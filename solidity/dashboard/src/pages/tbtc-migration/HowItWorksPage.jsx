@@ -25,8 +25,8 @@ const tbtcPools = [
 
 const HowItWorksPage = () => {
   return (
-    <>
-      <section className="tile explanation">
+    <section className="tbtc-migration">
+      <section className="tile tbtc-migration__explanation">
         <h2 className="text-grey-70 mb-1">What is token migration?</h2>
         <h3 className="text-grey-50">
           Token migration is a method which upgrades and downgrades your tBTC
@@ -34,7 +34,7 @@ const HowItWorksPage = () => {
         </h3>
       </section>
 
-      <section className="tile resources">
+      <section className="tile tbtc-migration__resources">
         <h3 className="mb-1">Why upgrade your tBTC?</h3>
         <List>
           <List.Title className="h5 text-violet-80">how it works</List.Title>
@@ -78,7 +78,7 @@ const HowItWorksPage = () => {
         </a>
       </section>
 
-      <section className="mint-tbtc-v1">
+      <section className="tbtc-migration__mint-tbtc-v1">
         <div className="mint-tbtc-v1__icon-wrapper">
           <Icons.TBTC />
         </div>
@@ -94,7 +94,7 @@ const HowItWorksPage = () => {
       </section>
 
       <List
-        className="tile tbtc-pools-section"
+        className="tile tbtc-migration__tbtc-pools"
         items={tbtcPools}
         renderItem={renderPoolItem}
       >
@@ -103,7 +103,7 @@ const HowItWorksPage = () => {
         </List.Title>
         <List.Content className="tbtc-pools" />
       </List>
-    </>
+    </section>
   )
 }
 
