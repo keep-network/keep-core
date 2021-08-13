@@ -235,7 +235,10 @@ const PendingWithdrawalsView = ({
   }
 
   return (
-    <section className={"tile pending-withdrawal"}>
+    <section
+      className={`tile pending-withdrawal 
+      ${isWithdrawalTimeoutOver(pendingWithdrawal) ? "pending-withdrawal--withdrawal-expired" : ""}
+      `}>
       <DataTable
         data={formattedDataForDataTable}
         itemFieldId="pendingWithdrawalId"

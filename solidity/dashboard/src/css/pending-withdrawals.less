@@ -1,9 +1,24 @@
 .pending-withdrawal {
+  border: 1px solid @color-yellow-100;
+
   table {
     thead {
       tr {
         background-color: @color-yellow-10;
         border-bottom: 1px solid @color-yellow-60;
+      }
+    }
+  }
+
+  &--withdrawal-expired {
+    border: 1px solid @color-red-60;
+
+    table {
+      thead {
+        tr {
+          background-color: @color-red-10;
+          border-bottom: 1px solid @color-red-30;
+        }
       }
     }
   }
