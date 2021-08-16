@@ -26,6 +26,7 @@
   }
 
   &__tbtc-pools {
+    padding-bottom: 0;
     .tbtc-pools__item {
       .divider.divider--tile-fluid {
         padding: 0;
@@ -87,13 +88,8 @@
 }
 
 .tbtc-migration-portal {
-  // display: flex;
-
   &__tbtc-balances {
     .tile();
-    // flex: 1;
-    // max-width: 350px;
-    // margin-right: 1rem;
 
     align-self: flex-start;
     padding-bottom: 0;
@@ -130,9 +126,124 @@
 
   &__form-wrapper {
     .tile();
-    // flex-grow: 3;
-    // max-width: 550px;
-    // height: 600px;
+  }
+
+  .tbtc-migration-portal-form {
+    &__inputs-wrapper {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+
+      .from-to-switcher {
+        all: unset;
+        background-color: @secondary-color;
+        align-self: center;
+        width: 42px;
+        height: 32px;
+        border-radius: 8px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        cursor: pointer;
+
+        &:hover {
+          svg {
+            path {
+              &:first-child {
+                transform: rotate(180deg);
+              }
+              transform: rotate(-180deg);
+              transform-origin: center;
+            }
+          }
+        }
+        svg {
+          path {
+            transition: 0.3s;
+          }
+        }
+      }
+
+      .tbtc-token-container {
+        // border: 1px solid @color-black;
+        position: relative;
+        overflow: hidden;
+        padding: 1rem;
+        margin-bottom: 0.25rem;
+        border-radius: 8px;
+
+        &--v1 {
+          background-color: @color-black;
+          color: @white;
+          svg {
+            path {
+              fill: @white;
+            }
+          }
+          .input__label__text {
+            color: @white;
+          }
+        }
+
+        &--v2 {
+          .input__label__text {
+            color: inherit;
+          }
+        }
+
+        .input__label__info-container__additional-info-text {
+          background-color: inherit;
+          border-radius: 0;
+          border: unset;
+          padding: 0;
+          margin-bottom: 0;
+        }
+
+        &--top,
+        &--bottom {
+          &::before {
+            content: "";
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            bottom: 0px;
+            right: 0px;
+            border: 1px solid @color-black;
+            border-radius: 8px;
+          }
+          &::after {
+            content: "";
+            position: absolute;
+            padding: 2px;
+
+            width: 44px;
+            height: 32px;
+            left: 50%;
+            margin-left: -25px;
+            border-radius: 8px;
+            border: 1px solid @color-black;
+            background-color: @white;
+          }
+        }
+
+        &--top {
+          margin-bottom: -14px;
+
+          &::after {
+            bottom: -20px;
+          }
+        }
+
+        &--bottom {
+          margin-top: -14px;
+
+          &::after {
+            top: -20px;
+          }
+        }
+      }
+    }
   }
 
   @media screen and (min-width: 1000px) {
@@ -147,7 +258,7 @@
     &__form-wrapper {
       flex-grow: 3;
       max-width: 550px;
-      height: 600px;
+      // height: 600px;
     }
   }
 }

@@ -1,6 +1,7 @@
 import React from "react"
 import List from "../../components/List"
 import TokenAmount from "../../components/TokenAmount"
+import { MigrationPortalForm } from "../../components/tbtc-migration"
 import { TBTC } from "../../utils/token.utils"
 
 const TokenUpgradePortalPage = () => {
@@ -34,7 +35,9 @@ const TokenUpgradePortalPage = () => {
         </List.Content>
       </List>
       <section className="tbtc-migration-portal__form-wrapper">
-        {/* TODO: Form content here */}
+        <h3 className="text-grey-70 mb-1">Migration Portal</h3>
+        {/* TODO: Pass props */}
+        <MigrationPortalForm />
       </section>
     </section>
   )
