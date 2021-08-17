@@ -1,12 +1,31 @@
 import React from "react"
 import List from "../../components/List"
 import TokenAmount from "../../components/TokenAmount"
-import { MigrationPortalForm } from "../../components/tbtc-migration"
+import {
+  MigrationPortalForm,
+  ConfirmMigrationModal,
+} from "../../components/tbtc-migration"
 import { TBTC } from "../../utils/token.utils"
+import { useModal } from "../../hooks/useModal"
 
 const TokenUpgradePortalPage = () => {
   const tbtcV1Balance = "0"
   const tbtcV2Balance = "0"
+  const { openConfirmationModal } = useModal()
+
+  const onSubmitMigrationForm = async (values, awaitingPromise) => {
+    await openConfirmationModal(
+      {
+        modalOptions: { title: "Upgrade" },
+        from: "v1",
+        to: "v2",
+        amount: 0,
+      },
+      ConfirmMigrationModal
+    )
+    // TODO: dispatch redux action
+  }
+
   return (
     <section className="tbtc-migration-portal">
       <List className="tbtc-migration-portal__tbtc-balances">
@@ -37,7 +56,7 @@ const TokenUpgradePortalPage = () => {
       <section className="tbtc-migration-portal__form-wrapper">
         <h3 className="text-grey-70 mb-1">Migration Portal</h3>
         {/* TODO: Pass props */}
-        <MigrationPortalForm />
+        <MigrationPortalForm onSubmit={onSubmitMigrationForm} />
       </section>
     </section>
   )
