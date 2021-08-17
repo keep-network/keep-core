@@ -7,23 +7,28 @@ import moment from "moment";
 import {useSelector} from "react-redux";
 import List from "../List";
 import Divider from "../Divider";
-import Button, {SubmitButton} from "../Button";
+import Button from "../Button";
 import {KEEP} from "../../utils/token.utils";
-import {shortenAddress} from "../../utils/general.utils";
+import {
+  getSamePercentageValue,
+  shortenAddress
+} from "../../utils/general.utils";
 import WithdrawalInfo from "./WithdrawalInfo";
 import {add} from "../../utils/arithmetics.utils";
 import {useWeb3Address} from "../WithWeb3Context";
 
 const infoBannerTitle = "The cooldown period is 21 days"
 
-const items = [
-  {
-    label: "Add 1000 KEEP to your existing expired withdrawal"
-  },
-  {
-    label: "Reset the 21 day cooldown period."
-  }
-]
+const getItems = (keepAmount) => {
+  return [
+    {
+      label: `Add ${KEEP.displayAmount(keepAmount)} KEEP to your existing expired withdrawal`
+    },
+    {
+      label: `Reset the 21 day cooldown period.`
+    }
+  ]
+}
 
 const IncreaseWithdrawalModal = ({
   pendingWithdrawalBalance,
@@ -36,6 +41,10 @@ const IncreaseWithdrawalModal = ({
 }) => {
   const yourAddress = useWeb3Address()
   const [step, setStep] = useState(transactionFinished ? 2 : 1)
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
 
   const onSubmit = (values) => {
     if (step === 1) {
@@ -52,7 +61,7 @@ const IncreaseWithdrawalModal = ({
       addedAmount={addedAmount}
     >
       <OnlyIf condition={step === 1}>
-        <IncreaseWithdrawalModalStep1 onSubmit={onSubmit}/>
+        <IncreaseWithdrawalModalStep1 addedAmount={addedAmount} onSubmit={onSubmit}/>
       </OnlyIf>
       <OnlyIf condition={step === 2}>
         <WithdrawalInfo
@@ -67,13 +76,13 @@ const IncreaseWithdrawalModal = ({
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Expired withdrawal &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              {KEEP.displayAmount(pendingWithdrawalBalance)} KEEP
+              {KEEP.displayAmount(getSamePercentageValue(pendingWithdrawalBalance, covTotalSupply, totalValueLocked))} KEEP
             </h4>
           </div>
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Increase amount &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              {KEEP.displayAmount(addedAmount)} KEEP
+              {KEEP.displayAmount(getSamePercentageValue(addedAmount, covTotalSupply, totalValueLocked))} KEEP
             </h4>
           </div>
           <div className={"withdraw-modal__data-row"}>
@@ -89,7 +98,13 @@ const IncreaseWithdrawalModal = ({
   )
 }
 
-const IncreaseWithdrawalModalStep1 = ({onSubmit}) => {
+const IncreaseWithdrawalModalStep1 = ({addedAmount, onSubmit}) => {
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
+
+  const items = getItems(getSamePercentageValue(addedAmount, covTotalSupply, totalValueLocked))
   return (
     <div>
       <h3 className={"mb-1"}>Take note!</h3>
@@ -120,6 +135,11 @@ const ModalWithOverview = ({
   pendingWithdrawalBalance,
   addedAmount,
  }) => {
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
+
   return (
     <div className={`modal-with-overview__content-container ${className}`}>
       <div className={"modal-with-overview-modal__info"}>
@@ -131,7 +151,7 @@ const ModalWithOverview = ({
         <h4 className={"modal-with-overview__added-amount color-grey-70"}>
           <Icons.ArrowDown />
           <Icons.Add />
-          {KEEP.displayAmount(addedAmount)} KEEP
+          {KEEP.displayAmount(getSamePercentageValue(addedAmount, covTotalSupply, totalValueLocked))} KEEP
         </h4>
         <IncreaseWithdrawalModal.Tile title={"new withdrawal"} amount={add(pendingWithdrawalBalance, addedAmount)}/>
       </div>
@@ -141,14 +161,19 @@ const ModalWithOverview = ({
 
 const IncreaseWithdrawalModalTile = ({title, amount, expired = false}) => {
   const {
+    totalValueLocked,
+    covTotalSupply,
     withdrawalDelay,
   } = useSelector((state) => state.coveragePool)
+
   const endOfWithdrawalDate = moment().add(withdrawalDelay, "days")
   return (
     <div className={"modal-with-overview__tile"}>
       <h5 className={"modal-with-overview__tile-title"}>{title}</h5>
       <div className={"modal-with-overview__withdrawal-info"}>
-        <h4 className={"modal-with-overview__amount text-grey-70"}>{KEEP.displayAmount(amount)} KEEP</h4>
+        <h4 className={"modal-with-overview__amount text-grey-70"}>
+          {KEEP.displayAmount(getSamePercentageValue(amount, covTotalSupply, totalValueLocked))} KEEP
+        </h4>
         <OnlyIf condition={!expired}>
           <div className={"modal-with-overview__delay text-grey-50"}>21 days: {endOfWithdrawalDate.format("MM/DD")}</div>
         </OnlyIf>

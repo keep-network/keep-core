@@ -7,6 +7,8 @@ import Divider from "../Divider";
 import Button from "../Button";
 import React from "react";
 import {AcceptTermConfirmationModal} from "../ConfirmationModal";
+import {getSamePercentageValue} from "../../utils/general.utils";
+import {useSelector} from "react-redux";
 
 const WithdrawalInfo = ({
   transactionFinished,
@@ -19,6 +21,11 @@ const WithdrawalInfo = ({
   infoBannerDescription,
   children,
  }) => {
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
+
   return (
     <WithdrawalInfo.Container
       transactionFinished={transactionFinished}
@@ -32,7 +39,7 @@ const WithdrawalInfo = ({
       </OnlyIf>
       <div className={"withdraw-modal__data"}>
         <TokenAmount
-          amount={amount}
+          amount={getSamePercentageValue(amount, covTotalSupply, totalValueLocked)}
           wrapperClassName={"withdraw-modal__token-amount"}
           token={KEEP}
           withIcon

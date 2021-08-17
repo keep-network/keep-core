@@ -112,7 +112,7 @@ function* fetchCovPoolData(action) {
       address
     )
 
-    const covBalance = add(balanceOf, pendingWithdrawal)
+    const covBalance = add(balanceOf, pendingWithdrawal).toString()
 
     yield put(
       fetchCovPoolDataSuccess({

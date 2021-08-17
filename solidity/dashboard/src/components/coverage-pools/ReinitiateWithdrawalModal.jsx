@@ -5,9 +5,12 @@ import TokenAmount from "../TokenAmount";
 import {covKEEP, KEEP} from "../../utils/token.utils";
 import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm";
 import {gt, eq, lt} from "../../utils/arithmetics.utils";
-import { useDispatch } from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import { EVENTS } from "../../constants/events";
 import IncreaseWithdrawalModal from "./IncreaseWithdrawalModal";
+import {
+  getSamePercentageValue
+} from "../../utils/general.utils";
 
 const step1Title = "You are about to re-initiate this withdrawal:"
 const step2Title = "You are about to re-withdraw:"
@@ -68,6 +71,7 @@ const ReinitiateWithdrawalModal = ({
         <OnlyIf condition={eq(amount, 0)}>
           <InitiateCovPoolsWithdrawModal
             amount={pendingWithdrawalBalance}
+            covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
             containerTitle={step2Title}
             submitBtnText={"withdraw"}
             onBtnClick={onBtnClick}
@@ -79,6 +83,7 @@ const ReinitiateWithdrawalModal = ({
         <OnlyIf condition={lt(amount, 0)}>
           <InitiateCovPoolsWithdrawModal
             amount={pendingWithdrawalBalance}
+            covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
             containerTitle={step2Title}
             submitBtnText={"withdraw"}
             onBtnClick={onBtnClick}
@@ -113,12 +118,17 @@ const ReinitiateWithdrawalModalStep1 = ({
   onCancel,
   transactionFinished,
 }) => {
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
+
   return (
     <div className={"reinitiate-withdrawal-modal"}>
       <h3 className={"reinitiate-withdrawal-modal__container-title"}>{containerTitle}</h3>
       <div className={"reinitiate-withdrawal-modal__data"}>
         <TokenAmount
-          amount={pendingWithdrawalBalance}
+          amount={getSamePercentageValue(pendingWithdrawalBalance, covTotalSupply, totalValueLocked)}
           wrapperClassName={"reinitiate-withdrawal-modal__token-amount"}
           token={KEEP}
           withIcon

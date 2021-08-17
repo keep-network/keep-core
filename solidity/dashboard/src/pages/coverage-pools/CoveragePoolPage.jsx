@@ -22,7 +22,10 @@ import {
 import { useModal } from "../../hooks/useModal"
 import { eq, gt } from "../../utils/arithmetics.utils"
 import { covKEEP, KEEP } from "../../utils/token.utils"
-import { displayPercentageValue } from "../../utils/general.utils"
+import {
+  displayPercentageValue,
+  getSamePercentageValue,
+} from "../../utils/general.utils"
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
 import Chip from "../../components/Chip"
@@ -46,7 +49,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     shareOfPool,
     covBalance,
     covTokensAvailableToWithdraw,
-    // covTotalSupply,
+    covTotalSupply,
     // error,
     estimatedRewards,
     estimatedKeepBalance,
@@ -224,7 +227,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           </div>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={covBalance}
+            amount={getSamePercentageValue(covBalance, covTotalSupply, totalValueLocked)}
             amountClassName={"h1 text-mint-100"}
             symbolClassName={"h2 text-mint-100"}
             token={KEEP}
@@ -278,7 +281,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <h3>Available to withdraw</h3>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={covTokensAvailableToWithdraw}
+            amount={getSamePercentageValue(covTokensAvailableToWithdraw, covTotalSupply, totalValueLocked)}
             amountClassName={"h2 text-mint-100"}
             symbolClassName={"h3 text-mint-100"}
             token={KEEP}

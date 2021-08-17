@@ -1,15 +1,12 @@
 import React from "react"
-import { AcceptTermConfirmationModal } from "../ConfirmationModal"
-import TokenAmount from "../TokenAmount"
-import Banner from "../Banner"
-import * as Icons from "../Icons"
 import ModalWithTimeline, {MODAL_WITH_TIMELINE_STEPS} from "./ModalWithTImeline";
-import OnlyIf from "../OnlyIf";
-import { covKEEP, KEEP } from "../../utils/token.utils";
-import { shortenAddress } from "../../utils/general.utils";
-import Divider from "../Divider";
-import Button from "../Button";
+import { KEEP } from "../../utils/token.utils";
+import {
+  getSamePercentageValue,
+  shortenAddress
+} from "../../utils/general.utils";
 import WithdrawalInfo from "./WithdrawalInfo";
+import {useSelector} from "react-redux";
 
 const infoBannerTitle =
   "The cooldown period is 21 days.."
@@ -19,6 +16,7 @@ const infoBannerDescription =
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
+  covTokensAvailableToWithdraw,
   containerTitle,
   submitBtnText,
   onBtnClick,
@@ -26,6 +24,11 @@ const InitiateCovPoolsWithdrawModal = ({
   className = "",
   transactionFinished = false,
 }) => {
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
+
   return (
     <ModalWithTimeline
       className={`withdraw-modal__main-container ${className}`}
@@ -48,13 +51,14 @@ const InitiateCovPoolsWithdrawModal = ({
         <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Pool Balance &nbsp;</h4>
           <h4 className={"withdraw-modal__data__value text-grey-70"}>
-            1,000 KEEP
-          </h4>
-        </div>
-        <div className={"withdraw-modal__data-row"}>
-          <h4 className={"text-grey-50"}>Earned Balance &nbsp;</h4>
-          <h4 className={"withdraw-modal__data__value text-grey-70"}>
-            1,000 KEEP
+            {KEEP.displayAmount(
+              getSamePercentageValue(
+                covTokensAvailableToWithdraw,
+                covTotalSupply,
+                totalValueLocked
+              )
+            )
+            } KEEP
           </h4>
         </div>
         <div className={"withdraw-modal__data-row"}>

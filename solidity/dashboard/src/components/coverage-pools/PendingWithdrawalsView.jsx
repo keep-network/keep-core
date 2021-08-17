@@ -6,12 +6,11 @@ import moment from "moment"
 import { SubmitButton } from "../Button"
 import { useSelector } from "react-redux"
 import * as Icons from "../Icons"
-import Chip from "../Chip"
 import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import Tooltip from "../Tooltip"
 import { KEEP } from "../../utils/token.utils"
-import {formatValue} from "../../utils/general.utils";
+import {getSamePercentageValue} from "../../utils/general.utils";
 
 const PendingWithdrawalsView = ({
   onClaimTokensSubmitButtonClick,
@@ -22,6 +21,11 @@ const PendingWithdrawalsView = ({
   withdrawalInitiatedTimestamp,
   covTokensAvailableToWithdraw,
 }) => {
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
+
   const formattedDataForDataTable = withdrawalInitiatedTimestamp > 0 ? [{
     covAmount: pendingWithdrawal,
     timestamp: withdrawalInitiatedTimestamp,
@@ -255,7 +259,7 @@ const PendingWithdrawalsView = ({
             return (
               <div>
                 <TokenAmount
-                  amount={covAmount}
+                  amount={getSamePercentageValue(covAmount, covTotalSupply, totalValueLocked)}
                   wrapperClassName={"pending-withdrawal__token-amount"}
                   token={KEEP}
                   withIcon
