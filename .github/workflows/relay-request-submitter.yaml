@@ -5,6 +5,7 @@ on:
   # schedule:
   #  - cron: '*/30 * * * *'
   workflow_dispatch:
+  push:
 
 jobs:
   submit-relay-request:
