@@ -1,4 +1,4 @@
-name: Relay request submitter
+name: Relay Request Submitter / Testnet
 
 on:
   # TODO: Uncomment once development is done
@@ -15,6 +15,11 @@ jobs:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/ci/actions/load-env-variables@v1
+        with:
+          environment: 'ropsten'
 
       - uses: actions/setup-node@v2
         with:
