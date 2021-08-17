@@ -22,14 +22,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: solidity/package-lock.json
 
-      - name: Install external @keep-network/keep-core module
+      - run: npm ci
+
+      - name: Install external keep-core contracts
         env:
           KEEP_CORE_VERSION: latest #TODO: Change to `ropsten`
         run: |
+          mkdir external && cd "$_"
+          npm init -y
           npm install --quiet --save-exact \
             @keep-network/keep-core@$KEEP_CORE_VERSION
-          mkdir -p build/contracts
-          cp -a node_modules/@keep-network/keep-core/artifacts/. build/contracts/
+          mkdir -p ../build/contracts
+          cp -a node_modules/@keep-network/keep-core/artifacts/. ../build/contracts/
 
       - name: Submit relay entry request
         env:

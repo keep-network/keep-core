@@ -11,6 +11,10 @@ module.exports = async function () {
     keepRandomBeaconService.address
   )
 
+  console.log(
+    `Address of the KeepRandomBeaconService contract is ${keepRandomBeaconService.address}`
+  )
+
   try {
     const entryFeeEstimate = await contractInstance.entryFeeEstimate(0)
     const tx = await contractInstance.methods["requestRelayEntry()"]({
