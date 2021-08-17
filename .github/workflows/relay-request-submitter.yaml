@@ -1,0 +1,45 @@
+name: Relay request submitter
+
+on:
+  # TODO: Uncomment once development is done
+  # schedule:
+  #  - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  submit-relay-request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+
+      - name: Create temporary submitter module
+        env:
+          KEEP_CORE_VERSION: latest #TODO: Change to `ropsten`
+          TRUFFLE_VERSION: 5.3.1
+        run: |
+          mkdir submitter
+          cp solidity/truffle-config.js submitter/truffle-config.js
+          cp solidity/scripts/request-relay-entry.js submitter/request-relay-entry.js
+          cd submitter
+          npm init -y
+          npm install --save-exact \
+            @keep-network/keep-core@$KEEP_CORE_VERSION \
+            truffle@$TRUFFLE_VERSION
+          mkdir -p build/contracts
+          cp -a node_modules/@keep-network/keep-core/artifacts/. build/contracts/
+
+      - name: Submit relay entry request
+        working-directory: ./submitter
+        env:
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME_WS }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          WATCH_RELAY_ENTRY: true
+        run: npx truffle exec ./request-relay-entry.js --network $TRUFFLE_NETWORK
+
+
+
