@@ -21,6 +21,7 @@ const swapBoxStyle = {
   height: "40px",
   marginRight: "0.5rem",
 }
+
 const styles = {
   swapBox: swapBoxStyle,
   v1: {
@@ -36,6 +37,13 @@ const styles = {
     textAlign: "center",
 
     ...swapBoxStyle,
+  },
+  listWrapper: {
+    borderRadius: "8px",
+    padding: "1rem",
+  },
+  chevronRighIcon: {
+    marginRight: "0.5rem",
   },
 }
 
@@ -67,19 +75,19 @@ const ConfirmMigrationModal = ({
         <div className="bg-violet-10 flex row" style={styles.swapBox}>
           <Icons.ChevronRight
             className="chevron-right-icon chevron-right-icon--secondary"
-            style={{ marginRight: "0.5rem" }}
+            style={styles.chevronRighIcon}
           />
           <Icons.ChevronRight
             className="chevron-right-icon chevron-right-icon--secondary"
-            style={{ marginRight: "0.5rem" }}
+            style={styles.chevronRighIcon}
           />
           <Icons.ChevronRight
             className="chevron-right-icon chevron-right-icon--secondary"
-            style={{ marginRight: "0.5rem" }}
+            style={styles.chevronRighIcon}
           />
           <Icons.ChevronRight
             className="chevron-right-icon chevron-right-icon--secondary"
-            style={{ marginRight: "0.5rem" }}
+            style={styles.chevronRighIcon}
           />
           <Icons.ChevronRight className="chevron-right-icon chevron-right-icon--secondary" />
         </div>
@@ -87,10 +95,7 @@ const ConfirmMigrationModal = ({
           {`tBTC${to}`}
         </div>
       </div>
-      <div
-        className="bg-grey-10 w-100 mb-1"
-        style={{ borderRadius: "8px", padding: "1rem" }}
-      >
+      <div className="bg-grey-10 w-100 mb-1" style={styles.listWrapper}>
         <List items={remember}>
           <List.Title className="mb-1">Always remember:</List.Title>
           <List.Content className="bullets text-smaller" />
