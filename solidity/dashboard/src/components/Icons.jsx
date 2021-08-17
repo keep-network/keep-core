@@ -61,6 +61,7 @@ export { ReactComponent as Decentralize } from "../static/svg/decentralize.svg"
 export { ReactComponent as CoveragePool } from "../static/svg/coverage-pool.svg"
 export { ReactComponent as SaddleWhite } from "../static/svg/saddle-logo.svg"
 export { ReactComponent as Swap } from "../static/svg/swap.svg"
+export { ReactComponent as ChevronRight } from "../static/svg/chevron-right.svg"
 
 const Badge = ({ height, width }) => (
   <svg
