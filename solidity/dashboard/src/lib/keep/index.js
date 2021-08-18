@@ -1,10 +1,6 @@
 import contracts, {
   SADDLE_SWAP_CONTRACT_NAME,
   SaddleSwapArtifact,
-} from "./contracts"
-import CoveragePoolV1 from "./coverage-pool"
-import { UniswapV2Exchange } from "./exchange-api"
-import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
   TOKEN_GRANT_CONTRACT_NAME,
@@ -25,7 +21,12 @@ import {
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
   COV_TOKEN_CONTRACT_NAME,
   ASSET_POOL_CONTRACT_NAME,
+  TBTCV2_VENDING_MACHINEE_CONTRACT_NAME,
+  TBTCV2_TOKEN_CONTRACT_NAME,
 } from "./contracts"
+import CoveragePoolV1 from "./coverage-pool"
+import { UniswapV2Exchange } from "./exchange-api"
+import TBTCV2Migration from "./tbtc-migration"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
 /** @typedef { import("../web3").BaseContract} BaseContract */
@@ -111,7 +112,13 @@ class Keep {
   [COV_TOKEN_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [ASSET_POOL_CONTRACT_NAME]
+  [ASSET_POOL_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [TBTCV2_TOKEN_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [TBTCV2_VENDING_MACHINEE_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
@@ -159,6 +166,12 @@ class Keep {
       this.covTokenContract,
       this.keepTokenContract,
       this.exchangeService,
+      this.web3
+    )
+    this.tBTCV2Migration = new TBTCV2Migration(
+      this.tbtcTokenContract,
+      this.tbtcV2Contract,
+      this.vendingMachineContract,
       this.web3
     )
   }
