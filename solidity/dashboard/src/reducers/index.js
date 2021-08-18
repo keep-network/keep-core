@@ -11,6 +11,7 @@ import operator from "./operator"
 import authorization from "./authorization"
 import transactions from "./transactions"
 import coveragePool from "./coverage-pool"
+import tbtcV2Migration from "./tbtc-migration"
 
 const app = (state = { address: null }, action) => {
   switch (action.type) {
@@ -36,6 +37,7 @@ const reducers = combineReducers({
   authorization,
   transactions,
   coveragePool,
+  tbtcV2Migration,
 })
 
 const rootReducer = (state, action) => {

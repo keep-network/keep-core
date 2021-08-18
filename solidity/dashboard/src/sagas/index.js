@@ -14,6 +14,7 @@ import * as liquidityRewards from "./liquidity-rewards"
 import * as operator from "./operartor"
 import * as authorization from "./authorization"
 import * as coveragePool from "./coverage-pool"
+import * as tbtcV2Migration from "./tbtc-migration"
 
 const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
   liquidityRewards
@@ -30,6 +31,7 @@ const loginRequiredSagas = [
   ...Object.values(restliquidityRewards),
   ...Object.values(operator),
   ...Object.values(authorization),
+  ...Object.values(tbtcV2Migration),
 ]
 
 const sagas = [
