@@ -84,21 +84,6 @@ function* fetchCovPoolData(action) {
 
     const balanceOf = yield call(Keep.coveragePoolV1.covBalanceOf, address)
     const totalSupply = yield call(Keep.coveragePoolV1.covTotalSupply)
-    const shareOfPool = yield call(
-      Keep.coveragePoolV1.shareOfPool,
-      totalSupply,
-      balanceOf
-    )
-    const estimatedKeepBalance = yield call(
-      Keep.coveragePoolV1.estimatedCollateralTokenBalance,
-      shareOfPool
-    )
-
-    const estimatedRewards = yield call(
-      Keep.coveragePoolV1.estimatedRewards,
-      address,
-      shareOfPool
-    )
 
     const withdrawalDelays = yield call(Keep.coveragePoolV1.withdrawalDelays)
 
@@ -113,6 +98,22 @@ function* fetchCovPoolData(action) {
     )
 
     const covBalance = add(balanceOf, pendingWithdrawal).toString()
+
+    const shareOfPool = yield call(
+      Keep.coveragePoolV1.shareOfPool,
+      totalSupply,
+      covBalance
+    )
+    const estimatedKeepBalance = yield call(
+      Keep.coveragePoolV1.estimatedCollateralTokenBalance,
+      shareOfPool
+    )
+
+    const estimatedRewards = yield call(
+      Keep.coveragePoolV1.estimatedRewards,
+      address,
+      shareOfPool
+    )
 
     yield put(
       fetchCovPoolDataSuccess({
