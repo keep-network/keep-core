@@ -61,6 +61,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
 
+  const modal = useSelector((state) => state.modal)
+
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
   const address = useWeb3Address()
@@ -71,10 +73,10 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   }, [dispatch])
 
   useEffect(() => {
-    if (address) {
+    if (address || modal.isOpen) {
       dispatch(fetchCovPoolDataRequest(address))
     }
-  }, [dispatch, address])
+  }, [dispatch, address, modal.isOpen])
 
   const onSubmitDepositForm = async (values, awaitingPromise) => {
     const { tokenAmount } = values
