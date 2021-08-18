@@ -5,7 +5,11 @@ package event
 
 import (
 	"math/big"
+
+	"github.com/ipfs/go-log"
 )
+
+var logger = log.Logger("keep-event")
 
 // EntrySubmitted indicates that valid relay entry has been submitted to the
 // chain for the currently processed relay request. This event is intended to

@@ -27,6 +27,8 @@ func (gst *GroupSelectionTrack) Add(entry string) bool {
 
 	gst.Data[entry] = true
 
+	logger.Debugf("added entry [%v] to the group selection track", entry)
+
 	return true
 }
 
@@ -36,6 +38,8 @@ func (gst *GroupSelectionTrack) Remove(entry string) {
 	defer gst.Mutex.Unlock()
 
 	delete(gst.Data, entry)
+
+	logger.Debugf("removed entry [%v] from the group selection track", entry)
 }
 
 // RelayRequestTrack is used to track requests for new entries after RelayEntryRequested
