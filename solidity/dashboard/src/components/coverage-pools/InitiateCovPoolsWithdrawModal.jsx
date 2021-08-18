@@ -16,7 +16,6 @@ const infoBannerDescription =
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
-  covTokensAvailableToWithdraw,
   containerTitle,
   submitBtnText,
   onBtnClick,
@@ -25,6 +24,7 @@ const InitiateCovPoolsWithdrawModal = ({
   transactionFinished = false,
 }) => {
   const {
+    covTokensAvailableToWithdraw,
     totalValueLocked,
     covTotalSupply,
   } = useSelector((state) => state.coveragePool)

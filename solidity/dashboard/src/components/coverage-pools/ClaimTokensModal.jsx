@@ -6,7 +6,11 @@ import Button from "../Button"
 import OnlyIf from "../OnlyIf"
 import ModalWithTimeline from "./ModalWithTImeline";
 import {useWeb3Address} from "../WithWeb3Context";
-import {shortenAddress} from "../../utils/general.utils";
+import {
+  getSamePercentageValue,
+  shortenAddress
+} from "../../utils/general.utils";
+import {useSelector} from "react-redux";
 
 const ClaimTokensModal = ({
   amount,
@@ -17,6 +21,10 @@ const ClaimTokensModal = ({
   transactionHash = "",
 }) => {
   const yourAddress = useWeb3Address()
+  const {
+    totalValueLocked,
+    covTotalSupply,
+  } = useSelector((state) => state.coveragePool)
   return (
     <ModalWithTimeline className={"claim-tokens-modal__main-container"}>
       <OnlyIf condition={!transactionFinished}>
@@ -28,7 +36,7 @@ const ClaimTokensModal = ({
       </OnlyIf>
       <div className={"claim-tokens-modal__data"}>
         <TokenAmount
-          amount={amount}
+          amount={getSamePercentageValue(amount, covTotalSupply, totalValueLocked)}
           wrapperClassName={"claim-tokens-modal__token-amount"}
           token={KEEP}
           withIcon
@@ -36,13 +44,7 @@ const ClaimTokensModal = ({
         <div className={"claim-tokens-modal__data-row"}>
           <h4 className={"text-grey-50"}>Initial Withdrawal &nbsp;</h4>
           <h4 className={"claim-tokens-modal__data__value text-grey-70"}>
-            {KEEP.displayAmount(amount)} KEEP
-          </h4>
-        </div>
-        <div className={"claim-tokens-modal__data-row"}>
-          <h4 className={"text-grey-50"}>Rewards earned &nbsp;</h4>
-          <h4 className={"claim-tokens-modal__data__value text-grey-70"}>
-            1,000 KEEP
+            {KEEP.displayAmount(getSamePercentageValue(amount, covTotalSupply, totalValueLocked))} KEEP
           </h4>
         </div>
         <div className={"claim-tokens-modal__data-row"}>

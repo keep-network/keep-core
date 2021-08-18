@@ -86,12 +86,21 @@ export const ModalContextProvider = ({ children }) => {
   const awaitingPromiseRef = useRef()
   const modal = useSelector((state) => state.modal)
 
+  const closeEventModal = () => {
+    dispatch({ type: "modal/is_closed" })
+    closeModal()
+  }
+
   useEffect(() => {
     if (modal.isOpen) {
       switch (modal.emittedEvent) {
         case EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED:
-          openModal(<ClaimTokensModal transactionFinished={true} amount={modal.additionalData?.amount} onCancel={closeModal}/>, {
-            closeModal: closeModal,
+          openModal(<ClaimTokensModal
+            transactionFinished={true}
+            amount={modal.additionalData?.amount}
+            onCancel={closeEventModal}
+          />, {
+            closeModal: closeEventModal,
             title: "Claim tokens",
             classes: {
               modalWrapperClassName: "modal-wrapper__claim-tokens",
@@ -102,9 +111,9 @@ export const ModalContextProvider = ({ children }) => {
           openModal(<InitiateCovPoolsWithdrawModal
             transactionFinished={true}
             amount={modal.additionalData?.covAmount}
-            onCancel={closeModal}
+            onCancel={closeEventModal}
           />, {
-            closeModal: closeModal,
+            closeModal: closeEventModal,
             title: "Withdraw",
             classes: {
               modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
@@ -115,9 +124,9 @@ export const ModalContextProvider = ({ children }) => {
           openModal(<InitiateCovPoolsWithdrawModal
             transactionFinished={true}
             amount={modal.additionalData?.covAmount}
-            onCancel={closeModal}
+            onCancel={closeEventModal}
           />, {
-            closeModal: closeModal,
+            closeModal: closeEventModal,
             title: "Re-initiate withdrawal",
             classes: {
               modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
@@ -129,9 +138,9 @@ export const ModalContextProvider = ({ children }) => {
             transactionFinished={true}
             pendingWithdrawalBalance={modal.additionalData?.covAmount}
             addedAmount={"0"}
-            onCancel={closeModal}
+            onCancel={closeEventModal}
           />, {
-            closeModal: closeModal,
+            closeModal: closeEventModal,
             title: "Re-initiate withdrawal",
             classes: {
               modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
@@ -144,9 +153,9 @@ export const ModalContextProvider = ({ children }) => {
             amount={modal.additionalData?.amount}
             balanceAmount={modal.additionalData?.updatedCovBalance}
             estimatedBalanceAmountInKeep={modal.additionalData?.estimatedKeepBalance}
-            onCancel={closeModal}
+            onCancel={closeEventModal}
           />, {
-            closeModal: closeModal,
+            closeModal: closeEventModal,
             title: "Deposit",
             classes: {
               modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
