@@ -7,6 +7,13 @@ export const TBTCV2_MIGRATION_FETCH_DATA_SUCCESS =
 export const TBTCV2_MIGRATION_FETCH_DATA_ERROR =
   "tbtcv2_migration/fetch_data_error"
 
+export const TBTCV2_TOKEN_MINTED_EVENT_EMITTED =
+  "tbtcv2_migration/token_minted_event_emitted"
+export const TBTCV2_TOKEN_UNMINTED_EVENT_EMITTED =
+  "tbtcv2_migration/token_unminted_event_emitted"
+export const TBTCV2_TOKEN_MINTED = "tbtcv2_migration/token_minted"
+export const TBTCV2_TOKEN_UNMINTED = "tbtcv2_migration/token_unminted"
+
 export const fetchDataStart = () => {
   return {
     type: TBTCV2_MIGRATION_FETCH_DATA_START,

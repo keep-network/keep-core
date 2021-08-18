@@ -1,4 +1,5 @@
 import { tbtcV2Migration } from "../actions"
+import { add, sub } from "../utils/arithmetics.utils"
 
 const initialState = {
   tbtcV1Balance: "0",
@@ -29,6 +30,21 @@ const tbtcV2MigrationReducer = (state = initialState, action) => {
         ...state,
         isFetching: false,
         error: action.payload.error,
+      }
+    case tbtcV2Migration.TBTCV2_TOKEN_MINTED:
+      return {
+        ...state,
+        tbtcV1Balance: sub(state.tbtcV1Balance, action.payload.amount),
+        tbtcV2Balance: add(state.tbtcV2Balance, action.payload.amount),
+      }
+    case tbtcV2Migration.TBTCV2_TOKEN_UNMINTED:
+      return {
+        ...state,
+        tbtcV1Balance: add(state.tbtcV1Balance, action.payload.amount),
+        tbtcV2Balance: sub(
+          state.tbtcV2Balance,
+          add(action.payload.amount, action.payload.fee)
+        ),
       }
     default:
       return state
