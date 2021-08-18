@@ -11,6 +11,7 @@ import { colors } from "../../constants/colors"
 import Tooltip from "../Tooltip"
 import { KEEP } from "../../utils/token.utils"
 import {getSamePercentageValue} from "../../utils/general.utils";
+import BigNumber from "bignumber.js";
 
 const PendingWithdrawalsView = ({
   onClaimTokensSubmitButtonClick,
@@ -241,7 +242,11 @@ const PendingWithdrawalsView = ({
   return (
     <section
       className={`tile pending-withdrawal 
-      ${isWithdrawalTimeoutOver(withdrawalInitiatedTimestamp) ? "pending-withdrawal--withdrawal-expired" : ""}
+      ${!(new BigNumber(withdrawalInitiatedTimestamp).isZero()) &&
+      isWithdrawalTimeoutOver(withdrawalInitiatedTimestamp)
+        ? "pending-withdrawal--withdrawal-expired" 
+        : ""
+      }
       `}>
       <DataTable
         data={formattedDataForDataTable}
