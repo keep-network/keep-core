@@ -1,15 +1,16 @@
 import React from "react"
-import ModalWithTimeline, {MODAL_WITH_TIMELINE_STEPS} from "./ModalWithTImeline";
-import { KEEP } from "../../utils/token.utils";
+import ModalWithTimeline, {
+  MODAL_WITH_TIMELINE_STEPS,
+} from "./ModalWithTImeline"
+import { KEEP } from "../../utils/token.utils"
 import {
   getSamePercentageValue,
-  shortenAddress
-} from "../../utils/general.utils";
-import WithdrawalInfo from "./WithdrawalInfo";
-import {useSelector} from "react-redux";
+  shortenAddress,
+} from "../../utils/general.utils"
+import WithdrawalInfo from "./WithdrawalInfo"
+import { useSelector } from "react-redux"
 
-const infoBannerTitle =
-  "The cooldown period is 21 days.."
+const infoBannerTitle = "The cooldown period is 21 days.."
 
 const infoBannerDescription =
   "A withdrawn deposit will be available to claim after 21 days. During cooldown, your funds will accumulate rewards but are also subject to risk to cover for a hit."
@@ -23,21 +24,19 @@ const InitiateCovPoolsWithdrawModal = ({
   className = "",
   transactionFinished = false,
 }) => {
-  const {
-    covTokensAvailableToWithdraw,
-    totalValueLocked,
-    covTotalSupply,
-  } = useSelector((state) => state.coveragePool)
+  const { covTokensAvailableToWithdraw, totalValueLocked, covTotalSupply } =
+    useSelector((state) => state.coveragePool)
 
   return (
     <ModalWithTimeline
       className={`withdraw-modal__main-container ${className}`}
       step={
-        transactionFinished ?
-          MODAL_WITH_TIMELINE_STEPS.COOLDOWN :
-          MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT
+        transactionFinished
+          ? MODAL_WITH_TIMELINE_STEPS.COOLDOWN
+          : MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT
       }
-      withDescription={true}>
+      withDescription={true}
+    >
       <WithdrawalInfo
         transactionFinished={transactionFinished}
         containerTitle={containerTitle}
@@ -57,8 +56,8 @@ const InitiateCovPoolsWithdrawModal = ({
                 covTotalSupply,
                 totalValueLocked
               )
-            )
-            } KEEP
+            )}{" "}
+            KEEP
           </h4>
         </div>
         <div className={"withdraw-modal__data-row"}>
@@ -68,7 +67,6 @@ const InitiateCovPoolsWithdrawModal = ({
           </h4>
         </div>
       </WithdrawalInfo>
-
     </ModalWithTimeline>
   )
 }

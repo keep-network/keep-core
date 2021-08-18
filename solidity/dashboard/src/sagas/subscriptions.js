@@ -177,14 +177,13 @@ function* observeStakedEvents() {
         if (!isAddressedToCurrentAccount) {
           // check if current address is a grantee in the managed grant
           try {
-            const managedGrantContractInstance = createManagedGrantContractInstance(
-              web3,
-              grantee
-            )
+            const managedGrantContractInstance =
+              createManagedGrantContractInstance(web3, grantee)
             const granteeAddressInManagedGrant = yield call(
               managedGrantContractInstance.methods.grantee().call
             )
-            delegation.managedGrantContractInstance = managedGrantContractInstance
+            delegation.managedGrantContractInstance =
+              managedGrantContractInstance
             delegation.isManagedGrant = true
 
             // compere a current address with a grantee address from the ManagedGrant contract
@@ -476,11 +475,8 @@ export function* subscribeToTopUpInitiatedEvent() {
 }
 
 function* observeTopUpInitiatedEvent() {
-  const {
-    stakingContract,
-    tokenStakingEscrow,
-    grantContract,
-  } = yield getContractsContext()
+  const { stakingContract, tokenStakingEscrow, grantContract } =
+    yield getContractsContext()
 
   // Other events may also be emitted with the `TopUpInitiated` event.
   const eventsToCheck = [
@@ -544,11 +540,8 @@ export function* subsribeToTopUpCompletedEvent() {
 }
 
 function* observeTopUpCompletedEvent() {
-  const {
-    stakingContract,
-    tokenStakingEscrow,
-    grantContract,
-  } = yield getContractsContext()
+  const { stakingContract, tokenStakingEscrow, grantContract } =
+    yield getContractsContext()
   const eventsToCheck = [
     [grantContract, "TokenGrantStaked"],
     [tokenStakingEscrow, "DepositRedelegated"],

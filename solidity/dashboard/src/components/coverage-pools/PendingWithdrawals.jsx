@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import {
   claimTokensFromWithdrawal,
   withdrawAssetPool,
@@ -7,9 +7,9 @@ import PendingWithdrawalsView from "./PendingWithdrawalsView"
 import { useDispatch, useSelector } from "react-redux"
 import ClaimTokensModal from "./ClaimTokensModal"
 import { useModal } from "../../hooks/useModal"
-import ReinitiateWithdrawalModal from "./ReinitiateWithdrawalModal";
+import ReinitiateWithdrawalModal from "./ReinitiateWithdrawalModal"
 
-const PendingWithdrawals = ({covTokensAvailableToWithdraw}) => {
+const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
   const { openConfirmationModal, closeModal } = useModal()
   const {
@@ -37,7 +37,11 @@ const PendingWithdrawals = ({covTokensAvailableToWithdraw}) => {
     dispatch(claimTokensFromWithdrawal(awaitingPromise))
   }
 
-  const onReinitiateWithdrawal = async (pendingWithdrawal, covTokensAvailableToWithdraw, awaitingPromise) => {
+  const onReinitiateWithdrawal = async (
+    pendingWithdrawal,
+    covTokensAvailableToWithdraw,
+    awaitingPromise
+  ) => {
     await openConfirmationModal(
       {
         modalOptions: {
@@ -51,7 +55,7 @@ const PendingWithdrawals = ({covTokensAvailableToWithdraw}) => {
         covTokensAvailableToWithdraw,
         containerTitle: "You are about to re-initiate this withdrawal:",
       },
-      ReinitiateWithdrawalModal,
+      ReinitiateWithdrawalModal
     )
     dispatch(withdrawAssetPool("0", awaitingPromise))
   }

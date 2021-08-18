@@ -11,7 +11,7 @@ const modalReducer = (state = initialState, action) => {
       return {
         ...state,
         isOpen: true,
-        emittedEvent: action.payload.emittedEvent || state.emittedEvent ,
+        emittedEvent: action.payload.emittedEvent || state.emittedEvent,
         transactionHash: action.payload.transactionHash,
         additionalData: action.payload.additionalData,
       }

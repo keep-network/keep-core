@@ -198,7 +198,7 @@ export function* subscribeToCovTokenTransferEvent() {
             amount: value,
             updatedCovBalance: updatedCovBalance,
             estimatedKeepBalance: estimatedKeepBalance,
-          }
+          },
         },
       })
     }
@@ -224,7 +224,10 @@ export function* subscribeToCovTokenTransferEvent() {
       address
     )
 
-    const covTokensAvailableToWithdraw = sub(updatedCovBalance, pendingWithdrawal)
+    const covTokensAvailableToWithdraw = sub(
+      updatedCovBalance,
+      pendingWithdrawal
+    )
 
     yield put(
       covTokenUpdated({
@@ -257,7 +260,6 @@ export function* subscribeToWithdrawalInitiatedEvent() {
       returnValues: { underwriter, covAmount },
     } = event
 
-
     const address = yield select(selectors.getUserAddress)
 
     if (isSameEthAddress(address, underwriter)) {
@@ -266,8 +268,8 @@ export function* subscribeToWithdrawalInitiatedEvent() {
         payload: {
           transactionHash: event.transactionHash,
           additionalData: {
-            covAmount
-          }
+            covAmount,
+          },
         },
       })
     }
@@ -295,13 +297,11 @@ export function* subscribeToWithdrawalCompletedEvent() {
           emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
           transactionHash: event.transactionHash,
           additionalData: {
-            amount
-          }
+            amount,
+          },
         },
       })
     }
-
-
   }
 }
 

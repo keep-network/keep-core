@@ -12,7 +12,7 @@ import { SubmitButton } from "./Button"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import { KEEP } from "../utils/token.utils"
 import moment from "moment"
-import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken";
+import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
 
 const WithdrawAmountForm = ({
   onCancel,
@@ -43,7 +43,7 @@ const WithdrawAmountForm = ({
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
       >
-        { submitBtnText }
+        {submitBtnText}
       </SubmitButton>
       <p
         className={

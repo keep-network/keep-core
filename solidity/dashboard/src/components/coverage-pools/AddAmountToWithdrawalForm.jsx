@@ -14,16 +14,20 @@ import {
 } from "../../forms/common-validators"
 import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
-import {getSamePercentageValue} from "../../utils/general.utils";
-import {useSelector} from "react-redux";
+import { getSamePercentageValue } from "../../utils/general.utils"
+import { useSelector } from "react-redux"
 
-const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, initialValue = "0", ...formikProps }) => {
+const AddAmountToWithdrawalForm = ({
+  tokenAmount,
+  onSubmit,
+  initialValue = "0",
+  ...formikProps
+}) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
-  const {
-    totalValueLocked,
-    covTotalSupply,
-  } = useSelector((state) => state.coveragePool)
+  const { totalValueLocked, covTotalSupply } = useSelector(
+    (state) => state.coveragePool
+  )
 
   return (
     <form className="add-amount-to-withdraw-form">
@@ -31,14 +35,22 @@ const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, initialValue = "0", 
         <h4>Add your available balance?</h4>
         <div className={"add-amount-to-withdraw-form__available-balance"}>
           <TokenAmount
-            amount={getSamePercentageValue(tokenAmount, covTotalSupply, totalValueLocked)}
+            amount={getSamePercentageValue(
+              tokenAmount,
+              covTotalSupply,
+              totalValueLocked
+            )}
             wrapperClassName={"add-amount-to-withdraw-form__token-amount"}
             amountClassName={"h3 text-mint-100"}
             symbolClassName={"h3 text-mint-100"}
             token={KEEP}
             withIcon
           />
-          <h4 className={"add-amount-to-withdraw-form__cov-token-amount text-grey-70"}>
+          <h4
+            className={
+              "add-amount-to-withdraw-form__cov-token-amount text-grey-70"
+            }
+          >
             {KEEP.toFormat(KEEP.toTokenUnit(tokenAmount)).toString()} covKEEP
           </h4>
         </div>
@@ -57,7 +69,7 @@ const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, initialValue = "0", 
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
-        disabled={!(formikProps.isValid)}
+        disabled={!formikProps.isValid}
       >
         continue
       </SubmitButton>
@@ -68,7 +80,7 @@ const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, initialValue = "0", 
 export default withFormik({
   validateOnChange: true,
   validateOnBlur: true,
-  mapPropsToValues: ({initialValue}) => ({
+  mapPropsToValues: ({ initialValue }) => ({
     tokenAmount: KEEP.toTokenUnit(initialValue).toString(),
   }),
   validate: (values, props) => {

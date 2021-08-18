@@ -1,4 +1,4 @@
-import React, {useMemo} from "react"
+import React, { useMemo } from "react"
 import { Column, DataTable } from "../DataTable"
 import resourceTooltipProps from "../../constants/tooltips"
 import TokenAmount from "../TokenAmount"
@@ -10,8 +10,8 @@ import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import Tooltip from "../Tooltip"
 import { KEEP } from "../../utils/token.utils"
-import {getSamePercentageValue} from "../../utils/general.utils";
-import BigNumber from "bignumber.js";
+import { getSamePercentageValue } from "../../utils/general.utils"
+import BigNumber from "bignumber.js"
 
 const PendingWithdrawalsView = ({
   onClaimTokensSubmitButtonClick,
@@ -22,15 +22,19 @@ const PendingWithdrawalsView = ({
   withdrawalInitiatedTimestamp,
   covTokensAvailableToWithdraw,
 }) => {
-  const {
-    totalValueLocked,
-    covTotalSupply,
-  } = useSelector((state) => state.coveragePool)
+  const { totalValueLocked, covTotalSupply } = useSelector(
+    (state) => state.coveragePool
+  )
 
-  const formattedDataForDataTable = withdrawalInitiatedTimestamp > 0 ? [{
-    covAmount: pendingWithdrawal,
-    timestamp: withdrawalInitiatedTimestamp,
-  }] : []
+  const formattedDataForDataTable =
+    withdrawalInitiatedTimestamp > 0
+      ? [
+          {
+            covAmount: pendingWithdrawal,
+            timestamp: withdrawalInitiatedTimestamp,
+          },
+        ]
+      : []
 
   const renderProgressBar = (
     withdrawalDate,
@@ -242,12 +246,14 @@ const PendingWithdrawalsView = ({
   return (
     <section
       className={`tile pending-withdrawal 
-      ${!(new BigNumber(withdrawalInitiatedTimestamp).isZero()) &&
-      isWithdrawalTimeoutOver(withdrawalInitiatedTimestamp)
-        ? "pending-withdrawal--withdrawal-expired" 
-        : ""
+      ${
+        !new BigNumber(withdrawalInitiatedTimestamp).isZero() &&
+        isWithdrawalTimeoutOver(withdrawalInitiatedTimestamp)
+          ? "pending-withdrawal--withdrawal-expired"
+          : ""
       }
-      `}>
+      `}
+    >
       <DataTable
         data={formattedDataForDataTable}
         itemFieldId="pendingWithdrawalId"
@@ -264,7 +270,11 @@ const PendingWithdrawalsView = ({
             return (
               <div>
                 <TokenAmount
-                  amount={getSamePercentageValue(covAmount, covTotalSupply, totalValueLocked)}
+                  amount={getSamePercentageValue(
+                    covAmount,
+                    covTotalSupply,
+                    totalValueLocked
+                  )}
                   wrapperClassName={"pending-withdrawal__token-amount"}
                   token={KEEP}
                   withIcon
@@ -293,9 +303,16 @@ const PendingWithdrawalsView = ({
                 className="btn btn-lg btn-primary"
                 onSubmitAction={async (awaitingPromise) => {
                   if (isWithdrawalTimeoutOver(timestamp)) {
-                    await onReinitiateWithdrawal(covAmount, covTokensAvailableToWithdraw, awaitingPromise)
+                    await onReinitiateWithdrawal(
+                      covAmount,
+                      covTokensAvailableToWithdraw,
+                      awaitingPromise
+                    )
                   } else {
-                    await onClaimTokensSubmitButtonClick(covAmount, awaitingPromise)
+                    await onClaimTokensSubmitButtonClick(
+                      covAmount,
+                      awaitingPromise
+                    )
                   }
                 }}
                 disabled={!isWithdrawalDelayOver(timestamp)}

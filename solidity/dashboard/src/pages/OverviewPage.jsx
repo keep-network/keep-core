@@ -17,8 +17,7 @@ import { useWeb3Address } from "../components/WithWeb3Context"
 import * as CoveragePoolsComponents from "../components/coverage-pools"
 import OnlyIf from "../components/OnlyIf"
 import { useHideComponent } from "../hooks/useHideComponent"
-import PendingWithdrawals
-  from "../components/coverage-pools/PendingWithdrawals";
+import PendingWithdrawals from "../components/coverage-pools/PendingWithdrawals"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()

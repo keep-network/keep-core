@@ -1,7 +1,7 @@
 import React from "react"
 import Tooltip from "./Tooltip"
 import { KEEP } from "../utils/token.utils"
-import OnlyIf from "./OnlyIf";
+import OnlyIf from "./OnlyIf"
 
 const TokenAmount = ({
   amount,

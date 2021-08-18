@@ -32,11 +32,9 @@ import Chip from "../../components/Chip"
 import Tooltip from "../../components/Tooltip"
 import * as Icons from "../../components/Icons"
 import Divider from "../../components/Divider"
-import InitiateCovPoolsWithdrawModal
-  from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal";
-import { EVENTS } from "../../constants/events";
-import ReinitiateWithdrawalModal
-  from "../../components/coverage-pools/ReinitiateWithdrawalModal";
+import InitiateCovPoolsWithdrawModal from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal"
+import { EVENTS } from "../../constants/events"
+import ReinitiateWithdrawalModal from "../../components/coverage-pools/ReinitiateWithdrawalModal"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -99,7 +97,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   const onSubmitWithdrawForm = async (values, awaitingPromise) => {
     const { withdrawAmount } = values
-    const amount = KEEP.fromTokenUnit(withdrawAmount).toString();
+    const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
     if (eq(withdrawalInitiatedTimestamp, 0)) {
       dispatch({
         type: "modal/set_emitted_event",
@@ -118,7 +116,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           amount,
           containerTitle: "You are about to withdraw:",
         },
-        InitiateCovPoolsWithdrawModal,
+        InitiateCovPoolsWithdrawModal
       )
     } else {
       dispatch({
@@ -140,7 +138,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           covTokensAvailableToWithdraw,
           containerTitle: "You are about to re-initiate this withdrawal:",
         },
-        ReinitiateWithdrawalModal,
+        ReinitiateWithdrawalModal
       )
     }
 
@@ -200,7 +198,9 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         {/* TODO add more metrics according to the Figma vies */}
       </section>
 
-      <PendingWithdrawals covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}/>
+      <PendingWithdrawals
+        covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
+      />
 
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
@@ -229,7 +229,11 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           </div>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={getSamePercentageValue(covBalance, covTotalSupply, totalValueLocked)}
+            amount={getSamePercentageValue(
+              covBalance,
+              covTotalSupply,
+              totalValueLocked
+            )}
             amountClassName={"h1 text-mint-100"}
             symbolClassName={"h2 text-mint-100"}
             token={KEEP}
@@ -283,7 +287,11 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <h3>Available to withdraw</h3>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={getSamePercentageValue(covTokensAvailableToWithdraw, covTotalSupply, totalValueLocked)}
+            amount={getSamePercentageValue(
+              covTokensAvailableToWithdraw,
+              covTotalSupply,
+              totalValueLocked
+            )}
             amountClassName={"h2 text-mint-100"}
             symbolClassName={"h3 text-mint-100"}
             token={KEEP}
@@ -302,7 +310,11 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
           <WithdrawAmountForm
             onCancel={onCancel}
-            submitBtnText={gt(withdrawalInitiatedTimestamp, "0") ? "increase withdrawal" : "withdraw"}
+            submitBtnText={
+              gt(withdrawalInitiatedTimestamp, "0")
+                ? "increase withdrawal"
+                : "withdraw"
+            }
             withdrawAmount={covBalance}
             onSubmit={onSubmitWithdrawForm}
             withdrawalDelay={withdrawalDelay}

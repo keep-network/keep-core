@@ -1,29 +1,27 @@
 import React, { useEffect, useState } from "react"
-import OnlyIf from "../OnlyIf";
-import InitiateCovPoolsWithdrawModal from "./InitiateCovPoolsWithdrawModal";
-import TokenAmount from "../TokenAmount";
-import {covKEEP, KEEP} from "../../utils/token.utils";
-import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm";
-import {gt, eq, lt} from "../../utils/arithmetics.utils";
-import {useDispatch, useSelector} from "react-redux";
-import { EVENTS } from "../../constants/events";
-import IncreaseWithdrawalModal from "./IncreaseWithdrawalModal";
-import {
-  getSamePercentageValue
-} from "../../utils/general.utils";
+import OnlyIf from "../OnlyIf"
+import InitiateCovPoolsWithdrawModal from "./InitiateCovPoolsWithdrawModal"
+import TokenAmount from "../TokenAmount"
+import { covKEEP, KEEP } from "../../utils/token.utils"
+import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm"
+import { gt, eq, lt } from "../../utils/arithmetics.utils"
+import { useDispatch, useSelector } from "react-redux"
+import { EVENTS } from "../../constants/events"
+import IncreaseWithdrawalModal from "./IncreaseWithdrawalModal"
+import { getSamePercentageValue } from "../../utils/general.utils"
 
 const step1Title = "You are about to re-initiate this withdrawal:"
 const step2Title = "You are about to re-withdraw:"
 
 const ReinitiateWithdrawalModal = ({
- pendingWithdrawalBalance,
- covTokensAvailableToWithdraw,
- submitBtnText,
- onBtnClick,
- onCancel,
- className = "",
- initialAmountValue = "0", // in smallest unit
- transactionFinished = false,
+  pendingWithdrawalBalance,
+  covTokensAvailableToWithdraw,
+  submitBtnText,
+  onBtnClick,
+  onCancel,
+  className = "",
+  initialAmountValue = "0", // in smallest unit
+  transactionFinished = false,
 }) => {
   const [step, setStep] = useState(1)
   const [amount, setAmount] = useState(initialAmountValue.toString())
@@ -42,12 +40,12 @@ const ReinitiateWithdrawalModal = ({
       if (eq(amount, 0)) {
         dispatch({
           type: "modal/set_emitted_event",
-          payload: EVENTS.COVERAGE_POOLS.RE_WITHDRAWAL_INITIATED
+          payload: EVENTS.COVERAGE_POOLS.RE_WITHDRAWAL_INITIATED,
         })
       } else if (gt(amount, 0)) {
         dispatch({
           type: "modal/set_emitted_event",
-          payload: EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL
+          payload: EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL,
         })
       }
     }
@@ -118,17 +116,22 @@ const ReinitiateWithdrawalModalStep1 = ({
   onCancel,
   transactionFinished,
 }) => {
-  const {
-    totalValueLocked,
-    covTotalSupply,
-  } = useSelector((state) => state.coveragePool)
+  const { totalValueLocked, covTotalSupply } = useSelector(
+    (state) => state.coveragePool
+  )
 
   return (
     <div className={"reinitiate-withdrawal-modal"}>
-      <h3 className={"reinitiate-withdrawal-modal__container-title"}>{containerTitle}</h3>
+      <h3 className={"reinitiate-withdrawal-modal__container-title"}>
+        {containerTitle}
+      </h3>
       <div className={"reinitiate-withdrawal-modal__data"}>
         <TokenAmount
-          amount={getSamePercentageValue(pendingWithdrawalBalance, covTotalSupply, totalValueLocked)}
+          amount={getSamePercentageValue(
+            pendingWithdrawalBalance,
+            covTotalSupply,
+            totalValueLocked
+          )}
           wrapperClassName={"reinitiate-withdrawal-modal__token-amount"}
           token={KEEP}
           withIcon
@@ -144,7 +147,8 @@ const ReinitiateWithdrawalModalStep1 = ({
       <AddAmountToWithdrawalForm
         initialValue={initialAmountValue}
         onSubmit={onBtnClick}
-        tokenAmount={covTokensAvailableToWithdraw} />
+        tokenAmount={covTokensAvailableToWithdraw}
+      />
     </div>
   )
 }
