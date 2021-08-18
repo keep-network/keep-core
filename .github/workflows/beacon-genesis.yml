@@ -1,0 +1,66 @@
+# This workflow initiates Beacon genesis on Testnet. The workflow should be
+# manually dispatched after the `keep-core` contracts get deployed and
+# kubernetes pods get rotated. The `upstream_build` parameter should contain
+# deployment info of at least `keep-core/solidity` module, but inputs
+# additionally containing information about other modules will be accepted as well.
+name: Beacon genesis
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment for workflow execution'
+        required: false
+        default: 'dev'
+      upstream_builds:
+        description: 'Upstream builds'
+        required: false
+
+jobs:
+  beacon-genesis:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/scripts
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/ci/actions/load-env-variables@v1
+        with:
+          environment: ${{ github.event.inputs.environment }}
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "npm"
+          cache-dependency-path: solidity/package-lock.json
+
+      - name: Get upstream packages' versions
+        uses: keep-network/ci/actions/upstream-builds-query@v1
+        id: upstream-builds-query
+        with:
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
+
+      - name: Resolve latest contracts
+        run: |
+          npm install --save-exact \
+            @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }}
+      
+      - name: Initiate Beacon contract genesis on Ethereum
+        if: github.event.inputs.environment != 'alfajores'
+        env:
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME_WS }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: npx truffle exec ./genesis.js —network ${{ env.TRUFFLE_NETWORK }}
+
+      - name: Initiate Beacon contract genesis on Celo
+        if: github.event.inputs.environment == 'alfajores'
+        env:
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_CELO_HOSTNAME }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: npx truffle exec ./genesis.js —network ${{ env.TRUFFLE_NETWORK }}
