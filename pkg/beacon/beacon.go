@@ -3,7 +3,6 @@ package beacon
 import (
 	"context"
 	"encoding/hex"
-	"sync"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -73,11 +72,6 @@ func Initialize(
 
 	eventDeduplicator := event.NewDeduplicator(groupSelectionDurationBlocks)
 
-	pendingRelayRequests := &event.RelayRequestTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
-
 	node.ResumeSigningIfEligible(relayChain, signing)
 
 	_ = relayChain.OnRelayEntryRequested(func(request *event.Request) {
@@ -86,7 +80,9 @@ func Initialize(
 				go func() {
 					previousEntry := hex.EncodeToString(request.PreviousEntry[:])
 
-					if ok := pendingRelayRequests.Add(previousEntry); !ok {
+					if ok := eventDeduplicator.NotifyRelayEntryStarted(
+						previousEntry,
+					); !ok {
 						logger.Warningf(
 							"relay entry requested event with previous entry "+
 								"[0x%x] has been registered already",
@@ -95,7 +91,15 @@ func Initialize(
 						return
 					}
 
-					defer pendingRelayRequests.Remove(previousEntry)
+					// TODO: The `node.GenerateRelayEntry` function does not
+					//       block and performs relay entry in separate
+					//       goroutine. This means the below completion
+					//       notification may be performed too early and
+					//       a duplicated event can be harmful. This
+					//       should be inspected.
+					defer eventDeduplicator.NotifyRelayEntryCompleted(
+						previousEntry,
+					)
 
 					logger.Infof(
 						"new relay entry requested at block [%v] from group "+

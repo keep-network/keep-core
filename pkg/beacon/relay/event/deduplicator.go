@@ -17,15 +17,17 @@ type Deduplicator struct {
 	groupSelectionDurationBlocks uint64
 
 	groupSelectionTrack *groupSelectionTrack
+	relayRequestTrack   *relayRequestTrack
 }
 
 // NewDeduplicator constructs a new Deduplicator instance.
-func NewDeduplicator(groupSelectionDurationBlocks uint64) *Deduplicator {
-	groupSelectionTrack := &groupSelectionTrack{}
-
+func NewDeduplicator(
+	groupSelectionDurationBlocks uint64,
+) *Deduplicator {
 	return &Deduplicator{
 		groupSelectionDurationBlocks: groupSelectionDurationBlocks,
-		groupSelectionTrack:          groupSelectionTrack,
+		groupSelectionTrack:          &groupSelectionTrack{},
+		relayRequestTrack:            &relayRequestTrack{data: make(map[string]bool)},
 	}
 }
 
@@ -41,4 +43,21 @@ func (d *Deduplicator) NotifyGroupSelectionStarted(blockNumber uint64) bool {
 	}
 
 	return false
+}
+
+// NotifyRelayEntryStarted notifies the client wants to start relay entry
+// generation upon receiving an event. It returns boolean indicating whether the
+// client should proceed with the execution or ignore the event as a duplicate.
+//
+// In case the client proceeds with the relay entry generation, it should call
+// NotifyRelayEntryCompleted once the protocol completes, no matter if it
+// failed or succeeded.
+func (d *Deduplicator) NotifyRelayEntryStarted(previousEntry string) bool {
+	return d.relayRequestTrack.add(previousEntry)
+}
+
+// NotifyRelayEntryCompleted should be called once client completed relay
+// entry generation protocol, no matter if it succeeded or not.
+func (d *Deduplicator) NotifyRelayEntryCompleted(previousEntry string) {
+	d.relayRequestTrack.remove(previousEntry)
 }

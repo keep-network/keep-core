@@ -1,7 +1,6 @@
 package event
 
 import (
-	"sync"
 	"testing"
 )
 
@@ -26,16 +25,15 @@ func TestRelayRequestTrack_Add(t *testing.T) {
 	previousEntry1 := "0x12345"
 	previousEntry2 := "0x67891"
 
-	rrt := &RelayRequestTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
+	rrt := &relayRequestTrack{
+		data: make(map[string]bool),
 	}
 
-	if !rrt.Add(previousEntry1) {
+	if !rrt.add(previousEntry1) {
 		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
 	}
 
-	if !rrt.Add(previousEntry2) {
+	if !rrt.add(previousEntry2) {
 		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
 	}
 }
@@ -43,16 +41,15 @@ func TestRelayRequestTrack_Add(t *testing.T) {
 func TestRelayRequestTrackAdd_Duplicate(t *testing.T) {
 	previousEntry := "0x12345"
 
-	rrt := &RelayRequestTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
+	rrt := &relayRequestTrack{
+		data: make(map[string]bool),
 	}
 
-	if !rrt.Add(previousEntry) {
+	if !rrt.add(previousEntry) {
 		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
 	}
 
-	if rrt.Add(previousEntry) {
+	if rrt.add(previousEntry) {
 		t.Error("RelayEntryRequested event was emitted before; should not be added")
 	}
 }
@@ -60,18 +57,17 @@ func TestRelayRequestTrackAdd_Duplicate(t *testing.T) {
 func TestRelayRequestTrackRemove(t *testing.T) {
 	previousEntry := "0x12345"
 
-	rrt := &RelayRequestTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
+	rrt := &relayRequestTrack{
+		data: make(map[string]bool),
 	}
 
-	if !rrt.Add(previousEntry) {
+	if !rrt.add(previousEntry) {
 		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
 	}
 
-	rrt.Remove(previousEntry)
+	rrt.remove(previousEntry)
 
-	if !rrt.Add(previousEntry) {
+	if !rrt.add(previousEntry) {
 		t.Error("RelayEntryRequested event was removed; should be added successfully")
 	}
 }
@@ -79,14 +75,13 @@ func TestRelayRequestTrackRemove(t *testing.T) {
 func TestRelayRequestTrack_WhenEmpty(t *testing.T) {
 	previousEntry := "0x12345"
 
-	rrt := &RelayRequestTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
+	rrt := &relayRequestTrack{
+		data: make(map[string]bool),
 	}
 
-	rrt.Remove(previousEntry)
+	rrt.remove(previousEntry)
 
-	if !rrt.Add(previousEntry) {
+	if !rrt.add(previousEntry) {
 		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
 	}
 }
