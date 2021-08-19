@@ -75,29 +75,31 @@ func (d *Deduplicator) NotifyGroupSelectionStarted(
 		)
 	}
 
-	lastGroupIndex := new(big.Int).Sub(groupsNumber, big.NewInt(1))
-	lastGroupTime, err := d.chain.GetGroupRegistrationTime(
-		lastGroupIndex,
-	)
-	if err != nil {
-		return false, fmt.Errorf(
-			"could not get group registration time: [%v]",
-			err,
+	if groupsNumber != nil && groupsNumber.Uint64() > 0 {
+		lastGroupIndex := new(big.Int).Sub(groupsNumber, big.NewInt(1))
+		lastGroupTime, err := d.chain.GetGroupRegistrationTime(
+			lastGroupIndex,
 		)
-	}
+		if err != nil {
+			return false, fmt.Errorf(
+				"could not get group registration time: [%v]",
+				err,
+			)
+		}
 
-	lastGroupSelectionStartTime, err := d.chain.BlockTimestamp(
-		lastGroupSelectionStartBlock,
-	)
-	if err != nil {
-		return false, fmt.Errorf(
-			"could not get last group selection start time: [%v]",
-			err,
+		lastGroupSelectionStartTime, err := d.chain.BlockTimestamp(
+			lastGroupSelectionStartBlock,
 		)
-	}
+		if err != nil {
+			return false, fmt.Errorf(
+				"could not get last group selection start time: [%v]",
+				err,
+			)
+		}
 
-	if lastGroupTime.Uint64() > lastGroupSelectionStartTime {
-		return d.groupSelectionTrack.update(newGroupSelectionStartBlock), nil
+		if lastGroupTime.Uint64() > lastGroupSelectionStartTime {
+			return d.groupSelectionTrack.update(newGroupSelectionStartBlock), nil
+		}
 	}
 
 	return false, nil
