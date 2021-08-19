@@ -64,10 +64,14 @@ func Initialize(
 		groupRegistry,
 	)
 
-	pendingGroupSelections := &event.GroupSelectionTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
+	// We need to calculate group selection duration here as we can't do it
+	// inside the deduplicator due to import cycles.
+	groupSelectionDurationBlocks := chainConfig.TicketSubmissionTimeout +
+		gjkr.ProtocolBlocks() +
+		dkgresult.PrePublicationBlocks() +
+		(uint64(chainConfig.GroupSize) * chainConfig.ResultPublicationBlockStep)
+
+	eventDeduplicator := event.NewDeduplicator(groupSelectionDurationBlocks)
 
 	pendingRelayRequests := &event.RelayRequestTrack{
 		Data:  make(map[string]bool),
@@ -149,12 +153,15 @@ func Initialize(
 			)
 		}
 
-		newEntry := event.NewEntry.Text(16)
 		go func() {
-			if ok := pendingGroupSelections.Add(newEntry); !ok {
+			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
+				event.BlockNumber,
+			); !ok {
 				logger.Errorf(
-					"group selection event with seed [0x%x] has been registered already",
+					"group selection event with seed [0x%x] and "+
+						"starting block [%v] has been registered already",
 					event.NewEntry,
+					event.BlockNumber,
 				)
 				return
 			}
@@ -177,56 +184,6 @@ func Initialize(
 			if err != nil {
 				logger.Errorf("tickets submission failed: [%v]", err)
 			}
-
-			// We deduplicate `GroupSelectionStarted` events by keeping them
-			// into the `pendingGroupSelections` cache. Duplicated events
-			// may occur due to chain reorgs or because of the subscription
-			// monitoring mechanism which re-fetches past events in case
-			// something bad happens with the websocket connection pointing
-			// to the Ethereum node. However, we can't remove current group
-			// selection from cache just after ticket submission terminates
-			// because a duplicated event coming right after the removal
-			// will trigger a new DKG which will break the current one.
-			// We need to hold the cache entry for the maximum DKG duration
-			// time. We should also do it regardless of the outcome on this
-			// node as other nodes may still perform DKG successfully.
-			// Removing the cache entry after hitting the DKG timeout is
-			// enough and we don't need to monitor for a successful group
-			// registration. A successful group registration means we never
-			// have to trigger group selection again for the group seed we hold
-			// in the cache so we don't have to bother about removing the cache
-			// entry just after the group is registered. In contrary, when
-			// current group selection fails, we need to remove the cache
-			// entry once the timeout is hit to allow the node to retry
-			// the group selection for that seed as soon as possible.
-
-			dkgDurationBlocks :=
-				chainConfig.TicketSubmissionTimeout +
-					gjkr.ProtocolBlocks() +
-					dkgresult.PrePublicationBlocks() +
-					(uint64(chainConfig.GroupSize) * chainConfig.ResultPublicationBlockStep)
-
-			dkgTimeout := event.BlockNumber + dkgDurationBlocks
-
-			if err := blockCounter.WaitForBlockHeight(dkgTimeout); err != nil {
-				// We assume the average block time is 15s.
-				delayDuration := time.Duration(dkgDurationBlocks*15) * time.Second
-
-				logger.Errorf(
-					"could not set the block counter to wait "+
-						"until the DKG timeout block [%v] to remove the "+
-						"current group selection from cache: [%v]; "+
-						"current group selection will be removed from cache "+
-						"after a fixed delay of [%v]",
-					dkgTimeout,
-					err,
-					delayDuration,
-				)
-
-				<-time.After(delayDuration)
-			}
-
-			pendingGroupSelections.Remove(newEntry)
 		}()
 	})
 

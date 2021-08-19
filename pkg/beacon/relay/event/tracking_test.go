@@ -5,72 +5,20 @@ import (
 	"testing"
 )
 
-func TestGroupSelectionTrack_Add(t *testing.T) {
-	entry1 := "0x12345"
-	entry2 := "0x67891"
+func TestGroupSelectionTrack_UpdateAndGet(t *testing.T) {
+	gst := &groupSelectionTrack{}
 
-	gst := &GroupSelectionTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
+	gst.update(1000)
 
-	if !gst.Add(entry1) {
-		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
-	}
+	expectedValue := uint64(1000)
+	actualValue := gst.get()
 
-	if !gst.Add(entry2) {
-		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
-	}
-}
-
-func TestGroupSelectionTrackAdd_Duplicate(t *testing.T) {
-	entry := "0x12345"
-
-	gst := &GroupSelectionTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
-
-	if !gst.Add(entry) {
-		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
-	}
-
-	if gst.Add(entry) {
-		t.Error("GroupSelectionStarted event was emitted before; should not be added")
-	}
-}
-
-func TestGroupSelectionTrackRemove(t *testing.T) {
-	entry := "0x12345"
-
-	gst := &GroupSelectionTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
-
-	if !gst.Add(entry) {
-		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
-	}
-
-	gst.Remove(entry)
-
-	if !gst.Add(entry) {
-		t.Error("GroupSelectionStarted event was removed; should be added successfully")
-	}
-}
-
-func TestGroupSelectionTrack_WhenEmpty(t *testing.T) {
-	entry := "0x12345"
-
-	gst := &GroupSelectionTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
-
-	gst.Remove(entry)
-
-	if !gst.Add(entry) {
-		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
+	if expectedValue != actualValue {
+		t.Errorf(
+			"\nexpected: %v\nactual:   %v",
+			expectedValue,
+			actualValue,
+		)
 	}
 }
 
