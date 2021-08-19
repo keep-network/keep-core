@@ -118,7 +118,7 @@ func TestLoadGroup(t *testing.T) {
 
 func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
-		groupsToRemove: [][]byte{},
+		groupsToRemove:       [][]byte{},
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
@@ -211,6 +211,16 @@ func (mgri *mockGroupRegistrationInterface) GetGroupMembers(
 	groupPublicKey []byte,
 ) ([]chain.StakerAddress, error) {
 	return nil, nil // no-op
+}
+
+func (mgri *mockGroupRegistrationInterface) GetNumberOfCreatedGroups() (*big.Int, error) {
+	panic("not implemented")
+}
+
+func (mgri *mockGroupRegistrationInterface) GetGroupRegistrationTime(
+	groupIndex *big.Int,
+) (*big.Int, error) {
+	panic("not implemented")
 }
 
 type persistenceHandleMock struct {
