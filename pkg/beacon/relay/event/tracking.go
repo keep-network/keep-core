@@ -15,11 +15,13 @@ type groupSelectionTrack struct {
 }
 
 // Update sets the new value of the last group selection start block number.
-func (gst *groupSelectionTrack) update(newBlockNumber uint64) {
+func (gst *groupSelectionTrack) update(newBlockNumber uint64) bool {
 	gst.mutex.Lock()
 	defer gst.mutex.Unlock()
 
 	gst.blockNumber = newBlockNumber
+
+	return true
 }
 
 // Get returns the last group selection start block number.

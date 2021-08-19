@@ -1,5 +1,17 @@
 package event
 
+import (
+	"fmt"
+	"math/big"
+)
+
+// Local chain interface to avoid import cycles.
+type chain interface {
+	BlockTimestamp(blockNumber uint64) (uint64, error)
+	GetNumberOfCreatedGroups() (*big.Int, error)
+	GetGroupRegistrationTime(groupIndex *big.Int) (*big.Int, error)
+}
+
 // Deduplicator decides whether the given event should be handled by the
 // client or not.
 //
@@ -14,6 +26,7 @@ package event
 // - group selection started
 // - relay entry requested
 type Deduplicator struct {
+	chain                        chain
 	groupSelectionDurationBlocks uint64
 
 	groupSelectionTrack *groupSelectionTrack
@@ -22,9 +35,11 @@ type Deduplicator struct {
 
 // NewDeduplicator constructs a new Deduplicator instance.
 func NewDeduplicator(
+	chain chain,
 	groupSelectionDurationBlocks uint64,
 ) *Deduplicator {
 	return &Deduplicator{
+		chain:                        chain,
 		groupSelectionDurationBlocks: groupSelectionDurationBlocks,
 		groupSelectionTrack:          &groupSelectionTrack{},
 		relayRequestTrack:            &relayRequestTrack{data: make(map[string]bool)},
@@ -34,15 +49,58 @@ func NewDeduplicator(
 // NotifyGroupSelectionStarted notifies the client wants to start group
 // selection upon receiving an event. It returns boolean indicating whether the
 // client should proceed with the execution or ignore the event as a duplicate.
-func (d *Deduplicator) NotifyGroupSelectionStarted(blockNumber uint64) bool {
-	lastBlockNumber := d.groupSelectionTrack.get()
+func (d *Deduplicator) NotifyGroupSelectionStarted(
+	newGroupSelectionStartBlock uint64,
+) (bool, error) {
+	lastGroupSelectionStartBlock := d.groupSelectionTrack.get()
 
-	if lastBlockNumber == 0 || blockNumber > lastBlockNumber+d.groupSelectionDurationBlocks {
-		d.groupSelectionTrack.update(blockNumber)
-		return true
+	lastGroupSelectionTimeoutBlock := lastGroupSelectionStartBlock +
+		d.groupSelectionDurationBlocks
+
+	if lastGroupSelectionStartBlock == 0 ||
+		newGroupSelectionStartBlock > lastGroupSelectionTimeoutBlock {
+		return d.groupSelectionTrack.update(newGroupSelectionStartBlock), nil
 	}
 
-	return false
+	// If the notification comes before last group selection timeout elapsed,
+	// there is still a chance a new group selection has been triggered shortly
+	// after the last one terminated with success. The client must handle
+	// this case.
+
+	groupsNumber, err := d.chain.GetNumberOfCreatedGroups()
+	if err != nil {
+		return false, fmt.Errorf(
+			"could not get number of created groups: [%v]",
+			err,
+		)
+	}
+
+	lastGroupIndex := new(big.Int).Sub(groupsNumber, big.NewInt(1))
+	lastGroupTime, err := d.chain.GetGroupRegistrationTime(
+		lastGroupIndex,
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"could not get group registration time: [%v]",
+			err,
+		)
+	}
+
+	lastGroupSelectionStartTime, err := d.chain.BlockTimestamp(
+		lastGroupSelectionStartBlock,
+	)
+	if err != nil {
+		return false, fmt.Errorf(
+			"could not get last group selection start time: [%v]",
+			err,
+		)
+	}
+
+	if lastGroupTime.Uint64() > lastGroupSelectionStartTime {
+		return d.groupSelectionTrack.update(newGroupSelectionStartBlock), nil
+	}
+
+	return false, nil
 }
 
 // NotifyRelayEntryStarted notifies the client wants to start relay entry

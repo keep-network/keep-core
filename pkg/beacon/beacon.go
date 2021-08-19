@@ -70,7 +70,10 @@ func Initialize(
 		dkgresult.PrePublicationBlocks() +
 		(uint64(chainConfig.GroupSize) * chainConfig.ResultPublicationBlockStep)
 
-	eventDeduplicator := event.NewDeduplicator(groupSelectionDurationBlocks)
+	eventDeduplicator := event.NewDeduplicator(
+		relayChain,
+		groupSelectionDurationBlocks,
+	)
 
 	node.ResumeSigningIfEligible(relayChain, signing)
 
@@ -158,9 +161,19 @@ func Initialize(
 		}
 
 		go func() {
-			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
+			shouldProcess, err := eventDeduplicator.NotifyGroupSelectionStarted(
 				event.BlockNumber,
-			); !ok {
+			)
+			if err != nil {
+				logger.Errorf(
+					"could not determine whether group selection "+
+						"event is a duplicate: [%v]",
+					err,
+				)
+				return
+			}
+
+			if !shouldProcess {
 				logger.Errorf(
 					"group selection event with seed [0x%x] and "+
 						"starting block [%v] has been registered already",
@@ -176,7 +189,7 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			err := groupselection.CandidateToNewGroup(
+			err = groupselection.CandidateToNewGroup(
 				relayChain,
 				blockCounter,
 				chainConfig,
