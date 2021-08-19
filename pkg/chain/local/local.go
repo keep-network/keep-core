@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/ipfs/go-log"
 
@@ -52,6 +53,7 @@ type Chain interface {
 type localGroup struct {
 	groupPublicKey          []byte
 	registrationBlockHeight uint64
+	registrationTime        int64
 }
 
 type localChain struct {
@@ -430,6 +432,7 @@ func (c *localChain) SubmitDKGResult(
 	myGroup := localGroup{
 		groupPublicKey:          resultToPublish.GroupPublicKey,
 		registrationBlockHeight: currentBlock,
+		registrationTime:        time.Now().Unix(),
 	}
 	c.groups = append(c.groups, myGroup)
 	c.lastSubmittedDKGResult = resultToPublish
@@ -533,6 +536,22 @@ func (c *localChain) CalculateDKGResultHash(
 	)
 
 	return dkgResultHash, nil
+}
+
+func (c *localChain) GetNumberOfCreatedGroups() (*big.Int, error) {
+	return big.NewInt(int64(len(c.groups))), nil
+}
+
+func (c *localChain) GetGroupRegistrationTime(
+	groupIndex *big.Int,
+) (*big.Int, error) {
+	return big.NewInt(c.groups[groupIndex.Int64()].registrationTime), nil
+}
+
+func (c *localChain) BlockTimestamp(
+	blockNumber uint64,
+) (uint64, error) {
+	return blockNumber, nil
 }
 
 func generateHandlerID() int {
