@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -492,30 +491,4 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 func (ec *ethereumChain) Address() common.Address {
 	return ec.accountKey.Address
-}
-
-func (ec *ethereumChain) GetNumberOfCreatedGroups() (*big.Int, error) {
-	return ec.keepRandomBeaconOperatorContract.GetNumberOfCreatedGroups()
-}
-
-func (ec *ethereumChain) GetGroupRegistrationTime(
-	groupIndex *big.Int,
-) (*big.Int, error) {
-	return ec.keepRandomBeaconOperatorContract.GetGroupRegistrationTime(
-		groupIndex,
-	)
-}
-
-func (ec *ethereumChain) BlockTimestamp(
-	blockNumber uint64,
-) (uint64, error) {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancelCtx()
-
-	block, err := ec.client.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
-	if err != nil {
-		return 0, err
-	}
-
-	return block.Time(), nil
 }

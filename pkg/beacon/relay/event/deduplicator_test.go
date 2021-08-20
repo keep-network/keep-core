@@ -1,14 +1,13 @@
 package event
 
 import (
-	"math/big"
+	"encoding/hex"
 	"testing"
 )
 
 func TestStartGroupSelection_NoPriorGroupSelections(t *testing.T) {
 	chain := &testChain{
-		numberOfCreatedGroupsValue:    big.NewInt(0),
-		getGroupRegistrationTimeValue: map[uint64]*big.Int{},
+		currentRequestPreviousEntryValue: []byte{},
 	}
 
 	// In case of first group selection for that node, the last group selection
@@ -18,20 +17,16 @@ func TestStartGroupSelection_NoPriorGroupSelections(t *testing.T) {
 		200,
 	)
 
-	canGenerate, err := deduplicator.NotifyGroupSelectionStarted(5)
-	if err != nil {
-		t.Fatal(err)
-	}
+	canGenerate := deduplicator.NotifyGroupSelectionStarted(5)
 
 	if !canGenerate {
 		t.Fatal("should be allowed to start group selection")
 	}
 }
 
-func TestStartGroupSelection_LastGroupSelectionTimedOut(t *testing.T) {
+func TestStartGroupSelection_MinGroupSelectionDurationPassed(t *testing.T) {
 	chain := &testChain{
-		numberOfCreatedGroupsValue:    big.NewInt(0),
-		getGroupRegistrationTimeValue: map[uint64]*big.Int{},
+		currentRequestPreviousEntryValue: []byte{},
 	}
 
 	deduplicator := NewDeduplicator(
@@ -40,23 +35,19 @@ func TestStartGroupSelection_LastGroupSelectionTimedOut(t *testing.T) {
 	)
 
 	// Simulate the last group selection occured at block 100
-	deduplicator.groupSelectionTrack.update(100)
+	deduplicator.currentGroupSelectionStartBlock = 100
 
 	// Group selection will be possible at block 100 + 200 + 1 = 301
-	canGenerate, err := deduplicator.NotifyGroupSelectionStarted(301)
-	if err != nil {
-		t.Fatal(err)
-	}
+	canGenerate := deduplicator.NotifyGroupSelectionStarted(301)
 
 	if !canGenerate {
 		t.Fatal("should be allowed to start group selection")
 	}
 }
 
-func TestStartGroupSelection_LastGroupSelectionNotTimedOut(t *testing.T) {
+func TestStartGroupSelection_MinGroupSelectionDurationNotPassed(t *testing.T) {
 	chain := &testChain{
-		numberOfCreatedGroupsValue:    big.NewInt(0),
-		getGroupRegistrationTimeValue: map[uint64]*big.Int{},
+		currentRequestPreviousEntryValue: []byte{},
 	}
 
 	deduplicator := NewDeduplicator(
@@ -65,27 +56,19 @@ func TestStartGroupSelection_LastGroupSelectionNotTimedOut(t *testing.T) {
 	)
 
 	// Simulate the last group selection occured at block 100
-	deduplicator.groupSelectionTrack.update(100)
+	deduplicator.currentGroupSelectionStartBlock = 100
 
 	// Group selection will be possible at block 100 + 200 + 1 = 301
-	canGenerate, err := deduplicator.NotifyGroupSelectionStarted(300)
-	if err != nil {
-		t.Fatal(err)
-	}
+	canGenerate := deduplicator.NotifyGroupSelectionStarted(300)
 
 	if canGenerate {
 		t.Fatal("should not be allowed to start group selection")
 	}
 }
 
-func TestStartGroupSelection_LastGroupSelectionNotTimedOutButSuccessful(
-	t *testing.T,
-) {
+func TestStartRelayEntry_NoPriorRelayEntries(t *testing.T) {
 	chain := &testChain{
-		numberOfCreatedGroupsValue: big.NewInt(10),
-		getGroupRegistrationTimeValue: map[uint64]*big.Int{
-			9: big.NewInt(200),
-		},
+		currentRequestPreviousEntryValue: []byte{},
 	}
 
 	deduplicator := NewDeduplicator(
@@ -93,44 +76,22 @@ func TestStartGroupSelection_LastGroupSelectionNotTimedOutButSuccessful(
 		200,
 	)
 
-	// Simulate the last group selection occured at block 100
-	deduplicator.groupSelectionTrack.update(100)
-
-	// Group selection will be possible at block 100 + 200 + 1 = 301 but
-	// the last group was registered at T=200 and the new group selection
-	// start block has T=300
-	canGenerate, err := deduplicator.NotifyGroupSelectionStarted(300)
+	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
+		5,
+		"entry",
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if !canGenerate {
-		t.Fatal("should be allowed to start group selection")
-	}
-}
-
-func TestStartRelayEntry(t *testing.T) {
-	chain := &testChain{
-		numberOfCreatedGroupsValue:    big.NewInt(0),
-		getGroupRegistrationTimeValue: map[uint64]*big.Int{},
-	}
-
-	deduplicator := NewDeduplicator(
-		chain,
-		200,
-	)
-
-	canGenerate := deduplicator.NotifyRelayEntryStarted("entry")
-
-	if !canGenerate {
 		t.Fatal("should be allowed to start relay entry")
 	}
 }
 
-func TestStartRelayEntry_AlreadyStarted(t *testing.T) {
+func TestStartRelayEntry_SmallerStartBlock(t *testing.T) {
 	chain := &testChain{
-		numberOfCreatedGroupsValue:    big.NewInt(0),
-		getGroupRegistrationTimeValue: map[uint64]*big.Int{},
+		currentRequestPreviousEntryValue: []byte{},
 	}
 
 	deduplicator := NewDeduplicator(
@@ -138,18 +99,24 @@ func TestStartRelayEntry_AlreadyStarted(t *testing.T) {
 		200,
 	)
 
-	deduplicator.NotifyRelayEntryStarted("entry")
-	canGenerate := deduplicator.NotifyRelayEntryStarted("entry")
+	deduplicator.currentRequestStartBlock = 100
+
+	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
+		5,
+		"entry",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if canGenerate {
-		t.Fatal("should be not allowed to start relay entry")
+		t.Fatal("should not be allowed to start relay entry")
 	}
 }
 
-func TestStartRelayEntry_AlreadyStartedButCompleted(t *testing.T) {
+func TestStartRelayEntry_BiggerStartBlock_DifferentPreviousEntry(t *testing.T) {
 	chain := &testChain{
-		numberOfCreatedGroupsValue:    big.NewInt(0),
-		getGroupRegistrationTimeValue: map[uint64]*big.Int{},
+		currentRequestPreviousEntryValue: []byte{},
 	}
 
 	deduplicator := NewDeduplicator(
@@ -157,30 +124,88 @@ func TestStartRelayEntry_AlreadyStartedButCompleted(t *testing.T) {
 		200,
 	)
 
-	deduplicator.NotifyRelayEntryStarted("entry")
-	deduplicator.NotifyRelayEntryCompleted("entry")
-	canGenerate := deduplicator.NotifyRelayEntryStarted("entry")
+	deduplicator.currentRequestStartBlock = 100
+	deduplicator.currentRequestPreviousEntry = "01"
+
+	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
+		101,
+		"02",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if !canGenerate {
 		t.Fatal("should be allowed to start relay entry")
+	}
+}
+
+func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntryConfirmedOnChain(t *testing.T) {
+	bytes, err := hex.DecodeString("01")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain := &testChain{
+		currentRequestPreviousEntryValue: bytes,
+	}
+
+	deduplicator := NewDeduplicator(
+		chain,
+		200,
+	)
+
+	deduplicator.currentRequestStartBlock = 100
+	deduplicator.currentRequestPreviousEntry = "01"
+
+	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
+		101,
+		"01",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !canGenerate {
+		t.Fatal("should be allowed to start relay entry")
+	}
+}
+
+func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntryNotConfirmedOnChain(t *testing.T) {
+	bytes, err := hex.DecodeString("02")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain := &testChain{
+		currentRequestPreviousEntryValue: bytes,
+	}
+
+	deduplicator := NewDeduplicator(
+		chain,
+		200,
+	)
+
+	deduplicator.currentRequestStartBlock = 100
+	deduplicator.currentRequestPreviousEntry = "01"
+
+	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
+		101,
+		"01",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if canGenerate {
+		t.Fatal("should not be allowed to start relay entry")
 	}
 }
 
 type testChain struct {
-	numberOfCreatedGroupsValue    *big.Int
-	getGroupRegistrationTimeValue map[uint64]*big.Int // <groupIndex, time>
+	currentRequestPreviousEntryValue []byte
 }
 
-func (tc *testChain) BlockTimestamp(blockNumber uint64) (uint64, error) {
-	return blockNumber, nil
-}
-
-func (tc *testChain) GetNumberOfCreatedGroups() (*big.Int, error) {
-	return tc.numberOfCreatedGroupsValue, nil
-}
-
-func (tc *testChain) GetGroupRegistrationTime(
-	groupIndex *big.Int,
-) (*big.Int, error) {
-	return tc.getGroupRegistrationTimeValue[groupIndex.Uint64()], nil
+func (tc *testChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	return tc.currentRequestPreviousEntryValue, nil
 }

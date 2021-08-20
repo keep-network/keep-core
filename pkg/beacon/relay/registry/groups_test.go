@@ -213,16 +213,6 @@ func (mgri *mockGroupRegistrationInterface) GetGroupMembers(
 	return nil, nil // no-op
 }
 
-func (mgri *mockGroupRegistrationInterface) GetNumberOfCreatedGroups() (*big.Int, error) {
-	panic("not implemented")
-}
-
-func (mgri *mockGroupRegistrationInterface) GetGroupRegistrationTime(
-	groupIndex *big.Int,
-) (*big.Int, error) {
-	panic("not implemented")
-}
-
 type persistenceHandleMock struct {
 	archivedGroups []string
 }

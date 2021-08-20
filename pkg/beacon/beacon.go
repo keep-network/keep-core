@@ -64,15 +64,17 @@ func Initialize(
 	)
 
 	// We need to calculate group selection duration here as we can't do it
-	// inside the deduplicator due to import cycles.
-	groupSelectionDurationBlocks := chainConfig.TicketSubmissionTimeout +
-		gjkr.ProtocolBlocks() +
-		dkgresult.PrePublicationBlocks() +
-		(uint64(chainConfig.GroupSize) * chainConfig.ResultPublicationBlockStep)
+	// inside the deduplicator due to import cycles. We don't include the
+	// time needed for publication as we are interested about the minimum
+	// possible group duration.
+	minGroupSelectionDurationBlocks :=
+		chainConfig.TicketSubmissionTimeout +
+			gjkr.ProtocolBlocks() +
+			dkgresult.PrePublicationBlocks()
 
 	eventDeduplicator := event.NewDeduplicator(
 		relayChain,
-		groupSelectionDurationBlocks,
+		minGroupSelectionDurationBlocks,
 	)
 
 	node.ResumeSigningIfEligible(relayChain, signing)
@@ -81,28 +83,32 @@ func Initialize(
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
-					previousEntry := hex.EncodeToString(request.PreviousEntry[:])
-
-					if ok := eventDeduplicator.NotifyRelayEntryStarted(
-						previousEntry,
-					); !ok {
-						logger.Warningf(
-							"relay entry requested event with previous entry "+
-								"[0x%x] has been registered already",
+					shouldProcess, err := eventDeduplicator.NotifyRelayEntryStarted(
+						request.BlockNumber,
+						hex.EncodeToString(request.PreviousEntry[:]),
+					)
+					if err != nil {
+						logger.Errorf(
+							"could not determine whether relay entry "+
+								"requested event with previous entry [0x%x] "+
+								"and starting block [%v] is a duplicate: [%v]",
 							request.PreviousEntry,
+							request.BlockNumber,
+							err,
 						)
 						return
 					}
 
-					// TODO: The `node.GenerateRelayEntry` function does not
-					//       block and performs relay entry in separate
-					//       goroutine. This means the below completion
-					//       notification may be performed too early and
-					//       a duplicated event can be harmful. This
-					//       should be inspected.
-					defer eventDeduplicator.NotifyRelayEntryCompleted(
-						previousEntry,
-					)
+					if !shouldProcess {
+						logger.Warningf(
+							"relay entry requested event with previous "+
+								"entry [0x%x] and starting block [%v] has been "+
+								"registered already",
+							request.PreviousEntry,
+							request.BlockNumber,
+						)
+						return
+					}
 
 					logger.Infof(
 						"new relay entry requested at block [%v] from group "+
@@ -161,19 +167,9 @@ func Initialize(
 		}
 
 		go func() {
-			shouldProcess, err := eventDeduplicator.NotifyGroupSelectionStarted(
+			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
 				event.BlockNumber,
-			)
-			if err != nil {
-				logger.Errorf(
-					"could not determine whether group selection "+
-						"event is a duplicate: [%v]",
-					err,
-				)
-				return
-			}
-
-			if !shouldProcess {
+			); !ok {
 				logger.Errorf(
 					"group selection event with seed [0x%x] and "+
 						"starting block [%v] has been registered already",

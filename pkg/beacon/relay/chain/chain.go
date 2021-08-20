@@ -86,11 +86,6 @@ type GroupRegistrationInterface interface {
 	// GetGroupMembers returns `GroupSize` slice of addresses of
 	// participants which have been selected to the group with given public key.
 	GetGroupMembers(groupPublicKey []byte) ([]StakerAddress, error)
-	// GetNumberOfCreatedGroups returns the total number of groups, no matter
-	// in which state they are.
-	GetNumberOfCreatedGroups() (*big.Int, error)
-	// GetGroupRegistrationTime returns group registration timestamp in seconds.
-	GetGroupRegistrationTime(groupIndex *big.Int) (*big.Int, error)
 }
 
 // GroupInterface defines the subset of the relay chain interface that pertains
@@ -139,8 +134,6 @@ type Interface interface {
 	// threshold relay. This value can change over time according to the minimum
 	// stake schedule.
 	MinimumStake() (*big.Int, error)
-	// BlockTimestamp returns second timestamp of given block number.
-	BlockTimestamp(blockNumber uint64) (uint64, error)
 
 	GroupInterface
 	RelayEntryInterface
