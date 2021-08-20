@@ -118,7 +118,7 @@ func TestLoadGroup(t *testing.T) {
 
 func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
-		groupsToRemove:       [][]byte{},
+		groupsToRemove: [][]byte{},
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
