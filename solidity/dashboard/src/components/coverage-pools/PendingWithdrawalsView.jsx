@@ -110,6 +110,14 @@ const PendingWithdrawalsView = ({
     const minutes = moment
       .duration(endOfWithdrawalDelayDate.diff(currentDate))
       .minutes()
+    const seconds = moment
+      .duration(endOfWithdrawalDelayDate.diff(currentDate))
+      .seconds()
+
+    const timeUntilAvailableText =
+      days > 0
+        ? `${days}d ${hours}h ${minutes}m until available`
+        : `${hours}h ${minutes}m ${seconds}s until available`
 
     let cooldownStatus = <></>
     if (currentDate.isBefore(endOfWithdrawalDelayDate, "seconds")) {
@@ -122,7 +130,7 @@ const PendingWithdrawalsView = ({
           )}
           <div className={"pending-withdrawal__cooldown-time-container"}>
             <span>
-              {days}d {hours}h {minutes}m until available
+              {timeUntilAvailableText}
             </span>
           </div>
         </>
@@ -184,6 +192,14 @@ const PendingWithdrawalsView = ({
     const minutes = moment
       .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
       .minutes()
+    const seconds = moment
+      .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
+      .seconds()
+
+    const timeToClaimText =
+      days > 0
+        ? `Available for: ${days}d ${hours}h ${minutes}m`
+        : `Available for: ${hours}h ${minutes}m ${seconds}s`
 
     let timeToClaim = <></>
     if (!isWithdrawalTimeoutOver(pendingWithdrawalTimestamp)) {
@@ -192,9 +208,7 @@ const PendingWithdrawalsView = ({
           className={"coverage-pool__withdrawal-claim-tokens-info-container"}
         >
           <div className={"coverage-pool__withdrawal-available-for"}>
-            <h4>
-              Available for: {days}d {hours}h {minutes}m
-            </h4>
+            <h4>{timeToClaimText}</h4>
             <Tooltip
               simple
               delay={0}
