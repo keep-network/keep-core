@@ -44,9 +44,11 @@ contract CumulativeMerkleDrop160 is Ownable, ICumulativeMerkleDrop160 {
         cumulativeClaimed[account] = cumulativeAmount;
 
         // Send the token
-        uint256 amount = cumulativeAmount - preclaimed;
-        IERC20(token).safeTransfer(account, amount);
-        emit Claimed(account, amount);
+        unchecked {
+            uint256 amount = cumulativeAmount - preclaimed;
+            IERC20(token).safeTransfer(account, amount);
+            emit Claimed(account, amount);
+        }
     }
 
     // function verify(bytes calldata proof, bytes20 root, bytes20 leaf) public pure returns (bool) {
