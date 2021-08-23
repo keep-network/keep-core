@@ -4,7 +4,7 @@ pragma solidity ^0.8.6;
 
 // Allows anyone to claim a token if they exist in a merkle root.
 interface ICumulativeMerkleDrop {
-    // This event is triggered whenever a call to #claim succeeds.
+    // This event is triggered whenever a call to #setMerkleRoot succeeds.
     event MerkelRootUpdated(bytes32 oldMerkleRoot, bytes32 newMerkleRoot);
     // This event is triggered whenever a call to #claim succeeds.
     event Claimed(address account, uint256 amount);
