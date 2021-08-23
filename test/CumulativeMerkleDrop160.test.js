@@ -60,8 +60,8 @@ contract('CumulativeMerkleDrop160', async function ([_, w1, w2, w3, w4]) {
             await this.drop.contract.methods.verify(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
             expect(await this.drop.verify(this.proofs[0], this.root, this.leaves[0])).to.be.true;
         }
-        await this.drop.contract.methods.verifyAsm(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
-        expect(await this.drop.verifyAsm(this.proofs[0], this.root, this.leaves[0])).to.be.true;
+        // await this.drop.contract.methods.verifyAsm(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
+        // expect(await this.drop.verifyAsm(this.proofs[0], this.root, this.leaves[0])).to.be.true;
         await this.drop.claim(accounts[findSortedIndex(this, 0)], 1, this.root, this.proofs[0]);
     });
 
