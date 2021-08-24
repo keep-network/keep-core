@@ -36,13 +36,14 @@ import {
   submitButtonHelper,
 } from "./utils"
 import { Keep } from "../contracts"
-import { add, gt, sub } from "../utils/arithmetics.utils"
+import { add, eq, gt, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { sendTransaction } from "./web3"
 import { KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
-import { EVENTS } from "../constants/events"
+import { showModal } from "../actions/modal"
+import { modalComponentType } from "../components/Modal"
 
 function* fetchTvl() {
   try {
@@ -189,18 +190,25 @@ export function* subscribeToCovTokenTransferEvent() {
     )
 
     if (isSameEthAddress(to, address)) {
-      yield put({
-        type: "modal/is_opened",
-        payload: {
-          emittedEvent: EVENTS.COVERAGE_POOLS.COV_TOKEN_TRANSFERED_TO_USER,
-          transactionHash: event.transactionHash,
-          additionalData: {
+      yield put(
+        showModal({
+          modalComponentType:
+            modalComponentType.COV_POOLS.KEEP_DEPOSITED_SUCCESS,
+          componentProps: {
+            transactionFinished: true,
+            transactionHash: event.transactionHash,
             amount: value,
-            updatedCovBalance: updatedCovBalance,
-            estimatedKeepBalance: estimatedKeepBalance,
+            balanceAmount: updatedCovBalance,
+            estimatedBalanceAmountInKeep: estimatedKeepBalance,
           },
-        },
-      })
+          modalProps: {
+            title: "Claim tokens",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__claim-tokens",
+            },
+          },
+        })
+      )
     }
 
     const estimatedRewards = yield call(
@@ -261,17 +269,48 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     } = event
 
     const address = yield select(selectors.getUserAddress)
+    const { componentProps } = yield select(selectors.getModalData)
 
     if (isSameEthAddress(address, underwriter)) {
-      yield put({
-        type: "modal/is_opened",
-        payload: {
-          transactionHash: event.transactionHash,
-          additionalData: {
-            covAmount,
+      let modalType = modalComponentType.COV_POOLS.INITIATE_WITHDRAWAL
+      let title = "Withdraw"
+      let amount = covAmount
+      if (
+        componentProps?.pendingWithdrawalBalance &&
+        componentProps?.amount &&
+        gt(componentProps?.pendingWithdrawalBalance, 0) &&
+        eq(componentProps?.amount, 0)
+      ) {
+        modalType = modalComponentType.COV_POOLS.RE_INITIATE_WITHDRAWAL
+        title = "Re-initiate withdrawal"
+      } else if (
+        componentProps?.pendingWithdrawalBalance &&
+        componentProps?.amount &&
+        gt(componentProps?.pendingWithdrawalBalance, 0) &&
+        gt(componentProps?.amount, 0)
+      ) {
+        modalType = modalComponentType.COV_POOLS.INCREASE_WITHDRAWAL
+        title = "Re-initiate withdrawal"
+        amount = componentProps.amount
+      }
+
+      yield put(
+        showModal({
+          modalComponentType: modalType,
+          componentProps: {
+            transactionFinished: true,
+            transactionHash: event.transactionHash,
+            pendingWithdrawalBalance: componentProps?.pendingWithdrawalBalance,
+            amount: amount,
           },
-        },
-      })
+          modalProps: {
+            title,
+            classes: {
+              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+            },
+          },
+        })
+      )
     }
   }
 }
@@ -291,16 +330,21 @@ export function* subscribeToWithdrawalCompletedEvent() {
     const address = yield select(selectors.getUserAddress)
 
     if (isSameEthAddress(address, underwriter)) {
-      yield put({
-        type: "modal/is_opened",
-        payload: {
-          emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
-          transactionHash: event.transactionHash,
-          additionalData: {
-            amount,
+      yield put(
+        showModal({
+          modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
+          componentProps: {
+            transactionFinished: true,
+            amount: amount,
           },
-        },
-      })
+          modalProps: {
+            title: "Claim tokens",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__claim-tokens",
+            },
+          },
+        })
+      )
     }
   }
 }

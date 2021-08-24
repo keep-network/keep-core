@@ -6,9 +6,9 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm"
 import { gt, eq, lt } from "../../utils/arithmetics.utils"
 import { useDispatch, useSelector } from "react-redux"
-import { EVENTS } from "../../constants/events"
 import IncreaseWithdrawalModal from "./IncreaseWithdrawalModal"
 import { getSamePercentageValue } from "../../utils/general.utils"
+import { addAdditionalDataToModal } from "../../actions/modal"
 
 const step1Title = "You are about to re-initiate this withdrawal:"
 const step2Title = "You are about to re-withdraw:"
@@ -37,17 +37,14 @@ const ReinitiateWithdrawalModal = ({
 
   useEffect(() => {
     if (step === 2) {
-      if (eq(amount, 0)) {
-        dispatch({
-          type: "modal/set_emitted_event",
-          payload: EVENTS.COVERAGE_POOLS.RE_WITHDRAWAL_INITIATED,
+      dispatch(
+        addAdditionalDataToModal({
+          componentProps: {
+            pendingWithdrawalBalance: pendingWithdrawalBalance,
+            amount: amount,
+          },
         })
-      } else if (gt(amount, 0)) {
-        dispatch({
-          type: "modal/set_emitted_event",
-          payload: EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL,
-        })
-      }
+      )
     }
   }, [step, amount, amount])
 
@@ -93,7 +90,7 @@ const ReinitiateWithdrawalModal = ({
         <OnlyIf condition={gt(amount, 0)}>
           <IncreaseWithdrawalModal
             pendingWithdrawalBalance={pendingWithdrawalBalance}
-            addedAmount={amount}
+            amount={amount}
             submitBtnText={"withdraw"}
             onBtnClick={onBtnClick}
             onCancel={onCancel}

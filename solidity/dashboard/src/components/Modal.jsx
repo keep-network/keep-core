@@ -3,15 +3,25 @@ import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 import ConfirmationModal from "./ConfirmationModal"
 import { useDispatch, useSelector } from "react-redux"
-import { EVENTS } from "../constants/events"
 import ClaimTokensModal from "./coverage-pools/ClaimTokensModal"
 import InitiateCovPoolsWithdrawModal from "./coverage-pools/InitiateCovPoolsWithdrawModal"
 import { InitiateDepositModal } from "./coverage-pools"
 import IncreaseWithdrawalModal from "./coverage-pools/IncreaseWithdrawalModal"
+import { clearAdditionalDataFromModal, hideModal } from "../actions/modal"
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
 const crossIconWidth = 15
+
+export const modalComponentType = {
+  COV_POOLS: {
+    KEEP_DEPOSITED_SUCCESS: InitiateDepositModal,
+    INITIATE_WITHDRAWAL: InitiateCovPoolsWithdrawModal,
+    RE_INITIATE_WITHDRAWAL: InitiateCovPoolsWithdrawModal,
+    INCREASE_WITHDRAWAL: IncreaseWithdrawalModal,
+    WITHDRAWAL_COMPLETED: ClaimTokensModal,
+  },
+}
 
 const Modal = React.memo(
   ({ isOpen, closeModal, isFullScreen, hideTitleBar, classes, ...props }) => {
@@ -86,101 +96,28 @@ export const ModalContextProvider = ({ children }) => {
   const modal = useSelector((state) => state.modal)
 
   const closeEventModal = () => {
-    dispatch({ type: "modal/is_closed" })
+    dispatch(clearAdditionalDataFromModal())
+    dispatch(hideModal())
     closeModal()
+  }
+
+  const openSpecificModal = () => {
+    const SpecificComponent = modal.modalComponentType
+    openModal(
+      <SpecificComponent
+        onCancel={closeEventModal}
+        {...modal.componentProps}
+      />,
+      {
+        closeModal: closeEventModal,
+        ...modal.modalProps,
+      }
+    )
   }
 
   useEffect(() => {
     if (modal.isOpen) {
-      switch (modal.emittedEvent) {
-        case EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED:
-          openModal(
-            <ClaimTokensModal
-              transactionFinished={true}
-              amount={modal.additionalData?.amount}
-              onCancel={closeEventModal}
-            />,
-            {
-              closeModal: closeEventModal,
-              title: "Claim tokens",
-              classes: {
-                modalWrapperClassName: "modal-wrapper__claim-tokens",
-              },
-            }
-          )
-          break
-        case EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED:
-          openModal(
-            <InitiateCovPoolsWithdrawModal
-              transactionFinished={true}
-              amount={modal.additionalData?.covAmount}
-              onCancel={closeEventModal}
-            />,
-            {
-              closeModal: closeEventModal,
-              title: "Withdraw",
-              classes: {
-                modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-              },
-            }
-          )
-          break
-        case EVENTS.COVERAGE_POOLS.RE_WITHDRAWAL_INITIATED:
-          openModal(
-            <InitiateCovPoolsWithdrawModal
-              transactionFinished={true}
-              amount={modal.additionalData?.covAmount}
-              onCancel={closeEventModal}
-            />,
-            {
-              closeModal: closeEventModal,
-              title: "Re-initiate withdrawal",
-              classes: {
-                modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-              },
-            }
-          )
-          break
-        case EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL:
-          openModal(
-            <IncreaseWithdrawalModal
-              transactionFinished={true}
-              pendingWithdrawalBalance={modal.additionalData?.covAmount}
-              addedAmount={"0"}
-              onCancel={closeEventModal}
-            />,
-            {
-              closeModal: closeEventModal,
-              title: "Re-initiate withdrawal",
-              classes: {
-                modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-              },
-            }
-          )
-          break
-        case EVENTS.COVERAGE_POOLS.COV_TOKEN_TRANSFERED_TO_USER:
-          openModal(
-            <InitiateDepositModal
-              transactionFinished={true}
-              amount={modal.additionalData?.amount}
-              balanceAmount={modal.additionalData?.updatedCovBalance}
-              estimatedBalanceAmountInKeep={
-                modal.additionalData?.estimatedKeepBalance
-              }
-              onCancel={closeEventModal}
-            />,
-            {
-              closeModal: closeEventModal,
-              title: "Deposit",
-              classes: {
-                modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-              },
-            }
-          )
-          break
-        default:
-          break
-      }
+      openSpecificModal()
     }
   }, [modal.isOpen])
 

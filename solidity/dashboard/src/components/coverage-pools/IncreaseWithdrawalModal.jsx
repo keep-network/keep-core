@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import OnlyIf from "../OnlyIf"
 import * as Icons from "./../Icons"
 import { colors } from "../../constants/colors"
 import ProgressBar from "../ProgressBar"
 import moment from "moment"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import List from "../List"
 import Divider from "../Divider"
 import Button from "../Button"
@@ -16,7 +16,7 @@ import {
 import WithdrawalInfo from "./WithdrawalInfo"
 import { add } from "../../utils/arithmetics.utils"
 import { useWeb3Address } from "../WithWeb3Context"
-import BigNumber from "bignumber.js"
+import { addAdditionalDataToModal } from "../../actions/modal"
 
 const infoBannerTitle = "The cooldown period is 21 days"
 
@@ -35,13 +35,14 @@ const getItems = (keepAmount) => {
 
 const IncreaseWithdrawalModal = ({
   pendingWithdrawalBalance,
-  addedAmount,
+  amount, // amount addedd to withdrawal
   submitBtnText,
   onBtnClick,
   onCancel,
   className = "",
   transactionFinished = false,
 }) => {
+  const dispatch = useDispatch()
   const yourAddress = useWeb3Address()
   const [step, setStep] = useState(transactionFinished ? 2 : 1)
   const { totalValueLocked, covTotalSupply } = useSelector(
@@ -52,6 +53,14 @@ const IncreaseWithdrawalModal = ({
     if (step === 1) {
       setStep((prevStep) => prevStep + 1)
     } else if (step === 2) {
+      dispatch(
+        addAdditionalDataToModal({
+          componentProps: {
+            pendingWithdrawalBalance: pendingWithdrawalBalance,
+            amount: amount,
+          },
+        })
+      )
       onBtnClick()
     }
   }
@@ -60,11 +69,11 @@ const IncreaseWithdrawalModal = ({
     <ModalWithOverview
       className={`${className} withdraw-modal__main-container`}
       pendingWithdrawalBalance={pendingWithdrawalBalance}
-      addedAmount={addedAmount}
+      addedAmount={amount}
     >
       <OnlyIf condition={step === 1}>
         <IncreaseWithdrawalModalStep1
-          addedAmount={addedAmount}
+          addedAmount={amount}
           onSubmit={onSubmit}
         />
       </OnlyIf>
@@ -75,7 +84,7 @@ const IncreaseWithdrawalModal = ({
           submitBtnText={"withdraw"}
           onBtnClick={onSubmit}
           onCancel={onCancel}
-          amount={add(pendingWithdrawalBalance, addedAmount)}
+          amount={add(pendingWithdrawalBalance, amount)}
           infoBannerTitle={infoBannerTitle}
         >
           <div className={"withdraw-modal__data-row"}>
@@ -95,11 +104,7 @@ const IncreaseWithdrawalModal = ({
             <h4 className={"text-grey-50"}>Increase amount &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
               {KEEP.displayAmount(
-                getSamePercentageValue(
-                  addedAmount,
-                  covTotalSupply,
-                  totalValueLocked
-                )
+                getSamePercentageValue(amount, covTotalSupply, totalValueLocked)
               )}{" "}
               KEEP
             </h4>

@@ -33,7 +33,6 @@ import Tooltip from "../../components/Tooltip"
 import * as Icons from "../../components/Icons"
 import Divider from "../../components/Divider"
 import InitiateCovPoolsWithdrawModal from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal"
-import { EVENTS } from "../../constants/events"
 import ReinitiateWithdrawalModal from "../../components/coverage-pools/ReinitiateWithdrawalModal"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
@@ -99,11 +98,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     const { withdrawAmount } = values
     const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
     if (eq(withdrawalInitiatedTimestamp, 0)) {
-      dispatch({
-        type: "modal/set_emitted_event",
-        payload: EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
-      })
-
       await openConfirmationModal(
         {
           modalOptions: {
@@ -119,11 +113,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         InitiateCovPoolsWithdrawModal
       )
     } else {
-      dispatch({
-        type: "modal/set_emitted_event",
-        payload: EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL,
-      })
-
       await openConfirmationModal(
         {
           modalOptions: {

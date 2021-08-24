@@ -3,8 +3,6 @@ import { KEEP } from "../../../utils/token.utils"
 import { APYCalculator } from "../helper"
 import { RewardsPoolArtifact } from "../contracts"
 import { add, sub, gt } from "../../../utils/arithmetics.utils"
-import { isSameEthAddress } from "../../../utils/general.utils"
-import { EVENTS } from "../../../constants/events"
 
 /** @typedef { import("../../web3").BaseContract} BaseContract */
 /** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
