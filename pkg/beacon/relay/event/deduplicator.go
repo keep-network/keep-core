@@ -27,8 +27,8 @@ type chain interface {
 // - group selection started
 // - relay entry requested
 type Deduplicator struct {
-	chain                           chain
-	minGroupSelectionDurationBlocks uint64
+	chain                          chain
+	minGroupCreationDurationBlocks uint64
 
 	groupSelectionMutex             sync.Mutex
 	currentGroupSelectionStartBlock uint64
@@ -41,11 +41,11 @@ type Deduplicator struct {
 // NewDeduplicator constructs a new Deduplicator instance.
 func NewDeduplicator(
 	chain chain,
-	minGroupSelectionDurationBlocks uint64,
+	minGroupCreationDurationBlocks uint64,
 ) *Deduplicator {
 	return &Deduplicator{
-		chain:                           chain,
-		minGroupSelectionDurationBlocks: minGroupSelectionDurationBlocks,
+		chain:                          chain,
+		minGroupCreationDurationBlocks: minGroupCreationDurationBlocks,
 	}
 }
 
@@ -58,11 +58,11 @@ func (d *Deduplicator) NotifyGroupSelectionStarted(
 	d.groupSelectionMutex.Lock()
 	defer d.groupSelectionMutex.Unlock()
 
-	minCurrentGroupSelectionEndBlock := d.currentGroupSelectionStartBlock +
-		d.minGroupSelectionDurationBlocks
+	minCurrentGroupCreationEndBlock := d.currentGroupSelectionStartBlock +
+		d.minGroupCreationDurationBlocks
 
 	shouldUpdate := d.currentGroupSelectionStartBlock == 0 ||
-		newGroupSelectionStartBlock > minCurrentGroupSelectionEndBlock
+		newGroupSelectionStartBlock > minCurrentGroupCreationEndBlock
 
 	if shouldUpdate {
 		d.currentGroupSelectionStartBlock = newGroupSelectionStartBlock
@@ -122,7 +122,7 @@ func (d *Deduplicator) NotifyRelayEntryStarted(
 				if newRequestPreviousEntry ==
 					hex.EncodeToString(currentRequestPreviousEntryOnChain[:]) &&
 					newRequestStartBlock ==
-						currentRequestStartBlockOnChain.Uint64() {
+					currentRequestStartBlockOnChain.Uint64() {
 					return true, nil
 				}
 			} else {

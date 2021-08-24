@@ -66,15 +66,15 @@ func Initialize(
 	// We need to calculate group selection duration here as we can't do it
 	// inside the deduplicator due to import cycles. We don't include the
 	// time needed for publication as we are interested about the minimum
-	// possible group duration.
-	minGroupSelectionDurationBlocks :=
+	// possible off-chain group create protocol duration.
+	minGroupCreationDurationBlocks :=
 		chainConfig.TicketSubmissionTimeout +
 			gjkr.ProtocolBlocks() +
 			dkgresult.PrePublicationBlocks()
 
 	eventDeduplicator := event.NewDeduplicator(
 		relayChain,
-		minGroupSelectionDurationBlocks,
+		minGroupCreationDurationBlocks,
 	)
 
 	node.ResumeSigningIfEligible(relayChain, signing)
