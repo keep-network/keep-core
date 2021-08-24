@@ -170,7 +170,7 @@ func Initialize(
 			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
 				event.BlockNumber,
 			); !ok {
-				logger.Errorf(
+				logger.Warningf(
 					"group selection event with seed [0x%x] and "+
 						"starting block [%v] has been registered already",
 					event.NewEntry,
