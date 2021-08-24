@@ -133,7 +133,6 @@ export const ModalContextProvider = ({ children }) => {
     }
     setModalOptions(null)
     setIsOpen(false)
-    // dispatch({ type: "modal/is_closed" })
   }, [])
 
   const onSubmitConfirmationModal = useCallback(
