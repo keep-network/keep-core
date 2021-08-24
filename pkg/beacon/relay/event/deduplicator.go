@@ -3,11 +3,13 @@ package event
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"sync"
 )
 
 // Local chain interface to avoid import cycles.
 type chain interface {
+	CurrentRequestStartBlock() (*big.Int, error)
 	CurrentRequestPreviousEntry() ([]byte, error)
 }
 
@@ -92,8 +94,11 @@ func (d *Deduplicator) NotifyRelayEntryStarted(
 		if newRequestStartBlock > d.currentRequestStartBlock {
 			// There may be a case when new relay request holds the same
 			// previous entry than the current one. It is the case when a timed
-			// out request is retried. In that case, we must verify the chain
-			// state. In contrary, if new relay request holds a different
+			// out request is retried or a minor chain reorg occurred. The
+			// former must be processed but the latter should be ignored. To
+			// make a right decision, we need to consult the chain to confirm
+			// values of the current request previous entry and start block.
+			// In contrary, if new relay request holds a different
 			// previous entry than the current one, everything is ok.
 			if newRequestPreviousEntry == d.currentRequestPreviousEntry {
 				currentRequestPreviousEntryOnChain, err := d.chain.
@@ -105,8 +110,19 @@ func (d *Deduplicator) NotifyRelayEntryStarted(
 					)
 				}
 
+				currentRequestStartBlockOnChain, err := d.chain.
+					CurrentRequestStartBlock()
+				if err != nil {
+					return false, fmt.Errorf(
+						"could not get current request start block: [%v]",
+						err,
+					)
+				}
+
 				if newRequestPreviousEntry ==
-					hex.EncodeToString(currentRequestPreviousEntryOnChain[:]) {
+					hex.EncodeToString(currentRequestPreviousEntryOnChain[:]) &&
+					newRequestStartBlock ==
+						currentRequestStartBlockOnChain.Uint64() {
 					return true, nil
 				}
 			} else {

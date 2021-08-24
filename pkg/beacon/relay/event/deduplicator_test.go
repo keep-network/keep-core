@@ -2,11 +2,13 @@ package event
 
 import (
 	"encoding/hex"
+	"math/big"
 	"testing"
 )
 
 func TestStartGroupSelection_NoPriorGroupSelections(t *testing.T) {
 	chain := &testChain{
+		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
 	}
 
@@ -26,6 +28,7 @@ func TestStartGroupSelection_NoPriorGroupSelections(t *testing.T) {
 
 func TestStartGroupSelection_MinGroupSelectionDurationPassed(t *testing.T) {
 	chain := &testChain{
+		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
 	}
 
@@ -47,6 +50,7 @@ func TestStartGroupSelection_MinGroupSelectionDurationPassed(t *testing.T) {
 
 func TestStartGroupSelection_MinGroupSelectionDurationNotPassed(t *testing.T) {
 	chain := &testChain{
+		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
 	}
 
@@ -68,6 +72,7 @@ func TestStartGroupSelection_MinGroupSelectionDurationNotPassed(t *testing.T) {
 
 func TestStartRelayEntry_NoPriorRelayEntries(t *testing.T) {
 	chain := &testChain{
+		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
 	}
 
@@ -91,6 +96,7 @@ func TestStartRelayEntry_NoPriorRelayEntries(t *testing.T) {
 
 func TestStartRelayEntry_SmallerStartBlock(t *testing.T) {
 	chain := &testChain{
+		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
 	}
 
@@ -116,6 +122,7 @@ func TestStartRelayEntry_SmallerStartBlock(t *testing.T) {
 
 func TestStartRelayEntry_BiggerStartBlock_DifferentPreviousEntry(t *testing.T) {
 	chain := &testChain{
+		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
 	}
 
@@ -140,13 +147,14 @@ func TestStartRelayEntry_BiggerStartBlock_DifferentPreviousEntry(t *testing.T) {
 	}
 }
 
-func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntryConfirmedOnChain(t *testing.T) {
+func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_ConfirmedOnChain(t *testing.T) {
 	bytes, err := hex.DecodeString("01")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	chain := &testChain{
+		currentRequestStartBlockValue:    big.NewInt(101),
 		currentRequestPreviousEntryValue: bytes,
 	}
 
@@ -171,13 +179,46 @@ func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntryConfirmedOnChain(t *t
 	}
 }
 
-func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntryNotConfirmedOnChain(t *testing.T) {
+func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_PreviousEntryNotConfirmedOnChain(t *testing.T) {
 	bytes, err := hex.DecodeString("02")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	chain := &testChain{
+		currentRequestStartBlockValue:    big.NewInt(101),
+		currentRequestPreviousEntryValue: bytes,
+	}
+
+	deduplicator := NewDeduplicator(
+		chain,
+		200,
+	)
+
+	deduplicator.currentRequestStartBlock = 100
+	deduplicator.currentRequestPreviousEntry = "01"
+
+	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
+		101,
+		"01",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if canGenerate {
+		t.Fatal("should not be allowed to start relay entry")
+	}
+}
+
+func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_StartBlockNotConfirmedOnChain(t *testing.T) {
+	bytes, err := hex.DecodeString("01")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	chain := &testChain{
+		currentRequestStartBlockValue:    big.NewInt(100),
 		currentRequestPreviousEntryValue: bytes,
 	}
 
@@ -203,7 +244,12 @@ func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntryNotConfirmedOnChain(t
 }
 
 type testChain struct {
+	currentRequestStartBlockValue    *big.Int
 	currentRequestPreviousEntryValue []byte
+}
+
+func (tc *testChain) CurrentRequestStartBlock() (*big.Int, error) {
+	return tc.currentRequestStartBlockValue, nil
 }
 
 func (tc *testChain) CurrentRequestPreviousEntry() ([]byte, error) {
