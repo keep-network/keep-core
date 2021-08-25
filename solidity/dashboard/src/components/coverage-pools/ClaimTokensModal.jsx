@@ -27,9 +27,19 @@ const ClaimTokensModal = ({
       <OnlyIf condition={!transactionFinished}>
         <h3 className={"mb-1"}>You are about to claim:</h3>
       </OnlyIf>
-      <OnlyIf condition={transactionFinished}>
+      <OnlyIf condition={transactionFinished && transactionHash}>
         <h3>Success!</h3>
-        <h4 className={"text-gray-70 mb-1"}>View your transaction here.</h4>
+        <h4 className={"text-gray-70 mb-1"}>
+          View your transaction&nbsp;
+          <a
+            href={`https://etherscan.io/tx/${transactionHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            here
+          </a>
+          .
+        </h4>
       </OnlyIf>
       <div className={"claim-tokens-modal__data"}>
         <TokenAmount

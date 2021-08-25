@@ -334,6 +334,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
         showModal({
           modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
           componentProps: {
+            transactionHash: event.transactionHash,
             transactionFinished: true,
             amount: amount,
           },
