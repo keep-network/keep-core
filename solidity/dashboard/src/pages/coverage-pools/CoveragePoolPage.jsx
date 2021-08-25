@@ -304,7 +304,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
                 ? "increase withdrawal"
                 : "withdraw"
             }
-            withdrawAmount={covBalance}
+            withdrawAmount={covTokensAvailableToWithdraw}
             onSubmit={onSubmitWithdrawForm}
             withdrawalDelay={withdrawalDelay}
           />
