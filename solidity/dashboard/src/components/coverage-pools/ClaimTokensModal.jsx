@@ -10,20 +10,18 @@ import {
   getSamePercentageValue,
   shortenAddress,
 } from "../../utils/general.utils"
-import { useSelector } from "react-redux"
 
 const ClaimTokensModal = ({
   amount,
   submitBtnText,
   onBtnClick,
   onCancel,
+  totalValueLocked,
+  covTotalSupply,
   transactionFinished = false,
   transactionHash = "",
 }) => {
   const yourAddress = useWeb3Address()
-  const { totalValueLocked, covTotalSupply } = useSelector(
-    (state) => state.coveragePool
-  )
   return (
     <ModalWithTimeline className={"claim-tokens-modal__main-container"}>
       <OnlyIf condition={!transactionFinished}>

@@ -29,11 +29,9 @@ import {
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
 import Chip from "../../components/Chip"
-import Tooltip from "../../components/Tooltip"
-import * as Icons from "../../components/Icons"
-import Divider from "../../components/Divider"
 import InitiateCovPoolsWithdrawModal from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal"
 import ReinitiateWithdrawalModal from "../../components/coverage-pools/ReinitiateWithdrawalModal"
+import { addAdditionalDataToModal } from "../../actions/modal"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -70,10 +68,10 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   }, [dispatch])
 
   useEffect(() => {
-    if (address || modal.isOpen) {
+    if (address) {
       dispatch(fetchCovPoolDataRequest(address))
     }
-  }, [dispatch, address, modal.isOpen])
+  }, [dispatch, address])
 
   const onSubmitDepositForm = async (values, awaitingPromise) => {
     const { tokenAmount } = values
@@ -97,6 +95,15 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const onSubmitWithdrawForm = async (values, awaitingPromise) => {
     const { withdrawAmount } = values
     const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
+    dispatch(
+      addAdditionalDataToModal({
+        componentProps: {
+          totalValueLocked,
+          covTotalSupply,
+          covTokensAvailableToWithdraw,
+        },
+      })
+    )
     if (eq(withdrawalInitiatedTimestamp, 0)) {
       await openConfirmationModal(
         {
@@ -108,6 +115,9 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           },
           submitBtnText: "withdraw",
           amount,
+          covTotalSupply,
+          totalValueLocked,
+          covTokensAvailableToWithdraw,
           containerTitle: "You are about to withdraw:",
         },
         InitiateCovPoolsWithdrawModal
@@ -125,6 +135,9 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           pendingWithdrawalBalance: pendingWithdrawal,
           initialAmountValue: amount,
           covTokensAvailableToWithdraw,
+          covTotalSupply,
+          totalValueLocked,
+          withdrawalDelay,
           containerTitle: "You are about to re-initiate this withdrawal:",
         },
         ReinitiateWithdrawalModal

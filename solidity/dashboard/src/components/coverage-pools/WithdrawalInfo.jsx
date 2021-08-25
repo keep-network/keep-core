@@ -17,14 +17,12 @@ const WithdrawalInfo = ({
   onBtnClick,
   onCancel,
   amount,
+  totalValueLocked,
+  covTotalSupply,
   infoBannerTitle,
   infoBannerDescription,
   children,
 }) => {
-  const { totalValueLocked, covTotalSupply } = useSelector(
-    (state) => state.coveragePool
-  )
-
   return (
     <WithdrawalInfo.Container
       transactionFinished={transactionFinished}

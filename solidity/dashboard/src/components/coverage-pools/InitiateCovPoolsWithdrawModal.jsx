@@ -17,6 +17,9 @@ const infoBannerDescription =
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
+  covTokensAvailableToWithdraw,
+  totalValueLocked,
+  covTotalSupply,
   containerTitle,
   submitBtnText,
   onBtnClick,
@@ -24,9 +27,6 @@ const InitiateCovPoolsWithdrawModal = ({
   className = "",
   transactionFinished = false,
 }) => {
-  const { covTokensAvailableToWithdraw, totalValueLocked, covTotalSupply } =
-    useSelector((state) => state.coveragePool)
-
   return (
     <ModalWithTimeline
       className={`withdraw-modal__main-container ${className}`}
@@ -44,6 +44,8 @@ const InitiateCovPoolsWithdrawModal = ({
         onBtnClick={onBtnClick}
         onCancel={onCancel}
         amount={amount}
+        totalValueLocked={totalValueLocked}
+        covTotalSupply={covTotalSupply}
         infoBannerTitle={infoBannerTitle}
         infoBannerDescription={infoBannerDescription}
       >

@@ -34,11 +34,22 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   } = useSelector((state) => state.coveragePool)
 
   const onClaimTokensSubmitButtonClick = async (covAmount, awaitingPromise) => {
+    dispatch(
+      addAdditionalDataToModal({
+        componentProps: {
+          totalValueLocked,
+          covTotalSupply,
+          covTokensAvailableToWithdraw,
+        },
+      })
+    )
     await openConfirmationModal(
       {
         closeModal: closeModal,
         submitBtnText: "claim",
         amount: covAmount,
+        totalValueLocked,
+        covTotalSupply,
         modalOptions: {
           title: "Claim tokens",
           classes: {
@@ -56,6 +67,15 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
     covTokensAvailableToWithdraw,
     awaitingPromise
   ) => {
+    dispatch(
+      addAdditionalDataToModal({
+        componentProps: {
+          totalValueLocked,
+          covTotalSupply,
+          covTokensAvailableToWithdraw,
+        },
+      })
+    )
     await openConfirmationModal(
       {
         modalOptions: {
@@ -67,6 +87,9 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
         submitBtnText: "continue",
         pendingWithdrawalBalance: pendingWithdrawal,
         covTokensAvailableToWithdraw,
+        totalValueLocked,
+        covTotalSupply,
+        withdrawalDelay,
         containerTitle: "You are about to re-initiate this withdrawal:",
       },
       ReinitiateWithdrawalModal

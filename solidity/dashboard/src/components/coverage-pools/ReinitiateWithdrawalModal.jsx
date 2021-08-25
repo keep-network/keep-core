@@ -4,8 +4,8 @@ import InitiateCovPoolsWithdrawModal from "./InitiateCovPoolsWithdrawModal"
 import TokenAmount from "../TokenAmount"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm"
-import { gt, eq, lt } from "../../utils/arithmetics.utils"
-import { useDispatch, useSelector } from "react-redux"
+import { gt, lte } from "../../utils/arithmetics.utils"
+import { useDispatch } from "react-redux"
 import IncreaseWithdrawalModal from "./IncreaseWithdrawalModal"
 import { getSamePercentageValue } from "../../utils/general.utils"
 import { addAdditionalDataToModal } from "../../actions/modal"
@@ -16,6 +16,9 @@ const step2Title = "You are about to re-withdraw:"
 const ReinitiateWithdrawalModal = ({
   pendingWithdrawalBalance,
   covTokensAvailableToWithdraw,
+  totalValueLocked,
+  covTotalSupply,
+  withdrawalDelay,
   submitBtnText,
   onBtnClick,
   onCancel,
@@ -46,7 +49,7 @@ const ReinitiateWithdrawalModal = ({
         })
       )
     }
-  }, [step, amount, amount])
+  }, [step, amount, pendingWithdrawalBalance])
 
   return (
     <>
@@ -56,6 +59,8 @@ const ReinitiateWithdrawalModal = ({
           pendingWithdrawalBalance={pendingWithdrawalBalance}
           covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
           submitBtnText={submitBtnText}
+          totalValueLocked={totalValueLocked}
+          covTotalSupply={covTotalSupply}
           onBtnClick={onSubmit}
           onCancel={onCancel}
           transactionFinished={transactionFinished}
@@ -63,22 +68,12 @@ const ReinitiateWithdrawalModal = ({
         />
       </OnlyIf>
       <OnlyIf condition={step === 2}>
-        <OnlyIf condition={eq(amount, 0)}>
+        <OnlyIf condition={lte(amount, 0)}>
           <InitiateCovPoolsWithdrawModal
             amount={pendingWithdrawalBalance}
             covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
-            containerTitle={step2Title}
-            submitBtnText={"withdraw"}
-            onBtnClick={onBtnClick}
-            onCancel={onCancel}
-            className={"reinitiate-withdrawal-modal__main-container"}
-            transactionFinished={false}
-          />
-        </OnlyIf>
-        <OnlyIf condition={lt(amount, 0)}>
-          <InitiateCovPoolsWithdrawModal
-            amount={pendingWithdrawalBalance}
-            covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
+            totalValueLocked={totalValueLocked}
+            covTotalSupply={covTotalSupply}
             containerTitle={step2Title}
             submitBtnText={"withdraw"}
             onBtnClick={onBtnClick}
@@ -91,6 +86,9 @@ const ReinitiateWithdrawalModal = ({
           <IncreaseWithdrawalModal
             pendingWithdrawalBalance={pendingWithdrawalBalance}
             amount={amount}
+            totalValueLocked={totalValueLocked}
+            covTotalSupply={covTotalSupply}
+            withdrawalDelay={withdrawalDelay}
             submitBtnText={"withdraw"}
             onBtnClick={onBtnClick}
             onCancel={onCancel}
@@ -108,15 +106,13 @@ const ReinitiateWithdrawalModalStep1 = ({
   pendingWithdrawalBalance,
   covTokensAvailableToWithdraw,
   initialAmountValue,
+  totalValueLocked,
+  covTotalSupply,
   submitBtnText,
   onBtnClick,
   onCancel,
   transactionFinished,
 }) => {
-  const { totalValueLocked, covTotalSupply } = useSelector(
-    (state) => state.coveragePool
-  )
-
   return (
     <div className={"reinitiate-withdrawal-modal"}>
       <h3 className={"reinitiate-withdrawal-modal__container-title"}>
@@ -145,6 +141,8 @@ const ReinitiateWithdrawalModalStep1 = ({
         initialValue={initialAmountValue}
         onSubmit={onBtnClick}
         tokenAmount={covTokensAvailableToWithdraw}
+        totalValueLocked={totalValueLocked}
+        covTotalSupply={covTotalSupply}
       />
     </div>
   )

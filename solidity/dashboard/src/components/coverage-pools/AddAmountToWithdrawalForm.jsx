@@ -15,19 +15,17 @@ import {
 import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { getSamePercentageValue } from "../../utils/general.utils"
-import { useSelector } from "react-redux"
 
 const AddAmountToWithdrawalForm = ({
   tokenAmount,
   onSubmit,
   initialValue = "0",
+  totalValueLocked,
+  covTotalSupply,
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
-  const { totalValueLocked, covTotalSupply } = useSelector(
-    (state) => state.coveragePool
-  )
 
   return (
     <form className="add-amount-to-withdraw-form">
