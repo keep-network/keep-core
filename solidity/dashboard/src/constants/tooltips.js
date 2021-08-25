@@ -36,7 +36,31 @@ const resourceTooltipProps = {
   },
   pendingWithdrawal: {
     title: "Pending Withdrawal",
-    content: "Tooltip content",
+    content:
+      "After the 21 day cooldown ends, you have a 2 day claim window to claim your tokens and rewards. Your deposit and rewards will be sent in one transaction. If you do not claim your tokens within 2 days, your tokens will return to the pool and you will have to withdraw them again.",
+  },
+  totalValueLocked: {
+    title: "Total Value Locked",
+    content: "The total amount of KEEP deposited into the coverage pool.",
+    withRedirectLink: true,
+    redirectLink: "/coverage-pools/how-it-works",
+    linkText: "How it works",
+  },
+  covPoolsDeposit: {
+    title: "Coverage pool deposit",
+    content:
+      'Deposit into the coverage pool to secure the network and earn rewards. A coverage pool functions as a form of insurance that can be used as a back-stop or "buyer of last resort" in on-chain financial systems.',
+    withRedirectLink: true,
+    redirectLink: "/coverage-pools/how-it-works",
+    linkText: "How it works",
+  },
+  covPoolsAvailableToWithdraw: {
+    title: "Available to withdraw",
+    content:
+      "The amount of KEEP you have available to withdraw from the coverage pool. Note that there is a 21 day cooldown period before you can claim your tokens after you withdraw.",
+    withRedirectLink: true,
+    redirectLink: "/coverage-pools/how-it-works",
+    linkText: "How it works",
   },
 }
 

@@ -32,6 +32,8 @@ import Chip from "../../components/Chip"
 import InitiateCovPoolsWithdrawModal from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal"
 import ReinitiateWithdrawalModal from "../../components/coverage-pools/ReinitiateWithdrawalModal"
 import { addAdditionalDataToModal } from "../../actions/modal"
+import ResourceTooltip from "../../components/ResourceTooltip";
+import resourceTooltipProps from "../../constants/tooltips";
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -154,7 +156,13 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
       <CheckListBanner />
       <section className="tile coverage-pool__overview">
         <section className="coverage-pool__overview__tvl">
-          <h2 className="h2--alt text-grey-70 mb-1">Total Value Locked</h2>
+          <div className={"flex row center mb-1"}>
+            <h2 className="h2--alt text-grey-70">Total Value Locked</h2>
+            <ResourceTooltip
+              tooltipClassName={"ml-1"}
+              {...resourceTooltipProps.totalValueLocked}
+            />
+          </div>
           <TokenAmount
             amount={totalValueLocked}
             amountClassName="h1 text-mint-100"
@@ -206,7 +214,13 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
-          <h3>Deposit</h3>
+          <div className={"flex row center"}>
+            <h3>Deposit</h3>
+            <ResourceTooltip
+              tooltipClassName={"ml-1"}
+              {...resourceTooltipProps.covPoolsDeposit}
+            />
+          </div>
           <DepositForm
             onSubmit={onSubmitDepositForm}
             tokenAmount={keepTokenBalance.value}
@@ -255,7 +269,13 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         </section>
 
         <section className="tile coverage-pool__withdraw-wrapper">
-          <h3>Available to withdraw</h3>
+          <div className={"flex row center"}>
+            <h3>Available to withdraw</h3>
+            <ResourceTooltip
+              tooltipClassName={"ml-1"}
+              {...resourceTooltipProps.covPoolsAvailableToWithdraw}
+            />
+          </div>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
             amount={getSamePercentageValue(
