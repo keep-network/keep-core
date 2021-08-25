@@ -17,9 +17,9 @@ import BigNumber from "bignumber.js"
 import { Column, DataTable } from "../DataTable"
 import resourceTooltipProps from "../../constants/tooltips"
 import TokenAmount from "../TokenAmount"
-import { getSamePercentageValue } from "../../utils/general.utils"
 import { KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
+import { Keep } from "../../contracts"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
@@ -354,7 +354,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
             return (
               <div>
                 <TokenAmount
-                  amount={getSamePercentageValue(
+                  amount={Keep.coveragePoolV1.estimatedBalanceFor(
                     covAmount,
                     covTotalSupply,
                     totalValueLocked

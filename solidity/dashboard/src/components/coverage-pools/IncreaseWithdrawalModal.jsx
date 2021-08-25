@@ -9,14 +9,12 @@ import List from "../List"
 import Divider from "../Divider"
 import Button from "../Button"
 import { KEEP } from "../../utils/token.utils"
-import {
-  getSamePercentageValue,
-  shortenAddress,
-} from "../../utils/general.utils"
+import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
 import { add } from "../../utils/arithmetics.utils"
 import { useWeb3Address } from "../WithWeb3Context"
 import { addAdditionalDataToModal } from "../../actions/modal"
+import { Keep } from "../../contracts"
 
 const infoBannerTitle = "The cooldown period is 21 days"
 
@@ -98,7 +96,7 @@ const IncreaseWithdrawalModal = ({
             <h4 className={"text-grey-50"}>Expired withdrawal &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
               {KEEP.displayAmount(
-                getSamePercentageValue(
+                Keep.coveragePoolV1.estimatedBalanceFor(
                   pendingWithdrawalBalance,
                   covTotalSupply,
                   totalValueLocked
@@ -111,7 +109,11 @@ const IncreaseWithdrawalModal = ({
             <h4 className={"text-grey-50"}>Increase amount &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
               {KEEP.displayAmount(
-                getSamePercentageValue(amount, covTotalSupply, totalValueLocked)
+                Keep.coveragePoolV1.estimatedBalanceFor(
+                  amount,
+                  covTotalSupply,
+                  totalValueLocked
+                )
               )}{" "}
               KEEP
             </h4>
@@ -134,9 +136,12 @@ const IncreaseWithdrawalModalStep1 = ({
   covTotalSupply,
   onSubmit,
 }) => {
-
   const items = getItems(
-    getSamePercentageValue(addedAmount, covTotalSupply, totalValueLocked)
+    Keep.coveragePoolV1.estimatedBalanceFor(
+      addedAmount,
+      covTotalSupply,
+      totalValueLocked
+    )
   )
   return (
     <div>
@@ -188,7 +193,7 @@ const ModalWithOverview = ({
           <Icons.ArrowDown />
           <Icons.Add />
           {KEEP.displayAmount(
-            getSamePercentageValue(
+            Keep.coveragePoolV1.estimatedBalanceFor(
               addedAmount,
               covTotalSupply,
               totalValueLocked
@@ -223,7 +228,11 @@ const IncreaseWithdrawalModalTile = ({
       <div className={"modal-with-overview__withdrawal-info"}>
         <h4 className={"modal-with-overview__amount text-grey-70"}>
           {KEEP.displayAmount(
-            getSamePercentageValue(amount, covTotalSupply, totalValueLocked)
+            Keep.coveragePoolV1.estimatedBalanceFor(
+              amount,
+              covTotalSupply,
+              totalValueLocked
+            )
           )}{" "}
           KEEP
         </h4>

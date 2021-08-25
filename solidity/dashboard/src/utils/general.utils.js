@@ -161,21 +161,3 @@ export const removeSubstringBetweenCharacter = (
 
 export const isString = (value) =>
   typeof value === "string" || value instanceof String
-
-export const getSamePercentageValue = (
-  givenValue,
-  givenValueTotal,
-  searchedValueTotal
-) => {
-  if (
-    new BigNumber(givenValue).isZero() ||
-    new BigNumber(givenValueTotal).isZero() ||
-    new BigNumber(searchedValueTotal).isZero()
-  ) {
-    return "0"
-  }
-  return new BigNumber(givenValue)
-    .div(givenValueTotal)
-    .multipliedBy(searchedValueTotal)
-    .toString()
-}

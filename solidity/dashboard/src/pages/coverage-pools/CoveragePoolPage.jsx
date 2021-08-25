@@ -22,18 +22,16 @@ import {
 import { useModal } from "../../hooks/useModal"
 import { eq, gt } from "../../utils/arithmetics.utils"
 import { covKEEP, KEEP } from "../../utils/token.utils"
-import {
-  displayPercentageValue,
-  getSamePercentageValue,
-} from "../../utils/general.utils"
+import { displayPercentageValue } from "../../utils/general.utils"
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
 import Chip from "../../components/Chip"
 import InitiateCovPoolsWithdrawModal from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal"
 import ReinitiateWithdrawalModal from "../../components/coverage-pools/ReinitiateWithdrawalModal"
 import { addAdditionalDataToModal } from "../../actions/modal"
-import ResourceTooltip from "../../components/ResourceTooltip";
-import resourceTooltipProps from "../../constants/tooltips";
+import ResourceTooltip from "../../components/ResourceTooltip"
+import resourceTooltipProps from "../../constants/tooltips"
+import { Keep } from "../../contracts"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -245,7 +243,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           </div>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={getSamePercentageValue(
+            amount={Keep.coveragePoolV1.estimatedBalanceFor(
               covBalance,
               covTotalSupply,
               totalValueLocked
@@ -278,7 +276,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           </div>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={getSamePercentageValue(
+            amount={Keep.coveragePoolV1.estimatedBalanceFor(
               covTokensAvailableToWithdraw,
               covTotalSupply,
               totalValueLocked

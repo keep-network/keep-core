@@ -6,10 +6,8 @@ import Button from "../Button"
 import OnlyIf from "../OnlyIf"
 import ModalWithTimeline from "./ModalWithTImeline"
 import { useWeb3Address } from "../WithWeb3Context"
-import {
-  getSamePercentageValue,
-  shortenAddress,
-} from "../../utils/general.utils"
+import { shortenAddress } from "../../utils/general.utils"
+import { Keep } from "../../contracts"
 
 const ClaimTokensModal = ({
   amount,
@@ -43,7 +41,7 @@ const ClaimTokensModal = ({
       </OnlyIf>
       <div className={"claim-tokens-modal__data"}>
         <TokenAmount
-          amount={getSamePercentageValue(
+          amount={Keep.coveragePoolV1.estimatedBalanceFor(
             amount,
             covTotalSupply,
             totalValueLocked
@@ -56,7 +54,11 @@ const ClaimTokensModal = ({
           <h4 className={"text-grey-50"}>Initial Withdrawal &nbsp;</h4>
           <h4 className={"claim-tokens-modal__data__value text-grey-70"}>
             {KEEP.displayAmount(
-              getSamePercentageValue(amount, covTotalSupply, totalValueLocked)
+              Keep.coveragePoolV1.estimatedBalanceFor(
+                amount,
+                covTotalSupply,
+                totalValueLocked
+              )
             )}{" "}
             KEEP
           </h4>

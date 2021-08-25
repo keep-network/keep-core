@@ -7,8 +7,8 @@ import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm"
 import { gt, lte } from "../../utils/arithmetics.utils"
 import { useDispatch } from "react-redux"
 import IncreaseWithdrawalModal from "./IncreaseWithdrawalModal"
-import { getSamePercentageValue } from "../../utils/general.utils"
 import { addAdditionalDataToModal } from "../../actions/modal"
+import { Keep } from "../../contracts"
 
 const step1Title = "You are about to re-initiate this withdrawal:"
 const step2Title = "You are about to re-withdraw:"
@@ -120,7 +120,7 @@ const ReinitiateWithdrawalModalStep1 = ({
       </h3>
       <div className={"reinitiate-withdrawal-modal__data"}>
         <TokenAmount
-          amount={getSamePercentageValue(
+          amount={Keep.coveragePoolV1.estimatedBalanceFor(
             pendingWithdrawalBalance,
             covTotalSupply,
             totalValueLocked

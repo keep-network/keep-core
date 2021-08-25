@@ -14,7 +14,7 @@ import {
 } from "../../forms/common-validators"
 import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
-import { getSamePercentageValue } from "../../utils/general.utils"
+import { Keep } from "../../contracts"
 
 const AddAmountToWithdrawalForm = ({
   tokenAmount,
@@ -33,7 +33,7 @@ const AddAmountToWithdrawalForm = ({
         <h4>Add your available balance?</h4>
         <div className={"add-amount-to-withdraw-form__available-balance"}>
           <TokenAmount
-            amount={getSamePercentageValue(
+            amount={Keep.coveragePoolV1.estimatedBalanceFor(
               tokenAmount,
               covTotalSupply,
               totalValueLocked

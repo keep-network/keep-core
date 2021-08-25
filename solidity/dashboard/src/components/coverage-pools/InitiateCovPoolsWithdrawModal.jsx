@@ -3,12 +3,9 @@ import ModalWithTimeline, {
   MODAL_WITH_TIMELINE_STEPS,
 } from "./ModalWithTImeline"
 import { KEEP } from "../../utils/token.utils"
-import {
-  getSamePercentageValue,
-  shortenAddress,
-} from "../../utils/general.utils"
+import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
-import { useSelector } from "react-redux"
+import { Keep } from "../../contracts"
 
 const infoBannerTitle = "The cooldown period is 21 days.."
 
@@ -53,7 +50,7 @@ const InitiateCovPoolsWithdrawModal = ({
           <h4 className={"text-grey-50"}>Pool Balance &nbsp;</h4>
           <h4 className={"withdraw-modal__data__value text-grey-70"}>
             {KEEP.displayAmount(
-              getSamePercentageValue(
+              Keep.coveragePoolV1.estimatedBalanceFor(
                 covTokensAvailableToWithdraw,
                 covTotalSupply,
                 totalValueLocked
