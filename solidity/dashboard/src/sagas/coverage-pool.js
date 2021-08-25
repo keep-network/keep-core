@@ -311,6 +311,18 @@ export function* subscribeToWithdrawalInitiatedEvent() {
           },
         })
       )
+
+      const withdrawalInitiatedTimestamp = yield call(
+        Keep.coveragePoolV1.withdrawalInitiatedTimestamp,
+        address
+      )
+
+      yield put(
+        covTokenUpdated({
+          pendingWithdrawal: covAmount,
+          withdrawalInitiatedTimestamp,
+        })
+      )
     }
   }
 }
