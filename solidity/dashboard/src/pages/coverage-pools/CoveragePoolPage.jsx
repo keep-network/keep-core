@@ -239,37 +239,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               return <div style={{ width: "32px", height: "32px" }}></div>
             }}
           />
-          <div className={"coverage-pool__deposits-and-earned"}>
-            <div className={"coverage-pool__deposit"}>
-              <h4 className={"text-grey-70"}>Your deposits &nbsp;</h4>
-              <Tooltip
-                simple
-                delay={0}
-                triggerComponent={Icons.MoreInfo}
-                className={"lp-balance__tooltip"}
-              >
-                Your deposits tooltip
-              </Tooltip>
-              <h4 className={"coverage-pool__deposit-amount text-grey-40"}>
-                1,000 KEEP
-              </h4>
-            </div>
-            <Divider style={{ margin: "0.5rem 0" }} />
-            <div className={"coverage-pool__earned"}>
-              <h4 className={"text-grey-70"}>Earned &nbsp;</h4>
-              <Tooltip
-                simple
-                delay={0}
-                triggerComponent={Icons.MoreInfo}
-                className={"lp-balance__tooltip"}
-              >
-                Rewards earned tooltip
-              </Tooltip>
-              <h4 className={"coverage-pool__earned-amount text-grey-40"}>
-                0 KEEP
-              </h4>
-            </div>
-          </div>
         </section>
 
         <section className="tile coverage-pool__withdraw-wrapper">
