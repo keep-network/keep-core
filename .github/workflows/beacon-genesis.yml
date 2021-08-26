@@ -15,6 +15,7 @@ on:
       upstream_builds:
         description: 'Upstream builds'
         required: false
+  push: # TODO: Just for testing. Remove before merging!
 
 jobs:
   beacon-genesis:
@@ -28,7 +29,7 @@ jobs:
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v1
         with:
-          environment: ${{ github.event.inputs.environment }}
+          environment: "ropsten" # TODO: Just for testing. Remove before merging!
 
       - uses: actions/setup-node@v2
         with:
@@ -40,7 +41,7 @@ jobs:
         uses: keep-network/ci/actions/upstream-builds-query@v1
         id: upstream-builds-query
         with:
-          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          upstream-builds: "[{\"module\":\"github.com/keep-network/keep-core/solidity\",\"upstream_ref\":\"main\",\"version\":\"1.8.0-ropsten.11+main.08feb36306945a115bfc258792f59b325f7868af\",\"url\":\"https://github.com/keep-network/keep-core/actions/runs/1169555144\"}]" # TODO: Just for testing. Remove before merging!
           query: |
             keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
 
