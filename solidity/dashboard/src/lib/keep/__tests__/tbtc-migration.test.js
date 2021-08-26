@@ -1,3 +1,4 @@
+import { TBTC } from "../../../utils/token.utils"
 import TBTCV2Migration from "../tbtc-migration"
 
 const createMockedContract = (address) => ({
@@ -67,5 +68,16 @@ describe("Test CoveragePoolV1 lib", () => {
       amount
     )
     expect(result).toEqual(mockedResult)
+  })
+
+  it("should calculate unmint fee for a given amount if pass unmint fee param", async () => {
+    const mockedUnmintFee = TBTC.fromTokenUnit(0.001).toString()
+    const amount = TBTC.fromTokenUnit(2).toString()
+    const expectedResult = TBTC.fromTokenUnit(0.002).toString()
+
+    const result = await tbtcV2Migration.unmintFeeFor(amount, mockedUnmintFee)
+
+    expect(tbtcV2Migration.vendingMachine.makeCall).not.toHaveBeenCalled()
+    expect(result.toString()).toEqual(expectedResult.toString())
   })
 })

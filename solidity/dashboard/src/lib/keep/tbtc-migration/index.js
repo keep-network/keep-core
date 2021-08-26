@@ -1,6 +1,9 @@
 /** @typedef { import("../../web3").BaseContract} BaseContract */
 /** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
 
+import { div, mul } from "../../../utils/arithmetics.utils"
+import { Token } from "../../../utils/token.utils"
+
 class TBTCV2Migration {
   /**
    * @param {BaseContract} _tbtcV1
@@ -19,8 +22,15 @@ class TBTCV2Migration {
     return await this.vendingMachine.makeCall("unmintFee")
   }
 
-  unmintFeeFor = async (amount) => {
-    return await this.vendingMachine.makeCall("unmintFeeFor", amount)
+  unmintFeeFor = async (amount, unmintFee = null) => {
+    if (!unmintFee) {
+      return await this.vendingMachine.makeCall("unmintFeeFor", amount)
+    }
+
+    return div(
+      mul(amount, unmintFee),
+      Token.fromTokenUnit(1, 18).toString()
+    ).toString()
   }
 
   tbtcV1BalanceOf = async (address) => {
