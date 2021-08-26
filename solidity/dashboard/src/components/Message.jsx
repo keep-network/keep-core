@@ -12,6 +12,7 @@ import SuccessMessage from "./messages/SuccessMessage"
 import ErrorMessage from "./messages/ErrorMessage"
 import DelegationAlreadyCopiedMessage from "./messages/DelegationAlreadyCopiedMessage"
 import TopUpReadyToBeCommittedMessage from "./messages/TopUpReadyToBeCommittedMessage"
+import CovPoolsClaimTokensTimeLeftMessage from "./messages/CovPoolsClaimTokensTimeLeftMessage"
 
 export const MessagesContext = React.createContext({})
 
@@ -25,6 +26,7 @@ export const messageType = {
   LIQUIDITY_REWARDS_EARNED: LiquidityRewardsEarnedMessage,
   DELEGATION_ALREADY_COPIED: DelegationAlreadyCopiedMessage,
   TOP_UP_READY_TO_BE_COMMITTED: TopUpReadyToBeCommittedMessage,
+  COV_POOLS_CLAIM_TOKENS_TIME_LEFT: CovPoolsClaimTokensTimeLeftMessage,
 }
 
 const messageTransitionTimeoutInMs = 500
