@@ -17,6 +17,7 @@ import * as liquidityRewards from "../../sagas/liquidity-rewards"
 import * as operator from "../../sagas/operartor"
 import * as authorization from "../../sagas/authorization"
 import * as coveragePool from "../../sagas/coverage-pool"
+import * as tbtcMigration from "../../sagas/tbtc-migration"
 
 const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
   liquidityRewards
@@ -39,6 +40,7 @@ const loginRequiredSagas = [
   ...Object.values(restliquidityRewards),
   ...Object.values(operator),
   ...Object.values(authorization),
+  ...Object.values(tbtcMigration),
 ]
 
 describe("Test root saga", () => {

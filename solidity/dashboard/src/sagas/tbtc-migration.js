@@ -49,7 +49,7 @@ function* fetchData(action) {
   }
 }
 
-export function* watchFetchTvl() {
+export function* watchFetchData() {
   yield takeOnlyOnce(
     tbtcV2Migration.TBTCV2_MIGRATION_FETCH_DATA_REQUEST,
     identifyTaskByAddress,
