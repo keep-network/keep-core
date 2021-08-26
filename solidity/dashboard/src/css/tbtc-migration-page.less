@@ -3,10 +3,9 @@
     .tile();
     display: flex;
     align-items: center;
-    background-color: @color-black;
 
     .mint-tbtc-v1__icon-wrapper {
-      background-color: @white;
+      background-color: @color-black;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -14,6 +13,11 @@
       border-radius: 50%;
       margin-right: 1.5rem;
 
+      svg {
+        path {
+          fill: @white;
+        }
+      }
       svg.tbtc-icon {
         width: 75px;
         height: 75px;
@@ -50,6 +54,12 @@
     }
   }
 
+  &__explanation {
+    .explanation__upgrade-btn {
+      margin-top: 1.5rem;
+    }
+  }
+
   @media screen and (min-width: 1000px) {
     display: grid;
     grid-template-areas:
@@ -70,6 +80,13 @@
 
     &__explanation {
       grid-area: explanation;
+      display: flex;
+
+      .explanation__upgrade-btn {
+        margin-top: 0;
+        margin-left: 2rem;
+        align-self: center;
+      }
     }
 
     &__resources {

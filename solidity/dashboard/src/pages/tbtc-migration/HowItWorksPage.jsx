@@ -27,11 +27,19 @@ const HowItWorksPage = () => {
   return (
     <section className="tbtc-migration">
       <section className="tile tbtc-migration__explanation">
-        <h2 className="text-grey-70 mb-1">What is token migration?</h2>
-        <h3 className="text-grey-50">
-          Token migration is a method which upgrades and downgrades your tBTC
-          tokens in one single transaction.
-        </h3>
+        <header>
+          <h2 className="text-grey-70 mb-1">What is token migration?</h2>
+          <h3 className="text-grey-50">
+            Token migration is a method which upgrades and downgrades your tBTC
+            tokens in one single transaction.
+          </h3>
+        </header>
+        <NavLink
+          to="/tbtc-migration/portal"
+          className="btn btn-primary btn-md explanation__upgrade-btn"
+        >
+          upgrade tokens
+        </NavLink>
       </section>
 
       <section className="tile tbtc-migration__resources">
@@ -39,22 +47,22 @@ const HowItWorksPage = () => {
         <List>
           <List.Title className="h5 text-violet-80">how it works</List.Title>
           <List.Content className="bullets bullets--violet-80 text-grey-60">
-            <List.Item>
+            <List.Item className="mb-1">
               <strong>
                 It costs you zero to upgrade or downgrade your tokens.
               </strong>
               &nbsp;There will be zero Keep Network fees.
             </List.Item>
-            <List.Item>
+            <List.Item className="mb-1">
               The upgrade from v1 to v2 is&nbsp;<strong>reversible</strong>
               .&nbsp;This means you can always go back from v2 to v1 if you need
               to.
             </List.Item>
-            <List.Item>
+            <List.Item className="mb-1">
               <strong>Why would I downgrade?</strong>&nbsp;You might need to
               downgrade from v2 to v1 in the event of liquidation or redemption.
             </List.Item>
-            <List.Item>
+            <List.Item className="mb-1">
               <strong>You like yield farming?</strong>&nbsp;From existing tBTC
               pools which will soon/now transition to utilizing tBTCv2 only.
             </List.Item>
@@ -82,12 +90,12 @@ const HowItWorksPage = () => {
         <div className="mint-tbtc-v1__icon-wrapper">
           <Icons.TBTC />
         </div>
-        <h3 className="text-white">Mint tBTC v1</h3>
+        <h3>Mint tBTC v1</h3>
         <a
           href="https://dapp.tbtc.network"
           rel="noopener noreferrer"
           target="_blank"
-          className="btn btn-secondary btn-md"
+          className="btn btn-primary btn-md"
         >
           go to dapp ↗
         </a>
