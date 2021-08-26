@@ -18,11 +18,19 @@ import * as CoveragePoolsComponents from "../components/coverage-pools"
 import OnlyIf from "../components/OnlyIf"
 import { useHideComponent } from "../hooks/useHideComponent"
 import PendingWithdrawals from "../components/coverage-pools/PendingWithdrawals"
+import {
+  fetchAPYRequest,
+  fetchCovPoolDataRequest,
+  fetchTvlRequest,
+} from "../actions/coverage-pool"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
   const address = useWeb3Address()
   const dispatch = useDispatch()
+  const { covTokensAvailableToWithdraw } = useSelector(
+    (state) => state.coveragePool
+  )
 
   useEffect(() => {
     if (isConnected) {
@@ -34,6 +42,9 @@ const OverviewPage = (props) => {
         type: "token-grant/fetch_grants_request",
         payload: { address },
       })
+      dispatch(fetchCovPoolDataRequest(address))
+      dispatch(fetchTvlRequest())
+      dispatch(fetchAPYRequest())
     }
   }, [dispatch, isConnected, address])
 
@@ -90,7 +101,9 @@ const OverviewPage = (props) => {
         <CoveragePoolsComponents.LearnMoreBanner onClose={hideBanner} />
       </OnlyIf>
       <OverviewFirstSection />
-      <PendingWithdrawals />
+      <PendingWithdrawals
+        covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
+      />
       <TokenOverview
         totalKeepTokenBalance={totalKeepTokenBalance}
         totalOwnedStakedBalance={totalOwnedStakedBalance}
