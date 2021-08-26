@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import List from "../../components/List"
 import TokenAmount from "../../components/TokenAmount"
 import {
@@ -7,23 +7,43 @@ import {
 } from "../../components/tbtc-migration"
 import { TBTC } from "../../utils/token.utils"
 import { useModal } from "../../hooks/useModal"
+import { useWeb3Address } from "../../components/WithWeb3Context"
+import { useDispatch, useSelector } from "react-redux"
+import { tbtcV2Migration } from "../../actions"
 
 const TokenUpgradePortalPage = () => {
-  const tbtcV1Balance = "0"
-  const tbtcV2Balance = "0"
   const { openConfirmationModal } = useModal()
+  const address = useWeb3Address()
+  const dispatch = useDispatch()
+
+  const { tbtcV1Balance, tbtcV2Balance, unmintFee } = useSelector(
+    (state) => state.tbtcV2Migration
+  )
+
+  useEffect(() => {
+    dispatch(tbtcV2Migration.fetchDataRequest(address))
+  }, [address, dispatch])
 
   const onSubmitMigrationForm = async (values, awaitingPromise) => {
+    const { amount, from, to } = values
+    const _amount = TBTC.fromTokenUnit(amount).toString()
+
     await openConfirmationModal(
       {
-        modalOptions: { title: "Upgrade" },
-        from: "v1",
-        to: "v2",
-        amount: 0,
+        modalOptions: { title: to === "v2" ? "Upgrade" : "Downgrade" },
+        from,
+        to,
+        amount: _amount,
+        fee: unmintFee,
       },
       ConfirmMigrationModal
     )
-    // TODO: dispatch redux action
+
+    if (to === "v2") {
+      dispatch(tbtcV2Migration.mint(_amount, awaitingPromise))
+    } else {
+      dispatch(tbtcV2Migration.unmint(_amount, awaitingPromise))
+    }
   }
 
   return (
@@ -55,8 +75,12 @@ const TokenUpgradePortalPage = () => {
       </List>
       <section className="tbtc-migration-portal__form-wrapper">
         <h3 className="text-grey-70 mb-1">Migration Portal</h3>
-        {/* TODO: Pass props */}
-        <MigrationPortalForm onSubmit={onSubmitMigrationForm} />
+        <MigrationPortalForm
+          mintingFee={unmintFee}
+          tbtcV1Balance={tbtcV1Balance}
+          tbtcV2Balance={tbtcV2Balance}
+          onSubmit={onSubmitMigrationForm}
+        />
       </section>
     </section>
   )
