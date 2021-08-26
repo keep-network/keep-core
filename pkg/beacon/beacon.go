@@ -103,7 +103,7 @@ func Initialize(
 						logger.Warningf(
 							"relay entry requested event with previous "+
 								"entry [0x%x] and starting block [%v] has been "+
-								"registered already",
+								"already processed",
 							request.PreviousEntry,
 							request.BlockNumber,
 						)
@@ -172,7 +172,7 @@ func Initialize(
 			); !ok {
 				logger.Warningf(
 					"group selection event with seed [0x%x] and "+
-						"starting block [%v] has been registered already",
+						"starting block [%v] has been already processed",
 					event.NewEntry,
 					event.BlockNumber,
 				)
