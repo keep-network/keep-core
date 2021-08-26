@@ -38,7 +38,7 @@ func TestStartGroupSelection_MinGroupSelectionDurationPassed(t *testing.T) {
 	)
 
 	// Simulate the last group selection occured at block 100
-	deduplicator.currentGroupSelectionStartBlock = 100
+	deduplicator.NotifyGroupSelectionStarted(100)
 
 	// Group selection will be possible at block 100 + 200 + 1 = 301
 	canGenerate := deduplicator.NotifyGroupSelectionStarted(301)
@@ -60,7 +60,7 @@ func TestStartGroupSelection_MinGroupSelectionDurationNotPassed(t *testing.T) {
 	)
 
 	// Simulate the last group selection occured at block 100
-	deduplicator.currentGroupSelectionStartBlock = 100
+	deduplicator.NotifyGroupSelectionStarted(100)
 
 	// Group selection will be possible at block 100 + 200 + 1 = 301
 	canGenerate := deduplicator.NotifyGroupSelectionStarted(300)
@@ -94,7 +94,7 @@ func TestStartRelayEntry_NoPriorRelayEntries(t *testing.T) {
 	}
 }
 
-func TestStartRelayEntry_SmallerStartBlock(t *testing.T) {
+func TestStartRelayEntry_LowerStartBlock(t *testing.T) {
 	chain := &testChain{
 		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
@@ -105,11 +105,14 @@ func TestStartRelayEntry_SmallerStartBlock(t *testing.T) {
 		200,
 	)
 
-	deduplicator.currentRequestStartBlock = 100
+	_, err := deduplicator.NotifyRelayEntryStarted(100, "01")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
 		5,
-		"entry",
+		"02",
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -120,7 +123,7 @@ func TestStartRelayEntry_SmallerStartBlock(t *testing.T) {
 	}
 }
 
-func TestStartRelayEntry_BiggerStartBlock_DifferentPreviousEntry(t *testing.T) {
+func TestStartRelayEntry_HigherStartBlock_DifferentPreviousEntry(t *testing.T) {
 	chain := &testChain{
 		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
@@ -131,8 +134,10 @@ func TestStartRelayEntry_BiggerStartBlock_DifferentPreviousEntry(t *testing.T) {
 		200,
 	)
 
-	deduplicator.currentRequestStartBlock = 100
-	deduplicator.currentRequestPreviousEntry = "01"
+	_, err := deduplicator.NotifyRelayEntryStarted(100, "01")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
 		101,
@@ -147,7 +152,7 @@ func TestStartRelayEntry_BiggerStartBlock_DifferentPreviousEntry(t *testing.T) {
 	}
 }
 
-func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_ConfirmedOnChain(t *testing.T) {
+func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_ConfirmedOnChain(t *testing.T) {
 	bytes, err := hex.DecodeString("01")
 	if err != nil {
 		t.Fatal(err)
@@ -163,8 +168,10 @@ func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_ConfirmedOnChain(t *
 		200,
 	)
 
-	deduplicator.currentRequestStartBlock = 100
-	deduplicator.currentRequestPreviousEntry = "01"
+	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
 		101,
@@ -179,7 +186,7 @@ func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_ConfirmedOnChain(t *
 	}
 }
 
-func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_PreviousEntryNotConfirmedOnChain(t *testing.T) {
+func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_PreviousEntryNotConfirmedOnChain(t *testing.T) {
 	bytes, err := hex.DecodeString("02")
 	if err != nil {
 		t.Fatal(err)
@@ -195,8 +202,10 @@ func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_PreviousEntryNotConf
 		200,
 	)
 
-	deduplicator.currentRequestStartBlock = 100
-	deduplicator.currentRequestPreviousEntry = "01"
+	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
 		101,
@@ -211,7 +220,7 @@ func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_PreviousEntryNotConf
 	}
 }
 
-func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_StartBlockNotConfirmedOnChain(t *testing.T) {
+func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_StartBlockNotConfirmedOnChain(t *testing.T) {
 	bytes, err := hex.DecodeString("01")
 	if err != nil {
 		t.Fatal(err)
@@ -227,8 +236,10 @@ func TestStartRelayEntry_BiggerStartBlock_SamePreviousEntry_StartBlockNotConfirm
 		200,
 	)
 
-	deduplicator.currentRequestStartBlock = 100
-	deduplicator.currentRequestPreviousEntry = "01"
+	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
 		101,
