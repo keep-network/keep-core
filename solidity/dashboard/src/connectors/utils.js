@@ -24,7 +24,10 @@ export const getChainIdFromV = (vInHex) => {
 }
 
 export const getChainId = () => {
-  if (process.env.NODE_ENV === "development") {
+  if (
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "test"
+  ) {
     // private chains (default), change if you use a different one
     return 1337
   }
@@ -33,7 +36,10 @@ export const getChainId = () => {
 }
 
 export const getWsUrl = () => {
-  if (process.env.NODE_ENV === "development") {
+  if (
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "test"
+  ) {
     // Ganache web socket url, change if you use a different one
     return "ws://localhost:8545"
   }
