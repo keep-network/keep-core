@@ -18,7 +18,7 @@ const CumulativeMerkleDrop = artifacts.require('CumulativeMerkleDrop');
 async function makeDrop (token, drop, wallets, amounts, deposit) {
     const elements = wallets.map((w, i) => w + web3.utils.padLeft(web3.utils.toHex(amounts[i]), 64).substr(2));
     const hashedElements = elements.map(keccak256).map(x => MerkleTree.bufferToHex(x));
-    const tree = new MerkleTree(elements, keccak256, { hashLeaves: true, sortPairs: true });
+    const tree = new MerkleTree(elements, keccak256, { hashLeaves: true, sort: true });
     const root = tree.getHexRoot();
     const leaves = tree.getHexLeaves();
     const proofs = leaves.map(tree.getHexProof, tree);
@@ -53,12 +53,12 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
         this.proofs = proofs;
 
         if (this.drop.contract.methods.verify) {
-            await this.drop.contract.methods.verify(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
-            expect(await this.drop.verify(this.proofs[0], this.root, this.leaves[0])).to.be.true;
+            await this.drop.contract.methods.verify(this.proofs[findSortedIndex(this, 0)], this.root, this.leaves[0]).send({ from: _ });
+            expect(await this.drop.verify(this.proofs[findSortedIndex(this, 0)], this.root, this.leaves[0])).to.be.true;
         }
-        // await this.drop.contract.methods.verifyAsm(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
-        // expect(await this.drop.verifyAsm(this.proofs[0], this.root, this.leaves[0])).to.be.true;
-        await this.drop.claim(accounts[findSortedIndex(this, 0)], 1, this.root, this.proofs[0]);
+        // await this.drop.contract.methods.verifyAsm(this.proofs[findSortedIndex(this, 0)], this.root, this.leaves[0]).send({ from: _ });
+        // expect(await this.drop.verifyAsm(this.proofs[findSortedIndex(this, 0)], this.root, this.leaves[0])).to.be.true;
+        await this.drop.claim(accounts[0], 1, this.root, this.proofs[findSortedIndex(this, 0)]);
     });
 
     describe('Single drop for 4 wallets: [1, 2, 3, 4]', async function () {

@@ -12,38 +12,38 @@ function shouldBehaveLikeCumulativeMerkleDropFor4WalletsWithBalances1234 (errorP
 
         it('should success to claim 1 token, second drop and claim 2 tokens', async function () {
             await expectEvent(
-                await this.drop.claim(wallets[findSortedIndex(this, 0)], 1, this.root, this.proofs[0]),
-                'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '1'),
+                await this.drop.claim(wallets[0], 1, this.root, this.proofs[findSortedIndex(this, 0)]),
+                'Claimed', claimedEvent(wallets[0], '1'),
             );
 
             await makeSecondDrop(this);
 
             await expectEvent(
-                await this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
-                'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '2'),
+                await this.drop.claim(wallets[0], 3, this.root, this.proofs[findSortedIndex(this, 0)]),
+                'Claimed', claimedEvent(wallets[0], '2'),
             );
 
             await expectRevert(
-                this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
+                this.drop.claim(wallets[0], 3, this.root, this.proofs[findSortedIndex(this, 0)]),
                 `${errorPrefix}: Nothing to claim`,
             );
         });
 
         it('should success to claim 1 token, second drop and claim 2 tokens twice', async function () {
             await expectEvent(
-                await this.drop.claim(wallets[findSortedIndex(this, 0)], 1, this.root, this.proofs[0]),
-                'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '1'),
+                await this.drop.claim(wallets[0], 1, this.root, this.proofs[findSortedIndex(this, 0)]),
+                'Claimed', claimedEvent(wallets[0], '1'),
             );
 
             await makeSecondDrop(this);
 
             await expectEvent(
-                await this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
-                'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '2'),
+                await this.drop.claim(wallets[0], 3, this.root, this.proofs[findSortedIndex(this, 0)]),
+                'Claimed', claimedEvent(wallets[0], '2'),
             );
 
             await expectRevert(
-                this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
+                this.drop.claim(wallets[0], 3, this.root, this.proofs[findSortedIndex(this, 0)]),
                 `${errorPrefix}: Nothing to claim`,
             );
         });
@@ -52,8 +52,8 @@ function shouldBehaveLikeCumulativeMerkleDropFor4WalletsWithBalances1234 (errorP
             await makeSecondDrop(this);
 
             await expectEvent(
-                await this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
-                'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '3'),
+                await this.drop.claim(wallets[0], 3, this.root, this.proofs[findSortedIndex(this, 0)]),
+                'Claimed', claimedEvent(wallets[0], '3'),
             );
         });
 
@@ -61,12 +61,12 @@ function shouldBehaveLikeCumulativeMerkleDropFor4WalletsWithBalances1234 (errorP
             await makeSecondDrop(this);
 
             await expectEvent(
-                await this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
-                'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '3'),
+                await this.drop.claim(wallets[0], 3, this.root, this.proofs[findSortedIndex(this, 0)]),
+                'Claimed', claimedEvent(wallets[0], '3'),
             );
 
             await expectRevert(
-                this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
+                this.drop.claim(wallets[0], 3, this.root, this.proofs[findSortedIndex(this, 0)]),
                 `${errorPrefix}: Nothing to claim`,
             );
         });
