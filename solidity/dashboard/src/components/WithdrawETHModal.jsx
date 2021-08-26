@@ -5,12 +5,14 @@ import web3Utils from "web3-utils"
 import { useWeb3Context } from "./WithWeb3Context"
 import * as Icons from "./Icons"
 import AvailableEthAmount from "./AvailableEthAmount"
-import AvailableETHForm from "./AvailableTokenForm"
 import {
   withdrawUnbondedEth,
   withdrawUnbondedEthAsManagedGrantee,
 } from "../actions/web3"
 import { connect } from "react-redux"
+import MaxAmountAddon from "./MaxAmountAddon"
+import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
+import AvailableTokenForm from "./AvailableTokenForm"
 
 const WithdrawETHModal = ({
   operatorAddress,
@@ -66,6 +68,7 @@ const WithdrawETHModal = ({
         web3={web3}
         onSubmit={onSubmit}
         availableETH={availableETH}
+        availableETHInWei={availableETHInWei}
         onCancel={closeModal}
         submitBtnText="withdraw eth"
       />
@@ -79,6 +82,20 @@ const mapDispatchToProps = {
 }
 
 export default React.memo(connect(null, mapDispatchToProps)(WithdrawETHModal))
+
+const WithdrawETHForm = (props) => {
+  const { availableETHInWei } = props
+  const setMaxAmount = useSetMaxAmountToken("ethAmount", availableETHInWei)
+  return (
+    <AvailableTokenForm
+      formInputProps={{
+        name: "ethAmount",
+        inputAddon: <MaxAmountAddon onClick={setMaxAmount} text="Max Amount" />,
+      }}
+      {...props}
+    />
+  )
+}
 
 const WithdrawETHFormik = withFormik({
   validateOnChange: false,
@@ -113,4 +130,4 @@ const WithdrawETHFormik = withFormik({
     return getErrorsObj(errors)
   },
   displayName: "WithdrawETHForm",
-})(AvailableETHForm)
+})(WithdrawETHForm)
