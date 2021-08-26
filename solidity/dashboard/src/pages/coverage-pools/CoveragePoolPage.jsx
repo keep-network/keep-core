@@ -2,7 +2,6 @@ import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   CheckListBanner,
-  HowDoesItWorkBanner,
   DepositForm,
   InitiateDepositModal,
 } from "../../components/coverage-pools"
@@ -55,8 +54,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     pendingWithdrawal,
     withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
-
-  const modal = useSelector((state) => state.modal)
 
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 

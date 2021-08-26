@@ -49,7 +49,7 @@ const ReinitiateWithdrawalModal = ({
         })
       )
     }
-  }, [step, amount, pendingWithdrawalBalance])
+  }, [step, amount, pendingWithdrawalBalance, dispatch])
 
   return (
     <>

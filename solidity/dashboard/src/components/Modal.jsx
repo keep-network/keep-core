@@ -95,32 +95,6 @@ export const ModalContextProvider = ({ children }) => {
   const awaitingPromiseRef = useRef()
   const modal = useSelector((state) => state.modal)
 
-  const closeEventModal = () => {
-    dispatch(clearAdditionalDataFromModal())
-    dispatch(hideModal())
-    closeModal()
-  }
-
-  const openSpecificModal = () => {
-    const SpecificComponent = modal.modalComponentType
-    openModal(
-      <SpecificComponent
-        onCancel={closeEventModal}
-        {...modal.componentProps}
-      />,
-      {
-        closeModal: closeEventModal,
-        ...modal.modalProps,
-      }
-    )
-  }
-
-  useEffect(() => {
-    if (modal.isOpen) {
-      openSpecificModal()
-    }
-  }, [modal.isOpen])
-
   const openModal = useCallback((modalComponent, modalOptions = {}) => {
     setModalComponent(modalComponent)
     setModalOptions(modalOptions)
@@ -134,6 +108,38 @@ export const ModalContextProvider = ({ children }) => {
     setModalOptions(null)
     setIsOpen(false)
   }, [])
+
+  const closeEventModal = useCallback(() => {
+    dispatch(clearAdditionalDataFromModal())
+    dispatch(hideModal())
+    closeModal()
+  }, [dispatch, closeModal])
+
+  const openSpecificModal = useCallback(() => {
+    const SpecificComponent = modal.modalComponentType
+    openModal(
+      <SpecificComponent
+        onCancel={closeEventModal}
+        {...modal.componentProps}
+      />,
+      {
+        closeModal: closeEventModal,
+        ...modal.modalProps,
+      }
+    )
+  }, [
+    closeEventModal,
+    modal.componentProps,
+    modal.modalComponentType,
+    modal.modalProps,
+    openModal,
+  ])
+
+  useEffect(() => {
+    if (modal.isOpen) {
+      openSpecificModal()
+    }
+  }, [modal.isOpen, openSpecificModal])
 
   const onSubmitConfirmationModal = useCallback(
     (values) => {
