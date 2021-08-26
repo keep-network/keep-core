@@ -1,6 +1,7 @@
 const { BN } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
+const { toBN } = require('./helpers/utils');
 
 const {
     shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234,
@@ -18,7 +19,7 @@ function keccak160 (input) {
 }
 
 async function makeDrop (token, drop, wallets, amounts, deposit) {
-    const elements = wallets.map((w, i) => w + web3.utils.padLeft(web3.utils.toHex(amounts[i]), 64).substr(2));
+    const elements = wallets.map((w, i) => w + toBN(amounts[i]).toString(16, 64));
     const hashedElements = elements.map(keccak160).map(x => MerkleTree.bufferToHex(x));
     const tree = new MerkleTree(elements, keccak160, { hashLeaves: true, sort: true });
     const root = tree.getHexRoot();
