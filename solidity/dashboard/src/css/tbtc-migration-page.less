@@ -192,12 +192,16 @@
           }
         }
 
-        .input__label__info-container__additional-info-text {
-          background-color: inherit;
-          border-radius: 0;
-          border: unset;
-          padding: 0;
+        .input__label__info-container {
           margin-bottom: 0;
+
+          &__additional-info-text {
+            background-color: inherit;
+            border-radius: 0;
+            border: unset;
+            padding: 0;
+            margin-bottom: 0;
+          }
         }
 
         &--top,
@@ -258,7 +262,6 @@
     &__form-wrapper {
       flex-grow: 3;
       max-width: 550px;
-      // height: 600px;
     }
   }
 }
