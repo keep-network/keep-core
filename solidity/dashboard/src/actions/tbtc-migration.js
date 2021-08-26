@@ -14,6 +14,9 @@ export const TBTCV2_TOKEN_UNMINTED_EVENT_EMITTED =
 export const TBTCV2_TOKEN_MINTED = "tbtcv2_migration/token_minted"
 export const TBTCV2_TOKEN_UNMINTED = "tbtcv2_migration/token_unminted"
 
+export const TBTCV2_MINT = "tbtcv2_migration/mint"
+export const TBTCV2_UNMINT = "tbtcv2_migration/unmint"
+
 export const fetchDataStart = () => {
   return {
     type: TBTCV2_MIGRATION_FETCH_DATA_START,
@@ -31,5 +34,21 @@ export const fetchDataRequest = (address) => {
   return {
     type: TBTCV2_MIGRATION_FETCH_DATA_REQUEST,
     payload: { address },
+  }
+}
+
+export const mint = (amount, meta) => {
+  return {
+    type: TBTCV2_MINT,
+    payload: { amount },
+    meta,
+  }
+}
+
+export const unmint = (amount, meta) => {
+  return {
+    type: TBTCV2_UNMINT,
+    payload: { amount },
+    meta,
   }
 }

@@ -1,10 +1,23 @@
-import { put, call, take, actionChannel, select } from "redux-saga/effects"
+import {
+  put,
+  call,
+  take,
+  actionChannel,
+  select,
+  takeEvery,
+} from "redux-saga/effects"
 import { takeOnlyOnce } from "./effects"
 import selectors from "./selectors"
 import { Keep } from "../contracts"
 import { tbtcV2Migration } from "../actions"
-import { identifyTaskByAddress, logErrorAndThrow } from "./utils"
+import {
+  identifyTaskByAddress,
+  logErrorAndThrow,
+  submitButtonHelper,
+} from "./utils"
 import { isSameEthAddress } from "../utils/general.utils"
+import { sendTransaction, approveAndTransferToken } from "./web3"
+import { add } from "../utils/arithmetics.utils"
 
 function* fetchData(action) {
   try {
@@ -69,6 +82,7 @@ export function* subscribeToTBTCV2MintedEvent() {
         amount,
       },
     })
+    // TODO: Display `MigrationCompletedModal`.
   }
 }
 
@@ -98,5 +112,60 @@ export function* subscribeToTBTCV2UnmintedEvent() {
         fee,
       },
     })
+
+    // TODO: Display `MigrationCompletedModal`.
   }
+}
+
+function* mint(action) {
+  const { amount } = action.payload
+  const vendingMachineAddress = Keep.tBTCV2Migration.vendingMachine.address
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.tBTCV2Migration.tbtcV1.instance,
+      methodName: "approveAndCall",
+      args: [vendingMachineAddress, amount, []],
+    },
+  })
+}
+
+function* mintWorker(action) {
+  yield call(submitButtonHelper, mint, action)
+}
+
+export function* watchMintTBTCV2() {
+  yield takeEvery(tbtcV2Migration.TBTCV2_MINT, mintWorker)
+}
+
+function* unmint(action) {
+  const { amount } = action.payload
+  const address = yield select(selectors.getUserAddress)
+  const { unmintFee } = yield select(selectors.getTBTCV2Migration)
+
+  const vendingMachineAddress = Keep.tBTCV2Migration.vendingMachine.address
+  const unmintFeeFor = yield call(
+    Keep.tBTCV2Migration.unmintFeeFor,
+    amount,
+    unmintFee
+  )
+  const amountToApprove = add(amount, unmintFeeFor)
+
+  yield* approveAndTransferToken(
+    address,
+    vendingMachineAddress,
+    amountToApprove,
+    Keep.tBTCV2Migration.tbtcV2,
+    Keep.tBTCV2Migration.vendingMachine,
+    "unmint",
+    [amount]
+  )
+}
+
+function* unmintWorker(action) {
+  yield call(submitButtonHelper, unmint, action)
+}
+
+export function* watchUnmintTBTCV2() {
+  yield takeEvery(tbtcV2Migration.TBTCV2_UNMINT, unmintWorker)
 }
