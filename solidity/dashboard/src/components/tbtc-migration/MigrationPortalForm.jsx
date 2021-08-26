@@ -1,13 +1,19 @@
-import React, { useState } from "react"
+import React from "react"
+import { withFormik, useField } from "formik"
 import * as Icons from "../Icons"
 import FormInput from "../FormInput"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { formatAmount, normalizeAmount } from "../../forms/form.utils"
-import { getErrorsObj } from "../../forms/common-validators"
 import Chip from "../Chip"
-import { withFormik } from "formik"
-import { TBTC } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
+import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
+import { Keep } from "../../contracts"
+import { normalizeFloatingAmount } from "../../forms/form.utils"
+import {
+  getErrorsObj,
+  validateAmountInRange,
+} from "../../forms/common-validators"
+import { TBTC } from "../../utils/token.utils"
+import { gt, sub } from "../../utils/arithmetics.utils"
 
 const MigrationPortalForm = ({
   mintingFee = 0,
@@ -15,17 +21,21 @@ const MigrationPortalForm = ({
   tbtcV2Balance = 0,
   onSubmit = () => {},
 }) => {
-  const [from, setFrom] = useState("v1")
-  const [to, setTo] = useState("v2")
+  const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
+
+  const [fromField, , fromHelpers] = useField("from")
+  const [toField, , toHelpers] = useField("to")
+  const from = fromField.value
+  const to = toField.value
 
   const onSwapBtn = (event) => {
     event.preventDefault()
     if (from === "v1") {
-      setFrom("v2")
-      setTo("v1")
+      fromHelpers.setValue("v2")
+      toHelpers.setValue("v1")
     } else {
-      setFrom("v1")
-      setTo("v2")
+      fromHelpers.setValue("v1")
+      toHelpers.setValue("v2")
     }
   }
 
@@ -44,11 +54,10 @@ const MigrationPortalForm = ({
             name="amount"
             type="text"
             label="Amount"
-            normalize={normalizeAmount}
-            format={formatAmount}
+            normalize={normalizeFloatingAmount}
             placeholder="0"
             additionalInfoText={`Balance: ${TBTC.displayAmount(
-              to === "v1" ? tbtcV1Balance : tbtcV2Balance
+              from === "v1" ? tbtcV1Balance : tbtcV2Balance
             )}`}
             inputAddon={<MaxAmountAddon onClick={() => {}} text="Max" />}
           />
@@ -68,8 +77,7 @@ const MigrationPortalForm = ({
             name="amount"
             type="text"
             label="Amount"
-            normalize={normalizeAmount}
-            format={formatAmount}
+            normalize={normalizeFloatingAmount}
             placeholder="0"
             disabled
             additionalInfoText={`Balance: ${TBTC.displayAmount(
@@ -80,11 +88,11 @@ const MigrationPortalForm = ({
       </div>
 
       <p className="text-smaller text-secondary mb-0">
-        {`Minting Fee: ${from === "v2" ? mintingFee : 0}`}
+        {`Minting Fee: ${from === "v2" ? TBTC.displayAmount(mintingFee) : 0}`}
       </p>
       <SubmitButton
         className="btn btn-primary btn-lg w-100 mt-1"
-        onSubmitAction={onSubmit}
+        onSubmitAction={onSubmitBtn}
       >
         {from === "v1" ? "upgrade" : "downgrade"}
       </SubmitButton>
@@ -95,12 +103,42 @@ const MigrationPortalForm = ({
 export default withFormik({
   mapPropsToValues: () => ({
     amount: 0,
+    from: "v1",
+    to: "v2",
   }),
   validate: (values, props) => {
-    // const { amount } = values
-    const errors = {}
+    return getMaxAmount(values, props).then((maxAmount) => {
+      const errors = {}
+      if (gt(TBTC.fromTokenUnit(values.amount).toString(), maxAmount)) {
+        errors.amount = "Insufficient funds"
+      } else {
+        errors.amount = validateAmountInRange(
+          values.amount,
+          maxAmount,
+          1,
+          TBTC,
+          true
+        )
+      }
 
-    return getErrorsObj(errors)
+      return getErrorsObj(errors)
+    })
   },
   displayName: "TBTCMigrationPortalForm",
 })(MigrationPortalForm)
+
+const getMaxAmount = async (values, props) => {
+  const { amount, from } = values
+  const { mintingFee, tbtcV1Balance, tbtcV2Balance } = props
+
+  if (from === "v1") {
+    return tbtcV1Balance
+  }
+
+  const unmintFeeFor = await Keep.tBTCV2Migration.unmintFeeFor(
+    TBTC.fromTokenUnit(amount).toString(),
+    mintingFee
+  )
+
+  return sub(tbtcV2Balance, unmintFeeFor).toString()
+}
