@@ -24,6 +24,7 @@ const InitiateDepositModal = ({
   onBtnClick,
   onCancel,
   transactionFinished = false,
+  transactionHash = "",
 }) => {
   return (
     <ModalWithTimeline
@@ -46,7 +47,17 @@ const InitiateDepositModal = ({
             />
             Success!
           </h3>
-          <h4 className={"text-gray-70 mb-1"}>View your transaction here.</h4>
+          <h4 className={"text-gray-70 mb-1"}>
+            View your transaction&nbsp;
+            <a
+              href={`https://etherscan.io/tx/${transactionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              here
+            </a>
+            .
+          </h4>
         </OnlyIf>
         <div className={"withdraw-modal__data"}>
           <TokenAmount

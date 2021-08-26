@@ -25,7 +25,7 @@ const ClaimTokensModal = ({
       <OnlyIf condition={!transactionFinished}>
         <h3 className={"mb-1"}>You are about to claim:</h3>
       </OnlyIf>
-      <OnlyIf condition={transactionFinished && transactionHash}>
+      <OnlyIf condition={transactionFinished}>
         <h3>Success!</h3>
         <h4 className={"text-gray-70 mb-1"}>
           View your transaction&nbsp;
