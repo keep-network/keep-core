@@ -122,6 +122,8 @@ spec:
             value: '3919'
           - name: KEEP_CLIENT_DATA_DIR
             value: /mnt/keep-client/data
+          - name: METRICS_PORT
+            value: '9601'
         volumeMounts:
           - name: keep-client-config
             mountPath: /mnt/keep-client/config
