@@ -1,4 +1,7 @@
-import React from "react"
+import React, { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { fetchTvlRequest, fetchAPYRequest } from "../../actions/coverage-pool"
+import { MetricsSection } from "../../components/coverage-pools"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
 import List from "../../components/List"
@@ -40,9 +43,35 @@ const about = [
 ]
 
 const HowItWorksPage = () => {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    dispatch(fetchTvlRequest())
+    dispatch(fetchAPYRequest())
+  }, [dispatch])
+
+  const {
+    totalValueLocked,
+    totalValueLockedInUSD,
+    isTotalValueLockedFetching,
+    apy,
+    isApyFetching,
+    totalAllocatedRewards,
+    totalCoverageClaimed,
+  } = useSelector((state) => state.coveragePool)
+
   return (
     <>
-      {/* TODO add a section with metrics- the same as is on the Coverage Pool Deposit page. */}
+      <MetricsSection
+        tvl={totalValueLocked}
+        tvlInUSD={totalValueLockedInUSD}
+        rewardRate={apy}
+        isRewardRateFetching={isApyFetching}
+        totalAllocatedRewards={totalAllocatedRewards}
+        isTotalAllocatedRewardsFetching={isTotalValueLockedFetching}
+        lifetimeCovered={totalCoverageClaimed}
+        isLifetimeCoveredFetching={isTotalValueLockedFetching}
+      />
       <section className="cov-how-it-works__info-section">
         <Icons.CoveragePool className="info-section__icon" />
         <header className="info-section__header">

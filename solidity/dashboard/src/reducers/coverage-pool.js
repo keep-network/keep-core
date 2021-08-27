@@ -18,6 +18,7 @@ export const coveragePoolInitialData = {
   isTotalValueLockedFetching: false,
   tvlError: null,
   totalAllocatedRewards: 0,
+  totalCoverageClaimed: 0,
 
   // APY
   apy: 0,
@@ -51,6 +52,7 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
         totalValueLocked: action.payload.tvl,
         totalValueLockedInUSD: action.payload.tvlInUSD,
         totalAllocatedRewards: action.payload.totalAllocatedRewards,
+        totalCoverageClaimed: action.payload.totalCoverageClaimed,
         isTotalValueLockedFetching: false,
         tvlError: null,
       }

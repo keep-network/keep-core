@@ -311,4 +311,20 @@ describe("Test CoveragePoolV1 lib", () => {
     expect(spyOnGetPastEvents).toHaveBeenCalledWith("RewardToppedUp")
     expect(result.toString()).toEqual(Token.fromTokenUnit(60).toString())
   })
+
+  it("should return the total coverage claimed amount", async () => {
+    const mockedEventsData = [
+      { returnValues: { amount: Token.fromTokenUnit(30).toString() } },
+      { returnValues: { amount: Token.fromTokenUnit(20).toString() } },
+    ]
+    const spy = jest
+      .spyOn(coveragePoolV1.assetPoolContract, "getPastEvents")
+      .mockResolvedValue(mockedEventsData)
+
+    const expectedResult = Token.fromTokenUnit(50).toString()
+    const result = await coveragePoolV1.totalCoverageClaimed()
+
+    expect(spy).toHaveBeenCalledWith("CoverageClaimed")
+    expect(result.toString()).toEqual(expectedResult)
+  })
 })

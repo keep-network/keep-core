@@ -256,6 +256,18 @@ class CoveragePoolV1 {
     )
   }
 
+  /**
+   * Calculates the amount of collateral token used from the coverage pool to
+   * cover a loss since the start of the pool.
+   * @return {Promise<string>} The total amount of collateral token used from the
+   * coverage pool to cover a loss.
+   */
+  totalCoverageClaimed = async () => {
+    return (
+      await this.assetPoolContract.getPastEvents("CoverageClaimed")
+    ).reduce((reducer, _) => add(reducer, _.returnValues.amount), "0")
+  }
+
   covTokensAllowed = async (owner, spender) => {
     return await this.covTokenContract.makeCall("allowance", owner, spender)
   }
