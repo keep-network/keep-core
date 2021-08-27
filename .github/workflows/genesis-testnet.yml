@@ -5,7 +5,6 @@ name: Genesis Submitter / Testnet
 
 on:
   workflow_dispatch:
-  push: # TODO: Just for testing. Remove before merging!
 
 jobs:
   submit-genesis:
@@ -31,7 +30,7 @@ jobs:
 
       - name: Install external keep-core contracts
         env:
-          KEEP_CORE_VERSION: latest #TODO: Change to `ropsten`
+          KEEP_CORE_VERSION: ropsten
         run: |
           mkdir external && cd "$_"
           npm init -y
