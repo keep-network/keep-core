@@ -76,7 +76,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
         },
       })
     )
-    await openConfirmationModal(
+    const { amount } = await openConfirmationModal(
       {
         modalOptions: {
           title: "Re-initiate withdrawal",
@@ -94,8 +94,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
       },
       ReinitiateWithdrawalModal
     )
-    // TODO: ADD PROPER AMOUNT
-    dispatch(withdrawAssetPool("0", awaitingPromise))
+    dispatch(withdrawAssetPool(amount, awaitingPromise))
   }
 
   const formattedDataForDataTable =

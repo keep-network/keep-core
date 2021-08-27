@@ -35,6 +35,7 @@ const ReinitiateWithdrawalModal = ({
       setStep((prevStep) => prevStep + 1)
       setAmount(KEEP.fromTokenUnit(values.tokenAmount).toString())
     } else if (step === 2) {
+      onBtnClick({ amount })
     }
   }
 
@@ -76,7 +77,7 @@ const ReinitiateWithdrawalModal = ({
             covTotalSupply={covTotalSupply}
             containerTitle={step2Title}
             submitBtnText={"withdraw"}
-            onBtnClick={onBtnClick}
+            onBtnClick={onSubmit}
             onCancel={onCancel}
             className={"reinitiate-withdrawal-modal__main-container"}
             transactionFinished={false}
@@ -90,7 +91,7 @@ const ReinitiateWithdrawalModal = ({
             covTotalSupply={covTotalSupply}
             withdrawalDelay={withdrawalDelay}
             submitBtnText={"withdraw"}
-            onBtnClick={onBtnClick}
+            onBtnClick={onSubmit}
             onCancel={onCancel}
             className={"increase-withdrawal-modal__main-container"}
             transactionFinished={false}

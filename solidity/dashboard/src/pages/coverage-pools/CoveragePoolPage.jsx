@@ -119,8 +119,9 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         },
         InitiateCovPoolsWithdrawModal
       )
+      dispatch(withdrawAssetPool(amount, awaitingPromise))
     } else {
-      await openConfirmationModal(
+      const { amount: finalAmount } = await openConfirmationModal(
         {
           modalOptions: {
             title: "Re-initiate withdrawal",
@@ -139,9 +140,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         },
         ReinitiateWithdrawalModal
       )
+      dispatch(withdrawAssetPool(finalAmount, awaitingPromise))
     }
-
-    dispatch(withdrawAssetPool(amount, awaitingPromise))
   }
 
   const onCancel = () => {}
