@@ -1,5 +1,5 @@
 import React from "react"
-import { withFormik, useField } from "formik"
+import { withFormik, useField, useFormikContext } from "formik"
 import * as Icons from "../Icons"
 import FormInput from "../FormInput"
 import MaxAmountAddon from "../MaxAmountAddon"
@@ -39,6 +39,7 @@ const MigrationPortalForm = ({
   onSubmit = () => {},
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
+  const { setFieldValue } = useFormikContext()
 
   const [fromField, , fromHelpers] = useField("from")
   const [toField, , toHelpers] = useField("to")
@@ -66,7 +67,9 @@ const MigrationPortalForm = ({
           <h3 className="flex row center" style={styles.tokenLabel}>
             <Icons.TBTC />
             &nbsp;tBTC&nbsp;
-            <h5 style={styles.fromBox}>{from}</h5>
+            <span className="h5" style={styles.fromBox}>
+              {from}
+            </span>
           </h3>
           <FormInput
             name="amount"
@@ -77,7 +80,19 @@ const MigrationPortalForm = ({
             additionalInfoText={`Balance: ${TBTC.displayAmount(
               from === "v1" ? tbtcV1Balance : tbtcV2Balance
             )}`}
-            inputAddon={<MaxAmountAddon onClick={() => {}} text="Max" />}
+            inputAddon={
+              <MaxAmountAddon
+                onClick={() => {
+                  setFieldValue(
+                    "amount",
+                    TBTC.toTokenUnit(
+                      from === "v1" ? tbtcV1Balance : tbtcV2Balance
+                    ).toString()
+                  )
+                }}
+                text="Max"
+              />
+            }
           />
         </div>
         <button className="from-to-switcher" onClick={onSwapBtn}>
@@ -90,9 +105,9 @@ const MigrationPortalForm = ({
           <h3 className="flex row center" style={styles.tokenLabel}>
             <Icons.TBTC />
             &nbsp;tBTC&nbsp;
-            <h5 className="self-center" style={styles.toBox}>
+            <span className="h5" style={styles.toBox}>
               {to}
-            </h5>
+            </span>
           </h3>
           <FormInput
             name="amount"
