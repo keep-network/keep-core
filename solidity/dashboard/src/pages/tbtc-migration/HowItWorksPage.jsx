@@ -31,7 +31,8 @@ const HowItWorksPage = () => {
           <h2 className="text-grey-70 mb-1">What is token migration?</h2>
           <h3 className="text-grey-50">
             Token migration is a method which upgrades and downgrades your tBTC
-            tokens in one single transaction.
+            tokens in one&nbsp;
+            <strong className="text-secondary">single transaction.</strong>
           </h3>
         </header>
         <NavLink
@@ -45,26 +46,31 @@ const HowItWorksPage = () => {
       <section className="tile tbtc-migration__resources">
         <h3 className="mb-1">Why upgrade your tBTC?</h3>
         <List>
-          <List.Title className="h5 text-violet-80">how it works</List.Title>
+          <List.Title className="h5 text-violet-80">Upgrade perks</List.Title>
           <List.Content className="bullets bullets--violet-80 text-grey-60">
             <List.Item className="mb-1">
               <strong>
                 It costs you zero to upgrade or downgrade your tokens.
               </strong>
-              &nbsp;There will be zero Keep Network fees.
+              &nbsp;There will be zero Keep Network fees but you need to pay the
+              Ethereum Network gas costs.
             </List.Item>
             <List.Item className="mb-1">
-              The upgrade from v1 to v2 is&nbsp;<strong>reversible</strong>
-              .&nbsp;This means you can always go back from v2 to v1 if you need
-              to.
+              <strong>
+                The upgrade from v1 to v2, or v2 to v1 is reversible.
+              </strong>
+              &nbsp;This means you can always go back from v2 to v1,v1 to v2 if
+              you need to. The reversibility will be working until the tBTC v2
+              bridge is launched.
             </List.Item>
             <List.Item className="mb-1">
               <strong>Why would I downgrade?</strong>&nbsp;You might need to
-              downgrade from v2 to v1 in the event of liquidation or redemption.
+              downgrade from v2 to v1 if you need to interact with the v1
+              bridge.
             </List.Item>
             <List.Item className="mb-1">
-              <strong>You like yield farming?</strong>&nbsp;From existing tBTC
-              pools which will soon/now transition to utilizing tBTCv2 only.
+              <strong>You like yield farming?</strong>&nbsp;Existing tBTC pools
+              which will soon transition to utilizing tBTCv2 only.
             </List.Item>
           </List.Content>
         </List>
