@@ -57,6 +57,7 @@ const HowItWorksPage = () => {
     apy,
     isApyFetching,
     totalAllocatedRewards,
+    totalCoverageClaimed,
   } = useSelector((state) => state.coveragePool)
 
   return (
@@ -68,8 +69,8 @@ const HowItWorksPage = () => {
         isRewardRateFetching={isApyFetching}
         totalAllocatedRewards={totalAllocatedRewards}
         isTotalAllocatedRewardsFetching={isTotalValueLockedFetching}
-        // TODO fetch the covered value
-        lifetimeCovered={0}
+        lifetimeCovered={totalCoverageClaimed}
+        isLifetimeCoveredFetching={isTotalValueLockedFetching}
       />
       <section className="cov-how-it-works__info-section">
         <Icons.CoveragePool className="info-section__icon" />

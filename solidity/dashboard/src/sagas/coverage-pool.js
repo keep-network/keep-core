@@ -48,7 +48,17 @@ function* fetchTvl() {
     const totalAllocatedRewards = yield call(
       Keep.coveragePoolV1.totalAllocatedRewards
     )
-    yield put(fetchTvlSuccess({ tvl, tvlInUSD, totalAllocatedRewards }))
+    const totalCoverageClaimed = yield call(
+      Keep.coveragePoolV1.totalCoverageClaimed
+    )
+    yield put(
+      fetchTvlSuccess({
+        tvl,
+        tvlInUSD,
+        totalAllocatedRewards,
+        totalCoverageClaimed,
+      })
+    )
   } catch (error) {
     yield* logError(COVERAGE_POOL_FETCH_TVL_ERROR, error)
   }

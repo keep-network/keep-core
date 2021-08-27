@@ -32,6 +32,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     apy,
     isApyFetching,
     totalAllocatedRewards,
+    totalCoverageClaimed,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
@@ -71,8 +72,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         isRewardRateFetching={isApyFetching}
         totalAllocatedRewards={totalAllocatedRewards}
         isTotalAllocatedRewardsFetching={isTotalValueLockedFetching}
-        // TODO fetch the covered value
-        lifetimeCovered={0}
+        lifetimeCovered={totalCoverageClaimed}
+        isLifetimeCoveredFetching={isTotalValueLockedFetching}
       />
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
