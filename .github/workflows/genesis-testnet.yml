@@ -1,14 +1,14 @@
 # This workflow initiates beacon genesis on testnet. The workflow should be
 # manually dispatched after the `keep-core` contracts get deployed and
 # kubernetes pods get rotated.
-name: Beacon genesis
+name: Genesis Submitter / Testnet
 
 on:
   workflow_dispatch:
   push: # TODO: Just for testing. Remove before merging!
 
 jobs:
-  beacon-genesis:
+  submit-genesis:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -45,4 +45,4 @@ jobs:
           CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME_WS }}
           CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle exec ./scripts/genesis.js —-network ${{ env.TRUFFLE_NETWORK }}
+        run: npx truffle exec ./scripts/genesis.js --network $TRUFFLE_NETWORK
