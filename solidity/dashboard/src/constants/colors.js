@@ -28,4 +28,5 @@ export const colors = {
   brandViolet40: "#AE96E1",
   brandViolet20: "#D7CBF0",
   brandViolet10: "#F2EEFA",
+  white: "#fff",
 }

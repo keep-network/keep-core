@@ -105,42 +105,6 @@
 }
 
 .tbtc-migration-portal {
-  &__tbtc-balances {
-    .tile();
-
-    align-self: flex-start;
-    padding-bottom: 0;
-    .tbtc-balances {
-      margin-top: 1.5rem;
-      .tbtc-balance {
-        margin: 0 -2rem;
-        padding: 2rem 2rem;
-
-        &--v1 {
-          background-color: @color-black;
-
-          > .token-amount {
-            svg {
-              path {
-                fill: @white;
-              }
-            }
-          }
-        }
-
-        &--v2 {
-          > .token-amount {
-            svg {
-              path {
-                fill: @color-black;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
   &__form-wrapper {
     .tile();
   }
@@ -153,11 +117,11 @@
 
       .from-to-switcher {
         all: unset;
-        background-color: @secondary-color;
+        background-color: @color-black;
         align-self: center;
-        width: 42px;
-        height: 32px;
-        border-radius: 8px !important;
+        width: 44px;
+        height: 44px;
+        border-radius: 50% !important;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -177,13 +141,13 @@
         }
         svg {
           path {
+            fill: @primary-color;
             transition: 0.3s;
           }
         }
       }
 
       .tbtc-token-container {
-        // border: 1px solid @color-black;
         position: relative;
         overflow: hidden;
         padding: 1rem;
@@ -191,19 +155,14 @@
         border-radius: 8px;
 
         &--v1 {
-          background-color: @color-black;
-          color: @white;
-          svg {
-            path {
-              fill: @white;
-            }
-          }
+          background-color: @color-mint-10;
           .input__label__text {
-            color: @white;
+            color: inherit;
           }
         }
 
         &--v2 {
+          background-color: @color-grey-10;
           .input__label__text {
             color: inherit;
           }
@@ -221,47 +180,12 @@
           }
         }
 
-        &--top,
-        &--bottom {
-          &::before {
-            content: "";
-            position: absolute;
-            top: 0px;
-            left: 0px;
-            bottom: 0px;
-            right: 0px;
-            border: 1px solid @color-black;
-            border-radius: 8px;
-          }
-          &::after {
-            content: "";
-            position: absolute;
-            padding: 2px;
-
-            width: 44px;
-            height: 32px;
-            left: 50%;
-            margin-left: -25px;
-            border-radius: 8px;
-            border: 1px solid @color-black;
-            background-color: @white;
-          }
-        }
-
         &--top {
-          margin-bottom: -14px;
-
-          &::after {
-            bottom: -20px;
-          }
+          margin-bottom: -18px;
         }
 
         &--bottom {
-          margin-top: -14px;
-
-          &::after {
-            top: -20px;
-          }
+          margin-top: -18px;
         }
       }
     }
@@ -269,16 +193,10 @@
 
   @media screen and (min-width: 1000px) {
     display: flex;
-
-    &__tbtc-balances {
-      flex: 1;
-      max-width: 350px;
-      margin-right: 1rem;
-    }
+    justify-content: center;
 
     &__form-wrapper {
-      flex-grow: 3;
-      max-width: 550px;
+      min-width: 550px;
     }
   }
 }

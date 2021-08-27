@@ -3,7 +3,6 @@ import { withFormik, useField } from "formik"
 import * as Icons from "../Icons"
 import FormInput from "../FormInput"
 import MaxAmountAddon from "../MaxAmountAddon"
-import Chip from "../Chip"
 import { SubmitButton } from "../Button"
 import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
 import { Keep } from "../../contracts"
@@ -14,6 +13,24 @@ import {
 } from "../../forms/common-validators"
 import { TBTC } from "../../utils/token.utils"
 import { gt, sub } from "../../utils/arithmetics.utils"
+import { colors } from "../../constants/colors"
+
+const styles = {
+  tokenLabel: { margin: "0.5rem 0" },
+  fromBox: {
+    color: colors.white,
+    borderRadius: "0.5rem",
+    backgroundColor: colors.black,
+    padding: "0 0.5rem",
+  },
+  toBox: {
+    color: colors.black,
+    borderRadius: "0.5rem",
+    backgroundColor: colors.white,
+    border: `1px solid ${colors.black}`,
+    padding: "0 0.5rem",
+  },
+}
 
 const MigrationPortalForm = ({
   mintingFee = 0,
@@ -45,10 +62,13 @@ const MigrationPortalForm = ({
         <div
           className={`tbtc-token-container tbtc-token-container--${from} tbtc-token-container--top`}
         >
-          <Chip text="from" size="big" color="primary" />
-          <h3 className="mt-1 flex row center">
+          <h5>from</h5>
+          <h3 className="flex row center" style={styles.tokenLabel}>
             <Icons.TBTC />
-            &nbsp;tBTC {from}
+            &nbsp;tBTC&nbsp;
+            <h5 className="text-smaller" style={styles.fromBox}>
+              {from}
+            </h5>
           </h3>
           <FormInput
             name="amount"
@@ -68,10 +88,13 @@ const MigrationPortalForm = ({
         <div
           className={`tbtc-token-container tbtc-token-container--${to} tbtc-token-container--bottom`}
         >
-          <Chip text="to" size="big" color="black" />
-          <h3 className="mt-1 flex row center">
+          <h5>to</h5>
+          <h3 className="flex row center" style={styles.tokenLabel}>
             <Icons.TBTC />
-            &nbsp;tBTC {to}
+            &nbsp;tBTC&nbsp;
+            <h5 className="self-center" style={styles.toBox}>
+              {to}
+            </h5>
           </h3>
           <FormInput
             name="amount"
