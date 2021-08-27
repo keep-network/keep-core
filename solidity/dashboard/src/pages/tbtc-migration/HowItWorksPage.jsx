@@ -6,7 +6,7 @@ import Divider from "../../components/Divider"
 
 const tbtcPools = [
   {
-    id: "saddle",
+    id: "v2",
     icon: Icons.SaddleWhite,
     label: "tBTC v2 Pool on Saddle",
     btnText: "go to pool ↗",
@@ -14,8 +14,8 @@ const tbtcPools = [
     external: true,
   },
   {
-    id: "keep",
-    icon: Icons.KeepBlackGreen,
+    id: "v1",
+    icon: Icons.UniswapLogo,
     label: "tBTC v1 Pool on Keep",
     btnText: "go to pool",
     link: "/liquidity",
