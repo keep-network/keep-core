@@ -66,9 +66,7 @@ const MigrationPortalForm = ({
           <h3 className="flex row center" style={styles.tokenLabel}>
             <Icons.TBTC />
             &nbsp;tBTC&nbsp;
-            <h5 className="text-smaller" style={styles.fromBox}>
-              {from}
-            </h5>
+            <h5 style={styles.fromBox}>{from}</h5>
           </h3>
           <FormInput
             name="amount"
