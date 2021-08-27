@@ -191,7 +191,7 @@ jobs:
       - name: Publish to npm
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
-          npm publish --access=public
+          npm publish --access=public --tag ${{ github.event.inputs.environment }}
 
       - name: Upload keep-core contracts for initcontainer build
         uses: actions/upload-artifact@v2
