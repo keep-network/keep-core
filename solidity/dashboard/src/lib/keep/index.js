@@ -25,6 +25,7 @@ import {
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
   COV_TOKEN_CONTRACT_NAME,
   ASSET_POOL_CONTRACT_NAME,
+  REWARDS_POOL_CONTRACT_NAME,
 } from "./contracts"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
@@ -111,7 +112,10 @@ class Keep {
   [COV_TOKEN_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [ASSET_POOL_CONTRACT_NAME]
+  [ASSET_POOL_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [REWARDS_POOL_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
@@ -158,6 +162,7 @@ class Keep {
       this.assetPoolContract,
       this.covTokenContract,
       this.keepTokenContract,
+      this.rewardsPoolContract,
       this.exchangeService,
       this.web3
     )

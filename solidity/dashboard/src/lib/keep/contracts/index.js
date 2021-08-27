@@ -58,6 +58,7 @@ export const SaddleSwapArtifact = SaddleSwap
 
 export const ASSET_POOL_CONTRACT_NAME = "assetPoolContract"
 export const COV_TOKEN_CONTRACT_NAME = "covTokenContract"
+export const REWARDS_POOL_CONTRACT_NAME = "rewardsPoolContract"
 
 export const RewardsPoolArtifact = RewardsPool
 
@@ -120,6 +121,9 @@ const contracts = {
   },
   [COV_TOKEN_CONTRACT_NAME]: {
     artifact: UnderwriterToken,
+  },
+  [REWARDS_POOL_CONTRACT_NAME]: {
+    artifact: RewardsPool,
   },
 }
 

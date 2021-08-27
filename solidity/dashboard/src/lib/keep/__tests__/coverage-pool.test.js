@@ -1,13 +1,7 @@
 import CoveragePoolV1 from "../coverage-pool"
 import { Token } from "../../../utils/token.utils"
-import { RewardsPoolArtifact } from "../contracts"
 import { APYCalculator } from "../helper"
 
-jest.mock("../contracts", () => ({
-  RewardsPoolArtifact: {
-    abi: [],
-  },
-}))
 jest.mock("../helper", () => ({
   APYCalculator: {
     calculatePoolRewardRate: jest.fn(),
@@ -28,6 +22,7 @@ describe("Test CoveragePoolV1 lib", () => {
     const assetPoolContract = createMockedContract("0x9")
     const covTokenContract = createMockedContract("0x7")
     const collateralToken = createMockedContract("0x6")
+    const rewardsPoolContract = createMockedContract("0x7")
     const exchangeService = {
       getKeepTokenPriceInUSD: jest.fn(),
     }
@@ -39,6 +34,7 @@ describe("Test CoveragePoolV1 lib", () => {
       assetPoolContract,
       covTokenContract,
       collateralToken,
+      rewardsPoolContract,
       exchangeService,
       web3
     )
@@ -181,52 +177,14 @@ describe("Test CoveragePoolV1 lib", () => {
     expect(result).toEqual(mockedBalance)
   })
 
-  describe
-
-  it("should return the reward pool contract", async () => {
-    const mockedRewardPoolContractAddress = "0x123"
-    const spyOnRewardsPool = jest
-      .spyOn(coveragePoolV1.assetPoolContract, "makeCall")
-      .mockResolvedValue(mockedRewardPoolContractAddress)
-
-    const mockedRewardPoolContract = createMockedContract(
-      mockedRewardPoolContractAddress
-    )
-    const spyOnCreateContract = jest
-      .spyOn(coveragePoolV1.web3, "createContractInstance")
-      .mockReturnValue(mockedRewardPoolContract)
-
-    const result = await coveragePoolV1.getRewardPoolContract()
-    const result2 = await coveragePoolV1.getRewardPoolContract()
-
-    expect(spyOnRewardsPool).toHaveBeenCalledWith("rewardsPool")
-    expect(spyOnRewardsPool).toHaveBeenCalledTimes(1)
-    expect(spyOnCreateContract).toHaveBeenCalledWith(
-      RewardsPoolArtifact.abi,
-      mockedRewardPoolContractAddress,
-      coveragePoolV1.assetPoolContract.deploymentTxnHash,
-      coveragePoolV1.assetPoolContract.deployedAtBlock
-    )
-    expect(spyOnCreateContract).toHaveBeenCalledTimes(1)
-    expect(result).toEqual(mockedRewardPoolContract)
-    expect(result).toEqual(result2)
-    expect(coveragePoolV1._rewardPoolContract).toEqual(result)
-  })
-
   it("should return the reward rate of the rewards pool contract", async () => {
-    const mockedRewardsPoolContract = createMockedContract("0x1234")
-    const spyOnRewardPoolContract = jest
-      .spyOn(coveragePoolV1, "getRewardPoolContract")
-      .mockResolvedValue(mockedRewardsPoolContract)
-
     const rewardRate = Token.fromTokenUnit("1000").toString()
     const spyOnMakeCall = jest
-      .spyOn(mockedRewardsPoolContract, "makeCall")
+      .spyOn(coveragePoolV1.rewardPoolContract, "makeCall")
       .mockResolvedValue(rewardRate)
 
     const result = await coveragePoolV1.rewardPoolRewardRate()
 
-    expect(spyOnRewardPoolContract).toHaveBeenCalled()
     expect(spyOnMakeCall).toHaveBeenCalledWith("rewardRate")
     expect(result).toEqual(rewardRate)
   })
@@ -284,11 +242,6 @@ describe("Test CoveragePoolV1 lib", () => {
   })
 
   it("should return the total allocated rewards", async () => {
-    const mockedRewardsPoolContract = createMockedContract("0x0123")
-    const spyOnGetRewardsPoolContract = jest
-      .spyOn(coveragePoolV1, "getRewardPoolContract")
-      .mockResolvedValue(mockedRewardsPoolContract)
-
     const mockedEvents = [
       {
         returnValues: {
@@ -302,12 +255,11 @@ describe("Test CoveragePoolV1 lib", () => {
       },
     ]
     const spyOnGetPastEvents = jest
-      .spyOn(mockedRewardsPoolContract, "getPastEvents")
+      .spyOn(coveragePoolV1.rewardPoolContract, "getPastEvents")
       .mockResolvedValue(mockedEvents)
 
     const result = await coveragePoolV1.totalAllocatedRewards()
 
-    expect(spyOnGetRewardsPoolContract).toHaveBeenCalled()
     expect(spyOnGetPastEvents).toHaveBeenCalledWith("RewardToppedUp")
     expect(result.toString()).toEqual(Token.fromTokenUnit(60).toString())
   })
