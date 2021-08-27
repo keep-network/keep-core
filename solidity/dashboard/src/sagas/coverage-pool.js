@@ -160,6 +160,8 @@ export function* subscribeToCovTokenTransferEvent() {
     )
 
     const address = yield select(selectors.getUserAddress)
+    const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
+
     let updatedCovTotalSupply = covTotalSupply
     if (isSameEthAddress(from, ZERO_ADDRESS)) {
       updatedCovTotalSupply = add(covTotalSupply, value).toString()
@@ -168,7 +170,10 @@ export function* subscribeToCovTokenTransferEvent() {
     }
 
     let arithmeticOpration = null
-    if (isSameEthAddress(address, from)) {
+    if (
+      isSameEthAddress(address, from) &&
+      !isSameEthAddress(to, assetPoolAddress) // if it's not withdrawal initiation
+    ) {
       arithmeticOpration = sub
     } else if (isSameEthAddress(address, to)) {
       arithmeticOpration = add
