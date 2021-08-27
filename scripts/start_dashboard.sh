@@ -6,6 +6,7 @@ LOG_END='\n\e[0m' # new line + reset color
 
 KEEP_CORE_PATH=$PWD
 DASHBOARD_DIR_PATH="$KEEP_CORE_PATH/solidity/dashboard"
+KEEP_CORE_ARTIFACTS_PATH="$KEEP_CORE_PATH/solidity/artifacts"
 
 KEEP_ECDSA_PATH="$PWD/../keep-ecdsa"
 KEEP_ECDSA_SOL_PATH="$PWD/../keep-ecdsa/solidity"
@@ -16,6 +17,8 @@ MERKLE_DISTRIBUTOR_OUTPUT_PATH="$KEEP_ECDSA_DISTRIBUTOR_PATH/output-merkle-objec
 
 TBTC_PATH="$PWD/../tbtc"
 TBTC_SOL_ARTIFACTS_PATH="$TBTC_PATH/solidity/artifacts"
+
+COV_POOLS_PATH="$PWD/../coverage-pools"
 
 printf "${LOG_START}Migrating contracts for keep-core...${LOG_END}"
 cd "$KEEP_CORE_PATH"
@@ -33,31 +36,49 @@ printf "${LOG_START}Initialize contracts for keep-ecdsa...${LOG_END}"
 cd $KEEP_ECDSA_SOL_PATH
 
 # Get network ID.
-NETWORK_ID_OUTPUT=$(npx truffle exec ./scripts/get-network-id.js)
+NETWORK_ID_OUTPUT=$(npx truffle exec ./scripts/get-network-id.js --network local)
 NETWORK_ID=$(echo "$NETWORK_ID_OUTPUT" | tail -1)
+GET_NETWORK_JSON_QUERY=".networks.\"${NETWORK_ID}\".address"
 
 # Extract TBTCSystem contract address.
-JSON_QUERY=".networks.\"${NETWORK_ID}\".address"
 TBTC_SYSTEM_CONTRACT="${TBTC_SOL_ARTIFACTS_PATH}/TBTCSystem.json"
-TBTC_SYSTEM_CONTRACT_ADDRESS=$(cat ${TBTC_SYSTEM_CONTRACT} | jq "${JSON_QUERY}" | tr -d '"')
+TBTC_SYSTEM_CONTRACT_ADDRESS=$(cat ${TBTC_SYSTEM_CONTRACT} | jq "${GET_NETWORK_JSON_QUERY}" | tr -d '"')
 
 printf "${LOG_START}TBTCSystem contract address is: ${TBTC_SYSTEM_CONTRACT_ADDRESS}${LOG_END}"
 
 # Run keep-ecdsa initialization script.
-./scripts/initialize.sh --network local --application-address $TBTC_SYSTEM_CONTRACT_ADDRESS
+cd $KEEP_ECDSA_PATH
+./scripts/initialize.sh --contracts-only --network local --application-address $TBTC_SYSTEM_CONTRACT_ADDRESS
+
+# Extract KEEP token contract address.
+KEEP_TOKEN_CONTRACT="${KEEP_CORE_ARTIFACTS_PATH}/KeepToken.json"
+KEEP_TOKEN_CONTRACT_ADDRESS=$(cat ${KEEP_TOKEN_CONTRACT} | jq "${GET_NETWORK_JSON_QUERY}" | tr -d '"')
+
+printf "${LOG_START}KEEP token contract address is: ${KEEP_TOKEN_CONTRACT_ADDRESS}${LOG_END}"
+
+cd $COV_POOLS_PATH
+printf "${LOG_START}Creating links for cvovrage pools...${LOG_END}"
+KEEP_TOKEN_ADDRESS=$KEEP_TOKEN_CONTRACT_ADDRESS ./scripts/install.sh
+
+# In the Keep Token Dashboard we use `npm` instead of `yarn` so we need to link
+# the `keep-network/coverage-pool` package manually via npm.
+npm link
 
 printf "${LOG_START}Installing Keep Token Dashboard...${LOG_END}"
 
 cd $DASHBOARD_DIR_PATH
 
-## uncomment when version of a dependency in package.json has changed.
-# printf "${LOG_START}Installing NPM dependencies in dashboard...${LOG_END}"
+# uncomment when version of a dependency in package.json has changed.
+printf "${LOG_START}Installing NPM dependencies in dashboard...${LOG_END}"
 # rm -rf node_modules/
 # rm package-lock.json
 npm install
 
 cd $DASHBOARD_DIR_PATH
-npm link @keep-network/keep-core @keep-network/keep-ecdsa @keep-network/tbtc
+npm link @keep-network/keep-core \
+    @keep-network/keep-ecdsa \
+    @keep-network/tbtc \
+    @keep-network/coverage-pool
 
 # Make sure files below exists in keep-ecdsa repository. Otherwise comment out.
 printf "${LOG_START}Generating mock input data for ecdsa merkle distributor${LOG_END}"

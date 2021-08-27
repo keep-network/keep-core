@@ -4,6 +4,8 @@ import FormInput from "./FormInput"
 import { colors } from "../constants/colors"
 import { withFormik } from "formik"
 import { getErrorsObj } from "../forms/common-validators"
+import Divider from "./Divider"
+import FormCheckbox from "./FormCheckbox"
 
 const ConfirmationModal = ({
   title,
@@ -29,9 +31,7 @@ const ConfirmationModal = ({
   )
 }
 
-export default React.memo(ConfirmationModal)
-
-export const withConfirmationModal =
+const withConfirmationModal =
   (WrappedComponent) =>
   ({
     title,
@@ -111,3 +111,74 @@ const ConfirmationFormFormik = withFormik({
   handleSubmit: (values, { props }) => props.onBtnClick(values),
   displayName: "ConfirmationForm",
 })(ConfirmationForm)
+
+const AcceptTermForm = ({
+  termText,
+  btnText,
+  onSubmit,
+  onCancel,
+  ...formikProps
+}) => {
+  return (
+    <form>
+      <Divider className="divider divider--tile-fluid" />
+      <FormCheckbox label={termText} name="checked" type="checkbox" />
+      <div className="flex row center mt-2">
+        <Button
+          className="btn btn-lg btn-primary"
+          type="submit"
+          disabled={!(formikProps.isValid && formikProps.dirty)}
+          onClick={formikProps.handleSubmit}
+        >
+          {btnText}
+        </Button>
+        <span onClick={onCancel} className="ml-1 text-link">
+          Cancel
+        </span>
+      </div>
+    </form>
+  )
+}
+
+const AcceptTermFormik = withFormik({
+  mapPropsToValues: () => ({
+    checked: false,
+  }),
+  validate: (values, { confirmationText }) => {
+    const errors = {}
+
+    if (!values.checked) {
+      errors.checked = "Required"
+    }
+
+    return getErrorsObj(errors)
+  },
+  handleSubmit: (values, { props }) => props.onBtnClick(values),
+  displayName: "AcceptTermForm",
+})(AcceptTermForm)
+
+const AcceptTermConfirmationModal = ({
+  title,
+  termText,
+  btnText,
+  onBtnClick,
+  onCancel,
+  children,
+}) => {
+  return (
+    <section>
+      <h3 className="mb-1">{title}</h3>
+      {children}
+      <AcceptTermFormik
+        termText={termText}
+        btnText={btnText}
+        onBtnClick={onBtnClick}
+        onCancel={onCancel}
+      />
+    </section>
+  )
+}
+
+export default React.memo(ConfirmationModal)
+
+export { withConfirmationModal, AcceptTermConfirmationModal }

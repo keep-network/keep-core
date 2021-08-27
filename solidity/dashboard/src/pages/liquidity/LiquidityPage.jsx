@@ -85,7 +85,7 @@ const LiquidityPage = ({ headerTitle }) => {
   }
 
   return (
-    <PageWrapper title={headerTitle} newPage={true}>
+    <PageWrapper title={headerTitle}>
       {isBannerVisible && (
         <Banner className="liquidity-banner">
           <Banner.Icon
