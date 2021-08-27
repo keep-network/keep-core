@@ -1,11 +1,9 @@
 name: Relay Request Submitter / Testnet
 
 on:
-  # TODO: Uncomment once development is done
-  # schedule:
-  #  - cron: '*/30 * * * *'
+  schedule:
+    - cron: '*/30 * * * *'
   workflow_dispatch:
-  push:
 
 jobs:
   submit-relay-request:
@@ -31,7 +29,7 @@ jobs:
 
       - name: Install external keep-core contracts
         env:
-          KEEP_CORE_VERSION: latest #TODO: Change to `ropsten`
+          KEEP_CORE_VERSION: ropsten
         run: |
           mkdir external && cd "$_"
           npm init -y
