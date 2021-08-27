@@ -1,6 +1,7 @@
 import React from "react"
 import Tooltip from "./Tooltip"
 import { KEEP } from "../utils/token.utils"
+import OnlyIf from "./OnlyIf"
 
 const TokenAmount = ({
   amount,
@@ -38,7 +39,7 @@ const TokenAmount = ({
         {...iconProps}
         className={`token-amount__icon ${iconProps.className}`}
       />
-      &nbsp;
+      <OnlyIf condition={icon}>&nbsp;</OnlyIf>
       <Tooltip
         simple
         triggerComponent={() => (

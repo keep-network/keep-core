@@ -26,7 +26,7 @@ const AddTopUpModal = ({
   const onSubmit = (values) => {
     if (step === 1) {
       setAmount(values.amount)
-      setStep((preveStep) => preveStep + 1)
+      setStep((prevStep) => prevStep + 1)
     } else if (step === 2) {
       submitConfirmationModal({ amount })
     }

@@ -24,6 +24,10 @@ import {
   COVERAGE_POOL_FETCH_APY_ERROR,
   fetchAPYSuccess,
   COVERAGE_POOL_FETCH_APY_REQUEST,
+  COVERAGE_POOL_WITHDRAW_ASSET_POOL,
+  COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
+  COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+  COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -32,12 +36,14 @@ import {
   submitButtonHelper,
 } from "./utils"
 import { Keep } from "../contracts"
-import { add, sub } from "../utils/arithmetics.utils"
+import { add, eq, gt, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { sendTransaction } from "./web3"
 import { KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
+import { showModal } from "../actions/modal"
+import { modalComponentType } from "../components/Modal"
 
 function* fetchTvl() {
   try {
@@ -89,10 +95,25 @@ function* fetchCovPoolData(action) {
 
     const balanceOf = yield call(Keep.coveragePoolV1.covBalanceOf, address)
     const totalSupply = yield call(Keep.coveragePoolV1.covTotalSupply)
+
+    const withdrawalDelays = yield call(Keep.coveragePoolV1.withdrawalDelays)
+
+    const pendingWithdrawal = yield call(
+      Keep.coveragePoolV1.pendingWithdrawal,
+      address
+    )
+
+    const withdrawalInitiatedTimestamp = yield call(
+      Keep.coveragePoolV1.withdrawalInitiatedTimestamp,
+      address
+    )
+
+    const covBalance = add(balanceOf, pendingWithdrawal).toString()
+
     const shareOfPool = yield call(
       Keep.coveragePoolV1.shareOfPool,
       totalSupply,
-      balanceOf
+      covBalance
     )
     const estimatedKeepBalance = yield call(
       Keep.coveragePoolV1.estimatedCollateralTokenBalance,
@@ -108,10 +129,15 @@ function* fetchCovPoolData(action) {
     yield put(
       fetchCovPoolDataSuccess({
         shareOfPool,
-        covBalance: balanceOf,
+        covBalance,
+        covTokensAvailableToWithdraw: balanceOf,
         covTotalSupply: totalSupply,
         estimatedRewards,
         estimatedKeepBalance,
+        withdrawalDelay: withdrawalDelays.withdrawalDelay,
+        withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
+        pendingWithdrawal,
+        withdrawalInitiatedTimestamp,
       })
     )
   } catch (error) {
@@ -144,6 +170,8 @@ export function* subscribeToCovTokenTransferEvent() {
     )
 
     const address = yield select(selectors.getUserAddress)
+    const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
+
     let updatedCovTotalSupply = covTotalSupply
     if (isSameEthAddress(from, ZERO_ADDRESS)) {
       updatedCovTotalSupply = add(covTotalSupply, value).toString()
@@ -152,7 +180,10 @@ export function* subscribeToCovTokenTransferEvent() {
     }
 
     let arithmeticOpration = null
-    if (isSameEthAddress(address, from)) {
+    if (
+      isSameEthAddress(address, from) &&
+      !isSameEthAddress(to, assetPoolAddress) // if it's not withdrawal initiation
+    ) {
       arithmeticOpration = sub
     } else if (isSameEthAddress(address, to)) {
       arithmeticOpration = add
@@ -173,6 +204,28 @@ export function* subscribeToCovTokenTransferEvent() {
       shareOfPool
     )
 
+    if (isSameEthAddress(to, address)) {
+      yield put(
+        showModal({
+          modalComponentType:
+            modalComponentType.COV_POOLS.KEEP_DEPOSITED_SUCCESS,
+          componentProps: {
+            transactionFinished: true,
+            transactionHash: event.transactionHash,
+            amount: value,
+            balanceAmount: updatedCovBalance,
+            estimatedBalanceAmountInKeep: estimatedKeepBalance,
+          },
+          modalProps: {
+            title: "Claim tokens",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__claim-tokens",
+            },
+          },
+        })
+      )
+    }
+
     const estimatedRewards = yield call(
       Keep.coveragePoolV1.estimatedRewards,
       address,
@@ -184,9 +237,25 @@ export function* subscribeToCovTokenTransferEvent() {
     const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
     const apy = yield call(Keep.coveragePoolV1.apy)
 
+    const pendingWithdrawal = yield call(
+      Keep.coveragePoolV1.pendingWithdrawal,
+      address
+    )
+
+    const withdrawalInitiatedTimestamp = yield call(
+      Keep.coveragePoolV1.withdrawalInitiatedTimestamp,
+      address
+    )
+
+    const covTokensAvailableToWithdraw = sub(
+      updatedCovBalance,
+      pendingWithdrawal
+    )
+
     yield put(
       covTokenUpdated({
         covBalance: updatedCovBalance,
+        covTokensAvailableToWithdraw,
         covTotalSupply: updatedCovTotalSupply,
         shareOfPool,
         estimatedKeepBalance,
@@ -194,8 +263,117 @@ export function* subscribeToCovTokenTransferEvent() {
         totalValueLocked: tvl,
         totalValueLockedInUSD: tvlInUSD,
         apy,
+        pendingWithdrawal,
+        withdrawalInitiatedTimestamp,
       })
     )
+  }
+}
+
+export function* subscribeToWithdrawalInitiatedEvent() {
+  const requestChan = yield actionChannel(
+    COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED
+  )
+
+  while (true) {
+    const {
+      payload: { event },
+    } = yield take(requestChan)
+    const {
+      returnValues: { underwriter, covAmount },
+    } = event
+
+    const address = yield select(selectors.getUserAddress)
+    const { componentProps } = yield select(selectors.getModalData)
+
+    if (isSameEthAddress(address, underwriter)) {
+      let modalType = modalComponentType.COV_POOLS.INITIATE_WITHDRAWAL
+      let title = "Withdraw"
+      let amount = covAmount
+      if (
+        componentProps?.pendingWithdrawalBalance &&
+        componentProps?.amount &&
+        gt(componentProps?.pendingWithdrawalBalance, 0) &&
+        eq(componentProps?.amount, 0)
+      ) {
+        modalType = modalComponentType.COV_POOLS.RE_INITIATE_WITHDRAWAL
+        title = "Re-initiate withdrawal"
+      } else if (
+        componentProps?.pendingWithdrawalBalance &&
+        componentProps?.amount &&
+        gt(componentProps?.pendingWithdrawalBalance, 0) &&
+        gt(componentProps?.amount, 0)
+      ) {
+        modalType = modalComponentType.COV_POOLS.INCREASE_WITHDRAWAL
+        title = "Re-initiate withdrawal"
+        amount = componentProps.amount
+      }
+
+      yield put(
+        showModal({
+          modalComponentType: modalType,
+          componentProps: {
+            transactionFinished: true,
+            transactionHash: event.transactionHash,
+            pendingWithdrawalBalance: componentProps?.pendingWithdrawalBalance,
+            amount: amount,
+          },
+          modalProps: {
+            title,
+            classes: {
+              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+            },
+          },
+        })
+      )
+
+      const withdrawalInitiatedTimestamp = yield call(
+        Keep.coveragePoolV1.withdrawalInitiatedTimestamp,
+        address
+      )
+
+      yield put(
+        covTokenUpdated({
+          pendingWithdrawal: covAmount,
+          withdrawalInitiatedTimestamp,
+        })
+      )
+    }
+  }
+}
+
+export function* subscribeToWithdrawalCompletedEvent() {
+  const requestChan = yield actionChannel(
+    COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED
+  )
+
+  while (true) {
+    const {
+      payload: { event },
+    } = yield take(requestChan)
+    const {
+      returnValues: { underwriter, amount },
+    } = event
+    const address = yield select(selectors.getUserAddress)
+
+    if (isSameEthAddress(address, underwriter)) {
+      yield put(
+        showModal({
+          modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
+          componentProps: {
+            transactionHash: event.transactionHash,
+            transactionFinished: true,
+            amount: amount,
+          },
+          modalProps: {
+            title: "Claim tokens",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__claim-tokens",
+            },
+          },
+        })
+      )
+    }
   }
 }
 
@@ -220,4 +398,67 @@ function* depositAssetPoolWorker(action) {
 
 export function* watchDepositAssetPool() {
   yield takeEvery(COVERAGE_POOL_DEPOSIT_ASSET_POOL, depositAssetPoolWorker)
+}
+
+function* withdrawAssetPool(action) {
+  const { payload } = action
+  const { amount } = payload
+
+  const address = yield select(selectors.getUserAddress)
+  const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
+
+  const covTokensAllowed = yield call(
+    Keep.coveragePoolV1.covTokensAllowed,
+    address,
+    assetPoolAddress
+  )
+
+  if (gt(amount, covTokensAllowed)) {
+    yield call(sendTransaction, {
+      payload: {
+        contract: Keep.coveragePoolV1.covTokenContract.instance,
+        methodName: "approve",
+        args: [assetPoolAddress, amount],
+      },
+    })
+  }
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.assetPoolContract.instance,
+      methodName: "initiateWithdrawal",
+      args: [amount],
+    },
+  })
+}
+
+function* withdrawAssetPoolWorker(action) {
+  yield call(submitButtonHelper, withdrawAssetPool, action)
+}
+
+export function* watchWithdrawAssetPool() {
+  yield takeEvery(COVERAGE_POOL_WITHDRAW_ASSET_POOL, withdrawAssetPoolWorker)
+}
+
+function* claimTokensFromWithdrawal() {
+  const address = yield select(selectors.getUserAddress)
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.assetPoolContract.instance,
+      methodName: "completeWithdrawal",
+      args: [address],
+    },
+  })
+}
+
+function* claimTokensFromWithdrawalWorker(action) {
+  yield call(submitButtonHelper, claimTokensFromWithdrawal, action)
+}
+
+export function* watchClaimTokensFromWithdrawal() {
+  yield takeEvery(
+    COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
+    claimTokensFromWithdrawalWorker
+  )
 }

@@ -135,6 +135,29 @@ class CoveragePoolV1 {
   }
 
   /**
+   * Estimates KEEP balance from give covKeeps amount
+   * @param {string | number} covKeep covKeep amount that we want to estimate
+   * KEEP value from
+   * @param {string | number} totalSupplyOfCovKeep total supply of covKeeps
+   * @param {string | number} tvl - total supply of KEEPs places in coverage
+   * pools
+   * @return {string} - estimated KEEP amount of given covKEEPS
+   */
+  estimatedBalanceFor = (covKeep, totalSupplyOfCovKeep, tvl) => {
+    if (
+      new BigNumber(covKeep).isZero() ||
+      new BigNumber(totalSupplyOfCovKeep).isZero() ||
+      new BigNumber(tvl).isZero()
+    ) {
+      return "0"
+    }
+    return new BigNumber(covKeep)
+      .div(totalSupplyOfCovKeep)
+      .multipliedBy(tvl)
+      .toString()
+  }
+
+  /**
    * Returns the `AssetPool` contract's balance of the collateral token.
    * @return {Promise<string>} The `AssetPool` contract's balance of the
    * collateral token.
@@ -218,6 +241,34 @@ class CoveragePoolV1 {
     return (
       await this.assetPoolContract.getPastEvents("CoverageClaimed")
     ).reduce((reducer, _) => add(reducer, _.returnValues.amount), "0")
+  }
+
+  covTokensAllowed = async (owner, spender) => {
+    return await this.covTokenContract.makeCall("allowance", owner, spender)
+  }
+
+  withdrawalInitiatedTimestamp = async (address) => {
+    return await this.assetPoolContract.makeCall(
+      "withdrawalInitiatedTimestamp",
+      address
+    )
+  }
+
+  pendingWithdrawal = async (address) => {
+    return await this.assetPoolContract.makeCall("pendingWithdrawal", address)
+  }
+
+  withdrawalDelays = async () => {
+    const withdrawalDelay = await this.assetPoolContract.makeCall(
+      "withdrawalDelay"
+    )
+    const withdrawalTimeout = await this.assetPoolContract.makeCall(
+      "withdrawalTimeout"
+    )
+    return {
+      withdrawalDelay,
+      withdrawalTimeout,
+    }
   }
 }
 

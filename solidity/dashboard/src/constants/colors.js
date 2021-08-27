@@ -28,4 +28,7 @@ export const colors = {
   brandViolet40: "#AE96E1",
   brandViolet20: "#D7CBF0",
   brandViolet10: "#F2EEFA",
+  yellowPrimary: "#FFF9F1",
+  yellowSecondary: "#FF9900",
+  yellow30: "#FFEFD9",
 }

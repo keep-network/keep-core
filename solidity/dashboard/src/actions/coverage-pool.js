@@ -15,7 +15,16 @@ export const COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR =
 export const COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED =
   "coverage_pool/cov_token_transfer_event_emitted"
 
+export const COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED =
+  "coverage_pool/withdrawal_initiated_event_emitted"
+
+export const COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED =
+  "coverage_pool/withdrawal_completed_event_emitted"
+
 export const COVERAGE_POOL_DEPOSIT_ASSET_POOL = "coverage_pool/deposit"
+export const COVERAGE_POOL_WITHDRAW_ASSET_POOL = "coverage_pool/withdraw"
+export const COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL =
+  "coverage_pool/claim_tokens"
 
 export const COVERAGE_POOL_COV_TOKEN_UPDATED = "coverage_pool/cov_token_updated"
 
@@ -79,6 +88,20 @@ export const covTokenTransferEventEmitted = (event) => {
   }
 }
 
+export const coveragePoolWithdrawalInitiatedEventEmitted = (event) => {
+  return {
+    type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+    payload: { event },
+  }
+}
+
+export const coveragePoolWithdrawalCompletedEventEmitted = (event) => {
+  return {
+    type: COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+    payload: { event },
+  }
+}
+
 /**
  * @param {Object} data Cov token info.
  * @param {string} data.shareOfPool The share of the pool. Tha value should be
@@ -103,6 +126,23 @@ export const depositAssetPool = (amount, meta) => {
     payload: {
       amount,
     },
+    meta,
+  }
+}
+
+export const withdrawAssetPool = (amount, meta) => {
+  return {
+    type: COVERAGE_POOL_WITHDRAW_ASSET_POOL,
+    payload: {
+      amount,
+    },
+    meta,
+  }
+}
+
+export const claimTokensFromWithdrawal = (meta) => {
+  return {
+    type: COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
     meta,
   }
 }

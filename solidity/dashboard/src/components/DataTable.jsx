@@ -36,7 +36,7 @@ export class DataTable extends React.Component {
           } = column
           const cellKey = `${item[itemFieldId]}-${field}-${item[field]}-${index}`
           return (
-            <td key={cellKey}>
+            <td key={cellKey} className={column.props.tdClassName}>
               <span className="responsive-header">{column.props.header}</span>
               {this.renderColumnContent(column, item)}
             </td>

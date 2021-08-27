@@ -28,10 +28,15 @@ export const coveragePoolInitialData = {
   isDataFetching: false,
   shareOfPool: 0,
   covBalance: 0,
+  covTokensAvailableToWithdraw: 0,
   covTotalSupply: 0,
   error: null,
   estimatedRewards: 0,
   estimatedKeepBalance: 0,
+  withdrawalDelay: 0,
+  withdrawalTimeout: 0,
+  pendingWithdrawal: 0,
+  withdrawalInitiatedTimestamp: 0,
 }
 
 const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
