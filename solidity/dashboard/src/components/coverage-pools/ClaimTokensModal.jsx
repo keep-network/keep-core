@@ -4,7 +4,9 @@ import { KEEP } from "../../utils/token.utils"
 import Divider from "../Divider"
 import Button from "../Button"
 import OnlyIf from "../OnlyIf"
-import ModalWithTimeline from "./ModalWithTImeline"
+import ModalWithTimeline, {
+  MODAL_WITH_TIMELINE_STEPS,
+} from "./ModalWithTImeline"
 import { useWeb3Address } from "../WithWeb3Context"
 import { shortenAddress } from "../../utils/general.utils"
 import { Keep } from "../../contracts"
@@ -21,7 +23,11 @@ const ClaimTokensModal = ({
 }) => {
   const yourAddress = useWeb3Address()
   return (
-    <ModalWithTimeline className={"claim-tokens-modal__main-container"}>
+    <ModalWithTimeline
+      className={"claim-tokens-modal__main-container"}
+      step={MODAL_WITH_TIMELINE_STEPS.CLAIM_TOKENS}
+      withDescription={!transactionFinished}
+    >
       <OnlyIf condition={!transactionFinished}>
         <h3 className={"mb-1"}>You are about to claim:</h3>
       </OnlyIf>
