@@ -172,7 +172,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         </section>
 
         <section className="tile coverage-pool__balance">
-          <div className={"coverage-pool__balance-title"}>
+          <div className="coverage-pool__balance-title mb-1">
             <h3>Balance</h3>
             <OnlyIf condition={gt(withdrawalInitiatedTimestamp, 0)}>
               <Chip
@@ -212,7 +212,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         </section>
 
         <section className="tile coverage-pool__withdraw-wrapper">
-          <div className={"flex row center"}>
+          <div className={"flex row center mb-1"}>
             <h3>Available to withdraw</h3>
             <ResourceTooltip
               tooltipClassName={"ml-1"}
