@@ -7,11 +7,6 @@ import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
 import { Keep } from "../../contracts"
 
-const infoBannerTitle = "The cooldown period is 21 days.."
-
-const infoBannerDescription =
-  "A withdrawn deposit will be available to claim after 21 days. During cooldown, your funds will accumulate rewards but are also subject to risk to cover for a hit."
-
 const InitiateCovPoolsWithdrawModal = ({
   amount,
   covTokensAvailableToWithdraw,
@@ -43,8 +38,6 @@ const InitiateCovPoolsWithdrawModal = ({
         amount={amount}
         totalValueLocked={totalValueLocked}
         covTotalSupply={covTotalSupply}
-        infoBannerTitle={infoBannerTitle}
-        infoBannerDescription={infoBannerDescription}
       >
         <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Pool Balance &nbsp;</h4>
