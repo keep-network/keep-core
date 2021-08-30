@@ -11,7 +11,6 @@ import MaxAmountAddon from "./MaxAmountAddon"
 import { SubmitButton } from "./Button"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import { KEEP } from "../utils/token.utils"
-import moment from "moment"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
 
 const WithdrawAmountForm = ({
@@ -45,16 +44,6 @@ const WithdrawAmountForm = ({
       >
         {submitBtnText}
       </SubmitButton>
-      <p
-        className={
-          "text-bold text-validation text-center withdraw-amount-form__button-text"
-        }
-      >
-        <span className={"text-bold"}>
-          {moment.duration(withdrawalDelay, "seconds").days()} days
-        </span>{" "}
-        cooldown period
-      </p>
     </form>
   )
 }
