@@ -9,7 +9,7 @@ require (
 	github.com/aristanetworks/goarista v0.0.0-20200206021550-59c4040ef2d3 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/celo-org/celo-blockchain v0.0.0-20210222234634-f8c8f6744526
-	github.com/ethereum/go-ethereum v1.10.1
+	github.com/ethereum/go-ethereum v1.10.8
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/google/uuid v1.1.5
@@ -28,5 +28,5 @@ require (
 	github.com/libp2p/go-libp2p-secio v0.2.2
 	github.com/multiformats/go-multiaddr v0.2.2
 	github.com/urfave/cli v1.22.1
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 )
