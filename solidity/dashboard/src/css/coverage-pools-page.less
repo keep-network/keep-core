@@ -106,49 +106,49 @@
     align-self: start;
   }
 
-    .coverage-pool__balance {
-        grid-area: balance;
-        justify-self: stretch;
-        align-self: start;
+  .coverage-pool__balance {
+    grid-area: balance;
+    justify-self: stretch;
+    align-self: start;
 
-        .coverage-pool__balance-title {
-            display: flex;
-            align-items: center;
+    .coverage-pool__balance-title {
+      display: flex;
+      align-items: center;
 
-            .coverage-pool_pending-withdrawal-chip {
-                margin: 0 1rem;
-            }
+      .coverage-pool_pending-withdrawal-chip {
+        margin: 0 1rem;
+      }
 
-            .coverage-pool__share-of-pool {
-                margin-left: auto
-            }
-        }
+      .coverage-pool__share-of-pool {
+        margin-left: auto;
+      }
+    }
+  }
+
+  > .coverage-pool__checklist {
+    grid-area: available-to-withdraw;
+    justify-self: stretch;
+    align-self: start;
+  }
+
+  .coverage-pool__withdraw-wrapper {
+    grid-area: available-to-withdraw;
+    justify-self: stretch;
+    align-self: start;
+
+    h3 {
+      margin: 0 0 5px 0;
     }
 
-    > .coverage-pool__checklist {
-        grid-area: available-to-withdraw;
-        justify-self: stretch;
-        align-self: start;
+    .coverage-pool__cov-token-amount {
+      margin-bottom: 2rem;
     }
-
-    .coverage-pool__withdraw-wrapper {
-        grid-area: available-to-withdraw;
-        justify-self: stretch;
-        align-self: start;
-
-        h3 {
-            margin: 0 0 5px 0;
-        }
-
-        .coverage-pool__cov-token-amount {
-            margin-bottom: 2rem;
-        }
-    }
+  }
 }
 
 .withdraw-amount-form__button-text {
-    margin: 1rem;
-    font-size: 16px;
+  margin: 1rem;
+  font-size: 16px;
 }
 
 .cov-how-it-works__info-section {
