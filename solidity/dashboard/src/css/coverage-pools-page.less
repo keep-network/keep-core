@@ -79,6 +79,7 @@
 
   .coverage-pool__deposit-form {
     grid-area: deposit-form;
+    align-self: flex-start;
     //margin-bottom: 0;
 
     .deposit-form {
@@ -86,6 +87,19 @@
         background-color: @color-green-bg-light;
         margin: 2rem -2rem;
         padding: 2rem 2rem;
+
+        .input__label__info-container {
+          margin-bottom: 0.5rem;
+
+          &__additional-info-text {
+            color: @color-green;
+            font-weight: 500;
+            font-size: 0.875rem;
+            margin-bottom: 0;
+            padding: 0;
+            background-color: inherit;
+          }
+        }
       }
     }
   }
@@ -100,13 +114,8 @@
     margin-bottom: 0;
   }
 
-  > .coverage-pool__checklist {
-    grid-area: banner;
-    justify-self: stretch;
-    align-self: start;
-  }
-
   .coverage-pool__balance {
+    margin-bottom: 0;
     grid-area: balance;
     justify-self: stretch;
     align-self: start;
@@ -123,12 +132,6 @@
         margin-left: auto;
       }
     }
-  }
-
-  > .coverage-pool__checklist {
-    grid-area: available-to-withdraw;
-    justify-self: stretch;
-    align-self: start;
   }
 
   .coverage-pool__withdraw-wrapper {
