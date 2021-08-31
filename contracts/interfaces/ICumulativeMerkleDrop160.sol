@@ -7,7 +7,7 @@ interface ICumulativeMerkleDrop160 {
     // This event is triggered whenever a call to #setMerkleRoot succeeds.
     event MerkelRootUpdated(bytes20 oldMerkleRoot, bytes20 newMerkleRoot);
     // This event is triggered whenever a call to #claim succeeds.
-    event Claimed(address account, uint256 amount);
+    event Claimed(address indexed account, uint256 amount);
 
     // Returns the address of the token distributed by this contract.
     function token() external view returns (address);
