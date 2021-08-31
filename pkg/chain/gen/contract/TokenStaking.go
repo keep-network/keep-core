@@ -116,7 +116,7 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction authorizeOperatorContract",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 			_operatorContract,
@@ -162,8 +162,8 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction authorizeOperatorContract with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction authorizeOperatorContract with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -193,8 +193,8 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction authorizeOperatorContract with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction authorizeOperatorContract with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -261,7 +261,7 @@ func (ts *TokenStaking) CancelStake(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction cancelStake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -304,8 +304,8 @@ func (ts *TokenStaking) CancelStake(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction cancelStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction cancelStake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -333,8 +333,8 @@ func (ts *TokenStaking) CancelStake(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction cancelStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction cancelStake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -397,7 +397,7 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction claimDelegatedAuthority",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			delegatedAuthoritySource,
 		),
@@ -440,8 +440,8 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction claimDelegatedAuthority with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction claimDelegatedAuthority with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -469,8 +469,8 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction claimDelegatedAuthority with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction claimDelegatedAuthority with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -533,7 +533,7 @@ func (ts *TokenStaking) CommitTopUp(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction commitTopUp",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -576,8 +576,8 @@ func (ts *TokenStaking) CommitTopUp(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction commitTopUp with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction commitTopUp with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -605,8 +605,8 @@ func (ts *TokenStaking) CommitTopUp(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction commitTopUp with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction commitTopUp with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -670,7 +670,7 @@ func (ts *TokenStaking) LockStake(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction lockStake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			operator,
 			duration,
@@ -716,8 +716,8 @@ func (ts *TokenStaking) LockStake(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction lockStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction lockStake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -747,8 +747,8 @@ func (ts *TokenStaking) LockStake(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction lockStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction lockStake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -818,7 +818,7 @@ func (ts *TokenStaking) ReceiveApproval(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction receiveApproval",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_from,
 			_value,
@@ -870,8 +870,8 @@ func (ts *TokenStaking) ReceiveApproval(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction receiveApproval with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -905,8 +905,8 @@ func (ts *TokenStaking) ReceiveApproval(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction receiveApproval with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -981,7 +981,7 @@ func (ts *TokenStaking) RecoverStake(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction recoverStake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -1024,8 +1024,8 @@ func (ts *TokenStaking) RecoverStake(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction recoverStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction recoverStake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1053,8 +1053,8 @@ func (ts *TokenStaking) RecoverStake(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction recoverStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction recoverStake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1118,7 +1118,7 @@ func (ts *TokenStaking) ReleaseExpiredLock(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction releaseExpiredLock",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			operator,
 			operatorContract,
@@ -1164,8 +1164,8 @@ func (ts *TokenStaking) ReleaseExpiredLock(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction releaseExpiredLock with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction releaseExpiredLock with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1195,8 +1195,8 @@ func (ts *TokenStaking) ReleaseExpiredLock(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction releaseExpiredLock with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction releaseExpiredLock with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1266,7 +1266,7 @@ func (ts *TokenStaking) Seize(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction seize",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			amountToSeize,
 			rewardMultiplier,
@@ -1318,8 +1318,8 @@ func (ts *TokenStaking) Seize(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction seize with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction seize with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1353,8 +1353,8 @@ func (ts *TokenStaking) Seize(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction seize with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction seize with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1430,7 +1430,7 @@ func (ts *TokenStaking) Slash(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction slash",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			amountToSlash,
 			misbehavedOperators,
@@ -1476,8 +1476,8 @@ func (ts *TokenStaking) Slash(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction slash with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction slash with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1507,8 +1507,8 @@ func (ts *TokenStaking) Slash(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction slash with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction slash with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1576,7 +1576,7 @@ func (ts *TokenStaking) TransferStakeOwnership(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction transferStakeOwnership",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			operator,
 			newOwner,
@@ -1622,8 +1622,8 @@ func (ts *TokenStaking) TransferStakeOwnership(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction transferStakeOwnership with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction transferStakeOwnership with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1653,8 +1653,8 @@ func (ts *TokenStaking) TransferStakeOwnership(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction transferStakeOwnership with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction transferStakeOwnership with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1721,7 +1721,7 @@ func (ts *TokenStaking) Undelegate(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction undelegate",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -1764,8 +1764,8 @@ func (ts *TokenStaking) Undelegate(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction undelegate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction undelegate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1793,8 +1793,8 @@ func (ts *TokenStaking) Undelegate(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction undelegate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction undelegate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1858,7 +1858,7 @@ func (ts *TokenStaking) UndelegateAt(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction undelegateAt",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 			_undelegationTimestamp,
@@ -1904,8 +1904,8 @@ func (ts *TokenStaking) UndelegateAt(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction undelegateAt with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction undelegateAt with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1935,8 +1935,8 @@ func (ts *TokenStaking) UndelegateAt(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction undelegateAt with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction undelegateAt with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -2003,7 +2003,7 @@ func (ts *TokenStaking) UnlockStake(
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
 		"submitting transaction unlockStake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			operator,
 		),
@@ -2046,8 +2046,8 @@ func (ts *TokenStaking) UnlockStake(
 	}
 
 	tsLogger.Infof(
-		"submitted transaction unlockStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction unlockStake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -2075,8 +2075,8 @@ func (ts *TokenStaking) UnlockStake(
 			}
 
 			tsLogger.Infof(
-				"submitted transaction unlockStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction unlockStake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 

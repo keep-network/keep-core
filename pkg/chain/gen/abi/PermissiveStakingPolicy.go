@@ -4,6 +4,7 @@
 package abi
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,8 +28,14 @@ var (
 	_ = event.NewSubscription
 )
 
+// PermissiveStakingPolicyMetaData contains all meta data concerning the PermissiveStakingPolicy contract.
+var PermissiveStakingPolicyMetaData = &bind.MetaData{
+	ABI: "[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]",
+}
+
 // PermissiveStakingPolicyABI is the input ABI used to generate the binding from.
-const PermissiveStakingPolicyABI = "[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+// Deprecated: Use PermissiveStakingPolicyMetaData.ABI instead.
+var PermissiveStakingPolicyABI = PermissiveStakingPolicyMetaData.ABI
 
 // PermissiveStakingPolicy is an auto generated Go binding around an Ethereum contract.
 type PermissiveStakingPolicy struct {

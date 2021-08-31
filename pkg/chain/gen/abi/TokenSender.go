@@ -4,6 +4,7 @@
 package abi
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,8 +28,14 @@ var (
 	_ = event.NewSubscription
 )
 
+// TokenSenderMetaData contains all meta data concerning the TokenSender contract.
+var TokenSenderMetaData = &bind.MetaData{
+	ABI: "[{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"approveAndCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+}
+
 // TokenSenderABI is the input ABI used to generate the binding from.
-const TokenSenderABI = "[{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_spender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"approveAndCall\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+// Deprecated: Use TokenSenderMetaData.ABI instead.
+var TokenSenderABI = TokenSenderMetaData.ABI
 
 // TokenSender is an auto generated Go binding around an Ethereum contract.
 type TokenSender struct {

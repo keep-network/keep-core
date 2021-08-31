@@ -115,7 +115,7 @@ func (krbo *KeepRandomBeaconOperator) AddServiceContract(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction addServiceContract",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			serviceContract,
 		),
@@ -158,8 +158,8 @@ func (krbo *KeepRandomBeaconOperator) AddServiceContract(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction addServiceContract with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction addServiceContract with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -187,8 +187,8 @@ func (krbo *KeepRandomBeaconOperator) AddServiceContract(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction addServiceContract with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction addServiceContract with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -253,12 +253,12 @@ func (krbo *KeepRandomBeaconOperator) CreateGroup(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction createGroup",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_newEntry,
 			submitter,
 		),
-		"value: ", value,
+		" value: ", value,
 	)
 
 	krbo.transactionMutex.Lock()
@@ -302,8 +302,8 @@ func (krbo *KeepRandomBeaconOperator) CreateGroup(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction createGroup with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction createGroup with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -333,8 +333,8 @@ func (krbo *KeepRandomBeaconOperator) CreateGroup(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction createGroup with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction createGroup with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -402,7 +402,7 @@ func (krbo *KeepRandomBeaconOperator) Genesis(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction genesis",
-		"value: ", value,
+		" value: ", value,
 	)
 
 	krbo.transactionMutex.Lock()
@@ -442,8 +442,8 @@ func (krbo *KeepRandomBeaconOperator) Genesis(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction genesis with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction genesis with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -469,8 +469,8 @@ func (krbo *KeepRandomBeaconOperator) Genesis(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction genesis with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction genesis with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -565,8 +565,8 @@ func (krbo *KeepRandomBeaconOperator) RefreshGasPrice(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction refreshGasPrice with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction refreshGasPrice with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -592,8 +592,8 @@ func (krbo *KeepRandomBeaconOperator) RefreshGasPrice(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction refreshGasPrice with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction refreshGasPrice with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -651,7 +651,7 @@ func (krbo *KeepRandomBeaconOperator) RelayEntry(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction relayEntry",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_groupSignature,
 		),
@@ -694,8 +694,8 @@ func (krbo *KeepRandomBeaconOperator) RelayEntry(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction relayEntry with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction relayEntry with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -723,8 +723,8 @@ func (krbo *KeepRandomBeaconOperator) RelayEntry(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction relayEntry with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction relayEntry with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -823,8 +823,8 @@ func (krbo *KeepRandomBeaconOperator) ReportRelayEntryTimeout(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction reportRelayEntryTimeout with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction reportRelayEntryTimeout with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -850,8 +850,8 @@ func (krbo *KeepRandomBeaconOperator) ReportRelayEntryTimeout(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction reportRelayEntryTimeout with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction reportRelayEntryTimeout with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -910,7 +910,7 @@ func (krbo *KeepRandomBeaconOperator) ReportUnauthorizedSigning(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction reportUnauthorizedSigning",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			groupIndex,
 			signedMsgSender,
@@ -956,8 +956,8 @@ func (krbo *KeepRandomBeaconOperator) ReportUnauthorizedSigning(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction reportUnauthorizedSigning with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction reportUnauthorizedSigning with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -987,8 +987,8 @@ func (krbo *KeepRandomBeaconOperator) ReportUnauthorizedSigning(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction reportUnauthorizedSigning with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction reportUnauthorizedSigning with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1057,12 +1057,12 @@ func (krbo *KeepRandomBeaconOperator) Sign(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction sign",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			requestId,
 			previousEntry,
 		),
-		"value: ", value,
+		" value: ", value,
 	)
 
 	krbo.transactionMutex.Lock()
@@ -1106,8 +1106,8 @@ func (krbo *KeepRandomBeaconOperator) Sign(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction sign with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction sign with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1137,8 +1137,8 @@ func (krbo *KeepRandomBeaconOperator) Sign(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction sign with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction sign with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1210,7 +1210,7 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResult(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction submitDkgResult",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			submitterMemberIndex,
 			groupPubKey,
@@ -1265,8 +1265,8 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResult(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction submitDkgResult with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction submitDkgResult with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1302,8 +1302,8 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResult(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction submitDkgResult with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction submitDkgResult with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1382,7 +1382,7 @@ func (krbo *KeepRandomBeaconOperator) SubmitTicket(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction submitTicket",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			ticket,
 		),
@@ -1425,8 +1425,8 @@ func (krbo *KeepRandomBeaconOperator) SubmitTicket(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction submitTicket with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction submitTicket with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1454,8 +1454,8 @@ func (krbo *KeepRandomBeaconOperator) SubmitTicket(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction submitTicket with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction submitTicket with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1519,7 +1519,7 @@ func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewards(
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
 		"submitting transaction withdrawGroupMemberRewards",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			operator,
 			groupIndex,
@@ -1565,8 +1565,8 @@ func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewards(
 	}
 
 	krboLogger.Infof(
-		"submitted transaction withdrawGroupMemberRewards with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction withdrawGroupMemberRewards with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1596,8 +1596,8 @@ func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewards(
 			}
 
 			krboLogger.Infof(
-				"submitted transaction withdrawGroupMemberRewards with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction withdrawGroupMemberRewards with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
