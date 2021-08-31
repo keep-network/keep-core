@@ -328,10 +328,31 @@ export function* subscribeToWithdrawalCompletedEvent() {
       returnValues: { underwriter, amount, covAmount },
     } = event
     const address = yield select(selectors.getUserAddress)
+    const isAddressedToCurrentAddress = isSameEthAddress(address, underwriter)
 
     const { covTotalSupply, covBalance } = yield select(
       selectors.getCoveragePool
     )
+
+    if (isAddressedToCurrentAddress) {
+      yield put(
+        showModal({
+          modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
+          componentProps: {
+            transactionHash: event.transactionHash,
+            transactionFinished: true,
+            amount: amount,
+          },
+          modalProps: {
+            title: "Claim tokens",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__claim-tokens",
+            },
+          },
+        })
+      )
+    }
+
     const updatedCovTotalSupply = sub(covTotalSupply, covAmount)
     const totalValueLocked = yield call(Keep.coveragePoolV1.totalValueLocked)
     const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
@@ -340,36 +361,9 @@ export function* subscribeToWithdrawalCompletedEvent() {
       .toFormat(2)
     const apy = yield call(Keep.coveragePoolV1.apy)
 
-    if (!isSameEthAddress(address, underwriter)) {
-      yield put(
-        covTokenUpdated({
-          covTotalSupply: updatedCovTotalSupply,
-          totalValueLocked,
-          totalValueLockedInUSD,
-          apy,
-        })
-      )
-      continue
-    }
-
-    yield put(
-      showModal({
-        modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
-        componentProps: {
-          transactionHash: event.transactionHash,
-          transactionFinished: true,
-          amount: amount,
-        },
-        modalProps: {
-          title: "Claim tokens",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__claim-tokens",
-          },
-        },
-      })
-    )
-
-    const updatedCovBalance = sub(covBalance, covAmount)
+    const updatedCovBalance = isAddressedToCurrentAddress
+      ? sub(covBalance, covAmount)
+      : covBalance
 
     const shareOfPool = yield call(
       Keep.coveragePoolV1.shareOfPool,
