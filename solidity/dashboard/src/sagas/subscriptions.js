@@ -20,7 +20,7 @@ import {
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
 } from "../actions"
 import {
-  covTokenTransferEventEmitted,
+  assetPoolDepositedEventEmitted,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   coveragePoolWithdrawalCompletedEventEmitted,
   coveragePoolWithdrawalInitiatedEventEmitted,
@@ -1008,7 +1008,7 @@ export function* observeAssetPoolDepositedEvent() {
     subscribeToEventAndEmitData,
     assetPoolContract,
     EVENTS.COVERAGE_POOLS.DEPOSITED,
-    covTokenTransferEventEmitted,
+    assetPoolDepositedEventEmitted,
     `AssetPool.${EVENTS.COVERAGE_POOLS.DEPOSITED}`
   )
 }

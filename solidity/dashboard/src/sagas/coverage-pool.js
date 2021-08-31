@@ -12,7 +12,7 @@ import {
   COVERAGE_POOL_FETCH_TVL_REQUEST,
   COVERAGE_POOL_FETCH_TVL_ERROR,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_REQUEST,
-  COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED,
+  COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
   fetchTvlStart,
   fetchTvlSuccess,
   fetchCovPoolDataStart,
@@ -154,7 +154,7 @@ export function* watchFetchCovPoolData() {
 
 export function* subscribeToAssetPoolDepositedEvent() {
   const requestChan = yield actionChannel(
-    COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED
+    COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED
   )
 
   while (true) {
