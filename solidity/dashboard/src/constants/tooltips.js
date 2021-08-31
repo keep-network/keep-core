@@ -38,6 +38,8 @@ const resourceTooltipProps = {
     title: "Pending Withdrawal",
     content:
       "After the 21 day cooldown ends, you have a 2 day claim window to claim your tokens and rewards. Your deposit and rewards will be sent in one transaction. If you do not claim your tokens within 2 days, your tokens will return to the pool and you will have to withdraw them again.",
+    linkText: "How it works",
+    redirectLink: "/coverage-pools/how-it-works",
   },
   totalValueLocked: {
     title: "Total Value Locked",
