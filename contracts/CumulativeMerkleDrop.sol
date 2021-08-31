@@ -75,7 +75,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
                     mstore(mem2, leaf)
                 }
 
-                leaf := keccak256(mem1, 64)
+                leaf := keccak256(mem1, 0x40)
             }
 
             valid := eq(root, leaf)
