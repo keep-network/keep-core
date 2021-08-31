@@ -1,0 +1,157 @@
+:toc: macro
+
+= RFC 19: Random Beacon v2
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+The last release of the random beacon got its genesis Sep 16th 2020 and worked
+until November 11th when it was stopped with a panic button as a result of an
+unannounced https://github.com/keep-network/keep-core/blob/main/docs/status-reports/2020-11-11-retro-geth-hardfork.adoc[Ethereum
+hard fork].
+
+For the time it was working, the beacon produced more than 1700 relay entries
+and 70 groups.
+
+Both on-chain and off-chain components proved to be successful but - just like
+with any other product - some pain points were identified by the users. This RFC
+aims at describing the pain points and proposing changes that should make the
+beacon easier to operate and more consistent with tBTC v2.
+
+=== ETH-based pricing
+
+Having reimbursements for various on-chain actions in ETH was a nice feature but
+also complex in practice. Highly volatile gas price led to creating new groups
+too often and gas price ceiling value was impossible to maintain up-to-date.
+With too many groups being created, operators were spending too much ETH on
+ticket submission and too low rewards were getting accumulated per group making
+the reward withdrawal operation not profitable enough or not profitable at all
+in the case of small stakers.
+
+Extra submitter rewards added on top of reimbursements were hard to understand
+for staking providers and calculating the provider’s fee was complicated given
+the non-reimbursable cost of ticket submission. Surprisingly, it is much easier
+for staking providers to calculate their fee and costs in tBTC v1, having a
+clean rule that no operations are reimbursed and the only reward their receive
+is KEEP plus TBTC fees.
+
+=== Aggressive timeouts
+
+Relay entry timeouts were pretty aggressive. Set to 64x6 = 384 blocks, they were
+giving about 1.5 hour to submit a relay entry before the minimum stake from each
+group member was slashed. This timeout proved to be not enough to notify,
+investigate, and fix a problem. Three groups were slashed in a row during the
+November 11th incident that begun around 08:00 UTC, before any US-based
+operators noticed the problem.
+
+
+== Proposal
+
+=== Fees and rewards
+
+In tBTC v1, operators have to execute a lot of on-chain transactions per
+deposit. Even though they are not reimbursed for on-chain actions and they
+receive KEEP rewards and TBTC fees, this scheme proved to be successful and no
+operators complained about it.
+
+For v2 of the random beacon, all rewards and reimbursements should be done in T.
+This scheme is compatible with tBTC v2 design where all rewards and
+reimbursements are also done only in T.
+
+Relay requester should provide a fee in T. The value of the fee is a governable
+parameter. The fee is split into two parts. One part goes to a group creation
+pool and another part is used as a reimbursement for the relay entry submitter.
+What percent of the fee goes to the group creation pool is a governable
+parameter.
+
+Given that we want to incentivize to submit a relay entry as soon as possible
+and that the price relation between gas price and T reimbursement for relay
+entry submission is unknown at the moment the fee is set by the governance, we
+should calculate a delay factor and delay penalty as in v1 of the random beacon.
+The delay penalty should be subtracted from reimbursement and sent to the
+sortition-pool-wide reward pool. The remaining part is sent to the relay entry
+submitter. Over the course 64x6 blocks, reimbursement goes to zero. On-chain we
+are not going to enforce any order of submitters but off-chain clients should
+agree to the order where the member with index 1 has 6 blocks to submit, after 6
+blocks member with index 2 tries to submit, after 12 blocks member with index 3
+tries to submit and so forth.
+
+Anyone should be able to submit a transaction creating a new group and this
+action should be detached from relay entry submission. The submitter of this
+transaction receives a part of the group creation pool and the remaining part
+should be reserved for DKG result submitter as reimbursement for future
+transaction. What percentage of the pool goes where is a governable parameter
+and should be determined based on the gas cost of the two transactions.
+
+To make this scheme works both relay entry and DKG result submission
+transactions need to have predictable gas cost. Although it is guaranteed for
+the latter, the former, in v1 of the beacon, depends on the gas cost of
+executing a callback and needs to be optimized.
+
+T rewards will be distributed continuously to all operators in the beacon
+sortition pool, just like in the case of tBTC v2.
+
+=== Callbacks
+
+In v1 of the random beacon, a callback is executed in the same transaction in
+which relay entry is submitted with a gas limit of 2M. This allows applications
+using the random beacon to avoid an additional complexity at their end but comes
+at the cost of random beacon operators who need to have enough ETH on their
+balance. This approach is not compatible with the idea that all rewards will be
+solely in T given that it is impossible to establish the cost of executing a
+callback in T.
+
+Instead of executing any callback in the same transaction in which relay entry
+is submitted, we can assume that only the simplest callbacks are allowed, up to
+some gas limit set by the governance. Applications wanting to use a relay entry
+should submit another transaction using the relay entry value previously set by
+the random beacon. They should also employ an additional security check making
+sure the entry submitted is only valid for a certain number of blocks to avoid
+situation when relay entry beacon transaction and application-specific
+transaction are executed far from each other.
+
+On the example of tBTC v2, random beacon transaction submitting relay entry
+would only execute a simple callback setting the value of the entry on wallet
+factory, and another transaction executed on tBTC v2 side to the wallet factory,
+would use the entry for sortition.
+
+The fact the full - even the most complex - callback is executed in the same
+transaction in which the relay entry is submitted gives an impression of better
+security. This impression is false though, given that the entry to be submitted
+is visible in the mempool and smart attackers can have their transactions mined
+faster to - for example - put the sortition pool in the desired state for the
+new entry. This issue needs to be solved on the sortition pool side with
+initiation time for new operators in the pool.
+
+=== Group creation
+
+As mentioned in the section about fees and rewards, anyone should be able to
+submit a transaction to create a new group and we should switch from a
+ticket-based approach to sortition pools. Sortition pool should weigh operators
+by stake and allow to select the same operator multiple times. DKG protocol
+should execute in the same way as for v1 and inactive/disqualified members
+should be marked and kicked out of the sortition pool losing their rewards.
+
+=== Timeouts
+
+We should extend the timeout for submitting relay entry to give operators more
+time to react. After 64x6 blocks, relay entry submission reward goes to 0. From
+this point, all operators in the group should start bleeding and losing their
+stake. The bleeding should increase linearly from 0 to the minimum stake per
+operator over the course of 48 hours. Both the initial and hard timeout should
+be governable parameters.
+
+=== Reduced complexity of contract relationships
+
+With all changes implemented as above, we need to answer the question if the
+service contract is still needed and whether we should not implement a simple
+beacon upgradeability scheme in the application using the beacon. In v1, the
+service contract takes care of executing the callback and reimbursing the
+operator. It also estimates entry fee, and determines if it is possible to
+create a new group on the most recent operator contract. All these
+functionalities, needed in v1, are simplified in this RFC so the service
+contract may no longer be needed, and removing it from the execution path could
+save some gas.
