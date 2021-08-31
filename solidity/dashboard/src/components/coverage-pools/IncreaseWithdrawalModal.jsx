@@ -228,7 +228,7 @@ const IncreaseWithdrawalModalTile = ({
   withdrawalDelay,
   expired = false,
 }) => {
-  const endOfWithdrawalDate = moment().add(withdrawalDelay, "days")
+  const endOfWithdrawalDate = moment().add(withdrawalDelay, "seconds")
   return (
     <div className={"modal-with-overview__tile"}>
       <h5 className={"modal-with-overview__tile-title text-grey-50"}>
