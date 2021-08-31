@@ -1,6 +1,6 @@
 module github.com/keep-network/keep-core
 
-go 1.12
+go 1.16
 
 replace github.com/urfave/cli => github.com/keep-network/cli v1.20.0
 
