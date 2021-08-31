@@ -333,11 +333,20 @@ export function* subscribeToWithdrawalCompletedEvent() {
       selectors.getCoveragePool
     )
     const updatedCovTotalSupply = sub(covTotalSupply, amount)
+    const totalValueLocked = yield call(Keep.coveragePoolV1.totalValueLocked)
+    const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
+    const totalValueLockedInUSD = keepInUSD
+      .multipliedBy(KEEP.toTokenUnit(totalValueLocked))
+      .toFormat(2)
+    const apy = yield call(Keep.coveragePoolV1.apy)
 
     if (!isSameEthAddress(address, underwriter)) {
       yield put(
         covTokenUpdated({
           covTotalSupply: updatedCovTotalSupply,
+          totalValueLocked,
+          totalValueLockedInUSD,
+          apy,
         })
       )
       continue
@@ -388,6 +397,9 @@ export function* subscribeToWithdrawalCompletedEvent() {
         covTotalSupply: updatedCovTotalSupply,
         estimatedRewards,
         estimatedKeepBalance,
+        totalValueLockedInUSD,
+        totalValueLocked,
+        apy,
       })
     )
   }
