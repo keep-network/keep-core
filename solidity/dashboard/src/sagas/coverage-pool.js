@@ -332,7 +332,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
     const { covTotalSupply, covBalance } = yield select(
       selectors.getCoveragePool
     )
-    const updatedCovTotalSupply = sub(covTotalSupply, amount)
+    const updatedCovTotalSupply = sub(covTotalSupply, covAmount)
     const totalValueLocked = yield call(Keep.coveragePoolV1.totalValueLocked)
     const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
     const totalValueLockedInUSD = keepInUSD
