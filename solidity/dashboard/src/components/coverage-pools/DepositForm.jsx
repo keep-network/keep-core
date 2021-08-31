@@ -19,6 +19,7 @@ import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
+import { LINK } from "../../constants/constants"
 
 const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
@@ -73,7 +74,11 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
       </SubmitButton>
       <p className="text-center text-secondary mt-1 mb-0">
         Risk warning:&nbsp;
-        <a href="https://example.com" rel="noopener noreferrer" target="_blank">
+        <a
+          href={LINK.coveragePools.docs}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
           Read the documentation
         </a>
       </p>
