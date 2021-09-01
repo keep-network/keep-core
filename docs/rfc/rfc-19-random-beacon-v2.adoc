@@ -17,9 +17,11 @@ For the time it was working, the beacon produced more than 1700 relay entries
 and 70 groups.
 
 Both on-chain and off-chain components proved to be successful but - just like
-with any other product - some pain points were identified by the users. This RFC
-aims at describing the pain points and proposing changes that should make the
-beacon easier to operate and more consistent with tBTC v2.
+with any other product - some pain points were identified by the users.
+The most problematic aspects were the construction of pricing scheme and too
+aggressive timeouts. This RFC aims at describing these problems and proposing
+changes that should make the beacon easier to operate and more consistent with
+tBTC v2.
 
 === ETH-based pricing
 
