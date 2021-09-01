@@ -2,12 +2,12 @@ import OnlyIf from "../OnlyIf"
 import * as Icons from "../Icons"
 import TokenAmount from "../TokenAmount"
 import { covKEEP, KEEP } from "../../utils/token.utils"
-import Banner from "../Banner"
 import Divider from "../Divider"
 import Button from "../Button"
 import React from "react"
 import { AcceptTermConfirmationModal } from "../ConfirmationModal"
 import { Keep } from "../../contracts"
+import { CooldownPeriodBanner } from "../coverage-pools"
 
 const WithdrawalInfo = ({
   transactionFinished,
@@ -18,8 +18,6 @@ const WithdrawalInfo = ({
   amount,
   totalValueLocked,
   covTotalSupply,
-  infoBannerTitle,
-  infoBannerDescription,
   children,
 }) => {
   return (
@@ -65,23 +63,7 @@ const WithdrawalInfo = ({
         {children}
       </div>
       <OnlyIf condition={!transactionFinished}>
-        <Banner
-          icon={Icons.Tooltip}
-          className={`withdraw-modal__banner banner--info mt-2 mb-2`}
-        >
-          <Banner.Icon
-            icon={Icons.Tooltip}
-            className={`withdraw-modal__banner-icon mr-1`}
-            backgroundColor={"transparent"}
-            color={"black"}
-          />
-          <div className={`withdraw-modal__banner-icon-text`}>
-            <Banner.Title>{infoBannerTitle}</Banner.Title>
-            <OnlyIf condition={infoBannerDescription}>
-              <Banner.Description>{infoBannerDescription}</Banner.Description>
-            </OnlyIf>
-          </div>
-        </Banner>
+        <CooldownPeriodBanner />
       </OnlyIf>
       <OnlyIf condition={transactionFinished}>
         <Divider className="divider divider--tile-fluid" />

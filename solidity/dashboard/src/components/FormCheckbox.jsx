@@ -7,10 +7,10 @@ const FormCheckbox = ({ label, withError = false, ...props }) => {
 
   return (
     <>
-      <label>
-        <input checked={field.value} {...field} {...props} />
-        &nbsp;{label}
-      </label>
+      <div className="form-checkbox">
+        <input id={props.name} checked={field.value} {...field} {...props} />
+        <label htmlFor={props.name}>{label}</label>
+      </div>
       <OnlyIf condition={withError && meta.touched && meta.error}>
         <div className="form-error">{meta.error}</div>
       </OnlyIf>

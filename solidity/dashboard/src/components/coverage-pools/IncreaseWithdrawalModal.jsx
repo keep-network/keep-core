@@ -16,17 +16,22 @@ import { useWeb3Address } from "../WithWeb3Context"
 import { addAdditionalDataToModal } from "../../actions/modal"
 import { Keep } from "../../contracts"
 
-const infoBannerTitle = "The cooldown period is 21 days"
-
 const getItems = (keepAmount) => {
   return [
     {
-      label: `Add ${KEEP.displayAmount(
-        keepAmount
-      )} KEEP to your existing expired withdrawal`,
+      label: (
+        <>
+          Add&nbsp;<strong>{KEEP.displayAmountWithSymbol(keepAmount)}</strong>
+          &nbsp;to your existing expired withdrawal
+        </>
+      ),
     },
     {
-      label: `Reset the 21 day cooldown period.`,
+      label: (
+        <>
+          Reset the&nbsp;<strong>21 day</strong>&nbsp;cooldown period.
+        </>
+      ),
     },
   ]
 }
@@ -78,6 +83,7 @@ const IncreaseWithdrawalModal = ({
           totalValueLocked={totalValueLocked}
           covTotalSupply={covTotalSupply}
           onSubmit={onSubmit}
+          onCancel={onCancel}
         />
       </OnlyIf>
       <OnlyIf condition={step === 2}>
@@ -90,32 +96,29 @@ const IncreaseWithdrawalModal = ({
           amount={add(pendingWithdrawalBalance, amount)}
           totalValueLocked={totalValueLocked}
           covTotalSupply={covTotalSupply}
-          infoBannerTitle={infoBannerTitle}
         >
           <div className={"withdraw-modal__data-row"}>
-            <h4 className={"text-grey-50"}>Expired withdrawal &nbsp;</h4>
+            <h4 className={"text-grey-50"}>Expired withdrawal&nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              {KEEP.displayAmount(
+              {KEEP.displayAmountWithSymbol(
                 Keep.coveragePoolV1.estimatedBalanceFor(
                   pendingWithdrawalBalance,
                   covTotalSupply,
                   totalValueLocked
                 )
-              )}{" "}
-              KEEP
+              )}
             </h4>
           </div>
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Increase amount &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              {KEEP.displayAmount(
+              {KEEP.displayAmountWithSymbol(
                 Keep.coveragePoolV1.estimatedBalanceFor(
                   amount,
                   covTotalSupply,
                   totalValueLocked
                 )
-              )}{" "}
-              KEEP
+              )}
             </h4>
           </div>
           <div className={"withdraw-modal__data-row"}>
@@ -135,6 +138,7 @@ const IncreaseWithdrawalModalStep1 = ({
   totalValueLocked,
   covTotalSupply,
   onSubmit,
+  onCancel,
 }) => {
   const items = getItems(
     Keep.coveragePoolV1.estimatedBalanceFor(
@@ -146,7 +150,7 @@ const IncreaseWithdrawalModalStep1 = ({
   return (
     <div>
       <h3 className={"mb-1"}>Take note!</h3>
-      <h4 className={"color-grey-70"}>
+      <h4 className={"text-grey-70"}>
         Your expired withdrawal needs to be re-initiated. This withdrawal will:
       </h4>
       <List
@@ -155,13 +159,15 @@ const IncreaseWithdrawalModalStep1 = ({
       >
         <List.Content className="bullets text-grey-70" />
       </List>
-      <h4 className={"color-grey-70 mb-3"}>Do you want to continue?</h4>
+      <h4 className={"text-grey-70 mb-3"}>Do you want to continue?</h4>
       <Divider className="divider divider--tile-fluid" />
       <div className={"flex row center"}>
         <Button className="btn btn-lg btn-primary" onClick={onSubmit}>
           continue
         </Button>
-        <span className="ml-2 text-link text-grey-70">Cancel</span>
+        <span onClick={onCancel} className="ml-2 text-link text-grey-70">
+          Cancel
+        </span>
       </div>
     </div>
   )
@@ -189,17 +195,18 @@ const ModalWithOverview = ({
           withdrawalDelay={withdrawalDelay}
           expired
         />
-        <h4 className={"modal-with-overview__added-amount color-grey-70"}>
+        <h4 className={"modal-with-overview__added-amount text-grey-70"}>
           <Icons.ArrowDown />
+          &nbsp;
           <Icons.Add />
-          {KEEP.displayAmount(
+          &nbsp;
+          {KEEP.displayAmountWithSymbol(
             Keep.coveragePoolV1.estimatedBalanceFor(
               addedAmount,
               covTotalSupply,
               totalValueLocked
             )
-          )}{" "}
-          KEEP
+          )}
         </h4>
         <IncreaseWithdrawalModal.Tile
           title={"new withdrawal"}
@@ -221,20 +228,21 @@ const IncreaseWithdrawalModalTile = ({
   withdrawalDelay,
   expired = false,
 }) => {
-  const endOfWithdrawalDate = moment().add(withdrawalDelay, "days")
+  const endOfWithdrawalDate = moment().add(withdrawalDelay, "seconds")
   return (
     <div className={"modal-with-overview__tile"}>
-      <h5 className={"modal-with-overview__tile-title"}>{title}</h5>
+      <h5 className={"modal-with-overview__tile-title text-grey-50"}>
+        {title}
+      </h5>
       <div className={"modal-with-overview__withdrawal-info"}>
         <h4 className={"modal-with-overview__amount text-grey-70"}>
-          {KEEP.displayAmount(
+          {KEEP.displayAmountWithSymbol(
             Keep.coveragePoolV1.estimatedBalanceFor(
               amount,
               covTotalSupply,
               totalValueLocked
             )
-          )}{" "}
-          KEEP
+          )}
         </h4>
         <OnlyIf condition={!expired}>
           <div className={"modal-with-overview__delay text-grey-50"}>
@@ -242,7 +250,7 @@ const IncreaseWithdrawalModalTile = ({
           </div>
         </OnlyIf>
         <OnlyIf condition={expired}>
-          <div className={"modal-with-overview__delay text-error"}>expired</div>
+          <div className={"modal-with-overview__delay text-error"}>Expired</div>
         </OnlyIf>
       </div>
       <ProgressBar

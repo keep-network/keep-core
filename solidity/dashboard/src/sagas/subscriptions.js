@@ -20,7 +20,7 @@ import {
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
 } from "../actions"
 import {
-  covTokenTransferEventEmitted,
+  assetPoolDepositedEventEmitted,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   coveragePoolWithdrawalCompletedEventEmitted,
   coveragePoolWithdrawalInitiatedEventEmitted,
@@ -999,17 +999,17 @@ export function* subscribeToOperatorUndelegateEvent() {
   yield fork(updateOperatorData)
 }
 
-export function* observeCovTokenTransferEvent() {
+export function* observeAssetPoolDepositedEvent() {
   yield take(COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS)
 
-  const covTokenContract = Keep.coveragePoolV1.covTokenContract.instance
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
 
   yield fork(
     subscribeToEventAndEmitData,
-    covTokenContract,
-    "Transfer",
-    covTokenTransferEventEmitted,
-    "CovToken.Transfer"
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.DEPOSITED,
+    assetPoolDepositedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.DEPOSITED}`
   )
 }
 
@@ -1021,7 +1021,7 @@ export function* observeWithdrawalInitiatedEvent() {
     assetPoolContract,
     EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
     coveragePoolWithdrawalInitiatedEventEmitted,
-    null
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED}`
   )
 }
 
@@ -1033,6 +1033,6 @@ export function* observeWithdrawalCompletedEvent() {
     assetPoolContract,
     EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
     coveragePoolWithdrawalCompletedEventEmitted,
-    null
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED}`
   )
 }

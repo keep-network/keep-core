@@ -36,14 +36,10 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     totalValueLocked,
     totalValueLockedInUSD,
     isTotalValueLockedFetching,
-    // isDataFetching,
     shareOfPool,
     covBalance,
     covTokensAvailableToWithdraw,
     covTotalSupply,
-    // error,
-    estimatedRewards,
-    estimatedKeepBalance,
     apy,
     isApyFetching,
     totalAllocatedRewards,
@@ -56,6 +52,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
   const address = useWeb3Address()
+
+  const hasCovKEEPTokens = gt(covBalance, 0)
 
   useEffect(() => {
     dispatch(fetchTvlRequest())
@@ -142,8 +140,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     }
   }
 
-  const onCancel = () => {}
-
   return (
     <>
       <MetricsSection
@@ -156,9 +152,11 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         lifetimeCovered={totalCoverageClaimed}
         isLifetimeCoveredFetching={isTotalValueLockedFetching}
       />
-      <PendingWithdrawals
-        covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
-      />
+      <OnlyIf condition={withdrawalInitiatedTimestamp > 0}>
+        <PendingWithdrawals
+          covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
+        />
+      </OnlyIf>
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
           <div className={"flex row center"}>
@@ -176,7 +174,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         </section>
 
         <section className="tile coverage-pool__balance">
-          <div className={"coverage-pool__balance-title"}>
+          <div className="coverage-pool__balance-title mb-1">
             <h3>Balance</h3>
             <OnlyIf condition={gt(withdrawalInitiatedTimestamp, 0)}>
               <Chip
@@ -186,78 +184,81 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
                 color="yellow"
               />
             </OnlyIf>
-            <span className={"coverage-pool__share-of-pool text-grey-40"}>
-              {displayPercentageValue(shareOfPool * 100, false)} of pool
-            </span>
+            <OnlyIf condition={hasCovKEEPTokens}>
+              <span className={"coverage-pool__share-of-pool text-grey-40"}>
+                {displayPercentageValue(shareOfPool * 100, false)} of pool
+              </span>
+            </OnlyIf>
           </div>
-          <TokenAmount
-            wrapperClassName={"coverage-pool__token-amount"}
-            amount={Keep.coveragePoolV1.estimatedBalanceFor(
-              covBalance,
-              covTotalSupply,
-              totalValueLocked
-            )}
-            amountClassName={"h1 text-mint-100"}
-            symbolClassName={"h2 text-mint-100"}
-            token={KEEP}
-            withIcon
-          />
-          <TokenAmount
-            wrapperClassName={"coverage-pool__cov-token-amount"}
-            amount={covBalance}
-            amountClassName={"h3 text-grey-40"}
-            symbolClassName={"h3 text-grey-40"}
-            token={covKEEP}
-            withIcon
-            icon={() => {
-              return <div style={{ width: "32px", height: "32px" }}></div>
-            }}
-          />
+          <OnlyIf condition={!hasCovKEEPTokens}>
+            <h4 className="text-center text-grey-50 mt-3">
+              You have no share of the pool yet.
+              <p>Deposit KEEP to see your balance.</p>
+            </h4>
+          </OnlyIf>
+          <OnlyIf condition={hasCovKEEPTokens}>
+            <TokenAmount
+              wrapperClassName={"coverage-pool__token-amount"}
+              amount={Keep.coveragePoolV1.estimatedBalanceFor(
+                covBalance,
+                covTotalSupply,
+                totalValueLocked
+              )}
+              amountClassName={"h1 text-mint-100"}
+              symbolClassName={"h2 text-mint-100"}
+              token={KEEP}
+              withIcon
+            />
+            <TokenAmount
+              wrapperClassName={"coverage-pool__cov-token-amount"}
+              amount={covBalance}
+              amountClassName={"h3 text-grey-40"}
+              symbolClassName={"h3 text-grey-40"}
+              token={covKEEP}
+            />
+          </OnlyIf>
         </section>
 
-        <section className="tile coverage-pool__withdraw-wrapper">
-          <div className={"flex row center"}>
-            <h3>Available to withdraw</h3>
-            <ResourceTooltip
-              tooltipClassName={"ml-1"}
-              {...resourceTooltipProps.covPoolsAvailableToWithdraw}
+        <OnlyIf condition={hasCovKEEPTokens}>
+          <section className="tile coverage-pool__withdraw-wrapper">
+            <div className={"flex row center mb-1"}>
+              <h3>Available to withdraw</h3>
+              <ResourceTooltip
+                tooltipClassName={"ml-1"}
+                {...resourceTooltipProps.covPoolsAvailableToWithdraw}
+              />
+            </div>
+            <TokenAmount
+              wrapperClassName={"coverage-pool__token-amount"}
+              amount={Keep.coveragePoolV1.estimatedBalanceFor(
+                covTokensAvailableToWithdraw,
+                covTotalSupply,
+                totalValueLocked
+              )}
+              amountClassName={"h2 text-mint-100"}
+              symbolClassName={"h3 text-mint-100"}
+              token={KEEP}
+              withIcon
             />
-          </div>
-          <TokenAmount
-            wrapperClassName={"coverage-pool__token-amount"}
-            amount={Keep.coveragePoolV1.estimatedBalanceFor(
-              covTokensAvailableToWithdraw,
-              covTotalSupply,
-              totalValueLocked
-            )}
-            amountClassName={"h2 text-mint-100"}
-            symbolClassName={"h3 text-mint-100"}
-            token={KEEP}
-            withIcon
-          />
-          <TokenAmount
-            wrapperClassName={"coverage-pool__cov-token-amount"}
-            amount={covTokensAvailableToWithdraw}
-            amountClassName={"h3 text-grey-40"}
-            symbolClassName={"h3 text-grey-40"}
-            token={covKEEP}
-            withIcon
-            icon={() => {
-              return <div style={{ width: "32px", height: "32px" }}></div>
-            }}
-          />
-          <WithdrawAmountForm
-            onCancel={onCancel}
-            submitBtnText={
-              gt(withdrawalInitiatedTimestamp, "0")
-                ? "increase withdrawal"
-                : "withdraw"
-            }
-            withdrawAmount={covTokensAvailableToWithdraw}
-            onSubmit={onSubmitWithdrawForm}
-            withdrawalDelay={withdrawalDelay}
-          />
-        </section>
+            <TokenAmount
+              wrapperClassName={"coverage-pool__cov-token-amount"}
+              amount={covTokensAvailableToWithdraw}
+              amountClassName={"h3 text-grey-40"}
+              symbolClassName={"h3 text-grey-40"}
+              token={covKEEP}
+            />
+            <WithdrawAmountForm
+              submitBtnText={
+                gt(withdrawalInitiatedTimestamp, "0")
+                  ? "increase withdrawal"
+                  : "withdraw"
+              }
+              withdrawAmount={covTokensAvailableToWithdraw}
+              onSubmit={onSubmitWithdrawForm}
+              withdrawalDelay={withdrawalDelay}
+            />
+          </section>
+        </OnlyIf>
       </section>
     </>
   )

@@ -12,8 +12,8 @@ export const COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS =
 export const COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR =
   "coverage_pool/fetch_cov_pool_data_error"
 
-export const COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED =
-  "coverage_pool/cov_token_transfer_event_emitted"
+export const COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED =
+  "coverage_pool/asset_pool_deposited_event_emitted"
 
 export const COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED =
   "coverage_pool/withdrawal_initiated_event_emitted"
@@ -81,9 +81,9 @@ export const fetchCovPoolDataSuccess = (data) => {
   }
 }
 
-export const covTokenTransferEventEmitted = (event) => {
+export const assetPoolDepositedEventEmitted = (event) => {
   return {
-    type: COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED,
+    type: COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
     payload: { event },
   }
 }
