@@ -26,8 +26,11 @@ tBTC v2.
 === ETH-based pricing
 
 Having reimbursements for various on-chain actions in ETH was a nice feature but
-also complex in practice. Highly volatile gas price led to creating new groups
-too often and gas price ceiling value was impossible to maintain up-to-date.
+also complex in practice. Highly volatile gas price on mainnet made the gas price
+ceiling value impossible to maintain up-to-date. Given that the gas price
+ceiling had to be higher than the current gas price and that the fee for future
+group creation was calculated based on the gas price ceiling, new groups were 
+getting created too often. 
 With too many groups being created, operators were spending too much ETH on
 ticket submission and too low rewards were getting accumulated per group making
 the reward withdrawal operation not profitable enough or not profitable at all
