@@ -160,3 +160,8 @@ create a new group on the most recent operator contract. All these
 functionalities, needed in v1, are simplified in this RFC so the service
 contract may no longer be needed, and removing it from the execution path could
 save some gas.
+
+[bibliography]
+== Related Links
+
+- link:rfc-16-pricing.adoc[RFC 16: Pricing]
