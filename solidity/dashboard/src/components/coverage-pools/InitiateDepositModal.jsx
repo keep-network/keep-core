@@ -1,7 +1,6 @@
 import React from "react"
 import { AcceptTermConfirmationModal } from "../ConfirmationModal"
 import TokenAmount from "../TokenAmount"
-import Banner from "../Banner"
 import * as Icons from "../Icons"
 import ModalWithTimeline, {
   MODAL_WITH_TIMELINE_STEPS,
@@ -10,11 +9,7 @@ import OnlyIf from "../OnlyIf"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import Divider from "../Divider"
 import Button from "../Button"
-
-const infoBannerTitle = "The cooldown period is 21 days.."
-
-const infoBannerDescription =
-  "A withdrawn deposit will be available to claim after 21 days. During cooldown, your funds will accumulate rewards but are also subject to risk to cover for a hit."
+import { CooldownPeriodBanner } from "../coverage-pools"
 
 const InitiateDepositModal = ({
   amount, // amount of KEEP that user want to initiate balance with (in KEEP)
@@ -85,21 +80,7 @@ const InitiateDepositModal = ({
           </OnlyIf>
         </div>
         <OnlyIf condition={!transactionFinished}>
-          <Banner
-            icon={Icons.Tooltip}
-            className="withdraw-modal__banner banner--info mt-2 mb-2"
-          >
-            <Banner.Icon
-              icon={Icons.Tooltip}
-              className={`withdraw-modal__banner-icon mr-1`}
-              backgroundColor={"transparent"}
-              color={"black"}
-            />
-            <div className={"withdraw-modal__banner-icon-text"}>
-              <Banner.Title>{infoBannerTitle}</Banner.Title>
-              <Banner.Description>{infoBannerDescription}</Banner.Description>
-            </div>
-          </Banner>
+          <CooldownPeriodBanner />
         </OnlyIf>
         <OnlyIf condition={transactionFinished}>
           <Divider className="divider divider--tile-fluid" />

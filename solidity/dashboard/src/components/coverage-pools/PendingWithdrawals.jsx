@@ -155,14 +155,15 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
         <span>
           {endOfWithdrawalDelayDate.format("MM/DD/YYYY")} at{" "}
           {endOfWithdrawalDelayDate.format("HH:mm:ss")}{" "}
-          <a
+          {/* TODO: Add to calendar button */}
+          {/* <a
             href={"http://google.com"}
             className="arrow-link"
             rel="noopener noreferrer"
             target="_blank"
           >
             Add to calendar
-          </a>
+          </a> */}
         </span>
       </div>
     )

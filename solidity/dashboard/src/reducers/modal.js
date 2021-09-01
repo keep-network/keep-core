@@ -1,8 +1,9 @@
 import {
-  ADD_ADDITIONAL_DATA_TO_MODAL, CLEAR_ADDITIONAL_DATA_FROM_MODAL,
+  ADD_ADDITIONAL_DATA_TO_MODAL,
+  CLEAR_ADDITIONAL_DATA_FROM_MODAL,
   CLOSE_MODAL,
   OPEN_MODAL,
-} from "../actions/modal";
+} from "../actions/modal"
 
 const initialState = {
   isOpen: false,
