@@ -178,7 +178,7 @@ func TestCreateTopicValidator(t *testing.T) {
 		authorIDBytes, _ := authorID.Marshal()
 		message := &pubsubpb.Message{From: authorIDBytes}
 
-		actualResult := validator(nil, peer.ID(i), &pubsub.Message{Message: message})
+		actualResult := validator(nil, peer.ID(rune(i)), &pubsub.Message{Message: message})
 
 		if expectedResults[i] != actualResult {
 			t.Errorf(
