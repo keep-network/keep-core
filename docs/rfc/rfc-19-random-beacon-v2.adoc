@@ -26,7 +26,7 @@ tBTC v2.
 === ETH-based pricing
 
 Having reimbursements for various on-chain actions in ETH was a nice feature but
-also complex in practice. Highly volatile gas price on mainnet made the gas price
+also complex in practice. Highly volatile gas prices on mainnet made the gas price
 ceiling value impossible to maintain up-to-date. Given that the gas price
 ceiling had to be higher than the current gas price and that the fee for future
 group creation was calculated based on the gas price ceiling, new groups were 
@@ -40,13 +40,13 @@ Extra submitter rewards added on top of reimbursements were hard to understand
 for staking providers and calculating the provider’s fee was complicated given
 the non-reimbursable cost of ticket submission. Surprisingly, it is much easier
 for staking providers to calculate their fee and costs in tBTC v1, having a
-clean rule that no operations are reimbursed and the only reward their receive
+clean rule that no operations are reimbursed and the only reward they receive
 is KEEP plus TBTC fees.
 
 === Aggressive timeouts
 
 Relay entry timeouts were pretty aggressive. Set to 64x6 = 384 blocks, they were
-giving about 1.5 hour to submit a relay entry before the minimum stake from each
+giving about 1.5 hours to submit a relay entry before the minimum stake from each
 group member was slashed. This timeout proved to be not enough to notify,
 investigate, and fix a problem. Three groups were slashed in a row during the
 November 11th incident that begun around 08:00 UTC, before any US-based
@@ -72,13 +72,13 @@ pool and another part is used as a reimbursement for the relay entry submitter.
 What percent of the fee goes to the group creation pool is a governable
 parameter.
 
-Given that we want to incentivize to submit a relay entry as soon as possible
+Given that we want to incentivize the submission of a relay entry as soon as possible
 and that the price relation between gas price and T reimbursement for relay
 entry submission is unknown at the moment the fee is set by the governance, we
 should calculate a delay factor and delay penalty as in v1 of the random beacon.
 The delay penalty should be subtracted from reimbursement and sent to the
 sortition-pool-wide reward pool. The remaining part is sent to the relay entry
-submitter. Over the course 64x6 blocks, reimbursement goes to zero. On-chain we
+submitter. Over the course of 64x6 blocks, reimbursement goes to zero. On-chain we
 are not going to enforce any order of submitters but off-chain clients should
 agree to the order where the member with index 1 has 6 blocks to submit, after 6
 blocks member with index 2 tries to submit, after 12 blocks member with index 3
@@ -87,12 +87,12 @@ tries to submit and so forth.
 Anyone should be able to submit a transaction creating a new group and this
 action should be detached from relay entry submission. The submitter of this
 transaction receives a part of the group creation pool and the remaining part
-should be reserved for DKG result submitter as reimbursement for future
+should be reserved for the DKG result submitter as reimbursement for a future
 transaction. What percentage of the pool goes where is a governable parameter
 and should be determined based on the gas cost of the two transactions.
 
-To make this scheme works both relay entry and DKG result submission
-transactions need to have predictable gas cost. Although it is guaranteed for
+To make this scheme work, both the relay entry and the DKG result submission
+transactions need to have predictable gas costs. Although it is guaranteed for
 the latter, the former, in v1 of the beacon, depends on the gas cost of
 executing a callback and needs to be optimized.
 
@@ -115,13 +115,13 @@ some gas limit set by the governance. Applications wanting to use a relay entry
 should submit another transaction using the relay entry value previously set by
 the random beacon. They should also employ an additional security check making
 sure the entry submitted is only valid for a certain number of blocks to avoid
-situation when relay entry beacon transaction and application-specific
+the situation when relay entry beacon transaction and application-specific
 transaction are executed far from each other.
 
-On the example of tBTC v2, random beacon transaction submitting relay entry
-would only execute a simple callback setting the value of the entry on wallet
-factory, and another transaction executed on tBTC v2 side to the wallet factory,
-would use the entry for sortition.
+For example, in tBTC v2, the random beacon transaction which submits the relay
+entry would execute a simple callback that sets the value of the entry on the
+wallet factory. Another transaction executes on the tBTC v2 side to the wallet
+factory that would use the entry for sortition.
 
 The fact the full - even the most complex - callback is executed in the same
 transaction in which the relay entry is submitted gives an impression of better
@@ -135,7 +135,7 @@ initiation time for new operators in the pool.
 
 As mentioned in the section about fees and rewards, anyone should be able to
 submit a transaction to create a new group and we should switch from a
-ticket-based approach to sortition pools. Sortition pool should weigh operators
+ticket-based approach to sortition pools. The sortition pool should weigh operators
 by stake and allow to select the same operator multiple times. DKG protocol
 should execute in the same way as for v1 and inactive/disqualified members
 should be marked and kicked out of the sortition pool losing their rewards.
@@ -152,7 +152,7 @@ be governable parameters.
 === Reduced complexity of contract relationships
 
 With all changes implemented as above, we need to answer the question if the
-service contract is still needed and whether we should not implement a simple
+service contract is still needed and whether we should implement a simple
 beacon upgradeability scheme in the application using the beacon. In v1, the
 service contract takes care of executing the callback and reimbursing the
 operator. It also estimates entry fee, and determines if it is possible to
