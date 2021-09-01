@@ -55,6 +55,7 @@ operators noticed the problem.
 
 == Proposal
 
+[[fees-and-rewards]]
 === Fees and rewards
 
 In tBTC v1, operators have to execute a lot of on-chain transactions per
@@ -133,12 +134,13 @@ initiation time for new operators in the pool.
 
 === Group creation
 
-As mentioned in the section about fees and rewards, anyone should be able to
-submit a transaction to create a new group and we should switch from a
-ticket-based approach to sortition pools. The sortition pool should weigh operators
-by stake and allow to select the same operator multiple times. DKG protocol
-should execute in the same way as for v1 and inactive/disqualified members
-should be marked and kicked out of the sortition pool losing their rewards.
+As mentioned in the section about <<fees-and-rewards,fees and rewards>>, anyone 
+should be able to submit a transaction to create a new group and we should switch 
+from a ticket-based approach to sortition pools. The sortition pool should weigh 
+operators by stake and allow to select the same operator multiple times. DKG 
+protocol should execute in the same way as for v1 and inactive/disqualified 
+members should be marked and kicked out of the sortition pool losing their
+rewards.
 
 === Timeouts
 
