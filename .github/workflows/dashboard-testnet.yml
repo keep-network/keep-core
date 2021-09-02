@@ -83,6 +83,10 @@ jobs:
               @keep-network/tbtc \
               @keep-network/coverage-pools
 
+      # Temporarily we use a secific, fixed cov-pools package version for the
+      # dapp deployment on Ropsten. The version we're using has modified values
+      # of withdrawalDelay & withdrawalTimeout params, to allow for faster
+      # testing. The changes in this workflow are not intended for merge to `main`.
       - name: Get upstream packages' versions
         if: github.event_name == 'workflow_dispatch'
         uses: keep-network/ci/actions/upstream-builds-query@v1
@@ -93,7 +97,7 @@ jobs:
             keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
             keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
             tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
-            coverage-pools-version = github.com/keep-network/coverage-pools#version
+          # coverage-pools-version = github.com/keep-network/coverage-pools#version
 
       - name: Resolve latest contracts
         if: github.event_name == 'workflow_dispatch'
@@ -102,7 +106,8 @@ jobs:
               @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }} \
               @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }} \
               @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
-              @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }}
+              @keep-network/coverage-pools@0.0.1-ropsten.4+ropsten-test-params.5a18cc724133191c110ec9100aa9ccbfdf1e35e2
+          #   @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }}
 
       - name: NPM build
         run: npm run build
