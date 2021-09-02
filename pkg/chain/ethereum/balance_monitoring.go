@@ -61,7 +61,7 @@ func (ec *ethereumChain) balanceMonitor() (*ethutil.BalanceMonitor, error) {
 	) (*ethereum.Wei, error) {
 		ctx, cancelCtx := context.WithTimeout(
 			context.Background(),
-			1*time.Minute,
+			30*time.Second,
 		)
 		defer cancelCtx()
 
