@@ -74,8 +74,10 @@ export class Token {
    *
    * @return {string} Formatted amount in readble format.
    */
-  displayAmount = (amount) => {
-    return this._displayAmount(amount, this.toFormat)
+  displayAmount = (amount, decimals = this.decimals) => {
+    return this._displayAmount(amount, decimals, (amount, decimals) =>
+      this.toFormat(amount, decimals)
+    )
   }
 
   /**
@@ -88,7 +90,10 @@ export class Token {
    *
    * @return {string} Formatted amount.
    */
-  toFormat = (amount, decimalPlaces = this.decimalsToDisplay) => {
+  toFormat = (
+    amount,
+    decimalPlaces = this.decimalsToDisplay
+  ) => {
     const _amount = BigNumber.isBigNumber(amount)
       ? amount
       : new BigNumber(amount)
@@ -153,12 +158,20 @@ export class Token {
    *
    * @return {string} Formatted amount with a metric suffix.
    */
-  displayAmountWithMetricSuffix = (amount) => {
-    const result = this._displayAmount(amount, this.getNumberWithMetricSuffix)
+  displayAmountWithMetricSuffix = (amount, decimals = this.decimals) => {
+    const result = this._displayAmount(
+      amount,
+      decimals,
+      this.getNumberWithMetricSuffix
+    )
     return result?.formattedValue ? result.formattedValue : result
   }
 
-  _displayAmount = (amount, formattingFn = (amount) => amount) => {
+  _displayAmount = (
+    amount,
+    decimals = this.decimals,
+    formattingFn = (amount) => amount
+  ) => {
     const amountInBn = BigNumber.isBigNumber(amount)
       ? amount
       : new BigNumber(amount)
@@ -170,7 +183,7 @@ export class Token {
       return `<${this.MIN_AMOUNT_IN_TOKEN_UNIT}`
     }
 
-    return formattingFn(this.toTokenUnit(amount))
+    return formattingFn(this.toTokenUnit(amount), decimals)
   }
 }
 

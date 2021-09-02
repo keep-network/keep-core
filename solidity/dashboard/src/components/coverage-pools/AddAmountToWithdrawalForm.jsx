@@ -56,8 +56,8 @@ const AddAmountToWithdrawalForm = ({
           name="tokenAmount"
           type="text"
           label="Amount"
-          normalize={normalizeAmount}
-          format={formatAmount}
+          normalize={(amount) => normalizeAmount(amount, true)}
+          format={(amount) => formatAmount(amount, true)}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }

@@ -27,9 +27,15 @@ const TokenAmount = ({
   const _smallestPrecisionDecimals =
     smallestPrecisionDecimals || token.smallestPrecisionDecimals
 
+  const decimalsToDisplayInFormattedAmount =
+    smallestPrecisionDecimals > 2 ? 2 : smallestPrecisionDecimals
+
   const formattedAmount = withMetricSuffix
-    ? token.displayAmountWithMetricSuffix(amount)
-    : token.displayAmount(amount)
+    ? token.displayAmountWithMetricSuffix(
+        amount,
+        decimalsToDisplayInFormattedAmount
+      )
+    : token.displayAmount(amount, decimalsToDisplayInFormattedAmount)
 
   return (
     <div className={`token-amount ${wrapperClassName}`}>
@@ -51,7 +57,8 @@ const TokenAmount = ({
         className="token-amount__tooltip"
       >
         {`${token.toFormat(
-          token.toTokenUnit(amount, _smallestPrecisionDecimals)
+          token.toTokenUnit(amount, _smallestPrecisionDecimals),
+          _smallestPrecisionDecimals
         )} ${_smallestPrecisionUnit}`}
       </Tooltip>
       {withSymbol && (
