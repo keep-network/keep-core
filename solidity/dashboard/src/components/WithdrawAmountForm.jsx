@@ -19,6 +19,7 @@ const WithdrawAmountForm = ({
   submitBtnText,
   withdrawAmount,
   withdrawalDelay, // <number> in seconds
+  allowDecimals = false,
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
@@ -34,8 +35,8 @@ const WithdrawAmountForm = ({
         type="text"
         label="Withdraw Amount"
         placeholder="0"
-        normalize={normalizeAmount}
-        format={formatFormAmount}
+        normalize={(value) => normalizeAmount(value, allowDecimals)}
+        format={(value) => formatFormAmount(value, allowDecimals)}
         inputAddon={<MaxAmountAddon onClick={onAddonClick} text="Max Amount" />}
       />
       <SubmitButton

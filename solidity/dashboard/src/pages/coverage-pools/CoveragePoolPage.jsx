@@ -170,6 +170,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             onSubmit={onSubmitDepositForm}
             tokenAmount={keepTokenBalance.value}
             apy={apy}
+            allowDecimals={true}
           />
         </section>
 
@@ -256,6 +257,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               withdrawAmount={covTokensAvailableToWithdraw}
               onSubmit={onSubmitWithdrawForm}
               withdrawalDelay={withdrawalDelay}
+              allowDecimals={true}
             />
           </section>
         </OnlyIf>

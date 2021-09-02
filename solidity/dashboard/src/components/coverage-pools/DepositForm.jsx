@@ -21,7 +21,13 @@ import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
 
-const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
+const DepositForm = ({
+  tokenAmount,
+  onSubmit,
+  apy,
+  allowDecimals = false,
+  ...formikProps
+}) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
 
@@ -46,8 +52,8 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={normalizeAmount}
-          format={formatAmount}
+          normalize={(value) => normalizeAmount(value, allowDecimals)}
+          format={(value) => formatAmount(value, allowDecimals)}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
