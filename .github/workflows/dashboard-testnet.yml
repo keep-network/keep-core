@@ -29,6 +29,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         if: github.event_name == 'pull_request'
+        with:
+          ref: cov-pools-dapp # Added only temporarily, not intended for workflow on `main`
 
       - uses: dorny/paths-filter@v2
         if: github.event_name == 'pull_request'
@@ -49,6 +51,8 @@ jobs:
         working-directory: ./solidity/dashboard
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: cov-pools-dapp # Added only temporarily, not intended for workflow on `main`
 
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v1
