@@ -8,17 +8,27 @@ module.exports = async ({ deployments, getNamedAccounts }) => {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const args = ['0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'];
+    const args = ['0x111111111117dC0aa78b770fA6A738034120C302'];
 
     const merkleDrop = await deploy('CumulativeMerkleDrop', {
         from: deployer,
         args: args,
         skipIfAlreadyDeployed: true,
+        maxFeePerGas: 100000000000,
+        maxPriorityFeePerGas: 2000000000,
     });
 
     const CumulativeMerkleDrop = await ethers.getContractFactory('CumulativeMerkleDrop');
     const cumulativeMerkleDrop = CumulativeMerkleDrop.attach(merkleDrop.address);
-    await cumulativeMerkleDrop.setMerkleRoot('0xd76ea6876293c58ef1fa269fed8274d9784195fd3c2a12dd0bd35b5729d24f76');
+
+    const txn = await cumulativeMerkleDrop.setMerkleRoot(
+        '0x323e1a13446c2a6ed35c700e5f336cdd367b554f76fd7e8268eb3a302e963924',
+        {
+            maxFeePerGas: 100000000000,
+            maxPriorityFeePerGas: 2000000000,
+        }
+    );
+    await txn;
 
     console.log('CumulativeMerkleDrop deployed to:', merkleDrop.address);
 
