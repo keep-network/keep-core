@@ -131,3 +131,8 @@ export const AUTH_CONTRACTS_LABEL = {
   BONDED_ECDSA_KEEP_FACTORY: "BondedECDSAKeepFactory",
   RANDOM_BEACON: "Keep Random Beacon Operator Contract",
 }
+
+export const TBTC_TOKEN_VERSION = {
+  v1: "v1",
+  v2: "v2",
+}

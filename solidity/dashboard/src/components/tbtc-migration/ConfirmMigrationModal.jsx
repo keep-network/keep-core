@@ -5,6 +5,7 @@ import * as Icons from "../Icons"
 import Divider from "../Divider"
 import Button from "../Button"
 import { TBTC } from "../../utils/token.utils"
+import { TBTC_TOKEN_VERSION } from "../../constants/constants"
 
 const remember = [
   { label: "the upgrade is reversible" },
@@ -48,8 +49,8 @@ const styles = {
 }
 
 const ConfirmMigrationModal = ({
-  from = "v1",
-  to = "v2",
+  from = TBTC_TOKEN_VERSION.v1,
+  to = TBTC_TOKEN_VERSION.v2,
   amount,
   onBtnClick,
   onCancel,
@@ -57,7 +58,7 @@ const ConfirmMigrationModal = ({
   return (
     <section>
       <h3 className="mb-1">{`You are about to ${
-        to === "v2" ? "upgrade" : "downgrade"
+        to === TBTC_TOKEN_VERSION.v2 ? "upgrade" : "downgrade"
       }`}</h3>
       <TokenAmount
         token={TBTC}
@@ -108,7 +109,7 @@ const ConfirmMigrationModal = ({
         type="submit"
         onClick={onBtnClick}
       >
-        {to === "v2" ? "upgrade" : "downgrade"}
+        {to === TBTC_TOKEN_VERSION.v2 ? "upgrade" : "downgrade"}
       </Button>
       <span onClick={onCancel} className="ml-1 text-link">
         Cancel

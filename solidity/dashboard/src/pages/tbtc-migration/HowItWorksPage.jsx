@@ -3,10 +3,11 @@ import List from "../../components/List"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
 import Divider from "../../components/Divider"
+import { TBTC_TOKEN_VERSION } from "../../constants/constants"
 
 const tbtcPools = [
   {
-    id: "v2",
+    id: TBTC_TOKEN_VERSION.v2,
     icon: Icons.SaddleWhite,
     label: "tBTC v2 Pool on Saddle",
     btnText: "go to pool ↗",
@@ -14,7 +15,7 @@ const tbtcPools = [
     external: true,
   },
   {
-    id: "v1",
+    id: TBTC_TOKEN_VERSION.v1,
     icon: Icons.UniswapLogo,
     label: "tBTC v1 Pool on Keep",
     btnText: "go to pool",

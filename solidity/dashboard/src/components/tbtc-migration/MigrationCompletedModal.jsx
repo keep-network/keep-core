@@ -11,6 +11,7 @@ import Divider from "../Divider"
 import Button from "../Button"
 import { TBTC } from "../../utils/token.utils"
 import { gt } from "../../utils/arithmetics.utils"
+import { TBTC_TOKEN_VERSION } from "../../constants/constants"
 
 // TODO: Clean-up styles. They are the same as in the `ConfirmMigrationModal`
 // component.
@@ -61,7 +62,8 @@ const MigrationCompletedModal = ({
           style={styles.successIcon}
           className="success-icon success-icon--green"
         />
-        &nbsp; Success! Tokens&nbsp;{to === "v2" ? "upgraded" : "downgraded"}.
+        &nbsp; Success! Tokens&nbsp;
+        {to === TBTC_TOKEN_VERSION.v2 ? "upgraded" : "downgraded"}.
       </h3>
       <h4 className="text-grey-70 mb-1">
         View your transaction&nbsp;
@@ -91,7 +93,8 @@ const MigrationCompletedModal = ({
         <List.Content>
           <List.Item className="flex row">
             <div className="text-grey-50">
-              {to === "v2" ? "Upgraded" : "Downgraded"}&nbsp;Tokens
+              {to === TBTC_TOKEN_VERSION.v2 ? "Upgraded" : "Downgraded"}
+              &nbsp;Tokens
             </div>
             <div className="ml-a">
               <TokenAmount
@@ -132,15 +135,21 @@ const MigrationCompletedModal = ({
       >
         <DoubleIcon
           MainIcon={Icons.TBTC}
-          SecondaryIcon={to === "v2" ? Icons.SaddleWhite : Icons.KeepBlackGreen}
+          SecondaryIcon={
+            to === TBTC_TOKEN_VERSION.v2
+              ? Icons.SaddleWhite
+              : Icons.KeepBlackGreen
+          }
         />
-        <div>&nbsp;{to === "v2" ? "tBTCv2/Saddle" : "tBTCv1/KEEP"}</div>
-        <OnlyIf condition={to === "v1"}>
+        <div>
+          &nbsp;{to === TBTC_TOKEN_VERSION.v2 ? "tBTCv2/Saddle" : "tBTCv1/KEEP"}
+        </div>
+        <OnlyIf condition={to === TBTC_TOKEN_VERSION.v1}>
           <NavLink to="/liquidity" className="btn btn-primary btn-md ml-a">
             go to pool
           </NavLink>
         </OnlyIf>
-        <OnlyIf condition={to === "v2"}>
+        <OnlyIf condition={to === TBTC_TOKEN_VERSION.v2}>
           <a
             href={"https://saddle.exchange/#/pools/btc/deposit"}
             rel="noopener noreferrer"

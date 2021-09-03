@@ -14,6 +14,7 @@ import {
 import { TBTC } from "../../utils/token.utils"
 import { gt, sub } from "../../utils/arithmetics.utils"
 import { colors } from "../../constants/colors"
+import { TBTC_TOKEN_VERSION } from "../../constants/constants"
 
 const styles = {
   tokenLabel: { margin: "0.5rem 0" },
@@ -48,12 +49,12 @@ const MigrationPortalForm = ({
 
   const onSwapBtn = (event) => {
     event.preventDefault()
-    if (from === "v1") {
-      fromHelpers.setValue("v2")
-      toHelpers.setValue("v1")
+    if (from === TBTC_TOKEN_VERSION.v1) {
+      fromHelpers.setValue(TBTC_TOKEN_VERSION.v2)
+      toHelpers.setValue(TBTC_TOKEN_VERSION.v1)
     } else {
-      fromHelpers.setValue("v1")
-      toHelpers.setValue("v2")
+      fromHelpers.setValue(TBTC_TOKEN_VERSION.v1)
+      toHelpers.setValue(TBTC_TOKEN_VERSION.v2)
     }
   }
 
@@ -78,7 +79,7 @@ const MigrationPortalForm = ({
             normalize={normalizeFloatingAmount}
             placeholder="0"
             additionalInfoText={`Balance: ${TBTC.displayAmount(
-              from === "v1" ? tbtcV1Balance : tbtcV2Balance
+              from === TBTC_TOKEN_VERSION.v1 ? tbtcV1Balance : tbtcV2Balance
             )}`}
             inputAddon={
               <MaxAmountAddon
@@ -86,7 +87,9 @@ const MigrationPortalForm = ({
                   setFieldValue(
                     "amount",
                     TBTC.toTokenUnit(
-                      from === "v1" ? tbtcV1Balance : tbtcV2Balance
+                      from === TBTC_TOKEN_VERSION.v1
+                        ? tbtcV1Balance
+                        : tbtcV2Balance
                     ).toString()
                   )
                 }}
@@ -117,20 +120,22 @@ const MigrationPortalForm = ({
             placeholder="0"
             disabled
             additionalInfoText={`Balance: ${TBTC.displayAmount(
-              to === "v1" ? tbtcV1Balance : tbtcV2Balance
+              to === TBTC_TOKEN_VERSION.v1 ? tbtcV1Balance : tbtcV2Balance
             )}`}
           />
         </div>
       </div>
 
       <p className="text-smaller text-secondary mb-0">
-        {`Minting Fee: ${from === "v2" ? TBTC.displayAmount(mintingFee) : 0}`}
+        {`Minting Fee: ${
+          from === TBTC_TOKEN_VERSION.v2 ? TBTC.displayAmount(mintingFee) : 0
+        }`}
       </p>
       <SubmitButton
         className="btn btn-primary btn-lg w-100 mt-1"
         onSubmitAction={onSubmitBtn}
       >
-        {from === "v1" ? "upgrade" : "downgrade"}
+        {from === TBTC_TOKEN_VERSION.v1 ? "upgrade" : "downgrade"}
       </SubmitButton>
     </form>
   )
@@ -139,8 +144,8 @@ const MigrationPortalForm = ({
 export default withFormik({
   mapPropsToValues: () => ({
     amount: 0,
-    from: "v1",
-    to: "v2",
+    from: TBTC_TOKEN_VERSION.v1,
+    to: TBTC_TOKEN_VERSION.v2,
   }),
   validate: (values, props) => {
     return getMaxAmount(values, props).then((maxAmount) => {
@@ -167,7 +172,7 @@ const getMaxAmount = async (values, props) => {
   const { amount, from } = values
   const { mintingFee, tbtcV1Balance, tbtcV2Balance } = props
 
-  if (from === "v1") {
+  if (from === TBTC_TOKEN_VERSION.v1) {
     return tbtcV1Balance
   }
 

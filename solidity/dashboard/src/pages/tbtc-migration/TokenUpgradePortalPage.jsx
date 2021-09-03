@@ -28,7 +28,9 @@ const TokenUpgradePortalPage = () => {
 
     await openConfirmationModal(
       {
-        modalOptions: { title: to === "v2" ? "Upgrade" : "Downgrade" },
+        modalOptions: {
+          title: to === TBTC_TOKEN_VERSION.v2 ? "Upgrade" : "Downgrade",
+        },
         from,
         to,
         amount: _amount,
@@ -37,7 +39,7 @@ const TokenUpgradePortalPage = () => {
       ConfirmMigrationModal
     )
 
-    if (to === "v2") {
+    if (to === TBTC_TOKEN_VERSION.v2) {
       dispatch(tbtcV2Migration.mint(_amount, awaitingPromise))
     } else {
       dispatch(tbtcV2Migration.unmint(_amount, awaitingPromise))
