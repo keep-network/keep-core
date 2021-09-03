@@ -427,8 +427,8 @@ github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSi
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h1:2pXAsi4OUUjZKr5ds5UOF2IxXN+jVW0WetVO+czkf+A=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
-github.com/keep-network/keep-common v1.5.1 h1:zgUUe2zJNFo9gSgH3RZc+rkm0jpNMK45PJVnJ992U5E=
-github.com/keep-network/keep-common v1.5.1/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
+github.com/keep-network/keep-common v1.7.0 h1:K9OOam4VWfEVf+tMtl0HSwRxGZ/l6JiD1+UXKKCjXOA=
+github.com/keep-network/keep-common v1.7.0/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
