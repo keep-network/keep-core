@@ -8,6 +8,7 @@ import { useModal } from "../../hooks/useModal"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import { useDispatch, useSelector } from "react-redux"
 import { tbtcV2Migration } from "../../actions"
+import { TBTC_TOKEN_VERSION } from "../../constants/constants"
 
 const TokenUpgradePortalPage = () => {
   const { openConfirmationModal } = useModal()
