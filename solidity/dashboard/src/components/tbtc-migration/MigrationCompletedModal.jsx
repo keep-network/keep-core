@@ -50,10 +50,10 @@ const MigrationCompletedModal = ({
   from,
   to,
   amount,
-  fee = 0,
   txHash,
-  address = "0x65b6463582d4f4b4a4ecd53e076152b9561ca415",
+  address,
   onCancel,
+  fee = 0,
 }) => {
   return (
     <>
