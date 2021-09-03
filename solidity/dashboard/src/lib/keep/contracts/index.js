@@ -64,7 +64,7 @@ export const COV_TOKEN_CONTRACT_NAME = "covTokenContract"
 export const RewardsPoolArtifact = RewardsPool
 
 export const TBTCV2_TOKEN_CONTRACT_NAME = "tbtcV2Contract"
-export const TBTCV2_VENDING_MACHINEE_CONTRACT_NAME = "vendingMachineContract"
+export const TBTCV2_VENDING_MACHINE_CONTRACT_NAME = "vendingMachineContract"
 
 const contracts = {
   [KEEP_TOKEN_CONTRACT_NAME]: { artifact: KeepToken },
@@ -129,7 +129,7 @@ const contracts = {
   [TBTCV2_TOKEN_CONTRACT_NAME]: {
     artifact: TBTCV2Token,
   },
-  [TBTCV2_VENDING_MACHINEE_CONTRACT_NAME]: {
+  [TBTCV2_VENDING_MACHINE_CONTRACT_NAME]: {
     artifact: TBTCV2VendingMachine,
   },
 }

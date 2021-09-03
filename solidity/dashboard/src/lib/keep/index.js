@@ -21,7 +21,7 @@ import contracts, {
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
   COV_TOKEN_CONTRACT_NAME,
   ASSET_POOL_CONTRACT_NAME,
-  TBTCV2_VENDING_MACHINEE_CONTRACT_NAME,
+  TBTCV2_VENDING_MACHINE_CONTRACT_NAME,
   TBTCV2_TOKEN_CONTRACT_NAME,
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
@@ -118,7 +118,7 @@ class Keep {
   [TBTCV2_TOKEN_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [TBTCV2_VENDING_MACHINEE_CONTRACT_NAME]
+  [TBTCV2_VENDING_MACHINE_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
