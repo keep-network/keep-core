@@ -1,4 +1,4 @@
-name: Go / keep-core
+name: Go
 
 on:
   schedule:
