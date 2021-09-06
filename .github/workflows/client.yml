@@ -1,6 +1,8 @@
-name: Go
+name: Go / keep-core
 
 on:
+  schedule:
+    - cron: '0 0 * * *'
   push:
     branches:
       - main
