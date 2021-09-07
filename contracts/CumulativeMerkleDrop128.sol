@@ -27,6 +27,7 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
     }
 
     function claim(
+        bytes16 salt,
         address account,
         uint256 cumulativeAmount,
         bytes16 expectedMerkleRoot,
@@ -35,7 +36,7 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
         require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
-        bytes16 leaf = _keccak128(abi.encodePacked(account, cumulativeAmount));
+        bytes16 leaf = _keccak128(abi.encodePacked(salt, account, cumulativeAmount));
         require(_verifyAsm(merkleProof, expectedMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
