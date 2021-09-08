@@ -84,8 +84,6 @@ export default withFormik({
     const { tokenAmount } = values
     const errors = {}
 
-    // TODO: Remove default 0 value
-
     if (lte(props.tokenAmount || 0, 0)) {
       errors.tokenAmount = "Insufficient funds"
     } else {
