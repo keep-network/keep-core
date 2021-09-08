@@ -4,7 +4,7 @@ import FormInput from "../../components/FormInput"
 import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { normalizeAmount, formatAmount } from "../../forms/form.utils"
+import { normalizeFloatingAmount } from "../../forms/form.utils"
 import { KEEP } from "../../utils/token.utils"
 import List from "../List"
 import * as Icons from "../Icons"
@@ -52,8 +52,7 @@ const DepositForm = ({
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={(value) => normalizeAmount(value, allowDecimals)}
-          format={(value) => formatAmount(value, allowDecimals)}
+          normalize={normalizeFloatingAmount}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }

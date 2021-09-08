@@ -4,7 +4,7 @@ import FormInput from "../../components/FormInput"
 import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { normalizeAmount, formatAmount } from "../../forms/form.utils"
+import { normalizeFloatingAmount } from "../../forms/form.utils"
 import { KEEP } from "../../utils/token.utils"
 import TokenAmount from "../TokenAmount"
 import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
@@ -56,8 +56,7 @@ const AddAmountToWithdrawalForm = ({
           name="tokenAmount"
           type="text"
           label="Amount"
-          normalize={(amount) => normalizeAmount(amount, true)}
-          format={(amount) => formatAmount(amount, true)}
+          normalize={normalizeFloatingAmount}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }

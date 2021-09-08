@@ -2,10 +2,7 @@ import React from "react"
 import { withFormik } from "formik"
 import { lte } from "../utils/arithmetics.utils"
 import { getErrorsObj, validateAmountInRange } from "../forms/common-validators"
-import {
-  formatAmount as formatFormAmount,
-  normalizeAmount,
-} from "../forms/form.utils"
+import { normalizeFloatingAmount } from "../forms/form.utils"
 import FormInput from "./FormInput"
 import MaxAmountAddon from "./MaxAmountAddon"
 import { SubmitButton } from "./Button"
@@ -35,8 +32,7 @@ const WithdrawAmountForm = ({
         type="text"
         label="Withdraw Amount"
         placeholder="0"
-        normalize={(value) => normalizeAmount(value, allowDecimals)}
-        format={(value) => formatFormAmount(value, allowDecimals)}
+        normalize={normalizeFloatingAmount}
         inputAddon={<MaxAmountAddon onClick={onAddonClick} text="Max Amount" />}
       />
       <SubmitButton
