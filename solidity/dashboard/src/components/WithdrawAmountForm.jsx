@@ -38,6 +38,7 @@ const WithdrawAmountForm = ({
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
+        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         {submitBtnText}
       </SubmitButton>
@@ -46,8 +47,10 @@ const WithdrawAmountForm = ({
 }
 
 const WithdrawAmountFormWithFormik = withFormik({
+  validateOnChange: true,
+  validateOnBlur: true,
   mapPropsToValues: () => ({
-    withdrawAmount: "",
+    withdrawAmount: "0",
   }),
   validate: (values, props) => {
     const { withdrawAmount } = values
@@ -59,7 +62,7 @@ const WithdrawAmountFormWithFormik = withFormik({
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,
         props.withdrawAmount,
-        KEEP.fromTokenUnit(1)
+        1
       )
     }
 
