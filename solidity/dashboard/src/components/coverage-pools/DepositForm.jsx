@@ -25,7 +25,7 @@ const DepositForm = ({
   tokenAmount,
   onSubmit,
   apy,
-  allowDecimals = false,
+  keepDecimalsToDisplay = 2,
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
@@ -56,7 +56,18 @@ const DepositForm = ({
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
-          additionalInfoText={`KEEP Balance ${KEEP.displayAmount(tokenAmount)}`}
+          additionalInfoText={
+            <>
+              <span>Keep Balance</span>&nbsp;
+              <TokenAmount
+                amount={tokenAmount}
+                wrapperClassName={"deposit-form__keep-balance-amount"}
+                amountClassName={"text-success"}
+                symbolClassName={"text-success"}
+                decimalsToDisplay={keepDecimalsToDisplay}
+              />
+            </>
+          }
         />
       </div>
       <List>
@@ -66,6 +77,7 @@ const DepositForm = ({
             apy={apy}
             reward={getEstimatedReward()}
             label="Yearly"
+            keepDecimalsToDisplay={keepDecimalsToDisplay}
           />
         </List.Content>
       </List>
@@ -91,7 +103,12 @@ const DepositForm = ({
   )
 }
 
-const EstimatedAPYListItem = ({ apy, reward, label }) => {
+const EstimatedAPYListItem = ({
+  apy,
+  reward,
+  label,
+  keepDecimalsToDisplay = 2,
+}) => {
   return (
     <List.Item className="mb-1">
       <div className="flex row center">
@@ -120,6 +137,7 @@ const EstimatedAPYListItem = ({ apy, reward, label }) => {
             amount={reward}
             amountClassName=""
             symbolClassName=""
+            decimalsToDisplay={keepDecimalsToDisplay}
           />
         </OnlyIf>
       </div>

@@ -21,7 +21,10 @@ import { KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
 import { Keep } from "../../contracts"
 
-const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
+const PendingWithdrawals = ({
+  covTokensAvailableToWithdraw,
+  keepDecimalsToDisplay = 2,
+}) => {
   const dispatch = useDispatch()
   const { openConfirmationModal, closeModal } = useModal()
   const {
@@ -361,6 +364,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
                   )}
                   wrapperClassName={"pending-withdrawal__token-amount"}
                   token={KEEP}
+                  decimalsToDisplay={keepDecimalsToDisplay}
                   withIcon
                 />
                 <div className={"pending-withdrawal__initialization-date"}>

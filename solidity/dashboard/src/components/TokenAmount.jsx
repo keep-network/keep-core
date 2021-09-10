@@ -17,6 +17,7 @@ const TokenAmount = ({
   withMetricSuffix = false,
   smallestPrecisionUnit = null,
   smallestPrecisionDecimals = null,
+  decimalsToDisplay = null,
   withSymbol = true,
 }) => {
   const CurrencyIcon = withIcon ? icon || token.icon : () => <></>
@@ -27,15 +28,11 @@ const TokenAmount = ({
   const _smallestPrecisionDecimals =
     smallestPrecisionDecimals || token.smallestPrecisionDecimals
 
-  const decimalsToDisplayInFormattedAmount =
-    smallestPrecisionDecimals > 2 ? 2 : smallestPrecisionDecimals
+  const _decimalsToDisplay = decimalsToDisplay | token.decimalsToDisplay
 
   const formattedAmount = withMetricSuffix
-    ? token.displayAmountWithMetricSuffix(
-        amount,
-        decimalsToDisplayInFormattedAmount
-      )
-    : token.displayAmount(amount, decimalsToDisplayInFormattedAmount)
+    ? token.displayAmountWithMetricSuffix(amount, _decimalsToDisplay)
+    : token.displayAmount(amount, _decimalsToDisplay)
 
   return (
     <div className={`token-amount ${wrapperClassName}`}>

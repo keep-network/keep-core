@@ -7,7 +7,6 @@ import FormInput from "./FormInput"
 import MaxAmountAddon from "./MaxAmountAddon"
 import { SubmitButton } from "./Button"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { KEEP } from "../utils/token.utils"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
 
 const WithdrawAmountForm = ({
@@ -16,7 +15,6 @@ const WithdrawAmountForm = ({
   submitBtnText,
   withdrawAmount,
   withdrawalDelay, // <number> in seconds
-  allowDecimals = false,
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
