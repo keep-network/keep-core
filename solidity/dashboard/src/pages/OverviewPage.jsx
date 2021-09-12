@@ -28,9 +28,8 @@ const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
   const address = useWeb3Address()
   const dispatch = useDispatch()
-  const { covTokensAvailableToWithdraw } = useSelector(
-    (state) => state.coveragePool
-  )
+  const { covTokensAvailableToWithdraw, withdrawalInitiatedTimestamp } =
+    useSelector((state) => state.coveragePool)
 
   useEffect(() => {
     if (isConnected) {
@@ -101,9 +100,11 @@ const OverviewPage = (props) => {
         <CoveragePoolsComponents.LearnMoreBanner onClose={hideBanner} />
       </OnlyIf>
       <OverviewFirstSection />
-      <PendingWithdrawals
-        covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
-      />
+      <OnlyIf condition={withdrawalInitiatedTimestamp > 0}>
+        <PendingWithdrawals
+          covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
+        />
+      </OnlyIf>
       <TokenOverview
         totalKeepTokenBalance={totalKeepTokenBalance}
         totalOwnedStakedBalance={totalOwnedStakedBalance}
