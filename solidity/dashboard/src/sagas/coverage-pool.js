@@ -125,6 +125,10 @@ function* fetchCovPoolData(action) {
       shareOfPool
     )
 
+    const hasRiskManagerOpenAuctions = yield call(
+      Keep.coveragePoolV1.hasRiskManagerOpenAuctions
+    )
+
     yield put(
       fetchCovPoolDataSuccess({
         shareOfPool,
@@ -137,6 +141,7 @@ function* fetchCovPoolData(action) {
         withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
         pendingWithdrawal,
         withdrawalInitiatedTimestamp,
+        hasRiskManagerOpenAuctions,
       })
     )
   } catch (error) {
