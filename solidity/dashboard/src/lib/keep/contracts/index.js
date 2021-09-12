@@ -59,8 +59,10 @@ export const SaddleSwapArtifact = SaddleSwap
 
 export const ASSET_POOL_CONTRACT_NAME = "assetPoolContract"
 export const COV_TOKEN_CONTRACT_NAME = "covTokenContract"
-export const REWARDS_POOL_CONTRACT_NAME = "rewardsPoolContract"
 export const RISK_MANAGER_V1_CONTRACT_NAME = "riskManagerV1Contract"
+export const REWARDS_POOL_CONTRACT_NAME = "rewardsPoolContract"
+// TODO: Auctioneer contract and subscribing to it's auction events
+export const AUCTIONEER_CONTRACT_NAME = "auctioneerContract"
 
 export const RewardsPoolArtifact = RewardsPool
 
