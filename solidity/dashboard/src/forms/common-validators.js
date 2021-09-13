@@ -26,20 +26,26 @@ export const validateAmountInRange = (
   value,
   maxValue,
   minValue = 0,
+  /** @type {import("../utils/token.utils").Token} */
   token = KEEP,
-  floatingNumber = false
+  isFloatingNumber = false
 ) => {
-  const formatedValue = token.fromTokenUnit(value).toString()
-
-  const validateValueInBN = web3Utils.toBN(formatedValue)
-  const maxValueInBN = web3Utils.toBN(maxValue.toString() || 0)
-  const minValueInBN = web3Utils.toBN(minValue.toString())
+  /** @type {import("bignumber.js").BigNumber} */
+  const formatedValue = token.fromTokenUnit(value)
 
   if (isBlankString(value)) {
     return "Required"
-  } else if (!floatingNumber && !REGEXP_ONLY_NUMBERS.test(value)) {
+  } else if (
+    (!isFloatingNumber && !REGEXP_ONLY_NUMBERS.test(value)) ||
+    (isFloatingNumber && formatedValue.decimalPlaces() > 0)
+  ) {
     return "Invalid value"
-  } else if (validateValueInBN.gt(maxValueInBN)) {
+  }
+  const validateValueInBN = web3Utils.toBN(formatedValue.toString())
+  const maxValueInBN = web3Utils.toBN(maxValue.toString() || 0)
+  const minValueInBN = web3Utils.toBN(minValue.toString())
+
+  if (validateValueInBN.gt(maxValueInBN)) {
     return `The value should be less than or equal ${token.displayAmount(
       maxValueInBN.toString()
     )}`

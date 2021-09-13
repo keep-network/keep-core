@@ -12,7 +12,7 @@ import {
   validateAmountInRange,
 } from "../../forms/common-validators"
 import { TBTC } from "../../utils/token.utils"
-import { gt, sub } from "../../utils/arithmetics.utils"
+import { sub } from "../../utils/arithmetics.utils"
 import { colors } from "../../constants/colors"
 import { TBTC_TOKEN_VERSION } from "../../constants/constants"
 
@@ -148,22 +148,31 @@ export default withFormik({
     to: TBTC_TOKEN_VERSION.v2,
   }),
   validate: (values, props) => {
-    return getMaxAmount(values, props).then((maxAmount) => {
-      const errors = {}
-      if (gt(TBTC.fromTokenUnit(values.amount).toString(), maxAmount)) {
-        errors.amount = "Insufficient funds"
-      } else {
-        errors.amount = validateAmountInRange(
-          values.amount,
-          maxAmount,
-          1,
-          TBTC,
-          true
-        )
-      }
+    return getMaxAmount(values, props).then(
+      ({ tokenBalance, maxTokenBalance }) => {
+        const errors = {}
+        const formattedValue = TBTC.fromTokenUnit(values.amount)
 
-      return getErrorsObj(errors)
-    })
+        if (formattedValue.gt(tokenBalance)) {
+          errors.amount = "Insufficient funds"
+        } else if (
+          values.from === TBTC_TOKEN_VERSION.v2 &&
+          formattedValue.gt(maxTokenBalance)
+        ) {
+          errors.amount = "You don't have enough funds to cover minting fee."
+        } else {
+          errors.amount = validateAmountInRange(
+            values.amount,
+            maxTokenBalance,
+            TBTC.fromTokenUnit(TBTC.toTokenUnit(1)).toString(), // 1 wei,
+            TBTC,
+            true
+          )
+        }
+
+        return getErrorsObj(errors)
+      }
+    )
   },
   displayName: "TBTCMigrationPortalForm",
 })(MigrationPortalForm)
@@ -173,7 +182,7 @@ const getMaxAmount = async (values, props) => {
   const { mintingFee, tbtcV1Balance, tbtcV2Balance } = props
 
   if (from === TBTC_TOKEN_VERSION.v1) {
-    return tbtcV1Balance
+    return { tokenBalance: tbtcV1Balance, maxTokenBalance: tbtcV1Balance }
   }
 
   const unmintFeeFor = await Keep.tBTCV2Migration.unmintFeeFor(
@@ -181,5 +190,9 @@ const getMaxAmount = async (values, props) => {
     mintingFee
   )
 
-  return sub(tbtcV2Balance, unmintFeeFor).toString()
+  return {
+    tokenBalance: tbtcV2Balance,
+    maxTokenBalance: sub(tbtcV2Balance, unmintFeeFor).toString(),
+    unmintFee: unmintFeeFor,
+  }
 }
