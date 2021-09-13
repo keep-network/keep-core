@@ -6,6 +6,7 @@ import Divider from "../Divider"
 import Button from "../Button"
 import { TBTC } from "../../utils/token.utils"
 import { TBTC_TOKEN_VERSION } from "../../constants/constants"
+import commonStyles from "./styles"
 
 const remember = [
   { label: "the upgrade is reversible" },
@@ -16,33 +17,7 @@ const remember = [
   },
 ]
 
-const swapBoxStyle = {
-  padding: "0.5rem 0.75rem",
-  borderRadius: "0.5rem",
-  height: "40px",
-  marginRight: "0.5rem",
-}
-
 const styles = {
-  swapBox: swapBoxStyle,
-  v1: {
-    color: "white",
-    backgroundColor: "black",
-    textAlign: "center",
-    ...swapBoxStyle,
-  },
-  v2: {
-    color: "black",
-    backgroundColor: "white",
-    border: "1px solid black",
-    textAlign: "center",
-
-    ...swapBoxStyle,
-  },
-  listWrapper: {
-    borderRadius: "8px",
-    padding: "1rem",
-  },
   chevronRighIcon: {
     marginRight: "0.5rem",
   },
@@ -70,10 +45,10 @@ const ConfirmMigrationModal = ({
         withIcon
       />
       <div className="flex row full-center mt-2 mb-1">
-        <div className="text-smaller" style={styles[from]}>
+        <div className="text-smaller" style={commonStyles[from]}>
           {`tBTC${from}`}
         </div>
-        <div className="bg-violet-10 flex row" style={styles.swapBox}>
+        <div className="bg-violet-10 flex row" style={commonStyles.swapBox}>
           <Icons.ChevronRight
             className="chevron-right-icon chevron-right-icon--secondary"
             style={styles.chevronRighIcon}
@@ -92,11 +67,11 @@ const ConfirmMigrationModal = ({
           />
           <Icons.ChevronRight className="chevron-right-icon chevron-right-icon--secondary" />
         </div>
-        <div className="text-smaller" style={styles[to]}>
+        <div className="text-smaller" style={commonStyles[to]}>
           {`tBTC${to}`}
         </div>
       </div>
-      <div className="bg-grey-10 w-100 mb-1" style={styles.listWrapper}>
+      <div className="bg-grey-10 w-100 mb-1" style={commonStyles.boxWrapper}>
         <List items={remember}>
           <List.Title className="mb-1">Always remember:</List.Title>
           <List.Content className="bullets text-smaller" />

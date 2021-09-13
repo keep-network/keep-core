@@ -12,37 +12,12 @@ import Button from "../Button"
 import { TBTC } from "../../utils/token.utils"
 import { gt } from "../../utils/arithmetics.utils"
 import { TBTC_TOKEN_VERSION } from "../../constants/constants"
-
-// TODO: Clean-up styles. They are the same as in the `ConfirmMigrationModal`
-// component.
-const swapBoxStyle = {
-  padding: "0.5rem 0.75rem",
-  borderRadius: "0.5rem",
-  height: "40px",
-  marginRight: "0.5rem",
-}
+import commonStyles from "./styles"
 
 const styles = {
   successIcon: {
     width: 20,
     height: 20,
-  },
-  v1: {
-    color: "white",
-    backgroundColor: "black",
-    textAlign: "center",
-    ...swapBoxStyle,
-  },
-  v2: {
-    color: "black",
-    backgroundColor: "white",
-    border: "1px solid black",
-    textAlign: "center",
-    ...swapBoxStyle,
-  },
-  poolWrapper: {
-    padding: "1rem",
-    borderRadius: "0.5rem",
   },
 }
 
@@ -84,7 +59,7 @@ const MigrationCompletedModal = ({
         withIcon
       />
       <div className="text-center mt-1 mb-1">
-        <span className="text-smaller" style={styles[to]}>
+        <span className="text-smaller" style={commonStyles[to]}>
           {`tBTC${to}`}
         </span>
       </div>
@@ -131,7 +106,7 @@ const MigrationCompletedModal = ({
       </List>
       <div
         className="mt-1 mb-1 bg-mint-10 flex row center"
-        style={styles.poolWrapper}
+        style={commonStyles.boxWrapper}
       >
         <DoubleIcon
           MainIcon={Icons.TBTC}
