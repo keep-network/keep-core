@@ -14,6 +14,17 @@ import { TBTC } from "../../utils/token.utils"
 import { tbtcV2Migration } from "../../actions"
 import selectors from "../../sagas/selectors"
 import { add, sub } from "../../utils/arithmetics.utils"
+import { showModal } from "../../actions/modal"
+import { modalComponentType } from "../../components/Modal"
+import { TBTC_TOKEN_VERSION } from "../../constants/constants"
+
+// TODO: Mock globally
+// Mock TrezorConnector due to `This version of trezor-connect is not suitable
+// to work without browser. Use trezor-connect@extended package instead` error.
+jest.mock("../../connectors/trezor", () => ({
+  ...jest.requireActual("../../components/Modal"),
+  TrezorConnector: Object,
+}))
 
 describe("TBTC migration saga test", () => {
   const mockedAddress = "0xa9d41A6a24312505866E38C217e39A447d6b66B4"
@@ -85,6 +96,7 @@ describe("TBTC migration saga test", () => {
       recipient: mockedAddress,
       amount: TBTC.fromTokenUnit(2).toString(),
     }
+    const mockedTxHash = "0x0"
     return (
       expectSaga(subscribeToTBTCV2MintedEvent)
         .withReducer(tbtcV2MigrationReducer)
@@ -93,9 +105,14 @@ describe("TBTC migration saga test", () => {
         .actionChannel(tbtcV2Migration.TBTCV2_TOKEN_MINTED_EVENT_EMITTED)
         .dispatch({
           type: tbtcV2Migration.TBTCV2_TOKEN_MINTED_EVENT_EMITTED,
-          payload: { event: { returnValues: mockedEventData } },
+          payload: {
+            event: {
+              transactionHash: mockedTxHash,
+              returnValues: mockedEventData,
+            },
+          },
         })
-        // The second event has been emitted bu a recipient is different than
+        // The second event has been emitted but a recipient is different than
         // current logged account- we should not update data.
         .dispatch({
           type: tbtcV2Migration.TBTCV2_TOKEN_MINTED_EVENT_EMITTED,
@@ -112,6 +129,22 @@ describe("TBTC migration saga test", () => {
           type: tbtcV2Migration.TBTCV2_TOKEN_MINTED,
           payload: { amount: mockedEventData.amount },
         })
+        .put(
+          showModal({
+            modalComponentType:
+              modalComponentType.TBTC_MIGRATION.MIGRATION_COMPLETED,
+            componentProps: {
+              from: TBTC_TOKEN_VERSION.v1,
+              to: TBTC_TOKEN_VERSION.v2,
+              amount: mockedEventData.amount,
+              txHash: mockedTxHash,
+              address: mockedAddress,
+            },
+            modalProps: {
+              title: "Upgrade",
+            },
+          })
+        )
         .hasFinalState({
           ...initialState,
           tbtcV1Balance: "0",
@@ -127,6 +160,7 @@ describe("TBTC migration saga test", () => {
       amount: TBTC.fromTokenUnit(2).toString(),
       fee: TBTC.fromTokenUnit(0.002).toString(),
     }
+    const mockedTxHash = "0x0"
     const initialTBTCV2Balance = add(
       mockedEventData.amount,
       mockedEventData.fee
@@ -139,9 +173,14 @@ describe("TBTC migration saga test", () => {
         .actionChannel(tbtcV2Migration.TBTCV2_TOKEN_UNMINTED_EVENT_EMITTED)
         .dispatch({
           type: tbtcV2Migration.TBTCV2_TOKEN_UNMINTED_EVENT_EMITTED,
-          payload: { event: { returnValues: mockedEventData } },
+          payload: {
+            event: {
+              transactionHash: mockedTxHash,
+              returnValues: mockedEventData,
+            },
+          },
         })
-        // The second event has been emitted bu a recipient is different than
+        // The second event has been emitted but a recipient is different than
         // current logged account- we should not update data.
         .dispatch({
           type: tbtcV2Migration.TBTCV2_TOKEN_UNMINTED_EVENT_EMITTED,
@@ -158,6 +197,23 @@ describe("TBTC migration saga test", () => {
           type: tbtcV2Migration.TBTCV2_TOKEN_UNMINTED,
           payload: { amount: mockedEventData.amount, fee: mockedEventData.fee },
         })
+        .put(
+          showModal({
+            modalComponentType:
+              modalComponentType.TBTC_MIGRATION.MIGRATION_COMPLETED,
+            componentProps: {
+              from: TBTC_TOKEN_VERSION.v2,
+              to: TBTC_TOKEN_VERSION.v1,
+              amount: mockedEventData.amount,
+              fee: mockedEventData.fee,
+              txHash: mockedTxHash,
+              address: mockedAddress,
+            },
+            modalProps: {
+              title: "Downgrade",
+            },
+          })
+        )
         .hasFinalState({
           ...initialState,
           tbtcV1Balance: mockedEventData.amount,
