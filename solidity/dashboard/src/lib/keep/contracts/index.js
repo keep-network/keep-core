@@ -24,9 +24,9 @@ import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBT
 import KeepOnlyPool from "@keep-network/keep-core/artifacts/KeepVault.json"
 // import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 import SaddleSwap from "../../../contracts-artifacts/SaddleSwap.json"
-import AssetPool from "@keep-network/coverage-pool/artifacts/AssetPool.json"
-import UnderwriterToken from "@keep-network/coverage-pool/artifacts/UnderwriterToken.json"
-import RewardsPool from "@keep-network/coverage-pool/artifacts/RewardsPool.json"
+import AssetPool from "@keep-network/coverage-pools/artifacts/AssetPool.json"
+import UnderwriterToken from "@keep-network/coverage-pools/artifacts/UnderwriterToken.json"
+import RewardsPool from "@keep-network/coverage-pools/artifacts/RewardsPool.json"
 import TBTCV2Token from "@keep-network/tbtc-v2/artifacts/TBTC.json"
 import TBTCV2VendingMachine from "@keep-network/tbtc-v2/artifacts/VendingMachine.json"
 
