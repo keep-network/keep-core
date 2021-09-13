@@ -1,9 +1,12 @@
 import React from "react"
 import * as Icons from "./Icons"
 
-const Banner = ({ inline, className, children, ...restProps }) => {
+const Banner = ({ inline, className, children, style = {}, ...restProps }) => {
   return (
-    <div className={`banner${inline ? "--inline" : ""} ${className}`}>
+    <div
+      className={`banner${inline ? "--inline" : ""} ${className}`}
+      style={style}
+    >
       {inline ? (
         <>
           <Banner.Icon icon={restProps.icon} />
@@ -50,8 +53,10 @@ Banner.CloseIcon = ({
   )
 }
 
-Banner.Icon = ({ icon: IconComponent, className = "" }) => {
-  return <IconComponent className={`banner__icon ${className}`} />
+Banner.Icon = ({ icon: IconComponent, className = "", ...iconProps }) => {
+  return (
+    <IconComponent className={`banner__icon ${className}`} {...iconProps} />
+  )
 }
 
 export default Banner

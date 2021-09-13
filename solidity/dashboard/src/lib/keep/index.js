@@ -23,6 +23,7 @@ import contracts, {
   ASSET_POOL_CONTRACT_NAME,
   TBTCV2_VENDING_MACHINE_CONTRACT_NAME,
   TBTCV2_TOKEN_CONTRACT_NAME,
+  REWARDS_POOL_CONTRACT_NAME,
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
@@ -92,8 +93,8 @@ class Keep {
 
   /** @type {BaseContract} */
   [LP_REWARDS_KEEP_ETH_CONTRACT_NAME];
-  /** @type {BaseContract} */
 
+  /** @type {BaseContract} */
   [LP_REWARDS_TBTC_ETH_CONTRACT_NAME];
 
   /** @type {BaseContract} */
@@ -118,7 +119,10 @@ class Keep {
   [TBTCV2_TOKEN_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [TBTCV2_VENDING_MACHINE_CONTRACT_NAME]
+  [TBTCV2_VENDING_MACHINE_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [REWARDS_POOL_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
@@ -165,6 +169,7 @@ class Keep {
       this.assetPoolContract,
       this.covTokenContract,
       this.keepTokenContract,
+      this.rewardsPoolContract,
       this.exchangeService,
       this.web3
     )

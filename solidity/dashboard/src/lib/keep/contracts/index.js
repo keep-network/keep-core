@@ -60,6 +60,7 @@ export const SaddleSwapArtifact = SaddleSwap
 
 export const ASSET_POOL_CONTRACT_NAME = "assetPoolContract"
 export const COV_TOKEN_CONTRACT_NAME = "covTokenContract"
+export const REWARDS_POOL_CONTRACT_NAME = "rewardsPoolContract"
 
 export const RewardsPoolArtifact = RewardsPool
 
@@ -131,6 +132,9 @@ const contracts = {
   },
   [TBTCV2_VENDING_MACHINE_CONTRACT_NAME]: {
     artifact: TBTCV2VendingMachine,
+  },
+  [REWARDS_POOL_CONTRACT_NAME]: {
+    artifact: RewardsPool,
   },
 }
 

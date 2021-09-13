@@ -1,7 +1,6 @@
 import BigNumber from "bignumber.js"
 import { KEEP } from "../../../utils/token.utils"
 import { APYCalculator } from "../helper"
-import { RewardsPoolArtifact } from "../contracts"
 import { add, sub, gt } from "../../../utils/arithmetics.utils"
 
 /** @typedef { import("../../web3").BaseContract} BaseContract */
@@ -14,6 +13,7 @@ class CoveragePoolV1 {
    * @param {BaseContract} _assetPoolContract
    * @param {BaseContract} _covTokenContract
    * @param {BaseContract} _collateralToken
+   * @param {BaseExchange} _rewardPoolContract
    * @param {BaseExchange} _exchangeService
    * @param {Web3LibWrapper} _web3
    */
@@ -21,6 +21,7 @@ class CoveragePoolV1 {
     _assetPoolContract,
     _covTokenContract,
     _collateralToken,
+    _rewardPoolContract,
     _exchangeService,
     _web3
   ) {
@@ -28,8 +29,8 @@ class CoveragePoolV1 {
     this.covTokenContract = _covTokenContract
     this.collateralToken = _collateralToken
     this.exchangeService = _exchangeService
+    this.rewardPoolContract = _rewardPoolContract
     this.web3 = _web3
-    this._rewardPoolContract = undefined
   }
 
   /**
@@ -134,6 +135,29 @@ class CoveragePoolV1 {
   }
 
   /**
+   * Estimates KEEP balance from give covKeeps amount
+   * @param {string | number} covKeep covKeep amount that we want to estimate
+   * KEEP value from
+   * @param {string | number} totalSupplyOfCovKeep total supply of covKeeps
+   * @param {string | number} tvl - total supply of KEEPs places in coverage
+   * pools
+   * @return {string} - estimated KEEP amount of given covKEEPS
+   */
+  estimatedBalanceFor = (covKeep, totalSupplyOfCovKeep, tvl) => {
+    if (
+      new BigNumber(covKeep).isZero() ||
+      new BigNumber(totalSupplyOfCovKeep).isZero() ||
+      new BigNumber(tvl).isZero()
+    ) {
+      return "0"
+    }
+    return new BigNumber(covKeep)
+      .div(totalSupplyOfCovKeep)
+      .multipliedBy(tvl)
+      .toString()
+  }
+
+  /**
    * Returns the `AssetPool` contract's balance of the collateral token.
    * @return {Promise<string>} The `AssetPool` contract's balance of the
    * collateral token.
@@ -166,30 +190,7 @@ class CoveragePoolV1 {
    * unlocked.
    */
   rewardPoolRewardRate = async () => {
-    const rewardPoolContract = await this.getRewardPoolContract()
-    return await rewardPoolContract.makeCall("rewardRate")
-  }
-
-  /**
-   * @return {Promise<BaseContract>} The `RewardsPool` contract.
-   */
-  getRewardPoolContract = async () => {
-    if (!this._rewardPoolContract) {
-      const rewardPoolAddress = await this.assetPoolContract.makeCall(
-        "rewardsPool"
-      )
-      this._rewardPoolContract = this.web3.createContractInstance(
-        RewardsPoolArtifact.abi,
-        rewardPoolAddress,
-        // The `RewardsPool` contract is created in the same transaction as the
-        // `AssetPool` contract (in the `AssetPool` constructor). In thah case
-        // we can pass `deploymentTxnHash` and `deployedAtBlock` from the
-        // `AssetPool` contract.
-        this.assetPoolContract.deploymentTxnHash,
-        this.assetPoolContract.deployedAtBlock
-      )
-    }
-    return this._rewardPoolContract
+    return await this.rewardPoolContract.makeCall("rewardRate")
   }
 
   /**
@@ -225,12 +226,49 @@ class CoveragePoolV1 {
    * the `RewardsPool` contract.
    */
   totalAllocatedRewards = async () => {
-    const rewardPoolContract = await this.getRewardPoolContract()
+    return (
+      await this.rewardPoolContract.getPastEvents("RewardToppedUp")
+    ).reduce((reducer, _) => add(reducer, _.returnValues.amount), "0")
+  }
 
-    return (await rewardPoolContract.getPastEvents("RewardToppedUp")).reduce(
-      (reducer, _) => add(reducer, _.returnValues.amount),
-      "0"
+  /**
+   * Calculates the amount of collateral token used from the coverage pool to
+   * cover a loss since the start of the pool.
+   * @return {Promise<string>} The total amount of collateral token used from the
+   * coverage pool to cover a loss.
+   */
+  totalCoverageClaimed = async () => {
+    return (
+      await this.assetPoolContract.getPastEvents("CoverageClaimed")
+    ).reduce((reducer, _) => add(reducer, _.returnValues.amount), "0")
+  }
+
+  covTokensAllowed = async (owner, spender) => {
+    return await this.covTokenContract.makeCall("allowance", owner, spender)
+  }
+
+  withdrawalInitiatedTimestamp = async (address) => {
+    return await this.assetPoolContract.makeCall(
+      "withdrawalInitiatedTimestamp",
+      address
     )
+  }
+
+  pendingWithdrawal = async (address) => {
+    return await this.assetPoolContract.makeCall("pendingWithdrawal", address)
+  }
+
+  withdrawalDelays = async () => {
+    const withdrawalDelay = await this.assetPoolContract.makeCall(
+      "withdrawalDelay"
+    )
+    const withdrawalTimeout = await this.assetPoolContract.makeCall(
+      "withdrawalTimeout"
+    )
+    return {
+      withdrawalDelay,
+      withdrawalTimeout,
+    }
   }
 }
 

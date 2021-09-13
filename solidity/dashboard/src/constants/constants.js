@@ -32,6 +32,9 @@ export const LINK = {
   keepWebsite: "https://keep.network/",
   stakingDocumentation:
     "https://keep-network.gitbook.io/staking-documentation/",
+  coveragePools: {
+    docs: "https://github.com/keep-network/coverage-pools/blob/main/docs/design.adoc",
+  },
 }
 
 export const WALLETS = {

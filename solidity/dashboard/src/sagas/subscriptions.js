@@ -21,10 +21,13 @@ import {
   tbtcV2Migration,
 } from "../actions"
 import {
-  covTokenTransferEventEmitted,
+  assetPoolDepositedEventEmitted,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
+  coveragePoolWithdrawalCompletedEventEmitted,
+  coveragePoolWithdrawalInitiatedEventEmitted,
 } from "../actions/coverage-pool"
 import { Keep } from "../contracts"
+import { EVENTS } from "../constants/events"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -997,17 +1000,41 @@ export function* subscribeToOperatorUndelegateEvent() {
   yield fork(updateOperatorData)
 }
 
-export function* observeCovTokenTransferEvent() {
+export function* observeAssetPoolDepositedEvent() {
   yield take(COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS)
 
-  const covTokenContract = Keep.coveragePoolV1.covTokenContract.instance
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
 
   yield fork(
     subscribeToEventAndEmitData,
-    covTokenContract,
-    "Transfer",
-    covTokenTransferEventEmitted,
-    "CovToken.Transfer"
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.DEPOSITED,
+    assetPoolDepositedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.DEPOSITED}`
+  )
+}
+
+export function* observeWithdrawalInitiatedEvent() {
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
+    coveragePoolWithdrawalInitiatedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED}`
+  )
+}
+
+export function* observeWithdrawalCompletedEvent() {
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
+    coveragePoolWithdrawalCompletedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED}`
   )
 }
 

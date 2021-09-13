@@ -41,6 +41,8 @@ import { ReactComponent as NetworkStatusIndicator } from "../static/svg/network-
 import { ReactComponent as MetaMask } from "../static/svg/metamask.svg"
 import { ReactComponent as Trezor } from "../static/svg/trezor.svg"
 import { ReactComponent as Ledger } from "../static/svg/ledger.svg"
+import { ReactComponent as Add } from "../static/svg/add.svg"
+import { ReactComponent as ArrowDown } from "../static/svg/arrow-down.svg"
 export { ReactComponent as Warning } from "../static/svg/warning.svg"
 export { ReactComponent as Wallet } from "../static/svg/wallet.svg"
 export { ReactComponent as Grant } from "../static/svg/grant.svg"
@@ -62,6 +64,7 @@ export { ReactComponent as CoveragePool } from "../static/svg/coverage-pool.svg"
 export { ReactComponent as SaddleWhite } from "../static/svg/saddle-logo.svg"
 export { ReactComponent as Swap } from "../static/svg/swap.svg"
 export { ReactComponent as ChevronRight } from "../static/svg/chevron-right.svg"
+export { ReactComponent as Refresh } from "../static/svg/refresh.svg"
 
 const Badge = ({ height, width }) => (
   <svg
@@ -400,4 +403,6 @@ export {
   KeepDashboardLogo,
   NetworkStatusIndicator,
   Saddle,
+  Add,
+  ArrowDown,
 }

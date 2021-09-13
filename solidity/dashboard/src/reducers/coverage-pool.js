@@ -18,6 +18,7 @@ export const coveragePoolInitialData = {
   isTotalValueLockedFetching: false,
   tvlError: null,
   totalAllocatedRewards: 0,
+  totalCoverageClaimed: 0,
 
   // APY
   apy: 0,
@@ -27,10 +28,15 @@ export const coveragePoolInitialData = {
   isDataFetching: false,
   shareOfPool: 0,
   covBalance: 0,
+  covTokensAvailableToWithdraw: 0,
   covTotalSupply: 0,
   error: null,
   estimatedRewards: 0,
   estimatedKeepBalance: 0,
+  withdrawalDelay: 0,
+  withdrawalTimeout: 0,
+  pendingWithdrawal: 0,
+  withdrawalInitiatedTimestamp: 0,
 }
 
 const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
@@ -46,6 +52,7 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
         totalValueLocked: action.payload.tvl,
         totalValueLockedInUSD: action.payload.tvlInUSD,
         totalAllocatedRewards: action.payload.totalAllocatedRewards,
+        totalCoverageClaimed: action.payload.totalCoverageClaimed,
         isTotalValueLockedFetching: false,
         tvlError: null,
       }

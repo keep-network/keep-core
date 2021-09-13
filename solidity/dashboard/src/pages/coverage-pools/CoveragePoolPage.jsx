@@ -13,11 +13,21 @@ import {
   fetchCovPoolDataRequest,
   depositAssetPool,
   fetchAPYRequest,
+  withdrawAssetPool,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
-import { lte } from "../../utils/arithmetics.utils"
-import { KEEP } from "../../utils/token.utils"
+import { eq, gt } from "../../utils/arithmetics.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
+import WithdrawAmountForm from "../../components/WithdrawAmountForm"
+import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
+import Chip from "../../components/Chip"
+import InitiateCovPoolsWithdrawModal from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal"
+import ReinitiateWithdrawalModal from "../../components/coverage-pools/ReinitiateWithdrawalModal"
+import { addAdditionalDataToModal } from "../../actions/modal"
+import ResourceTooltip from "../../components/ResourceTooltip"
+import resourceTooltipProps from "../../constants/tooltips"
+import { Keep } from "../../contracts"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -27,15 +37,23 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     totalValueLockedInUSD,
     isTotalValueLockedFetching,
     shareOfPool,
-    estimatedRewards,
-    estimatedKeepBalance,
+    covBalance,
+    covTokensAvailableToWithdraw,
+    covTotalSupply,
     apy,
     isApyFetching,
     totalAllocatedRewards,
+    totalCoverageClaimed,
+    withdrawalDelay,
+    pendingWithdrawal,
+    withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
+
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
   const address = useWeb3Address()
+
+  const hasCovKEEPTokens = gt(covBalance, 0)
 
   useEffect(() => {
     dispatch(fetchTvlRequest())
@@ -53,13 +71,73 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     const amount = KEEP.fromTokenUnit(tokenAmount)
     await openConfirmationModal(
       {
-        modalOptions: { title: "Initiate Deposit" },
+        modalOptions: {
+          title: "Deposit",
+          classes: {
+            modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+          },
+        },
         submitBtnText: "deposit",
         amount,
       },
       InitiateDepositModal
     )
     dispatch(depositAssetPool(amount, awaitingPromise))
+  }
+
+  const onSubmitWithdrawForm = async (values, awaitingPromise) => {
+    const { withdrawAmount } = values
+    const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
+    dispatch(
+      addAdditionalDataToModal({
+        componentProps: {
+          totalValueLocked,
+          covTotalSupply,
+          covTokensAvailableToWithdraw,
+        },
+      })
+    )
+    if (eq(withdrawalInitiatedTimestamp, 0)) {
+      await openConfirmationModal(
+        {
+          modalOptions: {
+            title: "Withdraw",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+            },
+          },
+          submitBtnText: "withdraw",
+          amount,
+          covTotalSupply,
+          totalValueLocked,
+          covTokensAvailableToWithdraw,
+          containerTitle: "You are about to withdraw:",
+        },
+        InitiateCovPoolsWithdrawModal
+      )
+      dispatch(withdrawAssetPool(amount, awaitingPromise))
+    } else {
+      const { amount: finalAmount } = await openConfirmationModal(
+        {
+          modalOptions: {
+            title: "Re-initiate withdrawal",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__reinitiate-withdrawal",
+            },
+          },
+          submitBtnText: "continue",
+          pendingWithdrawalBalance: pendingWithdrawal,
+          initialAmountValue: amount,
+          covTokensAvailableToWithdraw,
+          covTotalSupply,
+          totalValueLocked,
+          withdrawalDelay,
+          containerTitle: "You are about to re-initiate this withdrawal:",
+        },
+        ReinitiateWithdrawalModal
+      )
+      dispatch(withdrawAssetPool(finalAmount, awaitingPromise))
+    }
   }
 
   return (
@@ -71,12 +149,23 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         isRewardRateFetching={isApyFetching}
         totalAllocatedRewards={totalAllocatedRewards}
         isTotalAllocatedRewardsFetching={isTotalValueLockedFetching}
-        // TODO fetch the covered value
-        lifetimeCovered={0}
+        lifetimeCovered={totalCoverageClaimed}
+        isLifetimeCoveredFetching={isTotalValueLockedFetching}
       />
+      <OnlyIf condition={withdrawalInitiatedTimestamp > 0}>
+        <PendingWithdrawals
+          covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}
+        />
+      </OnlyIf>
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
-          <h3>Deposit</h3>
+          <div className={"flex row center"}>
+            <h3>Deposit</h3>
+            <ResourceTooltip
+              tooltipClassName={"ml-1"}
+              {...resourceTooltipProps.covPoolsDeposit}
+            />
+          </div>
           <DepositForm
             onSubmit={onSubmitDepositForm}
             tokenAmount={keepTokenBalance.value}
@@ -84,44 +173,92 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
         </section>
 
-        <section className="tile coverage-pool__share-of-pool">
-          <h4 className="text-grey-70 mb-3">Your Share of Pool</h4>
-
-          <OnlyIf condition={shareOfPool <= 0}>
-            <div className="text-grey-30 text-center">
-              You have no balance yet.&nbsp;
-              <br />
-              <u>Deposit KEEP</u>&nbsp;to see balance.
-            </div>
+        <section className="tile coverage-pool__balance">
+          <div className="coverage-pool__balance-title mb-1">
+            <h3>Balance</h3>
+            <OnlyIf condition={gt(withdrawalInitiatedTimestamp, 0)}>
+              <Chip
+                text={`Pending withdrawal`}
+                size="small"
+                className={"coverage-pool_pending-withdrawal-chip"}
+                color="yellow"
+              />
+            </OnlyIf>
+            <OnlyIf condition={hasCovKEEPTokens}>
+              <span className={"coverage-pool__share-of-pool text-grey-40"}>
+                {displayPercentageValue(shareOfPool * 100, false)} of pool
+              </span>
+            </OnlyIf>
+          </div>
+          <OnlyIf condition={!hasCovKEEPTokens}>
+            <h4 className="text-center text-grey-50 mt-3">
+              You have no share of the pool yet.
+              <p>Deposit KEEP to see your balance.</p>
+            </h4>
           </OnlyIf>
-          <OnlyIf condition={shareOfPool > 0}>
-            <div className="flex column center">
-              <TokenAmount amount={estimatedKeepBalance} withSymbol={false} />
-              <h4 className="text-mint-100">{KEEP.symbol}</h4>
-              <div className="text-grey-40 mt-2">
-                <b>{displayPercentageValue(shareOfPool * 100, false)}</b>
-                &nbsp;of Pool
-              </div>
-            </div>
+          <OnlyIf condition={hasCovKEEPTokens}>
+            <TokenAmount
+              wrapperClassName={"coverage-pool__token-amount"}
+              amount={Keep.coveragePoolV1.estimatedBalanceFor(
+                covBalance,
+                covTotalSupply,
+                totalValueLocked
+              )}
+              amountClassName={"h1 text-mint-100"}
+              symbolClassName={"h2 text-mint-100"}
+              token={KEEP}
+              withIcon
+            />
+            <TokenAmount
+              wrapperClassName={"coverage-pool__cov-token-amount"}
+              amount={covBalance}
+              amountClassName={"h3 text-grey-40"}
+              symbolClassName={"h3 text-grey-40"}
+              token={covKEEP}
+            />
           </OnlyIf>
         </section>
 
-        <section className="tile coverage-pool__rewards">
-          <h4 className="text-grey-70 mb-3">Your Rewards</h4>
-          <OnlyIf condition={lte(estimatedRewards, 0) && shareOfPool <= 0}>
-            <div className="text-grey-30 text-center">
-              You have no rewards yet.&nbsp;
-              <br />
-              <u>Deposit KEEP</u>&nbsp;to see rewards.
+        <OnlyIf condition={hasCovKEEPTokens}>
+          <section className="tile coverage-pool__withdraw-wrapper">
+            <div className={"flex row center mb-1"}>
+              <h3>Available to withdraw</h3>
+              <ResourceTooltip
+                tooltipClassName={"ml-1"}
+                {...resourceTooltipProps.covPoolsAvailableToWithdraw}
+              />
             </div>
-          </OnlyIf>
-          <OnlyIf condition={shareOfPool > 0}>
-            <div className="flex column center">
-              <TokenAmount amount={estimatedRewards} withSymbol={false} />
-              <h4 className="text-mint-100">{KEEP.symbol}</h4>
-            </div>
-          </OnlyIf>
-        </section>
+            <TokenAmount
+              wrapperClassName={"coverage-pool__token-amount"}
+              amount={Keep.coveragePoolV1.estimatedBalanceFor(
+                covTokensAvailableToWithdraw,
+                covTotalSupply,
+                totalValueLocked
+              )}
+              amountClassName={"h2 text-mint-100"}
+              symbolClassName={"h3 text-mint-100"}
+              token={KEEP}
+              withIcon
+            />
+            <TokenAmount
+              wrapperClassName={"coverage-pool__cov-token-amount"}
+              amount={covTokensAvailableToWithdraw}
+              amountClassName={"h3 text-grey-40"}
+              symbolClassName={"h3 text-grey-40"}
+              token={covKEEP}
+            />
+            <WithdrawAmountForm
+              submitBtnText={
+                gt(withdrawalInitiatedTimestamp, "0")
+                  ? "increase withdrawal"
+                  : "withdraw"
+              }
+              withdrawAmount={covTokensAvailableToWithdraw}
+              onSubmit={onSubmitWithdrawForm}
+              withdrawalDelay={withdrawalDelay}
+            />
+          </section>
+        </OnlyIf>
       </section>
     </>
   )

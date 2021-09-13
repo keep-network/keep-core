@@ -35,10 +35,15 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            border: 2px solid @color-brand-violet-20;
-            background-color: @color-brand-violet-80;
+            border: 2px solid @color-grey-20;
+            background-color: @color-grey-50;
             color: @white;
             z-index: 1;
+
+            &--active {
+              border-color: @color-brand-violet-20;
+              background-color: @color-brand-violet-80;
+            }
 
             &--breaker {
               margin-top: 1rem;
@@ -80,10 +85,23 @@
 }
 
 .timeline-default-card {
-  border: 1px solid @color-brand-violet-40;
-  border-left: @left-border-width solid @color-brand-violet-80;
+  border: 1px solid @color-grey-50;
+  border-left: @left-border-width solid @color-grey-50;
   border-radius: 0.5rem;
   &:extend(.box-shadow);
   padding: 1.5rem 2rem;
   background-color: @white;
+
+  h4 {
+    color: @color-grey-60;
+  }
+
+  &--active {
+    border-color: @color-brand-violet-40;
+    border-left-color: @color-brand-violet-80;
+
+    h4 {
+      color: @color-brand-violet-80;
+    }
+  }
 }

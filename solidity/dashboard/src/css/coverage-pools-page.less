@@ -70,8 +70,8 @@
 .coverage-pool__deposit-wrapper {
   display: grid;
   grid-template-areas:
-    "deposit-form   share-of-pool   rewards"
-    "deposit-form   banner          banner";
+    "deposit-form   balance   balance"
+    "deposit-form   available-to-withdraw          available-to-withdraw";
 
   grid-template-columns: 2fr 1fr 1fr;
   grid-template-rows: auto;
@@ -79,13 +79,27 @@
 
   .coverage-pool__deposit-form {
     grid-area: deposit-form;
-    margin-bottom: 0;
+    align-self: flex-start;
+    //margin-bottom: 0;
 
     .deposit-form {
       .deposit-form__token-amount-wrapper {
         background-color: @color-green-bg-light;
         margin: 2rem -2rem;
         padding: 2rem 2rem;
+
+        .input__label__info-container {
+          margin-bottom: 0.5rem;
+
+          &__additional-info-text {
+            color: @color-green;
+            font-weight: 500;
+            font-size: 0.875rem;
+            margin-bottom: 0;
+            padding: 0;
+            background-color: inherit;
+          }
+        }
       }
     }
   }
@@ -99,6 +113,50 @@
     grid-area: rewards;
     margin-bottom: 0;
   }
+
+  .coverage-pool__balance {
+    margin-bottom: 0;
+    grid-area: balance;
+    justify-self: stretch;
+    align-self: start;
+
+    .coverage-pool__balance-title {
+      display: flex;
+      align-items: center;
+
+      .coverage-pool_pending-withdrawal-chip {
+        margin: 0 1rem;
+      }
+
+      .coverage-pool__share-of-pool {
+        margin-left: auto;
+      }
+    }
+
+    .coverage-pool__cov-token-amount {
+      margin-left: 2.25rem;
+    }
+  }
+
+  .coverage-pool__withdraw-wrapper {
+    grid-area: available-to-withdraw;
+    justify-self: stretch;
+    align-self: start;
+
+    h3 {
+      margin: 0 0 5px 0;
+    }
+
+    .coverage-pool__cov-token-amount {
+      margin-bottom: 2rem;
+      margin-left: 2.25rem;
+    }
+  }
+}
+
+.withdraw-amount-form__button-text {
+  margin: 1rem;
+  font-size: 16px;
 }
 
 .cov-how-it-works__info-section {

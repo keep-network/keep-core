@@ -12,6 +12,7 @@ import authorization from "./authorization"
 import transactions from "./transactions"
 import coveragePool from "./coverage-pool"
 import tbtcV2Migration from "./tbtc-migration"
+import modal from "./modal"
 
 const app = (state = { address: null }, action) => {
   switch (action.type) {
@@ -38,6 +39,7 @@ const reducers = combineReducers({
   transactions,
   coveragePool,
   tbtcV2Migration,
+  modal,
 })
 
 const rootReducer = (state, action) => {
