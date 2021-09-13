@@ -33,7 +33,8 @@
     "rimraf": "^3.0.2",
     "solc": "^0.8.7-fixed",
     "solhint": "^3.3.6",
-    "solidity-coverage": "^0.7.17"
+    "solidity-coverage": "^0.7.17",
+    "ethereumjs-wallet": "^1.0.1"
   },
   "scripts": {
     "clean": "rimraf artifacts cache coverage coverage.json",

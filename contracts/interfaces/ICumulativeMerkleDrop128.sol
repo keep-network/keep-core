@@ -17,6 +17,7 @@ interface ICumulativeMerkleDrop128 {
     function setMerkleRoot(bytes16 merkleRoot_) external;
     // Claim the given amount of the token to the given address. Reverts if the inputs are invalid.
     function claim(
+        bytes16 salt,
         address account,
         uint256 cumulativeAmount,
         bytes16 expectedMerkleRoot,

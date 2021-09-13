@@ -26,7 +26,7 @@ module.exports = async ({ deployments, getNamedAccounts }) => {
         {
             maxFeePerGas: 100000000000,
             maxPriorityFeePerGas: 2000000000,
-        }
+        },
     );
     await txn;
 
