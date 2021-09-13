@@ -18,6 +18,14 @@ import * as operator from "../../sagas/operartor"
 import * as authorization from "../../sagas/authorization"
 import * as coveragePool from "../../sagas/coverage-pool"
 
+// TODO: Mock globally
+// Mock TrezorConnector due to `This version of trezor-connect is not suitable
+// to work without browser. Use trezor-connect@extended package instead` error.
+jest.mock("../../connectors/trezor", () => ({
+  ...jest.requireActual("../../components/Modal"),
+  TrezorConnector: Object,
+}))
+
 const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
   liquidityRewards
 
