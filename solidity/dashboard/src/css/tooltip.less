@@ -21,7 +21,7 @@
         top: 2rem;
       }
 
-      &:after {
+      .tooltip__arrow {
         content: "";
         height: 0;
         width: 0;
@@ -40,7 +40,7 @@
   &--top {
     .tooltip__content-wrapper {
       bottom: calc(100% + @tooltip-arrow-size);
-      &::after {
+      .tooltip__arrow {
         top: 100%;
         border-bottom: none;
         border-top: @tooltip-arrow-size solid @color-black;
