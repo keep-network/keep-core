@@ -8,6 +8,8 @@ import {
   watchFetchAPY,
   watchFetchCovPoolData,
   subscribeToCovTokenTransferEvent,
+  subscribeToAuctionCreatedEvent,
+  subscribeToAuctionClosedEvent,
 } from "../../sagas/coverage-pool"
 import selectors from "../../sagas/selectors"
 
@@ -30,6 +32,8 @@ import {
   COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
   covTokenUpdated,
   COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED,
+  RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
+  RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
 } from "../../actions/coverage-pool"
 import { Keep } from "../../contracts"
 import { ZERO_ADDRESS } from "../../utils/ethereum.utils"
@@ -312,6 +316,96 @@ describe("Coverage pool saga test", () => {
           totalValueLocked: updatedTvl,
           totalValueLockedInUSD: tvlInUSD,
           apy: updatedAPY,
+        })
+        .run()
+    })
+  })
+
+  describe("Subscribe to AuctionCreated event", () => {
+    it("should update data correctly if `AuctionCreated` event has been emitted", () => {
+      const initialState = {
+        ...coveragePoolInitialData,
+        hasRiskManagerOpenAuctions: false,
+      }
+
+      return expectSaga(subscribeToAuctionCreatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .dispatch({
+          type: RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
+        })
+        .put(
+          covTokenUpdated({
+            hasRiskManagerOpenAuctions: true,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          hasRiskManagerOpenAuctions: true,
+        })
+        .run()
+    })
+
+    it("should update data correctly if `AuctionClosed` event has been emitted and there are no more open auctions left", () => {
+      const initialState = {
+        ...coveragePoolInitialData,
+        hasRiskManagerOpenAuctions: false,
+      }
+
+      const mockedHasOpenAuctions = false
+
+      return expectSaga(subscribeToAuctionClosedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [
+            matchers.call.fn(Keep.coveragePoolV1.hasRiskManagerOpenAuctions),
+            mockedHasOpenAuctions,
+          ],
+        ])
+        .dispatch({
+          type: RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
+        })
+        .put(
+          covTokenUpdated({
+            hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
+        })
+        .run()
+    })
+
+    it("should update data correctly if `AuctionClosed` event has been emitted but open auctions still exist", () => {
+      const initialState = {
+        ...coveragePoolInitialData,
+        hasRiskManagerOpenAuctions: false,
+      }
+
+      const mockedHasOpenAuctions = true
+
+      return expectSaga(subscribeToAuctionClosedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [
+            matchers.call.fn(Keep.coveragePoolV1.hasRiskManagerOpenAuctions),
+            mockedHasOpenAuctions,
+          ],
+        ])
+        .dispatch({
+          type: RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
+        })
+        .put(
+          covTokenUpdated({
+            hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
         })
         .run()
     })
