@@ -414,9 +414,7 @@ export function* subscribeToAuctionCreatedEvent() {
   while (true) {
     yield take(requestChan)
 
-    const hasRiskManagerOpenAuctions = yield call(
-      Keep.coveragePoolV1.hasRiskManagerOpenAuctions
-    )
+    const hasRiskManagerOpenAuctions = true
 
     yield put(
       covTokenUpdated({
