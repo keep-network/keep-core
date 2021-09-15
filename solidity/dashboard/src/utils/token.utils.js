@@ -96,9 +96,7 @@ export class Token {
       : new BigNumber(amount)
     return _amount.decimalPlaces() < decimalPlaces
       ? _amount.toFormat(undefined, BigNumber.ROUND_DOWN)
-      : new BigNumber(_amount.toFormat(decimalPlaces, BigNumber.ROUND_DOWN))
-          .div(1)
-          .toString()
+      : _amount.toFormat(decimalPlaces, BigNumber.ROUND_DOWN)
   }
 
   /**
