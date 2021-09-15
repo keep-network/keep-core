@@ -29,7 +29,12 @@ const DepositForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
+  const onAddonClick = useSetMaxAmountToken(
+    "tokenAmount",
+    tokenAmount,
+    KEEP,
+    KEEP.decimals
+  )
 
   const getEstimatedReward = () => {
     if (!formikProps.values.tokenAmount) {
