@@ -55,8 +55,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   const hasCovKEEPTokens = gt(covBalance, 0)
 
-  const keepDecimalsToDisplay = 2 // decimals to display for KEEP amount
-
   useEffect(() => {
     dispatch(fetchTvlRequest())
     dispatch(fetchAPYRequest())
@@ -209,7 +207,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               amountClassName={"h1 text-mint-100"}
               symbolClassName={"h2 text-mint-100"}
               token={KEEP}
-              decimalsToDisplay={keepDecimalsToDisplay}
               withIcon
             />
             <TokenAmount
@@ -241,7 +238,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               amountClassName={"h2 text-mint-100"}
               symbolClassName={"h3 text-mint-100"}
               token={KEEP}
-              decimalsToDisplay={keepDecimalsToDisplay}
               withIcon
             />
             <TokenAmount

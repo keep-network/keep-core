@@ -4,7 +4,7 @@ import FormInput from "../../components/FormInput"
 import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { normalizeFloatingAmount } from "../../forms/form.utils"
+import { formatAmount, normalizeAmount } from "../../forms/form.utils"
 import { KEEP } from "../../utils/token.utils"
 import List from "../List"
 import * as Icons from "../Icons"
@@ -20,14 +20,9 @@ import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
+import BigNumber from "bignumber.js"
 
-const DepositForm = ({
-  tokenAmount,
-  onSubmit,
-  apy,
-  keepDecimalsToDisplay = 2,
-  ...formikProps
-}) => {
+const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken(
     "tokenAmount",
@@ -57,7 +52,8 @@ const DepositForm = ({
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={normalizeFloatingAmount}
+          normalize={normalizeAmount}
+          format={(value) => formatAmount(value, BigNumber.ROUND_FLOOR)}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
@@ -69,7 +65,6 @@ const DepositForm = ({
                 wrapperClassName={"deposit-form__keep-balance-amount"}
                 amountClassName={"text-success"}
                 symbolClassName={"text-success"}
-                decimalsToDisplay={keepDecimalsToDisplay}
               />
             </>
           }
@@ -82,7 +77,6 @@ const DepositForm = ({
             apy={apy}
             reward={getEstimatedReward()}
             label="Yearly"
-            keepDecimalsToDisplay={keepDecimalsToDisplay}
           />
         </List.Content>
       </List>
@@ -112,7 +106,6 @@ const EstimatedAPYListItem = ({
   apy,
   reward,
   label,
-  keepDecimalsToDisplay = 2,
 }) => {
   return (
     <List.Item className="mb-1">
@@ -142,7 +135,6 @@ const EstimatedAPYListItem = ({
             amount={reward}
             amountClassName=""
             symbolClassName=""
-            decimalsToDisplay={keepDecimalsToDisplay}
           />
         </OnlyIf>
       </div>

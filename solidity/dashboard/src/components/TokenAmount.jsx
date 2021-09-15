@@ -1,6 +1,6 @@
 import React from "react"
 import Tooltip from "./Tooltip"
-import { KEEP } from "../utils/token.utils"
+import { covKEEP, KEEP } from "../utils/token.utils"
 import OnlyIf from "./OnlyIf"
 
 const TokenAmount = ({
@@ -18,8 +18,12 @@ const TokenAmount = ({
   smallestPrecisionUnit = null,
   smallestPrecisionDecimals = null,
   decimalsToDisplay = null,
+  displayDecimalsInTooltip = false,
   withSymbol = true,
 }) => {
+  if (token === covKEEP) {
+    displayDecimalsInTooltip = true
+  }
   const CurrencyIcon = withIcon ? icon || token.icon : () => <></>
 
   const _smallestPrecisionUnit =
@@ -29,6 +33,10 @@ const TokenAmount = ({
     smallestPrecisionDecimals || token.smallestPrecisionDecimals
 
   const _decimalsToDisplay = decimalsToDisplay | token.decimalsToDisplay
+
+  const _decimalsToDisplayInTooltip = displayDecimalsInTooltip
+    ? token.smallestPrecisionDecimals
+    : 0
 
   const formattedAmount = withMetricSuffix
     ? token.displayAmountWithMetricSuffix(amount, _decimalsToDisplay)
@@ -55,7 +63,7 @@ const TokenAmount = ({
       >
         {`${token.toFormat(
           token.toTokenUnit(amount, _smallestPrecisionDecimals),
-          _smallestPrecisionDecimals
+          _decimalsToDisplayInTooltip
         )} ${_smallestPrecisionUnit}`}
       </Tooltip>
       {withSymbol && (

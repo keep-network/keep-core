@@ -25,7 +25,12 @@ const AddAmountToWithdrawalForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
+  const onAddonClick = useSetMaxAmountToken(
+    "tokenAmount",
+    tokenAmount,
+    KEEP,
+    KEEP.decimals
+  )
 
   return (
     <form className="add-amount-to-withdraw-form">

@@ -7,6 +7,10 @@ export const normalizeAmount = (value) => {
 }
 
 export const formatAmount = (value) => {
+  if (value.includes(".") && value.indexOf(".") !== 0) {
+    const valuesSplitByDot = value.split(".")
+    value = valuesSplitByDot[0]
+  }
   const newValue = value ? value.replace(NOT_NUMBERS, "") : 0
   return new BigNumber(newValue).toFormat(0)
 }
