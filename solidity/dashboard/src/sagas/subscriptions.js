@@ -24,6 +24,8 @@ import {
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   coveragePoolWithdrawalCompletedEventEmitted,
   coveragePoolWithdrawalInitiatedEventEmitted,
+  riskManagerAuctionClosedEventEmitted,
+  riskManagerAuctionCreatedEventEmitted,
 } from "../actions/coverage-pool"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
@@ -1034,5 +1036,31 @@ export function* observeWithdrawalCompletedEvent() {
     EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
     coveragePoolWithdrawalCompletedEventEmitted,
     `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED}`
+  )
+}
+
+export function* observeAuctionCreatedEvent() {
+  const riskManagerV1Contract =
+    Keep.coveragePoolV1.riskManagerV1Contract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    riskManagerV1Contract,
+    "AuctionCreated",
+    riskManagerAuctionCreatedEventEmitted,
+    "RiskManagerV1.AuctionCreated"
+  )
+}
+
+export function* observeAuctionClosedEvent() {
+  const riskManagerV1Contract =
+    Keep.coveragePoolV1.riskManagerV1Contract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    riskManagerV1Contract,
+    "AuctionClosed",
+    riskManagerAuctionClosedEventEmitted,
+    "RiskManagerV1.AuctionClosed"
   )
 }

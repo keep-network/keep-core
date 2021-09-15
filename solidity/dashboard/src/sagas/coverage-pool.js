@@ -28,6 +28,8 @@ import {
   COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
   COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
   COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+  RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
+  RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -125,6 +127,10 @@ function* fetchCovPoolData(action) {
       shareOfPool
     )
 
+    const hasRiskManagerOpenAuctions = yield call(
+      Keep.coveragePoolV1.hasRiskManagerOpenAuctions
+    )
+
     yield put(
       fetchCovPoolDataSuccess({
         shareOfPool,
@@ -137,6 +143,7 @@ function* fetchCovPoolData(action) {
         withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
         pendingWithdrawal,
         withdrawalInitiatedTimestamp,
+        hasRiskManagerOpenAuctions,
       })
     )
   } catch (error) {
@@ -394,6 +401,44 @@ export function* subscribeToWithdrawalCompletedEvent() {
         totalValueLockedInUSD,
         totalValueLocked,
         apy,
+      })
+    )
+  }
+}
+
+export function* subscribeToAuctionCreatedEvent() {
+  const requestChan = yield actionChannel(
+    RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED
+  )
+
+  while (true) {
+    yield take(requestChan)
+
+    const hasRiskManagerOpenAuctions = true
+
+    yield put(
+      covTokenUpdated({
+        hasRiskManagerOpenAuctions,
+      })
+    )
+  }
+}
+
+export function* subscribeToAuctionClosedEvent() {
+  const requestChan = yield actionChannel(
+    RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED
+  )
+
+  while (true) {
+    yield take(requestChan)
+
+    const hasRiskManagerOpenAuctions = yield call(
+      Keep.coveragePoolV1.hasRiskManagerOpenAuctions
+    )
+
+    yield put(
+      covTokenUpdated({
+        hasRiskManagerOpenAuctions,
       })
     )
   }

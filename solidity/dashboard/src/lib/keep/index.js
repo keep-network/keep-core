@@ -1,4 +1,5 @@
 import contracts, {
+  RISK_MANAGER_V1_CONTRACT_NAME,
   SADDLE_SWAP_CONTRACT_NAME,
   SaddleSwapArtifact,
 } from "./contracts"
@@ -115,6 +116,9 @@ class Keep {
   [ASSET_POOL_CONTRACT_NAME];
 
   /** @type {BaseContract} */
+  [RISK_MANAGER_V1_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
   [REWARDS_POOL_CONTRACT_NAME]
 
   initializeContracts = () => {
@@ -163,6 +167,7 @@ class Keep {
       this.covTokenContract,
       this.keepTokenContract,
       this.rewardsPoolContract,
+      this.riskManagerV1Contract,
       this.exchangeService,
       this.web3
     )
