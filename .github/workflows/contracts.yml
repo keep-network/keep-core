@@ -177,7 +177,7 @@ jobs:
       - name: Annotate in case of verification failure
         if: steps.verify-contracts.outcome == 'failure'
         continue-on-error: true
-        uses: kibalabs/github-action-create-annotations@v0.2.0
+        uses: thesis/github-action-create-annotations@v0.2.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           json-file-path: "./.github/annotations.json"
