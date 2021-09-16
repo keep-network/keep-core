@@ -68,7 +68,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   const onSubmitDepositForm = async (values, awaitingPromise) => {
     const { tokenAmount } = values
-    const amount = KEEP.fromTokenUnit(tokenAmount)
+    const amount = KEEP.fromTokenUnit(tokenAmount).toString()
     await openConfirmationModal(
       {
         modalOptions: {
