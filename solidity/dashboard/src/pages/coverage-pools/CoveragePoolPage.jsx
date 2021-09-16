@@ -28,6 +28,7 @@ import { addAdditionalDataToModal } from "../../actions/modal"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
 import { Keep } from "../../contracts"
+import ConfirmationModal from "../../components/ConfirmationModal"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -47,6 +48,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     withdrawalDelay,
     pendingWithdrawal,
     withdrawalInitiatedTimestamp,
+    hasRiskManagerOpenAuctions,
   } = useSelector((state) => state.coveragePool)
 
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
@@ -69,6 +71,21 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const onSubmitDepositForm = async (values, awaitingPromise) => {
     const { tokenAmount } = values
     const amount = KEEP.fromTokenUnit(tokenAmount).toString()
+    if (hasRiskManagerOpenAuctions) {
+      await openConfirmationModal(
+        {
+          modalOptions: {
+            title: "Deposit",
+          },
+          btnText: "continue",
+          title: "Take note!",
+          subtitle:
+            "The coverage pool is about to cover an event. Do you want to continue with this deposit?",
+          withConfirmationInput: false,
+        },
+        ConfirmationModal
+      )
+    }
     await openConfirmationModal(
       {
         modalOptions: {

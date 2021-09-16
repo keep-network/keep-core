@@ -23,6 +23,7 @@ describe("Test CoveragePoolV1 lib", () => {
     const covTokenContract = createMockedContract("0x7")
     const collateralToken = createMockedContract("0x6")
     const rewardsPoolContract = createMockedContract("0x7")
+    const riskManagerContract = createMockedContract("0x8")
     const exchangeService = {
       getKeepTokenPriceInUSD: jest.fn(),
     }
@@ -35,6 +36,7 @@ describe("Test CoveragePoolV1 lib", () => {
       covTokenContract,
       collateralToken,
       rewardsPoolContract,
+      riskManagerContract,
       exchangeService,
       web3
     )
@@ -278,5 +280,19 @@ describe("Test CoveragePoolV1 lib", () => {
 
     expect(spy).toHaveBeenCalledWith("CoverageClaimed")
     expect(result.toString()).toEqual(expectedResult)
+  })
+
+  it("should check if there are any open auctions in Risk Manager", async () => {
+    const mockedResult = false
+    coveragePoolV1.riskManagerV1Contract.makeCall.mockResolvedValue(
+      mockedResult
+    )
+
+    const result = await coveragePoolV1.hasRiskManagerOpenAuctions()
+
+    expect(coveragePoolV1.riskManagerV1Contract.makeCall).toHaveBeenCalledWith(
+      "hasOpenAuctions"
+    )
+    expect(result).toEqual(mockedResult)
   })
 })

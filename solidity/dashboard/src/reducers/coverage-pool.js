@@ -37,6 +37,9 @@ export const coveragePoolInitialData = {
   withdrawalTimeout: 0,
   pendingWithdrawal: 0,
   withdrawalInitiatedTimestamp: 0,
+
+  // riskManager
+  hasRiskManagerOpenAuctions: false,
 }
 
 const coveragePoolReducer = (state = coveragePoolInitialData, action) => {

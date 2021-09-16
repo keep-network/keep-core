@@ -14,6 +14,7 @@ class CoveragePoolV1 {
    * @param {BaseContract} _covTokenContract
    * @param {BaseContract} _collateralToken
    * @param {BaseExchange} _rewardPoolContract
+   * @param {BaseExchange} _riskManagerV1Contract
    * @param {BaseExchange} _exchangeService
    * @param {Web3LibWrapper} _web3
    */
@@ -22,14 +23,16 @@ class CoveragePoolV1 {
     _covTokenContract,
     _collateralToken,
     _rewardPoolContract,
+    _riskManagerV1Contract,
     _exchangeService,
     _web3
   ) {
     this.assetPoolContract = _assetPoolContract
     this.covTokenContract = _covTokenContract
     this.collateralToken = _collateralToken
-    this.exchangeService = _exchangeService
     this.rewardPoolContract = _rewardPoolContract
+    this.riskManagerV1Contract = _riskManagerV1Contract
+    this.exchangeService = _exchangeService
     this.web3 = _web3
   }
 
@@ -269,6 +272,10 @@ class CoveragePoolV1 {
       withdrawalDelay,
       withdrawalTimeout,
     }
+  }
+
+  hasRiskManagerOpenAuctions = async () => {
+    return await this.riskManagerV1Contract.makeCall("hasOpenAuctions")
   }
 }
 

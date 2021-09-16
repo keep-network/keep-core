@@ -6,6 +6,7 @@ import { withFormik } from "formik"
 import { getErrorsObj } from "../forms/common-validators"
 import Divider from "./Divider"
 import FormCheckbox from "./FormCheckbox"
+import OnlyIf from "./OnlyIf"
 
 const ConfirmationModal = ({
   title,
@@ -15,6 +16,7 @@ const ConfirmationModal = ({
   onBtnClick,
   onCancel,
   getLabelText,
+  withConfirmationInput = true,
 }) => {
   return (
     <>
@@ -26,6 +28,7 @@ const ConfirmationModal = ({
         onBtnClick={onBtnClick}
         onCancel={onCancel}
         getLabelText={getLabelText}
+        withConfirmationInput={withConfirmationInput}
       />
     </>
   )
@@ -61,16 +64,19 @@ const ConfirmationForm = ({
   btnText,
   onCancel,
   getLabelText = (confirmationText) => `Type ${confirmationText} to confirm.`,
+  withConfirmationInput,
   ...formikProps
 }) => {
   return (
     <form>
-      <FormInput
-        name="confirmationText"
-        type="text"
-        label={getLabelText(confirmationText)}
-        placeholder=""
-      />
+      <OnlyIf condition={withConfirmationInput}>
+        <FormInput
+          name="confirmationText"
+          type="text"
+          label={getLabelText(confirmationText)}
+          placeholder=""
+        />
+      </OnlyIf>
       <div
         className="flex row center mt-2"
         style={{
@@ -82,7 +88,9 @@ const ConfirmationForm = ({
         <Button
           className="btn btn-lg btn-primary"
           type="submit"
-          disabled={!(formikProps.isValid && formikProps.dirty)}
+          disabled={
+            withConfirmationInput && !(formikProps.isValid && formikProps.dirty)
+          }
           onClick={formikProps.handleSubmit}
         >
           {btnText}
@@ -99,10 +107,10 @@ const ConfirmationFormFormik = withFormik({
   mapPropsToValues: () => ({
     confirmationText: "",
   }),
-  validate: (values, { confirmationText }) => {
+  validate: (values, { confirmationText, withConfirmationInput }) => {
     const errors = {}
 
-    if (values.confirmationText !== confirmationText) {
+    if (withConfirmationInput && values.confirmationText !== confirmationText) {
       errors.confirmationText = "Does not match"
     }
 
