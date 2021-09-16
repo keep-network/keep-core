@@ -5,7 +5,7 @@ import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
 import { normalizeFloatingAmount } from "../../forms/form.utils"
-import { KEEP } from "../../utils/token.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import TokenAmount from "../TokenAmount"
 import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
 import {
@@ -95,7 +95,9 @@ export default withFormik({
       errors.tokenAmount = validateAmountInRange(
         tokenAmount,
         props.tokenAmount,
-        0
+        0,
+        covKEEP,
+        true
       )
     }
 

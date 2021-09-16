@@ -8,6 +8,7 @@ import MaxAmountAddon from "./MaxAmountAddon"
 import { SubmitButton } from "./Button"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
+import { covKEEP } from "../utils/token.utils"
 
 const WithdrawAmountForm = ({
   onCancel,
@@ -60,7 +61,9 @@ const WithdrawAmountFormWithFormik = withFormik({
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,
         props.withdrawAmount,
-        1
+        1,
+        covKEEP,
+        true
       )
     }
 
