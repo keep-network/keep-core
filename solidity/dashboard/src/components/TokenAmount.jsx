@@ -60,6 +60,13 @@ const TokenAmount = ({
         )}
         delay={0}
         className="token-amount__tooltip"
+        contentWrapperStyles={
+          _decimalsToDisplayInTooltip > 0
+            ? {
+                wordBreak: "break-word",
+              }
+            : null
+        }
       >
         {`${token.toFormat(
           token.toTokenUnit(amount, _smallestPrecisionDecimals),
