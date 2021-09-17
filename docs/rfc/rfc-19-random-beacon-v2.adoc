@@ -62,9 +62,11 @@ New groups should be created with a fixed, governable frequency of relay
 requests. Instead of a ticket-based approach for group selection, we should
 use sortition pools. Group creation start transaction should be embedded into
 relay request transaction and should lock a sortition pool. From this moment,
-no operator can enter or leave the pool. All off-chain clients should perform
-group selection optimistically, using a view sortition function call and perform
-DKG. Once the group submits the result to the chain, a challenge period starts.
+no operator can enter or leave the pool. Once a new relay entry appears on the
+chain, all off-chain clients should perform group selection optimistically, 
+using the new entry value and a view sortition pool function call.
+After determining group members, clients should perform DKG as usual. 
+Once the group submits the result to the chain, a challenge period starts.
 
 During the challenge period, anyone can notify that the submitted DKG result
 contains group members not selected by the pool. This leads to slashing all
@@ -77,7 +79,8 @@ a reward, as described in <<fees-and-rewards, Fees and Rewards>> section.
 
 In case the DKG result was not submitted before a timeout, anyone can notify DKG
 timed out and receive a reward, as described in <<fees-and-rewards, Fees and Rewards>> 
-section.
+section. DKG timeout includes the situation when no new relay entry was produced
+and sortition could not be performed.
 
 The sortition pool should weigh operators by stake and allow to select the same 
 operator multiple times. DKG protocol should execute in the same way as for v1
