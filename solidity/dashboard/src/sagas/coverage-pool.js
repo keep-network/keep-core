@@ -316,7 +316,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
         covTokensAvailableToWithdraw: sub(
           covTokensAvailableToWithdraw,
           covAmount
-        ),
+        ).toString(),
       })
     )
   }

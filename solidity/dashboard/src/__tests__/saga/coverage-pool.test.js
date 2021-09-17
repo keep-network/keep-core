@@ -9,6 +9,7 @@ import {
   subscribeToAuctionCreatedEvent,
   subscribeToAuctionClosedEvent,
   subscribeToAssetPoolDepositedEvent,
+  subscribeToWithdrawalInitiatedEvent,
 } from "../../sagas/coverage-pool"
 
 import coveragePoolReducer, {
@@ -32,10 +33,11 @@ import {
   RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
   RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
   COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
+  COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
 } from "../../actions/coverage-pool"
 import { Keep } from "../../contracts"
 import * as matchers from "redux-saga-test-plan/matchers"
-import { add } from "../../utils/arithmetics.utils"
+import { add, sub } from "../../utils/arithmetics.utils"
 import { select } from "redux-saga-test-plan/matchers"
 import selectors from "../../sagas/selectors"
 
@@ -560,6 +562,120 @@ describe("Coverage pool saga test", () => {
           totalValueLocked: updatedTvl,
           totalValueLockedInUSD: tvlInUSD,
           apy: updatedAPY,
+        })
+        .run()
+    })
+  })
+
+  describe("Subscribe to WithdrawalInitiated event", () => {
+    it("should update data correctly if the `WithdrawalInitiated` event has been emitted by current logged user", () => {
+      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+      const initialCovBalance = Token.fromTokenUnit(30).toString()
+      const initialCovTokensAvailableToWithdraw =
+        Token.fromTokenUnit(30).toString()
+      const withdrawalInitiatedEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("20").toString(),
+        timestamp: 1631857610,
+      }
+      const mockedEvent = {
+        returnValues: withdrawalInitiatedEventData,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          pendingWithdrawalBalance: KEEP.fromTokenUnit("200").toString(),
+          amount: KEEP.fromTokenUnit("20").toString(),
+        },
+      }
+
+      const initialState = {
+        ...coveragePoolInitialData,
+        covTotalSupply: initialCovTotalSupply,
+        covBalance: initialCovBalance,
+        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+      }
+
+      const updatedCovTokensAvailableToWithdraw = sub(
+        initialCovTokensAvailableToWithdraw,
+        withdrawalInitiatedEventData.covAmount
+      ).toString()
+
+      return expectSaga(subscribeToWithdrawalInitiatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            pendingWithdrawal: withdrawalInitiatedEventData.covAmount,
+            withdrawalInitiatedTimestamp:
+              withdrawalInitiatedEventData.timestamp,
+            covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          pendingWithdrawal: withdrawalInitiatedEventData.covAmount,
+          withdrawalInitiatedTimestamp: withdrawalInitiatedEventData.timestamp,
+          covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+        })
+        .run()
+    })
+
+    it("should update data correctly for current user if the `WithdrawalInitiated` event has been emitted by another user", () => {
+      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
+      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+      const initialCovBalance = Token.fromTokenUnit(30).toString()
+      const initialCovTokensAvailableToWithdraw =
+        Token.fromTokenUnit(30).toString()
+      const withdrawalInitiatedEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("20").toString(),
+        timestamp: 1631857610,
+      }
+      const mockedEvent = {
+        returnValues: withdrawalInitiatedEventData,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          pendingWithdrawalBalance: KEEP.fromTokenUnit("200").toString(),
+          amount: KEEP.fromTokenUnit("20").toString(),
+        },
+      }
+
+      const initialState = {
+        ...coveragePoolInitialData,
+        covTotalSupply: initialCovTotalSupply,
+        covBalance: initialCovBalance,
+        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+      }
+
+      return expectSaga(subscribeToWithdrawalInitiatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .hasFinalState({
+          ...initialState,
         })
         .run()
     })
