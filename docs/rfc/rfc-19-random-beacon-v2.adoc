@@ -175,16 +175,37 @@ faster to, for example, put the sortition pool using the entry for group
 selection in the desired state. This issue needs to be solved on the sortition
 pool side with initiation time for new operators in the pool and/or state lock.
 
-To ensure predictable cost of relay entry submission transaction, we should
-eliminate callbacks altogether. It is up to the application to act when a new
-relay entry has been submitted and execute the necessary logic based on the relay
-entry value. Random beacon will store the block in which the entry was submitted
-next to the entry so that the application may decide if the entry timed out in
-case the application transaction reading the entry was delayed for whatever reason.
-In this model, the application requests for a relay entry in one transaction,
-and reads the entry performing the necessary logic in another transaction.
-We do not care about free-riders. They can read the last entry value but can not
-have the entry produced in the frequency they need without paying a fee in T.
+Instead of executing any callback in the same transaction in which relay entry
+is submitted, we should allow only simple, low gas budget callbacks with a gas
+limit controlled by the governance. Applications wanting to use a relay entry
+should submit another transaction using the relay entry value previously set by
+the random beacon. They should also employ an additional security check making
+sure the entry submitted is only valid for a certain number of blocks to avoid
+the situation when relay entry beacon transaction and application-specific
+transaction are executed far from each other.
+
+Smart contract consuming new relay entry needs to implement `IRandomBeaconConsumer`
+interface. Gas limit for `__beaconCallback` call should be initially set to 50k
+gas which is enough to SSTORE new relay entry, block height in which the entry
+was submitted, and to emit an event. Callback gas limit should be a governable
+value. Failure in the callback function should not revert the relay entry
+transaction. When requesting a relay entry, it should be possible to pass an
+optional address parameter - this is the address of a contract implementing
+`IRandomBeaconConsumer` interface that should be called when a new relay entry
+is submitted to the chain.
+
+```
+interface IRandomBeaconConsumer {
+    /// @notice Receives relay entry produced by Keep Random Beacon. This function
+    /// should be called only by Keep Random Beacon.
+    ///
+    /// @param relayEntry Relay entry (random number) produced by Keep Random
+    ///                   Beacon.
+    /// @param blockNumber Block number at which the relay entry was submitted
+    ///                    to the chain.
+    function __beaconCallback(uint256 relayEntry, uint256 blockNumber) external;
+}
+```
 
 === Timeouts
 
