@@ -389,20 +389,23 @@ export function* subscribeToWithdrawalCompletedEvent() {
       shareOfPool
     )
 
-    yield put(
-      covTokenUpdated({
-        pendingWithdrawal: "0",
-        withdrawalInitiatedTimestamp: "0",
-        shareOfPool,
-        covBalance: updatedCovBalance,
-        covTotalSupply: updatedCovTotalSupply,
-        estimatedRewards,
-        estimatedKeepBalance,
-        totalValueLockedInUSD,
-        totalValueLocked,
-        apy,
-      })
-    )
+    const covTokenUpdatedData = {
+      shareOfPool,
+      covBalance: updatedCovBalance,
+      covTotalSupply: updatedCovTotalSupply,
+      estimatedRewards,
+      estimatedKeepBalance,
+      totalValueLockedInUSD,
+      totalValueLocked,
+      apy,
+    }
+
+    if (isAddressedToCurrentAddress) {
+      covTokenUpdatedData.pendingWithdrawal = "0"
+      covTokenUpdatedData.withdrawalInitiatedTimestamp = "0"
+    }
+
+    yield put(covTokenUpdated(covTokenUpdatedData))
   }
 }
 
