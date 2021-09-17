@@ -8,6 +8,7 @@ import {
   watchFetchCovPoolData,
   subscribeToAuctionCreatedEvent,
   subscribeToAuctionClosedEvent,
+  subscribeToAssetPoolDepositedEvent,
 } from "../../sagas/coverage-pool"
 
 import coveragePoolReducer, {
@@ -30,9 +31,13 @@ import {
   covTokenUpdated,
   RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
   RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
+  COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
 } from "../../actions/coverage-pool"
 import { Keep } from "../../contracts"
-import * as matchers from "redux-saga-test-plan/matchers";
+import * as matchers from "redux-saga-test-plan/matchers"
+import { add } from "../../utils/arithmetics.utils"
+import { select } from "redux-saga-test-plan/matchers"
+import selectors from "../../sagas/selectors"
 
 // TODO: Mock globally
 // Mock TrezorConnector due to `This version of trezor-connect is not suitable
@@ -355,6 +360,210 @@ describe("Coverage pool saga test", () => {
   //       .run()
   //   })
   // })
+
+  describe("Subscribe to Asset Pool's Deposit event", () => {
+    it("should udpate data correctly if the `Deposit` event has been emitted by current logged user", () => {
+      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+      const initialCovBalance = Token.fromTokenUnit(30).toString()
+      const initialCovTokensAvailableToWithdraw =
+        Token.fromTokenUnit(30).toString()
+      const depositEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("300").toString(),
+      }
+      const mockedEvent = {
+        returnValues: depositEventData,
+      }
+
+      const initialState = {
+        ...coveragePoolInitialData,
+        covTotalSupply: initialCovTotalSupply,
+        covBalance: initialCovBalance,
+        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+      }
+
+      const updatedCovBalance = add(
+        initialCovBalance,
+        depositEventData.covAmount
+      ).toString()
+      const updatedCovTotalSupply = add(
+        initialCovTotalSupply,
+        depositEventData.covAmount
+      ).toString()
+      const updatedCovTokensAvailableToWithdraw = add(
+        initialCovTokensAvailableToWithdraw,
+        depositEventData.covAmount
+      ).toString()
+      const updatedShareOfPool = 0.8
+      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
+      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
+      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
+      const keepInUSD = new BigNumber(0.25)
+      const updatedAPY = 0.5
+      const tvlInUSD = new BigNumber(keepInUSD)
+        .multipliedBy(KEEP.toTokenUnit(updatedTvl))
+        .toFormat(2)
+
+      return expectSaga(subscribeToAssetPoolDepositedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            covBalance: updatedCovBalance,
+            covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+            covTotalSupply: updatedCovTotalSupply,
+            shareOfPool: updatedShareOfPool,
+            estimatedKeepBalance,
+            estimatedRewards,
+            totalValueLocked: updatedTvl,
+            totalValueLockedInUSD: tvlInUSD,
+            apy: updatedAPY,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          covBalance: updatedCovBalance,
+          covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+          covTotalSupply: updatedCovTotalSupply,
+          shareOfPool: updatedShareOfPool,
+          estimatedKeepBalance,
+          estimatedRewards,
+          totalValueLocked: updatedTvl,
+          totalValueLockedInUSD: tvlInUSD,
+          apy: updatedAPY,
+        })
+        .run()
+    })
+
+    it("should udpate data correctly for current user if the `Deposit` event has been emitted by another user", () => {
+      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
+      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+      const initialCovBalance = Token.fromTokenUnit(30).toString()
+      const initialCovTokensAvailableToWithdraw =
+        Token.fromTokenUnit(30).toString()
+      const depositEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("300").toString(),
+      }
+      const mockedEvent = {
+        returnValues: depositEventData,
+      }
+
+      const initialState = {
+        ...coveragePoolInitialData,
+        covTotalSupply: initialCovTotalSupply,
+        covBalance: initialCovBalance,
+        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+      }
+
+      const updatedCovTotalSupply = add(
+        initialCovTotalSupply,
+        depositEventData.covAmount
+      ).toString()
+      const updatedShareOfPool = 0.8
+      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
+      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
+      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
+      const keepInUSD = new BigNumber(0.25)
+      const updatedAPY = 0.5
+      const tvlInUSD = new BigNumber(keepInUSD)
+        .multipliedBy(KEEP.toTokenUnit(updatedTvl))
+        .toFormat(2)
+
+      return expectSaga(subscribeToAssetPoolDepositedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            covBalance: initialCovBalance,
+            covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+            covTotalSupply: updatedCovTotalSupply,
+            shareOfPool: updatedShareOfPool,
+            estimatedKeepBalance,
+            estimatedRewards,
+            totalValueLocked: updatedTvl,
+            totalValueLockedInUSD: tvlInUSD,
+            apy: updatedAPY,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          covBalance: initialCovBalance,
+          covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+          covTotalSupply: updatedCovTotalSupply,
+          shareOfPool: updatedShareOfPool,
+          estimatedKeepBalance,
+          estimatedRewards,
+          totalValueLocked: updatedTvl,
+          totalValueLockedInUSD: tvlInUSD,
+          apy: updatedAPY,
+        })
+        .run()
+    })
+  })
 
   describe("Subscribe to AuctionCreated event", () => {
     it("should update data correctly if `AuctionCreated` event has been emitted", () => {

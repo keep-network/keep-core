@@ -178,12 +178,12 @@ export function* subscribeToAssetPoolDepositedEvent() {
 
     const isAddressedToCurrentAddress = isSameEthAddress(address, underwriter)
 
-    const updatedCovTotalSupply = add(covTotalSupply, covAmount)
+    const updatedCovTotalSupply = add(covTotalSupply, covAmount).toString()
     const updatedCovBalance = isAddressedToCurrentAddress
-      ? add(covBalance, covAmount)
+      ? add(covBalance, covAmount).toString()
       : covBalance
     const updatedcovTokensAvailableToWithdraw = isAddressedToCurrentAddress
-      ? add(covTokensAvailableToWithdraw, covAmount)
+      ? add(covTokensAvailableToWithdraw, covAmount).toString()
       : covTokensAvailableToWithdraw
 
     const shareOfPool = yield call(
