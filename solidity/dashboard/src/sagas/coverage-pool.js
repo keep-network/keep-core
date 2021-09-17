@@ -360,7 +360,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
       )
     }
 
-    const updatedCovTotalSupply = sub(covTotalSupply, covAmount)
+    const updatedCovTotalSupply = sub(covTotalSupply, covAmount).toString()
     const totalValueLocked = yield call(Keep.coveragePoolV1.totalValueLocked)
     const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
     const totalValueLockedInUSD = keepInUSD
@@ -369,7 +369,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
     const apy = yield call(Keep.coveragePoolV1.apy)
 
     const updatedCovBalance = isAddressedToCurrentAddress
-      ? sub(covBalance, covAmount)
+      ? sub(covBalance, covAmount).toString()
       : covBalance
 
     const shareOfPool = yield call(
