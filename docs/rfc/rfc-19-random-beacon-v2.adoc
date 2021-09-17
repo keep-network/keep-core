@@ -244,6 +244,7 @@ save some gas.
 * Hard timeout for a relay entry
 * The frequency of a new group creation
 * Group lifetime
+* Callback gas limit
 
 [bibliography]
 == Related Links
