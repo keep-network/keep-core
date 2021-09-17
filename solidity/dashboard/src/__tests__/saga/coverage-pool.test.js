@@ -701,6 +701,116 @@ describe("Coverage pool saga test", () => {
         })
         .run()
     })
+
+    it("should update data correctly for current user if the `WithdrawalCompleted` event has been emitted by another user", () => {
+      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
+      const initialCovTotalSupply = Token.fromTokenUnit("1000").toString()
+      const initialCovBalance = Token.fromTokenUnit("400").toString()
+
+      const withdrawalCompletedEventData = {
+        underwriter: underwriterAddress,
+        amount: KEEP.fromTokenUnit("320").toString(),
+        covAmount: KEEP.fromTokenUnit("300").toString(),
+      }
+      const initialCovTokensAvailableToWithdraw = sub(
+        initialCovBalance,
+        withdrawalCompletedEventData.covAmount
+      ).toString()
+
+      const mockedEvent = {
+        returnValues: withdrawalCompletedEventData,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          pendingWithdrawalBalance: KEEP.fromTokenUnit("0").toString(),
+          amount: KEEP.fromTokenUnit("0").toString(),
+        },
+      }
+
+      const initialState = {
+        ...coveragePoolInitialData,
+        covTotalSupply: initialCovTotalSupply,
+        covBalance: initialCovBalance,
+        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+        pendingWithdrawal: "300",
+        withdrawalInitiatedTimestamp: "1631857111",
+      }
+
+      const updatedCovTotalSupply = sub(
+        initialCovTotalSupply,
+        withdrawalCompletedEventData.covAmount
+      ).toString()
+      const updatedShareOfPool = 0.8
+      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
+      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
+      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
+      const keepInUSD = new BigNumber(0.25)
+      const updatedAPY = 0.5
+      const tvlInUSD = new BigNumber(keepInUSD)
+        .multipliedBy(KEEP.toTokenUnit(updatedTvl))
+        .toFormat(2)
+
+      return expectSaga(subscribeToWithdrawalCompletedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            shareOfPool: updatedShareOfPool,
+            covBalance: initialCovBalance,
+            covTotalSupply: updatedCovTotalSupply,
+            estimatedRewards,
+            estimatedKeepBalance,
+            totalValueLockedInUSD: tvlInUSD,
+            totalValueLocked: updatedTvl,
+            apy: updatedAPY,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          shareOfPool: updatedShareOfPool,
+          covBalance: initialCovBalance,
+          covTotalSupply: updatedCovTotalSupply,
+          estimatedRewards,
+          estimatedKeepBalance,
+          totalValueLockedInUSD: tvlInUSD,
+          totalValueLocked: updatedTvl,
+          apy: updatedAPY,
+        })
+        .run()
+    })
   })
 
   describe("Subscribe to AuctionCreated event", () => {
