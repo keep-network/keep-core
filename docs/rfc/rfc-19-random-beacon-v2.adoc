@@ -103,7 +103,7 @@ reimburse for different actions related to DKG.
 The transaction submitting relay entry is not reimbursable and implementation
 should ensure the gas cost of this transaction is as low as possible, below
 200k gas. The first group member eligible to submit the result is 
-`previous_entry MOD group_size`, then also `(previous_entry MOD group_size) + 1`.
+`new_entry MOD group_size`, then also `(new_entry MOD group_size) + 1`.
 At the end, all group members should be eligible to submit the result. If the
 given member did not submit the result in their round, they should be removed
 from the sortition pool for at least 2 weeks and do not earn rewards for
@@ -112,10 +112,10 @@ as cheap as possible so that the member submitting relay entry does not have to
 pay any additional costs for removing inactive members from the pool. Smart
 contract patterns such as gas station could be helpful in achieving this goal.
 
-For example, if `previous_entry MOD group_size = 60` and the entry was submitted 
-by the member with index `3`, members with indexes `{60, 61, 62, 63, 64, 1, 2}`
-should be removed from the sortition pool in the same transaction in which
-member with index `3` submitted relay entry.
+For example, if `new_entry MOD group_size = 60`, `group_size = 64`, and the entry 
+was submitted  by the member with index `3`, members with indexes 
+`{60, 61, 62, 63, 64, 1, 2}` should be removed from the sortition pool in the 
+same transaction in which member with index `3` submitted relay entry.
 
 The default time for a single member to submit a relay entry should be increased 
 from 6 to 10 blocks and should become a governable parameter.
@@ -134,10 +134,12 @@ Just like in the case of relay entry submission, the order in which operators
 are supposed to submit DKG result is enforced on-chain and operators who missed
 their round are removed from the sortition pool for at least 2 weeks and do
 not earn rewards for that time. The first member eligible to submit the DKG result
-is a member with index `1`, then also `2`. For example, if member `9` submitted
-DKG result, members with indexes `{1, 2, 3, 4, 5, 6, 7, 8}` should be removed
-from the sortition pool in the same transaction in which member `9` submitted
-DKG result.
+is a member with index `hash(new_group_pubkey) % group_size`, then also 
+`(hash(new_group_pubkey) % group_size) + 1`. For example, if 
+`hash(new_group_pubkey) % group_size = 62`, `group_size = 64`, and member `9` 
+submitted DKG result, members with indexes `{62, 63, 64, 1, 2, 3, 4, 5, 6, 7, 8}` 
+should be removed from the sortition pool in the same transaction in which 
+member `9` submitted DKG result.
 
 The default time for each member to submit DKG result should be set to 10 blocks
 and should become a governable parameter.
