@@ -210,7 +210,7 @@ export function* subscribeToAssetPoolDepositedEvent() {
             estimatedBalanceAmountInKeep: estimatedKeepBalance,
           },
           modalProps: {
-            title: "Claim tokens",
+            title: "Deposit",
             classes: {
               modalWrapperClassName: "modal-wrapper__claim-tokens",
             },
