@@ -137,7 +137,7 @@ const MigrationCompletedModal = ({
       </div>
       <Divider className="divider divider--tile-fluid" />
       <Button className="btn btn-secondary btn-md" onClick={onCancel}>
-        cancel
+        close
       </Button>
     </>
   )
