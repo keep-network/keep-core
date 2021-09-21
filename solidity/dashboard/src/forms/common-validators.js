@@ -22,21 +22,21 @@ export const validateEthAddress = (address, required = true) => {
   }
 }
 
+export const isNumeric = (value) => {
+  return !Number.isNaN(parseFloat(value)) && isFinite(value, "Is not finite")
+}
+
 export const validateAmountInRange = (
   value,
   maxValue,
   minValue = 0,
   token = KEEP,
-  isFloatingNumber = false
 ) => {
   const formattedValue = token.fromTokenUnit(value)
 
   if (isBlankString(value)) {
     return "Required"
-  } else if (
-    (!isFloatingNumber && !REGEXP_ONLY_NUMBERS.test(value)) ||
-    (isFloatingNumber && formattedValue.decimalPlaces() > 0)
-  ) {
+  } else if (!isNumeric(value)) {
     return "Invalid value"
   }
 

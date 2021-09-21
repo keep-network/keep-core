@@ -63,7 +63,6 @@ const WithdrawAmountFormWithFormik = withFormik({
         props.withdrawAmount,
         1,
         covKEEP,
-        true
       )
     }
 

@@ -97,7 +97,6 @@ export default withFormik({
         props.tokenAmount,
         0,
         covKEEP,
-        true
       )
     }
 
