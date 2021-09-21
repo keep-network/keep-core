@@ -3,7 +3,7 @@ import List from "../../components/List"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
 import Divider from "../../components/Divider"
-import { TBTC_TOKEN_VERSION } from "../../constants/constants"
+import { TBTC_TOKEN_VERSION, LINK } from "../../constants/constants"
 
 const tbtcPools = [
   {
@@ -11,7 +11,7 @@ const tbtcPools = [
     icon: Icons.SaddleWhite,
     label: "tBTC v2 Pool on Saddle",
     btnText: "go to pool ↗",
-    link: "https://saddle.exchange/#/pools/btc/deposit",
+    link: LINK.tbtcMigration.saddlePoolv2,
     external: true,
   },
   {
@@ -84,7 +84,7 @@ const HowItWorksPage = () => {
           </p>
         </section>
         <a
-          href="https://example.com"
+          href={LINK.tbtcMigration.docs}
           rel="noopener noreferrer"
           target="_blank"
           className="text-smaller"
@@ -99,7 +99,7 @@ const HowItWorksPage = () => {
         </div>
         <h3>Mint tBTC v1</h3>
         <a
-          href="https://dapp.tbtc.network"
+          href={LINK.tbtcDapp}
           rel="noopener noreferrer"
           target="_blank"
           className="btn btn-primary btn-md"

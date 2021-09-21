@@ -11,7 +11,7 @@ import Divider from "../Divider"
 import Button from "../Button"
 import { TBTC } from "../../utils/token.utils"
 import { gt } from "../../utils/arithmetics.utils"
-import { TBTC_TOKEN_VERSION } from "../../constants/constants"
+import { LINK, TBTC_TOKEN_VERSION } from "../../constants/constants"
 import commonStyles from "./styles"
 
 const styles = {
@@ -126,7 +126,7 @@ const MigrationCompletedModal = ({
         </OnlyIf>
         <OnlyIf condition={to === TBTC_TOKEN_VERSION.v2}>
           <a
-            href={"https://saddle.exchange/#/pools/btc/deposit"}
+            href={LINK.tbtcMigration.saddlePoolv2}
             rel="noopener noreferrer"
             target="_blank"
             className="btn btn-primary btn-md ml-a"

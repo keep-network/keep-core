@@ -35,6 +35,11 @@ export const LINK = {
   coveragePools: {
     docs: "https://github.com/keep-network/coverage-pools/blob/main/docs/design.adoc",
   },
+  tbtcMigration: {
+    docs: "https://coda.io/@keep-network/how-to-mint-tbtc-v2-with-etherscan",
+    saddlePoolv2: "https://saddle.exchange/#/pools/tbtc/deposit",
+  },
+  tbtcDapp: "https://dapp.tbtc.network",
 }
 
 export const WALLETS = {
