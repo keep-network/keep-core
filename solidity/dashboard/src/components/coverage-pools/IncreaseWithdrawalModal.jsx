@@ -15,6 +15,7 @@ import { add } from "../../utils/arithmetics.utils"
 import { useWeb3Address } from "../WithWeb3Context"
 import { addAdditionalDataToModal } from "../../actions/modal"
 import { Keep } from "../../contracts"
+import TokenAmount from "../TokenAmount";
 
 const getItems = (keepAmount) => {
   return [
@@ -200,13 +201,16 @@ const ModalWithOverview = ({
           &nbsp;
           <Icons.Add />
           &nbsp;
-          {KEEP.displayAmountWithSymbol(
-            Keep.coveragePoolV1.estimatedBalanceFor(
+          <TokenAmount
+            amount={Keep.coveragePoolV1.estimatedBalanceFor(
               addedAmount,
               covTotalSupply,
               totalValueLocked
-            )
-          )}
+            )}
+            token={KEEP}
+            amountClassName={"h4 text-grey-70"}
+            symbolClassName={"h4 text-gray-70"}
+          />
         </h4>
         <IncreaseWithdrawalModal.Tile
           title={"new withdrawal"}
@@ -236,13 +240,16 @@ const IncreaseWithdrawalModalTile = ({
       </h5>
       <div className={"modal-with-overview__withdrawal-info"}>
         <h4 className={"modal-with-overview__amount text-grey-70"}>
-          {KEEP.displayAmountWithSymbol(
-            Keep.coveragePoolV1.estimatedBalanceFor(
+          <TokenAmount
+            amount={Keep.coveragePoolV1.estimatedBalanceFor(
               amount,
               covTotalSupply,
               totalValueLocked
-            )
-          )}
+            )}
+            token={KEEP}
+            amountClassName={"h4 text-grey-70"}
+            symbolClassName={"h4 text-gray-70"}
+          />
         </h4>
         <OnlyIf condition={!expired}>
           <div className={"modal-with-overview__delay text-grey-50"}>

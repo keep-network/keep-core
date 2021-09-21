@@ -4,8 +4,8 @@ import FormInput from "../../components/FormInput"
 import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { normalizeAmount, formatAmount } from "../../forms/form.utils"
-import { KEEP } from "../../utils/token.utils"
+import { normalizeFloatingAmount } from "../../forms/form.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import TokenAmount from "../TokenAmount"
 import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
 import {
@@ -25,7 +25,12 @@ const AddAmountToWithdrawalForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
+  const onAddonClick = useSetMaxAmountToken(
+    "tokenAmount",
+    tokenAmount,
+    KEEP,
+    KEEP.decimals
+  )
 
   return (
     <form className="add-amount-to-withdraw-form">
@@ -56,10 +61,9 @@ const AddAmountToWithdrawalForm = ({
           name="tokenAmount"
           type="text"
           label="Amount"
-          normalize={normalizeAmount}
-          format={formatAmount}
+          normalize={normalizeFloatingAmount}
           inputAddon={
-            <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
+            <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
         />
       </div>
@@ -85,15 +89,14 @@ export default withFormik({
     const { tokenAmount } = values
     const errors = {}
 
-    // TODO: Remove default 0 value
-
     if (lte(props.tokenAmount || 0, 0)) {
       errors.tokenAmount = "Insufficient funds"
     } else {
       errors.tokenAmount = validateAmountInRange(
         tokenAmount,
         props.tokenAmount,
-        0
+        0,
+        covKEEP,
       )
     }
 

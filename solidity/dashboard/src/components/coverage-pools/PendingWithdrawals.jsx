@@ -21,7 +21,9 @@ import { KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
 import { Keep } from "../../contracts"
 
-const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
+const PendingWithdrawals = ({
+  covTokensAvailableToWithdraw,
+}) => {
   const dispatch = useDispatch()
   const { openConfirmationModal, closeModal } = useModal()
   const {

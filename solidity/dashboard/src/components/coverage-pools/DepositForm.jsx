@@ -4,7 +4,7 @@ import FormInput from "../../components/FormInput"
 import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { normalizeAmount, formatAmount } from "../../forms/form.utils"
+import { formatAmount, normalizeAmount } from "../../forms/form.utils"
 import { KEEP } from "../../utils/token.utils"
 import List from "../List"
 import * as Icons from "../Icons"
@@ -20,10 +20,16 @@ import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
+import BigNumber from "bignumber.js"
 
 const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
+  const onAddonClick = useSetMaxAmountToken(
+    "tokenAmount",
+    tokenAmount,
+    KEEP,
+    KEEP.decimals
+  )
 
   const getEstimatedReward = () => {
     if (!formikProps.values.tokenAmount) {
@@ -47,11 +53,21 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
           label="Amount"
           placeholder="0"
           normalize={normalizeAmount}
-          format={formatAmount}
+          format={(value) => formatAmount(value, BigNumber.ROUND_FLOOR)}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
-          additionalInfoText={`KEEP Balance ${KEEP.displayAmount(tokenAmount)}`}
+          additionalInfoText={
+            <>
+              <span>Keep Balance</span>&nbsp;
+              <TokenAmount
+                amount={tokenAmount}
+                wrapperClassName={"deposit-form__keep-balance-amount"}
+                amountClassName={"text-success"}
+                symbolClassName={"text-success"}
+              />
+            </>
+          }
         />
       </div>
       <List>
@@ -86,7 +102,11 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   )
 }
 
-const EstimatedAPYListItem = ({ apy, reward, label }) => {
+const EstimatedAPYListItem = ({
+  apy,
+  reward,
+  label,
+}) => {
   return (
     <List.Item className="mb-1">
       <div className="flex row center">

@@ -2,16 +2,13 @@ import React from "react"
 import { withFormik } from "formik"
 import { lte } from "../utils/arithmetics.utils"
 import { getErrorsObj, validateAmountInRange } from "../forms/common-validators"
-import {
-  formatAmount as formatFormAmount,
-  normalizeAmount,
-} from "../forms/form.utils"
+import { normalizeFloatingAmount } from "../forms/form.utils"
 import FormInput from "./FormInput"
 import MaxAmountAddon from "./MaxAmountAddon"
 import { SubmitButton } from "./Button"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { KEEP } from "../utils/token.utils"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
+import { covKEEP } from "../utils/token.utils"
 
 const WithdrawAmountForm = ({
   onCancel,
@@ -22,7 +19,12 @@ const WithdrawAmountForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const onAddonClick = useSetMaxAmountToken("withdrawAmount", withdrawAmount)
+  const onAddonClick = useSetMaxAmountToken(
+    "withdrawAmount",
+    withdrawAmount,
+    covKEEP,
+    covKEEP.decimals
+  )
 
   return (
     <form
@@ -34,13 +36,13 @@ const WithdrawAmountForm = ({
         type="text"
         label="Withdraw Amount"
         placeholder="0"
-        normalize={normalizeAmount}
-        format={formatFormAmount}
+        normalize={normalizeFloatingAmount}
         inputAddon={<MaxAmountAddon onClick={onAddonClick} text="Max Amount" />}
       />
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
+        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         {submitBtnText}
       </SubmitButton>
@@ -49,8 +51,10 @@ const WithdrawAmountForm = ({
 }
 
 const WithdrawAmountFormWithFormik = withFormik({
+  validateOnChange: true,
+  validateOnBlur: true,
   mapPropsToValues: () => ({
-    withdrawAmount: "",
+    withdrawAmount: "0",
   }),
   validate: (values, props) => {
     const { withdrawAmount } = values
@@ -62,7 +66,8 @@ const WithdrawAmountFormWithFormik = withFormik({
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,
         props.withdrawAmount,
-        KEEP.fromTokenUnit(1)
+        1,
+        covKEEP,
       )
     }
 
