@@ -2,7 +2,6 @@ import web3Utils from "web3-utils"
 import { KEEP } from "../utils/token.utils"
 
 const REGEXP_NOT_BLANK_STRING = /^\s*$/
-const REGEXP_ONLY_NUMBERS = /^\d+$/
 
 const isBlankString = (value) => {
   return !value || REGEXP_NOT_BLANK_STRING.test(value)
