@@ -71,6 +71,7 @@ Once the group submits the result to the chain, a challenge period starts.
 During the challenge period, anyone can notify that the submitted DKG result
 contains group members not selected by the pool. This leads to slashing all
 members who signed the result and the notifier receives 5% from the slashed amount.
+The malicious result is immediatelly discarded.
 The length of the challenge period and slashing amount are governable parameters.
 
 Once the challenge period passes, anyone can unlock the sortition pool and mark
