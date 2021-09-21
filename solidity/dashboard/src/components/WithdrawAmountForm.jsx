@@ -19,7 +19,12 @@ const WithdrawAmountForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const onAddonClick = useSetMaxAmountToken("withdrawAmount", withdrawAmount)
+  const onAddonClick = useSetMaxAmountToken(
+    "withdrawAmount",
+    withdrawAmount,
+    covKEEP,
+    covKEEP.decimals
+  )
 
   return (
     <form
