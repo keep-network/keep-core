@@ -63,7 +63,7 @@ const AddAmountToWithdrawalForm = ({
           label="Amount"
           normalize={normalizeFloatingAmount}
           inputAddon={
-            <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
+            <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
         />
       </div>
