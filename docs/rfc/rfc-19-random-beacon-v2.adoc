@@ -78,6 +78,11 @@ Once the challenge period passes, anyone can unlock the sortition pool and mark
 the DKG result as accepted. In this transaction, the DKG result submitter receives
 a reward, as described in <<fees-and-rewards, Fees and Rewards>> section.
 
+There is a timeout before which DKG result should be submitted. The timeout equals
+the group size multiplied by the number of blocks for a member to become eligible
+to submit DKG result. The timer starts at the moment when the first member becomes
+eligible.
+
 In case the DKG result was not submitted before a timeout, anyone can notify DKG
 timed out and receive a reward, as described in <<fees-and-rewards, Fees and Rewards>> 
 section. DKG timeout includes the situation when no new relay entry was produced
