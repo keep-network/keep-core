@@ -221,7 +221,10 @@ interface IRandomBeaconConsumer {
 === Timeouts
 
 We should extend the timeout for submitting relay entry to give operators more
-time to react. After 64x10 blocks from the relay request, if no entry was
+time to react. We should extend the time for a single member to become eligible
+from 6 blocks to 10 blocks and make it a governable parameter. 
+After the initial timeout passes (group size multipled by the number of blocks
+for a member to become eligible to submit relay entry), if no entry was
 provided, all operators in the group should start bleeding and losing their
 stake. The bleeding should increase linearly from 0 to the governable slashing 
 amount per operator over the course of 48 hours. The time for a single group
