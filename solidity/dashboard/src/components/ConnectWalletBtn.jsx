@@ -1,6 +1,6 @@
 import React from "react"
 import WalletOptions from "./WalletOptions"
-import Tooltip from "./Tooltip"
+import Tooltip, { TOOLTIP_DIRECTION } from "./Tooltip"
 
 const ConnectWalletBtn = ({
   text,
@@ -9,7 +9,7 @@ const ConnectWalletBtn = ({
 }) => {
   return (
     <Tooltip
-      direction="top"
+      direction={TOOLTIP_DIRECTION.TOP}
       simple
       className="empty-state__wallet-options-tooltip"
       triggerComponent={() => (
