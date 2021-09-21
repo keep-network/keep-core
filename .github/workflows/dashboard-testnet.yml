@@ -81,6 +81,7 @@ jobs:
               @keep-network/keep-core \
               @keep-network/keep-ecdsa \
               @keep-network/tbtc \
+              @keep-network/tbtc-v2 \
               @keep-network/coverage-pools
 
       - name: Get upstream packages' versions
@@ -93,6 +94,7 @@ jobs:
             keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
             keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
             tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
+            tbtc-v2-contracts-version = github.com/keep-network/tbtc-v2/solidity#version
             coverage-pools-version = github.com/keep-network/coverage-pools#version
 
       - name: Resolve latest contracts
@@ -102,6 +104,7 @@ jobs:
               @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }} \
               @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }} \
               @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
+              @keep-network/tbtc-v2@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
               @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }}
 
       - name: NPM build
