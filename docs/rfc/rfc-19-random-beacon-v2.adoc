@@ -239,6 +239,7 @@ save some gas.
 * Reward for unlocking the sortition pool if DKG timed out
 * Slashing amount for not submitting relay entry
 * Slashing amount for submitting malicious DKG result
+* The number of blocks for which a DKG result can be challenged
 * The number of blocks for a member to become eligible to submit relay entry
 * The number of blocks for a member to become eligible to submit DKG result
 * Hard timeout for a relay entry
