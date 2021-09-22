@@ -12,7 +12,6 @@ import {
   validateAmountInRange,
   getErrorsObj,
 } from "../../forms/common-validators"
-import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { Keep } from "../../contracts"
 
@@ -89,16 +88,12 @@ export default withFormik({
     const { tokenAmount } = values
     const errors = {}
 
-    if (lte(props.tokenAmount || 0, 0)) {
-      errors.tokenAmount = "Insufficient funds"
-    } else {
-      errors.tokenAmount = validateAmountInRange(
-        tokenAmount,
-        props.tokenAmount,
-        0,
-        covKEEP,
-      )
-    }
+    errors.tokenAmount = validateAmountInRange(
+      tokenAmount,
+      props.tokenAmount,
+      0,
+      covKEEP
+    )
 
     return getErrorsObj(errors)
   },
