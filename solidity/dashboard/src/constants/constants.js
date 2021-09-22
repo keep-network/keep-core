@@ -37,7 +37,14 @@ export const LINK = {
   },
   tbtcMigration: {
     docs: "https://coda.io/@keep-network/how-to-mint-tbtc-v2-with-etherscan",
-    saddlePoolv2: "https://saddle.exchange/#/pools/tbtc/deposit",
+  },
+  pools: {
+    saddle: {
+      tbtcV2: "https://saddle.exchange/#/pools/tbtc/deposit",
+    },
+    uniswap: {
+      tbtcETH: `https://app.uniswap.org/#/add/v2/0x8daebade922df735c38c80c7ebd708af50815faa/ETH`,
+    },
   },
   tbtcDapp: "https://dapp.tbtc.network",
 }

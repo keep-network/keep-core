@@ -5,7 +5,6 @@ import { ViewInBlockExplorer } from "../ViewInBlockExplorer"
 import List from "../List"
 import AddressShortcut from "../AddressShortcut"
 import OnlyIf from "../OnlyIf"
-import NavLink from "../NavLink"
 import DoubleIcon from "../DoubleIcon"
 import Divider from "../Divider"
 import Button from "../Button"
@@ -119,21 +118,18 @@ const MigrationCompletedModal = ({
         <div>
           &nbsp;{to === TBTC_TOKEN_VERSION.v2 ? "tBTCv2/Saddle" : "tBTCv1/KEEP"}
         </div>
-        <OnlyIf condition={to === TBTC_TOKEN_VERSION.v1}>
-          <NavLink to="/liquidity" className="btn btn-primary btn-md ml-a">
-            go to pool
-          </NavLink>
-        </OnlyIf>
-        <OnlyIf condition={to === TBTC_TOKEN_VERSION.v2}>
-          <a
-            href={LINK.tbtcMigration.saddlePoolv2}
-            rel="noopener noreferrer"
-            target="_blank"
-            className="btn btn-primary btn-md ml-a"
-          >
-            go to pool ↗
-          </a>
-        </OnlyIf>
+        <a
+          href={
+            to === TBTC_TOKEN_VERSION.v2
+              ? LINK.pools.saddle.tbtcV2
+              : LINK.pools.uniswap.tbtcETH
+          }
+          rel="noopener noreferrer"
+          target="_blank"
+          className="btn btn-primary btn-md ml-a"
+        >
+          go to pool ↗
+        </a>
       </div>
       <Divider className="divider divider--tile-fluid" />
       <Button className="btn btn-secondary btn-md" onClick={onCancel}>
