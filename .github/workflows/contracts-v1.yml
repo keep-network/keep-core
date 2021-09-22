@@ -1,4 +1,4 @@
-name: Solidity
+name: Solidity v1
 
 on:
   schedule:
@@ -7,8 +7,8 @@ on:
     branches:
       - main
     paths:
-      - "solidity/**"
-      - "!solidity/dashboard/**"
+      - "solidity-v1/**"
+      - "!solidity-v1/dashboard/**"
   pull_request:
   workflow_dispatch:
     inputs:
@@ -39,7 +39,7 @@ jobs:
         with:
           filters: |
             path-filter:
-              - './solidity/!(dashboard)/**'
+              - './solidity-v1/!(dashboard)/**'
 
   contracts-build-and-test:
     needs: contracts-detect-changes
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./solidity
+        working-directory: ./solidity-v1
     steps:
       - uses: actions/checkout@v2
 
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./solidity
+        working-directory: ./solidity-v1
     steps:
       - uses: actions/checkout@v2
 
@@ -118,7 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./solidity
+        working-directory: ./solidity-v1
     outputs:
       version: ${{ steps.npm-version-bump.outputs.version }}
     steps:
@@ -173,7 +173,7 @@ jobs:
         id: npm-version-bump
         uses: keep-network/npm-version-bump@v2
         with:
-          work-dir: ./solidity
+          work-dir: ./solidity-v1
           environment: ${{ github.event.inputs.environment }}
           branch: ${{ github.ref }}
           commit: ${{ github.sha }}
@@ -183,7 +183,7 @@ jobs:
         uses: keep-network/tenderly-push-action@v1
         continue-on-error: true
         with:
-          working-directory: ./solidity
+          working-directory: ./solidity-v1
           tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
           tenderly-project: thesis/keep-test
           eth-network-id: ${{ env.NETWORK_ID }}
@@ -199,7 +199,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Contracts
-          path: ./solidity/build/contracts/*
+          path: ./solidity-v1/build/contracts/*
 
   contracts-build-and-publish-initcontainer:
     needs: [contracts-migrate-and-publish]
@@ -258,7 +258,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          module: "github.com/keep-network/keep-core/solidity"
+          module: "github.com/keep-network/keep-core/solidity-v1"
           url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}

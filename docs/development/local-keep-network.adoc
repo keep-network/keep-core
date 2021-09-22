@@ -278,7 +278,7 @@ If you get `Account unlock with HTTP access is forbidden` you should run
 Ethereum client (described in the previous section) with param:
 `--allow-insecure-unlock`
 
-We also need to create a new network entry in `keep-core/solidity/truffle.js`
+We also need to create a new network entry in `keep-core/solidity-v1/truffle-config.js`
 pointing to our local node and its account. This account will pay gas for Keep
 contract deployment.
 
@@ -296,7 +296,7 @@ contracts. Please save the output of as we will need to use some of the
 outputted contract addresses in the Keep peer configuration later.
 
 ```
-$ cd keep-core/solidity
+$ cd keep-core/solidity-v1
 $ truffle migrate --reset --network local
 
 Using network 'local'.

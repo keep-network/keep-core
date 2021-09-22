@@ -7,7 +7,7 @@ DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
-KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
+KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity-v1"
 
 # Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"

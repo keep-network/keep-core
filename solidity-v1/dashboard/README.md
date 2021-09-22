@@ -18,7 +18,7 @@ User has the ability to visualize their token and stake balances, token grant un
 - Deploy contracts demo setup to it:
 
 ```
-cd keep-core/solidity
+cd keep-core/solidity-v1
 npm install
 npm run demo
 ```
@@ -42,7 +42,7 @@ npm run demo
 - Deploy contracts demo setup:
 
 ```
-cd keep-core/solidity
+cd keep-core/solidity-v1
 npm install
 ```
 

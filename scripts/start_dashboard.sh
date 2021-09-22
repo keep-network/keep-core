@@ -5,8 +5,8 @@ LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
 KEEP_CORE_PATH=$PWD
-DASHBOARD_DIR_PATH="$KEEP_CORE_PATH/solidity/dashboard"
-KEEP_CORE_ARTIFACTS_PATH="$KEEP_CORE_PATH/solidity/artifacts"
+DASHBOARD_DIR_PATH="$KEEP_CORE_PATH/solidity-v1/dashboard"
+KEEP_CORE_ARTIFACTS_PATH="$KEEP_CORE_PATH/solidity-v1/artifacts"
 
 KEEP_ECDSA_PATH="$PWD/../keep-ecdsa"
 KEEP_ECDSA_SOL_PATH="$PWD/../keep-ecdsa/solidity"
