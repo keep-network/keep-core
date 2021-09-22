@@ -23,7 +23,6 @@ import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
-import BigNumber from "bignumber.js"
 
 const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
