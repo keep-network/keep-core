@@ -21,3 +21,15 @@ export const normalizeFloatingAmount = (value) =>
     .replace(/(\..*)\./g, "$1") // remove multiple points.
     .replace(/(?!^)-/g, "") // remove middle hyphen.
     .replace(/^0+(\d)/gm, "$1") // remove multiple leading zeros.
+
+export const formatFloatingAmount = (value) => {
+  if (value.includes(".") && value.indexOf(".") !== 0) {
+    const [firstPart, ...rest] = value.split(".")
+    const restValue = rest.join(".").replace(NOT_NUMBERS, "")
+    const newValue = firstPart ? firstPart.replace(NOT_NUMBERS, "") : 0
+    const firstPartFormatted = new BigNumber(newValue).toFormat(0)
+    return [firstPartFormatted, restValue].join(".")
+  }
+  const newValue = value ? value.replace(NOT_NUMBERS, "") : 0
+  return new BigNumber(newValue).toFormat(0)
+}
