@@ -1,6 +1,6 @@
 {
-  "name": "@keep-network/random-beacon-v2",
-  "version": "0.0.1-dev",
+  "name": "@keep-network/random-beacon",
+  "version": "2.0.0-dev",
   "description": "random beacon v2",
   "scripts": {
     "build": "hardhat compile",
