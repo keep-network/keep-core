@@ -46,6 +46,12 @@ export const LINK = {
       tbtcETH: `https://app.uniswap.org/#/add/v2/0x8daebade922df735c38c80c7ebd708af50815faa/ETH`,
     },
   },
+  proposals: {
+    shiftingIncentivesToCoveragePools:
+      "https://forum.keep.network/t/shifting-incentives-towards-tbtc-v2-and-coverage-pool-version-2/322",
+    removeIncentivesForKEEPTBTCpool:
+      "https://forum.keep.network/t/proposal-remove-incentives-for-the-keep-tbtc-pool/56",
+  },
   tbtcDapp: "https://dapp.tbtc.network",
 }
 

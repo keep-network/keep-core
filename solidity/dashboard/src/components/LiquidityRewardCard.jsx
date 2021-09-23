@@ -13,6 +13,14 @@ import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import { APY, LPTokenBalance, ShareOfPool } from "./liquidity"
 import MetricsTile from "./MetricsTile"
 
+const defaultIncentivesRemovedBannerProps = {
+  title: "Incentives removed",
+  description:
+    "The incentives for this pool has been removed and you can no longer deposit the lp tokens. You can still withdraw rewards that you already earned.",
+  link: null,
+  linkText: "More info",
+}
+
 const LiquidityRewardCard = ({
   title,
   liquidityPairContractName,
@@ -37,6 +45,9 @@ const LiquidityRewardCard = ({
   isAPYFetching,
   pool,
   incentivesRemoved,
+  incentivesRemovedBannerProps = {
+    ...defaultIncentivesRemovedBannerProps,
+  },
 }) => {
   const hasWrappedTokens = useMemo(
     () => gt(wrappedTokenBalance, 0),
@@ -54,12 +65,14 @@ const LiquidityRewardCard = ({
 
     if (incentivesRemoved) {
       bannerIcon = Icons.Warning
-      bannerTitle = "Incentives removed"
-      bannerDescription =
-        "The incentives for this pool has been removed and you can no longer deposit the lp tokens. You can still withdraw rewards that you already earned."
-      link =
-        "https://forum.keep.network/t/proposal-remove-incentives-for-the-keep-tbtc-pool/56"
-      linkText = "More info"
+      const bannerProps = {
+        ...defaultIncentivesRemovedBannerProps,
+        ...incentivesRemovedBannerProps,
+      }
+      bannerTitle = bannerProps.title
+      bannerDescription = bannerProps.description
+      link = bannerProps.link
+      linkText = bannerProps.linkText
     } else {
       bannerIcon = !hasDepositedWrappedTokens ? Icons.Rewards : Icons.Wallet
       bannerTitle = !hasDepositedWrappedTokens
@@ -78,26 +91,26 @@ const LiquidityRewardCard = ({
     return (
       !hasWrappedTokens && (
         <Banner
-          className={`liquidity__new-user-info ${
-            incentivesRemoved ? "liquidity__new-user-info--warning mt-2" : ""
+          className={`liquidity-info-banner ${
+            incentivesRemoved ? "liquidity-info-banner--warning mt-2" : ""
           }`}
         >
           <Banner.Icon
             icon={bannerIcon}
-            className={`liquidity__rewards-icon ${
-              incentivesRemoved ? "liquidity__rewards-icon--warning" : ""
+            className={`liquidity-info-banner__icon ${
+              incentivesRemoved ? "liquidity-info-banner__icon--warning" : ""
             }`}
           />
-          <div className={"liquidity__new-user-info-text"}>
+          <div className={"liquidity-info-banner__content"}>
             <Banner.Title
-              className={`liquidity-banner__title ${
+              className={`liquidity-info-banner__content__title ${
                 incentivesRemoved ? "text-grey-60" : "text-white"
               }`}
             >
               {bannerTitle}
             </Banner.Title>
             <Banner.Description
-              className={`liquidity-banner__info ${
+              className={`liquidity-info-banner__content__description ${
                 incentivesRemoved ? "text-grey-60" : "text-white"
               }`}
             >

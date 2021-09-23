@@ -55,45 +55,6 @@
     justify-content: center;
   }
 
-  .liquidity__new-user-info {
-    background-color: @secondary-color;
-    color: @white;
-    display: flex;
-    padding: 0.7rem 0.5rem;
-
-    &--warning {
-      background-color: @color-grey-20;
-      padding-right: 0.8rem;
-    }
-
-    .liquidity__rewards-icon {
-      width: 1.5rem;
-      height: 1.5rem;
-      margin: 0.2rem 0.5rem;
-      flex: 0 0 auto;
-
-      path {
-        fill: white;
-      }
-
-      &--warning {
-        path {
-          fill: @color-grey-60;
-        }
-      }
-    }
-
-    .liquidity__new-user-info-text {
-      margin-left: 0.5rem;
-      font-weight: 500;
-
-      .liquidity-banner__info {
-        font-weight: 400;
-        margin-bottom: 0.3rem;
-      }
-    }
-  }
-
   .lp-balance {
     margin: 2rem 0;
 
@@ -264,6 +225,45 @@
       &:nth-child(3) {
         display: block;
       }
+    }
+  }
+}
+
+.liquidity-info-banner {
+  background-color: @secondary-color;
+  color: @white;
+  display: flex;
+  padding: 0.7rem 0.5rem;
+
+  &--warning {
+    background-color: @color-grey-20;
+    padding-right: 0.8rem;
+  }
+
+  .liquidity-info-banner__icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0.2rem 0.5rem;
+    flex: 0 0 auto;
+
+    path {
+      fill: white;
+    }
+
+    &--warning {
+      path {
+        fill: @color-grey-60;
+      }
+    }
+  }
+
+  .liquidity-info-banner__content {
+    margin-left: 0.5rem;
+    font-weight: 500;
+
+    .liquidity-info-banner__content__description {
+      font-weight: 400;
+      margin-bottom: 0.3rem;
     }
   }
 }
