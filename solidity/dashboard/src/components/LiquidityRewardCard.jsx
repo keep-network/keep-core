@@ -9,7 +9,7 @@ import Tooltip from "./Tooltip"
 import Banner from "./Banner"
 import { KEEP } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
-import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import { POOL_TYPE } from "../constants/constants"
 import { APY, LPTokenBalance, ShareOfPool } from "./liquidity"
 import MetricsTile from "./MetricsTile"
 
@@ -82,10 +82,7 @@ const LiquidityRewardCard = ({
         ? "Get LP tokens by adding liquidity first to the"
         : "Get more by adding liquidity to the"
       link = viewPoolLink
-      linkText =
-        title === LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label
-          ? "Saddle pool"
-          : "Uniswap pool"
+      linkText = pool === POOL_TYPE.SADDLE ? "Saddle pool" : "Uniswap pool"
     }
 
     return (
@@ -144,9 +141,7 @@ const LiquidityRewardCard = ({
         <h2 className={"h2--alt text-grey-70"}>{title}</h2>
       </div>
       <h4 className="liquidity__card-subtitle text-grey-40">
-        {title === LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label
-          ? "Saddle Pool"
-          : "Uniswap Pool"}
+        {pool === POOL_TYPE.SADDLE ? "Saddle Pool" : "Uniswap Pool"}
         &nbsp;
         <a
           target="_blank"

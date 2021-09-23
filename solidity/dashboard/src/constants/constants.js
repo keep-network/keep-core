@@ -1,3 +1,8 @@
+import {
+  createSaddleSwapContract,
+  createSaddleTBTCMetaPool,
+} from "../contracts"
+
 export const KEEP_TOKEN_CONTRACT_NAME = "token"
 export const TOKEN_STAKING_CONTRACT_NAME = "stakingContract"
 export const TOKEN_GRANT_CONTRACT_NAME = "grantContract"
@@ -18,6 +23,8 @@ export const LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME = "LPRewardsTBTCSaddle"
 export const LP_REWARDS_KEEP_ETH_CONTRACT_NAME = "LPRewardsKEEPETHContract"
 export const LP_REWARDS_TBTC_ETH_CONTRACT_NAME = "LPRewardsTBTCETHContract"
 export const LP_REWARDS_KEEP_TBTC_CONTRACT_NAME = "LPRewardsKEEPTBTCContract"
+export const LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME = "LPRewardsTBTCSaddle"
+
 export const KEEP_TOKEN_GEYSER_CONTRACT_NAME = "keepTokenGeyserContract"
 export const ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME =
   "ECDSARewardsDistributorContract"
@@ -78,13 +85,42 @@ export const SIGNING_GROUP_STATUS = {
   ACTIVE: "Active work",
 }
 
+export const POOL_TYPE = {
+  SADDLE: "SADDLE",
+  UNISWAP: "UNISWAP",
+  TOKEN_GEYSER: "TOKEN_GEYSER",
+}
+
 export const LIQUIDITY_REWARD_PAIRS = {
+  TBTCV2_SADDLE: {
+    contractName: LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME,
+    label: "TBTC V2 + SADDLE",
+    viewPoolLink: LINK.pools.saddle.tbtcV2,
+    pool: POOL_TYPE.SADDLE,
+    lpTokens: [],
+    options: {
+      createSwapContract: createSaddleTBTCMetaPool,
+      poolTokens: [
+        { name: "TBTC", decimals: 18 },
+        { name: "saddleBTC-V2", decimals: 18 },
+      ],
+    },
+  },
   TBTC_SADDLE: {
     contractName: LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME,
     label: "TBTC + SADDLE",
     viewPoolLink: "https://saddle.exchange/#/deposit",
-    pool: "SADDLE",
+    pool: POOL_TYPE.SADDLE,
     lpTokens: [],
+    options: {
+      createSwapContract: createSaddleSwapContract,
+      poolTokens: [
+        { name: "TBTC", decimals: 18 },
+        { name: "WBTC", decimals: 8 },
+        { name: "RENBTC", decimals: 8 },
+        { name: "SBTC", decimals: 18 },
+      ],
+    },
   },
   KEEP_ETH: {
     contractName: LP_REWARDS_KEEP_ETH_CONTRACT_NAME,
@@ -92,7 +128,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
     viewPoolLink:
       "https://v2.info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a",
     address: "0xe6f19dab7d43317344282f803f8e8d240708174a",
-    pool: "UNISWAP",
+    pool: POOL_TYPE.UNISWAP,
     lpTokens: [
       {
         tokenName: "KEEP",
@@ -110,7 +146,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
     viewPoolLink:
       "https://v2.info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081",
     address: "0x38c8ffee49f286f25d25bad919ff7552e5daf081",
-    pool: "UNISWAP",
+    pool: POOL_TYPE.UNISWAP,
     lpTokens: [
       {
         tokenName: "KEEP",
@@ -128,7 +164,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
     viewPoolLink:
       "https://v2.info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6",
     address: "0x854056fd40c1b52037166285b2e54fee774d33f6",
-    pool: "UNISWAP",
+    pool: POOL_TYPE.UNISWAP,
     lpTokens: [
       {
         tokenName: "TBTC",
@@ -143,7 +179,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
   KEEP_ONLY: {
     contractName: KEEP_TOKEN_GEYSER_CONTRACT_NAME,
     label: "KEEP",
-    pool: "TOKEN_GEYSER",
+    pool: POOL_TYPE.TOKEN_GEYSER,
   },
 }
 

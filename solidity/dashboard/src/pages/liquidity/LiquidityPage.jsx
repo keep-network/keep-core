@@ -20,6 +20,18 @@ import KeepOnlyPool from "../../components/KeepOnlyPool"
 
 const cards = [
   {
+    id: "TBTCV2_SADDLE",
+    title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.label,
+    liquidityPairContractName:
+      LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.contractName,
+    MainIcon: Icons.TBTC,
+    SecondaryIcon: Icons.Saddle,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.lpTokens,
+    wrapperClassName: "tbtc-v2-saddle",
+  },
+  {
     id: "KEEP_ETH",
     title: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label,
     liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName,
