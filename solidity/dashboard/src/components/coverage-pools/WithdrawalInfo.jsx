@@ -44,21 +44,21 @@ const WithdrawalInfo = ({
       </OnlyIf>
       <div className={"withdraw-modal__data"}>
         <TokenAmount
+          amount={amount}
+          wrapperClassName={"withdraw-modal__token-amount"}
+          token={covKEEP}
+          withIcon
+        />
+        <TokenAmount
+          wrapperClassName={"withdraw-modal__cov-token-amount"}
           amount={Keep.coveragePoolV1.estimatedBalanceFor(
             amount,
             covTotalSupply,
             totalValueLocked
           )}
-          wrapperClassName={"withdraw-modal__token-amount"}
-          token={KEEP}
-          withIcon
-        />
-        <TokenAmount
-          wrapperClassName={"withdraw-modal__cov-token-amount"}
-          amount={amount}
           amountClassName={"h3 text-grey-60"}
           symbolClassName={"h3 text-grey-60"}
-          token={covKEEP}
+          token={KEEP}
         />
         {children}
       </div>

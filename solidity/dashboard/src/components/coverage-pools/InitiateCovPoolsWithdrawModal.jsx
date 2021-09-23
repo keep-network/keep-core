@@ -40,6 +40,19 @@ const InitiateCovPoolsWithdrawModal = ({
         covTotalSupply={covTotalSupply}
       >
         <div className={"withdraw-modal__data-row"}>
+          <h4 className={"text-grey-50"}>Exchange Rate&nbsp;</h4>
+          <h4 className={"withdraw-modal__data__value text-grey-70"}>
+            1 covKEEP = ~
+            {KEEP.displayAmountWithSymbol(
+              Keep.coveragePoolV1.estimatedBalanceFor(
+                KEEP.fromTokenUnit(1).toString(),
+                covTotalSupply,
+                totalValueLocked
+              )
+            )}
+          </h4>
+        </div>
+        <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Pool Balance &nbsp;</h4>
           <h4 className={"withdraw-modal__data__value text-grey-70"}>
             {KEEP.displayAmount(
