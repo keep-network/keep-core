@@ -7,6 +7,10 @@
     "test": "hardhat test",
     "deploy": "hardhat deploy --export export.json"
   },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf"
+  },
   "devDependencies": {
     "@keep-network/hardhat-local-networks-config": "^0.1.0-pre.0",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
@@ -16,6 +20,8 @@
     "@types/node": "^16.9.6",
     "@tenderly/hardhat-tenderly": "^1.0.12",
     "chai": "^4.3.4",
+    "eslint": "^7.30.0",
+    "eslint-config-keep": "github:keep-network/eslint-config-keep#0c27ade",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.7",
     "hardhat": "^2.6.4",
