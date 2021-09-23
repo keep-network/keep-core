@@ -17,13 +17,11 @@ import BigNumber from "bignumber.js"
 import { Column, DataTable } from "../DataTable"
 import resourceTooltipProps from "../../constants/tooltips"
 import TokenAmount from "../TokenAmount"
-import { KEEP } from "../../utils/token.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
 import { Keep } from "../../contracts"
 
-const PendingWithdrawals = ({
-  covTokensAvailableToWithdraw,
-}) => {
+const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
   const { openConfirmationModal, closeModal } = useModal()
   const {
@@ -352,7 +350,6 @@ const PendingWithdrawals = ({
           header="amount"
           field="covAmount"
           renderContent={({ covAmount, timestamp }) => {
-            const withdrawalTimestamp = moment.unix(timestamp)
             return (
               <div>
                 <TokenAmount
@@ -365,9 +362,17 @@ const PendingWithdrawals = ({
                   token={KEEP}
                   withIcon
                 />
-                <div className={"pending-withdrawal__initialization-date"}>
-                  &nbsp;{withdrawalTimestamp.format("MM/DD/YYYY")}
-                </div>
+                <TokenAmount
+                  amount={Keep.coveragePoolV1.estimatedBalanceFor(
+                    covAmount,
+                    covTotalSupply,
+                    totalValueLocked
+                  )}
+                  amountClassName={"h3 text-grey-40"}
+                  symbolClassName={"h3 text-grey-40"}
+                  wrapperClassName={"pending-withdrawal__cov-token-amount"}
+                  token={covKEEP}
+                />
               </div>
             )
           }}
