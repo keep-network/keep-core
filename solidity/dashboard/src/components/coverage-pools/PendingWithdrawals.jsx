@@ -276,10 +276,10 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
       .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
       .seconds()
 
-    const timeToClaimText =
+    const timeToClaimWithUnits =
       days > 0
-        ? `Available for: ${days}d ${hours}h ${minutes}m`
-        : `Available for: ${hours}h ${minutes}m ${seconds}s`
+        ? `${days}d ${hours}h ${minutes}m`
+        : `${hours}h ${minutes}m ${seconds}s`
 
     let timeToClaim = <></>
     if (!isWithdrawalTimeoutOver(pendingWithdrawalTimestamp)) {
@@ -288,7 +288,12 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
           className={"coverage-pool__withdrawal-claim-tokens-info-container"}
         >
           <div className={"coverage-pool__withdrawal-available-for"}>
-            <h4>{timeToClaimText}</h4>
+            <h4>
+              Available for:{" "}
+              <span className={days > 0 ? "text-black" : "text-error"}>
+                {timeToClaimWithUnits}
+              </span>
+            </h4>
             <Tooltip
               simple
               delay={0}
