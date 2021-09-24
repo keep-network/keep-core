@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/keep-network/keep-common/pkg/rate"
 
@@ -27,21 +26,6 @@ const (
 	KeepRandomBeaconOperatorContractName = "KeepRandomBeaconOperator"
 	TokenStakingContractName             = "TokenStaking"
 	KeepRandomBeaconServiceContractName  = "KeepRandomBeaconService"
-)
-
-var (
-	// DefaultMiningCheckInterval is the default interval in which transaction
-	// mining status is checked. If the transaction is not mined within this
-	// time, the gas price is increased and transaction is resubmitted.
-	// This value can be overwritten in the configuration file.
-	DefaultMiningCheckInterval = 60 * time.Second
-
-	// DefaultMaxGasPrice specifies the default maximum gas price the client is
-	// willing to pay for the transaction to be mined. The offered transaction
-	// gas price can not be higher than the max gas price value. If the maximum
-	// allowed gas price is reached, no further resubmission attempts are
-	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
 type ethereumChain struct {
@@ -141,22 +125,7 @@ func connectWithClient(
 		ec.accountKey = key
 	}
 
-	checkInterval := DefaultMiningCheckInterval
-	maxGasPrice := DefaultMaxGasPrice
-	if config.MiningCheckInterval != 0 {
-		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
-	}
-	if config.MaxGasPrice != nil {
-		maxGasPrice = config.MaxGasPrice.Int
-	}
-
-	logger.Infof("using [%v] mining check interval", checkInterval)
-	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(
-		ec.client,
-		checkInterval,
-		maxGasPrice,
-	)
+	miningWaiter := ethutil.NewMiningWaiter(ec.client, config)
 
 	address, err := config.ContractAddress(KeepRandomBeaconOperatorContractName)
 	if err != nil {
@@ -277,20 +246,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		)
 	}
 
-	checkInterval := DefaultMiningCheckInterval
-	maxGasPrice := DefaultMaxGasPrice
-	if config.MiningCheckInterval != 0 {
-		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
-	}
-	if config.MaxGasPrice != nil {
-		maxGasPrice = config.MaxGasPrice.Int
-	}
-
-	miningWaiter := ethutil.NewMiningWaiter(
-		client,
-		checkInterval,
-		maxGasPrice,
-	)
+	miningWaiter := ethutil.NewMiningWaiter(client, config)
 
 	address, err := config.ContractAddress(KeepRandomBeaconServiceContractName)
 	if err != nil {

@@ -41,7 +41,7 @@ type KeepRandomBeaconService struct {
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
-	miningWaiter      *ethlike.MiningWaiter
+	miningWaiter      *chainutil.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
@@ -53,7 +53,7 @@ func NewKeepRandomBeaconService(
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
-	miningWaiter *ethlike.MiningWaiter,
+	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*KeepRandomBeaconService, error) {
@@ -164,16 +164,11 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.AddOperatorContract(
-				transactorOptions,
+				newTransactorOptions,
 				operatorContract,
 			)
 			if err != nil {
@@ -192,10 +187,7 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -308,16 +300,11 @@ func (krbs *KeepRandomBeaconService) EntryCreated(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.EntryCreated(
-				transactorOptions,
+				newTransactorOptions,
 				requestId,
 				entry,
 				submitter,
@@ -340,10 +327,7 @@ func (krbs *KeepRandomBeaconService) EntryCreated(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -460,16 +444,11 @@ func (krbs *KeepRandomBeaconService) ExecuteCallback(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.ExecuteCallback(
-				transactorOptions,
+				newTransactorOptions,
 				requestId,
 				entry,
 			)
@@ -490,10 +469,7 @@ func (krbs *KeepRandomBeaconService) ExecuteCallback(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -599,16 +575,11 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.FundDkgFeePool(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, krbs.errorResolver.ResolveError(
@@ -625,10 +596,7 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -726,16 +694,11 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.FundRequestSubsidyFeePool(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, krbs.errorResolver.ResolveError(
@@ -752,10 +715,7 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -860,16 +820,11 @@ func (krbs *KeepRandomBeaconService) Initialize(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.Initialize(
-				transactorOptions,
+				newTransactorOptions,
 				dkgContributionMargin,
 				registry,
 			)
@@ -890,10 +845,7 @@ func (krbs *KeepRandomBeaconService) Initialize(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1002,16 +954,11 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.RemoveOperatorContract(
-				transactorOptions,
+				newTransactorOptions,
 				operatorContract,
 			)
 			if err != nil {
@@ -1030,10 +977,7 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1135,16 +1079,11 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.RequestRelayEntry(
-				transactorOptions,
+				newTransactorOptions,
 			)
 			if err != nil {
 				return nil, krbs.errorResolver.ResolveError(
@@ -1161,10 +1100,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1273,16 +1209,11 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := krbs.contract.RequestRelayEntry0(
-				transactorOptions,
+				newTransactorOptions,
 				callbackContract,
 				callbackGas,
 			)
@@ -1303,10 +1234,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 

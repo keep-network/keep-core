@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -868,20 +867,7 @@ func initializeKeepRandomBeaconService(c *cli.Context) (*contract.KeepRandomBeac
 		)
 	}
 
-	checkInterval := cmd.DefaultMiningCheckInterval
-	maxGasPrice := cmd.DefaultMaxGasPrice
-	if config.MiningCheckInterval != 0 {
-		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
-	}
-	if config.MaxGasPrice != nil {
-		maxGasPrice = config.MaxGasPrice.Int
-	}
-
-	miningWaiter := chainutil.NewMiningWaiter(
-		client,
-		checkInterval,
-		maxGasPrice,
-	)
+	miningWaiter := chainutil.NewMiningWaiter(client, config)
 
 	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {

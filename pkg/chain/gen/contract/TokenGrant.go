@@ -41,7 +41,7 @@ type TokenGrant struct {
 	transactorOptions *bind.TransactOpts
 	errorResolver     *chainutil.ErrorResolver
 	nonceManager      *ethlike.NonceManager
-	miningWaiter      *ethlike.MiningWaiter
+	miningWaiter      *chainutil.MiningWaiter
 	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
@@ -53,7 +53,7 @@ func NewTokenGrant(
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
 	nonceManager *ethlike.NonceManager,
-	miningWaiter *ethlike.MiningWaiter,
+	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*TokenGrant, error) {
@@ -164,16 +164,11 @@ func (tg *TokenGrant) AuthorizeStakingContract(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.AuthorizeStakingContract(
-				transactorOptions,
+				newTransactorOptions,
 				_stakingContract,
 			)
 			if err != nil {
@@ -192,10 +187,7 @@ func (tg *TokenGrant) AuthorizeStakingContract(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -300,16 +292,11 @@ func (tg *TokenGrant) CancelRevokedStake(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.CancelRevokedStake(
-				transactorOptions,
+				newTransactorOptions,
 				_operator,
 			)
 			if err != nil {
@@ -328,10 +315,7 @@ func (tg *TokenGrant) CancelRevokedStake(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -436,16 +420,11 @@ func (tg *TokenGrant) CancelStake(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.CancelStake(
-				transactorOptions,
+				newTransactorOptions,
 				_operator,
 			)
 			if err != nil {
@@ -464,10 +443,7 @@ func (tg *TokenGrant) CancelStake(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -584,16 +560,11 @@ func (tg *TokenGrant) ReceiveApproval(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.ReceiveApproval(
-				transactorOptions,
+				newTransactorOptions,
 				_from,
 				_amount,
 				_token,
@@ -618,10 +589,7 @@ func (tg *TokenGrant) ReceiveApproval(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -738,16 +706,11 @@ func (tg *TokenGrant) RecoverStake(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.RecoverStake(
-				transactorOptions,
+				newTransactorOptions,
 				_operator,
 			)
 			if err != nil {
@@ -766,10 +729,7 @@ func (tg *TokenGrant) RecoverStake(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -874,16 +834,11 @@ func (tg *TokenGrant) Revoke(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.Revoke(
-				transactorOptions,
+				newTransactorOptions,
 				_id,
 			)
 			if err != nil {
@@ -902,10 +857,7 @@ func (tg *TokenGrant) Revoke(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1022,16 +974,11 @@ func (tg *TokenGrant) Stake(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.Stake(
-				transactorOptions,
+				newTransactorOptions,
 				_id,
 				_stakingContract,
 				_amount,
@@ -1056,10 +1003,7 @@ func (tg *TokenGrant) Stake(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1176,16 +1120,11 @@ func (tg *TokenGrant) Undelegate(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.Undelegate(
-				transactorOptions,
+				newTransactorOptions,
 				_operator,
 			)
 			if err != nil {
@@ -1204,10 +1143,7 @@ func (tg *TokenGrant) Undelegate(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1312,16 +1248,11 @@ func (tg *TokenGrant) UndelegateRevoked(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.UndelegateRevoked(
-				transactorOptions,
+				newTransactorOptions,
 				_operator,
 			)
 			if err != nil {
@@ -1340,10 +1271,7 @@ func (tg *TokenGrant) UndelegateRevoked(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1448,16 +1376,11 @@ func (tg *TokenGrant) Withdraw(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.Withdraw(
-				transactorOptions,
+				newTransactorOptions,
 				_id,
 			)
 			if err != nil {
@@ -1476,10 +1399,7 @@ func (tg *TokenGrant) Withdraw(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
@@ -1584,16 +1504,11 @@ func (tg *TokenGrant) WithdrawRevoked(
 	)
 
 	go tg.miningWaiter.ForceMining(
-		&ethlike.Transaction{
-			Hash:     ethlike.Hash(transaction.Hash()),
-			GasPrice: transaction.GasPrice(),
-		},
-		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
 			transaction, err := tg.contract.WithdrawRevoked(
-				transactorOptions,
+				newTransactorOptions,
 				_id,
 			)
 			if err != nil {
@@ -1612,10 +1527,7 @@ func (tg *TokenGrant) WithdrawRevoked(
 				transaction.Nonce(),
 			)
 
-			return &ethlike.Transaction{
-				Hash:     ethlike.Hash(transaction.Hash()),
-				GasPrice: transaction.GasPrice(),
-			}, nil
+			return transaction, nil
 		},
 	)
 
