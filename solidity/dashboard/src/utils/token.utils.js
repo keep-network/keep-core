@@ -51,7 +51,7 @@ export class Token {
     this.icon = _icon
     this.decimalsToDisplay = _decimalsToDisplay
     this.MIN_AMOUNT_TO_DISPLAY = new BigNumber(10)
-      .pow(this.smallestPrecisionDecimals)
+      .pow(this.decimals - this.decimalsToDisplay)
       .toString()
 
     this.MIN_AMOUNT_IN_TOKEN_UNIT = this.toTokenUnit(
@@ -71,6 +71,7 @@ export class Token {
    * Displays the provided amount in the readble format.
    *
    * @param {*} amount An amount in the samllest unit of the token.
+   * @param {number} decimals How many decimal places we want to display in the amount.
    *
    * @return {string} Formatted amount in readble format.
    */

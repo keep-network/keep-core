@@ -4,7 +4,10 @@ import FormInput from "../../components/FormInput"
 import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { formatAmount, normalizeAmount } from "../../forms/form.utils"
+import {
+  formatFloatingAmount,
+  normalizeFloatingAmount,
+} from "../../forms/form.utils"
 import { KEEP } from "../../utils/token.utils"
 import List from "../List"
 import * as Icons from "../Icons"
@@ -20,7 +23,6 @@ import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
-import BigNumber from "bignumber.js"
 
 const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
@@ -52,8 +54,16 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={normalizeAmount}
-          format={(value) => formatAmount(value, BigNumber.ROUND_FLOOR)}
+          normalize={normalizeFloatingAmount}
+          format={formatFloatingAmount}
+          leftIconComponent={
+            <Icons.KeepOutline
+              className="keep-outline--grey-60"
+              width={20}
+              height={20}
+              style={{ margin: "0 1rem" }}
+            />
+          }
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
@@ -102,11 +112,7 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   )
 }
 
-const EstimatedAPYListItem = ({
-  apy,
-  reward,
-  label,
-}) => {
+const EstimatedAPYListItem = ({ apy, reward, label }) => {
   return (
     <List.Item className="mb-1">
       <div className="flex row center">

@@ -97,7 +97,7 @@ const ClaimTokensModal = ({
             disabled={false}
             onClick={onCancel}
           >
-            Close
+            close
           </Button>
         </OnlyIf>
       </div>

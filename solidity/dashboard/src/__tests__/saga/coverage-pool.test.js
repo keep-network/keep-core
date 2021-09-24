@@ -32,7 +32,7 @@ import {
   RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
 } from "../../actions/coverage-pool"
 import { Keep } from "../../contracts"
-import * as matchers from "redux-saga-test-plan/matchers";
+import * as matchers from "redux-saga-test-plan/matchers"
 
 // TODO: Mock globally
 // Mock TrezorConnector due to `This version of trezor-connect is not suitable

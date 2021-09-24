@@ -21,7 +21,7 @@ const TokenAmount = ({
   displayDecimalsInTooltip = false,
   withSymbol = true,
 }) => {
-  if (token === covKEEP) {
+  if (token === KEEP || covKEEP) {
     displayDecimalsInTooltip = true
   }
   const CurrencyIcon = withIcon ? icon || token.icon : () => <></>

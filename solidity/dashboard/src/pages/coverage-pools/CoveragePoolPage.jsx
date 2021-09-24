@@ -216,22 +216,19 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <OnlyIf condition={hasCovKEEPTokens}>
             <TokenAmount
               wrapperClassName={"coverage-pool__token-amount"}
+              amount={covBalance}
+              amountClassName={"h1 text-mint-100"}
+              symbolClassName={"h2 text-mint-100"}
+              token={covKEEP}
+            />
+            <TokenAmount
               amount={Keep.coveragePoolV1.estimatedBalanceFor(
                 covBalance,
                 covTotalSupply,
                 totalValueLocked
               )}
-              amountClassName={"h1 text-mint-100"}
-              symbolClassName={"h2 text-mint-100"}
-              token={KEEP}
-              withIcon
-            />
-            <TokenAmount
-              wrapperClassName={"coverage-pool__cov-token-amount"}
-              amount={covBalance}
               amountClassName={"h3 text-grey-40"}
               symbolClassName={"h3 text-grey-40"}
-              token={covKEEP}
             />
           </OnlyIf>
         </section>
@@ -247,22 +244,21 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             </div>
             <TokenAmount
               wrapperClassName={"coverage-pool__token-amount"}
+              amount={covTokensAvailableToWithdraw}
+              amountClassName={"h2 text-mint-100"}
+              symbolClassName={"h3 text-mint-100"}
+              token={covKEEP}
+            />
+            <TokenAmount
+              wrapperClassName={"coverage-pool__cov-token-amount"}
               amount={Keep.coveragePoolV1.estimatedBalanceFor(
                 covTokensAvailableToWithdraw,
                 covTotalSupply,
                 totalValueLocked
               )}
-              amountClassName={"h2 text-mint-100"}
-              symbolClassName={"h3 text-mint-100"}
-              token={KEEP}
-              withIcon
-            />
-            <TokenAmount
-              wrapperClassName={"coverage-pool__cov-token-amount"}
-              amount={covTokensAvailableToWithdraw}
               amountClassName={"h3 text-grey-40"}
               symbolClassName={"h3 text-grey-40"}
-              token={covKEEP}
+              token={KEEP}
             />
             <WithdrawAmountForm
               submitBtnText={
