@@ -41,8 +41,7 @@ export class Token {
     _smallestPrecisionUnit,
     _smallestPrecisionDecimals,
     _icon,
-    _decimalsToDisplay = 4,
-    _minAmountToDisplay = 1 // min amount to display in token unit
+    _decimalsToDisplay = 4
   ) {
     this.name = _name
     this.decimals = _decimals
@@ -51,9 +50,8 @@ export class Token {
     this.smallestPrecisionDecimals = _smallestPrecisionDecimals
     this.icon = _icon
     this.decimalsToDisplay = _decimalsToDisplay
-    this.MIN_AMOUNT_TO_DISPLAY = new BigNumber(_minAmountToDisplay)
-      .multipliedBy(10)
-      .pow(this.smallestPrecisionDecimals)
+    this.MIN_AMOUNT_TO_DISPLAY = new BigNumber(10)
+      .pow(this.decimals - this.decimalsToDisplay)
       .toString()
 
     this.MIN_AMOUNT_IN_TOKEN_UNIT = this.toTokenUnit(
@@ -204,8 +202,7 @@ export const covKEEP = new Token(
   "covKEEP",
   18,
   Icons.KeepOutline,
-  2,
-  0
+  2
 )
 
 export const ETH = new Token("Ether", 18, "ETH", "gwei", 14, Icons.ETH)
