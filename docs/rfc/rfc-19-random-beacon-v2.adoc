@@ -1,0 +1,267 @@
+:toc: macro
+
+= RFC 19: Random Beacon v2
+
+:icons: font
+:numbered:
+toc::[]
+
+== Background
+
+The last release of the random beacon got its genesis Sep 16th 2020 and worked
+until November 11th when it was stopped with a panic button as a result of an
+unannounced https://github.com/keep-network/keep-core/blob/main/docs/status-reports/2020-11-11-retro-geth-hardfork.adoc[Ethereum
+hard fork].
+
+For the time it was working, the beacon produced more than 1700 relay entries
+and 70 groups.
+
+Both on-chain and off-chain components proved to be successful but - just like
+with any other product - some pain points were identified by the users.
+The most problematic aspects were the construction of pricing scheme and too
+aggressive timeouts. This RFC aims at describing these problems and proposing
+changes that should make the beacon easier to operate and more consistent with
+tBTC v2.
+
+=== ETH-based pricing
+
+Having reimbursements for various on-chain actions in ETH was a nice feature but
+also complex in practice. Highly volatile gas prices on mainnet made the gas price
+ceiling value impossible to maintain up-to-date. Given that the gas price
+ceiling had to be higher than the current gas price and that the fee for future
+group creation was calculated based on the gas price ceiling, new groups were 
+getting created too often. 
+
+With too many groups being created, operators were spending too much ETH on
+ticket submission and too low rewards were getting accumulated per group making
+the reward withdrawal operation not profitable enough or not profitable at all
+in the case of small stakers.
+
+Extra submitter rewards added on top of reimbursements were hard to understand
+for staking providers and calculating the provider’s fee was complicated given
+the non-reimbursable cost of ticket submission. Surprisingly, it is much easier
+for staking providers to calculate their fee and costs in tBTC v1, having a
+clean rule that no operations are reimbursed and the only reward they receive
+is KEEP plus TBTC fees.
+
+=== Aggressive timeouts
+
+Relay entry timeouts were pretty aggressive. Set to 64x6 = 384 blocks, they were
+giving about 1.5 hours to submit a relay entry before the minimum stake from each
+group member was slashed. This timeout proved to be not enough to notify,
+investigate, and fix a problem. Three groups were slashed in a row during the
+November 11th incident that begun around 08:00 UTC, before any US-based
+operators noticed the problem.
+
+
+== Proposal
+
+=== Group creation
+
+New groups should be created with a fixed, governable frequency of relay
+requests. Instead of a ticket-based approach for group selection, we should
+use sortition pools. Group creation start transaction should be embedded into
+relay request transaction and should lock a sortition pool. From this moment,
+no operator can enter or leave the pool. Once a new relay entry appears on the
+chain, all off-chain clients should perform group selection optimistically, 
+using the new entry value and a view sortition pool function call.
+After determining group members, clients should perform DKG as usual. 
+Once the group submits the result to the chain, a challenge period starts.
+
+During the challenge period, anyone can notify that the submitted DKG result
+contains group members not selected by the pool. This leads to slashing all
+members who signed the result and the notifier receives 5% from the slashed amount.
+The malicious result is immediatelly discarded.
+The length of the challenge period and slashing amount are governable parameters.
+
+Once the challenge period passes, anyone can unlock the sortition pool and mark
+the DKG result as accepted. In this transaction, the DKG result submitter receives
+a reward, as described in <<fees-and-rewards, Fees and Rewards>> section.
+
+There is a timeout before which DKG result should be submitted. The timeout equals
+the group size multiplied by the number of blocks for a member to become eligible
+to submit DKG result. The timer starts at the moment when the first member becomes
+eligible.
+
+In case the DKG result was not submitted before a timeout, anyone can notify DKG
+timed out and receive a reward, as described in <<fees-and-rewards, Fees and Rewards>> 
+section. DKG timeout includes the situation when no new relay entry was produced
+and sortition could not be performed.
+
+The sortition pool should weigh operators by stake and allow to select the same 
+operator multiple times. DKG protocol should execute in the same way as for v1
+and inactive/disqualified members should be marked and kicked out of the
+sortition pool for at least 2 weeks losing their rewards for that time.
+
+Each group created in the system remains active for the same period of time
+which should be a governable parameter. Group that expired is no longer selected
+for any new work and group expiration will be handled in the relay request
+transaction.
+
+[[fees-and-rewards]]
+=== Fees and rewards
+
+In tBTC v1, operators have to execute a lot of on-chain transactions per
+deposit. Even though they are not reimbursed for on-chain actions and they
+receive KEEP rewards and TBTC fees, this scheme proved to be successful and no
+operators complained about it.
+
+For v2 of the random beacon, all rewards should be done in T.
+This scheme is compatible with tBTC v2 design where all rewards and
+are also done only in T.
+
+Relay requester should provide a fee in T. The value of the fee is a governable
+parameter. The entire fee is deposited in the maintenance pool that is used to
+reimburse for different actions related to DKG.
+
+The transaction submitting relay entry is not reimbursable and implementation
+should ensure the gas cost of this transaction is as low as possible, below
+200k gas. The first group member eligible to submit the result is 
+`new_entry MOD group_size`, then also `(new_entry MOD group_size) + 1`.
+At the end, all group members should be eligible to submit the result. If the
+given member did not submit the result in their round, they should be removed
+from the sortition pool for at least 2 weeks and do not earn rewards for
+that time. The operation removing members from the sortition pool should be
+as cheap as possible so that the member submitting relay entry does not have to
+pay any additional costs for removing inactive members from the pool. Smart
+contract patterns such as gas station could be helpful in achieving this goal.
+
+For example, if `new_entry MOD group_size = 60`, `group_size = 64`, and the entry 
+was submitted  by the member with index `3`, members with indexes 
+`{60, 61, 62, 63, 64, 1, 2}` should be removed from the sortition pool in the 
+same transaction in which member with index `3` submitted relay entry.
+
+The default time for a single member to submit a relay entry should be increased 
+from 6 to 10 blocks and should become a governable parameter.
+
+There is a fixed, governable reward for submitting a DKG result, paid from the
+maintenance pool. The reward is paid to the DKG result submitter in the transaction
+approving the DKG result. The logic triggering new group selection will be embedded 
+in relay entry request transaction and should be as cheap as possible - it only
+locks the sortition pool and emits a group creation start event.
+
+In case the DKG result has not been submitted on time, anyone can unlock the pool
+and receive a fixed, governable reward for reporting DKG timeout. The reward is
+paid from the maintenance pool.
+
+Just like in the case of relay entry submission, the order in which operators
+are supposed to submit DKG result is enforced on-chain and operators who missed
+their round are removed from the sortition pool for at least 2 weeks and do
+not earn rewards for that time. The first member eligible to submit the DKG result
+is a member with index `hash(new_group_pubkey) % group_size`, then also 
+`(hash(new_group_pubkey) % group_size) + 1`. For example, if 
+`hash(new_group_pubkey) % group_size = 62`, `group_size = 64`, and member `9` 
+submitted DKG result, members with indexes `{62, 63, 64, 1, 2, 3, 4, 5, 6, 7, 8}` 
+should be removed from the sortition pool in the same transaction in which 
+member `9` submitted DKG result.
+
+The default time for each member to submit DKG result should be set to 10 blocks
+and should become a governable parameter.
+
+To make this scheme work, both the relay entry and the DKG result submission
+transactions need to have predictable gas costs. Although it is guaranteed for
+the latter, the former, in v1 of the beacon, depends on the gas cost of
+executing a callback and needs to be optimized - more on that in the
+ <<callbacks,Callbacks>> section.
+
+T rewards will be distributed continuously to all operators in the beacon
+sortition pool, just like in the case of tBTC v2.
+
+[[callbacks]]
+=== Callbacks
+
+In v1 of the random beacon, a callback is executed in the same transaction in
+which relay entry is submitted with a gas limit of 2M. This allows applications
+using the random beacon to avoid an additional complexity at their end but comes
+at the cost of random beacon operators who need to have enough ETH on their
+balance. This approach is not compatible with the idea that all rewards will be
+solely in T given that it is impossible to establish the cost of executing a
+callback in T.
+
+The fact the full - even the most complex - callback is executed in the same
+transaction in which the relay entry is submitted gives an impression of better
+security. This impression is false though, given that the entry to be submitted
+is visible in the mempool and smart attackers can have their transactions mined
+faster to, for example, put the sortition pool using the entry for group
+selection in the desired state. This issue needs to be solved on the sortition
+pool side with initiation time for new operators in the pool and/or state lock.
+
+Instead of executing any callback in the same transaction in which relay entry
+is submitted, we should allow only simple, low gas budget callbacks with a gas
+limit controlled by the governance. Applications wanting to use a relay entry
+should submit another transaction using the relay entry value previously set by
+the random beacon. They should also employ an additional security check making
+sure the entry submitted is only valid for a certain number of blocks to avoid
+the situation when relay entry beacon transaction and application-specific
+transaction are executed far from each other.
+
+Smart contract consuming new relay entry needs to implement `IRandomBeaconConsumer`
+interface. Gas limit for `__beaconCallback` call should be initially set to 50k
+gas which is enough to SSTORE new relay entry, block height in which the entry
+was submitted, and to emit an event. Callback gas limit should be a governable
+value. Failure in the callback function should not revert the relay entry
+transaction. When requesting a relay entry, it should be possible to pass an
+optional address parameter - this is the address of a contract implementing
+`IRandomBeaconConsumer` interface that should be called when a new relay entry
+is submitted to the chain.
+
+```
+interface IRandomBeaconConsumer {
+    /// @notice Receives relay entry produced by Keep Random Beacon. This function
+    /// should be called only by Keep Random Beacon.
+    ///
+    /// @param relayEntry Relay entry (random number) produced by Keep Random
+    ///                   Beacon.
+    /// @param blockNumber Block number at which the relay entry was submitted
+    ///                    to the chain.
+    function __beaconCallback(uint256 relayEntry, uint256 blockNumber) external;
+}
+```
+
+=== Timeouts
+
+We should extend the timeout for submitting relay entry to give operators more
+time to react. We should extend the time for a single member to become eligible
+from 6 blocks to 10 blocks and make it a governable parameter. 
+After the initial timeout passes (group size multipled by the number of blocks
+for a member to become eligible to submit relay entry), if no entry was
+provided, all operators in the group should start bleeding and losing their
+stake. The bleeding should increase linearly from 0 to the governable slashing 
+amount per operator over the course of 48 hours. The time for a single group
+member to become eligible to submit result and the hard relay entry timeout are
+governable parameters. This gives a chance to start with more forgiving penalties
+and increase them over time. In general, the slashing penalty should
+be proportional to rewards and the frequency of relay requests and associated
+risk.
+
+=== Reduced complexity of contract relationships
+
+With all changes implemented as above, we need to answer the question if the
+service contract is still needed and whether we should implement a simple
+beacon upgradeability scheme in the application using the beacon. In v1, the
+service contract takes care of executing the callback and reimbursing the
+operator. It also estimates entry fee, and determines if it is possible to
+create a new group on the most recent operator contract. All these
+functionalities, needed in v1, are simplified in this RFC so the service
+contract may no longer be needed, and removing it from the execution path could
+save some gas.
+
+== List of governable parameters
+
+* Relay request fee in T
+* Reward for submitting DKG result
+* Reward for unlocking the sortition pool if DKG timed out
+* Slashing amount for not submitting relay entry
+* Slashing amount for submitting malicious DKG result
+* The number of blocks for which a DKG result can be challenged
+* The number of blocks for a member to become eligible to submit relay entry
+* The number of blocks for a member to become eligible to submit DKG result
+* Hard timeout for a relay entry
+* The frequency of a new group creation
+* Group lifetime
+* Callback gas limit
+
+[bibliography]
+== Related Links
+
+- link:rfc-16-pricing.adoc[RFC 16: Pricing]
