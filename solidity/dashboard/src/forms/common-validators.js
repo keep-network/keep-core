@@ -29,7 +29,7 @@ export const validateAmountInRange = (
   value,
   maxValue,
   minValue = 0,
-  token = KEEP,
+  token = KEEP
 ) => {
   const formattedValue = token.fromTokenUnit(value)
 

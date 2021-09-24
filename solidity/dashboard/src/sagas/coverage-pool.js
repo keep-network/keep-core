@@ -262,9 +262,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     } = event
 
     const address = yield select(selectors.getUserAddress)
-    const { covBalance, covTokensAvailableToWithdraw } = yield select(
-      selectors.getCoveragePool
-    )
+    const { covBalance } = yield select(selectors.getCoveragePool)
     const { componentProps } = yield select(selectors.getModalData)
 
     if (!isSameEthAddress(address, underwriter)) {
@@ -315,10 +313,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
       covTokenUpdated({
         pendingWithdrawal: covAmount,
         withdrawalInitiatedTimestamp: timestamp,
-        covTokensAvailableToWithdraw: sub(
-          covBalance,
-          covAmount
-        ).toString(),
+        covTokensAvailableToWithdraw: sub(covBalance, covAmount).toString(),
       })
     )
   }
