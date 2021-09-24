@@ -71,7 +71,7 @@ const WithdrawalInfo = ({
           disabled={false}
           onClick={onCancel}
         >
-          Close
+          close
         </Button>
       </OnlyIf>
     </WithdrawalInfo.Container>

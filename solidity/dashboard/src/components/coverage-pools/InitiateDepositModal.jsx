@@ -104,7 +104,7 @@ const InitiateDepositModal = ({
             disabled={false}
             onClick={onCancel}
           >
-            Close
+            close
           </Button>
         </OnlyIf>
       </InitiateDepositModal.Container>
