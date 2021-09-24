@@ -8,8 +8,6 @@
     "deploy": "hardhat deploy --export export.json"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.2",
-    "@tenderly/hardhat-tenderly": "^1.0.12",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf"
   },
   "devDependencies": {
@@ -21,6 +19,7 @@
     "@types/chai": "^4.2.22",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.9.6",
+    "@tenderly/hardhat-tenderly": "^1.0.12",
     "chai": "^4.3.4",
     "eslint": "^7.30.0",
     "eslint-config-keep": "github:keep-network/eslint-config-keep#0c27ade",

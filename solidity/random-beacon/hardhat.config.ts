@@ -41,6 +41,8 @@ const config: HardhatUserConfig = {
       tags: ["tenderly"],
     },
   },
+  // // Define local networks configuration file path to load networks from the file.
+  // localNetworksConfig: "./.hardhat/networks.ts",
   tenderly: {
     username: "thesis",
     project: "",
