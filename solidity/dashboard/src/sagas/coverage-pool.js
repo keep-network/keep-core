@@ -262,7 +262,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     } = event
 
     const address = yield select(selectors.getUserAddress)
-    const { covTokensAvailableToWithdraw } = yield select(
+    const { covBalance, covTokensAvailableToWithdraw } = yield select(
       selectors.getCoveragePool
     )
     const { componentProps } = yield select(selectors.getModalData)
@@ -316,9 +316,9 @@ export function* subscribeToWithdrawalInitiatedEvent() {
         pendingWithdrawal: covAmount,
         withdrawalInitiatedTimestamp: timestamp,
         covTokensAvailableToWithdraw: sub(
-          covTokensAvailableToWithdraw,
+          covBalance,
           covAmount
-        ),
+        ).toString(),
       })
     )
   }
