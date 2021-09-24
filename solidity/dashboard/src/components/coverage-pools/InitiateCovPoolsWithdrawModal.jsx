@@ -2,10 +2,11 @@ import React from "react"
 import ModalWithTimeline, {
   MODAL_WITH_TIMELINE_STEPS,
 } from "./ModalWithTImeline"
-import { KEEP } from "../../utils/token.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
 import { Keep } from "../../contracts"
+import TokenAmount from "../TokenAmount"
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
@@ -54,16 +55,13 @@ const InitiateCovPoolsWithdrawModal = ({
         </div>
         <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Pool Balance &nbsp;</h4>
-          <h4 className={"withdraw-modal__data__value text-grey-70"}>
-            {KEEP.displayAmount(
-              Keep.coveragePoolV1.estimatedBalanceFor(
-                covTokensAvailableToWithdraw,
-                covTotalSupply,
-                totalValueLocked
-              )
-            )}{" "}
-            KEEP
-          </h4>
+          <TokenAmount
+            amount={covTokensAvailableToWithdraw}
+            wrapperClassName={"withdraw-modal__data__value"}
+            amountClassName={"h4 text-grey-70"}
+            symbolClassName={"h4 text-grey-70"}
+            token={covKEEP}
+          />
         </div>
         <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Wallet &nbsp;</h4>

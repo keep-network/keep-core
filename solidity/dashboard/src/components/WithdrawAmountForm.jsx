@@ -42,6 +42,11 @@ const WithdrawAmountForm = ({
         normalize={normalizeFloatingAmount}
         format={formatFloatingAmount}
         inputAddon={<MaxAmountAddon onClick={onAddonClick} text="Max Amount" />}
+        leftIconComponent={
+          <span className={"form-input__left-icon__cov-keep-amount"}>
+            covKEEP
+          </span>
+        }
       />
       <SubmitButton
         className="btn btn-lg btn-primary w-100"

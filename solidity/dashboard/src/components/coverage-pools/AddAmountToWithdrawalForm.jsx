@@ -40,24 +40,24 @@ const AddAmountToWithdrawalForm = ({
         <h4>Add your available balance?</h4>
         <div className={"add-amount-to-withdraw-form__available-balance"}>
           <TokenAmount
+            amount={tokenAmount}
+            wrapperClassName={"add-amount-to-withdraw-form__token-amount"}
+            amountClassName={"h3 text-mint-100"}
+            symbolClassName={"h3 text-mint-100"}
+            token={covKEEP}
+            withIcon
+          />
+          <TokenAmount
             amount={Keep.coveragePoolV1.estimatedBalanceFor(
               tokenAmount,
               covTotalSupply,
               totalValueLocked
             )}
-            wrapperClassName={"add-amount-to-withdraw-form__token-amount"}
-            amountClassName={"h3 text-mint-100"}
-            symbolClassName={"h3 text-mint-100"}
+            wrapperClassName={"add-amount-to-withdraw-form__cov-token-amount"}
+            amountClassName={"h4 text-grey-70"}
+            symbolClassName={"h4 text-grey-70"}
             token={KEEP}
-            withIcon
           />
-          <h4
-            className={
-              "add-amount-to-withdraw-form__cov-token-amount text-grey-70"
-            }
-          >
-            {KEEP.toFormat(KEEP.toTokenUnit(tokenAmount)).toString()} covKEEP
-          </h4>
         </div>
         <FormInput
           name="tokenAmount"
@@ -67,6 +67,11 @@ const AddAmountToWithdrawalForm = ({
           format={formatFloatingAmount}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
+          }
+          leftIconComponent={
+            <span className={"form-input__left-icon__cov-keep-amount"}>
+              covKEEP
+            </span>
           }
         />
       </div>

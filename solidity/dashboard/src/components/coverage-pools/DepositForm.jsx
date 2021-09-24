@@ -56,6 +56,14 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
           placeholder="0"
           normalize={normalizeFloatingAmount}
           format={formatFloatingAmount}
+          leftIconComponent={
+            <Icons.KeepOutline
+              className="keep-outline--grey-60"
+              width={20}
+              height={20}
+              style={{ margin: "0 1rem" }}
+            />
+          }
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }

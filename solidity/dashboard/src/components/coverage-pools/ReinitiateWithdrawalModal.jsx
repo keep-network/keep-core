@@ -121,21 +121,21 @@ const ReinitiateWithdrawalModalStep1 = ({
       </h3>
       <div className={"reinitiate-withdrawal-modal__data"}>
         <TokenAmount
+          amount={pendingWithdrawalBalance}
+          wrapperClassName={"reinitiate-withdrawal-modal__token-amount"}
+          token={covKEEP}
+          withIcon
+        />
+        <TokenAmount
+          wrapperClassName={"reinitiate-withdrawal-modal__cov-token-amount"}
           amount={Keep.coveragePoolV1.estimatedBalanceFor(
             pendingWithdrawalBalance,
             covTotalSupply,
             totalValueLocked
           )}
-          wrapperClassName={"reinitiate-withdrawal-modal__token-amount"}
-          token={KEEP}
-          withIcon
-        />
-        <TokenAmount
-          wrapperClassName={"reinitiate-withdrawal-modal__cov-token-amount"}
-          amount={pendingWithdrawalBalance}
           amountClassName={"h4 text-grey-60"}
           symbolClassName={"h4 text-grey-60"}
-          token={covKEEP}
+          token={KEEP}
         />
       </div>
       <AddAmountToWithdrawalForm
