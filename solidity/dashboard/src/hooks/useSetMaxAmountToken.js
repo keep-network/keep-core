@@ -13,7 +13,10 @@ const useSetMaxAmountToken = (
   const setMaxAvailableAmount = () => {
     setFieldValue(
       filedName,
-      token.toTokenUnit(availableAmount).toFixed(decimals, BigNumber.ROUND_DOWN)
+      token
+        .toTokenUnit(availableAmount)
+        .decimalPlaces(decimals, BigNumber.ROUND_DOWN)
+        .toString()
     )
   }
 
