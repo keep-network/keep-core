@@ -2,9 +2,8 @@
 
 pragma solidity 0.8.5;
 
-import "@thesis/solidity-contracts/contracts/token/ERC20WithPermit.sol";
-
-contract TestToken is ERC20WithPermit {
-    /* solhint-disable-next-line no-empty-blocks */
-    constructor() ERC20WithPermit("Test Token", "TT") {}
+// Stub contract used for initial project setup.
+// Should be removed once we have actual contracts.
+contract TestToken {
+    string public name = "Test Token";
 }

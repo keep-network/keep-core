@@ -1,6 +1,8 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
+// This is an example of Typescript test.
+// Should be removed once we have actual tests.
 describe("Token", function () {
   let testToken
 
