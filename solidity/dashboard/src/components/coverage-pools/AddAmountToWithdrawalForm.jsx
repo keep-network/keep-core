@@ -45,7 +45,6 @@ const AddAmountToWithdrawalForm = ({
             amountClassName={"h3 text-mint-100"}
             symbolClassName={"h3 text-mint-100"}
             token={covKEEP}
-            withIcon
           />
           <TokenAmount
             amount={Keep.coveragePoolV1.estimatedBalanceFor(

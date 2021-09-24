@@ -220,10 +220,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               amountClassName={"h1 text-mint-100"}
               symbolClassName={"h2 text-mint-100"}
               token={covKEEP}
-              withIcon
             />
             <TokenAmount
-              wrapperClassName={"coverage-pool__cov-token-amount"}
               amount={Keep.coveragePoolV1.estimatedBalanceFor(
                 covBalance,
                 covTotalSupply,
@@ -250,7 +248,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               amountClassName={"h2 text-mint-100"}
               symbolClassName={"h3 text-mint-100"}
               token={covKEEP}
-              withIcon
             />
             <TokenAmount
               wrapperClassName={"coverage-pool__cov-token-amount"}

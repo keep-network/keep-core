@@ -47,7 +47,6 @@ const WithdrawalInfo = ({
           amount={amount}
           wrapperClassName={"withdraw-modal__token-amount"}
           token={covKEEP}
-          withIcon
         />
         <TokenAmount
           wrapperClassName={"withdraw-modal__cov-token-amount"}

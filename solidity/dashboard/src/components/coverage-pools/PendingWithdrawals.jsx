@@ -353,21 +353,19 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
             return (
               <div>
                 <TokenAmount
+                  amount={covAmount}
+                  wrapperClassName={"pending-withdrawal__token-amount"}
+                  token={covKEEP}
+                />
+                <TokenAmount
                   amount={Keep.coveragePoolV1.estimatedBalanceFor(
                     covAmount,
                     covTotalSupply,
                     totalValueLocked
                   )}
-                  wrapperClassName={"pending-withdrawal__token-amount"}
-                  token={KEEP}
-                  withIcon
-                />
-                <TokenAmount
-                  amount={covAmount}
                   amountClassName={"h3 text-grey-40"}
                   symbolClassName={"h3 text-grey-40"}
-                  wrapperClassName={"pending-withdrawal__cov-token-amount"}
-                  token={covKEEP}
+                  token={KEEP}
                 />
               </div>
             )

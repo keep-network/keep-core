@@ -124,10 +124,8 @@ const ReinitiateWithdrawalModalStep1 = ({
           amount={pendingWithdrawalBalance}
           wrapperClassName={"reinitiate-withdrawal-modal__token-amount"}
           token={covKEEP}
-          withIcon
         />
         <TokenAmount
-          wrapperClassName={"reinitiate-withdrawal-modal__cov-token-amount"}
           amount={Keep.coveragePoolV1.estimatedBalanceFor(
             pendingWithdrawalBalance,
             covTotalSupply,
