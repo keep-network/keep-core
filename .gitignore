@@ -44,6 +44,10 @@ configs
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
 keep-client-snapshot.tar
-solidity/random-beacon/cache
-solidity/random-beacon/yarn-error.log
-solidity/random-beacon/export.json
+
+# Yarn
+yarn-error.log
+
+# Hardhat
+cache/
+export.json
