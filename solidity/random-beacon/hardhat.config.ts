@@ -45,6 +45,11 @@ const config: HardhatUserConfig = {
     username: "thesis",
     project: "",
   },
+  namedAccounts: {
+    deployer: {
+      default: 0, // take the first account as deployer
+    },
+  },
 }
 
 export default config

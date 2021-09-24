@@ -4,7 +4,8 @@
   "description": "random beacon v2",
   "scripts": {
     "build": "hardhat compile",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "hardhat test",
+    "deploy": "hardhat deploy --export export.json"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
@@ -18,6 +19,9 @@
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@types/chai": "^4.2.22",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.9.6",
+    "chai": "^4.3.4",
     "eslint": "^7.30.0",
     "eslint-config-keep": "github:keep-network/eslint-config-keep#0c27ade",
     "ethereum-waffle": "^3.4.0",

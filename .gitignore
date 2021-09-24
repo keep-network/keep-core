@@ -46,3 +46,4 @@ configs
 keep-client-snapshot.tar
 solidity/random-beacon/cache
 solidity/random-beacon/yarn-error.log
+solidity/random-beacon/export.json
