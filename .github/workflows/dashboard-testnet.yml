@@ -104,7 +104,7 @@ jobs:
               @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-contracts-version }} \
               @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }} \
               @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
-              @keep-network/tbtc-v2@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
+              @keep-network/tbtc-v2@${{ steps.upstream-builds-query.outputs.tbtc-v2-contracts-version }} \
               @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }}
 
       - name: NPM build
