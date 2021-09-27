@@ -60,10 +60,10 @@ jobs:
     # A pull_request event is a PR; leave a comment with the preview URL.
     - if: github.event_name == 'pull_request'
       name: Post preview URL to PR
-      uses: actions/github-script@v3
+      uses: actions/github-script@v5
       with:
         script: |
-          github.issues.createComment({
+          github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
