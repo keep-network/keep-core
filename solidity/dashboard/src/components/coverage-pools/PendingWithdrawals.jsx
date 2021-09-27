@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import {
   claimTokensFromWithdrawal,
   withdrawAssetPool,
@@ -32,6 +32,16 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
     pendingWithdrawal,
     withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
+  const [currentDateInUnix, setCurrentDateInUnix] = useState(moment().unix())
+
+  useEffect(() => {
+    const myInterval = setInterval(() => {
+      setCurrentDateInUnix(moment().unix())
+    }, 1000)
+    return () => {
+      clearInterval(myInterval)
+    }
+  })
 
   const onClaimTokensSubmitButtonClick = async (covAmount, awaitingPromise) => {
     dispatch(
@@ -171,7 +181,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
 
   const renderLoadingBarCooldownStatus = (timestamp) => {
     const withdrawalDate = moment.unix(timestamp)
-    const currentDate = moment()
+    const currentDate = moment.unix(currentDateInUnix)
     const endOfWithdrawalDelayDate = moment
       .unix(timestamp)
       .add(withdrawalDelay, "seconds")
@@ -222,7 +232,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   }
 
   const isWithdrawalDelayOver = (pendingWithdrawalTimestamp) => {
-    const currentDate = moment()
+    const currentDate = moment.unix(currentDateInUnix)
     const endOfWithdrawalDelayDate = moment
       .unix(pendingWithdrawalTimestamp)
       .add(withdrawalDelay, "seconds")
@@ -231,7 +241,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   }
 
   const isWithdrawalTimeoutOver = (pendingWithdrawalTimestamp) => {
-    const currentDate = moment()
+    const currentDate = moment.unix(currentDateInUnix)
     const endOfWithdrawalTimeoutDate = moment
       .unix(pendingWithdrawalTimestamp)
       .add(withdrawalDelay, "seconds")
@@ -241,7 +251,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   }
 
   const renderTimeLeftToClaimText = (pendingWithdrawalTimestamp) => {
-    const currentDate = moment()
+    const currentDate = moment.unix(currentDateInUnix)
     const endOfWithdrawalDelayDate = moment
       .unix(pendingWithdrawalTimestamp)
       .add(withdrawalDelay, "seconds")
@@ -266,10 +276,10 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
       .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
       .seconds()
 
-    const timeToClaimText =
+    const timeToClaimWithUnits =
       days > 0
-        ? `Available for: ${days}d ${hours}h ${minutes}m`
-        : `Available for: ${hours}h ${minutes}m ${seconds}s`
+        ? `${days}d ${hours}h ${minutes}m`
+        : `${hours}h ${minutes}m ${seconds}s`
 
     let timeToClaim = <></>
     if (!isWithdrawalTimeoutOver(pendingWithdrawalTimestamp)) {
@@ -278,7 +288,12 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
           className={"coverage-pool__withdrawal-claim-tokens-info-container"}
         >
           <div className={"coverage-pool__withdrawal-available-for"}>
-            <h4>{timeToClaimText}</h4>
+            <h4>
+              Available for:{" "}
+              <span className={days > 0 ? "text-black" : "text-error"}>
+                {timeToClaimWithUnits}
+              </span>
+            </h4>
             <Tooltip
               simple
               delay={0}
