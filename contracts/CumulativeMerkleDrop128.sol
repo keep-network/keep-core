@@ -36,7 +36,7 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
         require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
-        bytes16 leaf = _keccak128(abi.encodePacked(salt, account, cumulativeAmount));
+        bytes16 leaf = bytes16(keccak256((abi.encodePacked(salt, account, cumulativeAmount))));
         require(_verifyAsm(merkleProof, expectedMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
@@ -64,6 +64,10 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
     //     return leaf == root;
     // }
     //
+    // function _keccak128(bytes memory input) internal pure returns(bytes16) {
+    //     return bytes16(keccak256(input));
+    // }
+    //
     // function _getBytes16(bytes calldata input) internal pure returns(bytes16 res) {
     //     // solhint-disable-next-line no-inline-assembly
     //     assembly {
@@ -71,7 +75,6 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
     //     }
     // }
 
-    // Experimental assembly optimization
     function _verifyAsm(bytes calldata proof, bytes16 root, bytes16 leaf) private pure returns (bool valid) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -97,9 +100,5 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
 
             valid := iszero(shr(128, xor(root, leaf)))
         }
-    }
-
-    function _keccak128(bytes memory input) internal pure returns(bytes16) {
-        return bytes16(keccak256(input));
     }
 }
