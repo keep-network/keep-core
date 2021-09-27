@@ -54,7 +54,6 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     //     return merkleProof.verify(root, leaf);
     // }
 
-    // Experimental assembly optimization
     function _verifyAsm(bytes32[] calldata proof, bytes32 root, bytes32 leaf) private pure returns (bool valid) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
