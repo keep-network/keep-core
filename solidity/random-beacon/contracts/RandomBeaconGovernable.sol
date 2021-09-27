@@ -20,7 +20,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Random Beacon Governable
 /// @notice This is a base contract that holds governable parameters for Random
-///        Beacon V2 as well as their update logic
+///         Beacon as well as their update logic
 contract RandomBeaconGovernable is Ownable {
     /// @notice The time delay that needs to pass between initializing and
     ///         finalizing update of any governable parameter in this contract.
@@ -68,7 +68,7 @@ contract RandomBeaconGovernable is Ownable {
     uint256 public newDkgSubmissionEligibilityDelay;
     uint256 public dkgSubmissionEligibilityDelayChangeInitiated;
 
-    /// @notice Hard timeout for a relay entry
+    /// @notice Hard timeout for a relay entry in blocks
     uint256 public relayEntryHardTimeout;
     uint256 public newRelayEntryHardTimeout;
     uint256 public relayEntryHardTimeoutChangeInitiated;
@@ -78,7 +78,7 @@ contract RandomBeaconGovernable is Ownable {
     uint256 public newGroupCreationFrequency;
     uint256 public groupCreationFrequencyChangeInitiated;
 
-    /// @notice Group lifetime
+    /// @notice Group lifetime in seconds
     uint256 public groupLifetime;
     uint256 public newGroupLifetime;
     uint256 public groupLifetimeChangeInitiated;
