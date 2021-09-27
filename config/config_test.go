@@ -46,7 +46,7 @@ func TestReadConfig(t *testing.T) {
 			expectedValue: "/my/secure/location",
 		},
 		"Ethereum.MaxGasPrice": {
-			readValueFunc: func(c *Config) interface{} { return c.Ethereum.MaxGasPrice.Int },
+			readValueFunc: func(c *Config) interface{} { return c.Ethereum.MaxGasFeeCap.Int },
 			expectedValue: big.NewInt(140000000000),
 		},
 		"Ethereum.BalanceAlertThreshold": {
