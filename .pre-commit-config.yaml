@@ -17,12 +17,18 @@ repos:
       files: '\.sol$'
       language: script
       description: "Checks solidity code according to the package's linter configuration"
-    - id: lint-js
-      name: 'lint solidity js'
-      entry: /usr/bin/env bash -c "cd solidity-v1 && npm run lint:js"
-      files: 'solidity-v1\/.*\.js$'
+    - id: lint-eslint
+      name: 'lint solidity ts/js'
+      entry: /usr/bin/env bash -c "cd solidity/random-beacon && npm run lint:eslint"
+      files: 'solidity/random-beacon\/.*'
       language: script
-      description: "Checks JS code according to the package's linter configuration"
+      description: "Checks TS/JS code according to the package's linter configuration"
+    - id: lint-config
+      name: 'lint solidity json/yaml'
+      entry: /usr/bin/env bash -c "cd solidity/random-beacon && npm run lint:config"
+      files: 'solidity/random-beacon\/.*'
+      language: script
+      description: "Checks JSON/YAML code according to the package's linter configuration"
     - id: format-dashboard
       name: 'format dashboard'
       entry: /usr/bin/env bash -c "cd solidity-v1/dashboard && npm run format"
