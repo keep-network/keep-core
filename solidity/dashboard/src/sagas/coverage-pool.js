@@ -180,12 +180,12 @@ export function* subscribeToAssetPoolDepositedEvent() {
 
     const isAddressedToCurrentAddress = isSameEthAddress(address, underwriter)
 
-    const updatedCovTotalSupply = add(covTotalSupply, covAmount)
+    const updatedCovTotalSupply = add(covTotalSupply, covAmount).toString()
     const updatedCovBalance = isAddressedToCurrentAddress
-      ? add(covBalance, covAmount)
+      ? add(covBalance, covAmount).toString()
       : covBalance
     const updatedcovTokensAvailableToWithdraw = isAddressedToCurrentAddress
-      ? add(covTokensAvailableToWithdraw, covAmount)
+      ? add(covTokensAvailableToWithdraw, covAmount).toString()
       : covTokensAvailableToWithdraw
 
     const shareOfPool = yield call(
@@ -212,7 +212,7 @@ export function* subscribeToAssetPoolDepositedEvent() {
             estimatedBalanceAmountInKeep: estimatedKeepBalance,
           },
           modalProps: {
-            title: "Claim tokens",
+            title: "Deposit",
             classes: {
               modalWrapperClassName: "modal-wrapper__claim-tokens",
             },
@@ -357,7 +357,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
       )
     }
 
-    const updatedCovTotalSupply = sub(covTotalSupply, covAmount)
+    const updatedCovTotalSupply = sub(covTotalSupply, covAmount).toString()
     const totalValueLocked = yield call(Keep.coveragePoolV1.totalValueLocked)
     const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
     const totalValueLockedInUSD = keepInUSD
@@ -366,7 +366,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
     const apy = yield call(Keep.coveragePoolV1.apy)
 
     const updatedCovBalance = isAddressedToCurrentAddress
-      ? sub(covBalance, covAmount)
+      ? sub(covBalance, covAmount).toString()
       : covBalance
 
     const shareOfPool = yield call(
