@@ -113,8 +113,18 @@ input {
       display: flex;
       align-items: center;
 
-      > svg {
-        margin-right: 1.5rem;
+      .form-input__left-icon-container {
+        background-color: @color-grey-10;
+        align-self: normal;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .form-input__left-icon__cov-keep-amount {
+          color: #6d6d6d;
+          margin: 0 1rem;
+          font-size: 12px;
+        }
       }
 
       input {
@@ -133,5 +143,19 @@ input {
       font-size: 0.9rem;
       font-weight: 500;
     }
+  }
+}
+
+.form-checkbox {
+  input {
+    margin-right: 0.25rem;
+  }
+
+  label {
+    all: unset;
+    cursor: default;
+    font-weight: normal;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 }

@@ -22,6 +22,8 @@ export const KEEP_TOKEN_GEYSER_CONTRACT_NAME = "keepTokenGeyserContract"
 export const ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME =
   "ECDSARewardsDistributorContract"
 
+export const ASSET_POOL_CONTRACT_NAME = "assetPoolContract"
+
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
 
@@ -30,6 +32,9 @@ export const LINK = {
   keepWebsite: "https://keep.network/",
   stakingDocumentation:
     "https://keep-network.gitbook.io/staking-documentation/",
+  coveragePools: {
+    docs: "https://github.com/keep-network/coverage-pools/blob/main/docs/design.adoc",
+  },
 }
 
 export const WALLETS = {

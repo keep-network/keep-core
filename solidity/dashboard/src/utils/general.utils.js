@@ -89,13 +89,12 @@ export const displayPercentageValue = (
     value = formatValue(value)
   }
 
-  let prefix = ""
   if (value > 0 && value <= min) {
-    prefix = `<`
+    return `<${min}%`
   } else if (value >= max) {
-    prefix = `>`
+    return `>${max}%`
   }
-  return `${prefix}${value}%`
+  return `${value}%`
 }
 
 /**
@@ -159,3 +158,6 @@ export const removeSubstringBetweenCharacter = (
   const final = splittedInput.join(character)
   return final
 }
+
+export const isString = (value) =>
+  typeof value === "string" || value instanceof String

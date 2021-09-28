@@ -10,6 +10,8 @@ import notificationsData from "./notifications-data"
 import operator from "./operator"
 import authorization from "./authorization"
 import transactions from "./transactions"
+import coveragePool from "./coverage-pool"
+import modal from "./modal"
 
 const app = (state = { address: null }, action) => {
   switch (action.type) {
@@ -34,6 +36,8 @@ const reducers = combineReducers({
   operator,
   authorization,
   transactions,
+  coveragePool,
+  modal,
 })
 
 const rootReducer = (state, action) => {

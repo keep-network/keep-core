@@ -5,6 +5,7 @@ import {
   getContractsContext,
   getWeb3Context,
   getLPRewardsWrapper,
+  subscribeToEventAndEmitData,
 } from "./utils"
 import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
@@ -18,6 +19,16 @@ import {
   OPERATOR_DELEGATION_UNDELEGATED,
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
 } from "../actions"
+import {
+  assetPoolDepositedEventEmitted,
+  COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
+  coveragePoolWithdrawalCompletedEventEmitted,
+  coveragePoolWithdrawalInitiatedEventEmitted,
+  riskManagerAuctionClosedEventEmitted,
+  riskManagerAuctionCreatedEventEmitted,
+} from "../actions/coverage-pool"
+import { Keep } from "../contracts"
+import { EVENTS } from "../constants/events"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -40,9 +51,15 @@ function* observeKeepTokenTransfer() {
   // Observe and dispatch an action that updates keep token balance.
   while (true) {
     try {
+      const event = yield take(contractEventCahnnel)
       const {
         returnValues: { from, to, value },
-      } = yield take(contractEventCahnnel)
+      } = event
+
+      yield put({
+        type: "keep-token/transfered_event",
+        payload: { event },
+      })
 
       let arithmeticOpration = null
       if (isSameEthAddress(defaultAccount, from)) {
@@ -982,4 +999,68 @@ function* updateOperatorData() {
 export function* subscribeToOperatorUndelegateEvent() {
   yield take(FETCH_OPERATOR_DELEGATIONS_SUCCESS)
   yield fork(updateOperatorData)
+}
+
+export function* observeAssetPoolDepositedEvent() {
+  yield take(COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS)
+
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.DEPOSITED,
+    assetPoolDepositedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.DEPOSITED}`
+  )
+}
+
+export function* observeWithdrawalInitiatedEvent() {
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
+    coveragePoolWithdrawalInitiatedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED}`
+  )
+}
+
+export function* observeWithdrawalCompletedEvent() {
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
+    coveragePoolWithdrawalCompletedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED}`
+  )
+}
+
+export function* observeAuctionCreatedEvent() {
+  const riskManagerV1Contract =
+    Keep.coveragePoolV1.riskManagerV1Contract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    riskManagerV1Contract,
+    "AuctionCreated",
+    riskManagerAuctionCreatedEventEmitted,
+    "RiskManagerV1.AuctionCreated"
+  )
+}
+
+export function* observeAuctionClosedEvent() {
+  const riskManagerV1Contract =
+    Keep.coveragePoolV1.riskManagerV1Contract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    riskManagerV1Contract,
+    "AuctionClosed",
+    riskManagerAuctionClosedEventEmitted,
+    "RiskManagerV1.AuctionClosed"
+  )
 }

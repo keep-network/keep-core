@@ -20,6 +20,16 @@
   .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
 }
 
+.draw-dashed-vertical-line(@color) {
+  background: repeating-linear-gradient(
+    to bottom,
+    @color 0,
+    @color 2px,
+    transparent 0,
+    transparent 4px
+  );
+}
+
 .tile {
   background: @white;
   padding: 2rem;
@@ -290,18 +300,32 @@ svg.eth-icon.eth-icon {
 }
 
 ul {
-  &.list__colored-bullets--grey-60 {
-    list-style: none;
+  &.bullets {
+    list-style: inside;
 
     li {
-      padding-left: 1em;
-      text-indent: -1em;
+      padding-left: 1.5rem;
+      text-indent: -1.5rem;
     }
 
     li::before {
       content: "\2022";
-      color: @color-grey-60;
+      color: @color-black;
       padding-right: 1rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    &--violet-80 {
+      li::before {
+        color: @color-brand-violet-80;
+      }
+    }
+
+    &--grey-60 {
+      li::before {
+        color: @color-grey-60;
+      }
     }
   }
 }
@@ -341,7 +365,8 @@ svg.tbtc-icon,
 svg.reward-icon,
 svg.trezor-logo,
 svg.ledger-logo,
-svg.wallet-connect-logo {
+svg.wallet-connect-logo,
+svg.plus-icon {
   &--black {
     path {
       fill: @color-black;
@@ -360,6 +385,24 @@ svg.wallet-connect-logo {
     }
   }
 
+  &--grey-50 {
+    path {
+      fill: @color-grey-50;
+    }
+  }
+
+  &--grey-60 {
+    path {
+      fill: @color-grey-60;
+    }
+  }
+
+  &--grey-70 {
+    path {
+      fill: @color-grey-70;
+    }
+  }
+
   &--mint-100 {
     path {
       fill: @color-mint-100;
@@ -371,4 +414,15 @@ svg.wallet-connect-logo {
       fill: @color-mint-80;
     }
   }
+
+  &--yellow {
+    path {
+      fill: @color-yellow-100;
+    }
+  }
+}
+
+.divider.divider--tile-fluid {
+  margin: 0 -2rem;
+  padding: 2rem 2rem 0;
 }
