@@ -110,7 +110,6 @@ export function* subscribeToEventAndEmitData(
         : action(event)
       yield put(_action)
     } catch (error) {
-      console.log("error", error)
       console.error(`Failed subscribing to ${_debugName} event`, error)
       contractEventCahnnel.close()
     }
