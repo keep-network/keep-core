@@ -83,9 +83,12 @@ const InitiateDepositModal = ({
           <CooldownPeriodBanner />
         </OnlyIf>
         <OnlyIf condition={transactionFinished}>
-          <Divider className="divider divider--tile-fluid" />
+          <Divider
+            className="divider divider--tile-fluid"
+            style={{ margin: "0.5rem 0", marginTop: "auto" }}
+          />
           <Button
-            className="btn btn-lg btn-secondary"
+            className="btn btn-lg btn-secondary success-modal-close-button"
             disabled={false}
             onClick={onCancel}
           >

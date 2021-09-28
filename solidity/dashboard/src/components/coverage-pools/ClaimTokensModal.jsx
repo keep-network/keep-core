@@ -72,7 +72,7 @@ const ClaimTokensModal = ({
           </h4>
         </div>
       </div>
-      <Divider style={{ margin: "0.5rem 0" }} />
+      <Divider style={{ margin: "0.5rem 0", marginTop: "auto" }} />
       <div className="flex row center mt-2">
         <OnlyIf condition={!transactionFinished}>
           <Button
@@ -89,7 +89,7 @@ const ClaimTokensModal = ({
         </OnlyIf>
         <OnlyIf condition={transactionFinished}>
           <Button
-            className="btn btn-lg btn-secondary"
+            className="btn btn-lg btn-secondary success-modal-close-button"
             disabled={false}
             onClick={onCancel}
           >
