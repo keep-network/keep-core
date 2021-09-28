@@ -342,7 +342,9 @@ export function* subscribeToWithdrawalCompletedEvent() {
           componentProps: {
             transactionHash: event.transactionHash,
             transactionFinished: true,
-            amount: amount,
+            collateralTokenAmount: amount,
+            covAmount,
+            address: underwriter,
           },
           modalProps: {
             title: "Claim tokens",

@@ -1,27 +1,27 @@
 import React from "react"
 import TokenAmount from "../TokenAmount"
-import { KEEP } from "../../utils/token.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import Divider from "../Divider"
 import Button from "../Button"
 import OnlyIf from "../OnlyIf"
 import ModalWithTimeline, {
   MODAL_WITH_TIMELINE_STEPS,
 } from "./ModalWithTImeline"
-import { useWeb3Address } from "../WithWeb3Context"
 import { shortenAddress } from "../../utils/general.utils"
 import { Keep } from "../../contracts"
 
 const ClaimTokensModal = ({
-  amount,
+  covAmount,
+  collateralTokenAmount,
   submitBtnText,
   onBtnClick,
   onCancel,
   totalValueLocked,
   covTotalSupply,
+  address,
   transactionFinished = false,
   transactionHash = "",
 }) => {
-  const yourAddress = useWeb3Address()
   return (
     <ModalWithTimeline
       className={"claim-tokens-modal__main-container"}
@@ -47,32 +47,28 @@ const ClaimTokensModal = ({
       </OnlyIf>
       <div className={"claim-tokens-modal__data"}>
         <TokenAmount
-          amount={Keep.coveragePoolV1.estimatedBalanceFor(
-            amount,
-            covTotalSupply,
-            totalValueLocked
-          )}
+          amount={covAmount}
           wrapperClassName={"claim-tokens-modal__token-amount"}
-          token={KEEP}
-          withIcon
+          token={covKEEP}
         />
         <div className={"claim-tokens-modal__data-row"}>
           <h4 className={"text-grey-50"}>Initial Withdrawal &nbsp;</h4>
           <h4 className={"claim-tokens-modal__data__value text-grey-70"}>
-            {KEEP.displayAmount(
-              Keep.coveragePoolV1.estimatedBalanceFor(
-                amount,
-                covTotalSupply,
-                totalValueLocked
-              )
-            )}{" "}
-            KEEP
+            {KEEP.displayAmountWithSymbol(
+              transactionFinished
+                ? collateralTokenAmount
+                : Keep.coveragePoolV1.estimatedBalanceFor(
+                    covAmount,
+                    covTotalSupply,
+                    totalValueLocked
+                  )
+            )}
           </h4>
         </div>
         <div className={"claim-tokens-modal__data-row"}>
           <h4 className={"text-grey-50"}>Wallet &nbsp;</h4>
           <h4 className={"claim-tokens-modal__data__value text-grey-70"}>
-            {shortenAddress(yourAddress)}
+            {shortenAddress(address)}
           </h4>
         </div>
       </div>

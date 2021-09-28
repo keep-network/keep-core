@@ -20,10 +20,13 @@ import TokenAmount from "../TokenAmount"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
 import { Keep } from "../../contracts"
+import { useWeb3Address } from "../WithWeb3Context"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
   const { openConfirmationModal, closeModal } = useModal()
+  const yourAddress = useWeb3Address()
+
   const {
     totalValueLocked,
     covTotalSupply,
@@ -57,9 +60,10 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
       {
         closeModal: closeModal,
         submitBtnText: "claim",
-        amount: covAmount,
+        covAmount,
         totalValueLocked,
         covTotalSupply,
+        address: yourAddress,
         modalOptions: {
           title: "Claim tokens",
           classes: {
