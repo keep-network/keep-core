@@ -147,21 +147,19 @@ describe("Test CoveragePoolV1 lib", () => {
   })
 
   it("should return the estimated collateral token balance", async () => {
-    const mockedCollateralBalance = 100
-    coveragePoolV1.collateralToken.makeCall.mockResolvedValue(
-      mockedCollateralBalance
-    )
+    const mockedTVL = 100
+    const spyOnTVL = jest
+      .spyOn(coveragePoolV1, "totalValueLocked")
+      .mockResolvedValue(mockedTVL)
+
     const shareOfPool = 0.35
 
     const result = await coveragePoolV1.estimatedCollateralTokenBalance(
       shareOfPool
     )
 
-    expect(coveragePoolV1.collateralToken.makeCall).toHaveBeenCalledWith(
-      "balanceOf",
-      coveragePoolV1.assetPoolContract.address
-    )
-    expect(result).toEqual((mockedCollateralBalance * shareOfPool).toString())
+    expect(spyOnTVL).toHaveBeenCalled()
+    expect(result).toEqual((mockedTVL * shareOfPool).toString())
   })
 
   it("should return the asset pool collateral token balance", async () => {

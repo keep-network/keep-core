@@ -129,7 +129,7 @@ class CoveragePoolV1 {
    * @return {Promise<string>} Estimated collateral token balance.
    */
   estimatedCollateralTokenBalance = async (shareOfPool) => {
-    const balanceOfAssetPool = await this.assetPoolCollateralTokenBalance()
+    const balanceOfAssetPool = await this.totalValueLocked()
 
     return new BigNumber(balanceOfAssetPool)
       .multipliedBy(shareOfPool)

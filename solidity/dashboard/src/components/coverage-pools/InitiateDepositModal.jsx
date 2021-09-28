@@ -10,8 +10,6 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import Divider from "../Divider"
 import Button from "../Button"
 import { CooldownPeriodBanner } from "../coverage-pools"
-import { addAdditionalDataToModal } from "../../actions/modal"
-import { useDispatch } from "react-redux"
 
 const InitiateDepositModal = ({
   amount, // amount of KEEP that user wants to deposit (in KEEP)
@@ -23,19 +21,6 @@ const InitiateDepositModal = ({
   transactionFinished = false,
   transactionHash = "",
 }) => {
-  const dispatch = useDispatch()
-
-  const onSubmit = () => {
-    dispatch(
-      addAdditionalDataToModal({
-        componentProps: {
-          amount: amount,
-        },
-      })
-    )
-    onBtnClick()
-  }
-
   return (
     <ModalWithTimeline
       className={`withdraw-modal__main-container`}
@@ -45,7 +30,7 @@ const InitiateDepositModal = ({
       <InitiateDepositModal.Container
         transactionFinished={transactionFinished}
         submitBtnText={submitBtnText}
-        onBtnClick={onSubmit}
+        onBtnClick={onBtnClick}
         onCancel={onCancel}
       >
         <OnlyIf condition={transactionFinished}>
@@ -98,9 +83,12 @@ const InitiateDepositModal = ({
           <CooldownPeriodBanner />
         </OnlyIf>
         <OnlyIf condition={transactionFinished}>
-          <Divider className="divider divider--tile-fluid" />
+          <Divider
+            className="divider divider--tile-fluid"
+            style={{ margin: "0.5rem 0", marginTop: "auto" }}
+          />
           <Button
-            className="btn btn-lg btn-secondary"
+            className="btn btn-lg btn-secondary success-modal-close-button"
             disabled={false}
             onClick={onCancel}
           >
