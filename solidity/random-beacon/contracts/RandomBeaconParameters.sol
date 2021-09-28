@@ -50,10 +50,6 @@ library GovernableParameters {
         mapping(string => uint256) changeInitiatedTimestamp;
     }
 
-    /// @notice The time delay that needs to pass between initializing and
-    ///         finalizing update of any governable parameter in this contract.
-    uint256 public constant GOVERNANCE_DELAY = 7 days;
-
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
         uint256 timestamp
@@ -173,7 +169,7 @@ library GovernableParameters {
     /// @dev Can be called only after the governance delay elapses.
     function finalizeRelayRequestFeeUpdate(Storage storage self)
         external
-        onlyAfterGovernanceDelay(self, "relayRequestFee", GOVERNANCE_DELAY)
+        onlyAfterGovernanceDelay(self, "relayRequestFee", 24 hours)
     {
         self.relayRequestFee = self.newRelayRequestFee;
         emit RelayRequestFeeUpdated(self.relayRequestFee);
@@ -212,7 +208,7 @@ library GovernableParameters {
         onlyAfterGovernanceDelay(
             self,
             "relayEntrySubmissionFailureSlashingAmount",
-            GOVERNANCE_DELAY
+            2 weeks
         )
     {
         self.relayEntrySubmissionFailureSlashingAmount = self
@@ -229,12 +225,16 @@ library GovernableParameters {
     /// @notice Begins the relay entry submission eligibility delay update
     ///         process.
     /// @param _newRelayEntrySubmissionEligibilityDelay New relay entry
-    ///        submission eligibility delay
+    ///        submission eligibility delay in blocks
     function beginRelayEntrySubmissionEligibilityDelayUpdate(
         Storage storage self,
         uint32 _newRelayEntrySubmissionEligibilityDelay
     ) external {
         /* solhint-disable not-rely-on-time */
+        require(
+            _newRelayEntrySubmissionEligibilityDelay > 0,
+            "Relay entry submission eligibility delay must be greater than 0 blocks"
+        );
         self
             .newRelayEntrySubmissionEligibilityDelay = _newRelayEntrySubmissionEligibilityDelay;
         self.changeInitiatedTimestamp[
@@ -257,7 +257,7 @@ library GovernableParameters {
         onlyAfterGovernanceDelay(
             self,
             "relayEntrySubmissionEligibilityDelay",
-            GOVERNANCE_DELAY
+            24 hours
         )
     {
         self.relayEntrySubmissionEligibilityDelay = self
@@ -272,7 +272,7 @@ library GovernableParameters {
     }
 
     /// @notice Begins the relay entry hard timeout update process.
-    /// @param _newRelayEntryHardTimeout New relay entry hard timeout
+    /// @param _newRelayEntryHardTimeout New relay entry hard timeout in blocks
     function beginRelayEntryHardTimeoutUpdate(
         Storage storage self,
         uint32 _newRelayEntryHardTimeout
@@ -292,11 +292,7 @@ library GovernableParameters {
     /// @dev Can be called only after the governance delay elapses.
     function finalizeRelayEntryHardTimeoutUpdate(Storage storage self)
         external
-        onlyAfterGovernanceDelay(
-            self,
-            "relayEntryHardTimeout",
-            GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(self, "relayEntryHardTimeout", 2 weeks)
     {
         self.relayEntryHardTimeout = self.newRelayEntryHardTimeout;
         emit RelayEntryHardTimeoutUpdated(self.relayEntryHardTimeout);
@@ -325,11 +321,7 @@ library GovernableParameters {
     /// @dev Can be called only after the governance delay elapses.
     function finalizeDkgResultSubmissionRewardUpdate(Storage storage self)
         external
-        onlyAfterGovernanceDelay(
-            self,
-            "dkgResultSubmissionReward",
-            GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(self, "dkgResultSubmissionReward", 24 hours)
     {
         self.dkgResultSubmissionReward = self.newDkgResultSubmissionReward;
         emit DkgResultSubmissionRewardUpdated(self.dkgResultSubmissionReward);
@@ -367,7 +359,7 @@ library GovernableParameters {
         onlyAfterGovernanceDelay(
             self,
             "maliciousDkgResultSlashingAmount",
-            GOVERNANCE_DELAY
+            24 hours
         )
     {
         self.maliciousDkgResultSlashingAmount = self
@@ -381,11 +373,15 @@ library GovernableParameters {
 
     /// @notice Begins the DKG submission eligibility delay update process.
     /// @param _newDkgSubmissionEligibilityDelay New DKG submission eligibility
-    ///        delay
+    ///        delay in blocks
     function beginDkgSubmissionEligibilityDelayUpdate(
         Storage storage self,
         uint32 _newDkgSubmissionEligibilityDelay
     ) external {
+        require(
+            _newDkgSubmissionEligibilityDelay > 0,
+            "DKG submission eligibility delay must be greater than 0 blocks"
+        );
         /* solhint-disable not-rely-on-time */
         self
             .newDkgSubmissionEligibilityDelay = _newDkgSubmissionEligibilityDelay;
@@ -405,7 +401,7 @@ library GovernableParameters {
         onlyAfterGovernanceDelay(
             self,
             "dkgSubmissionEligibilityDelay",
-            GOVERNANCE_DELAY
+            24 hours
         )
     {
         self.dkgSubmissionEligibilityDelay = self
@@ -419,12 +415,16 @@ library GovernableParameters {
 
     /// @notice Begins the DKG result challenge period length update process.
     /// @param _newDkgResultChallengePeriodLength New DKG result challenge
-    ///        period length
+    ///        period length in blocks
     function beginDkgResultChallengePeriodLengthUpdate(
         Storage storage self,
         uint32 _newDkgResultChallengePeriodLength
     ) external {
         /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgResultChallengePeriodLength > 10,
+            "DKG result challenge period length must be grater than 10 blocks"
+        );
         self
             .newDkgResultChallengePeriodLength = _newDkgResultChallengePeriodLength;
         self.changeInitiatedTimestamp["dkgResultChallengePeriodLength"] = block
@@ -443,7 +443,7 @@ library GovernableParameters {
         onlyAfterGovernanceDelay(
             self,
             "dkgResultChallengePeriodLength",
-            GOVERNANCE_DELAY
+            24 hours
         )
     {
         self.dkgResultChallengePeriodLength = self
@@ -476,11 +476,7 @@ library GovernableParameters {
     /// @dev Can be called only after the governance delay elapses.
     function finalizeSortitionPoolUnlockingRewardUpdate(Storage storage self)
         external
-        onlyAfterGovernanceDelay(
-            self,
-            "sortitionPoolUnlockingReward",
-            GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(self, "sortitionPoolUnlockingReward", 24 hours)
     {
         self.sortitionPoolUnlockingReward = self
             .newSortitionPoolUnlockingReward;
@@ -498,6 +494,10 @@ library GovernableParameters {
         uint32 _newGroupCreationFrequency
     ) external {
         /* solhint-disable not-rely-on-time */
+        require(
+            _newGroupCreationFrequency > 0,
+            "Group creation frequency must be grater than zero"
+        );
         self.newGroupCreationFrequency = _newGroupCreationFrequency;
         self.changeInitiatedTimestamp["groupCreationFrequency"] = block
             .timestamp;
@@ -512,11 +512,7 @@ library GovernableParameters {
     /// @dev Can be called only after the governance delay elapses.
     function finalizeGroupCreationFrequencyUpdate(Storage storage self)
         external
-        onlyAfterGovernanceDelay(
-            self,
-            "groupCreationFrequency",
-            GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(self, "groupCreationFrequency", 2 weeks)
     {
         self.groupCreationFrequency = self.newGroupCreationFrequency;
         emit GroupCreationFrequencyUpdated(self.groupCreationFrequency);
@@ -525,12 +521,16 @@ library GovernableParameters {
     }
 
     /// @notice Begins the group lifetime update process.
-    /// @param _newGroupLifetime New group lifetime
+    /// @param _newGroupLifetime New group lifetime in seconds
     function beginGroupLifetimeUpdate(
         Storage storage self,
         uint32 _newGroupLifetime
     ) external {
         /* solhint-disable not-rely-on-time */
+        require(
+            _newGroupLifetime >= 1 days && _newGroupLifetime <= 2 weeks,
+            "Group lifetime must be >= 1 day and <= 2 weeks"
+        );
         self.newGroupLifetime = _newGroupLifetime;
         self.changeInitiatedTimestamp["groupLifetime"] = block.timestamp;
         emit GroupLifetimeUpdateStarted(_newGroupLifetime, block.timestamp);
@@ -541,7 +541,7 @@ library GovernableParameters {
     /// @dev Can be called only after the governance delay elapses.
     function finalizeGroupLifetimeUpdate(Storage storage self)
         external
-        onlyAfterGovernanceDelay(self, "groupLifetime", GOVERNANCE_DELAY)
+        onlyAfterGovernanceDelay(self, "groupLifetime", 2 weeks)
     {
         self.groupLifetime = self.newGroupLifetime;
         emit GroupLifetimeUpdated(self.groupLifetime);
@@ -556,6 +556,10 @@ library GovernableParameters {
         uint32 _newCallbackGasLimit
     ) external {
         /* solhint-disable not-rely-on-time */
+        require(
+            _newCallbackGasLimit > 0 && _newCallbackGasLimit < 1000000,
+            "Callback gas limit must be > 0 and < 1000000"
+        );
         self.newCallbackGasLimit = _newCallbackGasLimit;
         self.changeInitiatedTimestamp["callbackGasLimit"] = block.timestamp;
         emit CallbackGasLimitUpdateStarted(
@@ -569,7 +573,7 @@ library GovernableParameters {
     /// @dev Can be called only after the governance delay elapses.
     function finalizeCallbackGasLimitUpdate(Storage storage self)
         external
-        onlyAfterGovernanceDelay(self, "callbackGasLimit", GOVERNANCE_DELAY)
+        onlyAfterGovernanceDelay(self, "callbackGasLimit", 2 weeks)
     {
         self.callbackGasLimit = self.newCallbackGasLimit;
         emit CallbackGasLimitUpdated(self.callbackGasLimit);
@@ -715,7 +719,7 @@ contract RandomBeaconParameters is Ownable {
     ///         process.
     /// @dev Can be called only by the contract owner.
     /// @param newRelayEntrySubmissionEligibilityDelay New relay entry
-    ///        submission eligibility delay
+    ///        submission eligibility delay in blocks
     function beginRelayEntrySubmissionEligibilityDelayUpdate(
         uint256 newRelayEntrySubmissionEligibilityDelay
     ) external onlyOwner {
@@ -738,7 +742,7 @@ contract RandomBeaconParameters is Ownable {
 
     /// @notice Begins the relay entry hard timeout update process.
     /// @dev Can be called only by the contract owner.
-    /// @param newRelayEntryHardTimeout New relay entry hard timeout
+    /// @param newRelayEntryHardTimeout New relay entry hard timeout in blocks
     function beginRelayEntryHardTimeoutUpdate(uint256 newRelayEntryHardTimeout)
         external
         onlyOwner
@@ -799,7 +803,7 @@ contract RandomBeaconParameters is Ownable {
     /// @notice Begins the DKG submission eligibility delay update process.
     /// @dev Can be called only by the contract owner.
     /// @param newDkgSubmissionEligibilityDelay New DKG submission eligibility
-    ///        delay
+    ///        delay in blocks
     function beginDkgSubmissionEligibilityDelayUpdate(
         uint256 newDkgSubmissionEligibilityDelay
     ) external onlyOwner {
@@ -818,7 +822,7 @@ contract RandomBeaconParameters is Ownable {
     /// @notice Begins the DKG result challenge period length update process.
     /// @dev Can be called only by the contract owner.
     /// @param newDkgResultChallengePeriodLength New DKG result challenge
-    ///        period length
+    ///        period length in blocks
     function beginDkgResultChallengePeriodLengthUpdate(
         uint256 newDkgResultChallengePeriodLength
     ) external onlyOwner {
@@ -872,7 +876,7 @@ contract RandomBeaconParameters is Ownable {
 
     /// @notice Begins the group lifetime update process.
     /// @dev Can be called only by the contract owner.
-    /// @param newGroupLifetime New group lifetime
+    /// @param newGroupLifetime New group lifetime in seconds
     function beginGroupLifetimeUpdate(uint256 newGroupLifetime)
         external
         onlyOwner
@@ -923,7 +927,7 @@ contract RandomBeaconParameters is Ownable {
             );
     }
 
-    /// @notice Returns the entry submission eligibility delay.
+    /// @notice Returns the entry submission eligibility delay in blocks.
     function relayEntrySubmissionEligibilityDelay()
         public
         view
@@ -933,7 +937,7 @@ contract RandomBeaconParameters is Ownable {
             uint256(governableParameters.relayEntrySubmissionEligibilityDelay);
     }
 
-    /// @notice Returns the entry hard timeout.
+    /// @notice Returns the relay entry hard timeout in blocks.
     function relayEntryHardTimeout() public view returns (uint256) {
         return uint256(governableParameters.relayEntryHardTimeout);
     }
@@ -948,12 +952,12 @@ contract RandomBeaconParameters is Ownable {
         return uint256(governableParameters.maliciousDkgResultSlashingAmount);
     }
 
-    /// @notice Returns the submission eligibility delay.
+    /// @notice Returns the DKG submission eligibility delay in blocks.
     function dkgSubmissionEligibilityDelay() public view returns (uint256) {
         return uint256(governableParameters.dkgSubmissionEligibilityDelay);
     }
 
-    /// @notice Returns the DKG result challenge period length.
+    /// @notice Returns the DKG result challenge period length in blocks.
     function dkgResultChallengePeriodLength() public view returns (uint256) {
         return uint256(governableParameters.dkgResultChallengePeriodLength);
     }
@@ -968,7 +972,7 @@ contract RandomBeaconParameters is Ownable {
         return uint256(governableParameters.groupCreationFrequency);
     }
 
-    /// @notice Returns the group lifetime.
+    /// @notice Returns the group lifetime in seconds.
     function groupLifetime() public view returns (uint256) {
         return uint256(governableParameters.groupLifetime);
     }
