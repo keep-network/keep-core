@@ -276,10 +276,10 @@ describe("Coverage pool saga test", () => {
     const initialCovTokensAvailableToWithdraw =
       Token.fromTokenUnit(30).toString()
 
-    const mockedModalData = {
-      componentProps: {
-        amount: KEEP.fromTokenUnit("20").toString(),
-      },
+    const depositEventData = {
+      underwriter: address,
+      covAmount: KEEP.fromTokenUnit("300").toString(),
+      amount: KEEP.fromTokenUnit("350").toString(),
     }
 
     const initialState = {
@@ -299,15 +299,8 @@ describe("Coverage pool saga test", () => {
       .toFormat(2)
 
     it("should update data correctly if the `Deposit` event has been emitted by current logged user", () => {
-      const underwriterAddress = address
-
-      const depositEventData = {
-        underwriter: underwriterAddress,
-        covAmount: KEEP.fromTokenUnit("300").toString(),
-      }
-
       const mockedEvent = {
-        returnValues: depositEventData,
+        returnValues: { ...depositEventData },
       }
 
       const updatedCovBalance = add(
@@ -329,7 +322,6 @@ describe("Coverage pool saga test", () => {
         .provide([
           [select(selectors.getCoveragePool), initialState],
           [select(selectors.getUserAddress), address],
-          [select(selectors.getModalData), mockedModalData],
           [
             matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
             updatedShareOfPool,
@@ -386,13 +378,11 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should update data correctly for current user if the `Deposit` event has been emitted by another user", () => {
-      const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
-      const depositEventData = {
-        underwriter: underwriterAddress,
-        covAmount: KEEP.fromTokenUnit("300").toString(),
-      }
       const mockedEvent = {
-        returnValues: depositEventData,
+        returnValues: {
+          ...depositEventData,
+          underwriter: "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047",
+        },
       }
 
       const updatedCovTotalSupply = add(
@@ -406,7 +396,6 @@ describe("Coverage pool saga test", () => {
         .provide([
           [select(selectors.getCoveragePool), initialState],
           [select(selectors.getUserAddress), address],
-          [select(selectors.getModalData), mockedModalData],
           [
             matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
             updatedShareOfPool,
@@ -463,14 +452,9 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should show correct success modal window, when depositing KEEPs in Coverage Pool", () => {
-      const underwriterAddress = address
       const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
-      const depositEventData = {
-        underwriter: underwriterAddress,
-        covAmount: KEEP.fromTokenUnit("300").toString(),
-      }
       const mockedEvent = {
-        returnValues: depositEventData,
+        returnValues: { ...depositEventData },
         transactionHash,
       }
 
@@ -484,7 +468,6 @@ describe("Coverage pool saga test", () => {
         .provide([
           [select(selectors.getCoveragePool), initialState],
           [select(selectors.getUserAddress), address],
-          [select(selectors.getModalData), mockedModalData],
           [
             matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
             updatedShareOfPool,
@@ -519,6 +502,11 @@ describe("Coverage pool saga test", () => {
               modalComponentType: expectedModalType,
               modalProps: {
                 title: expectedTitle,
+              },
+              componentProps: {
+                transactionFinished: true,
+                transactionHash: mockedEvent.transactionHash,
+                amount: mockedEvent.returnValues.amount,
               },
             },
           },

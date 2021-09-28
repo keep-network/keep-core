@@ -169,15 +169,12 @@ export function* subscribeToAssetPoolDepositedEvent() {
       payload: { event },
     } = yield take(requestChan)
     const {
-      returnValues: { underwriter, covAmount },
+      returnValues: { underwriter, covAmount, amount },
     } = event
     const { covTotalSupply, covBalance, covTokensAvailableToWithdraw } =
       yield select(selectors.getCoveragePool)
 
     const address = yield select(selectors.getUserAddress)
-
-    const { componentProps } = yield select(selectors.getModalData)
-
     const isAddressedToCurrentAddress = isSameEthAddress(address, underwriter)
 
     const updatedCovTotalSupply = add(covTotalSupply, covAmount).toString()
@@ -207,7 +204,7 @@ export function* subscribeToAssetPoolDepositedEvent() {
           componentProps: {
             transactionFinished: true,
             transactionHash: event.transactionHash,
-            amount: componentProps?.amount,
+            amount,
             balanceAmount: updatedCovBalance,
             estimatedBalanceAmountInKeep: estimatedKeepBalance,
           },
