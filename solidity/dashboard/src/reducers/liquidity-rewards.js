@@ -18,11 +18,12 @@ const liquidityPairInitialData = {
 }
 
 const initialState = {
-  TBTC_SADDLE: { ...liquidityPairInitialData },
+  TBTCV2_SADDLE: { ...liquidityPairInitialData },
   KEEP_ETH: { ...liquidityPairInitialData },
   TBTC_ETH: { ...liquidityPairInitialData },
-  KEEP_TBTC: { ...liquidityPairInitialData },
   KEEP_ONLY: { ...liquidityPairInitialData },
+  TBTC_SADDLE: { ...liquidityPairInitialData },
+  KEEP_TBTC: { ...liquidityPairInitialData },
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {

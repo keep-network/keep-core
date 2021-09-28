@@ -55,6 +55,7 @@ export function* logErrorAndThrow(errorActionType, error, payload = {}) {
  * @param {string} liquidityRewardPair.pool - The type of pool.
  * @param {string} liquidityRewardPair.contractName - The LPRewards contract
  * name for a given liquidity pair.
+ * @param {Object} liquidityRewardPair.options - Additional options that define the pool.
  * @return {LiquidityRewards} Liquidity rewards wrapper.
  */
 export function* getLPRewardsWrapper(liquidityRewardPair) {
@@ -66,7 +67,8 @@ export function* getLPRewardsWrapper(liquidityRewardPair) {
     [LiquidityRewardsFactory, LiquidityRewardsFactory.initialize],
     liquidityRewardPair.pool,
     LPRewardsContract,
-    web3
+    web3,
+    liquidityRewardPair.options
   )
 
   return LiquidityRewards
