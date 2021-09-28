@@ -852,6 +852,126 @@ describe("RandomBeaconGovernable", () => {
     })
   })
 
+  describe("beginDkgSubmissionEligibilityDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernable
+            .connect(thirdParty)
+            .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernable
+          .connect(governance)
+          .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+      })
+
+      it("should not update the DKG submission eligibility delay", async () => {
+        expect(
+          await randomBeaconGovernable.dkgSubmissionEligibilityDelay()
+        ).to.be.equal(0)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernable.getRemainingDkgSubmissionEligibilityDelayUpdateTime()
+        ).to.be.equal(GOVERNANCE_DELAY)
+      })
+
+      it("should emit the DkgSubmissionEligibilityDelayUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernable,
+            "DkgSubmissionEligibilityDelayUpdateStarted"
+          )
+          .withArgs(UPDATED_VALUE, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgSubmissionEligibilityDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernable
+            .connect(thirdParty)
+            .finalizeDkgSubmissionEligibilityDelayUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernable
+            .connect(governance)
+            .finalizeDkgSubmissionEligibilityDelayUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernable
+          .connect(governance)
+          .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+
+        await increaseTime(6 * 24 * 60 * 60) // 6 days
+
+        await expect(
+          randomBeaconGovernable
+            .connect(governance)
+            .finalizeDkgSubmissionEligibilityDelayUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context("when the update process is initialized", () => {
+      let tx
+
+      beforeEach(async () => {
+        await randomBeaconGovernable
+          .connect(governance)
+          .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+
+        await increaseTime(GOVERNANCE_DELAY)
+
+        tx = await randomBeaconGovernable
+          .connect(governance)
+          .finalizeDkgSubmissionEligibilityDelayUpdate()
+      })
+
+      it("should update the DKG submission eligibility delay", async () => {
+        expect(
+          await randomBeaconGovernable.dkgSubmissionEligibilityDelay()
+        ).to.be.equal(UPDATED_VALUE)
+      })
+
+      it("should emit DkgSubmissionEligibilityDelayUpdated event", async () => {
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernable,
+            "DkgSubmissionEligibilityDelayUpdated"
+          )
+          .withArgs(UPDATED_VALUE)
+      })
+
+      it("should reset the governance delay timer", async () => {
+        await expect(
+          randomBeaconGovernable.getRemainingDkgSubmissionEligibilityDelayUpdateTime()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+  })
+
   describe("beginRelayEntryHardTimeoutUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
