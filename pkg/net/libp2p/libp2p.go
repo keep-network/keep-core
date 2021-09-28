@@ -168,7 +168,7 @@ func (cm *connectionManager) ConnectedPeers() []string {
 }
 
 func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error) {
-	peerID, err := peer.IDB58Decode(connectedPeer)
+	peerID, err := peer.Decode(connectedPeer)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to decode peer ID from [%s]: [%v]",
@@ -190,7 +190,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 }
 
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
-	peerID, err := peer.IDB58Decode(peerHash)
+	peerID, err := peer.Decode(peerHash)
 	if err != nil {
 		logger.Errorf("failed to decode peer hash [%v]: [%v]", peerHash, err)
 		return
