@@ -140,6 +140,14 @@ contract RandomBeaconGovernable is Ownable {
         uint256 relayEntrySubmissionEligibilityDelay
     );
 
+    event DkgSubmissionEligibilityDelayUpdateStarted(
+        uint256 dkgSubmissionEligibilityDelay,
+        uint256 timestamp
+    );
+    event DkgSubmissionEligibilityDelayUpdated(
+        uint256 dkgSubmissionEligibilityDelay
+    );
+
     event RelayEntryHardTimeoutUpdateStarted(
         uint256 relayEntryHardTimeout,
         uint256 timestamp
@@ -407,6 +415,41 @@ contract RandomBeaconGovernable is Ownable {
         newRelayEntrySubmissionEligibilityDelay = 0;
     }
 
+    /// @notice Begins the DKG submission eligibility delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgSubmissionEligibilityDelay New DKG submission eligibility
+    ///        delay
+    function beginDkgSubmissionEligibilityDelayUpdate(
+        uint256 _newDkgSubmissionEligibilityDelay
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newDkgSubmissionEligibilityDelay = _newDkgSubmissionEligibilityDelay;
+        dkgSubmissionEligibilityDelayChangeInitiated = block.timestamp;
+        emit DkgSubmissionEligibilityDelayUpdateStarted(
+            _newDkgSubmissionEligibilityDelay,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG submission eligibility delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgSubmissionEligibilityDelayUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgSubmissionEligibilityDelayChangeInitiated
+        )
+    {
+        dkgSubmissionEligibilityDelay = newDkgSubmissionEligibilityDelay;
+        emit DkgSubmissionEligibilityDelayUpdated(
+            dkgSubmissionEligibilityDelay
+        );
+        dkgSubmissionEligibilityDelayChangeInitiated = 0;
+        newDkgSubmissionEligibilityDelay = 0;
+    }
+
     /// @notice Begins the relay entry hard timeout update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newRelayEntryHardTimeout New relay entry hard timeout
@@ -628,6 +671,21 @@ contract RandomBeaconGovernable is Ownable {
         return
             GovernanceUtils.getRemainingChangeTime(
                 relayEntrySubmissionEligibilityDelayChangeInitiated,
+                GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG submission eligibility
+    ///         delay can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgSubmissionEligibilityDelayUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            GovernanceUtils.getRemainingChangeTime(
+                dkgSubmissionEligibilityDelayChangeInitiated,
                 GOVERNANCE_DELAY
             );
     }
