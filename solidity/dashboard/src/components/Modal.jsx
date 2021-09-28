@@ -8,6 +8,7 @@ import InitiateCovPoolsWithdrawModal from "./coverage-pools/InitiateCovPoolsWith
 import { InitiateDepositModal } from "./coverage-pools"
 import IncreaseWithdrawalModal from "./coverage-pools/IncreaseWithdrawalModal"
 import { clearAdditionalDataFromModal, hideModal } from "../actions/modal"
+import { MigrationCompletedModal } from "./tbtc-migration"
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
@@ -20,6 +21,9 @@ export const modalComponentType = {
     RE_INITIATE_WITHDRAWAL: InitiateCovPoolsWithdrawModal,
     INCREASE_WITHDRAWAL: IncreaseWithdrawalModal,
     WITHDRAWAL_COMPLETED: ClaimTokensModal,
+  },
+  TBTC_MIGRATION: {
+    MIGRATION_COMPLETED: MigrationCompletedModal,
   },
 }
 

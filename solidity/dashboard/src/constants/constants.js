@@ -35,6 +35,18 @@ export const LINK = {
   coveragePools: {
     docs: "https://github.com/keep-network/coverage-pools/blob/main/docs/design.adoc",
   },
+  tbtcMigration: {
+    docs: "https://coda.io/@keep-network/how-to-mint-tbtc-v2-with-etherscan",
+  },
+  pools: {
+    saddle: {
+      tbtcV2: "https://saddle.exchange/#/pools/tbtc/deposit",
+    },
+    uniswap: {
+      tbtcETH: `https://app.uniswap.org/#/add/v2/0x8daebade922df735c38c80c7ebd708af50815faa/ETH`,
+    },
+  },
+  tbtcDapp: "https://dapp.tbtc.network",
 }
 
 export const WALLETS = {
@@ -133,4 +145,9 @@ export const AUTH_CONTRACTS_LABEL = {
   TBTC_SYSTEM: "TBTCSystem",
   BONDED_ECDSA_KEEP_FACTORY: "BondedECDSAKeepFactory",
   RANDOM_BEACON: "Keep Random Beacon Operator Contract",
+}
+
+export const TBTC_TOKEN_VERSION = {
+  v1: "v1",
+  v2: "v2",
 }

@@ -20,6 +20,7 @@ const TokenAmount = ({
   decimalsToDisplay = null,
   displayDecimalsInTooltip = false,
   withSymbol = true,
+  symbol = "",
 }) => {
   if (token === KEEP || covKEEP) {
     displayDecimalsInTooltip = true
@@ -32,6 +33,7 @@ const TokenAmount = ({
   const _smallestPrecisionDecimals =
     smallestPrecisionDecimals || token.smallestPrecisionDecimals
 
+  const _symbol = symbol || token.symbol
   const _decimalsToDisplay = decimalsToDisplay | token.decimalsToDisplay
 
   const _decimalsToDisplayInTooltip = displayDecimalsInTooltip
@@ -75,7 +77,7 @@ const TokenAmount = ({
       </Tooltip>
       {withSymbol && (
         <span className={symbolClassName} style={symbolStyles}>
-          &nbsp;{token.symbol}
+          &nbsp;{_symbol}
         </span>
       )}
     </div>

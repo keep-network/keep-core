@@ -29,8 +29,10 @@ export const validateAmountInRange = (
   value,
   maxValue,
   minValue = 0,
+  /** @type {import("../utils/token.utils").Token} */
   token = KEEP
 ) => {
+  /** @type {import("bignumber.js").BigNumber} */
   const formattedValue = token.fromTokenUnit(value)
 
   if (isBlankString(value)) {
