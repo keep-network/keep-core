@@ -4,9 +4,6 @@ import { expect } from "chai"
 import { increaseTime } from "./helpers/contract-test-helpers"
 
 describe("RandomBeaconParameters", () => {
-  const UPDATED_VALUE = 123
-  const GOVERNANCE_DELAY = 7 * 24 * 60 * 60 // 7 days in seconds
-
   let governance: Signer
   let thirdParty: Signer
   let randomBeaconParameters: Contract
@@ -40,7 +37,7 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginRelayRequestFeeUpdate(UPDATED_VALUE)
+            .beginRelayRequestFeeUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -51,7 +48,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginRelayRequestFeeUpdate(UPDATED_VALUE)
+          .beginRelayRequestFeeUpdate(123)
       })
 
       it("should not update the relay request fee", async () => {
@@ -63,7 +60,7 @@ describe("RandomBeaconParameters", () => {
           .timestamp
         await expect(tx)
           .to.emit(randomBeaconParameters, "RelayRequestFeeUpdateStarted")
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(123, blockTimestamp)
       })
     })
   })
@@ -93,9 +90,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayRequestFeeUpdate(UPDATED_VALUE)
+          .beginRelayRequestFeeUpdate(123)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconParameters
@@ -111,9 +108,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayRequestFeeUpdate(UPDATED_VALUE)
+          .beginRelayRequestFeeUpdate(123)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -121,15 +118,13 @@ describe("RandomBeaconParameters", () => {
       })
 
       it("should update the relay request fee", async () => {
-        expect(await randomBeaconParameters.relayRequestFee()).to.be.equal(
-          UPDATED_VALUE
-        )
+        expect(await randomBeaconParameters.relayRequestFee()).to.be.equal(123)
       })
 
       it("should emit RelayRequestFeeUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeaconParameters, "RelayRequestFeeUpdated")
-          .withArgs(UPDATED_VALUE)
+          .withArgs(123)
       })
     })
   })
@@ -140,7 +135,7 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginRelayEntrySubmissionFailureSlashingAmountUpdate(UPDATED_VALUE)
+            .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -151,7 +146,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(UPDATED_VALUE)
+          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
       })
 
       it("should not update the relay entry submission failure slashing amount", async () => {
@@ -168,7 +163,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "RelayEntrySubmissionFailureSlashingAmountUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(123, blockTimestamp)
       })
     })
   })
@@ -198,9 +193,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(UPDATED_VALUE)
+          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconParameters
@@ -216,9 +211,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(UPDATED_VALUE)
+          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(14 * 24 * 60 * 60) // 14 days
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -228,7 +223,7 @@ describe("RandomBeaconParameters", () => {
       it("should update the relay entry submission failure slashing amount", async () => {
         expect(
           await randomBeaconParameters.relayEntrySubmissionFailureSlashingAmount()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(123)
       })
 
       it("should emit RelayEntrySubmissionFailureSlashingAmountUpdated event", async () => {
@@ -237,7 +232,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "RelayEntrySubmissionFailureSlashingAmountUpdated"
           )
-          .withArgs(UPDATED_VALUE)
+          .withArgs(123)
       })
     })
   })
@@ -248,8 +243,20 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginRelayEntrySubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+            .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
         ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is zero", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginRelayEntrySubmissionEligibilityDelayUpdate(0)
+        ).to.be.revertedWith(
+          "Relay entry submission eligibility delay must be greater than 0 blocks"
+        )
       })
     })
 
@@ -259,7 +266,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntrySubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+          .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
       })
 
       it("should not update the relay entry submission eligibility delay", async () => {
@@ -276,7 +283,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "RelayEntrySubmissionEligibilityDelayUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(1, blockTimestamp)
       })
     })
   })
@@ -306,9 +313,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntrySubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+          .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconParameters
@@ -324,9 +331,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntrySubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+          .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -336,7 +343,7 @@ describe("RandomBeaconParameters", () => {
       it("should update the relay entry submission eligibility delay", async () => {
         expect(
           await randomBeaconParameters.relayEntrySubmissionEligibilityDelay()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(1)
       })
 
       it("should emit RelayEntrySubmissionEligibilityDelayUpdated event", async () => {
@@ -345,7 +352,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "RelayEntrySubmissionEligibilityDelayUpdated"
           )
-          .withArgs(UPDATED_VALUE)
+          .withArgs(1)
       })
     })
   })
@@ -356,7 +363,7 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginRelayEntryHardTimeoutUpdate(UPDATED_VALUE)
+            .beginRelayEntryHardTimeoutUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -367,7 +374,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntryHardTimeoutUpdate(UPDATED_VALUE)
+          .beginRelayEntryHardTimeoutUpdate(123)
       })
 
       it("should not update the relay entry hard timeout", async () => {
@@ -381,7 +388,7 @@ describe("RandomBeaconParameters", () => {
           .timestamp
         await expect(tx)
           .to.emit(randomBeaconParameters, "RelayEntryHardTimeoutUpdateStarted")
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(123, blockTimestamp)
       })
     })
   })
@@ -411,9 +418,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntryHardTimeoutUpdate(UPDATED_VALUE)
+          .beginRelayEntryHardTimeoutUpdate(123)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconParameters
@@ -429,9 +436,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginRelayEntryHardTimeoutUpdate(UPDATED_VALUE)
+          .beginRelayEntryHardTimeoutUpdate(123)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(14 * 24 * 60 * 60) // 14 days
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -441,13 +448,13 @@ describe("RandomBeaconParameters", () => {
       it("should update the relay entry hard timeout", async () => {
         expect(
           await randomBeaconParameters.relayEntryHardTimeout()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(123)
       })
 
       it("should emit RelayEntryHardTimeoutUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeaconParameters, "RelayEntryHardTimeoutUpdated")
-          .withArgs(UPDATED_VALUE)
+          .withArgs(123)
       })
     })
   })
@@ -458,7 +465,7 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginDkgResultSubmissionRewardUpdate(UPDATED_VALUE)
+            .beginDkgResultSubmissionRewardUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -469,7 +476,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginDkgResultSubmissionRewardUpdate(UPDATED_VALUE)
+          .beginDkgResultSubmissionRewardUpdate(123)
       })
 
       it("should not update the dkg result submission reward", async () => {
@@ -486,7 +493,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "DkgResultSubmissionRewardUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(123, blockTimestamp)
       })
     })
   })
@@ -516,9 +523,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginDkgResultSubmissionRewardUpdate(UPDATED_VALUE)
+          .beginDkgResultSubmissionRewardUpdate(123)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconParameters
@@ -534,9 +541,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginDkgResultSubmissionRewardUpdate(UPDATED_VALUE)
+          .beginDkgResultSubmissionRewardUpdate(123)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -546,13 +553,13 @@ describe("RandomBeaconParameters", () => {
       it("should update the dkg result submission reward", async () => {
         expect(
           await randomBeaconParameters.dkgResultSubmissionReward()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(123)
       })
 
       it("should emit DkgResultSubmissionRewardUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeaconParameters, "DkgResultSubmissionRewardUpdated")
-          .withArgs(UPDATED_VALUE)
+          .withArgs(123)
       })
     })
   })
@@ -563,7 +570,7 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginMaliciousDkgResultSlashingAmountUpdate(UPDATED_VALUE)
+            .beginMaliciousDkgResultSlashingAmountUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -574,7 +581,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginMaliciousDkgResultSlashingAmountUpdate(UPDATED_VALUE)
+          .beginMaliciousDkgResultSlashingAmountUpdate(123)
       })
 
       it("should not update the malicious DKG result slashing amount", async () => {
@@ -591,7 +598,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "MaliciousDkgResultSlashingAmountUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(123, blockTimestamp)
       })
     })
   })
@@ -621,9 +628,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginMaliciousDkgResultSlashingAmountUpdate(UPDATED_VALUE)
+          .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconParameters
@@ -639,9 +646,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginMaliciousDkgResultSlashingAmountUpdate(UPDATED_VALUE)
+          .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -651,7 +658,7 @@ describe("RandomBeaconParameters", () => {
       it("should update the malicious DKG result slashing amount", async () => {
         expect(
           await randomBeaconParameters.maliciousDkgResultSlashingAmount()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(123)
       })
 
       it("should emit MaliciousDkgResultSlashingAmountUpdated event", async () => {
@@ -660,7 +667,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "MaliciousDkgResultSlashingAmountUpdated"
           )
-          .withArgs(UPDATED_VALUE)
+          .withArgs(123)
       })
     })
   })
@@ -671,8 +678,20 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+            .beginDkgSubmissionEligibilityDelayUpdate(1)
         ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is less than zero", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginDkgSubmissionEligibilityDelayUpdate(0)
+        ).to.be.revertedWith(
+          "DKG submission eligibility delay must be greater than 0 blocks"
+        )
       })
     })
 
@@ -682,7 +701,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+          .beginDkgSubmissionEligibilityDelayUpdate(1)
       })
 
       it("should not update the DKG submission eligibility delay", async () => {
@@ -699,7 +718,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "DkgSubmissionEligibilityDelayUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(1, blockTimestamp)
       })
     })
   })
@@ -729,9 +748,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+          .beginDkgSubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconParameters
@@ -747,9 +766,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginDkgSubmissionEligibilityDelayUpdate(UPDATED_VALUE)
+          .beginDkgSubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -759,7 +778,7 @@ describe("RandomBeaconParameters", () => {
       it("should update the DKG submission eligibility delay", async () => {
         expect(
           await randomBeaconParameters.dkgSubmissionEligibilityDelay()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(1)
       })
 
       it("should emit DkgSubmissionEligibilityDelayUpdated event", async () => {
@@ -768,7 +787,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "DkgSubmissionEligibilityDelayUpdated"
           )
-          .withArgs(UPDATED_VALUE)
+          .withArgs(1)
       })
     })
   })
@@ -779,8 +798,20 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginDkgResultChallengePeriodLengthUpdate(UPDATED_VALUE)
+            .beginDkgResultChallengePeriodLengthUpdate(11)
         ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is less then required", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginDkgResultChallengePeriodLengthUpdate(10)
+        ).to.be.revertedWith(
+          "DKG result challenge period length must be grater than 10 blocks"
+        )
       })
     })
 
@@ -790,7 +821,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(UPDATED_VALUE)
+          .beginDkgResultChallengePeriodLengthUpdate(11)
       })
 
       it("should not update the DKG result challenge period length", async () => {
@@ -807,7 +838,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "DkgResultChallengePeriodLengthUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(11, blockTimestamp)
       })
     })
   })
@@ -837,9 +868,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(UPDATED_VALUE)
+          .beginDkgResultChallengePeriodLengthUpdate(11)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconParameters
@@ -855,9 +886,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(UPDATED_VALUE)
+          .beginDkgResultChallengePeriodLengthUpdate(11)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -867,7 +898,7 @@ describe("RandomBeaconParameters", () => {
       it("should update the DKG result challenge period length", async () => {
         expect(
           await randomBeaconParameters.dkgResultChallengePeriodLength()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(11)
       })
 
       it("should emit DkgResultChallengePeriodLengthUpdated event", async () => {
@@ -876,7 +907,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "DkgResultChallengePeriodLengthUpdated"
           )
-          .withArgs(UPDATED_VALUE)
+          .withArgs(11)
       })
     })
   })
@@ -887,7 +918,7 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginSortitionPoolUnlockingRewardUpdate(UPDATED_VALUE)
+            .beginSortitionPoolUnlockingRewardUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -898,7 +929,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginSortitionPoolUnlockingRewardUpdate(UPDATED_VALUE)
+          .beginSortitionPoolUnlockingRewardUpdate(123)
       })
 
       it("should not update the sortition pool unlocking reward", async () => {
@@ -915,7 +946,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "SortitionPoolUnlockingRewardUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(123, blockTimestamp)
       })
     })
   })
@@ -945,9 +976,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginSortitionPoolUnlockingRewardUpdate(UPDATED_VALUE)
+          .beginSortitionPoolUnlockingRewardUpdate(123)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconParameters
@@ -963,9 +994,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginSortitionPoolUnlockingRewardUpdate(UPDATED_VALUE)
+          .beginSortitionPoolUnlockingRewardUpdate(123)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -975,7 +1006,7 @@ describe("RandomBeaconParameters", () => {
       it("should update the sortition pool unlocking reward", async () => {
         expect(
           await randomBeaconParameters.sortitionPoolUnlockingReward()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(123)
       })
 
       it("should emit SortitionPoolUnlockingRewardUpdated event", async () => {
@@ -984,7 +1015,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "SortitionPoolUnlockingRewardUpdated"
           )
-          .withArgs(UPDATED_VALUE)
+          .withArgs(123)
       })
     })
   })
@@ -995,8 +1026,20 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginGroupCreationFrequencyUpdate(UPDATED_VALUE)
+            .beginGroupCreationFrequencyUpdate(1)
         ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is zero", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginGroupCreationFrequencyUpdate(0)
+        ).to.be.revertedWith(
+          "Group creation frequency must be grater than zero"
+        )
       })
     })
 
@@ -1006,7 +1049,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginGroupCreationFrequencyUpdate(UPDATED_VALUE)
+          .beginGroupCreationFrequencyUpdate(1)
       })
 
       it("should not update the group creation frequency timeout", async () => {
@@ -1023,7 +1066,7 @@ describe("RandomBeaconParameters", () => {
             randomBeaconParameters,
             "GroupCreationFrequencyUpdateStarted"
           )
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(1, blockTimestamp)
       })
     })
   })
@@ -1053,9 +1096,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginGroupCreationFrequencyUpdate(UPDATED_VALUE)
+          .beginGroupCreationFrequencyUpdate(1)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconParameters
@@ -1071,9 +1114,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginGroupCreationFrequencyUpdate(UPDATED_VALUE)
+          .beginGroupCreationFrequencyUpdate(1)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(14 * 24 * 60 * 60) // 14 days
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -1083,13 +1126,13 @@ describe("RandomBeaconParameters", () => {
       it("should update the group creation frequency", async () => {
         expect(
           await randomBeaconParameters.groupCreationFrequency()
-        ).to.be.equal(UPDATED_VALUE)
+        ).to.be.equal(1)
       })
 
       it("should emit GroupCreationFrequencyUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeaconParameters, "GroupCreationFrequencyUpdated")
-          .withArgs(UPDATED_VALUE)
+          .withArgs(1)
       })
     })
   })
@@ -1100,8 +1143,28 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginGroupLifetimeUpdate(UPDATED_VALUE)
+            .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
         ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is less than one day", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginGroupLifetimeUpdate(23 * 60 * 60) // 23 hours
+        ).to.be.revertedWith("Group lifetime must be >= 1 day and <= 2 weeks")
+      })
+    })
+
+    context("when the update value is more than 2 weeks", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginGroupLifetimeUpdate(15 * 24 * 60 * 60) // 15 days
+        ).to.be.revertedWith("Group lifetime must be >= 1 day and <= 2 weeks")
       })
     })
 
@@ -1111,7 +1174,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginGroupLifetimeUpdate(UPDATED_VALUE)
+          .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
       })
 
       it("should not update the group lifetime", async () => {
@@ -1123,7 +1186,7 @@ describe("RandomBeaconParameters", () => {
           .timestamp
         await expect(tx)
           .to.emit(randomBeaconParameters, "GroupLifetimeUpdateStarted")
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(2 * 24 * 60 * 60, blockTimestamp) // 2 days
       })
     })
   })
@@ -1153,9 +1216,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginGroupLifetimeUpdate(UPDATED_VALUE)
+          .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconParameters
@@ -1171,9 +1234,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginGroupLifetimeUpdate(UPDATED_VALUE)
+          .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(14 * 24 * 60 * 60) // 14 days
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -1182,14 +1245,14 @@ describe("RandomBeaconParameters", () => {
 
       it("should update the group lifetime", async () => {
         expect(await randomBeaconParameters.groupLifetime()).to.be.equal(
-          UPDATED_VALUE
+          2 * 24 * 60 * 60 // 2 days
         )
       })
 
       it("should emit GroupLifetimeUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeaconParameters, "GroupLifetimeUpdated")
-          .withArgs(UPDATED_VALUE)
+          .withArgs(2 * 24 * 60 * 60) // 2 days
       })
     })
   })
@@ -1200,8 +1263,28 @@ describe("RandomBeaconParameters", () => {
         await expect(
           randomBeaconParameters
             .connect(thirdParty)
-            .beginCallbackGasLimitUpdate(UPDATED_VALUE)
+            .beginCallbackGasLimitUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is zero", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginCallbackGasLimitUpdate(0)
+        ).to.be.revertedWith("Callback gas limit must be > 0 and < 1000000")
+      })
+    })
+
+    context("when the update value is million", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconParameters
+            .connect(governance)
+            .beginCallbackGasLimitUpdate(1000000)
+        ).to.be.revertedWith("Callback gas limit must be > 0 and < 1000000")
       })
     })
 
@@ -1211,7 +1294,7 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         tx = await randomBeaconParameters
           .connect(governance)
-          .beginCallbackGasLimitUpdate(UPDATED_VALUE)
+          .beginCallbackGasLimitUpdate(123)
       })
 
       it("should not update the callback gas limit", async () => {
@@ -1223,7 +1306,7 @@ describe("RandomBeaconParameters", () => {
           .timestamp
         await expect(tx)
           .to.emit(randomBeaconParameters, "CallbackGasLimitUpdateStarted")
-          .withArgs(UPDATED_VALUE, blockTimestamp)
+          .withArgs(123, blockTimestamp)
       })
     })
   })
@@ -1253,9 +1336,9 @@ describe("RandomBeaconParameters", () => {
       it("should revert", async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginCallbackGasLimitUpdate(UPDATED_VALUE)
+          .beginCallbackGasLimitUpdate(123)
 
-        await increaseTime(6 * 24 * 60 * 60) // 6 days
+        await increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconParameters
@@ -1271,9 +1354,9 @@ describe("RandomBeaconParameters", () => {
       beforeEach(async () => {
         await randomBeaconParameters
           .connect(governance)
-          .beginCallbackGasLimitUpdate(UPDATED_VALUE)
+          .beginCallbackGasLimitUpdate(123)
 
-        await increaseTime(GOVERNANCE_DELAY)
+        await increaseTime(14 * 24 * 60 * 60) // 14 days
 
         tx = await randomBeaconParameters
           .connect(governance)
@@ -1281,15 +1364,13 @@ describe("RandomBeaconParameters", () => {
       })
 
       it("should update the callback gas limit", async () => {
-        expect(await randomBeaconParameters.callbackGasLimit()).to.be.equal(
-          UPDATED_VALUE
-        )
+        expect(await randomBeaconParameters.callbackGasLimit()).to.be.equal(123)
       })
 
       it("should emit CallbackGasLimitUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeaconParameters, "CallbackGasLimitUpdated")
-          .withArgs(UPDATED_VALUE)
+          .withArgs(123)
       })
     })
   })
