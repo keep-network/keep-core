@@ -276,6 +276,12 @@ describe("Coverage pool saga test", () => {
     const initialCovTokensAvailableToWithdraw =
       Token.fromTokenUnit(30).toString()
 
+    const mockedModalData = {
+      componentProps: {
+        amount: KEEP.fromTokenUnit("20").toString(),
+      },
+    }
+
     const initialState = {
       ...coveragePoolInitialData,
       covTotalSupply: initialCovTotalSupply,
@@ -323,6 +329,7 @@ describe("Coverage pool saga test", () => {
         .provide([
           [select(selectors.getCoveragePool), initialState],
           [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
           [
             matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
             updatedShareOfPool,
@@ -399,6 +406,7 @@ describe("Coverage pool saga test", () => {
         .provide([
           [select(selectors.getCoveragePool), initialState],
           [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
           [
             matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
             updatedShareOfPool,
@@ -476,6 +484,7 @@ describe("Coverage pool saga test", () => {
         .provide([
           [select(selectors.getCoveragePool), initialState],
           [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
           [
             matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
             updatedShareOfPool,
