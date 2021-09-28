@@ -6,6 +6,11 @@ import {
   watchFetchTvl,
   watchFetchAPY,
   watchFetchCovPoolData,
+  subscribeToAuctionCreatedEvent,
+  subscribeToAuctionClosedEvent,
+  subscribeToAssetPoolDepositedEvent,
+  subscribeToWithdrawalInitiatedEvent,
+  subscribeToWithdrawalCompletedEvent,
 } from "../../sagas/coverage-pool"
 
 import coveragePoolReducer, {
@@ -25,8 +30,20 @@ import {
   fetchCovPoolDataStart,
   fetchCovPoolDataSuccess,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
+  covTokenUpdated,
+  RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
+  RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
+  COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
+  COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+  COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
 } from "../../actions/coverage-pool"
 import { Keep } from "../../contracts"
+import * as matchers from "redux-saga-test-plan/matchers"
+import { add, sub } from "../../utils/arithmetics.utils"
+import { select } from "redux-saga-test-plan/matchers"
+import selectors from "../../sagas/selectors"
+import { OPEN_MODAL } from "../../actions/modal"
+import { modalComponentType } from "../../components/Modal"
 
 // TODO: Mock globally
 // Mock TrezorConnector due to `This version of trezor-connect is not suitable
@@ -156,6 +173,7 @@ describe("Coverage pool saga test", () => {
     }
     const pendingWithdrawal = 0
     const withdrawalInitiatedTimestamp = 0
+    const hasOpenAuctions = true
 
     it("should fetch apy data correctly", () => {
       return expectSaga(watchFetchCovPoolData)
@@ -187,6 +205,10 @@ describe("Coverage pool saga test", () => {
             call(Keep.coveragePoolV1.estimatedRewards, address, shareOfPool),
             estimatedRewards,
           ],
+          [
+            call(Keep.coveragePoolV1.hasRiskManagerOpenAuctions),
+            hasOpenAuctions,
+          ],
         ])
         .dispatch(fetchCovPoolDataRequest(address))
         .put(fetchCovPoolDataStart())
@@ -202,6 +224,7 @@ describe("Coverage pool saga test", () => {
             withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
             pendingWithdrawal,
             withdrawalInitiatedTimestamp,
+            hasRiskManagerOpenAuctions: hasOpenAuctions,
           })
         )
         .hasFinalState({
@@ -216,6 +239,7 @@ describe("Coverage pool saga test", () => {
           withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
           pendingWithdrawal,
           withdrawalInitiatedTimestamp,
+          hasRiskManagerOpenAuctions: hasOpenAuctions,
         })
         .run()
     })
@@ -244,102 +268,853 @@ describe("Coverage pool saga test", () => {
         .run()
     })
   })
-  // TODO: Update test cases
-  // describe("Subscribe to cov token transfer event", () => {
-  //   it("should udpate data correctly if the `Transfer` event has been emitted", () => {
-  //     const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-  //     const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-  //     const initialCovBalance = Token.fromTokenUnit(30).toString()
-  //     const transferEventData = {
-  //       from: ZERO_ADDRESS,
-  //       to: address,
-  //       value: KEEP.fromTokenUnit("300").toString(),
-  //     }
-  //     const mockedEvent = {
-  //       returnValues: transferEventData,
-  //     }
 
-  //     const initialState = {
-  //       ...coveragePoolInitialData,
-  //       covTotalSupply: initialCovTotalSupply,
-  //       covBalance: initialCovBalance,
-  //     }
+  describe("Subscribe to Asset Pool's Deposit event", () => {
+    const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+    const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+    const initialCovBalance = Token.fromTokenUnit(30).toString()
+    const initialCovTokensAvailableToWithdraw =
+      Token.fromTokenUnit(30).toString()
 
-  //     const updatedCovBalance = add(
-  //       initialCovBalance,
-  //       transferEventData.value
-  //     ).toString()
-  //     const updatedCovTotalSupply = add(
-  //       initialCovTotalSupply,
-  //       transferEventData.value
-  //     ).toString()
-  //     const updatedShareOfPool = 0.8
-  //     const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
-  //     const estimatedRewards = KEEP.fromTokenUnit(35).toString()
-  //     const updatedTvl = KEEP.fromTokenUnit(10000).toString()
-  //     const keepInUSD = new BigNumber(0.25)
-  //     const updatedAPY = 0.5
-  //     const tvlInUSD = new BigNumber(keepInUSD)
-  //       .multipliedBy(KEEP.toTokenUnit(updatedTvl))
-  //       .toFormat(2)
+    const depositEventData = {
+      underwriter: address,
+      covAmount: KEEP.fromTokenUnit("300").toString(),
+      amount: KEEP.fromTokenUnit("350").toString(),
+    }
 
-  //     return expectSaga(subscribeToCovTokenTransferEvent)
-  //       .withReducer(coveragePoolReducer, initialState.coveragePool)
-  //       .withState(initialState)
-  //       .provide([
-  //         [select(selectors.getCoveragePool), initialState],
-  //         [select(selectors.getUserAddress), address],
-  //         [
-  //           matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
-  //           updatedShareOfPool,
-  //         ],
-  //         [
-  //           matchers.call.fn(
-  //             Keep.coveragePoolV1.estimatedCollateralTokenBalance
-  //           ),
-  //           estimatedKeepBalance,
-  //         ],
-  //         [
-  //           matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
-  //           estimatedRewards,
-  //         ],
-  //         [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
-  //         [
-  //           matchers.call.fn(
-  //             Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
-  //           ),
-  //           keepInUSD,
-  //         ],
-  //         [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
-  //       ])
-  //       .dispatch({
-  //         type: COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED,
-  //         payload: { event: mockedEvent },
-  //       })
-  //       .put(
-  //         covTokenUpdated({
-  //           covBalance: updatedCovBalance,
-  //           covTotalSupply: updatedCovTotalSupply,
-  //           shareOfPool: updatedShareOfPool,
-  //           estimatedKeepBalance,
-  //           estimatedRewards,
-  //           totalValueLocked: updatedTvl,
-  //           totalValueLockedInUSD: tvlInUSD,
-  //           apy: updatedAPY,
-  //         })
-  //       )
-  //       .hasFinalState({
-  //         ...initialState,
-  //         covBalance: updatedCovBalance,
-  //         covTotalSupply: updatedCovTotalSupply,
-  //         shareOfPool: updatedShareOfPool,
-  //         estimatedKeepBalance,
-  //         estimatedRewards,
-  //         totalValueLocked: updatedTvl,
-  //         totalValueLockedInUSD: tvlInUSD,
-  //         apy: updatedAPY,
-  //       })
-  //       .run()
-  //   })
-  // })
+    const initialState = {
+      ...coveragePoolInitialData,
+      covTotalSupply: initialCovTotalSupply,
+      covBalance: initialCovBalance,
+      covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+    }
+    const updatedShareOfPool = 0.8
+    const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
+    const estimatedRewards = KEEP.fromTokenUnit(35).toString()
+    const updatedTvl = KEEP.fromTokenUnit(10000).toString()
+    const keepInUSD = new BigNumber(0.25)
+    const updatedAPY = 0.5
+    const tvlInUSD = new BigNumber(keepInUSD)
+      .multipliedBy(KEEP.toTokenUnit(updatedTvl))
+      .toFormat(2)
+
+    it("should update data correctly if the `Deposit` event has been emitted by current logged user", () => {
+      const mockedEvent = {
+        returnValues: { ...depositEventData },
+      }
+
+      const updatedCovBalance = add(
+        initialCovBalance,
+        depositEventData.covAmount
+      ).toString()
+      const updatedCovTotalSupply = add(
+        initialCovTotalSupply,
+        depositEventData.covAmount
+      ).toString()
+      const updatedCovTokensAvailableToWithdraw = add(
+        initialCovTokensAvailableToWithdraw,
+        depositEventData.covAmount
+      ).toString()
+
+      return expectSaga(subscribeToAssetPoolDepositedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            covBalance: updatedCovBalance,
+            covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+            covTotalSupply: updatedCovTotalSupply,
+            shareOfPool: updatedShareOfPool,
+            estimatedKeepBalance,
+            estimatedRewards,
+            totalValueLocked: updatedTvl,
+            totalValueLockedInUSD: tvlInUSD,
+            apy: updatedAPY,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          covBalance: updatedCovBalance,
+          covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+          covTotalSupply: updatedCovTotalSupply,
+          shareOfPool: updatedShareOfPool,
+          estimatedKeepBalance,
+          estimatedRewards,
+          totalValueLocked: updatedTvl,
+          totalValueLockedInUSD: tvlInUSD,
+          apy: updatedAPY,
+        })
+        .run()
+    })
+
+    it("should update data correctly for current user if the `Deposit` event has been emitted by another user", () => {
+      const mockedEvent = {
+        returnValues: {
+          ...depositEventData,
+          underwriter: "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047",
+        },
+      }
+
+      const updatedCovTotalSupply = add(
+        initialCovTotalSupply,
+        depositEventData.covAmount
+      ).toString()
+
+      return expectSaga(subscribeToAssetPoolDepositedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            covBalance: initialCovBalance,
+            covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+            covTotalSupply: updatedCovTotalSupply,
+            shareOfPool: updatedShareOfPool,
+            estimatedKeepBalance,
+            estimatedRewards,
+            totalValueLocked: updatedTvl,
+            totalValueLockedInUSD: tvlInUSD,
+            apy: updatedAPY,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          covBalance: initialCovBalance,
+          covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+          covTotalSupply: updatedCovTotalSupply,
+          shareOfPool: updatedShareOfPool,
+          estimatedKeepBalance,
+          estimatedRewards,
+          totalValueLocked: updatedTvl,
+          totalValueLockedInUSD: tvlInUSD,
+          apy: updatedAPY,
+        })
+        .run()
+    })
+
+    it("should show correct success modal window, when depositing KEEPs in Coverage Pool", () => {
+      const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
+      const mockedEvent = {
+        returnValues: { ...depositEventData },
+        transactionHash,
+      }
+
+      const expectedModalType =
+        modalComponentType.COV_POOLS.KEEP_DEPOSITED_SUCCESS
+      const expectedTitle = "Deposit"
+
+      return expectSaga(subscribeToAssetPoolDepositedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_ASSET_POOL_DEPOSITED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put.like({
+          action: {
+            type: OPEN_MODAL,
+            payload: {
+              modalComponentType: expectedModalType,
+              modalProps: {
+                title: expectedTitle,
+              },
+              componentProps: {
+                transactionFinished: true,
+                transactionHash: mockedEvent.transactionHash,
+                amount: mockedEvent.returnValues.amount,
+              },
+            },
+          },
+        })
+        .run()
+    })
+  })
+
+  describe("Subscribe to WithdrawalInitiated event", () => {
+    const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+    const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
+    const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+    const initialCovBalance = Token.fromTokenUnit(30).toString()
+    const initialCovTokensAvailableToWithdraw =
+      Token.fromTokenUnit(30).toString()
+
+    const initialState = {
+      ...coveragePoolInitialData,
+      covTotalSupply: initialCovTotalSupply,
+      covBalance: initialCovBalance,
+      covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+    }
+
+    it("should update data correctly if the `WithdrawalInitiated` event has been emitted by current logged user", () => {
+      const underwriterAddress = address
+      const withdrawalInitiatedEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("20").toString(),
+        timestamp: 1631857610,
+      }
+      const mockedEvent = {
+        returnValues: withdrawalInitiatedEventData,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          pendingWithdrawalBalance: KEEP.fromTokenUnit("200").toString(),
+          amount: KEEP.fromTokenUnit("20").toString(),
+        },
+      }
+
+      const updatedCovTokensAvailableToWithdraw = sub(
+        initialCovTokensAvailableToWithdraw,
+        withdrawalInitiatedEventData.covAmount
+      ).toString()
+
+      return expectSaga(subscribeToWithdrawalInitiatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            pendingWithdrawal: withdrawalInitiatedEventData.covAmount,
+            withdrawalInitiatedTimestamp:
+              withdrawalInitiatedEventData.timestamp,
+            covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          pendingWithdrawal: withdrawalInitiatedEventData.covAmount,
+          withdrawalInitiatedTimestamp: withdrawalInitiatedEventData.timestamp,
+          covTokensAvailableToWithdraw: updatedCovTokensAvailableToWithdraw,
+        })
+        .run()
+    })
+
+    it("should update data correctly for current user if the `WithdrawalInitiated` event has been emitted by another user", () => {
+      const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
+      const withdrawalInitiatedEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("20").toString(),
+        timestamp: 1631857610,
+      }
+      const mockedEvent = {
+        returnValues: withdrawalInitiatedEventData,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          pendingWithdrawalBalance: KEEP.fromTokenUnit("200").toString(),
+          amount: KEEP.fromTokenUnit("20").toString(),
+        },
+      }
+
+      return expectSaga(subscribeToWithdrawalInitiatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .hasFinalState({
+          ...initialState,
+        })
+        .run()
+    })
+
+    it("should show correct success modal window, when initiating a withdrawal", () => {
+      const underwriterAddress = address
+      const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
+      const withdrawalInitiatedEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("20").toString(),
+        timestamp: 1631857610,
+      }
+      const mockedEvent = {
+        returnValues: withdrawalInitiatedEventData,
+        transactionHash,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          amount: KEEP.fromTokenUnit("20").toString(),
+        },
+      }
+
+      const expectedModalType = modalComponentType.COV_POOLS.INITIATE_WITHDRAWAL
+      const expectedTitle = "Withdraw"
+
+      return expectSaga(subscribeToWithdrawalInitiatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put.like({
+          action: {
+            type: OPEN_MODAL,
+            payload: {
+              modalComponentType: expectedModalType,
+              modalProps: {
+                title: expectedTitle,
+              },
+            },
+          },
+        })
+        .run()
+    })
+
+    it("should show correct success modal window, when re-initiating a withdrawal", () => {
+      const underwriterAddress = address
+      const withdrawalInitiatedEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("20").toString(),
+        timestamp: 1631857610,
+      }
+      const mockedEvent = {
+        returnValues: withdrawalInitiatedEventData,
+        transactionHash,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          pendingWithdrawalBalance: Token.fromTokenUnit(20).toString(),
+          amount: KEEP.fromTokenUnit("0").toString(),
+        },
+      }
+
+      const expectedModalType =
+        modalComponentType.COV_POOLS.RE_INITIATE_WITHDRAWAL
+      const expectedTitle = "Re-initiate withdrawal"
+
+      return expectSaga(subscribeToWithdrawalInitiatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put.like({
+          action: {
+            type: OPEN_MODAL,
+            payload: {
+              modalComponentType: expectedModalType,
+              modalProps: {
+                title: expectedTitle,
+              },
+            },
+          },
+        })
+        .run()
+    })
+
+    it("should show correct success modal window, when increasing value of a pending withdrawal", () => {
+      const underwriterAddress = address
+      const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
+      const withdrawalInitiatedEventData = {
+        underwriter: underwriterAddress,
+        covAmount: KEEP.fromTokenUnit("20").toString(),
+        timestamp: 1631857610,
+      }
+      const mockedEvent = {
+        returnValues: withdrawalInitiatedEventData,
+        transactionHash,
+      }
+
+      const mockedModalData = {
+        componentProps: {
+          pendingWithdrawalBalance: Token.fromTokenUnit(20).toString(),
+          amount: KEEP.fromTokenUnit("10").toString(),
+        },
+      }
+
+      const expectedModalType = modalComponentType.COV_POOLS.INCREASE_WITHDRAWAL
+      const expectedTitle = "Re-initiate withdrawal"
+
+      return expectSaga(subscribeToWithdrawalInitiatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put.like({
+          action: {
+            type: OPEN_MODAL,
+            payload: {
+              modalComponentType: expectedModalType,
+              modalProps: {
+                title: expectedTitle,
+              },
+            },
+          },
+        })
+        .run()
+    })
+  })
+
+  describe("Subscribe to WithdrawalCompleted event", () => {
+    const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+    const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
+    const initialCovTotalSupply = Token.fromTokenUnit("1000").toString()
+    const initialCovBalance = Token.fromTokenUnit("400").toString()
+
+    const withdrawalCompletedEventData = {
+      underwriter: address,
+      amount: KEEP.fromTokenUnit("320").toString(),
+      covAmount: KEEP.fromTokenUnit("300").toString(),
+    }
+    const initialCovTokensAvailableToWithdraw = sub(
+      initialCovBalance,
+      withdrawalCompletedEventData.covAmount
+    ).toString()
+
+    const mockedEvent = {
+      returnValues: withdrawalCompletedEventData,
+      transactionHash,
+    }
+
+    const mockedModalData = {
+      componentProps: {
+        pendingWithdrawalBalance: KEEP.fromTokenUnit("0").toString(),
+        amount: KEEP.fromTokenUnit("0").toString(),
+      },
+    }
+
+    const initialState = {
+      ...coveragePoolInitialData,
+      covTotalSupply: initialCovTotalSupply,
+      covBalance: initialCovBalance,
+      covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+    }
+
+    const updatedShareOfPool = 0.8
+    const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
+    const estimatedRewards = KEEP.fromTokenUnit(35).toString()
+    const updatedTvl = KEEP.fromTokenUnit(10000).toString()
+    const keepInUSD = new BigNumber(0.25)
+    const updatedAPY = 0.5
+    const tvlInUSD = new BigNumber(keepInUSD)
+      .multipliedBy(KEEP.toTokenUnit(updatedTvl))
+      .toFormat(2)
+
+    it("should update data correctly if the `WithdrawalCompleted` event has been emitted by current logged user", () => {
+      const updatedCovBalance = sub(
+        initialCovBalance,
+        withdrawalCompletedEventData.covAmount
+      ).toString()
+      const updatedCovTotalSupply = sub(
+        initialCovTotalSupply,
+        withdrawalCompletedEventData.covAmount
+      ).toString()
+
+      return expectSaga(subscribeToWithdrawalCompletedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            shareOfPool: updatedShareOfPool,
+            covBalance: updatedCovBalance,
+            covTotalSupply: updatedCovTotalSupply,
+            estimatedRewards,
+            estimatedKeepBalance,
+            totalValueLockedInUSD: tvlInUSD,
+            totalValueLocked: updatedTvl,
+            apy: updatedAPY,
+            pendingWithdrawal: "0",
+            withdrawalInitiatedTimestamp: "0",
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          shareOfPool: updatedShareOfPool,
+          covBalance: updatedCovBalance,
+          covTotalSupply: updatedCovTotalSupply,
+          estimatedRewards,
+          estimatedKeepBalance,
+          totalValueLockedInUSD: tvlInUSD,
+          totalValueLocked: updatedTvl,
+          apy: updatedAPY,
+          pendingWithdrawal: "0",
+          withdrawalInitiatedTimestamp: "0",
+        })
+        .run()
+    })
+
+    it("should update data correctly for current user if the `WithdrawalCompleted` event has been emitted by another user", () => {
+      const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
+
+      const withdrawalCompletedEventData = {
+        underwriter: underwriterAddress,
+        amount: KEEP.fromTokenUnit("320").toString(),
+        covAmount: KEEP.fromTokenUnit("300").toString(),
+      }
+      const initialCovTokensAvailableToWithdraw = sub(
+        initialCovBalance,
+        withdrawalCompletedEventData.covAmount
+      ).toString()
+
+      const mockedEvent = {
+        returnValues: withdrawalCompletedEventData,
+      }
+
+      const initialState = {
+        ...coveragePoolInitialData,
+        covTotalSupply: initialCovTotalSupply,
+        covBalance: initialCovBalance,
+        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+        pendingWithdrawal: "300",
+        withdrawalInitiatedTimestamp: "1631857111",
+      }
+
+      const updatedCovTotalSupply = sub(
+        initialCovTotalSupply,
+        withdrawalCompletedEventData.covAmount
+      ).toString()
+
+      return expectSaga(subscribeToWithdrawalCompletedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [select(selectors.getModalData), mockedModalData],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put(
+          covTokenUpdated({
+            shareOfPool: updatedShareOfPool,
+            covBalance: initialCovBalance,
+            covTotalSupply: updatedCovTotalSupply,
+            estimatedRewards,
+            estimatedKeepBalance,
+            totalValueLockedInUSD: tvlInUSD,
+            totalValueLocked: updatedTvl,
+            apy: updatedAPY,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          shareOfPool: updatedShareOfPool,
+          covBalance: initialCovBalance,
+          covTotalSupply: updatedCovTotalSupply,
+          estimatedRewards,
+          estimatedKeepBalance,
+          totalValueLockedInUSD: tvlInUSD,
+          totalValueLocked: updatedTvl,
+          apy: updatedAPY,
+        })
+        .run()
+    })
+
+    it("should show correct success modal window, when claiming tokens from a pending withdrawal", () => {
+      const expectedModalType =
+        modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED
+      const expectedTitle = "Claim tokens"
+
+      return expectSaga(subscribeToWithdrawalCompletedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [select(selectors.getCoveragePool), initialState],
+          [select(selectors.getUserAddress), address],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.shareOfPool),
+            updatedShareOfPool,
+          ],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.estimatedCollateralTokenBalance
+            ),
+            estimatedKeepBalance,
+          ],
+          [
+            matchers.call.fn(Keep.coveragePoolV1.estimatedRewards),
+            estimatedRewards,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.totalValueLocked), updatedTvl],
+          [
+            matchers.call.fn(
+              Keep.coveragePoolV1.exchangeService.getKeepTokenPriceInUSD
+            ),
+            keepInUSD,
+          ],
+          [matchers.call.fn(Keep.coveragePoolV1.apy), updatedAPY],
+        ])
+        .dispatch({
+          type: COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+          payload: { event: mockedEvent },
+        })
+        .put.like({
+          action: {
+            type: OPEN_MODAL,
+            payload: {
+              modalComponentType: expectedModalType,
+              modalProps: {
+                title: expectedTitle,
+              },
+            },
+          },
+        })
+        .run()
+    })
+  })
+
+  describe("Subscribe to AuctionCreated event", () => {
+    it("should update data correctly if `AuctionCreated` event has been emitted", () => {
+      const initialState = {
+        ...coveragePoolInitialData,
+        hasRiskManagerOpenAuctions: false,
+      }
+
+      return expectSaga(subscribeToAuctionCreatedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .dispatch({
+          type: RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
+        })
+        .put(
+          covTokenUpdated({
+            hasRiskManagerOpenAuctions: true,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          hasRiskManagerOpenAuctions: true,
+        })
+        .run()
+    })
+
+    it("should update data correctly if `AuctionClosed` event has been emitted and there are no more open auctions left", () => {
+      const initialState = {
+        ...coveragePoolInitialData,
+        hasRiskManagerOpenAuctions: false,
+      }
+
+      const mockedHasOpenAuctions = false
+
+      return expectSaga(subscribeToAuctionClosedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [
+            matchers.call.fn(Keep.coveragePoolV1.hasRiskManagerOpenAuctions),
+            mockedHasOpenAuctions,
+          ],
+        ])
+        .dispatch({
+          type: RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
+        })
+        .put(
+          covTokenUpdated({
+            hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
+        })
+        .run()
+    })
+
+    it("should update data correctly if `AuctionClosed` event has been emitted but open auctions still exist", () => {
+      const initialState = {
+        ...coveragePoolInitialData,
+        hasRiskManagerOpenAuctions: false,
+      }
+
+      const mockedHasOpenAuctions = true
+
+      return expectSaga(subscribeToAuctionClosedEvent)
+        .withReducer(coveragePoolReducer, initialState.coveragePool)
+        .withState(initialState)
+        .provide([
+          [
+            matchers.call.fn(Keep.coveragePoolV1.hasRiskManagerOpenAuctions),
+            mockedHasOpenAuctions,
+          ],
+        ])
+        .dispatch({
+          type: RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
+        })
+        .put(
+          covTokenUpdated({
+            hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
+          })
+        )
+        .hasFinalState({
+          ...initialState,
+          hasRiskManagerOpenAuctions: mockedHasOpenAuctions,
+        })
+        .run()
+    })
+  })
 })

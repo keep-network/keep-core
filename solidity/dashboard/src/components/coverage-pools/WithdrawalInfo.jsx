@@ -44,21 +44,20 @@ const WithdrawalInfo = ({
       </OnlyIf>
       <div className={"withdraw-modal__data"}>
         <TokenAmount
+          amount={amount}
+          wrapperClassName={"withdraw-modal__token-amount"}
+          token={covKEEP}
+        />
+        <TokenAmount
+          wrapperClassName={"withdraw-modal__cov-token-amount"}
           amount={Keep.coveragePoolV1.estimatedBalanceFor(
             amount,
             covTotalSupply,
             totalValueLocked
           )}
-          wrapperClassName={"withdraw-modal__token-amount"}
-          token={KEEP}
-          withIcon
-        />
-        <TokenAmount
-          wrapperClassName={"withdraw-modal__cov-token-amount"}
-          amount={amount}
           amountClassName={"h3 text-grey-60"}
           symbolClassName={"h3 text-grey-60"}
-          token={covKEEP}
+          token={KEEP}
         />
         {children}
       </div>
@@ -66,13 +65,16 @@ const WithdrawalInfo = ({
         <CooldownPeriodBanner />
       </OnlyIf>
       <OnlyIf condition={transactionFinished}>
-        <Divider className="divider divider--tile-fluid" />
+        <Divider
+          className="divider divider--tile-fluid"
+          style={{ marginTop: "auto" }}
+        />
         <Button
-          className="btn btn-lg btn-secondary"
+          className="btn btn-lg btn-secondary success-modal-close-button"
           disabled={false}
           onClick={onCancel}
         >
-          Close
+          close
         </Button>
       </OnlyIf>
     </WithdrawalInfo.Container>

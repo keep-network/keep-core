@@ -36,6 +36,25 @@ const (
 	combinationStateActiveBlocks = 20
 )
 
+// ProtocolBlocks returns the total number of blocks it takes to execute
+// all the required work defined by the GJKR protocol.
+func ProtocolBlocks() uint64 {
+	return ephemeralKeyPairStateDelayBlocks +
+		ephemeralKeyPairStateActiveBlocks +
+		commitmentStateDelayBlocks +
+		commitmentStateActiveBlocks +
+		commitmentVerificationStateDelayBlocks +
+		commitmentVerificationStateActiveBlocks +
+		pointsShareStateDelayBlocks +
+		pointsShareStateActiveBlocks +
+		pointsValidationStateDelayBlocks +
+		pointsValidationStateActiveBlocks +
+		keyRevealStateDelayBlocks +
+		keyRevealStateActiveBlocks +
+		combinationStateDelayBlocks +
+		combinationStateActiveBlocks
+}
+
 // ephemeralKeyPairGenerationState is the state during which members broadcast
 // public ephemeral keys generated for other members of the group.
 // `EphemeralPublicKeyMessage`s are valid in this state.

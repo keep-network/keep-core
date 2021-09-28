@@ -28,6 +28,7 @@ import { addAdditionalDataToModal } from "../../actions/modal"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
 import { Keep } from "../../contracts"
+import ConfirmationModal from "../../components/ConfirmationModal"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -47,6 +48,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     withdrawalDelay,
     pendingWithdrawal,
     withdrawalInitiatedTimestamp,
+    hasRiskManagerOpenAuctions,
   } = useSelector((state) => state.coveragePool)
 
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
@@ -68,7 +70,22 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   const onSubmitDepositForm = async (values, awaitingPromise) => {
     const { tokenAmount } = values
-    const amount = KEEP.fromTokenUnit(tokenAmount)
+    const amount = KEEP.fromTokenUnit(tokenAmount).toString()
+    if (hasRiskManagerOpenAuctions) {
+      await openConfirmationModal(
+        {
+          modalOptions: {
+            title: "Deposit",
+          },
+          btnText: "continue",
+          title: "Take note!",
+          subtitle:
+            "The coverage pool is about to cover an event. Do you want to continue with this deposit?",
+          withConfirmationInput: false,
+        },
+        ConfirmationModal
+      )
+    }
     await openConfirmationModal(
       {
         modalOptions: {
@@ -199,22 +216,19 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <OnlyIf condition={hasCovKEEPTokens}>
             <TokenAmount
               wrapperClassName={"coverage-pool__token-amount"}
+              amount={covBalance}
+              amountClassName={"h1 text-mint-100"}
+              symbolClassName={"h2 text-mint-100"}
+              token={covKEEP}
+            />
+            <TokenAmount
               amount={Keep.coveragePoolV1.estimatedBalanceFor(
                 covBalance,
                 covTotalSupply,
                 totalValueLocked
               )}
-              amountClassName={"h1 text-mint-100"}
-              symbolClassName={"h2 text-mint-100"}
-              token={KEEP}
-              withIcon
-            />
-            <TokenAmount
-              wrapperClassName={"coverage-pool__cov-token-amount"}
-              amount={covBalance}
               amountClassName={"h3 text-grey-40"}
               symbolClassName={"h3 text-grey-40"}
-              token={covKEEP}
             />
           </OnlyIf>
         </section>
@@ -230,22 +244,21 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             </div>
             <TokenAmount
               wrapperClassName={"coverage-pool__token-amount"}
+              amount={covTokensAvailableToWithdraw}
+              amountClassName={"h2 text-mint-100"}
+              symbolClassName={"h3 text-mint-100"}
+              token={covKEEP}
+            />
+            <TokenAmount
+              wrapperClassName={"coverage-pool__cov-token-amount"}
               amount={Keep.coveragePoolV1.estimatedBalanceFor(
                 covTokensAvailableToWithdraw,
                 covTotalSupply,
                 totalValueLocked
               )}
-              amountClassName={"h2 text-mint-100"}
-              symbolClassName={"h3 text-mint-100"}
-              token={KEEP}
-              withIcon
-            />
-            <TokenAmount
-              wrapperClassName={"coverage-pool__cov-token-amount"}
-              amount={covTokensAvailableToWithdraw}
               amountClassName={"h3 text-grey-40"}
               symbolClassName={"h3 text-grey-40"}
-              token={covKEEP}
+              token={KEEP}
             />
             <WithdrawAmountForm
               submitBtnText={

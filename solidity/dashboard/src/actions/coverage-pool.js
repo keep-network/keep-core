@@ -21,6 +21,12 @@ export const COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED =
 export const COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED =
   "coverage_pool/withdrawal_completed_event_emitted"
 
+export const RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED =
+  "risk_manager/auction_created_event_emitted"
+
+export const RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED =
+  "risk_manager/auction_closed_event_emitted"
+
 export const COVERAGE_POOL_DEPOSIT_ASSET_POOL = "coverage_pool/deposit"
 export const COVERAGE_POOL_WITHDRAW_ASSET_POOL = "coverage_pool/withdraw"
 export const COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL =
@@ -98,6 +104,20 @@ export const coveragePoolWithdrawalInitiatedEventEmitted = (event) => {
 export const coveragePoolWithdrawalCompletedEventEmitted = (event) => {
   return {
     type: COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+    payload: { event },
+  }
+}
+
+export const riskManagerAuctionCreatedEventEmitted = (event) => {
+  return {
+    type: RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
+    payload: { event },
+  }
+}
+
+export const riskManagerAuctionClosedEventEmitted = (event) => {
+  return {
+    type: RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
     payload: { event },
   }
 }

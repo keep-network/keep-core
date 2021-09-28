@@ -23,6 +23,7 @@ describe("Test CoveragePoolV1 lib", () => {
     const covTokenContract = createMockedContract("0x7")
     const collateralToken = createMockedContract("0x6")
     const rewardsPoolContract = createMockedContract("0x7")
+    const riskManagerContract = createMockedContract("0x8")
     const exchangeService = {
       getKeepTokenPriceInUSD: jest.fn(),
     }
@@ -35,6 +36,7 @@ describe("Test CoveragePoolV1 lib", () => {
       covTokenContract,
       collateralToken,
       rewardsPoolContract,
+      riskManagerContract,
       exchangeService,
       web3
     )
@@ -145,21 +147,19 @@ describe("Test CoveragePoolV1 lib", () => {
   })
 
   it("should return the estimated collateral token balance", async () => {
-    const mockedCollateralBalance = 100
-    coveragePoolV1.collateralToken.makeCall.mockResolvedValue(
-      mockedCollateralBalance
-    )
+    const mockedTVL = 100
+    const spyOnTVL = jest
+      .spyOn(coveragePoolV1, "totalValueLocked")
+      .mockResolvedValue(mockedTVL)
+
     const shareOfPool = 0.35
 
     const result = await coveragePoolV1.estimatedCollateralTokenBalance(
       shareOfPool
     )
 
-    expect(coveragePoolV1.collateralToken.makeCall).toHaveBeenCalledWith(
-      "balanceOf",
-      coveragePoolV1.assetPoolContract.address
-    )
-    expect(result).toEqual((mockedCollateralBalance * shareOfPool).toString())
+    expect(spyOnTVL).toHaveBeenCalled()
+    expect(result).toEqual((mockedTVL * shareOfPool).toString())
   })
 
   it("should return the asset pool collateral token balance", async () => {
@@ -278,5 +278,19 @@ describe("Test CoveragePoolV1 lib", () => {
 
     expect(spy).toHaveBeenCalledWith("CoverageClaimed")
     expect(result.toString()).toEqual(expectedResult)
+  })
+
+  it("should check if there are any open auctions in Risk Manager", async () => {
+    const mockedResult = false
+    coveragePoolV1.riskManagerV1Contract.makeCall.mockResolvedValue(
+      mockedResult
+    )
+
+    const result = await coveragePoolV1.hasRiskManagerOpenAuctions()
+
+    expect(coveragePoolV1.riskManagerV1Contract.makeCall).toHaveBeenCalledWith(
+      "hasOpenAuctions"
+    )
+    expect(result).toEqual(mockedResult)
   })
 })

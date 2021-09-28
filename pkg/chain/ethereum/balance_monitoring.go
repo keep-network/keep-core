@@ -21,6 +21,10 @@ var defaultBalanceAlertThreshold = ethereum.WrapWei(
 // check should be triggered.
 const defaultBalanceMonitoringTick = 10 * time.Minute
 
+// defaultBalanceMonitoringRetryTimeout determines the timeout for balance check
+// at each tick.
+const defaultBalanceMonitoringRetryTimeout = 5 * time.Minute
+
 // initializeBalanceMonitoring sets up the balance monitoring process
 func (ec *ethereumChain) initializeBalanceMonitoring(ctx context.Context) {
 	balanceMonitor, err := ec.balanceMonitor()
@@ -39,6 +43,7 @@ func (ec *ethereumChain) initializeBalanceMonitoring(ctx context.Context) {
 		ec.Address(),
 		alertThreshold,
 		defaultBalanceMonitoringTick,
+		defaultBalanceMonitoringRetryTimeout,
 	)
 
 	logger.Infof(
@@ -56,7 +61,7 @@ func (ec *ethereumChain) balanceMonitor() (*ethutil.BalanceMonitor, error) {
 	) (*ethereum.Wei, error) {
 		ctx, cancelCtx := context.WithTimeout(
 			context.Background(),
-			1*time.Minute,
+			30*time.Second,
 		)
 		defer cancelCtx()
 

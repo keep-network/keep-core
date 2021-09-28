@@ -28,6 +28,8 @@ import {
   COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
   COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
   COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
+  RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
+  RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -125,6 +127,10 @@ function* fetchCovPoolData(action) {
       shareOfPool
     )
 
+    const hasRiskManagerOpenAuctions = yield call(
+      Keep.coveragePoolV1.hasRiskManagerOpenAuctions
+    )
+
     yield put(
       fetchCovPoolDataSuccess({
         shareOfPool,
@@ -137,6 +143,7 @@ function* fetchCovPoolData(action) {
         withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
         pendingWithdrawal,
         withdrawalInitiatedTimestamp,
+        hasRiskManagerOpenAuctions,
       })
     )
   } catch (error) {
@@ -162,21 +169,20 @@ export function* subscribeToAssetPoolDepositedEvent() {
       payload: { event },
     } = yield take(requestChan)
     const {
-      returnValues: { underwriter, covAmount },
+      returnValues: { underwriter, covAmount, amount },
     } = event
     const { covTotalSupply, covBalance, covTokensAvailableToWithdraw } =
       yield select(selectors.getCoveragePool)
 
     const address = yield select(selectors.getUserAddress)
-
     const isAddressedToCurrentAddress = isSameEthAddress(address, underwriter)
 
-    const updatedCovTotalSupply = add(covTotalSupply, covAmount)
+    const updatedCovTotalSupply = add(covTotalSupply, covAmount).toString()
     const updatedCovBalance = isAddressedToCurrentAddress
-      ? add(covBalance, covAmount)
+      ? add(covBalance, covAmount).toString()
       : covBalance
     const updatedcovTokensAvailableToWithdraw = isAddressedToCurrentAddress
-      ? add(covTokensAvailableToWithdraw, covAmount)
+      ? add(covTokensAvailableToWithdraw, covAmount).toString()
       : covTokensAvailableToWithdraw
 
     const shareOfPool = yield call(
@@ -198,12 +204,12 @@ export function* subscribeToAssetPoolDepositedEvent() {
           componentProps: {
             transactionFinished: true,
             transactionHash: event.transactionHash,
-            amount: covAmount,
+            amount,
             balanceAmount: updatedCovBalance,
             estimatedBalanceAmountInKeep: estimatedKeepBalance,
           },
           modalProps: {
-            title: "Claim tokens",
+            title: "Deposit",
             classes: {
               modalWrapperClassName: "modal-wrapper__claim-tokens",
             },
@@ -253,9 +259,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     } = event
 
     const address = yield select(selectors.getUserAddress)
-    const { covTokensAvailableToWithdraw } = yield select(
-      selectors.getCoveragePool
-    )
+    const { covBalance } = yield select(selectors.getCoveragePool)
     const { componentProps } = yield select(selectors.getModalData)
 
     if (!isSameEthAddress(address, underwriter)) {
@@ -306,10 +310,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
       covTokenUpdated({
         pendingWithdrawal: covAmount,
         withdrawalInitiatedTimestamp: timestamp,
-        covTokensAvailableToWithdraw: sub(
-          covTokensAvailableToWithdraw,
-          covAmount
-        ),
+        covTokensAvailableToWithdraw: sub(covBalance, covAmount).toString(),
       })
     )
   }
@@ -341,7 +342,9 @@ export function* subscribeToWithdrawalCompletedEvent() {
           componentProps: {
             transactionHash: event.transactionHash,
             transactionFinished: true,
-            amount: amount,
+            collateralTokenAmount: amount,
+            covAmount,
+            address: underwriter,
           },
           modalProps: {
             title: "Claim tokens",
@@ -353,7 +356,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
       )
     }
 
-    const updatedCovTotalSupply = sub(covTotalSupply, covAmount)
+    const updatedCovTotalSupply = sub(covTotalSupply, covAmount).toString()
     const totalValueLocked = yield call(Keep.coveragePoolV1.totalValueLocked)
     const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
     const totalValueLockedInUSD = keepInUSD
@@ -362,7 +365,7 @@ export function* subscribeToWithdrawalCompletedEvent() {
     const apy = yield call(Keep.coveragePoolV1.apy)
 
     const updatedCovBalance = isAddressedToCurrentAddress
-      ? sub(covBalance, covAmount)
+      ? sub(covBalance, covAmount).toString()
       : covBalance
 
     const shareOfPool = yield call(
@@ -382,18 +385,59 @@ export function* subscribeToWithdrawalCompletedEvent() {
       shareOfPool
     )
 
+    const covTokenUpdatedData = {
+      shareOfPool,
+      covBalance: updatedCovBalance,
+      covTotalSupply: updatedCovTotalSupply,
+      estimatedRewards,
+      estimatedKeepBalance,
+      totalValueLockedInUSD,
+      totalValueLocked,
+      apy,
+    }
+
+    if (isAddressedToCurrentAddress) {
+      covTokenUpdatedData.pendingWithdrawal = "0"
+      covTokenUpdatedData.withdrawalInitiatedTimestamp = "0"
+    }
+
+    yield put(covTokenUpdated(covTokenUpdatedData))
+  }
+}
+
+export function* subscribeToAuctionCreatedEvent() {
+  const requestChan = yield actionChannel(
+    RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED
+  )
+
+  while (true) {
+    yield take(requestChan)
+
+    const hasRiskManagerOpenAuctions = true
+
     yield put(
       covTokenUpdated({
-        pendingWithdrawal: "0",
-        withdrawalInitiatedTimestamp: "0",
-        shareOfPool,
-        covBalance: updatedCovBalance,
-        covTotalSupply: updatedCovTotalSupply,
-        estimatedRewards,
-        estimatedKeepBalance,
-        totalValueLockedInUSD,
-        totalValueLocked,
-        apy,
+        hasRiskManagerOpenAuctions,
+      })
+    )
+  }
+}
+
+export function* subscribeToAuctionClosedEvent() {
+  const requestChan = yield actionChannel(
+    RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED
+  )
+
+  while (true) {
+    yield take(requestChan)
+
+    const hasRiskManagerOpenAuctions = yield call(
+      Keep.coveragePoolV1.hasRiskManagerOpenAuctions
+    )
+
+    yield put(
+      covTokenUpdated({
+        hasRiskManagerOpenAuctions,
       })
     )
   }

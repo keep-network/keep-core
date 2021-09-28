@@ -6,6 +6,7 @@ import { Skeleton } from "../skeletons"
 import TokenAmount from "../TokenAmount"
 import ResourceTooltip from "../ResourceTooltip"
 import OnlyIf from "../OnlyIf"
+import { TOOLTIP_DIRECTION } from "../Tooltip"
 
 const MetricsSection = ({
   tvl,
@@ -42,7 +43,7 @@ const MetricsSection = ({
 
       <section className={`metrics__reward-rate ${classes.rewardRate || ""}`}>
         <MetricsTile className="bg-mint-10">
-          <MetricsTile.Tooltip direction="top">
+          <MetricsTile.Tooltip direction={TOOLTIP_DIRECTION.TOP}>
             The rate of rewards that you will receive annually.
           </MetricsTile.Tooltip>
           <APY
@@ -58,7 +59,7 @@ const MetricsSection = ({
         className={`metrics__total-rewards ${classes.totalRewards || ""}`}
       >
         <MetricsTile className="bg-mint-10">
-          <MetricsTile.Tooltip direction="top">
+          <MetricsTile.Tooltip direction={TOOLTIP_DIRECTION.TOP}>
             Rewards distributed from the rewards pool contract since the start
             of the pool.
           </MetricsTile.Tooltip>
@@ -81,7 +82,7 @@ const MetricsSection = ({
         className={`metrics__lifetime-covered ${classes.lifetimeCovered || ""}`}
       >
         <MetricsTile className="bg-mint-10">
-          <MetricsTile.Tooltip direction="top">
+          <MetricsTile.Tooltip direction={TOOLTIP_DIRECTION.TOP}>
             Amount of KEEP used from the coverage pool to cover a loss since the
             start of the pool.
           </MetricsTile.Tooltip>

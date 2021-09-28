@@ -44,3 +44,10 @@ configs
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
 keep-client-snapshot.tar
+
+# Yarn
+yarn-error.log
+
+# Hardhat
+cache/
+export.json

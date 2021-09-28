@@ -51,7 +51,7 @@ export class Token {
     this.icon = _icon
     this.decimalsToDisplay = _decimalsToDisplay
     this.MIN_AMOUNT_TO_DISPLAY = new BigNumber(10)
-      .pow(this.smallestPrecisionDecimals)
+      .pow(this.decimals - this.decimalsToDisplay)
       .toString()
 
     this.MIN_AMOUNT_IN_TOKEN_UNIT = this.toTokenUnit(
@@ -71,11 +71,14 @@ export class Token {
    * Displays the provided amount in the readble format.
    *
    * @param {*} amount An amount in the samllest unit of the token.
+   * @param {number} decimals How many decimal places we want to display in the amount.
    *
    * @return {string} Formatted amount in readble format.
    */
-  displayAmount = (amount) => {
-    return this._displayAmount(amount, this.toFormat)
+  displayAmount = (amount, decimals = this.decimalsToDisplay) => {
+    return this._displayAmount(amount, decimals, (amount, decimals) => {
+      return this.toFormat(amount, decimals)
+    })
   }
 
   /**
@@ -150,15 +153,23 @@ export class Token {
    * Displays an amount with a metric suffix.
    *
    * @param {*} amount An amount to display.
+   * @param {number} decimals Number of decimal numbers to print
    *
    * @return {string} Formatted amount with a metric suffix.
    */
-  displayAmountWithMetricSuffix = (amount) => {
-    const result = this._displayAmount(amount, this.getNumberWithMetricSuffix)
+  displayAmountWithMetricSuffix = (
+    amount,
+    decimals = this.decimalsToDisplay
+  ) => {
+    const result = this._displayAmount(
+      amount,
+      decimals,
+      this.getNumberWithMetricSuffix
+    )
     return result?.formattedValue ? result.formattedValue : result
   }
 
-  _displayAmount = (amount, formattingFn = (amount) => amount) => {
+  _displayAmount = (amount, decimals, formattingFn = (amount) => amount) => {
     const amountInBn = BigNumber.isBigNumber(amount)
       ? amount
       : new BigNumber(amount)
@@ -170,7 +181,7 @@ export class Token {
       return `<${this.MIN_AMOUNT_IN_TOKEN_UNIT}`
     }
 
-    return formattingFn(this.toTokenUnit(amount))
+    return formattingFn(this.toTokenUnit(amount), decimals)
   }
 }
 
@@ -191,7 +202,7 @@ export const covKEEP = new Token(
   "covKEEP",
   18,
   Icons.KeepOutline,
-  0
+  2
 )
 
 export const ETH = new Token("Ether", 18, "ETH", "gwei", 14, Icons.ETH)

@@ -3,7 +3,6 @@ package beacon
 import (
 	"context"
 	"encoding/hex"
-	"sync"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -11,7 +10,9 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	dkgresult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -62,15 +63,19 @@ func Initialize(
 		groupRegistry,
 	)
 
-	pendingGroupSelections := &event.GroupSelectionTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
+	// We need to calculate group selection duration here as we can't do it
+	// inside the deduplicator due to import cycles. We don't include the
+	// time needed for publication as we are interested about the minimum
+	// possible off-chain group create protocol duration.
+	minGroupCreationDurationBlocks :=
+		chainConfig.TicketSubmissionTimeout +
+			gjkr.ProtocolBlocks() +
+			dkgresult.PrePublicationBlocks()
 
-	pendingRelayRequests := &event.RelayRequestTrack{
-		Data:  make(map[string]bool),
-		Mutex: &sync.Mutex{},
-	}
+	eventDeduplicator := event.NewDeduplicator(
+		relayChain,
+		minGroupCreationDurationBlocks,
+	)
 
 	node.ResumeSigningIfEligible(relayChain, signing)
 
@@ -78,18 +83,32 @@ func Initialize(
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
-					previousEntry := hex.EncodeToString(request.PreviousEntry[:])
-
-					if ok := pendingRelayRequests.Add(previousEntry); !ok {
-						logger.Warningf(
-							"relay entry requested event with previous entry "+
-								"[0x%x] has been registered already",
+					shouldProcess, err := eventDeduplicator.NotifyRelayEntryStarted(
+						request.BlockNumber,
+						hex.EncodeToString(request.PreviousEntry[:]),
+					)
+					if err != nil {
+						logger.Errorf(
+							"could not determine whether relay entry "+
+								"requested event with previous entry [0x%x] "+
+								"and starting block [%v] is a duplicate: [%v]",
 							request.PreviousEntry,
+							request.BlockNumber,
+							err,
 						)
 						return
 					}
 
-					defer pendingRelayRequests.Remove(previousEntry)
+					if !shouldProcess {
+						logger.Warningf(
+							"relay entry requested event with previous "+
+								"entry [0x%x] and starting block [%v] has been "+
+								"already processed",
+							request.PreviousEntry,
+							request.BlockNumber,
+						)
+						return
+					}
 
 					logger.Infof(
 						"new relay entry requested at block [%v] from group "+
@@ -147,17 +166,18 @@ func Initialize(
 			)
 		}
 
-		newEntry := event.NewEntry.Text(16)
 		go func() {
-			if ok := pendingGroupSelections.Add(newEntry); !ok {
-				logger.Errorf(
-					"group selection event with seed [0x%x] has been registered already",
+			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
+				event.BlockNumber,
+			); !ok {
+				logger.Warningf(
+					"group selection event with seed [0x%x] and "+
+						"starting block [%v] has been already processed",
 					event.NewEntry,
+					event.BlockNumber,
 				)
 				return
 			}
-
-			defer pendingGroupSelections.Remove(newEntry)
 
 			logger.Infof(
 				"group selection started with seed [0x%x] at block [%v]",
@@ -165,7 +185,7 @@ func Initialize(
 				event.BlockNumber,
 			)
 
-			err := groupselection.CandidateToNewGroup(
+			err = groupselection.CandidateToNewGroup(
 				relayChain,
 				blockCounter,
 				chainConfig,
@@ -175,7 +195,7 @@ func Initialize(
 				onGroupSelected,
 			)
 			if err != nil {
-				logger.Errorf("Tickets submission failed: [%v]", err)
+				logger.Errorf("tickets submission failed: [%v]", err)
 			}
 		}()
 	})

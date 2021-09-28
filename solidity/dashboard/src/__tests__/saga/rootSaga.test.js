@@ -27,6 +27,14 @@ jest.mock("../../connectors/trezor", () => ({
   TrezorConnector: Object,
 }))
 
+// TODO: Mock globally
+// Mock TrezorConnector due to `This version of trezor-connect is not suitable
+// to work without browser. Use trezor-connect@extended package instead` error.
+jest.mock("../../connectors/trezor", () => ({
+  ...jest.requireActual("../../components/Modal"),
+  TrezorConnector: Object,
+}))
+
 const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
   liquidityRewards
 

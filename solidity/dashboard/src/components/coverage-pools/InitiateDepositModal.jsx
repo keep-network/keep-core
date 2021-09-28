@@ -12,7 +12,7 @@ import Button from "../Button"
 import { CooldownPeriodBanner } from "../coverage-pools"
 
 const InitiateDepositModal = ({
-  amount, // amount of KEEP that user want to initiate balance with (in KEEP)
+  amount, // amount of KEEP that user wants to deposit (in KEEP)
   balanceAmount, // total balance of the user after the deposit is done (in covKEEP)
   estimatedBalanceAmountInKeep, // estimated total balance of user in KEEP
   submitBtnText,
@@ -83,13 +83,16 @@ const InitiateDepositModal = ({
           <CooldownPeriodBanner />
         </OnlyIf>
         <OnlyIf condition={transactionFinished}>
-          <Divider className="divider divider--tile-fluid" />
+          <Divider
+            className="divider divider--tile-fluid"
+            style={{ margin: "0.5rem 0", marginTop: "auto" }}
+          />
           <Button
-            className="btn btn-lg btn-secondary"
+            className="btn btn-lg btn-secondary success-modal-close-button"
             disabled={false}
             onClick={onCancel}
           >
-            Close
+            close
           </Button>
         </OnlyIf>
       </InitiateDepositModal.Container>

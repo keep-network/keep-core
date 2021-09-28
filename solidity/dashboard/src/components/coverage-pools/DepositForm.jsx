@@ -4,7 +4,10 @@ import FormInput from "../../components/FormInput"
 import { SubmitButton } from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { normalizeAmount, formatAmount } from "../../forms/form.utils"
+import {
+  formatFloatingAmount,
+  normalizeFloatingAmount,
+} from "../../forms/form.utils"
 import { KEEP } from "../../utils/token.utils"
 import List from "../List"
 import * as Icons from "../Icons"
@@ -23,7 +26,12 @@ import { LINK } from "../../constants/constants"
 
 const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
+  const onAddonClick = useSetMaxAmountToken(
+    "tokenAmount",
+    tokenAmount,
+    KEEP,
+    KEEP.decimals
+  )
 
   const getEstimatedReward = () => {
     if (!formikProps.values.tokenAmount) {
@@ -46,12 +54,30 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={normalizeAmount}
-          format={formatAmount}
+          normalize={normalizeFloatingAmount}
+          format={formatFloatingAmount}
+          leftIconComponent={
+            <Icons.KeepOutline
+              className="keep-outline--grey-60"
+              width={20}
+              height={20}
+              style={{ margin: "0 1rem" }}
+            />
+          }
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }
-          additionalInfoText={`KEEP Balance ${KEEP.displayAmount(tokenAmount)}`}
+          additionalInfoText={
+            <>
+              <span>Keep Balance</span>&nbsp;
+              <TokenAmount
+                amount={tokenAmount}
+                wrapperClassName={"deposit-form__keep-balance-amount"}
+                amountClassName={"text-success"}
+                symbolClassName={"text-success"}
+              />
+            </>
+          }
         />
       </div>
       <List>

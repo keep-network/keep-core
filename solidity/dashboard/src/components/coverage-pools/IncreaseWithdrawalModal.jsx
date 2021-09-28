@@ -8,20 +8,22 @@ import { useDispatch } from "react-redux"
 import List from "../List"
 import Divider from "../Divider"
 import Button from "../Button"
-import { KEEP } from "../../utils/token.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
 import { add } from "../../utils/arithmetics.utils"
 import { useWeb3Address } from "../WithWeb3Context"
 import { addAdditionalDataToModal } from "../../actions/modal"
 import { Keep } from "../../contracts"
+import TokenAmount from "../TokenAmount"
 
-const getItems = (keepAmount) => {
+const getItems = (covKeepAmount) => {
   return [
     {
       label: (
         <>
-          Add&nbsp;<strong>{KEEP.displayAmountWithSymbol(keepAmount)}</strong>
+          Add&nbsp;
+          <strong>{covKEEP.displayAmountWithSymbol(covKeepAmount)}</strong>
           &nbsp;to your existing expired withdrawal
         </>
       ),
@@ -98,11 +100,12 @@ const IncreaseWithdrawalModal = ({
           covTotalSupply={covTotalSupply}
         >
           <div className={"withdraw-modal__data-row"}>
-            <h4 className={"text-grey-50"}>Expired withdrawal&nbsp;</h4>
+            <h4 className={"text-grey-50"}>Exchange Rate&nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
+              1 covKEEP = ~
               {KEEP.displayAmountWithSymbol(
                 Keep.coveragePoolV1.estimatedBalanceFor(
-                  pendingWithdrawalBalance,
+                  KEEP.fromTokenUnit(1).toString(),
                   covTotalSupply,
                   totalValueLocked
                 )
@@ -110,16 +113,24 @@ const IncreaseWithdrawalModal = ({
             </h4>
           </div>
           <div className={"withdraw-modal__data-row"}>
+            <h4 className={"text-grey-50"}>Expired withdrawal&nbsp;</h4>
+            <TokenAmount
+              amount={pendingWithdrawalBalance}
+              wrapperClassName={"withdraw-modal__data__value"}
+              amountClassName={"h4 text-grey-70"}
+              symbolClassName={"h4 text-grey-70"}
+              token={covKEEP}
+            />
+          </div>
+          <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Increase amount &nbsp;</h4>
-            <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              {KEEP.displayAmountWithSymbol(
-                Keep.coveragePoolV1.estimatedBalanceFor(
-                  amount,
-                  covTotalSupply,
-                  totalValueLocked
-                )
-              )}
-            </h4>
+            <TokenAmount
+              amount={amount}
+              wrapperClassName={"withdraw-modal__data__value"}
+              amountClassName={"h4 text-grey-70"}
+              symbolClassName={"h4 text-grey-70"}
+              token={covKEEP}
+            />
           </div>
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Wallet &nbsp;</h4>
@@ -140,13 +151,7 @@ const IncreaseWithdrawalModalStep1 = ({
   onSubmit,
   onCancel,
 }) => {
-  const items = getItems(
-    Keep.coveragePoolV1.estimatedBalanceFor(
-      addedAmount,
-      covTotalSupply,
-      totalValueLocked
-    )
-  )
+  const items = getItems(addedAmount)
   return (
     <div>
       <h3 className={"mb-1"}>Take note!</h3>
@@ -200,13 +205,12 @@ const ModalWithOverview = ({
           &nbsp;
           <Icons.Add />
           &nbsp;
-          {KEEP.displayAmountWithSymbol(
-            Keep.coveragePoolV1.estimatedBalanceFor(
-              addedAmount,
-              covTotalSupply,
-              totalValueLocked
-            )
-          )}
+          <TokenAmount
+            amount={addedAmount}
+            token={covKEEP}
+            amountClassName={"h4 text-grey-70"}
+            symbolClassName={"h4 text-gray-70"}
+          />
         </h4>
         <IncreaseWithdrawalModal.Tile
           title={"new withdrawal"}
@@ -236,13 +240,12 @@ const IncreaseWithdrawalModalTile = ({
       </h5>
       <div className={"modal-with-overview__withdrawal-info"}>
         <h4 className={"modal-with-overview__amount text-grey-70"}>
-          {KEEP.displayAmountWithSymbol(
-            Keep.coveragePoolV1.estimatedBalanceFor(
-              amount,
-              covTotalSupply,
-              totalValueLocked
-            )
-          )}
+          <TokenAmount
+            amount={amount}
+            token={covKEEP}
+            amountClassName={"h4 text-grey-70"}
+            symbolClassName={"h4 text-gray-70"}
+          />
         </h4>
         <OnlyIf condition={!expired}>
           <div className={"modal-with-overview__delay text-grey-50"}>

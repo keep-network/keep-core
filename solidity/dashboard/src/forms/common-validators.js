@@ -2,7 +2,6 @@ import web3Utils from "web3-utils"
 import { KEEP } from "../utils/token.utils"
 
 const REGEXP_NOT_BLANK_STRING = /^\s*$/
-const REGEXP_ONLY_NUMBERS = /^\d+$/
 
 const isBlankString = (value) => {
   return !value || REGEXP_NOT_BLANK_STRING.test(value)
@@ -22,26 +21,27 @@ export const validateEthAddress = (address, required = true) => {
   }
 }
 
+export const isNumeric = (value) => {
+  return !Number.isNaN(parseFloat(value)) && isFinite(value, "Is not finite")
+}
+
 export const validateAmountInRange = (
   value,
   maxValue,
   minValue = 0,
   /** @type {import("../utils/token.utils").Token} */
-  token = KEEP,
-  isFloatingNumber = false
+  token = KEEP
 ) => {
   /** @type {import("bignumber.js").BigNumber} */
-  const formatedValue = token.fromTokenUnit(value)
+  const formattedValue = token.fromTokenUnit(value)
 
   if (isBlankString(value)) {
     return "Required"
-  } else if (
-    (!isFloatingNumber && !REGEXP_ONLY_NUMBERS.test(value)) ||
-    (isFloatingNumber && formatedValue.decimalPlaces() > 0)
-  ) {
+  } else if (!isNumeric(value)) {
     return "Invalid value"
   }
-  const validateValueInBN = web3Utils.toBN(formatedValue.toString())
+
+  const validateValueInBN = web3Utils.toBN(formattedValue.toString())
   const maxValueInBN = web3Utils.toBN(maxValue.toString() || 0)
   const minValueInBN = web3Utils.toBN(minValue.toString())
 
