@@ -7,7 +7,7 @@ import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
 import { Keep } from "../../contracts"
 import TokenAmount from "../TokenAmount"
-import {useWeb3Address} from "../WithWeb3Context";
+import { useWeb3Address } from "../WithWeb3Context"
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
