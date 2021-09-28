@@ -1,10 +1,15 @@
 import React, { useEffect, useState, useRef } from "react"
 import { CSSTransition } from "react-transition-group"
 
+export const TOOLTIP_DIRECTION = {
+  TOP: "top",
+  BOTTOM: "bottom",
+}
+
 const Tooltip = ({
   triggerComponent: TriggerComponent,
   children,
-  direction = "bottom",
+  direction = TOOLTIP_DIRECTION.BOTTOM,
   simple = false,
   delay = 300,
   className = "",
@@ -14,6 +19,8 @@ const Tooltip = ({
 }) => {
   const timeout = useRef(null)
   const [active, setActive] = useState(false)
+  const contentRef = useRef(null)
+  const arrowRef = useRef(null)
 
   useEffect(() => {
     return () => {
@@ -23,7 +30,31 @@ const Tooltip = ({
     }
   })
 
+  /**
+   * Check if tooltip is out of the RIGHT side of the view.
+   * If it is it will move the tooltip to the left.
+   */
+  const handleDropdownPosition = () => {
+    if (!contentRef || !contentRef.current) return
+    if (!arrowRef || !arrowRef.current) return
+    const contentRect = contentRef.current.getBoundingClientRect()
+    const contentRightX = contentRect.x + contentRect.width
+
+    if (contentRightX > window.outerWidth) {
+      contentRef.current.style.transform = `translateX(calc(-100% + 9px))`
+      if (direction === TOOLTIP_DIRECTION.TOP) {
+        contentRef.current.style.borderBottomRightRadius = "0"
+      } else if (direction === TOOLTIP_DIRECTION.BOTTOM) {
+        contentRef.current.style.borderTopRightRadius = "0"
+      }
+
+      arrowRef.current.style.left = "auto"
+      arrowRef.current.style.right = "calc(0%)"
+    }
+  }
+
   const showTooltip = () => {
+    handleDropdownPosition()
     setActive(true)
     clearTimeout(timeout.current)
   }
@@ -64,7 +95,9 @@ const Tooltip = ({
           style={contentWrapperStyles}
           onMouseEnter={showTooltip}
           onMouseLeave={hideTooltip}
+          ref={contentRef}
         >
+          <div ref={arrowRef} className={"tooltip__arrow"} />
           {children}
         </div>
       </CSSTransition>

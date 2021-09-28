@@ -136,7 +136,14 @@ const TokensAmountField = ({
           additionalInfoText={`MIN STAKE ${KEEP.displayAmountWithSymbol(
             minStake
           )}`}
-          leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
+          leftIconComponent={
+            <Icons.KeepOutline
+              className="keep-outline--grey-60"
+              width={32}
+              height={32}
+              style={{ margin: "0 1.5rem" }}
+            />
+          }
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }

@@ -176,6 +176,8 @@ export function* subscribeToAssetPoolDepositedEvent() {
 
     const address = yield select(selectors.getUserAddress)
 
+    const { componentProps } = yield select(selectors.getModalData)
+
     const isAddressedToCurrentAddress = isSameEthAddress(address, underwriter)
 
     const updatedCovTotalSupply = add(covTotalSupply, covAmount).toString()
@@ -205,7 +207,7 @@ export function* subscribeToAssetPoolDepositedEvent() {
           componentProps: {
             transactionFinished: true,
             transactionHash: event.transactionHash,
-            amount: covAmount,
+            amount: componentProps?.amount,
             balanceAmount: updatedCovBalance,
             estimatedBalanceAmountInKeep: estimatedKeepBalance,
           },
@@ -260,9 +262,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     } = event
 
     const address = yield select(selectors.getUserAddress)
-    const { covTokensAvailableToWithdraw } = yield select(
-      selectors.getCoveragePool
-    )
+    const { covBalance } = yield select(selectors.getCoveragePool)
     const { componentProps } = yield select(selectors.getModalData)
 
     if (!isSameEthAddress(address, underwriter)) {
@@ -313,10 +313,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
       covTokenUpdated({
         pendingWithdrawal: covAmount,
         withdrawalInitiatedTimestamp: timestamp,
-        covTokensAvailableToWithdraw: sub(
-          covTokensAvailableToWithdraw,
-          covAmount
-        ).toString(),
+        covTokensAvailableToWithdraw: sub(covBalance, covAmount).toString(),
       })
     )
   }

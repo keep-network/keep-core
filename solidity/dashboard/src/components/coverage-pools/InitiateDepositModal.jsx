@@ -10,9 +10,11 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import Divider from "../Divider"
 import Button from "../Button"
 import { CooldownPeriodBanner } from "../coverage-pools"
+import { addAdditionalDataToModal } from "../../actions/modal"
+import { useDispatch } from "react-redux"
 
 const InitiateDepositModal = ({
-  amount, // amount of KEEP that user want to initiate balance with (in KEEP)
+  amount, // amount of KEEP that user wants to deposit (in KEEP)
   balanceAmount, // total balance of the user after the deposit is done (in covKEEP)
   estimatedBalanceAmountInKeep, // estimated total balance of user in KEEP
   submitBtnText,
@@ -21,6 +23,19 @@ const InitiateDepositModal = ({
   transactionFinished = false,
   transactionHash = "",
 }) => {
+  const dispatch = useDispatch()
+
+  const onSubmit = () => {
+    dispatch(
+      addAdditionalDataToModal({
+        componentProps: {
+          amount: amount,
+        },
+      })
+    )
+    onBtnClick()
+  }
+
   return (
     <ModalWithTimeline
       className={`withdraw-modal__main-container`}
@@ -30,7 +45,7 @@ const InitiateDepositModal = ({
       <InitiateDepositModal.Container
         transactionFinished={transactionFinished}
         submitBtnText={submitBtnText}
-        onBtnClick={onBtnClick}
+        onBtnClick={onSubmit}
         onCancel={onCancel}
       >
         <OnlyIf condition={transactionFinished}>
@@ -89,7 +104,7 @@ const InitiateDepositModal = ({
             disabled={false}
             onClick={onCancel}
           >
-            Close
+            close
           </Button>
         </OnlyIf>
       </InitiateDepositModal.Container>

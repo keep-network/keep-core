@@ -198,7 +198,7 @@ const TopUpInitiatedConfirmationModal = ({
         }}
       />
       <Button className="btn btn-lg btn-secondary" onClick={closeModal}>
-        Close
+        close
       </Button>
     </>
   )
