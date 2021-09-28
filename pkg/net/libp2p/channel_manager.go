@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	libp2pMessageSigning              = true
-	libp2pStrictSignatureVerification = true
-	libp2pPeerOutboundQueueSize       = 256
-	libp2pValidationQueueSize         = 4096
+	libp2pPeerOutboundQueueSize = 256
+	libp2pValidationQueueSize   = 4096
 )
 
 type channelManager struct {
@@ -46,8 +44,7 @@ func newChannelManager(
 		ctx,
 		p2phost,
 		pubsub.WithMessageAuthor(identity.id),
-		pubsub.WithMessageSigning(libp2pMessageSigning),
-		pubsub.WithStrictSignatureVerification(libp2pStrictSignatureVerification),
+		pubsub.WithMessageSignaturePolicy(pubsub.StrictSign),
 		pubsub.WithPeerOutboundQueueSize(libp2pPeerOutboundQueueSize),
 		pubsub.WithValidateQueueSize(libp2pValidationQueueSize),
 	)
