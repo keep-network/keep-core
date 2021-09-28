@@ -21,7 +21,7 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
 import { Keep } from "../../contracts"
 import { useWeb3Address } from "../WithWeb3Context"
-import ResourceTooltip, {ResourceTooltipContent} from "../ResourceTooltip";
+import { ResourceTooltipContent } from "../ResourceTooltip"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
