@@ -161,7 +161,7 @@ const KeepOnlyPool = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   href={LINK.proposals.shiftingIncentivesToCoveragePools}
-                  className="text-grey-60"
+                  className="text-link text-grey-60"
                 >
                   More info
                 </a>
