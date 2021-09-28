@@ -270,26 +270,38 @@ describe("Coverage pool saga test", () => {
   })
 
   describe("Subscribe to Asset Pool's Deposit event", () => {
+    const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+    const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+    const initialCovBalance = Token.fromTokenUnit(30).toString()
+    const initialCovTokensAvailableToWithdraw =
+      Token.fromTokenUnit(30).toString()
+
+    const initialState = {
+      ...coveragePoolInitialData,
+      covTotalSupply: initialCovTotalSupply,
+      covBalance: initialCovBalance,
+      covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+    }
+    const updatedShareOfPool = 0.8
+    const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
+    const estimatedRewards = KEEP.fromTokenUnit(35).toString()
+    const updatedTvl = KEEP.fromTokenUnit(10000).toString()
+    const keepInUSD = new BigNumber(0.25)
+    const updatedAPY = 0.5
+    const tvlInUSD = new BigNumber(keepInUSD)
+      .multipliedBy(KEEP.toTokenUnit(updatedTvl))
+      .toFormat(2)
+
     it("should update data correctly if the `Deposit` event has been emitted by current logged user", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(30).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
+      const underwriterAddress = address
+
       const depositEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("300").toString(),
       }
+
       const mockedEvent = {
         returnValues: depositEventData,
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
       }
 
       const updatedCovBalance = add(
@@ -304,15 +316,6 @@ describe("Coverage pool saga test", () => {
         initialCovTokensAvailableToWithdraw,
         depositEventData.covAmount
       ).toString()
-      const updatedShareOfPool = 0.8
-      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
-      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
-      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
-      const keepInUSD = new BigNumber(0.25)
-      const updatedAPY = 0.5
-      const tvlInUSD = new BigNumber(keepInUSD)
-        .multipliedBy(KEEP.toTokenUnit(updatedTvl))
-        .toFormat(2)
 
       return expectSaga(subscribeToAssetPoolDepositedEvent)
         .withReducer(coveragePoolReducer, initialState.coveragePool)
@@ -376,12 +379,7 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should update data correctly for current user if the `Deposit` event has been emitted by another user", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
       const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(30).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
       const depositEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("300").toString(),
@@ -390,26 +388,10 @@ describe("Coverage pool saga test", () => {
         returnValues: depositEventData,
       }
 
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
-      }
-
       const updatedCovTotalSupply = add(
         initialCovTotalSupply,
         depositEventData.covAmount
       ).toString()
-      const updatedShareOfPool = 0.8
-      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
-      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
-      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
-      const keepInUSD = new BigNumber(0.25)
-      const updatedAPY = 0.5
-      const tvlInUSD = new BigNumber(keepInUSD)
-        .multipliedBy(KEEP.toTokenUnit(updatedTvl))
-        .toFormat(2)
 
       return expectSaga(subscribeToAssetPoolDepositedEvent)
         .withReducer(coveragePoolReducer, initialState.coveragePool)
@@ -473,13 +455,8 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should show correct success modal window, when depositing KEEPs in Coverage Pool", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = address
       const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(30).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
       const depositEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("300").toString(),
@@ -489,19 +466,6 @@ describe("Coverage pool saga test", () => {
         transactionHash,
       }
 
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
-      }
-
-      const updatedShareOfPool = 0.8
-      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
-      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
-      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
-      const keepInUSD = new BigNumber(0.25)
-      const updatedAPY = 0.5
       const expectedModalType =
         modalComponentType.COV_POOLS.KEEP_DEPOSITED_SUCCESS
       const expectedTitle = "Deposit"
@@ -555,13 +519,22 @@ describe("Coverage pool saga test", () => {
   })
 
   describe("Subscribe to WithdrawalInitiated event", () => {
+    const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+    const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
+    const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
+    const initialCovBalance = Token.fromTokenUnit(30).toString()
+    const initialCovTokensAvailableToWithdraw =
+      Token.fromTokenUnit(30).toString()
+
+    const initialState = {
+      ...coveragePoolInitialData,
+      covTotalSupply: initialCovTotalSupply,
+      covBalance: initialCovBalance,
+      covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+    }
+
     it("should update data correctly if the `WithdrawalInitiated` event has been emitted by current logged user", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(30).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
+      const underwriterAddress = address
       const withdrawalInitiatedEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("20").toString(),
@@ -576,13 +549,6 @@ describe("Coverage pool saga test", () => {
           pendingWithdrawalBalance: KEEP.fromTokenUnit("200").toString(),
           amount: KEEP.fromTokenUnit("20").toString(),
         },
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
       }
 
       const updatedCovTokensAvailableToWithdraw = sub(
@@ -620,12 +586,7 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should update data correctly for current user if the `WithdrawalInitiated` event has been emitted by another user", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
       const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(30).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
       const withdrawalInitiatedEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("20").toString(),
@@ -640,13 +601,6 @@ describe("Coverage pool saga test", () => {
           pendingWithdrawalBalance: KEEP.fromTokenUnit("200").toString(),
           amount: KEEP.fromTokenUnit("20").toString(),
         },
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
       }
 
       return expectSaga(subscribeToWithdrawalInitiatedEvent)
@@ -668,13 +622,8 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should show correct success modal window, when initiating a withdrawal", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = address
       const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(30).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
       const withdrawalInitiatedEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("20").toString(),
@@ -689,13 +638,6 @@ describe("Coverage pool saga test", () => {
         componentProps: {
           amount: KEEP.fromTokenUnit("20").toString(),
         },
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
       }
 
       const expectedModalType = modalComponentType.COV_POOLS.INITIATE_WITHDRAWAL
@@ -728,13 +670,7 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should show correct success modal window, when re-initiating a withdrawal", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(50).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
+      const underwriterAddress = address
       const withdrawalInitiatedEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("20").toString(),
@@ -750,13 +686,6 @@ describe("Coverage pool saga test", () => {
           pendingWithdrawalBalance: Token.fromTokenUnit(20).toString(),
           amount: KEEP.fromTokenUnit("0").toString(),
         },
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
       }
 
       const expectedModalType =
@@ -790,13 +719,8 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should show correct success modal window, when increasing value of a pending withdrawal", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+      const underwriterAddress = address
       const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(50).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
       const withdrawalInitiatedEventData = {
         underwriter: underwriterAddress,
         covAmount: KEEP.fromTokenUnit("20").toString(),
@@ -812,13 +736,6 @@ describe("Coverage pool saga test", () => {
           pendingWithdrawalBalance: Token.fromTokenUnit(20).toString(),
           amount: KEEP.fromTokenUnit("10").toString(),
         },
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
       }
 
       const expectedModalType = modalComponentType.COV_POOLS.INCREASE_WITHDRAWAL
@@ -852,40 +769,51 @@ describe("Coverage pool saga test", () => {
   })
 
   describe("Subscribe to WithdrawalCompleted event", () => {
+    const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
+    const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
+    const initialCovTotalSupply = Token.fromTokenUnit("1000").toString()
+    const initialCovBalance = Token.fromTokenUnit("400").toString()
+
+    const withdrawalCompletedEventData = {
+      underwriter: address,
+      amount: KEEP.fromTokenUnit("320").toString(),
+      covAmount: KEEP.fromTokenUnit("300").toString(),
+    }
+    const initialCovTokensAvailableToWithdraw = sub(
+      initialCovBalance,
+      withdrawalCompletedEventData.covAmount
+    ).toString()
+
+    const mockedEvent = {
+      returnValues: withdrawalCompletedEventData,
+      transactionHash,
+    }
+
+    const mockedModalData = {
+      componentProps: {
+        pendingWithdrawalBalance: KEEP.fromTokenUnit("0").toString(),
+        amount: KEEP.fromTokenUnit("0").toString(),
+      },
+    }
+
+    const initialState = {
+      ...coveragePoolInitialData,
+      covTotalSupply: initialCovTotalSupply,
+      covBalance: initialCovBalance,
+      covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
+    }
+
+    const updatedShareOfPool = 0.8
+    const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
+    const estimatedRewards = KEEP.fromTokenUnit(35).toString()
+    const updatedTvl = KEEP.fromTokenUnit(10000).toString()
+    const keepInUSD = new BigNumber(0.25)
+    const updatedAPY = 0.5
+    const tvlInUSD = new BigNumber(keepInUSD)
+      .multipliedBy(KEEP.toTokenUnit(updatedTvl))
+      .toFormat(2)
+
     it("should update data correctly if the `WithdrawalCompleted` event has been emitted by current logged user", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const initialCovTotalSupply = Token.fromTokenUnit("1000").toString()
-      const initialCovBalance = Token.fromTokenUnit("400").toString()
-
-      const withdrawalCompletedEventData = {
-        underwriter: underwriterAddress,
-        amount: KEEP.fromTokenUnit("320").toString(),
-        covAmount: KEEP.fromTokenUnit("300").toString(),
-      }
-      const initialCovTokensAvailableToWithdraw = sub(
-        initialCovBalance,
-        withdrawalCompletedEventData.covAmount
-      ).toString()
-
-      const mockedEvent = {
-        returnValues: withdrawalCompletedEventData,
-      }
-
-      const mockedModalData = {
-        componentProps: {
-          pendingWithdrawalBalance: KEEP.fromTokenUnit("0").toString(),
-          amount: KEEP.fromTokenUnit("0").toString(),
-        },
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
-      }
-
       const updatedCovBalance = sub(
         initialCovBalance,
         withdrawalCompletedEventData.covAmount
@@ -894,15 +822,6 @@ describe("Coverage pool saga test", () => {
         initialCovTotalSupply,
         withdrawalCompletedEventData.covAmount
       ).toString()
-      const updatedShareOfPool = 0.8
-      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
-      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
-      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
-      const keepInUSD = new BigNumber(0.25)
-      const updatedAPY = 0.5
-      const tvlInUSD = new BigNumber(keepInUSD)
-        .multipliedBy(KEEP.toTokenUnit(updatedTvl))
-        .toFormat(2)
 
       return expectSaga(subscribeToWithdrawalCompletedEvent)
         .withReducer(coveragePoolReducer, initialState.coveragePool)
@@ -969,10 +888,7 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should update data correctly for current user if the `WithdrawalCompleted` event has been emitted by another user", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
       const underwriterAddress = "0x065993c332b02ab8674Ac033CaCDBccBe7bc9047"
-      const initialCovTotalSupply = Token.fromTokenUnit("1000").toString()
-      const initialCovBalance = Token.fromTokenUnit("400").toString()
 
       const withdrawalCompletedEventData = {
         underwriter: underwriterAddress,
@@ -988,13 +904,6 @@ describe("Coverage pool saga test", () => {
         returnValues: withdrawalCompletedEventData,
       }
 
-      const mockedModalData = {
-        componentProps: {
-          pendingWithdrawalBalance: KEEP.fromTokenUnit("0").toString(),
-          amount: KEEP.fromTokenUnit("0").toString(),
-        },
-      }
-
       const initialState = {
         ...coveragePoolInitialData,
         covTotalSupply: initialCovTotalSupply,
@@ -1008,15 +917,6 @@ describe("Coverage pool saga test", () => {
         initialCovTotalSupply,
         withdrawalCompletedEventData.covAmount
       ).toString()
-      const updatedShareOfPool = 0.8
-      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
-      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
-      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
-      const keepInUSD = new BigNumber(0.25)
-      const updatedAPY = 0.5
-      const tvlInUSD = new BigNumber(keepInUSD)
-        .multipliedBy(KEEP.toTokenUnit(updatedTvl))
-        .toFormat(2)
 
       return expectSaga(subscribeToWithdrawalCompletedEvent)
         .withReducer(coveragePoolReducer, initialState.coveragePool)
@@ -1079,37 +979,6 @@ describe("Coverage pool saga test", () => {
     })
 
     it("should show correct success modal window, when claiming tokens from a pending withdrawal", () => {
-      const address = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const underwriterAddress = "0x086813525A7dC7dafFf015Cdf03896Fd276eab60"
-      const transactionHash = "0x123453525A7454et543tr5Cdf03896Fd276avg45"
-      const initialCovTotalSupply = Token.fromTokenUnit(100).toString()
-      const initialCovBalance = Token.fromTokenUnit(50).toString()
-      const initialCovTokensAvailableToWithdraw =
-        Token.fromTokenUnit(30).toString()
-      const withdrawalInitiatedEventData = {
-        underwriter: underwriterAddress,
-        covAmount: KEEP.fromTokenUnit("20").toString(),
-        timestamp: 1631857610,
-      }
-      const mockedEvent = {
-        returnValues: withdrawalInitiatedEventData,
-        transactionHash,
-      }
-
-      const initialState = {
-        ...coveragePoolInitialData,
-        covTotalSupply: initialCovTotalSupply,
-        covBalance: initialCovBalance,
-        covTokensAvailableToWithdraw: initialCovTokensAvailableToWithdraw,
-      }
-
-      const updatedShareOfPool = 0.8
-      const estimatedKeepBalance = KEEP.fromTokenUnit(350).toString()
-      const estimatedRewards = KEEP.fromTokenUnit(35).toString()
-      const updatedTvl = KEEP.fromTokenUnit(10000).toString()
-      const keepInUSD = new BigNumber(0.25)
-      const updatedAPY = 0.5
-
       const expectedModalType =
         modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED
       const expectedTitle = "Claim tokens"
