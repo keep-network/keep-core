@@ -21,6 +21,7 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
 import { Keep } from "../../contracts"
 import { useWeb3Address } from "../WithWeb3Context"
+import { ResourceTooltipContent } from "../ResourceTooltip"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
@@ -299,12 +300,12 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
               </span>
             </h4>
             <Tooltip
-              simple
-              delay={0}
               triggerComponent={Icons.MoreInfo}
               className={"withdrawal-available-for__tooltip"}
             >
-              Available for tooltip
+              <ResourceTooltipContent
+                {...resourceTooltipProps.covPoolsAvailableToWithdraw}
+              />
             </Tooltip>
           </div>
           <span className={"coverage-pool__withdrawal-expired-at"}>
@@ -319,12 +320,12 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
         <div className={"coverage-pool__withdrawal-expired-error"}>
           <h4 className={"text-error"}>Claim window expired</h4>
           <Tooltip
-            simple
-            delay={0}
             triggerComponent={Icons.MoreInfo}
             className={"withdrawal-expired__tooltip"}
           >
-            Withdrawal expired tooltip
+            <ResourceTooltipContent
+              {...resourceTooltipProps.covPoolsAvailableToWithdraw}
+            />
           </Tooltip>
         </div>
       )
