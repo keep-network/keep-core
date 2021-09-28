@@ -52,7 +52,7 @@ func (i *identity) Marshal() ([]byte, error) {
 		}
 	}
 
-	pubKeyBytes, err := pubKey.Bytes()
+	pubKeyBytes, err := libp2pcrypto.MarshalPublicKey(pubKey)
 	if err != nil {
 		return nil, err
 	}
