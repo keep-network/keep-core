@@ -7,6 +7,7 @@ import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
 import { Keep } from "../../contracts"
 import TokenAmount from "../TokenAmount"
+import {useWeb3Address} from "../WithWeb3Context";
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
@@ -20,6 +21,8 @@ const InitiateCovPoolsWithdrawModal = ({
   className = "",
   transactionFinished = false,
 }) => {
+  const yourAddress = useWeb3Address()
+
   return (
     <ModalWithTimeline
       className={`withdraw-modal__main-container ${className}`}
@@ -66,7 +69,7 @@ const InitiateCovPoolsWithdrawModal = ({
         <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Wallet &nbsp;</h4>
           <h4 className={"withdraw-modal__data__value text-grey-70"}>
-            {shortenAddress("0x254673e7c7d76e051e80d30FCc3EA6A9C2a22222")}
+            {shortenAddress(yourAddress)}
           </h4>
         </div>
       </WithdrawalInfo>
