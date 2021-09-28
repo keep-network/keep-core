@@ -300,7 +300,6 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
               </span>
             </h4>
             <Tooltip
-              delay={0}
               triggerComponent={Icons.MoreInfo}
               className={"withdrawal-available-for__tooltip"}
             >
@@ -321,7 +320,6 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
         <div className={"coverage-pool__withdrawal-expired-error"}>
           <h4 className={"text-error"}>Claim window expired</h4>
           <Tooltip
-            delay={0}
             triggerComponent={Icons.MoreInfo}
             className={"withdrawal-expired__tooltip"}
           >
