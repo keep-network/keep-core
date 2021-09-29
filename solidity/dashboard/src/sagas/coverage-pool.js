@@ -343,6 +343,11 @@ export function* subscribeToWithdrawalCompletedEvent() {
     )
 
     if (isAddressedToCurrentAddress) {
+      yield put({
+        type: "keep-token/transfered",
+        payload: { value: amount, arithmeticOperation: add },
+      })
+
       yield put(
         showModal({
           modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
