@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: cov-pools-dapp # Added only temporarily, not intended for workflow on `main`
+          ref: ${{ github.event.inputs.upstream_ref }}
 
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v1
