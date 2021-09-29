@@ -61,16 +61,16 @@ function* observeKeepTokenTransfer() {
         payload: { event },
       })
 
-      let arithmeticOpration = null
+      let arithmeticOperation = null
       if (isSameEthAddress(defaultAccount, from)) {
-        arithmeticOpration = sub
+        arithmeticOperation = sub
       } else if (isSameEthAddress(defaultAccount, to)) {
-        arithmeticOpration = add
+        arithmeticOperation = add
       }
-      if (arithmeticOpration) {
+      if (arithmeticOperation) {
         yield put({
           type: "keep-token/transfered",
-          payload: { value, arithmeticOpration },
+          payload: { value, arithmeticOperation },
         })
       }
     } catch (error) {
@@ -706,8 +706,8 @@ function* lpTokensStakedOrWithdrawn(
   // Update only if this transaction relates to the current logged account.
   if (isSameEthAddress(defaultAccount, user)) {
     emittedAmountValue = amount
-    const arithmeticOpration = actionType.includes("withdrawn") ? sub : add
-    updatedlpBalance = arithmeticOpration(lpBalance, amount).toString()
+    const arithmeticOperation = actionType.includes("withdrawn") ? sub : add
+    updatedlpBalance = arithmeticOperation(lpBalance, amount).toString()
   }
 
   yield* updateLPTokenBalance(

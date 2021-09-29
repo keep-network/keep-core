@@ -185,6 +185,13 @@ export function* subscribeToAssetPoolDepositedEvent() {
       ? add(covTokensAvailableToWithdraw, covAmount).toString()
       : covTokensAvailableToWithdraw
 
+    if (isAddressedToCurrentAddress) {
+      yield put({
+        type: "keep-token/transfered",
+        payload: { value: amount, arithmeticOperation: sub },
+      })
+    }
+
     const shareOfPool = yield call(
       Keep.coveragePoolV1.shareOfPool,
       updatedCovTotalSupply,

@@ -9,7 +9,7 @@ const keepBalance = (state = initialState, action) => {
     case "keep-token/transfered":
       return {
         ...state,
-        value: action.payload.arithmeticOpration(
+        value: action.payload.arithmeticOperation(
           state.value,
           action.payload.value
         ),
