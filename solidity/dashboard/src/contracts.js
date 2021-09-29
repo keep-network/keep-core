@@ -21,7 +21,7 @@ import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPET
 import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
 import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
 import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCSaddle.json"
-import LPRewardsTBTCv2Saddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCv2Saddle.json"
+import LPRewardsTBTCv2Saddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCSaddle.json"
 import KeepOnlyPool from "@keep-network/keep-core/artifacts/KeepVault.json"
 import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 import SaddleSwap from "./contracts-artifacts/SaddleSwap.json"
