@@ -5,6 +5,7 @@ import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
 import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
+import "hardhat-contract-sizer"
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -50,6 +51,11 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0, // take the first account as deployer
     },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
 }
 
