@@ -1,18 +1,22 @@
-const initialState = {
+import { add, sub } from "../utils/arithmetics.utils"
+
+export const keepBalanceInitialState = {
   value: "0",
   isFetching: false,
   error: "",
 }
 
-const keepBalance = (state = initialState, action) => {
+const keepBalance = (state = keepBalanceInitialState, action) => {
   switch (action.type) {
-    case "keep-token/transfered":
+    case "keep-token/transferred_from":
       return {
         ...state,
-        value: action.payload.arithmeticOperation(
-          state.value,
-          action.payload.value
-        ),
+        value: sub(state.value, action.payload.value),
+      }
+    case "keep-token/transferred_to":
+      return {
+        ...state,
+        value: add(state.value, action.payload.value),
       }
     case "keep-token/balance_request":
       return { ...state, isFetching: true }

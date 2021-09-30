@@ -85,17 +85,20 @@ export const identifyTaskBy = (indentificationField) => (action) =>
  * @param {string} eventName The contract event name.
  * @param {string | Function} action The action to be emitted to the redux.
  * @param {string} debugName A debug event name.
+ * @param {Object} options (optional) Options used when calling an event
  */
 export function* subscribeToEventAndEmitData(
   contractInstance,
   eventName,
   action,
-  debugName
+  debugName,
+  options = null
 ) {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     contractInstance,
-    eventName
+    eventName,
+    options
   )
   const _debugName = debugName || eventName
   const _isString = isString(action)

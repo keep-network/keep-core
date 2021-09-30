@@ -1,4 +1,11 @@
-import { fork, take, call, put, select } from "redux-saga/effects"
+import {
+  fork,
+  take,
+  call,
+  put,
+  select,
+  actionChannel,
+} from "redux-saga/effects"
 import moment from "moment"
 import { createSubcribeToContractEventChannel } from "./web3"
 import {
@@ -24,6 +31,10 @@ import {
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   coveragePoolWithdrawalCompletedEventEmitted,
   coveragePoolWithdrawalInitiatedEventEmitted,
+  KEEP_TOKEN_TRANSFER_FROM_EVENT_EMITTED,
+  KEEP_TOKEN_TRANSFER_TO_EVENT_EMITTED,
+  keepTokenTransferFromEventEmitted,
+  keepTokenTransferToEventEmitted,
   riskManagerAuctionClosedEventEmitted,
   riskManagerAuctionCreatedEventEmitted,
 } from "../actions/coverage-pool"
@@ -32,51 +43,89 @@ import { EVENTS } from "../constants/events"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
-  yield fork(observeKeepTokenTransfer)
 }
 
-function* observeKeepTokenTransfer() {
-  const { token } = yield getContractsContext()
+export function* observeKeepTokenTransferFrom() {
+  const { token: keepTokenContractInstance } = yield getContractsContext()
   const {
     eth: { defaultAccount },
   } = yield getWeb3Context()
 
-  // Create subscription channel.
-  const contractEventCahnnel = yield call(
-    createSubcribeToContractEventChannel,
-    token,
-    "Transfer"
+  const options = {
+    filter: {
+      from: defaultAccount,
+    },
+  }
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    keepTokenContractInstance,
+    "Transfer",
+    keepTokenTransferFromEventEmitted,
+    "KeepToken.Transfer",
+    options
+  )
+}
+
+export function* observeKeepTokenTransferTo() {
+  const { token: keepTokenContractInstance } = yield getContractsContext()
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  const options = {
+    filter: {
+      to: defaultAccount,
+    },
+  }
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    keepTokenContractInstance,
+    "Transfer",
+    keepTokenTransferToEventEmitted,
+    "KeepToken.Transfer",
+    options
+  )
+}
+
+export function* subscribeToKeepTokenTransferFromEvent() {
+  const requestChan = yield actionChannel(
+    KEEP_TOKEN_TRANSFER_FROM_EVENT_EMITTED
   )
 
   // Observe and dispatch an action that updates keep token balance.
   while (true) {
-    try {
-      const event = yield take(contractEventCahnnel)
-      const {
-        returnValues: { from, to, value },
-      } = event
+    const {
+      payload: { event },
+    } = yield take(requestChan)
+    const {
+      returnValues: { value },
+    } = event
 
-      yield put({
-        type: "keep-token/transfered_event",
-        payload: { event },
-      })
+    yield put({
+      type: "keep-token/transferred_from",
+      payload: { value },
+    })
+  }
+}
 
-      let arithmeticOperation = null
-      if (isSameEthAddress(defaultAccount, from)) {
-        arithmeticOperation = sub
-      } else if (isSameEthAddress(defaultAccount, to)) {
-        arithmeticOperation = add
-      }
-      if (arithmeticOperation) {
-        yield put({
-          type: "keep-token/transfered",
-          payload: { value, arithmeticOperation },
-        })
-      }
-    } catch (error) {
-      console.error(`Failed subscribing to Transfer event`, error)
-      contractEventCahnnel.close()
-    }
+export function* subscribtToKeepTokenTransferToEvent() {
+  const requestChan = yield actionChannel(KEEP_TOKEN_TRANSFER_TO_EVENT_EMITTED)
+
+  // Observe and dispatch an action that updates keep token balance.
+  while (true) {
+    const {
+      payload: { event },
+    } = yield take(requestChan)
+    const {
+      returnValues: { value },
+    } = event
+
+    yield put({
+      type: "keep-token/transferred_to",
+      payload: { value },
+    })
   }
 }
 

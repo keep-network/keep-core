@@ -185,13 +185,6 @@ export function* subscribeToAssetPoolDepositedEvent() {
       ? add(covTokensAvailableToWithdraw, covAmount).toString()
       : covTokensAvailableToWithdraw
 
-    if (isAddressedToCurrentAddress) {
-      yield put({
-        type: "keep-token/transfered",
-        payload: { value: amount, arithmeticOperation: sub },
-      })
-    }
-
     const shareOfPool = yield call(
       Keep.coveragePoolV1.shareOfPool,
       updatedCovTotalSupply,
@@ -343,11 +336,6 @@ export function* subscribeToWithdrawalCompletedEvent() {
     )
 
     if (isAddressedToCurrentAddress) {
-      yield put({
-        type: "keep-token/transfered",
-        payload: { value: amount, arithmeticOperation: add },
-      })
-
       yield put(
         showModal({
           modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
