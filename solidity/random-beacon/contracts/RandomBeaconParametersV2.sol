@@ -20,7 +20,9 @@ contract RandomBeaconParametersV2 is Ownable {
     error GovernanceDelayNotElapsed();
 
     modifier onlyAfterGovernanceDelay(string memory parameter, uint256 delay) {
-        uint256 slotTimestamp = calcSlot(PREFIX_UPDATE_TIMESTAMP, parameter);
+        uint256 slotTimestamp = uint256(
+            keccak256(abi.encodePacked(PREFIX_UPDATE_TIMESTAMP, parameter))
+        ) - 1;
 
         uint256 initiated;
         assembly {
@@ -40,7 +42,8 @@ contract RandomBeaconParametersV2 is Ownable {
         view
         returns (uint256 value)
     {
-        uint256 slot = calcSlot(PREFIX, parameter);
+        uint256 slot = uint256(keccak256(abi.encodePacked(PREFIX, parameter))) -
+            1;
 
         assembly {
             value := sload(slot)
@@ -52,7 +55,9 @@ contract RandomBeaconParametersV2 is Ownable {
         view
         returns (uint256 value)
     {
-        uint256 slot = calcSlot(PREFIX_NEW, parameter);
+        uint256 slot = uint256(
+            keccak256(abi.encodePacked(PREFIX_NEW, parameter))
+        ) - 1;
 
         assembly {
             value := sload(slot)
@@ -63,8 +68,13 @@ contract RandomBeaconParametersV2 is Ownable {
         public
         onlyOwner
     {
-        uint256 slotNew = calcSlot(PREFIX_NEW, parameter);
-        uint256 slotTimestamp = calcSlot(PREFIX_UPDATE_TIMESTAMP, parameter);
+        uint256 slotNew = uint256(
+            keccak256(abi.encodePacked(PREFIX_NEW, parameter))
+        ) - 1;
+
+        uint256 slotTimestamp = uint256(
+            keccak256(abi.encodePacked(PREFIX_UPDATE_TIMESTAMP, parameter))
+        ) - 1;
 
         uint256 newValueCheck;
         assembly {
@@ -83,8 +93,11 @@ contract RandomBeaconParametersV2 is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(parameter, DELAY)
     {
-        uint256 slot = calcSlot(PREFIX, parameter);
-        uint256 slotNewValue = calcSlot(PREFIX_NEW, parameter);
+        uint256 slot = uint256(keccak256(abi.encodePacked(PREFIX, parameter))) -
+            1;
+        uint256 slotNewValue = uint256(
+            keccak256(abi.encodePacked(PREFIX_NEW, parameter))
+        ) - 1;
 
         uint256 newValue;
         assembly {
@@ -95,13 +108,5 @@ contract RandomBeaconParametersV2 is Ownable {
         emit UpdateCompleted(parameter, newValue);
 
         // TODO: delete stored value for update
-    }
-
-    function calcSlot(string memory prefix, string memory parameter)
-        private
-        pure
-        returns (uint256)
-    {
-        return uint256(keccak256(abi.encodePacked(prefix, parameter))) - 1;
     }
 }

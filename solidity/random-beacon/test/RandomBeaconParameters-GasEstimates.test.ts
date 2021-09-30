@@ -7,7 +7,7 @@ import type {
   RandomBeaconParametersV2,
 } from "../typechain"
 
-describe.only("RandomBeacon Parameters Gas Estimates", () => {
+describe("RandomBeacon Parameters Gas Estimates", () => {
   let parametersV1: RandomBeaconParameters
   let parametersV2: RandomBeaconParametersV2
 
@@ -40,7 +40,7 @@ describe.only("RandomBeacon Parameters Gas Estimates", () => {
   const parameter = "relayRequestFee"
   describe("parameters V1", async () => {
     const previousEstimatedGasV1 = 23474
-    const previousEstimatedGasV2 = 25246
+    const previousEstimatedGasV2 = 25201
 
     let lowestEstimatedGas: BigNumber
     let estimatedGasV1: BigNumber
