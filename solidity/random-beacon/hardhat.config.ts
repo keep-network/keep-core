@@ -7,6 +7,7 @@ import "@nomiclabs/hardhat-ethers"
 import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
 import "hardhat-gas-reporter"
+import "hardhat-contract-sizer"
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -45,6 +46,12 @@ const config: HardhatUserConfig = {
   tenderly: {
     username: "thesis",
     project: "",
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
 }
 
