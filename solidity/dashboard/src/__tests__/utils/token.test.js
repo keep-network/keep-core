@@ -36,12 +36,24 @@ describe("Test `Token` class", () => {
       expect(result).toBe("0")
     })
 
-    it("should return small amount correctly", () => {
-      const amount = "90000000000000" // 0.00009
+    it("should return amount between 0 and <... correctly", () => {
+      const amount = "9000000000000" // 0.000009
 
       const result = TestToken.displayAmount(amount)
 
-      expect(result).toBe("<0.0001")
+      // The smallest amount to display is 0.00001
+      expect(result).toBe("<0.00001")
+    })
+
+    it.each`
+      amount                | expectedResult
+      ${"90000000000000"}   | ${"0.00009"}
+      ${"10000000000000"}   | ${"0.00001"}
+      ${"1980000000000000"} | ${"0.00198"}
+    `("should return $amount correctly", ({ amount, expectedResult }) => {
+      const result = TestToken.displayAmount(amount)
+
+      expect(result).toBe(expectedResult)
     })
 
     it("should return the amount with separators and w/o trailing zeros", () => {
@@ -94,11 +106,11 @@ describe("Test `Token` class", () => {
 
     it("should return a `<...` if the amount is samllest than smallestDecimalsPrercision", () => {
       const smallAmount = new BigNumber(8).times(
-        new BigNumber(10).pow(TestToken.smallestPrecisionDecimals - 1) // 0.00008
+        new BigNumber(10).pow(TestToken.decimalsToDisplay - 1) // 0.00008
       )
 
       expect(TestToken.displayAmountWithMetricSuffix(smallAmount)).toBe(
-        "<0.0001"
+        "<0.00001"
       )
     })
   })

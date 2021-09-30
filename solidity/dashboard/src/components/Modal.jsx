@@ -2,10 +2,30 @@ import React, { useEffect, useRef, useCallback, useState } from "react"
 import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 import ConfirmationModal from "./ConfirmationModal"
+import { useDispatch, useSelector } from "react-redux"
+import ClaimTokensModal from "./coverage-pools/ClaimTokensModal"
+import InitiateCovPoolsWithdrawModal from "./coverage-pools/InitiateCovPoolsWithdrawModal"
+import { InitiateDepositModal } from "./coverage-pools"
+import IncreaseWithdrawalModal from "./coverage-pools/IncreaseWithdrawalModal"
+import { clearAdditionalDataFromModal, hideModal } from "../actions/modal"
+import { MigrationCompletedModal } from "./tbtc-migration"
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
 const crossIconWidth = 15
+
+export const modalComponentType = {
+  COV_POOLS: {
+    KEEP_DEPOSITED_SUCCESS: InitiateDepositModal,
+    INITIATE_WITHDRAWAL: InitiateCovPoolsWithdrawModal,
+    RE_INITIATE_WITHDRAWAL: InitiateCovPoolsWithdrawModal,
+    INCREASE_WITHDRAWAL: IncreaseWithdrawalModal,
+    WITHDRAWAL_COMPLETED: ClaimTokensModal,
+  },
+  TBTC_MIGRATION: {
+    MIGRATION_COMPLETED: MigrationCompletedModal,
+  },
+}
 
 const Modal = React.memo(
   ({ isOpen, closeModal, isFullScreen, hideTitleBar, classes, ...props }) => {
@@ -72,10 +92,12 @@ export const ModalContext = React.createContext({
 })
 
 export const ModalContextProvider = ({ children }) => {
+  const dispatch = useDispatch()
   const [modalComponent, setModalComponent] = useState()
   const [isOpen, setIsOpen] = useState(false)
   const [modalOptions, setModalOptions] = useState(null)
   const awaitingPromiseRef = useRef()
+  const modal = useSelector((state) => state.modal)
 
   const openModal = useCallback((modalComponent, modalOptions = {}) => {
     setModalComponent(modalComponent)
@@ -90,6 +112,38 @@ export const ModalContextProvider = ({ children }) => {
     setModalOptions(null)
     setIsOpen(false)
   }, [])
+
+  const closeEventModal = useCallback(() => {
+    dispatch(clearAdditionalDataFromModal())
+    dispatch(hideModal())
+    closeModal()
+  }, [dispatch, closeModal])
+
+  const openSpecificModal = useCallback(() => {
+    const SpecificComponent = modal.modalComponentType
+    openModal(
+      <SpecificComponent
+        onCancel={closeEventModal}
+        {...modal.componentProps}
+      />,
+      {
+        closeModal: closeEventModal,
+        ...modal.modalProps,
+      }
+    )
+  }, [
+    closeEventModal,
+    modal.componentProps,
+    modal.modalComponentType,
+    modal.modalProps,
+    openModal,
+  ])
+
+  useEffect(() => {
+    if (modal.isOpen) {
+      openSpecificModal()
+    }
+  }, [modal.isOpen, openSpecificModal])
 
   const onSubmitConfirmationModal = useCallback(
     (values) => {

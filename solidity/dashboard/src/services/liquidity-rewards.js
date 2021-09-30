@@ -1,7 +1,6 @@
 import web3Utils from "web3-utils"
 import {
   createERC20Contract,
-  createSaddleSwapContract,
   getContractDeploymentBlockNumber,
 } from "../contracts"
 import BigNumber from "bignumber.js"
@@ -14,7 +13,10 @@ import {
 import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
-import { KEEP_TOKEN_GEYSER_CONTRACT_NAME } from "../constants/constants"
+import {
+  KEEP_TOKEN_GEYSER_CONTRACT_NAME,
+  POOL_TYPE,
+} from "../constants/constants"
 import { scaleInputForNumberRange } from "../utils/general.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
@@ -200,16 +202,11 @@ class UniswapLPRewards extends LiquidityRewards {
 }
 
 class SaddleLPRewards extends LiquidityRewards {
-  BTC_POOL_TOKENS = [
-    { name: "TBTC", decimals: 18 },
-    { name: "WBTC", decimals: 8 },
-    { name: "RENBTC", decimals: 8 },
-    { name: "SBTC", decimals: 18 },
-  ]
-
-  constructor(_wrappedTokenContract, _LPRewardsContract, _web3) {
+  constructor(_wrappedTokenContract, _LPRewardsContract, _web3, options) {
     super(_wrappedTokenContract, _LPRewardsContract, _web3)
-    this.swapContract = createSaddleSwapContract(this.web3)
+    const { poolTokens, createSwapContract } = options
+    this.swapContract = createSwapContract(this.web3)
+    this.poolTokens = poolTokens
   }
 
   swapContract = null
@@ -248,7 +245,7 @@ class SaddleLPRewards extends LiquidityRewards {
   _getBTCInPool = async () => {
     return (
       await Promise.all(
-        this.BTC_POOL_TOKENS.map(async (token, i) => {
+        this.poolTokens.map(async (token, i) => {
           const balance = await this._getTokenBalance(i)
           return new BigNumber(10)
             .pow(18 - token.decimals) // cast all to 18 decimals
@@ -422,20 +419,24 @@ class TokenGeyserLPRewards extends LiquidityRewards {
 }
 
 const LiquidityRewardsPoolStrategy = {
-  UNISWAP: UniswapLPRewards,
-  SADDLE: SaddleLPRewards,
-  TOKEN_GEYSER: TokenGeyserLPRewards,
+  [POOL_TYPE.UNISWAP]: UniswapLPRewards,
+  [POOL_TYPE.SADDLE]: SaddleLPRewards,
+  [POOL_TYPE.TOKEN_GEYSER]: TokenGeyserLPRewards,
 }
 
 export class LiquidityRewardsFactory {
   /**
    *
-   * @param {('UNISWAP' | 'SADDLE' | 'TOKEN_GEYSER')} pool - The supported type of pools.
-   * @param {Object} LPRewardsContract - The LPRewardsContract as web3 contract instance.
+   * @param {('UNISWAP' | 'SADDLE' | 'TOKEN_GEYSER')} pool - The supported type
+   * of pools.
+   * @param {Object} LPRewardsContract - The LPRewardsContract as web3 contract
+   * instance.
    * @param {Web3} web3 - web3
+   * @param {Object} options - Additional options that should be passed to the strategy
+   * constructor. The strategy defines options object.
    * @return {LiquidityRewards} - The Liquidity Rewards Wrapper
    */
-  static async initialize(pool, LPRewardsContract, web3) {
+  static async initialize(pool, LPRewardsContract, web3, options = {}) {
     const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
 
     const lpRewardsContractAddress = web3Utils.toChecksumAddress(
@@ -457,6 +458,11 @@ export class LiquidityRewardsFactory {
       LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
     )
 
-    return new PoolStrategy(wrappedTokenContract, LPRewardsContract, web3)
+    return new PoolStrategy(
+      wrappedTokenContract,
+      LPRewardsContract,
+      web3,
+      options
+    )
   }
 }

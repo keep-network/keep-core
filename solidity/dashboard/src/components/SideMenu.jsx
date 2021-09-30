@@ -14,6 +14,8 @@ import { isEmptyArray } from "../utils/array.utils"
 import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
 import NavLink from "./NavLink"
+import CoveragePoolPage from "../pages/coverage-pools"
+import TBTCMigrationPage from "../pages/tbtc-migration"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -47,9 +49,20 @@ export const SideMenu = (props) => {
           label="earn"
           icon={<Icons.FeesVector />}
           subroutes={[
+            CoveragePoolPage.route,
+            LiquidityPage.route,
             EarningsPage.route,
             RewardsPage.route,
-            { ...LiquidityPage.route, withNewLabel: true },
+          ]}
+        />
+        <NavLinkSection
+          label="tbtc"
+          icon={<Icons.TBTC />}
+          subroutes={[
+            {
+              ...TBTCMigrationPage.route,
+              title: "Token Upgrade",
+            },
           ]}
         />
         <NavLinkSection

@@ -283,7 +283,8 @@ function* fetchLiquidityRewardsAPY(liquidityRewardPair) {
       [LiquidityRewardsFactory, LiquidityRewardsFactory.initialize],
       liquidityRewardPair.pool,
       LPRewardsContract,
-      web3
+      web3,
+      liquidityRewardPair.options
     )
 
     let apy = Infinity

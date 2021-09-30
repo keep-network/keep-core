@@ -1,1 +1,1 @@
-= Random beacon v2
+= Keep Random Beacon

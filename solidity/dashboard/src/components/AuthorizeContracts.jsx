@@ -7,7 +7,7 @@ import { KEEP } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { shortenAddress } from "../utils/general.utils"
 import resourceTooltipProps from "../constants/tooltips"
-import Tooltip from "./Tooltip"
+import Tooltip, { TOOLTIP_DIRECTION } from "./Tooltip"
 import { AUTH_CONTRACTS_LABEL } from "../constants/constants"
 
 const AuthorizeContracts = ({
@@ -152,7 +152,7 @@ const AuthorizeContractItem = ({
             }
             simple
             delay={10}
-            direction="top"
+            direction={TOOLTIP_DIRECTION.TOP}
             contentWrapperStyles={styles.tooltipContentWrapper}
             triggerComponent={() => (
               <SubmitButton

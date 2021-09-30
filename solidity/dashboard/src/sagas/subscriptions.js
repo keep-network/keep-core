@@ -5,6 +5,7 @@ import {
   getContractsContext,
   getWeb3Context,
   getLPRewardsWrapper,
+  subscribeToEventAndEmitData,
 } from "./utils"
 import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
@@ -17,50 +18,68 @@ import { messageType } from "../components/Message"
 import {
   OPERATOR_DELEGATION_UNDELEGATED,
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
+  tbtcV2Migration,
 } from "../actions"
+import {
+  assetPoolDepositedEventEmitted,
+  COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
+  coveragePoolWithdrawalCompletedEventEmitted,
+  coveragePoolWithdrawalInitiatedEventEmitted,
+  riskManagerAuctionClosedEventEmitted,
+  riskManagerAuctionCreatedEventEmitted,
+} from "../actions/coverage-pool"
+import { keepBalanceActions } from "../actions"
+import { Keep } from "../contracts"
+import { EVENTS } from "../constants/events"
 
 export function* subscribeToKeepTokenTransferEvent() {
-  yield take("keep-token/balance_request_success")
-  yield fork(observeKeepTokenTransfer)
+  yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
+  yield fork(observeKeepTokenTransferFrom)
+  yield fork(observeKeepTokenTransferTo)
 }
 
-function* observeKeepTokenTransfer() {
-  const { token } = yield getContractsContext()
+function* observeKeepTokenTransferFrom() {
+  const { token: keepTokenContractInstance } = yield getContractsContext()
   const {
     eth: { defaultAccount },
   } = yield getWeb3Context()
 
-  // Create subscription channel.
-  const contractEventCahnnel = yield call(
-    createSubcribeToContractEventChannel,
-    token,
-    "Transfer"
-  )
-
-  // Observe and dispatch an action that updates keep token balance.
-  while (true) {
-    try {
-      const {
-        returnValues: { from, to, value },
-      } = yield take(contractEventCahnnel)
-
-      let arithmeticOpration = null
-      if (isSameEthAddress(defaultAccount, from)) {
-        arithmeticOpration = sub
-      } else if (isSameEthAddress(defaultAccount, to)) {
-        arithmeticOpration = add
-      }
-      if (arithmeticOpration) {
-        yield put({
-          type: "keep-token/transfered",
-          payload: { value, arithmeticOpration },
-        })
-      }
-    } catch (error) {
-      console.error(`Failed subscribing to Transfer event`, error)
-      contractEventCahnnel.close()
-    }
+  const options = {
+    filter: {
+      from: defaultAccount,
+    },
   }
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    keepTokenContractInstance,
+    "Transfer",
+    keepBalanceActions.keepTokenTransferFromEventEmitted,
+    "KeepToken.Transfer",
+    options
+  )
+}
+
+function* observeKeepTokenTransferTo() {
+  const { token: keepTokenContractInstance } = yield getContractsContext()
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  const options = {
+    filter: {
+      to: defaultAccount,
+    },
+  }
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    keepTokenContractInstance,
+    "Transfer",
+    keepBalanceActions.keepTokenTransferToEventEmitted,
+    "KeepToken.Transfer",
+    options
+  )
 }
 
 export function* subscribeToStakedEvent() {
@@ -689,8 +708,8 @@ function* lpTokensStakedOrWithdrawn(
   // Update only if this transaction relates to the current logged account.
   if (isSameEthAddress(defaultAccount, user)) {
     emittedAmountValue = amount
-    const arithmeticOpration = actionType.includes("withdrawn") ? sub : add
-    updatedlpBalance = arithmeticOpration(lpBalance, amount).toString()
+    const arithmeticOperation = actionType.includes("withdrawn") ? sub : add
+    updatedlpBalance = arithmeticOperation(lpBalance, amount).toString()
   }
 
   yield* updateLPTokenBalance(
@@ -982,4 +1001,96 @@ function* updateOperatorData() {
 export function* subscribeToOperatorUndelegateEvent() {
   yield take(FETCH_OPERATOR_DELEGATIONS_SUCCESS)
   yield fork(updateOperatorData)
+}
+
+export function* observeAssetPoolDepositedEvent() {
+  yield take(COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS)
+
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.DEPOSITED,
+    assetPoolDepositedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.DEPOSITED}`
+  )
+}
+
+export function* observeWithdrawalInitiatedEvent() {
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
+    coveragePoolWithdrawalInitiatedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED}`
+  )
+}
+
+export function* observeWithdrawalCompletedEvent() {
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
+    coveragePoolWithdrawalCompletedEventEmitted,
+    `AssetPool.${EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED}`
+  )
+}
+
+export function* observeTBTCV2MintedEvent() {
+  yield take(tbtcV2Migration.TBTCV2_MIGRATION_FETCH_DATA_SUCCESS)
+
+  const vendingMachine = Keep.tBTCV2Migration.vendingMachine.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    vendingMachine,
+    "Minted",
+    tbtcV2Migration.TBTCV2_TOKEN_MINTED_EVENT_EMITTED,
+    "VendingMachine.Minted"
+  )
+}
+
+export function* observeTBTCV2UnmintedEvent() {
+  yield take(tbtcV2Migration.TBTCV2_MIGRATION_FETCH_DATA_SUCCESS)
+
+  const vendingMachine = Keep.tBTCV2Migration.vendingMachine.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    vendingMachine,
+    "Unminted",
+    tbtcV2Migration.TBTCV2_TOKEN_UNMINTED_EVENT_EMITTED,
+    "VendingMachine.Unminted"
+  )
+}
+
+export function* observeAuctionCreatedEvent() {
+  const riskManagerV1Contract =
+    Keep.coveragePoolV1.riskManagerV1Contract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    riskManagerV1Contract,
+    "AuctionCreated",
+    riskManagerAuctionCreatedEventEmitted,
+    "RiskManagerV1.AuctionCreated"
+  )
+}
+
+export function* observeAuctionClosedEvent() {
+  const riskManagerV1Contract =
+    Keep.coveragePoolV1.riskManagerV1Contract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    riskManagerV1Contract,
+    "AuctionClosed",
+    riskManagerAuctionClosedEventEmitted,
+    "RiskManagerV1.AuctionClosed"
+  )
 }

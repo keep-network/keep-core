@@ -1,5 +1,6 @@
 import React from "react"
 import { Route, Switch, Redirect } from "react-router-dom"
+import web3Utils from "web3-utils"
 import { NotFound404 } from "./NotFound404"
 import { useWeb3Context } from "./WithWeb3Context"
 import OperationsPage from "../pages/operations"
@@ -11,7 +12,8 @@ import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
 import RewardsPage from "../pages/rewards"
 import LiquidityPage from "../pages/liquidity"
-import web3Utils from "web3-utils"
+import CoveragePoolPage from "../pages/coverage-pools"
+import TBTCMigrationPage from "../pages/tbtc-migration"
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 export const pages = [
@@ -25,6 +27,8 @@ export const pages = [
   RewardsPage,
   LiquidityPage,
   ResourcesPage,
+  CoveragePoolPage,
+  TBTCMigrationPage,
 ]
 
 class Routing extends React.Component {

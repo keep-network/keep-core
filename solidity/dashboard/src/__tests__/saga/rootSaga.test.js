@@ -16,11 +16,33 @@ import * as rewards from "../../sagas/rewards"
 import * as liquidityRewards from "../../sagas/liquidity-rewards"
 import * as operator from "../../sagas/operartor"
 import * as authorization from "../../sagas/authorization"
+import * as coveragePool from "../../sagas/coverage-pool"
+import * as tbtcMigration from "../../sagas/tbtc-migration"
+
+// TODO: Mock globally
+// Mock TrezorConnector due to `This version of trezor-connect is not suitable
+// to work without browser. Use trezor-connect@extended package instead` error.
+jest.mock("../../connectors/trezor", () => ({
+  ...jest.requireActual("../../components/Modal"),
+  TrezorConnector: Object,
+}))
+
+// TODO: Mock globally
+// Mock TrezorConnector due to `This version of trezor-connect is not suitable
+// to work without browser. Use trezor-connect@extended package instead` error.
+jest.mock("../../connectors/trezor", () => ({
+  ...jest.requireActual("../../components/Modal"),
+  TrezorConnector: Object,
+}))
 
 const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
   liquidityRewards
 
-const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
+const sagas = [
+  ...Object.values(messagesSaga),
+  watchFetchLiquidityRewardsAPY,
+  ...Object.values(coveragePool),
+]
 
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
@@ -34,6 +56,7 @@ const loginRequiredSagas = [
   ...Object.values(restliquidityRewards),
   ...Object.values(operator),
   ...Object.values(authorization),
+  ...Object.values(tbtcMigration),
 ]
 
 describe("Test root saga", () => {

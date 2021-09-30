@@ -2,12 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from "react"
 import { useField } from "formik"
 import * as Icons from "./Icons"
 import Tooltip from "./Tooltip"
-
-const iconDefaultValues = {
-  width: 32,
-  heigh: 32,
-  marginRight: 1.5,
-}
+import OnlyIf from "./OnlyIf"
 
 const FormInput = ({
   label,
@@ -15,7 +10,7 @@ const FormInput = ({
   normalize,
   tooltipText,
   additionalInfoText,
-  leftIcon,
+  leftIconComponent = null,
   inputAddon,
   tooltipProps = {},
   ...props
@@ -33,23 +28,9 @@ const FormInput = ({
     setInputPaddingRight(finalWidth)
   }, [])
 
-  const leftIconComponent =
-    leftIcon && React.isValidElement(leftIcon)
-      ? React.cloneElement(leftIcon, {
-          width: iconDefaultValues.width,
-          height: iconDefaultValues.height,
-          style: { marginRight: `${iconDefaultValues.marginRight}rem` },
-        })
-      : null
-
-  const alignToInput = leftIconComponent
-    ? {
-        marginLeft: `calc(${iconDefaultValues.width}px + ${iconDefaultValues.marginRight}rem)`,
-      }
-    : {}
   return (
     <div className="form-input flex flex-1 column">
-      <label className="input__label" style={alignToInput}>
+      <label className="input__label">
         <span className="input__label__text">{label}</span>
         <div
           className={`input__label__info-container ${
@@ -74,8 +55,17 @@ const FormInput = ({
           )}
         </div>
       </label>
-      <div className="form-input__wrapper">
-        {leftIconComponent}
+      <div
+        className="form-input__wrapper"
+        style={{
+          border: `${leftIconComponent ? "1px solid #0A0806" : "none"}`,
+        }}
+      >
+        <OnlyIf condition={leftIconComponent}>
+          <div className={"form-input__left-icon-container"}>
+            {leftIconComponent}
+          </div>
+        </OnlyIf>
         <input
           {...field}
           {...props}
@@ -84,16 +74,17 @@ const FormInput = ({
             helpers.setValue(normalize ? normalize(value) : value)
           }}
           value={format ? format(field.value) : field.value}
-          style={{ paddingRight: `${inputPaddingRight}px` }}
+          style={{
+            paddingRight: `${inputPaddingRight}px`,
+            borderStyle: `${leftIconComponent ? "none" : "solid"}`,
+          }}
         />
         <div ref={inputAddonRef} className="form-input__addon">
           {inputAddon}
         </div>
       </div>
       {meta.touched && meta.error ? (
-        <div className="form-input__error" style={alignToInput}>
-          {meta.error}
-        </div>
+        <div className="form-input__error">{meta.error}</div>
       ) : null}
     </div>
   )
