@@ -3,3 +3,4 @@ build/
 cache/
 deployments/
 export.json
+typechain/

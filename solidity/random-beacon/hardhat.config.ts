@@ -3,6 +3,9 @@ import { HardhatUserConfig } from "hardhat/config"
 import "@keep-network/hardhat-local-networks-config"
 import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
+import "@typechain/hardhat"
+import "@nomiclabs/hardhat-ethers"
+import "@nomiclabs/hardhat-waffle"
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -24,7 +27,7 @@ const config: HardhatUserConfig = {
         url: process.env.FORKING_URL || "",
         // latest block is taken if FORKING_BLOCK env is not provided
         blockNumber: process.env.FORKING_BLOCK
-          ? parseInt(process.env.FORKING_BLOCK)
+          ? parseInt(process.env.FORKING_BLOCK, 10)
           : undefined,
       },
       tags: ["local"],

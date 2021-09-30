@@ -51,3 +51,4 @@ yarn-error.log
 # Hardhat
 cache/
 export.json
+solidity/random-beacon/typechain

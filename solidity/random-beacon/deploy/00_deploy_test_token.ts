@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types"
 
 // This is an example of deployment script.
 // Should be removed once we have actual contracts to deploy.
-const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments } = hre
   const { deployer } = await getNamedAccounts()
 
