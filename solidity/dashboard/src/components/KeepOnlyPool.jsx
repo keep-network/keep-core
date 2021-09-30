@@ -19,6 +19,8 @@ import { useModal } from "../hooks/useModal"
 import TokenAmount from "./TokenAmount"
 import MetricsTile from "./MetricsTile"
 import RewardMultiplier from "./liquidity/RewardMultiplier"
+import Banner from "./Banner"
+import { LINK } from "../constants/constants"
 
 const KeepOnlyPool = ({
   apy,
@@ -139,11 +141,37 @@ const KeepOnlyPool = ({
               &nbsp;KEEP
             </h4>
           </div>
-
+          <Banner
+            className="liquidity-info-banner liquidity-info-banner--warning mt-2"
+            style={{ maxWidth: "100%" }}
+          >
+            <Banner.Icon
+              icon={Icons.Warning}
+              className="liquidity-info-banner__icon liquidity-info-banner__icon--warning"
+            />
+            <div className="liquidity-info-banner__content">
+              <Banner.Title className="text-grey-60">
+                Incentives removed
+              </Banner.Title>
+              <Banner.Description className="liquidity-info-banner__content__description text-grey-60">
+                The incentives for this pool has been removed and you can no
+                longer deposit the KEEP tokens. You can still withdraw deposited
+                KEEP tokens and rewards that you already earned.&nbsp;
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={LINK.proposals.shiftingIncentivesToCoveragePools}
+                  className="text-link text-grey-60"
+                >
+                  More info
+                </a>
+              </Banner.Description>
+            </div>
+          </Banner>
           <div className="flex row space-between mt-2">
             <SubmitButton
               className="btn btn-primary btn-lg"
-              disabled={!gt(wrappedTokenBalance || 0, 0)}
+              disabled={true}
               onSubmitAction={addKEEP}
             >
               {gt(lpBalance, 0) ? "add more keep" : "deposit keep"}

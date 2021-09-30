@@ -21,9 +21,12 @@ import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPET
 import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
 import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
 import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCSaddle.json"
+import LPRewardsTBTCv2Saddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCv2Saddle.json"
 import KeepOnlyPool from "@keep-network/keep-core/artifacts/KeepVault.json"
 import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 import SaddleSwap from "./contracts-artifacts/SaddleSwap.json"
+import SaddleTBTCMetaPool from "./contracts-artifacts/SaddleTBTCMetaPool.json"
+
 import Web3 from "web3"
 
 import {
@@ -45,6 +48,7 @@ import {
   LP_REWARDS_KEEP_TBTC_CONTRACT_NAME,
   LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME,
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
+  LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME,
 } from "./constants/constants"
 
 import KeepLib from "./lib/keep"
@@ -141,6 +145,9 @@ const contracts = {
   [KEEP_TOKEN_GEYSER_CONTRACT_NAME]: {
     artifact: KeepOnlyPool,
     withDeployBlock: true,
+  },
+  [LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME]: {
+    artifact: LPRewardsTBTCv2Saddle,
   },
 }
 
@@ -346,10 +353,19 @@ export const createLPRewardsContract = async (web3, contractName) => {
   return await getContract(web3, artifact, {})
 }
 
-export const createSaddleSwapContract = (web3) => {
+export function createSaddleSwapContract(web3) {
   return createWeb3ContractInstance(
     web3,
     SaddleSwap.abi,
     "0x4f6A43Ad7cba042606dECaCA730d4CE0A57ac62e"
+  )
+}
+
+export function createSaddleTBTCMetaPool(web3) {
+  return createWeb3ContractInstance(
+    web3,
+    SaddleTBTCMetaPool.abi,
+    // https://etherscan.io/address/0xf74ebe6e5586275dc4CeD78F5DBEF31B1EfbE7a5#code
+    "0xf74ebe6e5586275dc4CeD78F5DBEF31B1EfbE7a5"
   )
 }

@@ -206,7 +206,7 @@ export const covKEEP = new Token(
 )
 
 export const ETH = new Token("Ether", 18, "ETH", "gwei", 14, Icons.ETH)
-export const TBTC = new Token("tBTC", 18, "TBTC", "tSats", 8, Icons.TBTC)
+export const TBTC = new Token("tBTC", 18, "TBTC", "tSats", 8, Icons.TBTC, 8)
 export const LPToken = new Token(
   "Liqudity Provider Token",
   18,

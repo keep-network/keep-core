@@ -17,7 +17,7 @@ jobs:
   dashboard-detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      dashboard: ${{ steps.filter.outputs.path-filter }}
+      path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
     - uses: actions/checkout@v2
       if: github.event_name == 'pull_request'

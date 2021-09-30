@@ -13,6 +13,7 @@ import {
 } from "../actions/messages"
 import { messageType } from "../components/Message"
 import ExplorerModeSubprovider from "../connectors/explorerModeSubprovider"
+import { gt } from "../utils/arithmetics.utils"
 
 function createTransactionEventChannel(
   contract,
@@ -217,5 +218,42 @@ export function* watchSendRawTransactionsInSequenceRequest() {
     } catch (error) {
       yield* logError("web3/send_raw_transaction_in_sequence_failure", error)
     }
+  })
+}
+
+export function* approveAndTransferToken(
+  owner,
+  spender,
+  amount,
+  /** @type {import("../lib/web3").BaseContract} */
+  token,
+  /** @type {import("../lib/web3").BaseContract} */
+  recipientContract,
+  recipientMethodName,
+  recipientArgs
+) {
+  const approvedAmount = yield call(
+    [token, token.makeCall],
+    "allowance",
+    owner,
+    spender
+  )
+
+  if (gt(amount, approvedAmount)) {
+    yield call(sendTransaction, {
+      payload: {
+        contract: token.instance,
+        methodName: "approve",
+        args: [spender, amount],
+      },
+    })
+  }
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: recipientContract.instance,
+      methodName: recipientMethodName,
+      args: recipientArgs,
+    },
   })
 }

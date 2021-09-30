@@ -7,7 +7,7 @@ import {
 import PageWrapper from "../../components/PageWrapper"
 import CardContainer from "../../components/CardContainer"
 import LiquidityRewardCard from "../../components/LiquidityRewardCard"
-import { LIQUIDITY_REWARD_PAIRS } from "../../constants/constants"
+import { LINK, LIQUIDITY_REWARD_PAIRS } from "../../constants/constants"
 import * as Icons from "../../components/Icons"
 import {
   addMoreLpTokens,
@@ -16,8 +16,74 @@ import {
 import Banner from "../../components/Banner"
 import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
-
 import KeepOnlyPool from "../../components/KeepOnlyPool"
+
+const cards = [
+  {
+    id: "TBTCV2_SADDLE",
+    title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.label,
+    liquidityPairContractName:
+      LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.contractName,
+    MainIcon: Icons.TBTC,
+    SecondaryIcon: Icons.Saddle,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.lpTokens,
+    wrapperClassName: "tbtc-v2-saddle",
+  },
+  {
+    id: "KEEP_ETH",
+    title: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label,
+    liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName,
+    MainIcon: Icons.KeepBlackGreen,
+    SecondaryIcon: Icons.EthToken,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens,
+    wrapperClassName: "keep-eth",
+  },
+  {
+    id: "TBTC_ETH",
+    title: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label,
+    liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.contractName,
+    MainIcon: Icons.TBTC,
+    SecondaryIcon: Icons.EthToken,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.lpTokens,
+    wrapperClassName: "tbtc-eth",
+  },
+  {
+    id: "TBTC_SADDLE",
+    title: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label,
+    liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.contractName,
+    MainIcon: Icons.TBTC,
+    SecondaryIcon: Icons.Saddle,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.lpTokens,
+    wrapperClassName: "tbtc-saddle",
+    incentivesRemoved: true,
+    incentivesRemovedBannerProps: {
+      link: LINK.proposals.shiftingIncentivesToCoveragePools,
+    },
+  },
+  {
+    id: "KEEP_TBTC",
+    title: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label,
+    liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.contractName,
+    MainIcon: Icons.KeepBlackGreen,
+    SecondaryIcon: Icons.TBTC,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.lpTokens,
+    wrapperClassName: "keep-tbtc",
+    incentivesRemoved: true,
+    incentivesRemovedBannerProps: {
+      link: LINK.proposals.removeIncentivesForKEEPTBTCpool,
+    },
+  },
+]
 
 const LiquidityPage = ({ headerTitle }) => {
   const [isBannerVisible, hideBanner] = useHideComponent(false)
@@ -25,7 +91,7 @@ const LiquidityPage = ({ headerTitle }) => {
   const dispatch = useDispatch()
   const address = useWeb3Address()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
-  const { TBTC_SADDLE, KEEP_ETH, TBTC_ETH, KEEP_TBTC, KEEP_ONLY } = useSelector(
+  const { KEEP_ONLY, ...liquidityPools } = useSelector(
     (state) => state.liquidityRewards
   )
 
@@ -136,99 +202,23 @@ const LiquidityPage = ({ headerTitle }) => {
         pool={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool}
       />
       <CardContainer>
-        <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label}
-          liquidityPairContractName={
-            LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.contractName
-          }
-          MainIcon={Icons.TBTC}
-          SecondaryIcon={Icons.Saddle}
-          viewPoolLink={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.viewPoolLink}
-          apy={TBTC_SADDLE.apy}
-          percentageOfTotalPool={TBTC_SADDLE.shareOfPoolInPercent}
-          rewardBalance={TBTC_SADDLE.reward}
-          wrappedTokenBalance={TBTC_SADDLE.wrappedTokenBalance}
-          lpBalance={TBTC_SADDLE.lpBalance}
-          lpTokenBalance={TBTC_SADDLE.lpTokenBalance}
-          rewardMultiplier={TBTC_SADDLE.rewardMultiplier}
-          lpTokens={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.lpTokens}
-          isFetching={TBTC_SADDLE.isFetching}
-          wrapperClassName="tbtc-saddle"
-          addLpTokens={addLpTokens}
-          withdrawLiquidityRewards={withdrawLiquidityRewards}
-          isAPYFetching={TBTC_SADDLE.isAPYFetching}
-          pool={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.pool}
-        />
-        <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
-          liquidityPairContractName={
-            LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName
-          }
-          MainIcon={Icons.KeepBlackGreen}
-          SecondaryIcon={Icons.EthToken}
-          viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}
-          apy={KEEP_ETH.apy}
-          percentageOfTotalPool={KEEP_ETH.shareOfPoolInPercent}
-          rewardBalance={KEEP_ETH.reward}
-          wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
-          lpBalance={KEEP_ETH.lpBalance}
-          lpTokenBalance={KEEP_ETH.lpTokenBalance}
-          rewardMultiplier={KEEP_ETH.rewardMultiplier}
-          lpTokens={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens}
-          isFetching={KEEP_ETH.isFetching}
-          wrapperClassName="keep-eth"
-          addLpTokens={addLpTokens}
-          withdrawLiquidityRewards={withdrawLiquidityRewards}
-          isAPYFetching={KEEP_ETH.isAPYFetching}
-          pool={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool}
-        />
-        <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label}
-          liquidityPairContractName={
-            LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.contractName
-          }
-          MainIcon={Icons.KeepBlackGreen}
-          SecondaryIcon={Icons.TBTC}
-          viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.viewPoolLink}
-          apy={KEEP_TBTC.apy}
-          percentageOfTotalPool={KEEP_TBTC.shareOfPoolInPercent}
-          rewardBalance={KEEP_TBTC.reward}
-          wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
-          lpBalance={KEEP_TBTC.lpBalance}
-          lpTokenBalance={KEEP_TBTC.lpTokenBalance}
-          rewardMultiplier={KEEP_TBTC.rewardMultiplier}
-          lpTokens={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.lpTokens}
-          isFetching={KEEP_TBTC.isFetching}
-          wrapperClassName="keep-tbtc"
-          addLpTokens={addLpTokens}
-          withdrawLiquidityRewards={withdrawLiquidityRewards}
-          isAPYFetching={KEEP_TBTC.isAPYFetching}
-          pool={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.pool}
-          incentivesRemoved={true}
-        />
-        <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label}
-          liquidityPairContractName={
-            LIQUIDITY_REWARD_PAIRS.TBTC_ETH.contractName
-          }
-          MainIcon={Icons.TBTC}
-          SecondaryIcon={Icons.EthToken}
-          viewPoolLink={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.viewPoolLink}
-          apy={TBTC_ETH.apy}
-          percentageOfTotalPool={TBTC_ETH.shareOfPoolInPercent}
-          rewardBalance={TBTC_ETH.reward}
-          wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}
-          lpBalance={TBTC_ETH.lpBalance}
-          lpTokenBalance={TBTC_ETH.lpTokenBalance}
-          rewardMultiplier={TBTC_ETH.rewardMultiplier}
-          lpTokens={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.lpTokens}
-          isFetching={TBTC_ETH.isFetching}
-          wrapperClassName="tbtc-eth"
-          addLpTokens={addLpTokens}
-          withdrawLiquidityRewards={withdrawLiquidityRewards}
-          isAPYFetching={TBTC_ETH.isAPYFetching}
-          pool={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.pool}
-        />
+        {cards.map(({ id, ...data }) => (
+          <LiquidityRewardCard
+            key={id}
+            {...data}
+            apy={liquidityPools[id].apy}
+            percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
+            rewardBalance={liquidityPools[id].reward}
+            wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
+            lpBalance={liquidityPools[id].lpBalance}
+            lpTokenBalance={liquidityPools[id].lpTokenBalance}
+            rewardMultiplier={liquidityPools[id].rewardMultiplier}
+            isFetching={liquidityPools[id].isFetching}
+            addLpTokens={addLpTokens}
+            withdrawLiquidityRewards={withdrawLiquidityRewards}
+            isAPYFetching={liquidityPools[id].isAPYFetching}
+          />
+        ))}
       </CardContainer>
     </PageWrapper>
   )

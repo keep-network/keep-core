@@ -27,6 +27,8 @@ import SaddleSwap from "../../../contracts-artifacts/SaddleSwap.json"
 import AssetPool from "@keep-network/coverage-pools/artifacts/AssetPool.json"
 import UnderwriterToken from "@keep-network/coverage-pools/artifacts/UnderwriterToken.json"
 import RewardsPool from "@keep-network/coverage-pools/artifacts/RewardsPool.json"
+import TBTCV2Token from "@keep-network/tbtc-v2/artifacts/TBTC.json"
+import TBTCV2VendingMachine from "@keep-network/tbtc-v2/artifacts/VendingMachine.json"
 import RiskManagerV1 from "@keep-network/coverage-pools/artifacts/RiskManagerV1.json"
 
 export const KEEP_TOKEN_CONTRACT_NAME = "keepTokenContract"
@@ -63,6 +65,9 @@ export const RISK_MANAGER_V1_CONTRACT_NAME = "riskManagerV1Contract"
 export const REWARDS_POOL_CONTRACT_NAME = "rewardsPoolContract"
 
 export const RewardsPoolArtifact = RewardsPool
+
+export const TBTCV2_TOKEN_CONTRACT_NAME = "tbtcV2Contract"
+export const TBTCV2_VENDING_MACHINE_CONTRACT_NAME = "vendingMachineContract"
 
 const contracts = {
   [KEEP_TOKEN_CONTRACT_NAME]: { artifact: KeepToken },
@@ -123,6 +128,12 @@ const contracts = {
   },
   [COV_TOKEN_CONTRACT_NAME]: {
     artifact: UnderwriterToken,
+  },
+  [TBTCV2_TOKEN_CONTRACT_NAME]: {
+    artifact: TBTCV2Token,
+  },
+  [TBTCV2_VENDING_MACHINE_CONTRACT_NAME]: {
+    artifact: TBTCV2VendingMachine,
   },
   [RISK_MANAGER_V1_CONTRACT_NAME]: {
     artifact: RiskManagerV1,
