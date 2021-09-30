@@ -5,9 +5,9 @@ import ModalWithTimeline, {
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import { shortenAddress } from "../../utils/general.utils"
 import WithdrawalInfo from "./WithdrawalInfo"
-import { Keep } from "../../contracts"
 import TokenAmount from "../TokenAmount"
 import { useWeb3Address } from "../WithWeb3Context"
+import { CoveragePoolV1ExchangeRate } from "./ExchangeRate"
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
@@ -45,16 +45,14 @@ const InitiateCovPoolsWithdrawModal = ({
       >
         <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Exchange Rate&nbsp;</h4>
-          <h4 className={"withdraw-modal__data__value text-grey-70"}>
-            1 covKEEP = ~
-            {KEEP.displayAmountWithSymbol(
-              Keep.coveragePoolV1.estimatedBalanceFor(
-                KEEP.fromTokenUnit(1).toString(),
-                covTotalSupply,
-                totalValueLocked
-              )
-            )}
-          </h4>
+          <CoveragePoolV1ExchangeRate
+            htmlTag="h4"
+            className="withdraw-modal__data__value text-grey-70"
+            covToken={covKEEP}
+            collateralToken={KEEP}
+            covTotalSupply={covTotalSupply}
+            totalValueLocked={totalValueLocked}
+          />
         </div>
         <div className={"withdraw-modal__data-row"}>
           <h4 className={"text-grey-50"}>Pool Balance &nbsp;</h4>

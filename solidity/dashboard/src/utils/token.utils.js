@@ -177,8 +177,16 @@ export class Token {
       return "0"
     }
 
-    if (amountInBn.lt(this.MIN_AMOUNT_TO_DISPLAY)) {
-      return `<${this.MIN_AMOUNT_IN_TOKEN_UNIT}`
+    const isTheSameDecimalsNumber = decimals === this.decimalsToDisplay
+    const _minAmountToDisplay = isTheSameDecimalsNumber
+      ? this.MIN_AMOUNT_TO_DISPLAY
+      : new BigNumber(10).pow(this.decimals - decimals).toString()
+    const _minAmountInTokenUnit = isTheSameDecimalsNumber
+      ? this.MIN_AMOUNT_IN_TOKEN_UNIT
+      : this.toTokenUnit(_minAmountToDisplay).toString()
+
+    if (amountInBn.lt(_minAmountToDisplay)) {
+      return `<${_minAmountInTokenUnit}`
     }
 
     return formattingFn(this.toTokenUnit(amount), decimals)

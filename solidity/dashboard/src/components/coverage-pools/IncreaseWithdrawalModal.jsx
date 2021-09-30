@@ -14,8 +14,8 @@ import WithdrawalInfo from "./WithdrawalInfo"
 import { add } from "../../utils/arithmetics.utils"
 import { useWeb3Address } from "../WithWeb3Context"
 import { addAdditionalDataToModal } from "../../actions/modal"
-import { Keep } from "../../contracts"
 import TokenAmount from "../TokenAmount"
+import { CoveragePoolV1ExchangeRate } from "./ExchangeRate"
 
 const getItems = (covKeepAmount) => {
   return [
@@ -101,16 +101,14 @@ const IncreaseWithdrawalModal = ({
         >
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Exchange Rate&nbsp;</h4>
-            <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              1 covKEEP = ~
-              {KEEP.displayAmountWithSymbol(
-                Keep.coveragePoolV1.estimatedBalanceFor(
-                  KEEP.fromTokenUnit(1).toString(),
-                  covTotalSupply,
-                  totalValueLocked
-                )
-              )}
-            </h4>
+            <CoveragePoolV1ExchangeRate
+              htmlTag="h4"
+              className="withdraw-modal__data__value text-grey-70"
+              covToken={covKEEP}
+              collateralToken={KEEP}
+              covTotalSupply={covTotalSupply}
+              totalValueLocked={totalValueLocked}
+            />
           </div>
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Expired withdrawal&nbsp;</h4>
