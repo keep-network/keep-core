@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
 // TODO: Consider which functions can be internal or internal. What are implications
