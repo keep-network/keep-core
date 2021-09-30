@@ -1,11 +1,4 @@
-import {
-  fork,
-  take,
-  call,
-  put,
-  select,
-  actionChannel,
-} from "redux-saga/effects"
+import { fork, take, call, put, select } from "redux-saga/effects"
 import moment from "moment"
 import { createSubcribeToContractEventChannel } from "./web3"
 import {
@@ -32,13 +25,10 @@ import {
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   coveragePoolWithdrawalCompletedEventEmitted,
   coveragePoolWithdrawalInitiatedEventEmitted,
-  KEEP_TOKEN_TRANSFER_FROM_EVENT_EMITTED,
-  KEEP_TOKEN_TRANSFER_TO_EVENT_EMITTED,
-  keepTokenTransferFromEventEmitted,
-  keepTokenTransferToEventEmitted,
   riskManagerAuctionClosedEventEmitted,
   riskManagerAuctionCreatedEventEmitted,
 } from "../actions/coverage-pool"
+import { keepBalanceActions } from "../actions"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
 
@@ -62,7 +52,7 @@ export function* observeKeepTokenTransferFrom() {
     subscribeToEventAndEmitData,
     keepTokenContractInstance,
     "Transfer",
-    keepTokenTransferFromEventEmitted,
+    keepBalanceActions.keepTokenTransferFromEventEmitted,
     "KeepToken.Transfer",
     options
   )
@@ -84,50 +74,10 @@ export function* observeKeepTokenTransferTo() {
     subscribeToEventAndEmitData,
     keepTokenContractInstance,
     "Transfer",
-    keepTokenTransferToEventEmitted,
+    keepBalanceActions.keepTokenTransferToEventEmitted,
     "KeepToken.Transfer",
     options
   )
-}
-
-export function* subscribeToKeepTokenTransferFromEvent() {
-  const requestChan = yield actionChannel(
-    KEEP_TOKEN_TRANSFER_FROM_EVENT_EMITTED
-  )
-
-  // Observe and dispatch an action that updates keep token balance.
-  while (true) {
-    const {
-      payload: { event },
-    } = yield take(requestChan)
-    const {
-      returnValues: { value },
-    } = event
-
-    yield put({
-      type: "keep-token/transferred_from",
-      payload: { value },
-    })
-  }
-}
-
-export function* subscribtToKeepTokenTransferToEvent() {
-  const requestChan = yield actionChannel(KEEP_TOKEN_TRANSFER_TO_EVENT_EMITTED)
-
-  // Observe and dispatch an action that updates keep token balance.
-  while (true) {
-    const {
-      payload: { event },
-    } = yield take(requestChan)
-    const {
-      returnValues: { value },
-    } = event
-
-    yield put({
-      type: "keep-token/transferred_to",
-      payload: { value },
-    })
-  }
 }
 
 export function* subscribeToStakedEvent() {

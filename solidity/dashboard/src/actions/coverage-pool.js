@@ -27,12 +27,6 @@ export const RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED =
 export const RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED =
   "risk_manager/auction_closed_event_emitted"
 
-export const KEEP_TOKEN_TRANSFER_FROM_EVENT_EMITTED =
-  "keep_token/transfer_from"
-
-export const KEEP_TOKEN_TRANSFER_TO_EVENT_EMITTED =
-  "keep_token/transfer_to"
-
 export const COVERAGE_POOL_DEPOSIT_ASSET_POOL = "coverage_pool/deposit"
 export const COVERAGE_POOL_WITHDRAW_ASSET_POOL = "coverage_pool/withdraw"
 export const COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL =
@@ -124,20 +118,6 @@ export const riskManagerAuctionCreatedEventEmitted = (event) => {
 export const riskManagerAuctionClosedEventEmitted = (event) => {
   return {
     type: RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
-    payload: { event },
-  }
-}
-
-export const keepTokenTransferFromEventEmitted = (event) => {
-  return {
-    type: KEEP_TOKEN_TRANSFER_FROM_EVENT_EMITTED,
-    payload: { event },
-  }
-}
-
-export const keepTokenTransferToEventEmitted = (event) => {
-  return {
-    type: KEEP_TOKEN_TRANSFER_TO_EVENT_EMITTED,
     payload: { event },
   }
 }
