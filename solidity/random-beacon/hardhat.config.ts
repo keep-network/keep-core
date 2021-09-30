@@ -7,6 +7,7 @@ import "@tenderly/hardhat-tenderly"
 import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
+import "@typechain/hardhat"
 
 const config: HardhatUserConfig = {
   solidity: {
