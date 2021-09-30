@@ -23,6 +23,12 @@ repos:
       files: 'solidity\/.*\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
+    - id: lint-ts
+      name: 'lint solidity ts'
+      entry: /usr/bin/env bash -c "cd solidity/random-beacon && npm run lint:ts"
+      files: 'solidity/random-beacon\/.*\.ts$'
+      language: script
+      description: "Checks TS code according to the package's linter configuration"
     - id: format-dashboard
       name: 'format dashboard'
       entry: /usr/bin/env bash -c "cd solidity/dashboard && npm run format"
