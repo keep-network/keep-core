@@ -34,9 +34,11 @@ import { EVENTS } from "../constants/events"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
+  yield fork(observeKeepTokenTransferFrom)
+  yield fork(observeKeepTokenTransferTo)
 }
 
-export function* observeKeepTokenTransferFrom() {
+function* observeKeepTokenTransferFrom() {
   const { token: keepTokenContractInstance } = yield getContractsContext()
   const {
     eth: { defaultAccount },
@@ -58,7 +60,7 @@ export function* observeKeepTokenTransferFrom() {
   )
 }
 
-export function* observeKeepTokenTransferTo() {
+function* observeKeepTokenTransferTo() {
   const { token: keepTokenContractInstance } = yield getContractsContext()
   const {
     eth: { defaultAccount },
