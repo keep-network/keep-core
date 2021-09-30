@@ -33,7 +33,7 @@ import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
 
 export function* subscribeToKeepTokenTransferEvent() {
-  yield take("keep-token/balance_request_success")
+  yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
   yield fork(observeKeepTokenTransferFrom)
   yield fork(observeKeepTokenTransferTo)
 }

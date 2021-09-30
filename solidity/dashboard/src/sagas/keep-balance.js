@@ -12,7 +12,10 @@ import keepToken from "../services/keepToken"
 import { keepBalanceActions } from "../actions"
 
 export function* watchKeepTokenBalanceRequest() {
-  yield takeLatest("keep-token/balance_request", fetchKeepTokenBalance)
+  yield takeLatest(
+    keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST,
+    fetchKeepTokenBalance
+  )
 }
 
 export function* fetchKeepTokenBalanceWithRetry() {
@@ -30,11 +33,14 @@ function* fetchKeepTokenBalance() {
       defaultAccount
     )
     yield put({
-      type: "keep-token/balance_request_success",
+      type: keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS,
       payload: keepTokenBalance,
     })
   } catch (error) {
-    yield* logError("keep-token/balance_request_failure", error)
+    yield* logError(
+      keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_FAILURE,
+      error
+    )
   }
 }
 
@@ -53,7 +59,7 @@ export function* subscribeToKeepTokenTransferFromEvent() {
     } = event
 
     yield put({
-      type: "keep-token/transferred_from",
+      type: keepBalanceActions.KEEP_TOKEN_TRANSFERRED_FROM,
       payload: { value },
     })
   }
@@ -74,7 +80,7 @@ export function* subscribeToKeepTokenTransferToEvent() {
     } = event
 
     yield put({
-      type: "keep-token/transferred_to",
+      type: keepBalanceActions.KEEP_TOKEN_TRANSFERRED_TO,
       payload: { value },
     })
   }
