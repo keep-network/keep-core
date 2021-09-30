@@ -138,26 +138,32 @@ class CoveragePoolV1 {
   }
 
   /**
-   * Estimates KEEP balance from give covKeeps amount
-   * @param {string | number} covKeep covKeep amount that we want to estimate
-   * KEEP value from
-   * @param {string | number} totalSupplyOfCovKeep total supply of covKeeps
-   * @param {string | number} tvl - total supply of KEEPs places in coverage
-   * pools
-   * @return {string} - estimated KEEP amount of given covKEEPS
+   * Estimates collateral token balance from given cov token amount
+   * @param {string | number} covToken cov token amount that we want to estimate
+   * collateral token value from
+   * @param {string | number} totalSupplyOfCovToken total supply of cov tokens
+   * @param {string | number} tvl - total supply of collateral tokens places in
+   * coverage pools
+   * @return {string} - estimated collateral token amount of given cov tokens
    */
-  estimatedBalanceFor = (covKeep, totalSupplyOfCovKeep, tvl) => {
+  estimatedBalanceFor = (covToken, totalSupplyOfCovToken, tvl) => {
     if (
-      new BigNumber(covKeep).isZero() ||
-      new BigNumber(totalSupplyOfCovKeep).isZero() ||
+      new BigNumber(covToken).isZero() ||
+      new BigNumber(totalSupplyOfCovToken).isZero() ||
       new BigNumber(tvl).isZero()
     ) {
       return "0"
     }
-    return new BigNumber(covKeep)
-      .div(totalSupplyOfCovKeep)
-      .multipliedBy(tvl)
-      .toString()
+    return (
+      new BigNumber(covToken)
+        .div(totalSupplyOfCovToken)
+        .multipliedBy(tvl)
+        // TODO: Make a coverage pool lib more abstract to be independent of the
+        // KEEP token and pass collateral token and cov token object to
+        // constructor.
+        .decimalPlaces(KEEP.decimals)
+        .toString()
+    )
   }
 
   /**
