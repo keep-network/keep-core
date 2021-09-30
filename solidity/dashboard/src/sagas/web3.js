@@ -106,7 +106,7 @@ function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
 export function createSubcribeToContractEventChannel(
   contract,
   eventName,
-  options
+  options = {}
 ) {
   const contractHasEvent = contract.options.jsonInterface.find(
     (entry) => entry.type === "event" && entry.name === eventName
