@@ -9,12 +9,18 @@ import "@tenderly/hardhat-tenderly"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "@typechain/hardhat"
+import "hardhat-gas-reporter"
 
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
         version: "0.8.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
       },
     ],
   },
