@@ -1,4 +1,5 @@
 import * as TBTCV2MigrationActions from "./tbtc-migration"
+import * as KeepBalanceActions from "./keep-balance"
 
 // COPY STAKE
 export const FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST =
@@ -48,4 +49,8 @@ export const KEEP_RANDOM_BEACON_AUTHORIZED =
 
 export const tbtcV2Migration = {
   ...TBTCV2MigrationActions,
+}
+
+export const keepBalanceActions = {
+  ...KeepBalanceActions,
 }

@@ -103,7 +103,11 @@ function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
   }, buffers.expanding())
 }
 
-export function createSubcribeToContractEventChannel(contract, eventName) {
+export function createSubcribeToContractEventChannel(
+  contract,
+  eventName,
+  options = {}
+) {
   const contractHasEvent = contract.options.jsonInterface.find(
     (entry) => entry.type === "event" && entry.name === eventName
   )
@@ -115,7 +119,7 @@ export function createSubcribeToContractEventChannel(contract, eventName) {
     }, buffers.expanding())
   }
 
-  const eventEmitter = contract.events[eventName]()
+  const eventEmitter = contract.events[eventName](options)
   let eventTxCache = null
 
   return eventChannel((emit) => {

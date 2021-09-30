@@ -28,57 +28,58 @@ import {
   riskManagerAuctionClosedEventEmitted,
   riskManagerAuctionCreatedEventEmitted,
 } from "../actions/coverage-pool"
+import { keepBalanceActions } from "../actions"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
 
 export function* subscribeToKeepTokenTransferEvent() {
-  yield take("keep-token/balance_request_success")
-  yield fork(observeKeepTokenTransfer)
+  yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
+  yield fork(observeKeepTokenTransferFrom)
+  yield fork(observeKeepTokenTransferTo)
 }
 
-function* observeKeepTokenTransfer() {
-  const { token } = yield getContractsContext()
+function* observeKeepTokenTransferFrom() {
+  const { token: keepTokenContractInstance } = yield getContractsContext()
   const {
     eth: { defaultAccount },
   } = yield getWeb3Context()
 
-  // Create subscription channel.
-  const contractEventCahnnel = yield call(
-    createSubcribeToContractEventChannel,
-    token,
-    "Transfer"
-  )
-
-  // Observe and dispatch an action that updates keep token balance.
-  while (true) {
-    try {
-      const event = yield take(contractEventCahnnel)
-      const {
-        returnValues: { from, to, value },
-      } = event
-
-      yield put({
-        type: "keep-token/transfered_event",
-        payload: { event },
-      })
-
-      let arithmeticOpration = null
-      if (isSameEthAddress(defaultAccount, from)) {
-        arithmeticOpration = sub
-      } else if (isSameEthAddress(defaultAccount, to)) {
-        arithmeticOpration = add
-      }
-      if (arithmeticOpration) {
-        yield put({
-          type: "keep-token/transfered",
-          payload: { value, arithmeticOpration },
-        })
-      }
-    } catch (error) {
-      console.error(`Failed subscribing to Transfer event`, error)
-      contractEventCahnnel.close()
-    }
+  const options = {
+    filter: {
+      from: defaultAccount,
+    },
   }
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    keepTokenContractInstance,
+    "Transfer",
+    keepBalanceActions.keepTokenTransferFromEventEmitted,
+    "KeepToken.Transfer",
+    options
+  )
+}
+
+function* observeKeepTokenTransferTo() {
+  const { token: keepTokenContractInstance } = yield getContractsContext()
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  const options = {
+    filter: {
+      to: defaultAccount,
+    },
+  }
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    keepTokenContractInstance,
+    "Transfer",
+    keepBalanceActions.keepTokenTransferToEventEmitted,
+    "KeepToken.Transfer",
+    options
+  )
 }
 
 export function* subscribeToStakedEvent() {
@@ -707,8 +708,8 @@ function* lpTokensStakedOrWithdrawn(
   // Update only if this transaction relates to the current logged account.
   if (isSameEthAddress(defaultAccount, user)) {
     emittedAmountValue = amount
-    const arithmeticOpration = actionType.includes("withdrawn") ? sub : add
-    updatedlpBalance = arithmeticOpration(lpBalance, amount).toString()
+    const arithmeticOperation = actionType.includes("withdrawn") ? sub : add
+    updatedlpBalance = arithmeticOperation(lpBalance, amount).toString()
   }
 
   yield* updateLPTokenBalance(
