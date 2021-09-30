@@ -183,7 +183,7 @@ export class Token {
       : new BigNumber(10).pow(this.decimals - decimals).toString()
     const _minAmountInTokenUnit = isTheSameDecimalsNumber
       ? this.MIN_AMOUNT_IN_TOKEN_UNIT
-      : this.toTokenUnit(this.MIN_AMOUNT_TO_DISPLAY).toString()
+      : this.toTokenUnit(_minAmountToDisplay).toString()
 
     if (amountInBn.lt(_minAmountToDisplay)) {
       return `<${_minAmountInTokenUnit}`
