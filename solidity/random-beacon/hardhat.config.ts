@@ -12,6 +12,11 @@ const config: HardhatUserConfig = {
     compilers: [
       {
         version: "0.8.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
       },
     ],
   },
@@ -51,6 +56,7 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0, // take the first account as deployer
     },
+  },
   contractSizer: {
     alphaSort: true,
     disambiguatePaths: false,
