@@ -8,6 +8,7 @@ import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
+import "@typechain/hardhat"
 
 const config: HardhatUserConfig = {
   solidity: {
