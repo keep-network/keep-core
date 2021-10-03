@@ -6,6 +6,7 @@ import {
   take,
   actionChannel,
   takeEvery,
+  delay,
 } from "redux-saga/effects"
 import { takeOnlyOnce } from "./effects"
 import {
@@ -36,6 +37,7 @@ import {
   logErrorAndThrow,
   logError,
   submitButtonHelper,
+  getWeb3Context,
 } from "./utils"
 import { Keep } from "../contracts"
 import { add, eq, gt, sub } from "../utils/arithmetics.utils"
@@ -45,6 +47,9 @@ import { KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
 import { showModal } from "../actions/modal"
 import { modalComponentType } from "../components/Modal"
+import moment from "moment"
+import { showMessage } from "../actions/messages"
+import { messageType } from "../components/Message"
 
 function* fetchTvl() {
   try {
@@ -527,4 +532,87 @@ export function* watchClaimTokensFromWithdrawal() {
     COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
     claimTokensFromWithdrawalWorker
   )
+}
+
+export function* watchPendingWithdrawalNotifications() {
+  const {
+    eth: { defaultAccount: address },
+  } = yield getWeb3Context()
+
+  const withdrawalInitiatedTimestamp = yield call(
+    Keep.coveragePoolV1.withdrawalInitiatedTimestamp,
+    address
+  )
+
+  const { withdrawalDelay, withdrawalTimeout } = yield call(
+    Keep.coveragePoolV1.withdrawalDelays
+  )
+
+  // print `Claim window expired` message only once (per withdrawal)
+  let timeExpiredMessageDisplayed = false
+
+  while (true) {
+    const currentDate = moment()
+
+    const endOfWithdrawalDelayDate = moment
+      .unix(withdrawalInitiatedTimestamp)
+      .add(withdrawalDelay, "seconds")
+
+    const endOfWithdrawalTimeoutDate = moment
+      .unix(withdrawalInitiatedTimestamp)
+      .add(withdrawalDelay, "seconds")
+      .add(withdrawalTimeout, "seconds")
+
+    const days = endOfWithdrawalTimeoutDate.diff(currentDate, "days")
+    const hours = moment
+      .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
+      .hours()
+    const minutes = moment
+      .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
+      .minutes()
+
+    if (
+      currentDate.isAfter(endOfWithdrawalDelayDate, "second") &&
+      currentDate.isBefore(endOfWithdrawalTimeoutDate, "second")
+    ) {
+      let timeLeft = ""
+      if (days > 0) {
+        timeLeft = days !== 1 ? `${days} days` : `${days} day`
+      } else if (hours > 0) {
+        timeLeft = hours !== 1 ? `${hours} hours` : `${hours} hour`
+      } else if (minutes > 0) {
+        timeLeft = "less than 1 hour"
+      } else {
+        timeLeft = "less than 1 minute"
+      }
+
+      yield put(
+        showMessage({
+          messageType: messageType.COV_POOLS_CLAIM_TOKENS_TIME_LEFT,
+          messageProps: {
+            sticky: true,
+            title: `You have to ${timeLeft} to claim your tokens`,
+          },
+        })
+      )
+      timeExpiredMessageDisplayed = false
+    } else if (
+      currentDate.isAfter(endOfWithdrawalTimeoutDate, "second") &&
+      !timeExpiredMessageDisplayed
+    ) {
+      yield put(
+        showMessage({
+          messageType: messageType.COV_POOLS_CLAIM_TOKENS_TIME_LEFT,
+          messageProps: {
+            sticky: true,
+            title: `The claim window expired.`,
+            linkText: "Re-initiate withdrawal",
+          },
+        })
+      )
+      timeExpiredMessageDisplayed = true
+    }
+
+    yield delay(moment.duration(40, "minutes").asMilliseconds())
+  }
 }
