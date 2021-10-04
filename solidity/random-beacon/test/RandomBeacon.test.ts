@@ -38,8 +38,9 @@ describe("RandomBeacon", () => {
     })
 
     context("when the caller is the owner", () => {
+      let tx
       beforeEach(async () => {
-        await randomBeacon
+        tx = await randomBeacon
           .connect(governance)
           .updateRelayEntryParameters(
             relayRequestFee,
@@ -72,6 +73,17 @@ describe("RandomBeacon", () => {
           callbackGasLimit
         )
       })
+
+      it("should emit the RelayEntryParametersUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "RelayEntryParametersUpdated")
+          .withArgs(
+            relayRequestFee,
+            relayEntrySubmissionEligibilityDelay,
+            RelayEntryHardTimeout,
+            callbackGasLimit
+          )
+      })
     })
   })
 
@@ -96,8 +108,9 @@ describe("RandomBeacon", () => {
     })
 
     context("when the caller is the owner", () => {
+      let tx
       beforeEach(async () => {
-        await randomBeacon
+        tx = await randomBeacon
           .connect(governance)
           .updateGroupCreationParameters(
             groupCreationFrequency,
@@ -128,6 +141,17 @@ describe("RandomBeacon", () => {
           dkgSubmissionEligibilityDelay
         )
       })
+
+      it("should emit the GroupCreationParametersUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "GroupCreationParametersUpdated")
+          .withArgs(
+            groupCreationFrequency,
+            groupLifetime,
+            dkgResultChallengePeriodLength,
+            dkgSubmissionEligibilityDelay
+          )
+      })
     })
   })
 
@@ -148,8 +172,9 @@ describe("RandomBeacon", () => {
     })
 
     context("when the caller is the owner", () => {
+      let tx
       beforeEach(async () => {
-        await randomBeacon
+        tx = await randomBeacon
           .connect(governance)
           .updateRewardParameters(
             dkgResultSubmissionReward,
@@ -167,6 +192,12 @@ describe("RandomBeacon", () => {
         expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
           sortitionPoolUnlockingReward
         )
+      })
+
+      it("should emit the RewardParametersUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "RewardParametersUpdated")
+          .withArgs(dkgResultSubmissionReward, sortitionPoolUnlockingReward)
       })
     })
   })
@@ -188,8 +219,9 @@ describe("RandomBeacon", () => {
     })
 
     context("when the caller is the owner", () => {
+      let tx
       beforeEach(async () => {
-        await randomBeacon
+        tx = await randomBeacon
           .connect(governance)
           .updateSlashingParameters(
             relayEntrySubmissionFailureSlashingAmount,
@@ -207,6 +239,15 @@ describe("RandomBeacon", () => {
         expect(
           await randomBeacon.maliciousDkgResultSlashingAmount()
         ).to.be.equal(maliciousDkgResultSlashingAmount)
+      })
+
+      it("should emit the SlashingParametersUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "SlashingParametersUpdated")
+          .withArgs(
+            relayEntrySubmissionFailureSlashingAmount,
+            maliciousDkgResultSlashingAmount
+          )
       })
     })
   })

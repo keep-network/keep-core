@@ -59,6 +59,30 @@ contract RandomBeacon is Ownable {
     /// @notice Slashing amount for submitting malicious DKG result
     uint256 public maliciousDkgResultSlashingAmount;
 
+    event RelayEntryParametersUpdated(
+        uint256 relayRequestFee,
+        uint256 relayEntrySubmissionEligibilityDelay,
+        uint256 RelayEntryHardTimeout,
+        uint256 callbackGasLimit
+    );
+
+    event GroupCreationParametersUpdated(
+        uint256 groupCreationFrequency,
+        uint256 groupLifetime,
+        uint256 dkgResultChallengePeriodLength,
+        uint256 dkgSubmissionEligibilityDelay
+    );
+
+    event RewardParametersUpdated(
+        uint256 dkgResultSubmissionReward,
+        uint256 sortitionPoolUnlockingReward
+    );
+
+    event SlashingParametersUpdated(
+        uint256 relayEntrySubmissionFailureSlashingAmount,
+        uint256 maliciousDkgResultSlashingAmount
+    );
+
     /// @notice Updates the values of relay entry parameters
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract
@@ -77,6 +101,12 @@ contract RandomBeacon is Ownable {
         relayEntrySubmissionEligibilityDelay = _relayEntrySubmissionEligibilityDelay;
         relayEntryHardTimeout = _relayEntryHardTimeout;
         callbackGasLimit = _callbackGasLimit;
+        emit RelayEntryParametersUpdated(
+            relayRequestFee,
+            relayEntrySubmissionEligibilityDelay,
+            relayEntryHardTimeout,
+            callbackGasLimit
+        );
     }
 
     /// @notice Updates the values of group creation parameters
@@ -98,6 +128,12 @@ contract RandomBeacon is Ownable {
         groupLifetime = _groupLifetime;
         dkgResultChallengePeriodLength = _dkgResultChallengePeriodLength;
         dkgSubmissionEligibilityDelay = _dkgSubmissionEligibilityDelay;
+        emit GroupCreationParametersUpdated(
+            groupCreationFrequency,
+            groupLifetime,
+            dkgResultChallengePeriodLength,
+            dkgSubmissionEligibilityDelay
+        );
     }
 
     /// @notice Updates the values of reward parameters
@@ -111,6 +147,10 @@ contract RandomBeacon is Ownable {
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
         sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        emit RewardParametersUpdated(
+            dkgResultSubmissionReward,
+            sortitionPoolUnlockingReward
+        );
     }
 
     /// @notice Updates the values of slashing parameters
@@ -126,5 +166,9 @@ contract RandomBeacon is Ownable {
     ) external onlyOwner {
         relayEntrySubmissionFailureSlashingAmount = _relayEntrySubmissionFailureSlashingAmount;
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
+        emit SlashingParametersUpdated(
+            relayEntrySubmissionFailureSlashingAmount,
+            maliciousDkgResultSlashingAmount
+        );
     }
 }
