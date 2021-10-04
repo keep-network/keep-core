@@ -131,7 +131,7 @@ contract RandomBeacon is Ownable {
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
         uint256 relayEntrySubmissionEligibilityDelay,
-        uint256 RelayEntryHardTimeout,
+        uint256 relayEntryHardTimeout,
         uint256 callbackGasLimit
     );
 
@@ -152,9 +152,9 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
-    /// @notice Updates the values of relay entry parameters
+    /// @notice Updates the values of relay entry parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract
+    ///      random beacon governance contract.
     /// @param _relayRequestFee New relay request fee
     /// @param _relayEntrySubmissionEligibilityDelay New relay entry submission
     ///        eligibility delay
@@ -178,9 +178,9 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Updates the values of group creation parameters
+    /// @notice Updates the values of group creation parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract
+    ///      random beacon governance contract.
     /// @param _groupCreationFrequency New group creation frequency
     /// @param _groupLifetime New group lifetime
     /// @param _dkgResultChallengePeriodLength New DKG result challenge period
@@ -205,9 +205,9 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Updates the values of reward parameters
+    /// @notice Updates the values of reward parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract
+    ///      random beacon governance contract.
     /// @param _dkgResultSubmissionReward New DKG result submission reward
     /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
     function updateRewardParameters(
@@ -222,9 +222,9 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Updates the values of slashing parameters
+    /// @notice Updates the values of slashing parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract
+    ///      random beacon governance contract.
     /// @param _relayEntrySubmissionFailureSlashingAmount New relay entry
     ///        submission failure amount
     /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
