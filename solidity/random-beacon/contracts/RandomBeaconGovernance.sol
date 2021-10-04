@@ -60,6 +60,32 @@ contract RandomBeaconGovernance is Ownable {
 
     RandomBeacon public randomBeacon;
 
+    // Long governance delay used for critical parameters giving a chance for
+    // stakers to opt out before the change is finalized in case they do not 
+    // agree with that change. The maximum group lifetime must not be longer
+    // than this delay.
+    //
+    // The full list of parameters protected by this delay:
+    // - relay entry hard timeout
+    // - callback gas limit
+    // - group creation frequency
+    // - group lifetime
+    // - relay entry submission failure slashing amount
+    uint256 internal CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
+
+    // Short governance delay for non-critical parameters. Honest stakers should
+    // not be severly affected by any change of these parameters.
+    //
+    // The full list of parameters protected by this delay:
+    // - relay request fee
+    // - relay entry submission eligibility delay
+    // - DKG result challenge period length
+    // - DKG result submission eligibility delay
+    // - DKG result submission reward
+    // - sortition pool unlocking reward
+    // - malicious DKG result slashing amount
+    uint256 internal STANDARD_PARAMETER_GOVERNANCE_DELAY = 24 hours; 
+
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
         uint256 timestamp
@@ -202,7 +228,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeRelayRequestFeeUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(relayRequestFeeChangeInitiated, 24 hours)
+        onlyAfterGovernanceDelay(
+            relayRequestFeeChangeInitiated, 
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateRelayEntryParameters(
             newRelayRequestFee,
@@ -246,7 +275,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             relayEntrySubmissionEligibilityDelayChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateRelayEntryParameters(
@@ -285,7 +314,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeRelayEntryHardTimeoutUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(relayEntryHardTimeoutChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            relayEntryHardTimeoutChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
@@ -325,7 +357,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeCallbackGasLimitUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(callbackGasLimitChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            callbackGasLimitChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
@@ -364,7 +399,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeGroupCreationFrequencyUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(groupCreationFrequencyChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            groupCreationFrequencyChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateGroupCreationParameters(
             newGroupCreationFrequency,
@@ -401,7 +439,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeGroupLifetimeUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(groupLifetimeChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            groupLifetimeChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
@@ -443,7 +484,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             dkgResultChallengePeriodLengthChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateGroupCreationParameters(
@@ -488,7 +529,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             dkgSubmissionEligibilityDelayChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateGroupCreationParameters(
@@ -528,7 +569,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             dkgResultSubmissionRewardChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateRewardParameters(
@@ -564,7 +605,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             sortitionPoolUnlockingRewardChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateRewardParameters(
@@ -606,7 +647,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             relayEntrySubmissionFailureSlashingAmountChangeInitiated,
-            2 weeks
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateSlashingParameters(
@@ -646,7 +687,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             maliciousDkgResultSlashingAmountChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateSlashingParameters(
@@ -671,7 +712,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayRequestFeeChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -686,7 +727,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntrySubmissionEligibilityDelayChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -701,7 +742,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntryHardTimeoutChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -716,7 +757,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 callbackGasLimitChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -731,7 +772,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 groupCreationFrequencyChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -745,7 +786,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 groupLifetimeChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -760,7 +801,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgResultChallengePeriodLengthChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -775,7 +816,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgSubmissionEligibilityDelayChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -790,7 +831,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgResultSubmissionRewardChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -805,7 +846,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 sortitionPoolUnlockingRewardChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -820,7 +861,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntrySubmissionFailureSlashingAmountChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -835,7 +876,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultSlashingAmountChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 }
