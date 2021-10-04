@@ -118,10 +118,10 @@ const LiquidityPage = ({ headerTitle }) => {
   }, [isConnected, keepTokenBalance.value, hideBanner, isBannerVisible])
 
   const addLpTokens = (poolId, wrappedTokenBalance, awaitingPromise) => {
-    const liquidityPairData = LIQUIDITY_REWARD_PAIRS[poolId]
+    const liquidityRewardPair = LIQUIDITY_REWARD_PAIRS[poolId]
     dispatch(
       addMoreLpTokens(
-        liquidityPairData,
+        liquidityRewardPair,
         wrappedTokenBalance,
         address,
         awaitingPromise
@@ -130,9 +130,9 @@ const LiquidityPage = ({ headerTitle }) => {
   }
 
   const withdrawLiquidityRewards = (poolId, amount, awaitingPromise) => {
-    const liquidityPairData = LIQUIDITY_REWARD_PAIRS[poolId]
+    const liquidityRewardPair = LIQUIDITY_REWARD_PAIRS[poolId]
     dispatch(
-      withdrawAllLiquidityRewards(liquidityPairData, amount, awaitingPromise)
+      withdrawAllLiquidityRewards(liquidityRewardPair, amount, awaitingPromise)
     )
   }
 
