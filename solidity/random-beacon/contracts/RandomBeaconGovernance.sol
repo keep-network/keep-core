@@ -249,7 +249,6 @@ contract RandomBeaconGovernance is Ownable {
             24 hours
         )
     {
-        //relayEntrySubmissionEligibilityDelay = newRelayEntrySubmissionEligibilityDelay;
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             newRelayEntrySubmissionEligibilityDelay,
