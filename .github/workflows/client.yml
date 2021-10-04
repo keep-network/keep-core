@@ -11,7 +11,7 @@ on:
       - "infrastructure/**"
       - "scripts/**"
       - "token-stakedrop/**"
-      - "solidity/dashboard/**"
+      - "solidity-v1/dashboard/**"
   pull_request:
   workflow_dispatch:
     inputs:
@@ -42,7 +42,7 @@ jobs:
         with:
           filters: |
             path-filter:
-              - './!((docs|infrastructure|scripts|token-stakedrop|(solidity/dashboard))/**)'
+              - './!((docs|infrastructure|scripts|token-stakedrop|(solidity-v1/dashboard))/**)'
 
   client-build-test-publish:
     needs: client-detect-changes

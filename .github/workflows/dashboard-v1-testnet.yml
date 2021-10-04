@@ -7,7 +7,7 @@ on:
     branches:
      - main
     paths:
-      - "solidity/dashboard/**"
+      - "solidity-v1/dashboard/**"
   pull_request:
   workflow_dispatch:
     inputs:
@@ -38,7 +38,7 @@ jobs:
         with:
           filters: |
             path-filter:
-              - './solidity/dashboard/**'
+              - './solidity-v1/dashboard/**'
 
   dashboard-build-and-publish:
     needs: dashboard-detect-changes
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./solidity/dashboard
+        working-directory: ./solidity-v1/dashboard
     steps:
       - uses: actions/checkout@v2
 
@@ -93,7 +93,7 @@ jobs:
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
           query: |
-            keep-core-contracts-version = github.com/keep-network/keep-core/solidity#version
+            keep-core-contracts-version = github.com/keep-network/keep-core/solidity-v1#version
             keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
             tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
             tbtc-v2-contracts-version = github.com/keep-network/tbtc-v2/solidity#version
@@ -122,7 +122,7 @@ jobs:
           set-website: true
           home-page-path: index.html
           error-page-path: index.html
-          build-folder: solidity/dashboard/build
+          build-folder: solidity-v1/dashboard/build
       
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'

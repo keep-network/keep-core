@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-    - solidity/dashboard/**
+    - solidity-v1/dashboard/**
 
 # For pull_request_target:
 #  - Checkout with repository set to PR repo, ref same (see
@@ -22,7 +22,7 @@ jobs:
     if: startsWith(github.head_ref, 'releases/mainnet/token-dashboard/')
     defaults:
       run:
-        working-directory: solidity/dashboard
+        working-directory: solidity-v1/dashboard
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -46,7 +46,7 @@ jobs:
     #    service-key: ${{ secrets.KEEP_DASHBOARD_UPLOADER_SERVICE_KEY_JSON }}
     #    project: keep-prd-210b
     #    bucket-name: dashboard.keep.network
-    #    build-folder: solidity/dashboard/build
+    #    build-folder: solidity-v1/dashboard/build
     # A pull_request event is a PR; deploy to preview bucket.
     - if: github.event_name == 'pull_request'
       name: Deploy PR preview to GCP
@@ -56,7 +56,7 @@ jobs:
         project: keep-prd-210b
         bucket-name: preview.dashboard.keep.network
         bucket-path: ${{ github.head_ref }}
-        build-folder: solidity/dashboard/build
+        build-folder: solidity-v1/dashboard/build
     # A pull_request event is a PR; leave a comment with the preview URL.
     - if: github.event_name == 'pull_request'
       name: Post preview URL to PR
