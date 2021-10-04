@@ -117,36 +117,22 @@ const LiquidityPage = ({ headerTitle }) => {
     }
   }, [isConnected, keepTokenBalance.value, hideBanner, isBannerVisible])
 
-  const addLpTokens = (
-    wrappedTokenBalance,
-    liquidityPairContractName,
-    pool,
-    awaitingPromise
-  ) => {
+  const addLpTokens = (poolId, wrappedTokenBalance, awaitingPromise) => {
+    const liquidityPairData = LIQUIDITY_REWARD_PAIRS[poolId]
     dispatch(
       addMoreLpTokens(
+        liquidityPairData,
         wrappedTokenBalance,
         address,
-        liquidityPairContractName,
-        pool,
         awaitingPromise
       )
     )
   }
 
-  const withdrawLiquidityRewards = (
-    liquidityPairContractName,
-    amount,
-    pool,
-    awaitingPromise
-  ) => {
+  const withdrawLiquidityRewards = (poolId, amount, awaitingPromise) => {
+    const liquidityPairData = LIQUIDITY_REWARD_PAIRS[poolId]
     dispatch(
-      withdrawAllLiquidityRewards(
-        liquidityPairContractName,
-        amount,
-        pool,
-        awaitingPromise
-      )
+      withdrawAllLiquidityRewards(liquidityPairData, amount, awaitingPromise)
     )
   }
 
@@ -205,6 +191,7 @@ const LiquidityPage = ({ headerTitle }) => {
         {cards.map(({ id, ...data }) => (
           <LiquidityRewardCard
             key={id}
+            poolId={id}
             {...data}
             apy={liquidityPools[id].apy}
             percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
