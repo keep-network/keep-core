@@ -557,6 +557,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
+"@keep-network/hardhat-helpers@https://github.com/keep-network/hardhat-helpers#ed35ab7":
+  version "0.2.0-pre.2"
+  resolved "https://github.com/keep-network/hardhat-helpers#ed35ab741bede1730333217922065f65a997f840"
+
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.0":
   version "0.1.0-pre.0"
   resolved "https://registry.yarnpkg.com/@keep-network/hardhat-local-networks-config/-/hardhat-local-networks-config-0.1.0-pre.0.tgz#55ab2f524f3bc5ad094d878c74644a0f77054396"
