@@ -105,7 +105,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -232,7 +232,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -347,7 +347,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -477,7 +477,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -602,7 +602,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -732,7 +732,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -859,7 +859,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -991,7 +991,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -1109,7 +1109,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -1222,7 +1222,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -1342,7 +1342,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
@@ -1462,7 +1462,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized", () => {
+    context("when the update process is initialized and governance delay passed", () => {
       let tx
 
       beforeEach(async () => {
