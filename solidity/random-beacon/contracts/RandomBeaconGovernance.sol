@@ -15,7 +15,6 @@
 pragma solidity ^0.8.6;
 
 import "./RandomBeacon.sol";
-import "./GovernanceUtils.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Random beacon governance
@@ -160,6 +159,26 @@ contract RandomBeaconGovernance is Ownable {
 
     constructor(RandomBeacon _randomBeacon) {
         randomBeacon = _randomBeacon;
+    }
+
+    /// @notice Gets the time remaining until the governable parameter update
+    ///         can be committed.
+    /// @param changeTimestamp Timestamp indicating the beginning of the change.
+    /// @param delay Governance delay.
+    /// @return Remaining time in seconds.
+    function getRemainingChangeTime(uint256 changeTimestamp, uint256 delay)
+        internal
+        view
+        returns (uint256)
+    {
+        require(changeTimestamp > 0, "Change not initiated");
+        /* solhint-disable-next-line not-rely-on-time */
+        uint256 elapsed = block.timestamp - changeTimestamp;
+        if (elapsed >= delay) {
+            return 0;
+        } else {
+            return delay - elapsed;
+        }
     }
 
     /// @notice Begins the relay request fee update process.
@@ -650,7 +669,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 relayRequestFeeChangeInitiated,
                 24 hours
             );
@@ -665,7 +684,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 relayEntrySubmissionEligibilityDelayChangeInitiated,
                 24 hours
             );
@@ -680,7 +699,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 relayEntryHardTimeoutChangeInitiated,
                 2 weeks
             );
@@ -695,7 +714,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 callbackGasLimitChangeInitiated,
                 2 weeks
             );
@@ -710,7 +729,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 groupCreationFrequencyChangeInitiated,
                 2 weeks
             );
@@ -724,7 +743,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 groupLifetimeChangeInitiated,
                 2 weeks
             );
@@ -739,7 +758,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 dkgResultChallengePeriodLengthChangeInitiated,
                 24 hours
             );
@@ -754,7 +773,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 dkgSubmissionEligibilityDelayChangeInitiated,
                 24 hours
             );
@@ -769,7 +788,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 dkgResultSubmissionRewardChangeInitiated,
                 24 hours
             );
@@ -784,7 +803,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 sortitionPoolUnlockingRewardChangeInitiated,
                 24 hours
             );
@@ -799,7 +818,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 relayEntrySubmissionFailureSlashingAmountChangeInitiated,
                 2 weeks
             );
@@ -814,7 +833,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            GovernanceUtils.getRemainingChangeTime(
+            getRemainingChangeTime(
                 maliciousDkgResultSlashingAmountChangeInitiated,
                 24 hours
             );
