@@ -17,9 +17,10 @@ pragma solidity ^0.8.6;
 import "./RandomBeacon.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title Random beacon governance
-/// @notice Random beacon governance owns the random beacon contract and is
-///         responsible for updating its governable parameters
+/// @title Keep Random Beacon Governance
+/// @notice Owns the `RandomBeacon` contract and is responsible for updating its
+///         governable parameters in respect to governance delay invividual
+///         for each parameter.
 contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayRequestFee;
     uint256 public relayRequestFeeChangeInitiated;
