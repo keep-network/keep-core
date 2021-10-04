@@ -171,6 +171,16 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.AuthorizeOperatorContract(
 				newTransactorOptions,
 				_operator,
@@ -305,6 +315,16 @@ func (ts *TokenStaking) CancelStake(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.CancelStake(
 				newTransactorOptions,
 				_operator,
@@ -433,6 +453,16 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.ClaimDelegatedAuthority(
 				newTransactorOptions,
 				delegatedAuthoritySource,
@@ -561,6 +591,16 @@ func (ts *TokenStaking) CommitTopUp(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.CommitTopUp(
 				newTransactorOptions,
 				_operator,
@@ -693,6 +733,16 @@ func (ts *TokenStaking) LockStake(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.LockStake(
 				newTransactorOptions,
 				operator,
@@ -839,6 +889,16 @@ func (ts *TokenStaking) ReceiveApproval(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.ReceiveApproval(
 				newTransactorOptions,
 				_from,
@@ -985,6 +1045,16 @@ func (ts *TokenStaking) RecoverStake(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.RecoverStake(
 				newTransactorOptions,
 				_operator,
@@ -1117,6 +1187,16 @@ func (ts *TokenStaking) ReleaseExpiredLock(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.ReleaseExpiredLock(
 				newTransactorOptions,
 				operator,
@@ -1263,6 +1343,16 @@ func (ts *TokenStaking) Seize(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.Seize(
 				newTransactorOptions,
 				amountToSeize,
@@ -1413,6 +1503,16 @@ func (ts *TokenStaking) Slash(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.Slash(
 				newTransactorOptions,
 				amountToSlash,
@@ -1551,6 +1651,16 @@ func (ts *TokenStaking) TransferStakeOwnership(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.TransferStakeOwnership(
 				newTransactorOptions,
 				operator,
@@ -1685,6 +1795,16 @@ func (ts *TokenStaking) Undelegate(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.Undelegate(
 				newTransactorOptions,
 				_operator,
@@ -1817,6 +1937,16 @@ func (ts *TokenStaking) UndelegateAt(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.UndelegateAt(
 				newTransactorOptions,
 				_operator,
@@ -1951,6 +2081,16 @@ func (ts *TokenStaking) UnlockStake(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := ts.contract.UnlockStake(
 				newTransactorOptions,
 				operator,

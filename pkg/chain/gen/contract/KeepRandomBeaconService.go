@@ -167,6 +167,16 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.AddOperatorContract(
 				newTransactorOptions,
 				operatorContract,
@@ -303,6 +313,16 @@ func (krbs *KeepRandomBeaconService) EntryCreated(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.EntryCreated(
 				newTransactorOptions,
 				requestId,
@@ -447,6 +467,16 @@ func (krbs *KeepRandomBeaconService) ExecuteCallback(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.ExecuteCallback(
 				newTransactorOptions,
 				requestId,
@@ -578,6 +608,16 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.FundDkgFeePool(
 				newTransactorOptions,
 			)
@@ -697,6 +737,16 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.FundRequestSubsidyFeePool(
 				newTransactorOptions,
 			)
@@ -823,6 +873,16 @@ func (krbs *KeepRandomBeaconService) Initialize(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.Initialize(
 				newTransactorOptions,
 				dkgContributionMargin,
@@ -957,6 +1017,16 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.RemoveOperatorContract(
 				newTransactorOptions,
 				operatorContract,
@@ -1082,6 +1152,16 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.RequestRelayEntry(
 				newTransactorOptions,
 			)
@@ -1212,6 +1292,16 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transaction.Gas()
+			}
+
 			transaction, err := krbs.contract.RequestRelayEntry0(
 				newTransactorOptions,
 				callbackContract,
