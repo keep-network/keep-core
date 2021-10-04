@@ -1,16 +1,23 @@
 import { HardhatUserConfig } from "hardhat/config"
 
 import "@keep-network/hardhat-local-networks-config"
+import "@keep-network/hardhat-helpers"
 import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
 import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
+import "hardhat-contract-sizer"
 
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.5",
+        version: "0.8.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+          },
+        },
       },
     ],
   },
@@ -50,6 +57,12 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0, // take the first account as deployer
     },
+  },
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: true,
   },
 }
 
