@@ -76,32 +76,36 @@ keep-core/
   Dockerfile
   main.go, *.go
   docs/
-  solidity-v1/ <1>
-  cmd/ <2>
-  pkg/ <3>
+  solidity <1>
+  solidity-v1/ <2>
+  cmd/ <3>
+  pkg/ <4>
     net/
-      net.go, *.go <4>
+      net.go, *.go <5>
       libp2p/
     chain/
-      chain.go, *.go <4>
+      chain.go, *.go <5>
       ethereum/
         gen/
-          gen.go <5>
+          gen.go <6>
     relay/
       relay.go, *.go
 ```
-<1> While the Keep network only uses Solidity at the moment, the directory
-    structure allows for other contract languages.
-<2> Keep client subcommands are implemented here, though they should be minimal and
+<1> Core contracts of the Keep contracts. Random beacon contracts are stored under
+    `/solidity/random-beacon` whereas ECDSA under `/solidity/ecdsa`.
+<2> Legacy core contracts of the random beacon (v1). While the Keep network only uses 
+    Solidity at the moment, the directory structure allows for other contract
+    languages.
+<3> Keep client subcommands are implemented here, though they should be minimal and
     deal solely with user interaction. The meat of the commands should exist in
     a package fit for the appropriate purpose.
-<3> All additional packages live in `pkg/`.
-<4> The high-level interfaces for a package `mypackage` live in `mypackage.go`.
+<4> All additional packages live in `pkg/`.
+<5> The high-level interfaces for a package `mypackage` live in `mypackage.go`.
     `net` and `chain` are interface packages that expose a common interface
     to network and blockchain layers. Their subpackages provide particular
     implementations of these common interfaces. Only `cmd/` and the main
     package should interact with the implementations directly.
-<5> When a package requires generated code, it should have a subpackage named
+<6> When a package requires generated code, it should have a subpackage named
     `gen/`. This subpackage should contain a single file, `gen.go`, with a
     `// go:generate` annotation to trigger appropriate code generation. All code
     generation is done with a single invocation of `go generate` at build time.
