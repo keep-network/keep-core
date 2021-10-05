@@ -17,9 +17,10 @@ pragma solidity ^0.8.6;
 import "./RandomBeacon.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/// @title Random beacon governance
-/// @notice Random beacon governance owns the random beacon contract and is
-///         responsible for updating its governable parameters
+/// @title Keep Random Beacon Governance
+/// @notice Owns the `RandomBeacon` contract and is responsible for updating its
+///         governable parameters in respect to governance delay individual
+///         for each parameter.
 contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayRequestFee;
     uint256 public relayRequestFeeChangeInitiated;
@@ -42,8 +43,8 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newDkgResultChallengePeriodLength;
     uint256 public dkgResultChallengePeriodLengthChangeInitiated;
 
-    uint256 public newDkgSubmissionEligibilityDelay;
-    uint256 public dkgSubmissionEligibilityDelayChangeInitiated;
+    uint256 public newDkgResultSubmissionEligibilityDelay;
+    uint256 public dkgResultSubmissionEligibilityDelayChangeInitiated;
 
     uint256 public newDkgResultSubmissionReward;
     uint256 public dkgResultSubmissionRewardChangeInitiated;
@@ -58,6 +59,32 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
     RandomBeacon public randomBeacon;
+
+    // Long governance delay used for critical parameters giving a chance for
+    // stakers to opt out before the change is finalized in case they do not 
+    // agree with that change. The maximum group lifetime must not be longer
+    // than this delay.
+    //
+    // The full list of parameters protected by this delay:
+    // - relay entry hard timeout
+    // - callback gas limit
+    // - group lifetime
+    // - relay entry submission failure slashing amount
+    uint256 internal CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
+
+    // Short governance delay for non-critical parameters. Honest stakers should
+    // not be severely affected by any change of these parameters.
+    //
+    // The full list of parameters protected by this delay:
+    // - relay request fee
+    // - group creation frequency
+    // - relay entry submission eligibility delay
+    // - DKG result challenge period length
+    // - DKG result submission eligibility delay
+    // - DKG result submission reward
+    // - sortition pool unlocking reward
+    // - malicious DKG result slashing amount
+    uint256 internal STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours; 
 
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
@@ -102,12 +129,12 @@ contract RandomBeaconGovernance is Ownable {
         uint256 dkgResultChallengePeriodLength
     );
 
-    event DkgSubmissionEligibilityDelayUpdateStarted(
-        uint256 dkgSubmissionEligibilityDelay,
+    event DkgResultSubmissionEligibilityDelayUpdateStarted(
+        uint256 dkgResultSubmissionEligibilityDelay,
         uint256 timestamp
     );
-    event DkgSubmissionEligibilityDelayUpdated(
-        uint256 dkgSubmissionEligibilityDelay
+    event DkgResultSubmissionEligibilityDelayUpdated(
+        uint256 dkgResultSubmissionEligibilityDelay
     );
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -201,7 +228,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeRelayRequestFeeUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(relayRequestFeeChangeInitiated, 24 hours)
+        onlyAfterGovernanceDelay(
+            relayRequestFeeChangeInitiated, 
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateRelayEntryParameters(
             newRelayRequestFee,
@@ -225,7 +255,7 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-disable not-rely-on-time */
         require(
             _newRelayEntrySubmissionEligibilityDelay > 0,
-            "Relay entry submission eligibility delay must be greater than 0 blocks"
+            "Relay entry submission eligibility delay must be > 0"
         );
         newRelayEntrySubmissionEligibilityDelay = _newRelayEntrySubmissionEligibilityDelay;
         relayEntrySubmissionEligibilityDelayChangeInitiated = block.timestamp;
@@ -245,10 +275,9 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             relayEntrySubmissionEligibilityDelayChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        //relayEntrySubmissionEligibilityDelay = newRelayEntrySubmissionEligibilityDelay;
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             newRelayEntrySubmissionEligibilityDelay,
@@ -285,7 +314,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeRelayEntryHardTimeoutUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(relayEntryHardTimeoutChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            relayEntryHardTimeoutChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
@@ -307,8 +339,8 @@ contract RandomBeaconGovernance is Ownable {
     {
         /* solhint-disable not-rely-on-time */
         require(
-            _newCallbackGasLimit > 0 && _newCallbackGasLimit < 1000000,
-            "Callback gas limit must be > 0 and < 1000000"
+            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1000000,
+            "Callback gas limit must be > 0 and <= 1000000"
         );
         newCallbackGasLimit = _newCallbackGasLimit;
         callbackGasLimitChangeInitiated = block.timestamp;
@@ -325,7 +357,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeCallbackGasLimitUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(callbackGasLimitChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            callbackGasLimitChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
@@ -347,7 +382,7 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-disable not-rely-on-time */
         require(
             _newGroupCreationFrequency > 0,
-            "Group creation frequency must be grater than zero"
+            "Group creation frequency must be > 0"
         );
         newGroupCreationFrequency = _newGroupCreationFrequency;
         groupCreationFrequencyChangeInitiated = block.timestamp;
@@ -364,13 +399,16 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeGroupCreationFrequencyUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(groupCreationFrequencyChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            groupCreationFrequencyChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateGroupCreationParameters(
             newGroupCreationFrequency,
             randomBeacon.groupLifetime(),
             randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgSubmissionEligibilityDelay()
+            randomBeacon.dkgResultSubmissionEligibilityDelay()
         );
         emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
         groupCreationFrequencyChangeInitiated = 0;
@@ -401,13 +439,16 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeGroupLifetimeUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(groupLifetimeChangeInitiated, 2 weeks)
+        onlyAfterGovernanceDelay(
+            groupLifetimeChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
     {
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
             newGroupLifetime,
             randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgSubmissionEligibilityDelay()
+            randomBeacon.dkgResultSubmissionEligibilityDelay()
         );
         emit GroupLifetimeUpdated(newGroupLifetime);
         groupLifetimeChangeInitiated = 0;
@@ -423,8 +464,8 @@ contract RandomBeaconGovernance is Ownable {
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         require(
-            _newDkgResultChallengePeriodLength > 10,
-            "DKG result challenge period length must be grater than 10 blocks"
+            _newDkgResultChallengePeriodLength >= 10,
+            "DKG result challenge period length must be >= 10"
         );
         newDkgResultChallengePeriodLength = _newDkgResultChallengePeriodLength;
         dkgResultChallengePeriodLengthChangeInitiated = block.timestamp;
@@ -443,14 +484,14 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             dkgResultChallengePeriodLengthChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
             randomBeacon.groupLifetime(),
             newDkgResultChallengePeriodLength,
-            randomBeacon.dkgSubmissionEligibilityDelay()
+            randomBeacon.dkgResultSubmissionEligibilityDelay()
         );
         emit DkgResultChallengePeriodLengthUpdated(
             newDkgResultChallengePeriodLength
@@ -459,49 +500,51 @@ contract RandomBeaconGovernance is Ownable {
         newDkgResultChallengePeriodLength = 0;
     }
 
-    /// @notice Begins the DKG submission eligibility delay update process.
+    /// @notice Begins the DKG result submission eligibility delay update
+    ///         process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgSubmissionEligibilityDelay New DKG submission eligibility
-    ///        delay in blocks
-    function beginDkgSubmissionEligibilityDelayUpdate(
-        uint256 _newDkgSubmissionEligibilityDelay
+    /// @param _newDkgResultSubmissionEligibilityDelay New DKG result submission 
+    ///        eligibility delay in blocks
+    function beginDkgResultSubmissionEligibilityDelayUpdate(
+        uint256 _newDkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         require(
-            _newDkgSubmissionEligibilityDelay > 0,
-            "DKG submission eligibility delay must be greater than 0 blocks"
+            _newDkgResultSubmissionEligibilityDelay > 0,
+            "DKG result submission eligibility delay must be > 0"
         );
-        newDkgSubmissionEligibilityDelay = _newDkgSubmissionEligibilityDelay;
-        dkgSubmissionEligibilityDelayChangeInitiated = block.timestamp;
-        emit DkgSubmissionEligibilityDelayUpdateStarted(
-            _newDkgSubmissionEligibilityDelay,
+        newDkgResultSubmissionEligibilityDelay = _newDkgResultSubmissionEligibilityDelay;
+        dkgResultSubmissionEligibilityDelayChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionEligibilityDelayUpdateStarted(
+            _newDkgResultSubmissionEligibilityDelay,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the DKG submission eligibility delay update process.
+    /// @notice Finalizes the DKG result submission eligibility delay update
+    ///         process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgSubmissionEligibilityDelayUpdate()
+    function finalizeDkgResultSubmissionEligibilityDelayUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            dkgSubmissionEligibilityDelayChangeInitiated,
-            24 hours
+            dkgResultSubmissionEligibilityDelayChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
             randomBeacon.groupLifetime(),
             randomBeacon.dkgResultChallengePeriodLength(),
-            newDkgSubmissionEligibilityDelay
+            newDkgResultSubmissionEligibilityDelay
         );
-        emit DkgSubmissionEligibilityDelayUpdated(
-            newDkgSubmissionEligibilityDelay
+        emit DkgResultSubmissionEligibilityDelayUpdated(
+            newDkgResultSubmissionEligibilityDelay
         );
-        dkgSubmissionEligibilityDelayChangeInitiated = 0;
-        newDkgSubmissionEligibilityDelay = 0;
+        dkgResultSubmissionEligibilityDelayChangeInitiated = 0;
+        newDkgResultSubmissionEligibilityDelay = 0;
     }
 
     /// @notice Begins the DKG result submission reward update process.
@@ -528,7 +571,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             dkgResultSubmissionRewardChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateRewardParameters(
@@ -564,7 +607,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             sortitionPoolUnlockingRewardChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateRewardParameters(
@@ -606,7 +649,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             relayEntrySubmissionFailureSlashingAmountChangeInitiated,
-            2 weeks
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateSlashingParameters(
@@ -646,7 +689,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             maliciousDkgResultSlashingAmountChangeInitiated,
-            24 hours
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateSlashingParameters(
@@ -671,7 +714,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayRequestFeeChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -686,7 +729,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntrySubmissionEligibilityDelayChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -701,7 +744,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntryHardTimeoutChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -716,7 +759,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 callbackGasLimitChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -731,7 +774,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 groupCreationFrequencyChangeInitiated,
-                2 weeks
+                STANDARD_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -745,7 +788,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 groupLifetimeChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -760,22 +803,22 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgResultChallengePeriodLengthChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
-    /// @notice Get the time remaining until the DKG submission eligibility
-    ///         delay can be updated.
+    /// @notice Get the time remaining until the DKG result submission
+    ///         eligibility delay can be updated.
     /// @return Remaining time in seconds.
-    function getRemainingDkgSubmissionEligibilityDelayUpdateTime()
+    function getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
         external
         view
         returns (uint256)
     {
         return
             getRemainingChangeTime(
-                dkgSubmissionEligibilityDelayChangeInitiated,
-                24 hours
+                dkgResultSubmissionEligibilityDelayChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -790,7 +833,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgResultSubmissionRewardChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -805,7 +848,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 sortitionPoolUnlockingRewardChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -820,7 +863,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntrySubmissionFailureSlashingAmountChangeInitiated,
-                2 weeks
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
@@ -835,7 +878,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultSlashingAmountChangeInitiated,
-                24 hours
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 }
