@@ -48,7 +48,7 @@ describe("RandomBeaconGovernance", () => {
       initialDkgResultSubmissionReward,
       initialSortitionPoolUnlockingReward
     )
-    await randomBeacon.updateSlashingParameters(
+    await randomBeacon.connect(governance).updateSlashingParameters(
       initialRelayEntrySubmissionFailureSlashingAmount,
       initialMaliciousDkgResultSlashingAmount
     )
