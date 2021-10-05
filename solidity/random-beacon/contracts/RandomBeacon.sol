@@ -84,19 +84,20 @@ contract RandomBeacon is Ownable {
     /// @notice The number of blocks it takes for a group member to become
     ///         eligible to submit the DKG result. At first, there is only one
     ///         member in the group eligible to submit the DKG result. Then,
-    ///         after `dkgSubmissionEligibilityDelay` blocks, another group 
-    ///         member becomes eligible so that there are two group members
-    ///         eligible to submit the DKG result at that moment. After another
-    ///         `dkgSubmissionEligibilityDelay` blocks, yet one group member
-    ///         becomes eligible to submit the DKG result so that there are
-    ///         three group members eligible to submit the DKG result at that
-    ///         moment. This continues until all group members are eligible to
-    ///         submit the DKG result or until the DKG result is submitted. If
-    ///         all members became eligible to submit the DKG result and one
-    ///         more `dkgSubmissionEligibilityDelay` passed without the DKG
-    ///         result submitted, DKG is considered as timed out and no DKG
-    ///         result for this group creation can be submitted anymore.
-    uint256 public dkgSubmissionEligibilityDelay;
+    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another  
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the DKG result at that moment. After 
+    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one 
+    ///         group member becomes eligible to submit the DKG result so that 
+    ///         there are three group members eligible to submit the DKG result 
+    ///         at that moment. This continues until all group members are 
+    ///         eligible to submit the DKG result or until the DKG result is 
+    ///         submitted. If all members became eligible to submit the DKG 
+    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
+    ///         without the DKG result submitted, DKG is considered as timed out 
+    ///         and no DKG result for this group creation can be submitted
+    ///         anymore.
+    uint256 public dkgResultSubmissionEligibilityDelay;
 
     /// @notice Reward in T for submitting DKG result. The reward is paid to
     ///         a submitter of a valid DKG result when the DKG result challenge
@@ -139,7 +140,7 @@ contract RandomBeacon is Ownable {
         uint256 groupCreationFrequency,
         uint256 groupLifetime,
         uint256 dkgResultChallengePeriodLength,
-        uint256 dkgSubmissionEligibilityDelay
+        uint256 dkgResultSubmissionEligibilityDelay
     );
 
     event RewardParametersUpdated(
@@ -187,23 +188,23 @@ contract RandomBeacon is Ownable {
     /// @param _groupLifetime New group lifetime
     /// @param _dkgResultChallengePeriodLength New DKG result challenge period
     ///        length
-    /// @param _dkgSubmissionEligibilityDelay New DKG submission eligibility
-    ///        delay
+    /// @param _dkgResultSubmissionEligibilityDelay New DKG submission
+    ///        eligibility delay
     function updateGroupCreationParameters(
         uint256 _groupCreationFrequency,
         uint256 _groupLifetime,
         uint256 _dkgResultChallengePeriodLength,
-        uint256 _dkgSubmissionEligibilityDelay
+        uint256 _dkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
         groupCreationFrequency = _groupCreationFrequency;
         groupLifetime = _groupLifetime;
         dkgResultChallengePeriodLength = _dkgResultChallengePeriodLength;
-        dkgSubmissionEligibilityDelay = _dkgSubmissionEligibilityDelay;
+        dkgResultSubmissionEligibilityDelay = _dkgResultSubmissionEligibilityDelay;
         emit GroupCreationParametersUpdated(
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
-            dkgSubmissionEligibilityDelay
+            dkgResultSubmissionEligibilityDelay
         );
     }
 

@@ -16,7 +16,7 @@ describe("RandomBeaconGovernance", () => {
   const initialGroupCreationFrequency = 4
   const initialGroupLifeTime = 60 * 60 * 24 * 7
   const initialDkgResultChallengePeriodLength = 60
-  const initialDkgSubmissionEligibilityDelay = 10
+  const initialDkgResultSubmissionEligibilityDelay = 10
   const initialDkgResultSubmissionReward = 500000
   const initialSortitionPoolUnlockingReward = 5000
   const initialRelayEntrySubmissionFailureSlashingAmount = 1000
@@ -41,7 +41,7 @@ describe("RandomBeaconGovernance", () => {
       initialGroupCreationFrequency,
       initialGroupLifeTime,
       initialDkgResultChallengePeriodLength,
-      initialDkgSubmissionEligibilityDelay
+      initialDkgResultSubmissionEligibilityDelay
     )
     await randomBeacon.connect(governance).updateRewardParameters(
       initialDkgResultSubmissionReward,
@@ -941,13 +941,13 @@ describe("RandomBeaconGovernance", () => {
     })
   })
 
-  describe("beginDkgSubmissionEligibilityDelayUpdate", () => {
+  describe("beginDkgResultSubmissionEligibilityDelayUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .beginDkgSubmissionEligibilityDelayUpdate(1)
+            .beginDkgResultSubmissionEligibilityDelayUpdate(1)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -957,7 +957,7 @@ describe("RandomBeaconGovernance", () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .beginDkgSubmissionEligibilityDelayUpdate(0)
+            .beginDkgResultSubmissionEligibilityDelayUpdate(0)
         ).to.be.revertedWith(
           "DKG submission eligibility delay must be greater than 0 blocks"
         )
@@ -970,41 +970,41 @@ describe("RandomBeaconGovernance", () => {
       beforeEach(async () => {
         tx = await randomBeaconGovernance
           .connect(governance)
-          .beginDkgSubmissionEligibilityDelayUpdate(1)
+          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
       })
 
-      it("should not update the DKG submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgSubmissionEligibilityDelay()).to.be.equal(
-          initialDkgSubmissionEligibilityDelay
+      it("should not update the DKG result submission eligibility delay", async () => {
+        expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
+          initialDkgResultSubmissionEligibilityDelay
         )
       })
 
       it("should start the governance delay timer", async () => {
         expect(
-          await randomBeaconGovernance.getRemainingDkgSubmissionEligibilityDelayUpdateTime()
+          await randomBeaconGovernance.getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
         ).to.be.equal(24 * 60 * 60)
       })
 
-      it("should emit the DkgSubmissionEligibilityDelayUpdateStarted event", async () => {
+      it("should emit the DkgResultSubmissionEligibilityDelayUpdateStarted event", async () => {
         const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
           .timestamp
         await expect(tx)
           .to.emit(
             randomBeaconGovernance,
-            "DkgSubmissionEligibilityDelayUpdateStarted"
+            "DkgResultSubmissionEligibilityDelayUpdateStarted"
           )
           .withArgs(1, blockTimestamp)
       })
     })
   })
 
-  describe("finalizeDkgSubmissionEligibilityDelayUpdate", () => {
+  describe("finalizeDkgResultSubmissionEligibilityDelayUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .finalizeDkgSubmissionEligibilityDelayUpdate()
+            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -1014,7 +1014,7 @@ describe("RandomBeaconGovernance", () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .finalizeDkgSubmissionEligibilityDelayUpdate()
+            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
         ).to.be.revertedWith("Change not initiated")
       })
     })
@@ -1023,14 +1023,14 @@ describe("RandomBeaconGovernance", () => {
       it("should revert", async () => {
         await randomBeaconGovernance
           .connect(governance)
-          .beginDkgSubmissionEligibilityDelayUpdate(1)
+          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
 
         await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .finalizeDkgSubmissionEligibilityDelayUpdate()
+            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
       })
     })
@@ -1041,33 +1041,33 @@ describe("RandomBeaconGovernance", () => {
       beforeEach(async () => {
         await randomBeaconGovernance
           .connect(governance)
-          .beginDkgSubmissionEligibilityDelayUpdate(1)
+          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
 
         await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
-          .finalizeDkgSubmissionEligibilityDelayUpdate()
+          .finalizeDkgResultSubmissionEligibilityDelayUpdate()
       })
 
-      it("should update the DKG submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgSubmissionEligibilityDelay()).to.be.equal(
+      it("should update the DKG result submission eligibility delay", async () => {
+        expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
           1
         )
       })
 
-      it("should emit DkgSubmissionEligibilityDelayUpdated event", async () => {
+      it("should emit DkgResultSubmissionEligibilityDelayUpdated event", async () => {
         await expect(tx)
           .to.emit(
             randomBeaconGovernance,
-            "DkgSubmissionEligibilityDelayUpdated"
+            "DkgResultSubmissionEligibilityDelayUpdated"
           )
           .withArgs(1)
       })
 
       it("should reset the governance delay timer", async () => {
         await expect(
-          randomBeaconGovernance.getRemainingDkgSubmissionEligibilityDelayUpdateTime()
+          randomBeaconGovernance.getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
         ).to.be.revertedWith("Change not initiated")
       })
     })

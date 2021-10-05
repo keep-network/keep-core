@@ -43,8 +43,8 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newDkgResultChallengePeriodLength;
     uint256 public dkgResultChallengePeriodLengthChangeInitiated;
 
-    uint256 public newDkgSubmissionEligibilityDelay;
-    uint256 public dkgSubmissionEligibilityDelayChangeInitiated;
+    uint256 public newDkgResultSubmissionEligibilityDelay;
+    uint256 public dkgResultSubmissionEligibilityDelayChangeInitiated;
 
     uint256 public newDkgResultSubmissionReward;
     uint256 public dkgResultSubmissionRewardChangeInitiated;
@@ -129,12 +129,12 @@ contract RandomBeaconGovernance is Ownable {
         uint256 dkgResultChallengePeriodLength
     );
 
-    event DkgSubmissionEligibilityDelayUpdateStarted(
-        uint256 dkgSubmissionEligibilityDelay,
+    event DkgResultSubmissionEligibilityDelayUpdateStarted(
+        uint256 dkgResultSubmissionEligibilityDelay,
         uint256 timestamp
     );
-    event DkgSubmissionEligibilityDelayUpdated(
-        uint256 dkgSubmissionEligibilityDelay
+    event DkgResultSubmissionEligibilityDelayUpdated(
+        uint256 dkgResultSubmissionEligibilityDelay
     );
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -408,7 +408,7 @@ contract RandomBeaconGovernance is Ownable {
             newGroupCreationFrequency,
             randomBeacon.groupLifetime(),
             randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgSubmissionEligibilityDelay()
+            randomBeacon.dkgResultSubmissionEligibilityDelay()
         );
         emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
         groupCreationFrequencyChangeInitiated = 0;
@@ -448,7 +448,7 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.groupCreationFrequency(),
             newGroupLifetime,
             randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgSubmissionEligibilityDelay()
+            randomBeacon.dkgResultSubmissionEligibilityDelay()
         );
         emit GroupLifetimeUpdated(newGroupLifetime);
         groupLifetimeChangeInitiated = 0;
@@ -491,7 +491,7 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.groupCreationFrequency(),
             randomBeacon.groupLifetime(),
             newDkgResultChallengePeriodLength,
-            randomBeacon.dkgSubmissionEligibilityDelay()
+            randomBeacon.dkgResultSubmissionEligibilityDelay()
         );
         emit DkgResultChallengePeriodLengthUpdated(
             newDkgResultChallengePeriodLength
@@ -502,20 +502,20 @@ contract RandomBeaconGovernance is Ownable {
 
     /// @notice Begins the DKG submission eligibility delay update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgSubmissionEligibilityDelay New DKG submission eligibility
-    ///        delay in blocks
-    function beginDkgSubmissionEligibilityDelayUpdate(
-        uint256 _newDkgSubmissionEligibilityDelay
+    /// @param _newDkgResultSubmissionEligibilityDelay New DKG submission 
+    ///        eligibility delay in blocks
+    function beginDkgResultSubmissionEligibilityDelayUpdate(
+        uint256 _newDkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         require(
-            _newDkgSubmissionEligibilityDelay > 0,
+            _newDkgResultSubmissionEligibilityDelay > 0,
             "DKG submission eligibility delay must be greater than 0 blocks"
         );
-        newDkgSubmissionEligibilityDelay = _newDkgSubmissionEligibilityDelay;
-        dkgSubmissionEligibilityDelayChangeInitiated = block.timestamp;
-        emit DkgSubmissionEligibilityDelayUpdateStarted(
-            _newDkgSubmissionEligibilityDelay,
+        newDkgResultSubmissionEligibilityDelay = _newDkgResultSubmissionEligibilityDelay;
+        dkgResultSubmissionEligibilityDelayChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionEligibilityDelayUpdateStarted(
+            _newDkgResultSubmissionEligibilityDelay,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
@@ -524,11 +524,11 @@ contract RandomBeaconGovernance is Ownable {
     /// @notice Finalizes the DKG submission eligibility delay update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgSubmissionEligibilityDelayUpdate()
+    function finalizeDkgResultSubmissionEligibilityDelayUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            dkgSubmissionEligibilityDelayChangeInitiated,
+            dkgResultSubmissionEligibilityDelayChangeInitiated,
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
@@ -536,13 +536,13 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.groupCreationFrequency(),
             randomBeacon.groupLifetime(),
             randomBeacon.dkgResultChallengePeriodLength(),
-            newDkgSubmissionEligibilityDelay
+            newDkgResultSubmissionEligibilityDelay
         );
-        emit DkgSubmissionEligibilityDelayUpdated(
-            newDkgSubmissionEligibilityDelay
+        emit DkgResultSubmissionEligibilityDelayUpdated(
+            newDkgResultSubmissionEligibilityDelay
         );
-        dkgSubmissionEligibilityDelayChangeInitiated = 0;
-        newDkgSubmissionEligibilityDelay = 0;
+        dkgResultSubmissionEligibilityDelayChangeInitiated = 0;
+        newDkgResultSubmissionEligibilityDelay = 0;
     }
 
     /// @notice Begins the DKG result submission reward update process.
@@ -808,14 +808,14 @@ contract RandomBeaconGovernance is Ownable {
     /// @notice Get the time remaining until the DKG submission eligibility
     ///         delay can be updated.
     /// @return Remaining time in seconds.
-    function getRemainingDkgSubmissionEligibilityDelayUpdateTime()
+    function getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
         external
         view
         returns (uint256)
     {
         return
             getRemainingChangeTime(
-                dkgSubmissionEligibilityDelayChangeInitiated,
+                dkgResultSubmissionEligibilityDelayChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }

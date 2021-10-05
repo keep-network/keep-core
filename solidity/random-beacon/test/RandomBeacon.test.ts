@@ -92,7 +92,7 @@ describe("RandomBeacon", () => {
     const groupCreationFrequency = 100
     const groupLifetime = 200
     const dkgResultChallengePeriodLength = 300
-    const dkgSubmissionEligibilityDelay = 400
+    const dkgResultSubmissionEligibilityDelay = 400
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -103,7 +103,7 @@ describe("RandomBeacon", () => {
               groupCreationFrequency,
               groupLifetime,
               dkgResultChallengePeriodLength,
-              dkgSubmissionEligibilityDelay
+              dkgResultSubmissionEligibilityDelay
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -118,7 +118,7 @@ describe("RandomBeacon", () => {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
-            dkgSubmissionEligibilityDelay
+            dkgResultSubmissionEligibilityDelay
           )
       })
 
@@ -139,8 +139,8 @@ describe("RandomBeacon", () => {
       })
 
       it("should update the DKG submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgSubmissionEligibilityDelay()).to.be.equal(
-          dkgSubmissionEligibilityDelay
+        expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
+          dkgResultSubmissionEligibilityDelay
         )
       })
 
@@ -151,7 +151,7 @@ describe("RandomBeacon", () => {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
-            dkgSubmissionEligibilityDelay
+            dkgResultSubmissionEligibilityDelay
           )
       })
     })
