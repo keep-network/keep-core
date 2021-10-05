@@ -60,8 +60,10 @@ library DKG {
         _;
         delete self.seed;
         delete self.groupSize;
-        delete self.startBlock;
+        delete self.signatureThreshold;
         delete self.dkgSubmissionEligibilityDelay;
+        delete self.timeDKG;
+        delete self.startBlock;
     }
 
     function isInProgress(Data storage self) public view returns (bool) {
@@ -76,11 +78,16 @@ library DKG {
         Data storage self,
         uint256 seed,
         uint256 groupSize,
-        uint256 dkgSubmissionEligibilityDelay
+        uint256 signatureThreshold,
+        uint256 dkgSubmissionEligibilityDelay,
+        uint256 timeDKG
     ) internal assertInProgress(self, false) {
         self.seed = seed;
         self.groupSize = groupSize;
+        self.signatureThreshold = signatureThreshold;
         self.dkgSubmissionEligibilityDelay = dkgSubmissionEligibilityDelay;
+        self.timeDKG = timeDKG;
+
         self.startBlock = block.number;
 
         emit DkgStarted(seed, groupSize, dkgSubmissionEligibilityDelay);
