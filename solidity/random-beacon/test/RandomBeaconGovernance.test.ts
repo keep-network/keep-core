@@ -27,8 +27,14 @@ describe("RandomBeaconGovernance", () => {
     governance = signers[0]
     thirdParty = signers[1]
 
+    const SortitionPoolStub = await ethers.getContractFactory(
+      "SortitionPoolStub"
+    )
+    const sortitionPoolStub = await SortitionPoolStub.deploy()
+    await sortitionPoolStub.deployed()
+
     const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
-    randomBeacon = await RandomBeacon.deploy()
+    randomBeacon = await RandomBeacon.deploy(sortitionPoolStub.address)
     await randomBeacon.deployed()
 
     await randomBeacon.connect(governance).updateRelayEntryParameters(
@@ -460,7 +466,7 @@ describe("RandomBeaconGovernance", () => {
         await randomBeaconGovernance
           .connect(governance)
           .beginCallbackGasLimitUpdate(2)
-        
+
         // works, did not revert
       })
     })
@@ -480,7 +486,7 @@ describe("RandomBeaconGovernance", () => {
         await randomBeaconGovernance
           .connect(governance)
           .beginCallbackGasLimitUpdate(1000000)
-      
+
         // works, did not revert
       })
     })
@@ -617,7 +623,7 @@ describe("RandomBeaconGovernance", () => {
         await randomBeaconGovernance
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(2)
-        
+
         // works, did not revert
       })
     })
@@ -909,7 +915,7 @@ describe("RandomBeaconGovernance", () => {
         await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(11)
-        
+
         // works, did not revert
       })
     })
