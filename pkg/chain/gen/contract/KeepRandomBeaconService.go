@@ -174,7 +174,7 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.AddOperatorContract(
@@ -320,7 +320,7 @@ func (krbs *KeepRandomBeaconService) EntryCreated(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.EntryCreated(
@@ -474,7 +474,7 @@ func (krbs *KeepRandomBeaconService) ExecuteCallback(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.ExecuteCallback(
@@ -615,7 +615,7 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.FundDkgFeePool(
@@ -744,7 +744,7 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.FundRequestSubsidyFeePool(
@@ -880,7 +880,7 @@ func (krbs *KeepRandomBeaconService) Initialize(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.Initialize(
@@ -1024,7 +1024,7 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.RemoveOperatorContract(
@@ -1159,7 +1159,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.RequestRelayEntry(
@@ -1299,7 +1299,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbs.contract.RequestRelayEntry0(

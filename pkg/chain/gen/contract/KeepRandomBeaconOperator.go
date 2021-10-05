@@ -174,7 +174,7 @@ func (krbo *KeepRandomBeaconOperator) AddServiceContract(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.AddServiceContract(
@@ -320,7 +320,7 @@ func (krbo *KeepRandomBeaconOperator) CreateGroup(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.CreateGroup(
@@ -462,7 +462,7 @@ func (krbo *KeepRandomBeaconOperator) Genesis(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.Genesis(
@@ -587,7 +587,7 @@ func (krbo *KeepRandomBeaconOperator) RefreshGasPrice(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.RefreshGasPrice(
@@ -718,7 +718,7 @@ func (krbo *KeepRandomBeaconOperator) RelayEntry(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.RelayEntry(
@@ -849,7 +849,7 @@ func (krbo *KeepRandomBeaconOperator) ReportRelayEntryTimeout(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.ReportRelayEntryTimeout(
@@ -984,7 +984,7 @@ func (krbo *KeepRandomBeaconOperator) ReportUnauthorizedSigning(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.ReportUnauthorizedSigning(
@@ -1136,7 +1136,7 @@ func (krbo *KeepRandomBeaconOperator) Sign(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.Sign(
@@ -1297,7 +1297,7 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResult(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.SubmitDkgResult(
@@ -1459,7 +1459,7 @@ func (krbo *KeepRandomBeaconOperator) SubmitTicket(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.SubmitTicket(
@@ -1601,7 +1601,7 @@ func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewards(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := krbo.contract.WithdrawGroupMemberRewards(

@@ -178,7 +178,7 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.AuthorizeOperatorContract(
@@ -322,7 +322,7 @@ func (ts *TokenStaking) CancelStake(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.CancelStake(
@@ -460,7 +460,7 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.ClaimDelegatedAuthority(
@@ -598,7 +598,7 @@ func (ts *TokenStaking) CommitTopUp(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.CommitTopUp(
@@ -740,7 +740,7 @@ func (ts *TokenStaking) LockStake(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.LockStake(
@@ -896,7 +896,7 @@ func (ts *TokenStaking) ReceiveApproval(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.ReceiveApproval(
@@ -1052,7 +1052,7 @@ func (ts *TokenStaking) RecoverStake(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.RecoverStake(
@@ -1194,7 +1194,7 @@ func (ts *TokenStaking) ReleaseExpiredLock(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.ReleaseExpiredLock(
@@ -1350,7 +1350,7 @@ func (ts *TokenStaking) Seize(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.Seize(
@@ -1510,7 +1510,7 @@ func (ts *TokenStaking) Slash(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.Slash(
@@ -1658,7 +1658,7 @@ func (ts *TokenStaking) TransferStakeOwnership(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.TransferStakeOwnership(
@@ -1802,7 +1802,7 @@ func (ts *TokenStaking) Undelegate(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.Undelegate(
@@ -1944,7 +1944,7 @@ func (ts *TokenStaking) UndelegateAt(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.UndelegateAt(
@@ -2088,7 +2088,7 @@ func (ts *TokenStaking) UnlockStake(
 			// code, let the the submitter re-estimate the gas limit on each
 			// resubmission.
 			if transactorOptions.GasLimit != 0 {
-				newTransactorOptions.GasLimit = transaction.Gas()
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
 			transaction, err := ts.contract.UnlockStake(
