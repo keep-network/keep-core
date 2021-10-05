@@ -1,8 +1,7 @@
 import { ethers } from "hardhat"
 import { Signer, Contract } from "ethers"
 import { expect } from "chai"
-import { increaseTime } from "./helpers/contract-test-helpers"
-import { context, it } from "@ungap/global-this"
+import { helpers } from "hardhat"
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
@@ -132,7 +131,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayRequestFeeUpdate(123)
 
-        await increaseTime(11 * 60 * 60 - 10) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60 - 10) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -150,7 +149,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayRequestFeeUpdate(123)
 
-        await increaseTime(12 * 60 * 60) // 12 hours
+        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -272,7 +271,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -290,7 +289,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(12 * 60 * 60) // 12 hours
+        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -389,7 +388,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntryHardTimeoutUpdate(123)
 
-        await increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconGovernance
@@ -407,7 +406,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntryHardTimeoutUpdate(123)
 
-        await increaseTime(14 * 24 * 60 * 60) // 2 weeks
+        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -544,7 +543,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginCallbackGasLimitUpdate(123)
 
-        await increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconGovernance
@@ -562,7 +561,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginCallbackGasLimitUpdate(123)
 
-        await increaseTime(14 * 24 * 60 * 60) // 2 weeks
+        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -684,7 +683,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
 
-        await increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -702,7 +701,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
 
-        await increaseTime(12 * 60 * 60) // 12 hours
+        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -836,7 +835,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
 
-        await increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconGovernance
@@ -854,7 +853,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
 
-        await increaseTime(14 * 24 * 60 * 60) // 2 weeks
+        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -976,7 +975,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(11)
 
-        await increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -994,7 +993,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(11)
 
-        await increaseTime(12 * 60 * 60) // 12 hours
+        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -1121,7 +1120,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultSubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -1139,7 +1138,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultSubmissionEligibilityDelayUpdate(1)
 
-        await increaseTime(12 * 60 * 60) // 12 hours
+        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -1241,7 +1240,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultSubmissionRewardUpdate(123)
 
-        await increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -1259,7 +1258,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultSubmissionRewardUpdate(123)
 
-        await increaseTime(24 * 60 * 60)
+        await helpers.time.increaseTime(24 * 60 * 60)
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -1356,7 +1355,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginSortitionPoolUnlockingRewardUpdate(123)
 
-        await increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -1374,7 +1373,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginSortitionPoolUnlockingRewardUpdate(123)
 
-        await increaseTime(12 * 60 * 60) // 12 hours
+        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -1476,7 +1475,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
 
-        await increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconGovernance
@@ -1494,7 +1493,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
 
-        await increaseTime(14 * 24 * 60 * 60) // 2 weeks
+        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
         tx = await randomBeaconGovernance
           .connect(governance)
@@ -1596,7 +1595,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-        await increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
@@ -1614,7 +1613,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-        await increaseTime(12 * 60 * 60) // 12 hours
+        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)
