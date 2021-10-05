@@ -1,33 +1,32 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { BigNumber, ContractTransaction } from "ethers"
-import type { DKG, RandomBeacon } from "../typechain"
+import { constants, testDeployment } from "./helpers/fixtures"
 
-const { increaseTime, lastBlockTime } = helpers.time
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { RandomBeacon } from "../typechain"
 
 describe("RandomBeacon contract", function () {
-  async function fixture() {
-    const DKG = await ethers.getContractFactory("DKG")
-    const dkg = (await DKG.deploy()) as DKG
+  const dkgTimeout: number =
+    constants.timeDKG +
+    constants.groupSize * constants.dkgSubmissionEligibilityDelay
 
-    const RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
-      libraries: {
-        DKG: dkg.address,
-      },
-    })
+  const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
-    const randomBeacon = (await RandomBeacon.deploy()) as RandomBeacon
-
-    await randomBeacon.deployed()
-
-    return randomBeacon
-  }
+  let signer1: SignerWithAddress
+  let signer2: SignerWithAddress
+  let signer3: SignerWithAddress
 
   let randomBeacon: RandomBeacon
 
+  before(async function () {
+    ;[signer1, signer2, signer3] = await ethers.getSigners()
+  })
+
   beforeEach("load test fixture", async function () {
-    randomBeacon = await waffle.loadFixture(fixture)
+    const contracts = await waffle.loadFixture(testDeployment)
+
+    randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
   describe("genesis function call", async function () {

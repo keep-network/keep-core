@@ -1,20 +1,24 @@
-import { ethers } from "hardhat"
-import { Signer, Contract } from "ethers"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
+
+import { randomBeaconDeployment } from "./helpers/fixtures"
+
+import type { Signer } from "ethers"
+import type { RandomBeacon } from "../typechain"
 
 describe("RandomBeacon", () => {
   let governance: Signer
   let thirdParty: Signer
-  let randomBeacon: Contract
+  let randomBeacon: RandomBeacon
 
-  beforeEach(async () => {
-    const signers = await ethers.getSigners()
-    governance = signers[0]
-    thirdParty = signers[1]
+  before(async function () {
+    ;[governance, thirdParty] = await ethers.getSigners()
+  })
 
-    const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
-    randomBeacon = await RandomBeacon.deploy()
-    await randomBeacon.deployed()
+  beforeEach("load test fixture", async function () {
+    const contracts = await waffle.loadFixture(randomBeaconDeployment)
+
+    randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
   describe("updateRelayEntryParameters", () => {
