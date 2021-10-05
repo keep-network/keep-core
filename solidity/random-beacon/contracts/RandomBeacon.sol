@@ -24,6 +24,25 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
 
+    // Constant parameters
+
+    /// @notice Seed value used for the genesis group selection.
+    /// https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    uint256 public constant GENESIS_SEED =
+        31415926535897932384626433832795028841971693993751058209749445923078164062862;
+
+    /// @notice Size of a group in the threshold relay.
+    uint256 public immutable GROUP_SIZE;
+
+    /// @notice The minimum number of signatures required to support DKG result.
+    uint256 public immutable SIGNATURE_THRESHOLD;
+
+    /// @notice Time in blocks after which DKG result is complete and ready to be
+    // published by clients.
+    uint256 public immutable TIME_DKG;
+
+    // Governable parameters
+
     /// @notice Relay request fee in T
     uint256 public relayRequestFee;
 
@@ -48,8 +67,8 @@ contract RandomBeacon is Ownable {
 
     /// @notice The number of blocks for a member to become eligible to submit
     ///         DKG result
-    uint256 public dkgSubmissionEligibilityDelay;
-
+    // FIXME: we set it with a value just for tests, the value should be initialized properly in another PR.
+    uint256 public dkgSubmissionEligibilityDelay = 10;
     /// @notice Reward for submitting DKG result
     uint256 public dkgResultSubmissionReward;
 
@@ -62,10 +81,7 @@ contract RandomBeacon is Ownable {
     /// @notice Slashing amount for submitting malicious DKG result
     uint256 public maliciousDkgResultSlashingAmount;
 
-    // FIXME: These parameters will be delivered from other contract.
-    uint256 public GROUP_SIZE = 66;
-    uint256 public dkgSubmissionEligibilityDelay = 10; // 10 blocks
-    uint256 public GROUP_FREQUENCY = 14;
+    // Libraries data storages
 
     // TODO: Can we really make it public along with the library functions?
     DKG.Data public dkg;
@@ -105,12 +121,18 @@ contract RandomBeacon is Ownable {
     event DkgTimedOut(uint256 seed);
     event DkgCompleted(uint256 seed);
 
+    // FIXME: This is just for tests
     uint256 internal currentRelayEntry = 420;
 
-    /// @dev Seed value used for the genesis group selection.
-    /// https://www.wolframalpha.com/input/?i=pi+to+78+digits
-    uint256 public constant GENESIS_SEED =
-        31415926535897932384626433832795028841971693993751058209749445923078164062862;
+    constructor(
+        uint256 groupSize,
+        uint256 signatureThreshold,
+        uint256 timeDkg
+    ) {
+        GROUP_SIZE = groupSize;
+        SIGNATURE_THRESHOLD = signatureThreshold;
+        TIME_DKG = timeDkg;
+    }
 
     /// @notice Updates the values of relay entry parameters
     /// @dev Can be called only by the contract owner, which should be the
@@ -204,7 +226,13 @@ contract RandomBeacon is Ownable {
     function createGroup(uint256 seed) internal {
         // Sortition performed off-chain
 
-        dkg.start(seed, GROUP_SIZE, dkgSubmissionEligibilityDelay);
+        dkg.start(
+            seed,
+            GROUP_SIZE,
+            SIGNATURE_THRESHOLD,
+            dkgSubmissionEligibilityDelay,
+            TIME_DKG
+        );
     }
 
     function genesis() external {
@@ -254,7 +282,7 @@ contract RandomBeacon is Ownable {
     }
 
     // function requestRelayEntry() external {
-    //     if RELAY_ENTRY_COUNT >= GROUP_FREQUENCY {
+    //     if RELAY_ENTRY_COUNT >= groupCreationFrequency {
     //         createGroup();
     //     }
     // }
