@@ -11,7 +11,7 @@ const BaseExchangeRate = ({
   const Tag = htmlTag
   return (
     <Tag className={className}>
-      {`1 ${covToken.symbol}`} = ~
+      {`1 ${covToken.symbol}`} =&nbsp;
       <TokenAmount
         amount={amount}
         decimalsToDisplay={3}
