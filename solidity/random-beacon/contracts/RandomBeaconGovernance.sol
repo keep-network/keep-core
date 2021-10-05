@@ -255,7 +255,7 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-disable not-rely-on-time */
         require(
             _newRelayEntrySubmissionEligibilityDelay > 0,
-            "Relay entry submission eligibility delay must be greater than 0 blocks"
+            "Relay entry submission eligibility delay must be > 0"
         );
         newRelayEntrySubmissionEligibilityDelay = _newRelayEntrySubmissionEligibilityDelay;
         relayEntrySubmissionEligibilityDelayChangeInitiated = block.timestamp;
@@ -339,8 +339,8 @@ contract RandomBeaconGovernance is Ownable {
     {
         /* solhint-disable not-rely-on-time */
         require(
-            _newCallbackGasLimit > 0 && _newCallbackGasLimit < 1000000,
-            "Callback gas limit must be > 0 and < 1000000"
+            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1000000,
+            "Callback gas limit must be > 0 and <= 1000000"
         );
         newCallbackGasLimit = _newCallbackGasLimit;
         callbackGasLimitChangeInitiated = block.timestamp;
@@ -382,7 +382,7 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-disable not-rely-on-time */
         require(
             _newGroupCreationFrequency > 0,
-            "Group creation frequency must be grater than zero"
+            "Group creation frequency must be > 0"
         );
         newGroupCreationFrequency = _newGroupCreationFrequency;
         groupCreationFrequencyChangeInitiated = block.timestamp;
@@ -464,8 +464,8 @@ contract RandomBeaconGovernance is Ownable {
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         require(
-            _newDkgResultChallengePeriodLength > 10,
-            "DKG result challenge period length must be grater than 10 blocks"
+            _newDkgResultChallengePeriodLength >= 10,
+            "DKG result challenge period length must be >= 10"
         );
         newDkgResultChallengePeriodLength = _newDkgResultChallengePeriodLength;
         dkgResultChallengePeriodLengthChangeInitiated = block.timestamp;
@@ -500,9 +500,10 @@ contract RandomBeaconGovernance is Ownable {
         newDkgResultChallengePeriodLength = 0;
     }
 
-    /// @notice Begins the DKG submission eligibility delay update process.
+    /// @notice Begins the DKG result submission eligibility delay update
+    ///         process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgResultSubmissionEligibilityDelay New DKG submission 
+    /// @param _newDkgResultSubmissionEligibilityDelay New DKG result submission 
     ///        eligibility delay in blocks
     function beginDkgResultSubmissionEligibilityDelayUpdate(
         uint256 _newDkgResultSubmissionEligibilityDelay
@@ -510,7 +511,7 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-disable not-rely-on-time */
         require(
             _newDkgResultSubmissionEligibilityDelay > 0,
-            "DKG submission eligibility delay must be greater than 0 blocks"
+            "DKG result submission eligibility delay must be > 0"
         );
         newDkgResultSubmissionEligibilityDelay = _newDkgResultSubmissionEligibilityDelay;
         dkgResultSubmissionEligibilityDelayChangeInitiated = block.timestamp;
@@ -521,7 +522,8 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the DKG submission eligibility delay update process.
+    /// @notice Finalizes the DKG result submission eligibility delay update
+    ///         process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
     function finalizeDkgResultSubmissionEligibilityDelayUpdate()
@@ -805,8 +807,8 @@ contract RandomBeaconGovernance is Ownable {
             );
     }
 
-    /// @notice Get the time remaining until the DKG submission eligibility
-    ///         delay can be updated.
+    /// @notice Get the time remaining until the DKG result submission
+    ///         eligibility delay can be updated.
     /// @return Remaining time in seconds.
     function getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
         external

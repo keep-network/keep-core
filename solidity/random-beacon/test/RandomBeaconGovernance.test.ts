@@ -2,6 +2,7 @@ import { ethers } from "hardhat"
 import { Signer, Contract } from "ethers"
 import { expect } from "chai"
 import { increaseTime } from "./helpers/contract-test-helpers"
+import { context, it } from "@ungap/global-this"
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
@@ -192,8 +193,21 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginRelayEntrySubmissionEligibilityDelayUpdate(0)
         ).to.be.revertedWith(
-          "Relay entry submission eligibility delay must be greater than 0 blocks"
+          "Relay entry submission eligibility delay must be > 0"
         )
+      })
+    })
+
+    context("when the update value is at least one", () => {
+      it("should accept the value", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginRelayEntrySubmissionEligibilityDelayUpdate(2)
+
+        // works, did not revert
       })
     })
 
@@ -435,17 +449,40 @@ describe("RandomBeaconGovernance", () => {
           randomBeaconGovernance
             .connect(governance)
             .beginCallbackGasLimitUpdate(0)
-        ).to.be.revertedWith("Callback gas limit must be > 0 and < 1000000")
+        ).to.be.revertedWith("Callback gas limit must be > 0 and <= 1000000")
       })
     })
 
-    context("when the update value is million", () => {
+    context("when the update value is at least one", () => {
+      it("should accept the value", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginCallbackGasLimitUpdate(1)
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginCallbackGasLimitUpdate(2)
+        
+        // works, did not revert
+      })
+    })
+
+    context("when the update value is more than one million", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .beginCallbackGasLimitUpdate(1000000)
-        ).to.be.revertedWith("Callback gas limit must be > 0 and < 1000000")
+            .beginCallbackGasLimitUpdate(1000001)
+        ).to.be.revertedWith("Callback gas limit must be > 0 and <= 1000000")
+      })
+    })
+
+    context("when the update value is one million", () => {
+      it("should accept the value", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginCallbackGasLimitUpdate(1000000)
+      
+        // works, did not revert
       })
     })
 
@@ -568,8 +605,21 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginGroupCreationFrequencyUpdate(0)
         ).to.be.revertedWith(
-          "Group creation frequency must be grater than zero"
+          "Group creation frequency must be > 0"
         )
+      })
+    })
+
+    context("when the update value is at least one", () => {
+      it("should accept the value", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginGroupCreationFrequencyUpdate(1)
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginGroupCreationFrequencyUpdate(2)
+        
+        // works, did not revert
       })
     })
 
@@ -693,8 +743,18 @@ describe("RandomBeaconGovernance", () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .beginGroupLifetimeUpdate(23 * 60 * 60) // 23 hours
+            .beginGroupLifetimeUpdate(23 * 60 * 60 - 1) // 24 hours - 1sec
         ).to.be.revertedWith("Group lifetime must be >= 1 day and <= 2 weeks")
+      })
+    })
+
+    context("when the update value is one day", () => {
+      it("should accept the value", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginGroupLifetimeUpdate(24 * 60 * 60) // 24 hours
+
+        // works, did not revert
       })
     })
 
@@ -703,8 +763,18 @@ describe("RandomBeaconGovernance", () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .beginGroupLifetimeUpdate(15 * 24 * 60 * 60) // 15 days
+            .beginGroupLifetimeUpdate(14 * 24 * 60 * 60 + 1) // 14 days + 1 sec
         ).to.be.revertedWith("Group lifetime must be >= 1 day and <= 2 weeks")
+      })
+    })
+
+    context("when the update value is 2 weeks", () => {
+      it("should accept the value", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginGroupLifetimeUpdate(14 * 24 * 60 * 60) // 14 days
+
+        // works, did not revert
       })
     })
 
@@ -820,15 +890,28 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update value is less then required", () => {
+    context("when the update value is less than 10", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .beginDkgResultChallengePeriodLengthUpdate(10)
+            .beginDkgResultChallengePeriodLengthUpdate(9)
         ).to.be.revertedWith(
-          "DKG result challenge period length must be grater than 10 blocks"
+          "DKG result challenge period length must be >= 10"
         )
+      })
+    })
+
+    context("when the update value is at least 10", () => {
+      it("should accept the value", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultChallengePeriodLengthUpdate(10)
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultChallengePeriodLengthUpdate(11)
+        
+        // works, did not revert
       })
     })
 
@@ -952,15 +1035,28 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update value is less than zero", () => {
+    context("when the update value is zero", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
             .beginDkgResultSubmissionEligibilityDelayUpdate(0)
         ).to.be.revertedWith(
-          "DKG submission eligibility delay must be greater than 0 blocks"
+          "DKG result submission eligibility delay must be > 0"
         )
+      })
+    })
+
+    context("when the update value is at least one", () => {
+      it("should accept the value", async () => {
+        randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+        randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultSubmissionEligibilityDelayUpdate(2)
+
+        // works, did not revert
       })
     })
 
