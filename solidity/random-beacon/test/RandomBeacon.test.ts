@@ -24,8 +24,9 @@ describe("RandomBeacon", () => {
   describe("updateRelayEntryParameters", () => {
     const relayRequestFee = 100
     const relayEntrySubmissionEligibilityDelay = 200
-    const RelayEntryHardTimeout = 300
+    const relayEntryHardTimeout = 300
     const callbackGasLimit = 400
+  
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -34,7 +35,7 @@ describe("RandomBeacon", () => {
             .updateRelayEntryParameters(
               relayRequestFee,
               relayEntrySubmissionEligibilityDelay,
-              RelayEntryHardTimeout,
+              relayEntryHardTimeout,
               callbackGasLimit
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
@@ -49,7 +50,7 @@ describe("RandomBeacon", () => {
           .updateRelayEntryParameters(
             relayRequestFee,
             relayEntrySubmissionEligibilityDelay,
-            RelayEntryHardTimeout,
+            relayEntryHardTimeout,
             callbackGasLimit
           )
       })
@@ -68,7 +69,7 @@ describe("RandomBeacon", () => {
 
       it("should update the relay entry hard timeout", async () => {
         expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(
-          RelayEntryHardTimeout
+          relayEntryHardTimeout
         )
       })
 
@@ -84,7 +85,7 @@ describe("RandomBeacon", () => {
           .withArgs(
             relayRequestFee,
             relayEntrySubmissionEligibilityDelay,
-            RelayEntryHardTimeout,
+            relayEntryHardTimeout,
             callbackGasLimit
           )
       })
@@ -95,7 +96,8 @@ describe("RandomBeacon", () => {
     const groupCreationFrequency = 100
     const groupLifetime = 200
     const dkgResultChallengePeriodLength = 300
-    const dkgSubmissionEligibilityDelay = 400
+    const dkgResultSubmissionEligibilityDelay = 400
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -105,7 +107,7 @@ describe("RandomBeacon", () => {
               groupCreationFrequency,
               groupLifetime,
               dkgResultChallengePeriodLength,
-              dkgSubmissionEligibilityDelay
+              dkgResultSubmissionEligibilityDelay
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -120,7 +122,7 @@ describe("RandomBeacon", () => {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
-            dkgSubmissionEligibilityDelay
+            dkgResultSubmissionEligibilityDelay
           )
       })
 
@@ -140,9 +142,9 @@ describe("RandomBeacon", () => {
         )
       })
 
-      it("should update the DKG submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgSubmissionEligibilityDelay()).to.be.equal(
-          dkgSubmissionEligibilityDelay
+      it("should update the DKG result submission eligibility delay", async () => {
+        expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
+          dkgResultSubmissionEligibilityDelay
         )
       })
 
@@ -153,7 +155,7 @@ describe("RandomBeacon", () => {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
-            dkgSubmissionEligibilityDelay
+            dkgResultSubmissionEligibilityDelay
           )
       })
     })
@@ -162,6 +164,7 @@ describe("RandomBeacon", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
+  
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -209,6 +212,7 @@ describe("RandomBeacon", () => {
   describe("updateSlashingParameters", () => {
     const relayEntrySubmissionFailureSlashingAmount = 100
     const maliciousDkgResultSlashingAmount = 200
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
