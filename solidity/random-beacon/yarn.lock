@@ -557,9 +557,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
-"@keep-network/hardhat-helpers@https://github.com/keep-network/hardhat-helpers#ed35ab7":
-  version "0.2.0-pre.2"
-  resolved "https://github.com/keep-network/hardhat-helpers#ed35ab741bede1730333217922065f65a997f840"
+"@keep-network/hardhat-helpers@0.2.0-pre.3":
+  version "0.2.0-pre.3"
+  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.2.0-pre.3.tgz#764d55e109bd2e9ff7e93a2a97cfa95419ac3751"
+  integrity sha512-B6ahORlG+mZ0/fvGZO80NUW/n/CL0OxEd+6QawPRqzrkKo4LUOzUILg4Hambcs5M1EVcYRS5IY4WgPeiYymVkQ==
 
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.0":
   version "0.1.0-pre.0"
@@ -586,7 +587,7 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@openzeppelin/contracts@^4.1.0", "@openzeppelin/contracts@^4.3.2":
+"@openzeppelin/contracts@^4.3.2":
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.3.2.tgz#ff80affd6d352dbe1bbc5b4e1833c41afd6283b6"
   integrity sha512-AybF1cesONZStg5kWf6ao9OlqTZuPqddvprc0ky7lrUVOjXeKpmQ2Y9FK+6ygxasb+4aic4O5pneFBfwVsRRRg==
