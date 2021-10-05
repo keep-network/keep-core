@@ -6,6 +6,8 @@ import { constants, testDeployment } from "./helpers/fixtures"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { RandomBeacon } from "../typechain"
 
+const { mineBlocks } = helpers.time
+
 describe("RandomBeacon contract", function () {
   const dkgTimeout: number =
     constants.timeDKG +
@@ -42,7 +44,7 @@ describe("RandomBeacon contract", function () {
         .withArgs(
           await randomBeacon.GENESIS_SEED(),
           await randomBeacon.GROUP_SIZE(),
-          await randomBeacon.DKG_TIMEOUT()
+            await randomBeacon.dkgSubmissionEligibilityDelay()
         )
     })
 
@@ -51,8 +53,30 @@ describe("RandomBeacon contract", function () {
 
       expect(dkgData.seed).to.eq(await randomBeacon.GENESIS_SEED())
       expect(dkgData.groupSize).to.eq(await randomBeacon.GROUP_SIZE())
-      expect(dkgData.timeoutDuration).to.eq(await randomBeacon.DKG_TIMEOUT())
-      expect(dkgData.startTimestamp).to.be.eq(await lastBlockTime())
+        expect(dkgData.dkgSubmissionEligibilityDelay).to.eq(
+          await randomBeacon.dkgSubmissionEligibilityDelay()
+        )
+        expect(dkgData.startBlock).to.be.eq(tx.blockNumber)
+      })
+    })
+
+    context("with genesis in progress", async function () {
+      beforeEach("run genesis", async () => {
+        await randomBeacon.genesis()
+      })
+
+      it("returns false", async function () {
+        // TODO: It should return a dedicated error from RandomBeacon contract.
+        await expect(randomBeacon.genesis()).to.be.revertedWith(
+          "InvalidInProgressState(false, true)"
+        )
+      })
+
+      // TODO: add more tests when more scenarios are covered.
+    })
+
+    context("with genesis already completed", async function () {
+      // TODO: Add tests
     })
   })
 
@@ -74,7 +98,8 @@ describe("RandomBeacon contract", function () {
 
       context("when dkg timeout was notified", async function () {
         beforeEach("notify dkg timeout", async () => {
-          await increaseTime(await randomBeacon.DKG_TIMEOUT())
+          await mineBlocks(dkgTimeout)
+
           await randomBeacon.notifyDkgTimeout()
         })
 
@@ -96,15 +121,14 @@ describe("RandomBeacon contract", function () {
 
       context("with group creation not timed out", async function () {
         it("reverts with NotTimedOut error", async function () {
-          const expectedTimeout = (await randomBeacon.dkg()).startTimestamp.add(
-            await randomBeacon.DKG_TIMEOUT()
-          )
+          const expectedTimeout = (await randomBeacon.dkg()).startBlock
+            .add(dkgTimeout)
+            .add(1)
 
-          // FIXME: I don't like it. Need to rerun many times to see if it really works.
-          const currentTimestamp = await increaseTime(10)
+          const latestBlock = await mineBlocks(dkgTimeout - 1)
 
           await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-            `NotTimedOut(${expectedTimeout}, ${currentTimestamp + 1})`
+            `NotTimedOut(${expectedTimeout}, ${latestBlock + 1})`
           )
         })
       })
@@ -113,7 +137,7 @@ describe("RandomBeacon contract", function () {
         let tx: ContractTransaction
 
         beforeEach("notify dkg timeout", async () => {
-          await increaseTime(await randomBeacon.DKG_TIMEOUT())
+          await mineBlocks(dkgTimeout)
           tx = await randomBeacon.notifyDkgTimeout()
         })
 
@@ -151,6 +175,10 @@ describe("RandomBeacon contract", function () {
       })
 
       context("with group creation not timed out", async function () {
+        beforeEach("increase time", async () => {
+          await mineBlocks(constants.timeDKG)
+        })
+
         it("cleans up dkg data", async function () {
           await randomBeacon.submitDkgResult()
 
@@ -196,6 +224,6 @@ async function assertDkgCleanData(randomBeacon: RandomBeacon) {
 
   expect(dkgData.seed).to.eq(0)
   expect(dkgData.groupSize).to.eq(0)
-  expect(dkgData.timeoutDuration).to.eq(0)
-  expect(dkgData.startTimestamp).to.eq(0)
+  expect(dkgData.startBlock).to.eq(0)
+  expect(dkgData.dkgSubmissionEligibilityDelay).to.eq(0)
 }
