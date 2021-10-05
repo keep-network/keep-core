@@ -1,9 +1,10 @@
-import { ethers, waffle } from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { increaseTime, lastBlockTime } from "./helpers/contract-test-helpers"
 
 import { BigNumber, ContractTransaction } from "ethers"
 import type { DKG, RandomBeacon } from "../typechain"
+
+const { increaseTime, lastBlockTime } = helpers.time
 
 describe("RandomBeacon contract", function () {
   async function fixture() {
