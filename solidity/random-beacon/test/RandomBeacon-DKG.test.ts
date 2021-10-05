@@ -13,7 +13,7 @@ const { mineBlocks } = helpers.time
 describe("RandomBeacon contract", function () {
   const dkgTimeout: number =
     constants.timeDKG +
-    constants.groupSize * constants.dkgSubmissionEligibilityDelay
+    constants.groupSize * constants.dkgResultSubmissionEligibilityDelay
 
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
@@ -47,7 +47,7 @@ describe("RandomBeacon contract", function () {
           .withArgs(
             await randomBeacon.GENESIS_SEED(),
             await randomBeacon.GROUP_SIZE(),
-            await randomBeacon.dkgSubmissionEligibilityDelay()
+            await randomBeacon.dkgResultSubmissionEligibilityDelay()
           )
       })
 
@@ -56,8 +56,8 @@ describe("RandomBeacon contract", function () {
 
         expect(dkgData.seed).to.eq(await randomBeacon.GENESIS_SEED())
         expect(dkgData.groupSize).to.eq(await randomBeacon.GROUP_SIZE())
-        expect(dkgData.dkgSubmissionEligibilityDelay).to.eq(
-          await randomBeacon.dkgSubmissionEligibilityDelay()
+        expect(dkgData.dkgResultSubmissionEligibilityDelay).to.eq(
+          await randomBeacon.dkgResultSubmissionEligibilityDelay()
         )
         expect(dkgData.startBlock).to.be.eq(tx.blockNumber)
       })
@@ -287,7 +287,7 @@ async function assertDkgCleanData(randomBeacon: RandomBeacon) {
   expect(dkgData.seed).to.eq(0)
   expect(dkgData.groupSize).to.eq(0)
   expect(dkgData.startBlock).to.eq(0)
-  expect(dkgData.dkgSubmissionEligibilityDelay).to.eq(0)
+  expect(dkgData.dkgResultSubmissionEligibilityDelay).to.eq(0)
 }
 
 async function signDkgResult(

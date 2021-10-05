@@ -18,7 +18,7 @@ library DKG {
         uint256 groupSize;
         // Time in blocks after which the next group member is eligible
         // to submit DKG result.
-        uint256 dkgSubmissionEligibilityDelay;
+        uint256 dkgResultSubmissionEligibilityDelay;
         // Time in blocks at which DKG started.
         uint256 startBlock;
         // Time in blocks after which DKG result is complete and ready to be
@@ -45,7 +45,7 @@ library DKG {
     event DkgStarted(
         uint256 seed,
         uint256 groupSize,
-        uint256 dkgSubmissionEligibilityDelay
+        uint256 dkgResultSubmissionEligibilityDelay
     ); // TODO: Add more parameters
     event DkgTimedOut(uint256 seed);
     event DkgCompleted(uint256 seed);
@@ -61,7 +61,7 @@ library DKG {
         delete self.seed;
         delete self.groupSize;
         delete self.signatureThreshold;
-        delete self.dkgSubmissionEligibilityDelay;
+        delete self.dkgResultSubmissionEligibilityDelay;
         delete self.timeDKG;
         delete self.startBlock;
     }
@@ -72,7 +72,7 @@ library DKG {
 
     function dkgTimeout(Data storage self) public view returns (uint256) {
         return
-            self.timeDKG + self.groupSize * self.dkgSubmissionEligibilityDelay;
+            self.timeDKG + self.groupSize * self.dkgResultSubmissionEligibilityDelay;
     }
 
     function start(
@@ -80,18 +80,18 @@ library DKG {
         uint256 seed,
         uint256 groupSize,
         uint256 signatureThreshold,
-        uint256 dkgSubmissionEligibilityDelay,
+        uint256 dkgResultSubmissionEligibilityDelay,
         uint256 timeDKG
     ) internal assertInProgress(self, false) {
         self.seed = seed;
         self.groupSize = groupSize;
         self.signatureThreshold = signatureThreshold;
-        self.dkgSubmissionEligibilityDelay = dkgSubmissionEligibilityDelay;
+        self.dkgResultSubmissionEligibilityDelay = dkgResultSubmissionEligibilityDelay;
         self.timeDKG = timeDKG;
 
         self.startBlock = block.number;
 
-        emit DkgStarted(seed, groupSize, dkgSubmissionEligibilityDelay);
+        emit DkgStarted(seed, groupSize, dkgResultSubmissionEligibilityDelay);
     }
 
     /// @notice Verifies the submitted DKG result against supporting member
@@ -131,7 +131,7 @@ library DKG {
             block.number >=
                 (T_init +
                     (submitterMemberIndex - 1) *
-                    self.dkgSubmissionEligibilityDelay),
+                    self.dkgResultSubmissionEligibilityDelay),
             "Submitter not eligible"
         );
 

@@ -187,7 +187,7 @@ contract RandomBeacon is Ownable {
     event DkgStarted(
         uint256 seed,
         uint256 groupSize,
-        uint256 dkgSubmissionEligibilityDelay
+        uint256 dkgResultSubmissionEligibilityDelay
     );
     event DkgTimedOut(uint256 seed);
     event DkgCompleted(uint256 seed);
@@ -322,7 +322,7 @@ contract RandomBeacon is Ownable {
             seed,
             GROUP_SIZE,
             SIGNATURE_THRESHOLD,
-            dkgSubmissionEligibilityDelay,
+            dkgResultSubmissionEligibilityDelay,
             TIME_DKG
         );
     }

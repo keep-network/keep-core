@@ -7,7 +7,7 @@ export const constants = {
   groupSize: 3,
   signatureThreshold: 2,
   timeDKG: 13,
-  dkgSubmissionEligibilityDelay: 10,
+  dkgResultSubmissionEligibilityDelay: 10,
 }
 
 interface DeployedContracts {
