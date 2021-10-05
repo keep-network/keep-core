@@ -101,8 +101,6 @@ library DKG {
     /// signature. Indices have to be unique.
     /// @param members Addresses of candidate group members as outputted by the
     /// group selection protocol.
-    /// @param groupSelectionEndBlock Block height at which the group selection
-    /// protocol ended.
     function verify(
         Data storage self,
         uint256 submitterMemberIndex,
@@ -110,8 +108,7 @@ library DKG {
         bytes memory misbehaved,
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
-        address[] memory members,
-        uint256 groupSelectionEndBlock
+        address[] memory members
     ) public view assertInProgress(self, true) {
         require(submitterMemberIndex > 0, "Invalid submitter index");
         require(
@@ -119,7 +116,9 @@ library DKG {
             "Unexpected submitter index"
         );
 
-        uint256 T_init = groupSelectionEndBlock + self.timeDKG;
+        // TODO: Revisit `timeDKG` value if it's something we need and can read
+        // from governable parameters.
+        uint256 T_init = self.startBlock + self.timeDKG;
         require(
             block.number >=
                 (T_init +
