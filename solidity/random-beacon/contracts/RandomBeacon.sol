@@ -119,8 +119,7 @@ contract RandomBeacon is Ownable {
     ///         without the DKG result submitted, DKG is considered as timed out
     ///         and no DKG result for this group creation can be submitted
     ///         anymore.
-    // FIXME: we set it with a value just for tests, the value should be initialized properly in another PR.
-    uint256 public dkgResultSubmissionEligibilityDelay = 10;
+    uint256 public dkgResultSubmissionEligibilityDelay;
 
     /// @notice Reward in T for submitting DKG result. The reward is paid to
     ///         a submitter of a valid DKG result when the DKG result challenge
