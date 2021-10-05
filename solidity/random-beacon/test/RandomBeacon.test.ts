@@ -138,7 +138,7 @@ describe("RandomBeacon", () => {
         )
       })
 
-      it("should update the DKG submission eligibility delay", async () => {
+      it("should update the DKG result submission eligibility delay", async () => {
         expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
           dkgResultSubmissionEligibilityDelay
         )

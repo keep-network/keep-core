@@ -112,11 +112,11 @@ contract RandomBeacon is Ownable {
 
     /// @notice Slashing amount for not submitting relay entry. When 
     ///         relay entry hard timeout is reached without the relay entry
-    ///         submitted, each group members gets slashed for
+    ///         submitted, each group member gets slashed for
     ///         `relayEntrySubmissionFailureSlashingAmount`. If the relay entry
     ///         gets submitted after the soft timeout (see 
     ///         `relayEntrySubmissionEligibilityDelay` documentation), but
-    ///         before the hard timeout, each group members gets slashed
+    ///         before the hard timeout, each group member gets slashed
     ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
     ///         and the time passed since the soft deadline.
     uint256 public relayEntrySubmissionFailureSlashingAmount;

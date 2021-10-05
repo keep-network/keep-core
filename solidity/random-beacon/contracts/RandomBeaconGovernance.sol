@@ -19,7 +19,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Keep Random Beacon Governance
 /// @notice Owns the `RandomBeacon` contract and is responsible for updating its
-///         governable parameters in respect to governance delay invividual
+///         governable parameters in respect to governance delay individual
 ///         for each parameter.
 contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayRequestFee;
@@ -73,7 +73,7 @@ contract RandomBeaconGovernance is Ownable {
     uint256 internal CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
 
     // Short governance delay for non-critical parameters. Honest stakers should
-    // not be severly affected by any change of these parameters.
+    // not be severely affected by any change of these parameters.
     //
     // The full list of parameters protected by this delay:
     // - relay request fee
