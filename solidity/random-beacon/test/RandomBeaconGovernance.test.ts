@@ -591,7 +591,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingGroupCreationFrequencyUpdateTime()
-        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+        ).to.be.equal(24 * 60 * 60) // 24 hours
       })
 
       it("should emit the GroupCreationFrequencyUpdateStarted event", async () => {
@@ -634,7 +634,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
 
-        await increaseTime(13 * 24 * 60 * 60) // 13 days
+        await increaseTime(23 * 60 * 60) // 23 hours
 
         await expect(
           randomBeaconGovernance
@@ -652,7 +652,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
 
-        await increaseTime(14 * 24 * 60 * 60) // 2 weeks
+        await increaseTime(24 * 60 * 60) // 24 hours
 
         tx = await randomBeaconGovernance
           .connect(governance)

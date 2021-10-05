@@ -68,7 +68,6 @@ contract RandomBeaconGovernance is Ownable {
     // The full list of parameters protected by this delay:
     // - relay entry hard timeout
     // - callback gas limit
-    // - group creation frequency
     // - group lifetime
     // - relay entry submission failure slashing amount
     uint256 internal CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
@@ -78,6 +77,7 @@ contract RandomBeaconGovernance is Ownable {
     //
     // The full list of parameters protected by this delay:
     // - relay request fee
+    // - group creation frequency
     // - relay entry submission eligibility delay
     // - DKG result challenge period length
     // - DKG result submission eligibility delay
@@ -401,7 +401,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             groupCreationFrequencyChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
         randomBeacon.updateGroupCreationParameters(
@@ -772,7 +772,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 groupCreationFrequencyChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
+                STANDARD_PARAMETER_GOVERNANCE_DELAY 
             );
     }
 
