@@ -17,7 +17,6 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../MaintenancePool.sol";
-import "../../../contracts/KeepToken.sol";
 
 // TODO: Documentation
 // TODO: Unit tests
@@ -27,7 +26,7 @@ library Relay {
     struct Request {
         uint256 id;
         uint256 startBlock;
-        uint256 groupIndex;
+        bytes groupPublicKey;
         bytes previousEntry;
     }
 
@@ -44,9 +43,16 @@ library Relay {
         uint256 bleedingPeriod;
     }
 
+    event RelayEntryRequested(
+        uint256 indexed requestId,
+        bytes groupPublicKey,
+        bytes previousEntry
+    );
+    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
     function requestEntry(
         Data storage self,
-        uint256 groupIndex,
+        bytes memory groupPublicKey,
         bytes calldata previousEntry
     ) internal {
         require(!isRequestInProgress(self), "Another relay request in progress");
@@ -60,16 +66,16 @@ library Relay {
         self.tToken.safeIncreaseAllowance(address(self.maintenancePool), self.relayRequestFee);
         self.maintenancePool.deposit(self.relayRequestFee);
 
-        self.requestCount++;
+        uint256 currentRequestId = ++self.requestCount;
 
         self.currentRequest = Request(
-            self.requestCount,
+            currentRequestId,
             block.number,
-            groupIndex,
+            groupPublicKey,
             previousEntry
         );
 
-        // TODO: Emit event.
+        emit RelayEntryRequested(currentRequestId, groupPublicKey, previousEntry);
     }
 
     function submitEntry(
@@ -79,12 +85,23 @@ library Relay {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!isRequestTimedOut(self), "Relay request timed out");
 
-        // TODO: Verify entry and submitter eligibility.
+        // TODO: Verify submitter eligibility.
+
+        // TODO: Attach BLS lib.
+        // require(
+        //     BLS.verify(
+        //         self.currentRequest.groupPublicKey,
+        //         self.currentRequest.previousEntry,
+        //         entry
+        //     ),
+        //     "Invalid signature"
+        // );
+
         // TODO: Implement bleeding.
 
         delete self.currentRequest;
 
-        // TODO: Emit event.
+        emit RelayEntrySubmitted(self.requestCount, entry);
     }
 
     function isRequestInProgress(
