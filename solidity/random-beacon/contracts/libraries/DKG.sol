@@ -9,8 +9,8 @@ library DKG {
     struct Data {
         uint256 seed;
         uint256 groupSize;
-        uint256 timeoutDuration;
-        uint256 startTimestamp;
+        uint256 dkgSubmissionEligibilityDelay;
+        uint256 startBlock;
     }
 
     /// DKG is in an invalid state. Expected in progress: `expectedInProgress`,
@@ -20,14 +20,15 @@ library DKG {
         bool actualInProgress
     );
 
-    /// DKG haven't timed out yet. Expected timestamp: `expectedTimeoutTimestamp`,
-    /// but actual timestamp: `actualTimestamp`.
-    error NotTimedOut(
-        uint256 expectedTimeoutTimestamp,
-        uint256 actualTimestamp
-    );
+    /// DKG haven't timed out yet. Expected block: `expectedTimeoutBlock`,
+    /// but actual block: `actualBlock`.
+    error NotTimedOut(uint256 expectedTimeoutBlock, uint256 actualBlock);
 
-    event DkgStarted(uint256 seed, uint256 groupSize, uint256 timeoutDuration);
+    event DkgStarted(
+        uint256 seed,
+        uint256 groupSize,
+        uint256 dkgSubmissionEligibilityDelay
+    ); // TODO: Add more parameters
     event DkgTimedOut(uint256 seed);
     event DkgCompleted(uint256 seed);
 
@@ -41,26 +42,30 @@ library DKG {
         _;
         delete self.seed;
         delete self.groupSize;
-        delete self.timeoutDuration;
-        delete self.startTimestamp;
+        delete self.startBlock;
+        delete self.dkgSubmissionEligibilityDelay;
     }
 
     function isInProgress(Data storage self) public view returns (bool) {
-        return self.startTimestamp > 0;
+        return self.startBlock > 0;
+    }
+
+    function dkgTimeout(Data storage self) public view returns (uint256) {
+        return self.groupSize * self.dkgSubmissionEligibilityDelay;
     }
 
     function start(
         Data storage self,
         uint256 seed,
         uint256 groupSize,
-        uint256 timeoutDuration
+        uint256 dkgSubmissionEligibilityDelay
     ) internal assertInProgress(self, false) {
         self.seed = seed;
         self.groupSize = groupSize;
-        self.timeoutDuration = timeoutDuration;
-        self.startTimestamp = block.timestamp;
+        self.dkgSubmissionEligibilityDelay = dkgSubmissionEligibilityDelay;
+        self.startBlock = block.number;
 
-        emit DkgStarted(seed, groupSize, timeoutDuration);
+        emit DkgStarted(seed, groupSize, dkgSubmissionEligibilityDelay);
     }
 
     function notifyTimeout(Data storage self)
@@ -68,10 +73,10 @@ library DKG {
         assertInProgress(self, true)
         cleanup(self)
     {
-        if (block.timestamp < self.startTimestamp + self.timeoutDuration)
+        if (block.number <= self.startBlock + dkgTimeout(self))
             revert NotTimedOut(
-                self.startTimestamp + self.timeoutDuration,
-                block.timestamp
+                self.startBlock + dkgTimeout(self) + 1,
+                block.number
             );
 
         emit DkgTimedOut(self.seed);

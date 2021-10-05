@@ -64,7 +64,7 @@ contract RandomBeacon is Ownable {
 
     // FIXME: These parameters will be delivered from other contract.
     uint256 public GROUP_SIZE = 66;
-    uint256 public DKG_TIMEOUT = 7 days;
+    uint256 public dkgSubmissionEligibilityDelay = 10; // 10 blocks
     uint256 public GROUP_FREQUENCY = 14;
 
     // TODO: Can we really make it public along with the library functions?
@@ -97,7 +97,11 @@ contract RandomBeacon is Ownable {
     );
 
     // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
-    event DkgStarted(uint256 seed, uint256 groupSize, uint256 timeoutDuration);
+    event DkgStarted(
+        uint256 seed,
+        uint256 groupSize,
+        uint256 dkgSubmissionEligibilityDelay
+    );
     event DkgTimedOut(uint256 seed);
     event DkgCompleted(uint256 seed);
 
@@ -200,7 +204,7 @@ contract RandomBeacon is Ownable {
     function createGroup(uint256 seed) internal {
         // Sortition performed off-chain
 
-        dkg.start(seed, GROUP_SIZE, DKG_TIMEOUT);
+        dkg.start(seed, GROUP_SIZE, dkgSubmissionEligibilityDelay);
     }
 
     function genesis() external {
