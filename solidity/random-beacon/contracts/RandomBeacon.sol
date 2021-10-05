@@ -153,6 +153,25 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
+    /// @dev Assigns initial values to parameters to make the beacon work
+    ///      safely. These parameters are just proposed defaults and they might
+    ///      be updated with `update*` functions after the contract deployment
+    ///      and before transferring the ownership to the governance contract.
+    constructor() {
+        relayRequestFee = 0;
+        relayEntrySubmissionEligibilityDelay = 10;
+        relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
+        callbackGasLimit = 200000;
+        groupCreationFrequency = 10;
+        groupLifetime = 2 weeks;
+        dkgResultChallengePeriodLength = 1440; // ~6h assuming 15s block time
+        dkgResultSubmissionEligibilityDelay = 10;
+        dkgResultSubmissionReward = 0;
+        sortitionPoolUnlockingReward = 0;
+        relayEntrySubmissionFailureSlashingAmount = 1000e18; 
+        maliciousDkgResultSlashingAmount = 50000e18;
+    }
+
     /// @notice Updates the values of relay entry parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
