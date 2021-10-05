@@ -66,6 +66,9 @@ const config: HardhatUserConfig = {
     runOnCompile: true,
     strict: true,
   },
+  gasReporter: {
+    currency: "USD",
+  },
 }
 
 export default config
