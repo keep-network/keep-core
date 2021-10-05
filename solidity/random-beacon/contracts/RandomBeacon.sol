@@ -207,7 +207,7 @@ contract RandomBeacon is Ownable {
     /// @param _groupLifetime New group lifetime
     /// @param _dkgResultChallengePeriodLength New DKG result challenge period
     ///        length
-    /// @param _dkgResultSubmissionEligibilityDelay New DKG submission
+    /// @param _dkgResultSubmissionEligibilityDelay New DKG result submission
     ///        eligibility delay
     function updateGroupCreationParameters(
         uint256 _groupCreationFrequency,
