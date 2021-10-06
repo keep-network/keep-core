@@ -22,6 +22,7 @@ import RewardMultiplier from "./liquidity/RewardMultiplier"
 import Banner from "./Banner"
 import { LINK } from "../constants/constants"
 
+const poolId = "KEEP_ONLY"
 const KeepOnlyPool = ({
   apy,
   lpBalance,
@@ -31,8 +32,6 @@ const KeepOnlyPool = ({
   isAPYFetching,
   addLpTokens,
   withdrawLiquidityRewards,
-  liquidityContractName,
-  pool,
   rewardMultiplier,
 }) => {
   const { openConfirmationModal } = useModal()
@@ -56,19 +55,12 @@ const KeepOnlyPool = ({
       )
 
       addLpTokens(
+        poolId,
         KEEP.fromTokenUnit(amount).toString(),
-        liquidityContractName,
-        pool,
         awaitingPromise
       )
     },
-    [
-      addLpTokens,
-      liquidityContractName,
-      pool,
-      openConfirmationModal,
-      wrappedTokenBalance,
-    ]
+    [addLpTokens, openConfirmationModal, wrappedTokenBalance]
   )
 
   const withdrawKEEP = useCallback(
@@ -83,20 +75,12 @@ const KeepOnlyPool = ({
       )
 
       withdrawLiquidityRewards(
-        liquidityContractName,
+        poolId,
         KEEP.fromTokenUnit(amount).toString(),
-        pool,
         awaitingPromise
       )
     },
-    [
-      withdrawLiquidityRewards,
-      lpBalance,
-      openConfirmationModal,
-      pool,
-      liquidityContractName,
-      rewardBalance,
-    ]
+    [withdrawLiquidityRewards, lpBalance, openConfirmationModal, rewardBalance]
   )
 
   return (
