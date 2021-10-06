@@ -1,9 +1,10 @@
 import React from "react"
+import BigNumber from "bignumber.js"
 import { Keep } from "../../contracts"
-import TokenAmount from "../TokenAmount"
 
 const BaseExchangeRate = ({
   covToken,
+  collateralToken,
   amount,
   htmlTag = "div",
   className = "",
@@ -12,13 +13,9 @@ const BaseExchangeRate = ({
   return (
     <Tag className={className}>
       {`1 ${covToken.symbol}`} =&nbsp;
-      <TokenAmount
-        amount={amount}
-        decimalsToDisplay={3}
-        wrapperClassName="flex-inline"
-        amountClassName=""
-        symbolClassName=""
-      />
+      {collateralToken.displayAmountWithSymbol(amount, 3, (amount) =>
+        new BigNumber(amount).toFormat(3, BigNumber.ROUND_DOWN)
+      )}
     </Tag>
   )
 }
@@ -33,6 +30,7 @@ export const CoveragePoolV1ExchangeRate = ({
   <BaseExchangeRate
     {...restProps}
     covToken={covToken}
+    collateralToken={collateralToken}
     amount={Keep.coveragePoolV1.estimatedBalanceFor(
       collateralToken.fromTokenUnit(1).toString(),
       covTotalSupply,
