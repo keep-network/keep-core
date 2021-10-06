@@ -55,6 +55,9 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "14.x"
+          registry-url: "https://registry.npmjs.org"
+          cache: "yarn"
+          cache-dependency-path: solidity/random-beacon/yarn.lock
 
       - name: Install dependencies
         run: yarn install
@@ -101,7 +104,7 @@ jobs:
         run: yarn install
 
       - name: Run Slither
-        run: slither --hardhat-artifacts-directory build .
+        run: slither .
   
   contracts-build-and-test:
     needs: contracts-detect-changes
@@ -118,6 +121,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/random-beacon/yarn.lock
             
       - name: Install dependencies
         run: yarn install
@@ -160,11 +165,6 @@ jobs:
         working-directory: ./solidity/random-beacon
     steps:
       - uses: actions/checkout@v2
-
-      - name: Load environment variables
-        uses: keep-network/ci/actions/load-env-variables@v1
-        with:
-          environment: ${{ github.event.inputs.environment }}
 
       - uses: actions/setup-node@v2
         with:
