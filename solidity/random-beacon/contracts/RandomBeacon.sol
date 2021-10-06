@@ -14,6 +14,7 @@
 
 pragma solidity ^0.8.6;
 
+import "./libraries/Relay.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Sortition Pool contract interface
@@ -36,6 +37,8 @@ interface ISortitionPool {
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
 contract RandomBeacon is Ownable {
+    using Relay for Relay.Data;
+
     /// @notice Relay request fee in T. This fee needs to be provided by the
     ///         account or contract requesting for a new relay entry.
     uint256 public relayRequestFee;
@@ -142,6 +145,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    Relay.Data public relay;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -167,6 +171,14 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
+    event RelayEntryRequested(
+        uint256 indexed requestId,
+        bytes groupPublicKey,
+        bytes previousEntry
+    );
+
+    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -189,7 +201,7 @@ contract RandomBeacon is Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
     }
 
-    /// @notice Updates the values of relay entry parameters
+    /// @notice Updates the values of relay entry parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
@@ -295,5 +307,23 @@ contract RandomBeacon is Ownable {
     /// @param operator Address of the operator
     function isOperatorEligible(address operator) external view returns (bool) {
         return sortitionPool.isOperatorEligible(operator);
+    }
+
+    function selectGroup() internal view returns (bytes memory) {
+        // TODO: Assert at least one group exists and implement selection logic.
+        return "0x00";
+    }
+
+    function requestRelayEntry(bytes calldata previousEntry) external {
+        relay.requestEntry(selectGroup(), previousEntry);
+    }
+
+    function submitRelayEntry(bytes calldata entry) external {
+        // TODO: Add reentrancy protection because this function invokes a callback.
+        relay.submitEntry(entry);
+
+        if (relay.requestCount % groupCreationFrequency == 0) {
+            createGroup(uint256(keccak256(entry)));
+        }
     }
 }
