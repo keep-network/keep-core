@@ -76,7 +76,7 @@ keep-core/
   Dockerfile
   main.go, *.go
   docs/
-  solidity <1>
+  solidity/ <1>
   solidity-v1/ <2>
   cmd/ <3>
   pkg/ <4>
