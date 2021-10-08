@@ -22,8 +22,8 @@ const defaultIncentivesRemovedBannerProps = {
 }
 
 const LiquidityRewardCard = ({
+  poolId,
   title,
-  liquidityPairContractName,
   MainIcon,
   SecondaryIcon,
   viewPoolLink,
@@ -221,12 +221,7 @@ const LiquidityRewardCard = ({
         className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
         disabled={!gt(wrappedTokenBalance, 0) || incentivesRemoved}
         onSubmitAction={(awaitingPromise) =>
-          addLpTokens(
-            wrappedTokenBalance,
-            liquidityPairContractName,
-            pool,
-            awaitingPromise
-          )
+          addLpTokens(poolId, wrappedTokenBalance, awaitingPromise)
         }
       >
         {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
@@ -236,12 +231,7 @@ const LiquidityRewardCard = ({
         className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
         disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
         onSubmitAction={(awaitingPromise) =>
-          withdrawLiquidityRewards(
-            liquidityPairContractName,
-            lpBalance,
-            pool,
-            awaitingPromise
-          )
+          withdrawLiquidityRewards(poolId, lpBalance, awaitingPromise)
         }
       >
         withdraw all

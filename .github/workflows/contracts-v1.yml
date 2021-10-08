@@ -1,4 +1,4 @@
-name: Solidity Random Beacon
+name: Solidity v1
 
 on:
   schedule:
@@ -7,7 +7,8 @@ on:
     branches:
       - main
     paths:
-      - "solidity/random-beacon/**"
+      - "solidity-v1/**"
+      - "!solidity-v1/dashboard/**"
   pull_request:
   workflow_dispatch:
     inputs:
@@ -38,7 +39,7 @@ jobs:
         with:
           filters: |
             path-filter:
-              - './solidity/random-beacon/**'
+              - './solidity-v1/!(dashboard)/**'
 
   contracts-lint:
     needs: contracts-detect-changes
@@ -48,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./solidity/random-beacon
+        working-directory: ./solidity-v1
     steps:
       - uses: actions/checkout@v2
 
@@ -72,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./solidity/random-beacon
+        working-directory: ./solidity-v1
     steps:
       - uses: actions/checkout@v2
 
@@ -113,7 +114,9 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./solidity/random-beacon
+        working-directory: ./solidity-v1
+    outputs:
+      version: ${{ steps.npm-version-bump.outputs.version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -129,8 +132,14 @@ jobs:
       - name: Build solidity contracts
         run: yarn build
 
-      - name: Run tests
-        run: yarn test
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity-v1
+          environment: ${{ github.event.inputs.environment }}
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
 
   contracts-deployment-dry-run:
     if: |
@@ -145,15 +154,21 @@ jobs:
 
       - uses: actions/setup-node@v2
         with:
-          node-version: "14.x"
-          cache: "yarn"
-          cache-dependency-path: solidity/random-beacon/yarn.lock
+          working-directory: ./solidity-v1
+          tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
+          tenderly-project: thesis/keep-test
+          eth-network-id: ${{ env.NETWORK_ID }}
+          github-project-name: keep-core
+          version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Deploy contracts
-        run: yarn deploy
+      - name: Upload keep-core contracts for initcontainer build
+        uses: actions/upload-artifact@v2
+        with:
+          name: Contracts
+          path: ./solidity-v1/build/contracts/*
 
   contracts-deployment-testnet:
     needs: [contracts-detect-changes, contracts-build-and-test]
@@ -194,7 +209,13 @@ jobs:
 
       - name: Publish to npm
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-core/solidity-v1"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          upstream_ref: ${{ github.event.inputs.upstream_ref }}
+          version: ${{ needs.contracts-migrate-and-publish.outputs.version }}
 
       # TODO: Notify CI about completion of the workflow

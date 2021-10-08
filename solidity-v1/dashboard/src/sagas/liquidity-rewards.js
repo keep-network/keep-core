@@ -221,10 +221,10 @@ function* processLiquidityRewardEarnedNotification(
 }
 
 function* stakeTokens(action) {
-  const { contractName, address, amount, pool } = action.payload
+  const { liquidityRewardPair, address, amount } = action.payload
 
   /** @type LiquidityRewards */
-  const LiquidityRewards = yield getLPRewardsWrapper({ contractName, pool })
+  const LiquidityRewards = yield getLPRewardsWrapper(liquidityRewardPair)
 
   const approvedAmount = yield call(
     [LiquidityRewards, LiquidityRewards.wrappedTokenAllowance],
@@ -320,10 +320,10 @@ export function* watchFetchLiquidityRewardsAPY() {
 }
 
 function* withdrawTokens(action) {
-  const { contractName, amount, pool } = action.payload
+  const { liquidityRewardPair, amount } = action.payload
 
   /** @type LiquidityRewards */
-  const LiquidityRewards = yield getLPRewardsWrapper({ contractName, pool })
+  const LiquidityRewards = yield getLPRewardsWrapper(liquidityRewardPair)
 
   yield call(sendTransaction, {
     payload: {

@@ -368,7 +368,7 @@ Entries in `upstream_builds` will have these properties:
     The ref used for this build.
 `module`::
     The name of the module that was built, including the repository (e.g.
-    `github.com/keep-network/keep-core/solidity`).
+    `github.com/keep-network/keep-core/solidity-v1`).
 `version`::
     The module version used for this build.
 
@@ -411,7 +411,7 @@ look something like this:
 
 ```
 {
-    "github.com/keep-network/keep-core/solidity": [
+    "github.com/keep-network/keep-core/solidity-v1": [
         "github.com/keep-network/keep-core",
         "github.com/keep-network/keep-core/token-dashboard"
     ],
