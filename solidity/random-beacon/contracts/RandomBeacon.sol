@@ -340,6 +340,7 @@ contract RandomBeacon is Ownable {
             GROUP_SIZE,
             SIGNATURE_THRESHOLD,
             dkgResultSubmissionEligibilityDelay,
+            dkgResultChallengePeriodLength,
             TIME_DKG
         );
 
