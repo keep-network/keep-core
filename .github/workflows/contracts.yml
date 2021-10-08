@@ -59,8 +59,12 @@ jobs:
       - name: Clean yarn
         run: |
           rm -rf node_modules
-          rm -rf yarn.lock
+          rm yarn.lock
           yarn cache clean
+        
+      - name: Yarn set version
+        run: |
+          yarn policies set-version 1.22.10 
 
       - name: Install dependencies
         run: yarn install
