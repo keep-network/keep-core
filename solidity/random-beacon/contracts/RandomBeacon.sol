@@ -188,6 +188,11 @@ contract RandomBeacon is Ownable {
 
     event DkgTimedOut(uint256 indexed seed);
 
+    event DkgResultChallenged(
+        bytes indexed groupPubKey,
+        address indexed submitter
+    ); // TODO: We could add submitter member address or ID
+
     // FIXME: This is just for tests
     uint256 internal currentRelayEntry = 420;
 
@@ -358,9 +363,20 @@ contract RandomBeacon is Ownable {
         uint256 resultIndex = dkg.submitDkgResult(dkgResult);
 
         // emit DkgResultSubmitted
+    }
 
-        // if enough results
-        completeGroupCreation();
+    function challengeDkgResult(
+        uint256 resultIndex,
+        DKG.DkgResult calldata dkgResult
+    ) external {
+        dkg.challengeResult(resultIndex, dkgResult);
+
+        // TODO: Slash submitter
+
+        emit DkgResultChallenged(
+            dkgResult.groupPubKey,
+            dkgResult.members[dkgResult.submitterMemberIndex] // TODO: Double check if this should be `submitterMemberIndex` or `submitterMemberIndex + 1`?
+        );
     }
 
     // function requestRelayEntry() external {
