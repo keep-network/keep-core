@@ -1,12 +1,35 @@
-name: Solidity Random Beacon Test
+name: Solidity Random Beacon 2
 
 on:
   push:
+    branches:
+      - main
     paths:
       - "solidity/random-beacon/**"
+  pull_request:
 
 jobs:
+  contracts-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request'
+
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/random-beacon/**'
+
   contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,8 +45,6 @@ jobs:
           rm yarn.lock
           yarn cache clean
           yarn
-
+        
       - name: Lint
         run: yarn lint
-  
-  
