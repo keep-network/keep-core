@@ -353,13 +353,6 @@ contract RandomBeacon is Ownable {
         createGroup(GENESIS_SEED);
     }
 
-    function completeGroupCreation() internal {
-        dkg.finish();
-
-        // New groups should be created with a fixed frequency of relay requests
-        // TODO: Consider each group a separate contract instance deployed with proxy?
-    }
-
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
 
@@ -379,6 +372,7 @@ contract RandomBeacon is Ownable {
         // validate DKG result
         uint256 resultIndex = dkg.submitDkgResult(dkgResult);
 
+        // TODO: Consider each group a separate contract instance deployed with proxy?
         groups.addGroup(dkgResult.groupPubKey);
 
         emit DkgResultSubmitted(
