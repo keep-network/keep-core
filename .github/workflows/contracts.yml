@@ -46,7 +46,7 @@ jobs:
           rm -rf node_modules
           rm yarn.lock
           yarn cache clean
-          yarn
+          yarn install --network-concurrency 1
         
       - name: Lint
         run: yarn lint
