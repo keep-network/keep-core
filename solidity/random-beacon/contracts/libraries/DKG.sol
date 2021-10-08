@@ -63,6 +63,7 @@ library DKG {
         delete self.dkgResultChallengePeriodLength;
         delete self.timeDKG;
         delete self.startBlock;
+        delete self.registeredDkgResults;
     }
 
     function isInProgress(Data storage self) public view returns (bool) {
@@ -247,5 +248,32 @@ library DKG {
         // TODO: Verify members with sortition pool
 
         delete self.registeredDkgResults[resultIndex]; // TODO: Check if this frees up the index, if so we need to be careful
+    }
+
+    function acceptResult(
+        Data storage self,
+        uint256 resultIndex,
+        DkgResult calldata dkgResult
+    ) external cleanup(self) {
+        assert(self.dkgResultChallengePeriodLength > 0);
+
+        require(isInProgress(self), "dkg is currently not in progress");
+
+        RegisteredDkgResult memory registeredDkgResult = self
+            .registeredDkgResults[resultIndex];
+
+        require(
+            block.timestamp >=
+                registeredDkgResult.resultSubmittedTimestamp +
+                    self.dkgResultChallengePeriodLength,
+            "Challenge period has not passed yet"
+        );
+
+        bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
+
+        require(
+            dkgResultHash == registeredDkgResult.dkgResultHash,
+            "invalid result"
+        );
     }
 }

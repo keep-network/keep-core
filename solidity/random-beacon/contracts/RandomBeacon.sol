@@ -186,6 +186,11 @@ contract RandomBeacon is Ownable {
         uint256 dkgResultSubmissionEligibilityDelay
     ); // TODO: Add all other needed paramters
 
+    event DkgResultApproved(
+        bytes indexed groupPubKey,
+        address indexed submitter
+    );
+
     event DkgTimedOut(uint256 indexed seed);
 
     event DkgResultChallenged(
@@ -377,6 +382,21 @@ contract RandomBeacon is Ownable {
             dkgResult.groupPubKey,
             dkgResult.members[dkgResult.submitterMemberIndex] // TODO: Double check if this should be `submitterMemberIndex` or `submitterMemberIndex + 1`?
         );
+    }
+
+    // Once the challenge period passes, anyone can unlock the sortition pool and mark the DKG result as accepted.
+    function approveDkgResult(
+        uint256 resultIndex,
+        DKG.DkgResult calldata dkgResult
+    ) external {
+        dkg.acceptResult(resultIndex, dkgResult);
+
+        emit DkgResultApproved(
+            dkgResult.groupPubKey,
+            dkgResult.members[dkgResult.submitterMemberIndex] // TODO: Double check if this should be `submitterMemberIndex` or `submitterMemberIndex + 1`?
+        );
+
+        // TODO: Unlock sortition pool
     }
 
     // function requestRelayEntry() external {
