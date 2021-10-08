@@ -31,16 +31,11 @@ library DKG {
         uint256 signatureThreshold;
     }
 
-    /// DKG is in an invalid state. Expected in progress: `expectedInProgress`,
-    /// but actual in progress: `actualInProgress`.
-    error InvalidInProgressState(
-        bool expectedInProgress,
-        bool actualInProgress
-    );
-
     modifier assertInProgress(Data storage self, bool expectedValue) {
-        if (isInProgress(self) != expectedValue)
-            revert InvalidInProgressState(expectedValue, isInProgress(self));
+        require(
+            isInProgress(self) == expectedValue,
+            "invalid in progress state"
+        );
         _;
     }
 

@@ -156,8 +156,6 @@ contract RandomBeacon is Ownable {
     // TODO: Can we really make it public along with the library functions?
     DKG.Data public dkg;
 
-    error NotAwaitingGenesis(uint256 groupCount);
-
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
         uint256 relayEntrySubmissionEligibilityDelay,
@@ -328,8 +326,7 @@ contract RandomBeacon is Ownable {
     }
 
     function genesis() external {
-        // if (groups.groupCount > 0)
-        //     revert NotAwaitingGenesis(dkg.groupCount, dkg.currentState);
+        // require(groups.groupCount == 0, "not awaiting genesis");
 
         createGroup(GENESIS_SEED);
     }
