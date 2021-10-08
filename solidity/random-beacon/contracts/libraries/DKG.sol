@@ -183,17 +183,15 @@ library DKG {
         }
     }
 
-    function notifyTimeout(Data storage self)
-        internal
-        cleanup(self)
-    {
+    function notifyTimeout(Data storage self) public cleanup(self) {
         require(isInProgress(self), "dkg is currently not in progress");
 
-        if (block.number <= self.startBlock + dkgTimeout(self))
-            revert NotTimedOut(
-                self.startBlock + dkgTimeout(self) + 1,
-                block.number
+        require(
+            block.number > self.startBlock + dkgTimeout(self),
+            "timeout not passed yet"
             );
+
+        revert("TODO: Implement");
     }
 
     function submitDkgResult(Data storage self, DkgResult calldata dkgResult)
