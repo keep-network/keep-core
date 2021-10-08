@@ -367,6 +367,8 @@ contract RandomBeacon is Ownable {
         // validate DKG result
         uint256 resultIndex = dkg.submitDkgResult(dkgResult);
 
+        groups.addGroup(dkgResult.groupPubKey);
+
         // emit DkgResultSubmitted
     }
 
@@ -390,6 +392,9 @@ contract RandomBeacon is Ownable {
         DKG.DkgResult calldata dkgResult
     ) external {
         dkg.acceptResult(resultIndex, dkgResult);
+
+        groups.activateGroup(dkgResult.groupPubKey);
+        // groups.setGroupMembers(groupPubKey, members, misbehaved);
 
         emit DkgResultApproved(
             dkgResult.groupPubKey,
