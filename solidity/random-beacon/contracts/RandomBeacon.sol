@@ -186,6 +186,17 @@ contract RandomBeacon is Ownable {
         uint256 dkgResultSubmissionEligibilityDelay
     ); // TODO: Add all other needed paramters
 
+    event DkgResultSubmitted(
+        bytes32 indexed seed,
+        uint256 index,
+        uint256 indexed submitterMemberIndex,
+        bytes indexed groupPubKey,
+        bytes misbehaved,
+        bytes signatures,
+        uint256[] signingMembersIndexes,
+        address[] members
+    ); // TODO: We could add submitter member address or ID
+
     event DkgResultApproved(
         bytes indexed groupPubKey,
         address indexed submitter
@@ -369,7 +380,16 @@ contract RandomBeacon is Ownable {
 
         groups.addGroup(dkgResult.groupPubKey);
 
-        // emit DkgResultSubmitted
+        emit DkgResultSubmitted(
+            dkg.seed,
+            resultIndex,
+            dkgResult.submitterMemberIndex,
+            dkgResult.groupPubKey,
+            dkgResult.misbehaved,
+            dkgResult.signatures,
+            dkgResult.signingMembersIndexes,
+            dkgResult.members
+        );
     }
 
     function challengeDkgResult(
