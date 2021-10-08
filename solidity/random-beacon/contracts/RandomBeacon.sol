@@ -355,7 +355,7 @@ contract RandomBeacon is Ownable {
         // TODO: Consider adding nonReentrant?
 
         // validate DKG result
-        dkg.verify(dkgResult);
+        uint256 resultIndex = dkg.submitDkgResult(dkgResult);
 
         // emit DkgResultSubmitted
 

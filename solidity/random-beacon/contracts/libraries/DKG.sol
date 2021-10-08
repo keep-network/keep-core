@@ -29,6 +29,8 @@ library DKG {
         // and it is recommended to make it higher than the signing threshold
         // to keep a safety margin for misbehaving members.
         uint256 signatureThreshold;
+        // List of results submitted during DKG.
+        RegisteredDkgResult[] registeredDkgResults;
     }
 
     struct DkgResult {
@@ -44,6 +46,11 @@ library DKG {
         uint256[] signingMembersIndexes;
         // Addresses of candidate group members as outputted by the group selection protocol.
         address[] members;
+    }
+
+    struct RegisteredDkgResult {
+        uint256 resultSubmittedTimestamp;
+        bytes32 dkgResultHash;
     }
 
     modifier cleanup(Data storage self) {
@@ -187,6 +194,25 @@ library DKG {
                 self.startBlock + dkgTimeout(self) + 1,
                 block.number
             );
+    }
+
+    function submitDkgResult(Data storage self, DkgResult calldata dkgResult)
+        external
+        returns (uint256)
+    {
+        require(isInProgress(self), "dkg is currently not in progress");
+
+        verify(self, dkgResult);
+
+        bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
+
+        self.registeredDkgResults.push(
+            RegisteredDkgResult(block.timestamp, dkgResultHash)
+        );
+
+        uint256 resultIndex = self.registeredDkgResults.length;
+
+        return resultIndex;
     }
 
     function finish(Data storage self)
