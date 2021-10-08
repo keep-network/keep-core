@@ -16,6 +16,7 @@ pragma solidity ^0.8.6;
 
 import "./libraries/Relay.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title Sortition Pool contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -36,7 +37,7 @@ interface ISortitionPool {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable {
+contract RandomBeacon is Ownable, ReentrancyGuard {
     using Relay for Relay.Data;
 
     /// @notice Relay request fee in T. This fee needs to be provided by the
@@ -314,12 +315,11 @@ contract RandomBeacon is Ownable {
         return "0x00";
     }
 
-    function requestRelayEntry(bytes calldata previousEntry) external {
+    function requestRelayEntry(bytes calldata previousEntry) external nonReentrant {
         relay.requestEntry(selectGroup(), previousEntry);
     }
 
-    function submitRelayEntry(bytes calldata entry) external {
-        // TODO: Add reentrancy protection because this function invokes a callback.
+    function submitRelayEntry(bytes calldata entry) external nonReentrant {
         relay.submitEntry(entry);
 
         if (relay.requestCount % groupCreationFrequency == 0) {
