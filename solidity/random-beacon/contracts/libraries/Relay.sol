@@ -39,8 +39,8 @@ library Relay {
         uint256 relayRequestFee;
 
         uint256 groupSize;
-        uint256 entrySubmissionBlockStep;
-        uint256 bleedingPeriod;
+        uint256 relayEntrySubmissionEligibilityDelay;
+        uint256 relayEntryHardTimeout;
     }
 
     event RelayEntryRequested(
@@ -113,8 +113,11 @@ library Relay {
     function isRequestTimedOut(
         Data storage self
     ) internal view returns (bool) {
-        // TODO: Bleeding period should be counted in.
+        uint256 relayEntryTimeout =
+            (self.groupSize * self.relayEntrySubmissionEligibilityDelay) +
+            self.relayEntryHardTimeout;
+
         return isRequestInProgress(self) &&
-            block.number > self.groupSize * self.entrySubmissionBlockStep;
+            block.number > self.currentRequest.startBlock + relayEntryTimeout;
     }
 }
