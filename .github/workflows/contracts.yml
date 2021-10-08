@@ -2,8 +2,6 @@ name: Solidity Random Beacon Test
 
 on:
   push:
-    branches:
-      - main
     paths:
       - "solidity/random-beacon/**"
 
