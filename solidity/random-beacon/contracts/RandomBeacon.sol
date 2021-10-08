@@ -350,35 +350,12 @@ contract RandomBeacon is Ownable {
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
     /// the protocol.
-    /// @param submitterMemberIndex Claimed submitter candidate group member index
-    /// @param groupPubKey Generated candidate group public key
-    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-    /// group members indexes in ascending order; Indexes reflect positions of
-    /// members in the group as outputted by the group selection protocol.
-    /// @param signatures Concatenation of signatures from members supporting the
-    /// result.
-    /// @param signingMembersIndexes Indices of members corresponding to each
-    /// signature.
-    /// @param members List of selected group members.
-    function submitDkgResult(
-        uint256 submitterMemberIndex,
-        bytes memory groupPubKey,
-        bytes memory misbehaved,
-        bytes memory signatures,
-        uint256[] memory signingMembersIndexes,
-        address[] memory members
-    ) external {
+    /// @param dkgResult DKG result.
+    function submitDkgResult(DKG.DkgResult calldata dkgResult) external {
         // TODO: Consider adding nonReentrant?
 
         // validate DKG result
-        dkg.verify(
-            submitterMemberIndex,
-            groupPubKey,
-            misbehaved,
-            signatures,
-            signingMembersIndexes,
-            members
-        );
+        dkg.verify(dkgResult);
 
         // emit DkgResultSubmitted
 

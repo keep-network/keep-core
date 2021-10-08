@@ -31,6 +31,21 @@ library DKG {
         uint256 signatureThreshold;
     }
 
+    struct DkgResult {
+        // Claimed submitter candidate group member index
+        uint256 submitterMemberIndex;
+        // Generated candidate group public key
+        bytes groupPubKey;
+        // Bytes array of misbehaved (disqualified or inactive)
+        bytes misbehaved;
+        // Concatenation of signatures from members supporting the result.
+        bytes signatures;
+        // Indices of members corresponding to each signature. Indices have to be unique.
+        uint256[] signingMembersIndexes;
+        // Addresses of candidate group members as outputted by the group selection protocol.
+        address[] members;
+    }
+
     modifier cleanup(Data storage self) {
         _;
         delete self.seed;
@@ -73,34 +88,16 @@ library DKG {
     /// signatures and if the submitter is eligible to submit at the current
     /// block. Every signature supporting the result has to be from a unique
     /// group member.
-    /// @param submitterMemberIndex Claimed submitter candidate group member index
-    /// @param groupPubKey Generated candidate group public key
-    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-    /// group members indexes; Indexes reflect positions of members in the group,
-    /// as outputted by the group selection protocol.
-    /// @param signatures Concatenation of signatures from members supporting the
-    /// result.
-    /// @param signingMemberIndices Indices of members corresponding to each
-    /// signature. Indices have to be unique.
-    /// @param members Addresses of candidate group members as outputted by the
-    /// group selection protocol.
-    function verify(
-        Data storage self,
-        uint256 submitterMemberIndex,
-        bytes memory groupPubKey,
-        bytes memory misbehaved,
-        bytes memory signatures,
-        uint256[] memory signingMemberIndices,
-        address[] memory members
-        )
+    /// @param dkgResult DKG result.
+    function verify(Data storage self, DkgResult calldata dkgResult)
         public
         view
     {
         require(isInProgress(self), "dkg is currently not in progress");
 
-        require(submitterMemberIndex > 0, "Invalid submitter index");
+        require(dkgResult.submitterMemberIndex > 0, "Invalid submitter index");
         require(
-            members[submitterMemberIndex - 1] == msg.sender,
+            dkgResult.members[dkgResult.submitterMemberIndex - 1] == msg.sender,
             "Unexpected submitter index"
         );
 
@@ -110,23 +107,33 @@ library DKG {
         require(
             block.number >=
                 (T_init +
-                    (submitterMemberIndex - 1) *
+                    (dkgResult.submitterMemberIndex - 1) *
                     self.dkgResultSubmissionEligibilityDelay),
             "Submitter not eligible"
         );
 
-        require(groupPubKey.length == 128, "Malformed group public key");
+        require(
+            dkgResult.groupPubKey.length == 128,
+            "Malformed group public key"
+        );
 
         require(
-            misbehaved.length <= self.groupSize - self.signatureThreshold,
+            dkgResult.misbehaved.length <=
+                self.groupSize - self.signatureThreshold,
             "Malformed misbehaved bytes"
         );
 
-        uint256 signaturesCount = signatures.length / 65;
-        require(signatures.length >= 65, "Too short signatures array");
-        require(signatures.length % 65 == 0, "Malformed signatures array");
+        uint256 signaturesCount = dkgResult.signatures.length / 65;
         require(
-            signaturesCount == signingMemberIndices.length,
+            dkgResult.signatures.length >= 65,
+            "Too short signatures array"
+        );
+        require(
+            dkgResult.signatures.length % 65 == 0,
+            "Malformed signatures array"
+        );
+        require(
+            signaturesCount == dkgResult.signingMembersIndexes.length,
             "Unexpected signatures count"
         );
         require(
@@ -136,7 +143,7 @@ library DKG {
         require(signaturesCount <= self.groupSize, "Too many signatures");
 
         bytes32 resultHash = keccak256(
-            abi.encodePacked(groupPubKey, misbehaved)
+            abi.encodePacked(dkgResult.groupPubKey, dkgResult.misbehaved)
         );
 
         bytes memory current; // Current signature to be checked.
@@ -144,9 +151,12 @@ library DKG {
         bool[] memory usedMemberIndices = new bool[](self.groupSize);
 
         for (uint256 i = 0; i < signaturesCount; i++) {
-            uint256 memberIndex = signingMemberIndices[i];
+            uint256 memberIndex = dkgResult.signingMembersIndexes[i];
             require(memberIndex > 0, "Invalid index");
-            require(memberIndex <= members.length, "Index out of range");
+            require(
+                memberIndex <= dkgResult.members.length,
+                "Index out of range"
+            );
 
             require(
                 !usedMemberIndices[memberIndex - 1],
@@ -154,13 +164,13 @@ library DKG {
             );
             usedMemberIndices[memberIndex - 1] = true;
 
-            current = signatures.slice(65 * i, 65);
+            current = dkgResult.signatures.slice(65 * i, 65);
             address recoveredAddress = resultHash
                 .toEthSignedMessageHash()
                 .recover(current);
 
             require(
-                members[memberIndex - 1] == recoveredAddress,
+                dkgResult.members[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
         }
