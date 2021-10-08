@@ -31,14 +31,6 @@ library DKG {
         uint256 signatureThreshold;
     }
 
-    modifier assertInProgress(Data storage self, bool expectedValue) {
-        require(
-            isInProgress(self) == expectedValue,
-            "invalid in progress state"
-        );
-        _;
-    }
-
     modifier cleanup(Data storage self) {
         _;
         delete self.seed;
@@ -65,7 +57,9 @@ library DKG {
         uint256 signatureThreshold,
         uint256 dkgResultSubmissionEligibilityDelay,
         uint256 timeDKG
-    ) internal assertInProgress(self, false) {
+    ) internal {
+        require(!isInProgress(self), "dkg is currently in progress");
+
         self.seed = seed;
         self.groupSize = groupSize;
         self.signatureThreshold = signatureThreshold;
@@ -98,7 +92,12 @@ library DKG {
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
         address[] memory members
-    ) public view assertInProgress(self, true) {
+        )
+        public
+        view
+    {
+        require(isInProgress(self), "dkg is currently not in progress");
+
         require(submitterMemberIndex > 0, "Invalid submitter index");
         require(
             members[submitterMemberIndex - 1] == msg.sender,
@@ -169,9 +168,10 @@ library DKG {
 
     function notifyTimeout(Data storage self)
         internal
-        assertInProgress(self, true)
         cleanup(self)
     {
+        require(isInProgress(self), "dkg is currently not in progress");
+
         if (block.number <= self.startBlock + dkgTimeout(self))
             revert NotTimedOut(
                 self.startBlock + dkgTimeout(self) + 1,
