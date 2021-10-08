@@ -182,14 +182,13 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
-    // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
     event DkgStarted(
         uint256 seed,
         uint256 groupSize,
         uint256 dkgResultSubmissionEligibilityDelay
-    );
-    event DkgTimedOut(uint256 seed);
-    event DkgCompleted(uint256 seed);
+    ); // TODO: Add all other needed paramters
+
+    event DkgTimedOut(uint256 indexed seed);
 
     // FIXME: This is just for tests
     uint256 internal currentRelayEntry = 420;
@@ -324,6 +323,8 @@ contract RandomBeacon is Ownable {
             dkgResultSubmissionEligibilityDelay,
             TIME_DKG
         );
+
+        emit DkgStarted(seed, GROUP_SIZE, dkgResultSubmissionEligibilityDelay);
     }
 
     function genesis() external {
@@ -342,6 +343,8 @@ contract RandomBeacon is Ownable {
 
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
+
+        emit DkgTimedOut(dkg.seed);
     }
 
     function isDkgInProgress() external view returns (bool) {

@@ -38,18 +38,6 @@ library DKG {
         bool actualInProgress
     );
 
-    /// DKG haven't timed out yet. Expected block: `expectedTimeoutBlock`,
-    /// but actual block: `actualBlock`.
-    error NotTimedOut(uint256 expectedTimeoutBlock, uint256 actualBlock);
-
-    event DkgStarted(
-        uint256 seed,
-        uint256 groupSize,
-        uint256 dkgResultSubmissionEligibilityDelay
-    ); // TODO: Add more parameters
-    event DkgTimedOut(uint256 seed);
-    event DkgCompleted(uint256 seed);
-
     modifier assertInProgress(Data storage self, bool expectedValue) {
         if (isInProgress(self) != expectedValue)
             revert InvalidInProgressState(expectedValue, isInProgress(self));
@@ -90,8 +78,6 @@ library DKG {
         self.timeDKG = timeDKG;
 
         self.startBlock = block.number;
-
-        emit DkgStarted(seed, groupSize, dkgResultSubmissionEligibilityDelay);
     }
 
     /// @notice Verifies the submitted DKG result against supporting member
@@ -196,15 +182,11 @@ library DKG {
                 self.startBlock + dkgTimeout(self) + 1,
                 block.number
             );
-
-        emit DkgTimedOut(self.seed);
     }
 
     function finish(Data storage self)
         internal
         assertInProgress(self, true)
         cleanup(self)
-    {
-        emit DkgCompleted(self.seed);
-    }
+    {}
 }
