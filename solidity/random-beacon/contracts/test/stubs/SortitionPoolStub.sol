@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.6;
 
-import "../RandomBeacon.sol";
+import "../../RandomBeacon.sol";
 
 // Stub contract used in tests
 contract SortitionPoolStub is ISortitionPool {
