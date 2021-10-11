@@ -1,11 +1,11 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { blsData } from "./helpers/data"
-
+import { groupStateEnum } from "./helpers/enums"
 import { constants, testDeployment } from "./helpers/fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { BigNumber, ContractTransaction } from "ethers"
+import type { ContractTransaction } from "ethers"
 import type { RandomBeacon } from "../typechain"
 
 const { mineBlocks } = helpers.time
@@ -13,7 +13,8 @@ const { mineBlocks } = helpers.time
 describe("RandomBeacon contract", function () {
   const dkgTimeout: number =
     constants.timeDKG +
-    constants.groupSize * constants.dkgResultSubmissionEligibilityDelay
+    constants.groupSize * constants.dkgResultSubmissionEligibilityDelay +
+    constants.dkgResultChallengePeriodLength
 
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
@@ -36,16 +37,17 @@ describe("RandomBeacon contract", function () {
   describe("genesis function call", async function () {
     context("with initial contract state", async function () {
       let tx: ContractTransaction
+      let expectedSeed: string
 
       beforeEach("run genesis", async () => {
-        tx = await randomBeacon.genesis()
+        ;[tx, expectedSeed] = await genesis()
       })
 
       it("emits DkgStarted event", async function () {
         await expect(tx)
           .to.emit(randomBeacon, "DkgStarted")
           .withArgs(
-            await randomBeacon.GENESIS_SEED(),
+            expectedSeed,
             await randomBeacon.GROUP_SIZE(),
             await randomBeacon.dkgResultSubmissionEligibilityDelay()
           )
@@ -54,32 +56,59 @@ describe("RandomBeacon contract", function () {
       it("sets values", async function () {
         const dkgData = await randomBeacon.dkg()
 
-        expect(dkgData.seed).to.eq(await randomBeacon.GENESIS_SEED())
+        expect(dkgData.seed).to.eq(expectedSeed)
         expect(dkgData.groupSize).to.eq(await randomBeacon.GROUP_SIZE())
+        expect(dkgData.signatureThreshold).to.eq(
+          await randomBeacon.SIGNATURE_THRESHOLD()
+        )
         expect(dkgData.dkgResultSubmissionEligibilityDelay).to.eq(
           await randomBeacon.dkgResultSubmissionEligibilityDelay()
         )
+        expect(dkgData.dkgResultChallengePeriodLength).to.eq(
+          await randomBeacon.dkgResultChallengePeriodLength()
+        )
+        expect(dkgData.timeDKG).to.eq(await randomBeacon.TIME_DKG())
         expect(dkgData.startBlock).to.be.eq(tx.blockNumber)
       })
     })
 
-    context("with genesis in progress", async function () {
+    context("with genesis started", async function () {
       beforeEach("run genesis", async () => {
         await randomBeacon.genesis()
       })
 
-      it("returns false", async function () {
-        // TODO: It should return a dedicated error from RandomBeacon contract.
-        await expect(randomBeacon.genesis()).to.be.revertedWith(
-          "InvalidInProgressState(false, true)"
-        )
+      context("with genesis in progress", async function () {
+        it("reverts with dkg is currently in progress error", async function () {
+          // TODO: It should return a dedicated error from RandomBeacon contract.
+          await expect(randomBeacon.genesis()).to.be.revertedWith(
+            "dkg is currently in progress"
+          )
+        })
+
+        // TODO: add more tests when more scenarios are covered.
       })
 
-      // TODO: add more tests when more scenarios are covered.
-    })
+      context("with genesis completed", async function () {
+        beforeEach(async () => {
+          await mineBlocks(constants.timeDKG)
 
-    context("with genesis already completed", async function () {
-      // TODO: Add tests
+          const [, approveDkgResultFunc] = await signAndSubmitDkgResult()
+
+          await mineBlocks(
+            (await randomBeacon.dkg()).dkgResultChallengePeriodLength.toNumber()
+          )
+
+          await approveDkgResultFunc()
+        })
+
+        it("reverts with not awaiting genesis error", async function () {
+          await expect(randomBeacon.genesis()).to.be.revertedWith(
+            "not awaiting genesis"
+          )
+        })
+
+        // TODO: Add tests
+      })
     })
   })
 
@@ -111,15 +140,30 @@ describe("RandomBeacon contract", function () {
         })
       })
 
-      context("when genesis dkg completed", async function () {
-        beforeEach("run genesis", async () => {
-          await mineBlocks(constants.timeDKG)
+      context("when genesis dkg result was submitted", async function () {
+        let approveDkgResultFunc: Function
 
-          await signAndSubmitDkgResult()
+        beforeEach(async () => {
+          await mineBlocks(constants.timeDKG)
+          ;[, approveDkgResultFunc] = await signAndSubmitDkgResult()
         })
 
-        it("returns false", async function () {
-          expect(await randomBeacon.isDkgInProgress()).to.be.false
+        context("when genesis dkg result was not approved", async function () {
+          it("returns true", async function () {
+            expect(await randomBeacon.isDkgInProgress()).to.be.true
+          })
+        })
+
+        context("when genesis dkg result was approved", async function () {
+          beforeEach(async () => {
+            await mineBlocks(constants.dkgResultChallengePeriodLength)
+
+            await approveDkgResultFunc()
+          })
+
+          it("returns false", async function () {
+            expect(await randomBeacon.isDkgInProgress()).to.be.false
+          })
         })
       })
     })
@@ -127,23 +171,18 @@ describe("RandomBeacon contract", function () {
 
   describe("notifyDkgTimeout function call", async function () {
     context("with group creation in progress", async function () {
-      let seed: BigNumber
+      let expectedSeed: string
 
       beforeEach("run genesis", async () => {
-        await randomBeacon.genesis()
-        seed = (await randomBeacon.dkg()).seed
+        ;[, expectedSeed] = await genesis()
       })
 
       context("with group creation not timed out", async function () {
-        it("reverts with NotTimedOut error", async function () {
-          const expectedTimeout = (await randomBeacon.dkg()).startBlock
-            .add(dkgTimeout)
-            .add(1)
-
-          const latestBlock = await mineBlocks(dkgTimeout - 1)
+        it("reverts with timeout not passed yet error", async function () {
+          await mineBlocks(dkgTimeout - 1)
 
           await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-            `NotTimedOut(${expectedTimeout}, ${latestBlock + 1})`
+            `timeout not passed yet`
           )
         })
       })
@@ -157,7 +196,9 @@ describe("RandomBeacon contract", function () {
         })
 
         it("emits an event", async function () {
-          await expect(tx).to.emit(randomBeacon, "DkgTimedOut").withArgs(seed)
+          await expect(tx)
+            .to.emit(randomBeacon, "DkgTimedOut")
+            .withArgs(expectedSeed)
         })
 
         it("cleans up dkg data", async function () {
@@ -166,24 +207,58 @@ describe("RandomBeacon contract", function () {
       })
     })
 
-    context("with group creation completed", async function () {
-      beforeEach("run genesis", async () => {
+    context("when genesis dkg result was submitted", async function () {
+      let approveDkgResultFunc: Function
+
+      beforeEach(async () => {
         await randomBeacon.genesis()
         await mineBlocks(constants.timeDKG)
-        await signAndSubmitDkgResult()
+        ;[, approveDkgResultFunc] = await signAndSubmitDkgResult()
       })
 
-      it("reverts with InvalidState error", async function () {
-        await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-          "InvalidInProgressState(true, false)"
-        )
+      context("when challenge period not passed", async function () {
+        context("when genesis dkg result was not approved", async function () {
+          it("reverts with timeout not passed yet error", async function () {
+            await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
+              `timeout not passed yet`
+            )
+          })
+        })
+      })
+
+      context("when challenge period passed", async function () {
+        beforeEach(async () => {
+          await mineBlocks(
+            constants.groupSize *
+              constants.dkgResultSubmissionEligibilityDelay +
+              constants.dkgResultChallengePeriodLength
+          )
+        })
+
+        context("when genesis dkg result was not approved", async function () {
+          it("suceeds", async function () {
+            await randomBeacon.notifyDkgTimeout()
+          })
+        })
+
+        context("when genesis dkg result was approved", async function () {
+          beforeEach(async () => {
+            await approveDkgResultFunc()
+          })
+
+          it("reverts with dkg is currently not in progress error", async function () {
+            await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
+              "dkg is currently not in progress"
+            )
+          })
+        })
       })
     })
 
     context("with group creation not in progress", async function () {
-      it("reverts with InvalidState error", async function () {
+      it("reverts with dkg is currently not in progress error", async function () {
         await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-          "InvalidInProgressState(true, false)"
+          "dkg is currently not in progress"
         )
       })
     })
@@ -193,16 +268,18 @@ describe("RandomBeacon contract", function () {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
 
     context("with initial contract state", async function () {
-      it("reverts with InvalidInProgressState error", async function () {
+      it("reverts with dkg is currently not in progress error", async function () {
         await expect(signAndSubmitDkgResult()).to.be.revertedWith(
-          "InvalidInProgressState(true, false)"
+          "dkg is currently not in progress"
         )
       })
     })
 
     context("with group creation in progress", async function () {
+      let expectedSeed: string
+
       beforeEach("run genesis", async () => {
-        await randomBeacon.genesis()
+        ;[, expectedSeed] = await genesis()
       })
 
       context("with group creation not timed out", async function () {
@@ -210,13 +287,18 @@ describe("RandomBeacon contract", function () {
           await mineBlocks(constants.timeDKG)
         })
 
-        it("cleans up dkg data", async function () {
+        it("succeeds", async function () {
           await signAndSubmitDkgResult()
-
-          // TODO: This test will be enhanced to clean up only after all DKG
-          // results were submitted.
-          await assertDkgCleanData(randomBeacon)
         })
+
+        // TODO: Move to result approval
+        // it("cleans up dkg data", async function () {
+        //   await signAndSubmitDkgResult()
+
+        //   // TODO: This test will be enhanced to clean up only after all DKG
+        //   // results were submitted.
+        //   await assertDkgCleanData(randomBeacon)
+        // })
       })
 
       context("with group creation timed out", async function () {
@@ -225,14 +307,14 @@ describe("RandomBeacon contract", function () {
         })
 
         context("with timeout not notified", async function () {
-          it("succeeds", async function () {
+          beforeEach(async () => {
             await signAndSubmitDkgResult()
           })
 
-          it("cleans up dkg data", async function () {
-            await signAndSubmitDkgResult()
-
-            await assertDkgCleanData(randomBeacon)
+          it("sets group state", async function () {
+            const groupData = await randomBeacon.callStatic.getGroup(
+              groupPublicKey
+            )
           })
         })
 
@@ -241,9 +323,9 @@ describe("RandomBeacon contract", function () {
             await randomBeacon.notifyDkgTimeout()
           })
 
-          it("reverts with InvalidInProgressState error", async function () {
+          it("reverts with dkg is currently not in progress error", async function () {
             await expect(signAndSubmitDkgResult()).to.be.revertedWith(
-              "InvalidInProgressState(true, false)"
+              "dkg is currently not in progress"
             )
           })
         })
@@ -251,7 +333,58 @@ describe("RandomBeacon contract", function () {
     })
   })
 
-  async function signAndSubmitDkgResult(): Promise<ContractTransaction> {
+  describe("approveDkgResult function call", async function () {
+    context("with dkg result submitted", async function () {
+      let approveDkgResultFunc: Function
+
+      beforeEach(async () => {
+        await randomBeacon.genesis()
+        await mineBlocks(dkgTimeout)
+        ;[, approveDkgResultFunc] = await signAndSubmitDkgResult()
+      })
+
+      context("with challenge period not passed", async function () {
+        beforeEach(async () => {
+          await mineBlocks(constants.dkgResultChallengePeriodLength - 2)
+        })
+
+        it("reverts with challenge period not passed error", async function () {
+          await expect(approveDkgResultFunc()).revertedWith(
+            "Challenge period has not passed yet"
+          )
+        })
+      })
+
+      context("with challenge period passed", async function () {
+        beforeEach(async () => {
+          await mineBlocks(constants.dkgResultChallengePeriodLength)
+
+          await approveDkgResultFunc()
+        })
+
+        it("cleans up dkg data", async function () {
+          await assertDkgCleanData(randomBeacon)
+        })
+      })
+    })
+  })
+
+  async function genesis(): Promise<[ContractTransaction, string]> {
+    const tx = await randomBeacon.genesis()
+
+    const expectedSeed = ethers.utils.keccak256(
+      ethers.utils.solidityPack(
+        ["uint256", "uint256"],
+        [await randomBeacon.GENESIS_SEED(), tx.blockNumber]
+      )
+    )
+
+    return [tx, expectedSeed]
+  }
+
+  async function signAndSubmitDkgResult(): Promise<
+    [ContractTransaction, Function]
+  > {
     const noMisbehaved = "0x"
 
     const signers = new Map<number, SignerWithAddress>([
@@ -268,26 +401,46 @@ describe("RandomBeacon contract", function () {
 
     const submitterIndex = 1
 
-    const transaction = randomBeacon.submitDkgResult(
-      submitterIndex,
-      blsData.groupPubKey,
-      noMisbehaved,
-      signaturesBytes,
-      signingMembersIndexes,
-      members
-    )
+    const dkgResult = {
+      submitterMemberIndex: submitterIndex,
+      groupPubKey: blsData.groupPubKey,
+      misbehaved: noMisbehaved,
+      signatures: signaturesBytes,
+      signingMembersIndexes: signingMembersIndexes,
+      members: members,
+    }
 
-    return transaction
+    const transaction = await randomBeacon.submitDkgResult(dkgResult)
+    let eventFilter = randomBeacon.filters.DkgResultSubmitted()
+    let events = await randomBeacon.queryFilter(eventFilter)
+    expect(events).to.be.lengthOf(1)
+
+    const resultIndex = events[0].args.index
+
+    const approveDkgResultFunc = async () => {
+      return randomBeacon.approveDkgResult(resultIndex, dkgResult)
+    }
+
+    return [transaction, approveDkgResultFunc]
   }
 })
 
 async function assertDkgCleanData(randomBeacon: RandomBeacon) {
   const dkgData = await randomBeacon.dkg()
 
-  expect(dkgData.seed).to.eq(0)
-  expect(dkgData.groupSize).to.eq(0)
-  expect(dkgData.startBlock).to.eq(0)
-  expect(dkgData.dkgResultSubmissionEligibilityDelay).to.eq(0)
+  expect(dkgData.seed, "unexpected seed").to.eq(0)
+  expect(dkgData.groupSize, "unexpected groupSize").to.eq(0)
+  expect(dkgData.signatureThreshold, "unexpected signatureThreshold").to.eq(0)
+  expect(dkgData.timeDKG, "unexpected timeDKG").to.eq(0)
+  expect(
+    dkgData.dkgResultSubmissionEligibilityDelay,
+    "unexpected dkgResultSubmissionEligibilityDelay"
+  ).to.eq(0)
+  expect(
+    dkgData.dkgResultChallengePeriodLength,
+    "unexpected dkgResultChallengePeriodLength"
+  ).to.eq(0)
+  expect(dkgData.startBlock, "unexpected startBlock").to.eq(0)
 }
 
 async function signDkgResult(
