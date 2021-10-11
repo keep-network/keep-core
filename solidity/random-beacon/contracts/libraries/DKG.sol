@@ -72,7 +72,9 @@ library DKG {
 
     function dkgTimeout(Data storage self) public view returns (uint256) {
         return
-            self.timeDKG + self.groupSize * self.dkgResultSubmissionEligibilityDelay;
+            self.timeDKG +
+            (self.groupSize * self.dkgResultSubmissionEligibilityDelay) +
+            self.dkgResultChallengePeriodLength;
     }
 
     function start(
