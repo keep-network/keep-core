@@ -280,12 +280,12 @@ describe("RandomBeacon", () => {
     context("when the operator is already registered", () => {
       beforeEach(async () => {
         await randomBeacon.connect(operator).registerMemberCandidate()
-        await randomBeacon.connect(operator).registerMemberCandidate()
       })
 
-      it("should keep the operator as registered", async () => {
-        expect(await sortitionPoolStub.operators(await operator.getAddress()))
-          .to.be.true
+      it("should revert", async () => {
+        await expect(
+          randomBeacon.connect(operator).registerMemberCandidate()
+        ).to.be.revertedWith("Operator is already registered")
       })
     })
   })
@@ -306,19 +306,22 @@ describe("RandomBeacon", () => {
       })
     })
 
-    context("when the operator is not eligible to join the sortition pool", () => {
-      beforeEach(async () => {
-        await sortitionPoolStub.setOperatorEligibility(
-          await operator.getAddress(),
-          false
-        )
-      })
+    context(
+      "when the operator is not eligible to join the sortition pool",
+      () => {
+        beforeEach(async () => {
+          await sortitionPoolStub.setOperatorEligibility(
+            await operator.getAddress(),
+            false
+          )
+        })
 
-      it("should return false", async () => {
-        expect(
-          await randomBeacon.isOperatorEligible(await operator.getAddress())
-        ).to.be.false
-      })
-    })
+        it("should return false", async () => {
+          expect(
+            await randomBeacon.isOperatorEligible(await operator.getAddress())
+          ).to.be.false
+        })
+      }
+    )
   })
 })

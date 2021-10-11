@@ -285,9 +285,11 @@ contract RandomBeacon is Ownable {
     /// @notice Registers caller in the sortition pool.
     function registerMemberCandidate() external {
         address operator = msg.sender;
-        if (!sortitionPool.isOperatorInPool(operator)) {
-            sortitionPool.joinPool(operator);
-        }
+        require(
+            !sortitionPool.isOperatorInPool(operator),
+            "Operator is already registered"
+        );
+        sortitionPool.joinPool(operator);
     }
 
     /// @notice Checks whether the given operator is eligible to join the
