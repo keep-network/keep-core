@@ -24,18 +24,6 @@
 	#
 	# MaxGasFeeCap = "500 Gwei" # 500 Gwei (default value)
 	#
-	# MaxGasPrice specifies the default maximum gas price the client is
-	# willing to pay for the transaction to be mined. The offered transaction
-	# gas price can not be higher than the max gas price value. If the maximum
-	# allowed gas price is reached, no further resubmission attempts are
-	# performed.A value can be provided in `wei`, `Gwei` or `ether`, e.g.
-	# `800.5 Gwei`. This property should be set for ETH-like chains (e.g. Celo)
-	# which don't support EIP-1559 and use old `GasPrice` parameter in
-	# transactions.
-	#
-	# MaxGasPrice = "500 Gwei" # 500 Gwei (default value)
-	#
-	#
 	# Uncomment to enable Ethereum node rate limiting. Both properties can be
 	# used together or separately.
 	#
