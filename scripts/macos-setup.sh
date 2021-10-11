@@ -30,7 +30,7 @@ pre-commit install --install-hooks
 
 echo "Installing solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
-cd ../solidity && npm install && cd ../scripts
+cd ../solidity-v1 && npm install && cd ../scripts
 
 if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
   echo 'WARNING: protoc-gen-gogoslick command is not available'

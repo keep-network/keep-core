@@ -1,4 +1,4 @@
-FROM golang:1.13.6-alpine3.10 AS gobuild
+FROM golang:1.16.7-alpine3.14 AS gobuild
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -18,7 +18,7 @@ RUN apk add --update --no-cache \
 	make \
 	nodejs \
 	npm \
-	python && \
+	python3 && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
@@ -43,8 +43,8 @@ RUN go mod download
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
-COPY ./solidity $APP_DIR/solidity
-RUN cd $APP_DIR/solidity && npm install
+COPY ./solidity-v1 $APP_DIR/solidity-v1
+RUN cd $APP_DIR/solidity-v1 && npm install
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
@@ -66,7 +66,7 @@ ARG REVISION
 RUN GOOS=linux go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
-FROM alpine:3.10
+FROM alpine:3.14
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin

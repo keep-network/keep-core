@@ -115,7 +115,7 @@ func (tg *TokenGrant) AuthorizeStakingContract(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction authorizeStakingContract",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_stakingContract,
 		),
@@ -158,8 +158,8 @@ func (tg *TokenGrant) AuthorizeStakingContract(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction authorizeStakingContract with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction authorizeStakingContract with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -187,8 +187,8 @@ func (tg *TokenGrant) AuthorizeStakingContract(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction authorizeStakingContract with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction authorizeStakingContract with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -251,7 +251,7 @@ func (tg *TokenGrant) CancelRevokedStake(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction cancelRevokedStake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -294,8 +294,8 @@ func (tg *TokenGrant) CancelRevokedStake(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction cancelRevokedStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction cancelRevokedStake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -323,8 +323,8 @@ func (tg *TokenGrant) CancelRevokedStake(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction cancelRevokedStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction cancelRevokedStake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -387,7 +387,7 @@ func (tg *TokenGrant) CancelStake(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction cancelStake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -430,8 +430,8 @@ func (tg *TokenGrant) CancelStake(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction cancelStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction cancelStake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -459,8 +459,8 @@ func (tg *TokenGrant) CancelStake(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction cancelStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction cancelStake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -526,7 +526,7 @@ func (tg *TokenGrant) ReceiveApproval(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction receiveApproval",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_from,
 			_amount,
@@ -578,8 +578,8 @@ func (tg *TokenGrant) ReceiveApproval(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction receiveApproval with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -613,8 +613,8 @@ func (tg *TokenGrant) ReceiveApproval(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction receiveApproval with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -689,7 +689,7 @@ func (tg *TokenGrant) RecoverStake(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction recoverStake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -732,8 +732,8 @@ func (tg *TokenGrant) RecoverStake(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction recoverStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction recoverStake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -761,8 +761,8 @@ func (tg *TokenGrant) RecoverStake(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction recoverStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction recoverStake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -825,7 +825,7 @@ func (tg *TokenGrant) Revoke(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction revoke",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_id,
 		),
@@ -868,8 +868,8 @@ func (tg *TokenGrant) Revoke(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction revoke with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction revoke with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -897,8 +897,8 @@ func (tg *TokenGrant) Revoke(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction revoke with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction revoke with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -964,7 +964,7 @@ func (tg *TokenGrant) Stake(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction stake",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_id,
 			_stakingContract,
@@ -1016,8 +1016,8 @@ func (tg *TokenGrant) Stake(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction stake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction stake with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1051,8 +1051,8 @@ func (tg *TokenGrant) Stake(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction stake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction stake with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1127,7 +1127,7 @@ func (tg *TokenGrant) Undelegate(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction undelegate",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -1170,8 +1170,8 @@ func (tg *TokenGrant) Undelegate(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction undelegate with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction undelegate with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1199,8 +1199,8 @@ func (tg *TokenGrant) Undelegate(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction undelegate with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction undelegate with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1263,7 +1263,7 @@ func (tg *TokenGrant) UndelegateRevoked(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction undelegateRevoked",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_operator,
 		),
@@ -1306,8 +1306,8 @@ func (tg *TokenGrant) UndelegateRevoked(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction undelegateRevoked with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction undelegateRevoked with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1335,8 +1335,8 @@ func (tg *TokenGrant) UndelegateRevoked(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction undelegateRevoked with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction undelegateRevoked with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1399,7 +1399,7 @@ func (tg *TokenGrant) Withdraw(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction withdraw",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_id,
 		),
@@ -1442,8 +1442,8 @@ func (tg *TokenGrant) Withdraw(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction withdraw with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction withdraw with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1471,8 +1471,8 @@ func (tg *TokenGrant) Withdraw(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction withdraw with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction withdraw with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1535,7 +1535,7 @@ func (tg *TokenGrant) WithdrawRevoked(
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
 		"submitting transaction withdrawRevoked",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			_id,
 		),
@@ -1578,8 +1578,8 @@ func (tg *TokenGrant) WithdrawRevoked(
 	}
 
 	tgLogger.Infof(
-		"submitted transaction withdrawRevoked with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction withdrawRevoked with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1607,8 +1607,8 @@ func (tg *TokenGrant) WithdrawRevoked(
 			}
 
 			tgLogger.Infof(
-				"submitted transaction withdrawRevoked with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction withdrawRevoked with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 

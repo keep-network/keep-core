@@ -1,0 +1,71 @@
+name: Token Dashboard / Mainnet
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+    - solidity-v1/dashboard/**
+
+# For pull_request_target:
+#  - Checkout with repository set to PR repo, ref same (see
+#    https://github.com/actions/checkout#usage).
+#  - Trigger from issue comment?
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [12.11.x]
+
+    if: startsWith(github.head_ref, 'releases/mainnet/token-dashboard/')
+    defaults:
+      run:
+        working-directory: solidity-v1/dashboard
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
+    #- run: npm run lint
+    #- if: github.event_name == 'push' TODO uncomment when mainnet builds happen this way
+    #  run: npm run build --if-present
+    - if: github.event_name == 'pull_request'
+      run: npm run build
+      env:
+        PUBLIC_URL: /${{ github.head_ref }}
+    # A push event is a main merge; deploy to primary bucket.
+    # TODO uncomment when mainnet builds happen this way
+    #- if: github.event_name == 'push'
+    #  name: Deploy Main to GCP
+    #  uses: thesis/gcp-storage-bucket-action@v3.1.0
+    #  with:
+    #    service-key: ${{ secrets.KEEP_DASHBOARD_UPLOADER_SERVICE_KEY_JSON }}
+    #    project: keep-prd-210b
+    #    bucket-name: dashboard.keep.network
+    #    build-folder: solidity-v1/dashboard/build
+    # A pull_request event is a PR; deploy to preview bucket.
+    - if: github.event_name == 'pull_request'
+      name: Deploy PR preview to GCP
+      uses: thesis/gcp-storage-bucket-action@v3.1.0
+      with:
+        service-key: ${{ secrets.KEEP_DASHBOARD_UPLOADER_SERVICE_KEY_JSON_BASE64 }}
+        project: keep-prd-210b
+        bucket-name: preview.dashboard.keep.network
+        bucket-path: ${{ github.head_ref }}
+        build-folder: solidity-v1/dashboard/build
+    # A pull_request event is a PR; leave a comment with the preview URL.
+    - if: github.event_name == 'pull_request'
+      name: Post preview URL to PR
+      uses: actions/github-script@v5
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: 'Preview uploaded to https://preview.dashboard.keep.network/${{ github.head_ref }}/.'
+          })

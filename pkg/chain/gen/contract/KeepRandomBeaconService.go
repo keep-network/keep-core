@@ -115,7 +115,7 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction addOperatorContract",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			operatorContract,
 		),
@@ -158,8 +158,8 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction addOperatorContract with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction addOperatorContract with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -187,8 +187,8 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction addOperatorContract with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction addOperatorContract with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -253,7 +253,7 @@ func (krbs *KeepRandomBeaconService) EntryCreated(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction entryCreated",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			requestId,
 			entry,
@@ -302,8 +302,8 @@ func (krbs *KeepRandomBeaconService) EntryCreated(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction entryCreated with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction entryCreated with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -335,8 +335,8 @@ func (krbs *KeepRandomBeaconService) EntryCreated(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction entryCreated with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction entryCreated with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -408,7 +408,7 @@ func (krbs *KeepRandomBeaconService) ExecuteCallback(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction executeCallback",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			requestId,
 			entry,
@@ -454,8 +454,8 @@ func (krbs *KeepRandomBeaconService) ExecuteCallback(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction executeCallback with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction executeCallback with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -485,8 +485,8 @@ func (krbs *KeepRandomBeaconService) ExecuteCallback(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction executeCallback with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction executeCallback with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -553,7 +553,7 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction fundDkgFeePool",
-		"value: ", value,
+		" value: ", value,
 	)
 
 	krbs.transactionMutex.Lock()
@@ -593,8 +593,8 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction fundDkgFeePool with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction fundDkgFeePool with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -620,8 +620,8 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction fundDkgFeePool with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction fundDkgFeePool with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -680,7 +680,7 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction fundRequestSubsidyFeePool",
-		"value: ", value,
+		" value: ", value,
 	)
 
 	krbs.transactionMutex.Lock()
@@ -720,8 +720,8 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction fundRequestSubsidyFeePool with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction fundRequestSubsidyFeePool with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -747,8 +747,8 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction fundRequestSubsidyFeePool with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction fundRequestSubsidyFeePool with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -808,7 +808,7 @@ func (krbs *KeepRandomBeaconService) Initialize(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction initialize",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			dkgContributionMargin,
 			registry,
@@ -854,8 +854,8 @@ func (krbs *KeepRandomBeaconService) Initialize(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction initialize with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -885,8 +885,8 @@ func (krbs *KeepRandomBeaconService) Initialize(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction initialize with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -953,7 +953,7 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction removeOperatorContract",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			operatorContract,
 		),
@@ -996,8 +996,8 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction removeOperatorContract with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction removeOperatorContract with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1025,8 +1025,8 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction removeOperatorContract with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction removeOperatorContract with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1089,7 +1089,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction requestRelayEntry",
-		"value: ", value,
+		" value: ", value,
 	)
 
 	krbs.transactionMutex.Lock()
@@ -1129,8 +1129,8 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction requestRelayEntry with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction requestRelayEntry with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1156,8 +1156,8 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction requestRelayEntry with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction requestRelayEntry with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 
@@ -1218,12 +1218,12 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction requestRelayEntry0",
-		"params: ",
+		" params: ",
 		fmt.Sprint(
 			callbackContract,
 			callbackGas,
 		),
-		"value: ", value,
+		" value: ", value,
 	)
 
 	krbs.transactionMutex.Lock()
@@ -1267,8 +1267,8 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction requestRelayEntry0 with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
+		"submitted transaction requestRelayEntry0 with id: [%s] and nonce [%v]",
+		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
@@ -1298,8 +1298,8 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction requestRelayEntry0 with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
+				"submitted transaction requestRelayEntry0 with id: [%s] and nonce [%v]",
+				transaction.Hash(),
 				transaction.Nonce(),
 			)
 

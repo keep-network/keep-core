@@ -4,7 +4,7 @@ This is a tool for finding KEEP token owners on Ethereum (or on any other
 EVM-compatible chain). It iterates over predefined sources of truth
 (information) to find KEEP token owners at a target block number.
 The tool generates a Merkle tree used as an input to
-https://github.com/keep-network/keep-core/blob/master/solidity/contracts/token-distribution/TokenDistributor.sol[`TokenDistributor`]
+https://github.com/keep-network/keep-core/blob/master/solidity-v1/contracts/token-distribution/TokenDistributor.sol[`TokenDistributor`]
 contract airdropping another ERC20 token with amounts based on KEEP token 
 balances. 
 
