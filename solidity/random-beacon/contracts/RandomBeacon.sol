@@ -181,13 +181,13 @@ contract RandomBeacon is Ownable {
     );
 
     event DkgStarted(
-        uint256 seed,
+        uint256 indexed seed,
         uint256 groupSize,
         uint256 dkgResultSubmissionEligibilityDelay
     ); // TODO: Add all other needed paramters
 
     event DkgResultSubmitted(
-        bytes32 indexed seed,
+        uint256 indexed seed,
         uint256 index,
         uint256 indexed submitterMemberIndex,
         bytes indexed groupPubKey,
