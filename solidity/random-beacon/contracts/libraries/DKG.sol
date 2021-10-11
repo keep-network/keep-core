@@ -86,6 +86,18 @@ library DKG {
     ) internal {
         require(!isInProgress(self), "dkg is currently in progress");
 
+        require(groupSize > 0, "groupSize not set");
+        require(signatureThreshold > 0, "signatureThreshold not set");
+        require(
+            dkgResultSubmissionEligibilityDelay > 0,
+            "dkgResultSubmissionEligibilityDelay not set"
+        );
+        require(
+            dkgResultChallengePeriodLength > 0,
+            "dkgResultChallengePeriodLength not set"
+        );
+        require(timeDKG > 0, "timeDKG not set");
+
         self.seed = seed;
         self.groupSize = groupSize;
         self.signatureThreshold = signatureThreshold;
@@ -107,6 +119,12 @@ library DKG {
         view
     {
         require(isInProgress(self), "dkg is currently not in progress");
+
+        assert(self.startBlock > 0);
+        assert(self.timeDKG > 0);
+        assert(self.dkgResultSubmissionEligibilityDelay > 0);
+        assert(self.groupSize > 0);
+        assert(self.signatureThreshold > 0);
 
         require(dkgResult.submitterMemberIndex > 0, "Invalid submitter index");
         require(
