@@ -77,6 +77,8 @@ keep-core/
   main.go, *.go
   docs/
   solidity/ <1>
+    ecdsa/
+    random-beacon/
   solidity-v1/ <2>
   cmd/ <3>
   pkg/ <4>
