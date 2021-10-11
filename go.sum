@@ -630,8 +630,8 @@ github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 h1:ZHuwnjpP8LsVsUYqTq
 github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9/go.mod h1:Od972xHfMJowv7NGVDiWVxk2zxnWgjLlJzE+F4F7AGU=
 github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSik8=
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
-github.com/keep-network/go-libp2p-bootstrap v0.0.0-20210928092318-b244e5abd4a5 h1:OoZTmi+i3bHKNO2xnsnVTegBESCUoXFudCjorNhexO0=
-github.com/keep-network/go-libp2p-bootstrap v0.0.0-20210928092318-b244e5abd4a5/go.mod h1:TorBHwJqhtjayv37C8GbRLMgQdAO7Z6TGrKAbCLBFo4=
+github.com/keep-network/go-libp2p-bootstrap v0.0.0-20211001132324-54dddf8aebd4 h1:ARN72cHYK0kPMFWVSzFuTKKla/EGtsRmGHOFWUNU6CQ=
+github.com/keep-network/go-libp2p-bootstrap v0.0.0-20211001132324-54dddf8aebd4/go.mod h1:TorBHwJqhtjayv37C8GbRLMgQdAO7Z6TGrKAbCLBFo4=
 github.com/keep-network/keep-common v1.7.0 h1:K9OOam4VWfEVf+tMtl0HSwRxGZ/l6JiD1+UXKKCjXOA=
 github.com/keep-network/keep-common v1.7.0/go.mod h1:g4RTDmhQMgwnlkU5bzW6cSz9dM+0UiQDPtow5NWdYbc=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
