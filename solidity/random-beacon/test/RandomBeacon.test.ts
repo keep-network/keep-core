@@ -5,15 +5,24 @@ import { expect } from "chai"
 describe("RandomBeacon", () => {
   let governance: Signer
   let thirdParty: Signer
+  let operator: Signer
   let randomBeacon: Contract
+  let sortitionPoolStub: Contract
 
   beforeEach(async () => {
     const signers = await ethers.getSigners()
     governance = signers[0]
     thirdParty = signers[1]
+    operator = signers[2]
+
+    const SortitionPoolStub = await ethers.getContractFactory(
+      "SortitionPoolStub"
+    )
+    sortitionPoolStub = await SortitionPoolStub.deploy()
+    await sortitionPoolStub.deployed()
 
     const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
-    randomBeacon = await RandomBeacon.deploy()
+    randomBeacon = await RandomBeacon.deploy(sortitionPoolStub.address)
     await randomBeacon.deployed()
   })
 
@@ -22,7 +31,7 @@ describe("RandomBeacon", () => {
     const relayEntrySubmissionEligibilityDelay = 200
     const relayEntryHardTimeout = 300
     const callbackGasLimit = 400
-  
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -139,9 +148,9 @@ describe("RandomBeacon", () => {
       })
 
       it("should update the DKG result submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
-          dkgResultSubmissionEligibilityDelay
-        )
+        expect(
+          await randomBeacon.dkgResultSubmissionEligibilityDelay()
+        ).to.be.equal(dkgResultSubmissionEligibilityDelay)
       })
 
       it("should emit the GroupCreationParametersUpdated event", async () => {
@@ -160,7 +169,7 @@ describe("RandomBeacon", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
-  
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -252,6 +261,63 @@ describe("RandomBeacon", () => {
             relayEntrySubmissionFailureSlashingAmount,
             maliciousDkgResultSlashingAmount
           )
+      })
+    })
+  })
+
+  describe("registerMemberCandidate", () => {
+    context("when the operator is not registered yet", () => {
+      beforeEach(async () => {
+        await randomBeacon.connect(operator).registerMemberCandidate()
+      })
+
+      it("should register the operator", async () => {
+        expect(await sortitionPoolStub.operators(await operator.getAddress()))
+          .to.be.true
+      })
+    })
+
+    context("when the operator is already registered", () => {
+      beforeEach(async () => {
+        await randomBeacon.connect(operator).registerMemberCandidate()
+        await randomBeacon.connect(operator).registerMemberCandidate()
+      })
+
+      it("should keep the operator as registered", async () => {
+        expect(await sortitionPoolStub.operators(await operator.getAddress()))
+          .to.be.true
+      })
+    })
+  })
+
+  describe("isOperatorEligible", () => {
+    context("when the operator is eligible in the sorition pool", () => {
+      beforeEach(async () => {
+        await sortitionPoolStub.setOperatorEligibility(
+          await operator.getAddress(),
+          true
+        )
+      })
+
+      it("should return true", async () => {
+        expect(
+          await randomBeacon.isOperatorEligible(await operator.getAddress())
+        ).to.be.true
+      })
+    })
+
+    context("when the operator is not eligible in the sorition pool", () => {
+      beforeEach(async () => {
+        await sortitionPoolStub.setOperatorEligibility(
+          await operator.getAddress(),
+          false
+        )
+      })
+
+      it("should return false", async () => {
+        expect(
+          await randomBeacon.isOperatorEligible(await operator.getAddress())
+        ).to.be.false
       })
     })
   })
