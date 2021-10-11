@@ -66,10 +66,15 @@ library Groups {
 
     // TODO: Add group termination
 
-    /// @notice Gets the number of active groups. Expired and terminated groups are
-    /// not counted as active.
-    function numberOfGroups(Data storage self) public view returns (uint256) {
-        return self.groups.length;
+    /// @notice Gets the number of active groups. Pending, expired and terminated
+    /// groups are not counted as active.
+    function numberOfActiveGroups(Data storage self)
+        public
+        view
+        returns (uint256)
+    {
+        // TODO: Revisit and include pending, terminated and expired groups
+        return self.activeGroupsCount;
         // TODO: Subtract expired and terminated groups
         // .sub(self.expiredGroupOffset).sub(
         //     self.activeTerminatedGroups.length)
