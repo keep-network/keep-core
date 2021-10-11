@@ -134,8 +134,6 @@ library DKG {
             "Unexpected submitter index"
         );
 
-        // TODO: Revisit `timeDKG` value if it's something we need and can read
-        // from governable parameters.
         uint256 T_init = self.startBlock + self.timeDKG;
         require(
             block.number >=
@@ -215,7 +213,7 @@ library DKG {
         require(
             block.number > self.startBlock + dkgTimeout(self),
             "timeout not passed yet"
-            );
+        );
 
         revert("TODO: Implement");
     }
