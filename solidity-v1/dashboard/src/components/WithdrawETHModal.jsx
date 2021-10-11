@@ -13,6 +13,7 @@ import { connect } from "react-redux"
 import MaxAmountAddon from "./MaxAmountAddon"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
 import AvailableTokenForm from "./AvailableTokenForm"
+import { ETH } from "../utils/token.utils"
 
 const WithdrawETHModal = ({
   operatorAddress,
@@ -85,7 +86,12 @@ export default React.memo(connect(null, mapDispatchToProps)(WithdrawETHModal))
 
 const WithdrawETHForm = (props) => {
   const { availableETHInWei } = props
-  const setMaxAmount = useSetMaxAmountToken("ethAmount", availableETHInWei)
+  const setMaxAmount = useSetMaxAmountToken(
+    "ethAmount",
+    availableETHInWei,
+    ETH,
+    ETH.decimals
+  )
   return (
     <AvailableTokenForm
       formInputProps={{
