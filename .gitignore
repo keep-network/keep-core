@@ -1,5 +1,4 @@
 node_modules/
-./solidity/truffle.js
 artifacts/
 build/
 vendor/
@@ -44,3 +43,10 @@ configs
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
 keep-client-snapshot.tar
+
+# Yarn
+yarn-error.log
+
+# Hardhat
+cache/
+export.json

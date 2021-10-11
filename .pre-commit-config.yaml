@@ -13,20 +13,20 @@ repos:
    hooks:
     - id: lint-sol
       name: 'lint solidity sol'
-      entry: /usr/bin/env bash -c "cd solidity && npm run lint:sol"
+      entry: /usr/bin/env bash -c "cd solidity-v1 && npm run lint:sol"
       files: '\.sol$'
       language: script
       description: "Checks solidity code according to the package's linter configuration"
     - id: lint-js
       name: 'lint solidity js'
-      entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
-      files: 'solidity\/.*\.js$'
+      entry: /usr/bin/env bash -c "cd solidity-v1 && npm run lint:js"
+      files: 'solidity-v1\/.*\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
     - id: format-dashboard
       name: 'format dashboard'
-      entry: /usr/bin/env bash -c "cd solidity/dashboard && npm run format"
-      files: 'solidity/dashboard/'
+      entry: /usr/bin/env bash -c "cd solidity-v1/dashboard && npm run format"
+      files: 'solidity-v1/dashboard/'
       language: script
       description: "Checks dashboard code according to the package's formatting configuration"
     - id: lint-faucet-js
