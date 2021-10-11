@@ -350,7 +350,9 @@ contract RandomBeacon is Ownable {
     function genesis() external {
         // require(groups.groupCount == 0, "not awaiting genesis");
 
-        createGroup(GENESIS_SEED);
+        createGroup(
+            uint256(keccak256(abi.encodePacked(GENESIS_SEED, block.number)))
+        );
     }
 
     function notifyDkgTimeout() external {
