@@ -360,9 +360,13 @@ contract RandomBeacon is Ownable {
     }
 
     function notifyDkgTimeout() external {
+        // We read the seed to provide it in the event, as dkg.notifyTimeout()
+        // function call will clean it.
+        uint256 seed = dkg.seed;
+
         dkg.notifyTimeout();
 
-        emit DkgTimedOut(dkg.seed);
+        emit DkgTimedOut(seed);
     }
 
     function isDkgInProgress() external view returns (bool) {
