@@ -14,8 +14,9 @@
 */
 pragma solidity ^0.8.6;
 
-import "./libraries/DKG.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./libraries/DKG.sol";
+import "./libraries/Groups.sol";
 
 /// @title Keep Random Beacon
 /// @notice Keep Random Beacon contract. It lets anyone request a new
@@ -26,6 +27,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 ///      parameters.
 contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
+    using Groups for Groups.Data;
 
     // Constant parameters
 
@@ -155,6 +157,7 @@ contract RandomBeacon is Ownable {
 
     // TODO: Can we really make it public along with the library functions?
     DKG.Data public dkg;
+    Groups.Data groups; // TODO: Compiler doesn't allow to make it public so we need to expose some data with getters.
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
