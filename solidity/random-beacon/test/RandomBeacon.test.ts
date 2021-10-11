@@ -291,7 +291,7 @@ describe("RandomBeacon", () => {
   })
 
   describe("isOperatorEligible", () => {
-    context("when the operator is eligible in the sorition pool", () => {
+    context("when the operator is eligible to join the sortition pool", () => {
       beforeEach(async () => {
         await sortitionPoolStub.setOperatorEligibility(
           await operator.getAddress(),
@@ -306,7 +306,7 @@ describe("RandomBeacon", () => {
       })
     })
 
-    context("when the operator is not eligible in the sorition pool", () => {
+    context("when the operator is not eligible to join the sortition pool", () => {
       beforeEach(async () => {
         await sortitionPoolStub.setOperatorEligibility(
           await operator.getAddress(),
