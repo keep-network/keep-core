@@ -20,6 +20,8 @@ library Groups {
         // Mapping of `groupPubKey` to flagged `groupIndex`
         mapping(bytes => uint256) groupIndices;
         Group[] groups;
+        // TODO: Rember about decreasing the counter in case of expiration or termination.
+        uint256 activeGroupsCount;
     }
 
     /// @notice Adds a new group.
@@ -41,6 +43,8 @@ library Groups {
         );
 
         group.activationTimestamp = block.timestamp;
+
+        self.activeGroupsCount++;
     }
 
     function getGroup(Data storage self, bytes memory groupPubKey)
@@ -64,7 +68,7 @@ library Groups {
         return self.groups[index];
     }
 
-    // TODO: Add group termination
+    // TODO: Add group termination and expiration
 
     /// @notice Gets the number of active groups. Pending, expired and terminated
     /// groups are not counted as active.
