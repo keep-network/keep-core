@@ -28,16 +28,16 @@ contract MerkleDrop128 {
     }
 
     function isClaimed(uint256 index) public view returns (bool) {
-        uint256 claimedWordIndex = index / 256;
-        uint256 claimedBitIndex = index % 256;
+        uint256 claimedWordIndex = index >> 8;
+        uint256 claimedBitIndex = index & 0xff;
         uint256 claimedWord = _claimedBitMap[claimedWordIndex];
         uint256 mask = (1 << claimedBitIndex);
         return claimedWord & mask == mask;
     }
 
     function _setClaimed(uint256 index) private {
-        uint256 claimedWordIndex = index / 256;
-        uint256 claimedBitIndex = index % 256;
+        uint256 claimedWordIndex = index >> 8;
+        uint256 claimedBitIndex = index & 0xff;
         _claimedBitMap[claimedWordIndex] = _claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
     }
 

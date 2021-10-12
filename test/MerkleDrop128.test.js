@@ -40,7 +40,7 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
         await Promise.all(wallets.map(w => this.token.mint(w, 1)));
     });
 
-    describe.only('Main', async function () {
+    describe('Main', async function () {
         it('Should transfer money to another wallet', async function () {
             const accountWithDropValues = [
                 {
