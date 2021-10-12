@@ -13,14 +13,16 @@
 	#
 	# MiningCheckInterval = 60  # 60 sec (default value)
 	#
-	# MaxGasPrice specifies the default maximum gas price the client is
-	# willing to pay for the transaction to be mined. The offered transaction
-	# gas price can not be higher than the max gas price value. If the maximum
-	# allowed gas price is reached, no further resubmission attempts are
-	# performed. A value can be provided in `wei`, `Gwei` or `ether`, e.g.
-	# `800.5 Gwei`.
 	#
-	# MaxGasPrice = "500 Gwei" # 500 Gwei (default value)
+	# MaxGasFeeCap specifies the maximum gas fee cap the client is
+	# willing to pay for the transaction to be mined. The offered transaction
+	# gas cost can not be higher than the max gas fee cap value. If the maximum
+	# allowed gas fee cap is reached, no further resubmission attempts are
+	# performed. This property should be set only for Ethereum. In case of
+	# legacy non-EIP-1559 transactions, this field works in the same way as
+	# `MaxGasPrice` property.
+	#
+	# MaxGasFeeCap = "500 Gwei" # 500 Gwei (default value)
 	#
 	# Uncomment to enable Ethereum node rate limiting. Both properties can be
 	# used together or separately.
