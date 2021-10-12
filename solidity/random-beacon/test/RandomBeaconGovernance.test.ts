@@ -1,15 +1,22 @@
-import { ethers, waffle, helpers } from "hardhat"
+import {
+  ethers,
+  waffle,
+  helpers,
+  getNamedAccounts,
+  getUnnamedAccounts,
+} from "hardhat"
 
 import { expect } from "chai"
 
 import { randomBeaconDeployment } from "./helpers/fixtures"
 
-import type { Signer } from "ethers"
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 describe("RandomBeaconGovernance", () => {
-  let governance: Signer
-  let thirdParty: Signer
+  let deployer: SignerWithAddress
+  let governance: SignerWithAddress
+  let thirdParty: SignerWithAddress
   let randomBeacon: RandomBeacon
   let randomBeaconGovernance: RandomBeaconGovernance
 
@@ -27,7 +34,9 @@ describe("RandomBeaconGovernance", () => {
   const initialMaliciousDkgResultSlashingAmount = 1000000000
 
   before(async function () {
-    ;[governance, thirdParty] = await ethers.getSigners()
+    deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+    governance = await ethers.getSigner((await getNamedAccounts()).governance)
+    thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
   })
 
   beforeEach(async () => {
@@ -36,7 +45,7 @@ describe("RandomBeaconGovernance", () => {
     randomBeacon = contracts.randomBeacon as RandomBeacon
 
     await randomBeacon
-      .connect(governance)
+      .connect(deployer)
       .updateRelayEntryParameters(
         initialRelayRequestFee,
         initialRelayEntrySubmissionEligibilityDelay,
@@ -44,7 +53,7 @@ describe("RandomBeaconGovernance", () => {
         initialCallbackGasLimit
       )
     await randomBeacon
-      .connect(governance)
+      .connect(deployer)
       .updateGroupCreationParameters(
         initialGroupCreationFrequency,
         initialGroupLifeTime,
@@ -52,13 +61,13 @@ describe("RandomBeaconGovernance", () => {
         initialDkgResultSubmissionEligibilityDelay
       )
     await randomBeacon
-      .connect(governance)
+      .connect(deployer)
       .updateRewardParameters(
         initialDkgResultSubmissionReward,
         initialSortitionPoolUnlockingReward
       )
     await randomBeacon
-      .connect(governance)
+      .connect(deployer)
       .updateSlashingParameters(
         initialRelayEntrySubmissionFailureSlashingAmount,
         initialMaliciousDkgResultSlashingAmount
@@ -71,7 +80,12 @@ describe("RandomBeaconGovernance", () => {
       randomBeacon.address
     )
     await randomBeaconGovernance.deployed()
+
     await randomBeacon.transferOwnership(randomBeaconGovernance.address)
+
+    await randomBeaconGovernance.transferOwnership(
+      await governance.getAddress()
+    )
   })
 
   describe("beginRelayRequestFeeUpdate", () => {

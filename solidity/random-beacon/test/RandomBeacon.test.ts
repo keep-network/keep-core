@@ -1,4 +1,4 @@
-import { ethers, waffle } from "hardhat"
+import { ethers, waffle, getNamedAccounts, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 
 import { constants, params, randomBeaconDeployment } from "./helpers/fixtures"
@@ -132,12 +132,17 @@ describe("RandomBeacon", () => {
   })
 
   context("when contracts deployed for test", () => {
+    let deployer: Signer
     let governance: Signer
     let thirdParty: Signer
     let randomBeacon: RandomBeacon
 
     before(async function () {
-      ;[governance, thirdParty] = await ethers.getSigners()
+      deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+      governance = await ethers.getSigner((await getNamedAccounts()).governance)
+      thirdParty = thirdParty = await ethers.getSigner(
+        (await getUnnamedAccounts())[1]
+      )
     })
 
     beforeEach("load test fixture", async function () {
@@ -153,7 +158,20 @@ describe("RandomBeacon", () => {
       const callbackGasLimit = 400
 
       context("when the caller is not the owner", () => {
-        it("should revert", async () => {
+        it("should revert for deployer", async () => {
+          await expect(
+            randomBeacon
+              .connect(deployer)
+              .updateRelayEntryParameters(
+                relayRequestFee,
+                relayEntrySubmissionEligibilityDelay,
+                relayEntryHardTimeout,
+                callbackGasLimit
+              )
+          ).to.be.revertedWith("Ownable: caller is not the owner")
+        })
+
+        it("should revert for third party", async () => {
           await expect(
             randomBeacon
               .connect(thirdParty)
@@ -224,7 +242,20 @@ describe("RandomBeacon", () => {
       const dkgResultSubmissionEligibilityDelay = 400
 
       context("when the caller is not the owner", () => {
-        it("should revert", async () => {
+        it("should revert for deployer", async () => {
+          await expect(
+            randomBeacon
+              .connect(deployer)
+              .updateGroupCreationParameters(
+                groupCreationFrequency,
+                groupLifetime,
+                dkgResultChallengePeriodLength,
+                dkgResultSubmissionEligibilityDelay
+              )
+          ).to.be.revertedWith("Ownable: caller is not the owner")
+        })
+
+        it("should revert for third party", async () => {
           await expect(
             randomBeacon
               .connect(thirdParty)
@@ -291,7 +322,18 @@ describe("RandomBeacon", () => {
       const sortitionPoolUnlockingReward = 200
 
       context("when the caller is not the owner", () => {
-        it("should revert", async () => {
+        it("should revert for deployer", async () => {
+          await expect(
+            randomBeacon
+              .connect(deployer)
+              .updateRewardParameters(
+                dkgResultSubmissionReward,
+                sortitionPoolUnlockingReward
+              )
+          ).to.be.revertedWith("Ownable: caller is not the owner")
+        })
+
+        it("should revert for third party", async () => {
           await expect(
             randomBeacon
               .connect(thirdParty)
@@ -339,7 +381,18 @@ describe("RandomBeacon", () => {
       const maliciousDkgResultSlashingAmount = 200
 
       context("when the caller is not the owner", () => {
-        it("should revert", async () => {
+        it("should revert for deployer", async () => {
+          await expect(
+            randomBeacon
+              .connect(deployer)
+              .updateSlashingParameters(
+                relayEntrySubmissionFailureSlashingAmount,
+                maliciousDkgResultSlashingAmount
+              )
+          ).to.be.revertedWith("Ownable: caller is not the owner")
+        })
+
+        it("should revert for third party", async () => {
           await expect(
             randomBeacon
               .connect(thirdParty)

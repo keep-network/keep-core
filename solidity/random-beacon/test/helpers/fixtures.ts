@@ -1,5 +1,5 @@
 import { Contract } from "ethers"
-import { ethers } from "hardhat"
+import { ethers, getNamedAccounts } from "hardhat"
 
 import type { RandomBeacon, RandomBeaconGovernance } from "../../typechain"
 
@@ -32,7 +32,14 @@ interface DeployedContracts {
   [key: string]: Contract
 }
 
+// TODO: Contract deployemnts should be replaced by hardhat-deploy plugin.
+
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
+  const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+  const governance = await ethers.getSigner(
+    (await getNamedAccounts()).governance
+  )
+
   const DKG = await ethers.getContractFactory("DKG")
   const dkg = await DKG.deploy()
 
@@ -46,13 +53,11 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     },
   })
 
-  const randomBeacon: RandomBeacon = await RandomBeacon.deploy(
-    constants.groupSize,
-    constants.signatureThreshold,
-    constants.timeDKG
-  )
+  const randomBeacon: RandomBeacon = await RandomBeacon.connect(
+    deployer
+  ).deploy(constants.groupSize, constants.signatureThreshold, constants.timeDKG)
 
-  await randomBeacon.deployed()
+  await randomBeacon.transferOwnership(await governance.getAddress())
 
   const contracts: DeployedContracts = { dkg, groups, randomBeacon }
 
@@ -60,16 +65,23 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
+  const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+  const governance = await ethers.getSigner(
+    (await getNamedAccounts()).governance
+  )
+
   const contracts = await randomBeaconDeployment()
 
   const RandomBeaconGovernance = await ethers.getContractFactory(
     "RandomBeaconGovernance"
   )
-  const randomBeaconGovernance: RandomBeaconGovernance = await RandomBeaconGovernance.deploy(
-    contracts.randomBeacon.address
-  )
-  await randomBeaconGovernance.deployed()
-  await contracts.randomBeacon.transferOwnership(randomBeaconGovernance.address)
+  const randomBeaconGovernance: RandomBeaconGovernance = await RandomBeaconGovernance.connect(
+    deployer
+  ).deploy(contracts.randomBeacon.address)
+
+  await contracts.randomBeacon
+    .connect(governance)
+    .transferOwnership(randomBeaconGovernance.address)
 
   const newContracts = { randomBeaconGovernance }
 
