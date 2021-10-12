@@ -57,7 +57,12 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: {
-      default: 0, // take the first account as deployer
+      hardhat: 1, // take the second account for hardhat network
+      default: 0, // take the first account for other networks
+    },
+    governance: {
+      hardhat: 2,
+      // mainnet: "TODO: Provide value"
     },
   },
   contractSizer: {
