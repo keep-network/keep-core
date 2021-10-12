@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.6;
+pragma abicoder v1;
 
 // Allows anyone to claim a token if they exist in a merkle root.
 interface ICumulativeMerkleDrop128 {
