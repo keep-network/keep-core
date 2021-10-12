@@ -232,7 +232,7 @@ library DKG {
             RegisteredDkgResult(block.timestamp, dkgResultHash)
         );
 
-        uint256 resultIndex = self.registeredDkgResults.length;
+        uint256 resultIndex = self.registeredDkgResults.length - 1;
 
         return resultIndex;
     }
