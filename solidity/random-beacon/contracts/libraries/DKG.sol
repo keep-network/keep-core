@@ -131,7 +131,7 @@ library DKG {
         require(dkgResult.submitterMemberIndex > 0, "Invalid submitter index");
         require(
             dkgResult.members[dkgResult.submitterMemberIndex - 1] == msg.sender,
-            "Unexpected submitter index"
+            "Sender address doesn't match member with submitter index"
         );
 
         uint256 T_init = self.startBlock + self.timeDKG;
