@@ -224,6 +224,17 @@ contract RandomBeacon is Ownable {
         uint256 signatureThreshold,
         uint256 timeDkg
     ) {
+        require(groupSize > 0, "groupSize has to be greater than zero");
+        require(
+            signatureThreshold > 0,
+            "signatureThreshold has to be greater than zero"
+        );
+        require(
+            signatureThreshold <= groupSize,
+            "signatureThreshold has to be less or equal groupSize"
+        );
+        require(timeDkg > 0, "timeDkg has to be greater than zero");
+
         relayRequestFee = 0;
         relayEntrySubmissionEligibilityDelay = 10;
         relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
