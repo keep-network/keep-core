@@ -264,8 +264,6 @@ library DKG {
         );
 
         // TODO: Verify members with sortition pool
-
-        delete self.registeredDkgResults[resultIndex]; // TODO: Check if this frees up the index, if so we need to be careful
     }
 
     function acceptResult(
