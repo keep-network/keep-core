@@ -15,6 +15,7 @@
 pragma solidity ^0.8.6;
 
 import "./libraries/Relay.sol";
+import "./libraries/Groups.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -310,17 +311,21 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         return sortitionPool.isOperatorEligible(operator);
     }
 
-    function selectGroup() internal view returns (bytes memory) {
+    function selectGroup() internal view returns (Groups.Group memory) {
         // TODO: Assert at least one group exists and implement selection logic.
-        return "0x00";
+        Groups.Group memory group;
+        return group;
     }
 
     function requestRelayEntry(bytes calldata previousEntry) external nonReentrant {
         relay.requestEntry(selectGroup(), previousEntry);
     }
 
-    function submitRelayEntry(bytes calldata entry) external nonReentrant {
-        relay.submitEntry(entry);
+    function submitRelayEntry(
+        uint256 submitterIndex,
+        bytes calldata entry
+    ) external nonReentrant {
+        relay.submitEntry(submitterIndex, entry);
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             createGroup(uint256(keccak256(entry)));
