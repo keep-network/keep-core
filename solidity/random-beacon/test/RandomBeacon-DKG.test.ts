@@ -1,11 +1,11 @@
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import { blsData } from "./helpers/data"
 import { constants, params, testDeployment } from "./helpers/fixtures"
 
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { ContractTransaction } from "ethers"
+import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon } from "../typechain"
+import type { Address } from "hardhat-deploy/types"
 
 const { mineBlocks } = helpers.time
 
@@ -17,14 +17,17 @@ describe("RandomBeacon contract", function () {
 
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
-  let signer1: SignerWithAddress
-  let signer2: SignerWithAddress
-  let signer3: SignerWithAddress
+  let thirdParty: Signer
+  let signers: DkgGroupSigners
 
   let randomBeacon: RandomBeacon
 
   before(async function () {
-    ;[signer1, signer2, signer3] = await ethers.getSigners()
+    thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
+
+    // Accounts offset provided to getDkgGroupSigners have to include number of
+    // unnamed accounts that were already used.
+    signers = await getDkgGroupSigners(constants.groupSize, 1)
   })
 
   beforeEach("load test fixture", async function () {
@@ -34,6 +37,10 @@ describe("RandomBeacon contract", function () {
   })
 
   describe("genesis function call", async function () {
+    it("can be invoked by third party", async function () {
+      await randomBeacon.connect(thirdParty).genesis()
+    })
+
     context("with initial contract state", async function () {
       let tx: ContractTransaction
       let expectedSeed: string
@@ -91,7 +98,7 @@ describe("RandomBeacon contract", function () {
         beforeEach(async () => {
           await mineBlocks(constants.timeDKG)
 
-          const [, approveDkgResultFunc] = await signAndSubmitDkgResult()
+          const [, approveDkgResultFunc] = await signAndSubmitDkgResult(signers)
 
           await mineBlocks(
             (await randomBeacon.dkg()).dkgResultChallengePeriodLength.toNumber()
@@ -144,7 +151,7 @@ describe("RandomBeacon contract", function () {
 
         beforeEach(async () => {
           await mineBlocks(constants.timeDKG)
-          ;[, approveDkgResultFunc] = await signAndSubmitDkgResult()
+          ;[, approveDkgResultFunc] = await signAndSubmitDkgResult(signers)
         })
 
         context("when genesis dkg result was not approved", async function () {
@@ -212,7 +219,7 @@ describe("RandomBeacon contract", function () {
       beforeEach(async () => {
         await randomBeacon.genesis()
         await mineBlocks(constants.timeDKG)
-        ;[, approveDkgResultFunc] = await signAndSubmitDkgResult()
+        ;[, approveDkgResultFunc] = await signAndSubmitDkgResult(signers)
       })
 
       context("when challenge period not passed", async function () {
@@ -267,7 +274,7 @@ describe("RandomBeacon contract", function () {
 
     context("with initial contract state", async function () {
       it("reverts with dkg is currently not in progress error", async function () {
-        await expect(signAndSubmitDkgResult()).to.be.revertedWith(
+        await expect(signAndSubmitDkgResult(signers)).to.be.revertedWith(
           "dkg is currently not in progress"
         )
       })
@@ -286,12 +293,12 @@ describe("RandomBeacon contract", function () {
         })
 
         it("succeeds", async function () {
-          await signAndSubmitDkgResult()
+          await signAndSubmitDkgResult(signers)
         })
 
         // TODO: Move to result approval
         // it("cleans up dkg data", async function () {
-        //   await signAndSubmitDkgResult()
+        //   await signAndSubmitDkgResult(signers)
 
         //   // TODO: This test will be enhanced to clean up only after all DKG
         //   // results were submitted.
@@ -306,7 +313,7 @@ describe("RandomBeacon contract", function () {
 
         context("with timeout not notified", async function () {
           beforeEach(async () => {
-            await signAndSubmitDkgResult()
+            await signAndSubmitDkgResult(signers)
           })
 
           it("sets group state", async function () {
@@ -322,7 +329,7 @@ describe("RandomBeacon contract", function () {
           })
 
           it("reverts with dkg is currently not in progress error", async function () {
-            await expect(signAndSubmitDkgResult()).to.be.revertedWith(
+            await expect(signAndSubmitDkgResult(signers)).to.be.revertedWith(
               "dkg is currently not in progress"
             )
           })
@@ -338,7 +345,7 @@ describe("RandomBeacon contract", function () {
       beforeEach(async () => {
         await randomBeacon.genesis()
         await mineBlocks(dkgTimeout)
-        ;[, approveDkgResultFunc] = await signAndSubmitDkgResult()
+        ;[, approveDkgResultFunc] = await signAndSubmitDkgResult(signers)
       })
 
       context("with challenge period not passed", async function () {
@@ -380,16 +387,14 @@ describe("RandomBeacon contract", function () {
     return [tx, expectedSeed]
   }
 
-  async function signAndSubmitDkgResult(): Promise<
-    [ContractTransaction, Function]
-  > {
+  async function signAndSubmitDkgResult(
+    signers: DkgGroupSigners
+  ): Promise<[ContractTransaction, Function]> {
     const noMisbehaved = "0x"
 
-    const signers = new Map<number, SignerWithAddress>([
-      [1, signer1],
-      [2, signer2],
-      [3, signer3],
-    ])
+    expect(signers.size, "unexpected signers map size").to.be.equal(
+      constants.groupSize
+    )
 
     const {
       members,
@@ -408,7 +413,9 @@ describe("RandomBeacon contract", function () {
       members: members,
     }
 
-    const transaction = await randomBeacon.submitDkgResult(dkgResult)
+    const transaction = await randomBeacon
+      .connect(await ethers.getSigner(signers.get(submitterIndex)))
+      .submitDkgResult(dkgResult)
     let eventFilter = randomBeacon.filters.DkgResultSubmitted()
     let events = await randomBeacon.queryFilter(eventFilter)
     expect(events).to.be.lengthOf(1)
@@ -422,6 +429,70 @@ describe("RandomBeacon contract", function () {
     return [transaction, approveDkgResultFunc]
   }
 })
+
+interface DkgGroupSigners extends Map<number, Address> {}
+
+async function getDkgGroupSigners(
+  groupSize: number,
+  startAccountsOffset: number
+): Promise<DkgGroupSigners> {
+  const signers = new Map<number, Address>()
+
+  for (let i = 1; i <= groupSize; i++) {
+    const signer = (await getUnnamedAccounts())[startAccountsOffset + i]
+
+    expect(
+      signer,
+      `signer [${i}] is not defined; check hardhat network configuration`
+    ).is.not.empty
+
+    signers.set(i, signer)
+  }
+
+  return signers
+}
+
+async function signDkgResult(
+  signers: DkgGroupSigners,
+  groupPublicKey: string,
+  misbehaved: string
+) {
+  const resultHash = ethers.utils.solidityKeccak256(
+    ["bytes", "bytes"],
+    [groupPublicKey, misbehaved]
+  )
+
+  const members: string[] = []
+  const signingMembersIndexes: number[] = []
+  const signatures: string[] = []
+
+  for (let [memberIndex, signer] of signers) {
+    members.push(signer)
+
+    signingMembersIndexes.push(memberIndex)
+
+    const ethersSigner = await ethers.getSigner(signer)
+
+    const signature = await ethersSigner.signMessage(
+      ethers.utils.arrayify(resultHash)
+    )
+
+    signatures.push(signature)
+  }
+
+  expect(
+    signingMembersIndexes.length,
+    "unexpected signingMembersIndexes array size"
+  ).to.be.equal(signers.size)
+
+  expect(signatures.length, "unexpected signatures array size").to.be.equal(
+    signers.size
+  )
+
+  const signaturesBytes: string = ethers.utils.hexConcat(signatures)
+
+  return { members, signingMembersIndexes, signaturesBytes }
+}
 
 async function assertDkgCleanData(randomBeacon: RandomBeacon) {
   const dkgData = await randomBeacon.dkg()
@@ -439,35 +510,4 @@ async function assertDkgCleanData(randomBeacon: RandomBeacon) {
     "unexpected dkgResultChallengePeriodLength"
   ).to.eq(0)
   expect(dkgData.startBlock, "unexpected startBlock").to.eq(0)
-}
-
-async function signDkgResult(
-  signers: Map<number, SignerWithAddress>,
-  groupPublicKey: string,
-  misbehaved: string
-) {
-  const resultHash = ethers.utils.solidityKeccak256(
-    ["bytes", "bytes"],
-    [groupPublicKey, misbehaved]
-  )
-
-  const members: string[] = []
-  const signingMembersIndexes: number[] = []
-  const signatures: string[] = []
-
-  for (let [memberIndex, signer] of signers) {
-    members.push(await signer.getAddress())
-
-    signingMembersIndexes.push(memberIndex)
-
-    const signature = await signer.signMessage(
-      ethers.utils.arrayify(resultHash)
-    )
-
-    signatures.push(signature)
-  }
-
-  const signaturesBytes: string = ethers.utils.hexConcat(signatures)
-
-  return { members, signingMembersIndexes, signaturesBytes }
 }
