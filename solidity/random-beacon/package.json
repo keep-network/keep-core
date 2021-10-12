@@ -8,8 +8,7 @@
     "deploy": "hardhat deploy --export export.json"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.2",
-    "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf"
+    "@openzeppelin/contracts": "^4.3.2"
   },
   "devDependencies": {
     "@keep-network/hardhat-helpers": "0.2.0-pre.3",
@@ -37,8 +36,5 @@
   },
   "engines": {
     "node": ">= 14.0.0"
-  },
-  "dependencies": {
-    "@openzeppelin/contracts": "^4.3.2"
   }
 }
