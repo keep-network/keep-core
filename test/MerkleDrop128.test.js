@@ -1,4 +1,4 @@
-const { BN } = require('@openzeppelin/test-helpers');
+const { BN, expectRevert } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 const { toBN, generateSalt } = require('./helpers/utils');
@@ -48,26 +48,103 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
         await Promise.all(wallets.map(w => this.token.mint(w, 1)));
     });
 
-    it.only('Sign for self', async function () {
-        const accountWithDropValues = [
-            {
-                account: addr1,
-                amount: 1,
-            },
-            {
-                account: w1,
-                amount: 1,
-            },
-        ];
-        const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
-        this.hashedElements = hashedElements;
-        this.leaves = leaves;
-        this.root = root;
-        this.proofs = proofs;
+    describe.only('Main', async function () {
+        it('Should transfer money to another wallet', async function () {
+            const accountWithDropValues = [
+                {
+                    account: addr1,
+                    amount: 1,
+                },
+                {
+                    account: w1,
+                    amount: 1,
+                },
+            ];
+            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            this.hashedElements = hashedElements;
+            this.leaves = leaves;
+            this.root = root;
+            this.proofs = proofs;
 
-        const account = Wallet.fromPrivateKey(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'));
-        const data = MerkleTree.bufferToHex(keccak256(account.getAddressString()));
-        const signature = ethSigUtil.personalSign(account.getPrivateKey(), { data });
-        await drop.claim(account.getAddressString(), account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature);
+            const account = Wallet.fromPrivateKey(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'));
+            const data = MerkleTree.bufferToHex(keccak256(w1));
+            const signature = ethSigUtil.personalSign(account.getPrivateKey(), { data });
+            await drop.claim(w1, account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature);
+        });
+
+        it('Should disallow invalid proof', async function () {
+            const accountWithDropValues = [
+                {
+                    account: addr1,
+                    amount: 1,
+                },
+                {
+                    account: w1,
+                    amount: 1,
+                },
+            ];
+            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            this.hashedElements = hashedElements;
+            this.leaves = leaves;
+            this.root = root;
+            this.proofs = proofs;
+
+            const account = Wallet.fromPrivateKey(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'));
+            const data = MerkleTree.bufferToHex(keccak256(w1));
+            const signature = ethSigUtil.personalSign(account.getPrivateKey(), { data });
+            await expectRevert(
+                drop.claim(w1, account.getAddressString(), 1, '0x', signature),
+                'MD: Invalid proof');
+        });
+
+        it('Should disallow invalid receiver', async function () {
+            const accountWithDropValues = [
+                {
+                    account: addr1,
+                    amount: 1,
+                },
+                {
+                    account: w1,
+                    amount: 1,
+                },
+            ];
+            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            this.hashedElements = hashedElements;
+            this.leaves = leaves;
+            this.root = root;
+            this.proofs = proofs;
+
+            const account = Wallet.fromPrivateKey(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'));
+            const data = MerkleTree.bufferToHex(keccak256(w1));
+            const signature = ethSigUtil.personalSign(account.getPrivateKey(), { data });
+            await expectRevert(
+                drop.claim(w2, account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature),
+                'MD: Invalid signature');
+        });
+
+        it('Should disallow double claim', async function () {
+            const accountWithDropValues = [
+                {
+                    account: addr1,
+                    amount: 1,
+                },
+                {
+                    account: w1,
+                    amount: 1,
+                },
+            ];
+            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            this.hashedElements = hashedElements;
+            this.leaves = leaves;
+            this.root = root;
+            this.proofs = proofs;
+
+            const account = Wallet.fromPrivateKey(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'));
+            const data = MerkleTree.bufferToHex(keccak256(w1));
+            const signature = ethSigUtil.personalSign(account.getPrivateKey(), { data });
+            const fn = () => drop.claim(w1, account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature);
+            await fn();
+            await expectRevert(fn(), 'MD: Drop already claimed');
+        });
     });
 });
