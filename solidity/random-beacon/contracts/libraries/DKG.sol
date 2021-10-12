@@ -122,8 +122,6 @@ library DKG {
         public
         view
     {
-        require(isInProgress(self), "dkg is currently not in progress");
-
         assert(self.startBlock > 0);
         assert(self.timeDKG > 0);
         assert(self.dkgResultSubmissionEligibilityDelay > 0);
