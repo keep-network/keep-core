@@ -50,7 +50,7 @@ library DKG {
     }
 
     struct RegisteredDkgResult {
-        uint256 resultSubmittedTimestamp;
+        uint256 resultSubmittedBlock;
         bytes32 dkgResultHash;
     }
 
@@ -229,7 +229,7 @@ library DKG {
         bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
 
         self.registeredDkgResults.push(
-            RegisteredDkgResult(block.timestamp, dkgResultHash)
+            RegisteredDkgResult(block.number, dkgResultHash)
         );
 
         uint256 resultIndex = self.registeredDkgResults.length - 1;
@@ -250,8 +250,8 @@ library DKG {
             .registeredDkgResults[resultIndex];
 
         require(
-            block.timestamp <
-                submittedDkgResult.resultSubmittedTimestamp +
+            block.number <
+                submittedDkgResult.resultSubmittedBlock +
                     self.dkgResultChallengePeriodLength,
             "Challenge period has already passed"
         );
@@ -284,8 +284,8 @@ library DKG {
             .registeredDkgResults[resultIndex];
 
         require(
-            block.timestamp >=
-                registeredDkgResult.resultSubmittedTimestamp +
+            block.number >=
+                registeredDkgResult.resultSubmittedBlock +
                     self.dkgResultChallengePeriodLength,
             "Challenge period has not passed yet"
         );
