@@ -19,7 +19,7 @@ contract MerkleDrop128 {
     uint256 public immutable depth;
 
     // This is a packed array of booleans.
-    mapping(uint256 => uint256) private claimedBitMap;
+    mapping(uint256 => uint256) private _claimedBitMap;
 
     constructor(address token_, bytes16 merkleRoot_, uint256 depth_) {
         token = token_;
@@ -30,7 +30,7 @@ contract MerkleDrop128 {
     function isClaimed(uint256 index) public view returns (bool) {
         uint256 claimedWordIndex = index / 256;
         uint256 claimedBitIndex = index % 256;
-        uint256 claimedWord = claimedBitMap[claimedWordIndex];
+        uint256 claimedWord = _claimedBitMap[claimedWordIndex];
         uint256 mask = (1 << claimedBitIndex);
         return claimedWord & mask == mask;
     }
@@ -38,7 +38,7 @@ contract MerkleDrop128 {
     function _setClaimed(uint256 index) private {
         uint256 claimedWordIndex = index / 256;
         uint256 claimedBitIndex = index % 256;
-        claimedBitMap[claimedWordIndex] = claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
+        _claimedBitMap[claimedWordIndex] = _claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
     }
 
     function claim(address receiver, address account, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external {
@@ -48,7 +48,7 @@ contract MerkleDrop128 {
         require(valid, "MD: Invalid proof");
         bytes32 signedHash = ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(receiver)));
         require(ECDSA.recover(signedHash, signature) == account, "MD: Invalid signature");
-        require(!isClaimed(index), 'MD: Drop already claimed');
+        require(!isClaimed(index), "MD: Drop already claimed");
 
         // Mark it claimed and send the token.
         _setClaimed(index);
@@ -61,8 +61,9 @@ contract MerkleDrop128 {
     }
 
     function _verifyAsm(bytes calldata proof, bytes16 root, bytes16 leaf) private view returns (bool valid, uint256 index) {
-        // solhint-disable-next-line no-inline-assembly
         uint256 loopDepth = 0;
+
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x10)

@@ -1,17 +1,9 @@
-const { BN, expectRevert } = require('@openzeppelin/test-helpers');
+const { expectRevert } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
-const { toBN, generateSalt } = require('./helpers/utils');
+const { toBN } = require('./helpers/utils');
 const ethSigUtil = require('eth-sig-util');
 const Wallet = require('ethereumjs-wallet').default;
-
-const {
-    shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234,
-} = require('./behaviors/MerkleDrop.behavior');
-
-const {
-    shouldBehaveLikeCumulativeMerkleDropFor4WalletsWithBalances1234,
-} = require('./behaviors/CumulativeMerkleDrop.behavior');
 
 const TokenMock = artifacts.require('TokenMock');
 const MerkleDrop128 = artifacts.require('MerkleDrop128');
@@ -60,7 +52,7 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
                     amount: 1,
                 },
             ];
-            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            const { hashedElements, leaves, root, proofs, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
             this.hashedElements = hashedElements;
             this.leaves = leaves;
             this.root = root;
@@ -83,7 +75,7 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
                     amount: 1,
                 },
             ];
-            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            const { hashedElements, leaves, root, proofs, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
             this.hashedElements = hashedElements;
             this.leaves = leaves;
             this.root = root;
@@ -108,7 +100,7 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
                     amount: 1,
                 },
             ];
-            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            const { hashedElements, leaves, root, proofs, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
             this.hashedElements = hashedElements;
             this.leaves = leaves;
             this.root = root;
@@ -133,7 +125,7 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
                     amount: 1,
                 },
             ];
-            const { hashedElements, leaves, root, proofs, salts, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
+            const { hashedElements, leaves, root, proofs, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
             this.hashedElements = hashedElements;
             this.leaves = leaves;
             this.root = root;
