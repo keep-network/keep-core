@@ -441,6 +441,14 @@ contract RandomBeacon is Ownable {
         // TODO: Unlock sortition pool
     }
 
+    function getGroup(bytes calldata groupPubKey)
+        public
+        view
+        returns (Groups.Group memory)
+    {
+        return groups.getGroup(groupPubKey);
+    }
+
     // function requestRelayEntry() external {
     //     if RELAY_ENTRY_COUNT >= groupCreationFrequency {
     //         createGroup();
