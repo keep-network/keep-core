@@ -2,7 +2,7 @@ import { ethers, waffle, helpers } from "hardhat"
 
 import { expect } from "chai"
 
-import { testDeployment } from "./helpers/fixtures"
+import { randomBeaconDeployment } from "./helpers/fixtures"
 
 import type { Signer } from "ethers"
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
@@ -31,10 +31,9 @@ describe("RandomBeaconGovernance", () => {
   })
 
   beforeEach(async () => {
-    const contracts = await waffle.loadFixture(testDeployment)
+    const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
-    randomBeaconGovernance = contracts.randomBeaconGovernance as RandomBeaconGovernance
 
     await randomBeacon
       .connect(governance)
