@@ -92,7 +92,9 @@ contract MerkleDrop128 {
         }
 
         if (loopDepth < depth) {
-            index = index << (depth - loopDepth);
+            unchecked {
+                index = index << (depth - loopDepth);
+            }
         }
     }
 }
