@@ -277,6 +277,11 @@ library DKG {
 
         require(isInProgress(self), "dkg is currently not in progress");
 
+        require(
+            resultIndex < self.registeredDkgResults.length,
+            "invalid result index"
+        );
+
         RegisteredDkgResult memory registeredDkgResult = self
             .registeredDkgResults[resultIndex];
 
