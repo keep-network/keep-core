@@ -229,8 +229,10 @@ contract RandomBeacon is Ownable {
         relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
         callbackGasLimit = 200000;
         groupCreationFrequency = 10;
+        // Due to how Groups expiration work for pending groups groupLifetime period
+        // has to be greated than dkgResultChallengePeriodLength period.
         groupLifetime = 2 weeks;
-        dkgResultChallengePeriodLength = 1440; // ~6h assuming 15s block time
+        dkgResultChallengePeriodLength = 1440; // number of blocks for ~6h assuming 15s block time
         dkgResultSubmissionEligibilityDelay = 10;
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
@@ -336,7 +338,7 @@ contract RandomBeacon is Ownable {
     }
 
     function createGroup(uint256 seed) internal {
-        // Sortition performed off-chain
+        // TODO: Lock sortition pool.
 
         dkg.start(
             seed,
