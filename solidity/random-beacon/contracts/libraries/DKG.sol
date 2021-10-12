@@ -59,9 +59,9 @@ library DKG {
         delete self.seed;
         delete self.groupSize;
         delete self.signatureThreshold;
+        delete self.timeDKG;
         delete self.dkgResultSubmissionEligibilityDelay;
         delete self.dkgResultChallengePeriodLength;
-        delete self.timeDKG;
         delete self.startBlock;
         delete self.registeredDkgResults;
     }
