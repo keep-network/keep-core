@@ -1,7 +1,7 @@
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 
-import { constants, randomBeaconDeployment } from "./helpers/fixtures"
+import { constants, params, randomBeaconDeployment } from "./helpers/fixtures"
 
 import type { Signer } from "ethers"
 import type { RandomBeacon, RandomBeacon__factory } from "../typechain"
@@ -33,28 +33,42 @@ describe("RandomBeacon", () => {
           constants.timeDKG
         )
 
-        expect(await randomBeacon.relayRequestFee()).to.be.equal(0)
+        expect(await randomBeacon.relayRequestFee()).to.be.equal(
+          params.relayRequestFee
+        )
         expect(
           await randomBeacon.relayEntrySubmissionEligibilityDelay()
-        ).to.be.equal(10)
-        expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(5760)
-        expect(await randomBeacon.callbackGasLimit()).to.be.equal(200000)
-        expect(await randomBeacon.groupCreationFrequency()).to.be.equal(10)
-        expect(await randomBeacon.groupLifetime()).to.be.equal(1209600)
+        ).to.be.equal(params.relayEntrySubmissionEligibilityDelay)
+        expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(
+          params.relayEntryHardTimeout
+        )
+        expect(await randomBeacon.callbackGasLimit()).to.be.equal(
+          params.callbackGasLimit
+        )
+        expect(await randomBeacon.groupCreationFrequency()).to.be.equal(
+          params.groupCreationFrequency
+        )
+        expect(await randomBeacon.groupLifetime()).to.be.equal(
+          params.groupLifeTime
+        )
         expect(await randomBeacon.dkgResultChallengePeriodLength()).to.be.equal(
-          1440
+          params.dkgResultChallengePeriodLength
         )
         expect(
           await randomBeacon.dkgResultSubmissionEligibilityDelay()
-        ).to.be.equal(10)
-        expect(await randomBeacon.dkgResultSubmissionReward()).to.be.equal(0)
-        expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(0)
+        ).to.be.equal(params.dkgResultSubmissionEligibilityDelay)
+        expect(await randomBeacon.dkgResultSubmissionReward()).to.be.equal(
+          params.dkgResultSubmissionReward
+        )
+        expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
+          params.sortitionPoolUnlockingReward
+        )
         expect(
           await randomBeacon.relayEntrySubmissionFailureSlashingAmount()
-        ).to.be.equal(ethers.BigNumber.from(10).pow(18).mul(1000))
+        ).to.be.equal(params.relayEntrySubmissionFailureSlashingAmount)
         expect(
           await randomBeacon.maliciousDkgResultSlashingAmount()
-        ).to.be.equal(ethers.BigNumber.from(10).pow(18).mul(50000))
+        ).to.be.equal(params.maliciousDkgResultSlashingAmount)
       })
 
       it("sets provided properties", async () => {

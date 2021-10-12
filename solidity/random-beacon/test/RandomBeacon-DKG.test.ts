@@ -1,8 +1,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { blsData } from "./helpers/data"
-import { groupStateEnum } from "./helpers/enums"
-import { constants, testDeployment } from "./helpers/fixtures"
+import { constants, params, testDeployment } from "./helpers/fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction } from "ethers"
@@ -13,8 +12,8 @@ const { mineBlocks } = helpers.time
 describe("RandomBeacon contract", function () {
   const dkgTimeout: number =
     constants.timeDKG +
-    constants.groupSize * constants.dkgResultSubmissionEligibilityDelay +
-    constants.dkgResultChallengePeriodLength
+    constants.groupSize * params.dkgResultSubmissionEligibilityDelay +
+    params.dkgResultChallengePeriodLength
 
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
@@ -156,7 +155,7 @@ describe("RandomBeacon contract", function () {
 
         context("when genesis dkg result was approved", async function () {
           beforeEach(async () => {
-            await mineBlocks(constants.dkgResultChallengePeriodLength)
+            await mineBlocks(params.dkgResultChallengePeriodLength)
 
             await approveDkgResultFunc()
           })
@@ -229,9 +228,8 @@ describe("RandomBeacon contract", function () {
       context("when challenge period passed", async function () {
         beforeEach(async () => {
           await mineBlocks(
-            constants.groupSize *
-              constants.dkgResultSubmissionEligibilityDelay +
-              constants.dkgResultChallengePeriodLength
+            constants.groupSize * params.dkgResultSubmissionEligibilityDelay +
+              params.dkgResultChallengePeriodLength
           )
         })
 
@@ -345,7 +343,7 @@ describe("RandomBeacon contract", function () {
 
       context("with challenge period not passed", async function () {
         beforeEach(async () => {
-          await mineBlocks(constants.dkgResultChallengePeriodLength - 2)
+          await mineBlocks(params.dkgResultChallengePeriodLength - 2)
         })
 
         it("reverts with challenge period not passed error", async function () {
@@ -357,7 +355,7 @@ describe("RandomBeacon contract", function () {
 
       context("with challenge period passed", async function () {
         beforeEach(async () => {
-          await mineBlocks(constants.dkgResultChallengePeriodLength)
+          await mineBlocks(params.dkgResultChallengePeriodLength)
 
           await approveDkgResultFunc()
         })
