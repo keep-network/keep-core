@@ -36,9 +36,13 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const DKG = await ethers.getContractFactory("DKG")
   const dkg = await DKG.deploy()
 
+  const Groups = await ethers.getContractFactory("Groups")
+  const groups = await Groups.deploy()
+
   const RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
     libraries: {
       DKG: dkg.address,
+      Groups: groups.address,
     },
   })
 
@@ -50,7 +54,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   await randomBeacon.deployed()
 
-  const contracts: DeployedContracts = { randomBeacon }
+  const contracts: DeployedContracts = { dkg, groups, randomBeacon }
 
   return contracts
 }
