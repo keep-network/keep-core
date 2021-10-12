@@ -3,7 +3,7 @@ import { expect } from "chai"
 import { blsData } from "./helpers/data"
 import { constants, params, testDeployment } from "./helpers/fixtures"
 
-import type { BigNumber, ContractTransaction, Signer } from "ethers"
+import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
 
@@ -115,15 +115,13 @@ describe("RandomBeacon contract", function () {
 
           await mineBlocks(constants.timeDKG)
 
-          const { resultIndex, dkgResult } = await signAndSubmitDkgResult(
-            signers
-          )
+          const { dkgResult } = await signAndSubmitDkgResult(signers)
 
           await mineBlocks(
             (await randomBeacon.dkg()).dkgResultChallengePeriodLength.toNumber()
           )
 
-          await randomBeacon.approveDkgResult(resultIndex, dkgResult)
+          await randomBeacon.approveDkgResult(dkgResult)
         })
 
         it("reverts with not awaiting genesis error", async function () {
@@ -166,12 +164,11 @@ describe("RandomBeacon contract", function () {
       })
 
       context("when genesis dkg result was submitted", async function () {
-        let resultIndex: BigNumber
         let dkgResult: DkgResult
 
         beforeEach(async () => {
           await mineBlocks(constants.timeDKG)
-          ;({ resultIndex, dkgResult } = await signAndSubmitDkgResult(signers))
+          ;({ dkgResult } = await signAndSubmitDkgResult(signers))
         })
 
         context("when genesis dkg result was not approved", async function () {
@@ -184,7 +181,7 @@ describe("RandomBeacon contract", function () {
           beforeEach(async () => {
             await mineBlocks(params.dkgResultChallengePeriodLength)
 
-            await randomBeacon.approveDkgResult(resultIndex, dkgResult)
+            await randomBeacon.approveDkgResult(dkgResult)
           })
 
           it("returns false", async function () {
@@ -194,7 +191,7 @@ describe("RandomBeacon contract", function () {
 
         context("when genesis dkg result was challenged", async function () {
           beforeEach(async () => {
-            await randomBeacon.challengeDkgResult(resultIndex, dkgResult)
+            await randomBeacon.challengeDkgResult(dkgResult)
           })
 
           it("returns true", async function () {
@@ -244,14 +241,13 @@ describe("RandomBeacon contract", function () {
     })
 
     context("when genesis dkg result was submitted", async function () {
-      let resultIndex: BigNumber
       let dkgResult: DkgResult
 
       beforeEach(async () => {
         await randomBeacon.genesis()
 
         await mineBlocks(constants.timeDKG)
-        ;({ resultIndex, dkgResult } = await signAndSubmitDkgResult(signers))
+        ;({ dkgResult } = await signAndSubmitDkgResult(signers))
       })
 
       context("when challenge period not passed", async function () {
@@ -280,7 +276,7 @@ describe("RandomBeacon contract", function () {
 
         context("when genesis dkg result was approved", async function () {
           beforeEach(async () => {
-            await randomBeacon.approveDkgResult(resultIndex, dkgResult)
+            await randomBeacon.approveDkgResult(dkgResult)
           })
 
           it("reverts with dkg is currently not in progress error", async function () {
@@ -321,31 +317,28 @@ describe("RandomBeacon contract", function () {
 
       context("with group creation not timed out", async function () {
         let tx: ContractTransaction
-        let resultIndex: BigNumber
         let dkgResult: DkgResult
 
         beforeEach(async () => {
           await mineBlocks(constants.timeDKG)
           ;({
             transaction: tx,
-            resultIndex,
+
             dkgResult,
           } = await signAndSubmitDkgResult(signers))
         })
 
         it("emits DkgStarted event", async function () {
-          await expect(tx)
-            .to.emit(randomBeacon, "DkgResultSubmitted")
-            .withArgs(
-              expectedSeed,
-              resultIndex,
-              dkgResult.submitterMemberIndex,
-              dkgResult.groupPubKey,
-              dkgResult.misbehaved,
-              dkgResult.signatures,
-              dkgResult.signingMembersIndexes,
-              dkgResult.members
-            )
+          await expect(tx).to.emit(randomBeacon, "DkgResultSubmitted").withArgs(
+            expectedSeed,
+
+            dkgResult.submitterMemberIndex,
+            dkgResult.groupPubKey,
+            dkgResult.misbehaved,
+            dkgResult.signatures,
+            dkgResult.signingMembersIndexes,
+            dkgResult.members
+          )
         })
 
         it("registers a pending group", async function () {
@@ -356,6 +349,9 @@ describe("RandomBeacon contract", function () {
         })
 
         // TODO: Add test for DKG result validation
+
+        // TODO: Add test for DKG result submission in the same DKG and previous DKGs
+        // due to keeping the results in a map with block numbers.
 
         // TODO: Move to result approval
         // it("cleans up dkg data", async function () {
@@ -395,14 +391,13 @@ describe("RandomBeacon contract", function () {
 
   describe("approveDkgResult function call", async function () {
     context("with dkg result submitted", async function () {
-      let resultIndex: BigNumber
       let dkgResult: DkgResult
 
       beforeEach(async () => {
         await randomBeacon.genesis()
 
         await mineBlocks(dkgTimeout)
-        ;({ resultIndex, dkgResult } = await signAndSubmitDkgResult(signers))
+        ;({ dkgResult } = await signAndSubmitDkgResult(signers))
       })
 
       context("with challenge period not passed", async function () {
@@ -411,9 +406,9 @@ describe("RandomBeacon contract", function () {
         })
 
         it("reverts with challenge period not passed error", async function () {
-          await expect(
-            randomBeacon.approveDkgResult(resultIndex, dkgResult)
-          ).revertedWith("Challenge period has not passed yet")
+          await expect(randomBeacon.approveDkgResult(dkgResult)).revertedWith(
+            "Challenge period has not passed yet"
+          )
         })
       })
 
@@ -421,7 +416,7 @@ describe("RandomBeacon contract", function () {
         beforeEach(async () => {
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
-          await randomBeacon.approveDkgResult(resultIndex, dkgResult)
+          await randomBeacon.approveDkgResult(dkgResult)
         })
 
         it("cleans up dkg data", async function () {
@@ -457,7 +452,7 @@ describe("RandomBeacon contract", function () {
     signers: DkgGroupSigners
   ): Promise<{
     transaction: ContractTransaction
-    resultIndex: BigNumber
+
     dkgResult: DkgResult
   }> {
     const noMisbehaved = "0x"
@@ -486,13 +481,8 @@ describe("RandomBeacon contract", function () {
     const transaction = await randomBeacon
       .connect(await ethers.getSigner(signers.get(submitterIndex)))
       .submitDkgResult(dkgResult)
-    let eventFilter = randomBeacon.filters.DkgResultSubmitted()
-    let events = await randomBeacon.queryFilter(eventFilter)
-    expect(events).to.be.lengthOf(1)
 
-    const resultIndex = events[0].args.index
-
-    return { transaction, resultIndex, dkgResult }
+    return { transaction, dkgResult }
   }
 })
 

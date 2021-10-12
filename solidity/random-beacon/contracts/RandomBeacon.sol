@@ -191,7 +191,6 @@ contract RandomBeacon is Ownable {
 
     event DkgResultSubmitted(
         uint256 indexed seed,
-        uint256 index,
         uint256 indexed submitterMemberIndex,
         bytes indexed groupPubKey,
         bytes misbehaved,
@@ -392,14 +391,13 @@ contract RandomBeacon is Ownable {
         // TODO: Consider adding nonReentrant?
 
         // validate DKG result
-        uint256 resultIndex = dkg.submitDkgResult(dkgResult);
+        dkg.submitDkgResult(dkgResult);
 
         // TODO: Consider each group a separate contract instance deployed with proxy?
         groups.addGroup(dkgResult.groupPubKey);
 
         emit DkgResultSubmitted(
             dkg.seed,
-            resultIndex,
             dkgResult.submitterMemberIndex,
             dkgResult.groupPubKey,
             dkgResult.misbehaved,
@@ -409,11 +407,8 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    function challengeDkgResult(
-        uint256 resultIndex,
-        DKG.DkgResult calldata dkgResult
-    ) external {
-        dkg.challengeResult(resultIndex, dkgResult);
+    function challengeDkgResult(DKG.DkgResult calldata dkgResult) external {
+        dkg.challengeResult(dkgResult);
 
         // TODO: Slash submitter
 
@@ -424,11 +419,8 @@ contract RandomBeacon is Ownable {
     }
 
     // Once the challenge period passes, anyone can unlock the sortition pool and mark the DKG result as accepted.
-    function approveDkgResult(
-        uint256 resultIndex,
-        DKG.DkgResult calldata dkgResult
-    ) external {
-        dkg.acceptResult(resultIndex, dkgResult);
+    function approveDkgResult(DKG.DkgResult calldata dkgResult) external {
+        dkg.acceptResult(dkgResult);
 
         groups.activateGroup(dkgResult.groupPubKey);
         // groups.setGroupMembers(groupPubKey, members, misbehaved);

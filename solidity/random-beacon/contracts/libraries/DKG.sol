@@ -30,8 +30,11 @@ library DKG {
         // and it is recommended to make it higher than the signing threshold
         // to keep a safety margin for misbehaving members.
         uint256 signatureThreshold;
-        // List of results submitted during DKG.
-        RegisteredDkgResult[] registeredDkgResults;
+        // Mapping of submitted DKG result hash with submission block number.
+        // This map is not cleaned after each DKG completition, so it can hold
+        // entires from past executions. The results should be filtered based on
+        // the current execution's startBlock.
+        mapping(bytes32 => uint256) registeredDkgResults;
     }
 
     struct DkgResult {
@@ -63,7 +66,6 @@ library DKG {
         delete self.dkgResultSubmissionEligibilityDelay;
         delete self.dkgResultChallengePeriodLength;
         delete self.startBlock;
-        delete self.registeredDkgResults;
     }
 
     function isInProgress(Data storage self) public view returns (bool) {
@@ -215,86 +217,72 @@ library DKG {
             "timeout not passed yet"
         );
 
-        revert("TODO: Implement");
+        // TODO: Implement
     }
 
     function submitDkgResult(Data storage self, DkgResult calldata dkgResult)
         external
-        returns (uint256)
     {
         require(isInProgress(self), "dkg is currently not in progress");
 
-        verify(self, dkgResult);
-
         bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
 
-        self.registeredDkgResults.push(
-            RegisteredDkgResult(block.number, dkgResultHash)
+        require(
+            self.registeredDkgResults[dkgResultHash] < self.startBlock,
+            "this dkg result was already submitted in the current dkg"
         );
 
-        uint256 resultIndex = self.registeredDkgResults.length - 1;
+        verify(self, dkgResult);
 
-        return resultIndex;
+        self.registeredDkgResults[dkgResultHash] = block.number;
     }
 
-    function challengeResult(
-        Data storage self,
-        uint256 resultIndex,
-        DkgResult calldata dkgResult
-    ) external {
+    function challengeResult(Data storage self, DkgResult calldata dkgResult)
+        external
+    {
         assert(self.dkgResultChallengePeriodLength > 0);
 
         require(isInProgress(self), "dkg is currently not in progress");
 
-        RegisteredDkgResult memory submittedDkgResult = self
-            .registeredDkgResults[resultIndex];
+        uint256 resultSubmissionBlock = self.registeredDkgResults[
+            keccak256(abi.encode(dkgResult))
+        ];
+
+        require(
+            resultSubmissionBlock >= self.startBlock,
+            "this dkg result was not submitted in the current dkg"
+        );
 
         require(
             block.number <
-                submittedDkgResult.resultSubmittedBlock +
-                    self.dkgResultChallengePeriodLength,
+                resultSubmissionBlock + self.dkgResultChallengePeriodLength,
             "Challenge period has already passed"
-        );
-
-        bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
-
-        require(
-            dkgResultHash == submittedDkgResult.dkgResultHash,
-            "invalid result"
         );
 
         // TODO: Verify members with sortition pool
     }
 
-    function acceptResult(
-        Data storage self,
-        uint256 resultIndex,
-        DkgResult calldata dkgResult
-    ) external cleanup(self) {
+    function acceptResult(Data storage self, DkgResult calldata dkgResult)
+        external
+        cleanup(self)
+    {
         assert(self.dkgResultChallengePeriodLength > 0);
 
         require(isInProgress(self), "dkg is currently not in progress");
 
-        require(
-            resultIndex < self.registeredDkgResults.length,
-            "invalid result index"
-        );
+        uint256 resultSubmissionBlock = self.registeredDkgResults[
+            keccak256(abi.encode(dkgResult))
+        ];
 
-        RegisteredDkgResult memory registeredDkgResult = self
-            .registeredDkgResults[resultIndex];
+        require(
+            resultSubmissionBlock >= self.startBlock,
+            "this dkg result was not submitted in the current dkg"
+        );
 
         require(
             block.number >=
-                registeredDkgResult.resultSubmittedBlock +
-                    self.dkgResultChallengePeriodLength,
+                resultSubmissionBlock + self.dkgResultChallengePeriodLength,
             "Challenge period has not passed yet"
-        );
-
-        bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
-
-        require(
-            dkgResultHash == registeredDkgResult.dkgResultHash,
-            "invalid result"
         );
     }
 }
