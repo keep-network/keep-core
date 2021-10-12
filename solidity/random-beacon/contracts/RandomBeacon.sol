@@ -311,14 +311,11 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         return sortitionPool.isOperatorEligible(operator);
     }
 
-    function selectGroup() internal view returns (Groups.Group memory) {
-        // TODO: Assert at least one group exists and implement selection logic.
-        Groups.Group memory group;
-        return group;
-    }
-
     function requestRelayEntry(bytes calldata previousEntry) external nonReentrant {
-        relay.requestEntry(selectGroup(), previousEntry);
+        Groups.Group memory group =
+            groups.selectGroup(uint256(keccak256(previousEntry)));
+
+        relay.requestEntry(group, previousEntry);
     }
 
     function submitRelayEntry(
