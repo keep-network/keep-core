@@ -46,8 +46,8 @@ contract MerkleDrop128 {
         bytes16 node = bytes16(keccak256(abi.encodePacked(account, amount)));
         (bool valid, uint256 index) = _verifyAsm(merkleProof, merkleRoot, node);
         require(valid, "MD: Invalid proof");
-        require(ECDSA.recover(keccak256(abi.encodePacked(receiver)), signature) == account, "CMD: Invalid signature");
-        require(!isClaimed(index), 'MD: Drop already claimed.');
+        require(ECDSA.recover(keccak256(abi.encodePacked(receiver)), signature) == account, "MD: Invalid signature");
+        require(!isClaimed(index), 'MD: Drop already claimed');
 
         // Mark it claimed and send the token.
         _setClaimed(index);
