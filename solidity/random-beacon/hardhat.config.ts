@@ -38,6 +38,7 @@ const config: HardhatUserConfig = {
           ? parseInt(process.env.FORKING_BLOCK)
           : undefined,
       },
+      accounts: { count: 70 },
       tags: ["local"],
     },
     ropsten: {

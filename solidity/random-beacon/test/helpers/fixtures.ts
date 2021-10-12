@@ -4,9 +4,9 @@ import { ethers, getNamedAccounts } from "hardhat"
 import type { RandomBeacon, RandomBeaconGovernance } from "../../typechain"
 
 export const constants = {
-  groupSize: 3,
-  signatureThreshold: 2,
-  timeDKG: 13,
+  groupSize: 64,
+  signatureThreshold: 33,
+  timeDKG: 5 * (1 + 5) + 2 * (1 + 10) + 20,
 }
 
 export const params = {
