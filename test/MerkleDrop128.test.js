@@ -3,6 +3,7 @@ const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 const { toBN, generateSalt } = require('./helpers/utils');
 const ethSigUtil = require('eth-sig-util');
+const Wallet = require('ethereumjs-wallet').default;
 
 const {
     shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234,
@@ -47,7 +48,7 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
         await Promise.all(wallets.map(w => this.token.mint(w, 1)));
     });
 
-    it.only('Benchmark 30000 wallets (merkle tree height 15)', async function () {
+    it.only('Sign for self', async function () {
         const accountWithDropValues = [
             {
                 account: addr1,
@@ -63,8 +64,10 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
         this.leaves = leaves;
         this.root = root;
         this.proofs = proofs;
-        const data = "hello";
-        const signature = ethSigUtil.personalSign(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'), { data });
-        await drop.claim(addr1, addr1, 1, this.proofs[findSortedIndex(this, 0)], signature);
+
+        const account = Wallet.fromPrivateKey(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'));
+        const data = MerkleTree.bufferToHex(keccak256(account.getAddressString()));
+        const signature = ethSigUtil.personalSign(account.getPrivateKey(), { data });
+        await drop.claim(account.getAddressString(), account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature);
     });
 });
