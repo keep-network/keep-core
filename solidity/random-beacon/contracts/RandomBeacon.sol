@@ -364,8 +364,7 @@ contract RandomBeacon is Ownable {
     }
 
     function genesis() external {
-        uint256 groupCount = groups.numberOfActiveGroups();
-        require(groupCount == 0, "not awaiting genesis");
+        require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
         createGroup(
             uint256(keccak256(abi.encodePacked(GENESIS_SEED, block.number)))
