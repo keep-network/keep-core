@@ -15,6 +15,7 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./libraries/DKG.sol";
 
 /// @title Sortition Pool contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -36,6 +37,8 @@ interface ISortitionPool {
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
 contract RandomBeacon is Ownable {
+    using DKG for DKG.Data;
+
     /// @notice Relay request fee in T. This fee needs to be provided by the
     ///         account or contract requesting for a new relay entry.
     uint256 public relayRequestFee;
@@ -143,6 +146,9 @@ contract RandomBeacon is Ownable {
 
     ISortitionPool public sortitionPool;
 
+    // Libraries data storages
+    DKG.Data dkg;
+
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
         uint256 relayEntrySubmissionEligibilityDelay,
@@ -165,6 +171,16 @@ contract RandomBeacon is Ownable {
     event SlashingParametersUpdated(
         uint256 relayEntrySubmissionFailureSlashingAmount,
         uint256 maliciousDkgResultSlashingAmount
+    );
+
+    event DkgResultSubmitted(
+        bytes indexed groupPubKey,
+        address indexed submitter,
+        uint256 submitterMemberIndex,
+        bytes misbehaved,
+        bytes signatures,
+        uint256[] signingMemberIndices,
+        address[] members
     );
 
     /// @dev Assigns initial values to parameters to make the beacon work
@@ -295,5 +311,24 @@ contract RandomBeacon is Ownable {
     /// @param operator Address of the operator
     function isOperatorEligible(address operator) external view returns (bool) {
         return sortitionPool.isOperatorEligible(operator);
+    }
+
+    /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
+    /// the protocol.
+    /// @param dkgResult DKG result.
+    function submitDkgResult(DKG.DkgResult calldata dkgResult) external {
+        dkg.submitDkgResult(dkgResult);
+
+        // TODO: Register a pending group
+
+        emit DkgResultSubmitted(
+            dkgResult.groupPubKey,
+            msg.sender,
+            dkgResult.submitterMemberIndex,
+            dkgResult.misbehaved,
+            dkgResult.signatures,
+            dkgResult.signingMemberIndices,
+            dkgResult.members
+        );
     }
 }
