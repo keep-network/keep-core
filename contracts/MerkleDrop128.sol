@@ -28,20 +28,6 @@ contract MerkleDrop128 is IMerkleDrop128 {
         depth = depth_;
     }
 
-    function isClaimed(uint256 index) public view override returns (bool) {
-        uint256 claimedWordIndex = index >> 8;
-        uint256 claimedBitIndex = index & 0xff;
-        uint256 claimedWord = _claimedBitMap[claimedWordIndex];
-        uint256 mask = (1 << claimedBitIndex);
-        return claimedWord & mask == mask;
-    }
-
-    function _setClaimed(uint256 index) private {
-        uint256 claimedWordIndex = index >> 8;
-        uint256 claimedBitIndex = index & 0xff;
-        _claimedBitMap[claimedWordIndex] = _claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
-    }
-
     function claim(address receiver, address account, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external override {
         // Verify the merkle proof.
         bytes16 node = bytes16(keccak256(abi.encodePacked(account, amount)));
@@ -49,15 +35,21 @@ contract MerkleDrop128 is IMerkleDrop128 {
         require(valid, "MD: Invalid proof");
         bytes32 signedHash = ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(receiver)));
         require(ECDSA.recover(signedHash, signature) == account, "MD: Invalid signature");
-        require(!isClaimed(index), "MD: Drop already claimed");
-
-        // Mark it claimed and send the token.
-        _setClaimed(index);
+        _invalidate(index);
         IERC20(token).safeTransfer(receiver, amount);
         emit Claimed(index, account, amount);
     }
 
-    function verify(bytes calldata proof, bytes16 root, bytes16 leaf) public view returns (bool valid, uint256 index) {
+    function _invalidate(uint256 index) private {
+        uint256 claimedWordIndex = index >> 8;
+        uint256 claimedBitIndex = index & 0xff;
+        uint256 claimedWord = _claimedBitMap[claimedWordIndex];
+        uint256 newClaimedWord = claimedWord | (1 << claimedBitIndex);
+        require(claimedWord != newClaimedWord, "MD: Drop already claimed");
+        _claimedBitMap[claimedWordIndex] = newClaimedWord;
+    }
+
+    function verify(bytes calldata proof, bytes16 root, bytes16 leaf) external view returns (bool valid, uint256 index) {
         return _verifyAsm(proof, root, leaf);
     }
 
