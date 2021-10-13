@@ -13,20 +13,20 @@ repos:
    hooks:
     - id: lint-sol
       name: 'lint solidity sol'
-      entry: /usr/bin/env bash -c "cd solidity-v1 && npm run lint:sol"
+      entry: /usr/bin/env bash -c "cd solidity/random-beacon && npm run lint:sol"
       files: '\.sol$'
       language: script
       description: "Checks solidity code according to the package's linter configuration"
     - id: lint-eslint
       name: 'lint solidity ts/js'
       entry: /usr/bin/env bash -c "cd solidity/random-beacon && npm run lint:eslint"
-      files: 'solidity/random-beacon\/.*'
+      files: '\.(ts|js)$'
       language: script
       description: "Checks TS/JS code according to the package's linter configuration"
     - id: lint-config
       name: 'lint solidity json/yaml'
       entry: /usr/bin/env bash -c "cd solidity/random-beacon && npm run lint:config"
-      files: 'solidity/random-beacon\/.*'
+      files: '\.(json|yaml)$'
       language: script
       description: "Checks JSON/YAML code according to the package's linter configuration"
     - id: lint-js-v1
