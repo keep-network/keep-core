@@ -359,4 +359,9 @@ contract RandomBeacon is Ownable {
             dkgResult.signingMemberIndices
         );
     }
+
+    /// @notice Check if DKG is currently in progress.
+    function isDkgInProgress() external view returns (bool) {
+        return dkg.isInProgress();
+    }
 }
