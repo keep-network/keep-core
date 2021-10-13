@@ -15,7 +15,7 @@ library DKG {
     uint256 offchainDkgTime;
     // Time in blocks after which the next group member is eligible
     // to submit DKG result.
-    uint256 resultPublicationBlockStep;
+    uint256 resultSubmissionEligibilityDelay;
     // Size of a group in the threshold relay.
     uint256 groupSize;
     // The minimum number of signatures required to support DKG result.
@@ -48,7 +48,7 @@ library DKG {
     address[] members;
   }
 
-  function start(Data storage self, uint256 resultPublicationBlockStep)
+  function start(Data storage self, uint256 resultSubmissionEligibilityDelay)
     internal
   {
     assert(self.groupSize > 0);
@@ -58,11 +58,11 @@ library DKG {
     require(!isInProgress(self), "dkg is currently in progress");
 
     require(
-      resultPublicationBlockStep > 0,
-      "resultPublicationBlockStep not set"
+      resultSubmissionEligibilityDelay > 0,
+      "resultSubmissionEligibilityDelay not set"
     );
 
-    self.resultPublicationBlockStep = resultPublicationBlockStep;
+    self.resultSubmissionEligibilityDelay = resultSubmissionEligibilityDelay;
 
     self.startBlock = block.number;
   }
@@ -80,7 +80,7 @@ library DKG {
     );
 
     assert(self.startBlock > 0);
-    assert(self.resultPublicationBlockStep > 0);
+    assert(self.resultSubmissionEligibilityDelay > 0);
 
     verify(
       self,
@@ -139,7 +139,7 @@ library DKG {
     uint256 T_init = groupSelectionEndBlock + self.offchainDkgTime;
     require(
       block.number >=
-        (T_init + (submitterMemberIndex - 1) * self.resultPublicationBlockStep),
+        (T_init + (submitterMemberIndex - 1) * self.resultSubmissionEligibilityDelay),
       "Submitter not eligible"
     );
 
