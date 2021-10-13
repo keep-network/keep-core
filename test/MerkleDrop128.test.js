@@ -64,14 +64,14 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
         it('Should transfer money to another wallet', async function () {
             const data = MerkleTree.bufferToHex(keccak256(w1));
             const signature = ethSigUtil.personalSign(this.account.getPrivateKey(), { data });
-            await this.drop.claim(w1, this.account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature);
+            await this.drop.claim(w1, 1, this.proofs[findSortedIndex(this, 0)], signature);
         });
 
         it('Should disallow invalid proof', async function () {
             const data = MerkleTree.bufferToHex(keccak256(w1));
             const signature = ethSigUtil.personalSign(this.account.getPrivateKey(), { data });
             await expectRevert(
-                this.drop.claim(w1, this.account.getAddressString(), 1, '0x', signature),
+                this.drop.claim(w1, 1, '0x', signature),
                 'MD: Invalid proof');
         });
 
@@ -79,14 +79,14 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
             const data = MerkleTree.bufferToHex(keccak256(w1));
             const signature = ethSigUtil.personalSign(this.account.getPrivateKey(), { data });
             await expectRevert(
-                this.drop.claim(w2, this.account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature),
-                'MD: Invalid signature');
+                this.drop.claim(w2, 1, this.proofs[findSortedIndex(this, 0)], signature),
+                'MD: Invalid proof');
         });
 
         it('Should disallow double claim', async function () {
             const data = MerkleTree.bufferToHex(keccak256(w1));
             const signature = ethSigUtil.personalSign(this.account.getPrivateKey(), { data });
-            const fn = () => this.drop.claim(w1, this.account.getAddressString(), 1, this.proofs[findSortedIndex(this, 0)], signature);
+            const fn = () => this.drop.claim(w1, 1, this.proofs[findSortedIndex(this, 0)], signature);
             await fn();
             await expectRevert(fn(), 'MD: Drop already claimed');
         });

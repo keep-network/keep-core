@@ -15,5 +15,5 @@ interface IMerkleDrop128 {
     // Returns the tree depth of the merkle tree containing account balances available to claim.
     function depth() external view returns (uint256);
     // Claim the given amount of the token to the given address. Reverts if the inputs are invalid.
-    function claim(address receiver, address account, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external;
+    function claim(address receiver, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external;
 }

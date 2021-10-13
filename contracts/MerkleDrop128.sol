@@ -28,13 +28,13 @@ contract MerkleDrop128 is IMerkleDrop128 {
         depth = depth_;
     }
 
-    function claim(address receiver, address account, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external override {
+    function claim(address receiver, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external override {
+        bytes32 signedHash = ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(receiver)));
+        address account = ECDSA.recover(signedHash, signature);
         // Verify the merkle proof.
         bytes16 node = bytes16(keccak256(abi.encodePacked(account, amount)));
         (bool valid, uint256 index) = _verifyAsm(merkleProof, merkleRoot, node);
         require(valid, "MD: Invalid proof");
-        bytes32 signedHash = ECDSA.toEthSignedMessageHash(keccak256(abi.encodePacked(receiver)));
-        require(ECDSA.recover(signedHash, signature) == account, "MD: Invalid signature");
         _invalidate(index);
         IERC20(token).safeTransfer(receiver, amount);
         emit Claimed(index, account, amount);
