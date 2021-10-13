@@ -39,6 +39,10 @@ contract MerkleDrop128 is IMerkleDrop128 {
         IERC20(token).safeTransfer(receiver, amount);
     }
 
+    function verify(bytes calldata proof, bytes16 root, bytes16 leaf) external view returns (bool valid, uint256 index) {
+        return _verifyAsm(proof, root, leaf);
+    }
+
     function _invalidate(uint256 index) private {
         uint256 claimedWordIndex = index >> 8;
         uint256 claimedBitIndex = index & 0xff;
@@ -46,10 +50,6 @@ contract MerkleDrop128 is IMerkleDrop128 {
         uint256 newClaimedWord = claimedWord | (1 << claimedBitIndex);
         require(claimedWord != newClaimedWord, "MD: Drop already claimed");
         _claimedBitMap[claimedWordIndex] = newClaimedWord;
-    }
-
-    function verify(bytes calldata proof, bytes16 root, bytes16 leaf) external view returns (bool valid, uint256 index) {
-        return _verifyAsm(proof, root, leaf);
     }
 
     function _verifyAsm(bytes calldata proof, bytes16 root, bytes16 leaf) private view returns (bool valid, uint256 index) {
@@ -81,10 +81,7 @@ contract MerkleDrop128 is IMerkleDrop128 {
             valid := iszero(shr(128, xor(root, leaf)))
         }
         unchecked {
-            uint256 extraDepth = depth - proof.length / 16;
-            if (extraDepth > 0) {
-                index <<= extraDepth;
-            }
+            index <<= depth - proof.length / 16;
         }
     }
 }
