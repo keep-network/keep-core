@@ -37,7 +37,6 @@ contract MerkleDrop128 is IMerkleDrop128 {
         require(valid, "MD: Invalid proof");
         _invalidate(index);
         IERC20(token).safeTransfer(receiver, amount);
-        emit Claimed(index, account, amount);
     }
 
     function _invalidate(uint256 index) private {
