@@ -126,6 +126,11 @@ const IncreaseWithdrawalModal = ({
     withdrawalInitiatedTimestamp
   )
 
+  const withdrawalInfoTitle =
+    pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.EXPIRED
+      ? "Your new withdrawal amount"
+      : "You are about to withdraw"
+
   return (
     <ModalWithOverview
       className={`${className} withdraw-modal__main-container`}
@@ -149,13 +154,16 @@ const IncreaseWithdrawalModal = ({
       <OnlyIf condition={step === 2}>
         <WithdrawalInfo
           transactionFinished={transactionFinished}
-          containerTitle={"Your new withdrawal amount"}
+          containerTitle={withdrawalInfoTitle}
           submitBtnText={"withdraw"}
           onBtnClick={onSubmit}
           onCancel={onCancel}
           amount={add(pendingWithdrawalBalance, amount)}
+          pendingWithdrawalBalance={pendingWithdrawalBalance}
+          addedAmount={amount}
           totalValueLocked={totalValueLocked}
           covTotalSupply={covTotalSupply}
+          pendingWithdrawalState={pendingWithdrawalState}
         >
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Exchange Rate&nbsp;</h4>
