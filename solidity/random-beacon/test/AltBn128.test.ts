@@ -20,18 +20,18 @@ describe("AltBn128", () => {
   })
 
   describe("g1Unmarshal", async () => {
-    it("does not accept less than 64 bytes", async () => {
+    it("should not accept less than 64 bytes", async () => {
       await expect(
         testAltBn128.publicG1Unmarshal(g1.slice(0, -2))
       ).to.be.revertedWith("Invalid G1 bytes length")
     })
 
-    it("does accept 64 bytes", async () => {
+    it("should accept 64 bytes", async () => {
       await testAltBn128.publicG1Unmarshal(g1)
       // ok, no revert
     })
 
-    it("does not accept more than 64 bytes", async () => {
+    it("should not accept more than 64 bytes", async () => {
       await expect(
         testAltBn128.publicG1Unmarshal(g1 + "ff")
       ).to.be.revertedWith("Invalid G1 bytes length")
@@ -39,18 +39,18 @@ describe("AltBn128", () => {
   })
 
   describe("g2Unmarshal", async () => {
-    it("does not accept less than 128 bytes", async () => {
+    it("should not accept less than 128 bytes", async () => {
       await expect(
         testAltBn128.publicG2Unmarshal(g2.slice(0, -2))
       ).to.be.revertedWith("Invalid G2 bytes length")
     })
 
-    it("does accept 128 bytes", async () => {
+    it("should accept 128 bytes", async () => {
       await testAltBn128.publicG2Unmarshal(g2)
       // ok, no revert
     })
 
-    it("does not accept more than 128 bytes", async () => {
+    it("should not accept more than 128 bytes", async () => {
       await expect(
         testAltBn128.publicG2Unmarshal(g2 + "ff")
       ).to.be.revertedWith("Invalid G2 bytes length")
@@ -58,18 +58,18 @@ describe("AltBn128", () => {
   })
 
   describe("g2Decompress", async () => {
-    it("does not accept less than 64 bytes", async () => {
+    it("should not accept less than 64 bytes", async () => {
       await expect(
         testAltBn128.publicG2Decompress(g2Compressed.slice(0, -2))
       ).to.be.revertedWith("Invalid G2 compressed bytes length")
     })
 
-    it("does accept 64 bytes", async () => {
+    it("should accept 64 bytes", async () => {
       await testAltBn128.publicG2Decompress(g2Compressed)
       // ok, no revert
     })
 
-    it("does not accept more than 64 bytes", async () => {
+    it("should not accept more than 64 bytes", async () => {
       await expect(
         testAltBn128.publicG2Decompress(g2Compressed + "ff")
       ).to.be.revertedWith("Invalid G2 compressed bytes length")
