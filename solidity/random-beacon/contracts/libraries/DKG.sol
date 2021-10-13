@@ -82,7 +82,6 @@ library DKG {
       "result was already submitted in the current dkg"
     );
 
-    assert(self.startBlock > 0);
     assert(self.resultSubmissionEligibilityDelay > 0);
 
     verify(
