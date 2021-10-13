@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: MIT
-//
-// Copy of https://github.com/keep-network/keep-core/blob/main/solidity-v1/contracts/stubs/TestModUtils.sol
-// adjusted to Solidity 8.
 pragma solidity ^0.8.6;
 
 import "../libraries/ModUtils.sol";

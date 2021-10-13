@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: MIT
-//
-// Copy of https://github.com/keep-network/keep-core/blob/main/solidity-v1/contracts/utils/ModUtils.sol
-// adjusted to Solidity 8.
 pragma solidity ^0.8.6;
 
 library ModUtils {
-    /**
-     * @dev Wrap the modular exponent pre-compile introduced in Byzantium.
-     * Returns base^exponent mod p.
-     */
+    
+    /// @dev Wraps the modular exponent pre-compile introduced in Byzantium.
+    ///      Returns base^exponent mod p.
     function modExp(
         uint256 base,
         uint256 exponent,
@@ -35,11 +31,9 @@ library ModUtils {
         }
     }
 
-    /**
-     * @dev Calculates and returns the square root of a mod p if such a square
-     * root exists. The modulus p must be an odd prime. If a square root does
-     * not exist, function returns 0.
-     */
+    /// @dev Calculates and returns the square root of a mod p if such a square
+    ///      root exists. The modulus p must be an odd prime. If a square root 
+    ///      does not exist, function returns 0.
     function modSqrt(uint256 a, uint256 p) internal view returns (uint256) {
         if (legendre(a, p) != 1) {
             return 0;
@@ -98,12 +92,10 @@ library ModUtils {
             r = m;
         }
     }
-
-    /**
-     * @dev Calculates the Legendre symbol of the given a mod p.
-     * @return Returns 1 if a is a quadratic residue mod p, -1 if it is
-     * a non-quadratic residue, and 0 if a is 0.
-     */
+    
+    /// @dev Calculates the Legendre symbol of the given a mod p.
+    /// @return Returns 1 if a is a quadratic residue mod p, -1 if it is
+    ///         a non-quadratic residue, and 0 if a is 0.    
     function legendre(uint256 a, uint256 p) internal view returns (int256) {
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
 

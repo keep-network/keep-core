@@ -1,18 +1,13 @@
 // SPDX-License-Identifier: MIT
-//
-// Copy of https://github.com/keep-network/keep-core/blob/main/solidity-v1/contracts/cryptography/AltBn128.sol
-// adjusted to Solidity 8.
 pragma solidity ^0.8.6;
 
 import "./ModUtils.sol";
 
-/**
- * @title Operations on alt_bn128
- * @dev Implementations of common elliptic curve operations on Ethereum's
- * (poorly named) alt_bn128 curve. Whenever possible, use post-Byzantium
- * pre-compiled contracts to offset gas costs. Note that these pre-compiles
- * might not be available on all (eg private) chains.
- */
+/// @title Operations on alt_bn128
+/// @dev Implementations of common elliptic curve operations on Ethereum's
+///      (poorly named) alt_bn128 curve. Whenever possible, use post-Byzantium
+///      pre-compiled contracts to offset gas costs. Note that these
+///      pre-compiles might not be available on all (eg private) chains.
 library AltBn128 {
     using ModUtils for uint256;
 
@@ -22,7 +17,8 @@ library AltBn128 {
         uint256 y;
     }
 
-    // gfP2 implements a field of size p² as a quadratic extension of the base field.
+    // gfP2 implements a field of size p² as a quadratic extension of the base
+    // field.
     struct gfP2 {
         uint256 x;
         uint256 y;
@@ -43,21 +39,18 @@ library AltBn128 {
         return p;
     }
 
-    /**
-     * @dev Gets generator of G1 group.
-     * Taken from go-ethereum/crypto/bn256/cloudflare/curve.go
-     */
+    
+    /// @dev Gets generator of G1 group.
+    ///      Taken from go-ethereum/crypto/bn256/cloudflare/curve.go     
     uint256 constant g1x = 1;
     uint256 constant g1y = 2;
 
     function g1() internal pure returns (G1Point memory) {
         return G1Point(g1x, g1y);
     }
-
-    /**
-     * @dev Gets generator of G2 group.
-     * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
-     */
+    
+    /// @dev Gets generator of G2 group.
+    ///      Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
     uint256 constant g2xx =
         11559732032986387107991004021392285783925812861821192530917403151452391805634;
     uint256 constant g2xy =
@@ -71,10 +64,8 @@ library AltBn128 {
         return G2Point(gfP2(g2xx, g2xy), gfP2(g2yx, g2yy));
     }
 
-    /**
-     * @dev Gets twist curve B constant.
-     * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
-     */
+    /// @dev Gets twist curve B constant.
+    ///      Taken from go-ethereum/crypto/bn256/cloudflare/twist.go    
     uint256 constant twistBx =
         266929791119991161246907387137283842545076965332900288569378510910307636690;
     uint256 constant twistBy =
@@ -84,9 +75,7 @@ library AltBn128 {
         return gfP2(twistBx, twistBy);
     }
 
-    /**
-     * @dev Gets root of the point where x and y are equal.
-     */
+    /// @dev Gets root of the point where x and y are equal.    
     uint256 constant hexRootX =
         21573744529824266246521972077326577680729363968861965890554801909984373949499;
     uint256 constant hexRootY =
@@ -96,22 +85,18 @@ library AltBn128 {
         return gfP2(hexRootX, hexRootY);
     }
 
-    /**
-     * @dev g1YFromX computes a Y value for a G1 point based on an X value.
-     * This computation is simply evaluating the curve equation for Y on a
-     * given X, and allows a point on the curve to be represented by just
-     * an X value + a sign bit.
-     */
+    /// @dev g1YFromX computes a Y value for a G1 point based on an X value.
+    ///      This computation is simply evaluating the curve equation for Y on a
+    ///      given X, and allows a point on the curve to be represented by just
+    ///      an X value + a sign bit.    
     function g1YFromX(uint256 x) internal view returns (uint256) {
         return ((x.modExp(3, p) + 3) % p).modSqrt(p);
     }
-
-    /**
-     * @dev g2YFromX computes a Y value for a G2 point based on an X value.
-     * This computation is simply evaluating the curve equation for Y on a
-     * given X, and allows a point on the curve to be represented by just
-     * an X value + a sign bit.
-     */
+    
+    /// @dev g2YFromX computes a Y value for a G2 point based on an X value.
+    ///      This computation is simply evaluating the curve equation for Y on a
+    ///      given X, and allows a point on the curve to be represented by just
+    ///      an X value + a sign bit.     
     function g2YFromX(gfP2 memory _x) internal pure returns (gfP2 memory y) {
         (uint256 xx, uint256 xy) = _gfP2CubeAddTwistB(_x.x, _x.y);
 
@@ -134,12 +119,10 @@ library AltBn128 {
         }
     }
 
-    /**
-     * @dev Hash a byte array message, m, and map it deterministically to a
-     * point on G1. Note that this approach was chosen for its simplicity /
-     * lower gas cost on the EVM, rather than good distribution of points on
-     * G1.
-     */
+    /// @dev Hash a byte array message, m, and map it deterministically to a
+    ///      point on G1. Note that this approach was chosen for its simplicity
+    ///      and lower gas cost on the EVM, rather than good distribution of
+    ///      points on G1.
     function g1HashToPoint(bytes memory m)
         internal
         view
@@ -158,17 +141,13 @@ library AltBn128 {
         }
     }
 
-    /**
-     * @dev Calculates whether the provided number is even or odd.
-     * @return 0x01 if y is an even number and 0x00 if it's odd.
-     */
+    /// @dev Calculates whether the provided number is even or odd.
+    /// @return 0x01 if y is an even number and 0x00 if it's odd.   
     function parity(uint256 value) private pure returns (bytes1) {
         return bytes32(value)[31] & 0x01;
     }
-
-    /**
-     * @dev Compress a point on G1 to a single uint256 for serialization.
-     */
+    
+    /// @dev Compress a point on G1 to a single uint256 for serialization.
     function g1Compress(G1Point memory point) internal pure returns (bytes32) {
         bytes32 m = bytes32(point.x);
 
@@ -178,10 +157,8 @@ library AltBn128 {
 
         return m;
     }
-
-    /**
-     * @dev Compress a point on G2 to a pair of uint256 for serialization.
-     */
+    
+    /// @dev Compress a point on G2 to a pair of uint256 for serialization.
     function g2Compress(G2Point memory point)
         internal
         pure
@@ -196,9 +173,7 @@ library AltBn128 {
         return abi.encodePacked(m, bytes32(point.x.y));
     }
 
-    /**
-     * @dev Decompress a point on G1 from a single uint256.
-     */
+    /// @dev Decompress a point on G1 from a single uint256.    
     function g1Decompress(bytes32 m) internal view returns (G1Point memory) {
         bytes32 mX = bytes32(0);
         bytes1 leadX = m[0] & 0x7f;
@@ -217,9 +192,7 @@ library AltBn128 {
         return G1Point(x, y);
     }
 
-    /**
-     * @dev Unmarshals a point on G1 from bytes in an uncompressed form.
-     */
+    /// @dev Unmarshals a point on G1 from bytes in an uncompressed form.    
     function g1Unmarshal(bytes memory m)
         internal
         pure
@@ -239,9 +212,7 @@ library AltBn128 {
         return G1Point(uint256(x), uint256(y));
     }
 
-    /**
-     * @dev Marshals a point on G1 to bytes form.
-     */
+    /// @dev Marshals a point on G1 to bytes form.    
     function g1Marshal(G1Point memory point)
         internal
         pure
@@ -260,9 +231,7 @@ library AltBn128 {
         return m;
     }
 
-    /**
-     * @dev Unmarshals a point on G2 from bytes in an uncompressed form.
-     */
+    /// @dev Unmarshals a point on G2 from bytes in an uncompressed form.    
     function g2Unmarshal(bytes memory m)
         internal
         pure
@@ -286,9 +255,7 @@ library AltBn128 {
         return G2Point(gfP2(xx, xy), gfP2(yx, yy));
     }
 
-    /**
-     * @dev Decompress a point on G2 from a pair of uint256.
-     */
+    /// @dev Decompress a point on G2 from a pair of uint256.    
     function g2Decompress(bytes memory m)
         internal
         pure
@@ -325,11 +292,9 @@ library AltBn128 {
         return G2Point(x, y);
     }
 
-    /**
-     * @dev Wrap the point addition pre-compile introduced in Byzantium. Return
-     * the sum of two points on G1. Revert if the provided points aren't on the
-     * curve.
-     */
+    /// @dev Wraps the point addition pre-compile introduced in Byzantium. 
+    ///      Returns the sum of two points on G1. Revert if the provided points 
+    ///      are not on the curve.
     function g1Add(G1Point memory a, G1Point memory b)
         internal
         view
@@ -349,9 +314,7 @@ library AltBn128 {
         }
     }
 
-    /**
-     * @dev Return the sum of two gfP2 field elements.
-     */
+    /// @dev Returns the sum of two gfP2 field elements.    
     function gfP2Add(gfP2 memory a, gfP2 memory b)
         internal
         pure
@@ -360,9 +323,7 @@ library AltBn128 {
         return gfP2(addmod(a.x, b.x, p), addmod(a.y, b.y, p));
     }
 
-    /**
-     * @dev Return multiplication of two gfP2 field elements.
-     */
+    /// @dev Returns multiplication of two gfP2 field elements.    
     function gfP2Multiply(gfP2 memory a, gfP2 memory b)
         internal
         pure
@@ -375,9 +336,7 @@ library AltBn128 {
             );
     }
 
-    /**
-     * @dev Return gfP2 element to the power of the provided exponent.
-     */
+    /// @dev Returns gfP2 element to the power of the provided exponent.
     function gfP2Pow(gfP2 memory _a, uint256 _exp)
         internal
         pure
@@ -404,9 +363,7 @@ library AltBn128 {
         return gfP2(x, y);
     }
 
-    /**
-     * @dev Return true if G2 point's y^2 equals x.
-     */
+    /// @dev Returns true if G2 point's y^2 equals x.
     function g2X2y(gfP2 memory x, gfP2 memory y) internal pure returns (bool) {
         gfP2 memory y2;
         y2 = gfP2Square(y);
@@ -414,9 +371,7 @@ library AltBn128 {
         return (y2.x == x.x && y2.y == x.y);
     }
 
-    /**
-     * @dev Return true if G1 point is on the curve.
-     */
+    /// @dev Returns true if G1 point is on the curve.    
     function isG1PointOnCurve(G1Point memory point)
         internal
         view
@@ -425,9 +380,7 @@ library AltBn128 {
         return point.y.modExp(2, p) == (point.x.modExp(3, p) + 3) % p;
     }
 
-    /**
-     * @dev Return true if G2 point is on the curve.
-     */
+    /// @dev Returns true if G2 point is on the curve.    
     function isG2PointOnCurve(G2Point memory point)
         internal
         pure
@@ -439,12 +392,10 @@ library AltBn128 {
         return (y2x == x3x && y2y == x3y);
     }
 
-    /**
-     * @dev Wrap the scalar point multiplication pre-compile introduced in
-     * Byzantium. The result of a point from G1 multiplied by a scalar should
-     * match the point added to itself the same number of times. Revert if the
-     * provided point isn't on the curve.
-     */
+    /// @dev Wraps the scalar point multiplication pre-compile introduced in
+    ///      Byzantium. The result of a point from G1 multiplied by a scalar 
+    ///      should match the point added to itself the same number of times. 
+    ///      Revert if the provided point isn't on the curve.
     function scalarMultiply(G1Point memory p_1, uint256 scalar)
         internal
         view
@@ -462,10 +413,9 @@ library AltBn128 {
         }
     }
 
-    /**
-     * @dev Wrap the pairing check pre-compile introduced in Byzantium. Return
-     * the result of a pairing check of 2 pairs (G1 p1, G2 p2) (G1 p3, G2 p4)
-     */
+    /// @dev Wraps the pairing check pre-compile introduced in Byzantium.
+    ///      Returns the result of a pairing check of 2 pairs
+    ///      (G1 p1, G2 p2) (G1 p3, G2 p4)
     function pairing(
         G1Point memory p1,
         G2Point memory p2,
