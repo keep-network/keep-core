@@ -1,13 +1,16 @@
-import { ethers } from "hardhat"
-import { Signer, Contract } from "ethers"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { helpers } from "hardhat"
+import { randomBeaconDeployment } from "./fixtures"
+
+import type { Signer } from "ethers"
+import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
+
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
   let thirdParty: Signer
-  let randomBeacon: Contract
-  let randomBeaconGovernance: Contract
+  let randomBeacon: RandomBeacon
+  let randomBeaconGovernance: RandomBeaconGovernance
 
   const initialRelayRequestFee = 100000
   const initialRelayEntrySubmissionEligibilityDelay = 10
@@ -22,20 +25,14 @@ describe("RandomBeaconGovernance", () => {
   const initialRelayEntrySubmissionFailureSlashingAmount = 1000
   const initialMaliciousDkgResultSlashingAmount = 1000000000
 
+  before(async function () {
+    ;[governance, thirdParty] = await ethers.getSigners()
+  })
+
   beforeEach(async () => {
-    const signers = await ethers.getSigners()
-    governance = signers[0]
-    thirdParty = signers[1]
+    const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
-    const SortitionPoolStub = await ethers.getContractFactory(
-      "SortitionPoolStub"
-    )
-    const sortitionPoolStub = await SortitionPoolStub.deploy()
-    await sortitionPoolStub.deployed()
-
-    const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
-    randomBeacon = await RandomBeacon.deploy(sortitionPoolStub.address)
-    await randomBeacon.deployed()
+    randomBeacon = contracts.randomBeacon as RandomBeacon
 
     await randomBeacon.connect(governance).updateRelayEntryParameters(
       initialRelayRequestFee,

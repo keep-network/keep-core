@@ -557,9 +557,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
-"@keep-network/hardhat-helpers@https://github.com/keep-network/hardhat-helpers#ed35ab7":
-  version "0.2.0-pre.2"
-  resolved "https://github.com/keep-network/hardhat-helpers#ed35ab741bede1730333217922065f65a997f840"
+"@keep-network/hardhat-helpers@^0.2.0-pre.4":
+  version "0.2.0-pre.4"
+  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.2.0-pre.4.tgz#692ca5096b2f40aca83c0d1629e2103e7cd8e3d9"
+  integrity sha512-g77I9irZueqxljBo8xJ4J0EpVhWFq+yo1FPe8lAl9udSc4RQ69oyBNSLOZf92YA3DVWakmq0ZQ9RRGX/+8YPYw==
 
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.0":
   version "0.1.0-pre.0"
@@ -877,10 +878,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.25.tgz#882bea2ca0d2ec22126b92b4dd2dc24b35a07469"
   integrity sha512-hcTWqk7DR/HrN9Xe7AlJwuCaL13Vcd9/g/T54YrJz4Q3ESM5mr33YCzW2bOfzSIc3aZMeGBvbLGvgN6mIJ0I5Q==
 
-"@types/node@^16.9.6":
-  version "16.9.6"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.9.6.tgz#040a64d7faf9e5d9e940357125f0963012e66f04"
-  integrity sha512-YHUZhBOMTM3mjFkXVcK+WwAcYmyhe1wL4lfqNtzI0b3qAy7yuSetnM7QJazgE5PFmgVTNGiLOgRFfJMqW7XpSQ==
+"@types/node@^16.10.5":
+  version "16.10.5"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.10.5.tgz#7fe4123b061753f1a58a6cd077ff0bb069ee752d"
+  integrity sha512-9iI3OOlkyOjLQQ9s+itIJNMRepDhB/96jW3fqduJ2FTPQj1dJjw6Q3QCImF9FE1wmdBs5QSun4FjDSFS8d8JLw==
 
 "@types/node@^8.0.0":
   version "8.10.66"
