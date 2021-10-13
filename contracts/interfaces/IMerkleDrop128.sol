@@ -13,4 +13,6 @@ interface IMerkleDrop128 {
     function depth() external view returns (uint256);
     // Claim the given amount of the token to the given address. Reverts if the inputs are invalid.
     function claim(address receiver, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external;
+    // Verifies that given leaf and merkle proof matches given merkle root and returns leaf index.
+    function verify(bytes calldata proof, bytes16 root, bytes16 leaf) external view returns (bool valid, uint256 index);
 }
