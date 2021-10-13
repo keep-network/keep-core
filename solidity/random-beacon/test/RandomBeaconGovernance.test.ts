@@ -1,7 +1,6 @@
-import { ethers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { Signer, Contract } from "ethers"
 import { expect } from "chai"
-import { helpers } from "hardhat"
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
