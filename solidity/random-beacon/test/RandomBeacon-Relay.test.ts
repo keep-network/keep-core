@@ -58,7 +58,7 @@ describe("RandomBeacon - Relay", function () {
         })
 
         context("when the requester doesn't pay the relay request fee", () => {
-          it.only("should revert", async () => {
+          it("should revert", async () => {
             await expect(
               randomBeacon.connect(requester).requestRelayEntry(blsData.previousEntry)
             ).to.be.revertedWith("Transfer amount exceeds allowance")
@@ -81,8 +81,58 @@ describe("RandomBeacon - Relay", function () {
     })
 
     context("when no groups exist", () => {
-      it("should revert", () => {
+      it("should revert", async () => {
         // TODO: Implement once proper `selectGroup` is ready.
+      })
+    })
+  })
+
+  describe("submitRelayEntry", () => {
+    context("when relay request is in progress", () => {
+      context("when relay entry is not timed out", () => {
+        context("when submitter index is valid", () => {
+          context("when entry is valid", () => {
+            context("when submitter is eligible", () => {
+
+            })
+
+            context("when submitter is not eligible", () => {
+              it("should revert", async () => {
+
+              })
+            })
+          })
+
+          context("when entry is not valid", () => {
+            it("should revert", async () => {
+
+            })
+          })
+        })
+
+        context("when submitter index is beyond valid range", () => {
+          it("should revert", async () => {
+
+          })
+        })
+
+        context("when submitter index does not correspond to sender address", () => {
+          it("should revert", async () => {
+
+          })
+        })
+      })
+
+      context("when relay entry is timed out", () => {
+        it("should revert", async () => {
+
+        })
+      })
+    })
+
+    context("when relay request is not in progress", () => {
+      it("should revert", async () => {
+
       })
     })
   })
