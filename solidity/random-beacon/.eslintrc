@@ -10,6 +10,7 @@
     "mocha": true
   },
   "rules": {
-    "new-cap": "off"
+    "new-cap": "off",
+    "import/no-extraneous-dependencies": "off"
   }
 }
