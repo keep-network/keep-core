@@ -128,8 +128,6 @@ const IncreaseWithdrawalModal = ({
       className={`${className} withdraw-modal__main-container`}
       pendingWithdrawalBalance={pendingWithdrawalBalance}
       addedAmount={amount}
-      totalValueLocked={totalValueLocked}
-      covTotalSupply={covTotalSupply}
       withdrawalDelay={withdrawalDelay}
       withdrawalTimeout={withdrawalTimeout}
       withdrawalInitiatedTimestamp={withdrawalInitiatedTimestamp}
@@ -201,8 +199,6 @@ const IncreaseWithdrawalModal = ({
 
 const IncreaseWithdrawalModalStep1 = ({
   addedAmount,
-  totalValueLocked,
-  covTotalSupply,
   onSubmit,
   onCancel,
   pendingWithdrawalState,
@@ -270,8 +266,6 @@ const ModalWithOverview = ({
         <h4 className={"mb-1"}>Overview</h4>
         <IncreaseWithdrawalModal.Tile
           amount={pendingWithdrawalBalance}
-          totalValueLocked={totalValueLocked}
-          covTotalSupply={covTotalSupply}
           withdrawalDelay={withdrawalDelay}
           withdrawalTimeout={withdrawalTimeout}
           withdrawalInitiatedTimestamp={withdrawalInitiatedTimestamp}
@@ -292,8 +286,6 @@ const ModalWithOverview = ({
         </h4>
         <IncreaseWithdrawalModal.Tile
           amount={add(pendingWithdrawalBalance, addedAmount)}
-          totalValueLocked={totalValueLocked}
-          covTotalSupply={covTotalSupply}
           withdrawalDelay={withdrawalDelay}
           withdrawalTimeout={withdrawalTimeout}
           pendingWithdrawalState={PENDING_WITHDRAWAL_STATUS.NONE}
@@ -306,8 +298,6 @@ const ModalWithOverview = ({
 const IncreaseWithdrawalModalTile = ({
   title,
   amount,
-  totalValueLocked,
-  covTotalSupply,
   withdrawalDelay,
   withdrawalTimeout,
   /** if null then it is a new withdrawal */
