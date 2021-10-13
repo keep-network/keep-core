@@ -1,14 +1,20 @@
 import { waffle } from "hardhat"
-import { testModUtilsDeployment } from "./fixtures"
+import { ethers } from "hardhat"
 import type { TestModUtils } from "../typechain"
 
 describe("ModUtils", () => {
   let testModUtils: TestModUtils
 
-  beforeEach("load test fixture", async function () {
-    const contracts = await waffle.loadFixture(testModUtilsDeployment)
+  const fixture = async function() {
+    const TestModUtils = await ethers.getContractFactory("TestModUtils")
+    const testModUtils = await TestModUtils.deploy()
+    await testModUtils.deployed()
 
-    testModUtils = contracts.testModUtils as TestModUtils
+    return testModUtils
+  }
+
+  beforeEach("load test fixture", async function () {
+    testModUtils = await waffle.loadFixture(fixture)
   })
 
   it("runModExponentTest()", async () => {

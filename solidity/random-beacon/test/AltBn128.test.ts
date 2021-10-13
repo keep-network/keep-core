@@ -1,7 +1,7 @@
 import { waffle } from "hardhat";
-import { testAltBn128Deployment } from "./fixtures";
-import type { TestAltBn128 } from "../typechain";
+import { ethers } from "hardhat"
 import { expect } from "chai"
+import type { TestAltBn128 } from "../typechain";
 
 describe("AltBn128", () => {
   const g1 =
@@ -13,10 +13,16 @@ describe("AltBn128", () => {
 
   let testAltBn128: TestAltBn128
 
-  beforeEach("load test fixture", async function () {
-    const contracts = await waffle.loadFixture(testAltBn128Deployment)
+  const fixture = async function () {
+    const TestAltBn128 = await ethers.getContractFactory("TestAltBn128")
+    const testAltBn128 = await TestAltBn128.deploy()
+    await testAltBn128.deployed()
 
-    testAltBn128 = contracts.testAltBn128 as TestAltBn128
+    return testAltBn128
+  }
+
+  beforeEach("load test fixture", async function () {
+    testAltBn128 = await waffle.loadFixture(fixture)
   })
 
   describe("g1Unmarshal", async () => {
