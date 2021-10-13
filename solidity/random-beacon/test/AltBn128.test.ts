@@ -1,5 +1,4 @@
-import { waffle } from "hardhat";
-import { ethers } from "hardhat"
+import { ethers, waffle } from "hardhat";
 import { expect } from "chai"
 import type { TestAltBn128 } from "../typechain";
 
