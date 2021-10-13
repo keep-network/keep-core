@@ -51,6 +51,18 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
                     account: w1,
                     amount: 1,
                 },
+                {
+                    account: w2,
+                    amount: 1,
+                },
+                {
+                    account: w3,
+                    amount: 1,
+                },
+                {
+                    account: w4,
+                    amount: 1,
+                },
             ];
             const { hashedElements, leaves, root, proofs, drop } = await makeDrop(this.token, accountWithDropValues, 1000000);
             this.hashedElements = hashedElements;
@@ -59,6 +71,14 @@ contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
             this.proofs = proofs;
             this.drop = drop;
             this.account = Wallet.fromPrivateKey(Buffer.from('ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', 'hex'));
+        });
+
+        it('Should enumerate items properly', async function () {
+            for (let i = 0; i < this.proofs.length; i++) {
+                const result = await this.drop.verify(this.proofs[findSortedIndex(this, i)], this.root, this.leaves[findSortedIndex(this, i)]);
+                expect(result.valid).to.be.true;
+                expect(result.index).to.be.bignumber.equal(toBN(findSortedIndex(this, i)));
+            }
         });
 
         it('Should transfer money to another wallet', async function () {
