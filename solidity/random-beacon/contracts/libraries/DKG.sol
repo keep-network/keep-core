@@ -40,7 +40,7 @@ library DKG {
   }
 
   /// @notice DKG result.
-  struct DkgResult {
+  struct Result {
     // Claimed submitter candidate group member index
     uint256 submitterMemberIndex;
     // Generated candidate group public key
@@ -70,12 +70,10 @@ library DKG {
     self.startBlock = block.number;
   }
 
-  function submitDkgResult(Data storage self, DkgResult calldata dkgResult)
-    external
-  {
+  function submitResult(Data storage self, Result calldata result) external {
     require(isInProgress(self), "dkg is currently not in progress");
 
-    bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
+    bytes32 resultHash = keccak256(abi.encode(result));
 
     require(
       self.submittedResultHash == 0,
@@ -86,15 +84,15 @@ library DKG {
 
     verify(
       self,
-      dkgResult.submitterMemberIndex,
-      dkgResult.groupPubKey,
-      dkgResult.misbehaved,
-      dkgResult.signatures,
-      dkgResult.signingMemberIndices,
-      dkgResult.members
+      result.submitterMemberIndex,
+      result.groupPubKey,
+      result.misbehaved,
+      result.signatures,
+      result.signingMemberIndices,
+      result.members
     );
 
-    self.submittedResultHash = dkgResultHash;
+    self.submittedResultHash = resultHash;
     self.submittedResultBlock = block.number;
   }
 
