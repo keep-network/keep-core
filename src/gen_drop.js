@@ -18,7 +18,7 @@ function makeDrop (wallets, amounts) {
     return { hashedElements, leaves, root, proofs };
 }
 
-const json = JSON.parse(fs.readFileSync('src/example.json', { encoding: 'utf8' }));
+const json = JSON.parse(fs.readFileSync('drop_data.json', { encoding: 'utf8' }));
 if (typeof json !== 'object') throw new Error('Invalid JSON');
 
 const drop = makeDrop(Object.keys(json), Object.values(json));
