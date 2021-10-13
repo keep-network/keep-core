@@ -7,10 +7,27 @@ import type {
 } from "../../typechain"
 
 export const constants = {
-  groupSize: 3,
-  signatureThreshold: 2,
-  timeDKG: 13,
-  dkgSubmissionEligibilityDelay: 10
+  groupSize: 64,
+  groupThreshold: 33,
+  signatureThreshold: 48, // groupThreshold + (groupSize - groupThreshold) / 2
+  offchainDkgTime: 72 // 5 * (1 + 5) + 2 * (1 + 10) + 20
+}
+
+export const params = {
+  relayRequestFee: 0,
+  relayEntrySubmissionEligibilityDelay: 10,
+  relayEntryHardTimeout: 5760,
+  callbackGasLimit: 200000,
+  groupCreationFrequency: 10,
+  groupLifeTime: 60 * 60 * 24 * 14, // 2 weeks
+  dkgResultChallengePeriodLength: 1440,
+  dkgResultSubmissionEligibilityDelay: 10,
+  dkgResultSubmissionReward: 0,
+  sortitionPoolUnlockingReward: 0,
+  relayEntrySubmissionFailureSlashingAmount: ethers.BigNumber.from(10)
+    .pow(18)
+    .mul(1000),
+  maliciousDkgResultSlashingAmount: ethers.BigNumber.from(10).pow(18).mul(50000)
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -32,9 +49,16 @@ export async function blsDeployment(): Promise<DeployedContracts> {
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
   const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-  await sortitionPoolStub.deployed()
 
-  const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
+  const DKG = await ethers.getContractFactory("DKG")
+  const dkg = await DKG.deploy()
+
+  const RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
+    libraries: {
+      DKG: dkg.address
+    }
+  })
+
   const randomBeacon: RandomBeacon = await RandomBeacon.deploy(
     sortitionPoolStub.address
   )
