@@ -24,6 +24,10 @@ contract MaintenancePool {
 
     IERC20 public tToken;
 
+    constructor(IERC20 _tToken) {
+        tToken = _tToken;
+    }
+
     function deposit(uint256 amount) external {
         tToken.safeTransferFrom(msg.sender, address(this), amount);
     }
