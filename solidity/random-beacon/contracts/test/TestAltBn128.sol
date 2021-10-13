@@ -305,7 +305,7 @@ contract TestAltBn128 {
         require(result, "Basic pairing check should succeed.");
     }
 
-    function runG1PointMarshalingTest() public view {
+    function runG1PointMarshalingTest() public pure {
         AltBn128.G1Point memory point;
         point
             .x = 656647519899395589093611455851658769732922739162315270379466002146796568126;
