@@ -61,9 +61,9 @@ contract MerkleDrop128 is IMerkleDrop128 {
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x10)
             let ptr := proof.offset
+            let mask := 1
 
             for { let end := add(ptr, proof.length) } lt(ptr, end) { ptr := add(ptr, 0x10) } {
-                index := shl(1, index)
                 let node := calldataload(ptr)
 
                 switch lt(leaf, node)
@@ -74,11 +74,12 @@ contract MerkleDrop128 is IMerkleDrop128 {
                 default {
                     mstore(mem1, node)
                     mstore(mem2, leaf)
-                    index := or(1, index)
+                    index := or(mask, index)
                 }
 
                 leaf := keccak256(mem1, 32)
                 loopDepth := add(loopDepth, 1)
+                mask := shl(1, mask)
             }
 
             valid := iszero(shr(128, xor(root, leaf)))
