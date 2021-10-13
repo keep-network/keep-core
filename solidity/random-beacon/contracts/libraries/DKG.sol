@@ -33,11 +33,10 @@ library DKG {
     uint256 resultSubmissionEligibilityDelay;
     // Time in blocks at which DKG started.
     uint256 startBlock;
-    // Mapping of submitted DKG result hash with submission block number.
-    // This map is not cleaned after each DKG completion, it can hold entires
-    // from past executions. The results should be filtered based on the current
-    // execution's startBlock.
-    mapping(bytes32 => uint256) registeredDkgResults;
+    // Hash of submitted DKG result.
+    bytes32 submittedResultHash;
+    // Block number from the moment of the DKG result submission.
+    uint256 submittedResultBlock;
   }
 
   /// @notice DKG result.
@@ -79,8 +78,8 @@ library DKG {
     bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
 
     require(
-      self.registeredDkgResults[dkgResultHash] < self.startBlock,
-      "this dkg result was already submitted in the current dkg"
+      self.submittedResultHash == 0,
+      "result was already submitted in the current dkg"
     );
 
     assert(self.startBlock > 0);
@@ -97,7 +96,8 @@ library DKG {
       self.startBlock
     );
 
-    self.registeredDkgResults[dkgResultHash] = block.number;
+    self.submittedResultHash = dkgResultHash;
+    self.submittedResultBlock = block.number;
   }
 
   /// @notice Checks if DKG is currently in progress.
