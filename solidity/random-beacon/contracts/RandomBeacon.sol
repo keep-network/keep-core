@@ -228,7 +228,7 @@ contract RandomBeacon is Ownable {
 
         dkg.groupSize = groupSize;
         dkg.signatureThreshold = groupThreshold + (groupSize - groupThreshold) / 2;
-        dkg.offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
+        dkg.offchainDkgTime = offchainDkgTime;
     }
 
     /// @notice Updates the values of relay entry parameters
