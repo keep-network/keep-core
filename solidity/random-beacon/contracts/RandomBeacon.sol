@@ -138,11 +138,14 @@ contract RandomBeacon is Ownable {
         uint256 callbackGasLimit
     );
 
-    event GroupCreationParametersUpdated(
-        uint256 groupCreationFrequency,
-        uint256 groupLifetime,
+    event DkgParametersUpdated(
         uint256 dkgResultChallengePeriodLength,
         uint256 dkgResultSubmissionEligibilityDelay
+    );
+
+    event GroupCreationParametersUpdated(
+        uint256 groupCreationFrequency,
+        uint256 groupLifetime
     );
 
     event RewardParametersUpdated(
@@ -219,24 +222,35 @@ contract RandomBeacon is Ownable {
     ///      validating parameters.
     /// @param _groupCreationFrequency New group creation frequency
     /// @param _groupLifetime New group lifetime
+    function updateGroupCreationParameters(
+        uint256 _groupCreationFrequency,
+        uint256 _groupLifetime
+    ) external onlyOwner {
+        groupCreationFrequency = _groupCreationFrequency;
+        groupLifetime = _groupLifetime;
+
+        emit GroupCreationParametersUpdated(
+            groupCreationFrequency,
+            groupLifetime
+        );
+    }
+
+    /// @notice Updates the values of DKG parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
     /// @param _dkgResultChallengePeriodLength New DKG result challenge period
     ///        length
     /// @param _dkgResultSubmissionEligibilityDelay New DKG result submission
     ///        eligibility delay
-    function updateGroupCreationParameters(
-        uint256 _groupCreationFrequency,
-        uint256 _groupLifetime,
+    function updateDkgParameters(
         uint256 _dkgResultChallengePeriodLength,
         uint256 _dkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
-        groupCreationFrequency = _groupCreationFrequency;
-        groupLifetime = _groupLifetime;
         dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
         dkg.setResultSubmissionEligibilityDelay(_dkgResultSubmissionEligibilityDelay);
 
-        emit GroupCreationParametersUpdated(
-            groupCreationFrequency,
-            groupLifetime,
+        emit DkgParametersUpdated(
             dkgResultChallengePeriodLength(),
             dkgResultSubmissionEligibilityDelay()
         );
