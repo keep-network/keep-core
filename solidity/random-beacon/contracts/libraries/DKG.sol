@@ -91,8 +91,7 @@ library DKG {
       dkgResult.misbehaved,
       dkgResult.signatures,
       dkgResult.signingMemberIndices,
-      dkgResult.members,
-      self.startBlock
+      dkgResult.members
     );
 
     self.submittedResultHash = dkgResultHash;
@@ -121,8 +120,6 @@ library DKG {
   /// signature. Indices have to be unique.
   /// @param members Addresses of candidate group members as outputted by the
   /// group selection protocol.
-  /// @param groupSelectionEndBlock Block height at which the group selection
-  /// protocol ended.
   function verify(
     Data storage self,
     uint256 submitterMemberIndex,
@@ -130,8 +127,7 @@ library DKG {
     bytes memory misbehaved,
     bytes memory signatures,
     uint256[] memory signingMemberIndices,
-    address[] memory members,
-    uint256 groupSelectionEndBlock
+    address[] memory members
   ) public view {
     require(submitterMemberIndex > 0, "Invalid submitter index");
     require(
@@ -139,7 +135,7 @@ library DKG {
       "Unexpected submitter index"
     );
 
-    uint256 T_init = groupSelectionEndBlock + offchainDkgTime;
+    uint256 T_init = self.startBlock + offchainDkgTime;
     require(
       block.number >=
         (T_init +
