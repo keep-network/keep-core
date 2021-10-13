@@ -53,8 +53,6 @@ contract MerkleDrop128 is IMerkleDrop128 {
     }
 
     function _verifyAsm(bytes calldata proof, bytes16 root, bytes16 leaf) private view returns (bool valid, uint256 index) {
-        uint256 loopDepth = 0;
-
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
@@ -77,16 +75,15 @@ contract MerkleDrop128 is IMerkleDrop128 {
                 }
 
                 leaf := keccak256(mem1, 32)
-                loopDepth := add(loopDepth, 1)
                 mask := shl(1, mask)
             }
 
             valid := iszero(shr(128, xor(root, leaf)))
         }
-
-        if (loopDepth < depth) {
-            unchecked {
-                index = index << (depth - loopDepth);
+        unchecked {
+            uint256 extraDepth = depth - proof.length / 16;
+            if (extraDepth > 0) {
+                index <<= extraDepth;
             }
         }
     }
