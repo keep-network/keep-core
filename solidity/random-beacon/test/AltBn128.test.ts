@@ -111,6 +111,11 @@ describe("AltBn128", () => {
     // ok, no revert
   })
 
+  it("runG1PointMarshalingTest()", async () => {
+    await testAltBn128.runG1PointMarshalingTest()
+    // ok, no revert
+  })
+
   it("runVerifySignatureTest()", async () => {
     await testAltBn128.runVerifySignatureTest()
     // ok, no revert
