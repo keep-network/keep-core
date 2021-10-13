@@ -23,6 +23,64 @@ library DKG {
     // and it is recommended to make it higher than the signing threshold
     // to keep a safety margin for misbehaving members.
     uint256 signatureThreshold;
+    // Time in blocks at which DKG started.
+    uint256 startBlock;
+    // Mapping of submitted DKG result hash with submission block number.
+    // This map is not cleaned after each DKG completion, it can hold entires
+    // from past executions. The results should be filtered based on the current
+    // execution's startBlock.
+    mapping(bytes32 => uint256) registeredDkgResults;
+  }
+
+  /// @notice DKG result.
+  struct DkgResult {
+    // Claimed submitter candidate group member index
+    uint256 submitterMemberIndex;
+    // Generated candidate group public key
+    bytes groupPubKey;
+    // Bytes array of misbehaved (disqualified or inactive)
+    bytes misbehaved;
+    // Concatenation of signatures from members supporting the result.
+    bytes signatures;
+    // Indices of members corresponding to each signature. Indices have to be unique.
+    uint256[] signingMemberIndices;
+    // Addresses of candidate group members as outputted by the group selection protocol.
+    address[] members;
+  }
+
+  function submitDkgResult(Data storage self, DkgResult calldata dkgResult)
+    external
+  {
+    require(isInProgress(self), "dkg is currently not in progress");
+
+    bytes32 dkgResultHash = keccak256(abi.encode(dkgResult));
+
+    require(
+      self.registeredDkgResults[dkgResultHash] < self.startBlock,
+      "this dkg result was already submitted in the current dkg"
+    );
+
+    assert(self.startBlock > 0);
+    assert(self.resultPublicationBlockStep > 0);
+
+    verify(
+      self,
+      dkgResult.submitterMemberIndex,
+      dkgResult.groupPubKey,
+      dkgResult.misbehaved,
+      dkgResult.signatures,
+      dkgResult.signingMemberIndices,
+      dkgResult.members,
+      self.startBlock
+    );
+
+    self.registeredDkgResults[dkgResultHash] = block.number;
+  }
+
+  /// @notice Checks if DKG is currently in progress.
+  /// @return True if DKG is in progress, false otherwise.
+  function isInProgress(Data storage self) public view returns (bool) {
+    return self.startBlock > 0;
   }
 
   /// @notice Verifies the submitted DKG result against supporting member
