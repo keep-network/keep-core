@@ -5,23 +5,33 @@ import { expect } from "chai"
 describe("RandomBeacon", () => {
   let governance: Signer
   let thirdParty: Signer
+  let operator: Signer
   let randomBeacon: Contract
+  let sortitionPoolStub: Contract
 
   beforeEach(async () => {
     const signers = await ethers.getSigners()
     governance = signers[0]
     thirdParty = signers[1]
+    operator = signers[2]
+
+    const SortitionPoolStub = await ethers.getContractFactory(
+      "SortitionPoolStub"
+    )
+    sortitionPoolStub = await SortitionPoolStub.deploy()
+    await sortitionPoolStub.deployed()
 
     const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
-    randomBeacon = await RandomBeacon.deploy()
+    randomBeacon = await RandomBeacon.deploy(sortitionPoolStub.address)
     await randomBeacon.deployed()
   })
 
   describe("updateRelayEntryParameters", () => {
     const relayRequestFee = 100
     const relayEntrySubmissionEligibilityDelay = 200
-    const RelayEntryHardTimeout = 300
+    const relayEntryHardTimeout = 300
     const callbackGasLimit = 400
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -30,7 +40,7 @@ describe("RandomBeacon", () => {
             .updateRelayEntryParameters(
               relayRequestFee,
               relayEntrySubmissionEligibilityDelay,
-              RelayEntryHardTimeout,
+              relayEntryHardTimeout,
               callbackGasLimit
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
@@ -45,7 +55,7 @@ describe("RandomBeacon", () => {
           .updateRelayEntryParameters(
             relayRequestFee,
             relayEntrySubmissionEligibilityDelay,
-            RelayEntryHardTimeout,
+            relayEntryHardTimeout,
             callbackGasLimit
           )
       })
@@ -64,7 +74,7 @@ describe("RandomBeacon", () => {
 
       it("should update the relay entry hard timeout", async () => {
         expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(
-          RelayEntryHardTimeout
+          relayEntryHardTimeout
         )
       })
 
@@ -80,7 +90,7 @@ describe("RandomBeacon", () => {
           .withArgs(
             relayRequestFee,
             relayEntrySubmissionEligibilityDelay,
-            RelayEntryHardTimeout,
+            relayEntryHardTimeout,
             callbackGasLimit
           )
       })
@@ -91,7 +101,8 @@ describe("RandomBeacon", () => {
     const groupCreationFrequency = 100
     const groupLifetime = 200
     const dkgResultChallengePeriodLength = 300
-    const dkgSubmissionEligibilityDelay = 400
+    const dkgResultSubmissionEligibilityDelay = 400
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -101,7 +112,7 @@ describe("RandomBeacon", () => {
               groupCreationFrequency,
               groupLifetime,
               dkgResultChallengePeriodLength,
-              dkgSubmissionEligibilityDelay
+              dkgResultSubmissionEligibilityDelay
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -116,7 +127,7 @@ describe("RandomBeacon", () => {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
-            dkgSubmissionEligibilityDelay
+            dkgResultSubmissionEligibilityDelay
           )
       })
 
@@ -136,10 +147,10 @@ describe("RandomBeacon", () => {
         )
       })
 
-      it("should update the DKG submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgSubmissionEligibilityDelay()).to.be.equal(
-          dkgSubmissionEligibilityDelay
-        )
+      it("should update the DKG result submission eligibility delay", async () => {
+        expect(
+          await randomBeacon.dkgResultSubmissionEligibilityDelay()
+        ).to.be.equal(dkgResultSubmissionEligibilityDelay)
       })
 
       it("should emit the GroupCreationParametersUpdated event", async () => {
@@ -149,7 +160,7 @@ describe("RandomBeacon", () => {
             groupCreationFrequency,
             groupLifetime,
             dkgResultChallengePeriodLength,
-            dkgSubmissionEligibilityDelay
+            dkgResultSubmissionEligibilityDelay
           )
       })
     })
@@ -158,6 +169,7 @@ describe("RandomBeacon", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -205,6 +217,7 @@ describe("RandomBeacon", () => {
   describe("updateSlashingParameters", () => {
     const relayEntrySubmissionFailureSlashingAmount = 100
     const maliciousDkgResultSlashingAmount = 200
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -248,6 +261,63 @@ describe("RandomBeacon", () => {
             relayEntrySubmissionFailureSlashingAmount,
             maliciousDkgResultSlashingAmount
           )
+      })
+    })
+  })
+
+  describe("registerMemberCandidate", () => {
+    context("when the operator is not registered yet", () => {
+      beforeEach(async () => {
+        await randomBeacon.connect(operator).registerMemberCandidate()
+      })
+
+      it("should register the operator", async () => {
+        expect(await sortitionPoolStub.operators(await operator.getAddress()))
+          .to.be.true
+      })
+    })
+
+    context("when the operator is already registered", () => {
+      beforeEach(async () => {
+        await randomBeacon.connect(operator).registerMemberCandidate()
+        await randomBeacon.connect(operator).registerMemberCandidate()
+      })
+
+      it("should keep the operator as registered", async () => {
+        expect(await sortitionPoolStub.operators(await operator.getAddress()))
+          .to.be.true
+      })
+    })
+  })
+
+  describe("isOperatorEligible", () => {
+    context("when the operator is eligible in the sorition pool", () => {
+      beforeEach(async () => {
+        await sortitionPoolStub.setOperatorEligibility(
+          await operator.getAddress(),
+          true
+        )
+      })
+
+      it("should return true", async () => {
+        expect(
+          await randomBeacon.isOperatorEligible(await operator.getAddress())
+        ).to.be.true
+      })
+    })
+
+    context("when the operator is not eligible in the sorition pool", () => {
+      beforeEach(async () => {
+        await sortitionPoolStub.setOperatorEligibility(
+          await operator.getAddress(),
+          false
+        )
+      })
+
+      it("should return false", async () => {
+        expect(
+          await randomBeacon.isOperatorEligible(await operator.getAddress())
+        ).to.be.false
       })
     })
   })

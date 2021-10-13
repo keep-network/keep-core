@@ -138,7 +138,7 @@ func (ucm *unicastChannelManager) getUnicastChannel(
 func (ucm *unicastChannelManager) newUnicastChannel(
 	peerID net.TransportIdentifier,
 ) (*unicastChannel, error) {
-	remotePeer, err := peer.IDB58Decode(peerID.String())
+	remotePeer, err := peer.Decode(peerID.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid peer ID: [%v]", err)
 	}
@@ -159,7 +159,7 @@ func (ucm *unicastChannelManager) newUnicastChannel(
 }
 
 func (ucm *unicastChannelManager) trialHandshake(peerID net.TransportIdentifier) error {
-	remotePeer, err := peer.IDB58Decode(peerID.String())
+	remotePeer, err := peer.Decode(peerID.String())
 	if err != nil {
 		return err
 	}

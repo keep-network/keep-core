@@ -8,7 +8,6 @@ import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "@typechain/hardhat"
-import "@nomiclabs/hardhat-ethers"
 
 const config: HardhatUserConfig = {
   solidity: {

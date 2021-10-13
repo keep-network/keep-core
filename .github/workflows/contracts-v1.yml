@@ -56,18 +56,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "14.x"
-
-      - name: Cache node modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-solidity-node-modules
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          cache: "npm"
+          cache-dependency-path: solidity-v1/package-lock.json
             
       - name: Install dependencies
         run: npm ci
@@ -93,18 +83,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "14.x"
-
-      - name: Cache node modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-solidity-node-modules
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          cache: "npm"
+          cache-dependency-path: solidity-v1/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -132,18 +112,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "14.x"
-
-      - name: Cache node modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-solidity-node-modules
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          cache: "npm"
+          cache-dependency-path: solidity-v1/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -200,6 +170,15 @@ jobs:
         with:
           name: Contracts
           path: ./solidity-v1/build/contracts/*
+
+      - name: Upload files needed for etherscan verification
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts for etherscan verifcation
+          path: |
+            ./solidity-v1/build
+            ./solidity-v1/package.json
+            ./solidity-v1/package-lock.json
 
   contracts-build-and-publish-initcontainer:
     needs: [contracts-migrate-and-publish]
@@ -274,3 +253,39 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  contracts-etherscan-verification:
+    needs: [contracts-migrate-and-publish]
+    if: github.event.inputs.environment != 'alfajores'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity-v1
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download files needed for etherscan verification
+        uses: actions/download-artifact@v2
+        with:
+          name: Artifacts for etherscan verifcation
+          path: ./solidity-v1
+
+      - name: Load environment variables
+        uses: keep-network/ci/actions/load-env-variables@v1
+        with:
+          environment: ${{ github.event.inputs.environment }}
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "npm"
+          cache-dependency-path: solidity-v1/package-lock.json
+
+      - name: Install needed dependencies
+        run: npm ci
+
+      - name: Verify Ethereum contracts on Etherscan
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          TRUFFLE_NETWORK: ${{ env.TRUFFLE_NETWORK}}
+        run: ./scripts/etherscan-verify.sh

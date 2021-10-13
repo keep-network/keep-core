@@ -14,9 +14,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
-	peer "github.com/libp2p/go-libp2p-core/peer"
-	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
@@ -30,6 +30,20 @@ const (
 	messageHandlerThrottle  = 512
 )
 
+type validator interface {
+	RegisterTopicValidator(
+		topic string,
+		val interface{},
+		opts ...pubsub.ValidatorOpt,
+	) error
+
+	UnregisterTopicValidator(topic string) error
+}
+
+type publisher interface {
+	Publish(ctx context.Context, data []byte, opts ...pubsub.PubOpt) error
+}
+
 type channel struct {
 	// channel-scoped atomic counter for sequence numbers
 	//
@@ -42,8 +56,11 @@ type channel struct {
 	clientIdentity *identity
 	peerStore      peerstore.Peerstore
 
-	pubsubMutex sync.Mutex
-	pubsub      *pubsub.PubSub
+	validatorMutex sync.Mutex
+	validator      validator
+
+	publisherMutex sync.Mutex
+	publisher      publisher
 
 	subscription         *pubsub.Subscription
 	incomingMessageQueue chan *pubsub.Message
@@ -79,7 +96,7 @@ func (c *channel) Send(ctx context.Context, message net.TaggedMarshaler) error {
 	messageProto.SequenceNumber = c.nextSeqno()
 
 	doSend := func() error {
-		return c.publishToPubSub(messageProto)
+		return c.publish(messageProto)
 	}
 
 	retransmission.ScheduleRetransmissions(ctx, c.retransmissionTicker, doSend)
@@ -169,16 +186,16 @@ func (c *channel) messageProto(
 	}, nil
 }
 
-func (c *channel) publishToPubSub(message *pb.BroadcastNetworkMessage) error {
+func (c *channel) publish(message *pb.BroadcastNetworkMessage) error {
 	messageBytes, err := message.Marshal()
 	if err != nil {
 		return err
 	}
 
-	c.pubsubMutex.Lock()
-	defer c.pubsubMutex.Unlock()
+	c.publisherMutex.Lock()
+	defer c.publisherMutex.Unlock()
 
-	return c.pubsub.Publish(c.name, messageBytes)
+	return c.publisher.Publish(context.TODO(), messageBytes)
 }
 
 func (c *channel) handleMessages(ctx context.Context) {
@@ -322,10 +339,10 @@ func (c *channel) deliver(message net.Message) {
 }
 
 func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
-	c.pubsubMutex.Lock()
-	defer c.pubsubMutex.Unlock()
+	c.validatorMutex.Lock()
+	defer c.validatorMutex.Unlock()
 
-	err := c.pubsub.UnregisterTopicValidator(c.name)
+	err := c.validator.UnregisterTopicValidator(c.name)
 	if err != nil {
 		// That error can occur when the filter is set for the first time
 		// and no prior filter exists.
@@ -336,7 +353,7 @@ func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 		)
 	}
 
-	return c.pubsub.RegisterTopicValidator(c.name, createTopicValidator(filter))
+	return c.validator.RegisterTopicValidator(c.name, createTopicValidator(filter))
 }
 
 func createTopicValidator(filter net.BroadcastChannelFilter) pubsub.Validator {
