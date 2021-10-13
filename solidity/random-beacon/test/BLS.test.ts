@@ -1,5 +1,5 @@
-import { blsData } from "./_blsdata";
-import { blsDeployment } from "./_fixtures";
+import { blsData } from "./data/bls";
+import { blsDeployment } from "./fixtures";
 import { waffle } from "hardhat";
 import type { BLS } from "../typechain";
 import { expect } from "chai"
