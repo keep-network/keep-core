@@ -1,6 +1,5 @@
+import { Contract } from "ethers"
 import { ethers } from "hardhat"
-
-import type { Contract } from "ethers"
 import type {
   SortitionPoolStub,
   RandomBeacon,
@@ -14,11 +13,21 @@ export const constants = {
   dkgSubmissionEligibilityDelay: 10
 }
 
+// TODO: We should consider using hardhat-deploy plugin for contracts deployment.
+
 interface DeployedContracts {
   [key: string]: Contract
 }
 
-// TODO: We should consider using hardhat-deploy plugin for contracts deployment.
+export async function blsDeployment(): Promise<DeployedContracts> {
+  const BLS = await ethers.getContractFactory("BLS")
+  const bls = await BLS.deploy()
+  await bls.deployed()
+
+  const contracts: DeployedContracts = { bls }
+
+  return contracts
+}
 
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
