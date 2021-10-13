@@ -33,7 +33,7 @@
     "keccak256": "^1.0.3",
     "merkletreejs": "^0.2.24",
     "rimraf": "^3.0.2",
-    "solc": "^0.8.9-fixed",
+    "solc": "^0.8.9",
     "solhint": "^3.3.6",
     "solidity-coverage": "^0.7.17",
     "ethereumjs-wallet": "^1.0.1"
