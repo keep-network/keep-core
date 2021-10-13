@@ -1,5 +1,5 @@
 import { waffle } from "hardhat"
-import { testModUtilsDeployment } from "./helpers/fixtures"
+import { testModUtilsDeployment } from "./_fixtures"
 import type { TestModUtils } from "../typechain"
 
 describe("ModUtils", () => {

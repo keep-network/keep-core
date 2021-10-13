@@ -1,5 +1,5 @@
 import { waffle } from "hardhat";
-import { testAltBn128Deployment } from "./helpers/fixtures";
+import { testAltBn128Deployment } from "./_fixtures";
 import type { TestAltBn128 } from "../typechain";
 import { expect } from "chai"
 

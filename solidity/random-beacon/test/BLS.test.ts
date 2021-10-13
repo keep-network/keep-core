@@ -1,6 +1,6 @@
-import { blsData } from "./helpers/data"
+import { blsData } from "./_blsdata";
+import { blsDeployment } from "./_fixtures";
 import { waffle } from "hardhat";
-import { blsDeployment } from "./helpers/fixtures";
 import type { BLS } from "../typechain";
 import { expect } from "chai"
 
