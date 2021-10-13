@@ -14,10 +14,12 @@
 
 pragma solidity ^0.8.6;
 
-import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
+import "./libraries/Relay.sol";
+import "./MaintenancePool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Sortition Pool contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -39,6 +41,7 @@ interface ISortitionPool {
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
 contract RandomBeacon is Ownable, ReentrancyGuard {
+    using Groups for Groups.Data;
     using Relay for Relay.Data;
 
     /// @notice Relay request fee in T. This fee needs to be provided by the
@@ -147,6 +150,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    Groups.Data public groups;
     Relay.Data public relay;
 
     event RelayEntryParametersUpdated(
@@ -185,11 +189,15 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
     ///      and before transferring the ownership to the governance contract.
-    constructor(ISortitionPool _sortitionPool) {
+    constructor(
+        ISortitionPool _sortitionPool,
+        IERC20 tToken,
+        MaintenancePool maintenancePool
+    ) {
         sortitionPool = _sortitionPool;
 
         // Governable parameters
-        relayRequestFee = 0;
+        relayRequestFee = 100e18;
         relayEntrySubmissionEligibilityDelay = 10;
         relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
         callbackGasLimit = 200000;
@@ -201,6 +209,13 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
+
+        relay.tToken = tToken;
+        relay.maintenancePool = maintenancePool;
+        relay.relayRequestFee = relayRequestFee;
+        relay.groupSize = groupSize;
+        relay.relayEntrySubmissionEligibilityDelay = relayEntrySubmissionEligibilityDelay;
+        relay.relayEntryHardTimeout = relayEntryHardTimeout;
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -218,10 +233,17 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
+        require(!relay.isRequestInProgress(), "Relay request in progress");
+
         relayRequestFee = _relayRequestFee;
         relayEntrySubmissionEligibilityDelay = _relayEntrySubmissionEligibilityDelay;
         relayEntryHardTimeout = _relayEntryHardTimeout;
         callbackGasLimit = _callbackGasLimit;
+
+        relay.relayRequestFee = relayRequestFee;
+        relay.relayEntrySubmissionEligibilityDelay = relayEntrySubmissionEligibilityDelay;
+        relay.relayEntryHardTimeout = relayEntryHardTimeout;
+
         emit RelayEntryParametersUpdated(
             relayRequestFee,
             relayEntrySubmissionEligibilityDelay,

@@ -587,7 +587,7 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@openzeppelin/contracts@^4.3.2":
+"@openzeppelin/contracts@^4.1.0", "@openzeppelin/contracts@^4.3.2":
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.3.2.tgz#ff80affd6d352dbe1bbc5b4e1833c41afd6283b6"
   integrity sha512-AybF1cesONZStg5kWf6ao9OlqTZuPqddvprc0ky7lrUVOjXeKpmQ2Y9FK+6ygxasb+4aic4O5pneFBfwVsRRRg==
@@ -741,6 +741,12 @@
     axios "^0.21.1"
     fs-extra "^9.0.1"
     js-yaml "^3.14.0"
+
+"@thesis/solidity-contracts@github:thesis/solidity-contracts#4985bcf":
+  version "0.0.1"
+  resolved "https://codeload.github.com/thesis/solidity-contracts/tar.gz/4985bcfc28e36eed9838993b16710e1b500f9e85"
+  dependencies:
+    "@openzeppelin/contracts" "^4.1.0"
 
 "@tsconfig/node10@^1.0.7":
   version "1.0.8"
