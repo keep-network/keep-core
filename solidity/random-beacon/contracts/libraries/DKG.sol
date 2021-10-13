@@ -3,7 +3,7 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "../utils/BytesLib.sol";
+import "./BytesLib.sol";
 
 library DKG {
   using BytesLib for bytes;
