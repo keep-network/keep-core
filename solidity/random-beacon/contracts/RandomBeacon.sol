@@ -51,7 +51,7 @@ contract RandomBeacon is Ownable {
 
     /// @dev Minimum number of group members needed to interact according to the
     /// protocol to produce a relay entry.
-    uint256 public groupThreshold = 33;
+    uint256 public constant groupThreshold = 33;
 
     /// @notice Time in blocks after which DKG result is complete and ready to be
     // published by clients.
