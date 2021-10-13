@@ -10,13 +10,14 @@ import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract MerkleDrop128 {
-    using SafeERC20 for IERC20;
-    event Claimed(uint256 index, address account, uint256 amount);
+import "./interfaces/IMerkleDrop128.sol";
 
-    address public immutable token;
-    bytes16 public immutable merkleRoot;
-    uint256 public immutable depth;
+contract MerkleDrop128 is IMerkleDrop128 {
+    using SafeERC20 for IERC20;
+
+    address public immutable override token;
+    bytes16 public immutable override merkleRoot;
+    uint256 public immutable override depth;
 
     // This is a packed array of booleans.
     mapping(uint256 => uint256) private _claimedBitMap;
@@ -27,7 +28,7 @@ contract MerkleDrop128 {
         depth = depth_;
     }
 
-    function isClaimed(uint256 index) public view returns (bool) {
+    function isClaimed(uint256 index) public view override returns (bool) {
         uint256 claimedWordIndex = index >> 8;
         uint256 claimedBitIndex = index & 0xff;
         uint256 claimedWord = _claimedBitMap[claimedWordIndex];
@@ -41,7 +42,7 @@ contract MerkleDrop128 {
         _claimedBitMap[claimedWordIndex] = _claimedBitMap[claimedWordIndex] | (1 << claimedBitIndex);
     }
 
-    function claim(address receiver, address account, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external {
+    function claim(address receiver, address account, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external override {
         // Verify the merkle proof.
         bytes16 node = bytes16(keccak256(abi.encodePacked(account, amount)));
         (bool valid, uint256 index) = _verifyAsm(merkleProof, merkleRoot, node);
