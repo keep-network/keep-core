@@ -188,10 +188,7 @@ contract RandomBeacon is Ownable {
     // challenges and the client.
     event DkgResultSubmitted(
         bytes indexed groupPubKey,
-        address indexed submitter,
-        uint256 submitterMemberIndex,
-        bytes misbehaved,
-        uint256[] signingMemberIndices
+        address indexed submitter
     );
 
     /// @dev Assigns initial values to parameters to make the beacon work
@@ -353,10 +350,7 @@ contract RandomBeacon is Ownable {
 
         emit DkgResultSubmitted(
             dkgResult.groupPubKey,
-            msg.sender, // TODO: Shouldn't we use here `dkgResult.members[dkgResult.submitterMemberIndex - 1]`?
-            dkgResult.submitterMemberIndex,
-            dkgResult.misbehaved,
-            dkgResult.signingMemberIndices
+            msg.sender // TODO: Shouldn't we use here `dkgResult.members[dkgResult.submitterMemberIndex - 1]`?
         );
     }
 

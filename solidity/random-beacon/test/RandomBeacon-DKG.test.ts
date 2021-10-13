@@ -150,14 +150,9 @@ describe("RandomBeacon contract", function () {
         })
 
         it("emits DkgResultSubmitted event", async function () {
-          await expect(tx).to.emit(randomBeacon, "DkgResultSubmitted").withArgs(
-            dkgResult.groupPubKey,
-            signers.get(1),
-            dkgResult.submitterMemberIndex,
-            dkgResult.misbehaved,
-
-            dkgResult.signingMemberIndices
-          )
+          await expect(tx)
+            .to.emit(randomBeacon, "DkgResultSubmitted")
+            .withArgs(dkgResult.groupPubKey, signers.get(1))
         })
       })
 
