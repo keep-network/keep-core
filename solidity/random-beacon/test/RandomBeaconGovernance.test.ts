@@ -1,6 +1,6 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { randomBeaconDeployment } from "./helpers/fixtures"
+import { randomBeaconDeployment } from "./fixtures"
 
 import type { Signer } from "ethers"
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
