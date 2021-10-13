@@ -12,7 +12,7 @@ library DKG {
   struct Data {
     // Time in blocks after which DKG result is complete and ready to be
     // published by clients.
-    uint256 timeDKG;
+    uint256 offchainDkgTime;
     // Time in blocks after which the next group member is eligible
     // to submit DKG result.
     uint256 resultPublicationBlockStep;
@@ -53,7 +53,7 @@ library DKG {
   {
     assert(self.groupSize > 0);
     assert(self.signatureThreshold > 0);
-    assert(self.timeDKG > 0);
+    assert(self.offchainDkgTime > 0);
 
     require(!isInProgress(self), "dkg is currently in progress");
 
@@ -136,7 +136,7 @@ library DKG {
       "Unexpected submitter index"
     );
 
-    uint256 T_init = groupSelectionEndBlock + self.timeDKG;
+    uint256 T_init = groupSelectionEndBlock + self.offchainDkgTime;
     require(
       block.number >=
         (T_init + (submitterMemberIndex - 1) * self.resultPublicationBlockStep),

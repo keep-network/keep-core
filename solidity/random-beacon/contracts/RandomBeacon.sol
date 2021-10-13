@@ -55,7 +55,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Time in blocks after which DKG result is complete and ready to be
     // published by clients.
-    uint256 public constant timeDkg = 5 * (1 + 5) + 2 * (1 + 10) + 20;
+    uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
 
     // Governable parameters
 
@@ -228,7 +228,7 @@ contract RandomBeacon is Ownable {
 
         dkg.groupSize = groupSize;
         dkg.signatureThreshold = groupThreshold + (groupSize - groupThreshold) / 2;
-        dkg.timeDKG = 5 * (1 + 5) + 2 * (1 + 10) + 20;
+        dkg.offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
     }
 
     /// @notice Updates the values of relay entry parameters
