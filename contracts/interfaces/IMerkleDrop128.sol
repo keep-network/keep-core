@@ -15,4 +15,6 @@ interface IMerkleDrop128 {
     function claim(address receiver, uint256 amount, bytes calldata merkleProof, bytes calldata signature) external;
     // Verifies that given leaf and merkle proof matches given merkle root and returns leaf index.
     function verify(bytes calldata proof, bytes16 root, bytes16 leaf) external view returns (bool valid, uint256 index);
+    // Returns true if the index has been marked claimed.
+    function isClaimed(uint256 index) external view returns (bool);
 }

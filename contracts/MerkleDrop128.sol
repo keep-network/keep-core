@@ -43,6 +43,14 @@ contract MerkleDrop128 is IMerkleDrop128 {
         return _verifyAsm(proof, root, leaf);
     }
 
+    function isClaimed(uint256 index) external view override returns (bool) {
+        uint256 claimedWordIndex = index / 256;
+        uint256 claimedBitIndex = index % 256;
+        uint256 claimedWord = _claimedBitMap[claimedWordIndex];
+        uint256 mask = (1 << claimedBitIndex);
+        return claimedWord & mask == mask;
+    }
+
     function _invalidate(uint256 index) private {
         uint256 claimedWordIndex = index >> 8;
         uint256 claimedBitIndex = index & 0xff;
