@@ -9,20 +9,28 @@ library DKG {
   using BytesLib for bytes;
   using ECDSA for bytes32;
 
+  /// @dev Size of a group in the threshold relay.
+  uint256 public constant groupSize = 64;
+
+  /// @dev Minimum number of group members needed to interact according to the
+  /// protocol to produce a relay entry.
+  uint256 public constant groupThreshold = 33;
+
+  /// @dev The minimum number of signatures required to support DKG result.
+  /// This number needs to be at least the same as the signing threshold
+  /// and it is recommended to make it higher than the signing threshold
+  /// to keep a safety margin for misbehaving members.
+  uint256 public constant signatureThreshold =
+    groupThreshold + (groupSize - groupThreshold) / 2;
+
+  /// @notice Time in blocks after which DKG result is complete and ready to be
+  // published by clients.
+  uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
+
   struct Data {
-    // Time in blocks after which DKG result is complete and ready to be
-    // published by clients.
-    uint256 offchainDkgTime;
     // Time in blocks after which the next group member is eligible
     // to submit DKG result.
     uint256 resultSubmissionEligibilityDelay;
-    // Size of a group in the threshold relay.
-    uint256 groupSize;
-    // The minimum number of signatures required to support DKG result.
-    // This number needs to be at least the same as the signing threshold
-    // and it is recommended to make it higher than the signing threshold
-    // to keep a safety margin for misbehaving members.
-    uint256 signatureThreshold;
     // Time in blocks at which DKG started.
     uint256 startBlock;
     // Mapping of submitted DKG result hash with submission block number.
@@ -51,10 +59,6 @@ library DKG {
   function start(Data storage self, uint256 resultSubmissionEligibilityDelay)
     internal
   {
-    assert(self.groupSize > 0);
-    assert(self.signatureThreshold > 0);
-    assert(self.offchainDkgTime > 0);
-
     require(!isInProgress(self), "dkg is currently in progress");
 
     require(
@@ -136,17 +140,19 @@ library DKG {
       "Unexpected submitter index"
     );
 
-    uint256 T_init = groupSelectionEndBlock + self.offchainDkgTime;
+    uint256 T_init = groupSelectionEndBlock + offchainDkgTime;
     require(
       block.number >=
-        (T_init + (submitterMemberIndex - 1) * self.resultSubmissionEligibilityDelay),
+        (T_init +
+          (submitterMemberIndex - 1) *
+          self.resultSubmissionEligibilityDelay),
       "Submitter not eligible"
     );
 
     require(groupPubKey.length == 128, "Malformed group public key");
 
     require(
-      misbehaved.length <= self.groupSize - self.signatureThreshold,
+      misbehaved.length <= groupSize - signatureThreshold,
       "Malformed misbehaved bytes"
     );
 
@@ -157,14 +163,14 @@ library DKG {
       signaturesCount == signingMemberIndices.length,
       "Unexpected signatures count"
     );
-    require(signaturesCount >= self.signatureThreshold, "Too few signatures");
-    require(signaturesCount <= self.groupSize, "Too many signatures");
+    require(signaturesCount >= signatureThreshold, "Too few signatures");
+    require(signaturesCount <= groupSize, "Too many signatures");
 
     bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, misbehaved));
 
     bytes memory current; // Current signature to be checked.
 
-    bool[] memory usedMemberIndices = new bool[](self.groupSize);
+    bool[] memory usedMemberIndices = new bool[](groupSize);
 
     for (uint256 i = 0; i < signaturesCount; i++) {
       uint256 memberIndex = signingMemberIndices[i];

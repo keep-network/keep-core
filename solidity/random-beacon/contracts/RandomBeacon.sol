@@ -46,17 +46,6 @@ contract RandomBeacon is Ownable {
     uint256 public constant genesisSeed =
         31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
-    /// @dev Size of a group in the threshold relay.
-    uint256 public constant groupSize = 64;
-
-    /// @dev Minimum number of group members needed to interact according to the
-    /// protocol to produce a relay entry.
-    uint256 public constant groupThreshold = 33;
-
-    /// @notice Time in blocks after which DKG result is complete and ready to be
-    // published by clients.
-    uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
-
     // Governable parameters
 
     /// @notice Relay request fee in T. This fee needs to be provided by the
@@ -225,10 +214,6 @@ contract RandomBeacon is Ownable {
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
-
-        dkg.groupSize = groupSize;
-        dkg.signatureThreshold = groupThreshold + (groupSize - groupThreshold) / 2;
-        dkg.offchainDkgTime = offchainDkgTime;
     }
 
     /// @notice Updates the values of relay entry parameters
