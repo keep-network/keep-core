@@ -48,6 +48,25 @@ library DKG {
     address[] members;
   }
 
+  function start(Data storage self, uint256 resultPublicationBlockStep)
+    internal
+  {
+    assert(self.groupSize > 0);
+    assert(self.signatureThreshold > 0);
+    assert(self.timeDKG > 0);
+
+    require(!isInProgress(self), "dkg is currently in progress");
+
+    require(
+      resultPublicationBlockStep > 0,
+      "resultPublicationBlockStep not set"
+    );
+
+    self.resultPublicationBlockStep = resultPublicationBlockStep;
+
+    self.startBlock = block.number;
+  }
+
   function submitDkgResult(Data storage self, DkgResult calldata dkgResult)
     external
   {

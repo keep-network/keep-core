@@ -39,6 +39,26 @@ interface ISortitionPool {
 contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
 
+    // Constant parameters
+
+    /// @notice Seed value used for the genesis group selection.
+    /// https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    uint256 public constant genesisSeed =
+        31415926535897932384626433832795028841971693993751058209749445923078164062862;
+
+    /// @dev Size of a group in the threshold relay.
+    uint256 public constant groupSize = 64;
+
+    /// @dev Minimum number of group members needed to interact according to the
+    /// protocol to produce a relay entry.
+    uint256 public groupThreshold = 33;
+
+    /// @notice Time in blocks after which DKG result is complete and ready to be
+    // published by clients.
+    uint256 public constant timeDkg = 5 * (1 + 5) + 2 * (1 + 10) + 20;
+
+    // Governable parameters
+
     /// @notice Relay request fee in T. This fee needs to be provided by the
     ///         account or contract requesting for a new relay entry.
     uint256 public relayRequestFee;
@@ -173,6 +193,8 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
+    event DkgStarted(uint256 indexed seed);
+
     event DkgResultSubmitted(
         bytes indexed groupPubKey,
         address indexed submitter,
@@ -203,6 +225,10 @@ contract RandomBeacon is Ownable {
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
+
+        dkg.groupSize = groupSize;
+        dkg.signatureThreshold = groupThreshold + (groupSize - groupThreshold) / 2;
+        dkg.timeDKG = 5 * (1 + 5) + 2 * (1 + 10) + 20;
     }
 
     /// @notice Updates the values of relay entry parameters
@@ -311,6 +337,25 @@ contract RandomBeacon is Ownable {
     /// @param operator Address of the operator
     function isOperatorEligible(address operator) external view returns (bool) {
         return sortitionPool.isOperatorEligible(operator);
+    }
+
+    /// @notice Triggers group selection if there are no active groups.
+    function genesis() external {
+        // TODO: Check number of active groups
+
+        createGroup(
+            uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
+        );
+    }
+
+    /// @notice Creates a new group.
+    /// @param seed Seed for DKG.
+    function createGroup(uint256 seed) internal {
+        // TODO: Lock sortition pool.
+
+        dkg.start(dkgResultSubmissionEligibilityDelay);
+
+        emit DkgStarted(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
