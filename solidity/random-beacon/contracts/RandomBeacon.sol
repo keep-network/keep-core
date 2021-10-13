@@ -96,33 +96,6 @@ contract RandomBeacon is Ownable {
     ///         to that group is still pending.
     uint256 public groupLifetime;
 
-    /// @notice The number of blocks for which a DKG result can be challenged.
-    ///         Anyone can challenge DKG result for a certain number of blocks
-    ///         before the result is fully accepted and the group registered in
-    ///         the pool of active groups. If the challenge gets accepted, all
-    ///         operators who signed the malicious result get slashed for
-    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
-    ///         rewarded.
-    uint256 public dkgResultChallengePeriodLength;
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the DKG result. At first, there is only one
-    ///         member in the group eligible to submit the DKG result. Then,
-    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the DKG result at that moment. After
-    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible to submit the DKG result so that
-    ///         there are three group members eligible to submit the DKG result
-    ///         at that moment. This continues until all group members are
-    ///         eligible to submit the DKG result or until the DKG result is
-    ///         submitted. If all members became eligible to submit the DKG
-    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
-    ///         without the DKG result submitted, DKG is considered as timed out
-    ///         and no DKG result for this group creation can be submitted
-    ///         anymore.
-    uint256 public dkgResultSubmissionEligibilityDelay;
-
     /// @notice Reward in T for submitting DKG result. The reward is paid to
     ///         a submitter of a valid DKG result when the DKG result challenge
     ///         period ends.
@@ -205,8 +178,8 @@ contract RandomBeacon is Ownable {
         callbackGasLimit = 200000;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
-        dkgResultChallengePeriodLength = 1440; // ~6h assuming 15s block time
-        dkgResultSubmissionEligibilityDelay = 10;
+        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(10);
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
@@ -258,14 +231,46 @@ contract RandomBeacon is Ownable {
     ) external onlyOwner {
         groupCreationFrequency = _groupCreationFrequency;
         groupLifetime = _groupLifetime;
-        dkgResultChallengePeriodLength = _dkgResultChallengePeriodLength;
-        dkgResultSubmissionEligibilityDelay = _dkgResultSubmissionEligibilityDelay;
+        dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
+        dkg.setResultSubmissionEligibilityDelay(_dkgResultSubmissionEligibilityDelay);
+
         emit GroupCreationParametersUpdated(
             groupCreationFrequency,
             groupLifetime,
-            dkgResultChallengePeriodLength,
-            dkgResultSubmissionEligibilityDelay
+            dkgResultChallengePeriodLength(),
+            dkgResultSubmissionEligibilityDelay()
         );
+    }
+
+    /// @notice The number of blocks for which a DKG result can be challenged.
+    ///         Anyone can challenge DKG result for a certain number of blocks
+    ///         before the result is fully accepted and the group registered in
+    ///         the pool of active groups. If the challenge gets accepted, all
+    ///         operators who signed the malicious result get slashed for
+    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
+    ///         rewarded.
+    function dkgResultChallengePeriodLength() public view returns (uint256) {
+        return dkg.parameters.resultChallengePeriodLength;
+    }
+
+    /// @notice The number of blocks it takes for a group member to become
+    ///         eligible to submit the DKG result. At first, there is only one
+    ///         member in the group eligible to submit the DKG result. Then,
+    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the DKG result at that moment. After
+    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
+    ///         group member becomes eligible to submit the DKG result so that
+    ///         there are three group members eligible to submit the DKG result
+    ///         at that moment. This continues until all group members are
+    ///         eligible to submit the DKG result or until the DKG result is
+    ///         submitted. If all members became eligible to submit the DKG
+    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
+    ///         without the DKG result submitted, DKG is considered as timed out
+    ///         and no DKG result for this group creation can be submitted
+    ///         anymore.
+    function dkgResultSubmissionEligibilityDelay() public view returns (uint256) {
+        return dkg.parameters.resultSubmissionEligibilityDelay;
     }
 
     /// @notice Updates the values of reward parameters.
@@ -335,7 +340,7 @@ contract RandomBeacon is Ownable {
     function createGroup(uint256 seed) internal {
         // TODO: Lock sortition pool.
 
-        dkg.start(dkgResultSubmissionEligibilityDelay);
+        dkg.start();
 
         emit DkgStarted(seed);
     }
