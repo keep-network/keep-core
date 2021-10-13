@@ -25,7 +25,7 @@ contract TestModUtils {
         59
     ];
 
-    function runModExponentTest() public {
+    function runModExponentTest() public view {
         uint256 a = 21;
         // a simple test
         require(a.modExp(2, 5) == 1, "");
@@ -95,7 +95,7 @@ contract TestModUtils {
         [int256(17), int256(9), int256(1)]
     ];
 
-    function runLegendreRangeTest() public {
+    function runLegendreRangeTest() public view {
         uint256 i;
         uint256 j;
         int256 leg;
@@ -110,7 +110,7 @@ contract TestModUtils {
         }
     }
 
-    function runLegendreListTest() public {
+    function runLegendreListTest() public view {
         uint256 i;
         int256 leg;
 
@@ -126,7 +126,7 @@ contract TestModUtils {
         }
     }
 
-    function runModSqrtOf0Test() public {
+    function runModSqrtOf0Test() public view {
         uint256 p;
         uint256 i;
         uint256 zero = 0;
@@ -138,7 +138,7 @@ contract TestModUtils {
         }
     }
 
-    function runModSqrtMultipleOfPTest() public {
+    function runModSqrtMultipleOfPTest() public view {
         uint256 p;
         uint256 pMult;
         uint256 i;
@@ -158,7 +158,7 @@ contract TestModUtils {
         }
     }
 
-    function runModSqrtAgainstListTest() public {
+    function runModSqrtAgainstListTest() public view {
         uint256 i;
         uint256 a;
         uint256 p;
@@ -210,7 +210,7 @@ contract TestModUtils {
         }
     }
 
-    function runModSqrtAgainstNonSquaresTest() public {
+    function runModSqrtAgainstNonSquaresTest() public view {
         uint8 i;
         uint256 a;
         uint256 p;
@@ -255,7 +255,7 @@ contract TestModUtils {
         }
     }
 
-    function runModSqrtALessThanPTest() public {
+    function runModSqrtALessThanPTest() public view {
         uint256 p;
         uint256 root;
         uint256 i;
@@ -276,7 +276,7 @@ contract TestModUtils {
         }
     }
 
-    function runModSqrtAGreaterThanPTest() public {
+    function runModSqrtAGreaterThanPTest() public view {
         uint256 p;
         uint256 root;
         uint8 i;

@@ -36,7 +36,7 @@ contract TestAltBn128 {
     AltBn128.G1Point g1 = AltBn128.g1();
     AltBn128.G2Point g2 = AltBn128.g2();
 
-    function runHashingTest() public {
+    function runHashingTest() public view {
         string memory hello = "hello!";
         string memory goodbye = "goodbye.";
         AltBn128.G1Point memory p_1;
@@ -59,7 +59,7 @@ contract TestAltBn128 {
         );
     }
 
-    function runHashAndAddTest() public {
+    function runHashAndAddTest() public view {
         string memory hello = "hello!";
         string memory goodbye = "goodbye.";
         AltBn128.G1Point memory p_1;
@@ -82,7 +82,7 @@ contract TestAltBn128 {
         );
     }
 
-    function runHashAndScalarMultiplyTest() public {
+    function runHashAndScalarMultiplyTest() public view {
         string memory hello = "hello!";
         AltBn128.G1Point memory p_1;
         AltBn128.G1Point memory p_2;
@@ -174,7 +174,7 @@ contract TestAltBn128 {
         ]
     ];
 
-    function runGfP2AddTest() public {
+    function runGfP2AddTest() public view {
         uint256 i;
         uint8 j;
 
@@ -222,7 +222,7 @@ contract TestAltBn128 {
         }
     }
 
-    function runAddTest() public {
+    function runAddTest() public view {
         uint256 i;
         uint8 j;
 
@@ -257,7 +257,7 @@ contract TestAltBn128 {
         }
     }
 
-    function runScalarMultiplyTest() public {
+    function runScalarMultiplyTest() public view {
         uint256 i;
         uint256 j;
 
@@ -294,7 +294,7 @@ contract TestAltBn128 {
         }
     }
 
-    function runBasicPairingTest() public {
+    function runBasicPairingTest() public view {
         bool result =
             AltBn128.pairing(
                 g1,
@@ -305,7 +305,7 @@ contract TestAltBn128 {
         require(result, "Basic pairing check should succeed.");
     }
 
-    function runG1PointMarshalingTest() public {
+    function runG1PointMarshalingTest() public view {
         AltBn128.G1Point memory point;
         point
             .x = 656647519899395589093611455851658769732922739162315270379466002146796568126;
@@ -326,7 +326,7 @@ contract TestAltBn128 {
     }
 
     // Verifying sample data generated with bn256.go - Ethereum's bn256/cloudflare curve.
-    function runVerifySignatureTest() public {
+    function runVerifySignatureTest() public view {
         // "hello!" message hashed to G1 point using G1HashToPoint from keep-core/pkg/bls/altbn128.go
         AltBn128.G1Point memory message;
         message
@@ -370,7 +370,7 @@ contract TestAltBn128 {
         );
     }
 
-    function runCompressG1InvertibilityTest() public {
+    function runCompressG1InvertibilityTest() public view {
         AltBn128.G1Point memory p_1;
         AltBn128.G1Point memory p_2;
 
@@ -390,7 +390,7 @@ contract TestAltBn128 {
         }
     }
 
-    function runCompressG2InvertibilityTest() public {
+    function runCompressG2InvertibilityTest() public view {
         AltBn128.G2Point memory p_1;
         AltBn128.G2Point memory p_2;
 
@@ -420,7 +420,7 @@ contract TestAltBn128 {
         }
     }
 
-    function runG2PointOnCurveTest() public {
+    function runG2PointOnCurveTest() public view {
         AltBn128.G2Point memory point;
 
         for (uint256 i = 0; i < randomG2.length; i++) {
