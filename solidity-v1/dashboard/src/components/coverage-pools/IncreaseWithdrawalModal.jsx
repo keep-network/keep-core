@@ -110,6 +110,9 @@ const IncreaseWithdrawalModal = ({
           componentProps: {
             pendingWithdrawalBalance: pendingWithdrawalBalance,
             amount: amount,
+            withdrawalDelay: withdrawalDelay,
+            withdrawalTimeout: withdrawalTimeout,
+            withdrawalInitiatedTimestamp: withdrawalInitiatedTimestamp,
           },
         })
       )
