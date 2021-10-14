@@ -7,7 +7,7 @@ import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
 
-const { mineBlocks } = helpers.time
+const { mineBlocks, mineBlocksTo } = helpers.time
 
 describe("RandomBeacon contract", function () {
   const dkgTimeout: number =
@@ -134,29 +134,168 @@ describe("RandomBeacon contract", function () {
     })
 
     context("with group creation in progress", async function () {
+      let genesisTx: ContractTransaction
       let expectedSeed: BigNumber
 
       beforeEach("run genesis", async () => {
-        ;[, expectedSeed] = await genesis()
+        ;[genesisTx, expectedSeed] = await genesis()
       })
 
       context("with group creation not timed out", async function () {
-        let tx: ContractTransaction
-        let dkgResult: DkgResult
+        context("with off-chain dkg time not passed", async function () {
+          beforeEach(async () => {
+            await mineBlocksTo(
+              genesisTx.blockNumber + constants.offchainDkgTime - 2
+            )
+          })
 
-        beforeEach(async () => {
-          await mineBlocks(constants.offchainDkgTime)
-          ;({
-            transaction: tx,
-
-            dkgResult
-          } = await signAndSubmitDkgResult(signers, expectedSeed))
+          it("reverts with submitter not eligible error", async function () {
+            await expect(
+              signAndSubmitDkgResult(signers, expectedSeed)
+            ).to.revertedWith("Submitter not eligible")
+          })
         })
 
-        it("emits DkgResultSubmitted event", async function () {
-          await expect(tx)
-            .to.emit(randomBeacon, "DkgResultSubmitted")
-            .withArgs(dkgResult.groupPubKey, signers.get(1))
+        context("with off-chain dkg time passed", async function () {
+          beforeEach(async () => {
+            await mineBlocksTo(
+              genesisTx.blockNumber + constants.offchainDkgTime - 1
+            )
+          })
+
+          it("succeeds for the first submitter", async function () {
+            const { transaction: tx, dkgResult } = await signAndSubmitDkgResult(
+              signers,
+              expectedSeed,
+              1
+            )
+            await expect(tx)
+              .to.emit(randomBeacon, "DkgResultSubmitted")
+              .withArgs(dkgResult.groupPubKey, signers.get(1))
+          })
+
+          it("reverts for the second submitter", async function () {
+            await expect(
+              signAndSubmitDkgResult(signers, expectedSeed, 2)
+            ).to.revertedWith("Submitter not eligible")
+          })
+
+          context(
+            "with first submitter eligibility delay period almost ended",
+            async function () {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  genesisTx.blockNumber +
+                    constants.offchainDkgTime +
+                    params.dkgResultSubmissionEligibilityDelay -
+                    2
+                )
+              })
+
+              it("succeeds for the first submitter", async function () {
+                const {
+                  transaction: tx,
+                  dkgResult
+                } = await signAndSubmitDkgResult(signers, expectedSeed, 1)
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultSubmitted")
+                  .withArgs(dkgResult.groupPubKey, signers.get(1))
+              })
+
+              it("reverts for the second submitter", async function () {
+                await expect(
+                  signAndSubmitDkgResult(signers, expectedSeed, 2)
+                ).to.revertedWith("Submitter not eligible")
+              })
+            }
+          )
+
+          context(
+            "with first submitter eligibility delay period ended",
+            async function () {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  genesisTx.blockNumber +
+                    constants.offchainDkgTime +
+                    params.dkgResultSubmissionEligibilityDelay -
+                    1
+                )
+              })
+
+              it("succeeds for the first submitter", async function () {
+                const {
+                  transaction: tx,
+                  dkgResult
+                } = await signAndSubmitDkgResult(signers, expectedSeed, 1)
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultSubmitted")
+                  .withArgs(dkgResult.groupPubKey, signers.get(1))
+              })
+
+              it("succeeds for the second submitter", async function () {
+                const {
+                  transaction: tx,
+                  dkgResult
+                } = await signAndSubmitDkgResult(signers, expectedSeed, 2)
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultSubmitted")
+                  .withArgs(dkgResult.groupPubKey, signers.get(2))
+              })
+
+              it("reverts for the third submitter", async function () {
+                await expect(
+                  signAndSubmitDkgResult(signers, expectedSeed, 3)
+                ).to.revertedWith("Submitter not eligible")
+              })
+            }
+          )
+
+          context(
+            "with the last submitter eligibility delay period almost ended",
+            async function () {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  genesisTx.blockNumber +
+                    constants.offchainDkgTime +
+                    constants.groupSize *
+                      params.dkgResultSubmissionEligibilityDelay -
+                    2
+                )
+              })
+
+              it(`succeeds for the first submitter`, async function () {
+                const {
+                  transaction: tx,
+                  dkgResult
+                } = await signAndSubmitDkgResult(signers, expectedSeed, 1)
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultSubmitted")
+                  .withArgs(dkgResult.groupPubKey, signers.get(1))
+              })
+
+              it(`succeeds for the last submitter`, async function () {
+                const {
+                  transaction: tx,
+                  dkgResult
+                } = await signAndSubmitDkgResult(
+                  signers,
+                  expectedSeed,
+                  constants.groupSize
+                )
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultSubmitted")
+                  .withArgs(
+                    dkgResult.groupPubKey,
+                    signers.get(constants.groupSize)
+                  )
+              })
+            }
+          )
         })
       })
 
@@ -200,7 +339,8 @@ describe("RandomBeacon contract", function () {
 
   async function signAndSubmitDkgResult(
     signers: DkgGroupSigners,
-    seed: BigNumber
+    seed: BigNumber,
+    submitterIndex: number = 1
   ): Promise<{
     transaction: ContractTransaction
 
@@ -217,8 +357,6 @@ describe("RandomBeacon contract", function () {
       signingMemberIndices,
       signaturesBytes
     } = await signDkgResult(seed, signers, groupPublicKey, noMisbehaved)
-
-    const submitterIndex = 1
 
     const dkgResult = {
       submitterMemberIndex: submitterIndex,
