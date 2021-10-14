@@ -369,7 +369,7 @@ contract RandomBeacon is Ownable {
 
         emit DkgResultSubmitted(
             dkgResult.groupPubKey,
-            msg.sender // TODO: Shouldn't we use here `dkgResult.members[dkgResult.submitterMemberIndex - 1]`?
+            msg.sender
         );
     }
 
