@@ -406,9 +406,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         randomBeacon.updateGroupCreationParameters(
             newGroupCreationFrequency,
-            randomBeacon.groupLifetime(),
-            randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgResultSubmissionEligibilityDelay()
+            randomBeacon.groupLifetime()
         );
         emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
         groupCreationFrequencyChangeInitiated = 0;
@@ -446,9 +444,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
-            newGroupLifetime,
-            randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgResultSubmissionEligibilityDelay()
+            newGroupLifetime
         );
         emit GroupLifetimeUpdated(newGroupLifetime);
         groupLifetimeChangeInitiated = 0;
@@ -487,9 +483,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        randomBeacon.updateGroupCreationParameters(
-            randomBeacon.groupCreationFrequency(),
-            randomBeacon.groupLifetime(),
+        randomBeacon.updateDkgParameters(
             newDkgResultChallengePeriodLength,
             randomBeacon.dkgResultSubmissionEligibilityDelay()
         );
@@ -534,9 +528,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        randomBeacon.updateGroupCreationParameters(
-            randomBeacon.groupCreationFrequency(),
-            randomBeacon.groupLifetime(),
+        randomBeacon.updateDkgParameters(
             randomBeacon.dkgResultChallengePeriodLength(),
             newDkgResultSubmissionEligibilityDelay
         );

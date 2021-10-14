@@ -27,10 +27,19 @@ library DKG {
   // published by clients.
   uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
 
-  struct Data {
+  struct Parameters {
+    // Time in blocks during which a submitted result can be challenged.
+    uint256 resultChallengePeriodLength;
     // Time in blocks after which the next group member is eligible
     // to submit DKG result.
     uint256 resultSubmissionEligibilityDelay;
+  }
+
+  struct Data {
+    // DKG parameters. The parameters should persist between DKG executions.
+    // They should be updated with dedicated set functions only when DKG is not
+    // in progress.
+    Parameters parameters;
     // Time in blocks at which DKG started.
     uint256 startBlock;
     // Hash of submitted DKG result.
@@ -55,17 +64,11 @@ library DKG {
     address[] members;
   }
 
-  function start(Data storage self, uint256 resultSubmissionEligibilityDelay)
-    internal
-  {
+  function start(Data storage self) internal {
     require(!isInProgress(self), "dkg is currently in progress");
 
-    require(
-      resultSubmissionEligibilityDelay > 0,
-      "resultSubmissionEligibilityDelay not set"
-    );
-
-    self.resultSubmissionEligibilityDelay = resultSubmissionEligibilityDelay;
+    assert(self.parameters.resultChallengePeriodLength > 0);
+    assert(self.parameters.resultSubmissionEligibilityDelay > 0);
 
     self.startBlock = block.number;
   }
@@ -80,7 +83,7 @@ library DKG {
       "result was already submitted in the current dkg"
     );
 
-    assert(self.resultSubmissionEligibilityDelay > 0);
+    assert(self.parameters.resultSubmissionEligibilityDelay > 0);
 
     verify(
       self,
@@ -138,7 +141,7 @@ library DKG {
       block.number >=
         (T_init +
           (submitterMemberIndex - 1) *
-          self.resultSubmissionEligibilityDelay),
+          self.parameters.resultSubmissionEligibilityDelay),
       "Submitter not eligible"
     );
 
@@ -182,6 +185,40 @@ library DKG {
         "Invalid signature"
       );
     }
+  }
+
+  /// @notice Set resultChallengePeriodLength parameter.
+  function setResultChallengePeriodLength(
+    Data storage self,
+    uint256 newResultChallengePeriodLength
+  ) internal {
+    require(!isInProgress(self), "dkg is currently in progress");
+
+    require(
+      newResultChallengePeriodLength > 0,
+      "new value should be greater than zero"
+    );
+
+    self
+      .parameters
+      .resultChallengePeriodLength = newResultChallengePeriodLength;
+  }
+
+  /// @notice Set resultSubmissionEligibilityDelay parameter.
+  function setResultSubmissionEligibilityDelay(
+    Data storage self,
+    uint256 newResultSubmissionEligibilityDelay
+  ) internal {
+    require(!isInProgress(self), "dkg is currently in progress");
+
+    require(
+      newResultSubmissionEligibilityDelay > 0,
+      "new value should be greater than zero"
+    );
+
+    self
+      .parameters
+      .resultSubmissionEligibilityDelay = newResultSubmissionEligibilityDelay;
   }
 
   /// @notice Cleans up state after DKG completion.
