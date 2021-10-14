@@ -52,9 +52,8 @@ library DKG {
   /// The states doesn't include timeouts which should be tracked and notified
   /// individually.
   enum State {
-    // Group creation is not in progress, awaits to be started. It is a state
-    // set after group creation completion either by timeout or by a result
-    // approval.
+    // Group creation is not in progress. It is a state set after group creation
+    // completion either by timeout or by a result approval.
     IDLE,
     // Off-chain DKG protocol execution is in progress. A result is being calculated
     // by the clients in this state. It's not yet possible to submit the result.
@@ -63,7 +62,7 @@ library DKG {
     // This is a state to which group creation returns in case of a result
     // challenge notification.
     AWAITING_RESULT,
-    // DKG result was submitted and awaits an approval of a challenge. If a result
+    // DKG result was submitted and awaits an approval or a challenge. If a result
     // gets challenge the state returns to `AWAITING_RESULT`. If a result gets
     // approval the state changes to `IDLE`.
     CHALLENGE
