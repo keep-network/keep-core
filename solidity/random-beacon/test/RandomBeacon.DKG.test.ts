@@ -9,7 +9,7 @@ import type { Address } from "hardhat-deploy/types"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 
-describe("RandomBeacon contract", function () {
+describe("RandomBeacon", function () {
   const dkgTimeout: number =
     constants.offchainDkgTime +
     constants.groupSize * params.dkgResultSubmissionEligibilityDelay
@@ -74,16 +74,19 @@ describe("RandomBeacon contract", function () {
       context("with dkg result submitted", async function () {
         // TODO: Add test cases to cover results that are approved, challenged or
         // pending.
-        beforeEach(async () => {
-          await mineBlocks(constants.offchainDkgTime)
 
-          await signAndSubmitDkgResult(signers, startBlock)
-        })
+        context("with dkg result not approved", async function () {
+          beforeEach(async () => {
+            await mineBlocks(constants.offchainDkgTime)
 
-        it("reverts with dkg is currently in progress error", async function () {
-          await expect(randomBeacon.genesis()).to.be.revertedWith(
-            "dkg is currently in progress"
-          )
+            await signAndSubmitDkgResult(signers, startBlock)
+          })
+
+          it("reverts with dkg is currently in progress error", async function () {
+            await expect(randomBeacon.genesis()).to.be.revertedWith(
+              "dkg is currently in progress"
+            )
+          })
         })
       })
     })
