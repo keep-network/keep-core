@@ -133,6 +133,8 @@ library DKG {
       "Unexpected submitter index"
     );
 
+    // TODO: In challenges implementation remember about resetting the counter for
+    // eligibility checks, see: https://github.com/keep-network/keep-core/pull/2654#discussion_r728819993
     uint256 T_init = self.startBlock + offchainDkgTime;
     require(
       block.number >=
