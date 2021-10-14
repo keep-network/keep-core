@@ -10,7 +10,6 @@ library ModUtils {
         uint256 exponent,
         uint256 p
     ) internal view returns (uint256 o) {
-        /* solium-disable-next-line */
         assembly {
             // Args for the precompile: [<length_of_BASE> <length_of_EXPONENT>
             // <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>]

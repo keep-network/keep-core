@@ -32,58 +32,37 @@ library AltBn128 {
 
     // p is a prime over which we form a basic field
     // Taken from go-ethereum/crypto/bn256/cloudflare/constants.go
-    uint256 constant p =
+    uint256 internal constant p =
         21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
-    function getP() internal pure returns (uint256) {
-        return p;
-    }
-
-    
     /// @dev Gets generator of G1 group.
     ///      Taken from go-ethereum/crypto/bn256/cloudflare/curve.go     
-    uint256 constant g1x = 1;
-    uint256 constant g1y = 2;
-
-    function g1() internal pure returns (G1Point memory) {
-        return G1Point(g1x, g1y);
-    }
+    uint256 internal constant g1x = 1;
+    uint256 internal constant g1y = 2;
     
     /// @dev Gets generator of G2 group.
     ///      Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
-    uint256 constant g2xx =
+    uint256 internal constant g2xx =
         11559732032986387107991004021392285783925812861821192530917403151452391805634;
-    uint256 constant g2xy =
+    uint256 internal constant g2xy =
         10857046999023057135944570762232829481370756359578518086990519993285655852781;
-    uint256 constant g2yx =
+    uint256 internal constant g2yx =
         4082367875863433681332203403145435568316851327593401208105741076214120093531;
-    uint256 constant g2yy =
+    uint256 internal constant g2yy =
         8495653923123431417604973247489272438418190587263600148770280649306958101930;
-
-    function g2() internal pure returns (G2Point memory) {
-        return G2Point(gfP2(g2xx, g2xy), gfP2(g2yx, g2yy));
-    }
 
     /// @dev Gets twist curve B constant.
     ///      Taken from go-ethereum/crypto/bn256/cloudflare/twist.go    
-    uint256 constant twistBx =
+    uint256 internal constant twistBx =
         266929791119991161246907387137283842545076965332900288569378510910307636690;
-    uint256 constant twistBy =
+    uint256 internal constant twistBy =
         19485874751759354771024239261021720505790618469301721065564631296452457478373;
 
-    function twistB() private pure returns (gfP2 memory) {
-        return gfP2(twistBx, twistBy);
-    }
-
     /// @dev Gets root of the point where x and y are equal.    
-    uint256 constant hexRootX =
+    uint256 internal constant hexRootX =
         21573744529824266246521972077326577680729363968861965890554801909984373949499;
-    uint256 constant hexRootY =
+    uint256 internal constant hexRootY =
         16854739155576650954933913186877292401521110422362946064090026408937773542853;
-
-    function hexRoot() private pure returns (gfP2 memory) {
-        return gfP2(hexRootX, hexRootY);
-    }
 
     /// @dev g1YFromX computes a Y value for a G1 point based on an X value.
     ///      This computation is simply evaluating the curve equation for Y on a
@@ -92,7 +71,158 @@ library AltBn128 {
     function g1YFromX(uint256 x) internal view returns (uint256) {
         return ((x.modExp(3, p) + 3) % p).modSqrt(p);
     }
-    
+
+    /// @dev Hash a byte array message, m, and map it deterministically to a
+    ///      point on G1. Note that this approach was chosen for its simplicity
+    ///      and lower gas cost on the EVM, rather than good distribution of
+    ///      points on G1.
+    function g1HashToPoint(bytes memory m)
+        internal
+        view
+        returns (G1Point memory)
+    {
+        bytes32 h = sha256(m);
+        uint256 x = uint256(h) % p;
+        uint256 y;
+
+        while (true) {
+            y = g1YFromX(x);
+            if (y > 0) {
+                return G1Point(x, y);
+            }
+            x += 1;
+        }
+    }
+
+    /// @dev Decompress a point on G1 from a single uint256.    
+    function g1Decompress(bytes32 m) internal view returns (G1Point memory) {
+        bytes32 mX = bytes32(0);
+        bytes1 leadX = m[0] & 0x7f;
+        // slither-disable-next-line incorrect-shift
+        uint256 mask = 0xff << (31 * 8);
+        mX = (m & ~bytes32(mask)) | (leadX >> 0);
+
+        uint256 x = uint256(mX);
+        uint256 y = g1YFromX(x);
+
+        if (parity(y) != (m[0] & 0x80) >> 7) {
+            y = p - y;
+        }
+
+        require(isG1PointOnCurve(G1Point(x, y)), "Malformed bn256.G1 point.");
+
+        return G1Point(x, y);
+    }
+
+
+    /// @dev Wraps the point addition pre-compile introduced in Byzantium. 
+    ///      Returns the sum of two points on G1. Revert if the provided points 
+    ///      are not on the curve.
+    function g1Add(G1Point memory a, G1Point memory b)
+        internal
+        view
+        returns (G1Point memory c)
+    {
+        assembly {
+            let arg := mload(0x40)
+            mstore(arg, mload(a))
+            mstore(add(arg, 0x20), mload(add(a, 0x20)))
+            mstore(add(arg, 0x40), mload(b))
+            mstore(add(arg, 0x60), mload(add(b, 0x20)))
+            // 0x60 is the ECADD precompile address
+            if iszero(staticcall(not(0), 0x06, arg, 0x80, c, 0x40)) {
+                revert(0, 0)
+            }
+        }
+    }
+
+    /// @dev Returns true if G1 point is on the curve.    
+    function isG1PointOnCurve(G1Point memory point)
+        internal
+        view
+        returns (bool)
+    {
+        return point.y.modExp(2, p) == (point.x.modExp(3, p) + 3) % p;
+    }
+
+    /// @dev Wraps the scalar point multiplication pre-compile introduced in
+    ///      Byzantium. The result of a point from G1 multiplied by a scalar 
+    ///      should match the point added to itself the same number of times. 
+    ///      Revert if the provided point isn't on the curve.
+    function scalarMultiply(G1Point memory p_1, uint256 scalar)
+        internal
+        view
+        returns (G1Point memory p_2)
+    {
+        assembly {
+            let arg := mload(0x40)
+            mstore(arg, mload(p_1))
+            mstore(add(arg, 0x20), mload(add(p_1, 0x20)))
+            mstore(add(arg, 0x40), scalar)
+            // 0x07 is the ECMUL precompile address
+            if iszero(staticcall(not(0), 0x07, arg, 0x60, p_2, 0x40)) {
+                revert(0, 0)
+            }
+        }
+    }
+
+    /// @dev Wraps the pairing check pre-compile introduced in Byzantium.
+    ///      Returns the result of a pairing check of 2 pairs
+    ///      (G1 p1, G2 p2) (G1 p3, G2 p4)
+    function pairing(
+        G1Point memory p1,
+        G2Point memory p2,
+        G1Point memory p3,
+        G2Point memory p4
+    ) internal view returns (bool result) {
+        uint256 _c;
+        assembly {
+            let c := mload(0x40)
+            let arg := add(c, 0x20)
+
+            mstore(arg, mload(p1))
+            mstore(add(arg, 0x20), mload(add(p1, 0x20)))
+
+            let p2x := mload(p2)
+            mstore(add(arg, 0x40), mload(p2x))
+            mstore(add(arg, 0x60), mload(add(p2x, 0x20)))
+
+            let p2y := mload(add(p2, 0x20))
+            mstore(add(arg, 0x80), mload(p2y))
+            mstore(add(arg, 0xa0), mload(add(p2y, 0x20)))
+
+            mstore(add(arg, 0xc0), mload(p3))
+            mstore(add(arg, 0xe0), mload(add(p3, 0x20)))
+
+            let p4x := mload(p4)
+            mstore(add(arg, 0x100), mload(p4x))
+            mstore(add(arg, 0x120), mload(add(p4x, 0x20)))
+
+            let p4y := mload(add(p4, 0x20))
+            mstore(add(arg, 0x140), mload(p4y))
+            mstore(add(arg, 0x160), mload(add(p4y, 0x20)))
+
+            // call(gasLimit, to, value, inputOffset, inputSize, outputOffset, outputSize)
+            if iszero(staticcall(not(0), 0x08, arg, 0x180, c, 0x20)) {
+                revert(0, 0)
+            }
+            _c := mload(c)
+        }
+        return _c != 0;
+    }
+
+    function getP() internal pure returns (uint256) {
+        return p;
+    }
+
+    function g1() internal pure returns (G1Point memory) {
+        return G1Point(g1x, g1y);
+    }
+
+    function g2() internal pure returns (G2Point memory) {
+        return G2Point(gfP2(g2xx, g2xy), gfP2(g2yx, g2yy));
+    }
+
     /// @dev g2YFromX computes a Y value for a G2 point based on an X value.
     ///      This computation is simply evaluating the curve equation for Y on a
     ///      given X, and allows a point on the curve to be represented by just
@@ -119,39 +249,12 @@ library AltBn128 {
         }
     }
 
-    /// @dev Hash a byte array message, m, and map it deterministically to a
-    ///      point on G1. Note that this approach was chosen for its simplicity
-    ///      and lower gas cost on the EVM, rather than good distribution of
-    ///      points on G1.
-    function g1HashToPoint(bytes memory m)
-        internal
-        view
-        returns (G1Point memory)
-    {
-        bytes32 h = sha256(m);
-        uint256 x = uint256(h) % p;
-        uint256 y;
-
-        while (true) {
-            y = g1YFromX(x);
-            if (y > 0) {
-                return G1Point(x, y);
-            }
-            x += 1;
-        }
-    }
-
-    /// @dev Calculates whether the provided number is even or odd.
-    /// @return 0x01 if y is an even number and 0x00 if it's odd.   
-    function parity(uint256 value) private pure returns (bytes1) {
-        return bytes32(value)[31] & 0x01;
-    }
-    
     /// @dev Compress a point on G1 to a single uint256 for serialization.
     function g1Compress(G1Point memory point) internal pure returns (bytes32) {
         bytes32 m = bytes32(point.x);
 
         bytes1 leadM = m[0] | (parity(point.y) << 7);
+        // slither-disable-next-line incorrect-shift
         uint256 mask = 0xff << (31 * 8);
         m = (m & ~bytes32(mask)) | (leadM >> 0);
 
@@ -167,29 +270,11 @@ library AltBn128 {
         bytes32 m = bytes32(point.x.x);
 
         bytes1 leadM = m[0] | (parity(point.y.x) << 7);
+        // slither-disable-next-line incorrect-shift
         uint256 mask = 0xff << (31 * 8);
         m = (m & ~bytes32(mask)) | (leadM >> 0);
 
         return abi.encodePacked(m, bytes32(point.x.y));
-    }
-
-    /// @dev Decompress a point on G1 from a single uint256.    
-    function g1Decompress(bytes32 m) internal view returns (G1Point memory) {
-        bytes32 mX = bytes32(0);
-        bytes1 leadX = m[0] & 0x7f;
-        uint256 mask = 0xff << (31 * 8);
-        mX = (m & ~bytes32(mask)) | (leadX >> 0);
-
-        uint256 x = uint256(mX);
-        uint256 y = g1YFromX(x);
-
-        if (parity(y) != (m[0] & 0x80) >> 7) {
-            y = p - y;
-        }
-
-        require(isG1PointOnCurve(G1Point(x, y)), "Malformed bn256.G1 point.");
-
-        return G1Point(x, y);
     }
 
     /// @dev Unmarshals a point on G1 from bytes in an uncompressed form.    
@@ -203,7 +288,6 @@ library AltBn128 {
         bytes32 x;
         bytes32 y;
 
-        /* solium-disable-next-line */
         assembly {
             x := mload(add(m, 0x20))
             y := mload(add(m, 0x40))
@@ -222,7 +306,6 @@ library AltBn128 {
         bytes32 x = bytes32(point.x);
         bytes32 y = bytes32(point.y);
 
-        /* solium-disable-next-line */
         assembly {
             mstore(add(m, 32), x)
             mstore(add(m, 64), y)
@@ -244,7 +327,6 @@ library AltBn128 {
         uint256 yx;
         uint256 yy;
 
-        /* solium-disable-next-line */
         assembly {
             xx := mload(add(m, 0x20))
             xy := mload(add(m, 0x40))
@@ -268,7 +350,6 @@ library AltBn128 {
         uint256 temp;
 
         // Extract two bytes32 from bytes array
-        /* solium-disable-next-line */
         assembly {
             temp := add(m, 32)
             x1 := mload(temp)
@@ -278,6 +359,7 @@ library AltBn128 {
 
         bytes32 mX = bytes32(0);
         bytes1 leadX = x1[0] & 0x7f;
+        // slither-disable-next-line incorrect-shift
         uint256 mask = 0xff << (31 * 8);
         mX = (x1 & ~bytes32(mask)) | (leadX >> 0);
 
@@ -290,28 +372,6 @@ library AltBn128 {
         }
 
         return G2Point(x, y);
-    }
-
-    /// @dev Wraps the point addition pre-compile introduced in Byzantium. 
-    ///      Returns the sum of two points on G1. Revert if the provided points 
-    ///      are not on the curve.
-    function g1Add(G1Point memory a, G1Point memory b)
-        internal
-        view
-        returns (G1Point memory c)
-    {
-        /* solium-disable-next-line */
-        assembly {
-            let arg := mload(0x40)
-            mstore(arg, mload(a))
-            mstore(add(arg, 0x20), mload(add(a, 0x20)))
-            mstore(add(arg, 0x40), mload(b))
-            mstore(add(arg, 0x60), mload(add(b, 0x20)))
-            // 0x60 is the ECADD precompile address
-            if iszero(staticcall(not(0), 0x06, arg, 0x80, c, 0x40)) {
-                revert(0, 0)
-            }
-        }
     }
 
     /// @dev Returns the sum of two gfP2 field elements.    
@@ -371,15 +431,6 @@ library AltBn128 {
         return (y2.x == x.x && y2.y == x.y);
     }
 
-    /// @dev Returns true if G1 point is on the curve.    
-    function isG1PointOnCurve(G1Point memory point)
-        internal
-        view
-        returns (bool)
-    {
-        return point.y.modExp(2, p) == (point.x.modExp(3, p) + 3) % p;
-    }
-
     /// @dev Returns true if G2 point is on the curve.    
     function isG2PointOnCurve(G2Point memory point)
         internal
@@ -392,71 +443,18 @@ library AltBn128 {
         return (y2x == x3x && y2y == x3y);
     }
 
-    /// @dev Wraps the scalar point multiplication pre-compile introduced in
-    ///      Byzantium. The result of a point from G1 multiplied by a scalar 
-    ///      should match the point added to itself the same number of times. 
-    ///      Revert if the provided point isn't on the curve.
-    function scalarMultiply(G1Point memory p_1, uint256 scalar)
-        internal
-        view
-        returns (G1Point memory p_2)
-    {
-        assembly {
-            let arg := mload(0x40)
-            mstore(arg, mload(p_1))
-            mstore(add(arg, 0x20), mload(add(p_1, 0x20)))
-            mstore(add(arg, 0x40), scalar)
-            // 0x07 is the ECMUL precompile address
-            if iszero(staticcall(not(0), 0x07, arg, 0x60, p_2, 0x40)) {
-                revert(0, 0)
-            }
-        }
+    function twistB() private pure returns (gfP2 memory) {
+        return gfP2(twistBx, twistBy);
     }
 
-    /// @dev Wraps the pairing check pre-compile introduced in Byzantium.
-    ///      Returns the result of a pairing check of 2 pairs
-    ///      (G1 p1, G2 p2) (G1 p3, G2 p4)
-    function pairing(
-        G1Point memory p1,
-        G2Point memory p2,
-        G1Point memory p3,
-        G2Point memory p4
-    ) internal view returns (bool result) {
-        uint256 _c;
-        /* solium-disable-next-line */
-        assembly {
-            let c := mload(0x40)
-            let arg := add(c, 0x20)
+    function hexRoot() private pure returns (gfP2 memory) {
+        return gfP2(hexRootX, hexRootY);
+    }
 
-            mstore(arg, mload(p1))
-            mstore(add(arg, 0x20), mload(add(p1, 0x20)))
-
-            let p2x := mload(p2)
-            mstore(add(arg, 0x40), mload(p2x))
-            mstore(add(arg, 0x60), mload(add(p2x, 0x20)))
-
-            let p2y := mload(add(p2, 0x20))
-            mstore(add(arg, 0x80), mload(p2y))
-            mstore(add(arg, 0xa0), mload(add(p2y, 0x20)))
-
-            mstore(add(arg, 0xc0), mload(p3))
-            mstore(add(arg, 0xe0), mload(add(p3, 0x20)))
-
-            let p4x := mload(p4)
-            mstore(add(arg, 0x100), mload(p4x))
-            mstore(add(arg, 0x120), mload(add(p4x, 0x20)))
-
-            let p4y := mload(add(p4, 0x20))
-            mstore(add(arg, 0x140), mload(p4y))
-            mstore(add(arg, 0x160), mload(add(p4y, 0x20)))
-
-            // call(gasLimit, to, value, inputOffset, inputSize, outputOffset, outputSize)
-            if iszero(staticcall(not(0), 0x08, arg, 0x180, c, 0x20)) {
-                revert(0, 0)
-            }
-            _c := mload(c)
-        }
-        return _c != 0;
+    /// @dev Calculates whether the provided number is even or odd.
+    /// @return 0x01 if y is an even number and 0x00 if it's odd.   
+    function parity(uint256 value) private pure returns (bytes1) {
+        return bytes32(value)[31] & 0x01;
     }
 
     function _gfP2Add(
