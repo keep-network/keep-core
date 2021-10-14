@@ -360,7 +360,7 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
-    /// the protocol.
+    ///         the protocol.
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);

@@ -13,18 +13,18 @@ library DKG {
   uint256 public constant groupSize = 64;
 
   /// @dev Minimum number of group members needed to interact according to the
-  /// protocol to produce a relay entry.
+  ///      protocol to produce a relay entry.
   uint256 public constant groupThreshold = 33;
 
   /// @dev The minimum number of signatures required to support DKG result.
-  /// This number needs to be at least the same as the signing threshold
-  /// and it is recommended to make it higher than the signing threshold
-  /// to keep a safety margin for misbehaving members.
+  ///      This number needs to be at least the same as the signing threshold
+  ///      and it is recommended to make it higher than the signing threshold
+  ///      to keep a safety margin for misbehaving members.
   uint256 public constant signatureThreshold =
     groupThreshold + (groupSize - groupThreshold) / 2;
 
   /// @notice Time in blocks after which DKG result is complete and ready to be
-  // published by clients.
+  //          published by clients.
   uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
 
   struct Parameters {
@@ -109,21 +109,20 @@ library DKG {
   }
 
   /// @notice Verifies the submitted DKG result against supporting member
-  /// signatures and if the submitter is eligible to submit at the current
-  /// block. Every signature supporting the result has to be from a unique
-  /// group member.
-  ///
+  ///         signatures and if the submitter is eligible to submit at the current
+  ///         block. Every signature supporting the result has to be from a unique
+  ///         group member.
   /// @param submitterMemberIndex Claimed submitter candidate group member index
   /// @param groupPubKey Generated candidate group public key
   /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-  /// group members indexes; Indexes reflect positions of members in the group,
-  /// as outputted by the group selection protocol.
+  ///        group members indexes; Indexes reflect positions of members in the group,
+  ///        as outputted by the group selection protocol.
   /// @param signatures Concatenation of signatures from members supporting the
-  /// result.
+  ///        result.
   /// @param signingMemberIndices Indices of members corresponding to each
-  /// signature. Indices have to be unique.
+  ///        signature. Indices have to be unique.
   /// @param members Addresses of candidate group members as outputted by the
-  /// group selection protocol.
+  ///        group selection protocol.
   function verify(
     Data storage self,
     uint256 submitterMemberIndex,
