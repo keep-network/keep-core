@@ -78,6 +78,7 @@ library DKG {
 
   function submitResult(Data storage self, Result calldata result) external {
     require(isInProgress(self), "dkg is currently not in progress");
+    require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
     bytes32 resultHash = keccak256(abi.encode(result));
 
@@ -104,6 +105,20 @@ library DKG {
   /// @return True if DKG is in progress, false otherwise.
   function isInProgress(Data storage self) public view returns (bool) {
     return self.startBlock > 0;
+  }
+
+  /// @notice Checks if DKG timed out. The DKG timeout period includes time required
+  ///         for off-chain protocol execution and time for the result publication
+  ///         for all group members. After this time result cannot be submitted
+  ///         and DKG can be notified about the timeout.
+  /// @return True if DKG timed out, false otherwise.
+  function hasDkgTimedOut(Data storage self) public view returns (bool) {
+    return
+      block.number >
+      (self.startBlock +
+        offchainDkgTime +
+        groupSize *
+        self.parameters.resultSubmissionEligibilityDelay);
   }
 
   /// @notice Verifies the submitted DKG result against supporting member

@@ -12,8 +12,7 @@ const { mineBlocks, mineBlocksTo } = helpers.time
 describe("RandomBeacon contract", function () {
   const dkgTimeout: number =
     constants.offchainDkgTime +
-    constants.groupSize * params.dkgResultSubmissionEligibilityDelay +
-    params.dkgResultChallengePeriodLength
+    constants.groupSize * params.dkgResultSubmissionEligibilityDelay
 
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
@@ -254,13 +253,7 @@ describe("RandomBeacon contract", function () {
             "with the last submitter eligibility delay period almost ended",
             async function () {
               beforeEach(async () => {
-                await mineBlocksTo(
-                  startBlock +
-                    constants.offchainDkgTime +
-                    constants.groupSize *
-                      params.dkgResultSubmissionEligibilityDelay -
-                    2
-                )
+                await mineBlocksTo(startBlock + dkgTimeout - 1)
               })
 
               it(`succeeds for the first submitter`, async function () {
@@ -298,12 +291,14 @@ describe("RandomBeacon contract", function () {
 
       context("with group creation timed out", async function () {
         beforeEach("increase time", async () => {
-          await mineBlocks(dkgTimeout)
+          await mineBlocksTo(startBlock + dkgTimeout)
         })
 
         context("with timeout not notified", async function () {
-          it("succeeds", async function () {
-            await signAndSubmitDkgResult(signers, startBlock)
+          it("reverts with dkg timeout already passed error", async function () {
+            await expect(
+              signAndSubmitDkgResult(signers, startBlock)
+            ).to.revertedWith("dkg timeout already passed")
           })
         })
       })
