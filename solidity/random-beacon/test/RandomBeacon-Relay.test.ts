@@ -15,7 +15,7 @@ interface GroupMember {
   signer: SignerWithAddress
 }
 
-describe.only("RandomBeacon - Relay", function () {
+describe("RandomBeacon - Relay", function () {
   const relayRequestFee = to1e18(100)
 
   let requester: SignerWithAddress
