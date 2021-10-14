@@ -1,8 +1,9 @@
+/* eslint-disable no-await-in-loop */
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { Address } from "hardhat-deploy/types"
-import { blsData } from "./data/bls"
+import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
 
 import type { RandomBeacon } from "../typechain"
@@ -52,6 +53,7 @@ describe("RandomBeacon", () => {
       let expectedSeed: BigNumber
 
       beforeEach("run genesis", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;[tx, expectedSeed] = await genesis()
       })
 
@@ -422,6 +424,7 @@ describe("RandomBeacon", () => {
   }
 
   async function signAndSubmitDkgResult(
+    // eslint-disable-next-line @typescript-eslint/no-shadow
     signers: DkgGroupSigners,
     startBlock: number,
     submitterIndex = 1
@@ -463,7 +466,7 @@ async function getDkgGroupSigners(
   for (let i = 1; i <= groupSize; i++) {
     const signer = (await getUnnamedAccounts())[startAccountsOffset + i]
 
-    expect(
+    await expect(
       signer,
       `signer [${i}] is not defined; check hardhat network configuration`
     ).is.not.empty
@@ -489,6 +492,7 @@ async function signDkgResult(
   const signingMemberIndices: number[] = []
   const signatures: string[] = []
 
+  // eslint-disable-next-line no-restricted-syntax
   for (const [memberIndex, signer] of signers) {
     members.push(signer)
 
