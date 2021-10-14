@@ -69,9 +69,6 @@ library DKG {
   function start(Data storage self, uint256 seed) internal {
     require(!isInProgress(self), "dkg is currently in progress");
 
-    assert(self.parameters.resultChallengePeriodLength > 0);
-    assert(self.parameters.resultSubmissionEligibilityDelay > 0);
-
     self.seed = seed;
     self.startBlock = block.number;
   }
@@ -85,8 +82,6 @@ library DKG {
       self.submittedResultHash == 0,
       "result was already submitted in the current dkg"
     );
-
-    assert(self.parameters.resultSubmissionEligibilityDelay > 0);
 
     verify(
       self,
