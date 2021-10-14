@@ -443,15 +443,6 @@ async function signDkgResult(
     signatures.push(signature)
   }
 
-  expect(
-    signingMemberIndices.length,
-    "unexpected signingMemberIndices array size"
-  ).to.be.equal(signers.size)
-
-  expect(signatures.length, "unexpected signatures array size").to.be.equal(
-    signers.size
-  )
-
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
   return { members, signingMemberIndices, signaturesBytes }
