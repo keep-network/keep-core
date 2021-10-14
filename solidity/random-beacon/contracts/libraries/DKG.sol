@@ -40,8 +40,6 @@ library DKG {
     // They should be updated with dedicated set functions only when DKG is not
     // in progress.
     Parameters parameters;
-    // Unique seed for each DKG.
-    uint256 seed;
     // Time in blocks at which DKG started.
     uint256 startBlock;
     // Hash of submitted DKG result.
@@ -66,10 +64,9 @@ library DKG {
     address[] members;
   }
 
-  function start(Data storage self, uint256 seed) internal {
+  function start(Data storage self) internal {
     require(!isInProgress(self), "dkg is currently in progress");
 
-    self.seed = seed;
     self.startBlock = block.number;
   }
 
@@ -163,7 +160,7 @@ library DKG {
     require(signaturesCount <= groupSize, "Too many signatures");
 
     bytes32 resultHash = keccak256(
-      abi.encodePacked(self.seed, groupPubKey, misbehaved)
+      abi.encodePacked(groupPubKey, misbehaved, self.startBlock)
     );
 
     bytes memory current; // Current signature to be checked.
@@ -226,7 +223,6 @@ library DKG {
   /// @notice Cleans up state after DKG completion.
   /// @dev Should be called after DKG times out or a result is approved.
   function cleanup(Data storage self) internal {
-    delete self.seed;
     delete self.startBlock;
     delete self.submittedResultHash;
     delete self.submittedResultBlock;
