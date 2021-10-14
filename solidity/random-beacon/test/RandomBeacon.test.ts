@@ -1,9 +1,9 @@
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 
+import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
 
-import type { Signer } from "ethers"
 import type { RandomBeacon, SortitionPoolStub } from "../typechain"
 
 describe("RandomBeacon", () => {
@@ -13,11 +13,12 @@ describe("RandomBeacon", () => {
   let randomBeacon: RandomBeacon
   let sortitionPoolStub: SortitionPoolStub
 
-  before(async function () {
-    ;[governance, thirdParty, operator] = await ethers.getSigners()
+  // prettier-ignore
+  before(async () => {
+    [governance, thirdParty, operator] = await ethers.getSigners()
   })
 
-  beforeEach("load test fixture", async function () {
+  beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
     sortitionPoolStub = contracts.sortitionPoolStub as SortitionPoolStub
@@ -295,8 +296,9 @@ describe("RandomBeacon", () => {
       })
 
       it("should register the operator", async () => {
-        expect(await sortitionPoolStub.operators(await operator.getAddress()))
-          .to.be.true
+        await expect(
+          await sortitionPoolStub.operators(await operator.getAddress())
+        ).to.be.true
       })
     })
 
@@ -307,8 +309,9 @@ describe("RandomBeacon", () => {
       })
 
       it("should keep the operator as registered", async () => {
-        expect(await sortitionPoolStub.operators(await operator.getAddress()))
-          .to.be.true
+        await expect(
+          await sortitionPoolStub.operators(await operator.getAddress())
+        ).to.be.true
       })
     })
   })
@@ -323,7 +326,7 @@ describe("RandomBeacon", () => {
       })
 
       it("should return true", async () => {
-        expect(
+        await expect(
           await randomBeacon.isOperatorEligible(await operator.getAddress())
         ).to.be.true
       })
@@ -338,7 +341,7 @@ describe("RandomBeacon", () => {
       })
 
       it("should return false", async () => {
-        expect(
+        await expect(
           await randomBeacon.isOperatorEligible(await operator.getAddress())
         ).to.be.false
       })

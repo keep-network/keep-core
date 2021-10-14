@@ -188,26 +188,6 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon = _randomBeacon;
     }
 
-    /// @notice Gets the time remaining until the governable parameter update
-    ///         can be committed.
-    /// @param changeTimestamp Timestamp indicating the beginning of the change.
-    /// @param delay Governance delay.
-    /// @return Remaining time in seconds.
-    function getRemainingChangeTime(uint256 changeTimestamp, uint256 delay)
-        internal
-        view
-        returns (uint256)
-    {
-        require(changeTimestamp > 0, "Change not initiated");
-        /* solhint-disable-next-line not-rely-on-time */
-        uint256 elapsed = block.timestamp - changeTimestamp;
-        if (elapsed >= delay) {
-            return 0;
-        } else {
-            return delay - elapsed;
-        }
-    }
-
     /// @notice Begins the relay request fee update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newRelayRequestFee New relay request fee
@@ -872,5 +852,25 @@ contract RandomBeaconGovernance is Ownable {
                 maliciousDkgResultSlashingAmountChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
+    }
+
+    /// @notice Gets the time remaining until the governable parameter update
+    ///         can be committed.
+    /// @param changeTimestamp Timestamp indicating the beginning of the change.
+    /// @param delay Governance delay.
+    /// @return Remaining time in seconds.
+    function getRemainingChangeTime(uint256 changeTimestamp, uint256 delay)
+        internal
+        view
+        returns (uint256)
+    {
+        require(changeTimestamp > 0, "Change not initiated");
+        /* solhint-disable-next-line not-rely-on-time */
+        uint256 elapsed = block.timestamp - changeTimestamp;
+        if (elapsed >= delay) {
+            return 0;
+        } else {
+            return delay - elapsed;
+        }
     }
 }
