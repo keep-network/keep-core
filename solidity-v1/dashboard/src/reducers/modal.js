@@ -10,14 +10,17 @@ const initialState = {
   modalComponentType: null,
   componentProps: null,
   modalProps: null,
+  modalType: null,
 }
 
+// TODO: Clean up modal reducer.
 const modalReducer = (state = initialState, action) => {
   switch (action.type) {
     case OPEN_MODAL:
       return {
         isOpen: true,
         modalComponentType: action.payload.modalComponentType,
+        modalType: action.payload.modalType,
         componentProps: {
           ...state.componentProps,
           ...action.payload.componentProps,
@@ -31,6 +34,8 @@ const modalReducer = (state = initialState, action) => {
       return {
         ...state,
         isOpen: false,
+        modalType: null,
+        modalProps: {},
       }
     case ADD_ADDITIONAL_DATA_TO_MODAL:
       return {
