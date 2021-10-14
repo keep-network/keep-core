@@ -19,7 +19,7 @@ library DKG {
   /// @dev The minimum number of signatures required to support DKG result.
   ///      This number needs to be at least the same as the signing threshold
   ///      and it is recommended to make it higher than the signing threshold
-  ///      to keep a safety margin for misbehaving members.
+  ///      to keep a safety margin for in case some members become inactive.
   uint256 public constant signatureThreshold =
     groupThreshold + (groupSize - groupThreshold) / 2;
 
