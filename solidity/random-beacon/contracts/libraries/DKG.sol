@@ -117,7 +117,6 @@ library DKG {
     require(currentState(self) == State.IDLE, "current state is not IDLE");
 
     self.startBlock = block.number;
-    self.resultSubmissionStartBlock = block.number + offchainDkgTime;
   }
 
   function submitResult(Data storage self, Result calldata result) external {
