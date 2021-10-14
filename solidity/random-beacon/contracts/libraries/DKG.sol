@@ -133,6 +133,9 @@ library DKG {
     uint256[] memory signingMemberIndices,
     address[] memory members
   ) public view {
+    // TODO: Verify if submitter is valid staker and signatures come from valid
+    // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
+
     require(submitterMemberIndex > 0, "Invalid submitter index");
     require(
       members[submitterMemberIndex - 1] == msg.sender,
