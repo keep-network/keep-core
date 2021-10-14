@@ -72,6 +72,8 @@ describe("RandomBeacon contract", function () {
       })
 
       context("with dkg result submitted", async function () {
+        // TODO: Add test cases to cover results that are approved, challenged or
+        // pending.
         beforeEach(async () => {
           await mineBlocks(constants.offchainDkgTime)
 
