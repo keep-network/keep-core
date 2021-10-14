@@ -159,6 +159,35 @@ describe("RandomBeacon contract", function () {
             await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
           })
 
+          it("reverts with less than threshold signers", async function () {
+            const filteredSigners = new Map(
+              Array.from(signers).filter(([index]) => {
+                return index < constants.signatureThreshold
+              })
+            )
+
+            await expect(
+              signAndSubmitDkgResult(filteredSigners, startBlock)
+            ).to.revertedWith("Too few signatures")
+          })
+
+          it("succeeds with threshold signers", async function () {
+            const filteredSigners = new Map(
+              Array.from(signers).filter(([index]) => {
+                return index <= constants.signatureThreshold
+              })
+            )
+
+            const { transaction: tx, dkgResult } = await signAndSubmitDkgResult(
+              filteredSigners,
+              startBlock
+            )
+
+            await expect(tx)
+              .to.emit(randomBeacon, "DkgResultSubmitted")
+              .withArgs(dkgResult.groupPubKey, signers.get(1))
+          })
+
           it("succeeds for the first submitter", async function () {
             const { transaction: tx, dkgResult } = await signAndSubmitDkgResult(
               signers,
@@ -339,10 +368,6 @@ describe("RandomBeacon contract", function () {
     dkgResult: DkgResult
   }> {
     const noMisbehaved = "0x"
-
-    expect(signers.size, "unexpected signers map size").to.be.equal(
-      constants.groupSize
-    )
 
     const {
       members,
