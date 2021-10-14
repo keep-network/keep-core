@@ -193,3 +193,12 @@ export const TBTC_TOKEN_VERSION = {
   v1: "v1",
   v2: "v2",
 }
+
+/**
+ * Enum defines a supported types of Modals
+ * @readonly
+ * @enum {string}
+ */
+export const MODAL_TYPES = {
+  Example: "Example",
+}
