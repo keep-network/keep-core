@@ -13,6 +13,10 @@ const blsData = {
   // group signature over previousEntry
   groupSignature:
     "0x112d462728e89432b0fe40251eeb6608aed4560f3dc833a9877f5010ace9b1312006dbbe2f30c6e0e3e7ec47dc078b7b6b773379d44d64e44ec4e017bfa7375c",
+
+  // group signature over groupSignature
+  nextGroupSignature:
+    "0x144b0508140c2c63fac298ee0cdd98571971a2d958f7c97d2bab82f3e1e727542d08314d6f087aca6ec2173b9a1d928cb80ff45258984a8929977a58d8b2fc26",
 }
 
 export default blsData
