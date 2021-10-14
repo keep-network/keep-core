@@ -129,7 +129,7 @@ contract RandomBeacon is Ownable {
     ISortitionPool public sortitionPool;
 
     // Libraries data storages
-    DKG.Data dkg;
+    DKG.Data internal dkg;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
