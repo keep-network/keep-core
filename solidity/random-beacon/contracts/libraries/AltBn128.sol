@@ -98,6 +98,7 @@ library AltBn128 {
     function g1Decompress(bytes32 m) internal view returns (G1Point memory) {
         bytes32 mX = bytes32(0);
         bytes1 leadX = m[0] & 0x7f;
+        // slither-disable-next-line incorrect-shift
         uint256 mask = 0xff << (31 * 8);
         mX = (m & ~bytes32(mask)) | (leadX >> 0);
 
@@ -253,6 +254,7 @@ library AltBn128 {
         bytes32 m = bytes32(point.x);
 
         bytes1 leadM = m[0] | (parity(point.y) << 7);
+        // slither-disable-next-line incorrect-shift
         uint256 mask = 0xff << (31 * 8);
         m = (m & ~bytes32(mask)) | (leadM >> 0);
 
@@ -268,6 +270,7 @@ library AltBn128 {
         bytes32 m = bytes32(point.x.x);
 
         bytes1 leadM = m[0] | (parity(point.y.x) << 7);
+        // slither-disable-next-line incorrect-shift
         uint256 mask = 0xff << (31 * 8);
         m = (m & ~bytes32(mask)) | (leadM >> 0);
 
@@ -356,6 +359,7 @@ library AltBn128 {
 
         bytes32 mX = bytes32(0);
         bytes1 leadX = x1[0] & 0x7f;
+        // slither-disable-next-line incorrect-shift
         uint256 mask = 0xff << (31 * 8);
         mX = (x1 & ~bytes32(mask)) | (leadX >> 0);
 
