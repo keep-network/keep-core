@@ -387,8 +387,8 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Check if DKG is currently in progress.
-    function isDkgInProgress() external view returns (bool) {
-        return dkg.isInProgress();
+    /// @notice Check current group creation state.
+    function getGroupCreationState() external view returns (DKG.State) {
+        return dkg.currentState();
     }
 }

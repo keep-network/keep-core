@@ -9,6 +9,13 @@ import type { Address } from "hardhat-deploy/types"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 
+const dkgState = {
+  IDLE: 0,
+  KEY_GENERATION: 1,
+  AWAITING_RESULT: 2,
+  CHALLENGE: 3
+}
+
 describe("RandomBeacon", function () {
   const dkgTimeout: number =
     constants.offchainDkgTime +
@@ -64,27 +71,26 @@ describe("RandomBeacon", function () {
       })
 
       context("with dkg result not submitted", async function () {
-        it("reverts with dkg is currently in progress error", async function () {
+        it("reverts with 'current state is not IDLE' error", async function () {
           await expect(randomBeacon.genesis()).to.be.revertedWith(
-            "dkg is currently in progress"
+            "current state is not IDLE"
           )
         })
       })
 
       context("with dkg result submitted", async function () {
+        beforeEach(async () => {
+          await mineBlocks(constants.offchainDkgTime)
+          await signAndSubmitDkgResult(signers, startBlock)
+        })
+
         // TODO: Add test cases to cover results that are approved, challenged or
         // pending.
 
         context("with dkg result not approved", async function () {
-          beforeEach(async () => {
-            await mineBlocks(constants.offchainDkgTime)
-
-            await signAndSubmitDkgResult(signers, startBlock)
-          })
-
-          it("reverts with dkg is currently in progress error", async function () {
+          it("reverts with 'current state is not IDLE' error", async function () {
             await expect(randomBeacon.genesis()).to.be.revertedWith(
-              "dkg is currently in progress"
+              "current state is not IDLE"
             )
           })
         })
@@ -92,10 +98,12 @@ describe("RandomBeacon", function () {
     })
   })
 
-  describe("isDkgInProgress function call", async function () {
+  describe("getGroupCreationState function call", async function () {
     context("with initial contract state", async function () {
-      it("returns false", async function () {
-        expect(await randomBeacon.isDkgInProgress()).to.be.false
+      it("returns IDLE state", async function () {
+        expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+          dkgState.IDLE
+        )
       })
     })
 
@@ -107,20 +115,80 @@ describe("RandomBeacon", function () {
         startBlock = genesisTx.blockNumber
       })
 
-      it("returns true", async function () {
-        expect(await randomBeacon.isDkgInProgress()).to.be.true
+      context("at the start of off-chain dkg period", async function () {
+        it("returns KEY_GENERATION state", async function () {
+          expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+            dkgState.KEY_GENERATION
+          )
+        })
       })
 
-      context("when genesis dkg result was submitted", async function () {
+      context("at the end of off-chain dkg period", async function () {
         beforeEach(async () => {
-          await mineBlocks(constants.offchainDkgTime)
-          await signAndSubmitDkgResult(signers, startBlock)
+          await mineBlocksTo(startBlock + constants.offchainDkgTime)
         })
 
-        context("when genesis dkg result was not approved", async function () {
-          it("returns true", async function () {
-            expect(await randomBeacon.isDkgInProgress()).to.be.true
+        it("returns KEY_GENERATION state", async function () {
+          expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+            dkgState.KEY_GENERATION
+          )
+        })
+      })
+
+      context("after off-chain dkg period", async function () {
+        beforeEach(async () => {
+          await mineBlocksTo(startBlock + constants.offchainDkgTime + 1)
+        })
+
+        context("when dkg result was not submitted", async function () {
+          it("returns AWAITING_RESULT state", async function () {
+            expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+              dkgState.AWAITING_RESULT
+            )
           })
+
+          context("after the dkg timeout period", async function () {
+            beforeEach(async () => {
+              await mineBlocksTo(startBlock + dkgTimeout + 1)
+            })
+
+            it("returns AWAITING_RESULT state", async function () {
+              expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                dkgState.AWAITING_RESULT
+              )
+            })
+          })
+        })
+
+        context("when dkg result was submitted", async function () {
+          beforeEach(async () => {
+            await signAndSubmitDkgResult(signers, startBlock)
+          })
+
+          context("when dkg result was not approved", async function () {
+            it("returns CHALLENGE state", async function () {
+              expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                dkgState.CHALLENGE
+              )
+            })
+          })
+
+          // TODO: Enable once approvals and challenges are implemented
+          // context("when dkg result was approved", async function () {
+          //   it("returns IDLE state", async function () {
+          //     expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+          //       dkgState.IDLE
+          //     )
+          //   })
+          // })
+
+          // context("when dkg result was challenged", async function () {
+          //   it("returns AWAITING_RESULT state", async function () {
+          //     expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+          //       dkgState.AWAITING_RESULT
+          //     )
+          //   })
+          // })
         })
       })
     })
@@ -130,9 +198,9 @@ describe("RandomBeacon", function () {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
 
     context("with initial contract state", async function () {
-      it("reverts with dkg is currently not in progress error", async function () {
+      it("reverts with 'current state is not AWAITING_RESULT' error", async function () {
         await expect(signAndSubmitDkgResult(signers, 1)).to.be.revertedWith(
-          "dkg is currently not in progress"
+          "current state is not AWAITING_RESULT"
         )
       })
     })
@@ -149,19 +217,19 @@ describe("RandomBeacon", function () {
       context("with group creation not timed out", async function () {
         context("with off-chain dkg time not passed", async function () {
           beforeEach(async () => {
-            await mineBlocksTo(startBlock + constants.offchainDkgTime - 2)
+            await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
           })
 
-          it("reverts with submitter not eligible error", async function () {
+          it("reverts with 'current state is not AWAITING_RESULT' error", async function () {
             await expect(
               signAndSubmitDkgResult(signers, startBlock)
-            ).to.revertedWith("Submitter not eligible")
+            ).to.revertedWith("current state is not AWAITING_RESULT")
           })
         })
 
         context("with off-chain dkg time passed", async function () {
           beforeEach(async () => {
-            await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
+            await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
           it("reverts with less than threshold signers", async function () {

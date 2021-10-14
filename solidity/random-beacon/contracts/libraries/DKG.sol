@@ -48,6 +48,27 @@ library DKG {
     uint256 submittedResultBlock;
   }
 
+  /// @notice States for phases of group creation.
+  /// The states doesn't include timeouts which should be tracked and notified
+  /// individually.
+  enum State {
+    // Group creation is not in progress, awaits to be started. It is a state
+    // set after group creation completion either by timeout or by a result
+    // approval.
+    IDLE,
+    // Off-chain DKG protocol execution is in progress. A result is being calculated
+    // by the clients in this state. It's not yet possible to submit the result.
+    KEY_GENERATION,
+    // After off-chain DKG protocol execution the contract awaits result submission.
+    // This is a state to which group creation returns in case of a result
+    // challenge notification.
+    AWAITING_RESULT,
+    // DKG result was submitted and awaits an approval of a challenge. If a result
+    // gets challenge the state returns to `AWAITING_RESULT`. If a result gets
+    // approval the state changes to `IDLE`.
+    CHALLENGE
+  }
+
   /// @notice DKG result.
   struct Result {
     // Claimed submitter candidate group member index
@@ -70,22 +91,42 @@ library DKG {
     address[] members;
   }
 
+  /// @notice Determines the current state of group creation. It doesn't take
+  ///         timeouts into consideration. The timeouts should be tracked and
+  ///         notified separately.
+  function currentState(Data storage self)
+    public
+    view
+    returns (State currentState)
+  {
+    currentState = State.IDLE;
+
+    if (self.startBlock > 0) {
+      currentState = State.KEY_GENERATION;
+
+      if (block.number > self.startBlock + offchainDkgTime) {
+        currentState = State.AWAITING_RESULT;
+
+        if (self.submittedResultBlock > 0) {
+          currentState = State.CHALLENGE;
+        }
+      }
+    }
+  }
+
   function start(Data storage self) internal {
-    require(!isInProgress(self), "dkg is currently in progress");
+    require(currentState(self) == State.IDLE, "current state is not IDLE");
 
     self.startBlock = block.number;
+    self.resultSubmissionStartBlock = block.number + offchainDkgTime;
   }
 
   function submitResult(Data storage self, Result calldata result) external {
-    require(isInProgress(self), "dkg is currently not in progress");
-    require(!hasDkgTimedOut(self), "dkg timeout already passed");
-
-    bytes32 resultHash = keccak256(abi.encode(result));
-
     require(
-      self.submittedResultHash == 0,
-      "result was already submitted in the current dkg"
+      currentState(self) == State.AWAITING_RESULT,
+      "current state is not AWAITING_RESULT"
     );
+    require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
     verify(
       self,
@@ -97,14 +138,8 @@ library DKG {
       result.members
     );
 
-    self.submittedResultHash = resultHash;
+    self.submittedResultHash = keccak256(abi.encode(result));
     self.submittedResultBlock = block.number;
-  }
-
-  /// @notice Checks if DKG is currently in progress.
-  /// @return True if DKG is in progress, false otherwise.
-  function isInProgress(Data storage self) public view returns (bool) {
-    return self.startBlock > 0;
   }
 
   /// @notice Checks if DKG timed out. The DKG timeout period includes time required
@@ -220,7 +255,7 @@ library DKG {
     Data storage self,
     uint256 newResultChallengePeriodLength
   ) internal {
-    require(!isInProgress(self), "dkg is currently in progress");
+    require(currentState(self) == State.IDLE, "current state is not IDLE");
 
     require(
       newResultChallengePeriodLength > 0,
@@ -237,7 +272,7 @@ library DKG {
     Data storage self,
     uint256 newResultSubmissionEligibilityDelay
   ) internal {
-    require(!isInProgress(self), "dkg is currently in progress");
+    require(currentState(self) == State.IDLE, "current state is not IDLE");
 
     require(
       newResultSubmissionEligibilityDelay > 0,
