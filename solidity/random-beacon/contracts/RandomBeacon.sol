@@ -354,7 +354,7 @@ contract RandomBeacon is Ownable {
     function createGroup(uint256 seed) internal {
         // TODO: Lock sortition pool.
 
-        dkg.start();
+        dkg.start(seed);
 
         emit DkgStarted(seed);
     }

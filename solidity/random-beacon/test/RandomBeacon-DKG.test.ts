@@ -3,7 +3,7 @@ import { expect } from "chai"
 import { blsData } from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
 
-import type { ContractTransaction, Signer } from "ethers"
+import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
 
@@ -43,7 +43,7 @@ describe("RandomBeacon contract", function () {
 
     context("with initial contract state", async function () {
       let tx: ContractTransaction
-      let expectedSeed: string
+      let expectedSeed: BigNumber
 
       beforeEach("run genesis", async () => {
         ;[tx, expectedSeed] = await genesis()
@@ -57,8 +57,10 @@ describe("RandomBeacon contract", function () {
     })
 
     context("with genesis in progress", async function () {
+      let expectedSeed: BigNumber
+
       beforeEach("run genesis", async () => {
-        await randomBeacon.genesis()
+        ;[, expectedSeed] = await genesis()
       })
 
       context("with dkg result not submitted", async function () {
@@ -73,7 +75,7 @@ describe("RandomBeacon contract", function () {
         beforeEach(async () => {
           await mineBlocks(constants.offchainDkgTime)
 
-          await signAndSubmitDkgResult(signers)
+          await signAndSubmitDkgResult(signers, expectedSeed)
         })
 
         it("reverts with dkg is currently in progress error", async function () {
@@ -93,8 +95,10 @@ describe("RandomBeacon contract", function () {
     })
 
     context("when genesis dkg started", async function () {
+      let expectedSeed: BigNumber
+
       beforeEach("run genesis", async () => {
-        await randomBeacon.genesis()
+        ;[, expectedSeed] = await genesis()
       })
 
       it("returns true", async function () {
@@ -106,7 +110,7 @@ describe("RandomBeacon contract", function () {
 
         beforeEach(async () => {
           await mineBlocks(constants.offchainDkgTime)
-          ;({ dkgResult } = await signAndSubmitDkgResult(signers))
+          ;({ dkgResult } = await signAndSubmitDkgResult(signers, expectedSeed))
         })
 
         context("when genesis dkg result was not approved", async function () {
@@ -123,14 +127,14 @@ describe("RandomBeacon contract", function () {
 
     context("with initial contract state", async function () {
       it("reverts with dkg is currently not in progress error", async function () {
-        await expect(signAndSubmitDkgResult(signers)).to.be.revertedWith(
-          "dkg is currently not in progress"
-        )
+        await expect(
+          signAndSubmitDkgResult(signers, ethers.constants.One)
+        ).to.be.revertedWith("dkg is currently not in progress")
       })
     })
 
     context("with group creation in progress", async function () {
-      let expectedSeed: string
+      let expectedSeed: BigNumber
 
       beforeEach("run genesis", async () => {
         ;[, expectedSeed] = await genesis()
@@ -146,7 +150,7 @@ describe("RandomBeacon contract", function () {
             transaction: tx,
 
             dkgResult
-          } = await signAndSubmitDkgResult(signers))
+          } = await signAndSubmitDkgResult(signers, expectedSeed))
         })
 
         it("emits DkgResultSubmitted event", async function () {
@@ -163,20 +167,22 @@ describe("RandomBeacon contract", function () {
 
         context("with timeout not notified", async function () {
           it("succeeds", async function () {
-            await signAndSubmitDkgResult(signers)
+            await signAndSubmitDkgResult(signers, expectedSeed)
           })
         })
       })
     })
   })
 
-  async function genesis(): Promise<[ContractTransaction, string]> {
+  async function genesis(): Promise<[ContractTransaction, BigNumber]> {
     const tx = await randomBeacon.genesis()
 
-    const expectedSeed = ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ["uint256", "uint256"],
-        [await randomBeacon.genesisSeed(), tx.blockNumber]
+    const expectedSeed = ethers.BigNumber.from(
+      ethers.utils.keccak256(
+        ethers.utils.solidityPack(
+          ["uint256", "uint256"],
+          [await randomBeacon.genesisSeed(), tx.blockNumber]
+        )
       )
     )
 
@@ -193,7 +199,8 @@ describe("RandomBeacon contract", function () {
   }
 
   async function signAndSubmitDkgResult(
-    signers: DkgGroupSigners
+    signers: DkgGroupSigners,
+    seed: BigNumber
   ): Promise<{
     transaction: ContractTransaction
 
@@ -209,7 +216,7 @@ describe("RandomBeacon contract", function () {
       members,
       signingMemberIndices,
       signaturesBytes
-    } = await signDkgResult(signers, groupPublicKey, noMisbehaved)
+    } = await signDkgResult(seed, signers, groupPublicKey, noMisbehaved)
 
     const submitterIndex = 1
 
@@ -253,13 +260,14 @@ async function getDkgGroupSigners(
 }
 
 async function signDkgResult(
+  seed: BigNumber,
   signers: DkgGroupSigners,
   groupPublicKey: string,
   misbehaved: string
 ) {
   const resultHash = ethers.utils.solidityKeccak256(
-    ["bytes", "bytes"],
-    [groupPublicKey, misbehaved]
+    ["uint256", "bytes", "bytes"],
+    [seed, groupPublicKey, misbehaved]
   )
 
   const members: string[] = []
