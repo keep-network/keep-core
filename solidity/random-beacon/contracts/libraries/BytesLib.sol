@@ -36,84 +36,6 @@ For more information, please refer to <https://unlicense.org>
 /** @author https://github.com/GNSPS **/
 
 library BytesLib {
-  function concat(bytes memory _preBytes, bytes memory _postBytes)
-    internal
-    pure
-    returns (bytes memory)
-  {
-    bytes memory tempBytes;
-
-    assembly {
-      // Get a location of some free memory and store it in tempBytes as
-      // Solidity does for memory variables.
-      tempBytes := mload(0x40)
-
-      // Store the length of the first bytes array at the beginning of
-      // the memory for tempBytes.
-      let length := mload(_preBytes)
-      mstore(tempBytes, length)
-
-      // Maintain a memory counter for the current write location in the
-      // temp bytes array by adding the 32 bytes for the array length to
-      // the starting location.
-      let mc := add(tempBytes, 0x20)
-      // Stop copying when the memory counter reaches the length of the
-      // first bytes array.
-      let end := add(mc, length)
-
-      for {
-        // Initialize a copy counter to the start of the _preBytes data,
-        // 32 bytes into its memory.
-        let cc := add(_preBytes, 0x20)
-      } lt(mc, end) {
-        // Increase both counters by 32 bytes each iteration.
-        mc := add(mc, 0x20)
-        cc := add(cc, 0x20)
-      } {
-        // Write the _preBytes data into the tempBytes memory 32 bytes
-        // at a time.
-        mstore(mc, mload(cc))
-      }
-
-      // Add the length of _postBytes to the current length of tempBytes
-      // and store it as the new length in the first 32 bytes of the
-      // tempBytes memory.
-      length := mload(_postBytes)
-      mstore(tempBytes, add(length, mload(tempBytes)))
-
-      // Move the memory counter back from a multiple of 0x20 to the
-      // actual end of the _preBytes data.
-      mc := end
-      // Stop copying when the memory counter reaches the new combined
-      // length of the arrays.
-      end := add(mc, length)
-
-      for {
-        let cc := add(_postBytes, 0x20)
-      } lt(mc, end) {
-        mc := add(mc, 0x20)
-        cc := add(cc, 0x20)
-      } {
-        mstore(mc, mload(cc))
-      }
-
-      // Update the free-memory pointer by padding our last write location
-      // to 32 bytes: add 31 bytes to the end of tempBytes to move to the
-      // next 32 byte block, then round down to the nearest multiple of
-      // 32. If the sum of the length of the two arrays is zero then add
-      // one before rounding down to leave a blank 32 bytes (the length block with 0).
-      mstore(
-        0x40,
-        and(
-          add(add(end, iszero(add(length, mload(_preBytes)))), 31),
-          not(31) // Round down to the nearest 32 bytes.
-        )
-      )
-    }
-
-    return tempBytes;
-  }
-
   function concatStorage(bytes storage _preBytes, bytes memory _postBytes)
     internal
   {
@@ -231,7 +153,6 @@ library BytesLib {
         // Copy over the first `submod` bytes of the new data as in
         // case 1 above.
         let slengthmod := mod(slength, 32)
-        let mlengthmod := mod(mlength, 32)
         let submod := sub(32, slengthmod)
         let mc := add(_postBytes, submod)
         let end := add(_postBytes, mlength)
@@ -254,6 +175,158 @@ library BytesLib {
         sstore(sc, mul(div(mload(mc), mask), mask))
       }
     }
+  }
+
+  function equalStorage(bytes storage _preBytes, bytes memory _postBytes)
+    internal
+    view
+    returns (bool)
+  {
+    bool success = true;
+
+    assembly {
+      // we know _preBytes_offset is 0
+      let fslot := sload(_preBytes.slot)
+      // Decode the length of the stored array like in concatStorage().
+      let slength := div(
+        and(fslot, sub(mul(0x100, iszero(and(fslot, 1))), 1)),
+        2
+      )
+      let mlength := mload(_postBytes)
+
+      // if lengths don't match the arrays are not equal
+      switch eq(slength, mlength)
+      case 1 {
+        // slength can contain both the length and contents of the array
+        // if length < 32 bytes so let's prepare for that
+        // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
+        if iszero(iszero(slength)) {
+          switch lt(slength, 32)
+          case 1 {
+            // blank the last byte which is the length
+            fslot := mul(div(fslot, 0x100), 0x100)
+
+            if iszero(eq(fslot, mload(add(_postBytes, 0x20)))) {
+              // unsuccess:
+              success := 0
+            }
+          }
+          default {
+            // cb is a circuit breaker in the for loop since there's
+            //  no said feature for inline assembly loops
+            // cb = 1 - don't breaker
+            // cb = 0 - break
+            let cb := 1
+
+            // get the keccak hash to get the contents of the array
+            mstore(0x0, _preBytes.slot)
+            let sc := keccak256(0x0, 0x20)
+
+            let mc := add(_postBytes, 0x20)
+            let end := add(mc, mlength)
+
+            // the next line is the loop condition:
+            // while(uint(mc < end) + cb == 2)
+            for {
+
+            } eq(add(lt(mc, end), cb), 2) {
+              sc := add(sc, 1)
+              mc := add(mc, 0x20)
+            } {
+              if iszero(eq(sload(sc), mload(mc))) {
+                // unsuccess:
+                success := 0
+                cb := 0
+              }
+            }
+          }
+        }
+      }
+      default {
+        // unsuccess:
+        success := 0
+      }
+    }
+
+    return success;
+  }
+
+  function concat(bytes memory _preBytes, bytes memory _postBytes)
+    internal
+    pure
+    returns (bytes memory)
+  {
+    bytes memory tempBytes;
+
+    assembly {
+      // Get a location of some free memory and store it in tempBytes as
+      // Solidity does for memory variables.
+      tempBytes := mload(0x40)
+
+      // Store the length of the first bytes array at the beginning of
+      // the memory for tempBytes.
+      let length := mload(_preBytes)
+      mstore(tempBytes, length)
+
+      // Maintain a memory counter for the current write location in the
+      // temp bytes array by adding the 32 bytes for the array length to
+      // the starting location.
+      let mc := add(tempBytes, 0x20)
+      // Stop copying when the memory counter reaches the length of the
+      // first bytes array.
+      let end := add(mc, length)
+
+      for {
+        // Initialize a copy counter to the start of the _preBytes data,
+        // 32 bytes into its memory.
+        let cc := add(_preBytes, 0x20)
+      } lt(mc, end) {
+        // Increase both counters by 32 bytes each iteration.
+        mc := add(mc, 0x20)
+        cc := add(cc, 0x20)
+      } {
+        // Write the _preBytes data into the tempBytes memory 32 bytes
+        // at a time.
+        mstore(mc, mload(cc))
+      }
+
+      // Add the length of _postBytes to the current length of tempBytes
+      // and store it as the new length in the first 32 bytes of the
+      // tempBytes memory.
+      length := mload(_postBytes)
+      mstore(tempBytes, add(length, mload(tempBytes)))
+
+      // Move the memory counter back from a multiple of 0x20 to the
+      // actual end of the _preBytes data.
+      mc := end
+      // Stop copying when the memory counter reaches the new combined
+      // length of the arrays.
+      end := add(mc, length)
+
+      for {
+        let cc := add(_postBytes, 0x20)
+      } lt(mc, end) {
+        mc := add(mc, 0x20)
+        cc := add(cc, 0x20)
+      } {
+        mstore(mc, mload(cc))
+      }
+
+      // Update the free-memory pointer by padding our last write location
+      // to 32 bytes: add 31 bytes to the end of tempBytes to move to the
+      // next 32 byte block, then round down to the nearest multiple of
+      // 32. If the sum of the length of the two arrays is zero then add
+      // one before rounding down to leave a blank 32 bytes (the length block with 0).
+      mstore(
+        0x40,
+        and(
+          add(add(end, iszero(add(length, mload(_preBytes)))), 31),
+          not(31) // Round down to the nearest 32 bytes.
+        )
+      )
+    }
+
+    return tempBytes;
   }
 
   function slice(
@@ -375,80 +448,6 @@ library BytesLib {
             // unsuccess:
             success := 0
             cb := 0
-          }
-        }
-      }
-      default {
-        // unsuccess:
-        success := 0
-      }
-    }
-
-    return success;
-  }
-
-  function equalStorage(bytes storage _preBytes, bytes memory _postBytes)
-    internal
-    view
-    returns (bool)
-  {
-    bool success = true;
-
-    assembly {
-      // we know _preBytes_offset is 0
-      let fslot := sload(_preBytes.slot)
-      // Decode the length of the stored array like in concatStorage().
-      let slength := div(
-        and(fslot, sub(mul(0x100, iszero(and(fslot, 1))), 1)),
-        2
-      )
-      let mlength := mload(_postBytes)
-
-      // if lengths don't match the arrays are not equal
-      switch eq(slength, mlength)
-      case 1 {
-        // slength can contain both the length and contents of the array
-        // if length < 32 bytes so let's prepare for that
-        // v. http://solidity.readthedocs.io/en/latest/miscellaneous.html#layout-of-state-variables-in-storage
-        if iszero(iszero(slength)) {
-          switch lt(slength, 32)
-          case 1 {
-            // blank the last byte which is the length
-            fslot := mul(div(fslot, 0x100), 0x100)
-
-            if iszero(eq(fslot, mload(add(_postBytes, 0x20)))) {
-              // unsuccess:
-              success := 0
-            }
-          }
-          default {
-            // cb is a circuit breaker in the for loop since there's
-            //  no said feature for inline assembly loops
-            // cb = 1 - don't breaker
-            // cb = 0 - break
-            let cb := 1
-
-            // get the keccak hash to get the contents of the array
-            mstore(0x0, _preBytes.slot)
-            let sc := keccak256(0x0, 0x20)
-
-            let mc := add(_postBytes, 0x20)
-            let end := add(mc, mlength)
-
-            // the next line is the loop condition:
-            // while(uint(mc < end) + cb == 2)
-            for {
-
-            } eq(add(lt(mc, end), cb), 2) {
-              sc := add(sc, 1)
-              mc := add(mc, 0x20)
-            } {
-              if iszero(eq(sload(sc), mload(mc))) {
-                // unsuccess:
-                success := 0
-                cb := 0
-              }
-            }
           }
         }
       }

@@ -7,7 +7,7 @@ import "../RandomBeacon.sol";
 // Stub contract used in tests
 contract SortitionPoolStub is ISortitionPool {
     mapping(address => bool) public operators;
-    mapping(address => bool) eligibleOperators;
+    mapping(address => bool) public eligibleOperators;
 
     function joinPool(address operator) external override {
         operators[operator] = true;
@@ -22,6 +22,11 @@ contract SortitionPoolStub is ISortitionPool {
         return operators[operator];
     }
 
+    // Helper function, it does not exist in the sorition pool
+    function setOperatorEligibility(address operator, bool eligibility) public {
+        eligibleOperators[operator] = eligibility;
+    }
+
     function isOperatorEligible(address operator)
         public
         view
@@ -29,10 +34,5 @@ contract SortitionPoolStub is ISortitionPool {
         returns (bool)
     {
         return eligibleOperators[operator];
-    }
-
-    // Helper function, it does not exist in the sorition pool
-    function setOperatorEligibility(address operator, bool eligibility) public {
-        eligibleOperators[operator] = eligibility;
     }
 }

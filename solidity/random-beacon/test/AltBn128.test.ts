@@ -1,6 +1,6 @@
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
-import type { TestAltBn128 } from "../typechain";
+import type { TestAltBn128 } from "../typechain"
 
 describe("AltBn128", () => {
   const g1 =
@@ -12,15 +12,15 @@ describe("AltBn128", () => {
 
   let testAltBn128: TestAltBn128
 
-  const fixture = async function () {
+  const fixture = async () => {
     const TestAltBn128 = await ethers.getContractFactory("TestAltBn128")
-    const testAltBn128 = await TestAltBn128.deploy()
+    testAltBn128 = await TestAltBn128.deploy()
     await testAltBn128.deployed()
 
     return testAltBn128
   }
 
-  beforeEach("load test fixture", async function () {
+  beforeEach("load test fixture", async () => {
     testAltBn128 = await waffle.loadFixture(fixture)
   })
 
@@ -38,7 +38,7 @@ describe("AltBn128", () => {
 
     it("should not accept more than 64 bytes", async () => {
       await expect(
-        testAltBn128.publicG1Unmarshal(g1 + "ff")
+        testAltBn128.publicG1Unmarshal(`${g1}ff`)
       ).to.be.revertedWith("Invalid G1 bytes length")
     })
   })
@@ -57,7 +57,7 @@ describe("AltBn128", () => {
 
     it("should not accept more than 128 bytes", async () => {
       await expect(
-        testAltBn128.publicG2Unmarshal(g2 + "ff")
+        testAltBn128.publicG2Unmarshal(`${g2}ff`)
       ).to.be.revertedWith("Invalid G2 bytes length")
     })
   })
@@ -76,7 +76,7 @@ describe("AltBn128", () => {
 
     it("should not accept more than 64 bytes", async () => {
       await expect(
-        testAltBn128.publicG2Decompress(g2Compressed + "ff")
+        testAltBn128.publicG2Decompress(`${g2Compressed}ff`)
       ).to.be.revertedWith("Invalid G2 compressed bytes length")
     })
   })

@@ -6,7 +6,7 @@ import "../libraries/ModUtils.sol";
 contract TestModUtils {
     using ModUtils for uint256;
 
-    uint256[16] smallOddPrimes = [
+    uint256[16] public smallOddPrimes = [
         3,
         5,
         7,
@@ -25,25 +25,7 @@ contract TestModUtils {
         59
     ];
 
-    function runModExponentTest() public view {
-        uint256 a = 21;
-        // a simple test
-        require(a.modExp(2, 5) == 1, "");
-        // test for overflow - (2 ^ 256 - 1) ^ 2 % alt_bn128_P
-        uint256 almostOverflow = (2**256 - 1);
-        uint256 result =
-            almostOverflow.modExp(
-                2,
-                21888242871839275222246405745257275088696311157297823662689037894645226208583
-            );
-        require(
-            result ==
-                12283109618583340521412061117291584720854994367414008739435419022702680857751,
-            "modExp() should not overflow"
-        );
-    }
-
-    int256[][] smallOddPrimesLegendre = [
+    int256[][] public smallOddPrimesLegendre = [
         [int256(3), int256(0), int256(0)],
         [int256(3), int256(1), int256(1)],
         [int256(3), int256(2), int256(-1)],
@@ -94,6 +76,24 @@ contract TestModUtils {
         [int256(17), int256(8), int256(1)],
         [int256(17), int256(9), int256(1)]
     ];
+
+    function runModExponentTest() public view {
+        uint256 a = 21;
+        // a simple test
+        require(a.modExp(2, 5) == 1, "");
+        // test for overflow - (2 ^ 256 - 1) ^ 2 % alt_bn128_P
+        uint256 almostOverflow = (2**256 - 1);
+        uint256 result =
+            almostOverflow.modExp(
+                2,
+                21888242871839275222246405745257275088696311157297823662689037894645226208583
+            );
+        require(
+            result ==
+                12283109618583340521412061117291584720854994367414008739435419022702680857751,
+            "modExp() should not overflow"
+        );
+    }
 
     function runLegendreRangeTest() public view {
         uint256 i;
