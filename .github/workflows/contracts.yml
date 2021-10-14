@@ -61,6 +61,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --network-concurrency 1
 
+      - name: Build
+        run: yarn build
+
       - name: Lint
         run: yarn lint
   
