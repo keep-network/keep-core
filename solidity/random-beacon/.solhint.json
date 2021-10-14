@@ -2,6 +2,7 @@
   "extends": "keep",
   "plugins": [],
   "rules": {
-    "func-visibility": ["error", { "ignoreConstructors": true }]
+    "func-visibility": ["error", { "ignoreConstructors": true }],
+    "no-inline-assembly": "off"
   }
 }
