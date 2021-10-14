@@ -43,7 +43,7 @@ describe("RandomBeacon", () => {
     randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
-  describe("genesis function call", async () => {
+  describe("genesis", async () => {
     it("can be invoked by third party", async () => {
       await randomBeacon.connect(thirdParty).genesis()
     })
@@ -100,7 +100,7 @@ describe("RandomBeacon", () => {
     })
   })
 
-  describe("getGroupCreationState function call", async () => {
+  describe("getGroupCreationState", async () => {
     context("with initial contract state", async () => {
       it("returns IDLE state", async () => {
         expect(await randomBeacon.getGroupCreationState()).to.be.equal(
@@ -196,7 +196,7 @@ describe("RandomBeacon", () => {
     })
   })
 
-  describe("submitDkgResult function call", async () => {
+  describe("submitDkgResult", async () => {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
 
     context("with initial contract state", async () => {
