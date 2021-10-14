@@ -14,8 +14,8 @@
     "lint:fix:eslint": "eslint . --fix",
     "lint:sol": "solhint 'contracts/**/*.sol'",
     "lint:fix:sol": "solhint 'contracts/**/*.sol' --fix",
-    "lint:config": "prettier -check '**/*.@(json|yaml)'",
-    "lint:config:fix": "prettier -write '**/*.@(json|yaml)'"
+    "lint:config": "prettier --check '**/*.@(json|yaml)'",
+    "lint:config:fix": "prettier --write '**/*.@(json|yaml)'"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
