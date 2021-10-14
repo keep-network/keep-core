@@ -38,7 +38,7 @@ const config: HardhatUserConfig = {
           : undefined,
       },
       accounts: { count: 70 },
-      tags: ["local"]
+      tags: ["local"],
     },
     ropsten: {
       url: process.env.CHAIN_API_URL || "",

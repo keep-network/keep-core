@@ -1,11 +1,11 @@
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
+import type { BigNumber, ContractTransaction, Signer } from "ethers"
+import type { Address } from "hardhat-deploy/types"
 import { blsData } from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
 
-import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon } from "../typechain"
-import type { Address } from "hardhat-deploy/types"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 
@@ -13,10 +13,10 @@ const dkgState = {
   IDLE: 0,
   KEY_GENERATION: 1,
   AWAITING_RESULT: 2,
-  CHALLENGE: 3
+  CHALLENGE: 3,
 }
 
-describe("RandomBeacon", function () {
+describe("RandomBeacon", () => {
   const dkgTimeout: number =
     constants.offchainDkgTime +
     constants.groupSize * params.dkgResultSubmissionEligibilityDelay
@@ -28,7 +28,7 @@ describe("RandomBeacon", function () {
 
   let randomBeacon: RandomBeacon
 
-  before(async function () {
+  before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
 
     // Accounts offset provided to getDkgGroupSigners have to include number of
@@ -36,18 +36,18 @@ describe("RandomBeacon", function () {
     signers = await getDkgGroupSigners(constants.groupSize, 1)
   })
 
-  beforeEach("load test fixture", async function () {
+  beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(testDeployment)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
-  describe("genesis function call", async function () {
-    it("can be invoked by third party", async function () {
+  describe("genesis function call", async () => {
+    it("can be invoked by third party", async () => {
       await randomBeacon.connect(thirdParty).genesis()
     })
 
-    context("with initial contract state", async function () {
+    context("with initial contract state", async () => {
       let tx: ContractTransaction
       let expectedSeed: BigNumber
 
@@ -55,14 +55,14 @@ describe("RandomBeacon", function () {
         ;[tx, expectedSeed] = await genesis()
       })
 
-      it("emits DkgStarted event", async function () {
+      it("emits DkgStarted event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "DkgStarted")
           .withArgs(expectedSeed)
       })
     })
 
-    context("with genesis in progress", async function () {
+    context("with genesis in progress", async () => {
       let startBlock: number
 
       beforeEach("run genesis", async () => {
@@ -70,15 +70,15 @@ describe("RandomBeacon", function () {
         startBlock = genesisTx.blockNumber
       })
 
-      context("with dkg result not submitted", async function () {
-        it("reverts with 'current state is not IDLE' error", async function () {
+      context("with dkg result not submitted", async () => {
+        it("reverts with 'current state is not IDLE' error", async () => {
           await expect(randomBeacon.genesis()).to.be.revertedWith(
             "current state is not IDLE"
           )
         })
       })
 
-      context("with dkg result submitted", async function () {
+      context("with dkg result submitted", async () => {
         beforeEach(async () => {
           await mineBlocks(constants.offchainDkgTime)
           await signAndSubmitDkgResult(signers, startBlock)
@@ -87,8 +87,8 @@ describe("RandomBeacon", function () {
         // TODO: Add test cases to cover results that are approved, challenged or
         // pending.
 
-        context("with dkg result not approved", async function () {
-          it("reverts with 'current state is not IDLE' error", async function () {
+        context("with dkg result not approved", async () => {
+          it("reverts with 'current state is not IDLE' error", async () => {
             await expect(randomBeacon.genesis()).to.be.revertedWith(
               "current state is not IDLE"
             )
@@ -98,16 +98,16 @@ describe("RandomBeacon", function () {
     })
   })
 
-  describe("getGroupCreationState function call", async function () {
-    context("with initial contract state", async function () {
-      it("returns IDLE state", async function () {
+  describe("getGroupCreationState function call", async () => {
+    context("with initial contract state", async () => {
+      it("returns IDLE state", async () => {
         expect(await randomBeacon.getGroupCreationState()).to.be.equal(
           dkgState.IDLE
         )
       })
     })
 
-    context("when genesis dkg started", async function () {
+    context("when genesis dkg started", async () => {
       let startBlock: number
 
       beforeEach("run genesis", async () => {
@@ -115,44 +115,44 @@ describe("RandomBeacon", function () {
         startBlock = genesisTx.blockNumber
       })
 
-      context("at the start of off-chain dkg period", async function () {
-        it("returns KEY_GENERATION state", async function () {
+      context("at the start of off-chain dkg period", async () => {
+        it("returns KEY_GENERATION state", async () => {
           expect(await randomBeacon.getGroupCreationState()).to.be.equal(
             dkgState.KEY_GENERATION
           )
         })
       })
 
-      context("at the end of off-chain dkg period", async function () {
+      context("at the end of off-chain dkg period", async () => {
         beforeEach(async () => {
           await mineBlocksTo(startBlock + constants.offchainDkgTime)
         })
 
-        it("returns KEY_GENERATION state", async function () {
+        it("returns KEY_GENERATION state", async () => {
           expect(await randomBeacon.getGroupCreationState()).to.be.equal(
             dkgState.KEY_GENERATION
           )
         })
       })
 
-      context("after off-chain dkg period", async function () {
+      context("after off-chain dkg period", async () => {
         beforeEach(async () => {
           await mineBlocksTo(startBlock + constants.offchainDkgTime + 1)
         })
 
-        context("when dkg result was not submitted", async function () {
-          it("returns AWAITING_RESULT state", async function () {
+        context("when dkg result was not submitted", async () => {
+          it("returns AWAITING_RESULT state", async () => {
             expect(await randomBeacon.getGroupCreationState()).to.be.equal(
               dkgState.AWAITING_RESULT
             )
           })
 
-          context("after the dkg timeout period", async function () {
+          context("after the dkg timeout period", async () => {
             beforeEach(async () => {
               await mineBlocksTo(startBlock + dkgTimeout + 1)
             })
 
-            it("returns AWAITING_RESULT state", async function () {
+            it("returns AWAITING_RESULT state", async () => {
               expect(await randomBeacon.getGroupCreationState()).to.be.equal(
                 dkgState.AWAITING_RESULT
               )
@@ -160,13 +160,13 @@ describe("RandomBeacon", function () {
           })
         })
 
-        context("when dkg result was submitted", async function () {
+        context("when dkg result was submitted", async () => {
           beforeEach(async () => {
             await signAndSubmitDkgResult(signers, startBlock)
           })
 
-          context("when dkg result was not approved", async function () {
-            it("returns CHALLENGE state", async function () {
+          context("when dkg result was not approved", async () => {
+            it("returns CHALLENGE state", async () => {
               expect(await randomBeacon.getGroupCreationState()).to.be.equal(
                 dkgState.CHALLENGE
               )
@@ -194,18 +194,18 @@ describe("RandomBeacon", function () {
     })
   })
 
-  describe("submitDkgResult function call", async function () {
+  describe("submitDkgResult function call", async () => {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
 
-    context("with initial contract state", async function () {
-      it("reverts with 'current state is not AWAITING_RESULT' error", async function () {
+    context("with initial contract state", async () => {
+      it("reverts with 'current state is not AWAITING_RESULT' error", async () => {
         await expect(signAndSubmitDkgResult(signers, 1)).to.be.revertedWith(
           "current state is not AWAITING_RESULT"
         )
       })
     })
 
-    context("with group creation in progress", async function () {
+    context("with group creation in progress", async () => {
       let startBlock: number
 
       beforeEach("run genesis", async () => {
@@ -214,29 +214,29 @@ describe("RandomBeacon", function () {
         startBlock = genesisTx.blockNumber
       })
 
-      context("with group creation not timed out", async function () {
-        context("with off-chain dkg time not passed", async function () {
+      context("with group creation not timed out", async () => {
+        context("with off-chain dkg time not passed", async () => {
           beforeEach(async () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
           })
 
-          it("reverts with 'current state is not AWAITING_RESULT' error", async function () {
+          it("reverts with 'current state is not AWAITING_RESULT' error", async () => {
             await expect(
               signAndSubmitDkgResult(signers, startBlock)
             ).to.revertedWith("current state is not AWAITING_RESULT")
           })
         })
 
-        context("with off-chain dkg time passed", async function () {
+        context("with off-chain dkg time passed", async () => {
           beforeEach(async () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
-          it("reverts with less than threshold signers", async function () {
+          it("reverts with less than threshold signers", async () => {
             const filteredSigners = new Map(
-              Array.from(signers).filter(([index]) => {
-                return index < constants.signatureThreshold
-              })
+              Array.from(signers).filter(
+                ([index]) => index < constants.signatureThreshold
+              )
             )
 
             await expect(
@@ -244,11 +244,11 @@ describe("RandomBeacon", function () {
             ).to.revertedWith("Too few signatures")
           })
 
-          it("succeeds with threshold signers", async function () {
+          it("succeeds with threshold signers", async () => {
             const filteredSigners = new Map(
-              Array.from(signers).filter(([index]) => {
-                return index <= constants.signatureThreshold
-              })
+              Array.from(signers).filter(
+                ([index]) => index <= constants.signatureThreshold
+              )
             )
 
             const { transaction: tx, dkgResult } = await signAndSubmitDkgResult(
@@ -261,7 +261,7 @@ describe("RandomBeacon", function () {
               .withArgs(dkgResult.groupPubKey, signers.get(1))
           })
 
-          it("succeeds for the first submitter", async function () {
+          it("succeeds for the first submitter", async () => {
             const { transaction: tx, dkgResult } = await signAndSubmitDkgResult(
               signers,
               startBlock,
@@ -272,7 +272,7 @@ describe("RandomBeacon", function () {
               .withArgs(dkgResult.groupPubKey, signers.get(1))
           })
 
-          it("reverts for the second submitter", async function () {
+          it("reverts for the second submitter", async () => {
             await expect(
               signAndSubmitDkgResult(signers, startBlock, 2)
             ).to.revertedWith("Submitter not eligible")
@@ -280,7 +280,7 @@ describe("RandomBeacon", function () {
 
           context(
             "with first submitter eligibility delay period almost ended",
-            async function () {
+            async () => {
               beforeEach(async () => {
                 await mineBlocksTo(
                   startBlock +
@@ -290,18 +290,16 @@ describe("RandomBeacon", function () {
                 )
               })
 
-              it("succeeds for the first submitter", async function () {
-                const {
-                  transaction: tx,
-                  dkgResult
-                } = await signAndSubmitDkgResult(signers, startBlock, 1)
+              it("succeeds for the first submitter", async () => {
+                const { transaction: tx, dkgResult } =
+                  await signAndSubmitDkgResult(signers, startBlock, 1)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(dkgResult.groupPubKey, signers.get(1))
               })
 
-              it("reverts for the second submitter", async function () {
+              it("reverts for the second submitter", async () => {
                 await expect(
                   signAndSubmitDkgResult(signers, startBlock, 2)
                 ).to.revertedWith("Submitter not eligible")
@@ -311,7 +309,7 @@ describe("RandomBeacon", function () {
 
           context(
             "with first submitter eligibility delay period ended",
-            async function () {
+            async () => {
               beforeEach(async () => {
                 await mineBlocksTo(
                   startBlock +
@@ -321,29 +319,25 @@ describe("RandomBeacon", function () {
                 )
               })
 
-              it("succeeds for the first submitter", async function () {
-                const {
-                  transaction: tx,
-                  dkgResult
-                } = await signAndSubmitDkgResult(signers, startBlock, 1)
+              it("succeeds for the first submitter", async () => {
+                const { transaction: tx, dkgResult } =
+                  await signAndSubmitDkgResult(signers, startBlock, 1)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(dkgResult.groupPubKey, signers.get(1))
               })
 
-              it("succeeds for the second submitter", async function () {
-                const {
-                  transaction: tx,
-                  dkgResult
-                } = await signAndSubmitDkgResult(signers, startBlock, 2)
+              it("succeeds for the second submitter", async () => {
+                const { transaction: tx, dkgResult } =
+                  await signAndSubmitDkgResult(signers, startBlock, 2)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(dkgResult.groupPubKey, signers.get(2))
               })
 
-              it("reverts for the third submitter", async function () {
+              it("reverts for the third submitter", async () => {
                 await expect(
                   signAndSubmitDkgResult(signers, startBlock, 3)
                 ).to.revertedWith("Submitter not eligible")
@@ -353,31 +347,27 @@ describe("RandomBeacon", function () {
 
           context(
             "with the last submitter eligibility delay period almost ended",
-            async function () {
+            async () => {
               beforeEach(async () => {
                 await mineBlocksTo(startBlock + dkgTimeout - 1)
               })
 
-              it(`succeeds for the first submitter`, async function () {
-                const {
-                  transaction: tx,
-                  dkgResult
-                } = await signAndSubmitDkgResult(signers, startBlock, 1)
+              it("succeeds for the first submitter", async () => {
+                const { transaction: tx, dkgResult } =
+                  await signAndSubmitDkgResult(signers, startBlock, 1)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(dkgResult.groupPubKey, signers.get(1))
               })
 
-              it(`succeeds for the last submitter`, async function () {
-                const {
-                  transaction: tx,
-                  dkgResult
-                } = await signAndSubmitDkgResult(
-                  signers,
-                  startBlock,
-                  constants.groupSize
-                )
+              it("succeeds for the last submitter", async () => {
+                const { transaction: tx, dkgResult } =
+                  await signAndSubmitDkgResult(
+                    signers,
+                    startBlock,
+                    constants.groupSize
+                  )
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
@@ -391,13 +381,13 @@ describe("RandomBeacon", function () {
         })
       })
 
-      context("with group creation timed out", async function () {
+      context("with group creation timed out", async () => {
         beforeEach("increase time", async () => {
           await mineBlocksTo(startBlock + dkgTimeout)
         })
 
-        context("with timeout not notified", async function () {
-          it("reverts with dkg timeout already passed error", async function () {
+        context("with timeout not notified", async () => {
+          it("reverts with dkg timeout already passed error", async () => {
             await expect(
               signAndSubmitDkgResult(signers, startBlock)
             ).to.revertedWith("dkg timeout already passed")
@@ -434,7 +424,7 @@ describe("RandomBeacon", function () {
   async function signAndSubmitDkgResult(
     signers: DkgGroupSigners,
     startBlock: number,
-    submitterIndex: number = 1
+    submitterIndex = 1
   ): Promise<{
     transaction: ContractTransaction
 
@@ -442,19 +432,16 @@ describe("RandomBeacon", function () {
   }> {
     const noMisbehaved = "0x"
 
-    const {
-      members,
-      signingMemberIndices,
-      signaturesBytes
-    } = await signDkgResult(signers, groupPublicKey, noMisbehaved, startBlock)
+    const { members, signingMemberIndices, signaturesBytes } =
+      await signDkgResult(signers, groupPublicKey, noMisbehaved, startBlock)
 
     const dkgResult = {
       submitterMemberIndex: submitterIndex,
       groupPubKey: blsData.groupPubKey,
       misbehaved: noMisbehaved,
       signatures: signaturesBytes,
-      signingMemberIndices: signingMemberIndices,
-      members: members
+      signingMemberIndices,
+      members,
     }
 
     const transaction = await randomBeacon
@@ -465,7 +452,7 @@ describe("RandomBeacon", function () {
   }
 })
 
-interface DkgGroupSigners extends Map<number, Address> {}
+type DkgGroupSigners = Map<number, Address>
 
 async function getDkgGroupSigners(
   groupSize: number,
@@ -502,7 +489,7 @@ async function signDkgResult(
   const signingMemberIndices: number[] = []
   const signatures: string[] = []
 
-  for (let [memberIndex, signer] of signers) {
+  for (const [memberIndex, signer] of signers) {
     members.push(signer)
 
     signingMemberIndices.push(memberIndex)

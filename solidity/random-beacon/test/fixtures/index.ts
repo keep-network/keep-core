@@ -3,14 +3,14 @@ import { ethers } from "hardhat"
 import type {
   SortitionPoolStub,
   RandomBeacon,
-  RandomBeaconGovernance
+  RandomBeaconGovernance,
 } from "../../typechain"
 
 export const constants = {
   groupSize: 64,
   groupThreshold: 33,
   signatureThreshold: 48, // groupThreshold + (groupSize - groupThreshold) / 2
-  offchainDkgTime: 72 // 5 * (1 + 5) + 2 * (1 + 10) + 20
+  offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
 }
 
 export const params = {
@@ -27,7 +27,9 @@ export const params = {
   relayEntrySubmissionFailureSlashingAmount: ethers.BigNumber.from(10)
     .pow(18)
     .mul(1000),
-  maliciousDkgResultSlashingAmount: ethers.BigNumber.from(10).pow(18).mul(50000)
+  maliciousDkgResultSlashingAmount: ethers.BigNumber.from(10)
+    .pow(18)
+    .mul(50000),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -55,8 +57,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
     libraries: {
-      DKG: dkg.address
-    }
+      DKG: dkg.address,
+    },
   })
 
   const randomBeacon: RandomBeacon = await RandomBeacon.deploy(
@@ -75,9 +77,8 @@ export async function testDeployment(): Promise<DeployedContracts> {
   const RandomBeaconGovernance = await ethers.getContractFactory(
     "RandomBeaconGovernance"
   )
-  const randomBeaconGovernance: RandomBeaconGovernance = await RandomBeaconGovernance.deploy(
-    contracts.randomBeacon.address
-  )
+  const randomBeaconGovernance: RandomBeaconGovernance =
+    await RandomBeaconGovernance.deploy(contracts.randomBeacon.address)
   await randomBeaconGovernance.deployed()
   await contracts.randomBeacon.transferOwnership(randomBeaconGovernance.address)
 
