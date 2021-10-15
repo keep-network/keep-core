@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+//
 // ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
 // ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //   ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
@@ -10,12 +12,11 @@
 //
 //                           Trust math, not hardware.
 
-// SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.6;
 
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
+import "./libraries/DKG.sol";
 import "./MaintenancePool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -41,8 +42,18 @@ interface ISortitionPool {
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
 contract RandomBeacon is Ownable, ReentrancyGuard {
+    using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
+
+    // Constant parameters
+
+    /// @notice Seed value used for the genesis group selection.
+    /// https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    uint256 public constant genesisSeed =
+        31415926535897932384626433832795028841971693993751058209749445923078164062862;
+
+    // Governable parameters
 
     /// @notice Relay request fee in T. This fee needs to be provided by the
     ///         account or contract requesting for a new relay entry.
@@ -92,33 +103,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         to that group is still pending.
     uint256 public groupLifetime;
 
-    /// @notice The number of blocks for which a DKG result can be challenged.
-    ///         Anyone can challenge DKG result for a certain number of blocks
-    ///         before the result is fully accepted and the group registered in
-    ///         the pool of active groups. If the challenge gets accepted, all
-    ///         operators who signed the malicious result get slashed for
-    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
-    ///         rewarded.
-    uint256 public dkgResultChallengePeriodLength;
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the DKG result. At first, there is only one
-    ///         member in the group eligible to submit the DKG result. Then,
-    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the DKG result at that moment. After
-    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible to submit the DKG result so that
-    ///         there are three group members eligible to submit the DKG result
-    ///         at that moment. This continues until all group members are
-    ///         eligible to submit the DKG result or until the DKG result is
-    ///         submitted. If all members became eligible to submit the DKG
-    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
-    ///         without the DKG result submitted, DKG is considered as timed out
-    ///         and no DKG result for this group creation can be submitted
-    ///         anymore.
-    uint256 public dkgResultSubmissionEligibilityDelay;
-
     /// @notice Reward in T for submitting DKG result. The reward is paid to
     ///         a submitter of a valid DKG result when the DKG result challenge
     ///         period ends.
@@ -150,8 +134,11 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
-    Groups.Data groups;
-    Relay.Data public relay;
+
+    // Libraries data storages
+    DKG.Data internal dkg;
+    Groups.Data internal groups;
+    Relay.Data internal relay;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -160,11 +147,14 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 callbackGasLimit
     );
 
-    event GroupCreationParametersUpdated(
-        uint256 groupCreationFrequency,
-        uint256 groupLifetime,
+    event DkgParametersUpdated(
         uint256 dkgResultChallengePeriodLength,
         uint256 dkgResultSubmissionEligibilityDelay
+    );
+
+    event GroupCreationParametersUpdated(
+        uint256 groupCreationFrequency,
+        uint256 groupLifetime
     );
 
     event RewardParametersUpdated(
@@ -175,6 +165,15 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     event SlashingParametersUpdated(
         uint256 relayEntrySubmissionFailureSlashingAmount,
         uint256 maliciousDkgResultSlashingAmount
+    );
+
+    event DkgStarted(uint256 indexed seed);
+
+    // TODO: Revisit properties returned in this event when working on result
+    // challenges and the client.
+    event DkgResultSubmitted(
+        bytes indexed groupPubKey,
+        address indexed submitter
     );
 
     event RelayEntryRequested(
@@ -204,8 +203,8 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         callbackGasLimit = 200000;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
-        dkgResultChallengePeriodLength = 1440; // ~6h assuming 15s block time
-        dkgResultSubmissionEligibilityDelay = 10;
+        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(10);
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
@@ -259,26 +258,69 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///      validating parameters.
     /// @param _groupCreationFrequency New group creation frequency
     /// @param _groupLifetime New group lifetime
+    function updateGroupCreationParameters(
+        uint256 _groupCreationFrequency,
+        uint256 _groupLifetime
+    ) external onlyOwner {
+        groupCreationFrequency = _groupCreationFrequency;
+        groupLifetime = _groupLifetime;
+
+        emit GroupCreationParametersUpdated(
+            groupCreationFrequency,
+            groupLifetime
+        );
+    }
+
+    /// @notice Updates the values of DKG parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
     /// @param _dkgResultChallengePeriodLength New DKG result challenge period
     ///        length
     /// @param _dkgResultSubmissionEligibilityDelay New DKG result submission
     ///        eligibility delay
-    function updateGroupCreationParameters(
-        uint256 _groupCreationFrequency,
-        uint256 _groupLifetime,
+    function updateDkgParameters(
         uint256 _dkgResultChallengePeriodLength,
         uint256 _dkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
-        groupCreationFrequency = _groupCreationFrequency;
-        groupLifetime = _groupLifetime;
-        dkgResultChallengePeriodLength = _dkgResultChallengePeriodLength;
-        dkgResultSubmissionEligibilityDelay = _dkgResultSubmissionEligibilityDelay;
-        emit GroupCreationParametersUpdated(
-            groupCreationFrequency,
-            groupLifetime,
-            dkgResultChallengePeriodLength,
-            dkgResultSubmissionEligibilityDelay
+        dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
+        dkg.setResultSubmissionEligibilityDelay(_dkgResultSubmissionEligibilityDelay);
+
+        emit DkgParametersUpdated(
+            dkgResultChallengePeriodLength(),
+            dkgResultSubmissionEligibilityDelay()
         );
+    }
+
+    /// @notice The number of blocks for which a DKG result can be challenged.
+    ///         Anyone can challenge DKG result for a certain number of blocks
+    ///         before the result is fully accepted and the group registered in
+    ///         the pool of active groups. If the challenge gets accepted, all
+    ///         operators who signed the malicious result get slashed for
+    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
+    ///         rewarded.
+    function dkgResultChallengePeriodLength() public view returns (uint256) {
+        return dkg.parameters.resultChallengePeriodLength;
+    }
+
+    /// @notice The number of blocks it takes for a group member to become
+    ///         eligible to submit the DKG result. At first, there is only one
+    ///         member in the group eligible to submit the DKG result. Then,
+    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the DKG result at that moment. After
+    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
+    ///         group member becomes eligible to submit the DKG result so that
+    ///         there are three group members eligible to submit the DKG result
+    ///         at that moment. This continues until all group members are
+    ///         eligible to submit the DKG result or until the DKG result is
+    ///         submitted. If all members became eligible to submit the DKG
+    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
+    ///         without the DKG result submitted, DKG is considered as timed out
+    ///         and no DKG result for this group creation can be submitted
+    ///         anymore.
+    function dkgResultSubmissionEligibilityDelay() public view returns (uint256) {
+        return dkg.parameters.resultSubmissionEligibilityDelay;
     }
 
     /// @notice Updates the values of reward parameters.
@@ -332,6 +374,67 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @param operator Address of the operator
     function isOperatorEligible(address operator) external view returns (bool) {
         return sortitionPool.isOperatorEligible(operator);
+    }
+
+    /// @notice Triggers group selection if there are no active groups.
+    function genesis() external {
+        // TODO: Check number of active groups
+
+        createGroup(
+            uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
+        );
+    }
+
+    /// @notice Creates a new group.
+    /// @param seed Seed for DKG.
+    function createGroup(uint256 seed) internal {
+        // TODO: Lock sortition pool.
+
+        dkg.start();
+
+        emit DkgStarted(seed);
+    }
+
+    /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
+    ///         the protocol. The DKG result consists of result submitting member
+    ///         index, calculated group public key, bytes array of misbehaved
+    ///         members, concatenation of signatures from group members,
+    ///         indices of members corresponding to each signature and
+    ///         the list of group members.
+    ///         When the result is verified successfully it gets registered and
+    ///         waits for an approval. A result can be challenged to verify the
+    ///         members list corresponds to the expected set of members determined
+    ///         by the sortition pool.
+    /// @dev The message to be signed by each member is keccak256 hash of the
+    ///      calculated group public key, misbehaved members as bytes and DKG
+    ///      start block. The calculated hash should be prefixed with prefixed with
+    ///      `\x19Ethereum signed message:\n` before signing, so the message to
+    ///      sign is:
+    ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
+    /// @param dkgResult DKG result.
+    function submitDkgResult(DKG.Result calldata dkgResult) external {
+        dkg.submitResult(dkgResult);
+
+        // TODO: Register a pending group
+
+        emit DkgResultSubmitted(
+            dkgResult.groupPubKey,
+            msg.sender
+        );
+    }
+
+    /// @notice Check current group creation state.
+    function getGroupCreationState() external view returns (DKG.State) {
+        return dkg.currentState();
+    }
+
+    /// @notice Checks if DKG timed out. The DKG timeout period includes time required
+    ///         for off-chain protocol execution and time for the result publication
+    ///         for all group members. After this time result cannot be submitted
+    ///         and DKG can be notified about the timeout.
+    /// @return True if DKG timed out, false otherwise.
+    function hasDkgTimedOut() public view returns (bool) {
+        return dkg.hasDkgTimedOut();
     }
 
     function requestRelayEntry(bytes calldata previousEntry) external nonReentrant {
