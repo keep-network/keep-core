@@ -282,12 +282,4 @@ library DKG {
       .parameters
       .resultSubmissionEligibilityDelay = newResultSubmissionEligibilityDelay;
   }
-
-  /// @notice Cleans up state after DKG completion.
-  /// @dev Should be called after DKG times out or a result is approved.
-  function cleanup(Data storage self) internal {
-    delete self.startBlock;
-    delete self.submittedResultHash;
-    delete self.submittedResultBlock;
-  }
 }
