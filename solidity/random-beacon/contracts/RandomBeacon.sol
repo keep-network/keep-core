@@ -17,7 +17,6 @@ pragma solidity ^0.8.6;
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
-import "./MaintenancePool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -190,9 +189,8 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///      and before transferring the ownership to the governance contract.
     constructor(
         ISortitionPool _sortitionPool,
-        IERC20 tToken,
-        MaintenancePool maintenancePool,
-        uint256 groupSize
+        IERC20 _tToken,
+        uint256 _groupSize
     ) {
         sortitionPool = _sortitionPool;
 
@@ -210,10 +208,9 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
 
-        relay.tToken = tToken;
-        relay.maintenancePool = maintenancePool;
+        relay.tToken = _tToken;
         relay.relayRequestFee = relayRequestFee;
-        relay.groupSize = groupSize;
+        relay.groupSize = _groupSize;
         relay.relayEntrySubmissionEligibilityDelay = relayEntrySubmissionEligibilityDelay;
         relay.relayEntryHardTimeout = relayEntryHardTimeout;
     }

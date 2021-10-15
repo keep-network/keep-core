@@ -4,7 +4,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
 import { constants, testDeployment } from "./fixtures"
-import type { RandomBeacon, TestToken, MaintenancePool } from "../typechain"
+import type { RandomBeacon, TestToken } from "../typechain"
 
 const { time } = helpers
 const { mineBlocks } = time
@@ -29,7 +29,6 @@ describe("RandomBeacon - Relay", () => {
 
   let randomBeacon: RandomBeacon
   let testToken: TestToken
-  let maintenancePool: MaintenancePool
 
   before(async () => {
     let signer1: SignerWithAddress
@@ -71,7 +70,6 @@ describe("RandomBeacon - Relay", () => {
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
     testToken = contracts.testToken as TestToken
-    maintenancePool = contracts.maintenancePool as MaintenancePool
   })
 
   describe("requestRelayEntry", () => {
@@ -88,7 +86,7 @@ describe("RandomBeacon - Relay", () => {
 
           beforeEach(async () => {
             previousMaintenancePoolBalance = await testToken.balanceOf(
-              maintenancePool.address
+              randomBeacon.address
             )
             await approveTestToken()
             tx = await randomBeacon
@@ -98,7 +96,7 @@ describe("RandomBeacon - Relay", () => {
 
           it("should deposit relay request fee to the maintenance pool", async () => {
             const actualMaintenancePoolBalance = await testToken.balanceOf(
-              maintenancePool.address
+              randomBeacon.address
             )
             expect(
               actualMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
