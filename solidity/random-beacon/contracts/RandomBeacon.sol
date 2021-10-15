@@ -404,12 +404,9 @@ contract RandomBeacon is Ownable {
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
     ///         for off-chain protocol execution and time for the result publication
     ///         for all group members. After this time result cannot be submitted
-    ///         and DKG can be notified about the timeout. It requires DKG to be
-    ///         in `AWAITING_RESULT` state, to which DKG transitions after off-chain
-    ///         DKG time period passes. Once a result is submitted the DKG part
-    ///         of Group Creation is considered completed.
+    ///         and DKG can be notified about the timeout.
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut() public view returns (bool) {
-    return dkg.hasDkgTimedOut();
+        return dkg.hasDkgTimedOut();
     }
 }
