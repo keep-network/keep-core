@@ -70,7 +70,7 @@ contract RandomBeaconGovernance is Ownable {
     // - callback gas limit
     // - group lifetime
     // - relay entry submission failure slashing amount
-    uint256 internal CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
+    uint256 constant internal CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
 
     // Short governance delay for non-critical parameters. Honest stakers should
     // not be severely affected by any change of these parameters.
@@ -84,7 +84,7 @@ contract RandomBeaconGovernance is Ownable {
     // - DKG result submission reward
     // - sortition pool unlocking reward
     // - malicious DKG result slashing amount
-    uint256 internal STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours; 
+    uint256 constant internal STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours; 
 
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
