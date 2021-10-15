@@ -213,6 +213,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             newRelayRequestFee,
             randomBeacon.relayEntrySubmissionEligibilityDelay(),
@@ -258,6 +259,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             newRelayEntrySubmissionEligibilityDelay,
@@ -299,6 +301,7 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySubmissionEligibilityDelay(),
@@ -342,6 +345,7 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySubmissionEligibilityDelay(),
@@ -384,6 +388,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
             newGroupCreationFrequency,
             randomBeacon.groupLifetime(),
@@ -424,6 +429,7 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
             newGroupLifetime,
@@ -467,6 +473,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
             randomBeacon.groupLifetime(),
@@ -514,6 +521,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
             randomBeacon.groupLifetime(),
@@ -554,6 +562,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
             newDkgResultSubmissionReward,
             randomBeacon.sortitionPoolUnlockingReward()
@@ -590,6 +599,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             newSortitionPoolUnlockingReward
@@ -632,6 +642,7 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
             newRelayEntrySubmissionFailureSlashingAmount,
             randomBeacon.maliciousDkgResultSlashingAmount()
@@ -672,6 +683,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
             randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
             newMaliciousDkgResultSlashingAmount

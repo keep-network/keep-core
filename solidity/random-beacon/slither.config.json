@@ -1,5 +1,5 @@
 {
   "detectors_to_exclude": "assembly,timestamp,solc-version",
   "hardhat_artifacts_directory": "./build",
-  "filter_paths": "test"
+  "filter_paths": "test|BytesLib.sol|ModUtils.sol"
 }
