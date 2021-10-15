@@ -9,24 +9,6 @@ library DKG {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
-    /// @dev Size of a group in the threshold relay.
-    uint256 public constant groupSize = 64;
-
-    /// @dev Minimum number of group members needed to interact according to the
-    ///      protocol to produce a relay entry.
-    uint256 public constant groupThreshold = 33;
-
-    /// @dev The minimum number of signatures required to support DKG result.
-    ///      This number needs to be at least the same as the signing threshold
-    ///      and it is recommended to make it higher than the signing threshold
-    ///      to keep a safety margin for in case some members become inactive.
-    uint256 public constant signatureThreshold =
-        groupThreshold + (groupSize - groupThreshold) / 2;
-
-    /// @notice Time in blocks after which DKG result is complete and ready to be
-    //          published by clients.
-    uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
-
     struct Parameters {
         // Time in blocks during which a submitted result can be challenged.
         uint256 resultChallengePeriodLength;
@@ -46,26 +28,6 @@ library DKG {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
-    }
-
-    /// @notice States for phases of group creation.
-    /// The states doesn't include timeouts which should be tracked and notified
-    /// individually.
-    enum State {
-        // Group creation is not in progress. It is a state set after group creation
-        // completion either by timeout or by a result approval.
-        IDLE,
-        // Off-chain DKG protocol execution is in progress. A result is being calculated
-        // by the clients in this state. It's not yet possible to submit the result.
-        KEY_GENERATION,
-        // After off-chain DKG protocol execution the contract awaits result submission.
-        // This is a state to which group creation returns in case of a result
-        // challenge notification.
-        AWAITING_RESULT,
-        // DKG result was submitted and awaits an approval or a challenge. If a result
-        // gets challenge the state returns to `AWAITING_RESULT`. If a result gets
-        // approval the state changes to `IDLE`.
-        CHALLENGE
     }
 
     /// @notice DKG result.
@@ -89,6 +51,44 @@ library DKG {
         // Addresses of candidate group members as outputted by the group selection protocol.
         address[] members;
     }
+
+    /// @notice States for phases of group creation.
+    /// The states doesn't include timeouts which should be tracked and notified
+    /// individually.
+    enum State {
+        // Group creation is not in progress. It is a state set after group creation
+        // completion either by timeout or by a result approval.
+        IDLE,
+        // Off-chain DKG protocol execution is in progress. A result is being calculated
+        // by the clients in this state. It's not yet possible to submit the result.
+        KEY_GENERATION,
+        // After off-chain DKG protocol execution the contract awaits result submission.
+        // This is a state to which group creation returns in case of a result
+        // challenge notification.
+        AWAITING_RESULT,
+        // DKG result was submitted and awaits an approval or a challenge. If a result
+        // gets challenge the state returns to `AWAITING_RESULT`. If a result gets
+        // approval the state changes to `IDLE`.
+        CHALLENGE
+    }
+
+    /// @dev Size of a group in the threshold relay.
+    uint256 public constant groupSize = 64;
+
+    /// @dev Minimum number of group members needed to interact according to the
+    ///      protocol to produce a relay entry.
+    uint256 public constant groupThreshold = 33;
+
+    /// @dev The minimum number of signatures required to support DKG result.
+    ///      This number needs to be at least the same as the signing threshold
+    ///      and it is recommended to make it higher than the signing threshold
+    ///      to keep a safety margin for in case some members become inactive.
+    uint256 public constant signatureThreshold =
+        groupThreshold + (groupSize - groupThreshold) / 2;
+
+    /// @notice Time in blocks after which DKG result is complete and ready to be
+    //          published by clients.
+    uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
 
     /// @notice Determines the current state of group creation. It doesn't take
     ///         timeouts into consideration. The timeouts should be tracked and
