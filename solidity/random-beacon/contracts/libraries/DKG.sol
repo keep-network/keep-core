@@ -96,18 +96,18 @@ library DKG {
     function currentState(Data storage self)
         internal
         view
-        returns (State currentState)
+        returns (State state)
     {
-        currentState = State.IDLE;
+        state = State.IDLE;
 
         if (self.startBlock > 0) {
-            currentState = State.KEY_GENERATION;
+            state = State.KEY_GENERATION;
 
             if (block.number > self.startBlock + offchainDkgTime) {
-                currentState = State.AWAITING_RESULT;
+                state = State.AWAITING_RESULT;
 
                 if (self.submittedResultBlock > 0) {
-                    currentState = State.CHALLENGE;
+                    state = State.CHALLENGE;
                 }
             }
         }
