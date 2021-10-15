@@ -94,7 +94,7 @@ library DKG {
   ///         timeouts into consideration. The timeouts should be tracked and
   ///         notified separately.
   function currentState(Data storage self)
-    public
+    internal
     view
     returns (State currentState)
   {
@@ -119,7 +119,7 @@ library DKG {
     self.startBlock = block.number;
   }
 
-  function submitResult(Data storage self, Result calldata result) external {
+  function submitResult(Data storage self, Result calldata result) internal {
     require(
       currentState(self) == State.AWAITING_RESULT,
       "current state is not AWAITING_RESULT"
@@ -148,7 +148,7 @@ library DKG {
   ///         DKG time period passes. Once a result is submitted the DKG part
   ///         of Group Creation is considered completed.
   /// @return True if DKG timed out, false otherwise.
-  function hasDkgTimedOut(Data storage self) public view returns (bool) {
+  function hasDkgTimedOut(Data storage self) internal view returns (bool) {
     return
       currentState(self) == State.AWAITING_RESULT &&
       block.number >
@@ -187,7 +187,7 @@ library DKG {
     bytes memory signatures,
     uint256[] memory signingMemberIndices,
     address[] memory members
-  ) public view {
+  ) internal view {
     // TODO: Verify if submitter is valid staker and signatures come from valid
     // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
 
