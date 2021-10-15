@@ -387,6 +387,15 @@ contract RandomBeacon is Ownable {
         );
     }
 
+    /// @notice Returns DKG parameters in the following order:
+    ///         dkgResultChallengePeriodLength, dkgResultSubmissionEligibilityDelay
+    function getDkgParameters() external view returns (uint256, uint256) {
+        return (
+        dkg.parameters.resultChallengePeriodLength,
+        dkg.parameters.resultSubmissionEligibilityDelay
+        );
+    }
+
     /// @notice Check current group creation state.
     function getGroupCreationState() external view returns (DKG.State) {
         return dkg.currentState();
