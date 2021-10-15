@@ -252,6 +252,12 @@ library DKG {
         }
     }
 
+    function notifyDkgTimeout(Data storage self) internal cleanup(self) {
+        require(hasDkgTimedOut(self), "dkg has not timed out");
+
+        // TODO: Implement slashing
+    }
+
     /// @notice Set resultChallengePeriodLength parameter.
     function setResultChallengePeriodLength(
         Data storage self,
@@ -288,7 +294,8 @@ library DKG {
 
     /// @notice Cleans up state after DKG completion.
     /// @dev Should be called after DKG times out or a result is approved.
-    function cleanup(Data storage self) internal {
+    modifier cleanup(Data storage self) {
+        _;
         delete self.startBlock;
         delete self.submittedResultHash;
         delete self.submittedResultBlock;
