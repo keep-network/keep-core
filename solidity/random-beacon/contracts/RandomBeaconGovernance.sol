@@ -84,7 +84,7 @@ contract RandomBeaconGovernance is Ownable {
     // - DKG result submission reward
     // - sortition pool unlocking reward
     // - malicious DKG result slashing amount
-    uint256 internal STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
+    uint256 constant internal STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
 
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
