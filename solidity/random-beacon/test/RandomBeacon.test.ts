@@ -99,8 +99,6 @@ describe("RandomBeacon", () => {
   describe("updateGroupCreationParameters", () => {
     const groupCreationFrequency = 100
     const groupLifetime = 200
-    const dkgResultChallengePeriodLength = 300
-    const dkgResultSubmissionEligibilityDelay = 400
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -109,7 +107,48 @@ describe("RandomBeacon", () => {
             .connect(thirdParty)
             .updateGroupCreationParameters(
               groupCreationFrequency,
-              groupLifetime,
+              groupLifetime
+            )
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+      beforeEach(async () => {
+        tx = await randomBeacon
+          .connect(governance)
+          .updateGroupCreationParameters(groupCreationFrequency, groupLifetime)
+      })
+
+      it("should update the group creation frequency", async () => {
+        expect(await randomBeacon.groupCreationFrequency()).to.be.equal(
+          groupCreationFrequency
+        )
+      })
+
+      it("should update the group lifetime", async () => {
+        expect(await randomBeacon.groupLifetime()).to.be.equal(groupLifetime)
+      })
+
+      it("should emit the GroupCreationParametersUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "GroupCreationParametersUpdated")
+          .withArgs(groupCreationFrequency, groupLifetime)
+      })
+    })
+  })
+
+  describe("updateDkgParameters", () => {
+    const dkgResultChallengePeriodLength = 300
+    const dkgResultSubmissionEligibilityDelay = 400
+
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon
+            .connect(thirdParty)
+            .updateDkgParameters(
               dkgResultChallengePeriodLength,
               dkgResultSubmissionEligibilityDelay
             )
@@ -122,22 +161,10 @@ describe("RandomBeacon", () => {
       beforeEach(async () => {
         tx = await randomBeacon
           .connect(governance)
-          .updateGroupCreationParameters(
-            groupCreationFrequency,
-            groupLifetime,
+          .updateDkgParameters(
             dkgResultChallengePeriodLength,
             dkgResultSubmissionEligibilityDelay
           )
-      })
-
-      it("should update the group creation frequency", async () => {
-        expect(await randomBeacon.groupCreationFrequency()).to.be.equal(
-          groupCreationFrequency
-        )
-      })
-
-      it("should update the group lifetime", async () => {
-        expect(await randomBeacon.groupLifetime()).to.be.equal(groupLifetime)
       })
 
       it("should update the DKG result challenge period length", async () => {
@@ -152,12 +179,10 @@ describe("RandomBeacon", () => {
         ).to.be.equal(dkgResultSubmissionEligibilityDelay)
       })
 
-      it("should emit the GroupCreationParametersUpdated event", async () => {
+      it("should emit the DkgParametersUpdated event", async () => {
         await expect(tx)
-          .to.emit(randomBeacon, "GroupCreationParametersUpdated")
+          .to.emit(randomBeacon, "DkgParametersUpdated")
           .withArgs(
-            groupCreationFrequency,
-            groupLifetime,
             dkgResultChallengePeriodLength,
             dkgResultSubmissionEligibilityDelay
           )

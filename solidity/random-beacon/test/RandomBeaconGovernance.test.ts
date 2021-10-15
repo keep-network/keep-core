@@ -46,7 +46,11 @@ describe("RandomBeaconGovernance", () => {
       .connect(governance)
       .updateGroupCreationParameters(
         initialGroupCreationFrequency,
-        initialGroupLifeTime,
+        initialGroupLifeTime
+      )
+    await randomBeacon
+      .connect(governance)
+      .updateDkgParameters(
         initialDkgResultChallengePeriodLength,
         initialDkgResultSubmissionEligibilityDelay
       )
