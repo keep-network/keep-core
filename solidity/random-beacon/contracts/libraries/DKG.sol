@@ -258,6 +258,20 @@ library DKG {
         // TODO: Implement slashing
     }
 
+    function acceptResult(Data storage self) internal cleanup(self) {
+        require(
+            currentState(self) == State.CHALLENGE,
+            "current state is not CHALLENGE"
+        );
+
+        require(
+            block.number >=
+                self.submittedResultBlock +
+                    self.parameters.resultChallengePeriodLength,
+            "challenge period has not passed yet"
+        );
+    }
+
     /// @notice Set resultChallengePeriodLength parameter.
     function setResultChallengePeriodLength(
         Data storage self,
