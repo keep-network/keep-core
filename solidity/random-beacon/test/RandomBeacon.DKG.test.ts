@@ -43,15 +43,6 @@ describe("RandomBeacon", () => {
     randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
-  describe("getDkgParameters", async () => {
-    it("returns values", async () => {
-      const result = await randomBeacon.getDkgParameters()
-
-      expect(result[0]).to.be.equal(params.dkgResultChallengePeriodLength)
-      expect(result[1]).to.be.equal(params.dkgResultSubmissionEligibilityDelay)
-    })
-  })
-
   describe("genesis", async () => {
     it("can be invoked by third party", async () => {
       await randomBeacon.connect(thirdParty).genesis()
