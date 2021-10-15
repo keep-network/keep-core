@@ -260,7 +260,10 @@ library DKG {
         // TODO: Implement slashing
     }
 
-    function acceptResult(Data storage self) internal cleanup(self) {
+    function acceptResult(Data storage self, Result calldata dkgResult)
+        internal
+        cleanup(self)
+    {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -271,6 +274,11 @@ library DKG {
                 self.submittedResultBlock +
                     self.parameters.resultChallengePeriodLength,
             "challenge period has not passed yet"
+        );
+
+        require(
+            self.submittedResultHash == keccak256(abi.encode(dkgResult)),
+            "this result was not submitted in the current dkg"
         );
     }
 

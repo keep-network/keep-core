@@ -386,6 +386,7 @@ contract RandomBeacon is Ownable {
         dkg.submitResult(dkgResult);
 
         // TODO: Register a pending group
+        // TODO: Set members in the group
 
         emit DkgResultSubmitted(dkgResult.groupPubKey, msg.sender);
     }
@@ -394,6 +395,19 @@ contract RandomBeacon is Ownable {
         dkg.notifyTimeout();
 
         emit DkgTimedOut();
+    }
+
+    function approveDkgResult(DKG.Result calldata dkgResult) external {
+        dkg.acceptResult(dkgResult);
+
+        // TODO: Activate the pending group.
+
+        emit DkgResultApproved(
+            dkgResult.groupPubKey,
+            dkgResult.members[dkgResult.submitterMemberIndex - 1]
+        );
+
+        // TODO: Unlock sortition pool
     }
 
     /// @notice Check current group creation state.
