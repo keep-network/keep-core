@@ -305,7 +305,6 @@ library DKG {
         );
 
         // TODO: Verify members with sortition pool
-        // TODO: Implement slashing
 
         // Reset DKG result submission block start, so submission eligibility
         // starts from the beginning.

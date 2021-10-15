@@ -410,6 +410,17 @@ contract RandomBeacon is Ownable {
         // TODO: Unlock sortition pool
     }
 
+    function challengeDkgResult(DKG.Result calldata dkgResult) external {
+        dkg.challengeResult(dkgResult);
+
+        // TODO: Implement slashing
+
+        emit DkgResultChallenged(
+            dkgResult.groupPubKey,
+            dkgResult.members[dkgResult.submitterMemberIndex - 1]
+        );
+    }
+
     /// @notice Check current group creation state.
     function getGroupCreationState() external view returns (DKG.State) {
         return dkg.currentState();
