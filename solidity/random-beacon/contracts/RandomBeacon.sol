@@ -397,7 +397,7 @@ contract RandomBeacon is Ownable {
     ///         for all group members. After this time result cannot be submitted
     ///         and DKG can be notified about the timeout.
     /// @return True if DKG timed out, false otherwise.
-    function hasDkgTimedOut() public view returns (bool) {
+    function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
     }
 }

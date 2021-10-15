@@ -11,7 +11,7 @@ library BLS {
 
     /// @dev Creates a signature over message using the provided secret key.    
     function sign(bytes memory message, uint256 secretKey)
-        public
+        external
         view
         returns (bytes memory)
     {
@@ -50,7 +50,7 @@ library BLS {
         bytes memory publicKey,
         bytes memory message,
         bytes memory signature
-    ) public view returns (bool) {
+    ) external view returns (bool) {
         AltBn128.G1Point memory point = AltBn128.g1HashToPoint(message);
         bytes memory messageAsPoint = AltBn128.g1Marshal(point);
 
