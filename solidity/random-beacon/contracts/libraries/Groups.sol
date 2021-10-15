@@ -4,8 +4,11 @@ pragma solidity ^0.8.6;
 library Groups {
     struct Group {
         bytes groupPubKey;
-        uint256 activationTimestamp;
         address[] members;
+    }
+
+    struct Data {
+        Group[] groups;
     }
 
     function selectGroup(Data storage self, uint256 seed) internal view returns (Groups.Group memory) {

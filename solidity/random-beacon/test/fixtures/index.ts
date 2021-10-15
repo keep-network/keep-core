@@ -29,18 +29,53 @@ export async function blsDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function testTokenDeployment(): Promise<DeployedContracts> {
+  const TestToken = await ethers.getContractFactory("TestToken")
+  const testToken = await TestToken.deploy()
+  await testToken.deployed()
+
+  const contracts: DeployedContracts = { testToken }
+
+  return contracts
+}
+
+export async function maintenancePoolDeployment(tToken: Contract): Promise<DeployedContracts> {
+  const MaintenancePool = await ethers.getContractFactory("MaintenancePool")
+  const maintenancePool = await MaintenancePool.deploy(tToken.address)
+  await maintenancePool.deployed()
+
+  const contracts: DeployedContracts = { maintenancePool }
+
+  return contracts
+}
+
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
   const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
   await sortitionPoolStub.deployed()
 
-  const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
+  const { testToken } = await testTokenDeployment()
+  const { maintenancePool } = await maintenancePoolDeployment(testToken)
+
+  const RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
+    libraries: {
+      BLS: (await blsDeployment()).bls.address
+    },
+  })
   const randomBeacon: RandomBeacon = await RandomBeacon.deploy(
-    sortitionPoolStub.address
+    sortitionPoolStub.address,
+    testToken.address,
+    maintenancePool.address,
+    constants.groupSize
   )
   await randomBeacon.deployed()
 
-  const contracts: DeployedContracts = { sortitionPoolStub, randomBeacon }
+  const contracts: DeployedContracts = {
+    sortitionPoolStub,
+    randomBeacon,
+    testToken,
+    maintenancePool
+  }
 
   return contracts
 }

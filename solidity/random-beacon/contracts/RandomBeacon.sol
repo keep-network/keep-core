@@ -150,7 +150,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
-    Groups.Data public groups;
+    Groups.Data groups;
     Relay.Data public relay;
 
     event RelayEntryParametersUpdated(
@@ -192,7 +192,8 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     constructor(
         ISortitionPool _sortitionPool,
         IERC20 tToken,
-        MaintenancePool maintenancePool
+        MaintenancePool maintenancePool,
+        uint256 groupSize
     ) {
         sortitionPool = _sortitionPool;
 
@@ -347,7 +348,8 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relay.submitEntry(submitterIndex, entry);
 
         if (relay.requestCount % groupCreationFrequency == 0) {
-            createGroup(uint256(keccak256(entry)));
+            // TODO: Once implemented, invoke:
+            // createGroup(uint256(keccak256(entry)));
         }
     }
 }

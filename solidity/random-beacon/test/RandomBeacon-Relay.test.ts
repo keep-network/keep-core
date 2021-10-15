@@ -1,11 +1,10 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { blsData } from "./helpers/data"
-import { to1e18 } from "./helpers/functions"
-import { constants, testDeployment } from "./helpers/fixtures"
+import blsData from "./data/bls"
+import { to1e18 } from "./functions"
+import { constants, testDeployment } from "./fixtures"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { RandomBeacon, TestToken, MaintenancePool } from "../typechain"
-import {exec} from "child_process";
 
 const { time } = helpers
 const { mineBlocks } = time
@@ -15,7 +14,7 @@ interface GroupMember {
   signer: SignerWithAddress
 }
 
-describe("RandomBeacon - Relay", function () {
+describe.only("RandomBeacon - Relay", function () {
   const relayRequestFee = to1e18(100)
 
   let requester: SignerWithAddress
