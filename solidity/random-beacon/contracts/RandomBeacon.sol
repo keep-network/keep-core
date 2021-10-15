@@ -167,6 +167,18 @@ contract RandomBeacon is Ownable {
         address indexed submitter
     );
 
+    event DkgTimedOut();
+
+    event DkgResultApproved(
+        bytes indexed groupPubKey,
+        address indexed submitter
+    );
+
+    event DkgResultChallenged(
+        bytes indexed groupPubKey,
+        address indexed submitter
+    );
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
