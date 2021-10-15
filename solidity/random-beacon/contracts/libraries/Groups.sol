@@ -24,6 +24,7 @@ library Groups {
         Group[] groups;
     }
 
+    /* solhint-disable-next-line no-unused-vars */
     function selectGroup(Data storage self, uint256 seed) internal view returns (Groups.Group memory) {
         // TODO: Assert at least one group exists and implement selection logic.
         //       Currently this function is just a stub which makes tests working.

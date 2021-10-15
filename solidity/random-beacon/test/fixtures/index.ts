@@ -58,7 +58,9 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function maintenancePoolDeployment(tToken: Contract): Promise<DeployedContracts> {
+export async function maintenancePoolDeployment(
+  tToken: Contract
+): Promise<DeployedContracts> {
   const MaintenancePool = await ethers.getContractFactory("MaintenancePool")
   const maintenancePool = await MaintenancePool.deploy(tToken.address)
   await maintenancePool.deployed()
@@ -77,7 +79,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
     libraries: {
-      BLS: (await blsDeployment()).bls.address
+      BLS: (await blsDeployment()).bls.address,
     },
   })
   const randomBeacon: RandomBeacon = await RandomBeacon.deploy(
@@ -92,7 +94,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     sortitionPoolStub,
     randomBeacon,
     testToken,
-    maintenancePool
+    maintenancePool,
   }
 
   return contracts

@@ -1,9 +1,9 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
 import { constants, testDeployment } from "./fixtures"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { RandomBeacon, TestToken, MaintenancePool } from "../typechain"
 
 const { time } = helpers
@@ -14,7 +14,7 @@ interface GroupMember {
   signer: SignerWithAddress
 }
 
-describe("RandomBeacon - Relay", function () {
+describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
 
   let requester: SignerWithAddress
@@ -40,8 +40,7 @@ describe("RandomBeacon - Relay", function () {
     let signer6: SignerWithAddress
     let signer7: SignerWithAddress
     let signer8: SignerWithAddress
-
-    [
+    ;[
       requester,
       signer1,
       signer2,
@@ -53,14 +52,14 @@ describe("RandomBeacon - Relay", function () {
       signer8,
     ] = await ethers.getSigners()
 
-    member1 = {index: 1, signer: signer1}
-    member2 = {index: 2, signer: signer2}
-    member3 = {index: 3, signer: signer3}
-    member4 = {index: 4, signer: signer4}
-    member5 = {index: 5, signer: signer5}
-    member6 = {index: 6, signer: signer6}
-    member7 = {index: 7, signer: signer7}
-    member8 = {index: 8, signer: signer8}
+    member1 = { index: 1, signer: signer1 }
+    member2 = { index: 2, signer: signer2 }
+    member3 = { index: 3, signer: signer3 }
+    member4 = { index: 4, signer: signer4 }
+    member5 = { index: 5, signer: signer5 }
+    member6 = { index: 6, signer: signer6 }
+    member7 = { index: 7, signer: signer7 }
+    member8 = { index: 8, signer: signer8 }
 
     // Use smaller group size to make testing easier.
     constants.groupSize = 8
@@ -88,19 +87,27 @@ describe("RandomBeacon - Relay", function () {
           let previousMaintenancePoolBalance
 
           beforeEach(async () => {
-            previousMaintenancePoolBalance = await testToken.balanceOf(maintenancePool.address)
+            previousMaintenancePoolBalance = await testToken.balanceOf(
+              maintenancePool.address
+            )
             await approveTestToken()
-            tx = await randomBeacon.connect(requester).requestRelayEntry(blsData.previousEntry)
+            tx = await randomBeacon
+              .connect(requester)
+              .requestRelayEntry(blsData.previousEntry)
           })
 
           it("should deposit relay request fee to the maintenance pool", async () => {
-            const actualMaintenancePoolBalance = await testToken.balanceOf(maintenancePool.address)
-            expect(actualMaintenancePoolBalance.sub(previousMaintenancePoolBalance)).to.be.equal(relayRequestFee)
+            const actualMaintenancePoolBalance = await testToken.balanceOf(
+              maintenancePool.address
+            )
+            expect(
+              actualMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
+            ).to.be.equal(relayRequestFee)
           })
 
           it("should emit RelayEntryRequested event", async () => {
-            await expect(tx).to
-              .emit(randomBeacon, "RelayEntryRequested")
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryRequested")
               .withArgs(1, blsData.groupPubKey, blsData.previousEntry)
           })
         })
@@ -108,7 +115,9 @@ describe("RandomBeacon - Relay", function () {
         context("when the requester doesn't pay the relay request fee", () => {
           it("should revert", async () => {
             await expect(
-              randomBeacon.connect(requester).requestRelayEntry(blsData.previousEntry)
+              randomBeacon
+                .connect(requester)
+                .requestRelayEntry(blsData.previousEntry)
             ).to.be.revertedWith("Transfer amount exceeds allowance")
           })
         })
@@ -117,12 +126,16 @@ describe("RandomBeacon - Relay", function () {
       context("when there is an other relay entry in progress", () => {
         beforeEach(async () => {
           await approveTestToken()
-          await randomBeacon.connect(requester).requestRelayEntry(blsData.previousEntry)
+          await randomBeacon
+            .connect(requester)
+            .requestRelayEntry(blsData.previousEntry)
         })
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.connect(requester).requestRelayEntry(blsData.previousEntry)
+            randomBeacon
+              .connect(requester)
+              .requestRelayEntry(blsData.previousEntry)
           ).to.be.revertedWith("Another relay request in progress")
         })
       })
@@ -139,7 +152,9 @@ describe("RandomBeacon - Relay", function () {
     context("when relay request is in progress", () => {
       beforeEach(async () => {
         await approveTestToken()
-        await randomBeacon.connect(requester).requestRelayEntry(blsData.previousEntry)
+        await randomBeacon
+          .connect(requester)
+          .requestRelayEntry(blsData.previousEntry)
       })
 
       context("when relay entry is not timed out", () => {
@@ -149,49 +164,106 @@ describe("RandomBeacon - Relay", function () {
               // At the beginning only member 8 is eligible because
               // (blsData.groupSignature % groupSize) + 1 = 8.
               await assertMembersEligible([member8])
-              await assertMembersNotEligible([member1, member2, member3, member4, member5, member6, member7])
+              await assertMembersNotEligible([
+                member1,
+                member2,
+                member3,
+                member4,
+                member5,
+                member6,
+                member7,
+              ])
 
               await mineBlocks(10)
 
               await assertMembersEligible([member8, member1])
-              await assertMembersNotEligible([member2, member3, member4, member5, member6, member7])
+              await assertMembersNotEligible([
+                member2,
+                member3,
+                member4,
+                member5,
+                member6,
+                member7,
+              ])
 
               await mineBlocks(10)
 
               await assertMembersEligible([member8, member1, member2])
-              await assertMembersNotEligible([member3, member4, member5, member6, member7])
+              await assertMembersNotEligible([
+                member3,
+                member4,
+                member5,
+                member6,
+                member7,
+              ])
 
               await mineBlocks(10)
 
               await assertMembersEligible([member8, member1, member2, member3])
-              await assertMembersNotEligible([member4, member5, member6, member7])
+              await assertMembersNotEligible([
+                member4,
+                member5,
+                member6,
+                member7,
+              ])
 
               await mineBlocks(10)
 
-              await assertMembersEligible([member8, member1, member2, member3, member4])
+              await assertMembersEligible([
+                member8,
+                member1,
+                member2,
+                member3,
+                member4,
+              ])
               await assertMembersNotEligible([member5, member6, member7])
 
               await mineBlocks(10)
 
-              await assertMembersEligible([member8, member1, member2, member3, member4, member5])
+              await assertMembersEligible([
+                member8,
+                member1,
+                member2,
+                member3,
+                member4,
+                member5,
+              ])
               await assertMembersNotEligible([member6, member7])
 
               await mineBlocks(10)
 
-              await assertMembersEligible([member8, member1, member2, member3, member4, member5, member6])
+              await assertMembersEligible([
+                member8,
+                member1,
+                member2,
+                member3,
+                member4,
+                member5,
+                member6,
+              ])
               await assertMembersNotEligible([member7])
 
               await mineBlocks(10)
 
-              await assertMembersEligible([member8, member1, member2, member3, member4, member5, member6, member7])
+              await assertMembersEligible([
+                member8,
+                member1,
+                member2,
+                member3,
+                member4,
+                member5,
+                member6,
+                member7,
+              ])
             })
 
             it("should emit RelayEntrySubmitted event", async () => {
               await expect(
-                randomBeacon.connect(member8.signer)
+                randomBeacon
+                  .connect(member8.signer)
                   .submitRelayEntry(member8.index, blsData.groupSignature)
-              ).to
-                .emit(randomBeacon, "RelayEntrySubmitted")
+              )
+                .to.emit(randomBeacon, "RelayEntrySubmitted")
                 .withArgs(1, blsData.groupSignature)
             })
           })
@@ -199,7 +271,8 @@ describe("RandomBeacon - Relay", function () {
           context("when entry is not valid", () => {
             it("should revert", async () => {
               await expect(
-                randomBeacon.connect(member8.signer)
+                randomBeacon
+                  .connect(member8.signer)
                   .submitRelayEntry(member8.index, blsData.nextGroupSignature)
               ).to.be.revertedWith("Invalid entry")
             })
@@ -209,25 +282,31 @@ describe("RandomBeacon - Relay", function () {
         context("when submitter index is beyond valid range", () => {
           it("should revert", async () => {
             await expect(
-              randomBeacon.connect(member8.signer)
+              randomBeacon
+                .connect(member8.signer)
                 .submitRelayEntry(0, blsData.nextGroupSignature)
             ).to.be.revertedWith("Invalid submitter index")
 
             await expect(
-              randomBeacon.connect(member8.signer)
+              randomBeacon
+                .connect(member8.signer)
                 .submitRelayEntry(9, blsData.nextGroupSignature)
             ).to.be.revertedWith("Invalid submitter index")
           })
         })
 
-        context("when submitter index does not correspond to sender address", () => {
-          it("should revert", async () => {
-            await expect(
-              randomBeacon.connect(member8.signer)
-                .submitRelayEntry(7, blsData.nextGroupSignature)
-            ).to.be.revertedWith("Unexpected submitter index")
-          })
-        })
+        context(
+          "when submitter index does not correspond to sender address",
+          () => {
+            it("should revert", async () => {
+              await expect(
+                randomBeacon
+                  .connect(member8.signer)
+                  .submitRelayEntry(7, blsData.nextGroupSignature)
+              ).to.be.revertedWith("Unexpected submitter index")
+            })
+          }
+        )
       })
 
       context("when relay entry is timed out", () => {
@@ -236,7 +315,8 @@ describe("RandomBeacon - Relay", function () {
           await mineBlocks(8 * 10 + 5760)
 
           await expect(
-            randomBeacon.connect(member8.signer)
+            randomBeacon
+              .connect(member8.signer)
               .submitRelayEntry(member8.index, blsData.nextGroupSignature)
           ).to.be.revertedWith("Relay request timed out")
         })
@@ -246,7 +326,8 @@ describe("RandomBeacon - Relay", function () {
     context("when relay request is not in progress", () => {
       it("should revert", async () => {
         await expect(
-          randomBeacon.connect(member8.signer)
+          randomBeacon
+            .connect(member8.signer)
             .submitRelayEntry(member8.index, blsData.nextGroupSignature)
         ).to.be.revertedWith("No relay request in progress")
       })
@@ -255,25 +336,31 @@ describe("RandomBeacon - Relay", function () {
 
   async function approveTestToken() {
     await testToken.mint(requester.address, relayRequestFee)
-    await testToken.connect(requester).approve(randomBeacon.address, relayRequestFee)
+    await testToken
+      .connect(requester)
+      .approve(randomBeacon.address, relayRequestFee)
   }
 
   async function assertMembersEligible(members: GroupMember[]) {
-    for(let i = 0; i < members.length; i++) {
+    for (let i = 0; i < members.length; i++) {
       const member = members[i]
+      // eslint-disable-next-line no-await-in-loop
       await expect(
-        randomBeacon.connect(member.signer).callStatic
-          .submitRelayEntry(member.index, blsData.groupSignature)
+        randomBeacon
+          .connect(member.signer)
+          .callStatic.submitRelayEntry(member.index, blsData.groupSignature)
       ).not.to.be.reverted
     }
   }
 
   async function assertMembersNotEligible(members: GroupMember[]) {
-    for(let i = 0; i < members.length; i++) {
+    for (let i = 0; i < members.length; i++) {
       const member = members[i]
+      // eslint-disable-next-line no-await-in-loop
       await expect(
-        randomBeacon.connect(member.signer).callStatic
-          .submitRelayEntry(member.index, blsData.groupSignature)
+        randomBeacon
+          .connect(member.signer)
+          .callStatic.submitRelayEntry(member.index, blsData.groupSignature)
       ).to.be.revertedWith("Submitter is not eligible")
     }
   }
