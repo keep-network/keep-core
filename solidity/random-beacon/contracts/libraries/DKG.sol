@@ -42,6 +42,9 @@ library DKG {
         Parameters parameters;
         // Time in blocks at which DKG started.
         uint256 startBlock;
+        // Time in blocks at which results submission phase starts. It is a starting
+        // point for result submission eligibility calculations for members.
+        uint256 resultSubmissionStartBlock;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
@@ -117,6 +120,7 @@ library DKG {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
         self.startBlock = block.number;
+        self.resultSubmissionStartBlock = block.number + offchainDkgTime;
     }
 
     function submitResult(Data storage self, Result calldata result) internal {
@@ -194,9 +198,7 @@ library DKG {
             "Unexpected submitter index"
         );
 
-        // TODO: In challenges implementation remember about resetting the counter for
-        // eligibility checks, see: https://github.com/keep-network/keep-core/pull/2654#discussion_r728819993
-        uint256 T_init = self.startBlock + offchainDkgTime;
+        uint256 T_init = self.resultSubmissionStartBlock;
         require(
             block.number >=
                 (T_init +
@@ -272,6 +274,39 @@ library DKG {
         );
     }
 
+    // TODO: When implementing challenges verify if dkgResult is really needed to
+    // compare the hashes of challenged result with the submitted result.
+    function challengeResult(Data storage self, Result calldata dkgResult)
+        internal
+    {
+        require(
+            currentState(self) == State.CHALLENGE,
+            "current state is not CHALLENGE"
+        );
+
+        require(
+            block.number <
+                self.submittedResultBlock +
+                    self.parameters.resultChallengePeriodLength,
+            "challenge period has already passed"
+        );
+
+        require(
+            self.submittedResultHash == keccak256(abi.encode(dkgResult)),
+            "this result was not submitted in the current dkg"
+        );
+
+        // TODO: Verify members with sortition pool
+        // TODO: Implement slashing
+
+        // Reset DKG result submission block start, so submission eligibility
+        // starts from the beginning.
+        self.resultSubmissionStartBlock = block.number;
+
+        delete self.submittedResultBlock;
+        delete self.submittedResultHash;
+    }
+
     /// @notice Set resultChallengePeriodLength parameter.
     function setResultChallengePeriodLength(
         Data storage self,
@@ -311,6 +346,7 @@ library DKG {
     modifier cleanup(Data storage self) {
         _;
         delete self.startBlock;
+        delete self.resultSubmissionStartBlock;
         delete self.submittedResultHash;
         delete self.submittedResultBlock;
     }
