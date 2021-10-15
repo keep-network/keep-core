@@ -248,7 +248,9 @@ contract RandomBeacon is Ownable {
         uint256 _dkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
         dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
-        dkg.setResultSubmissionEligibilityDelay(_dkgResultSubmissionEligibilityDelay);
+        dkg.setResultSubmissionEligibilityDelay(
+            _dkgResultSubmissionEligibilityDelay
+        );
 
         emit DkgParametersUpdated(
             dkgResultChallengePeriodLength(),
@@ -283,7 +285,11 @@ contract RandomBeacon is Ownable {
     ///         without the DKG result submitted, DKG is considered as timed out
     ///         and no DKG result for this group creation can be submitted
     ///         anymore.
-    function dkgResultSubmissionEligibilityDelay() public view returns (uint256) {
+    function dkgResultSubmissionEligibilityDelay()
+        public
+        view
+        returns (uint256)
+    {
         return dkg.parameters.resultSubmissionEligibilityDelay;
     }
 
@@ -381,10 +387,7 @@ contract RandomBeacon is Ownable {
 
         // TODO: Register a pending group
 
-        emit DkgResultSubmitted(
-            dkgResult.groupPubKey,
-            msg.sender
-        );
+        emit DkgResultSubmitted(dkgResult.groupPubKey, msg.sender);
     }
 
     /// @notice Check current group creation state.
