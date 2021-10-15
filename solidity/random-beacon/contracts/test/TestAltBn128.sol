@@ -271,13 +271,12 @@ contract TestAltBn128 {
     }
 
     function runBasicPairingTest() public view {
-        bool result =
-            AltBn128.pairing(
-                g1,
-                g2,
-                AltBn128.G1Point(g1.x, AltBn128.getP() - g1.y),
-                g2
-            );
+        bool result = AltBn128.pairing(
+            g1,
+            g2,
+            AltBn128.G1Point(g1.x, AltBn128.getP() - g1.y),
+            g2
+        );
         require(result, "Basic pairing check should succeed.");
     }
 
@@ -313,13 +312,12 @@ contract TestAltBn128 {
             .y
             .y = 12642665914920339463975152321804664028480770144655934937445922690262428344269;
 
-        bool result =
-            AltBn128.pairing(
-                signature,
-                g2,
-                AltBn128.G1Point(message.x, AltBn128.getP() - message.y),
-                publicKey
-            );
+        bool result = AltBn128.pairing(
+            signature,
+            g2,
+            AltBn128.G1Point(message.x, AltBn128.getP() - message.y),
+            publicKey
+        );
         require(
             result,
             "Verify signature using precompiled pairing contract should succeed."
