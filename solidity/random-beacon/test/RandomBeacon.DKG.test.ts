@@ -196,6 +196,103 @@ describe("RandomBeacon", () => {
     })
   })
 
+  describe("hasDkgTimedOut", async () => {
+    context("with initial contract state", async () => {
+      it("returns false", async () => {
+        await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+      })
+    })
+
+    context("when genesis dkg started", async () => {
+      let startBlock: number
+
+      beforeEach("run genesis", async () => {
+        const [genesisTx] = await genesis()
+        startBlock = genesisTx.blockNumber
+      })
+
+      context("within off-chain dkg period", async () => {
+        it("returns false", async () => {
+          await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+        })
+      })
+
+      context("after off-chain dkg period", async () => {
+        beforeEach(async () => {
+          await mineBlocksTo(startBlock + constants.offchainDkgTime + 1)
+        })
+
+        context("when dkg result was not submitted", async () => {
+          it("returns false", async () => {
+            await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+          })
+
+          context("at the end of the dkg timeout period", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(startBlock + dkgTimeout)
+            })
+
+            it("returns false", async () => {
+              await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+            })
+          })
+
+          context("after the dkg timeout period", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(startBlock + dkgTimeout + 1)
+            })
+
+            it("returns true", async () => {
+              await expect(await randomBeacon.hasDkgTimedOut()).to.be.true
+            })
+          })
+        })
+
+        context("when dkg result was submitted", async () => {
+          beforeEach(async () => {
+            await signAndSubmitDkgResult(signers, startBlock)
+          })
+
+          context("when dkg result was not approved", async () => {
+            context("at the end of the dkg timeout period", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(startBlock + dkgTimeout)
+              })
+
+              it("returns false", async () => {
+                await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+              })
+            })
+
+            context("after the dkg timeout period", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(startBlock + dkgTimeout + 1)
+              })
+
+              it("returns false", async () => {
+                await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+              })
+            })
+          })
+
+          // TODO: Enable once approvals and challenges are implemented
+          // context("when dkg result was approved", async function () {
+          // it("returns false", async () => {
+          //   await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+          // })
+          // })
+          // TODO: Add test cases to cover transition after challenge back to
+          // the awaiting result state and counting timeout there.
+          // context("when dkg result was challenged", async function () {
+          // it("returns false", async () => {
+          //   await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+          // })
+          // })
+        })
+      })
+    })
+  })
+
   describe("submitDkgResult", async () => {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
 
