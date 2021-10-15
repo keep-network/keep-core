@@ -469,6 +469,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateDkgParameters(
             newDkgResultChallengePeriodLength,
             randomBeacon.dkgResultSubmissionEligibilityDelay()
@@ -514,6 +515,7 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateDkgParameters(
             randomBeacon.dkgResultChallengePeriodLength(),
             newDkgResultSubmissionEligibilityDelay
