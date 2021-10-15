@@ -390,6 +390,12 @@ contract RandomBeacon is Ownable {
         emit DkgResultSubmitted(dkgResult.groupPubKey, msg.sender);
     }
 
+    function notifyDkgTimeout() external {
+        dkg.notifyTimeout();
+
+        emit DkgTimedOut();
+    }
+
     /// @notice Check current group creation state.
     function getGroupCreationState() external view returns (DKG.State) {
         return dkg.currentState();
