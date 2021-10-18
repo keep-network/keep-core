@@ -322,8 +322,8 @@ contract RandomBeaconGovernance is Ownable {
     {
         /* solhint-disable not-rely-on-time */
         require(
-            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1000000,
-            "Callback gas limit must be > 0 and <= 1000000"
+            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1e6,
+            "Callback gas limit must be > 0 and <= 1e6"
         );
         newCallbackGasLimit = _newCallbackGasLimit;
         callbackGasLimitChangeInitiated = block.timestamp;

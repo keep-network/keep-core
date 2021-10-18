@@ -178,7 +178,7 @@ contract RandomBeacon is Ownable {
         relayRequestFee = 0;
         relayEntrySubmissionEligibilityDelay = 10;
         relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
-        callbackGasLimit = 200000;
+        callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
