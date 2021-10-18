@@ -178,7 +178,7 @@ contract RandomBeacon is Ownable {
         relayRequestFee = 0;
         relayEntrySubmissionEligibilityDelay = 10;
         relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
-        callbackGasLimit = 200000;
+        callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -258,6 +258,24 @@ contract RandomBeacon is Ownable {
         );
     }
 
+    /// @notice Updates the values of reward parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultSubmissionReward New DKG result submission reward
+    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
+    function updateRewardParameters(
+        uint256 _dkgResultSubmissionReward,
+        uint256 _sortitionPoolUnlockingReward
+    ) external onlyOwner {
+        dkgResultSubmissionReward = _dkgResultSubmissionReward;
+        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        emit RewardParametersUpdated(
+            dkgResultSubmissionReward,
+            sortitionPoolUnlockingReward
+        );
+    }
+
     /// @notice The number of blocks for which a DKG result can be challenged.
     ///         Anyone can challenge DKG result for a certain number of blocks
     ///         before the result is fully accepted and the group registered in
@@ -291,24 +309,6 @@ contract RandomBeacon is Ownable {
         returns (uint256)
     {
         return dkg.parameters.resultSubmissionEligibilityDelay;
-    }
-
-    /// @notice Updates the values of reward parameters.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract. The caller is responsible for
-    ///      validating parameters.
-    /// @param _dkgResultSubmissionReward New DKG result submission reward
-    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
-    function updateRewardParameters(
-        uint256 _dkgResultSubmissionReward,
-        uint256 _sortitionPoolUnlockingReward
-    ) external onlyOwner {
-        dkgResultSubmissionReward = _dkgResultSubmissionReward;
-        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
-        emit RewardParametersUpdated(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward
-        );
     }
 
     /// @notice Updates the values of slashing parameters.
@@ -400,7 +400,7 @@ contract RandomBeacon is Ownable {
     ///         for all group members. After this time result cannot be submitted
     ///         and DKG can be notified about the timeout.
     /// @return True if DKG timed out, false otherwise.
-    function hasDkgTimedOut() public view returns (bool) {
+    function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
     }
 }
