@@ -90,13 +90,18 @@ library Relay {
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    /// @return Array of members indexes which should be punished for not
-    ///         submitting the relay entry on their turn.
+    /// @return punishedMembersIndexes Array of members indexes which should
+    ///         be punished for not submitting the relay entry on their turn.
+    /// @return slashingFactor Percentage of members stakes which should be
+    ///         slashed as punishment for exceeding the soft timeout.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
         bytes calldata entry
-    ) internal returns (uint256[] memory punishedMembersIndexes){
+    ) internal returns (
+        uint256[] memory punishedMembersIndexes,
+        uint256 slashingFactor
+    ){
         require(isRequestInProgress(self), "No relay request in progress");
         // TODO: Add timeout reporting.
         require(!hasRequestTimedOut(self), "Relay request timed out");
@@ -140,14 +145,19 @@ library Relay {
             }
         }
 
-        // TODO: If soft timeout has elapsed, take bleeding into account
-        //       and slash all members appropriately.
+        // If the soft timeout has been exceeded apply stake slashing.
+        uint256 softTimeoutBlock = self.currentRequest.startBlock +
+            (self.groupSize * self.relayEntrySubmissionEligibilityDelay);
+        if (block.number > softTimeoutBlock) {
+            uint256 submissionDelay = block.number - softTimeoutBlock;
+            slashingFactor = (submissionDelay * 1e18) / self.relayEntryHardTimeout;
+        }
 
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
 
-        return punishedMembersIndexes;
+        return (punishedMembersIndexes, slashingFactor);
     }
 
     /// @notice Set relayRequestFee parameter.
