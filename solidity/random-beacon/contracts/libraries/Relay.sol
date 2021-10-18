@@ -19,26 +19,35 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./BLS.sol";
 import "./Groups.sol";
 
-// TODO: Documentation
 library Relay {
     using SafeERC20 for IERC20;
 
     struct Request {
+        // Request identifier.
         uint256 id;
+        // Request start block.
         uint256 startBlock;
+        // Group responsible for signing as part of the request.
         Groups.Group group;
+        // Previous entry value which should be signed as part of the request.
         bytes previousEntry;
     }
 
     struct Data {
+        // Total count of all requests.
         uint256 requestCount;
+        // Data of current request.
         Request currentRequest;
-
+        // Address of the T token contract.
         IERC20 tToken;
+        // Fee paid by the relay requester.
         uint256 relayRequestFee;
-
+        // Size of the group performing signing.
         uint256 groupSize;
+        // The number of blocks it takes for a group member to become
+        // eligible to submit the relay entry.
         uint256 relayEntrySubmissionEligibilityDelay;
+        // Hard timeout in blocks for a group to submit the relay entry.
         uint256 relayEntryHardTimeout;
     }
 
@@ -49,6 +58,11 @@ library Relay {
     );
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number).
+    /// @param group Group chosen to handle the request.
+    /// @param previousEntry Previous relay entry.
     function requestEntry(
         Data storage self,
         Groups.Group memory group,
@@ -73,6 +87,9 @@ library Relay {
         emit RelayEntryRequested(currentRequestId, group.groupPubKey, previousEntry);
     }
 
+    /// @notice Creates a new relay entry.
+    /// @param submitterIndex Index of the entry submitter.
+    /// @param entry Group BLS signature over the previous entry.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
@@ -119,12 +136,16 @@ library Relay {
         emit RelayEntrySubmitted(self.requestCount, entry);
     }
 
+    /// @notice Returns whether a relay entry request is currently in progress.
+    /// @return True if there is a request in progress. False otherwise.
     function isRequestInProgress(
         Data storage self
     ) internal view returns (bool) {
         return self.currentRequest.id != 0;
     }
 
+    /// @notice Returns whether the current relay request has timed out.
+    /// @return True if the request timed out. False otherwise.
     function isRequestTimedOut(
         Data storage self
     ) internal view returns (bool) {
@@ -136,6 +157,14 @@ library Relay {
             block.number > self.currentRequest.startBlock + relayEntryTimeout;
     }
 
+    /// @notice Determines the eligibility range for given relay entry basing on
+    ///         current block number.
+    /// @param entry Entry value for which the eligibility range should be
+    ///        determined.
+    /// @return firstEligibleIndex Index of the first member which is eligible
+    ///         to submit the relay entry.
+    /// @return lastEligibleIndex Index of the last member which is eligible
+    ///         to submit the relay entry.
     function getEligibilityRange(
         Data storage self,
         bytes calldata entry
@@ -163,6 +192,12 @@ library Relay {
         return (firstEligibleIndex, lastEligibleIndex);
     }
 
+    /// @notice Returns whether the given submitter index is eligible to submit
+    ///         a relay entry within given eligibility range.
+    /// @param submitterIndex Index of the submitter whose eligibility is checked.
+    /// @param firstEligibleIndex First index of the given eligibility range.
+    /// @param lastEligibleIndex Last index of the given eligibility range.
+    /// @return True if eligible. False otherwise.
     function isEligible(
         Data storage self,
         uint256 submitterIndex,

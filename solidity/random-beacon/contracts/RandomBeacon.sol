@@ -434,6 +434,10 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         return dkg.hasDkgTimedOut();
     }
 
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number).
+    /// @param previousEntry Previous relay entry.
     function requestRelayEntry(bytes calldata previousEntry) external nonReentrant {
         Groups.Group memory group =
             groups.selectGroup(uint256(keccak256(previousEntry)));
@@ -441,6 +445,9 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relay.requestEntry(group, previousEntry);
     }
 
+    /// @notice Creates a new relay entry.
+    /// @param submitterIndex Index of the entry submitter.
+    /// @param entry Group BLS signature over the previous entry.
     function submitRelayEntry(
         uint256 submitterIndex,
         bytes calldata entry
