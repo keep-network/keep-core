@@ -350,25 +350,26 @@ describe("RandomBeacon", () => {
               )
             )
 
-            const { transaction: tx, dkgResult } = await signAndSubmitDkgResult(
-              filteredSigners,
-              startBlock
-            )
+            const {
+              transaction: tx,
+              dkgResult,
+              dkgResultHash,
+            } = await signAndSubmitDkgResult(filteredSigners, startBlock)
 
             await expect(tx)
               .to.emit(randomBeacon, "DkgResultSubmitted")
-              .withArgs(dkgResult.groupPubKey, signers.get(1))
+              .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
           })
 
           it("succeeds for the first submitter", async () => {
-            const { transaction: tx, dkgResult } = await signAndSubmitDkgResult(
-              signers,
-              startBlock,
-              1
-            )
+            const {
+              transaction: tx,
+              dkgResult,
+              dkgResultHash,
+            } = await signAndSubmitDkgResult(signers, startBlock, 1)
             await expect(tx)
               .to.emit(randomBeacon, "DkgResultSubmitted")
-              .withArgs(dkgResult.groupPubKey, signers.get(1))
+              .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
           })
 
           it("reverts for the second submitter", async () => {
@@ -390,12 +391,19 @@ describe("RandomBeacon", () => {
               })
 
               it("succeeds for the first submitter", async () => {
-                const { transaction: tx, dkgResult } =
-                  await signAndSubmitDkgResult(signers, startBlock, 1)
+                const {
+                  transaction: tx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitDkgResult(signers, startBlock, 1)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(dkgResult.groupPubKey, signers.get(1))
+                  .withArgs(
+                    dkgResultHash,
+                    dkgResult.groupPubKey,
+                    signers.get(1)
+                  )
               })
 
               it("reverts for the second submitter", async () => {
@@ -419,21 +427,35 @@ describe("RandomBeacon", () => {
               })
 
               it("succeeds for the first submitter", async () => {
-                const { transaction: tx, dkgResult } =
-                  await signAndSubmitDkgResult(signers, startBlock, 1)
+                const {
+                  transaction: tx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitDkgResult(signers, startBlock, 1)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(dkgResult.groupPubKey, signers.get(1))
+                  .withArgs(
+                    dkgResultHash,
+                    dkgResult.groupPubKey,
+                    signers.get(1)
+                  )
               })
 
               it("succeeds for the second submitter", async () => {
-                const { transaction: tx, dkgResult } =
-                  await signAndSubmitDkgResult(signers, startBlock, 2)
+                const {
+                  transaction: tx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitDkgResult(signers, startBlock, 2)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(dkgResult.groupPubKey, signers.get(2))
+                  .withArgs(
+                    dkgResultHash,
+                    dkgResult.groupPubKey,
+                    signers.get(2)
+                  )
               })
 
               it("reverts for the third submitter", async () => {
@@ -452,25 +474,36 @@ describe("RandomBeacon", () => {
               })
 
               it("succeeds for the first submitter", async () => {
-                const { transaction: tx, dkgResult } =
-                  await signAndSubmitDkgResult(signers, startBlock, 1)
-
-                await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(dkgResult.groupPubKey, signers.get(1))
-              })
-
-              it("succeeds for the last submitter", async () => {
-                const { transaction: tx, dkgResult } =
-                  await signAndSubmitDkgResult(
-                    signers,
-                    startBlock,
-                    constants.groupSize
-                  )
+                const {
+                  transaction: tx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitDkgResult(signers, startBlock, 1)
 
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(
+                    dkgResultHash,
+                    dkgResult.groupPubKey,
+                    signers.get(1)
+                  )
+              })
+
+              it("succeeds for the last submitter", async () => {
+                const {
+                  transaction: tx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitDkgResult(
+                  signers,
+                  startBlock,
+                  constants.groupSize
+                )
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultSubmitted")
+                  .withArgs(
+                    dkgResultHash,
                     dkgResult.groupPubKey,
                     signers.get(constants.groupSize)
                   )
@@ -527,8 +560,8 @@ describe("RandomBeacon", () => {
     submitterIndex = 1
   ): Promise<{
     transaction: ContractTransaction
-
     dkgResult: DkgResult
+    dkgResultHash: string
   }> {
     const noMisbehaved = "0x"
 
@@ -544,11 +577,20 @@ describe("RandomBeacon", () => {
       members,
     }
 
+    const dkgResultHash = ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        [
+          "(uint256 submitterMemberIndex, bytes groupPubKey, bytes misbehaved, bytes signatures, uint256[] signingMemberIndices, address[] members)",
+        ],
+        [dkgResult]
+      )
+    )
+
     const transaction = await randomBeacon
       .connect(await ethers.getSigner(signers.get(submitterIndex)))
       .submitDkgResult(dkgResult)
 
-    return { transaction, dkgResult }
+    return { transaction, dkgResult, dkgResultHash }
   }
 })
 

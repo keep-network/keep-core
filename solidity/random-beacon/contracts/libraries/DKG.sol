@@ -123,7 +123,10 @@ library DKG {
         self.startBlock = block.number;
     }
 
-    function submitResult(Data storage self, Result calldata result) internal {
+    function submitResult(Data storage self, Result calldata result)
+        internal
+        returns (bytes32)
+    {
         require(
             currentState(self) == State.AWAITING_RESULT,
             "current state is not AWAITING_RESULT"
@@ -142,6 +145,8 @@ library DKG {
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
+
+        return self.submittedResultHash;
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
@@ -262,9 +267,10 @@ library DKG {
         // TODO: Implement slashing
     }
 
-    function acceptResult(Data storage self, Result calldata dkgResult)
+    function acceptResult(Data storage self)
         internal
         cleanup(self)
+        returns (bytes32)
     {
         require(
             currentState(self) == State.CHALLENGE,
@@ -278,16 +284,14 @@ library DKG {
             "challenge period has not passed yet"
         );
 
-        require(
-            self.submittedResultHash == keccak256(abi.encode(dkgResult)),
-            "this result was not submitted in the current dkg"
-        );
+        return self.submittedResultHash;
     }
 
     // TODO: When implementing challenges verify if dkgResult is really needed to
     // compare the hashes of challenged result with the submitted result.
     function challengeResult(Data storage self, Result calldata dkgResult)
         internal
+        returns (bytes32)
     {
         require(
             currentState(self) == State.CHALLENGE,
@@ -301,8 +305,9 @@ library DKG {
             "challenge period has already passed"
         );
 
+        bytes32 resultHash = keccak256(abi.encode(dkgResult));
         require(
-            self.submittedResultHash == keccak256(abi.encode(dkgResult)),
+            self.submittedResultHash == resultHash,
             "this result was not submitted in the current dkg"
         );
 
@@ -317,6 +322,8 @@ library DKG {
 
         delete self.submittedResultBlock;
         delete self.submittedResultHash;
+
+        return resultHash;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.

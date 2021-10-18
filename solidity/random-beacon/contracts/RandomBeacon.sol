@@ -163,6 +163,7 @@ contract RandomBeacon is Ownable {
     // TODO: Revisit properties returned in this event when working on result
     // challenges and the client.
     event DkgResultSubmitted(
+        bytes32 indexed resultHash,
         bytes indexed groupPubKey,
         address indexed submitter
     );
@@ -170,13 +171,13 @@ contract RandomBeacon is Ownable {
     event DkgTimedOut();
 
     event DkgResultApproved(
-        bytes indexed groupPubKey,
-        address indexed submitter
+        bytes32 indexed resultHash,
+        address indexed approver
     );
 
     event DkgResultChallenged(
-        bytes indexed groupPubKey,
-        address indexed submitter
+        bytes32 indexed resultHash,
+        address indexed challenger
     );
 
     /// @dev Assigns initial values to parameters to make the beacon work
@@ -395,12 +396,12 @@ contract RandomBeacon is Ownable {
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
-        dkg.submitResult(dkgResult);
+        bytes32 resultHash = dkg.submitResult(dkgResult);
 
         // TODO: Register a pending group
         // TODO: Set members in the group
 
-        emit DkgResultSubmitted(dkgResult.groupPubKey, msg.sender);
+        emit DkgResultSubmitted(resultHash, dkgResult.groupPubKey, msg.sender);
     }
 
     function notifyDkgTimeout() external {
@@ -409,28 +410,22 @@ contract RandomBeacon is Ownable {
         emit DkgTimedOut();
     }
 
-    function approveDkgResult(DKG.Result calldata dkgResult) external {
-        dkg.acceptResult(dkgResult);
+    function approveDkgResult() external {
+        bytes32 resultHash = dkg.acceptResult();
 
         // TODO: Activate the pending group.
 
-        emit DkgResultApproved(
-            dkgResult.groupPubKey,
-            dkgResult.members[dkgResult.submitterMemberIndex - 1]
-        );
+        emit DkgResultApproved(resultHash, msg.sender);
 
         // TODO: Unlock sortition pool
     }
 
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
-        dkg.challengeResult(dkgResult);
+        bytes32 resultHash = dkg.challengeResult(dkgResult);
 
         // TODO: Implement slashing
 
-        emit DkgResultChallenged(
-            dkgResult.groupPubKey,
-            dkgResult.members[dkgResult.submitterMemberIndex - 1]
-        );
+        emit DkgResultChallenged(resultHash, msg.sender);
     }
 
     /// @notice Check current group creation state.
