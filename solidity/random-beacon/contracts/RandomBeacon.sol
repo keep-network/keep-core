@@ -420,8 +420,9 @@ contract RandomBeacon is Ownable {
         // TODO: Unlock sortition pool
     }
 
-    function challengeDkgResult(DKG.Result calldata dkgResult) external {
-        bytes32 resultHash = dkg.challengeResult(dkgResult);
+    function challengeDkgResult() external {
+        // TODO: Determine parameters required for DKG result challenges.
+        bytes32 resultHash = dkg.challengeResult();
 
         // TODO: Implement slashing
 

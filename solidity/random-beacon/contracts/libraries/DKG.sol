@@ -287,12 +287,8 @@ library DKG {
         return self.submittedResultHash;
     }
 
-    // TODO: When implementing challenges verify if dkgResult is really needed to
-    // compare the hashes of challenged result with the submitted result.
-    function challengeResult(Data storage self, Result calldata dkgResult)
-        internal
-        returns (bytes32)
-    {
+    // TODO: When implementing challenges verify what parameters are required.
+    function challengeResult(Data storage self) internal returns (bytes32) {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -305,12 +301,6 @@ library DKG {
             "challenge period has already passed"
         );
 
-        bytes32 resultHash = keccak256(abi.encode(dkgResult));
-        require(
-            self.submittedResultHash == resultHash,
-            "this result was not submitted in the current dkg"
-        );
-
         // TODO: Verify members with sortition pool
 
         // Adjust DKG result submission block start, so submission eligibility
@@ -319,6 +309,9 @@ library DKG {
             block.number -
             self.startBlock -
             offchainDkgTime;
+
+        // Load result hash from storage, as we are going to delete it.
+        bytes32 resultHash = self.submittedResultHash;
 
         delete self.submittedResultBlock;
         delete self.submittedResultHash;
