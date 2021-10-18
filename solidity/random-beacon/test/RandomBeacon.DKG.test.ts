@@ -692,18 +692,22 @@ describe("RandomBeacon", () => {
               )
             })
 
-            it("can be called by a third party", async () => {
-              await randomBeacon.connect(thirdParty).approveDkgResult()
-            })
+            context("called by a third party", async () => {
+              let tx: ContractTransaction
 
-            it("emits an event", async () => {
-              const tx = await randomBeacon
-                .connect(thirdParty)
-                .approveDkgResult()
+              beforeEach(async () => {
+                tx = await randomBeacon.connect(thirdParty).approveDkgResult()
+              })
 
-              await expect(tx)
-                .to.emit(randomBeacon, "DkgResultApproved")
-                .withArgs(dkgResultHash, await thirdParty.getAddress())
+              it("emits an event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultApproved")
+                  .withArgs(dkgResultHash, await thirdParty.getAddress())
+              })
+
+              it.only("cleans dkg data", async () => {
+                await assertDkgResultCleanData(randomBeacon)
+              })
             })
           })
         })
@@ -722,6 +726,8 @@ describe("RandomBeacon", () => {
       })
     })
   })
+
+  // TODO: Add test for notifyDkgTimeout
 
   describe("challengeDkgResult", async () => {
     context("with initial contract state", async () => {
@@ -1050,4 +1056,33 @@ async function signDkgResult(
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
   return { members, signingMemberIndices, signaturesBytes }
+}
+
+async function assertDkgResultCleanData(randomBeacon: TestRandomBeacon) {
+  const dkgData = await randomBeacon.getDkgData()
+
+  expect(
+    dkgData.parameters.resultChallengePeriodLength,
+    "unexpected resultChallengePeriodLength"
+  ).to.eq(params.dkgResultChallengePeriodLength)
+
+  expect(
+    dkgData.parameters.resultSubmissionEligibilityDelay,
+    "unexpected resultSubmissionEligibilityDelay"
+  ).to.eq(params.dkgResultSubmissionEligibilityDelay)
+
+  expect(dkgData.startBlock, "unexpected startBlock").to.eq(0)
+
+  expect(
+    dkgData.resultSubmissionStartBlockOffset,
+    "unexpected resultSubmissionStartBlockOffset"
+  ).to.eq(0)
+
+  expect(dkgData.submittedResultHash, "unexpected submittedResultHash").to.eq(
+    ethers.constants.HashZero
+  )
+
+  expect(dkgData.submittedResultBlock, "unexpected submittedResultBlock").to.eq(
+    0
+  )
 }
