@@ -97,7 +97,7 @@ library Relay {
     ) internal {
         require(isRequestInProgress(self), "No relay request in progress");
         // TODO: Add timeout reporting.
-        require(!isRequestTimedOut(self), "Relay request timed out");
+        require(!hasRequestTimedOut(self), "Relay request timed out");
 
         require(
             submitterIndex > 0 && submitterIndex <= self.groupSize,
@@ -146,7 +146,7 @@ library Relay {
 
     /// @notice Returns whether the current relay request has timed out.
     /// @return True if the request timed out. False otherwise.
-    function isRequestTimedOut(
+    function hasRequestTimedOut(
         Data storage self
     ) internal view returns (bool) {
         uint256 relayEntryTimeout =
