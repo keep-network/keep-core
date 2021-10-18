@@ -142,7 +142,7 @@ library Relay {
         Data storage self,
         uint256 newRelayRequestFee
     ) internal {
-        require(!relay.isRequestInProgress(), "Relay request in progress");
+        require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayRequestFee = newRelayRequestFee;
     }
@@ -153,7 +153,7 @@ library Relay {
         Data storage self,
         uint256 newRelayEntrySubmissionEligibilityDelay
     ) internal {
-        require(!relay.isRequestInProgress(), "Relay request in progress");
+        require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayEntrySubmissionEligibilityDelay =
             newRelayEntrySubmissionEligibilityDelay;
@@ -165,7 +165,7 @@ library Relay {
         Data storage self,
         uint256 newRelayEntryHardTimeout
     ) internal {
-        require(!relay.isRequestInProgress(), "Relay request in progress");
+        require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayEntryHardTimeout = newRelayEntryHardTimeout;
     }
