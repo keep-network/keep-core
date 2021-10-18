@@ -831,6 +831,103 @@ describe("RandomBeacon", () => {
         })
       })
     })
+
+    // This test checks that dkg timeout is adjusted in case of result challenges
+    // to include the offset blocks that were mined until the invalid result
+    // was challenged.
+    it("enforces submission start offset", async () => {
+      const [genesisTx] = await genesis()
+      const startBlock = genesisTx.blockNumber
+
+      await mineBlocks(constants.offchainDkgTime)
+
+      // Submit result 1 at the beginning of the submission period
+      await signAndSubmitDkgResult(signers, startBlock)
+
+      await expect(
+        (
+          await randomBeacon.getDkgData()
+        ).resultSubmissionStartBlockOffset,
+        "invalid resultSubmissionStartBlockOffset for result 1 after submission"
+      ).to.equal(0)
+
+      // Challenge result 1 at the beginning of the challenge period
+      await randomBeacon.challengeDkgResult()
+      let expectedSubmissionOffset = 2 // 1 block for dkg result submission tx + 1 block for challenge tx
+
+      await expect(
+        (
+          await randomBeacon.getDkgData()
+        ).resultSubmissionStartBlockOffset,
+        "invalid resultSubmissionStartBlockOffset for result 1 after challenge"
+      ).to.equal(expectedSubmissionOffset)
+
+      // Submit result 2 in the middle of the submission period
+      let blocksToMine =
+        (constants.groupSize * params.dkgResultSubmissionEligibilityDelay) / 2
+      await mineBlocks(blocksToMine)
+      await signAndSubmitDkgResult(signers, startBlock, constants.groupSize / 2)
+
+      await expect(
+        (
+          await randomBeacon.getDkgData()
+        ).resultSubmissionStartBlockOffset,
+        "invalid resultSubmissionStartBlockOffset for result 2 after submission"
+      ).to.equal(expectedSubmissionOffset) // same as before
+
+      expectedSubmissionOffset += blocksToMine
+
+      // Challenge result 2 in the middle of the challenge period
+      await mineBlocks(params.dkgResultChallengePeriodLength / 2)
+      expectedSubmissionOffset += params.dkgResultChallengePeriodLength / 2
+
+      await randomBeacon.challengeDkgResult()
+      expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
+
+      await expect(
+        (
+          await randomBeacon.getDkgData()
+        ).resultSubmissionStartBlockOffset,
+        "invalid resultSubmissionStartBlockOffset for result 2 after challenge"
+      ).to.equal(expectedSubmissionOffset)
+
+      // Submit result 3 at the end of the submission period
+      blocksToMine =
+        constants.groupSize * params.dkgResultSubmissionEligibilityDelay - 1
+      await mineBlocks(blocksToMine)
+      await signAndSubmitDkgResult(signers, startBlock, constants.groupSize)
+
+      await expect(
+        (
+          await randomBeacon.getDkgData()
+        ).resultSubmissionStartBlockOffset,
+        "invalid resultSubmissionStartBlockOffset for result 3 after submission"
+      ).to.equal(expectedSubmissionOffset) // same as before
+
+      expectedSubmissionOffset += blocksToMine
+
+      // Challenge result 3 at the end of the challenge period
+      await mineBlocks(params.dkgResultChallengePeriodLength - 1)
+      expectedSubmissionOffset += params.dkgResultChallengePeriodLength - 1
+
+      await randomBeacon.challengeDkgResult()
+      expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
+
+      await expect(
+        (
+          await randomBeacon.getDkgData()
+        ).resultSubmissionStartBlockOffset,
+        "invalid resultSubmissionStartBlockOffset for result 3 after challenge"
+      ).to.equal(expectedSubmissionOffset)
+
+      // Submit result 4 after the submission period
+      blocksToMine =
+        constants.groupSize * params.dkgResultSubmissionEligibilityDelay
+      await mineBlocks(blocksToMine)
+      await expect(
+        signAndSubmitDkgResult(signers, startBlock, constants.groupSize)
+      ).revertedWith("dkg timeout already passed")
+    })
   })
 
   async function genesis(): Promise<[ContractTransaction, BigNumber]> {
