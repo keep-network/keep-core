@@ -209,10 +209,10 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         maliciousDkgResultSlashingAmount = 50000e18;
 
         relay.tToken = _tToken;
-        relay.relayRequestFee = relayRequestFee;
         relay.groupSize = _groupSize;
-        relay.relayEntrySubmissionEligibilityDelay = relayEntrySubmissionEligibilityDelay;
-        relay.relayEntryHardTimeout = relayEntryHardTimeout;
+        relay.setRelayRequestFee(relayRequestFee);
+        relay.setRelayEntrySubmissionEligibilityDelay(relayEntrySubmissionEligibilityDelay);
+        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -237,9 +237,9 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relayEntryHardTimeout = _relayEntryHardTimeout;
         callbackGasLimit = _callbackGasLimit;
 
-        relay.relayRequestFee = relayRequestFee;
-        relay.relayEntrySubmissionEligibilityDelay = relayEntrySubmissionEligibilityDelay;
-        relay.relayEntryHardTimeout = relayEntryHardTimeout;
+        relay.setRelayRequestFee(relayRequestFee);
+        relay.setRelayEntrySubmissionEligibilityDelay(relayEntrySubmissionEligibilityDelay);
+        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
             relayRequestFee,

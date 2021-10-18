@@ -136,6 +136,40 @@ library Relay {
         emit RelayEntrySubmitted(self.requestCount, entry);
     }
 
+    /// @notice Set relayRequestFee parameter.
+    /// @param newRelayRequestFee New value of the parameter.
+    function setRelayRequestFee(
+        Data storage self,
+        uint256 newRelayRequestFee
+    ) internal {
+        require(!relay.isRequestInProgress(), "Relay request in progress");
+
+        self.relayRequestFee = newRelayRequestFee;
+    }
+
+    /// @notice Set relayEntrySubmissionEligibilityDelay parameter.
+    /// @param newRelayEntrySubmissionEligibilityDelay New value of the parameter.
+    function setRelayEntrySubmissionEligibilityDelay(
+        Data storage self,
+        uint256 newRelayEntrySubmissionEligibilityDelay
+    ) internal {
+        require(!relay.isRequestInProgress(), "Relay request in progress");
+
+        self.relayEntrySubmissionEligibilityDelay =
+            newRelayEntrySubmissionEligibilityDelay;
+    }
+
+    /// @notice Set relayEntryHardTimeout parameter.
+    /// @param newRelayEntryHardTimeout New value of the parameter.
+    function setRelayEntryHardTimeout(
+        Data storage self,
+        uint256 newRelayEntryHardTimeout
+    ) internal {
+        require(!relay.isRequestInProgress(), "Relay request in progress");
+
+        self.relayEntryHardTimeout = newRelayEntryHardTimeout;
+    }
+
     /// @notice Returns whether a relay entry request is currently in progress.
     /// @return True if there is a request in progress. False otherwise.
     function isRequestInProgress(
