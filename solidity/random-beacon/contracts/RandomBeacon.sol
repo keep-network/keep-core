@@ -438,7 +438,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         include a random number (by signing the previous entry's
     ///         random number).
     /// @param previousEntry Previous relay entry.
-    function requestRelayEntry(bytes calldata previousEntry) external nonReentrant {
+    function requestRelayEntry(bytes calldata previousEntry) external {
         Groups.Group memory group =
             groups.selectGroup(uint256(keccak256(previousEntry)));
 
