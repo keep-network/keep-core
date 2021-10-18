@@ -38,7 +38,7 @@ repos:
     - id: lint-sol-v1
       name: 'lint solidity-v1 sol'
       entry: /usr/bin/env bash -c "cd solidity-v1 && npm run lint:sol"
-      files: '\.sol$'
+      files: 'solidity-v1\/.*\.sol$'
       language: script
       description: "Checks solidity code according to the package's linter configuration"
     - id: format-dashboard
