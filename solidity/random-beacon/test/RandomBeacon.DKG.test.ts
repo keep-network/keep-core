@@ -57,9 +57,9 @@ describe("RandomBeacon", () => {
         ;[tx, expectedSeed] = await genesis()
       })
 
-      it("emits DkgStarted event", async () => {
+      it("emits GroupCreationStarted event", async () => {
         await expect(tx)
-          .to.emit(randomBeacon, "DkgStarted")
+          .to.emit(randomBeacon, "GroupCreationStarted")
           .withArgs(expectedSeed)
       })
     })
@@ -705,7 +705,7 @@ describe("RandomBeacon", () => {
                   .withArgs(dkgResultHash, await thirdParty.getAddress())
               })
 
-              it.only("cleans dkg data", async () => {
+              it("cleans dkg data", async () => {
                 await assertDkgResultCleanData(randomBeacon)
               })
             })

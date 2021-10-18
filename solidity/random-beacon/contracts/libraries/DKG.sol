@@ -94,6 +94,29 @@ library DKG {
         address[] members;
     }
 
+    event DkgStarted(uint256 indexed seed);
+
+    // TODO: Revisit properties returned in this event when working on result
+    // challenges and the client.
+    //  TODO: Should it also return seed to link the result with a DKG run?
+    event DkgResultSubmitted(
+        bytes32 indexed resultHash,
+        bytes indexed groupPubKey,
+        address indexed submitter
+    );
+
+    event DkgTimedOut();
+
+    event DkgResultApproved(
+        bytes32 indexed resultHash,
+        address indexed approver
+    );
+
+    event DkgResultChallenged(
+        bytes32 indexed resultHash,
+        address indexed challenger
+    );
+
     /// @notice Determines the current state of group creation. It doesn't take
     ///         timeouts into consideration. The timeouts should be tracked and
     ///         notified separately.
@@ -145,6 +168,12 @@ library DKG {
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
+
+        emit DkgResultSubmitted(
+            self.submittedResultHash,
+            result.groupPubKey,
+            msg.sender
+        );
 
         return self.submittedResultHash;
     }
@@ -266,6 +295,8 @@ library DKG {
         require(hasDkgTimedOut(self), "dkg has not timed out");
 
         // TODO: Implement slashing
+
+        emit DkgTimedOut();
     }
 
     function approveResult(Data storage self)
@@ -284,6 +315,8 @@ library DKG {
                     self.parameters.resultChallengePeriodLength,
             "challenge period has not passed yet"
         );
+
+        emit DkgResultApproved(self.submittedResultHash, msg.sender);
 
         return self.submittedResultHash;
     }
@@ -316,6 +349,8 @@ library DKG {
 
         delete self.submittedResultBlock;
         delete self.submittedResultHash;
+
+        emit DkgResultChallenged(resultHash, msg.sender);
 
         return resultHash;
     }

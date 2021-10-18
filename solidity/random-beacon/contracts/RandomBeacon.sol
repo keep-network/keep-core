@@ -158,10 +158,10 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
-    event DkgStarted(uint256 indexed seed);
+    event GroupCreationStarted(uint256 indexed seed);
 
-    // TODO: Revisit properties returned in this event when working on result
-    // challenges and the client.
+    // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
+
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         bytes indexed groupPubKey,
@@ -375,7 +375,7 @@ contract RandomBeacon is Ownable {
 
         dkg.start();
 
-        emit DkgStarted(seed);
+        emit GroupCreationStarted(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
@@ -400,22 +400,16 @@ contract RandomBeacon is Ownable {
 
         // TODO: Register a pending group
         // TODO: Set members in the group
-
-        emit DkgResultSubmitted(resultHash, dkgResult.groupPubKey, msg.sender);
     }
 
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-
-        emit DkgTimedOut();
     }
 
     function approveDkgResult() external {
         bytes32 resultHash = dkg.approveResult();
 
         // TODO: Activate the pending group.
-
-        emit DkgResultApproved(resultHash, msg.sender);
 
         // TODO: Unlock sortition pool
     }
@@ -425,8 +419,6 @@ contract RandomBeacon is Ownable {
         bytes32 resultHash = dkg.challengeResult();
 
         // TODO: Implement slashing
-
-        emit DkgResultChallenged(resultHash, msg.sender);
     }
 
     /// @notice Check current group creation state.
