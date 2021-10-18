@@ -3,7 +3,7 @@ import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { constants, testDeployment } from "./fixtures"
+import { constants, randomBeaconDeployment } from "./fixtures"
 import type { RandomBeacon, TestToken } from "../typechain"
 
 const { time } = helpers
@@ -66,7 +66,7 @@ describe("RandomBeacon - Relay", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(testDeployment)
+    const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
     testToken = contracts.testToken as TestToken
