@@ -90,11 +90,13 @@ library Relay {
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
+    /// @return Array of members indexes which should be punished for not
+    ///         submitting the relay entry on their turn.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
         bytes calldata entry
-    ) internal {
+    ) internal returns (uint256[] memory punishedMembersIndexes){
         require(isRequestInProgress(self), "No relay request in progress");
         // TODO: Add timeout reporting.
         require(!hasRequestTimedOut(self), "Relay request timed out");
@@ -124,9 +126,19 @@ library Relay {
             "Submitter is not eligible"
         );
 
-        // TODO: Use submitterIndex, firstEligibleIndex and lastEligibleIndex
-        //       to prepare an array of addresses which should be kicked from
-        //       the sortition pool for 2 weeks.
+        for (uint256 i = firstEligibleIndex ; ; i++) {
+            uint256 index = i > self.groupSize ? i - self.groupSize : i;
+
+            if (index == submitterIndex) {
+               break;
+            }
+
+            punishedMembersIndexes.push(index);
+
+            if (index == lastEligibleIndex) {
+                break;
+            }
+        }
 
         // TODO: If soft timeout has elapsed, take bleeding into account
         //       and slash all members appropriately.
@@ -134,6 +146,8 @@ library Relay {
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
+
+        return punishedMembersIndexes;
     }
 
     /// @notice Set relayRequestFee parameter.

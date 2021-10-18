@@ -450,7 +450,13 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 submitterIndex,
         bytes calldata entry
     ) external nonReentrant {
-        relay.submitEntry(submitterIndex, entry);
+        uint256[] memory punishedMembersIndexes = relay.submitEntry(
+            submitterIndex,
+            entry
+        );
+
+        // TODO: Remove `punishedMembersIndexes` from the sortition pool
+        //       for 2 weeks. Will SP expose an API for that?
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             // TODO: Once implemented, invoke:
