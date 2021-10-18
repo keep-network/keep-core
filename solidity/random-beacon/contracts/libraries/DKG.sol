@@ -42,9 +42,10 @@ library DKG {
         Parameters parameters;
         // Time in blocks at which DKG started.
         uint256 startBlock;
-        // Time in blocks at which results submission phase starts. It is a starting
-        // point for result submission eligibility calculations for members.
-        uint256 resultSubmissionStartBlock;
+        // Time in blocks that should be added to result submission eligibility
+        // delay calculation. It is used in case of a challenge to adjust
+        // block calculation for members submission eligibility.
+        uint256 resultSubmissionStartBlockOffset;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
@@ -120,7 +121,6 @@ library DKG {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
         self.startBlock = block.number;
-        self.resultSubmissionStartBlock = block.number + offchainDkgTime;
     }
 
     function submitResult(Data storage self, Result calldata result) internal {
@@ -198,7 +198,9 @@ library DKG {
             "Unexpected submitter index"
         );
 
-        uint256 T_init = self.resultSubmissionStartBlock;
+        uint256 T_init = self.startBlock +
+            offchainDkgTime +
+            self.resultSubmissionStartBlockOffset;
         require(
             block.number >=
                 (T_init +
@@ -306,9 +308,12 @@ library DKG {
 
         // TODO: Verify members with sortition pool
 
-        // Reset DKG result submission block start, so submission eligibility
+        // Adjust DKG result submission block start, so submission eligibility
         // starts from the beginning.
-        self.resultSubmissionStartBlock = block.number;
+        self.resultSubmissionStartBlockOffset =
+            block.number -
+            self.startBlock -
+            offchainDkgTime;
 
         delete self.submittedResultBlock;
         delete self.submittedResultHash;
@@ -353,7 +358,7 @@ library DKG {
     modifier cleanup(Data storage self) {
         _;
         delete self.startBlock;
-        delete self.resultSubmissionStartBlock;
+        delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
         delete self.submittedResultBlock;
     }
