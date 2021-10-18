@@ -288,6 +288,7 @@ library DKG {
 
     /// @notice Cleans up state after DKG completion.
     /// @dev Should be called after DKG times out or a result is approved.
+    // slither-disable-next-line dead-code
     function cleanup(Data storage self) internal {
         delete self.startBlock;
         delete self.submittedResultHash;
