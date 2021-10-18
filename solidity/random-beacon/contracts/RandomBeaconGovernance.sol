@@ -321,9 +321,10 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
     {
         /* solhint-disable not-rely-on-time */
+        // slither-disable-next-line too-many-digits
         require(
             _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1e6,
-            "Callback gas limit must be > 0 and <= 1e6"
+            "Callback gas limit must be > 0 and <= 1000000"
         );
         newCallbackGasLimit = _newCallbackGasLimit;
         callbackGasLimitChangeInitiated = block.timestamp;
