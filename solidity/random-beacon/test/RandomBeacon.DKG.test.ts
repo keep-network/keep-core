@@ -322,13 +322,43 @@ describe("RandomBeacon", () => {
             })
           })
 
-          // TODO: Add test cases to cover transition after challenge back to
-          // the awaiting result state and counting timeout there.
-          // context("when dkg result was challenged", async function () {
-          // it("returns false", async () => {
-          //   await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
-          // })
-          // })
+          context("when dkg result was challenged", async () => {
+            let challengeBlockNumber: number
+
+            beforeEach(async () => {
+              const tx = await randomBeacon.challengeDkgResult()
+              challengeBlockNumber = tx.blockNumber
+            })
+
+            context("at the end of dkg result submission period", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  startBlock +
+                    constants.groupSize *
+                      params.dkgResultSubmissionEligibilityDelay
+                )
+              })
+
+              it("returns false", async () => {
+                await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
+              })
+            })
+
+            context("after dkg result submission period", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  challengeBlockNumber +
+                    constants.groupSize *
+                      params.dkgResultSubmissionEligibilityDelay +
+                    1
+                )
+              })
+
+              it("returns true", async () => {
+                await expect(await randomBeacon.hasDkgTimedOut()).to.be.true
+              })
+            })
+          })
         })
       })
     })
@@ -568,6 +598,9 @@ describe("RandomBeacon", () => {
         })
       })
 
+      // TODO: Check challenge adjust start block calculation for eligibility
+      // TODO: Check that challenges add up the delay
+
       context("with group creation timed out", async () => {
         beforeEach("increase time", async () => {
           await mineBlocksTo(startBlock + dkgTimeout)
@@ -685,6 +718,116 @@ describe("RandomBeacon", () => {
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
           await randomBeacon.approveDkgResult()
+        })
+      })
+    })
+  })
+
+  describe("challengeDkgResult", async () => {
+    context("with initial contract state", async () => {
+      it("reverts with 'current state is not CHALLENGE' error", async () => {
+        await expect(randomBeacon.challengeDkgResult()).to.be.revertedWith(
+          "current state is not CHALLENGE"
+        )
+      })
+    })
+
+    context("with group creation in progress", async () => {
+      let startBlock: number
+
+      beforeEach("run genesis", async () => {
+        const [genesisTx] = await genesis()
+
+        startBlock = genesisTx.blockNumber
+      })
+
+      it("reverts with 'current state is not CHALLENGE' error", async () => {
+        await expect(randomBeacon.challengeDkgResult()).to.be.revertedWith(
+          "current state is not CHALLENGE"
+        )
+      })
+
+      context("with off-chain dkg time passed", async () => {
+        beforeEach(async () => {
+          await mineBlocksTo(startBlock + constants.offchainDkgTime)
+        })
+
+        context("with dkg result not submitted", async () => {
+          it("reverts with 'current state is not CHALLENGE' error", async () => {
+            await expect(randomBeacon.challengeDkgResult()).to.be.revertedWith(
+              "current state is not CHALLENGE"
+            )
+          })
+        })
+
+        context("with dkg result submitted", async () => {
+          let resultSubmissionBlock: number
+          let dkgResultHash: string
+
+          beforeEach(async () => {
+            let tx: ContractTransaction
+              // eslint-disable-next-line @typescript-eslint/no-extra-semi
+            ;({ transaction: tx, dkgResultHash } = await signAndSubmitDkgResult(
+              signers,
+              startBlock
+            ))
+
+            resultSubmissionBlock = tx.blockNumber
+          })
+
+          context("at the beginning of challenge period", async () => {
+            it("can be called by a third party", async () => {
+              await randomBeacon.connect(thirdParty).challengeDkgResult()
+            })
+
+            it("emits an event", async () => {
+              const tx = await randomBeacon
+                .connect(thirdParty)
+                .challengeDkgResult()
+
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultChallenged")
+                .withArgs(dkgResultHash, await thirdParty.getAddress())
+            })
+          })
+
+          context("at the end of challenge period", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(
+                resultSubmissionBlock +
+                  params.dkgResultChallengePeriodLength -
+                  1
+              )
+            })
+
+            it("can be called by a third party", async () => {
+              await randomBeacon.connect(thirdParty).challengeDkgResult()
+            })
+
+            it("emits an event", async () => {
+              const tx = await randomBeacon
+                .connect(thirdParty)
+                .challengeDkgResult()
+
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultChallenged")
+                .withArgs(dkgResultHash, await thirdParty.getAddress())
+            })
+          })
+
+          context("with challenge period passed", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
+              )
+            })
+
+            it("reverts with 'challenge period has already passed' error", async () => {
+              await expect(
+                randomBeacon.challengeDkgResult()
+              ).to.be.revertedWith("challenge period has already passed")
+            })
+          })
         })
       })
     })
