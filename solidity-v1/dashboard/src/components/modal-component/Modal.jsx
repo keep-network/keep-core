@@ -60,7 +60,11 @@ export const ModalOverlay = ({
 }
 
 export const ModalContent = ({ className = "", ...restProps }) => {
-  return <section className="modal__content" {...restProps} />
+  return (
+    <div className="modal__content-wrapper">
+      <section className="modal__content" {...restProps} />
+    </div>
+  )
 }
 
 export const ModalHeader = ({ className = "", ...restProps }) => {
@@ -68,7 +72,7 @@ export const ModalHeader = ({ className = "", ...restProps }) => {
 }
 
 export const ModalBody = ({ className = "", ...restProps }) => {
-  return <div className={`modal__content ${className}`} {...restProps} />
+  return <div className={`modal__body ${className}`} {...restProps} />
 }
 
 export const ModalFooter = ({ className = "", ...restProps }) => {
@@ -93,7 +97,7 @@ export const ModalCloseButton = ({
   return (
     <button
       className={`modal__close-btn ${
-        isDisabled && "modal__close-btn--disabled"
+        isDisabled ? "modal__close-btn--disabled" : ""
       } ${className}`}
       type="button"
       disabled={isDisabled}
