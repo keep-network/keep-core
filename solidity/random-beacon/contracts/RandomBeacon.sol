@@ -230,8 +230,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
-        require(!relay.isRequestInProgress(), "Relay request in progress");
-
         relayRequestFee = _relayRequestFee;
         relayEntrySubmissionEligibilityDelay = _relayEntrySubmissionEligibilityDelay;
         relayEntryHardTimeout = _relayEntryHardTimeout;
