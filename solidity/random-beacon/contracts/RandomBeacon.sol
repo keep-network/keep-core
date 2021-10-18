@@ -411,7 +411,7 @@ contract RandomBeacon is Ownable {
     }
 
     function approveDkgResult() external {
-        bytes32 resultHash = dkg.acceptResult();
+        bytes32 resultHash = dkg.approveResult();
 
         // TODO: Activate the pending group.
 

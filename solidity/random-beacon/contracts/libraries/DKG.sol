@@ -267,7 +267,7 @@ library DKG {
         // TODO: Implement slashing
     }
 
-    function acceptResult(Data storage self)
+    function approveResult(Data storage self)
         internal
         cleanup(self)
         returns (bytes32)
