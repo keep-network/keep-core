@@ -160,6 +160,7 @@ library DKG {
             block.number >
             (self.startBlock +
                 offchainDkgTime +
+                self.resultSubmissionStartBlockOffset +
                 groupSize *
                 self.parameters.resultSubmissionEligibilityDelay);
     }
