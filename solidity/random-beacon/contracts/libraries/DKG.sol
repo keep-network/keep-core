@@ -278,7 +278,7 @@ library DKG {
         );
 
         require(
-            block.number >=
+            block.number >
                 self.submittedResultBlock +
                     self.parameters.resultChallengePeriodLength,
             "challenge period has not passed yet"
@@ -295,7 +295,7 @@ library DKG {
         );
 
         require(
-            block.number <
+            block.number <=
                 self.submittedResultBlock +
                     self.parameters.resultChallengePeriodLength,
             "challenge period has already passed"
