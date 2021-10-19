@@ -432,8 +432,6 @@ contract RandomBeacon is Ownable {
         // TODO: Determine parameters required for DKG result challenges.
         bytes memory groupPubKey = dkg.challengeResult();
 
-        groups.removePendingGroup(groupPubKey);
-
         // TODO: Implement slashing
     }
 

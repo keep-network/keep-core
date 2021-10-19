@@ -34,10 +34,12 @@ library Groups {
     function addPendingGroup(Data storage self, bytes calldata groupPubKey)
         internal
     {
-        require(
-            self.groupIndices[groupPubKey] == 0,
-            "group was already registered"
-        );
+        if (self.groupIndices[groupPubKey] != 0) {
+            require(
+                !wasGroupActivated(self, groupPubKey),
+                "group was already activated"
+            );
+        }
 
         self.groupIndices[groupPubKey] = (self.groups.length ^
             GROUP_INDEX_FLAG);
@@ -81,19 +83,6 @@ library Groups {
     // to be passed for group activation and removal? Could we assume that
     // the most recent group in the groups stack is a pending group? If so we could
     // also remove storing groupPubKey in the DKG library.
-
-    // TODO: Test this thoroughly to ensure that indices are not broken after removal.
-    function removePendingGroup(Data storage self, bytes memory groupPubKey)
-        internal
-    {
-        require(
-            !wasGroupActivated(self, groupPubKey),
-            "group was already activated"
-        );
-
-        delete self.groupIndices[groupPubKey];
-        delete self.groups[self.groupIndices[groupPubKey]];
-    }
 
     function activateGroup(Data storage self, bytes memory groupPubKey)
         internal
