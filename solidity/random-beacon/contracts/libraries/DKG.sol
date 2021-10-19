@@ -294,8 +294,6 @@ library DKG {
     function notifyTimeout(Data storage self) internal cleanup(self) {
         require(hasDkgTimedOut(self), "dkg has not timed out");
 
-        // TODO: Implement slashing
-
         emit DkgTimedOut();
     }
 
