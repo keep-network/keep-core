@@ -73,6 +73,7 @@ library Relay {
             "Another relay request in progress"
         );
 
+        // slither-disable-next-line reentrancy-events
         self.tToken.safeTransferFrom(
             msg.sender,
             address(this),
