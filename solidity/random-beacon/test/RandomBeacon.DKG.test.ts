@@ -57,9 +57,9 @@ describe("RandomBeacon", () => {
         ;[tx, expectedSeed] = await genesis()
       })
 
-      it("emits GroupCreationStarted event", async () => {
+      it("emits DkgStarted event", async () => {
         await expect(tx)
-          .to.emit(randomBeacon, "GroupCreationStarted")
+          .to.emit(randomBeacon, "DkgStarted")
           .withArgs(expectedSeed)
       })
     })

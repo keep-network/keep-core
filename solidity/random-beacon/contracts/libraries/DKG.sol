@@ -94,6 +94,8 @@ library DKG {
     //          published by clients.
     uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
 
+    event DkgStarted(uint256 indexed seed);
+
     // TODO: Revisit properties returned in this event when working on result
     // challenges and the client.
     //  TODO: Should it also return seed to link the result with a DKG run?
@@ -138,10 +140,12 @@ library DKG {
         }
     }
 
-    function start(Data storage self) internal {
+    function start(Data storage self, uint256 seed) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
         self.startBlock = block.number;
+
+        emit DkgStarted(seed);
     }
 
     function submitResult(Data storage self, Result calldata result) internal {
