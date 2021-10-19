@@ -22,7 +22,6 @@ library DKG {
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
         Parameters parameters;
-        uint256 seed;
         // Time in blocks at which DKG started.
         uint256 startBlock;
         // Time in blocks that should be added to result submission eligibility
@@ -99,14 +98,14 @@ library DKG {
 
     // TODO: Revisit properties returned in this event when working on result
     // challenges and the client.
+    //  TODO: Should it also return seed to link the result with a DKG run?
     event DkgResultSubmitted(
-        uint256 indexed seed,
         bytes32 indexed resultHash,
-        bytes groupPubKey,
+        bytes indexed groupPubKey,
         address indexed submitter
     );
 
-    event DkgTimedOut(uint256 indexed seed);
+    event DkgTimedOut();
 
     event DkgResultApproved(
         bytes32 indexed resultHash,
@@ -144,7 +143,6 @@ library DKG {
     function start(Data storage self, uint256 seed) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
-        self.seed = seed;
         self.startBlock = block.number;
 
         emit DkgStarted(seed);
@@ -171,7 +169,6 @@ library DKG {
         self.submittedResultBlock = block.number;
 
         emit DkgResultSubmitted(
-            self.seed,
             self.submittedResultHash,
             result.groupPubKey,
             msg.sender
@@ -297,7 +294,7 @@ library DKG {
     function notifyTimeout(Data storage self) internal cleanup(self) {
         require(hasDkgTimedOut(self), "dkg has not timed out");
 
-        emit DkgTimedOut(self.seed);
+        emit DkgTimedOut();
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
@@ -392,7 +389,6 @@ library DKG {
     /// @dev Should be called after DKG times out or a result is approved.
     modifier cleanup(Data storage self) {
         _;
-        delete self.seed;
         delete self.startBlock;
         delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
