@@ -2,7 +2,7 @@ import { Contract } from "ethers"
 import { ethers } from "hardhat"
 import type {
   SortitionPoolStub,
-  TestRandomBeacon,
+  RandomBeaconStub,
   RandomBeaconGovernance,
 } from "../../typechain"
 
@@ -52,9 +52,9 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
   const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
 
-  const RandomBeacon = await ethers.getContractFactory("TestRandomBeacon")
+  const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub")
 
-  const randomBeacon: TestRandomBeacon = await RandomBeacon.deploy(
+  const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPoolStub.address
   )
   await randomBeacon.deployed()

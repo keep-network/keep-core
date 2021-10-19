@@ -22,7 +22,7 @@ contract SortitionPoolStub is ISortitionPool {
         return operators[operator];
     }
 
-    // Helper function, it does not exist in the sorition pool
+    // Helper function, it does not exist in the sortition pool
     function setOperatorEligibility(address operator, bool eligibility) public {
         eligibleOperators[operator] = eligibility;
     }

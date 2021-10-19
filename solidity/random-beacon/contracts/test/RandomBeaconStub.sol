@@ -4,7 +4,7 @@ import "../RandomBeacon.sol";
 import "../libraries/DKG.sol";
 import "../libraries/Groups.sol";
 
-contract TestRandomBeacon is RandomBeacon {
+contract RandomBeaconStub is RandomBeacon {
     constructor(ISortitionPool _sortitionPool) RandomBeacon(_sortitionPool) {}
 
     function getDkgData() external view returns (DKG.Data memory) {

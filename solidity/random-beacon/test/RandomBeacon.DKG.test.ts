@@ -3,7 +3,7 @@ import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
-import type { RandomBeacon, TestRandomBeacon } from "../typechain"
+import type { RandomBeacon, RandomBeaconStub } from "../typechain"
 import {
   getDkgGroupSigners,
   genesis,
@@ -30,7 +30,7 @@ describe("RandomBeacon", () => {
   let thirdParty: Signer
   let signers: DkgGroupSigners
 
-  let randomBeacon: TestRandomBeacon & RandomBeacon
+  let randomBeacon: RandomBeaconStub & RandomBeacon
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -43,12 +43,14 @@ describe("RandomBeacon", () => {
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(testDeployment)
 
-    randomBeacon = contracts.randomBeacon as TestRandomBeacon & RandomBeacon
+    randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
   })
 
   describe("genesis", async () => {
-    it("can be invoked by third party", async () => {
-      await randomBeacon.connect(thirdParty).genesis()
+    context("when called by a third party", async () => {
+      it("should succeed", async () => {
+        await randomBeacon.connect(thirdParty).genesis()
+      })
     })
 
     context("with initial contract state", async () => {
@@ -60,9 +62,9 @@ describe("RandomBeacon", () => {
         ;[tx, expectedSeed] = await genesis(randomBeacon)
       })
 
-      it("emits GroupCreationStarted event", async () => {
+      it("should emit DkgStarted event", async () => {
         await expect(tx)
-          .to.emit(randomBeacon, "GroupCreationStarted")
+          .to.emit(randomBeacon, "DkgStarted")
           .withArgs(expectedSeed)
       })
     })
@@ -76,7 +78,7 @@ describe("RandomBeacon", () => {
       })
 
       context("with dkg result not submitted", async () => {
-        it("reverts with 'current state is not IDLE' error", async () => {
+        it("should revert with 'current state is not IDLE' error", async () => {
           await expect(randomBeacon.genesis()).to.be.revertedWith(
             "current state is not IDLE"
           )
@@ -98,7 +100,7 @@ describe("RandomBeacon", () => {
         // pending.
 
         context("with dkg result not approved", async () => {
-          it("reverts with 'current state is not IDLE' error", async () => {
+          it("should revert with 'current state is not IDLE' error", async () => {
             await expect(randomBeacon.genesis()).to.be.revertedWith(
               "current state is not IDLE"
             )
@@ -110,7 +112,7 @@ describe("RandomBeacon", () => {
 
   describe("getGroupCreationState", async () => {
     context("with initial contract state", async () => {
-      it("returns IDLE state", async () => {
+      it("should return IDLE state", async () => {
         expect(await randomBeacon.getGroupCreationState()).to.be.equal(
           dkgState.IDLE
         )
@@ -126,7 +128,7 @@ describe("RandomBeacon", () => {
       })
 
       context("at the start of off-chain dkg period", async () => {
-        it("returns KEY_GENERATION state", async () => {
+        it("should return KEY_GENERATION state", async () => {
           expect(await randomBeacon.getGroupCreationState()).to.be.equal(
             dkgState.KEY_GENERATION
           )
@@ -138,7 +140,7 @@ describe("RandomBeacon", () => {
           await mineBlocksTo(startBlock + constants.offchainDkgTime)
         })
 
-        it("returns KEY_GENERATION state", async () => {
+        it("should return KEY_GENERATION state", async () => {
           expect(await randomBeacon.getGroupCreationState()).to.be.equal(
             dkgState.KEY_GENERATION
           )
@@ -151,7 +153,7 @@ describe("RandomBeacon", () => {
         })
 
         context("when dkg result was not submitted", async () => {
-          it("returns AWAITING_RESULT state", async () => {
+          it("should return AWAITING_RESULT state", async () => {
             expect(await randomBeacon.getGroupCreationState()).to.be.equal(
               dkgState.AWAITING_RESULT
             )
@@ -162,7 +164,7 @@ describe("RandomBeacon", () => {
               await mineBlocksTo(startBlock + dkgTimeout + 1)
             })
 
-            it("returns AWAITING_RESULT state", async () => {
+            it("should return AWAITING_RESULT state", async () => {
               expect(await randomBeacon.getGroupCreationState()).to.be.equal(
                 dkgState.AWAITING_RESULT
               )
@@ -181,29 +183,37 @@ describe("RandomBeacon", () => {
           })
 
           context("when dkg result was not approved", async () => {
-            it("returns CHALLENGE state", async () => {
+            it("should return CHALLENGE state", async () => {
               expect(await randomBeacon.getGroupCreationState()).to.be.equal(
                 dkgState.CHALLENGE
               )
             })
           })
 
-          // TODO: Enable once approvals and challenges are implemented
-          // context("when dkg result was approved", async function () {
-          //   it("returns IDLE state", async function () {
-          //     expect(await randomBeacon.getGroupCreationState()).to.be.equal(
-          //       dkgState.IDLE
-          //     )
-          //   })
-          // })
+          context("when dkg result was approved", async () => {
+            beforeEach(async () => {
+              await mineBlocks(params.dkgResultChallengePeriodLength)
+              await randomBeacon.approveDkgResult()
+            })
 
-          // context("when dkg result was challenged", async function () {
-          //   it("returns AWAITING_RESULT state", async function () {
-          //     expect(await randomBeacon.getGroupCreationState()).to.be.equal(
-          //       dkgState.AWAITING_RESULT
-          //     )
-          //   })
-          // })
+            it("should return IDLE state", async () => {
+              expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                dkgState.IDLE
+              )
+            })
+          })
+
+          context("when dkg result was challenged", async () => {
+            beforeEach(async () => {
+              await randomBeacon.challengeDkgResult()
+            })
+
+            it("should return AWAITING_RESULT state", async () => {
+              expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                dkgState.AWAITING_RESULT
+              )
+            })
+          })
         })
       })
     })
@@ -211,7 +221,7 @@ describe("RandomBeacon", () => {
 
   describe("hasDkgTimedOut", async () => {
     context("with initial contract state", async () => {
-      it("returns false", async () => {
+      it("should return false", async () => {
         await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
       })
     })
@@ -225,7 +235,7 @@ describe("RandomBeacon", () => {
       })
 
       context("within off-chain dkg period", async () => {
-        it("returns false", async () => {
+        it("should return false", async () => {
           await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
         })
       })
@@ -236,7 +246,7 @@ describe("RandomBeacon", () => {
         })
 
         context("when dkg result was not submitted", async () => {
-          it("returns false", async () => {
+          it("should return false", async () => {
             await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
           })
 
@@ -245,7 +255,7 @@ describe("RandomBeacon", () => {
               await mineBlocksTo(startBlock + dkgTimeout)
             })
 
-            it("returns false", async () => {
+            it("should return false", async () => {
               await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
             })
           })
@@ -255,7 +265,7 @@ describe("RandomBeacon", () => {
               await mineBlocksTo(startBlock + dkgTimeout + 1)
             })
 
-            it("returns true", async () => {
+            it("should return true", async () => {
               await expect(await randomBeacon.hasDkgTimedOut()).to.be.true
             })
           })
@@ -281,7 +291,7 @@ describe("RandomBeacon", () => {
                 await mineBlocksTo(startBlock + dkgTimeout)
               })
 
-              it("returns false", async () => {
+              it("should return false", async () => {
                 await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
               })
             })
@@ -291,7 +301,7 @@ describe("RandomBeacon", () => {
                 await mineBlocksTo(startBlock + dkgTimeout + 1)
               })
 
-              it("returns false", async () => {
+              it("should return false", async () => {
                 await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
               })
             })
@@ -303,7 +313,7 @@ describe("RandomBeacon", () => {
                 )
               })
 
-              it("returns false", async () => {
+              it("should return false", async () => {
                 await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
               })
             })
@@ -317,7 +327,7 @@ describe("RandomBeacon", () => {
                 )
               })
 
-              it("returns false", async () => {
+              it("should return false", async () => {
                 await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
               })
             })
@@ -332,7 +342,7 @@ describe("RandomBeacon", () => {
               await randomBeacon.approveDkgResult()
             })
 
-            it("returns false", async () => {
+            it("should return false", async () => {
               await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
             })
           })
@@ -348,13 +358,13 @@ describe("RandomBeacon", () => {
             context("at the end of dkg result submission period", async () => {
               beforeEach(async () => {
                 await mineBlocksTo(
-                  startBlock +
+                  challengeBlockNumber +
                     constants.groupSize *
                       params.dkgResultSubmissionEligibilityDelay
                 )
               })
 
-              it("returns false", async () => {
+              it("should return false", async () => {
                 await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
               })
             })
@@ -369,7 +379,7 @@ describe("RandomBeacon", () => {
                 )
               })
 
-              it("returns true", async () => {
+              it("should return true", async () => {
                 await expect(await randomBeacon.hasDkgTimedOut()).to.be.true
               })
             })
@@ -383,7 +393,7 @@ describe("RandomBeacon", () => {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
 
     context("with initial contract state", async () => {
-      it("reverts with 'current state is not AWAITING_RESULT' error", async () => {
+      it("should revert with 'current state is not AWAITING_RESULT' error", async () => {
         await expect(
           signAndSubmitDkgResult(randomBeacon, groupPublicKey, signers, 1)
         ).to.be.revertedWith("current state is not AWAITING_RESULT")
@@ -405,7 +415,7 @@ describe("RandomBeacon", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
           })
 
-          it("reverts with 'current state is not AWAITING_RESULT' error", async () => {
+          it("should revert with 'current state is not AWAITING_RESULT' error", async () => {
             await expect(
               signAndSubmitDkgResult(
                 randomBeacon,
@@ -422,7 +432,7 @@ describe("RandomBeacon", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
-          it("reverts with less than threshold signers", async () => {
+          it("should revert with less than threshold signers", async () => {
             const filteredSigners = new Map(
               Array.from(signers).filter(
                 ([index]) => index < constants.signatureThreshold
@@ -439,7 +449,7 @@ describe("RandomBeacon", () => {
             ).to.be.revertedWith("Too few signatures")
           })
 
-          it("succeeds with threshold signers", async () => {
+          it("should succeed with threshold signers", async () => {
             const filteredSigners = new Map(
               Array.from(signers).filter(
                 ([index]) => index <= constants.signatureThreshold
@@ -462,7 +472,7 @@ describe("RandomBeacon", () => {
               .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
           })
 
-          it("succeeds for the first submitter", async () => {
+          it("should succeed for the first submitter", async () => {
             const {
               transaction: tx,
               dkgResult,
@@ -479,7 +489,7 @@ describe("RandomBeacon", () => {
               .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
           })
 
-          it("reverts for the second submitter", async () => {
+          it("should revert for the second submitter", async () => {
             await expect(
               signAndSubmitDkgResult(
                 randomBeacon,
@@ -503,7 +513,7 @@ describe("RandomBeacon", () => {
                 )
               })
 
-              it("succeeds for the first submitter", async () => {
+              it("should succeed for the first submitter", async () => {
                 const {
                   transaction: tx,
                   dkgResult,
@@ -525,7 +535,7 @@ describe("RandomBeacon", () => {
                   )
               })
 
-              it("reverts for the second submitter", async () => {
+              it("should revert for the second submitter", async () => {
                 await expect(
                   signAndSubmitDkgResult(
                     randomBeacon,
@@ -551,7 +561,7 @@ describe("RandomBeacon", () => {
                 )
               })
 
-              it("succeeds for the first submitter", async () => {
+              it("should succeed for the first submitter", async () => {
                 const {
                   transaction: tx,
                   dkgResult,
@@ -573,7 +583,7 @@ describe("RandomBeacon", () => {
                   )
               })
 
-              it("succeeds for the second submitter", async () => {
+              it("should succeed for the second submitter", async () => {
                 const {
                   transaction: tx,
                   dkgResult,
@@ -595,7 +605,7 @@ describe("RandomBeacon", () => {
                   )
               })
 
-              it("reverts for the third submitter", async () => {
+              it("should revert for the third submitter", async () => {
                 await expect(
                   signAndSubmitDkgResult(
                     randomBeacon,
@@ -616,7 +626,7 @@ describe("RandomBeacon", () => {
                 await mineBlocksTo(startBlock + dkgTimeout - 1)
               })
 
-              it("succeeds for the first submitter", async () => {
+              it("should succeed for the first submitter", async () => {
                 const {
                   transaction: tx,
                   dkgResult,
@@ -638,7 +648,7 @@ describe("RandomBeacon", () => {
                   )
               })
 
-              it("succeeds for the last submitter", async () => {
+              it("should succeed for the last submitter", async () => {
                 const {
                   transaction: tx,
                   dkgResult,
@@ -674,7 +684,7 @@ describe("RandomBeacon", () => {
               )
             })
 
-            it("reverts 'current state is not AWAITING_RESULT' error", async () => {
+            it("should revert 'current state is not AWAITING_RESULT' error", async () => {
               await expect(
                 signAndSubmitDkgResult(
                   randomBeacon,
@@ -683,6 +693,28 @@ describe("RandomBeacon", () => {
                   startBlock
                 )
               ).to.be.revertedWith("current state is not AWAITING_RESULT")
+            })
+          })
+
+          context("with dkg result challenged", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(startBlock + constants.offchainDkgTime)
+
+              await signAndSubmitDkgResult(signers, startBlock)
+
+              await randomBeacon.challengeDkgResult()
+            })
+
+            it("should allow first member to submit", async () => {
+              const {
+                transaction: tx,
+                dkgResult,
+                dkgResultHash,
+              } = await signAndSubmitDkgResult(signers, startBlock)
+
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultSubmitted")
+                .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
             })
           })
         })
@@ -697,7 +729,7 @@ describe("RandomBeacon", () => {
         })
 
         context("with timeout not notified", async () => {
-          it("reverts with dkg timeout already passed error", async () => {
+          it("should revert with dkg timeout already passed error", async () => {
             await expect(
               signAndSubmitDkgResult(
                 randomBeacon,
@@ -714,7 +746,7 @@ describe("RandomBeacon", () => {
 
   describe("approveDkgResult", async () => {
     context("with initial contract state", async () => {
-      it("reverts with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'current state is not CHALLENGE' error", async () => {
         await expect(randomBeacon.approveDkgResult()).to.be.revertedWith(
           "current state is not CHALLENGE"
         )
@@ -730,7 +762,7 @@ describe("RandomBeacon", () => {
         startBlock = genesisTx.blockNumber
       })
 
-      it("reverts with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'current state is not CHALLENGE' error", async () => {
         await expect(randomBeacon.approveDkgResult()).to.be.revertedWith(
           "current state is not CHALLENGE"
         )
@@ -742,7 +774,7 @@ describe("RandomBeacon", () => {
         })
 
         context("with dkg result not submitted", async () => {
-          it("reverts with 'current state is not CHALLENGE' error", async () => {
+          it("should revert with 'current state is not CHALLENGE' error", async () => {
             await expect(randomBeacon.approveDkgResult()).to.be.revertedWith(
               "current state is not CHALLENGE"
             )
@@ -775,7 +807,7 @@ describe("RandomBeacon", () => {
               )
             })
 
-            it("reverts with 'challenge period has not passed yet' error", async () => {
+            it("should revert with 'challenge period has not passed yet' error", async () => {
               await expect(randomBeacon.approveDkgResult()).to.be.revertedWith(
                 "challenge period has not passed yet"
               )
@@ -796,14 +828,71 @@ describe("RandomBeacon", () => {
                 tx = await randomBeacon.connect(thirdParty).approveDkgResult()
               })
 
-              it("emits an event", async () => {
+              it("should emit DkgResultApproved event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultApproved")
                   .withArgs(dkgResultHash, await thirdParty.getAddress())
               })
 
-              it("cleans dkg data", async () => {
+              it("should clean dkg data", async () => {
                 await assertDkgResultCleanData(randomBeacon)
+              })
+            })
+          })
+
+          context("when there was a challenged result before", async () => {
+            beforeEach(async () => {
+              await randomBeacon.challengeDkgResult()
+
+              // Submit a second result by another submitter
+              const submitterIndex = 5
+
+              await mineBlocks(
+                params.dkgResultSubmissionEligibilityDelay * submitterIndex
+              )
+
+              let tx: ContractTransaction
+              ;({ transaction: tx, dkgResultHash } =
+                await signAndSubmitDkgResult(
+                  signers,
+                  startBlock,
+                  submitterIndex
+                ))
+
+              resultSubmissionBlock = tx.blockNumber
+            })
+
+            context("with challenge period not passed", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  resultSubmissionBlock +
+                    params.dkgResultChallengePeriodLength -
+                    1
+                )
+              })
+
+              it("should revert with 'challenge period has not passed yet' error", async () => {
+                await expect(
+                  randomBeacon.approveDkgResult()
+                ).to.be.revertedWith("challenge period has not passed yet")
+              })
+            })
+
+            context("with challenge period passed", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
+                )
+              })
+
+              it("should succeed", async () => {
+                const tx = await randomBeacon
+                  .connect(thirdParty)
+                  .approveDkgResult()
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultApproved")
+                  .withArgs(dkgResultHash, await thirdParty.getAddress())
               })
             })
           })
@@ -811,7 +900,7 @@ describe("RandomBeacon", () => {
       })
 
       context("with max periods duration", async () => {
-        it("succeeds", async () => {
+        it("should succeed", async () => {
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
           await signAndSubmitDkgResult(
@@ -831,7 +920,7 @@ describe("RandomBeacon", () => {
 
   describe("notifyDkgTimeout", async () => {
     context("with initial contract state", async () => {
-      it("reverts with 'dkg has not timed out' error", async () => {
+      it("should revert with 'dkg has not timed out' error", async () => {
         await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
           "dkg has not timed out"
         )
@@ -853,7 +942,7 @@ describe("RandomBeacon", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
           })
 
-          it("reverts with 'dkg has not timed out' error", async () => {
+          it("should revert with 'dkg has not timed out' error", async () => {
             await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
               "dkg has not timed out"
             )
@@ -865,7 +954,7 @@ describe("RandomBeacon", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
-          it("reverts with 'dkg has not timed out' error", async () => {
+          it("should revert with 'dkg has not timed out' error", async () => {
             await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
               "dkg has not timed out"
             )
@@ -877,7 +966,7 @@ describe("RandomBeacon", () => {
             await mineBlocksTo(startBlock + dkgTimeout - 1)
           })
 
-          it("reverts with 'dkg has not timed out' error", async () => {
+          it("should revert with 'dkg has not timed out' error", async () => {
             await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
               "dkg has not timed out"
             )
@@ -897,11 +986,11 @@ describe("RandomBeacon", () => {
             tx = await randomBeacon.connect(thirdParty).notifyDkgTimeout()
           })
 
-          it("emits an event", async () => {
+          it("should emit DkgTimedOut event", async () => {
             await expect(tx).to.emit(randomBeacon, "DkgTimedOut")
           })
 
-          it("cleans dkg data", async () => {
+          it("should clean dkg data", async () => {
             await assertDkgResultCleanData(randomBeacon)
           })
         })
@@ -911,7 +1000,7 @@ describe("RandomBeacon", () => {
 
   describe("challengeDkgResult", async () => {
     context("with initial contract state", async () => {
-      it("reverts with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'current state is not CHALLENGE' error", async () => {
         await expect(randomBeacon.challengeDkgResult()).to.be.revertedWith(
           "current state is not CHALLENGE"
         )
@@ -927,7 +1016,7 @@ describe("RandomBeacon", () => {
         startBlock = genesisTx.blockNumber
       })
 
-      it("reverts with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'current state is not CHALLENGE' error", async () => {
         await expect(randomBeacon.challengeDkgResult()).to.be.revertedWith(
           "current state is not CHALLENGE"
         )
@@ -939,7 +1028,7 @@ describe("RandomBeacon", () => {
         })
 
         context("with dkg result not submitted", async () => {
-          it("reverts with 'current state is not CHALLENGE' error", async () => {
+          it("should revert with 'current state is not CHALLENGE' error", async () => {
             await expect(randomBeacon.challengeDkgResult()).to.be.revertedWith(
               "current state is not CHALLENGE"
             )
@@ -964,11 +1053,11 @@ describe("RandomBeacon", () => {
           })
 
           context("at the beginning of challenge period", async () => {
-            it("can be called by a third party", async () => {
+            it("should be callable by a third party", async () => {
               await randomBeacon.connect(thirdParty).challengeDkgResult()
             })
 
-            it("emits an event", async () => {
+            it("should emit DkgResultChallenged event", async () => {
               const tx = await randomBeacon
                 .connect(thirdParty)
                 .challengeDkgResult()
@@ -988,11 +1077,11 @@ describe("RandomBeacon", () => {
               )
             })
 
-            it("can be called by a third party", async () => {
+            it("should be callable by a third party", async () => {
               await randomBeacon.connect(thirdParty).challengeDkgResult()
             })
 
-            it("emits an event", async () => {
+            it("should emit DkgResultChallenged event", async () => {
               const tx = await randomBeacon
                 .connect(thirdParty)
                 .challengeDkgResult()
@@ -1010,7 +1099,7 @@ describe("RandomBeacon", () => {
               )
             })
 
-            it("reverts with 'challenge period has already passed' error", async () => {
+            it("should revert with 'challenge period has already passed' error", async () => {
               await expect(
                 randomBeacon.challengeDkgResult()
               ).to.be.revertedWith("challenge period has already passed")
@@ -1023,7 +1112,7 @@ describe("RandomBeacon", () => {
     // This test checks that dkg timeout is adjusted in case of result challenges
     // to include the offset blocks that were mined until the invalid result
     // was challenged.
-    it("enforces submission start offset", async () => {
+    it("should enforce submission start offset", async () => {
       const [genesisTx] = await genesis(randomBeacon)
       const startBlock = genesisTx.blockNumber
 
@@ -1148,7 +1237,7 @@ describe("RandomBeacon", () => {
   })
 })
 
-async function assertDkgResultCleanData(randomBeacon: TestRandomBeacon) {
+async function assertDkgResultCleanData(randomBeacon: RandomBeaconStub) {
   const dkgData = await randomBeacon.getDkgData()
 
   expect(

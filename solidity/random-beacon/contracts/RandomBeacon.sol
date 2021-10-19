@@ -161,9 +161,9 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
-    event GroupCreationStarted(uint256 indexed seed);
-
     // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
+
+    event DkgStarted(uint256 indexed seed);
 
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
@@ -352,9 +352,11 @@ contract RandomBeacon is Ownable {
     /// @notice Registers caller in the sortition pool.
     function registerMemberCandidate() external {
         address operator = msg.sender;
-        if (!sortitionPool.isOperatorInPool(operator)) {
-            sortitionPool.joinPool(operator);
-        }
+        require(
+            !sortitionPool.isOperatorInPool(operator),
+            "Operator is already registered"
+        );
+        sortitionPool.joinPool(operator);
     }
 
     /// @notice Checks whether the given operator is eligible to join the
@@ -378,9 +380,7 @@ contract RandomBeacon is Ownable {
     function createGroup(uint256 seed) internal {
         // TODO: Lock sortition pool.
 
-        dkg.start();
-
-        emit GroupCreationStarted(seed);
+        dkg.start(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
