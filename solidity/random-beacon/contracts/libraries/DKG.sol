@@ -144,10 +144,7 @@ library DKG {
         self.startBlock = block.number;
     }
 
-    function submitResult(Data storage self, Result calldata result)
-        internal
-        returns (bytes32)
-    {
+    function submitResult(Data storage self, Result calldata result) internal {
         require(
             currentState(self) == State.AWAITING_RESULT,
             "current state is not AWAITING_RESULT"
@@ -172,8 +169,6 @@ library DKG {
             result.groupPubKey,
             msg.sender
         );
-
-        return self.submittedResultHash;
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
@@ -303,11 +298,7 @@ library DKG {
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
-    function approveResult(Data storage self)
-        internal
-        cleanup(self)
-        returns (bytes32)
-    {
+    function approveResult(Data storage self) internal cleanup(self) {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -321,15 +312,13 @@ library DKG {
         );
 
         emit DkgResultApproved(self.submittedResultHash, msg.sender);
-
-        return self.submittedResultHash;
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
     // TODO: When implementing challenges verify what parameters are required.
-    function challengeResult(Data storage self) internal returns (bytes32) {
+    function challengeResult(Data storage self) internal {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -358,8 +347,6 @@ library DKG {
         delete self.submittedResultHash;
 
         emit DkgResultChallenged(resultHash, msg.sender);
-
-        return resultHash;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.
