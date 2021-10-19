@@ -124,6 +124,14 @@ library Groups {
         return group.activationTimestamp > 0;
     }
 
+    function getGroup(Data storage self, bytes memory groupPubKey)
+        internal
+        view
+        returns (Group memory)
+    {
+        return _getGroup(self, groupPubKey);
+    }
+
     function _getGroup(Data storage self, bytes memory groupPubKey)
         private
         view

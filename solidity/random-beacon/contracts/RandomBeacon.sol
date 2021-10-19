@@ -183,6 +183,8 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
+    event PendingGroupCreated(bytes groupPubKey);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -447,5 +449,13 @@ contract RandomBeacon is Ownable {
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
+    }
+
+    function getGroup(bytes memory groupPubKey)
+        external
+        view
+        returns (Groups.Group memory)
+    {
+        return groups.getGroup(groupPubKey);
     }
 }
