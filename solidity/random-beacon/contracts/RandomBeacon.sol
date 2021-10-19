@@ -16,6 +16,7 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./libraries/DKG.sol";
+import "./libraries/Groups.sol";
 
 /// @title Sortition Pool contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -38,6 +39,7 @@ interface ISortitionPool {
 ///      parameters.
 contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
+    using Groups for Groups.Data;
 
     // Constant parameters
 
@@ -130,6 +132,7 @@ contract RandomBeacon is Ownable {
 
     // Libraries data storages
     DKG.Data internal dkg;
+    Groups.Data internal groups;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -361,7 +364,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Triggers group selection if there are no active groups.
     function genesis() external {
-        // TODO: Check number of active groups
+        require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
         createGroup(
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
@@ -396,10 +399,15 @@ contract RandomBeacon is Ownable {
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
-        bytes32 resultHash = dkg.submitResult(dkgResult);
+        dkg.submitResult(dkgResult);
 
-        // TODO: Register a pending group
-        // TODO: Set members in the group
+        groups.addPendingGroup(dkgResult.groupPubKey);
+        // TODO: Does it have to be a separate function call, can't we include setGroupMembers in addPendingGroup?
+        groups.setGroupMembers(
+            dkgResult.groupPubKey,
+            dkgResult.members,
+            dkgResult.misbehaved
+        );
     }
 
     /// @notice Notifies about DKG timeout.
@@ -411,9 +419,9 @@ contract RandomBeacon is Ownable {
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
     function approveDkgResult() external {
-        bytes32 resultHash = dkg.approveResult();
+        bytes memory groupPubKey = dkg.approveResult();
 
-        // TODO: Activate the pending group.
+        groups.activateGroup(groupPubKey);
 
         // TODO: Unlock sortition pool
     }
@@ -422,7 +430,9 @@ contract RandomBeacon is Ownable {
     ///         invalid it reverts the DKG back to the result submission phase.
     function challengeDkgResult() external {
         // TODO: Determine parameters required for DKG result challenges.
-        bytes32 resultHash = dkg.challengeResult();
+        bytes memory groupPubKey = dkg.challengeResult();
+
+        groups.removePendingGroup(groupPubKey);
 
         // TODO: Implement slashing
     }

@@ -32,6 +32,7 @@ library DKG {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
+        bytes groupPublicKey;
     }
 
     /// @notice DKG result.
@@ -144,10 +145,7 @@ library DKG {
         self.startBlock = block.number;
     }
 
-    function submitResult(Data storage self, Result calldata result)
-        internal
-        returns (bytes32)
-    {
+    function submitResult(Data storage self, Result calldata result) internal {
         require(
             currentState(self) == State.AWAITING_RESULT,
             "current state is not AWAITING_RESULT"
@@ -166,14 +164,13 @@ library DKG {
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
+        self.groupPublicKey = result.groupPubKey;
 
         emit DkgResultSubmitted(
             self.submittedResultHash,
             result.groupPubKey,
             msg.sender
         );
-
-        return self.submittedResultHash;
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
@@ -306,7 +303,7 @@ library DKG {
     function approveResult(Data storage self)
         internal
         cleanup(self)
-        returns (bytes32)
+        returns (bytes memory)
     {
         require(
             currentState(self) == State.CHALLENGE,
@@ -322,14 +319,17 @@ library DKG {
 
         emit DkgResultApproved(self.submittedResultHash, msg.sender);
 
-        return self.submittedResultHash;
+        return self.groupPublicKey;
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
     // TODO: When implementing challenges verify what parameters are required.
-    function challengeResult(Data storage self) internal returns (bytes32) {
+    function challengeResult(Data storage self)
+        internal
+        returns (bytes memory)
+    {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -359,7 +359,7 @@ library DKG {
 
         emit DkgResultChallenged(resultHash, msg.sender);
 
-        return resultHash;
+        return self.groupPublicKey;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.
