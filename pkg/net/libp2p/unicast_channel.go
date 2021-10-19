@@ -11,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
 
-	"github.com/libp2p/go-libp2p-core/helpers"
 	"github.com/libp2p/go-libp2p-core/peer"
 
 	protoio "github.com/gogo/protobuf/io"
@@ -101,7 +100,11 @@ func (uc *unicastChannel) send(stream network.Stream, message proto.Message) err
 		return writer.Flush()
 	}
 
-	defer helpers.FullClose(stream)
+	defer func() {
+		if err := stream.Close(); err != nil {
+			logger.Errorf("could not close stream: [%v]", err)
+		}
+	}()
 
 	err := writeMsg(message)
 	if err != nil {

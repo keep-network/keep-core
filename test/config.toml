@@ -5,7 +5,7 @@
 [ethereum]
 	URL                     = "ws://192.168.0.158:8546"
 	URLRPC                  = "http://192.168.0.158:8545"
-	MaxGasPrice             = "140 Gwei"
+	MaxGasFeeCap            = "140 Gwei"
 	BalanceAlertThreshold   = "2.5 ether"
 
 [ethereum.account]

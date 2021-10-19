@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	secio "github.com/libp2p/go-libp2p-secio"
+	"github.com/libp2p/go-libp2p-tls"
 
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
@@ -39,7 +39,7 @@ func newEncryptedAuthenticatedTransport(
 		return nil, err
 	}
 
-	encryptionLayer, err := secio.New(pk)
+	encryptionLayer, err := libp2ptls.New(pk)
 	if err != nil {
 		return nil, err
 	}

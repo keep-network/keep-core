@@ -1,27 +1,26 @@
-import { ethers } from "hardhat"
-import { Signer, Contract } from "ethers"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 
+import { Signer, Contract } from "ethers"
+import { randomBeaconDeployment } from "./fixtures"
+
+import type { RandomBeacon, SortitionPoolStub } from "../typechain"
+
 describe("RandomBeacon - Pool", () => {
-  let governance: Signer
   let operator: Signer
   let randomBeacon: Contract
   let sortitionPoolStub: Contract
 
-  beforeEach(async () => {
-    const signers = await ethers.getSigners()
-    governance = signers[0]
-    operator = signers[1]
+  // prettier-ignore
+  before(async () => {
+    [operator] = await ethers.getSigners()
+  })
 
-    const SortitionPoolStub = await ethers.getContractFactory(
-      "SortitionPoolStub"
-    )
-    sortitionPoolStub = await SortitionPoolStub.deploy()
-    await sortitionPoolStub.deployed()
+  beforeEach("load test fixture", async () => {
+    const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
-    const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
-    randomBeacon = await RandomBeacon.deploy(sortitionPoolStub.address)
-    await randomBeacon.deployed()
+    sortitionPoolStub = contracts.sortitionPoolStub as SortitionPoolStub
+    randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
   describe("registerMemberCandidate", () => {
@@ -31,8 +30,9 @@ describe("RandomBeacon - Pool", () => {
       })
 
       it("should register the operator", async () => {
-        expect(await sortitionPoolStub.operators(await operator.getAddress()))
-          .to.be.true
+        await expect(
+          await sortitionPoolStub.operators(await operator.getAddress())
+        ).to.be.true
       })
     })
 
@@ -59,7 +59,7 @@ describe("RandomBeacon - Pool", () => {
       })
 
       it("should return true", async () => {
-        expect(
+        await expect(
           await randomBeacon.isOperatorEligible(await operator.getAddress())
         ).to.be.true
       })
@@ -76,7 +76,7 @@ describe("RandomBeacon - Pool", () => {
         })
 
         it("should return false", async () => {
-          expect(
+          await expect(
             await randomBeacon.isOperatorEligible(await operator.getAddress())
           ).to.be.false
         })
