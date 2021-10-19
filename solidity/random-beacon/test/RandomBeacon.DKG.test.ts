@@ -760,6 +760,63 @@ describe("RandomBeacon", () => {
               })
             })
           })
+
+          context("when there was a challenged result before", async () => {
+            beforeEach(async () => {
+              await randomBeacon.challengeDkgResult()
+
+              // Submit a second result by another submitter
+              const submitterIndex = 5
+
+              await mineBlocks(
+                params.dkgResultSubmissionEligibilityDelay * submitterIndex
+              )
+
+              let tx: ContractTransaction
+              ;({ transaction: tx, dkgResultHash } =
+                await signAndSubmitDkgResult(
+                  signers,
+                  startBlock,
+                  submitterIndex
+                ))
+
+              resultSubmissionBlock = tx.blockNumber
+            })
+
+            context("with challenge period not passed", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  resultSubmissionBlock +
+                    params.dkgResultChallengePeriodLength -
+                    1
+                )
+              })
+
+              it("reverts with 'challenge period has not passed yet' error", async () => {
+                await expect(
+                  randomBeacon.approveDkgResult()
+                ).to.be.revertedWith("challenge period has not passed yet")
+              })
+            })
+
+            context("with challenge period passed", async () => {
+              beforeEach(async () => {
+                await mineBlocksTo(
+                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
+                )
+              })
+
+              it("succeeds", async () => {
+                const tx = await randomBeacon
+                  .connect(thirdParty)
+                  .approveDkgResult()
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultApproved")
+                  .withArgs(dkgResultHash, await thirdParty.getAddress())
+              })
+            })
+          })
         })
       })
 
