@@ -187,11 +187,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
     ///      and before transferring the ownership to the governance contract.
-    constructor(
-        ISortitionPool _sortitionPool,
-        IERC20 _tToken,
-        uint256 _groupSize
-    ) {
+    constructor(ISortitionPool _sortitionPool, IERC20 _tToken) {
         sortitionPool = _sortitionPool;
 
         // Governable parameters
@@ -209,7 +205,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         maliciousDkgResultSlashingAmount = 50000e18;
 
         relay.tToken = _tToken;
-        relay.groupSize = _groupSize;
         relay.setRelayRequestFee(relayRequestFee);
         relay.setRelayEntrySubmissionEligibilityDelay(
             relayEntrySubmissionEligibilityDelay

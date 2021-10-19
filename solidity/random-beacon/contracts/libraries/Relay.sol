@@ -42,14 +42,15 @@ library Relay {
         IERC20 tToken;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
-        // Size of the group performing signing.
-        uint256 groupSize;
         // The number of blocks it takes for a group member to become
         // eligible to submit the relay entry.
         uint256 relayEntrySubmissionEligibilityDelay;
         // Hard timeout in blocks for a group to submit the relay entry.
         uint256 relayEntryHardTimeout;
     }
+
+    // Size of a group in the threshold relay.
+    uint256 public constant groupSize = 64;
 
     event RelayEntryRequested(
         uint256 indexed requestId,
@@ -112,7 +113,7 @@ library Relay {
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
         require(
-            submitterIndex > 0 && submitterIndex <= self.groupSize,
+            submitterIndex > 0 && submitterIndex <= groupSize,
             "Invalid submitter index"
         );
         require(
@@ -132,13 +133,14 @@ library Relay {
         (
             uint256 firstEligibleIndex,
             uint256 lastEligibleIndex
-        ) = getEligibilityRange(self, entry);
+        ) = getEligibilityRange(self, entry, groupSize);
         require(
             isEligible(
                 self,
                 submitterIndex,
                 firstEligibleIndex,
-                lastEligibleIndex
+                lastEligibleIndex,
+                groupSize
             ),
             "Submitter is not eligible"
         );
@@ -205,7 +207,7 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 relayEntryTimeout = (self.groupSize *
+        uint256 relayEntryTimeout = (groupSize *
             self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
 
@@ -216,22 +218,25 @@ library Relay {
 
     /// @notice Determines the eligibility range for given relay entry basing on
     ///         current block number.
-    /// @param entry Entry value for which the eligibility range should be
+    /// @param _entry Entry value for which the eligibility range should be
     ///        determined.
+    /// @param _groupSize Group size for which eligibility range should be determined.
     /// @return firstEligibleIndex Index of the first member which is eligible
     ///         to submit the relay entry.
     /// @return lastEligibleIndex Index of the last member which is eligible
     ///         to submit the relay entry.
-    function getEligibilityRange(Data storage self, bytes calldata entry)
+    function getEligibilityRange(
+        Data storage self,
+        bytes calldata _entry,
+        uint256 _groupSize
+    )
         internal
         view
         returns (uint256 firstEligibleIndex, uint256 lastEligibleIndex)
     {
-        uint256 groupSize = self.groupSize;
-
         // Modulo `groupSize` will give indexes in range <0, groupSize-1>
         // We count member indexes from `1` so we need to add `1` to the result.
-        firstEligibleIndex = (uint256(keccak256(entry)) % groupSize) + 1;
+        firstEligibleIndex = (uint256(keccak256(_entry)) % _groupSize) + 1;
 
         // Shift is computed by leveraging Solidity integer division which is
         // equivalent to floored division. That gives the desired result.
@@ -239,13 +244,13 @@ library Relay {
         // it explicitly.
         uint256 shift = (block.number - self.currentRequest.startBlock) /
             self.relayEntrySubmissionEligibilityDelay;
-        shift = shift > groupSize - 1 ? groupSize - 1 : shift;
+        shift = shift > _groupSize - 1 ? _groupSize - 1 : shift;
 
         // Last eligible index must be wrapped if their value is bigger than
         // the group size.
         lastEligibleIndex = firstEligibleIndex + shift;
-        lastEligibleIndex = lastEligibleIndex > groupSize
-            ? lastEligibleIndex - groupSize
+        lastEligibleIndex = lastEligibleIndex > _groupSize
+            ? lastEligibleIndex - _groupSize
             : lastEligibleIndex;
 
         return (firstEligibleIndex, lastEligibleIndex);
@@ -253,32 +258,36 @@ library Relay {
 
     /// @notice Returns whether the given submitter index is eligible to submit
     ///         a relay entry within given eligibility range.
-    /// @param submitterIndex Index of the submitter whose eligibility is checked.
-    /// @param firstEligibleIndex First index of the given eligibility range.
-    /// @param lastEligibleIndex Last index of the given eligibility range.
+    /// @param _submitterIndex Index of the submitter whose eligibility is checked.
+    /// @param _firstEligibleIndex First index of the given eligibility range.
+    /// @param _lastEligibleIndex Last index of the given eligibility range.
+    /// @param _groupSize Group size for which eligibility should be checked.
     /// @return True if eligible. False otherwise.
     function isEligible(
+        /* solhint-disable-next-line no-unused-vars */
         Data storage self,
-        uint256 submitterIndex,
-        uint256 firstEligibleIndex,
-        uint256 lastEligibleIndex
+        uint256 _submitterIndex,
+        uint256 _firstEligibleIndex,
+        uint256 _lastEligibleIndex,
+        uint256 _groupSize
     ) internal view returns (bool) {
-        if (firstEligibleIndex <= lastEligibleIndex) {
+        if (_firstEligibleIndex <= _lastEligibleIndex) {
             // First eligible index is equal or smaller than the last.
             // We just need to make sure the submitter index is in range
             // <firstEligibleIndex, lastEligibleIndex>.
             return
-                firstEligibleIndex <= submitterIndex &&
-                submitterIndex <= lastEligibleIndex;
+                _firstEligibleIndex <= _submitterIndex &&
+                _submitterIndex <= _lastEligibleIndex;
         } else {
             // First eligible index is bigger than the last. We need to deal
             // with wrapped range and check whether the submitter index is
             // either in range <1, lastEligibleIndex> or
             // <firstEligibleIndex, groupSize>.
             return
-                (1 <= submitterIndex && submitterIndex <= lastEligibleIndex) ||
-                (firstEligibleIndex <= submitterIndex &&
-                    submitterIndex <= self.groupSize);
+                (1 <= _submitterIndex &&
+                    _submitterIndex <= _lastEligibleIndex) ||
+                (_firstEligibleIndex <= _submitterIndex &&
+                    _submitterIndex <= _groupSize);
         }
     }
 }
