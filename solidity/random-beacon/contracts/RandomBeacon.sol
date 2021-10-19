@@ -17,6 +17,7 @@ pragma solidity ^0.8.6;
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
+import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -44,6 +45,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
+    using Callback for Callback.Data;
 
     // Constant parameters
 
@@ -138,6 +140,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     DKG.Data internal dkg;
     Groups.Data internal groups;
     Relay.Data internal relay;
+    Callback.Data internal callback;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -182,6 +185,10 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     );
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
+    event CallbackExecuted(uint256 entry, uint256 entrySubmittedBlock);
+
+    event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -439,12 +446,27 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         random number).
     /// @param previousEntry Previous relay entry.
     function requestRelayEntry(bytes calldata previousEntry) external {
+        IRandomBeaconConsumer callbackContract = IRandomBeaconConsumer(address(0));
+        requestRelayEntry(previousEntry, callbackContract);
+    }
+
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number).
+    /// @param previousEntry Previous relay entry.
+    /// @param callbackContract Beacon consumer callback contract.
+    function requestRelayEntry(bytes calldata previousEntry, IRandomBeaconConsumer callbackContract) public {
         Groups.Group memory group =
             groups.selectGroup(uint256(keccak256(previousEntry)));
 
         relay.requestEntry(group, previousEntry);
+        
+        if (address(callbackContract) != address(0)) {
+            callback.callbackContract = callbackContract;
+        }
     }
 
+    /// TODO: won't compile because of 'entry': uint256 vs bytes
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
@@ -458,5 +480,20 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
             // TODO: Once implemented, invoke:
             // createGroup(uint256(keccak256(entry)));
         }
+
+        callback.entrySubmittedBlock = block.number;
+
+        IRandomBeaconConsumer callbackContract = callback.callbackContract;
+        if (address(callbackContract) != address(0)) {
+            try callbackContract.__beaconCallback{gas: callbackGasLimit}(entry, block.number) {
+                emit CallbackExecuted(entry, block.number);
+            } catch {
+                emit CallbackFailed(entry, block.number);
+            }
+        }
+    }
+
+    function executeCallback(uint256 entry, uint256 entryValidityBlocks) external {
+        callback.executeCallback(entry, entryValidityBlocks);
     }
 }
