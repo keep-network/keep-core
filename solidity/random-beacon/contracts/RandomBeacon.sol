@@ -403,9 +403,7 @@ contract RandomBeacon is Ownable {
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
 
-        groups.addPendingGroup(dkgResult.groupPubKey);
-        // TODO: Does it have to be a separate function call, can't we include setGroupMembers in addPendingGroup?
-        groups.setGroupMembers(
+        groups.addPendingGroup(
             dkgResult.groupPubKey,
             dkgResult.members,
             dkgResult.misbehaved

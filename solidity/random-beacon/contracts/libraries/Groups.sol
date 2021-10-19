@@ -31,9 +31,12 @@ library Groups {
     }
 
     /// @notice Adds a new group.
-    function addPendingGroup(Data storage self, bytes calldata groupPubKey)
-        internal
-    {
+    function addPendingGroup(
+        Data storage self,
+        bytes calldata groupPubKey,
+        address[] memory members,
+        bytes memory misbehaved
+    ) internal {
         if (self.groupIndices[groupPubKey] != 0) {
             require(
                 !wasGroupActivated(self, groupPubKey),
@@ -47,22 +50,16 @@ library Groups {
         Group memory group;
         group.groupPubKey = groupPubKey;
         self.groups.push(group);
+
+        setGroupMembers(_getGroup((self), groupPubKey), members, misbehaved);
     }
 
     // TODO: This function should be optimized for members storing.
     function setGroupMembers(
-        Data storage self,
-        bytes memory groupPubKey,
+        Group storage group,
         address[] memory members,
         bytes memory misbehaved
-    ) internal {
-        require(
-            !wasGroupActivated(self, groupPubKey),
-            "group was already activated"
-        );
-
-        Group storage group = _getGroup(self, groupPubKey);
-
+    ) private {
         group.members = members;
 
         // Iterate misbehaved array backwards, replace misbehaved
