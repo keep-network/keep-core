@@ -402,10 +402,14 @@ contract RandomBeacon is Ownable {
         // TODO: Set members in the group
     }
 
+    /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
     }
 
+    /// @notice Approves DKG result. Can be called after challenge period for the
+    ///         submitted result is finished. Considers the submitted result as
+    ///         valid and completes the group creation.
     function approveDkgResult() external {
         bytes32 resultHash = dkg.approveResult();
 
@@ -414,6 +418,8 @@ contract RandomBeacon is Ownable {
         // TODO: Unlock sortition pool
     }
 
+    /// @notice Challenges DKG result. If the submitted result is proved to be
+    ///         invalid it reverts the DKG back to the result submission phase.
     function challengeDkgResult() external {
         // TODO: Determine parameters required for DKG result challenges.
         bytes32 resultHash = dkg.challengeResult();

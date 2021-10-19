@@ -179,7 +179,9 @@ library DKG {
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
     ///         for off-chain protocol execution and time for the result publication
     ///         for all group members. After this time result cannot be submitted
-    ///         and DKG can be notified about the timeout.
+    ///         and DKG can be notified about the timeout. DKG period is adjusted
+    ///         by result submission offset that include blocks that were mined
+    ///         while invalid result has been registered until it got challenged.
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut(Data storage self) internal view returns (bool) {
         return
@@ -289,6 +291,7 @@ library DKG {
         }
     }
 
+    /// @notice Notifies about DKG timeout.
     function notifyTimeout(Data storage self) internal cleanup(self) {
         require(hasDkgTimedOut(self), "dkg has not timed out");
 
@@ -297,6 +300,9 @@ library DKG {
         emit DkgTimedOut();
     }
 
+    /// @notice Approves DKG result. Can be called after challenge period for the
+    ///         submitted result is finished. Considers the submitted result as
+    ///         valid and completes the group creation.
     function approveResult(Data storage self)
         internal
         cleanup(self)
@@ -319,6 +325,9 @@ library DKG {
         return self.submittedResultHash;
     }
 
+    /// @notice Challenges DKG result. If the submitted result is proved to be
+    ///         invalid it reverts the DKG back to the result submission phase.
+    /// @dev Can be called during a challenge period for the submitted result.
     // TODO: When implementing challenges verify what parameters are required.
     function challengeResult(Data storage self) internal returns (bytes32) {
         require(
