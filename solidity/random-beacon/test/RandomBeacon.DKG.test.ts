@@ -618,6 +618,33 @@ describe("RandomBeacon", () => {
               ).to.be.revertedWith("current state is not AWAITING_RESULT")
             })
           })
+
+          context("with dkg result challenged", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(startBlock + constants.offchainDkgTime)
+
+              await signAndSubmitDkgResult(signers, startBlock)
+
+              await randomBeacon.challengeDkgResult()
+            })
+
+            it("allows first member to submit", async () => {
+              const {
+                transaction: tx,
+                dkgResult,
+                dkgResultHash,
+              } = await signAndSubmitDkgResult(signers, startBlock)
+
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultSubmitted")
+                .withArgs(
+                  expectedSeed,
+                  dkgResultHash,
+                  dkgResult.groupPubKey,
+                  signers.get(1)
+                )
+            })
+          })
         })
       })
 
