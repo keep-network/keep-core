@@ -68,9 +68,16 @@ library Relay {
         Groups.Group memory group,
         bytes calldata previousEntry
     ) internal {
-        require(!isRequestInProgress(self), "Another relay request in progress");
+        require(
+            !isRequestInProgress(self),
+            "Another relay request in progress"
+        );
 
-        self.tToken.safeTransferFrom(msg.sender, address(this), self.relayRequestFee);
+        self.tToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            self.relayRequestFee
+        );
 
         uint256 currentRequestId = ++self.requestCount;
 
@@ -84,7 +91,11 @@ library Relay {
             previousEntry
         );
 
-        emit RelayEntryRequested(currentRequestId, group.groupPubKey, previousEntry);
+        emit RelayEntryRequested(
+            currentRequestId,
+            group.groupPubKey,
+            previousEntry
+        );
     }
 
     /// @notice Creates a new relay entry.
@@ -117,10 +128,17 @@ library Relay {
             "Invalid entry"
         );
 
-        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) =
-            getEligibilityRange(self, entry);
+        (
+            uint256 firstEligibleIndex,
+            uint256 lastEligibleIndex
+        ) = getEligibilityRange(self, entry);
         require(
-            isEligible(self, submitterIndex, firstEligibleIndex, lastEligibleIndex),
+            isEligible(
+                self,
+                submitterIndex,
+                firstEligibleIndex,
+                lastEligibleIndex
+            ),
             "Submitter is not eligible"
         );
 
@@ -138,10 +156,9 @@ library Relay {
 
     /// @notice Set relayRequestFee parameter.
     /// @param newRelayRequestFee New value of the parameter.
-    function setRelayRequestFee(
-        Data storage self,
-        uint256 newRelayRequestFee
-    ) internal {
+    function setRelayRequestFee(Data storage self, uint256 newRelayRequestFee)
+        internal
+    {
         require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayRequestFee = newRelayRequestFee;
@@ -155,8 +172,8 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntrySubmissionEligibilityDelay =
-            newRelayEntrySubmissionEligibilityDelay;
+        self
+            .relayEntrySubmissionEligibilityDelay = newRelayEntrySubmissionEligibilityDelay;
     }
 
     /// @notice Set relayEntryHardTimeout parameter.
@@ -172,22 +189,27 @@ library Relay {
 
     /// @notice Returns whether a relay entry request is currently in progress.
     /// @return True if there is a request in progress. False otherwise.
-    function isRequestInProgress(
-        Data storage self
-    ) internal view returns (bool) {
+    function isRequestInProgress(Data storage self)
+        internal
+        view
+        returns (bool)
+    {
         return self.currentRequest.id != 0;
     }
 
     /// @notice Returns whether the current relay request has timed out.
     /// @return True if the request timed out. False otherwise.
-    function hasRequestTimedOut(
-        Data storage self
-    ) internal view returns (bool) {
-        uint256 relayEntryTimeout =
-            (self.groupSize * self.relayEntrySubmissionEligibilityDelay) +
+    function hasRequestTimedOut(Data storage self)
+        internal
+        view
+        returns (bool)
+    {
+        uint256 relayEntryTimeout = (self.groupSize *
+            self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
 
-        return isRequestInProgress(self) &&
+        return
+            isRequestInProgress(self) &&
             block.number > self.currentRequest.startBlock + relayEntryTimeout;
     }
 
@@ -199,10 +221,11 @@ library Relay {
     ///         to submit the relay entry.
     /// @return lastEligibleIndex Index of the last member which is eligible
     ///         to submit the relay entry.
-    function getEligibilityRange(
-        Data storage self,
-        bytes calldata entry
-    ) internal view returns (uint256 firstEligibleIndex, uint256 lastEligibleIndex) {
+    function getEligibilityRange(Data storage self, bytes calldata entry)
+        internal
+        view
+        returns (uint256 firstEligibleIndex, uint256 lastEligibleIndex)
+    {
         uint256 groupSize = self.groupSize;
 
         // Modulo `groupSize` will give indexes in range <0, groupSize-1>
@@ -220,8 +243,9 @@ library Relay {
         // Last eligible index must be wrapped if their value is bigger than
         // the group size.
         lastEligibleIndex = firstEligibleIndex + shift;
-        lastEligibleIndex = lastEligibleIndex > groupSize ?
-            lastEligibleIndex - groupSize : lastEligibleIndex;
+        lastEligibleIndex = lastEligibleIndex > groupSize
+            ? lastEligibleIndex - groupSize
+            : lastEligibleIndex;
 
         return (firstEligibleIndex, lastEligibleIndex);
     }
@@ -242,15 +266,18 @@ library Relay {
             // First eligible index is equal or smaller than the last.
             // We just need to make sure the submitter index is in range
             // <firstEligibleIndex, lastEligibleIndex>.
-            return firstEligibleIndex <= submitterIndex &&
+            return
+                firstEligibleIndex <= submitterIndex &&
                 submitterIndex <= lastEligibleIndex;
         } else {
             // First eligible index is bigger than the last. We need to deal
             // with wrapped range and check whether the submitter index is
             // either in range <1, lastEligibleIndex> or
             // <firstEligibleIndex, groupSize>.
-            return (1 <= submitterIndex && submitterIndex <= lastEligibleIndex) ||
-                (firstEligibleIndex <= submitterIndex && submitterIndex <= self.groupSize);
+            return
+                (1 <= submitterIndex && submitterIndex <= lastEligibleIndex) ||
+                (firstEligibleIndex <= submitterIndex &&
+                    submitterIndex <= self.groupSize);
         }
     }
 }

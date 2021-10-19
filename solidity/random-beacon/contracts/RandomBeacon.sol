@@ -211,7 +211,9 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relay.tToken = _tToken;
         relay.groupSize = _groupSize;
         relay.setRelayRequestFee(relayRequestFee);
-        relay.setRelayEntrySubmissionEligibilityDelay(relayEntrySubmissionEligibilityDelay);
+        relay.setRelayEntrySubmissionEligibilityDelay(
+            relayEntrySubmissionEligibilityDelay
+        );
         relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
     }
 
@@ -236,7 +238,9 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         callbackGasLimit = _callbackGasLimit;
 
         relay.setRelayRequestFee(relayRequestFee);
-        relay.setRelayEntrySubmissionEligibilityDelay(relayEntrySubmissionEligibilityDelay);
+        relay.setRelayEntrySubmissionEligibilityDelay(
+            relayEntrySubmissionEligibilityDelay
+        );
         relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
@@ -440,8 +444,9 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         random number).
     /// @param previousEntry Previous relay entry.
     function requestRelayEntry(bytes calldata previousEntry) external {
-        Groups.Group memory group =
-            groups.selectGroup(uint256(keccak256(previousEntry)));
+        Groups.Group memory group = groups.selectGroup(
+            uint256(keccak256(previousEntry))
+        );
 
         relay.requestEntry(group, previousEntry);
     }
@@ -449,10 +454,10 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(
-        uint256 submitterIndex,
-        bytes calldata entry
-    ) external nonReentrant {
+    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
+        external
+        nonReentrant
+    {
         relay.submitEntry(submitterIndex, entry);
 
         if (relay.requestCount % groupCreationFrequency == 0) {
