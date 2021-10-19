@@ -6,13 +6,16 @@ pragma abicoder v1;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interfaces/IMerkleDrop128.sol";
 
-contract MerkleDrop128 is IMerkleDrop128 {
+contract MerkleDrop128 is IMerkleDrop128, Ownable {
+    using Address for address payable;
     using SafeERC20 for IERC20;
 
     address public immutable override token;
@@ -21,6 +24,10 @@ contract MerkleDrop128 is IMerkleDrop128 {
 
     // This is a packed array of booleans.
     mapping(uint256 => uint256) private _claimedBitMap;
+
+    uint256 private constant _CLAIM_GAS_COST = 60000;
+
+    receive() external payable {}  // solhint-disable-line no-empty-blocks
 
     constructor(address token_, bytes16 merkleRoot_, uint256 depth_) {
         token = token_;
@@ -37,6 +44,7 @@ contract MerkleDrop128 is IMerkleDrop128 {
         require(valid, "MD: Invalid proof");
         _invalidate(index);
         IERC20(token).safeTransfer(receiver, amount);
+        _cashback();
     }
 
     function verify(bytes calldata proof, bytes16 root, bytes16 leaf) external view returns (bool valid, uint256 index) {
@@ -49,6 +57,14 @@ contract MerkleDrop128 is IMerkleDrop128 {
         uint256 claimedWord = _claimedBitMap[claimedWordIndex];
         uint256 mask = (1 << claimedBitIndex);
         return claimedWord & mask == mask;
+    }
+
+    function _cashback() private {
+        uint256 balance = address(this).balance;
+        if (balance > 0) {
+            // solhint-disable-next-line avoid-tx-origin
+            payable(tx.origin).sendValue(Math.min(block.basefee * _CLAIM_GAS_COST, balance));
+        }
     }
 
     function _invalidate(uint256 index) private {
@@ -90,6 +106,14 @@ contract MerkleDrop128 is IMerkleDrop128 {
         }
         unchecked {
             index <<= depth - proof.length / 16;
+        }
+    }
+
+    function rescueFunds(address token_, uint256 amount) external onlyOwner {
+        if (token_ == address(0)) {
+            payable(msg.sender).sendValue(amount);
+        } else {
+            IERC20(token_).safeTransfer(msg.sender, amount);
         }
     }
 }
