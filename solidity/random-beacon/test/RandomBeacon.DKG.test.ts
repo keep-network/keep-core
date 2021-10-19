@@ -62,6 +62,12 @@ describe("RandomBeacon", () => {
           .to.emit(randomBeacon, "DkgStarted")
           .withArgs(expectedSeed)
       })
+
+      it("stores seed", async () => {
+        await expect((await randomBeacon.getDkgData()).seed).to.be.equal(
+          expectedSeed
+        )
+      })
     })
 
     context("with genesis in progress", async () => {
@@ -376,10 +382,12 @@ describe("RandomBeacon", () => {
     })
 
     context("with group creation in progress", async () => {
+      let expectedSeed: BigNumber
       let startBlock: number
 
       beforeEach("run genesis", async () => {
-        const [genesisTx] = await genesis()
+        let genesisTx: ContractTransaction
+        ;[genesisTx, expectedSeed] = await genesis()
 
         startBlock = genesisTx.blockNumber
       })
@@ -429,7 +437,12 @@ describe("RandomBeacon", () => {
 
             await expect(tx)
               .to.emit(randomBeacon, "DkgResultSubmitted")
-              .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
+              .withArgs(
+                expectedSeed,
+                dkgResultHash,
+                dkgResult.groupPubKey,
+                signers.get(1)
+              )
           })
 
           it("succeeds for the first submitter", async () => {
@@ -440,7 +453,12 @@ describe("RandomBeacon", () => {
             } = await signAndSubmitDkgResult(signers, startBlock, 1)
             await expect(tx)
               .to.emit(randomBeacon, "DkgResultSubmitted")
-              .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
+              .withArgs(
+                expectedSeed,
+                dkgResultHash,
+                dkgResult.groupPubKey,
+                signers.get(1)
+              )
           })
 
           it("reverts for the second submitter", async () => {
@@ -471,6 +489,7 @@ describe("RandomBeacon", () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(
+                    expectedSeed,
                     dkgResultHash,
                     dkgResult.groupPubKey,
                     signers.get(1)
@@ -507,6 +526,7 @@ describe("RandomBeacon", () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(
+                    expectedSeed,
                     dkgResultHash,
                     dkgResult.groupPubKey,
                     signers.get(1)
@@ -523,6 +543,7 @@ describe("RandomBeacon", () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(
+                    expectedSeed,
                     dkgResultHash,
                     dkgResult.groupPubKey,
                     signers.get(2)
@@ -554,6 +575,7 @@ describe("RandomBeacon", () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(
+                    expectedSeed,
                     dkgResultHash,
                     dkgResult.groupPubKey,
                     signers.get(1)
@@ -574,6 +596,7 @@ describe("RandomBeacon", () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultSubmitted")
                   .withArgs(
+                    expectedSeed,
                     dkgResultHash,
                     dkgResult.groupPubKey,
                     signers.get(constants.groupSize)
@@ -737,10 +760,12 @@ describe("RandomBeacon", () => {
     })
 
     context("with group creation in progress", async () => {
+      let expectedSeed: BigNumber
       let startBlock: number
 
       beforeEach("run genesis", async () => {
-        const [genesisTx] = await genesis()
+        let genesisTx
+        ;[genesisTx, expectedSeed] = await genesis()
 
         startBlock = genesisTx.blockNumber
       })
@@ -796,7 +821,9 @@ describe("RandomBeacon", () => {
           })
 
           it("emits an event", async () => {
-            await expect(tx).to.emit(randomBeacon, "DkgTimedOut")
+            await expect(tx)
+              .to.emit(randomBeacon, "DkgTimedOut")
+              .withArgs(expectedSeed)
           })
 
           it("cleans dkg data", async () => {
@@ -1154,6 +1181,8 @@ async function assertDkgResultCleanData(randomBeacon: TestRandomBeacon) {
     dkgData.parameters.resultSubmissionEligibilityDelay,
     "unexpected resultSubmissionEligibilityDelay"
   ).to.eq(params.dkgResultSubmissionEligibilityDelay)
+
+  expect(dkgData.seed, "unexpected seed").to.eq(0)
 
   expect(dkgData.startBlock, "unexpected startBlock").to.eq(0)
 
