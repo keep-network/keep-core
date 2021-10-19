@@ -61,7 +61,7 @@ contract RandomBeaconGovernance is Ownable {
     RandomBeacon public randomBeacon;
 
     // Long governance delay used for critical parameters giving a chance for
-    // stakers to opt out before the change is finalized in case they do not 
+    // stakers to opt out before the change is finalized in case they do not
     // agree with that change. The maximum group lifetime must not be longer
     // than this delay.
     //
@@ -70,7 +70,7 @@ contract RandomBeaconGovernance is Ownable {
     // - callback gas limit
     // - group lifetime
     // - relay entry submission failure slashing amount
-    uint256 internal CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
+    uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
 
     // Short governance delay for non-critical parameters. Honest stakers should
     // not be severely affected by any change of these parameters.
@@ -84,7 +84,7 @@ contract RandomBeaconGovernance is Ownable {
     // - DKG result submission reward
     // - sortition pool unlocking reward
     // - malicious DKG result slashing amount
-    uint256 internal STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours; 
+    uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
 
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
@@ -209,17 +209,18 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            relayRequestFeeChangeInitiated, 
+            relayRequestFeeChangeInitiated,
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit RelayRequestFeeUpdated(newRelayRequestFee);
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             newRelayRequestFee,
             randomBeacon.relayEntrySubmissionEligibilityDelay(),
             randomBeacon.relayEntryHardTimeout(),
             randomBeacon.callbackGasLimit()
         );
-        emit RelayRequestFeeUpdated(newRelayRequestFee);
         relayRequestFeeChangeInitiated = 0;
         newRelayRequestFee = 0;
     }
@@ -258,14 +259,15 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit RelayEntrySubmissionEligibilityDelayUpdated(
+            newRelayEntrySubmissionEligibilityDelay
+        );
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             newRelayEntrySubmissionEligibilityDelay,
             randomBeacon.relayEntryHardTimeout(),
             randomBeacon.callbackGasLimit()
-        );
-        emit RelayEntrySubmissionEligibilityDelayUpdated(
-            newRelayEntrySubmissionEligibilityDelay
         );
         relayEntrySubmissionEligibilityDelayChangeInitiated = 0;
         newRelayEntrySubmissionEligibilityDelay = 0;
@@ -299,13 +301,14 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySubmissionEligibilityDelay(),
             newRelayEntryHardTimeout,
             randomBeacon.callbackGasLimit()
         );
-        emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
         relayEntryHardTimeoutChangeInitiated = 0;
         newRelayEntryHardTimeout = 0;
     }
@@ -318,8 +321,9 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
     {
         /* solhint-disable not-rely-on-time */
+        // slither-disable-next-line too-many-digits
         require(
-            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1000000,
+            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1e6,
             "Callback gas limit must be > 0 and <= 1000000"
         );
         newCallbackGasLimit = _newCallbackGasLimit;
@@ -342,13 +346,14 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit CallbackGasLimitUpdated(newCallbackGasLimit);
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySubmissionEligibilityDelay(),
             randomBeacon.relayEntryHardTimeout(),
             newCallbackGasLimit
         );
-        emit CallbackGasLimitUpdated(newCallbackGasLimit);
         callbackGasLimitChangeInitiated = 0;
         newCallbackGasLimit = 0;
     }
@@ -384,11 +389,12 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
             newGroupCreationFrequency,
             randomBeacon.groupLifetime()
         );
-        emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
         groupCreationFrequencyChangeInitiated = 0;
         newGroupCreationFrequency = 0;
     }
@@ -422,11 +428,12 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit GroupLifetimeUpdated(newGroupLifetime);
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
             newGroupLifetime
         );
-        emit GroupLifetimeUpdated(newGroupLifetime);
         groupLifetimeChangeInitiated = 0;
         newGroupLifetime = 0;
     }
@@ -463,12 +470,13 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit DkgResultChallengePeriodLengthUpdated(
+            newDkgResultChallengePeriodLength
+        );
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateDkgParameters(
             newDkgResultChallengePeriodLength,
             randomBeacon.dkgResultSubmissionEligibilityDelay()
-        );
-        emit DkgResultChallengePeriodLengthUpdated(
-            newDkgResultChallengePeriodLength
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
         newDkgResultChallengePeriodLength = 0;
@@ -477,7 +485,7 @@ contract RandomBeaconGovernance is Ownable {
     /// @notice Begins the DKG result submission eligibility delay update
     ///         process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgResultSubmissionEligibilityDelay New DKG result submission 
+    /// @param _newDkgResultSubmissionEligibilityDelay New DKG result submission
     ///        eligibility delay in blocks
     function beginDkgResultSubmissionEligibilityDelayUpdate(
         uint256 _newDkgResultSubmissionEligibilityDelay
@@ -508,11 +516,12 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        randomBeacon.updateDkgParameters(
-            randomBeacon.dkgResultChallengePeriodLength(),
+        emit DkgResultSubmissionEligibilityDelayUpdated(
             newDkgResultSubmissionEligibilityDelay
         );
-        emit DkgResultSubmissionEligibilityDelayUpdated(
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateDkgParameters(
+            randomBeacon.dkgResultChallengePeriodLength(),
             newDkgResultSubmissionEligibilityDelay
         );
         dkgResultSubmissionEligibilityDelayChangeInitiated = 0;
@@ -546,11 +555,12 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit DkgResultSubmissionRewardUpdated(newDkgResultSubmissionReward);
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
             newDkgResultSubmissionReward,
             randomBeacon.sortitionPoolUnlockingReward()
         );
-        emit DkgResultSubmissionRewardUpdated(newDkgResultSubmissionReward);
         dkgResultSubmissionRewardChangeInitiated = 0;
         newDkgResultSubmissionReward = 0;
     }
@@ -582,11 +592,12 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
+        emit SortitionPoolUnlockingRewardUpdated(
             newSortitionPoolUnlockingReward
         );
-        emit SortitionPoolUnlockingRewardUpdated(
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateRewardParameters(
+            randomBeacon.dkgResultSubmissionReward(),
             newSortitionPoolUnlockingReward
         );
         sortitionPoolUnlockingRewardChangeInitiated = 0;
@@ -624,12 +635,13 @@ contract RandomBeaconGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
+        emit RelayEntrySubmissionFailureSlashingAmountUpdated(
+            newRelayEntrySubmissionFailureSlashingAmount
+        );
+        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
             newRelayEntrySubmissionFailureSlashingAmount,
             randomBeacon.maliciousDkgResultSlashingAmount()
-        );
-        emit RelayEntrySubmissionFailureSlashingAmountUpdated(
-            newRelayEntrySubmissionFailureSlashingAmount
         );
         relayEntrySubmissionFailureSlashingAmountChangeInitiated = 0;
         newRelayEntrySubmissionFailureSlashingAmount = 0;
@@ -664,11 +676,12 @@ contract RandomBeaconGovernance is Ownable {
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        randomBeacon.updateSlashingParameters(
-            randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
+        emit MaliciousDkgResultSlashingAmountUpdated(
             newMaliciousDkgResultSlashingAmount
         );
-        emit MaliciousDkgResultSlashingAmountUpdated(
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateSlashingParameters(
+            randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
             newMaliciousDkgResultSlashingAmount
         );
         maliciousDkgResultSlashingAmountChangeInitiated = 0;
@@ -716,7 +729,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntryHardTimeoutChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -731,7 +744,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 callbackGasLimitChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -746,7 +759,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 groupCreationFrequencyChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY 
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -760,7 +773,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 groupLifetimeChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
@@ -835,7 +848,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntrySubmissionFailureSlashingAmountChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY 
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }
 

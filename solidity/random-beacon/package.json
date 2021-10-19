@@ -12,8 +12,8 @@
     "lint:fix": "npm run lint:fix:eslint && npm run lint:fix:sol && npm run lint:config:fix",
     "lint:eslint": "eslint .",
     "lint:fix:eslint": "eslint . --fix",
-    "lint:sol": "solhint 'contracts/**/*.sol'",
-    "lint:fix:sol": "solhint 'contracts/**/*.sol' --fix",
+    "lint:sol": "solhint 'contracts/**/*.sol' && prettier --check '**/*.sol'",
+    "lint:fix:sol": "solhint 'contracts/**/*.sol' --fix && prettier --write '**/*.sol'",
     "lint:config": "prettier --check '**/*.@(json|yaml)'",
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'"
   },

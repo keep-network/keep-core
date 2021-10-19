@@ -198,7 +198,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relayRequestFee = 100e18;
         relayEntrySubmissionEligibilityDelay = 10;
         relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
-        callbackGasLimit = 200000;
+        callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -279,11 +279,31 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 _dkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
         dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
-        dkg.setResultSubmissionEligibilityDelay(_dkgResultSubmissionEligibilityDelay);
+        dkg.setResultSubmissionEligibilityDelay(
+            _dkgResultSubmissionEligibilityDelay
+        );
 
         emit DkgParametersUpdated(
             dkgResultChallengePeriodLength(),
             dkgResultSubmissionEligibilityDelay()
+        );
+    }
+
+    /// @notice Updates the values of reward parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultSubmissionReward New DKG result submission reward
+    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
+    function updateRewardParameters(
+        uint256 _dkgResultSubmissionReward,
+        uint256 _sortitionPoolUnlockingReward
+    ) external onlyOwner {
+        dkgResultSubmissionReward = _dkgResultSubmissionReward;
+        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        emit RewardParametersUpdated(
+            dkgResultSubmissionReward,
+            sortitionPoolUnlockingReward
         );
     }
 
@@ -314,26 +334,12 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         without the DKG result submitted, DKG is considered as timed out
     ///         and no DKG result for this group creation can be submitted
     ///         anymore.
-    function dkgResultSubmissionEligibilityDelay() public view returns (uint256) {
+    function dkgResultSubmissionEligibilityDelay()
+        public
+        view
+        returns (uint256)
+    {
         return dkg.parameters.resultSubmissionEligibilityDelay;
-    }
-
-    /// @notice Updates the values of reward parameters.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract. The caller is responsible for
-    ///      validating parameters.
-    /// @param _dkgResultSubmissionReward New DKG result submission reward
-    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
-    function updateRewardParameters(
-        uint256 _dkgResultSubmissionReward,
-        uint256 _sortitionPoolUnlockingReward
-    ) external onlyOwner {
-        dkgResultSubmissionReward = _dkgResultSubmissionReward;
-        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
-        emit RewardParametersUpdated(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward
-        );
     }
 
     /// @notice Updates the values of slashing parameters.
@@ -412,10 +418,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
 
         // TODO: Register a pending group
 
-        emit DkgResultSubmitted(
-            dkgResult.groupPubKey,
-            msg.sender
-        );
+        emit DkgResultSubmitted(dkgResult.groupPubKey, msg.sender);
     }
 
     /// @notice Check current group creation state.
@@ -428,7 +431,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         for all group members. After this time result cannot be submitted
     ///         and DKG can be notified about the timeout.
     /// @return True if DKG timed out, false otherwise.
-    function hasDkgTimedOut() public view returns (bool) {
+    function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
     }
 
