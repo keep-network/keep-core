@@ -6,7 +6,7 @@ import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
 
-import type { TestRandomBeacon } from "../typechain"
+import type { RandomBeaconStub } from "../typechain"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 
@@ -27,7 +27,7 @@ describe("RandomBeacon", () => {
   let thirdParty: Signer
   let signers: DkgGroupSigners
 
-  let randomBeacon: TestRandomBeacon
+  let randomBeacon: RandomBeaconStub
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -40,7 +40,7 @@ describe("RandomBeacon", () => {
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(testDeployment)
 
-    randomBeacon = contracts.randomBeacon as TestRandomBeacon
+    randomBeacon = contracts.randomBeacon as RandomBeaconStub
   })
 
   describe("genesis", async () => {
@@ -1169,7 +1169,7 @@ async function signDkgResult(
   return { members, signingMemberIndices, signaturesBytes }
 }
 
-async function assertDkgResultCleanData(randomBeacon: TestRandomBeacon) {
+async function assertDkgResultCleanData(randomBeacon: RandomBeaconStub) {
   const dkgData = await randomBeacon.getDkgData()
 
   expect(
