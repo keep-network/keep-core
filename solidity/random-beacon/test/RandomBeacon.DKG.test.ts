@@ -700,7 +700,12 @@ describe("RandomBeacon", () => {
             beforeEach(async () => {
               await mineBlocksTo(startBlock + constants.offchainDkgTime)
 
-              await signAndSubmitDkgResult(signers, startBlock)
+              await signAndSubmitDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                signers,
+                startBlock
+              )
 
               await randomBeacon.challengeDkgResult()
             })
@@ -710,7 +715,12 @@ describe("RandomBeacon", () => {
                 transaction: tx,
                 dkgResult,
                 dkgResultHash,
-              } = await signAndSubmitDkgResult(signers, startBlock)
+              } = await signAndSubmitDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                signers,
+                startBlock
+              )
 
               await expect(tx)
                 .to.emit(randomBeacon, "DkgResultSubmitted")
@@ -854,6 +864,8 @@ describe("RandomBeacon", () => {
               let tx: ContractTransaction
               ;({ transaction: tx, dkgResultHash } =
                 await signAndSubmitDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
                   signers,
                   startBlock,
                   submitterIndex

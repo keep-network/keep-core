@@ -9,7 +9,7 @@ import {
   signAndSubmitDkgResult,
 } from "./utils/dkg"
 import type { DkgGroupSigners } from "./utils/dkg"
-import type { TestRandomBeacon, RandomBeacon } from "../typechain"
+import type { RandomBeaconStub, RandomBeacon } from "../typechain"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 
@@ -19,7 +19,7 @@ describe("RandomBeacon", () => {
   let thirdParty: Signer
   let signers: DkgGroupSigners
 
-  let randomBeacon: TestRandomBeacon & RandomBeacon
+  let randomBeacon: RandomBeaconStub & RandomBeacon
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -32,7 +32,7 @@ describe("RandomBeacon", () => {
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(testDeployment)
 
-    randomBeacon = contracts.randomBeacon as TestRandomBeacon & RandomBeacon
+    randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
   })
 
   describe("submitDkgResult", async () => {
