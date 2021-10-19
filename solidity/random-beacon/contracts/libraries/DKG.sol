@@ -24,6 +24,10 @@ library DKG {
         Parameters parameters;
         // Time in blocks at which DKG started.
         uint256 startBlock;
+        // Time in blocks that should be added to result submission eligibility
+        // delay calculation. It is used in case of a challenge to adjust
+        // block calculation for members submission eligibility.
+        uint256 resultSubmissionStartBlockOffset;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
@@ -90,6 +94,29 @@ library DKG {
     //          published by clients.
     uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
 
+    event DkgStarted(uint256 indexed seed);
+
+    // TODO: Revisit properties returned in this event when working on result
+    // challenges and the client.
+    //  TODO: Should it also return seed to link the result with a DKG run?
+    event DkgResultSubmitted(
+        bytes32 indexed resultHash,
+        bytes indexed groupPubKey,
+        address indexed submitter
+    );
+
+    event DkgTimedOut();
+
+    event DkgResultApproved(
+        bytes32 indexed resultHash,
+        address indexed approver
+    );
+
+    event DkgResultChallenged(
+        bytes32 indexed resultHash,
+        address indexed challenger
+    );
+
     /// @notice Determines the current state of group creation. It doesn't take
     ///         timeouts into consideration. The timeouts should be tracked and
     ///         notified separately.
@@ -113,10 +140,12 @@ library DKG {
         }
     }
 
-    function start(Data storage self) internal {
+    function start(Data storage self, uint256 seed) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
         self.startBlock = block.number;
+
+        emit DkgStarted(seed);
     }
 
     function submitResult(Data storage self, Result calldata result) internal {
@@ -138,12 +167,20 @@ library DKG {
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
+
+        emit DkgResultSubmitted(
+            self.submittedResultHash,
+            result.groupPubKey,
+            msg.sender
+        );
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
     ///         for off-chain protocol execution and time for the result publication
     ///         for all group members. After this time result cannot be submitted
-    ///         and DKG can be notified about the timeout.
+    ///         and DKG can be notified about the timeout. DKG period is adjusted
+    ///         by result submission offset that include blocks that were mined
+    ///         while invalid result has been registered until it got challenged.
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut(Data storage self) internal view returns (bool) {
         return
@@ -151,6 +188,7 @@ library DKG {
             block.number >
             (self.startBlock +
                 offchainDkgTime +
+                self.resultSubmissionStartBlockOffset +
                 groupSize *
                 self.parameters.resultSubmissionEligibilityDelay);
     }
@@ -194,9 +232,9 @@ library DKG {
             "Unexpected submitter index"
         );
 
-        // TODO: In challenges implementation remember about resetting the counter for
-        // eligibility checks, see: https://github.com/keep-network/keep-core/pull/2654#discussion_r728819993
-        uint256 T_init = self.startBlock + offchainDkgTime;
+        uint256 T_init = self.startBlock +
+            offchainDkgTime +
+            self.resultSubmissionStartBlockOffset;
         require(
             block.number >=
                 (T_init +
@@ -252,6 +290,67 @@ library DKG {
         }
     }
 
+    /// @notice Notifies about DKG timeout.
+    function notifyTimeout(Data storage self) internal cleanup(self) {
+        require(hasDkgTimedOut(self), "dkg has not timed out");
+
+        emit DkgTimedOut();
+    }
+
+    /// @notice Approves DKG result. Can be called after challenge period for the
+    ///         submitted result is finished. Considers the submitted result as
+    ///         valid and completes the group creation.
+    function approveResult(Data storage self) internal cleanup(self) {
+        require(
+            currentState(self) == State.CHALLENGE,
+            "current state is not CHALLENGE"
+        );
+
+        require(
+            block.number >
+                self.submittedResultBlock +
+                    self.parameters.resultChallengePeriodLength,
+            "challenge period has not passed yet"
+        );
+
+        emit DkgResultApproved(self.submittedResultHash, msg.sender);
+    }
+
+    /// @notice Challenges DKG result. If the submitted result is proved to be
+    ///         invalid it reverts the DKG back to the result submission phase.
+    /// @dev Can be called during a challenge period for the submitted result.
+    // TODO: When implementing challenges verify what parameters are required.
+    function challengeResult(Data storage self) internal {
+        require(
+            currentState(self) == State.CHALLENGE,
+            "current state is not CHALLENGE"
+        );
+
+        require(
+            block.number <=
+                self.submittedResultBlock +
+                    self.parameters.resultChallengePeriodLength,
+            "challenge period has already passed"
+        );
+
+        // TODO: Verify members with sortition pool
+
+        // Adjust DKG result submission block start, so submission eligibility
+        // starts from the beginning.
+        self.resultSubmissionStartBlockOffset =
+            block.number -
+            self.startBlock -
+            offchainDkgTime;
+
+        // Load result hash from storage, as we are going to delete it.
+        bytes32 resultHash = self.submittedResultHash;
+
+        delete self.submittedResultBlock;
+        delete self.submittedResultHash;
+
+        emit DkgResultChallenged(resultHash, msg.sender);
+    }
+
     /// @notice Set resultChallengePeriodLength parameter.
     function setResultChallengePeriodLength(
         Data storage self,
@@ -288,9 +387,10 @@ library DKG {
 
     /// @notice Cleans up state after DKG completion.
     /// @dev Should be called after DKG times out or a result is approved.
-    // slither-disable-next-line dead-code
-    function cleanup(Data storage self) internal {
+    modifier cleanup(Data storage self) {
+        _;
         delete self.startBlock;
+        delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
         delete self.submittedResultBlock;
     }

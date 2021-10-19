@@ -158,13 +158,26 @@ contract RandomBeacon is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
+    // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
+
     event DkgStarted(uint256 indexed seed);
 
-    // TODO: Revisit properties returned in this event when working on result
-    // challenges and the client.
     event DkgResultSubmitted(
+        bytes32 indexed resultHash,
         bytes indexed groupPubKey,
         address indexed submitter
+    );
+
+    event DkgTimedOut();
+
+    event DkgResultApproved(
+        bytes32 indexed resultHash,
+        address indexed approver
+    );
+
+    event DkgResultChallenged(
+        bytes32 indexed resultHash,
+        address indexed challenger
     );
 
     /// @dev Assigns initial values to parameters to make the beacon work
@@ -362,9 +375,7 @@ contract RandomBeacon is Ownable {
     function createGroup(uint256 seed) internal {
         // TODO: Lock sortition pool.
 
-        dkg.start();
-
-        emit DkgStarted(seed);
+        dkg.start(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
@@ -388,8 +399,32 @@ contract RandomBeacon is Ownable {
         dkg.submitResult(dkgResult);
 
         // TODO: Register a pending group
+        // TODO: Set members in the group
+    }
 
-        emit DkgResultSubmitted(dkgResult.groupPubKey, msg.sender);
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout() external {
+        dkg.notifyTimeout();
+    }
+
+    /// @notice Approves DKG result. Can be called after challenge period for the
+    ///         submitted result is finished. Considers the submitted result as
+    ///         valid and completes the group creation.
+    function approveDkgResult() external {
+        dkg.approveResult();
+
+        // TODO: Activate the pending group.
+
+        // TODO: Unlock sortition pool
+    }
+
+    /// @notice Challenges DKG result. If the submitted result is proved to be
+    ///         invalid it reverts the DKG back to the result submission phase.
+    function challengeDkgResult() external {
+        // TODO: Determine parameters required for DKG result challenges.
+        dkg.challengeResult();
+
+        // TODO: Implement slashing
     }
 
     /// @notice Check current group creation state.
