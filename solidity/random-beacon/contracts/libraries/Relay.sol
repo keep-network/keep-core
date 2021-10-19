@@ -24,18 +24,18 @@ library Relay {
 
     struct Request {
         // Request identifier.
-        uint256 id;
+        uint64 id;
+        // Identifier of group responsible for signing.
+        uint64 groupId;
         // Request start block.
-        uint256 startBlock;
-        // Group responsible for signing as part of the request.
-        Groups.Group group;
-        // Previous entry value which should be signed as part of the request.
-        bytes previousEntry;
+        uint128 startBlock;
     }
 
     struct Data {
         // Total count of all requests.
-        uint256 requestCount;
+        uint64 requestCount;
+        // Previous entry value.
+        bytes previousEntry;
         // Data of current request.
         Request currentRequest;
         // Address of the T token contract.
@@ -54,7 +54,7 @@ library Relay {
 
     event RelayEntryRequested(
         uint256 indexed requestId,
-        bytes groupPublicKey,
+        uint64 groupId,
         bytes previousEntry
     );
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
@@ -62,13 +62,8 @@ library Relay {
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
-    /// @param group Group chosen to handle the request.
-    /// @param previousEntry Previous relay entry.
-    function requestEntry(
-        Data storage self,
-        Groups.Group memory group,
-        bytes calldata previousEntry
-    ) internal {
+    /// @param groupId Identifier of the group chosen to handle the request.
+    function requestEntry(Data storage self, uint64 groupId) internal {
         require(
             !isRequestInProgress(self),
             "Another relay request in progress"
@@ -81,32 +76,29 @@ library Relay {
             self.relayRequestFee
         );
 
-        uint256 currentRequestId = ++self.requestCount;
+        uint64 currentRequestId = ++self.requestCount;
 
         // TODO: Accepting and storing the whole Group object is not efficient
         //       as a lot of data is copied. Revisit once `Groups` library is
         //       ready.
         self.currentRequest = Request(
             currentRequestId,
-            block.number,
-            group,
-            previousEntry
+            groupId,
+            uint128(block.number)
         );
 
-        emit RelayEntryRequested(
-            currentRequestId,
-            group.groupPubKey,
-            previousEntry
-        );
+        emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
     }
 
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
+    /// @param group Group data.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
-        bytes calldata entry
+        bytes calldata entry,
+        Groups.Group memory group
     ) internal {
         require(isRequestInProgress(self), "No relay request in progress");
         // TODO: Add timeout reporting.
@@ -117,16 +109,12 @@ library Relay {
             "Invalid submitter index"
         );
         require(
-            self.currentRequest.group.members[submitterIndex - 1] == msg.sender,
+            group.members[submitterIndex - 1] == msg.sender,
             "Unexpected submitter index"
         );
 
         require(
-            BLS.verify(
-                self.currentRequest.group.groupPubKey,
-                self.currentRequest.previousEntry,
-                entry
-            ),
+            BLS.verify(group.groupPubKey, self.previousEntry, entry),
             "Invalid entry"
         );
 
@@ -152,6 +140,7 @@ library Relay {
         // TODO: If soft timeout has elapsed, take bleeding into account
         //       and slash all members appropriately.
 
+        self.previousEntry = entry;
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);

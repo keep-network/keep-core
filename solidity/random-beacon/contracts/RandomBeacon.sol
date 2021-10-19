@@ -52,6 +52,13 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     uint256 public constant genesisSeed =
         31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
+    /// @dev Seed used as the first relay entry value.
+    /// It's a G1 point G * PI =
+    /// G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
+    /// Where G is the generator of G1 abstract cyclic group.
+    bytes public constant relaySeed =
+        hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
+
     // Governable parameters
 
     /// @notice Relay request fee in T. This fee needs to be provided by the
@@ -177,7 +184,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
 
     event RelayEntryRequested(
         uint256 indexed requestId,
-        bytes groupPublicKey,
+        uint64 groupId,
         bytes previousEntry
     );
 
@@ -204,6 +211,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
 
+        relay.previousEntry = relaySeed;
         relay.tToken = _tToken;
         relay.setRelayRequestFee(relayRequestFee);
         relay.setRelayEntrySubmissionEligibilityDelay(
@@ -437,13 +445,12 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
-    /// @param previousEntry Previous relay entry.
-    function requestRelayEntry(bytes calldata previousEntry) external {
-        Groups.Group memory group = groups.selectGroup(
-            uint256(keccak256(previousEntry))
+    function requestRelayEntry() external {
+        uint64 groupId = groups.selectGroup(
+            uint256(keccak256(relay.previousEntry))
         );
 
-        relay.requestEntry(group, previousEntry);
+        relay.requestEntry(groupId);
     }
 
     /// @notice Creates a new relay entry.
@@ -453,7 +460,11 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         external
         nonReentrant
     {
-        relay.submitEntry(submitterIndex, entry);
+        relay.submitEntry(
+            submitterIndex,
+            entry,
+            groups.getGroup(relay.currentRequest.groupId)
+        );
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             // TODO: Once implemented, invoke:

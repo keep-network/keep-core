@@ -28,11 +28,19 @@ library Groups {
     function selectGroup(Data storage self, uint256 seed)
         internal
         view
-        returns (Groups.Group memory)
+        returns (uint64)
     {
-        // TODO: Assert at least one group exists and implement selection logic.
-        //       Currently this function is just a stub which makes tests working.
+        // TODO: Implementation. Currently this function is just a stub which makes tests working.
+        return 1;
+    }
 
+    /* solhint-disable-next-line no-unused-vars */
+    function getGroup(Data storage self, uint64 groupId)
+        internal
+        view
+        returns (Group memory)
+    {
+        // TODO: Implementation. Currently this function is just a stub which makes tests working.
         address[] memory members = new address[](64);
         // Member with index 16.
         members[15] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);

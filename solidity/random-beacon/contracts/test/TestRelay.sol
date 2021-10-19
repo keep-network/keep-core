@@ -15,7 +15,7 @@ contract TestRelay {
     }
 
     function setCurrentRequestStartBlock() external {
-        relay.currentRequest.startBlock = block.number;
+        relay.currentRequest.startBlock = uint128(block.number);
     }
 
     function isEligible(uint256 submitterIndex, bytes calldata entry)

@@ -50,9 +50,7 @@ describe("RandomBeacon - Relay", () => {
               randomBeacon.address
             )
             await approveTestToken()
-            tx = await randomBeacon
-              .connect(requester)
-              .requestRelayEntry(blsData.previousEntry)
+            tx = await randomBeacon.connect(requester).requestRelayEntry()
           })
 
           it("should deposit relay request fee to the maintenance pool", async () => {
@@ -67,16 +65,14 @@ describe("RandomBeacon - Relay", () => {
           it("should emit RelayEntryRequested event", async () => {
             await expect(tx)
               .to.emit(randomBeacon, "RelayEntryRequested")
-              .withArgs(1, blsData.groupPubKey, blsData.previousEntry)
+              .withArgs(1, 1, blsData.previousEntry)
           })
         })
 
         context("when the requester doesn't pay the relay request fee", () => {
           it("should revert", async () => {
             await expect(
-              randomBeacon
-                .connect(requester)
-                .requestRelayEntry(blsData.previousEntry)
+              randomBeacon.connect(requester).requestRelayEntry()
             ).to.be.revertedWith("Transfer amount exceeds allowance")
           })
         })
@@ -85,16 +81,12 @@ describe("RandomBeacon - Relay", () => {
       context("when there is an other relay entry in progress", () => {
         beforeEach(async () => {
           await approveTestToken()
-          await randomBeacon
-            .connect(requester)
-            .requestRelayEntry(blsData.previousEntry)
+          await randomBeacon.connect(requester).requestRelayEntry()
         })
 
         it("should revert", async () => {
           await expect(
-            randomBeacon
-              .connect(requester)
-              .requestRelayEntry(blsData.previousEntry)
+            randomBeacon.connect(requester).requestRelayEntry()
           ).to.be.revertedWith("Another relay request in progress")
         })
       })
@@ -111,9 +103,7 @@ describe("RandomBeacon - Relay", () => {
     context("when relay request is in progress", () => {
       beforeEach(async () => {
         await approveTestToken()
-        await randomBeacon
-          .connect(requester)
-          .requestRelayEntry(blsData.previousEntry)
+        await randomBeacon.connect(requester).requestRelayEntry()
       })
 
       context("when relay entry is not timed out", () => {
