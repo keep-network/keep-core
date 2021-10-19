@@ -990,12 +990,13 @@ describe("RandomBeacon", () => {
       expectedSubmissionOffset += blocksToMine
 
       // Challenge result 3 at the end of the challenge period
-      await mineBlocks(params.dkgResultChallengePeriodLength - 1)
-      expectedSubmissionOffset += params.dkgResultChallengePeriodLength - 1
+      blocksToMine = params.dkgResultChallengePeriodLength - 1
+      await mineBlocks(blocksToMine)
+      expectedSubmissionOffset += blocksToMine
 
-      await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-        "dkg has not timed out"
-      )
+      await expect(
+        randomBeacon.callStatic.notifyDkgTimeout()
+      ).to.be.revertedWith("dkg has not timed out")
 
       await randomBeacon.challengeDkgResult()
       expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
