@@ -1,0 +1,438 @@
+:toc: macro
+
+= Random Beacon v2 User Acceptance Criteria
+
+:icons: font
+:numbered:
+toc::[]
+
+== Purpose of the document
+This document stores User Acceptance Criteria for Random Beacon v2 feature. It
+will be used to gain common understanding of how Random Beacon v2 should act and
+will be utilised during the acceptance testing of the feature.
+
+== Usear Acceptance Criteria list
+
+[%header,cols="1,4"]
+|===
+| Area
+| UAC
+
+| Relay request
+| Anyone can send a relay entry request transaction.
+
+| Relay request
+| Processing of each relay entry request should always result in the generation
+  of a random number (relay entry) and sometimes also (if certain conditions are
+  met) in a creation of a new signing group.
+
+| Relay request
+| When sending the relay request, the requester should provide a fixed fee in T.
+
+| Relay request
+| Upon receiving the relay entry request, the random beacon contract should
+  determine validity of the request.
+
+| Relay request
+| When determining validity of the relay entry request, the following aspects
+  should be taken into account: +
+  - isn’t the other relay entry request already pending? +
+  - has the requester provided the exact required fee? (if the fee is lower or
+  higher, the transaction should be reverted) +
+  - is there at least one active signing group?
+
+| Relay request
+| If a relay request is submitted before the previous relay request finished
+  being processed, the new request should be rejected (transaction should be
+  reverted).
+
+| Relay request
+| If the relay entry request is deemed valid, then: +
+  - the fee provided by the requester should be deposited in the maintenance
+  pool (with an intention to cover the reimbursements for DKG-related actions) +
+  - the current relay entry should be used by the beacon to select a signing
+  group from the set of active groups (by hashing the relay entry and applying
+  `modulo no_of_active_groups` operation on the result) +
+  - the random beacon contract should emit an event informing about the signing
+  group selection +
+  - the beacon should start the period of signature submission eligibility +
+  - the selected signing group should start off-chain signature generation (upon
+  noticing event sent by the beacon)
+
+| Relay request
+| If the relay entry request is deemed invalid, then: +
+  - the transaction should be reverted
+
+| Relay request - signature generation
+| Once the active group is selected as a signing group, it is tasked with the
+  generation of a BLS threshold signature (based on the current relay entry and
+  the data provided by at least `blsThreshold=(group_size/2) + 1` members of the
+  signing group).
+
+| Relay request - relay entry submission
+| During the signature submission eligibility period only selected members from
+  the group should be eligible to successfully submit the new relay entry
+  result. +
+  - at the beginning (right after the challenge period passes) only one member
+  (with index `new_entry % group_size` should be eligible +
+  - after fixed amount of blocks another member (with index `(new_entry %
+  group_size ) + 1` should become eligible (previous operator remains eligible)
+  - next members should become eligible after each fixed amount of blocks
+
+| Relay request - relay entry submission
+| Upon receiving the transaction submitting the relay entry, the random beacon
+  contract should determine validity of the transaction.
+
+| Relay request - relay entry submission
+| When determining validity of the relay entry submission, the following aspects
+  should be taken into account: +
+  - is the submitter eligible to submit? +
+  - hasn’t the hard timeout for the relay request be reached?
+
+| Relay request - relay entry submission
+| When requesting a relay entry, it should be possible to pass an optional
+  address parameter - this is the address of a contract implementing
+  `IRandomBeaconConsumer` interface
+
+| Relay request - relay entry submission
+| If the transaction submitting the new relay entry gets approved, then: +
+  - the BLS threshold signature should be accepted as a new relay entry +
+// TODO: revisit if 2 weeks removal time should be a governable parameter and if
+// it should be equall to 2 weeks or a different value
+  - operators who became eligible for submitting the relay entry before the
+  member who submitted the relay entry should be punished by being removed from
+  the sortition pool for a fixed amount of time (2 weeks) (in the same tx) +
+  - if an optional address of the `IRandomBeaconConsumer` interface was provided
+  in the tx, the interface should be called +
+  - the creation of a new signing group should be triggered (only sometimes, if
+  it’s the right time)
+
+| Relay request - relay entry submission
+| The transaction submitting relay entry is not reimbursable (i.e. the submitter
+  must provide the fee required for its processing).
+
+| Relay request - relay entry submission
+| The transaction submitting relay entry should have a predictable cost and the
+  gas cost of this transaction should be as low as possible, below 200k gas.
+
+| Relay request - relay entry submission
+| It should be possible to send low gas callbacks (up to the fixed gas cost
+  value) in the transaction submitting the relay entry.
+
+| Relay request - relay entry submission
+| Failure in the callback function should not revert the relay entry transaction.
+
+| Relay request - relay entry submission
+| The operation removing members from the sortition pool should be as cheap as
+  possible so that the member submitting relay entry does not have to pay any
+  additional costs for removing inactive members from the pool.
+
+| Relay request - relay entry timeouts
+| The soft relay entry timeout equals the group size multiplied by the number of
+  blocks for a member to become eligible to submit relay entry. The timer starts
+  at the moment when the first member becomes eligible (the moment when the
+  relay entry was requested). +
+  The hard relay entry timeout is a set value (measured in time units).
+
+| Relay request - relay entry timeouts
+| If no entry was successfully submitted until soft relay timeout is reached,
+  all operators in the group should start bleeding and losing their T stake. The
+  amount of lost stake should incrementally increase from 0 (at the moment of
+  soft relay entry timeout) to a fixed value (at the moment of hard relay entry
+  timeout)
+
+| Relay entry utilisation
+| Applications wanting to use a relay entry should submit another transaction
+  using the relay entry value previously set by the random beacon
+
+| Relay entry utilisation
+| Smart contract consuming new relay entry needs to implement
+  `IRandomBeaconConsumer` interface
+
+| Group creation
+| New groups should be crated with a fixed frequency of relay request (every
+  `N`-th relay entry request should result in the creation of a new group)
+
+| Group creation
+| If according to group creation frequency the relay entry request is the one
+  that should trigger new group creation, the creation should be triggered once
+  a new relay entry appears on the chain (all off-chain clients should start the
+  process of creation of new group using the new entry value and a view
+  sortition pool function call).
+
+| Group creation
+| Frequency must be rare enough to leave the time for the group creation and
+  then (when the pool gets unlocked) for joining operators to pools
+
+| Group creation
+| Group creation start transaction should be embedded into relay entry request
+  transaction
+
+| Group creation
+| Group creation start transaction should lock the sortition pool and emit the
+  group creation start event
+
+| Group creation
+| Group creation start transaction should be as cheap as possible
+
+| Group creation
+| The sortition pool should weigh operators by stake and allow to select the
+  same operator to group multiple times
+
+| Group creation - genesis
+| Beacon genesis should trigger the first group creation based on a fixed,
+  arbitrary seed value
+
+| Group creation - genesis
+| It should not be possible to perform beacon genesis if they are some active
+  groups.
+
+| Group creation - genesis
+| Everybody should be able to run beacon genesis in the following situations: +
+  - when no groups were created by the random beacon before +
+  or +
+  - when there were some groups created by the random beacon before, but they
+  all have expired
+
+| Group creation
+| Group creation start transaction should result in: +
+  - selection of a candidate group consisting of `group_size` members of
+  sortition pool +
+  - triggering of the DKG (distributed key generation) +
+  - the beacon should start the period of DKG result submission eligibility
+
+| Croup creation - selecting members
+| Upon noticing the group creation start event, clients should choose the
+  sortition pool members to the candidate group based on the current relay
+  entry, ensuring that the higher is the stake of an operator, the higher is his
+  chance of being selected to the group.
+
+| Group creation - DKG
+| After group members are determined, they should perform DKG, resulting in the
+  establishment of one of the below statuses: +
+  - success - together with the list of members of the candidate group, the
+  public key of the group and list of misbehaving members (members who were
+  inactive or were disqualified) +
+  - failure - together with the list of disqualified members
+
+| Group creation - DKG submission
+| When determining validity of the tx submitting the DKG result, the following
+  aspects should be taken into account: +
+  - is the submitter eligible at the moment to send the tx? +
+  - are there enough supporting signatures on the result? +
+  - do the signatures come from the stakers with at least a minimum stake? +
+  Only if all the above conditions have been met, the tx is considered valid.
+
+| Group creation - DKG submission
+| The transaction submitting DKG result should have a predictable cost.
+
+| Group creation - DKG submission
+| At a given moment, only selected members from the group should be eligible to
+  successfully submit the DKG result to the chain: +
+  - at the beginning (right after the challenge period passes) only one member
+  with index `hash(new_group_pubkey) % group_size` should be eligible +
+  - after fixed amount of blocks another member (with index
+  `(hash(new_group_pubkey) % group_size ) + 1` should become eligible (previous
+  operator remains eligible) +
+  - next members should become eligible after each fixed amount of blocks
+
+| Group creation - DKG submission
+| If random beacon deems the transaction submitting the DKG valid, then: +
+  - the DKG result submission eligibility period should finish (all other
+  results should be rejected from now on) +
+  - a challenge period should start
+
+| Group creation - DKG challenge
+| Anyone can send a challenge notification that submitted DKG result contains
+  group members not selected by the pool
+
+| Group creation - DKG challenge
+| Upon processing the challenge notification, the random beacon contract should
+  determine validity of the challenge.
+
+| Group creation - DKG challenge
+| When determining validity of the challenge, the following aspects should be
+  taken into account: +
+  - does it reference existing DKG result (if not, then challenge invalid) +
+  - within or outside of the challenge period for the specified DKG result (if
+  outside, then invalid) +
+  - have all members who signed a DKG result been selected by the sortition pool
+  to be in the group (if yes, then challenge invalid)
+
+| Group creation - DKG challenge
+| If the challenge notification was received within the challenge period and was
+  deemed justified, then: +
+  - the malicious DKG result should be immediately discarded (in the same
+  transaction in which notification happened) +
+  - all sortition pool members who signed the result should be slashed (fixed
+  amount) +
+  - notifier should receive 5% from the total slashed amount
+
+| Group creation - DKG challenge
+| If the challenge notification was received within the challenge period and was
+  not justified, then: +
+  - challenge transaction is reverted
+
+| Group creation - DKG challenge
+| If the challenge notification (justified or not) was received outside of the
+  challenge period, then: +
+  - challenge transaction is reverted
+
+| Group creation - DKG challenge
+| If the challenge notification was received within the challenge period and was
+    deemed justified, then: +
+  - the pool should be unlocked +
+  - the fixed amount reward (in T) should be sent from the maintenance pool to
+  the address specified by the notifier
+
+| Group creation - DKG acceptance
+| Anyone can send a transaction requesting unlocking of the sortition pool and
+  requesting marking of the DKG result as accepted
+
+| Group creation - DKG acceptance
+| Upon processing the transaction unlocking the sortition pool and marking the
+  DKG result as accepted, the random beacon contract should determine validity
+  of the transaction
+
+| Group creation - DKG acceptance
+| When determining validity of the tx unlocking the sortition pool and accepting
+  the DKG result, the following aspects should be taken into account: +
+  - is the sortition pool locked? +
+  - has the challenge period already passed? +
+  Only if all the above conditions have been met, the tx is considered valid.
+
+| Group creation - DKG acceptance
+| If the transaction unlocking the sortition pool and marking the DKG result as
+  accepted gets approved, then: +
+  - the sortition pool should get unlocked +
+  - the DKG result should be accepted and a group should be created based on the
+  candidate group +  
+  - submitter should receive the fixed reward (in T), paid from the maintenance
+  pool to the submitter’s address (in the same tx) +
+// TODO: revisit 2 weeks removal time
+  - operators who became eligible for submitting the DKG result before the
+  member who submitted the DKG result should be punished by being removed from
+  the sortition pool for a fixed amount of time (2 weeks) (in the same tx)
+
+| Group creation - DKG timeout
+| The DKG submission timeout equals the group size multiplied by the number of
+  blocks for a member to become eligible to submit the DKG result. The timer
+  starts at the moment when the first member becomes eligible (the moment when
+  DKG was requested)
+
+| Group creation - DKG timeout
+| Anyone can send a transaction reporting DKG timeout.
+
+| Group creation - DKG timeout
+| Upon noticing the DKG timeout notification, the random beacon contract should
+  determine its validity.
+
+| Group creation - DKG timeout
+| When determining validity of the DKG timeout notification, the following
+  aspects should be taken into account: +
+  - does it reference the existing DKG request? (if not, then notification
+  invalid) +
+  - has the DKG timeout passed? (if not, then notification invalid) +
+  - is the sortition pool in a locked state (if not - meaning somebody already
+  unlocked it - then notification invalid)
+
+| Sortition pool - punishments
+// TODO: revisit 2 weeks removal time
+| Member of the sortition pool can be punished with 2 weeks removal from the
+  pool as a result of: +
+  - misbehavior during the DKG generation +
+  - misbehavior during the DKG submission +
+  - misbehavior during relay entry submission
+
+| Sortition pool - punishments
+| Operators punished with removal from the group should not earn rewards for the
+  time of their absence in the pool.
+
+| Sortition pool - punishments
+// TODO: revisit 2 weeks removal time
+| After 2 weeks punish period elapses, operators removed from the sortition pool
+  should be automatically reinstated in the pool and should be able to earn the
+  rewards again (from membership in the pool and potentially submission of the
+  DKG result or unlocking the pool).
+
+| Sortition pool - punishments
+| The operation removing members from the sortition pool should be as cheap as
+  possible so that the member submitting the relay entry or the DKG result does
+  not have to pay any additional costs for removing inactive members from the
+  pool.
+
+| Sortition pool - rewards
+| Operators in the sortition pool can earn T for multiple activities: +
+  - for staying in the pool (given weekly, proportionally to stake) +
+  - for successful submission of the DKG result (fixed value) +
+  - for successful unlocking of the sortition pool if DKG timed out
+
+| Sortition pool - locking
+| When the sortition pool is locked, no operator can enter the pool
+
+| Sortition pool - locking
+| When the ssortition pool is locked, no operator can leave the pool
+
+| Sortition pool - locking
+| Once the ssortition pool gets unlocked, operators can leave the pool
+
+| Sortition pool - locking
+| Once the ssortition pool gets unlocked, new operators can join the pool
+
+// TODO: Once starting values for governable parameters are agreed upon,
+// add them to the UACs
+
+| Governable parameters
+| The frequency of relay requests should be a governable parameter
+
+| Governable parameters
+| The length of the challenge period should be a governable parameter
+
+| Governable parameters
+| The slashing amount for submitting malicious DKG result should be a governable
+  parameter
+
+| Governable parameters
+| The max slashing amount for not submitting the relay entry before the hard
+  timeout should be a governable parameter.
+
+| Governable parameters
+| The reward for submitting a DKG result should be a governable parameter
+
+| Governable parameters
+| The reward for unlocking the sortition pool if DKG timed out should be a
+  governable parameter
+
+| Governable parameters
+| Number of blocks after which a new operator is added to the list of operators
+  eligible for submitting the DKG result and unlocking the group should be a
+  governable parameter. Its initial value should be set to 10 blocks.
+
+| Governable parameters
+| The value of the fee for processing a relay request should be a governable
+  parameter
+
+| Governable parameters
+| The frequency (in blocks) of adding new group members as eligible to submit
+  relay entry should be a governable parameter. Its initial value should be set
+  to 10 blocks.
+
+| Governable parameters
+| The frequency (in blocks) of adding new group members as eligible to submit a
+  DKG result should be a governable parameter. Its initial value should be set
+  to 10 blocks.
+
+| Governable parameters
+| The hard timeout for a relay entry should be a governable parameter. Its
+  initial value should be set to 48 hours (may be specified in a different unit)
+
+| Governable parameters
+| The callback gas limit should be a governable parameter. Its initial value
+  should be set to 50k gas.
+
+| Governable parameters
+| The Staker DAO should be able to modify all the governable parameters
+
+| Upgradability
+| The random beacon contract should not be upgradeable
+|===
