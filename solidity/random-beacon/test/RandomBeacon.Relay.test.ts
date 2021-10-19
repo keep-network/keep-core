@@ -31,6 +31,8 @@ describe("RandomBeacon - Relay", () => {
     randomBeacon = contracts.randomBeacon as RandomBeacon
     testToken = contracts.testToken as TestToken
     testRelay = contracts.testRelay as TestRelay
+
+    await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
   })
 
   describe("requestRelayEntry", () => {

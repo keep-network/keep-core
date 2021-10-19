@@ -61,38 +61,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
 
     // Governable parameters
 
-    /// @notice Relay request fee in T. This fee needs to be provided by the
-    ///         account or contract requesting for a new relay entry.
-    uint256 public relayRequestFee;
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the relay entry. At first, there is only one
-    ///         member in the group eligible to submit the relay entry. Then,
-    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the relay entry at that moment. After
-    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible so that there are three group
-    ///         members eligible to submit the relay entry at that moment. This
-    ///         continues until all group members are eligible to submit the
-    ///         relay entry or until the relay entry is submitted. If all
-    ///         members became eligible to submit the relay entry and one more
-    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
-    ///         entry submitted, the group reaches soft timeout for submitting
-    ///         the relay entry and the slashing starts.
-    uint256 public relayEntrySubmissionEligibilityDelay;
-
-    /// @notice Hard timeout in blocks for a group to submit the relay entry.
-    ///         After all group members became eligible to submit the relay
-    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
-    ///         passed without relay entry submitted, all group members start
-    ///         getting slashed. The slashing amount increases linearly until
-    ///         the group submits the relay entry or until
-    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
-    ///         reached, each group member will get slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`.
-    uint256 public relayEntryHardTimeout;
-
     /// @notice Relay entry callback gas limit. This is the gas limit with which
     ///         callback function provided in the relay request transaction is
     ///         executed. The callback is executed with a new relay entry value
@@ -198,9 +166,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         sortitionPool = _sortitionPool;
 
         // Governable parameters
-        relayRequestFee = 100e18;
-        relayEntrySubmissionEligibilityDelay = 10;
-        relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
@@ -213,11 +178,8 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
 
         relay.previousEntry = relaySeed;
         relay.tToken = _tToken;
-        relay.setRelayRequestFee(relayRequestFee);
-        relay.setRelayEntrySubmissionEligibilityDelay(
-            relayEntrySubmissionEligibilityDelay
-        );
-        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
+        relay.setRelayEntrySubmissionEligibilityDelay(10);
+        relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -235,21 +197,18 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
-        relayRequestFee = _relayRequestFee;
-        relayEntrySubmissionEligibilityDelay = _relayEntrySubmissionEligibilityDelay;
-        relayEntryHardTimeout = _relayEntryHardTimeout;
         callbackGasLimit = _callbackGasLimit;
 
-        relay.setRelayRequestFee(relayRequestFee);
+        relay.setRelayRequestFee(_relayRequestFee);
         relay.setRelayEntrySubmissionEligibilityDelay(
-            relayEntrySubmissionEligibilityDelay
+            _relayEntrySubmissionEligibilityDelay
         );
-        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
+        relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
-            relayRequestFee,
-            relayEntrySubmissionEligibilityDelay,
-            relayEntryHardTimeout,
+            _relayRequestFee,
+            _relayEntrySubmissionEligibilityDelay,
+            _relayEntryHardTimeout,
             callbackGasLimit
         );
     }
@@ -470,5 +429,47 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
             // TODO: Once implemented, invoke:
             // createGroup(uint256(keccak256(entry)));
         }
+    }
+
+    /// @return Relay request fee in T. This fee needs to be provided by the
+    ///         account or contract requesting for a new relay entry.
+    function relayRequestFee() external view returns (uint256) {
+        return relay.relayRequestFee;
+    }
+
+    /// @return The number of blocks it takes for a group member to become
+    ///         eligible to submit the relay entry. At first, there is only one
+    ///         member in the group eligible to submit the relay entry. Then,
+    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the relay entry at that moment. After
+    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
+    ///         group member becomes eligible so that there are three group
+    ///         members eligible to submit the relay entry at that moment. This
+    ///         continues until all group members are eligible to submit the
+    ///         relay entry or until the relay entry is submitted. If all
+    ///         members became eligible to submit the relay entry and one more
+    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
+    ///         entry submitted, the group reaches soft timeout for submitting
+    ///         the relay entry and the slashing starts.
+    function relayEntrySubmissionEligibilityDelay()
+        external
+        view
+        returns (uint256)
+    {
+        return relay.relayEntrySubmissionEligibilityDelay;
+    }
+
+    /// @return Hard timeout in blocks for a group to submit the relay entry.
+    ///         After all group members became eligible to submit the relay
+    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
+    ///         passed without relay entry submitted, all group members start
+    ///         getting slashed. The slashing amount increases linearly until
+    ///         the group submits the relay entry or until
+    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
+    ///         reached, each group member will get slashed for
+    ///         `relayEntrySubmissionFailureSlashingAmount`.
+    function relayEntryHardTimeout() external view returns (uint256) {
+        return relay.relayEntryHardTimeout;
     }
 }
