@@ -393,7 +393,7 @@ describe("RandomBeacon", () => {
           it("reverts with 'current state is not AWAITING_RESULT' error", async () => {
             await expect(
               signAndSubmitDkgResult(signers, startBlock)
-            ).to.revertedWith("current state is not AWAITING_RESULT")
+            ).to.be.revertedWith("current state is not AWAITING_RESULT")
           })
         })
 
@@ -411,7 +411,7 @@ describe("RandomBeacon", () => {
 
             await expect(
               signAndSubmitDkgResult(filteredSigners, startBlock)
-            ).to.revertedWith("Too few signatures")
+            ).to.be.revertedWith("Too few signatures")
           })
 
           it("succeeds with threshold signers", async () => {
@@ -446,7 +446,7 @@ describe("RandomBeacon", () => {
           it("reverts for the second submitter", async () => {
             await expect(
               signAndSubmitDkgResult(signers, startBlock, 2)
-            ).to.revertedWith("Submitter not eligible")
+            ).to.be.revertedWith("Submitter not eligible")
           })
 
           context(
@@ -480,7 +480,7 @@ describe("RandomBeacon", () => {
               it("reverts for the second submitter", async () => {
                 await expect(
                   signAndSubmitDkgResult(signers, startBlock, 2)
-                ).to.revertedWith("Submitter not eligible")
+                ).to.be.revertedWith("Submitter not eligible")
               })
             }
           )
@@ -532,7 +532,7 @@ describe("RandomBeacon", () => {
               it("reverts for the third submitter", async () => {
                 await expect(
                   signAndSubmitDkgResult(signers, startBlock, 3)
-                ).to.revertedWith("Submitter not eligible")
+                ).to.be.revertedWith("Submitter not eligible")
               })
             }
           )
@@ -592,7 +592,7 @@ describe("RandomBeacon", () => {
             it("reverts 'current state is not AWAITING_RESULT' error", async () => {
               await expect(
                 signAndSubmitDkgResult(signers, startBlock)
-              ).to.revertedWith("current state is not AWAITING_RESULT")
+              ).to.be.revertedWith("current state is not AWAITING_RESULT")
             })
           })
         })
@@ -610,7 +610,7 @@ describe("RandomBeacon", () => {
           it("reverts with dkg timeout already passed error", async () => {
             await expect(
               signAndSubmitDkgResult(signers, startBlock)
-            ).to.revertedWith("dkg timeout already passed")
+            ).to.be.revertedWith("dkg timeout already passed")
           })
         })
       })
@@ -727,7 +727,85 @@ describe("RandomBeacon", () => {
     })
   })
 
-  // TODO: Add test for notifyDkgTimeout
+  describe("notifyDkgTimeout", async () => {
+    context("with initial contract state", async () => {
+      it("reverts with 'dkg has not timed out' error", async () => {
+        await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
+          "dkg has not timed out"
+        )
+      })
+    })
+
+    context("with group creation in progress", async () => {
+      let startBlock: number
+
+      beforeEach("run genesis", async () => {
+        const [genesisTx] = await genesis()
+
+        startBlock = genesisTx.blockNumber
+      })
+
+      context("with dkg not timed out", async () => {
+        context("with off-chain dkg time not passed", async () => {
+          beforeEach(async () => {
+            await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
+          })
+
+          it("reverts with 'dkg has not timed out' error", async () => {
+            await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
+              "dkg has not timed out"
+            )
+          })
+        })
+
+        context("with off-chain dkg time passed", async () => {
+          beforeEach(async () => {
+            await mineBlocksTo(startBlock + constants.offchainDkgTime)
+          })
+
+          it("reverts with 'dkg has not timed out' error", async () => {
+            await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
+              "dkg has not timed out"
+            )
+          })
+        })
+
+        context("with result submission period almost ended", async () => {
+          beforeEach(async () => {
+            await mineBlocksTo(startBlock + dkgTimeout - 1)
+          })
+
+          it("reverts with 'dkg has not timed out' error", async () => {
+            await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
+              "dkg has not timed out"
+            )
+          })
+        })
+      })
+
+      context("with dkg timed out", async () => {
+        beforeEach(async () => {
+          await mineBlocksTo(startBlock + dkgTimeout)
+        })
+
+        context("called by a third party", async () => {
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            tx = await randomBeacon.connect(thirdParty).notifyDkgTimeout()
+          })
+
+          it("emits an event", async () => {
+            await expect(tx).to.emit(randomBeacon, "DkgTimedOut")
+          })
+
+          it("cleans dkg data", async () => {
+            await assertDkgResultCleanData(randomBeacon)
+          })
+        })
+      })
+    })
+  })
 
   describe("challengeDkgResult", async () => {
     context("with initial contract state", async () => {
@@ -886,7 +964,6 @@ describe("RandomBeacon", () => {
       // Challenge result 2 in the middle of the challenge period
       await mineBlocks(params.dkgResultChallengePeriodLength / 2)
       expectedSubmissionOffset += params.dkgResultChallengePeriodLength / 2
-
       await randomBeacon.challengeDkgResult()
       expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
 
@@ -916,6 +993,10 @@ describe("RandomBeacon", () => {
       await mineBlocks(params.dkgResultChallengePeriodLength - 1)
       expectedSubmissionOffset += params.dkgResultChallengePeriodLength - 1
 
+      await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
+        "dkg has not timed out"
+      )
+
       await randomBeacon.challengeDkgResult()
       expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
 
@@ -932,7 +1013,9 @@ describe("RandomBeacon", () => {
       await mineBlocks(blocksToMine)
       await expect(
         signAndSubmitDkgResult(signers, startBlock, constants.groupSize)
-      ).revertedWith("dkg timeout already passed")
+      ).to.be.revertedWith("dkg timeout already passed")
+
+      await randomBeacon.notifyDkgTimeout()
     })
   })
 
