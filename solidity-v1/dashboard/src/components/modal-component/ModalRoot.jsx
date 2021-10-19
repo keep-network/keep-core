@@ -11,14 +11,13 @@ const modalRoot = document.getElementById("modal-root")
 
 export const ModalRoot = () => {
   const { modalType, modalProps, closeModal } = useModal()
-  console.log("modalType", modalType, modalProps, closeModal)
 
   if (!modalType) {
     return <></>
   }
   const SpecificModal = MODAL_TYPE_TO_COMPONENT[modalType]
   return ReactDOM.createPortal(
-    <SpecificModal closeModal={closeModal} {...modalProps} />,
+    <SpecificModal onClose={closeModal} {...modalProps} />,
     modalRoot
   )
 }

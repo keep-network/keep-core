@@ -6,6 +6,7 @@ const ModalContext = React.createContext({
   onClose: () => {},
   isCentered: true,
   closeOnOverlayClick: true,
+  size: "md",
 })
 
 const useModalContext = () => {
@@ -23,11 +24,12 @@ export const Modal = ({
   onClose,
   isCentered,
   closeOnOverlayClick,
+  size = "md",
   children,
 }) => {
   return (
     <ModalContext.Provider
-      value={{ isOpen, onClose, isCentered, closeOnOverlayClick }}
+      value={{ isOpen, onClose, isCentered, closeOnOverlayClick, size }}
     >
       <div className="modal">{children}</div>
     </ModalContext.Provider>
@@ -60,9 +62,13 @@ export const ModalOverlay = ({
 }
 
 export const ModalContent = ({ className = "", ...restProps }) => {
+  const { size } = useModalContext()
   return (
     <div className="modal__content-wrapper">
-      <section className="modal__content" {...restProps} />
+      <section
+        className={`modal__content modal__content--${size}`}
+        {...restProps}
+      />
     </div>
   )
 }
