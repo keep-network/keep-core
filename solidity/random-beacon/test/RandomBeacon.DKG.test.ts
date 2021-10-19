@@ -339,7 +339,7 @@ describe("RandomBeacon", () => {
             context("at the end of dkg result submission period", async () => {
               beforeEach(async () => {
                 await mineBlocksTo(
-                  startBlock +
+                  challengeBlockNumber +
                     constants.groupSize *
                       params.dkgResultSubmissionEligibilityDelay
                 )
