@@ -14,6 +14,10 @@ contract TestRelay {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
     }
 
+    function setCurrentRequestStartBlock() external {
+        relay.currentRequest.startBlock = block.number;
+    }
+
     function isEligible(uint256 submitterIndex, bytes calldata entry)
         external
         view

@@ -210,6 +210,8 @@ describe("RandomBeacon - Relay", () => {
 
   describe("isEligible", () => {
     it("should correctly manage the eligibility queue", async () => {
+      await testRelay.setCurrentRequestStartBlock()
+
       // At the beginning only member 8 is eligible because
       // (blsData.groupSignature % groupSize) + 1 = 8.
       await assertMembersEligible([8])
