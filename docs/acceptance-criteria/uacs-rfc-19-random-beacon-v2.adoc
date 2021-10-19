@@ -294,7 +294,8 @@ will be utilised during the acceptance testing of the feature.
   amount) (in the same tx) +
   - notifier should receive 5% from the total slashed amount (in the same tx) +
   - the members of the signing group should be given another chance to publish
-  the DKG result.
+  the DKG result
+  - DKG timeout timer and the result subission eligibility order shoul be reset.
 
 | Group creation - DKG challenge
 | If the challenge notification was received within the challenge period and was
@@ -339,7 +340,8 @@ will be utilised during the acceptance testing of the feature.
 | The DKG submission timeout equals the group size multiplied by the number of
   blocks for a member to become eligible to submit the DKG result. The timer
   starts at the moment when the first member becomes eligible (the moment when
-  DKG was requested).
+  DKG was requested). The timer gets reset when a valid DKG result challenge is
+  submitted. 
 
 | Group creation - DKG timeout
 | Anyone can send a transaction reporting DKG timeout.
