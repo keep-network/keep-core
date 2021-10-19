@@ -175,22 +175,30 @@ describe("RandomBeacon", () => {
             })
           })
 
-          // TODO: Enable once approvals and challenges are implemented
-          // context("when dkg result was approved", async function () {
-          //   it("returns IDLE state", async function () {
-          //     expect(await randomBeacon.getGroupCreationState()).to.be.equal(
-          //       dkgState.IDLE
-          //     )
-          //   })
-          // })
+          context("when dkg result was approved", async () => {
+            beforeEach(async () => {
+              await mineBlocks(params.dkgResultChallengePeriodLength)
+              await randomBeacon.approveDkgResult()
+            })
 
-          // context("when dkg result was challenged", async function () {
-          //   it("returns AWAITING_RESULT state", async function () {
-          //     expect(await randomBeacon.getGroupCreationState()).to.be.equal(
-          //       dkgState.AWAITING_RESULT
-          //     )
-          //   })
-          // })
+            it("should return IDLE state", async () => {
+              expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                dkgState.IDLE
+              )
+            })
+          })
+
+          context("when dkg result was challenged", async () => {
+            beforeEach(async () => {
+              await randomBeacon.challengeDkgResult()
+            })
+
+            it("should return AWAITING_RESULT state", async () => {
+              expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                dkgState.AWAITING_RESULT
+              )
+            })
+          })
         })
       })
     })
