@@ -8,10 +8,9 @@ import "./AltBn128.sol";
 ///      basic, aggregated, or reconstructed threshold BLS signatures, generated
 ///      using the AltBn128 curve.
 library BLS {
-
-    /// @dev Creates a signature over message using the provided secret key.    
+    /// @dev Creates a signature over message using the provided secret key.
     function sign(bytes memory message, uint256 secretKey)
-        public
+        external
         view
         returns (bytes memory)
     {
@@ -21,10 +20,24 @@ library BLS {
         return AltBn128.g1Marshal(p_2);
     }
 
+    /// @dev Wraps the functionality of BLS.verify, but hashes a message to
+    ///      a point on G1 and marshal to bytes first to allow raw bytes
+    ///      verificaion.
+    function verifyBytes(
+        bytes memory publicKey,
+        bytes memory message,
+        bytes memory signature
+    ) external view returns (bool) {
+        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(message);
+        bytes memory messageAsPoint = AltBn128.g1Marshal(point);
+
+        return verify(publicKey, messageAsPoint, signature);
+    }
+
     /// @dev Verify performs the pairing operation to check if the signature
-    ///      is correct for the provided message and the corresponding public 
-    ///      key. Public key must be a valid point on G2 curve in an 
-    ///      uncompressed format. Message must be a valid point on G1 curve in 
+    ///      is correct for the provided message and the corresponding public
+    ///      key. Public key must be a valid point on G2 curve in an
+    ///      uncompressed format. Message must be a valid point on G1 curve in
     ///      an uncompressed format. Signature must be a valid point on G1
     ///      curve in an uncompressed format.
     function verify(
@@ -41,19 +54,5 @@ library BLS {
                 AltBn128.g1Unmarshal(message),
                 AltBn128.g2Unmarshal(publicKey)
             );
-    }
-
-    /// @dev Wraps the functionality of BLS.verify, but hashes a message to
-    ///      a point on G1 and marshal to bytes first to allow raw bytes
-    ///      verificaion.
-    function verifyBytes(
-        bytes memory publicKey,
-        bytes memory message,
-        bytes memory signature
-    ) public view returns (bool) {
-        AltBn128.G1Point memory point = AltBn128.g1HashToPoint(message);
-        bytes memory messageAsPoint = AltBn128.g1Marshal(point);
-
-        return verify(publicKey, messageAsPoint, signature);
     }
 }

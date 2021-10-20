@@ -67,48 +67,46 @@ jobs:
       - name: Lint
         run: yarn lint
   
-  # TODO: We should run slither, however we need to decide on how we go about
-  #       slither warnings for code that was moved from beacon v1.
-  # contracts-slither:
-  #   needs: contracts-detect-changes
-  #   if: |
-  #     github.event_name == 'push'
-  #       || needs.contracts-detect-changes.outputs.path-filter == 'true'
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: ./solidity/random-beacon
-  #   steps:
-  #     - uses: actions/checkout@v2
+  contracts-slither:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/random-beacon
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - uses: actions/setup-node@v2
-  #       with:
-  #         node-version: "14.x"
-  #         cache: "yarn"
-  #         cache-dependency-path: solidity/random-beacon/yarn.lock
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/random-beacon/yarn.lock
 
-  #     - uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.8.5
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8.5
 
-  #     - name: Install Solidity
-  #       env:
-  #         SOLC_VERSION: 0.8.6 # according to solidity.version in hardhat.config.js
-  #       run: |
-  #         pip3 install solc-select
-  #         solc-select install $SOLC_VERSION
-  #         solc-select use $SOLC_VERSION
+      - name: Install Solidity
+        env:
+          SOLC_VERSION: 0.8.6 # according to solidity.version in hardhat.config.js
+        run: |
+          pip3 install solc-select
+          solc-select install $SOLC_VERSION
+          solc-select use $SOLC_VERSION
 
-  #     - name: Install Slither
-  #       env:
-  #         SLITHER_VERSION: 0.8.0
-  #       run: pip3 install slither-analyzer==$SLITHER_VERSION
+      - name: Install Slither
+        env:
+          SLITHER_VERSION: 0.8.0
+        run: pip3 install slither-analyzer==$SLITHER_VERSION
 
-  #     - name: Install dependencies
-  #       run: yarn install --network-concurrency 1
+      - name: Install dependencies
+        run: yarn install --network-concurrency 1
 
-  #     - name: Run Slither
-  #       run: slither .
+      - name: Run Slither
+        run: slither .
   
   contracts-build-and-test:
     needs: contracts-detect-changes

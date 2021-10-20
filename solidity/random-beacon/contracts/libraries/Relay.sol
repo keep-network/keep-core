@@ -24,26 +24,24 @@ library Relay {
 
     struct Request {
         // Request identifier.
-        uint256 id;
+        uint64 id;
+        // Identifier of group responsible for signing.
+        uint64 groupId;
         // Request start block.
-        uint256 startBlock;
-        // Group responsible for signing as part of the request.
-        Groups.Group group;
-        // Previous entry value which should be signed as part of the request.
-        bytes previousEntry;
+        uint128 startBlock;
     }
 
     struct Data {
         // Total count of all requests.
-        uint256 requestCount;
+        uint64 requestCount;
+        // Previous entry value.
+        bytes previousEntry;
         // Data of current request.
         Request currentRequest;
         // Address of the T token contract.
         IERC20 tToken;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
-        // Size of the group performing signing.
-        uint256 groupSize;
         // The number of blocks it takes for a group member to become
         // eligible to submit the relay entry.
         uint256 relayEntrySubmissionEligibilityDelay;
@@ -51,9 +49,12 @@ library Relay {
         uint256 relayEntryHardTimeout;
     }
 
+    // Size of a group in the threshold relay.
+    uint256 public constant groupSize = 64;
+
     event RelayEntryRequested(
         uint256 indexed requestId,
-        bytes groupPublicKey,
+        uint64 groupId,
         bytes previousEntry
     );
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
@@ -61,66 +62,74 @@ library Relay {
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
-    /// @param group Group chosen to handle the request.
-    /// @param previousEntry Previous relay entry.
-    function requestEntry(
-        Data storage self,
-        Groups.Group memory group,
-        bytes calldata previousEntry
-    ) internal {
-        require(!isRequestInProgress(self), "Another relay request in progress");
+    /// @param groupId Identifier of the group chosen to handle the request.
+    function requestEntry(Data storage self, uint64 groupId) internal {
+        require(
+            !isRequestInProgress(self),
+            "Another relay request in progress"
+        );
 
-        self.tToken.safeTransferFrom(msg.sender, address(this), self.relayRequestFee);
+        // slither-disable-next-line reentrancy-events
+        self.tToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            self.relayRequestFee
+        );
 
-        uint256 currentRequestId = ++self.requestCount;
+        uint64 currentRequestId = ++self.requestCount;
 
         // TODO: Accepting and storing the whole Group object is not efficient
         //       as a lot of data is copied. Revisit once `Groups` library is
         //       ready.
         self.currentRequest = Request(
             currentRequestId,
-            block.number,
-            group,
-            previousEntry
+            groupId,
+            uint128(block.number)
         );
 
-        emit RelayEntryRequested(currentRequestId, group.groupPubKey, previousEntry);
+        emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
     }
 
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
+    /// @param group Group data.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
-        bytes calldata entry
+        bytes calldata entry,
+        Groups.Group memory group
     ) internal {
         require(isRequestInProgress(self), "No relay request in progress");
         // TODO: Add timeout reporting.
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
         require(
-            submitterIndex > 0 && submitterIndex <= self.groupSize,
+            submitterIndex > 0 && submitterIndex <= groupSize,
             "Invalid submitter index"
         );
         require(
-            self.currentRequest.group.members[submitterIndex - 1] == msg.sender,
+            group.members[submitterIndex - 1] == msg.sender,
             "Unexpected submitter index"
         );
 
         require(
-            BLS.verify(
-                self.currentRequest.group.groupPubKey,
-                self.currentRequest.previousEntry,
-                entry
-            ),
+            BLS.verify(group.groupPubKey, self.previousEntry, entry),
             "Invalid entry"
         );
 
-        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) =
-            getEligibilityRange(self, entry);
+        (
+            uint256 firstEligibleIndex,
+            uint256 lastEligibleIndex
+        ) = getEligibilityRange(self, entry, groupSize);
         require(
-            isEligible(self, submitterIndex, firstEligibleIndex, lastEligibleIndex),
+            isEligible(
+                self,
+                submitterIndex,
+                firstEligibleIndex,
+                lastEligibleIndex,
+                groupSize
+            ),
             "Submitter is not eligible"
         );
 
@@ -131,49 +140,92 @@ library Relay {
         // TODO: If soft timeout has elapsed, take bleeding into account
         //       and slash all members appropriately.
 
+        self.previousEntry = entry;
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
     }
 
+    /// @notice Set relayRequestFee parameter.
+    /// @param newRelayRequestFee New value of the parameter.
+    function setRelayRequestFee(Data storage self, uint256 newRelayRequestFee)
+        internal
+    {
+        require(!isRequestInProgress(self), "Relay request in progress");
+
+        self.relayRequestFee = newRelayRequestFee;
+    }
+
+    /// @notice Set relayEntrySubmissionEligibilityDelay parameter.
+    /// @param newRelayEntrySubmissionEligibilityDelay New value of the parameter.
+    function setRelayEntrySubmissionEligibilityDelay(
+        Data storage self,
+        uint256 newRelayEntrySubmissionEligibilityDelay
+    ) internal {
+        require(!isRequestInProgress(self), "Relay request in progress");
+
+        self
+            .relayEntrySubmissionEligibilityDelay = newRelayEntrySubmissionEligibilityDelay;
+    }
+
+    /// @notice Set relayEntryHardTimeout parameter.
+    /// @param newRelayEntryHardTimeout New value of the parameter.
+    function setRelayEntryHardTimeout(
+        Data storage self,
+        uint256 newRelayEntryHardTimeout
+    ) internal {
+        require(!isRequestInProgress(self), "Relay request in progress");
+
+        self.relayEntryHardTimeout = newRelayEntryHardTimeout;
+    }
+
     /// @notice Returns whether a relay entry request is currently in progress.
     /// @return True if there is a request in progress. False otherwise.
-    function isRequestInProgress(
-        Data storage self
-    ) internal view returns (bool) {
+    function isRequestInProgress(Data storage self)
+        internal
+        view
+        returns (bool)
+    {
         return self.currentRequest.id != 0;
     }
 
     /// @notice Returns whether the current relay request has timed out.
     /// @return True if the request timed out. False otherwise.
-    function hasRequestTimedOut(
-        Data storage self
-    ) internal view returns (bool) {
-        uint256 relayEntryTimeout =
-            (self.groupSize * self.relayEntrySubmissionEligibilityDelay) +
+    function hasRequestTimedOut(Data storage self)
+        internal
+        view
+        returns (bool)
+    {
+        uint256 relayEntryTimeout = (groupSize *
+            self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
 
-        return isRequestInProgress(self) &&
+        return
+            isRequestInProgress(self) &&
             block.number > self.currentRequest.startBlock + relayEntryTimeout;
     }
 
     /// @notice Determines the eligibility range for given relay entry basing on
     ///         current block number.
-    /// @param entry Entry value for which the eligibility range should be
+    /// @param _entry Entry value for which the eligibility range should be
     ///        determined.
+    /// @param _groupSize Group size for which eligibility range should be determined.
     /// @return firstEligibleIndex Index of the first member which is eligible
     ///         to submit the relay entry.
     /// @return lastEligibleIndex Index of the last member which is eligible
     ///         to submit the relay entry.
     function getEligibilityRange(
         Data storage self,
-        bytes calldata entry
-    ) internal view returns (uint256 firstEligibleIndex, uint256 lastEligibleIndex) {
-        uint256 groupSize = self.groupSize;
-
+        bytes calldata _entry,
+        uint256 _groupSize
+    )
+        internal
+        view
+        returns (uint256 firstEligibleIndex, uint256 lastEligibleIndex)
+    {
         // Modulo `groupSize` will give indexes in range <0, groupSize-1>
         // We count member indexes from `1` so we need to add `1` to the result.
-        firstEligibleIndex = (uint256(keccak256(entry)) % groupSize) + 1;
+        firstEligibleIndex = (uint256(keccak256(_entry)) % _groupSize) + 1;
 
         // Shift is computed by leveraging Solidity integer division which is
         // equivalent to floored division. That gives the desired result.
@@ -181,42 +233,50 @@ library Relay {
         // it explicitly.
         uint256 shift = (block.number - self.currentRequest.startBlock) /
             self.relayEntrySubmissionEligibilityDelay;
-        shift = shift > groupSize - 1 ? groupSize - 1 : shift;
+        shift = shift > _groupSize - 1 ? _groupSize - 1 : shift;
 
         // Last eligible index must be wrapped if their value is bigger than
         // the group size.
         lastEligibleIndex = firstEligibleIndex + shift;
-        lastEligibleIndex = lastEligibleIndex > groupSize ?
-            lastEligibleIndex - groupSize : lastEligibleIndex;
+        lastEligibleIndex = lastEligibleIndex > _groupSize
+            ? lastEligibleIndex - _groupSize
+            : lastEligibleIndex;
 
         return (firstEligibleIndex, lastEligibleIndex);
     }
 
     /// @notice Returns whether the given submitter index is eligible to submit
     ///         a relay entry within given eligibility range.
-    /// @param submitterIndex Index of the submitter whose eligibility is checked.
-    /// @param firstEligibleIndex First index of the given eligibility range.
-    /// @param lastEligibleIndex Last index of the given eligibility range.
+    /// @param _submitterIndex Index of the submitter whose eligibility is checked.
+    /// @param _firstEligibleIndex First index of the given eligibility range.
+    /// @param _lastEligibleIndex Last index of the given eligibility range.
+    /// @param _groupSize Group size for which eligibility should be checked.
     /// @return True if eligible. False otherwise.
     function isEligible(
+        /* solhint-disable-next-line no-unused-vars */
         Data storage self,
-        uint256 submitterIndex,
-        uint256 firstEligibleIndex,
-        uint256 lastEligibleIndex
+        uint256 _submitterIndex,
+        uint256 _firstEligibleIndex,
+        uint256 _lastEligibleIndex,
+        uint256 _groupSize
     ) internal view returns (bool) {
-        if (firstEligibleIndex <= lastEligibleIndex) {
+        if (_firstEligibleIndex <= _lastEligibleIndex) {
             // First eligible index is equal or smaller than the last.
             // We just need to make sure the submitter index is in range
             // <firstEligibleIndex, lastEligibleIndex>.
-            return firstEligibleIndex <= submitterIndex &&
-                submitterIndex <= lastEligibleIndex;
+            return
+                _firstEligibleIndex <= _submitterIndex &&
+                _submitterIndex <= _lastEligibleIndex;
         } else {
             // First eligible index is bigger than the last. We need to deal
             // with wrapped range and check whether the submitter index is
             // either in range <1, lastEligibleIndex> or
             // <firstEligibleIndex, groupSize>.
-            return (1 <= submitterIndex && submitterIndex <= lastEligibleIndex) ||
-                (firstEligibleIndex <= submitterIndex && submitterIndex <= self.groupSize);
+            return
+                (1 <= _submitterIndex &&
+                    _submitterIndex <= _lastEligibleIndex) ||
+                (_firstEligibleIndex <= _submitterIndex &&
+                    _submitterIndex <= _groupSize);
         }
     }
 }
