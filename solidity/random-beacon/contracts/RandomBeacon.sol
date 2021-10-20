@@ -18,7 +18,6 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Sortition Pool contract interface
@@ -40,7 +39,7 @@ interface ISortitionPool {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable, ReentrancyGuard {
+contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
@@ -52,39 +51,14 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     uint256 public constant genesisSeed =
         31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
+    /// @dev Seed used as the first relay entry value.
+    /// It's a G1 point G * PI =
+    /// G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
+    /// Where G is the generator of G1 abstract cyclic group.
+    bytes public constant relaySeed =
+        hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
+
     // Governable parameters
-
-    /// @notice Relay request fee in T. This fee needs to be provided by the
-    ///         account or contract requesting for a new relay entry.
-    uint256 public relayRequestFee;
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the relay entry. At first, there is only one
-    ///         member in the group eligible to submit the relay entry. Then,
-    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the relay entry at that moment. After
-    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible so that there are three group
-    ///         members eligible to submit the relay entry at that moment. This
-    ///         continues until all group members are eligible to submit the
-    ///         relay entry or until the relay entry is submitted. If all
-    ///         members became eligible to submit the relay entry and one more
-    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
-    ///         entry submitted, the group reaches soft timeout for submitting
-    ///         the relay entry and the slashing starts.
-    uint256 public relayEntrySubmissionEligibilityDelay;
-
-    /// @notice Hard timeout in blocks for a group to submit the relay entry.
-    ///         After all group members became eligible to submit the relay
-    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
-    ///         passed without relay entry submitted, all group members start
-    ///         getting slashed. The slashing amount increases linearly until
-    ///         the group submits the relay entry or until
-    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
-    ///         reached, each group member will get slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`.
-    uint256 public relayEntryHardTimeout;
 
     /// @notice Relay entry callback gas limit. This is the gas limit with which
     ///         callback function provided in the relay request transaction is
@@ -166,18 +140,31 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 maliciousDkgResultSlashingAmount
     );
 
+    // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
+
     event DkgStarted(uint256 indexed seed);
 
-    // TODO: Revisit properties returned in this event when working on result
-    // challenges and the client.
     event DkgResultSubmitted(
+        bytes32 indexed resultHash,
         bytes indexed groupPubKey,
         address indexed submitter
     );
 
+    event DkgTimedOut();
+
+    event DkgResultApproved(
+        bytes32 indexed resultHash,
+        address indexed approver
+    );
+
+    event DkgResultChallenged(
+        bytes32 indexed resultHash,
+        address indexed challenger
+    );
+
     event RelayEntryRequested(
         uint256 indexed requestId,
-        bytes groupPublicKey,
+        uint64 groupId,
         bytes previousEntry
     );
 
@@ -187,18 +174,11 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
     ///      and before transferring the ownership to the governance contract.
-    constructor(
-        ISortitionPool _sortitionPool,
-        IERC20 _tToken,
-        uint256 _groupSize
-    ) {
+    constructor(ISortitionPool _sortitionPool, IERC20 _tToken) {
         sortitionPool = _sortitionPool;
 
         // Governable parameters
-        relayRequestFee = 100e18;
-        relayEntrySubmissionEligibilityDelay = 10;
-        relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
-        callbackGasLimit = 200000;
+        callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -208,11 +188,10 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
 
+        relay.previousEntry = relaySeed;
         relay.tToken = _tToken;
-        relay.groupSize = _groupSize;
-        relay.setRelayRequestFee(relayRequestFee);
-        relay.setRelayEntrySubmissionEligibilityDelay(relayEntrySubmissionEligibilityDelay);
-        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
+        relay.setRelayEntrySubmissionEligibilityDelay(10);
+        relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -230,19 +209,18 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
-        relayRequestFee = _relayRequestFee;
-        relayEntrySubmissionEligibilityDelay = _relayEntrySubmissionEligibilityDelay;
-        relayEntryHardTimeout = _relayEntryHardTimeout;
         callbackGasLimit = _callbackGasLimit;
 
-        relay.setRelayRequestFee(relayRequestFee);
-        relay.setRelayEntrySubmissionEligibilityDelay(relayEntrySubmissionEligibilityDelay);
-        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
+        relay.setRelayRequestFee(_relayRequestFee);
+        relay.setRelayEntrySubmissionEligibilityDelay(
+            _relayEntrySubmissionEligibilityDelay
+        );
+        relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
-            relayRequestFee,
-            relayEntrySubmissionEligibilityDelay,
-            relayEntryHardTimeout,
+            _relayRequestFee,
+            _relayEntrySubmissionEligibilityDelay,
+            _relayEntryHardTimeout,
             callbackGasLimit
         );
     }
@@ -279,11 +257,31 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 _dkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
         dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
-        dkg.setResultSubmissionEligibilityDelay(_dkgResultSubmissionEligibilityDelay);
+        dkg.setResultSubmissionEligibilityDelay(
+            _dkgResultSubmissionEligibilityDelay
+        );
 
         emit DkgParametersUpdated(
             dkgResultChallengePeriodLength(),
             dkgResultSubmissionEligibilityDelay()
+        );
+    }
+
+    /// @notice Updates the values of reward parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultSubmissionReward New DKG result submission reward
+    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
+    function updateRewardParameters(
+        uint256 _dkgResultSubmissionReward,
+        uint256 _sortitionPoolUnlockingReward
+    ) external onlyOwner {
+        dkgResultSubmissionReward = _dkgResultSubmissionReward;
+        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        emit RewardParametersUpdated(
+            dkgResultSubmissionReward,
+            sortitionPoolUnlockingReward
         );
     }
 
@@ -314,26 +312,12 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         without the DKG result submitted, DKG is considered as timed out
     ///         and no DKG result for this group creation can be submitted
     ///         anymore.
-    function dkgResultSubmissionEligibilityDelay() public view returns (uint256) {
+    function dkgResultSubmissionEligibilityDelay()
+        public
+        view
+        returns (uint256)
+    {
         return dkg.parameters.resultSubmissionEligibilityDelay;
-    }
-
-    /// @notice Updates the values of reward parameters.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract. The caller is responsible for
-    ///      validating parameters.
-    /// @param _dkgResultSubmissionReward New DKG result submission reward
-    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
-    function updateRewardParameters(
-        uint256 _dkgResultSubmissionReward,
-        uint256 _sortitionPoolUnlockingReward
-    ) external onlyOwner {
-        dkgResultSubmissionReward = _dkgResultSubmissionReward;
-        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
-        emit RewardParametersUpdated(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward
-        );
     }
 
     /// @notice Updates the values of slashing parameters.
@@ -359,9 +343,11 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @notice Registers caller in the sortition pool.
     function registerMemberCandidate() external {
         address operator = msg.sender;
-        if (!sortitionPool.isOperatorInPool(operator)) {
-            sortitionPool.joinPool(operator);
-        }
+        require(
+            !sortitionPool.isOperatorInPool(operator),
+            "Operator is already registered"
+        );
+        sortitionPool.joinPool(operator);
     }
 
     /// @notice Checks whether the given operator is eligible to join the
@@ -385,9 +371,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     function createGroup(uint256 seed) internal {
         // TODO: Lock sortition pool.
 
-        dkg.start();
-
-        emit DkgStarted(seed);
+        dkg.start(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
@@ -411,11 +395,32 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         dkg.submitResult(dkgResult);
 
         // TODO: Register a pending group
+        // TODO: Set members in the group
+    }
 
-        emit DkgResultSubmitted(
-            dkgResult.groupPubKey,
-            msg.sender
-        );
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout() external {
+        dkg.notifyTimeout();
+    }
+
+    /// @notice Approves DKG result. Can be called after challenge period for the
+    ///         submitted result is finished. Considers the submitted result as
+    ///         valid and completes the group creation.
+    function approveDkgResult() external {
+        dkg.approveResult();
+
+        // TODO: Activate the pending group.
+
+        // TODO: Unlock sortition pool
+    }
+
+    /// @notice Challenges DKG result. If the submitted result is proved to be
+    ///         invalid it reverts the DKG back to the result submission phase.
+    function challengeDkgResult() external {
+        // TODO: Determine parameters required for DKG result challenges.
+        dkg.challengeResult();
+
+        // TODO: Implement slashing
     }
 
     /// @notice Check current group creation state.
@@ -428,30 +433,37 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         for all group members. After this time result cannot be submitted
     ///         and DKG can be notified about the timeout.
     /// @return True if DKG timed out, false otherwise.
-    function hasDkgTimedOut() public view returns (bool) {
+    function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
-    /// @param previousEntry Previous relay entry.
-    function requestRelayEntry(bytes calldata previousEntry) external {
-        Groups.Group memory group =
-            groups.selectGroup(uint256(keccak256(previousEntry)));
+    function requestRelayEntry() external {
+        uint64 groupId = groups.selectGroup(
+            uint256(keccak256(relay.previousEntry))
+        );
 
-        relay.requestEntry(group, previousEntry);
+        relay.requestEntry(groupId);
     }
 
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(
-        uint256 submitterIndex,
-        bytes calldata entry
-    ) external nonReentrant {
-        (uint256[] memory punishedMembersIndexes, uint256 slashingFactor) =
-            relay.submitEntry(submitterIndex, entry);
+    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
+        external
+    {
+        (
+            /* solhint-disable-next-line no-unused-vars */
+            uint256[] memory punishedMembersIndexes,
+            /* solhint-disable-next-line no-unused-vars */
+            uint256 slashingFactor
+        ) = relay.submitEntry(
+                submitterIndex,
+                entry,
+                groups.getGroup(relay.currentRequest.groupId)
+            );
 
         // TODO: Remove `punishedMembersIndexes` from the sortition pool
         //       for 2 weeks. Will SP expose an API for that?
@@ -462,5 +474,47 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
             // TODO: Once implemented, invoke:
             // createGroup(uint256(keccak256(entry)));
         }
+    }
+
+    /// @return Relay request fee in T. This fee needs to be provided by the
+    ///         account or contract requesting for a new relay entry.
+    function relayRequestFee() external view returns (uint256) {
+        return relay.relayRequestFee;
+    }
+
+    /// @return The number of blocks it takes for a group member to become
+    ///         eligible to submit the relay entry. At first, there is only one
+    ///         member in the group eligible to submit the relay entry. Then,
+    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the relay entry at that moment. After
+    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
+    ///         group member becomes eligible so that there are three group
+    ///         members eligible to submit the relay entry at that moment. This
+    ///         continues until all group members are eligible to submit the
+    ///         relay entry or until the relay entry is submitted. If all
+    ///         members became eligible to submit the relay entry and one more
+    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
+    ///         entry submitted, the group reaches soft timeout for submitting
+    ///         the relay entry and the slashing starts.
+    function relayEntrySubmissionEligibilityDelay()
+        external
+        view
+        returns (uint256)
+    {
+        return relay.relayEntrySubmissionEligibilityDelay;
+    }
+
+    /// @return Hard timeout in blocks for a group to submit the relay entry.
+    ///         After all group members became eligible to submit the relay
+    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
+    ///         passed without relay entry submitted, all group members start
+    ///         getting slashed. The slashing amount increases linearly until
+    ///         the group submits the relay entry or until
+    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
+    ///         reached, each group member will get slashed for
+    ///         `relayEntrySubmissionFailureSlashingAmount`.
+    function relayEntryHardTimeout() external view returns (uint256) {
+        return relay.relayEntryHardTimeout;
     }
 }

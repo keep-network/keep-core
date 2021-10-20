@@ -2,7 +2,6 @@
 pragma solidity ^0.8.6;
 
 library ModUtils {
-    
     /// @dev Wraps the modular exponent pre-compile introduced in Byzantium.
     ///      Returns base^exponent mod p.
     function modExp(
@@ -31,7 +30,7 @@ library ModUtils {
     }
 
     /// @dev Calculates and returns the square root of a mod p if such a square
-    ///      root exists. The modulus p must be an odd prime. If a square root 
+    ///      root exists. The modulus p must be an odd prime. If a square root
     ///      does not exist, function returns 0.
     function modSqrt(uint256 a, uint256 p) internal view returns (uint256) {
         if (legendre(a, p) != 1) {
@@ -91,10 +90,10 @@ library ModUtils {
             r = m;
         }
     }
-    
+
     /// @dev Calculates the Legendre symbol of the given a mod p.
     /// @return Returns 1 if a is a quadratic residue mod p, -1 if it is
-    ///         a non-quadratic residue, and 0 if a is 0.    
+    ///         a non-quadratic residue, and 0 if a is 0.
     function legendre(uint256 a, uint256 p) internal view returns (int256) {
         uint256 raised = modExp(a, (p - 1) / uint256(2), p);
 
