@@ -65,6 +65,7 @@ export { ReactComponent as SaddleWhite } from "../static/svg/saddle-logo.svg"
 export { ReactComponent as Swap } from "../static/svg/swap.svg"
 export { ReactComponent as ChevronRight } from "../static/svg/chevron-right.svg"
 export { ReactComponent as Refresh } from "../static/svg/refresh.svg"
+export { ReactComponent as TTokenSymbol } from "../static/svg/t-token-symbol.svg"
 
 const Badge = ({ height, width }) => (
   <svg

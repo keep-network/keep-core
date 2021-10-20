@@ -11,7 +11,6 @@ TBTCMigrationsPageContainer.route = {
   title: "tBTC Token Upgrade Portal",
   path: "/tbtc-migration",
   pages: [HowItWorksPage, TokenUpgradePortalPage],
-  withNewLabel: true,
 }
 
 export default TBTCMigrationsPageContainer

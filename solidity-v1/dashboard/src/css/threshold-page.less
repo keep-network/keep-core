@@ -1,0 +1,127 @@
+.threshold-how-it-works-page {
+  &__explanation {
+    .explanation__upgrade-btn {
+      margin-top: 1.5rem;
+    }
+  }
+
+  &__upgrade-liquid-keep {
+    &__button-container {
+      display: flex;
+      align-items: center;
+
+      .button-container__title {
+        font-size: 1rem;
+        margin-left: 0.5rem;
+      }
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    display: grid;
+    grid-template-areas:
+      "explanation explanation"
+      "resources upgrade-liquid-keep"
+      "resources upgrade-staked-keep"
+      "resources upgrade-staked-keep";
+    gap: 1rem;
+    grid-gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto 250px auto auto;
+
+    &__explanation,
+    &__resources,
+    &__upgrade-liquid-keep,
+    &__upgrade-staked-keep {
+      margin-bottom: 0;
+    }
+
+    &__explanation {
+      grid-area: explanation;
+      display: flex;
+
+      .explanation__upgrade-btn {
+        margin-top: 0;
+        margin-left: 2rem;
+        align-self: center;
+      }
+
+      &__icon {
+        margin-right: 2rem;
+      }
+    }
+
+    &__resources {
+      grid-area: resources;
+    }
+
+    &__upgrade-liquid-keep {
+      grid-area: upgrade-liquid-keep;
+      align-self: flex-start;
+    }
+
+    &__upgrade-staked-keep {
+      grid-area: upgrade-staked-keep;
+      align-self: flex-start;
+      padding-bottom: 0;
+    }
+  }
+
+  @media screen and (min-width: 1050px) {
+    &__upgrade-liquid-keep {
+      &__button-container {
+        .button-container__title {
+          font-size: 1.25rem;
+          margin-left: 1rem;
+        }
+      }
+    }
+  }
+}
+
+.threshold-upgrade-page {
+  &__explanation {
+    .explanation__upgrade-btn {
+      margin-top: 1.5rem;
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    display: grid;
+    grid-template-areas:
+      "explanation explanation"
+      "not-staked staked";
+    gap: 1rem;
+    grid-gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+
+    &__explanation,
+    &__not-staked,
+    &__staked {
+      margin-bottom: 0;
+    }
+
+    &__explanation {
+      grid-area: explanation;
+      display: flex;
+
+      .explanation__upgrade-btn {
+        margin-top: 0;
+        margin-left: 2rem;
+        align-self: center;
+      }
+
+      &__icon {
+        margin-right: 2rem;
+      }
+    }
+
+    &__not-staked {
+      grid-area: not-staked;
+    }
+
+    &__staked {
+      grid-area: staked;
+    }
+  }
+}

@@ -16,6 +16,7 @@ import Chip from "./Chip"
 import NavLink from "./NavLink"
 import CoveragePoolPage from "../pages/coverage-pools"
 import TBTCMigrationPage from "../pages/tbtc-migration"
+import ThresholdPage from "../pages/threshold"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -41,6 +42,17 @@ export const SideMenu = (props) => {
           subroutes={[DelegationPage.route, TokenGrantsPage.route]}
         />
         <NavLinkSection
+          label="upgrade"
+          icon={<Icons.TBTC />}
+          subroutes={[
+            {
+              ...TBTCMigrationPage.route,
+              title: "TBTC v2.0",
+            },
+            ThresholdPage.route,
+          ]}
+        />
+        <NavLinkSection
           label="work"
           icon={<Icons.SwordOperations />}
           subroutes={[ApplicationsPage.route, OperationsPage.route]}
@@ -53,16 +65,6 @@ export const SideMenu = (props) => {
             LiquidityPage.route,
             EarningsPage.route,
             RewardsPage.route,
-          ]}
-        />
-        <NavLinkSection
-          label="tbtc"
-          icon={<Icons.TBTC />}
-          subroutes={[
-            {
-              ...TBTCMigrationPage.route,
-              title: "Token Upgrade",
-            },
           ]}
         />
         <NavLinkSection
