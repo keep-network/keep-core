@@ -143,29 +143,17 @@ library Relay {
             "Submitter is not eligible"
         );
 
-        for (uint256 i = firstEligibleIndex; ; i++) {
-            uint256 index = i > self.groupSize ? i - self.groupSize : i;
+        // Get the list of members indexes which should be punished due to
+        // not submitting the entry on their turn.
+        punishedMembersIndexes = getPunishedMembersIndexes(
+            self,
+            submitterIndex,
+            firstEligibleIndex
+        );
 
-            if (index == submitterIndex) {
-                break;
-            }
-
-            punishedMembersIndexes.push(index);
-
-            if (index == lastEligibleIndex) {
-                break;
-            }
-        }
-
-        // If the soft timeout has been exceeded apply stake slashing.
-        uint256 softTimeoutBlock = self.currentRequest.startBlock +
-            (self.groupSize * self.relayEntrySubmissionEligibilityDelay);
-        if (block.number > softTimeoutBlock) {
-            uint256 submissionDelay = block.number - softTimeoutBlock;
-            slashingFactor =
-                (submissionDelay * 1e18) /
-                self.relayEntryHardTimeout;
-        }
+        // If the soft timeout has been exceeded apply stake slashing for
+        // all group members.
+        slashingFactor = getSlashingFactor(self);
 
         self.previousEntry = entry;
         delete self.currentRequest;
@@ -307,5 +295,47 @@ library Relay {
                 (_firstEligibleIndex <= _submitterIndex &&
                     _submitterIndex <= _groupSize);
         }
+    }
+
+    function getPunishedMembersIndexes(
+        /* solhint-disable-next-line no-unused-vars */
+        Data storage self,
+        uint256 submitterIndex,
+        uint256 firstEligibleIndex
+    ) internal view returns (uint256[] memory) {
+        uint256 punishedMembersCount = submitterIndex >= firstEligibleIndex
+            ? submitterIndex - firstEligibleIndex
+            : groupSize - (firstEligibleIndex - submitterIndex);
+
+        uint256[] memory punishedMembersIndexes = new uint256[](
+            punishedMembersCount
+        );
+
+        for (uint256 i = 0; i < punishedMembersCount; i++) {
+            uint256 memberIndex = firstEligibleIndex + i;
+            memberIndex = memberIndex > groupSize
+                ? memberIndex - groupSize
+                : memberIndex;
+
+            punishedMembersIndexes[i] = memberIndex;
+        }
+
+        return punishedMembersIndexes;
+    }
+
+    function getSlashingFactor(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 softTimeoutBlock = self.currentRequest.startBlock +
+            (groupSize * self.relayEntrySubmissionEligibilityDelay);
+
+        if (block.number > softTimeoutBlock) {
+            uint256 submissionDelay = block.number - softTimeoutBlock;
+            return (submissionDelay * 1e18) / self.relayEntryHardTimeout;
+        }
+
+        return 0;
     }
 }
