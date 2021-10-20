@@ -18,7 +18,6 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Sortition Pool contract interface
@@ -40,7 +39,7 @@ interface ISortitionPool {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable, ReentrancyGuard {
+contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
@@ -417,7 +416,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @param entry Group BLS signature over the previous entry.
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
-        nonReentrant
     {
         relay.submitEntry(
             submitterIndex,
