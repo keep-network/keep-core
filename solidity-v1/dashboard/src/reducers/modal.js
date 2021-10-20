@@ -9,7 +9,7 @@ const initialState = {
   isOpen: false,
   modalComponentType: null,
   componentProps: null,
-  modalProps: null,
+  modalProps: {},
   modalType: null,
 }
 
