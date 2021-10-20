@@ -186,10 +186,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
-    event CallbackExecuted(uint256 entry, uint256 entrySubmittedBlock);
-
-    event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
-
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -455,15 +451,16 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     ///         random number).
     /// @param previousEntry Previous relay entry.
     /// @param callbackContract Beacon consumer callback contract.
-    function requestRelayEntry(bytes calldata previousEntry, IRandomBeaconConsumer callbackContract) public {
+    function requestRelayEntry(
+        bytes calldata previousEntry,
+        IRandomBeaconConsumer callbackContract
+    ) public {
         Groups.Group memory group =
             groups.selectGroup(uint256(keccak256(previousEntry)));
 
         relay.requestEntry(group, previousEntry);
         
-        if (address(callbackContract) != address(0)) {
-            callback.callbackContract = callbackContract;
-        }
+        callback.setCallbackContract(callbackContract);
     }
 
     /// TODO: won't compile because of 'entry': uint256 vs bytes
@@ -481,19 +478,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
             // createGroup(uint256(keccak256(entry)));
         }
 
-        callback.entrySubmittedBlock = block.number;
-
-        IRandomBeaconConsumer callbackContract = callback.callbackContract;
-        if (address(callbackContract) != address(0)) {
-            try callbackContract.__beaconCallback{gas: callbackGasLimit}(entry, block.number) {
-                emit CallbackExecuted(entry, block.number);
-            } catch {
-                emit CallbackFailed(entry, block.number);
-            }
-        }
-    }
-
-    function executeCallback(uint256 entry, uint256 entryValidityBlocks) external {
-        callback.executeCallback(entry, entryValidityBlocks);
+        callback.executeCallback(entry, callbackGasLimit);
     }
 }

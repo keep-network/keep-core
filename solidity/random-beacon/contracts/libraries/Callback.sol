@@ -18,27 +18,32 @@ interface IRandomBeaconConsumer {
 library Callback {
     struct Data {
       IRandomBeaconConsumer callbackContract;
-      uint256 entrySubmittedBlock;
     }
 
     event CallbackExecuted(uint256 entry, uint256 entrySubmittedBlock);
+    event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    /// @notice Executes customer specified callback for the relay entry request.
+    /// @notice Sets callback contract.
+    /// @param callbackContract Callback contract.
+    function setCallbackContract(
+      Data storage self,
+      IRandomBeaconConsumer callbackContract
+    ) internal {
+      if (address(callbackContract) != address(0)) {
+          self.callbackContract = callbackContract;
+      }
+    }
+
+    /// @notice Executes consumer specified callback for the relay entry request.
     /// @param entry The generated random number.
-    /// @param entryValidityBlocks Entry submitted is only valid for a certain number of blocks
-    function executeCallback(Data storage self, uint256 entry, uint256 entryValidityBlocks) internal {
-        require(
-            address(self.callbackContract) != address(0),
-            "Callback contract must be set"
-        );
-
-        require(
-            block.number <= self.entrySubmittedBlock + entryValidityBlocks,
-            "Entry is no longer valid"
-        );
-
-        self.callbackContract.__beaconCallback(entry, self.entrySubmittedBlock);
-
-        emit CallbackExecuted(entry, self.entrySubmittedBlock);
+    /// @param callbackGasLimit Callback gas limit.
+    function executeCallback(Data storage self, uint256 entry, uint256 callbackGasLimit) internal {
+      if (address(self.callbackContract) != address(0)) {
+        try self.callbackContract.__beaconCallback{gas: callbackGasLimit}(entry, block.number) {
+          emit CallbackExecuted(entry, block.number);
+        } catch {
+          emit CallbackFailed(entry, block.number);
+        }
+      }
     }
 }
