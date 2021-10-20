@@ -1,7 +1,7 @@
 import React from "react"
 import { Modal, ModalContent, ModalOverlay, ModalCloseButton } from "."
 
-function withBaseModal(WrappedModalContent) {
+export function withBaseModal(WrappedModalContent) {
   return (props) => {
     return (
       <Modal isOpen onClose={props.onClose}>
@@ -14,5 +14,3 @@ function withBaseModal(WrappedModalContent) {
     )
   }
 }
-
-export default withBaseModal

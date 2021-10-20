@@ -4,11 +4,15 @@ import { ExampleModal } from "."
 import MobileUsersModal from "./MobileUsersModal"
 import { useModal } from "../../hooks/useModal"
 import { MODAL_TYPES } from "../../constants/constants"
+import { WithdrawETHModal, AddETHModal } from "./bonding"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.Example]: ExampleModal,
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
+  [MODAL_TYPES.BondingAddETH]: AddETHModal,
+  [MODAL_TYPES.BondingWithdrawETH]: WithdrawETHModal,
 }
+
 const modalRoot = document.getElementById("modal-root")
 
 export const ModalRoot = () => {

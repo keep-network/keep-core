@@ -1,30 +1,31 @@
 import React, { useCallback } from "react"
-import { getErrorsObj } from "../forms/common-validators"
+import { useDispatch } from "react-redux"
 import { withFormik } from "formik"
 import web3Utils from "web3-utils"
-import { useWeb3Context } from "./WithWeb3Context"
-import * as Icons from "./Icons"
-import AvailableEthAmount from "./AvailableEthAmount"
+import { ModalHeader, ModalBody } from "../Modal"
+import { withBaseModal } from "../withBaseModal"
+import AvailableTokenForm from "../../AvailableTokenForm"
+import MaxAmountAddon from "../../MaxAmountAddon"
+import AvailableEthAmount from "../../AvailableEthAmount"
+import * as Icons from "../../Icons"
+import { useWeb3Context } from "../../WithWeb3Context"
+import useSetMaxAmountToken from "../../../hooks/useSetMaxAmountToken"
+import { ETH } from "../../../utils/token.utils"
+import { getErrorsObj } from "../../../forms/common-validators"
 import {
   withdrawUnbondedEth,
   withdrawUnbondedEthAsManagedGrantee,
-} from "../actions/web3"
-import { connect } from "react-redux"
-import MaxAmountAddon from "./MaxAmountAddon"
-import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
-import AvailableTokenForm from "./AvailableTokenForm"
-import { ETH } from "../utils/token.utils"
+} from "../../../actions/web3"
 
-const WithdrawETHModal = ({
+const WithdrawETHModalBase = ({
   operatorAddress,
   availableETHInWei,
   availableETH,
-  closeModal,
+  onClose,
   managedGrantAddress,
-  withdrawUnbondedEth,
-  withdrawUnbondedEthAsManagedGrantee,
 }) => {
   const { web3 } = useWeb3Context()
+  const dispatch = useDispatch()
 
   const onSubmit = useCallback(
     async (formValues, awaitingPromise) => {
@@ -32,57 +33,56 @@ const WithdrawETHModal = ({
       const weiToWithdraw = web3Utils.toWei(ethAmount.toString(), "ether")
 
       if (managedGrantAddress) {
-        withdrawUnbondedEthAsManagedGrantee(
-          weiToWithdraw,
-          operatorAddress,
-          managedGrantAddress,
-          awaitingPromise
+        dispatch(
+          withdrawUnbondedEthAsManagedGrantee(
+            weiToWithdraw,
+            operatorAddress,
+            managedGrantAddress,
+            awaitingPromise
+          )
         )
       } else {
-        withdrawUnbondedEth(weiToWithdraw, operatorAddress, awaitingPromise)
+        dispatch(
+          withdrawUnbondedEth(weiToWithdraw, operatorAddress, awaitingPromise)
+        )
       }
     },
-    [
-      operatorAddress,
-      managedGrantAddress,
-      withdrawUnbondedEth,
-      withdrawUnbondedEthAsManagedGrantee,
-    ]
+    [operatorAddress, managedGrantAddress, dispatch]
   )
 
   return (
     <>
-      <h4 style={{ marginBottom: "0.5rem" }}>Amount available to withdraw.</h4>
-      <div className="mt-1">
-        <AvailableEthAmount
-          availableETHInWei={availableETHInWei}
+      <ModalHeader>Withdraw ETH</ModalHeader>
+      <ModalBody>
+        <h4 style={{ marginBottom: "0.5rem" }}>
+          Amount available to withdraw.
+        </h4>
+        <div className="mt-1">
+          <AvailableEthAmount
+            availableETHInWei={availableETHInWei}
+            availableETH={availableETH}
+          />
+        </div>
+        <div className="text-validation mb-1 mt-2 flex row center">
+          <Icons.Diamond />
+          <span className="pl-1">
+            Withdrawn ETH will go to the beneficiary address.
+          </span>
+        </div>
+        <WithdrawETHFormik
+          web3={web3}
+          onSubmit={onSubmit}
           availableETH={availableETH}
+          availableETHInWei={availableETHInWei}
+          onCancel={onClose}
+          submitBtnText="withdraw eth"
         />
-      </div>
-      <div className="text-validation mb-1 mt-2 flex row center">
-        <Icons.Diamond />
-        <span className="pl-1">
-          Withdrawn ETH will go to the beneficiary address.
-        </span>
-      </div>
-      <WithdrawETHFormik
-        web3={web3}
-        onSubmit={onSubmit}
-        availableETH={availableETH}
-        availableETHInWei={availableETHInWei}
-        onCancel={closeModal}
-        submitBtnText="withdraw eth"
-      />
+      </ModalBody>
     </>
   )
 }
 
-const mapDispatchToProps = {
-  withdrawUnbondedEth,
-  withdrawUnbondedEthAsManagedGrantee,
-}
-
-export default React.memo(connect(null, mapDispatchToProps)(WithdrawETHModal))
+export const WithdrawETHModal = React.memo(withBaseModal(WithdrawETHModalBase))
 
 const WithdrawETHForm = (props) => {
   const { availableETHInWei } = props
@@ -95,6 +95,7 @@ const WithdrawETHForm = (props) => {
   return (
     <AvailableTokenForm
       formInputProps={{
+        label: "Withdraw",
         name: "ethAmount",
         inputAddon: <MaxAmountAddon onClick={setMaxAmount} text="Max Amount" />,
       }}
