@@ -23,9 +23,9 @@ export const Modal = ({
   isOpen,
   onClose,
   isCentered,
-  closeOnOverlayClick,
-  size = "md",
   children,
+  closeOnOverlayClick = false,
+  size = "md",
 }) => {
   return (
     <ModalContext.Provider
@@ -46,9 +46,9 @@ export const ModalOverlay = ({
   const _onClose = (event) => {
     event.stopPropagation()
     if (closeOnOverlayClick) {
-      onClick()
+      onClose()
     }
-    onClose()
+    onClick()
   }
 
   return (
