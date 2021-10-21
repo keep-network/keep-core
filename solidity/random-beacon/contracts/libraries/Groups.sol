@@ -126,6 +126,23 @@ library Groups {
         return group.activationTimestamp > 0;
     }
 
+    function selectGroup(Data storage self, uint256 seed)
+        internal
+        view
+        returns (uint64)
+    {
+        // TODO: Implement.
+        return uint64(self.groups.length - 1);
+    }
+
+    function getGroup(Data storage self, uint64 groupId)
+        internal
+        view
+        returns (Group memory)
+    {
+        return self.groups[groupId];
+    }
+
     function getGroup(Data storage self, bytes memory groupPubKey)
         internal
         view
