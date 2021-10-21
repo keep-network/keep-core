@@ -161,6 +161,12 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
+    event CallbackSet(IRandomBeaconConsumer callback);
+
+    event CallbackExecuted(uint256 entry, uint256 entrySubmittedBlock);
+
+    event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -407,17 +413,16 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
-    /// @param previousEntry Previous relay entry.
-    function requestRelayEntry(bytes calldata previousEntry) external {
+    function requestRelayEntry() external {
         IRandomBeaconConsumer callbackContract = IRandomBeaconConsumer(address(0));
-        requestRelayEntry(previousEntry, callbackContract);
+        requestRelayEntry(callbackContract);
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
     /// @param callbackContract Beacon consumer callback contract.
-    function requestRelayEntry(IRandomBeaconConsumer callbackContract) external {
+    function requestRelayEntry(IRandomBeaconConsumer callbackContract) public {
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(relay.previousEntry))
         );
