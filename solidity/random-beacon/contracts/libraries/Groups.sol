@@ -27,7 +27,7 @@ library Groups {
         // mapping(bytes32 => bytes) gr
         Group[] groups;
         // TODO: Remember about decreasing the counter in case of expiration or termination.
-        uint256 activeGroupsCount;
+        uint64 activeGroupsCount;
     }
 
     /// @notice Adds a new group.
@@ -43,6 +43,11 @@ library Groups {
                 "group was already activated"
             );
         }
+
+        require(
+            self.groups.length <= type(uint64).max,
+            "max number of groups reached"
+        );
 
         self.groupIndices[groupPubKey] = (self.groups.length ^
             GROUP_INDEX_FLAG);
@@ -102,7 +107,7 @@ library Groups {
     function numberOfActiveGroups(Data storage self)
         internal
         view
-        returns (uint256)
+        returns (uint64)
     {
         // TODO: Revisit and include pending, terminated and expired groups
         return self.activeGroupsCount;
@@ -137,8 +142,8 @@ library Groups {
         uint256 flaggedIndex = self.groupIndices[groupPubKey];
         require(flaggedIndex != 0, "Group does not exist");
 
-        uint256 index = flaggedIndex ^ GROUP_INDEX_FLAG;
+        uint256 groupId = flaggedIndex ^ GROUP_INDEX_FLAG;
 
-        return self.groups[index];
+        return self.groups[groupId];
     }
 }
