@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react"
-import { KeepLoadingIndicator } from "./Icons"
-import { useShowMessage, messageType } from "./Message"
-import ChooseWalletAddress from "./ChooseWalletAddress"
-import { isEmptyArray } from "../utils/array.utils"
-import { wait } from "../utils/general.utils"
-import { UserRejectedConnectionRequestError } from "../connectors"
+import { ModalBody } from "../Modal"
+import { KeepLoadingIndicator } from "../../Icons"
+import { useShowMessage, messageType } from "../../Message"
+import ChooseWalletAddress from "../../ChooseWalletAddress"
+import { UserRejectedConnectionRequestError } from "../../../connectors"
+import { isEmptyArray } from "../../../utils/array.utils"
+import { wait } from "../../../utils/general.utils"
 
-const SelectedWalletModal = ({
+const SelectedWalletModalBase = ({
   icon,
   walletName,
   descriptionIcon,
@@ -135,37 +136,39 @@ const SelectedWalletModal = ({
   }
 
   return (
-    <div className="flex column center">
-      <div className="flex full-center mb-3">
-        {icon}
-        <h3 className="ml-1">{walletName}</h3>
+    <ModalBody>
+      <div className="flex column center">
+        <div className="flex full-center mb-3">
+          {icon}
+          <h3 className="ml-1">{walletName}</h3>
+        </div>
+        {descriptionIcon && descriptionIcon}
+        <span className="text-center mt-1">{description}</span>
+        {children}
+        {isConnecting || accountsAreFetching ? (
+          <>
+            <KeepLoadingIndicator />
+            {accountsAreFetching
+              ? `Loading wallet addresses...`
+              : `Connecting...`}
+          </>
+        ) : null}
+        {renderError()}
+        {!isEmptyArray(availableAccounts) &&
+          !accountsAreFetching &&
+          !isConnecting && (
+            <ChooseWalletAddress
+              onSelectAccount={onSelectAccount}
+              addresses={availableAccounts}
+              withPagination={withAccountPagination}
+              renderPrevBtn={accountsOffSet > 0}
+              onNext={() => setAccountsOffSet((prevOffset) => prevOffset + 5)}
+              onPrev={() => setAccountsOffSet((prevOffset) => prevOffset - 5)}
+            />
+          )}
       </div>
-      {descriptionIcon && descriptionIcon}
-      <span className="text-center mt-1">{description}</span>
-      {children}
-      {isConnecting || accountsAreFetching ? (
-        <>
-          <KeepLoadingIndicator />
-          {accountsAreFetching
-            ? `Loading wallet addresses...`
-            : `Connecting...`}
-        </>
-      ) : null}
-      {renderError()}
-      {!isEmptyArray(availableAccounts) &&
-        !accountsAreFetching &&
-        !isConnecting && (
-          <ChooseWalletAddress
-            onSelectAccount={onSelectAccount}
-            addresses={availableAccounts}
-            withPagination={withAccountPagination}
-            renderPrevBtn={accountsOffSet > 0}
-            onNext={() => setAccountsOffSet((prevOffset) => prevOffset + 5)}
-            onPrev={() => setAccountsOffSet((prevOffset) => prevOffset - 5)}
-          />
-        )}
-    </div>
+    </ModalBody>
   )
 }
 
-export default React.memo(SelectedWalletModal)
+export const SelectedWalletModal = React.memo(SelectedWalletModalBase)

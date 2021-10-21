@@ -204,4 +204,10 @@ export const MODAL_TYPES = {
   MobileUsers: "MobileUsers",
   BondingAddETH: "BondingAddEth",
   BondingWithdrawETH: "BondingWithdrawETH",
+  MetaMask: "MetaMask",
+  ExplorerMode: "ExplorerMode",
+  Ledger: "Ledger",
+  Trezor: "Trezor",
+  WalletConnect: "WalletConnect",
+  WalletSelection: "WalletSelection",
 }
