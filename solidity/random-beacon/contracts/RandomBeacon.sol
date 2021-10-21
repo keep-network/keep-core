@@ -183,7 +183,10 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
-    event PendingGroupCreated(bytes groupPubKey);
+    event PendingGroupRegistered(
+        uint64 indexed groupId,
+        bytes indexed groupPubKey
+    );
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might

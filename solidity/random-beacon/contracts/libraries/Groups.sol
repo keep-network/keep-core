@@ -15,6 +15,11 @@ library Groups {
     // before using the value.
     uint256 constant GROUP_INDEX_FLAG = 1 << 255;
 
+    event PendingGroupRegistered(
+        uint64 indexed groupId,
+        bytes indexed groupPubKey
+    );
+
     struct Group {
         bytes groupPubKey;
         uint256 activationTimestamp;
@@ -57,6 +62,11 @@ library Groups {
         self.groups.push(group);
 
         setGroupMembers(_getGroup((self), groupPubKey), members, misbehaved);
+
+        emit PendingGroupRegistered(
+            uint64(self.groups.length - 1),
+            groupPubKey
+        );
     }
 
     // TODO: This function should be optimized for members storing.
