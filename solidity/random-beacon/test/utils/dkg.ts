@@ -18,9 +18,11 @@ export interface DkgResult {
   members: string[]
 }
 
+export const noMisbehaved = "0x"
+
 export async function getDkgGroupSigners(
   groupSize: number,
-  startAccountsOffset: number
+  startAccountsOffset = 0
 ): Promise<DkgGroupSigners> {
   const signers = new Map<number, Address>()
 
