@@ -70,6 +70,7 @@ library Groups {
     }
 
     // TODO: This function should be optimized for members storing.
+    // See https://github.com/keep-network/keep-core/pull/2666/files#r732629138
     function setGroupMembers(
         Group storage group,
         address[] memory members,

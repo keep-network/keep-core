@@ -54,6 +54,7 @@ library DKG {
         // Indices of members corresponding to each signature. Indices have to be unique.
         uint256[] signingMemberIndices;
         // Addresses of candidate group members as outputted by the group selection protocol.
+        // TODO: Modify according to https://github.com/keep-network/keep-core/pull/2666#discussion_r732629138
         address[] members;
     }
 
@@ -165,6 +166,9 @@ library DKG {
             result.signingMemberIndices,
             result.members
         );
+
+        // TODO: Check with sortition pool that all members have minimum stake.
+        // Check all members in one call.
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;

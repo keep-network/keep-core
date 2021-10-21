@@ -416,6 +416,8 @@ contract RandomBeacon is Ownable {
     /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
+
+        // TODO: Pay a reward to the caller.
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
@@ -426,6 +428,8 @@ contract RandomBeacon is Ownable {
 
         groups.activateGroup(groupPubKey);
 
+        // TODO: Handle DQ/IA
+        // TODO: Release a rewards to DKG submitter.
         // TODO: Unlock sortition pool
     }
 
@@ -434,6 +438,9 @@ contract RandomBeacon is Ownable {
     function challengeDkgResult() external {
         // TODO: Determine parameters required for DKG result challenges.
         bytes memory groupPubKey = dkg.challengeResult();
+
+        // TODO: Remove challenged pending group c84f859d598b952502eecd7a2b21e6f9b021266e
+        // Verify the costs of transaction.
 
         // TODO: Implement slashing
     }
