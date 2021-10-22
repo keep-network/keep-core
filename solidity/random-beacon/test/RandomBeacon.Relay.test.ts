@@ -3,8 +3,8 @@ import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { blsDeployment, constants, randomBeaconDeployment } from "./fixtures"
-import type { RandomBeacon, TestToken, TestRelay } from "../typechain"
+import { randomBeaconDeployment } from "./fixtures"
+import type { RandomBeacon, TestToken, RelayStub } from "../typechain"
 
 const { time } = helpers
 const { mineBlocks } = time
@@ -18,7 +18,7 @@ describe("RandomBeacon - Relay", () => {
 
   let randomBeacon: RandomBeacon
   let testToken: TestToken
-  let testRelay: TestRelay
+  let relayStub: RelayStub
 
   // prettier-ignore
   before(async () => {
@@ -30,7 +30,7 @@ describe("RandomBeacon - Relay", () => {
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
     testToken = contracts.testToken as TestToken
-    testRelay = contracts.testRelay as TestRelay
+    relayStub = contracts.relayStub as RelayStub
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
   })
@@ -202,7 +202,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("isEligible", () => {
     it("should correctly manage the eligibility queue", async () => {
-      await testRelay.setCurrentRequestStartBlock()
+      await relayStub.setCurrentRequestStartBlock()
 
       // At the beginning only member 8 is eligible because
       // (blsData.groupSignature % groupSize) + 1 = 8.
@@ -255,7 +255,7 @@ describe("RandomBeacon - Relay", () => {
   async function assertMembersEligible(members: number[]) {
     for (let i = 0; i < members.length; i++) {
       // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
-      expect(await testRelay.isEligible(members[i], blsData.groupSignature)).to
+      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
         .be.true
     }
   }
@@ -263,7 +263,7 @@ describe("RandomBeacon - Relay", () => {
   async function assertMembersNotEligible(members: number[]) {
     for (let i = 0; i < members.length; i++) {
       // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
-      expect(await testRelay.isEligible(members[i], blsData.groupSignature)).to
+      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
         .be.false
     }
   }

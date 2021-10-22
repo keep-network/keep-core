@@ -3,7 +3,7 @@ pragma solidity ^0.8.6;
 
 import "../libraries/Relay.sol";
 
-contract TestRelay {
+contract RelayStub {
     using Relay for Relay.Data;
 
     uint256 public constant groupSize = 8;
