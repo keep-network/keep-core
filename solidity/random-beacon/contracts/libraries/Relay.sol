@@ -139,8 +139,7 @@ library Relay {
                 self,
                 submitterIndex,
                 firstEligibleIndex,
-                lastEligibleIndex,
-                groupSize
+                lastEligibleIndex
             ),
             "Submitter is not eligible"
         );
@@ -282,15 +281,13 @@ library Relay {
     /// @param _submitterIndex Index of the submitter whose eligibility is checked.
     /// @param _firstEligibleIndex First index of the given eligibility range.
     /// @param _lastEligibleIndex Last index of the given eligibility range.
-    /// @param _groupSize Group size for which eligibility should be checked.
     /// @return True if eligible. False otherwise.
     function isEligible(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
         uint256 _submitterIndex,
         uint256 _firstEligibleIndex,
-        uint256 _lastEligibleIndex,
-        uint256 _groupSize
+        uint256 _lastEligibleIndex
     ) internal view returns (bool) {
         if (_firstEligibleIndex <= _lastEligibleIndex) {
             // First eligible index is equal or smaller than the last.
@@ -305,10 +302,8 @@ library Relay {
             // either in range <1, lastEligibleIndex> or
             // <firstEligibleIndex, groupSize>.
             return
-                (1 <= _submitterIndex &&
-                    _submitterIndex <= _lastEligibleIndex) ||
-                (_firstEligibleIndex <= _submitterIndex &&
-                    _submitterIndex <= _groupSize);
+                _submitterIndex <= _lastEligibleIndex ||
+                _firstEligibleIndex <= _submitterIndex;
         }
     }
 }

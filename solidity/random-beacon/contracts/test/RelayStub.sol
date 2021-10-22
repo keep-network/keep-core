@@ -30,8 +30,7 @@ contract RelayStub {
             relay.isEligible(
                 submitterIndex,
                 firstEligibleIndex,
-                lastEligibleIndex,
-                groupSize
+                lastEligibleIndex
             );
     }
 }
