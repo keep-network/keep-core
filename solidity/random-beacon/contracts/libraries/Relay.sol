@@ -232,6 +232,11 @@ library Relay {
 
     /// @notice Determines the eligibility range for given relay entry basing on
     ///         current block number.
+    /// @dev Parameters _entry and _groupSize are passed because the first
+    ///      eligible index is computed as `_entry % _groupSize`. This function
+    ///      doesn't use the constant `groupSize` directly to facilitate
+    ///      testing. Big group sizes in tests make readability worse and
+    ///      dramatically increase the time of execution.
     /// @param _entry Entry value for which the eligibility range should be
     ///        determined.
     /// @param _groupSize Group size for which eligibility range should be determined.
