@@ -1,10 +1,10 @@
 {
-  "name": "cumulative-merkle-drop",
+  "name": "merkle-distribution",
   "version": "0.0.1",
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git@github.com:1inch/cumulative-merkle-drop.git"
+    "url": "git@github.com:1inch/merkle-distribution.git"
   },
   "license": "MIT",
   "dependencies": {
