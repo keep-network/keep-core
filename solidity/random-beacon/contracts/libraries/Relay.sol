@@ -49,8 +49,15 @@ library Relay {
         uint256 relayEntryHardTimeout;
     }
 
-    // Size of a group in the threshold relay.
+    /// @notice Size of a group in the threshold relay.
     uint256 public constant groupSize = 64;
+
+    /// @notice Seed used as the first relay entry value.
+    /// It's a G1 point G * PI =
+    /// G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
+    /// Where G is the generator of G1 abstract cyclic group.
+    bytes public constant relaySeed =
+        hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
     event RelayEntryRequested(
         uint256 indexed requestId,
@@ -58,6 +65,16 @@ library Relay {
         bytes previousEntry
     );
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
+    /// @notice Initialized the very first `previousEntry` with an initial
+    ///         `relaySeed` value. Can be performed only once.
+    function initSeedEntry(Data storage self) internal {
+        require(
+            self.previousEntry.length == 0,
+            "Seed entry already initialized"
+        );
+        self.previousEntry = relaySeed;
+    }
 
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
