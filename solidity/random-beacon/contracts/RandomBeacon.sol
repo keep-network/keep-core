@@ -188,6 +188,8 @@ contract RandomBeacon is Ownable {
         bytes indexed groupPubKey
     );
 
+    event GroupActivated(bytes indexed groupPubKey);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment

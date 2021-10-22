@@ -13,6 +13,8 @@ contract TestGroups {
         bytes indexed groupPubKey
     );
 
+    event GroupActivated(bytes indexed groupPubKey);
+
     function addPendingGroup(
         bytes calldata groupPubKey,
         address[] memory members,
@@ -43,5 +45,9 @@ contract TestGroups {
 
     function getGroups() external view returns (Groups.Group[] memory) {
         return groups.groups;
+    }
+
+    function numberOfActiveGroups() external view returns (uint64) {
+        return groups.numberOfActiveGroups();
     }
 }

@@ -20,6 +20,8 @@ library Groups {
         bytes indexed groupPubKey
     );
 
+    event GroupActivated(bytes indexed groupPubKey);
+
     struct Group {
         bytes groupPubKey;
         uint256 activationTimestamp;
@@ -109,6 +111,8 @@ library Groups {
         group.activationTimestamp = block.timestamp;
 
         self.activeGroupsCount++;
+
+        emit GroupActivated(groupPubKey);
     }
 
     // TODO: Add group termination and expiration
@@ -168,7 +172,7 @@ library Groups {
         returns (Group storage)
     {
         uint256 flaggedIndex = self.groupIndices[groupPubKey];
-        require(flaggedIndex != 0, "Group does not exist");
+        require(flaggedIndex != 0, "group does not exist");
 
         uint256 groupId = flaggedIndex ^ GROUP_INDEX_FLAG;
 
