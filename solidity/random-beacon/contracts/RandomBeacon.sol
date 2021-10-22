@@ -182,7 +182,7 @@ contract RandomBeacon is Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
 
         relay.initSeedEntry();
-        relay.setTToken(_tToken);
+        relay.initTToken(_tToken);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
     }

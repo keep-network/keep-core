@@ -66,7 +66,7 @@ library Relay {
     );
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
-    /// @notice Initialized the very first `previousEntry` with an initial
+    /// @notice Initializes the very first `previousEntry` with an initial
     ///         `relaySeed` value. Can be performed only once.
     function initSeedEntry(Data storage self) internal {
         require(
@@ -74,6 +74,17 @@ library Relay {
             "Seed entry already initialized"
         );
         self.previousEntry = relaySeed;
+    }
+
+    /// @notice Initializes the tToken parameter. Can be performed only once.
+    /// @param _tToken Value of the parameter.
+    function initTToken(Data storage self, IERC20 _tToken) internal {
+        require(
+            address(self.tToken) == address(0),
+            "T token address already set"
+        );
+
+        self.tToken = _tToken;
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
@@ -160,14 +171,6 @@ library Relay {
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
-    }
-
-    /// @notice Set tToken parameter.
-    /// @param newTToken New value of the parameter.
-    function setTToken(Data storage self, IERC20 newTToken) internal {
-        require(!isRequestInProgress(self), "Relay request in progress");
-
-        self.tToken = newTToken;
     }
 
     /// @notice Set relayRequestFee parameter.
