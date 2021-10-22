@@ -33,6 +33,14 @@ contract TestGroups {
         return groups.getGroup(groupPubKey);
     }
 
+    function getFlaggedGroupIndex(bytes memory groupPubKey)
+        external
+        view
+        returns (uint256)
+    {
+        return groups.groupIndices[groupPubKey];
+    }
+
     function getGroups() external view returns (Groups.Group[] memory) {
         return groups.groups;
     }

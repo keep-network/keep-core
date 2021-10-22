@@ -1,6 +1,7 @@
 import { ethers } from "hardhat"
 import { expect } from "chai"
 import type { ContractTransaction } from "ethers"
+import { BigNumber } from "ethers"
 import blsData from "./data/bls"
 import { noMisbehaved, getDkgGroupSigners } from "./utils/dkg"
 import { constants } from "./fixtures"
@@ -113,6 +114,18 @@ describe("Groups", () => {
 
             expect(groupsData[0]).to.deep.equal(existingGroup)
           })
+
+          it("should update stored flagged index for existing group", async () => {
+            expect(
+              await groups.getFlaggedGroupIndex(existingGroupPublicKey)
+            ).to.equal(calculateFlaggedIndex(1))
+          })
+
+          it("should store a flagged group index", async () => {
+            expect(
+              await groups.getFlaggedGroupIndex(newGroupPublicKey)
+            ).to.equal(calculateFlaggedIndex(1))
+          })
         })
 
         context("with unique group public key", async () => {
@@ -151,6 +164,16 @@ describe("Groups", () => {
             const groupsData = await groups.getGroups()
 
             expect(groupsData[0]).to.deep.equal(existingGroup)
+
+            expect(
+              await groups.getFlaggedGroupIndex(existingGroupPublicKey)
+            ).to.equal(calculateFlaggedIndex(0))
+          })
+
+          it("should store a flagged group index", async () => {
+            expect(
+              await groups.getFlaggedGroupIndex(newGroupPublicKey)
+            ).to.equal(calculateFlaggedIndex(1))
           })
         })
       })
@@ -165,10 +188,12 @@ describe("Groups", () => {
         })
 
         context("with the same group public key", async () => {
+          const newGroupPublicKey = existingGroupPublicKey
+
           it("should revert with 'group was already activated' error", async () => {
             expect(
               groups.addPendingGroup(
-                existingGroupPublicKey,
+                newGroupPublicKey,
                 newGroupMembers,
                 noMisbehaved
               )
@@ -177,11 +202,13 @@ describe("Groups", () => {
         })
 
         context("with unique group public key", async () => {
+          const newGroupPublicKey = groupPublicKey
+
           let tx: ContractTransaction
 
           beforeEach(async () => {
             tx = await groups.addPendingGroup(
-              groupPublicKey,
+              newGroupPublicKey,
               newGroupMembers,
               noMisbehaved
             )
@@ -190,13 +217,13 @@ describe("Groups", () => {
           it("should emit PendingGroupRegistered event", async () => {
             expect(tx)
               .to.emit(groups, "PendingGroupRegistered")
-              .withArgs(1, groupPublicKey)
+              .withArgs(1, newGroupPublicKey)
           })
 
           it("should register a pending group", async () => {
-            const storedGroup = await groups.getGroup(groupPublicKey)
+            const storedGroup = await groups.getGroup(newGroupPublicKey)
 
-            expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+            expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationTimestamp).to.be.equal(0)
             expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
 
@@ -210,6 +237,16 @@ describe("Groups", () => {
             const groupsData = await groups.getGroups()
 
             expect(groupsData[0]).to.deep.equal(existingGroup)
+
+            expect(
+              await groups.getFlaggedGroupIndex(existingGroupPublicKey)
+            ).to.equal(calculateFlaggedIndex(0))
+          })
+
+          it("should store a flagged group index", async () => {
+            expect(
+              await groups.getFlaggedGroupIndex(newGroupPublicKey)
+            ).to.equal(calculateFlaggedIndex(1))
           })
         })
       })
@@ -218,3 +255,8 @@ describe("Groups", () => {
     // TODO: Add tests for setGroupMembers to remove misbehaved
   })
 })
+
+function calculateFlaggedIndex(index: number): BigNumber {
+  // eslint-disable-next-line no-bitwise
+  return BigNumber.from(index).xor(BigNumber.from(1).shl(255))
+}
