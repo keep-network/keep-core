@@ -57,11 +57,11 @@ describe("RandomBeacon - Relay", () => {
           })
 
           it("should deposit relay request fee to the maintenance pool", async () => {
-            const actualMaintenancePoolBalance = await testToken.balanceOf(
+            const currentMaintenancePoolBalance = await testToken.balanceOf(
               randomBeacon.address
             )
             expect(
-              actualMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
+              currentMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
             ).to.be.equal(relayRequestFee)
           })
 
