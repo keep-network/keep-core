@@ -15,6 +15,7 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
   let other: SignerWithAddress
+  let invalidEntrySubmitter: SignerWithAddress
 
   let randomBeacon: RandomBeacon
   let testToken: TestToken
@@ -22,7 +23,7 @@ describe("RandomBeacon - Relay", () => {
 
   // prettier-ignore
   before(async () => {
-    [requester, submitter, other] = await ethers.getSigners()
+    [requester, submitter, other, invalidEntrySubmitter] = await ethers.getSigners()
   })
 
   beforeEach("load test fixture", async () => {
@@ -110,8 +111,8 @@ describe("RandomBeacon - Relay", () => {
 
       context("when relay entry is not timed out", () => {
         context("when submitter index is valid", () => {
-          context("when entry is valid", () => {
-            context("when submitter is eligible", () => {
+          context("when submitter is eligible", () => {
+            context("when entry is valid", () => {
               it("should emit RelayEntrySubmitted event", async () => {
                 await expect(
                   randomBeacon
@@ -123,24 +124,26 @@ describe("RandomBeacon - Relay", () => {
               })
             })
 
-            context("when submitter is not eligible", () => {
+            context("when entry is not valid", () => {
               it("should revert", async () => {
+                // In that case nextGroupSignature % 64 gives 3 so that
+                // member needs to submit the wrong relay entry.
                 await expect(
                   randomBeacon
-                    .connect(other)
-                    .submitRelayEntry(17, blsData.groupSignature)
-                ).to.be.revertedWith("Submitter is not eligible")
+                    .connect(invalidEntrySubmitter)
+                    .submitRelayEntry(3, blsData.nextGroupSignature)
+                ).to.be.revertedWith("Invalid entry")
               })
             })
           })
 
-          context("when entry is not valid", () => {
+          context("when submitter is not eligible", () => {
             it("should revert", async () => {
               await expect(
                 randomBeacon
-                  .connect(submitter)
-                  .submitRelayEntry(16, blsData.nextGroupSignature)
-              ).to.be.revertedWith("Invalid entry")
+                  .connect(other)
+                  .submitRelayEntry(17, blsData.groupSignature)
+              ).to.be.revertedWith("Submitter is not eligible")
             })
           })
         })
