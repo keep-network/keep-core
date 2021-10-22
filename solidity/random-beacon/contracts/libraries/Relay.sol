@@ -130,11 +130,6 @@ library Relay {
             "Unexpected submitter index"
         );
 
-        require(
-            BLS.verify(group.groupPubKey, self.previousEntry, entry),
-            "Invalid entry"
-        );
-
         (
             uint256 firstEligibleIndex,
             uint256 lastEligibleIndex
@@ -148,6 +143,11 @@ library Relay {
                 groupSize
             ),
             "Submitter is not eligible"
+        );
+
+        require(
+            BLS.verify(group.groupPubKey, self.previousEntry, entry),
+            "Invalid entry"
         );
 
         // TODO: Use submitterIndex, firstEligibleIndex and lastEligibleIndex
