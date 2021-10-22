@@ -18,6 +18,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./BLS.sol";
 import "./Groups.sol";
+import "../RandomBeacon.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -38,8 +39,12 @@ library Relay {
         bytes previousEntry;
         // Data of current request.
         Request currentRequest;
+        // Address of the sortition pool contract.
+        ISortitionPool sortitionPool;
         // Address of the T token contract.
         IERC20 tToken;
+        // Address of the staking contract.
+        IStaking staking;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
         // The number of blocks it takes for a group member to become
@@ -47,6 +52,8 @@ library Relay {
         uint256 relayEntrySubmissionEligibilityDelay;
         // Hard timeout in blocks for a group to submit the relay entry.
         uint256 relayEntryHardTimeout;
+        // Slashing amount for not submitting relay entry
+        uint256 relayEntrySubmissionFailureSlashingAmount;
     }
 
     /// @notice Size of a group in the threshold relay.
@@ -64,7 +71,10 @@ library Relay {
         uint64 groupId,
         bytes previousEntry
     );
+
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
+    event RelayEntryTimedOut(uint256 indexed requestId);
 
     /// @notice Initializes the very first `previousEntry` with an initial
     ///         `relaySeed` value. Can be performed only once.
@@ -76,6 +86,20 @@ library Relay {
         self.previousEntry = relaySeed;
     }
 
+    /// @notice Initializes the sortitionPool parameter. Can be performed
+    ///         only once.
+    /// @param _sortitionPool Value of the parameter.
+    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+        internal
+    {
+        require(
+            address(self.sortitionPool) == address(0),
+            "Sortition pool address already set"
+        );
+
+        self.sortitionPool = _sortitionPool;
+    }
+
     /// @notice Initializes the tToken parameter. Can be performed only once.
     /// @param _tToken Value of the parameter.
     function initTToken(Data storage self, IERC20 _tToken) internal {
@@ -85,6 +109,18 @@ library Relay {
         );
 
         self.tToken = _tToken;
+    }
+
+    /// @notice Initializes the staking parameter. Can be performed
+    ///         only once.
+    /// @param _staking Value of the parameter.
+    function initStaking(Data storage self, IStaking _staking) internal {
+        require(
+            address(self.staking) == address(0),
+            "Staking address already set"
+        );
+
+        self.staking = _staking;
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
@@ -122,22 +158,12 @@ library Relay {
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
     /// @param group Group data.
-    /// @return punishedMembersIndexes Array of members indexes which should
-    ///         be punished for not submitting the relay entry on their turn.
-    /// @return slashingFactor Percentage of members stakes which should be
-    ///         slashed as punishment for exceeding the soft timeout.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
         bytes calldata entry,
         Groups.Group memory group
-    )
-        internal
-        returns (
-            uint256[] memory punishedMembersIndexes,
-            uint256 slashingFactor
-        )
-    {
+    ) internal {
         require(isRequestInProgress(self), "No relay request in progress");
         // TODO: Add timeout reporting.
         require(!hasRequestTimedOut(self), "Relay request timed out");
@@ -172,22 +198,26 @@ library Relay {
 
         // Get the list of members indexes which should be punished due to
         // not submitting the entry on their turn.
-        punishedMembersIndexes = getPunishedMembersIndexes(
+        /* solhint-disable-next-line no-unused-vars */
+        uint256[] memory punishedMembersIndexes = getPunishedMembersIndexes(
             self,
             submitterIndex,
             firstEligibleIndex
         );
+        // TODO: Kick punishedMembersIndexes from the sortition pool for 2 weeks.
 
         // If the soft timeout has been exceeded apply stake slashing for
-        // all group members.
-        slashingFactor = getSlashingFactor(self);
+        // all group members. Note that `getSlashingFactor` returns the
+        // factor multiplied by 1e18 to avoid precision loss. In that case
+        // the final result needs to be divided by 1e18.
+        uint256 slashingAmount = (getSlashingFactor(self) *
+            self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
+        self.staking.slash(slashingAmount, group.members);
 
         self.previousEntry = entry;
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
-
-        return (punishedMembersIndexes, slashingFactor);
     }
 
     /// @notice Set relayRequestFee parameter.
@@ -221,6 +251,32 @@ library Relay {
         require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayEntryHardTimeout = newRelayEntryHardTimeout;
+    }
+
+    /// @notice Set relayEntrySubmissionFailureSlashingAmount parameter.
+    /// @param newRelayEntrySubmissionFailureSlashingAmount New value of
+    ///        the parameter.
+    function setRelayEntrySubmissionFailureSlashingAmount(
+        Data storage self,
+        uint256 newRelayEntrySubmissionFailureSlashingAmount
+    ) internal {
+        require(!isRequestInProgress(self), "Relay request in progress");
+
+        self
+            .relayEntrySubmissionFailureSlashingAmount = newRelayEntrySubmissionFailureSlashingAmount;
+    }
+
+    function reportEntryTimeout(Data storage self, Groups.Group memory group)
+        internal
+    {
+        require(hasRequestTimedOut(self), "Relay request did not time out");
+
+        self.staking.slash(
+            self.relayEntrySubmissionFailureSlashingAmount,
+            group.members
+        );
+
+        delete self.currentRequest;
     }
 
     /// @notice Returns whether a relay entry request is currently in progress.

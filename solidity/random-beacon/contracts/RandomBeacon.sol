@@ -32,6 +32,14 @@ interface ISortitionPool {
     function isOperatorEligible(address operator) external view returns (bool);
 }
 
+/// @title Staking contract interface
+/// @notice This is an interface with just a few function signatures of the
+///         Staking contract, which is available at
+///         https://github.com/threshold-network/solidity-contracts/blob/main/contracts/staking/IStaking.sol
+interface IStaking {
+    function slash(uint256 amount, address[] memory operators) external;
+}
+
 /// @title Keep Random Beacon
 /// @notice Keep Random Beacon contract. It lets anyone request a new
 ///         relay entry and validates the new relay entry provided by the
@@ -79,17 +87,6 @@ contract RandomBeacon is Ownable {
     ///         locked and someone needs to unlock it. Anyone can do it and earn
     ///         `sortitionPoolUnlockingReward`.
     uint256 public sortitionPoolUnlockingReward;
-
-    /// @notice Slashing amount for not submitting relay entry. When
-    ///         relay entry hard timeout is reached without the relay entry
-    ///         submitted, each group member gets slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`. If the relay entry
-    ///         gets submitted after the soft timeout (see
-    ///         `relayEntrySubmissionEligibilityDelay` documentation), but
-    ///         before the hard timeout, each group member gets slashed
-    ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
-    ///         and the time passed since the soft deadline.
-    uint256 public relayEntrySubmissionFailureSlashingAmount;
 
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
@@ -167,7 +164,11 @@ contract RandomBeacon is Ownable {
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
     ///      and before transferring the ownership to the governance contract.
-    constructor(ISortitionPool _sortitionPool, IERC20 _tToken) {
+    constructor(
+        ISortitionPool _sortitionPool,
+        IERC20 _tToken,
+        IStaking _staking
+    ) {
         sortitionPool = _sortitionPool;
 
         // Governable parameters
@@ -178,13 +179,15 @@ contract RandomBeacon is Ownable {
         dkg.setResultSubmissionEligibilityDelay(10);
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
-        relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
 
         relay.initSeedEntry();
+        relay.initSortitionPool(_sortitionPool);
         relay.initTToken(_tToken);
+        relay.initStaking(_staking);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
+        relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -325,10 +328,12 @@ contract RandomBeacon is Ownable {
         uint256 _relayEntrySubmissionFailureSlashingAmount,
         uint256 _maliciousDkgResultSlashingAmount
     ) external onlyOwner {
-        relayEntrySubmissionFailureSlashingAmount = _relayEntrySubmissionFailureSlashingAmount;
+        relay.setRelayEntrySubmissionFailureSlashingAmount(
+            _relayEntrySubmissionFailureSlashingAmount
+        );
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
         emit SlashingParametersUpdated(
-            relayEntrySubmissionFailureSlashingAmount,
+            _relayEntrySubmissionFailureSlashingAmount,
             maliciousDkgResultSlashingAmount
         );
     }
@@ -447,26 +452,22 @@ contract RandomBeacon is Ownable {
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
     {
-        (
-            /* solhint-disable-next-line no-unused-vars */
-            uint256[] memory punishedMembersIndexes,
-            /* solhint-disable-next-line no-unused-vars */
-            uint256 slashingFactor
-        ) = relay.submitEntry(
-                submitterIndex,
-                entry,
-                groups.getGroup(relay.currentRequest.groupId)
-            );
-
-        // TODO: Remove `punishedMembersIndexes` from the sortition pool
-        //       for 2 weeks. Will SP expose an API for that?
-
-        // TODO: Slash all members stakes according to the `slashingFactor`.
+        relay.submitEntry(
+            submitterIndex,
+            entry,
+            groups.getGroup(relay.currentRequest.groupId)
+        );
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             // TODO: Once implemented, invoke:
             // createGroup(uint256(keccak256(entry)));
         }
+    }
+
+    function reportRelayEntryTimeout() external {
+        relay.reportEntryTimeout(groups.getGroup(relay.currentRequest.groupId));
+
+        // TODO: Terminate group?
     }
 
     /// @return Relay request fee in T. This fee needs to be provided by the
@@ -509,5 +510,22 @@ contract RandomBeacon is Ownable {
     ///         `relayEntrySubmissionFailureSlashingAmount`.
     function relayEntryHardTimeout() external view returns (uint256) {
         return relay.relayEntryHardTimeout;
+    }
+
+    /// @notice Slashing amount for not submitting relay entry. When
+    ///         relay entry hard timeout is reached without the relay entry
+    ///         submitted, each group member gets slashed for
+    ///         `relayEntrySubmissionFailureSlashingAmount`. If the relay entry
+    ///         gets submitted after the soft timeout (see
+    ///         `relayEntrySubmissionEligibilityDelay` documentation), but
+    ///         before the hard timeout, each group member gets slashed
+    ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
+    ///         and the time passed since the soft deadline.
+    function relayEntrySubmissionFailureSlashingAmount()
+        external
+        view
+        returns (uint256)
+    {
+        return relay.relayEntrySubmissionFailureSlashingAmount;
     }
 }
