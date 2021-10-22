@@ -193,15 +193,17 @@ library Relay {
             "Invalid entry"
         );
 
-        // Get the list of members indexes which should be punished due to
+        // Get the list of members addresses which should be punished due to
         // not submitting the entry on their turn.
         /* solhint-disable-next-line no-unused-vars */
-        uint256[] memory punishedMembersIndexes = getPunishedMembersIndexes(
+        address[] memory punishedMembers = getPunishedMembers(
             self,
             submitterIndex,
-            firstEligibleIndex
+            firstEligibleIndex,
+            group
         );
-        // TODO: Kick punishedMembersIndexes from the sortition pool for 2 weeks.
+        // TODO: Kick out punishedMembers from the sortition pool for 2 weeks.
+        //       Use gas station pattern to make that call gas-transparent.
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
@@ -384,19 +386,18 @@ library Relay {
         }
     }
 
-    function getPunishedMembersIndexes(
+    function getPunishedMembers(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
         uint256 submitterIndex,
-        uint256 firstEligibleIndex
-    ) internal view returns (uint256[] memory) {
+        uint256 firstEligibleIndex,
+        Groups.Group memory group
+    ) internal view returns (address[] memory) {
         uint256 punishedMembersCount = submitterIndex >= firstEligibleIndex
             ? submitterIndex - firstEligibleIndex
             : groupSize - (firstEligibleIndex - submitterIndex);
 
-        uint256[] memory punishedMembersIndexes = new uint256[](
-            punishedMembersCount
-        );
+        address[] memory punishedMembers = new address[](punishedMembersCount);
 
         for (uint256 i = 0; i < punishedMembersCount; i++) {
             uint256 memberIndex = firstEligibleIndex + i;
@@ -404,10 +405,10 @@ library Relay {
                 ? memberIndex - groupSize
                 : memberIndex;
 
-            punishedMembersIndexes[i] = memberIndex;
+            punishedMembers[i] = group.members[memberIndex - 1];
         }
 
-        return punishedMembersIndexes;
+        return punishedMembers;
     }
 
     function getSlashingFactor(Data storage self)
