@@ -42,6 +42,8 @@ library Groups {
     {
         // TODO: Implementation. Currently this function is just a stub which makes tests working.
         address[] memory members = new address[](64);
+        // Member with index 3.
+        members[2] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
         // Member with index 16.
         members[15] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         // Member with index 17.

@@ -51,13 +51,6 @@ contract RandomBeacon is Ownable {
     uint256 public constant genesisSeed =
         31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
-    /// @dev Seed used as the first relay entry value.
-    /// It's a G1 point G * PI =
-    /// G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
-    /// Where G is the generator of G1 abstract cyclic group.
-    bytes public constant relaySeed =
-        hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
-
     // Governable parameters
 
     /// @notice Relay entry callback gas limit. This is the gas limit with which
@@ -188,8 +181,8 @@ contract RandomBeacon is Ownable {
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
 
-        relay.previousEntry = relaySeed;
-        relay.tToken = _tToken;
+        relay.initSeedEntry();
+        relay.initTToken(_tToken);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
     }

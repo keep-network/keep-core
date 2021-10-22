@@ -62,8 +62,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
   const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
 
-  const TestRelay = await ethers.getContractFactory("TestRelay")
-  const testRelay = await TestRelay.deploy()
+  const RelayStub = await ethers.getContractFactory("RelayStub")
+  const relayStub = await RelayStub.deploy()
 
   const { testToken } = await testTokenDeployment()
 
@@ -83,7 +83,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     sortitionPoolStub,
     randomBeacon,
     testToken,
-    testRelay,
+    relayStub,
   }
 
   return contracts
