@@ -12,9 +12,9 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./interfaces/IMerkleDrop128.sol";
+import "./interfaces/ISignatureMerkleDrop128.sol";
 
-contract MerkleDrop128 is IMerkleDrop128, Ownable {
+contract SignatureMerkleDrop128 is ISignatureMerkleDrop128, Ownable {
     using Address for address payable;
     using SafeERC20 for IERC20;
 

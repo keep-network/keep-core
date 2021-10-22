@@ -6,7 +6,7 @@ const ethSigUtil = require('eth-sig-util');
 const Wallet = require('ethereumjs-wallet').default;
 
 const TokenMock = artifacts.require('TokenMock');
-const MerkleDrop128 = artifacts.require('MerkleDrop128');
+const SignatureMerkleDrop128 = artifacts.require('SignatureMerkleDrop128');
 
 function keccak128 (input) {
     return keccak256(input).slice(0, 16);
@@ -22,13 +22,13 @@ async function makeDrop (token, accountWithDropValues, deposit) {
         .map(tree.getHexProof, tree)
         .map(proof => '0x' + proof.map(p => p.substr(2)).join(''));
 
-    const drop = await MerkleDrop128.new(token.address, root, tree.getDepth());
+    const drop = await SignatureMerkleDrop128.new(token.address, root, tree.getDepth());
     await token.mint(drop.address, deposit);
 
     return { hashedElements, leaves, root, proofs, drop };
 }
 
-contract('MerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
+contract('SignatureMerkleDrop128', async function ([addr1, w1, w2, w3, w4]) {
     const wallets = [w1, w2, w3, w4];
 
     function findSortedIndex (self, i) {
