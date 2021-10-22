@@ -114,6 +114,11 @@ describe("RandomBeacon - Relay", () => {
           context("when submitter is eligible", () => {
             context("when entry is valid", () => {
               it("should emit RelayEntrySubmitted event", async () => {
+                // When determining the eligibility queue, the
+                // `(groupSignature % 64) + 1` equation points member `16`
+                // as the first eligible one. This is why we use that
+                // index as `submitRelayEntry` parameter. The `submitter`
+                // signer represents that member too.
                 await expect(
                   randomBeacon
                     .connect(submitter)
@@ -126,7 +131,7 @@ describe("RandomBeacon - Relay", () => {
 
             context("when entry is not valid", () => {
               it("should revert", async () => {
-                // In that case nextGroupSignature % 64 gives 3 so that
+                // In that case `(nextGroupSignature % 64) + 1` gives 3 so that
                 // member needs to submit the wrong relay entry.
                 await expect(
                   randomBeacon
