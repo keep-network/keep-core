@@ -277,6 +277,8 @@ library Relay {
         );
 
         delete self.currentRequest;
+
+        emit RelayEntryTimedOut(self.requestCount);
     }
 
     /// @notice Returns whether a relay entry request is currently in progress.

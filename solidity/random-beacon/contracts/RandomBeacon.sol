@@ -160,6 +160,8 @@ contract RandomBeacon is Ownable {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
+    event RelayEntryTimedOut(uint256 indexed requestId);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
