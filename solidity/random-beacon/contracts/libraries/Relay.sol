@@ -163,6 +163,14 @@ library Relay {
         emit RelayEntrySubmitted(self.requestCount, entry);
     }
 
+    /// @notice Set tToken parameter.
+    /// @param newTToken New value of the parameter.
+    function setTToken(Data storage self, IERC20 newTToken) internal {
+        require(!isRequestInProgress(self), "Relay request in progress");
+
+        self.tToken = newTToken;
+    }
+
     /// @notice Set relayRequestFee parameter.
     /// @param newRelayRequestFee New value of the parameter.
     function setRelayRequestFee(Data storage self, uint256 newRelayRequestFee)
