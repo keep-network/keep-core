@@ -13,6 +13,7 @@ import { WalletTokensPage } from "./WalletTokensPage"
 import { GrantedTokensPage } from "./GrantedTokensPage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import { isDelegationExists } from "../../services/token-staking.service"
+import { MODAL_TYPES } from "../../constants/constants"
 
 const DelegationPage = ({ title, routes }) => {
   return <PageWrapper title={title} routes={routes} />
@@ -54,15 +55,7 @@ const DelegationPageWrapperComponent = ({
       const { operatorAddress } = values
       try {
         if (await isDelegationExists(operatorAddress)) {
-          openModal(
-            <>
-              Delegate tokens for a different operator address or top-up the
-              existing delegation for <strong>{operatorAddress}</strong>
-              &nbsp;operartor via <strong>ADD KEEP</strong> button under&nbsp;
-              <strong>Delegations</strong> table.
-            </>,
-            { title: "Delegation already exists" }
-          )
+          openModal(MODAL_TYPES.DelegationAlreadyExists, { operatorAddress })
           throw new Error("Delegation already exists")
         }
         await openConfirmationModal(

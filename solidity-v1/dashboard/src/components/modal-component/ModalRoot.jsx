@@ -13,6 +13,7 @@ import {
   WalletConnectModal,
   WalletSelectionModal,
 } from "./wallets"
+import { DelegationAlreadyExists } from "./staking"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.Example]: ExampleModal,
@@ -25,6 +26,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ExplorerMode]: ExplorerModeModal,
   [MODAL_TYPES.WalletConnect]: WalletConnectModal,
   [MODAL_TYPES.WalletSelection]: WalletSelectionModal,
+  [MODAL_TYPES.DelegationAlreadyExists]: DelegationAlreadyExists,
 }
 
 const modalRoot = document.getElementById("modal-root")

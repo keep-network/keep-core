@@ -210,4 +210,5 @@ export const MODAL_TYPES = {
   Trezor: "Trezor",
   WalletConnect: "WalletConnect",
   WalletSelection: "WalletSelection",
+  DelegationAlreadyExists: "DelegationAlreadyExists",
 }
