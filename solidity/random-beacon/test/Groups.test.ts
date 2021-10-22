@@ -58,10 +58,8 @@ describe("Groups", () => {
         })
 
         it("should store a flagged group index", async () => {
-          const expectedFlaggedIndex = calculateFlaggedIndex(0)
-
           expect(await groups.getFlaggedGroupIndex(groupPublicKey)).to.equal(
-            expectedFlaggedIndex
+            calculateFlaggedIndex(0)
           )
         })
       })
@@ -385,6 +383,184 @@ describe("Groups", () => {
             expect(
               await groups.getFlaggedGroupIndex(newGroupPublicKey)
             ).to.equal(calculateFlaggedIndex(1))
+          })
+        })
+      })
+    })
+  })
+
+  describe("activateGroup", async () => {
+    context("when no groups are registered", async () => {
+      it("should revert with 'group does not exist' error", async () => {
+        expect(groups.activateGroup(groupPublicKey)).to.be.revertedWith(
+          "group does not exist"
+        )
+      })
+    })
+
+    context("when one group is registered", async () => {
+      beforeEach(async () => {
+        await groups.addPendingGroup(groupPublicKey, members, noMisbehaved)
+      })
+
+      context("when the group is pending", async () => {
+        let tx: ContractTransaction
+
+        beforeEach(async () => {
+          tx = await groups.activateGroup(groupPublicKey)
+        })
+
+        it("should set activation timestamp for the group", async () => {
+          // FIXME: Unclear why `tx.timestamp` is undefined
+          const expectedActivationTimestamp = (
+            await ethers.provider.getBlock(tx.blockHash)
+          ).timestamp
+
+          expect(
+            (await groups.getGroup(groupPublicKey)).activationTimestamp
+          ).to.be.equal(expectedActivationTimestamp)
+        })
+
+        it("should increase number of active groups", async () => {
+          expect(await groups.numberOfActiveGroups()).to.be.equal(1)
+        })
+      })
+
+      context("when the group is active", async () => {
+        beforeEach(async () => {
+          await groups.activateGroup(groupPublicKey)
+        })
+
+        it("should revert with 'group does not exist' error", async () => {
+          expect(groups.activateGroup(groupPublicKey)).to.be.revertedWith(
+            "group was already activated"
+          )
+        })
+      })
+    })
+
+    context("when two groups are registered", async () => {
+      context("with unique group public keys", async () => {
+        const groupPublicKey1 = "0x0001"
+        const groupPublicKey2 = "0x0002"
+
+        beforeEach(async () => {
+          await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
+          await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+        })
+
+        context("when both groups are pending", async () => {
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            tx = await groups.activateGroup(groupPublicKey2)
+          })
+
+          it("should not set activation timestamp for the other group", async () => {
+            expect(
+              (await groups.getGroup(groupPublicKey1)).activationTimestamp
+            ).to.be.equal(0)
+          })
+
+          it("should set activation timestamp for the activated group", async () => {
+            // FIXME: Unclear why `tx.timestamp` is undefined
+            const expectedActivationTimestamp = (
+              await ethers.provider.getBlock(tx.blockHash)
+            ).timestamp
+
+            expect(
+              (await groups.getGroup(groupPublicKey2)).activationTimestamp
+            ).to.be.equal(expectedActivationTimestamp)
+          })
+
+          it("should increase number of active groups", async () => {
+            expect(await groups.numberOfActiveGroups()).to.be.equal(1)
+          })
+        })
+
+        context("when the other groups is active", async () => {
+          let activationTimestamp1: number
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            const tx1 = await groups.activateGroup(groupPublicKey1)
+            activationTimestamp1 = (
+              await ethers.provider.getBlock(tx1.blockHash)
+            ).timestamp
+
+            tx = await groups.activateGroup(groupPublicKey2)
+          })
+
+          it("should not update activation timestamp for the other group", async () => {
+            expect(
+              (await groups.getGroup(groupPublicKey1)).activationTimestamp
+            ).to.be.equal(activationTimestamp1)
+          })
+
+          it("should set activation timestamp for the activated group", async () => {
+            // FIXME: Unclear why `tx.timestamp` is undefined
+            const expectedActivationTimestamp = (
+              await ethers.provider.getBlock(tx.blockHash)
+            ).timestamp
+
+            expect(
+              (await groups.getGroup(groupPublicKey2)).activationTimestamp
+            ).to.be.equal(expectedActivationTimestamp)
+          })
+
+          it("should increase number of active groups", async () => {
+            expect(await groups.numberOfActiveGroups()).to.be.equal(2)
+          })
+        })
+      })
+
+      context("with the same group public key", async () => {
+        const groupPublicKey1 = groupPublicKey
+        const groupPublicKey2 = groupPublicKey
+
+        beforeEach(async () => {
+          await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
+          await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+        })
+
+        context("when both groups are pending", async () => {
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            tx = await groups.activateGroup(groupPublicKey2)
+          })
+
+          it("should not set activation timestamp for the older group", async () => {
+            expect(
+              (await groups.getGroups())[0].activationTimestamp
+            ).to.be.equal(0)
+          })
+
+          it("should set activation timestamp for the newer group", async () => {
+            // FIXME: Unclear why `tx.timestamp` is undefined
+            const expectedActivationTimestamp = (
+              await ethers.provider.getBlock(tx.blockHash)
+            ).timestamp
+
+            expect(
+              (await groups.getGroups())[1].activationTimestamp
+            ).to.be.equal(expectedActivationTimestamp)
+          })
+
+          it("should increase number of active groups", async () => {
+            expect(await groups.numberOfActiveGroups()).to.be.equal(1)
+          })
+        })
+
+        context("when the groups is active", async () => {
+          beforeEach(async () => {
+            await groups.activateGroup(groupPublicKey1)
+          })
+
+          it("should revert with 'group was already activated' error", async () => {
+            expect(groups.activateGroup(groupPublicKey2)).to.be.revertedWith(
+              "group was already activated"
+            )
           })
         })
       })
