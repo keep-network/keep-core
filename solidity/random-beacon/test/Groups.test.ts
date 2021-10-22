@@ -29,27 +29,165 @@ describe("Groups", () => {
     context("when no groups are registered", async () => {
       let tx: ContractTransaction
 
-      beforeEach(async () => {
-        tx = await groups.addPendingGroup(groupPublicKey, members, noMisbehaved)
+      context("with no misbehaved members", async () => {
+        beforeEach(async () => {
+          tx = await groups.addPendingGroup(
+            groupPublicKey,
+            members,
+            noMisbehaved
+          )
+        })
+
+        it("should emit PendingGroupRegistered event", async () => {
+          expect(tx)
+            .to.emit(groups, "PendingGroupRegistered")
+            .withArgs(0, groupPublicKey)
+        })
+
+        it("should register a pending group", async () => {
+          const storedGroup = await groups.getGroup(groupPublicKey)
+
+          expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+          expect(storedGroup.activationTimestamp).to.be.equal(0)
+          expect(storedGroup.members).to.be.deep.equal(members)
+
+          const groupsData = await groups.getGroups()
+
+          expect(groupsData).to.be.lengthOf(1)
+          expect(groupsData[0]).to.deep.equal(storedGroup)
+        })
+
+        it("should store a flagged group index", async () => {
+          const expectedFlaggedIndex = calculateFlaggedIndex(0)
+
+          expect(await groups.getFlaggedGroupIndex(groupPublicKey)).to.equal(
+            expectedFlaggedIndex
+          )
+        })
       })
 
-      it("should emit PendingGroupRegistered event", async () => {
-        expect(tx)
-          .to.emit(groups, "PendingGroupRegistered")
-          .withArgs(0, groupPublicKey)
-      })
+      context("with misbehaved members", async () => {
+        context("with first member misbehaved", async () => {
+          const misbehavedIndices: number[] = [1]
 
-      it("should register a pending group", async () => {
-        const storedGroup = await groups.getGroup(groupPublicKey)
+          beforeEach(async () => {
+            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
 
-        expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-        expect(storedGroup.activationTimestamp).to.be.equal(0)
-        expect(storedGroup.members).to.be.deep.equal(members)
+            tx = await groups.addPendingGroup(
+              groupPublicKey,
+              members,
+              misbehaved
+            )
+          })
 
-        const groupsData = await groups.getGroups()
+          it("should filter out misbehaved members", async () => {
+            const expectedMembers = [...members]
+            expectedMembers[0] = expectedMembers.pop()
 
-        expect(groupsData).to.be.lengthOf(1)
-        expect(groupsData[0]).to.deep.equal(storedGroup)
+            expect(
+              (await groups.getGroup(groupPublicKey)).members
+            ).to.be.deep.equal(expectedMembers)
+          })
+        })
+
+        context("with last member misbehaved", async () => {
+          const misbehavedIndices: number[] = [constants.groupSize]
+
+          beforeEach(async () => {
+            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
+
+            tx = await groups.addPendingGroup(
+              groupPublicKey,
+              members,
+              misbehaved
+            )
+          })
+
+          it("should filter out misbehaved members", async () => {
+            const expectedMembers = [...members]
+            expectedMembers.pop()
+
+            expect(
+              (await groups.getGroup(groupPublicKey)).members
+            ).to.be.deep.equal(expectedMembers)
+          })
+        })
+
+        context("with middle member misbehaved", async () => {
+          const misbehavedIndices: number[] = [24]
+
+          beforeEach(async () => {
+            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
+
+            tx = await groups.addPendingGroup(
+              groupPublicKey,
+              members,
+              misbehaved
+            )
+          })
+
+          it("should filter out misbehaved members", async () => {
+            const expectedMembers = [...members]
+            expectedMembers[24 - 1] = expectedMembers.pop()
+
+            expect(
+              (await groups.getGroup(groupPublicKey)).members
+            ).to.be.deep.equal(expectedMembers)
+          })
+        })
+
+        context("with multiple members misbehaved", async () => {
+          const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
+
+          beforeEach(async () => {
+            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
+
+            tx = await groups.addPendingGroup(
+              groupPublicKey,
+              members,
+              misbehaved
+            )
+          })
+
+          it("should filter out misbehaved members", async () => {
+            const expectedMembers = filterMisbehaved(members, misbehavedIndices)
+
+            expect(
+              (await groups.getGroup(groupPublicKey)).members
+            ).to.be.deep.equal(expectedMembers)
+          })
+        })
+
+        context("with misbehaved member index 0", async () => {
+          const misbehavedIndices: number[] = [0]
+
+          it("should panic", async () => {
+            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
+
+            await expect(
+              groups.addPendingGroup(groupPublicKey, members, misbehaved)
+            ).to.be.revertedWith(
+              "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
+            )
+          })
+        })
+
+        context(
+          "with misbehaved member index greater than group size",
+          async () => {
+            const misbehavedIndices: number[] = [constants.groupSize + 1]
+
+            it("should panic", async () => {
+              const misbehaved = ethers.utils.hexlify(misbehavedIndices)
+
+              await expect(
+                groups.addPendingGroup(groupPublicKey, members, misbehaved)
+              ).to.be.revertedWith(
+                "reverted with panic code 0x32 (Array accessed at an out-of-bounds or negative index)"
+              )
+            })
+          }
+        )
       })
     })
 
@@ -251,12 +389,23 @@ describe("Groups", () => {
         })
       })
     })
-
-    // TODO: Add tests for setGroupMembers to remove misbehaved
   })
 })
 
 function calculateFlaggedIndex(index: number): BigNumber {
   // eslint-disable-next-line no-bitwise
   return BigNumber.from(index).xor(BigNumber.from(1).shl(255))
+}
+
+function filterMisbehaved(
+  members: string[],
+  misbehavedIndices: number[]
+): string[] {
+  const expectedMembers = [...members]
+  misbehavedIndices.reverse().forEach((value) => {
+    expectedMembers[value - 1] = expectedMembers[expectedMembers.length - 1]
+    expectedMembers.pop()
+  })
+
+  return expectedMembers
 }
