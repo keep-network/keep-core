@@ -266,7 +266,9 @@ library Relay {
         shift = shift > _groupSize - 1 ? _groupSize - 1 : shift;
 
         // Last eligible index must be wrapped if their value is bigger than
-        // the group size.
+        // the group size. If wrapping occurs, the lastEligibleIndex is smaller
+        // than the firstEligibleIndex. In that case, the eligibility queue
+        // can look as follows: 1, 2 (last), 3, 4, 5, 6, 7 (first), 8.
         lastEligibleIndex = firstEligibleIndex + shift;
         lastEligibleIndex = lastEligibleIndex > _groupSize
             ? lastEligibleIndex - _groupSize
