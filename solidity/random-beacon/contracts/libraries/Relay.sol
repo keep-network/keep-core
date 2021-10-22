@@ -209,6 +209,7 @@ library Relay {
         // the final result needs to be divided by 1e18.
         uint256 slashingAmount = (getSlashingFactor(self) *
             self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
+        // slither-disable-next-line reentrancy-events
         self.staking.slash(slashingAmount, group.members);
 
         self.previousEntry = entry;
@@ -268,6 +269,7 @@ library Relay {
     {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
+        // slither-disable-next-line reentrancy-events
         self.staking.slash(
             self.relayEntrySubmissionFailureSlashingAmount,
             group.members
