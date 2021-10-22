@@ -1,8 +1,20 @@
 import React from "react"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
+import TokenAmount from "../../components/TokenAmount"
+import { KEEP } from "../../utils/token.utils"
+import AllocationProgressBar from "../../components/threshold/AllocationProgressBar"
+import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
 
 const ThresholdUpgradePage = () => {
+  const onUpdateToTClick = () => {
+    console.log("update to T clicked!")
+  }
+
+  const onWithdrawFromGrant = () => {
+    console.log("withdraw from grant clicked!")
+  }
+
   return (
     <section className="threshold-upgrade-page">
       <section className="tile threshold-upgrade-page__explanation">
@@ -22,12 +34,54 @@ const ThresholdUpgradePage = () => {
         </NavLink>
       </section>
 
-      <section className="tile threshold-upgrade-page__not-staked">
-        <div>Not staked</div>
+      <section className="tile not-staked">
+        <h3 className="mb-1">Not staked</h3>
+        <TokenAmount
+          wrapperClassName={"not-staked__token-amount mb-2"}
+          amount={"500000320000000000000000"}
+          token={KEEP}
+          withIcon
+        />
+        <AllocationProgressBar
+          title={"wallet"}
+          currentValue={80}
+          totalValue={100}
+          className={"mb-1"}
+        />
+        <AllocationProgressBar
+          title={"available grant allocation"}
+          currentValue={20.33453453}
+          totalValue={103.342324}
+          className={"mb-2"}
+        />
+        <div className="upgrade-not-staked">
+          <h4 className={"mb-1"}>Upgrade not staked tokens</h4>
+          <UpgradeTokensTile
+            title={"Wallet"}
+            btnText={"upgrade to t"}
+            onBtnClick={onUpdateToTClick}
+            className={"mb-1"}
+          >
+            <UpgradeTokensTile.Row
+              label={"Liquid KEEP"}
+              amount={1000000000000000000000000}
+            />
+          </UpgradeTokensTile>
+          <UpgradeTokensTile
+            title={"Grant Allocation"}
+            btnText={"withdraw from grant"}
+            onBtnClick={onWithdrawFromGrant}
+          >
+            <UpgradeTokensTile.Row
+              label={"Available KEEP"}
+              amount={1000000000000000000000000}
+            />
+          </UpgradeTokensTile>
+        </div>
       </section>
 
-      <section className="tile threshold-upgrade-page__staked">
-        <div>Staked</div>
+      <section className="tile staked">
+        <h3>Staked</h3>
       </section>
     </section>
   )
