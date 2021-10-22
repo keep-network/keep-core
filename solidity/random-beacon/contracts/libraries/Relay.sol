@@ -142,9 +142,6 @@ library Relay {
 
         uint64 currentRequestId = ++self.requestCount;
 
-        // TODO: Accepting and storing the whole Group object is not efficient
-        //       as a lot of data is copied. Revisit once `Groups` library is
-        //       ready.
         self.currentRequest = Request(
             currentRequestId,
             groupId,
