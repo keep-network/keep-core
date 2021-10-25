@@ -21,7 +21,6 @@ export const ConfirmTopUpInitialization = withBaseModal(
     onClose,
   }) => {
     const formik = useTypeTextToConfirmFormik("CONFIRM", onConfirm)
-    console.log("formik.isValid", formik)
     return (
       <>
         <ModalHeader>Add KEEP</ModalHeader>
