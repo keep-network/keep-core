@@ -1,8 +1,9 @@
-export const OPEN_MODAL = "OPEN_MODAL"
-export const CLOSE_MODAL = "CLOSE_MODAL"
-export const ADD_ADDITIONAL_DATA_TO_MODAL = "ADD_ADDITIONAL_DATA_TO_MODAL"
-export const CLEAR_ADDITIONAL_DATA_FROM_MODAL =
-  "CLEAR_ADDITIONAL_DATA_FROM_MODAL"
+export const OPEN_MODAL = "modal/open"
+export const CLOSE_MODAL = "modal/close"
+export const ADD_ADDITIONAL_DATA_TO_MODAL = "modal/add_additional_data"
+export const CLEAR_ADDITIONAL_DATA_FROM_MODAL = "modal/clear_additional_data"
+export const CONFIRM = "modal/confirm"
+export const CANCEL = "modal/cancel"
 
 export const showModal = (options) => {
   return {
