@@ -5,6 +5,7 @@ import TokenAmount from "../../components/TokenAmount"
 import { KEEP } from "../../utils/token.utils"
 import AllocationProgressBar from "../../components/threshold/AllocationProgressBar"
 import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
+import resourceTooltipProps from "../../constants/tooltips"
 
 const ThresholdUpgradePage = () => {
   const onWithdrawFromGrant = () => {
@@ -67,6 +68,9 @@ const ThresholdUpgradePage = () => {
             title={"Grant Allocation"}
             btnText={"withdraw from grant"}
             onBtnClick={onWithdrawFromGrant}
+            titleTooltipProps={
+              resourceTooltipProps.thresholdPageGrantAllocation
+            }
           >
             <UpgradeTokensTile.Row
               label={"Available KEEP"}

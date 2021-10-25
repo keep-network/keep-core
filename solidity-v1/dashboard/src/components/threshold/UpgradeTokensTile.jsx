@@ -3,6 +3,7 @@ import TokenAmount from "../TokenAmount"
 import Button from "../Button"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
+import ResourceTooltip from "../ResourceTooltip"
 
 const UpgradeTokensTile = ({
   title,
@@ -10,11 +11,17 @@ const UpgradeTokensTile = ({
   btnText,
   onBtnClick,
   isLink = false,
+  titleTooltipProps = null,
   children,
 }) => {
   return (
     <div className={`upgrade-tokens-tile ${className}`}>
-      <div className="upgrade-tokens-tile__title">{title}</div>
+      <div className="upgrade-tokens-tile__title">
+        <span>{title}</span>
+        <OnlyIf condition={titleTooltipProps}>
+          <ResourceTooltip tooltipClassName="ml-1" {...titleTooltipProps} />
+        </OnlyIf>
+      </div>
       <div>{children}</div>
       <OnlyIf condition={!isLink}>
         <Button
