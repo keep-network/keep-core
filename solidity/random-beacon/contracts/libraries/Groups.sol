@@ -32,8 +32,10 @@ library Groups {
         address[] memory members,
         bytes memory misbehaved
     ) internal {
+        bytes32 groupPubKeyHash = keccak256(groupPubKey);
+
         require(
-            !wasGroupActivated(self, groupPubKey),
+            self.groupsData[groupPubKeyHash].activationTimestamp == 0,
             "group was already activated"
         );
 
@@ -44,19 +46,15 @@ library Groups {
 
         Group memory group;
         group.groupPubKey = groupPubKey;
-        self.groupsData[keccak256(groupPubKey)] = group;
+        self.groupsData[groupPubKeyHash] = group;
 
         // FIXME: We can end up with multiple pending groups registered with the same public key,
         // and later being activated. Although it shouldn't happen when this library
         // is used with Random Beacon DKG as it's handling just one result/group
         // at a time.
-        self.groupsRegistry.push(keccak256(groupPubKey));
+        self.groupsRegistry.push(groupPubKeyHash);
 
-        setGroupMembers(
-            _getGroup((self), keccak256(groupPubKey)),
-            members,
-            misbehaved
-        );
+        setGroupMembers(self.groupsData[groupPubKeyHash], members, misbehaved);
 
         emit PendingGroupRegistered(groupPubKey);
     }
@@ -102,24 +100,19 @@ library Groups {
     }
 
     function activateGroup(Data storage self) internal {
-        bytes32 groupPubKeyHash = self.groupsRegistry[
-            self.groupsRegistry.length - 1
+        Group storage group = self.groupsData[
+            self.groupsRegistry[self.groupsRegistry.length - 1]
         ];
 
-        bytes memory groupPubKey = self.groupsData[groupPubKeyHash].groupPubKey;
-        require(
-            !wasGroupActivated(self, groupPubKey),
-            "group was already activated"
-        );
+        require(group.activationTimestamp == 0, "group was already activated");
 
-        Group storage group = _getGroup(self, groupPubKeyHash);
         group.activationTimestamp = block.timestamp;
 
         self.activeGroupsCount++;
 
         emit GroupActivated(
             uint64(self.groupsRegistry.length - 1),
-            groupPubKey
+            group.groupPubKey
         );
     }
 
@@ -139,16 +132,6 @@ library Groups {
         //     self.activeTerminatedGroups.length)
     }
 
-    function wasGroupActivated(Data storage self, bytes memory groupPubKey)
-        internal
-        view
-        returns (bool)
-    {
-        Group memory group = getGroup(self, groupPubKey);
-
-        return group.activationTimestamp > 0;
-    }
-
     function selectGroup(Data storage self, uint256 seed)
         internal
         view
@@ -163,7 +146,7 @@ library Groups {
         view
         returns (Group memory)
     {
-        return _getGroup(self, self.groupsRegistry[groupId]);
+        return self.groupsData[self.groupsRegistry[groupId]];
     }
 
     function getGroup(Data storage self, bytes memory groupPubKey)
@@ -171,14 +154,6 @@ library Groups {
         view
         returns (Group memory)
     {
-        return _getGroup(self, keccak256(groupPubKey));
-    }
-
-    function _getGroup(Data storage self, bytes32 groupPubKeyHash)
-        private
-        view
-        returns (Group storage)
-    {
-        return self.groupsData[groupPubKeyHash];
+        return self.groupsData[keccak256(groupPubKey)];
     }
 }
