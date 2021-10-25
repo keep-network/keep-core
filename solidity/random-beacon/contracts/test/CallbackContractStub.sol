@@ -9,7 +9,10 @@ contract CallbackContractStub is IRandomBeaconConsumer {
     uint256 public _lastEntry;
     uint256 public _blockNumber;
 
-    function __beaconCallback(uint256 entry, uint256 blockNumber) external override {
+    function __beaconCallback(uint256 entry, uint256 blockNumber)
+        external
+        override
+    {
         _lastEntry = entry;
         _blockNumber = blockNumber;
     }

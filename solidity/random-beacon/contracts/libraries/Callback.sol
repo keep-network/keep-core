@@ -17,7 +17,7 @@ interface IRandomBeaconConsumer {
 /// @dev Library for handling calls to random beacon consumer.
 library Callback {
     struct Data {
-      IRandomBeaconConsumer callbackContract;
+        IRandomBeaconConsumer callbackContract;
     }
 
     event CallbackExecuted(uint256 entry, uint256 entrySubmittedBlock);
@@ -27,25 +27,34 @@ library Callback {
     /// @notice Sets callback contract.
     /// @param callbackContract Callback contract.
     function setCallbackContract(
-      Data storage self,
-      IRandomBeaconConsumer callbackContract
+        Data storage self,
+        IRandomBeaconConsumer callbackContract
     ) internal {
-      if (address(callbackContract) != address(0)) {
-          self.callbackContract = callbackContract;
-          emit CallbackSet(callbackContract);
-      }
+        if (address(callbackContract) != address(0)) {
+            self.callbackContract = callbackContract;
+            emit CallbackSet(callbackContract);
+        }
     }
 
     /// @notice Executes consumer specified callback for the relay entry request.
     /// @param entry The generated random number.
     /// @param callbackGasLimit Callback gas limit.
-    function executeCallback(Data storage self, uint256 entry, uint256 callbackGasLimit) internal {
-      if (address(self.callbackContract) != address(0)) {
-        try self.callbackContract.__beaconCallback{gas: callbackGasLimit}(entry, block.number) {
-          emit CallbackExecuted(entry, block.number);
-        } catch {
-          emit CallbackFailed(entry, block.number);
+    function executeCallback(
+        Data storage self,
+        uint256 entry,
+        uint256 callbackGasLimit
+    ) internal {
+        if (address(self.callbackContract) != address(0)) {
+            try
+                self.callbackContract.__beaconCallback{gas: callbackGasLimit}(
+                    entry,
+                    block.number
+                )
+            {
+                emit CallbackExecuted(entry, block.number);
+            } catch {
+                emit CallbackFailed(entry, block.number);
+            }
         }
-      }
     }
 }
