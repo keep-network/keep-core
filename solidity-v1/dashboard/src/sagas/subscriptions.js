@@ -516,12 +516,15 @@ function* observeTopUpInitiatedEvent() {
 
       if (delegation) {
         yield put(
-          showModal(MODAL_TYPES.TopUpInitiatedConfirmation, {
-            addedAmount: topUp,
-            currentAmount: delegation.amount,
-            authorizerAddress: delegation.authorizerAddress,
-            beneficiary: delegation.beneficiary,
-            operatorAddress: delegation.operatorAddress,
+          showModal({
+            modalType: MODAL_TYPES.TopUpInitiatedConfirmation,
+            modalProps: {
+              addedAmount: topUp,
+              currentAmount: delegation.amount,
+              authorizerAddress: delegation.authorizerAddress,
+              beneficiary: delegation.beneficiary,
+              operatorAddress: delegation.operatorAddress,
+            },
           })
         )
         yield put({

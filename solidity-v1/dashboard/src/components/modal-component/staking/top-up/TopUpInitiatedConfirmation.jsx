@@ -22,12 +22,14 @@ export const TopUpInitiatedConfirmation = withBaseModal(
     return (
       <>
         <ModalHeader>Add KEEP</ModalHeader>
-        <ModalBody className="text-center">
-          <h3>Almost there...</h3>
-          <div className="text-big text-grey-70">
-            Return to the token dashboard <strong>in 12 hours</strong> to commit
-            a top-up!
-          </div>
+        <ModalBody>
+          <section className="text-center">
+            <h3>Almost there...</h3>
+            <p className="text-big text-grey-70">
+              Return to the token dashboard
+              <strong>in 12 hours</strong>&nbsp;to finalize this transaction!
+            </p>
+          </section>
           <TokenAmount
             amount={addedAmount}
             withIcon
