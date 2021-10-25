@@ -10,6 +10,8 @@ import type {
 } from "../typechain"
 
 describe("RandomBeacon - Callback", () => {
+  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
   const relayRequestFee = to1e18(100)
   const relayEntryHardTimeout = 5760
   const relayEntrySubmissionEligibilityDelay = 10
@@ -46,11 +48,11 @@ describe("RandomBeacon - Callback", () => {
     beforeEach(async () => {
       await approveTestToken()
     })
-    context("when a callback contract is not passed", () => {
+    context("when a callback contract is zero address", () => {
       it("should not emit a callback contract set event", async () => {
         const tx = await randomBeacon
           .connect(requester)
-          ["requestRelayEntry()"]()
+          .requestRelayEntry(ZERO_ADDRESS)
 
         await expect(tx).not.to.emit(randomBeacon, "CallbackSet")
       })
@@ -60,7 +62,7 @@ describe("RandomBeacon - Callback", () => {
       it("should emit a callback contract set event", async () => {
         const tx = await randomBeacon
           .connect(requester)
-          ["requestRelayEntry(address)"](callbackContract.address)
+          .requestRelayEntry(callbackContract.address)
 
         await expect(tx)
           .to.emit(randomBeacon, "CallbackSet")
@@ -78,7 +80,7 @@ describe("RandomBeacon - Callback", () => {
         it("should emit a callback executed event", async () => {
           await randomBeacon
             .connect(requester)
-            ["requestRelayEntry(address)"](callbackContract.address)
+            .requestRelayEntry(callbackContract.address)
 
           const tx = await randomBeacon
             .connect(submitter)
@@ -100,7 +102,7 @@ describe("RandomBeacon - Callback", () => {
           )
           await randomBeacon
             .connect(requester)
-            ["requestRelayEntry(address)"](callbackContract.address)
+            .requestRelayEntry(callbackContract.address)
 
           const tx = await randomBeacon
             .connect(submitter)

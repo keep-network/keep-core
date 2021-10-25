@@ -442,16 +442,10 @@ contract RandomBeacon is Ownable {
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
-    function requestRelayEntry() external {
-        IRandomBeaconConsumer callbackContract = IRandomBeaconConsumer(address(0));
-        requestRelayEntry(callbackContract);
-    }
-
-    /// @notice Creates a request to generate a new relay entry, which will
-    ///         include a random number (by signing the previous entry's
-    ///         random number).
     /// @param callbackContract Beacon consumer callback contract.
-    function requestRelayEntry(IRandomBeaconConsumer callbackContract) public {
+    function requestRelayEntry(IRandomBeaconConsumer callbackContract)
+        external
+    {
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(relay.previousEntry))
         );
