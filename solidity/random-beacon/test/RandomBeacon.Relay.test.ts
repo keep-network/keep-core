@@ -15,7 +15,7 @@ import type {
 } from "../typechain"
 
 const { time } = helpers
-const { mineBlocks, mineBlocksTo } = time
+const { mineBlocks } = time
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
@@ -228,17 +228,15 @@ describe("RandomBeacon - Relay", () => {
                   let receipt: ContractReceipt
 
                   beforeEach(async () => {
-                    // Current request start block is 10. The `softTimeoutBlock`
-                    // is `currentRequestStartBlock + groupSize *
-                    // relayEntrySubmissionEligibilityDelay = 10 + 64 * 10 = 650`
-                    // The hard timeout is `5760` blocks. Let's assume we want
-                    // to submit the relay entry after 75% of the soft timeout
-                    // period elapses. If so we need to do it at block
-                    // `650 + (0.75 * 5760) = 4970`. However, we need to mine
-                    // to one block before because the relay entry submission
+                    // Let's assume we want to submit the relay entry after 75%
+                    // of the soft timeout period elapses. If so we need to
+                    // mine the following number of blocks:
+                    // `groupSize * relayEntrySubmissionEligibilityDelay +
+                    // (0.75 * relayEntryHardTimeout)`. However, we need to
+                    // subtract one block because the relay entry submission
                     // transaction will move the blockchain ahead by one block
                     // due to the Hardhat auto-mine feature.
-                    await mineBlocksTo(4969)
+                    await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
 
                     // When determining the eligibility queue, the
                     // `(groupSignature % 64) + 1` equation points member `16`
