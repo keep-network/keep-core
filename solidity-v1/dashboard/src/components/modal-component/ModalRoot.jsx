@@ -13,7 +13,12 @@ import {
   WalletConnectModal,
   WalletSelectionModal,
 } from "./wallets"
-import { DelegationAlreadyExists } from "./staking"
+import {
+  DelegationAlreadyExists,
+  TopUpInitiatedConfirmation,
+  TopUpInitialization,
+  ConfirmTopUpInitialization,
+} from "./staking"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.Example]: ExampleModal,

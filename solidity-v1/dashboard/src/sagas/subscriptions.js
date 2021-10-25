@@ -11,7 +11,7 @@ import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { getEventsFromTransaction, ZERO_ADDRESS } from "../utils/ethereum.utils"
-import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import { LIQUIDITY_REWARD_PAIRS, MODAL_TYPES } from "../constants/constants"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
@@ -31,6 +31,7 @@ import {
 import { keepBalanceActions } from "../actions"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
+import { showModal } from "../actions/modal"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
@@ -514,6 +515,15 @@ function* observeTopUpInitiatedEvent() {
       )
 
       if (delegation) {
+        yield put(
+          showModal(MODAL_TYPES.TopUpInitiatedConfirmation, {
+            addedAmount: topUp,
+            currentAmount: delegation.amount,
+            authorizerAddress: delegation.authorizerAddress,
+            beneficiary: delegation.beneficiary,
+            operatorAddress: delegation.operatorAddress,
+          })
+        )
         yield put({
           type: "staking/top_up_initiated",
           payload: { operator, topUp },

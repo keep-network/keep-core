@@ -211,4 +211,7 @@ export const MODAL_TYPES = {
   WalletConnect: "WalletConnect",
   WalletSelection: "WalletSelection",
   DelegationAlreadyExists: "DelegationAlreadyExists",
+  TopUpInitiatedConfirmation: "TopUpInitiatedConfirmation",
+  TopUpInitialization: "TopUpInitialization",
+  ConfirmTopUpInitialization: "ConfirmTopUpInitialization",
 }
