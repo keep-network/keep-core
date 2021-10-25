@@ -1,11 +1,13 @@
-import { call, put, take } from "redux-saga/effects"
+import { call, put, take, race } from "redux-saga/effects"
 import { Web3Loaded, ContractsLoaded } from "../contracts"
 import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
 import { createSubcribeToContractEventChannel } from "./web3"
 import { isString } from "../utils/general.utils"
+import { modalActions } from "../actions"
 
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
 /** @typedef { import("web3-eth-contract").Contract} Web3jsContract */
+/** @typedef {import("../constants/constants").MODAL_TYPES} ModalTypes */
 
 export function* getWeb3Context() {
   return yield Web3Loaded
@@ -117,4 +119,19 @@ export function* subscribeToEventAndEmitData(
       contractEventCahnnel.close()
     }
   }
+}
+
+export function* confirmModalSaga(modalType, modalProps) {
+  yield put(modalActions.openConfirmationModal(modalType, modalProps))
+  const { yes } = yield race({
+    yes: take(modalActions.CONFIRM),
+    no: take(modalActions.CANCEL),
+  })
+  yield put(modalActions.hideModal())
+  const isConfirmed = Boolean(yes)
+  if (!isConfirmed) {
+    throw new Error("Unconfirmed modal action ")
+  }
+
+  return { isConfirmed, task: yes }
 }

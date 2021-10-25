@@ -31,3 +31,16 @@ export const clearAdditionalDataFromModal = () => {
     type: CLEAR_ADDITIONAL_DATA_FROM_MODAL,
   }
 }
+
+export const openConfirmationModal = (modalType, modalProps = {}) => {
+  return {
+    type: OPEN_MODAL,
+    payload: {
+      modalProps: {
+        ...modalProps,
+        isConfirmationModal: true,
+      },
+      modalType,
+    },
+  }
+}

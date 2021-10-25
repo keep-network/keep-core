@@ -20,19 +20,31 @@ export const useModal = () => {
     [dispatch]
   )
 
+  const closeConfirmationModal = useCallback(() => {
+    if (awaitingPromiseRef.current) {
+      awaitingPromiseRef.current.reject()
+    }
+    dispatch({ type: modalActions.CANCEL })
+    closeModal()
+  }, [closeModal, dispatch])
+
   const onSubmitConfirmationModal = useCallback(
     (values) => {
       if (awaitingPromiseRef.current) {
         awaitingPromiseRef.current.resolve(values)
       }
-      closeModal()
+      dispatch({ type: modalActions.CONFIRM, payload: values })
     },
-    [closeModal]
+    [dispatch]
   )
 
   const openConfirmationModal = useCallback(
     (modalType, props) => {
-      openModal(modalType, { ...props, onConfirm: onSubmitConfirmationModal })
+      openModal(modalType, {
+        ...props,
+        onConfirm: onSubmitConfirmationModal,
+        isConfirmaitionModal: true,
+      })
 
       return new Promise((resolve, reject) => {
         awaitingPromiseRef.current = { resolve, reject }
@@ -47,5 +59,7 @@ export const useModal = () => {
     openModal,
     closeModal,
     openConfirmationModal,
+    closeConfirmationModal,
+    onSubmitConfirmationModal,
   }
 }

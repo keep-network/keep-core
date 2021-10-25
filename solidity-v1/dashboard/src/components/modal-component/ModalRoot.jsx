@@ -27,24 +27,49 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.WalletConnect]: WalletConnectModal,
   [MODAL_TYPES.WalletSelection]: WalletSelectionModal,
   [MODAL_TYPES.DelegationAlreadyExists]: DelegationAlreadyExists,
+  [MODAL_TYPES.TopUpInitialization]: TopUpInitialization,
+  [MODAL_TYPES.ConfirmTopUpInitialization]: ConfirmTopUpInitialization,
+  [MODAL_TYPES.TopUpInitiatedConfirmation]: TopUpInitiatedConfirmation,
 }
 
 const modalRoot = document.getElementById("modal-root")
 
 export const ModalRoot = () => {
-  const { modalType, modalProps, closeModal } = useModal()
-  const { onClose, ...restProps } = modalProps
+  const {
+    modalType,
+    modalProps,
+    closeModal,
+    closeConfirmationModal,
+    onSubmitConfirmationModal,
+  } = useModal()
+  const { onClose, onConfirm, ...restProps } = modalProps
 
   if (!modalType) {
     return <></>
   }
+
   const SpecificModal = MODAL_TYPE_TO_COMPONENT[modalType]
   return ReactDOM.createPortal(
     <SpecificModal
       onClose={() => {
         onClose && typeof onClose === "function" && onClose()
-        closeModal()
+        if (modalProps.isConfirmationModal) {
+          closeConfirmationModal()
+        } else {
+          closeModal()
+        }
       }}
+      onConfirm={
+        !modalProps.isConfirmationModal
+          ? undefined
+          : (values) => {
+              if (onConfirm) {
+                onConfirm(values)
+              } else {
+                onSubmitConfirmationModal(values)
+              }
+            }
+      }
       {...restProps}
     />,
     modalRoot
