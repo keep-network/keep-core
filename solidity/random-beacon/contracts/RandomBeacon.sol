@@ -19,7 +19,6 @@ import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
 import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Sortition Pool contract interface
@@ -41,7 +40,7 @@ interface ISortitionPool {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable, ReentrancyGuard {
+contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
@@ -53,13 +52,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 public constant genesisSeed =
         31415926535897932384626433832795028841971693993751058209749445923078164062862;
-
-    /// @dev Seed used as the first relay entry value.
-    /// It's a G1 point G * PI =
-    /// G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
-    /// Where G is the generator of G1 abstract cyclic group.
-    bytes public constant relaySeed =
-        hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
     // Governable parameters
 
@@ -144,13 +136,26 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         uint256 maliciousDkgResultSlashingAmount
     );
 
+    // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
+
     event DkgStarted(uint256 indexed seed);
 
-    // TODO: Revisit properties returned in this event when working on result
-    // challenges and the client.
     event DkgResultSubmitted(
+        bytes32 indexed resultHash,
         bytes indexed groupPubKey,
         address indexed submitter
+    );
+
+    event DkgTimedOut();
+
+    event DkgResultApproved(
+        bytes32 indexed resultHash,
+        address indexed approver
+    );
+
+    event DkgResultChallenged(
+        bytes32 indexed resultHash,
+        address indexed challenger
     );
 
     event RelayEntryRequested(
@@ -185,8 +190,8 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
 
-        relay.previousEntry = relaySeed;
-        relay.tToken = _tToken;
+        relay.initSeedEntry();
+        relay.initTToken(_tToken);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
     }
@@ -340,9 +345,11 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @notice Registers caller in the sortition pool.
     function registerMemberCandidate() external {
         address operator = msg.sender;
-        if (!sortitionPool.isOperatorInPool(operator)) {
-            sortitionPool.joinPool(operator);
-        }
+        require(
+            !sortitionPool.isOperatorInPool(operator),
+            "Operator is already registered"
+        );
+        sortitionPool.joinPool(operator);
     }
 
     /// @notice Checks whether the given operator is eligible to join the
@@ -366,9 +373,7 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     function createGroup(uint256 seed) internal {
         // TODO: Lock sortition pool.
 
-        dkg.start();
-
-        emit DkgStarted(seed);
+        dkg.start(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
@@ -392,8 +397,32 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
         dkg.submitResult(dkgResult);
 
         // TODO: Register a pending group
+        // TODO: Set members in the group
+    }
 
-        emit DkgResultSubmitted(dkgResult.groupPubKey, msg.sender);
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout() external {
+        dkg.notifyTimeout();
+    }
+
+    /// @notice Approves DKG result. Can be called after challenge period for the
+    ///         submitted result is finished. Considers the submitted result as
+    ///         valid and completes the group creation.
+    function approveDkgResult() external {
+        dkg.approveResult();
+
+        // TODO: Activate the pending group.
+
+        // TODO: Unlock sortition pool
+    }
+
+    /// @notice Challenges DKG result. If the submitted result is proved to be
+    ///         invalid it reverts the DKG back to the result submission phase.
+    function challengeDkgResult() external {
+        // TODO: Determine parameters required for DKG result challenges.
+        dkg.challengeResult();
+
+        // TODO: Implement slashing
     }
 
     /// @notice Check current group creation state.
@@ -438,7 +467,6 @@ contract RandomBeacon is Ownable, ReentrancyGuard {
     /// @param entry Group BLS signature over the previous entry.
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
-        nonReentrant
     {
         relay.submitEntry(
             submitterIndex,

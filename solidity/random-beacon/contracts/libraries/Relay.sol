@@ -49,8 +49,15 @@ library Relay {
         uint256 relayEntryHardTimeout;
     }
 
-    // Size of a group in the threshold relay.
+    /// @notice Size of a group in the threshold relay.
     uint256 public constant groupSize = 64;
+
+    /// @notice Seed used as the first relay entry value.
+    /// It's a G1 point G * PI =
+    /// G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
+    /// Where G is the generator of G1 abstract cyclic group.
+    bytes public constant relaySeed =
+        hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
     event RelayEntryRequested(
         uint256 indexed requestId,
@@ -58,6 +65,27 @@ library Relay {
         bytes previousEntry
     );
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
+    /// @notice Initializes the very first `previousEntry` with an initial
+    ///         `relaySeed` value. Can be performed only once.
+    function initSeedEntry(Data storage self) internal {
+        require(
+            self.previousEntry.length == 0,
+            "Seed entry already initialized"
+        );
+        self.previousEntry = relaySeed;
+    }
+
+    /// @notice Initializes the tToken parameter. Can be performed only once.
+    /// @param _tToken Value of the parameter.
+    function initTToken(Data storage self, IERC20 _tToken) internal {
+        require(
+            address(self.tToken) == address(0),
+            "T token address already set"
+        );
+
+        self.tToken = _tToken;
+    }
 
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
@@ -113,11 +141,6 @@ library Relay {
             "Unexpected submitter index"
         );
 
-        require(
-            BLS.verify(group.groupPubKey, self.previousEntry, entry),
-            "Invalid entry"
-        );
-
         (
             uint256 firstEligibleIndex,
             uint256 lastEligibleIndex
@@ -127,10 +150,14 @@ library Relay {
                 self,
                 submitterIndex,
                 firstEligibleIndex,
-                lastEligibleIndex,
-                groupSize
+                lastEligibleIndex
             ),
             "Submitter is not eligible"
+        );
+
+        require(
+            BLS.verify(group.groupPubKey, self.previousEntry, entry),
+            "Invalid entry"
         );
 
         // TODO: Use submitterIndex, firstEligibleIndex and lastEligibleIndex
@@ -207,6 +234,11 @@ library Relay {
 
     /// @notice Determines the eligibility range for given relay entry basing on
     ///         current block number.
+    /// @dev Parameters _entry and _groupSize are passed because the first
+    ///      eligible index is computed as `_entry % _groupSize`. This function
+    ///      doesn't use the constant `groupSize` directly to facilitate
+    ///      testing. Big group sizes in tests make readability worse and
+    ///      dramatically increase the time of execution.
     /// @param _entry Entry value for which the eligibility range should be
     ///        determined.
     /// @param _groupSize Group size for which eligibility range should be determined.
@@ -236,7 +268,9 @@ library Relay {
         shift = shift > _groupSize - 1 ? _groupSize - 1 : shift;
 
         // Last eligible index must be wrapped if their value is bigger than
-        // the group size.
+        // the group size. If wrapping occurs, the lastEligibleIndex is smaller
+        // than the firstEligibleIndex. In that case, the eligibility queue
+        // can look as follows: 1, 2 (last), 3, 4, 5, 6, 7 (first), 8.
         lastEligibleIndex = firstEligibleIndex + shift;
         lastEligibleIndex = lastEligibleIndex > _groupSize
             ? lastEligibleIndex - _groupSize
@@ -250,15 +284,13 @@ library Relay {
     /// @param _submitterIndex Index of the submitter whose eligibility is checked.
     /// @param _firstEligibleIndex First index of the given eligibility range.
     /// @param _lastEligibleIndex Last index of the given eligibility range.
-    /// @param _groupSize Group size for which eligibility should be checked.
     /// @return True if eligible. False otherwise.
     function isEligible(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
         uint256 _submitterIndex,
         uint256 _firstEligibleIndex,
-        uint256 _lastEligibleIndex,
-        uint256 _groupSize
+        uint256 _lastEligibleIndex
     ) internal view returns (bool) {
         if (_firstEligibleIndex <= _lastEligibleIndex) {
             // First eligible index is equal or smaller than the last.
@@ -273,10 +305,8 @@ library Relay {
             // either in range <1, lastEligibleIndex> or
             // <firstEligibleIndex, groupSize>.
             return
-                (1 <= _submitterIndex &&
-                    _submitterIndex <= _lastEligibleIndex) ||
-                (_firstEligibleIndex <= _submitterIndex &&
-                    _submitterIndex <= _groupSize);
+                _submitterIndex <= _lastEligibleIndex ||
+                _firstEligibleIndex <= _submitterIndex;
         }
     }
 }

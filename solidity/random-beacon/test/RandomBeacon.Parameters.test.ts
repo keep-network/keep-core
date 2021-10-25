@@ -4,24 +4,20 @@ import { expect } from "chai"
 import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
 
-import type { RandomBeacon, SortitionPoolStub } from "../typechain"
+import type { RandomBeacon } from "../typechain"
 
-describe("RandomBeacon", () => {
+describe("RandomBeacon - Parameters", () => {
   let governance: Signer
   let thirdParty: Signer
-  let operator: Signer
   let randomBeacon: RandomBeacon
-  let sortitionPoolStub: SortitionPoolStub
 
   // prettier-ignore
   before(async () => {
-    [governance, thirdParty, operator] = await ethers.getSigners()
+    [governance, thirdParty] = await ethers.getSigners()
   })
 
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
-
-    sortitionPoolStub = contracts.sortitionPoolStub as SortitionPoolStub
     randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
@@ -285,65 +281,6 @@ describe("RandomBeacon", () => {
             relayEntrySubmissionFailureSlashingAmount,
             maliciousDkgResultSlashingAmount
           )
-      })
-    })
-  })
-
-  describe("registerMemberCandidate", () => {
-    context("when the operator is not registered yet", () => {
-      beforeEach(async () => {
-        await randomBeacon.connect(operator).registerMemberCandidate()
-      })
-
-      it("should register the operator", async () => {
-        await expect(
-          await sortitionPoolStub.operators(await operator.getAddress())
-        ).to.be.true
-      })
-    })
-
-    context("when the operator is already registered", () => {
-      beforeEach(async () => {
-        await randomBeacon.connect(operator).registerMemberCandidate()
-        await randomBeacon.connect(operator).registerMemberCandidate()
-      })
-
-      it("should keep the operator as registered", async () => {
-        await expect(
-          await sortitionPoolStub.operators(await operator.getAddress())
-        ).to.be.true
-      })
-    })
-  })
-
-  describe("isOperatorEligible", () => {
-    context("when the operator is eligible in the sorition pool", () => {
-      beforeEach(async () => {
-        await sortitionPoolStub.setOperatorEligibility(
-          await operator.getAddress(),
-          true
-        )
-      })
-
-      it("should return true", async () => {
-        await expect(
-          await randomBeacon.isOperatorEligible(await operator.getAddress())
-        ).to.be.true
-      })
-    })
-
-    context("when the operator is not eligible in the sorition pool", () => {
-      beforeEach(async () => {
-        await sortitionPoolStub.setOperatorEligibility(
-          await operator.getAddress(),
-          false
-        )
-      })
-
-      it("should return false", async () => {
-        await expect(
-          await randomBeacon.isOperatorEligible(await operator.getAddress())
-        ).to.be.false
       })
     })
   })

@@ -3,8 +3,8 @@ import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { blsDeployment, constants, randomBeaconDeployment } from "./fixtures"
-import type { RandomBeacon, TestToken, TestRelay } from "../typechain"
+import { randomBeaconDeployment } from "./fixtures"
+import type { RandomBeacon, TestToken, RelayStub } from "../typechain"
 
 const { time } = helpers
 const { mineBlocks } = time
@@ -15,22 +15,33 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
   let other: SignerWithAddress
+  let invalidEntrySubmitter: SignerWithAddress
 
   let randomBeacon: RandomBeacon
   let testToken: TestToken
-  let testRelay: TestRelay
+  let relayStub: RelayStub
+
+  const fixture = async () => {
+    const deployment = await randomBeaconDeployment()
+
+    return {
+      randomBeacon: deployment.randomBeacon,
+      testToken: deployment.testToken,
+      relayStub: await (await ethers.getContractFactory("RelayStub")).deploy(),
+    }
+  }
 
   // prettier-ignore
   before(async () => {
-    [requester, submitter, other] = await ethers.getSigners()
+    [requester, submitter, other, invalidEntrySubmitter] = await ethers.getSigners()
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
+    const contracts = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
     testToken = contracts.testToken as TestToken
-    testRelay = contracts.testRelay as TestRelay
+    relayStub = contracts.relayStub as RelayStub
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
   })
@@ -56,11 +67,11 @@ describe("RandomBeacon - Relay", () => {
           })
 
           it("should deposit relay request fee to the maintenance pool", async () => {
-            const actualMaintenancePoolBalance = await testToken.balanceOf(
+            const currentMaintenancePoolBalance = await testToken.balanceOf(
               randomBeacon.address
             )
             expect(
-              actualMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
+              currentMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
             ).to.be.equal(relayRequestFee)
           })
 
@@ -110,9 +121,14 @@ describe("RandomBeacon - Relay", () => {
 
       context("when relay entry is not timed out", () => {
         context("when submitter index is valid", () => {
-          context("when entry is valid", () => {
-            context("when submitter is eligible", () => {
+          context("when submitter is eligible", () => {
+            context("when entry is valid", () => {
               it("should emit RelayEntrySubmitted event", async () => {
+                // When determining the eligibility queue, the
+                // `(groupSignature % 64) + 1` equation points member `16`
+                // as the first eligible one. This is why we use that
+                // index as `submitRelayEntry` parameter. The `submitter`
+                // signer represents that member too.
                 await expect(
                   randomBeacon
                     .connect(submitter)
@@ -123,24 +139,26 @@ describe("RandomBeacon - Relay", () => {
               })
             })
 
-            context("when submitter is not eligible", () => {
+            context("when entry is not valid", () => {
               it("should revert", async () => {
+                // In that case `(nextGroupSignature % 64) + 1` gives 3 so that
+                // member needs to submit the wrong relay entry.
                 await expect(
                   randomBeacon
-                    .connect(other)
-                    .submitRelayEntry(17, blsData.groupSignature)
-                ).to.be.revertedWith("Submitter is not eligible")
+                    .connect(invalidEntrySubmitter)
+                    .submitRelayEntry(3, blsData.nextGroupSignature)
+                ).to.be.revertedWith("Invalid entry")
               })
             })
           })
 
-          context("when entry is not valid", () => {
+          context("when submitter is not eligible", () => {
             it("should revert", async () => {
               await expect(
                 randomBeacon
-                  .connect(submitter)
-                  .submitRelayEntry(16, blsData.nextGroupSignature)
-              ).to.be.revertedWith("Invalid entry")
+                  .connect(other)
+                  .submitRelayEntry(17, blsData.groupSignature)
+              ).to.be.revertedWith("Submitter is not eligible")
             })
           })
         })
@@ -202,7 +220,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("isEligible", () => {
     it("should correctly manage the eligibility queue", async () => {
-      await testRelay.setCurrentRequestStartBlock()
+      await relayStub.setCurrentRequestStartBlock()
 
       // At the beginning only member 8 is eligible because
       // (blsData.groupSignature % groupSize) + 1 = 8.
@@ -255,7 +273,7 @@ describe("RandomBeacon - Relay", () => {
   async function assertMembersEligible(members: number[]) {
     for (let i = 0; i < members.length; i++) {
       // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
-      expect(await testRelay.isEligible(members[i], blsData.groupSignature)).to
+      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
         .be.true
     }
   }
@@ -263,7 +281,7 @@ describe("RandomBeacon - Relay", () => {
   async function assertMembersNotEligible(members: number[]) {
     for (let i = 0; i < members.length; i++) {
       // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
-      expect(await testRelay.isEligible(members[i], blsData.groupSignature)).to
+      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
         .be.false
     }
   }
