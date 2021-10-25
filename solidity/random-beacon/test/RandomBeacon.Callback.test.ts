@@ -1,7 +1,8 @@
 import { ethers, waffle } from "hardhat"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { expect } from "chai"
-import { to1e18 } from "./functions"
+import blsData from "./data/bls"
+import { to1e18, ZERO_ADDRESS } from "./functions"
 import { randomBeaconDeployment } from "./fixtures"
 import type {
   RandomBeacon,
@@ -10,8 +11,6 @@ import type {
 } from "../typechain"
 
 describe("RandomBeacon - Callback", () => {
-  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
-
   const relayRequestFee = to1e18(100)
   const relayEntryHardTimeout = 5760
   const relayEntrySubmissionEligibilityDelay = 10
@@ -84,11 +83,11 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(1, 42)
+            .submitRelayEntry(16, blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackExecuted")
-            .withArgs(42, tx.blockNumber)
+            .withArgs(blsData.groupSignatureUint256, tx.blockNumber)
         })
       })
       context("when the callback failed", () => {
@@ -106,11 +105,11 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(1, 42)
+            .submitRelayEntry(16, blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
-            .withArgs(42, tx.blockNumber)
+            .withArgs(blsData.groupSignatureUint256, tx.blockNumber)
         })
       })
     })

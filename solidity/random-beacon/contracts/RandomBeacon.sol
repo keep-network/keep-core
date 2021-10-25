@@ -455,7 +455,6 @@ contract RandomBeacon is Ownable {
         callback.setCallbackContract(callbackContract);
     }
 
-    /// TODO: won't compile because of 'entry': uint256 vs bytes
     /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
@@ -473,7 +472,7 @@ contract RandomBeacon is Ownable {
             // createGroup(uint256(keccak256(entry)));
         }
 
-        callback.executeCallback(entry, callbackGasLimit);
+        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
     }
 
     /// @return Relay request fee in T. This fee needs to be provided by the
