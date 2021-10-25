@@ -23,13 +23,25 @@ describe("RandomBeacon - Callback", () => {
   let testToken: TestToken
   let callbackContract: CallbackContractStub
 
+  const fixture = async () => {
+    const deployment = await randomBeaconDeployment()
+
+    return {
+      randomBeacon: deployment.randomBeacon,
+      testToken: deployment.testToken,
+      callbackContractStub: await (
+        await ethers.getContractFactory("CallbackContractStub")
+      ).deploy(),
+    }
+  }
+
   // prettier-ignore
   before(async () => {
     [requester, submitter] = await ethers.getSigners()
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
+    const contracts = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
     testToken = contracts.testToken as TestToken
