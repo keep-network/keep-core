@@ -30,6 +30,10 @@ interface ISortitionPool {
     function isOperatorInPool(address operator) external view returns (bool);
 
     function isOperatorEligible(address operator) external view returns (bool);
+
+    // TODO: Temporary function for testing only. Not sure how the removal
+    //       mechanism will work at the moment.
+    function removeOperators(address[] memory operators) external;
 }
 
 /// @title Staking contract interface

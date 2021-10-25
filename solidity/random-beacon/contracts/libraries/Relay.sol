@@ -202,8 +202,7 @@ library Relay {
             firstEligibleIndex,
             group
         );
-        // TODO: Kick out punishedMembers from the sortition pool for 2 weeks.
-        //       Use gas station pattern to make that call gas-transparent.
+        self.sortitionPool.removeOperators(punishedMembers);
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the

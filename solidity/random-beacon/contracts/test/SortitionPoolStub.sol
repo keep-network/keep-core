@@ -35,4 +35,11 @@ contract SortitionPoolStub is ISortitionPool {
     {
         return eligibleOperators[operator];
     }
+
+    function removeOperators(address[] memory _operators) external override {
+        for (uint256 i = 0; i < _operators.length; i++) {
+            delete operators[_operators[i]];
+            delete eligibleOperators[_operators[i]];
+        }
+    }
 }
