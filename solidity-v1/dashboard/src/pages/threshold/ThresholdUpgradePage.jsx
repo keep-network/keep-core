@@ -7,10 +7,6 @@ import AllocationProgressBar from "../../components/threshold/AllocationProgress
 import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
 
 const ThresholdUpgradePage = () => {
-  const onUpdateToTClick = () => {
-    console.log("update to T clicked!")
-  }
-
   const onWithdrawFromGrant = () => {
     console.log("withdraw from grant clicked!")
   }
@@ -59,8 +55,8 @@ const ThresholdUpgradePage = () => {
           <UpgradeTokensTile
             title={"Wallet"}
             btnText={"upgrade to t"}
-            onBtnClick={onUpdateToTClick}
             className={"mb-1"}
+            isLink
           >
             <UpgradeTokensTile.Row
               label={"Liquid KEEP"}

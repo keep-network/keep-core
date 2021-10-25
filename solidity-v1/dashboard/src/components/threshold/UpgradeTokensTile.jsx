@@ -1,24 +1,39 @@
 import React from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
+import OnlyIf from "../OnlyIf"
+import { LINK } from "../../constants/constants"
 
 const UpgradeTokensTile = ({
   title,
   className = "",
   btnText,
   onBtnClick,
+  isLink = false,
   children,
 }) => {
   return (
     <div className={`upgrade-tokens-tile ${className}`}>
       <div className="upgrade-tokens-tile__title">{title}</div>
       <div>{children}</div>
-      <Button
-        className="btn btn-primary btn-lg upgrade-tokens-tile__button"
-        onClick={onBtnClick}
-      >
-        {btnText}
-      </Button>
+      <OnlyIf condition={!isLink}>
+        <Button
+          className="btn btn-primary btn-md upgrade-tokens-tile__button"
+          onClick={onBtnClick}
+        >
+          {btnText}
+        </Button>
+      </OnlyIf>
+      <OnlyIf condition={isLink}>
+        <a
+          href={LINK.tbtcDapp}
+          rel="noopener noreferrer"
+          target="_blank"
+          className="btn btn-primary btn-md upgrade-tokens-tile__button"
+        >
+          {btnText} ↗
+        </a>
+      </OnlyIf>
     </div>
   )
 }
