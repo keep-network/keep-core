@@ -43,11 +43,13 @@ library Groups {
         // TODO: Implementation. Currently this function is just a stub which makes tests working.
         address[] memory members = new address[](64);
         // Member with index 3.
-        members[2] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        members[2] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
         // Member with index 16.
-        members[15] = address(0x70997970C51812dc3A010C7d01b50e0d17dc79C8);
+        members[15] = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
         // Member with index 17.
-        members[16] = address(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC);
+        members[16] = address(0x90F79bf6EB2c4f870365E785982E1f101E93b906);
+        // Member with index 18.
+        members[17] = address(0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65);
 
         // slither-disable-next-line uninitialized-local
         Groups.Group memory group;

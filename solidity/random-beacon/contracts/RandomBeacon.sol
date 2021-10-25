@@ -476,6 +476,10 @@ contract RandomBeacon is Ownable {
         // TODO: Terminate group?
     }
 
+    function isRelayRequestInProgress() external view returns (bool) {
+        return relay.isRequestInProgress();
+    }
+
     /// @return Relay request fee in T. This fee needs to be provided by the
     ///         account or contract requesting for a new relay entry.
     function relayRequestFee() external view returns (uint256) {

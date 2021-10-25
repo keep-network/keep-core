@@ -4,6 +4,7 @@ import type {
   SortitionPoolStub,
   RandomBeaconStub,
   RandomBeaconGovernance,
+  StakingStub,
 } from "../../typechain"
 
 export const constants = {
@@ -62,6 +63,9 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
   const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
 
+  const StakingStub = await ethers.getContractFactory("StakingStub")
+  const stakingStub: StakingStub = await StakingStub.deploy()
+
   const { testToken } = await testTokenDeployment()
 
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
@@ -72,7 +76,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPoolStub.address,
-    testToken.address
+    testToken.address,
+    stakingStub.address
   )
   await randomBeacon.deployed()
 
@@ -80,6 +85,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     sortitionPoolStub,
     randomBeacon,
     testToken,
+    stakingStub,
   }
 
   return contracts

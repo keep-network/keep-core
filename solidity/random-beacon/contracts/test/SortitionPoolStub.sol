@@ -9,6 +9,8 @@ contract SortitionPoolStub is ISortitionPool {
     mapping(address => bool) public operators;
     mapping(address => bool) public eligibleOperators;
 
+    event OperatorsRemoved(address[] operators);
+
     function joinPool(address operator) external override {
         operators[operator] = true;
     }
@@ -40,6 +42,10 @@ contract SortitionPoolStub is ISortitionPool {
         for (uint256 i = 0; i < _operators.length; i++) {
             delete operators[_operators[i]];
             delete eligibleOperators[_operators[i]];
+        }
+
+        if (_operators.length > 0) {
+            emit OperatorsRemoved(_operators);
         }
     }
 }
