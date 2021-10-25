@@ -21,13 +21,23 @@ describe("RandomBeacon - Relay", () => {
   let testToken: TestToken
   let relayStub: RelayStub
 
+  const fixture = async () => {
+    const deployment = await randomBeaconDeployment()
+
+    return {
+      randomBeacon: deployment.randomBeacon,
+      testToken: deployment.testToken,
+      relayStub: await (await ethers.getContractFactory("RelayStub")).deploy(),
+    }
+  }
+
   // prettier-ignore
   before(async () => {
     [requester, submitter, other, invalidEntrySubmitter] = await ethers.getSigners()
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
+    const contracts = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
     testToken = contracts.testToken as TestToken
