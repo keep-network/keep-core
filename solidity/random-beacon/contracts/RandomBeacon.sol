@@ -166,10 +166,6 @@ contract RandomBeacon is Ownable {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
-    event CallbackSet(IRandomBeaconConsumer callback);
-
-    event CallbackExecuted(uint256 entry, uint256 entrySubmittedBlock);
-
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     /// @dev Assigns initial values to parameters to make the beacon work

@@ -6,14 +6,14 @@ import "../libraries/Callback.sol";
 
 // Stub contract used in tests
 contract CallbackContractStub is IRandomBeaconConsumer {
-    uint256 public _lastEntry;
-    uint256 public _blockNumber;
+    uint256 public lastEntry;
+    uint256 public blockNumber;
 
-    function __beaconCallback(uint256 entry, uint256 blockNumber)
+    function __beaconCallback(uint256 _lastEntry, uint256 _blockNumber)
         external
         override
     {
-        _lastEntry = entry;
-        _blockNumber = blockNumber;
+        lastEntry = _lastEntry;
+        blockNumber = _blockNumber;
     }
 }

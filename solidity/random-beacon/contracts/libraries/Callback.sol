@@ -20,9 +20,7 @@ library Callback {
         IRandomBeaconConsumer callbackContract;
     }
 
-    event CallbackExecuted(uint256 entry, uint256 entrySubmittedBlock);
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
-    event CallbackSet(IRandomBeaconConsumer callback);
 
     /// @notice Sets callback contract.
     /// @param callbackContract Callback contract.
@@ -32,7 +30,6 @@ library Callback {
     ) internal {
         if (address(callbackContract) != address(0)) {
             self.callbackContract = callbackContract;
-            emit CallbackSet(callbackContract);
         }
     }
 
@@ -50,9 +47,7 @@ library Callback {
                     entry,
                     block.number
                 )
-            {
-                emit CallbackExecuted(entry, block.number);
-            } catch {
+            {} catch {
                 emit CallbackFailed(entry, block.number);
             }
         }
