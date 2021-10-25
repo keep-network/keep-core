@@ -22,8 +22,8 @@ contract TestGroups {
         groups.addPendingGroup(groupPubKey, members, misbehaved);
     }
 
-    function activateGroup(bytes memory groupPubKey) external {
-        groups.activateGroup(groupPubKey);
+    function activateGroup() external {
+        groups.activateGroup();
     }
 
     function getGroupsRegistry() external view returns (bytes32[] memory) {

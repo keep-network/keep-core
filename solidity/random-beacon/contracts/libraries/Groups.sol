@@ -6,12 +6,11 @@ import "./BytesLib.sol";
 library Groups {
     using BytesLib for bytes;
 
-    event PendingGroupRegistered(
-        uint64 indexed groupId,
-        bytes indexed groupPubKey
-    );
+    event PendingGroupRegistered(bytes indexed groupPubKey);
 
-    event GroupActivated(bytes indexed groupPubKey);
+    event PendingGroupRemoved(bytes indexed groupPubKey);
+
+    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
     struct Group {
         bytes groupPubKey;
@@ -85,20 +84,35 @@ library Groups {
         }
     }
 
-    // TODO: Could we further optimize this library and don't require groupPubKey
-    // to be passed for group activation and removal? Could we assume that
-    // the most recent group in the groups stack is a pending group? If so we could
-    // also remove storing groupPubKey in the DKG library.
+    function popPendingGroup(Data storage self) internal {
+        bytes32 groupPubKeyHash = self.groupsRegistry[
+            self.groupsRegistry.length - 1
+        ];
 
-    function activateGroup(Data storage self, bytes memory groupPubKey)
-        internal
-    {
+        require(
+            self.groupsData[groupPubKeyHash].activationTimestamp == 0,
+            "the latest registered group is not pending"
+        );
+
+        // Pop the latest registered group. Group data are not deleted from the
+        // `groupsData` map to reduce transaction costs.
+        self.groupsRegistry.pop();
+
+        emit PendingGroupRemoved(self.groupsData[groupPubKeyHash].groupPubKey);
+    }
+
+    function activateGroup(Data storage self) internal {
+        bytes32 groupPubKeyHash = self.groupsRegistry[
+            self.groupsRegistry.length - 1
+        ];
+
+        bytes memory groupPubKey = self.groupsData[groupPubKeyHash].groupPubKey;
         require(
             !wasGroupActivated(self, groupPubKey),
             "group was already activated"
         );
 
-        Group storage group = _getGroup(self, keccak256(groupPubKey));
+        Group storage group = _getGroup(self, groupPubKeyHash);
         group.activationTimestamp = block.timestamp;
 
         self.activeGroupsCount++;
