@@ -8,12 +8,11 @@ contract TestGroups {
 
     Groups.Data internal groups;
 
-    event PendingGroupRegistered(
-        uint64 indexed groupId,
-        bytes indexed groupPubKey
-    );
+    event PendingGroupRegistered(bytes indexed groupPubKey);
 
-    event GroupActivated(bytes indexed groupPubKey);
+    event PendingGroupRemoved(bytes indexed groupPubKey);
+
+    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
     function addPendingGroup(
         bytes calldata groupPubKey,
@@ -27,24 +26,16 @@ contract TestGroups {
         groups.activateGroup(groupPubKey);
     }
 
+    function getGroupsRegistry() external view returns (bytes32[] memory) {
+        return groups.groupsRegistry;
+    }
+
     function getGroup(bytes memory groupPubKey)
         external
         view
         returns (Groups.Group memory)
     {
         return groups.getGroup(groupPubKey);
-    }
-
-    function getFlaggedGroupIndex(bytes memory groupPubKey)
-        external
-        view
-        returns (uint256)
-    {
-        return groups.groupIndices[groupPubKey];
-    }
-
-    function getGroups() external view returns (Groups.Group[] memory) {
-        return groups.groups;
     }
 
     function numberOfActiveGroups() external view returns (uint64) {

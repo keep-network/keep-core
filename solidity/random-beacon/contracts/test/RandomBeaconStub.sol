@@ -10,8 +10,4 @@ contract RandomBeaconStub is RandomBeacon {
     function getDkgData() external view returns (DKG.Data memory) {
         return dkg;
     }
-
-    function getGroups() external view returns (Groups.Group[] memory) {
-        return groups.groups;
-    }
 }

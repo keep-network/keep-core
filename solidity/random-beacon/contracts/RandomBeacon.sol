@@ -183,12 +183,11 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
-    event PendingGroupRegistered(
-        uint64 indexed groupId,
-        bytes indexed groupPubKey
-    );
+    event PendingGroupRegistered(bytes indexed groupPubKey);
 
-    event GroupActivated(bytes indexed groupPubKey);
+    event PendingGroupRemoved(bytes indexed groupPubKey);
+
+    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -443,6 +442,7 @@ contract RandomBeacon is Ownable {
 
         // TODO: Remove challenged pending group c84f859d598b952502eecd7a2b21e6f9b021266e
         // Verify the costs of transaction.
+        groups.popPendingGroup();
 
         // TODO: Implement slashing
     }
@@ -459,6 +459,14 @@ contract RandomBeacon is Ownable {
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
+    }
+
+    function getGroup(uint64 groupId)
+        external
+        view
+        returns (Groups.Group memory)
+    {
+        return groups.getGroup(groupId);
     }
 
     function getGroup(bytes memory groupPubKey)

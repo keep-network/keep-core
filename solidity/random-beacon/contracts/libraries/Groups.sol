@@ -6,15 +6,6 @@ import "./BytesLib.sol";
 library Groups {
     using BytesLib for bytes;
 
-    // The index of a group is flagged with the most significant bit set,
-    // to distinguish the group `0` from null.
-    // The flag is toggled with bitwise XOR (`^`)
-    // which keeps all other bits intact but flips the flag bit.
-    // The flag should be set before writing to `groupIndices`,
-    // and unset after reading from `groupIndices`
-    // before using the value.
-    uint256 constant GROUP_INDEX_FLAG = 1 << 255;
-
     event PendingGroupRegistered(
         uint64 indexed groupId,
         bytes indexed groupPubKey
@@ -29,10 +20,8 @@ library Groups {
     }
 
     struct Data {
-        // Mapping of `groupPubKey` to flagged `groupIndex`
-        mapping(bytes => uint256) groupIndices;
-        // mapping(bytes32 => bytes) gr
-        Group[] groups;
+        mapping(bytes32 => Group) groupsData;
+        bytes32[] groupsRegistry;
         // TODO: Remember about decreasing the counter in case of expiration or termination.
         uint64 activeGroupsCount;
     }
@@ -44,31 +33,33 @@ library Groups {
         address[] memory members,
         bytes memory misbehaved
     ) internal {
-        if (self.groupIndices[groupPubKey] != 0) {
-            require(
-                !wasGroupActivated(self, groupPubKey),
-                "group was already activated"
-            );
-        }
-
         require(
-            self.groups.length <= type(uint64).max,
-            "max number of groups reached"
+            !wasGroupActivated(self, groupPubKey),
+            "group was already activated"
         );
 
-        self.groupIndices[groupPubKey] = (self.groups.length ^
-            GROUP_INDEX_FLAG);
+        require(
+            self.groupsRegistry.length <= type(uint64).max,
+            "max number of registered groups reached"
+        );
 
         Group memory group;
         group.groupPubKey = groupPubKey;
-        self.groups.push(group);
+        self.groupsData[keccak256(groupPubKey)] = group;
 
-        setGroupMembers(_getGroup((self), groupPubKey), members, misbehaved);
+        // FIXME: We can end up with multiple pending groups registered with the same public key,
+        // and later being activated. Although it shouldn't happen when this library
+        // is used with Random Beacon DKG as it's handling just one result/group
+        // at a time.
+        self.groupsRegistry.push(keccak256(groupPubKey));
 
-        emit PendingGroupRegistered(
-            uint64(self.groups.length - 1),
-            groupPubKey
+        setGroupMembers(
+            _getGroup((self), keccak256(groupPubKey)),
+            members,
+            misbehaved
         );
+
+        emit PendingGroupRegistered(groupPubKey);
     }
 
     // TODO: This function should be optimized for members storing.
@@ -107,12 +98,15 @@ library Groups {
             "group was already activated"
         );
 
-        Group storage group = _getGroup(self, groupPubKey);
+        Group storage group = _getGroup(self, keccak256(groupPubKey));
         group.activationTimestamp = block.timestamp;
 
         self.activeGroupsCount++;
 
-        emit GroupActivated(groupPubKey);
+        emit GroupActivated(
+            uint64(self.groupsRegistry.length - 1),
+            groupPubKey
+        );
     }
 
     // TODO: Add group termination and expiration
@@ -136,7 +130,7 @@ library Groups {
         view
         returns (bool)
     {
-        Group memory group = _getGroup(self, groupPubKey);
+        Group memory group = getGroup(self, groupPubKey);
 
         return group.activationTimestamp > 0;
     }
@@ -147,7 +141,7 @@ library Groups {
         returns (uint64)
     {
         // TODO: Implement.
-        return uint64(self.groups.length - 1);
+        return uint64(self.groupsRegistry.length - 1);
     }
 
     function getGroup(Data storage self, uint64 groupId)
@@ -155,7 +149,7 @@ library Groups {
         view
         returns (Group memory)
     {
-        return self.groups[groupId];
+        return _getGroup(self, self.groupsRegistry[groupId]);
     }
 
     function getGroup(Data storage self, bytes memory groupPubKey)
@@ -163,19 +157,14 @@ library Groups {
         view
         returns (Group memory)
     {
-        return _getGroup(self, groupPubKey);
+        return _getGroup(self, keccak256(groupPubKey));
     }
 
-    function _getGroup(Data storage self, bytes memory groupPubKey)
+    function _getGroup(Data storage self, bytes32 groupPubKeyHash)
         private
         view
         returns (Group storage)
     {
-        uint256 flaggedIndex = self.groupIndices[groupPubKey];
-        require(flaggedIndex != 0, "group does not exist");
-
-        uint256 groupId = flaggedIndex ^ GROUP_INDEX_FLAG;
-
-        return self.groups[groupId];
+        return self.groupsData[groupPubKeyHash];
     }
 }
