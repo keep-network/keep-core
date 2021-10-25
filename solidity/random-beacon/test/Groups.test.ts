@@ -1,12 +1,13 @@
 import { ethers } from "hardhat"
 import { expect } from "chai"
 import type { ContractTransaction } from "ethers"
-import { BigNumber } from "ethers"
 import blsData from "./data/bls"
 import { noMisbehaved, getDkgGroupSigners } from "./utils/dkg"
 import { constants } from "./fixtures"
 import type { TestGroups } from "../typechain"
 import type { DkgGroupSigners } from "./utils/dkg"
+
+const { keccak256 } = ethers.utils
 
 describe("Groups", () => {
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
@@ -41,26 +42,22 @@ describe("Groups", () => {
         it("should emit PendingGroupRegistered event", async () => {
           expect(tx)
             .to.emit(groups, "PendingGroupRegistered")
-            .withArgs(0, groupPublicKey)
+            .withArgs(groupPublicKey)
         })
 
-        it("should register a pending group", async () => {
+        it("should register group", async () => {
+          const groupsRegistry = await groups.getGroupsRegistry()
+
+          expect(groupsRegistry).to.be.lengthOf(1)
+          expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+        })
+
+        it("should store group data", async () => {
           const storedGroup = await groups.getGroup(groupPublicKey)
 
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationTimestamp).to.be.equal(0)
           expect(storedGroup.members).to.be.deep.equal(members)
-
-          const groupsData = await groups.getGroups()
-
-          expect(groupsData).to.be.lengthOf(1)
-          expect(groupsData[0]).to.deep.equal(storedGroup)
-        })
-
-        it("should store a flagged group index", async () => {
-          expect(await groups.getFlaggedGroupIndex(groupPublicKey)).to.equal(
-            calculateFlaggedIndex(0)
-          )
         })
       })
 
@@ -192,25 +189,23 @@ describe("Groups", () => {
     context("when existing group is already registered", async () => {
       const existingGroupPublicKey = "0x1234567890"
 
-      let exsitingGroupMembers: string[]
+      let existingGroupMembers: string[]
       let newGroupMembers: string[]
 
       beforeEach(async () => {
-        exsitingGroupMembers = members.slice(30)
+        existingGroupMembers = members.slice(30)
         newGroupMembers = members.slice(-30)
 
         await groups.addPendingGroup(
           existingGroupPublicKey,
-          exsitingGroupMembers,
+          existingGroupMembers,
           noMisbehaved
         )
       })
 
       context("when existing group is pending", async () => {
-        let existingGroup
-
         beforeEach(async () => {
-          existingGroup = await groups.getGroup(existingGroupPublicKey)
+          await groups.getGroup(existingGroupPublicKey)
         })
 
         context("with the same group public key", async () => {
@@ -229,38 +224,32 @@ describe("Groups", () => {
           it("should emit PendingGroupRegistered event", async () => {
             expect(tx)
               .to.emit(groups, "PendingGroupRegistered")
-              .withArgs(1, newGroupPublicKey)
+              .withArgs(newGroupPublicKey)
           })
 
-          it("should register a pending group", async () => {
+          it("should register group", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
+
+            expect(groupsRegistry).to.be.lengthOf(2)
+            expect(groupsRegistry[1]).to.deep.equal(
+              keccak256(newGroupPublicKey)
+            )
+          })
+
+          it("should store group data", async () => {
             const storedGroup = await groups.getGroup(newGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationTimestamp).to.be.equal(0)
             expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
-
-            const groupsData = await groups.getGroups()
-
-            expect(groupsData).to.be.lengthOf(2)
-            expect(groupsData[1]).to.deep.equal(storedGroup)
           })
 
-          it("should not update existing group", async () => {
-            const groupsData = await groups.getGroups()
+          it("should not update existing group entry", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
 
-            expect(groupsData[0]).to.deep.equal(existingGroup)
-          })
-
-          it("should update stored flagged index for existing group", async () => {
-            expect(
-              await groups.getFlaggedGroupIndex(existingGroupPublicKey)
-            ).to.equal(calculateFlaggedIndex(1))
-          })
-
-          it("should store a flagged group index", async () => {
-            expect(
-              await groups.getFlaggedGroupIndex(newGroupPublicKey)
-            ).to.equal(calculateFlaggedIndex(1))
+            expect(groupsRegistry[0]).to.deep.equal(
+              keccak256(existingGroupPublicKey)
+            )
           })
         })
 
@@ -280,36 +269,38 @@ describe("Groups", () => {
           it("should emit PendingGroupRegistered event", async () => {
             expect(tx)
               .to.emit(groups, "PendingGroupRegistered")
-              .withArgs(1, newGroupPublicKey)
+              .withArgs(newGroupPublicKey)
           })
 
-          it("should register a pending group", async () => {
+          it("should register group", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
+
+            expect(groupsRegistry).to.be.lengthOf(2)
+            expect(groupsRegistry[1]).to.deep.equal(
+              keccak256(newGroupPublicKey)
+            )
+          })
+
+          it("should store group data", async () => {
             const storedGroup = await groups.getGroup(newGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationTimestamp).to.be.equal(0)
             expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
-
-            const groupsData = await groups.getGroups()
-
-            expect(groupsData).to.be.lengthOf(2)
-            expect(groupsData[1]).to.deep.equal(storedGroup)
           })
 
           it("should not update existing group", async () => {
-            const groupsData = await groups.getGroups()
+            const groupsRegistry = await groups.getGroupsRegistry()
 
-            expect(groupsData[0]).to.deep.equal(existingGroup)
+            expect(groupsRegistry[0]).to.deep.equal(
+              keccak256(existingGroupPublicKey)
+            )
 
-            expect(
-              await groups.getFlaggedGroupIndex(existingGroupPublicKey)
-            ).to.equal(calculateFlaggedIndex(0))
-          })
+            const storedGroup = await groups.getGroup(existingGroupPublicKey)
 
-          it("should store a flagged group index", async () => {
-            expect(
-              await groups.getFlaggedGroupIndex(newGroupPublicKey)
-            ).to.equal(calculateFlaggedIndex(1))
+            expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
+            expect(storedGroup.activationTimestamp).to.be.equal(0)
+            expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
           })
         })
       })
@@ -318,7 +309,7 @@ describe("Groups", () => {
         let existingGroup
 
         beforeEach(async () => {
-          await groups.activateGroup(existingGroupPublicKey)
+          await groups.activateGroup()
 
           existingGroup = await groups.getGroup(existingGroupPublicKey)
         })
@@ -353,36 +344,40 @@ describe("Groups", () => {
           it("should emit PendingGroupRegistered event", async () => {
             expect(tx)
               .to.emit(groups, "PendingGroupRegistered")
-              .withArgs(1, newGroupPublicKey)
+              .withArgs(newGroupPublicKey)
           })
 
-          it("should register a pending group", async () => {
+          it("should register group", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
+
+            expect(groupsRegistry).to.be.lengthOf(2)
+            expect(groupsRegistry[1]).to.deep.equal(
+              keccak256(newGroupPublicKey)
+            )
+          })
+
+          it("should store group data", async () => {
             const storedGroup = await groups.getGroup(newGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationTimestamp).to.be.equal(0)
             expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
-
-            const groupsData = await groups.getGroups()
-
-            expect(groupsData).to.be.lengthOf(2)
-            expect(groupsData[1]).to.deep.equal(storedGroup)
           })
 
           it("should not update existing group", async () => {
-            const groupsData = await groups.getGroups()
+            const groupsRegistry = await groups.getGroupsRegistry()
 
-            expect(groupsData[0]).to.deep.equal(existingGroup)
+            expect(groupsRegistry[0]).to.deep.equal(
+              keccak256(existingGroupPublicKey)
+            )
 
-            expect(
-              await groups.getFlaggedGroupIndex(existingGroupPublicKey)
-            ).to.equal(calculateFlaggedIndex(0))
-          })
+            const storedGroup = await groups.getGroup(existingGroupPublicKey)
 
-          it("should store a flagged group index", async () => {
-            expect(
-              await groups.getFlaggedGroupIndex(newGroupPublicKey)
-            ).to.equal(calculateFlaggedIndex(1))
+            expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
+            expect(storedGroup.activationTimestamp).to.be.equal(
+              existingGroup.activationTimestamp
+            )
+            expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
           })
         })
       })
@@ -392,8 +387,8 @@ describe("Groups", () => {
   describe("activateGroup", async () => {
     context("when no groups are registered", async () => {
       it("should revert with 'group does not exist' error", async () => {
-        expect(groups.activateGroup(groupPublicKey)).to.be.revertedWith(
-          "group does not exist"
+        await expect(groups.activateGroup()).to.be.revertedWith(
+          "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
         )
       })
     })
@@ -407,7 +402,7 @@ describe("Groups", () => {
         let tx: ContractTransaction
 
         beforeEach(async () => {
-          tx = await groups.activateGroup(groupPublicKey)
+          tx = await groups.activateGroup()
         })
 
         it("should set activation timestamp for the group", async () => {
@@ -428,11 +423,11 @@ describe("Groups", () => {
 
       context("when the group is active", async () => {
         beforeEach(async () => {
-          await groups.activateGroup(groupPublicKey)
+          await groups.activateGroup()
         })
 
         it("should revert with 'group does not exist' error", async () => {
-          expect(groups.activateGroup(groupPublicKey)).to.be.revertedWith(
+          expect(groups.activateGroup()).to.be.revertedWith(
             "group was already activated"
           )
         })
@@ -444,16 +439,14 @@ describe("Groups", () => {
         const groupPublicKey1 = "0x0001"
         const groupPublicKey2 = "0x0002"
 
-        beforeEach(async () => {
-          await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
-          await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
-        })
-
         context("when both groups are pending", async () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            tx = await groups.activateGroup(groupPublicKey2)
+            await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
+            await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+
+            tx = await groups.activateGroup()
           })
 
           it("should not set activation timestamp for the other group", async () => {
@@ -478,17 +471,21 @@ describe("Groups", () => {
           })
         })
 
-        context("when the other groups is active", async () => {
+        context("when the other group is active", async () => {
           let activationTimestamp1: number
           let tx: ContractTransaction
 
+          // TODO: Update as the latest group got actiavted
           beforeEach(async () => {
-            const tx1 = await groups.activateGroup(groupPublicKey1)
+            await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
+            const tx1 = await groups.activateGroup()
             activationTimestamp1 = (
               await ethers.provider.getBlock(tx1.blockHash)
             ).timestamp
 
-            tx = await groups.activateGroup(groupPublicKey2)
+            await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+
+            tx = await groups.activateGroup()
           })
 
           it("should not update activation timestamp for the other group", async () => {
@@ -518,32 +515,24 @@ describe("Groups", () => {
         const groupPublicKey1 = groupPublicKey
         const groupPublicKey2 = groupPublicKey
 
-        beforeEach(async () => {
-          await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
-          await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
-        })
-
         context("when both groups are pending", async () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            tx = await groups.activateGroup(groupPublicKey2)
+            await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
+            await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+
+            tx = await groups.activateGroup()
           })
 
-          it("should not set activation timestamp for the older group", async () => {
-            expect(
-              (await groups.getGroups())[0].activationTimestamp
-            ).to.be.equal(0)
-          })
-
-          it("should set activation timestamp for the newer group", async () => {
+          it("should set activation timestamp for the group", async () => {
             // FIXME: Unclear why `tx.timestamp` is undefined
             const expectedActivationTimestamp = (
               await ethers.provider.getBlock(tx.blockHash)
             ).timestamp
 
             expect(
-              (await groups.getGroups())[1].activationTimestamp
+              (await groups.getGroup(groupPublicKey2)).activationTimestamp
             ).to.be.equal(expectedActivationTimestamp)
           })
 
@@ -551,27 +540,12 @@ describe("Groups", () => {
             expect(await groups.numberOfActiveGroups()).to.be.equal(1)
           })
         })
-
-        context("when the groups is active", async () => {
-          beforeEach(async () => {
-            await groups.activateGroup(groupPublicKey1)
-          })
-
-          it("should revert with 'group was already activated' error", async () => {
-            expect(groups.activateGroup(groupPublicKey2)).to.be.revertedWith(
-              "group was already activated"
-            )
-          })
-        })
       })
     })
   })
-})
 
-function calculateFlaggedIndex(index: number): BigNumber {
-  // eslint-disable-next-line no-bitwise
-  return BigNumber.from(index).xor(BigNumber.from(1).shl(255))
-}
+  // TODO: Add tests for popPendingGroup
+})
 
 function filterMisbehaved(
   members: string[],
