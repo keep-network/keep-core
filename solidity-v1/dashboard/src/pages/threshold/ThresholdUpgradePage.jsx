@@ -6,8 +6,12 @@ import { KEEP } from "../../utils/token.utils"
 import AllocationProgressBar from "../../components/threshold/AllocationProgressBar"
 import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
 import resourceTooltipProps from "../../constants/tooltips"
+import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
 
 const ThresholdUpgradePage = () => {
+  const { totalOwnedStakedBalance, totalKeepTokenBalance } =
+    useKeepBalanceInfo()
+
   const onWithdrawFromGrant = () => {
     console.log("withdraw from grant clicked!")
   }
@@ -41,8 +45,8 @@ const ThresholdUpgradePage = () => {
         />
         <AllocationProgressBar
           title={"wallet"}
-          currentValue={80}
-          totalValue={100}
+          currentValue={totalOwnedStakedBalance}
+          totalValue={totalKeepTokenBalance}
           className={"mb-1"}
         />
         <AllocationProgressBar

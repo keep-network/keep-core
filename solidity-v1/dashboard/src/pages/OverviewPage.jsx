@@ -23,6 +23,7 @@ import {
   fetchCovPoolDataRequest,
   fetchTvlRequest,
 } from "../actions/coverage-pool"
+import useKeepBalanceInfo from "../hooks/useKeepBalanceInfo"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -51,8 +52,6 @@ const OverviewPage = (props) => {
   const {
     delegations,
     undelegations,
-    ownedTokensDelegationsBalance,
-    ownedTokensUndelegationsBalance,
     isDelegationDataFetching,
     undelegationPeriod,
   } = useSelector((state) => state.staking)
@@ -65,16 +64,8 @@ const OverviewPage = (props) => {
     // TODO
   }, [])
 
-  const totalOwnedStakedBalance = useMemo(() => {
-    return add(
-      ownedTokensDelegationsBalance,
-      ownedTokensUndelegationsBalance
-    ).toString()
-  }, [ownedTokensDelegationsBalance, ownedTokensUndelegationsBalance])
-
-  const totalKeepTokenBalance = useMemo(() => {
-    return add(totalOwnedStakedBalance, keepToken.value).toString()
-  }, [keepToken.value, totalOwnedStakedBalance])
+  const { totalOwnedStakedBalance, totalKeepTokenBalance } =
+    useKeepBalanceInfo()
 
   const totalGrantedStakedBalance = useMemo(() => {
     return [...delegations, ...undelegations]
