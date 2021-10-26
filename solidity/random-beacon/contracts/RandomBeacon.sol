@@ -427,7 +427,7 @@ contract RandomBeacon is Ownable {
     function approveDkgResult() external {
         bytes memory groupPubKey = dkg.approveResult();
 
-        groups.activateGroup();
+        groups.activateCandidateGroup();
 
         // TODO: Handle DQ/IA
         // TODO: Release a rewards to DKG submitter.

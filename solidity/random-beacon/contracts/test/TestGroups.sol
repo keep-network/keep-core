@@ -22,8 +22,8 @@ contract TestGroups {
         groups.addCandidateGroup(groupPubKey, members, misbehaved);
     }
 
-    function activateGroup() external {
-        groups.activateGroup();
+    function activateCandidateGroup() external {
+        groups.activateCandidateGroup();
     }
 
     function getGroupsRegistry() external view returns (bytes32[] memory) {

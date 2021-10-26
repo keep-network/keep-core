@@ -309,7 +309,7 @@ describe("Groups", () => {
         let existingGroup
 
         beforeEach(async () => {
-          await groups.activateGroup()
+          await groups.activateCandidateGroup()
 
           existingGroup = await groups.getGroup(existingGroupPublicKey)
         })
@@ -384,10 +384,10 @@ describe("Groups", () => {
     })
   })
 
-  describe("activateGroup", async () => {
+  describe("activateCandidateGroup", async () => {
     context("when no groups are registered", async () => {
       it("should revert with 'group does not exist' error", async () => {
-        await expect(groups.activateGroup()).to.be.revertedWith(
+        await expect(groups.activateCandidateGroup()).to.be.revertedWith(
           "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
         )
       })
@@ -402,7 +402,7 @@ describe("Groups", () => {
         let tx: ContractTransaction
 
         beforeEach(async () => {
-          tx = await groups.activateGroup()
+          tx = await groups.activateCandidateGroup()
         })
 
         it("should set activation timestamp for the group", async () => {
@@ -423,11 +423,11 @@ describe("Groups", () => {
 
       context("when the group is active", async () => {
         beforeEach(async () => {
-          await groups.activateGroup()
+          await groups.activateCandidateGroup()
         })
 
         it("should revert with 'group does not exist' error", async () => {
-          expect(groups.activateGroup()).to.be.revertedWith(
+          expect(groups.activateCandidateGroup()).to.be.revertedWith(
             "group was already activated"
           )
         })
@@ -454,7 +454,7 @@ describe("Groups", () => {
               noMisbehaved
             )
 
-            tx = await groups.activateGroup()
+            tx = await groups.activateCandidateGroup()
           })
 
           it("should not set activation timestamp for the other group", async () => {
@@ -490,7 +490,7 @@ describe("Groups", () => {
               members,
               noMisbehaved
             )
-            const tx1 = await groups.activateGroup()
+            const tx1 = await groups.activateCandidateGroup()
             activationTimestamp1 = (
               await ethers.provider.getBlock(tx1.blockHash)
             ).timestamp
@@ -501,7 +501,7 @@ describe("Groups", () => {
               noMisbehaved
             )
 
-            tx = await groups.activateGroup()
+            tx = await groups.activateCandidateGroup()
           })
 
           it("should not update activation timestamp for the other group", async () => {
@@ -546,7 +546,7 @@ describe("Groups", () => {
               noMisbehaved
             )
 
-            tx = await groups.activateGroup()
+            tx = await groups.activateCandidateGroup()
           })
 
           it("should set activation timestamp for the group", async () => {

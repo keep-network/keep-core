@@ -101,7 +101,7 @@ library Groups {
         );
     }
 
-    function activateGroup(Data storage self) internal {
+    function activateCandidateGroup(Data storage self) internal {
         Group storage group = self.groupsData[
             self.groupsRegistry[self.groupsRegistry.length - 1]
         ];
