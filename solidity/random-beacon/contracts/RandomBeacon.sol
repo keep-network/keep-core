@@ -445,11 +445,15 @@ contract RandomBeacon is Ownable {
     ///         include a random number (by signing the previous entry's
     ///         random number).
     function requestRelayEntry() external {
+        _requestRelayEntry(true);
+    }
+
+    function _requestRelayEntry(bool isFeeRequired) internal {
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(relay.previousEntry))
         );
 
-        relay.requestEntry(groupId);
+        relay.requestEntry(groupId, isFeeRequired);
     }
 
     /// @notice Creates a new relay entry.
@@ -471,9 +475,15 @@ contract RandomBeacon is Ownable {
     }
 
     function reportRelayEntryTimeout() external {
-        relay.reportEntryTimeout(groups.getGroup(relay.currentRequest.groupId));
+        uint64 groupId = relay.currentRequest.groupId;
+        relay.reportEntryTimeout(groups.getGroup(groupId));
 
-        // TODO: Terminate group?
+        // TODO: Once implemented, invoke:
+        // terminateGroup(groupId);
+
+        // In case we retry the timed out request, we can't require the
+        // the request fee to be payed.
+        _requestRelayEntry(false);
     }
 
     function isRelayRequestInProgress() external view returns (bool) {

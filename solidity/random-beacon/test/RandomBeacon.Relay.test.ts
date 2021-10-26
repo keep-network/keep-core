@@ -360,6 +360,53 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
+  describe("reportRelayEntryTimeout", () => {
+    beforeEach(async () => {
+      await approveTestToken()
+      await randomBeacon.connect(requester).requestRelayEntry()
+    })
+
+    context("when relay entry timed out", () => {
+      let tx: ContractTransaction
+
+      beforeEach(async () => {
+        // `groupSize * relayEntrySubmissionEligibilityDelay +
+        // relayEntryHardTimeout`.
+        await mineBlocks(64 * 10 + 5760)
+
+        tx = await randomBeacon.reportRelayEntryTimeout()
+      })
+
+      it("should slash entire stakes of all group members", async () => {
+        await expect(tx)
+          .to.emit(staking, "Slashed")
+          .withArgs(to1e18(1000), group.members)
+      })
+
+      it("should emit RelayEntryTimedOut event", async () => {
+        await expect(tx).to.emit(randomBeacon, "RelayEntryTimedOut").withArgs(1)
+      })
+
+      it("should terminate the group", async () => {
+        // TODO: Implementation once `Groups` library is ready.
+      })
+
+      it("should request a new relay entry", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "RelayEntryRequested")
+          .withArgs(2, 1, blsData.previousEntry)
+      })
+    })
+
+    context("when relay entry did not time out", () => {
+      it("should revert", async () => {
+        await expect(randomBeacon.reportRelayEntryTimeout()).to.be.revertedWith(
+          "Relay request did not time out"
+        )
+      })
+    })
+  })
+
   describe("isEligible", () => {
     it("should correctly manage the eligibility queue", async () => {
       await relayStub.setCurrentRequestStartBlock()

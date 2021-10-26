@@ -127,18 +127,26 @@ library Relay {
     ///         include a random number (by signing the previous entry's
     ///         random number).
     /// @param groupId Identifier of the group chosen to handle the request.
-    function requestEntry(Data storage self, uint64 groupId) internal {
+    /// @param isFeeRequired Flag which determines whether the request fee
+    //         should be required upon request creation.
+    function requestEntry(
+        Data storage self,
+        uint64 groupId,
+        bool isFeeRequired
+    ) internal {
         require(
             !isRequestInProgress(self),
             "Another relay request in progress"
         );
 
-        // slither-disable-next-line reentrancy-events
-        self.tToken.safeTransferFrom(
-            msg.sender,
-            address(this),
-            self.relayRequestFee
-        );
+        if (isFeeRequired) {
+            // slither-disable-next-line reentrancy-events
+            self.tToken.safeTransferFrom(
+                msg.sender,
+                address(this),
+                self.relayRequestFee
+            );
+        }
 
         uint64 currentRequestId = ++self.requestCount;
 
