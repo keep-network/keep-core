@@ -22,6 +22,7 @@ describe("RandomBeacon - Callback", () => {
   let randomBeacon: RandomBeaconStub
   let testToken: TestToken
   let callbackContract: CallbackContractStub
+  let callbackContract1: CallbackContractStub
 
   const fixture = async () => {
     const deployment = await randomBeaconDeployment()
@@ -30,6 +31,9 @@ describe("RandomBeacon - Callback", () => {
       randomBeacon: deployment.randomBeacon,
       testToken: deployment.testToken,
       callbackContractStub: await (
+        await ethers.getContractFactory("CallbackContractStub")
+      ).deploy(),
+      callbackContractStub1: await (
         await ethers.getContractFactory("CallbackContractStub")
       ).deploy(),
     }
@@ -46,6 +50,7 @@ describe("RandomBeacon - Callback", () => {
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
     testToken = contracts.testToken as TestToken
     callbackContract = contracts.callbackContractStub as CallbackContractStub
+    callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
 
     await randomBeacon.updateRelayEntryParameters(
       to1e18(100),
@@ -59,21 +64,10 @@ describe("RandomBeacon - Callback", () => {
     beforeEach(async () => {
       await approveTestToken()
     })
-    context("when passed zero callback address", () => {
-      it("should be set to zero address after request", async () => {
-        const tx = await randomBeacon
-          .connect(requester)
-          .requestRelayEntry(ZERO_ADDRESS)
 
-        const callbackData = await randomBeacon.getCallbackData()
-
-        await expect(callbackData.callbackContract).to.equal(ZERO_ADDRESS)
-      })
-    })
-
-    context("when passed non-zero callback address", () => {
-      it("should be set to a callback contract address", async () => {
-        const tx = await randomBeacon
+    context("when passed non-zero and zero callback addresses", () => {
+      it("should be set to a non-zero callback contract address", async () => {
+        await randomBeacon
           .connect(requester)
           .requestRelayEntry(callbackContract.address)
 
@@ -81,6 +75,44 @@ describe("RandomBeacon - Callback", () => {
 
         await expect(callbackData.callbackContract).to.equal(
           callbackContract.address
+        )
+      })
+
+      it("should be reset to zero callback address", async () => {
+        await randomBeacon
+          .connect(requester)
+          .requestRelayEntry(callbackContract.address)
+
+        await randomBeacon
+          .connect(submitter)
+          .submitRelayEntry(16, blsData.groupSignature)
+
+        await approveTestToken()
+
+        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
+
+        const callbackData = await randomBeacon.getCallbackData()
+        await expect(callbackData.callbackContract).to.equal(ZERO_ADDRESS)
+      })
+
+      it("should be set to the latest non-zero callback address", async () => {
+        await randomBeacon
+          .connect(requester)
+          .requestRelayEntry(callbackContract.address)
+
+        await randomBeacon
+          .connect(submitter)
+          .submitRelayEntry(16, blsData.groupSignature)
+
+        await approveTestToken()
+
+        await randomBeacon
+          .connect(requester)
+          .requestRelayEntry(callbackContract1.address)
+
+        const callbackData = await randomBeacon.getCallbackData()
+        await expect(callbackData.callbackContract).to.equal(
+          callbackContract1.address
         )
       })
     })
@@ -92,22 +124,25 @@ describe("RandomBeacon - Callback", () => {
     })
     context("when the callback is set", () => {
       context("when the callback was executed", () => {
-        it("should set callback contract entry", async () => {
+        it("should set callback contract params", async () => {
           await randomBeacon
             .connect(requester)
             .requestRelayEntry(callbackContract.address)
 
-          await randomBeacon
+          const tx = await randomBeacon
             .connect(submitter)
             .submitRelayEntry(16, blsData.groupSignature)
 
           const lastEntry = await callbackContract.lastEntry()
           await expect(lastEntry).to.equal(blsData.groupSignatureUint256)
+
+          const blockNumber = await callbackContract.blockNumber()
+          await expect(blockNumber).to.gt(0)
         })
       })
 
       context("when the callback failed", () => {
-        it("should emit a callback failed event", async () => {
+        it("should emit a callback failed event upon transaction failure", async () => {
           callbackGasLimit = 40000
           await randomBeacon.updateRelayEntryParameters(
             to1e18(100),
