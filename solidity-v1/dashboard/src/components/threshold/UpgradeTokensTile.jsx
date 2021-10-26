@@ -10,6 +10,7 @@ const UpgradeTokensTile = ({
   className = "",
   btnText,
   onBtnClick,
+  buttonDisabled = false,
   isLink = false,
   titleTooltipProps = null,
   children,
@@ -27,6 +28,7 @@ const UpgradeTokensTile = ({
         <Button
           className="btn btn-primary btn-md upgrade-tokens-tile__button"
           onClick={onBtnClick}
+          disabled={buttonDisabled}
         >
           {btnText}
         </Button>

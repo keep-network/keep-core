@@ -8,6 +8,7 @@ import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
 import resourceTooltipProps from "../../constants/tooltips"
 import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
 import useGrantedBalanceInfo from "../../hooks/useGrantedBalanceInfo"
+import { lte } from "../../utils/arithmetics.utils"
 
 const ThresholdUpgradePage = () => {
   const { totalOwnedUnstakedBalance, totalKeepTokenBalance } =
@@ -69,20 +70,21 @@ const ThresholdUpgradePage = () => {
           >
             <UpgradeTokensTile.Row
               label={"Liquid KEEP"}
-              amount={1000000000000000000000000}
+              amount={totalOwnedUnstakedBalance}
             />
           </UpgradeTokensTile>
           <UpgradeTokensTile
             title={"Grant Allocation"}
             btnText={"withdraw from grant"}
             onBtnClick={onWithdrawFromGrant}
+            buttonDisabled={lte(totalGrantedUnstakedBalance, 0)}
             titleTooltipProps={
               resourceTooltipProps.thresholdPageGrantAllocation
             }
           >
             <UpgradeTokensTile.Row
               label={"Available KEEP"}
-              amount={1000000000000000000000000}
+              amount={totalGrantedUnstakedBalance}
             />
           </UpgradeTokensTile>
         </div>
