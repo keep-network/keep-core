@@ -46,6 +46,7 @@ library Callback {
                     block.number
                 )
             {} catch {
+                // slither-disable-next-line reentrancy-events
                 emit CallbackFailed(entry, block.number);
             }
         }
