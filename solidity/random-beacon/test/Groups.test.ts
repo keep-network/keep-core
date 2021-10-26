@@ -4,7 +4,7 @@ import type { ContractTransaction } from "ethers"
 import blsData from "./data/bls"
 import { noMisbehaved, getDkgGroupSigners } from "./utils/dkg"
 import { constants } from "./fixtures"
-import type { TestGroups } from "../typechain"
+import type { GroupsStub } from "../typechain"
 import type { DkgGroupSigners } from "./utils/dkg"
 
 const { keccak256 } = ethers.utils
@@ -13,7 +13,7 @@ describe("Groups", () => {
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
   let signers: DkgGroupSigners
-  let groups: TestGroups
+  let groups: GroupsStub
   let members: string[]
 
   before(async () => {
@@ -22,8 +22,8 @@ describe("Groups", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const TestGroups = await ethers.getContractFactory("TestGroups")
-    groups = await TestGroups.deploy()
+    const GroupsStub = await ethers.getContractFactory("GroupsStub")
+    groups = await GroupsStub.deploy()
   })
 
   describe("addCandidateGroup", async () => {
