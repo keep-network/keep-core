@@ -17,6 +17,7 @@ pragma solidity ^0.8.6;
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
+import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -43,6 +44,7 @@ contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
+    using Callback for Callback.Data;
 
     // Constant parameters
 
@@ -105,6 +107,7 @@ contract RandomBeacon is Ownable {
     DKG.Data internal dkg;
     Groups.Data internal groups;
     Relay.Data internal relay;
+    Callback.Data internal callback;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -162,6 +165,8 @@ contract RandomBeacon is Ownable {
     );
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
+    event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -433,12 +438,17 @@ contract RandomBeacon is Ownable {
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
-    function requestRelayEntry() external {
+    /// @param callbackContract Beacon consumer callback contract.
+    function requestRelayEntry(IRandomBeaconConsumer callbackContract)
+        external
+    {
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(relay.previousEntry))
         );
 
         relay.requestEntry(groupId);
+
+        callback.setCallbackContract(callbackContract);
     }
 
     /// @notice Creates a new relay entry.
@@ -457,6 +467,8 @@ contract RandomBeacon is Ownable {
             // TODO: Once implemented, invoke:
             // createGroup(uint256(keccak256(entry)));
         }
+
+        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
     }
 
     /// @return Relay request fee in T. This fee needs to be provided by the
