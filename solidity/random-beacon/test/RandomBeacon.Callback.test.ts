@@ -142,7 +142,7 @@ describe("RandomBeacon - Callback", () => {
       })
 
       context("when the callback failed", () => {
-        it("should emit a callback failed event upon transaction failure", async () => {
+        it("should emit a callback failed event because of the gas limit", async () => {
           callbackGasLimit = 40000
           await randomBeacon.updateRelayEntryParameters(
             to1e18(100),
@@ -153,6 +153,22 @@ describe("RandomBeacon - Callback", () => {
           await randomBeacon
             .connect(requester)
             .requestRelayEntry(callbackContract.address)
+
+          const tx = await randomBeacon
+            .connect(submitter)
+            .submitRelayEntry(16, blsData.groupSignature)
+
+          await expect(tx)
+            .to.emit(randomBeacon, "CallbackFailed")
+            .withArgs(blsData.groupSignatureUint256, tx.blockNumber)
+        })
+
+        it("should emit a callback failed event because of the internal error", async () => {
+          await randomBeacon
+            .connect(requester)
+            .requestRelayEntry(callbackContract.address)
+
+          await callbackContract.setFailureFlag(true)
 
           const tx = await randomBeacon
             .connect(submitter)
