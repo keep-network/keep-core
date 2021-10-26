@@ -137,7 +137,9 @@ describe("RandomBeacon - Callback", () => {
           await expect(lastEntry).to.equal(blsData.groupSignatureUint256)
 
           const blockNumber = await callbackContract.blockNumber()
-          await expect(blockNumber).to.gt(0)
+          const latestBlock = await ethers.provider.getBlock("latest")
+
+          await expect(blockNumber).to.equal(latestBlock.number)
         })
       })
 
