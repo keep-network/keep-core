@@ -28,9 +28,7 @@ library Callback {
         Data storage self,
         IRandomBeaconConsumer callbackContract
     ) internal {
-        if (address(callbackContract) != address(0)) {
-            self.callbackContract = callbackContract;
-        }
+        self.callbackContract = callbackContract;
     }
 
     /// @notice Executes consumer specified callback for the relay entry request.
