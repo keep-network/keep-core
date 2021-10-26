@@ -7,6 +7,7 @@ import "@tenderly/hardhat-tenderly"
 import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
+import "hardhat-dependency-compiler"
 import "@typechain/hardhat"
 
 const config: HardhatUserConfig = {
@@ -65,6 +66,13 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
+  },
+  dependencyCompiler: {
+    paths: [
+      "@keep-network/sortition-pools/contracts/SortitionPool.sol",
+      "@keep-network/sortition-pools/contracts/test/StakingContractStub.sol",
+    ],
+    keep: true,
   },
 }
 

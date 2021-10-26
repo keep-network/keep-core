@@ -2,14 +2,19 @@ import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 
 import { Signer, Contract } from "ethers"
-import { randomBeaconDeployment } from "./fixtures"
+import { randomBeaconDeploymentWithRealSortitionPool } from "./fixtures"
 
-import type { RandomBeacon, SortitionPoolStub } from "../typechain"
+import type {
+  RandomBeacon,
+  SortitionPool,
+  StakingContractStub,
+} from "../typechain"
 
 describe("RandomBeacon - Pool", () => {
   let operator: Signer
+  let sortitionPool: Contract
+  let stakingContractStub: Contract
   let randomBeacon: Contract
-  let sortitionPoolStub: Contract
 
   // prettier-ignore
   before(async () => {
@@ -17,13 +22,21 @@ describe("RandomBeacon - Pool", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
+    const contracts = await waffle.loadFixture(
+      randomBeaconDeploymentWithRealSortitionPool
+    )
 
-    sortitionPoolStub = contracts.sortitionPoolStub as SortitionPoolStub
+    sortitionPool = contracts.sortitionPool as SortitionPool
+    stakingContractStub = contracts.stakingContractStub as StakingContractStub
     randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
   describe("registerMemberCandidate", () => {
+    const minimumStake = 2000
+    beforeEach(async () => {
+      await stakingContractStub.setStake(operator.getAddress(), minimumStake)
+    })
+
     context("when the operator is not registered yet", () => {
       beforeEach(async () => {
         await randomBeacon.connect(operator).registerMemberCandidate()
@@ -31,7 +44,7 @@ describe("RandomBeacon - Pool", () => {
 
       it("should register the operator", async () => {
         await expect(
-          await sortitionPoolStub.operators(await operator.getAddress())
+          await sortitionPool.isOperatorInPool(await operator.getAddress())
         ).to.be.true
       })
     })
@@ -50,12 +63,10 @@ describe("RandomBeacon - Pool", () => {
   })
 
   describe("isOperatorEligible", () => {
+    const minimumStake = 2000
     context("when the operator is eligible to join the sortition pool", () => {
       beforeEach(async () => {
-        await sortitionPoolStub.setOperatorEligibility(
-          await operator.getAddress(),
-          true
-        )
+        await stakingContractStub.setStake(operator.getAddress(), minimumStake)
       })
 
       it("should return true", async () => {
@@ -69,9 +80,9 @@ describe("RandomBeacon - Pool", () => {
       "when the operator is not eligible to join the sortition pool",
       () => {
         beforeEach(async () => {
-          await sortitionPoolStub.setOperatorEligibility(
-            await operator.getAddress(),
-            false
+          await stakingContractStub.setStake(
+            operator.getAddress(),
+            minimumStake - 1
           )
         })
 
