@@ -441,13 +441,16 @@ contract RandomBeacon is Ownable {
         return dkg.hasDkgTimedOut();
     }
 
-    /// @notice Creates a request to generate a new relay entry, which will
-    ///         include a random number (by signing the previous entry's
-    ///         random number).
+    /// @notice External version of _requestRelayEntry. Requires the request fee.
     function requestRelayEntry() external {
         _requestRelayEntry(true);
     }
 
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number).
+    /// @param isFeeRequired Flag which determines whether the request fee
+    ///        should be required upon request creation.
     function _requestRelayEntry(bool isFeeRequired) internal {
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(relay.previousEntry))
@@ -474,6 +477,7 @@ contract RandomBeacon is Ownable {
         }
     }
 
+    /// @notice Reports a relay entry timeout.
     function reportRelayEntryTimeout() external {
         uint64 groupId = relay.currentRequest.groupId;
         relay.reportEntryTimeout(groups.getGroup(groupId));
@@ -486,6 +490,8 @@ contract RandomBeacon is Ownable {
         _requestRelayEntry(false);
     }
 
+    /// @return Flag indicating whether a relay entry request is currently
+    ///         in progress.
     function isRelayRequestInProgress() external view returns (bool) {
         return relay.isRequestInProgress();
     }

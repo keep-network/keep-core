@@ -128,7 +128,7 @@ library Relay {
     ///         random number).
     /// @param groupId Identifier of the group chosen to handle the request.
     /// @param isFeeRequired Flag which determines whether the request fee
-    //         should be required upon request creation.
+    ///        should be required upon request creation.
     function requestEntry(
         Data storage self,
         uint64 groupId,
@@ -274,6 +274,8 @@ library Relay {
             .relayEntrySubmissionFailureSlashingAmount = newRelayEntrySubmissionFailureSlashingAmount;
     }
 
+    /// @notice Reports a relay entry timeout.
+    /// @param group Group data.
     function reportEntryTimeout(Data storage self, Groups.Group memory group)
         internal
     {
@@ -394,6 +396,22 @@ library Relay {
         }
     }
 
+    /// @notice Determines a list of members which should be punished due to
+    ///         not submitting a relay entry on their turn. Punished members
+    ///         are determined using the eligibility queue and are taken from
+    ///         the <firstEligibleIndex, submitterIndex) range. It also handles
+    ///         the `submitterIndex < firstEligibleIndex` case and wraps the
+    ///         queue accordingly.
+    /// @dev This function doesn't use the constant `groupSize` directly and
+    ///      use a `_groupSize` parameter instead to facilitate testing.
+    ///      Big group sizes in tests make readability worse and dramatically
+    ///      increase the time of execution.
+    /// @param _submitterIndex Index of the relay entry submitter.
+    /// @param _firstEligibleIndex First index of the given eligibility range.
+    /// @param _group Group data.
+    /// @param _groupSize _groupSize Group size.
+    /// @return An array of members addresses which should be punished due to
+    ///         not submitting a relay entry on their turn.
     function getPunishedMembers(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
@@ -420,6 +438,18 @@ library Relay {
         return punishedMembers;
     }
 
+    /// @notice Computes the slashing factor which should be used during
+    ///         slashing of the group which exceeded the soft timeout.
+    /// @dev This function doesn't use the constant `groupSize` directly and
+    ///      use a `_groupSize` parameter instead to facilitate testing.
+    ///      Big group sizes in tests make readability worse and dramatically
+    ///      increase the time of execution.
+    /// @param _groupSize _groupSize Group size.
+    /// @return A slashing factor represented as a fraction multiplied by 1e18
+    ///         to avoid precision loss. When using this factor during slashing
+    ///         amount computations, the final result should be divided by
+    ///         1e18 to obtain a proper result. The slashing factor is
+    ///         always in range <0, 1e18>.
     function getSlashingFactor(Data storage self, uint256 _groupSize)
         internal
         view
