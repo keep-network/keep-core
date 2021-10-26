@@ -209,7 +209,7 @@ library Relay {
         // all group members. Note that `getSlashingFactor` returns the
         // factor multiplied by 1e18 to avoid precision loss. In that case
         // the final result needs to be divided by 1e18.
-        uint256 slashingAmount = (getSlashingFactor(self) *
+        uint256 slashingAmount = (getSlashingFactor(self, groupSize) *
             self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
         // slither-disable-next-line reentrancy-events
         self.staking.slash(slashingAmount, group.members);
@@ -412,17 +412,19 @@ library Relay {
         return punishedMembers;
     }
 
-    function getSlashingFactor(Data storage self)
+    function getSlashingFactor(Data storage self, uint256 _groupSize)
         internal
         view
         returns (uint256)
     {
         uint256 softTimeoutBlock = self.currentRequest.startBlock +
-            (groupSize * self.relayEntrySubmissionEligibilityDelay);
+            (_groupSize * self.relayEntrySubmissionEligibilityDelay);
 
         if (block.number > softTimeoutBlock) {
             uint256 submissionDelay = block.number - softTimeoutBlock;
-            return (submissionDelay * 1e18) / self.relayEntryHardTimeout;
+            uint256 slashingFactor = (submissionDelay * 1e18) /
+                self.relayEntryHardTimeout;
+            return slashingFactor > 1e18 ? 1e18 : slashingFactor;
         }
 
         return 0;

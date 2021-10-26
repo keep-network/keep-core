@@ -1,7 +1,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { ContractReceipt, ContractTransaction } from "ethers"
+import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
 import blsData from "./data/bls"
 import group from "./data/group"
 import { to1e18 } from "./functions"
@@ -462,6 +462,72 @@ describe("RandomBeacon - Relay", () => {
         await expect(punishedMembers[5]).to.be.equal(members[1])
       })
     })
+  })
+
+  describe("getSlashingFactor", () => {
+    beforeEach(async () => {
+      await relayStub.setCurrentRequestStartBlock()
+    })
+
+    context("when soft timeout has not been exceeded yet", () => {
+      it("should return a slashing factor equal to zero", async () => {
+        // `groupSize * relayEntrySubmissionEligibilityDelay`
+        await mineBlocks(8 * 10)
+
+        expect(await relayStub.getSlashingFactor()).to.be.equal(0)
+      })
+    })
+
+    context("when soft timeout has been exceeded by one block", () => {
+      it("should return a correct slashing factor", async () => {
+        // `groupSize * relayEntrySubmissionEligibilityDelay + 1 block`
+        await mineBlocks(8 * 10 + 1)
+
+        // We are exceeded the soft timeout by `1` block so this is the
+        // `submissionDelay` factor. If so we can calculate the slashing factor
+        // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
+        // gives `1 * 1e18 / 5760 = 173611111111111` (0.017%).
+        expect(await relayStub.getSlashingFactor()).to.be.equal(
+          BigNumber.from("173611111111111")
+        )
+      })
+    })
+
+    context(
+      "when soft timeout has been exceeded by the number of blocks equal to the hard timeout",
+      () => {
+        it("should return a correct slashing factor", async () => {
+          // `groupSize * relayEntrySubmissionEligibilityDelay + relayEntryHardTimeout`
+          await mineBlocks(8 * 10 + 5760)
+
+          // We are exceeded the soft timeout by `5760` blocks so this is the
+          // `submissionDelay` factor. If so we can calculate the slashing
+          // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
+          // gives `5760 * 1e18 / 5760 = 1000000000000000000` (100%).
+          expect(await relayStub.getSlashingFactor()).to.be.equal(
+            BigNumber.from("1000000000000000000")
+          )
+        })
+      }
+    )
+
+    context(
+      "when soft timeout has been exceeded by the number of blocks bigger than the hard timeout",
+      () => {
+        it("should return a correct slashing factor", async () => {
+          // `groupSize * relayEntrySubmissionEligibilityDelay +
+          // relayEntryHardTimeout + 1 block`.
+          await mineBlocks(8 * 10 + 5760 + 1)
+
+          // We are exceeded the soft timeout by a value bigger than the
+          // hard timeout. In that case the maximum value (100%) of the slashing
+          // factor should be returned.
+          expect(await relayStub.getSlashingFactor()).to.be.equal(
+            BigNumber.from("1000000000000000000")
+          )
+        })
+      }
+    )
   })
 
   async function approveTestToken() {

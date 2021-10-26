@@ -13,6 +13,7 @@ contract RelayStub {
 
     constructor() {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
+        relay.setRelayEntryHardTimeout(5760);
     }
 
     function setCurrentRequestStartBlock() external {
@@ -50,5 +51,9 @@ contract RelayStub {
                 group,
                 groupSize
             );
+    }
+
+    function getSlashingFactor() external view returns (uint256) {
+        return relay.getSlashingFactor(groupSize);
     }
 }
