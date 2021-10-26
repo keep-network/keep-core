@@ -7,10 +7,14 @@ import AllocationProgressBar from "../../components/threshold/AllocationProgress
 import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
 import resourceTooltipProps from "../../constants/tooltips"
 import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
+import useGrantedBalanceInfo from "../../hooks/useGrantedBalanceInfo"
 
 const ThresholdUpgradePage = () => {
-  const { totalOwnedStakedBalance, totalKeepTokenBalance } =
+  const { totalOwnedUnstakedBalance, totalKeepTokenBalance } =
     useKeepBalanceInfo()
+
+  const { totalGrantedUnstakedBalance, totalGrantedTokenBalance } =
+    useGrantedBalanceInfo()
 
   const onWithdrawFromGrant = () => {
     console.log("withdraw from grant clicked!")
@@ -45,14 +49,14 @@ const ThresholdUpgradePage = () => {
         />
         <AllocationProgressBar
           title={"wallet"}
-          currentValue={totalOwnedStakedBalance}
+          currentValue={totalOwnedUnstakedBalance}
           totalValue={totalKeepTokenBalance}
           className={"mb-1"}
         />
         <AllocationProgressBar
           title={"available grant allocation"}
-          currentValue={20.33453453}
-          totalValue={103.342324}
+          currentValue={totalGrantedUnstakedBalance}
+          totalValue={totalGrantedTokenBalance}
           className={"mb-2"}
         />
         <div className="upgrade-not-staked">

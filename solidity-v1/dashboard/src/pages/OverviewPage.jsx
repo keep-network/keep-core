@@ -1,9 +1,8 @@
-import React, { useEffect, useCallback, useMemo } from "react"
+import React, { useEffect, useCallback } from "react"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import Undelegations from "../components/Undelegations"
 import TokenOverview from "../components/TokenOverview"
 import { LoadingOverlay } from "../components/Loadable"
-import { add, sub } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 import Tile from "../components/Tile"
@@ -24,6 +23,7 @@ import {
   fetchTvlRequest,
 } from "../actions/coverage-pool"
 import useKeepBalanceInfo from "../hooks/useKeepBalanceInfo"
+import useGrantedBalanceInfo from "../hooks/useGrantedBalanceInfo"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -67,21 +67,8 @@ const OverviewPage = (props) => {
   const { totalOwnedStakedBalance, totalKeepTokenBalance } =
     useKeepBalanceInfo()
 
-  const totalGrantedStakedBalance = useMemo(() => {
-    return [...delegations, ...undelegations]
-      .filter((delegation) => delegation.isFromGrant)
-      .map(({ amount }) => amount)
-      .reduce(add, "0")
-      .toString()
-  }, [delegations, undelegations])
-
-  const totalGrantedTokenBalance = useMemo(() => {
-    const grantedBalance = grants
-      .map(({ amount, released }) => sub(amount, released))
-      .reduce(add, "0")
-      .toString()
-    return grantedBalance
-  }, [grants])
+  const { totalGrantedStakedBalance, totalGrantedTokenBalance } =
+    useGrantedBalanceInfo()
 
   const [isBannerVisible, hideBanner] = useHideComponent(false)
 

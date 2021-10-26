@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { add } from "../utils/arithmetics.utils"
+import { add, sub } from "../utils/arithmetics.utils"
 import { useSelector } from "react-redux"
 
 const useKeepBalanceInfo = () => {
@@ -19,8 +19,13 @@ const useKeepBalanceInfo = () => {
     return add(totalOwnedStakedBalance, keepToken.value).toString()
   }, [keepToken.value, totalOwnedStakedBalance])
 
+  const totalOwnedUnstakedBalance = useMemo(() => {
+    return sub(totalKeepTokenBalance, totalOwnedStakedBalance).toString()
+  }, [totalKeepTokenBalance, totalOwnedStakedBalance])
+
   return {
     totalOwnedStakedBalance,
+    totalOwnedUnstakedBalance,
     totalKeepTokenBalance,
   }
 }

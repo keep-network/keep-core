@@ -8,6 +8,10 @@ const AllocationProgressBar = ({
   totalValue = 100,
   className = "",
 }) => {
+  if (totalValue <= 0) {
+    currentValue = 0
+    totalValue = 100
+  }
   return (
     <div className={`allocation-progress-bar ${className}`}>
       <div className="allocation-progress-bar__token-allocation">
