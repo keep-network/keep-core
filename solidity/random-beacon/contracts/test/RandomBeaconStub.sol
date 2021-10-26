@@ -1,8 +1,6 @@
 pragma solidity ^0.8.6;
 
 import "../RandomBeacon.sol";
-import "../libraries/DKG.sol";
-import "../libraries/Groups.sol";
 
 contract RandomBeaconStub is RandomBeacon {
     constructor(ISortitionPool _sortitionPool) RandomBeacon(_sortitionPool) {}
