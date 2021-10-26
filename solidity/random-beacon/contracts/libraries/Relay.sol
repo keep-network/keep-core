@@ -170,7 +170,6 @@ library Relay {
         Groups.Group memory group
     ) internal {
         require(isRequestInProgress(self), "No relay request in progress");
-        // TODO: Add timeout reporting.
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
         require(
