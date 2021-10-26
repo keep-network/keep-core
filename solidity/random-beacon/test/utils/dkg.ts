@@ -69,8 +69,6 @@ export async function signAndSubmitDkgResult(
   dkgResultHash: string
   members: string[]
 }> {
-  const noMisbehaved = "0x"
-
   const { members, signingMemberIndices, signaturesBytes } =
     await signDkgResult(signers, groupPublicKey, noMisbehaved, startBlock)
 

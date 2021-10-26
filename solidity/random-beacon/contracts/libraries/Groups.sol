@@ -130,6 +130,7 @@ library Groups {
 
         require(group.activationTimestamp == 0, "group was already activated");
 
+        // solhint-disable-next-line not-rely-on-time
         group.activationTimestamp = block.timestamp;
 
         self.activeGroupsCount++;
@@ -162,7 +163,7 @@ library Groups {
         returns (uint64)
     {
         // TODO: Implement.
-        return uint64(self.groupsRegistry.length - 1);
+        return uint64(seed % self.groupsRegistry.length);
     }
 
     function getGroup(Data storage self, uint64 groupId)
