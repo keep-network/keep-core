@@ -39,8 +39,6 @@ library Relay {
         bytes previousEntry;
         // Data of current request.
         Request currentRequest;
-        // Address of the sortition pool contract.
-        ISortitionPool sortitionPool;
         // Address of the T token contract.
         IERC20 tToken;
         // Address of the staking contract.
@@ -84,20 +82,6 @@ library Relay {
             "Seed entry already initialized"
         );
         self.previousEntry = relaySeed;
-    }
-
-    /// @notice Initializes the sortitionPool parameter. Can be performed
-    ///         only once.
-    /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
-        internal
-    {
-        require(
-            address(self.sortitionPool) == address(0),
-            "Sortition pool address already set"
-        );
-
-        self.sortitionPool = _sortitionPool;
     }
 
     /// @notice Initializes the tToken parameter. Can be performed only once.
@@ -168,7 +152,7 @@ library Relay {
         uint256 submitterIndex,
         bytes calldata entry,
         Groups.Group memory group
-    ) internal {
+    ) internal returns (address[] memory punishedMembers) {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
@@ -202,15 +186,13 @@ library Relay {
 
         // Get the list of members addresses which should be punished due to
         // not submitting the entry on their turn.
-        /* solhint-disable-next-line no-unused-vars */
-        address[] memory punishedMembers = getPunishedMembers(
+        punishedMembers = getPunishedMembers(
             self,
             submitterIndex,
             firstEligibleIndex,
             group,
             groupSize
         );
-        self.sortitionPool.removeOperators(punishedMembers);
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
@@ -225,6 +207,8 @@ library Relay {
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
+
+        return punishedMembers;
     }
 
     /// @notice Set relayRequestFee parameter.

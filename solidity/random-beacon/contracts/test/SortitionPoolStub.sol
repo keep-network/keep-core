@@ -15,6 +15,11 @@ contract SortitionPoolStub is ISortitionPool {
         operators[operator] = true;
     }
 
+    function leavePool(address operator) external override {
+        delete operators[operator];
+        delete eligibleOperators[operator];
+    }
+
     function isOperatorInPool(address operator)
         external
         view
@@ -36,16 +41,5 @@ contract SortitionPoolStub is ISortitionPool {
         returns (bool)
     {
         return eligibleOperators[operator];
-    }
-
-    function removeOperators(address[] memory _operators) external override {
-        for (uint256 i = 0; i < _operators.length; i++) {
-            delete operators[_operators[i]];
-            delete eligibleOperators[_operators[i]];
-        }
-
-        if (_operators.length > 0) {
-            emit OperatorsRemoved(_operators);
-        }
     }
 }

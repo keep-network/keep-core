@@ -14,9 +14,10 @@
 
 pragma solidity ^0.8.6;
 
+import "./libraries/DKG.sol";
+import "./libraries/GasStation.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
-import "./libraries/DKG.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -27,13 +28,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface ISortitionPool {
     function joinPool(address operator) external;
 
+    function leavePool(address operator) external;
+
     function isOperatorInPool(address operator) external view returns (bool);
 
     function isOperatorEligible(address operator) external view returns (bool);
-
-    // TODO: Temporary function for testing only. Not sure how the removal
-    //       mechanism will work at the moment.
-    function removeOperators(address[] memory operators) external;
 }
 
 /// @title Staking contract interface
@@ -55,6 +54,7 @@ contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
+    using GasStation for GasStation.Data;
 
     // Constant parameters
 
@@ -106,6 +106,15 @@ contract RandomBeacon is Ownable {
     DKG.Data internal dkg;
     Groups.Data internal groups;
     Relay.Data internal relay;
+    GasStation.Data internal gasStation;
+
+    // Other parameters
+
+    /// @notice List of operators who are prohibited to join the sortition
+    ///         pool within a specific period of time. The key of the mapping
+    ///         is operator address. The value is a timestamp when the
+    ///         punishment ends.
+    mapping(address => uint256) public punishedOperators;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -175,6 +184,7 @@ contract RandomBeacon is Ownable {
         IERC20 _tToken,
         IStaking _staking
     ) {
+        // TODO: RandomBeacon must be the owner of the sortition pool.
         sortitionPool = _sortitionPool;
 
         // Governable parameters
@@ -188,7 +198,6 @@ contract RandomBeacon is Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
 
         relay.initSeedEntry();
-        relay.initSortitionPool(_sortitionPool);
         relay.initTToken(_tToken);
         relay.initStaking(_staking);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
@@ -465,11 +474,13 @@ contract RandomBeacon is Ownable {
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
     {
-        relay.submitEntry(
+        address[] memory punishedMembers = relay.submitEntry(
             submitterIndex,
             entry,
             groups.getGroup(relay.currentRequest.groupId)
         );
+
+        punishOperators(punishedMembers, 2 weeks);
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             // TODO: Once implemented, invoke:
@@ -489,6 +500,42 @@ contract RandomBeacon is Ownable {
         // the request fee to be payed.
         // TODO: Check number of groups is bigger than zero.
         _requestRelayEntry(false);
+    }
+
+    function joinSortitionPool() external {
+        address operator = msg.sender;
+        uint256 punishmentDeadline = punishedOperators[operator];
+
+        require(
+            /* solhint-disable-next-line not-rely-on-time */
+            punishmentDeadline == 0 || block.timestamp > punishmentDeadline,
+            "Operator has an active punishment"
+        );
+
+        delete punishedOperators[operator];
+
+        gasStation.depositGas(operator);
+        sortitionPool.joinPool(operator);
+    }
+
+    function punishOperators(
+        address[] memory operators,
+        uint256 punishmentDuration
+    ) internal {
+        for (uint256 i = 0; i < operators.length; i++) {
+            address operator = operators[i];
+
+            if (!sortitionPool.isOperatorInPool(operator)) {
+                continue;
+            }
+
+            /* solhint-disable-next-line not-rely-on-time */
+            punishedOperators[operator] = block.timestamp + punishmentDuration;
+
+            gasStation.releaseGas(operator);
+            // TODO: Is it possible to kick out operator when pool is locked?
+            sortitionPool.leavePool(operator);
+        }
     }
 
     /// @return Flag indicating whether a relay entry request is currently
