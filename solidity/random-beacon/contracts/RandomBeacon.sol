@@ -14,9 +14,12 @@
 
 pragma solidity ^0.8.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./libraries/Groups.sol";
+import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
 import "./libraries/Groups.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Sortition Pool contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -40,6 +43,7 @@ interface ISortitionPool {
 contract RandomBeacon is Ownable {
     using DKG for DKG.Data;
     using Groups for Groups.Data;
+    using Relay for Relay.Data;
 
     // Constant parameters
 
@@ -49,38 +53,6 @@ contract RandomBeacon is Ownable {
         31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
     // Governable parameters
-
-    /// @notice Relay request fee in T. This fee needs to be provided by the
-    ///         account or contract requesting for a new relay entry.
-    uint256 public relayRequestFee;
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the relay entry. At first, there is only one
-    ///         member in the group eligible to submit the relay entry. Then,
-    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the relay entry at that moment. After
-    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible so that there are three group
-    ///         members eligible to submit the relay entry at that moment. This
-    ///         continues until all group members are eligible to submit the
-    ///         relay entry or until the relay entry is submitted. If all
-    ///         members became eligible to submit the relay entry and one more
-    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
-    ///         entry submitted, the group reaches soft timeout for submitting
-    ///         the relay entry and the slashing starts.
-    uint256 public relayEntrySubmissionEligibilityDelay;
-
-    /// @notice Hard timeout in blocks for a group to submit the relay entry.
-    ///         After all group members became eligible to submit the relay
-    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
-    ///         passed without relay entry submitted, all group members start
-    ///         getting slashed. The slashing amount increases linearly until
-    ///         the group submits the relay entry or until
-    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
-    ///         reached, each group member will get slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`.
-    uint256 public relayEntryHardTimeout;
 
     /// @notice Relay entry callback gas limit. This is the gas limit with which
     ///         callback function provided in the relay request transaction is
@@ -133,6 +105,7 @@ contract RandomBeacon is Ownable {
     // Libraries data storages
     DKG.Data internal dkg;
     Groups.Data internal groups;
+    Relay.Data internal relay;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -189,17 +162,22 @@ contract RandomBeacon is Ownable {
 
     event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
+    event RelayEntryRequested(
+        uint256 indexed requestId,
+        uint64 groupId,
+        bytes previousEntry
+    );
+
+    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
     ///      and before transferring the ownership to the governance contract.
-    constructor(ISortitionPool _sortitionPool) {
+    constructor(ISortitionPool _sortitionPool, IERC20 _tToken) {
         sortitionPool = _sortitionPool;
 
         // Governable parameters
-        relayRequestFee = 0;
-        relayEntrySubmissionEligibilityDelay = 10;
-        relayEntryHardTimeout = 5760; // ~24h assuming 15s block time
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
@@ -209,9 +187,14 @@ contract RandomBeacon is Ownable {
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
+
+        relay.initSeedEntry();
+        relay.initTToken(_tToken);
+        relay.setRelayEntrySubmissionEligibilityDelay(10);
+        relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
     }
 
-    /// @notice Updates the values of relay entry parameters
+    /// @notice Updates the values of relay entry parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
@@ -226,14 +209,18 @@ contract RandomBeacon is Ownable {
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
-        relayRequestFee = _relayRequestFee;
-        relayEntrySubmissionEligibilityDelay = _relayEntrySubmissionEligibilityDelay;
-        relayEntryHardTimeout = _relayEntryHardTimeout;
         callbackGasLimit = _callbackGasLimit;
+
+        relay.setRelayRequestFee(_relayRequestFee);
+        relay.setRelayEntrySubmissionEligibilityDelay(
+            _relayEntrySubmissionEligibilityDelay
+        );
+        relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
+
         emit RelayEntryParametersUpdated(
-            relayRequestFee,
-            relayEntrySubmissionEligibilityDelay,
-            relayEntryHardTimeout,
+            _relayRequestFee,
+            _relayEntrySubmissionEligibilityDelay,
+            _relayEntryHardTimeout,
             callbackGasLimit
         );
     }
@@ -478,5 +465,76 @@ contract RandomBeacon is Ownable {
         returns (Groups.Group memory)
     {
         return groups.getGroup(groupPubKey);
+    }
+
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number).
+    function requestRelayEntry() external {
+        uint64 groupId = groups.selectGroup(
+            uint256(keccak256(relay.previousEntry))
+        );
+
+        relay.requestEntry(groupId);
+    }
+
+    /// @notice Creates a new relay entry.
+    /// @param submitterIndex Index of the entry submitter.
+    /// @param entry Group BLS signature over the previous entry.
+    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
+        external
+    {
+        relay.submitEntry(
+            submitterIndex,
+            entry,
+            groups.getGroup(relay.currentRequest.groupId)
+        );
+
+        if (relay.requestCount % groupCreationFrequency == 0) {
+            // TODO: Once implemented, invoke:
+            // createGroup(uint256(keccak256(entry)));
+        }
+    }
+
+    /// @return Relay request fee in T. This fee needs to be provided by the
+    ///         account or contract requesting for a new relay entry.
+    function relayRequestFee() external view returns (uint256) {
+        return relay.relayRequestFee;
+    }
+
+    /// @return The number of blocks it takes for a group member to become
+    ///         eligible to submit the relay entry. At first, there is only one
+    ///         member in the group eligible to submit the relay entry. Then,
+    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the relay entry at that moment. After
+    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
+    ///         group member becomes eligible so that there are three group
+    ///         members eligible to submit the relay entry at that moment. This
+    ///         continues until all group members are eligible to submit the
+    ///         relay entry or until the relay entry is submitted. If all
+    ///         members became eligible to submit the relay entry and one more
+    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
+    ///         entry submitted, the group reaches soft timeout for submitting
+    ///         the relay entry and the slashing starts.
+    function relayEntrySubmissionEligibilityDelay()
+        external
+        view
+        returns (uint256)
+    {
+        return relay.relayEntrySubmissionEligibilityDelay;
+    }
+
+    /// @return Hard timeout in blocks for a group to submit the relay entry.
+    ///         After all group members became eligible to submit the relay
+    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
+    ///         passed without relay entry submitted, all group members start
+    ///         getting slashed. The slashing amount increases linearly until
+    ///         the group submits the relay entry or until
+    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
+    ///         reached, each group member will get slashed for
+    ///         `relayEntrySubmissionFailureSlashingAmount`.
+    function relayEntryHardTimeout() external view returns (uint256) {
+        return relay.relayEntryHardTimeout;
     }
 }
