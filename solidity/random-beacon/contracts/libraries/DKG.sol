@@ -32,7 +32,6 @@ library DKG {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
-        bytes groupPublicKey;
     }
 
     /// @notice DKG result.
@@ -172,7 +171,6 @@ library DKG {
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
-        self.groupPublicKey = result.groupPubKey;
 
         emit DkgResultSubmitted(
             self.submittedResultHash,
@@ -306,11 +304,7 @@ library DKG {
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
-    function approveResult(Data storage self)
-        internal
-        cleanup(self)
-        returns (bytes memory)
-    {
+    function approveResult(Data storage self) internal cleanup(self) {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -324,18 +318,13 @@ library DKG {
         );
 
         emit DkgResultApproved(self.submittedResultHash, msg.sender);
-
-        return self.groupPublicKey;
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
     // TODO: When implementing challenges verify what parameters are required.
-    function challengeResult(Data storage self)
-        internal
-        returns (bytes memory)
-    {
+    function challengeResult(Data storage self) internal {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -364,8 +353,6 @@ library DKG {
         delete self.submittedResultHash;
 
         emit DkgResultChallenged(resultHash, msg.sender);
-
-        return self.groupPublicKey;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.

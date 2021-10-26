@@ -425,7 +425,7 @@ contract RandomBeacon is Ownable {
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
     function approveDkgResult() external {
-        bytes memory groupPubKey = dkg.approveResult();
+        dkg.approveResult();
 
         groups.activateCandidateGroup();
 
@@ -438,7 +438,7 @@ contract RandomBeacon is Ownable {
     ///         invalid it reverts the DKG back to the result submission phase.
     function challengeDkgResult() external {
         // TODO: Determine parameters required for DKG result challenges.
-        bytes memory groupPubKey = dkg.challengeResult();
+        dkg.challengeResult();
 
         // TODO: Remove challenged pending group c84f859d598b952502eecd7a2b21e6f9b021266e
         // Verify the costs of transaction.
