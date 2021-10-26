@@ -26,22 +26,22 @@ describe("Groups", () => {
     groups = await TestGroups.deploy()
   })
 
-  describe("addPendingGroup", async () => {
+  describe("addCandidateGroup", async () => {
     context("when no groups are registered", async () => {
       let tx: ContractTransaction
 
       context("with no misbehaved members", async () => {
         beforeEach(async () => {
-          tx = await groups.addPendingGroup(
+          tx = await groups.addCandidateGroup(
             groupPublicKey,
             members,
             noMisbehaved
           )
         })
 
-        it("should emit PendingGroupRegistered event", async () => {
+        it("should emit CandidateGroupRegistered event", async () => {
           expect(tx)
-            .to.emit(groups, "PendingGroupRegistered")
+            .to.emit(groups, "CandidateGroupRegistered")
             .withArgs(groupPublicKey)
         })
 
@@ -68,7 +68,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             const misbehaved = ethers.utils.hexlify(misbehavedIndices)
 
-            tx = await groups.addPendingGroup(
+            tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehaved
@@ -91,7 +91,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             const misbehaved = ethers.utils.hexlify(misbehavedIndices)
 
-            tx = await groups.addPendingGroup(
+            tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehaved
@@ -114,7 +114,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             const misbehaved = ethers.utils.hexlify(misbehavedIndices)
 
-            tx = await groups.addPendingGroup(
+            tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehaved
@@ -137,7 +137,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             const misbehaved = ethers.utils.hexlify(misbehavedIndices)
 
-            tx = await groups.addPendingGroup(
+            tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehaved
@@ -160,7 +160,7 @@ describe("Groups", () => {
             const misbehaved = ethers.utils.hexlify(misbehavedIndices)
 
             await expect(
-              groups.addPendingGroup(groupPublicKey, members, misbehaved)
+              groups.addCandidateGroup(groupPublicKey, members, misbehaved)
             ).to.be.revertedWith(
               "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
             )
@@ -176,7 +176,7 @@ describe("Groups", () => {
               const misbehaved = ethers.utils.hexlify(misbehavedIndices)
 
               await expect(
-                groups.addPendingGroup(groupPublicKey, members, misbehaved)
+                groups.addCandidateGroup(groupPublicKey, members, misbehaved)
               ).to.be.revertedWith(
                 "reverted with panic code 0x32 (Array accessed at an out-of-bounds or negative index)"
               )
@@ -196,14 +196,14 @@ describe("Groups", () => {
         existingGroupMembers = members.slice(30)
         newGroupMembers = members.slice(-30)
 
-        await groups.addPendingGroup(
+        await groups.addCandidateGroup(
           existingGroupPublicKey,
           existingGroupMembers,
           noMisbehaved
         )
       })
 
-      context("when existing group is pending", async () => {
+      context("when existing group is candidate", async () => {
         beforeEach(async () => {
           await groups.getGroup(existingGroupPublicKey)
         })
@@ -214,16 +214,16 @@ describe("Groups", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            tx = await groups.addPendingGroup(
+            tx = await groups.addCandidateGroup(
               newGroupPublicKey,
               newGroupMembers,
               noMisbehaved
             )
           })
 
-          it("should emit PendingGroupRegistered event", async () => {
+          it("should emit CandidateGroupRegistered event", async () => {
             expect(tx)
-              .to.emit(groups, "PendingGroupRegistered")
+              .to.emit(groups, "CandidateGroupRegistered")
               .withArgs(newGroupPublicKey)
           })
 
@@ -259,16 +259,16 @@ describe("Groups", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            tx = await groups.addPendingGroup(
+            tx = await groups.addCandidateGroup(
               newGroupPublicKey,
               newGroupMembers,
               noMisbehaved
             )
           })
 
-          it("should emit PendingGroupRegistered event", async () => {
+          it("should emit CandidateGroupRegistered event", async () => {
             expect(tx)
-              .to.emit(groups, "PendingGroupRegistered")
+              .to.emit(groups, "CandidateGroupRegistered")
               .withArgs(newGroupPublicKey)
           })
 
@@ -319,7 +319,7 @@ describe("Groups", () => {
 
           it("should revert with 'group was already activated' error", async () => {
             expect(
-              groups.addPendingGroup(
+              groups.addCandidateGroup(
                 newGroupPublicKey,
                 newGroupMembers,
                 noMisbehaved
@@ -334,16 +334,16 @@ describe("Groups", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            tx = await groups.addPendingGroup(
+            tx = await groups.addCandidateGroup(
               newGroupPublicKey,
               newGroupMembers,
               noMisbehaved
             )
           })
 
-          it("should emit PendingGroupRegistered event", async () => {
+          it("should emit CandidateGroupRegistered event", async () => {
             expect(tx)
-              .to.emit(groups, "PendingGroupRegistered")
+              .to.emit(groups, "CandidateGroupRegistered")
               .withArgs(newGroupPublicKey)
           })
 
@@ -395,10 +395,10 @@ describe("Groups", () => {
 
     context("when one group is registered", async () => {
       beforeEach(async () => {
-        await groups.addPendingGroup(groupPublicKey, members, noMisbehaved)
+        await groups.addCandidateGroup(groupPublicKey, members, noMisbehaved)
       })
 
-      context("when the group is pending", async () => {
+      context("when the group is candidate", async () => {
         let tx: ContractTransaction
 
         beforeEach(async () => {
@@ -439,12 +439,20 @@ describe("Groups", () => {
         const groupPublicKey1 = "0x0001"
         const groupPublicKey2 = "0x0002"
 
-        context("when both groups are pending", async () => {
+        context("when both groups are candidate", async () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
-            await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+            await groups.addCandidateGroup(
+              groupPublicKey1,
+              members,
+              noMisbehaved
+            )
+            await groups.addCandidateGroup(
+              groupPublicKey2,
+              members,
+              noMisbehaved
+            )
 
             tx = await groups.activateGroup()
           })
@@ -477,13 +485,21 @@ describe("Groups", () => {
 
           // TODO: Update as the latest group got actiavted
           beforeEach(async () => {
-            await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
+            await groups.addCandidateGroup(
+              groupPublicKey1,
+              members,
+              noMisbehaved
+            )
             const tx1 = await groups.activateGroup()
             activationTimestamp1 = (
               await ethers.provider.getBlock(tx1.blockHash)
             ).timestamp
 
-            await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+            await groups.addCandidateGroup(
+              groupPublicKey2,
+              members,
+              noMisbehaved
+            )
 
             tx = await groups.activateGroup()
           })
@@ -515,12 +531,20 @@ describe("Groups", () => {
         const groupPublicKey1 = groupPublicKey
         const groupPublicKey2 = groupPublicKey
 
-        context("when both groups are pending", async () => {
+        context("when both groups are candidate", async () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            await groups.addPendingGroup(groupPublicKey1, members, noMisbehaved)
-            await groups.addPendingGroup(groupPublicKey2, members, noMisbehaved)
+            await groups.addCandidateGroup(
+              groupPublicKey1,
+              members,
+              noMisbehaved
+            )
+            await groups.addCandidateGroup(
+              groupPublicKey2,
+              members,
+              noMisbehaved
+            )
 
             tx = await groups.activateGroup()
           })
@@ -544,7 +568,7 @@ describe("Groups", () => {
     })
   })
 
-  // TODO: Add tests for popPendingGroup
+  // TODO: Add tests for popCandidateGroup
 })
 
 function filterMisbehaved(

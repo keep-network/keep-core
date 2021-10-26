@@ -8,18 +8,18 @@ contract TestGroups {
 
     Groups.Data internal groups;
 
-    event PendingGroupRegistered(bytes indexed groupPubKey);
+    event CandidateGroupRegistered(bytes indexed groupPubKey);
 
-    event PendingGroupRemoved(bytes indexed groupPubKey);
+    event CandidateGroupRemoved(bytes indexed groupPubKey);
 
     event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
-    function addPendingGroup(
+    function addCandidateGroup(
         bytes calldata groupPubKey,
         address[] memory members,
         bytes memory misbehaved
     ) external {
-        groups.addPendingGroup(groupPubKey, members, misbehaved);
+        groups.addCandidateGroup(groupPubKey, members, misbehaved);
     }
 
     function activateGroup() external {

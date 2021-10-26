@@ -183,9 +183,9 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
-    event PendingGroupRegistered(bytes indexed groupPubKey);
+    event CandidateGroupRegistered(bytes indexed groupPubKey);
 
-    event PendingGroupRemoved(bytes indexed groupPubKey);
+    event CandidateGroupRemoved(bytes indexed groupPubKey);
 
     event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
@@ -407,7 +407,7 @@ contract RandomBeacon is Ownable {
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
 
-        groups.addPendingGroup(
+        groups.addCandidateGroup(
             dkgResult.groupPubKey,
             dkgResult.members,
             dkgResult.misbehaved
@@ -442,7 +442,7 @@ contract RandomBeacon is Ownable {
 
         // TODO: Remove challenged pending group c84f859d598b952502eecd7a2b21e6f9b021266e
         // Verify the costs of transaction.
-        groups.popPendingGroup();
+        groups.popCandidateGroup();
 
         // TODO: Implement slashing
     }

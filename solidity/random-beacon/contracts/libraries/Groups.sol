@@ -6,9 +6,9 @@ import "./BytesLib.sol";
 library Groups {
     using BytesLib for bytes;
 
-    event PendingGroupRegistered(bytes indexed groupPubKey);
+    event CandidateGroupRegistered(bytes indexed groupPubKey);
 
-    event PendingGroupRemoved(bytes indexed groupPubKey);
+    event CandidateGroupRemoved(bytes indexed groupPubKey);
 
     event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
@@ -26,7 +26,7 @@ library Groups {
     }
 
     /// @notice Adds a new group.
-    function addPendingGroup(
+    function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
         address[] memory members,
@@ -48,7 +48,7 @@ library Groups {
         group.groupPubKey = groupPubKey;
         self.groupsData[groupPubKeyHash] = group;
 
-        // FIXME: We can end up with multiple pending groups registered with the same public key,
+        // FIXME: We can end up with multiple candidate groups registered with the same public key,
         // and later being activated. Although it shouldn't happen when this library
         // is used with Random Beacon DKG as it's handling just one result/group
         // at a time.
@@ -56,7 +56,7 @@ library Groups {
 
         setGroupMembers(self.groupsData[groupPubKeyHash], members, misbehaved);
 
-        emit PendingGroupRegistered(groupPubKey);
+        emit CandidateGroupRegistered(groupPubKey);
     }
 
     // TODO: This function should be optimized for members storing.
@@ -82,21 +82,23 @@ library Groups {
         }
     }
 
-    function popPendingGroup(Data storage self) internal {
+    function popCandidateGroup(Data storage self) internal {
         bytes32 groupPubKeyHash = self.groupsRegistry[
             self.groupsRegistry.length - 1
         ];
 
         require(
             self.groupsData[groupPubKeyHash].activationTimestamp == 0,
-            "the latest registered group is not pending"
+            "the latest registered group was already activated"
         );
 
         // Pop the latest registered group. Group data are not deleted from the
         // `groupsData` map to reduce transaction costs.
         self.groupsRegistry.pop();
 
-        emit PendingGroupRemoved(self.groupsData[groupPubKeyHash].groupPubKey);
+        emit CandidateGroupRemoved(
+            self.groupsData[groupPubKeyHash].groupPubKey
+        );
     }
 
     function activateGroup(Data storage self) internal {
@@ -118,14 +120,14 @@ library Groups {
 
     // TODO: Add group termination and expiration
 
-    /// @notice Gets the number of active groups. Pending, expired and terminated
+    /// @notice Gets the number of active groups. Candidate, expired and terminated
     /// groups are not counted as active.
     function numberOfActiveGroups(Data storage self)
         internal
         view
         returns (uint64)
     {
-        // TODO: Revisit and include pending, terminated and expired groups
+        // TODO: Revisit and include candidate, terminated and expired groups
         return self.activeGroupsCount;
         // TODO: Subtract expired and terminated groups
         // .sub(self.expiredGroupOffset).sub(
