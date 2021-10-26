@@ -2,6 +2,7 @@
 pragma solidity ^0.8.6;
 
 import "../libraries/Relay.sol";
+import "../libraries/Groups.sol";
 
 contract RelayStub {
     using Relay for Relay.Data;
@@ -31,6 +32,23 @@ contract RelayStub {
                 submitterIndex,
                 firstEligibleIndex,
                 lastEligibleIndex
+            );
+    }
+
+    function getPunishedMembers(
+        uint256 submitterIndex,
+        uint256 firstEligibleIndex,
+        address[] memory members
+    ) external view returns (address[] memory) {
+        Groups.Group memory group;
+        group.members = members;
+
+        return
+            relay.getPunishedMembers(
+                submitterIndex,
+                firstEligibleIndex,
+                group,
+                groupSize
             );
     }
 }

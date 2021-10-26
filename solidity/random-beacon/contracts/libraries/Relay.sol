@@ -200,7 +200,8 @@ library Relay {
             self,
             submitterIndex,
             firstEligibleIndex,
-            group
+            group,
+            groupSize
         );
         self.sortitionPool.removeOperators(punishedMembers);
 
@@ -388,23 +389,24 @@ library Relay {
     function getPunishedMembers(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
-        uint256 submitterIndex,
-        uint256 firstEligibleIndex,
-        Groups.Group memory group
+        uint256 _submitterIndex,
+        uint256 _firstEligibleIndex,
+        Groups.Group memory _group,
+        uint256 _groupSize
     ) internal view returns (address[] memory) {
-        uint256 punishedMembersCount = submitterIndex >= firstEligibleIndex
-            ? submitterIndex - firstEligibleIndex
-            : groupSize - (firstEligibleIndex - submitterIndex);
+        uint256 punishedMembersCount = _submitterIndex >= _firstEligibleIndex
+            ? _submitterIndex - _firstEligibleIndex
+            : _groupSize - (_firstEligibleIndex - _submitterIndex);
 
         address[] memory punishedMembers = new address[](punishedMembersCount);
 
         for (uint256 i = 0; i < punishedMembersCount; i++) {
-            uint256 memberIndex = firstEligibleIndex + i;
-            memberIndex = memberIndex > groupSize
-                ? memberIndex - groupSize
+            uint256 memberIndex = _firstEligibleIndex + i;
+            memberIndex = memberIndex > _groupSize
+                ? memberIndex - _groupSize
                 : memberIndex;
 
-            punishedMembers[i] = group.members[memberIndex - 1];
+            punishedMembers[i] = _group.members[memberIndex - 1];
         }
 
         return punishedMembers;

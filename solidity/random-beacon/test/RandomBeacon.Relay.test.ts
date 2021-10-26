@@ -405,6 +405,65 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
+  describe("getPunishedMembers", () => {
+    // Group size is set to 8 in RelayStub contract.
+    const members = [
+      "0x69240c4C599e8aAE5edbe2e7284413de54C33084", // member index 1
+      "0x2c93C63bA855a205ec7b12E8b238027E268f4B21", // member index 2
+      "0xFa535f1b538c0C9b41522331Be3589a8B16b5F13", // member index 3
+      "0xd616385c394A8CbdDD2bf6bd24a0b6Ea1D0EFf6f", // member index 4
+      "0x44073d66381A124921e7cb88f936D8a03d2A8748", // member index 5
+      "0xD02E5b474Afcf9a11bCE04B53057C16DbF382f8f", // member index 6
+      "0x3F9164812469A0Ee635D63E79038302d84fe4821", // member index 7
+      "0xcC89758DE3153E8Dce621574FF0C22a7e4290e64", // member index 8
+    ]
+
+    context("when submitter index is the first eligible index", () => {
+      it("should return empty punished members list", async () => {
+        const punishedMembers = await relayStub.getPunishedMembers(
+          5,
+          5,
+          members
+        )
+
+        await expect(punishedMembers.length).to.be.equal(0)
+      })
+    })
+
+    context("when submitter index is bigger than first eligible index", () => {
+      it("should return a proper punished members list", async () => {
+        const punishedMembers = await relayStub.getPunishedMembers(
+          8,
+          5,
+          members
+        )
+
+        await expect(punishedMembers.length).to.be.equal(3)
+        await expect(punishedMembers[0]).to.be.equal(members[4])
+        await expect(punishedMembers[1]).to.be.equal(members[5])
+        await expect(punishedMembers[2]).to.be.equal(members[6])
+      })
+    })
+
+    context("when submitter index is smaller than first eligible index", () => {
+      it("should return a proper punished members list", async () => {
+        const punishedMembers = await relayStub.getPunishedMembers(
+          3,
+          5,
+          members
+        )
+
+        await expect(punishedMembers.length).to.be.equal(6)
+        await expect(punishedMembers[0]).to.be.equal(members[4])
+        await expect(punishedMembers[1]).to.be.equal(members[5])
+        await expect(punishedMembers[2]).to.be.equal(members[6])
+        await expect(punishedMembers[3]).to.be.equal(members[7])
+        await expect(punishedMembers[4]).to.be.equal(members[0])
+        await expect(punishedMembers[5]).to.be.equal(members[1])
+      })
+    })
+  })
+
   async function approveTestToken() {
     await testToken.mint(requester.address, relayRequestFee)
     await testToken
