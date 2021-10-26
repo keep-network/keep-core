@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
 import TokenAmount from "../../components/TokenAmount"
@@ -9,8 +9,30 @@ import resourceTooltipProps from "../../constants/tooltips"
 import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
 import useGrantedBalanceInfo from "../../hooks/useGrantedBalanceInfo"
 import { lte } from "../../utils/arithmetics.utils"
+import {
+  useWeb3Address,
+  useWeb3Context,
+} from "../../components/WithWeb3Context"
+import { useDispatch } from "react-redux"
 
 const ThresholdUpgradePage = () => {
+  const { isConnected } = useWeb3Context()
+  const address = useWeb3Address()
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    if (isConnected) {
+      dispatch({
+        type: "staking/fetch_delegations_request",
+        payload: { address },
+      })
+      dispatch({
+        type: "token-grant/fetch_grants_request",
+        payload: { address },
+      })
+    }
+  }, [dispatch, isConnected, address])
+
   const { totalOwnedUnstakedBalance, totalKeepTokenBalance } =
     useKeepBalanceInfo()
 
