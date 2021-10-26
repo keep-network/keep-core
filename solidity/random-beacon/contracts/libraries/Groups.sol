@@ -3,6 +3,10 @@ pragma solidity ^0.8.6;
 
 import "./BytesLib.sol";
 
+/// @notice This library is used as a registry of created groups.
+/// @dev This library should be used along with DKG library that ensures linear
+/// groups creation (only one group creation happens at a time). A candidate group
+/// has to be popped or activated before adding a new candidate group.
 library Groups {
     using BytesLib for bytes;
 
@@ -15,17 +19,27 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationTimestamp;
+        // TODO: Optimize members storing, see: https://github.com/keep-network/keep-core/pull/2666/files#r732629138
         address[] members;
     }
 
     struct Data {
+        // Mapping of keccak256 hashes of group public keys to groups details.
         mapping(bytes32 => Group) groupsData;
+        // Holds keccak256 hashes of group public keys in the order of registration.
         bytes32[] groupsRegistry;
         // TODO: Remember about decreasing the counter in case of expiration or termination.
         uint64 activeGroupsCount;
     }
 
-    /// @notice Adds a new group.
+    /// @notice Adds a new candidate group. The group is stored with group public
+    /// key and active members, but is not yet activated.
+    /// @param groupPubKey Generated candidate group public key
+    /// @param members Addresses of candidate group members as outputted by the
+    ///        group selection protocol.
+    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+    ///        group members indexes; Indexes reflect positions of members in the group,
+    ///        as outputted by the group selection protocol.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
@@ -48,10 +62,6 @@ library Groups {
         group.groupPubKey = groupPubKey;
         self.groupsData[groupPubKeyHash] = group;
 
-        // FIXME: We can end up with multiple candidate groups registered with the same public key,
-        // and later being activated. Although it shouldn't happen when this library
-        // is used with Random Beacon DKG as it's handling just one result/group
-        // at a time.
         self.groupsRegistry.push(groupPubKeyHash);
 
         setGroupMembers(self.groupsData[groupPubKeyHash], members, misbehaved);
@@ -59,6 +69,15 @@ library Groups {
         emit CandidateGroupRegistered(groupPubKey);
     }
 
+    /// @notice Sets addresses of members for the group eliminating members at
+    ///         positions pointed by the misbehaved array.
+    /// @param group The group storage.
+    /// @param members Group member addresses as outputted by the group selection
+    ///        protocol.
+    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+    ///        group members indexes in ascending order; Indexes reflect positions
+    ///        of members in the group as outputted by the group selection
+    ///        protocol - member indexes start from 1.
     // TODO: This function should be optimized for members storing.
     // See https://github.com/keep-network/keep-core/pull/2666/files#r732629138
     function setGroupMembers(
@@ -82,6 +101,10 @@ library Groups {
         }
     }
 
+    /// @notice Removes the latest candidate group.
+    /// @dev To optimize gas usage it doesn't delete group details from the
+    ///      `groupsData` mapping. The data will be overwritten in case a new
+    ///      candidate group gets registered.
     function popCandidateGroup(Data storage self) internal {
         bytes32 groupPubKeyHash = self.groupsRegistry[
             self.groupsRegistry.length - 1
@@ -92,8 +115,6 @@ library Groups {
             "the latest registered group was already activated"
         );
 
-        // Pop the latest registered group. Group data are not deleted from the
-        // `groupsData` map to reduce transaction costs.
         self.groupsRegistry.pop();
 
         emit CandidateGroupRemoved(
@@ -101,6 +122,7 @@ library Groups {
         );
     }
 
+    /// @notice Activates the latest candidate group.
     function activateCandidateGroup(Data storage self) internal {
         Group storage group = self.groupsData[
             self.groupsRegistry[self.groupsRegistry.length - 1]

@@ -167,7 +167,9 @@ library DKG {
         );
 
         // TODO: Check with sortition pool that all members have minimum stake.
-        // Check all members in one call.
+        // Check all members in one call or at least members that signed the result.
+        // We need to know in advance that there will be something that we can
+        // slash the members from.
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;

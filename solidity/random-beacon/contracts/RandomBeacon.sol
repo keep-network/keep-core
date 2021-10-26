@@ -397,6 +397,8 @@ contract RandomBeacon is Ownable {
     ///         waits for an approval. A result can be challenged to verify the
     ///         members list corresponds to the expected set of members determined
     ///         by the sortition pool.
+    ///         A candidate group is registered based on the submitted DKG result
+    ///         details.
     /// @dev The message to be signed by each member is keccak256 hash of the
     ///      calculated group public key, misbehaved members as bytes and DKG
     ///      start block. The calculated hash should be prefixed with prefixed with
@@ -423,7 +425,8 @@ contract RandomBeacon is Ownable {
 
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
-    ///         valid and completes the group creation.
+    ///         valid and completes the group creation by activating the candidate
+    ///         group.
     function approveDkgResult() external {
         dkg.approveResult();
 
@@ -436,12 +439,12 @@ contract RandomBeacon is Ownable {
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
+    ///         It removes a candidate group that was previously registered with
+    ///         the DKG result submission.
     function challengeDkgResult() external {
         // TODO: Determine parameters required for DKG result challenges.
         dkg.challengeResult();
 
-        // TODO: Remove challenged pending group c84f859d598b952502eecd7a2b21e6f9b021266e
-        // Verify the costs of transaction.
         groups.popCandidateGroup();
 
         // TODO: Implement slashing
