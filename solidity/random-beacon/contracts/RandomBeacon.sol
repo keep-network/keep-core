@@ -487,6 +487,7 @@ contract RandomBeacon is Ownable {
 
         // In case we retry the timed out request, we can't require the
         // the request fee to be payed.
+        // TODO: Check number of groups is bigger than zero.
         _requestRelayEntry(false);
     }
 
