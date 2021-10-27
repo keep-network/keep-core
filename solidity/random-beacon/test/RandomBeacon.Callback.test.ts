@@ -2,13 +2,15 @@ import { ethers, waffle } from "hardhat"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { expect } from "chai"
 import blsData from "./data/bls"
-import { to1e18, ZERO_ADDRESS } from "./functions"
+import { to1e18 } from "./functions"
 import { randomBeaconDeployment } from "./fixtures"
 import type {
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
 } from "../typechain"
+
+const ZERO_ADDRESS = ethers.constants.AddressZero
 
 describe("RandomBeacon - Callback", () => {
   const relayRequestFee = to1e18(100)

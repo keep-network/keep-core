@@ -3,13 +3,14 @@ import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { getDkgGroupSigners, signAndSubmitDkgResult } from "./utils/dkg"
-import { to1e18, ZERO_ADDRESS } from "./functions"
+import { to1e18 } from "./functions"
 import { constants, params, randomBeaconDeployment } from "./fixtures"
 import type { RandomBeacon, TestToken, RelayStub } from "../typechain"
 import type { DkgGroupSigners } from "./utils/dkg"
 
 const { time } = helpers
 const { mineBlocks } = time
+const ZERO_ADDRESS = ethers.constants.AddressZero
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
