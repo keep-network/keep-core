@@ -53,6 +53,19 @@ export const ModalRoot = () => {
     return <></>
   }
 
+  const _onConfirm = (values) => {
+    if (onConfirm && typeof onClose === "function") {
+      onConfirm(values)
+    } else {
+      onSubmitConfirmationModal(values)
+    }
+    if (modalProps.shouldCloseOnSubmit) {
+      // Just close modal we don't want to dispatch `modal/cancel`
+      // action.
+      closeModal()
+    }
+  }
+
   const SpecificModal = MODAL_TYPE_TO_COMPONENT[modalType]
   return ReactDOM.createPortal(
     <SpecificModal
@@ -64,17 +77,7 @@ export const ModalRoot = () => {
           closeModal()
         }
       }}
-      onConfirm={
-        !modalProps.isConfirmationModal
-          ? undefined
-          : (values) => {
-              if (onConfirm) {
-                onConfirm(values)
-              } else {
-                onSubmitConfirmationModal(values)
-              }
-            }
-      }
+      onConfirm={!modalProps.isConfirmationModal ? undefined : _onConfirm}
       {...restProps}
     />,
     modalRoot

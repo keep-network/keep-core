@@ -1,11 +1,11 @@
-import { useCallback, useRef } from "react"
+import { useCallback } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { modalActions } from "../actions"
 
+let awaitingPromiseRef = null
 export const useModal = () => {
   const modalType = useSelector((state) => state.modal.modalType)
   const modalProps = useSelector((state) => state.modal.modalProps)
-  const awaitingPromiseRef = useRef()
 
   const dispatch = useDispatch()
 
@@ -21,8 +21,9 @@ export const useModal = () => {
   )
 
   const closeConfirmationModal = useCallback(() => {
-    if (awaitingPromiseRef.current) {
-      awaitingPromiseRef.current.reject()
+    if (awaitingPromiseRef) {
+      awaitingPromiseRef.reject()
+      awaitingPromiseRef = null
     }
     dispatch({ type: modalActions.CANCEL })
     closeModal()
@@ -30,8 +31,8 @@ export const useModal = () => {
 
   const onSubmitConfirmationModal = useCallback(
     (values) => {
-      if (awaitingPromiseRef.current) {
-        awaitingPromiseRef.current.resolve(values)
+      if (awaitingPromiseRef) {
+        awaitingPromiseRef.resolve(values)
       }
       dispatch({ type: modalActions.CONFIRM, payload: values })
     },
@@ -43,11 +44,12 @@ export const useModal = () => {
       openModal(modalType, {
         ...props,
         onConfirm: onSubmitConfirmationModal,
-        isConfirmaitionModal: true,
+        isConfirmationModal: true,
+        shouldCloseOnSubmit: true,
       })
 
       return new Promise((resolve, reject) => {
-        awaitingPromiseRef.current = { resolve, reject }
+        awaitingPromiseRef = { resolve, reject }
       })
     },
     [openModal, onSubmitConfirmationModal]
