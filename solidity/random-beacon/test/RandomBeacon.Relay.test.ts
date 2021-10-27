@@ -1,21 +1,35 @@
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
-import { to1e18, ZERO_ADDRESS } from "./functions"
-import { randomBeaconDeployment } from "./fixtures"
+import { getDkgGroupSigners } from "./utils/dkg"
+import { to1e18 } from "./functions"
+import { constants, randomBeaconDeployment } from "./fixtures"
+import { createGroup } from "./utils/groups"
 import type { RandomBeacon, TestToken, RelayStub } from "../typechain"
+import type { DkgGroupSigners } from "./utils/dkg"
 
 const { time } = helpers
 const { mineBlocks } = time
+const ZERO_ADDRESS = ethers.constants.AddressZero
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
+
+  // When determining the eligibility queue, the `(blsData.groupSignature % 64) + 1`
+  // equation points member`16` as the first eligible one. This is why we use that
+  // index as `submitRelayEntry` parameter. The `submitter` signer represents that
+  // member too.
+  const submitterMemberIndex = 16
+  // In that case `(blsData.nextGroupSignature % 64) + 1` gives 3 so that  member needs
+  // to submit the wrong relay entry.
+  const invalidSubmitterMemberIndex = 3
 
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
   let other: SignerWithAddress
   let invalidEntrySubmitter: SignerWithAddress
+  let signers: DkgGroupSigners
 
   let randomBeacon: RandomBeacon
   let testToken: TestToken
@@ -31,9 +45,16 @@ describe("RandomBeacon - Relay", () => {
     }
   }
 
-  // prettier-ignore
   before(async () => {
-    [requester, submitter, other, invalidEntrySubmitter] = await ethers.getSigners()
+    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+
+    signers = await getDkgGroupSigners(constants.groupSize, 1)
+
+    submitter = await ethers.getSigner(signers.get(submitterMemberIndex))
+    invalidEntrySubmitter = await ethers.getSigner(
+      signers.get(invalidSubmitterMemberIndex)
+    )
+    other = await ethers.getSigner(signers.get(submitterMemberIndex + 1))
   })
 
   beforeEach("load test fixture", async () => {
@@ -49,8 +70,7 @@ describe("RandomBeacon - Relay", () => {
   describe("requestRelayEntry", () => {
     context("when groups exist", () => {
       beforeEach(async () => {
-        // TODO: Currently `selectGroup` returns a hardcoded group. Once
-        //       proper implementation is ready, add the group manually here.
+        await createGroup(randomBeacon, signers)
       })
 
       context("when there is no other relay entry in progress", () => {
@@ -80,7 +100,7 @@ describe("RandomBeacon - Relay", () => {
           it("should emit RelayEntryRequested event", async () => {
             await expect(tx)
               .to.emit(randomBeacon, "RelayEntryRequested")
-              .withArgs(1, 1, blsData.previousEntry)
+              .withArgs(1, 0, blsData.previousEntry)
           })
         })
 
@@ -110,11 +130,20 @@ describe("RandomBeacon - Relay", () => {
     context("when no groups exist", () => {
       it("should revert", async () => {
         // TODO: Implement once proper `selectGroup` is ready.
+        await expect(
+          randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
+        ).to.be.revertedWith(
+          "reverted with panic code 0x12 (Division or modulo division by zero)"
+        )
       })
     })
   })
 
   describe("submitRelayEntry", () => {
+    beforeEach(async () => {
+      await createGroup(randomBeacon, signers)
+    })
+
     context("when relay request is in progress", () => {
       beforeEach(async () => {
         await approveTestToken()
@@ -126,15 +155,13 @@ describe("RandomBeacon - Relay", () => {
           context("when submitter is eligible", () => {
             context("when entry is valid", () => {
               it("should emit RelayEntrySubmitted event", async () => {
-                // When determining the eligibility queue, the
-                // `(groupSignature % 64) + 1` equation points member `16`
-                // as the first eligible one. This is why we use that
-                // index as `submitRelayEntry` parameter. The `submitter`
-                // signer represents that member too.
                 await expect(
                   randomBeacon
                     .connect(submitter)
-                    .submitRelayEntry(16, blsData.groupSignature)
+                    .submitRelayEntry(
+                      submitterMemberIndex,
+                      blsData.groupSignature
+                    )
                 )
                   .to.emit(randomBeacon, "RelayEntrySubmitted")
                   .withArgs(1, blsData.groupSignature)
@@ -143,12 +170,13 @@ describe("RandomBeacon - Relay", () => {
 
             context("when entry is not valid", () => {
               it("should revert", async () => {
-                // In that case `(nextGroupSignature % 64) + 1` gives 3 so that
-                // member needs to submit the wrong relay entry.
                 await expect(
                   randomBeacon
                     .connect(invalidEntrySubmitter)
-                    .submitRelayEntry(3, blsData.nextGroupSignature)
+                    .submitRelayEntry(
+                      invalidSubmitterMemberIndex,
+                      blsData.nextGroupSignature
+                    )
                 ).to.be.revertedWith("Invalid entry")
               })
             })
@@ -159,7 +187,10 @@ describe("RandomBeacon - Relay", () => {
               await expect(
                 randomBeacon
                   .connect(other)
-                  .submitRelayEntry(17, blsData.groupSignature)
+                  .submitRelayEntry(
+                    submitterMemberIndex + 1,
+                    blsData.groupSignature
+                  )
               ).to.be.revertedWith("Submitter is not eligible")
             })
           })
@@ -203,7 +234,10 @@ describe("RandomBeacon - Relay", () => {
           await expect(
             randomBeacon
               .connect(submitter)
-              .submitRelayEntry(16, blsData.nextGroupSignature)
+              .submitRelayEntry(
+                submitterMemberIndex,
+                blsData.nextGroupSignature
+              )
           ).to.be.revertedWith("Relay request timed out")
         })
       })
@@ -214,7 +248,7 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.nextGroupSignature)
+            .submitRelayEntry(submitterMemberIndex, blsData.nextGroupSignature)
         ).to.be.revertedWith("No relay request in progress")
       })
     })

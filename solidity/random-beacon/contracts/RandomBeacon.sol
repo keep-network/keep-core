@@ -17,6 +17,7 @@ pragma solidity ^0.8.6;
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/DKG.sol";
+import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -157,6 +158,12 @@ contract RandomBeacon is Ownable {
         bytes32 indexed resultHash,
         address indexed challenger
     );
+
+    event CandidateGroupRegistered(bytes indexed groupPubKey);
+
+    event CandidateGroupRemoved(bytes indexed groupPubKey);
+
+    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
     event RelayEntryRequested(
         uint256 indexed requestId,
@@ -357,7 +364,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Triggers group selection if there are no active groups.
     function genesis() external {
-        // TODO: Check number of active groups
+        require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
         createGroup(
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
@@ -382,6 +389,8 @@ contract RandomBeacon is Ownable {
     ///         waits for an approval. A result can be challenged to verify the
     ///         members list corresponds to the expected set of members determined
     ///         by the sortition pool.
+    ///         A candidate group is registered based on the submitted DKG result
+    ///         details.
     /// @dev The message to be signed by each member is keccak256 hash of the
     ///      calculated group public key, misbehaved members as bytes and DKG
     ///      start block. The calculated hash should be prefixed with prefixed with
@@ -392,31 +401,43 @@ contract RandomBeacon is Ownable {
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
 
-        // TODO: Register a pending group
-        // TODO: Set members in the group
+        groups.addCandidateGroup(
+            dkgResult.groupPubKey,
+            dkgResult.members,
+            dkgResult.misbehaved
+        );
     }
 
     /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
+
+        // TODO: Pay a reward to the caller.
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
-    ///         valid and completes the group creation.
+    ///         valid and completes the group creation by activating the candidate
+    ///         group.
     function approveDkgResult() external {
         dkg.approveResult();
 
-        // TODO: Activate the pending group.
+        groups.activateCandidateGroup();
 
+        // TODO: Handle DQ/IA
+        // TODO: Release a rewards to DKG submitter.
         // TODO: Unlock sortition pool
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
+    ///         It removes a candidate group that was previously registered with
+    ///         the DKG result submission.
     function challengeDkgResult() external {
         // TODO: Determine parameters required for DKG result challenges.
         dkg.challengeResult();
+
+        groups.popCandidateGroup();
 
         // TODO: Implement slashing
     }
@@ -433,6 +454,26 @@ contract RandomBeacon is Ownable {
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
+    }
+
+    function getGroupsRegistry() external view returns (bytes32[] memory) {
+        return groups.groupsRegistry;
+    }
+
+    function getGroup(uint64 groupId)
+        external
+        view
+        returns (Groups.Group memory)
+    {
+        return groups.getGroup(groupId);
+    }
+
+    function getGroup(bytes memory groupPubKey)
+        external
+        view
+        returns (Groups.Group memory)
+    {
+        return groups.getGroup(groupPubKey);
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
