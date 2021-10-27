@@ -3,7 +3,7 @@ import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { getDkgGroupSigners, signAndSubmitDkgResult } from "./utils/dkg"
-import { to1e18 } from "./functions"
+import { to1e18, ZERO_ADDRESS } from "./functions"
 import { constants, params, randomBeaconDeployment } from "./fixtures"
 import type { RandomBeacon, TestToken, RelayStub } from "../typechain"
 import type { DkgGroupSigners } from "./utils/dkg"
@@ -81,7 +81,9 @@ describe("RandomBeacon - Relay", () => {
               randomBeacon.address
             )
             await approveTestToken()
-            tx = await randomBeacon.connect(requester).requestRelayEntry()
+            tx = await randomBeacon
+              .connect(requester)
+              .requestRelayEntry(ZERO_ADDRESS)
           })
 
           it("should deposit relay request fee to the maintenance pool", async () => {
@@ -103,7 +105,7 @@ describe("RandomBeacon - Relay", () => {
         context("when the requester doesn't pay the relay request fee", () => {
           it("should revert", async () => {
             await expect(
-              randomBeacon.connect(requester).requestRelayEntry()
+              randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
             ).to.be.revertedWith("Transfer amount exceeds allowance")
           })
         })
@@ -112,12 +114,12 @@ describe("RandomBeacon - Relay", () => {
       context("when there is an other relay entry in progress", () => {
         beforeEach(async () => {
           await approveTestToken()
-          await randomBeacon.connect(requester).requestRelayEntry()
+          await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         })
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.connect(requester).requestRelayEntry()
+            randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
           ).to.be.revertedWith("Another relay request in progress")
         })
       })
@@ -127,7 +129,7 @@ describe("RandomBeacon - Relay", () => {
       it("should revert", async () => {
         // TODO: Implement once proper `selectGroup` is ready.
         await expect(
-          randomBeacon.connect(requester).requestRelayEntry()
+          randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         ).to.be.revertedWith(
           "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
         )
@@ -143,7 +145,7 @@ describe("RandomBeacon - Relay", () => {
     context("when relay request is in progress", () => {
       beforeEach(async () => {
         await approveTestToken()
-        await randomBeacon.connect(requester).requestRelayEntry()
+        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
       context("when relay entry is not timed out", () => {
