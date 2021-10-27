@@ -3,6 +3,8 @@ pragma solidity ^0.8.6;
 
 import "./BytesLib.sol";
 
+import "hardhat/console.sol";
+
 /// @notice This library is used as a registry of created groups.
 /// @dev This library should be used along with DKG library that ensures linear
 /// groups creation (only one group creation happens at a time). A candidate group
@@ -44,7 +46,7 @@ library Groups {
         Data storage self,
         bytes calldata groupPubKey,
         address[] memory members,
-        bytes memory misbehaved
+        uint64 misbehaved
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
@@ -85,22 +87,30 @@ library Groups {
     function setGroupMembers(
         Group storage group,
         address[] memory members,
-        bytes memory misbehaved
+        uint64 misbehaved
     ) private {
+        require(members.length <= 64); // TODO: CHECK THIS IF NEEDED
+
         group.members = members;
 
-        // Iterate misbehaved array backwards, replace misbehaved
-        // member with the last element and reduce array length
-        uint256 i = misbehaved.length;
+        // Iterate members array backwards, replace misbehaved member with the
+        // last element and reduce array length
+        uint8 i = uint8(members.length);
         while (i > 0) {
-            // group member indexes start from 1, so we need to -1 on misbehaved
-            uint256 memberArrayPosition = misbehaved.toUint8(i - 1) - 1;
-            group.members[memberArrayPosition] = group.members[
-                group.members.length - 1
-            ];
-            group.members.pop();
+            uint8 memberArrayPosition = i - 1;
+
+            if (getBoolean(misbehaved, memberArrayPosition)) {
+                group.members[memberArrayPosition] = group.members[
+                    group.members.length - 1
+                ];
+                group.members.pop();
+            }
             i--;
         }
+    }
+
+    function getBoolean(uint256 self, uint8 index) public view returns (bool) {
+        return (uint8((self >> index) & 1) == 1 ? true : false);
     }
 
     /// @notice Removes the latest candidate group.

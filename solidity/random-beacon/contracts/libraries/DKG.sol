@@ -41,7 +41,7 @@ library DKG {
         // Generated candidate group public key
         bytes groupPubKey;
         // Bytes array of misbehaved (disqualified or inactive)
-        bytes misbehaved;
+        uint64 misbehaved;
         // Concatenation of signatures from members supporting the result.
         // The message to be signed by each member is keccak256 hash of the
         // calculated group public key, misbehaved members as bytes and DKG
@@ -224,7 +224,7 @@ library DKG {
         Data storage self,
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
-        bytes memory misbehaved,
+        uint64 misbehaved,
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
         address[] memory members
@@ -251,10 +251,10 @@ library DKG {
 
         require(groupPubKey.length == 128, "Malformed group public key");
 
-        require(
-            misbehaved.length <= groupSize - signatureThreshold,
-            "Malformed misbehaved bytes"
-        );
+        // require(
+        //     misbehaved.length <= groupSize - signatureThreshold,
+        //     "Malformed misbehaved bytes"
+        // );
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Too short signatures array");

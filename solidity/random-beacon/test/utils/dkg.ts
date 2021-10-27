@@ -3,7 +3,7 @@
 import { ethers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { Address } from "hardhat-deploy/types"
-import type { BigNumber, ContractTransaction } from "ethers"
+import type { BigNumber, BytesLike, ContractTransaction } from "ethers"
 import { constants } from "../fixtures"
 import blsData from "../data/bls"
 import type { RandomBeacon } from "../../typechain"
@@ -13,13 +13,13 @@ export type DkgGroupSigners = Map<number, Address>
 export interface DkgResult {
   submitterMemberIndex: number
   groupPubKey: string
-  misbehaved: string
+  misbehaved: BytesLike
   signatures: string
   signingMemberIndices: number[]
   members: string[]
 }
 
-export const noMisbehaved = "0x"
+export const noMisbehaved = ethers.utils.hexZeroPad(ethers.utils.hexlify(0), 8)
 
 export async function getDkgGroupSigners(
   groupSize: number = constants.groupSize,
@@ -101,11 +101,11 @@ export async function signAndSubmitDkgResult(
 async function signDkgResult(
   signers: DkgGroupSigners,
   groupPublicKey: string,
-  misbehaved: string,
+  misbehaved: BytesLike,
   startBlock: number
 ) {
   const resultHash = ethers.utils.solidityKeccak256(
-    ["bytes", "bytes", "uint256"],
+    ["bytes", "bytes8", "uint256"],
     [groupPublicKey, misbehaved, startBlock]
   )
 

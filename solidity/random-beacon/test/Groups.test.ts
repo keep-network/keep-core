@@ -1,6 +1,6 @@
 import { ethers } from "hardhat"
 import { expect } from "chai"
-import type { ContractTransaction } from "ethers"
+import { BigNumber, ContractTransaction } from "ethers"
 import blsData from "./data/bls"
 import { noMisbehaved, getDkgGroupSigners } from "./utils/dkg"
 import { constants } from "./fixtures"
@@ -9,7 +9,7 @@ import type { DkgGroupSigners } from "./utils/dkg"
 
 const { keccak256 } = ethers.utils
 
-describe("Groups", () => {
+describe.only("Groups", () => {
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
   let signers: DkgGroupSigners
@@ -18,7 +18,6 @@ describe("Groups", () => {
 
   before(async () => {
     signers = await getDkgGroupSigners(constants.groupSize)
-    members = Array.from(signers.values())
   })
 
   beforeEach("load test fixture", async () => {
@@ -26,163 +25,363 @@ describe("Groups", () => {
     groups = await GroupsStub.deploy()
   })
 
-  describe("addCandidateGroup", async () => {
+  describe.only("addCandidateGroup", async () => {
     context("when no groups are registered", async () => {
       let tx: ContractTransaction
 
-      context("with no misbehaved members", async () => {
+      context("with maximum size of members group", async () => {
         beforeEach(async () => {
-          tx = await groups.addCandidateGroup(
-            groupPublicKey,
-            members,
-            noMisbehaved
+          members = Array.from(signers.values())
+        })
+
+        context("with no misbehaved members", async () => {
+          beforeEach(async () => {
+            tx = await groups.addCandidateGroup(
+              groupPublicKey,
+              members,
+              noMisbehaved
+            )
+          })
+
+          it("should emit CandidateGroupRegistered event", async () => {
+            await expect(tx)
+              .to.emit(groups, "CandidateGroupRegistered")
+              .withArgs(groupPublicKey)
+          })
+
+          it("should register group", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
+
+            expect(groupsRegistry).to.be.lengthOf(1)
+            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+          })
+
+          it("should store group data", async () => {
+            const storedGroup = await groups.getGroup(groupPublicKey)
+
+            expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+            expect(storedGroup.activationTimestamp).to.be.equal(0)
+            expect(storedGroup.members).to.be.deep.equal(members)
+          })
+        })
+
+        context("with all members misbehaved", async () => {
+          beforeEach(async () => {
+            const allMisbehaved = ethers.utils.hexZeroPad(
+              ethers.utils.hexlify("0xFFFFFFFFFFFFFFFF"),
+              8
+            )
+
+            tx = await groups.addCandidateGroup(
+              groupPublicKey,
+              members,
+              allMisbehaved
+            )
+          })
+
+          it("should register group", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
+
+            expect(groupsRegistry).to.be.lengthOf(1)
+            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+          })
+
+          it("should store group data", async () => {
+            const storedGroup = await groups.getGroup(groupPublicKey)
+
+            expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+            expect(storedGroup.activationTimestamp).to.be.equal(0)
+            expect(storedGroup.members).to.be.deep.equal([])
+          })
+        })
+
+        context("with misbehaved members", async () => {
+          context("with first member misbehaved", async () => {
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved([1])
+
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
+              )
+            })
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = [...members]
+              expectedMembers[0] = expectedMembers.pop()
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context("with last member misbehaved", async () => {
+            const misbehavedIndices: number[] = [constants.groupSize]
+
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved(misbehavedIndices)
+
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
+              )
+            })
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = [...members]
+              expectedMembers.pop()
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context("with middle member misbehaved", async () => {
+            const misbehavedIndices: number[] = [24]
+
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved(misbehavedIndices)
+
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
+              )
+            })
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = [...members]
+              expectedMembers[24 - 1] = expectedMembers.pop()
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context("with multiple members misbehaved", async () => {
+            const misbehavedIndices: number[] = [1, 24, 35, constants.groupSize]
+
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved(misbehavedIndices)
+
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
+              )
+            })
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = filterMisbehaved(
+                members,
+                misbehavedIndices
+              )
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context(
+            "with misbehaved member index greater than group size",
+            async () => {
+              const misbehavedIndices: number[] = [constants.groupSize + 1]
+
+              it("should panic", async () => {
+                const misbehaved = generateMisbehaved(misbehavedIndices)
+
+                await expect(
+                  groups.addCandidateGroup(groupPublicKey, members, misbehaved)
+                ).to.be.revertedWith("value out of range")
+              })
+            }
           )
-        })
-
-        it("should emit CandidateGroupRegistered event", async () => {
-          await expect(tx)
-            .to.emit(groups, "CandidateGroupRegistered")
-            .withArgs(groupPublicKey)
-        })
-
-        it("should register group", async () => {
-          const groupsRegistry = await groups.getGroupsRegistry()
-
-          expect(groupsRegistry).to.be.lengthOf(1)
-          expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
-        })
-
-        it("should store group data", async () => {
-          const storedGroup = await groups.getGroup(groupPublicKey)
-
-          expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-          expect(storedGroup.activationTimestamp).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(members)
         })
       })
 
-      context("with misbehaved members", async () => {
-        context("with first member misbehaved", async () => {
-          const misbehavedIndices: number[] = [1]
+      context.only("with threshold size of members group", async () => {
+        beforeEach(async () => {
+          members = Array.from(signers.values()).slice(
+            0,
+            constants.signatureThreshold
+          )
+        })
 
+        context("with no misbehaved members", async () => {
           beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
+            tx = await groups.addCandidateGroup(
+              groupPublicKey,
+              members,
+              noMisbehaved
+            )
+          })
+
+          it("should emit CandidateGroupRegistered event", async () => {
+            await expect(tx)
+              .to.emit(groups, "CandidateGroupRegistered")
+              .withArgs(groupPublicKey)
+          })
+
+          it("should register group", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
+
+            expect(groupsRegistry).to.be.lengthOf(1)
+            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+          })
+
+          it("should store group data", async () => {
+            const storedGroup = await groups.getGroup(groupPublicKey)
+
+            expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+            expect(storedGroup.activationTimestamp).to.be.equal(0)
+            expect(storedGroup.members).to.be.deep.equal(members)
+          })
+        })
+
+        context("with all members misbehaved", async () => {
+          beforeEach(async () => {
+            const allMisbehaved = ethers.utils.hexZeroPad(
+              ethers.utils.hexlify("0xFFFFFFFFFFFFFFFF"),
+              8
+            )
 
             tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
-              misbehaved
+              allMisbehaved
             )
           })
 
-          it("should filter out misbehaved members", async () => {
-            const expectedMembers = [...members]
-            expectedMembers[0] = expectedMembers.pop()
+          it("should register group", async () => {
+            const groupsRegistry = await groups.getGroupsRegistry()
 
-            expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+            expect(groupsRegistry).to.be.lengthOf(1)
+            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+          })
+
+          it("should store group data", async () => {
+            const storedGroup = await groups.getGroup(groupPublicKey)
+
+            expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+            expect(storedGroup.activationTimestamp).to.be.equal(0)
+            expect(storedGroup.members).to.be.deep.equal([])
           })
         })
 
-        context("with last member misbehaved", async () => {
-          const misbehavedIndices: number[] = [constants.groupSize]
+        context("with misbehaved members", async () => {
+          context("with first member misbehaved", async () => {
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved([1])
 
-          beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
-            tx = await groups.addCandidateGroup(
-              groupPublicKey,
-              members,
-              misbehaved
-            )
-          })
-
-          it("should filter out misbehaved members", async () => {
-            const expectedMembers = [...members]
-            expectedMembers.pop()
-
-            expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
-          })
-        })
-
-        context("with middle member misbehaved", async () => {
-          const misbehavedIndices: number[] = [24]
-
-          beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
-            tx = await groups.addCandidateGroup(
-              groupPublicKey,
-              members,
-              misbehaved
-            )
-          })
-
-          it("should filter out misbehaved members", async () => {
-            const expectedMembers = [...members]
-            expectedMembers[24 - 1] = expectedMembers.pop()
-
-            expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
-          })
-        })
-
-        context("with multiple members misbehaved", async () => {
-          const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
-
-          beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
-            tx = await groups.addCandidateGroup(
-              groupPublicKey,
-              members,
-              misbehaved
-            )
-          })
-
-          it("should filter out misbehaved members", async () => {
-            const expectedMembers = filterMisbehaved(members, misbehavedIndices)
-
-            expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
-          })
-        })
-
-        context("with misbehaved member index 0", async () => {
-          const misbehavedIndices: number[] = [0]
-
-          it("should panic", async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
-            await expect(
-              groups.addCandidateGroup(groupPublicKey, members, misbehaved)
-            ).to.be.revertedWith(
-              "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
-            )
-          })
-        })
-
-        context(
-          "with misbehaved member index greater than group size",
-          async () => {
-            const misbehavedIndices: number[] = [constants.groupSize + 1]
-
-            it("should panic", async () => {
-              const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
-              await expect(
-                groups.addCandidateGroup(groupPublicKey, members, misbehaved)
-              ).to.be.revertedWith(
-                "reverted with panic code 0x32 (Array accessed at an out-of-bounds or negative index)"
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
               )
             })
-          }
-        )
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = [...members]
+              expectedMembers[0] = expectedMembers.pop()
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context("with last member misbehaved", async () => {
+            const misbehavedIndices: number[] = [constants.groupThreshold + 1]
+
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved(misbehavedIndices)
+
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
+              )
+            })
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = [...members]
+              expectedMembers.pop()
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context("with middle member misbehaved", async () => {
+            const misbehavedIndices: number[] = [24]
+
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved(misbehavedIndices)
+
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
+              )
+            })
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = [...members]
+              expectedMembers[24 - 1] = expectedMembers.pop()
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context("with multiple members misbehaved", async () => {
+            const misbehavedIndices: number[] = [1, 24, 35, constants.groupSize]
+
+            beforeEach(async () => {
+              const misbehaved = generateMisbehaved(misbehavedIndices)
+
+              tx = await groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehaved
+              )
+            })
+
+            it("should filter out misbehaved members", async () => {
+              const expectedMembers = filterMisbehaved(
+                members,
+                misbehavedIndices
+              )
+
+              expect(
+                (await groups.getGroup(groupPublicKey)).members
+              ).to.be.deep.equal(expectedMembers)
+            })
+          })
+
+          context(
+            "with misbehaved member index greater than group size",
+            async () => {
+              const misbehavedIndices: number[] = [constants.groupSize + 1]
+
+              it("should panic", async () => {
+                const misbehaved = generateMisbehaved(misbehavedIndices)
+
+                await expect(
+                  groups.addCandidateGroup(groupPublicKey, members, misbehaved)
+                ).to.be.revertedWith("value out of range")
+              })
+            }
+          )
+        })
       })
     })
 
@@ -935,4 +1134,15 @@ function filterMisbehaved(
   })
 
   return expectedMembers
+}
+
+function generateMisbehaved(misbehavedMembersIndices: number[]): string {
+  let num = BigNumber.from(0)
+
+  misbehavedMembersIndices.forEach((memberIndex) => {
+    const bit = memberIndex - 1
+    num = num.or(BigNumber.from(1).shl(bit)) // num | 1 << bit;
+  })
+
+  return ethers.utils.hexZeroPad(ethers.utils.hexlify(num), 8)
 }
