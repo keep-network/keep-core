@@ -22,6 +22,10 @@ contract GroupsStub {
         groups.addCandidateGroup(groupPubKey, members, misbehaved);
     }
 
+    function popCandidateGroup() external {
+        groups.popCandidateGroup();
+    }
+
     function activateCandidateGroup() external {
         groups.activateCandidateGroup();
     }
