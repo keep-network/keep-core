@@ -1,6 +1,5 @@
 import React, { useEffect, useCallback } from "react"
 import { connect } from "react-redux"
-import moment from "moment"
 import { FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST } from "../../actions"
 import { isEmptyArray } from "../../utils/array.utils"
 import Banner from "../../components/Banner"
@@ -58,9 +57,9 @@ const DelegationPageWrapperComponent = ({
           openModal(MODAL_TYPES.DelegationAlreadyExists, { operatorAddress })
           throw new Error("Delegation already exists")
         }
-        await openConfirmationModal(
-          confirmationModalOptions(initializationPeriod)
-        )
+        await openConfirmationModal(MODAL_TYPES.ConfirmDelegation, {
+          initializationPeriod,
+        })
         const grantData = values.grantData
           ? { ...values.grantData, grantId: values.grantData.id }
           : {}
@@ -141,16 +140,6 @@ const mapDispatchToProps = (dispatch) => {
       dispatch({ type: "staking/fetch_top_ups_request", payload: { address } }),
   }
 }
-
-const confirmationModalOptions = (initializationPeriod) => ({
-  modalOptions: { title: "Initiate Delegation" },
-  title: "You’re about to delegate stake.",
-  subtitle: `You’re delegating KEEP tokens. You will be able to cancel the delegation for up to ${moment()
-    .add(initializationPeriod, "seconds")
-    .fromNow(true)}. After that time, you can undelegate your stake.`,
-  btnText: "delegate",
-  confirmationText: "DELEGATE",
-})
 
 export const DelegationPageWrapper = connect(
   mapStateToProps,

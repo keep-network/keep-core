@@ -17,6 +17,10 @@ import {
   TopUpInitiatedConfirmation,
   TopUpInitialization,
   ConfirmTopUpInitialization,
+  ConfirmDelegation,
+  ConfirmRecovering,
+  ConfirmUndelegation,
+  ConfirmCancelDelegationFromGrant,
 } from "./staking"
 import { AddKeep, WithdrawKeep } from "./liquidity"
 
@@ -36,6 +40,11 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.TopUpInitiatedConfirmation]: TopUpInitiatedConfirmation,
   [MODAL_TYPES.KeepOnlyPoolAddKeep]: AddKeep,
   [MODAL_TYPES.KeepOnlyPoolWithdrawKeep]: WithdrawKeep,
+  [MODAL_TYPES.ConfirmDelegation]: ConfirmDelegation,
+  [MODAL_TYPES.ConfirmRecovering]: ConfirmRecovering,
+  [MODAL_TYPES.ConfirmCancelDelegationFromGrant]:
+    ConfirmCancelDelegationFromGrant,
+  [MODAL_TYPES.ConfirmUndelegation]: ConfirmUndelegation,
 }
 
 const modalRoot = document.getElementById("modal-root")

@@ -215,4 +215,8 @@ export const MODAL_TYPES = {
   ConfirmTopUpInitialization: "ConfirmTopUpInitialization",
   KeepOnlyPoolAddKeep: "KeepOnlyPoolAddKeep",
   KeepOnlyPoolWithdrawKeep: "KeepOnlyPoolWithdrawKeep",
+  ConfirmDelegation: "ConfirmDelegation",
+  ConfirmRecovering: "ConfirmRecovering",
+  ConfirmCancelDelegationFromGrant: "ConfirmCancelDelegationFromGrant",
+  ConfirmUndelegation: "ConfirmUndelegation",
 }

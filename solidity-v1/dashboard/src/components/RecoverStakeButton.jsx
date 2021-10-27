@@ -1,11 +1,10 @@
 import React, { useCallback } from "react"
 import { SubmitButton } from "./Button"
-import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { ContractsLoaded } from "../contracts"
 import { useModal } from "../hooks/useModal"
-import { withConfirmationModal } from "./ConfirmationModal"
 import { connect } from "react-redux"
 import { recoverStake } from "../actions/web3"
+import { MODAL_TYPES } from "../constants/constants"
 
 const RecoverStakeButton = ({ operatorAddress, recoverStake, ...props }) => {
   const { isFromGrant } = props
@@ -16,16 +15,9 @@ const RecoverStakeButton = ({ operatorAddress, recoverStake, ...props }) => {
       const { tokenStakingEscrow } = await ContractsLoaded
 
       if (isFromGrant) {
-        await openConfirmationModal(
-          {
-            modalOptions: { title: "Are you sure?" },
-            title: "You’re about to recover tokens.",
-            address: tokenStakingEscrow.options.address,
-            btnText: "recover",
-            confirmationText: "RECOVER",
-          },
-          withConfirmationModal(ConfirmRecoveringModal)
-        )
+        await openConfirmationModal(MODAL_TYPES.ConfirmRecovering, {
+          tokenStakingEscrowAddress: tokenStakingEscrow.options.address,
+        })
       }
 
       recoverStake(operatorAddress, awaitingPromise)
@@ -59,19 +51,3 @@ const mapDispatchToProps = {
 const ConnectedWithRedux = connect(null, mapDispatchToProps)(RecoverStakeButton)
 
 export default React.memo(ConnectedWithRedux)
-
-const ConfirmRecoveringModal = ({ address }) => {
-  return (
-    <>
-      <span>Recovering will deposit delegated tokens in the</span>
-      &nbsp;
-      <span>
-        <ViewAddressInBlockExplorer
-          address={address}
-          text="TokenStakingEscrow contract."
-        />
-      </span>
-      <p>You can withdraw them via Release tokens.</p>
-    </>
-  )
-}
