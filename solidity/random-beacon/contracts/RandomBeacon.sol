@@ -451,6 +451,10 @@ contract RandomBeacon is Ownable {
         return dkg.hasDkgTimedOut();
     }
 
+    function getGroupsRegistry() external view returns (bytes32[] memory) {
+        return groups.groupsRegistry;
+    }
+
     function getGroup(uint64 groupId)
         external
         view
