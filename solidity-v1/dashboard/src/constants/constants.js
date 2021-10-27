@@ -200,7 +200,6 @@ export const TBTC_TOKEN_VERSION = {
  * @enum {string}
  */
 export const MODAL_TYPES = {
-  Example: "Example",
   MobileUsers: "MobileUsers",
   BondingAddETH: "BondingAddEth",
   BondingWithdrawETH: "BondingWithdrawETH",
