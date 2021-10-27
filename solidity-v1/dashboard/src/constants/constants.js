@@ -220,4 +220,6 @@ export const MODAL_TYPES = {
   ConfirmCancelDelegationFromGrant: "ConfirmCancelDelegationFromGrant",
   ConfirmUndelegation: "ConfirmUndelegation",
   CopyStake: "CopyStake",
+  ConfirmTBTCMigration: "ConfirmTBTCMigration",
+  TBTCMigrationCompleted: "TBTCMigrationCompleted",
 }
