@@ -2,9 +2,10 @@ import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
-import { getDkgGroupSigners, signAndSubmitDkgResult } from "./utils/dkg"
+import { getDkgGroupSigners } from "./utils/dkg"
 import { to1e18 } from "./functions"
-import { constants, params, randomBeaconDeployment } from "./fixtures"
+import { constants, randomBeaconDeployment } from "./fixtures"
+import { createGroup } from "./utils/groups"
 import type { RandomBeacon, TestToken, RelayStub } from "../typechain"
 import type { DkgGroupSigners } from "./utils/dkg"
 
@@ -69,7 +70,7 @@ describe("RandomBeacon - Relay", () => {
   describe("requestRelayEntry", () => {
     context("when groups exist", () => {
       beforeEach(async () => {
-        await createGroup()
+        await createGroup(randomBeacon, signers)
       })
 
       context("when there is no other relay entry in progress", () => {
@@ -132,7 +133,7 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         ).to.be.revertedWith(
-          "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
+          "reverted with panic code 0x12 (Division or modulo division by zero)"
         )
       })
     })
@@ -140,7 +141,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("submitRelayEntry", () => {
     beforeEach(async () => {
-      await createGroup()
+      await createGroup(randomBeacon, signers)
     })
 
     context("when relay request is in progress", () => {
@@ -303,19 +304,6 @@ describe("RandomBeacon - Relay", () => {
     await testToken
       .connect(requester)
       .approve(randomBeacon.address, relayRequestFee)
-  }
-
-  async function createGroup() {
-    const { blockNumber: startBlock } = await randomBeacon.genesis()
-    await mineBlocks(constants.offchainDkgTime)
-    await signAndSubmitDkgResult(
-      randomBeacon,
-      blsData.groupPubKey,
-      signers,
-      startBlock
-    )
-    await mineBlocks(params.dkgResultChallengePeriodLength)
-    await randomBeacon.approveDkgResult()
   }
 
   async function assertMembersEligible(members: number[]) {

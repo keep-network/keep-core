@@ -1,10 +1,15 @@
-import { ethers, waffle } from "hardhat"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { ethers, waffle, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { randomBeaconDeployment } from "./fixtures"
+import { constants, randomBeaconDeployment } from "./fixtures"
+import { getDkgGroupSigners } from "./utils/dkg"
+import { createGroup } from "./utils/groups"
+import type { DkgGroupSigners } from "./utils/dkg"
+import type { DeployedContracts } from "./fixtures"
 import type {
+  RandomBeacon,
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
@@ -16,10 +21,18 @@ describe("RandomBeacon - Callback", () => {
   const relayRequestFee = to1e18(100)
   const relayEntryHardTimeout = 5760
   const relayEntrySubmissionEligibilityDelay = 10
+
+  // When determining the eligibility queue, the `(blsData.groupSignature % 64) + 1`
+  // equation points member`16` as the first eligible one. This is why we use that
+  // index as `submitRelayEntry` parameter. The `submitter` signer represents that
+  // member too.
+  const submitterMemberIndex = 16
+
   let callbackGasLimit = 50000
 
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
+  let signers: DkgGroupSigners
 
   let randomBeacon: RandomBeaconStub
   let testToken: TestToken
@@ -29,7 +42,7 @@ describe("RandomBeacon - Callback", () => {
   const fixture = async () => {
     const deployment = await randomBeaconDeployment()
 
-    return {
+    const contracts: DeployedContracts = {
       randomBeacon: deployment.randomBeacon,
       testToken: deployment.testToken,
       callbackContractStub: await (
@@ -39,11 +52,18 @@ describe("RandomBeacon - Callback", () => {
         await ethers.getContractFactory("CallbackContractStub")
       ).deploy(),
     }
+
+    await createGroup(contracts.randomBeacon as RandomBeacon, signers)
+
+    return contracts
   }
 
-  // prettier-ignore
   before(async () => {
-    [requester, submitter] = await ethers.getSigners()
+    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+
+    signers = await getDkgGroupSigners(constants.groupSize, 1)
+
+    submitter = await ethers.getSigner(signers.get(submitterMemberIndex))
   })
 
   beforeEach("load test fixture", async () => {

@@ -4,6 +4,7 @@ import { ethers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber, ContractTransaction } from "ethers"
+import { constants } from "../fixtures"
 import blsData from "../data/bls"
 import type { RandomBeacon } from "../../typechain"
 
@@ -21,7 +22,7 @@ export interface DkgResult {
 export const noMisbehaved = "0x"
 
 export async function getDkgGroupSigners(
-  groupSize: number,
+  groupSize: number = constants.groupSize,
   startAccountsOffset = 0
 ): Promise<DkgGroupSigners> {
   const signers = new Map<number, Address>()
