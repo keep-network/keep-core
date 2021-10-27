@@ -22,7 +22,9 @@ const dkgState = {
   CHALLENGE: 3,
 }
 
-describe("RandomBeacon", () => {
+// Test suite covering group creation in RandomBeacon contract.
+// It covers DKG and Groups libraries usage in the process of group creation.
+describe("RandomBeacon - Group Creation", () => {
   const dkgTimeout: number =
     constants.offchainDkgTime +
     constants.groupSize * params.dkgResultSubmissionEligibilityDelay
