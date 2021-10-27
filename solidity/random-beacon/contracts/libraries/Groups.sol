@@ -58,13 +58,15 @@ library Groups {
             "max number of registered groups reached"
         );
 
-        Group memory group;
+        // We use group from storage that is assumed to be a struct set to the
+        // default values. We need to remember to overwrite fields in case a
+        // candidate group was already registered before and popped.
+        Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
-        self.groupsData[groupPubKeyHash] = group;
 
         self.groupsRegistry.push(groupPubKeyHash);
 
-        setGroupMembers(self.groupsData[groupPubKeyHash], members, misbehaved);
+        setGroupMembers(group, members, misbehaved);
 
         emit CandidateGroupRegistered(groupPubKey);
     }
