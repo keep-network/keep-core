@@ -317,14 +317,16 @@ describe("Groups", () => {
         context("with the same group public key", async () => {
           const newGroupPublicKey = existingGroupPublicKey
 
-          it("should revert with 'group was already activated' error", async () => {
-            expect(
+          it("should revert with 'group with this public key was already activated' error", async () => {
+            await expect(
               groups.addCandidateGroup(
                 newGroupPublicKey,
                 newGroupMembers,
                 noMisbehaved
               )
-            ).to.be.revertedWith("group was already activated")
+            ).to.be.revertedWith(
+              "group with this public key was already activated"
+            )
           })
         })
 
@@ -530,9 +532,9 @@ describe("Groups", () => {
           await groups.activateCandidateGroup()
         })
 
-        it("should revert with 'group does not exist' error", async () => {
-          expect(groups.activateCandidateGroup()).to.be.revertedWith(
-            "group was already activated"
+        it("should revert with 'the latest registered group was already activated' error", async () => {
+          await expect(groups.activateCandidateGroup()).to.be.revertedWith(
+            "the latest registered group was already activated"
           )
         })
       })
@@ -745,8 +747,8 @@ describe("Groups", () => {
           await groups.activateCandidateGroup()
         })
 
-        it("should revert with 'group does not exist' error", async () => {
-          expect(groups.activateCandidateGroup()).to.be.revertedWith(
+        it("should revert with 'the latest registered group was already activated' error", async () => {
+          await expect(groups.activateCandidateGroup()).to.be.revertedWith(
             "the latest registered group was already activated"
           )
         })

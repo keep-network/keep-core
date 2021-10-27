@@ -50,7 +50,7 @@ library Groups {
 
         require(
             self.groupsData[groupPubKeyHash].activationTimestamp == 0,
-            "group was already activated"
+            "group with this public key was already activated"
         );
 
         require(
@@ -130,7 +130,10 @@ library Groups {
             self.groupsRegistry[self.groupsRegistry.length - 1]
         ];
 
-        require(group.activationTimestamp == 0, "group was already activated");
+        require(
+            group.activationTimestamp == 0,
+            "the latest registered group was already activated"
+        );
 
         // solhint-disable-next-line not-rely-on-time
         group.activationTimestamp = block.timestamp;
