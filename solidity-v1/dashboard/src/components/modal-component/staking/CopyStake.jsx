@@ -1,26 +1,26 @@
 import React from "react"
-import StepNav from "../components/StepNav"
+import StepNav from "../../StepNav"
 import {
   CopyStakeStepO,
   CopyStakeStep1,
   CopyStakeStep2,
   CopyStakeStep3,
   CopyStakeStep4,
-} from "../components/copy-stake-steps"
+} from "../../copy-stake-steps"
 import {
   INCREMENT_STEP,
   DECREMENT_STEP,
   SET_STRATEGY,
   SET_DELEGATION,
   RESET_COPY_STAKE_FLOW,
-} from "../actions"
+} from "../../../actions"
 import { connect } from "react-redux"
-import { useModal } from "../hooks/useModal"
-import * as Icons from "../components/Icons"
+import * as Icons from "../../Icons"
+import { Modal, ModalContent, ModalCloseButton } from "../Modal"
 
 const copyStakeSteps = ["balance", "upgrade", "review", "complete"]
 
-const CopyStakePage = ({
+const CopyStakeComponent = ({
   incrementStep,
   decrementStep,
   setStrategy,
@@ -32,10 +32,9 @@ const CopyStakePage = ({
   oldDelegations,
   oldDelegationsFetching,
   resetSteps,
+  onClose: closeModal,
   ...restProps
 }) => {
-  const { closeModal } = useModal()
-
   const onClose = () => {
     closeModal()
     resetSteps()
@@ -104,20 +103,28 @@ const CopyStakePage = ({
   }
 
   return (
-    <div className="copy-stake__layout">
-      <nav className="copy-stake__nav">
-        <div className="copy-stake__nav__indicator">
-          <StepNav steps={copyStakeSteps} activeStep={step} />
+    <Modal size="full" isOpen onClose={onClose}>
+      <ModalContent>
+        <ModalCloseButton>
+          <div className="flex row center">
+            <Icons.Cross width={15} height={15} />
+            <span className="h5 text-grey-60" style={{ marginLeft: "0.5rem" }}>
+              close
+            </span>
+          </div>
+        </ModalCloseButton>
+        <div className="copy-stake__layout">
+          <nav className="copy-stake__nav">
+            <div className="copy-stake__nav__indicator">
+              <StepNav steps={copyStakeSteps} activeStep={step} />
+            </div>
+          </nav>
+          <main className="copy-stake__content-wrapper">
+            <div className="copy-stake__content">{renderContent()}</div>
+          </main>
         </div>
-      </nav>
-      <main className="copy-stake__content-wrapper">
-        <div className="copy-stake__close" onClick={onClose}>
-          <Icons.Cross className="mr-1" width={16} height={16} />
-          <h5>close</h5>
-        </div>
-        <div className="copy-stake__content">{renderContent()}</div>
-      </main>
-    </div>
+      </ModalContent>
+    </Modal>
   )
 }
 
@@ -143,4 +150,7 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(CopyStakePage)
+export const CopyStake = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(CopyStakeComponent)

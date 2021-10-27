@@ -21,6 +21,7 @@ import {
   ConfirmRecovering,
   ConfirmUndelegation,
   ConfirmCancelDelegationFromGrant,
+  CopyStake,
 } from "./staking"
 import { AddKeep, WithdrawKeep } from "./liquidity"
 
@@ -45,6 +46,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ConfirmCancelDelegationFromGrant]:
     ConfirmCancelDelegationFromGrant,
   [MODAL_TYPES.ConfirmUndelegation]: ConfirmUndelegation,
+  [MODAL_TYPES.CopyStake]: CopyStake,
 }
 
 const modalRoot = document.getElementById("modal-root")

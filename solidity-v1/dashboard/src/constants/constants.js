@@ -219,4 +219,5 @@ export const MODAL_TYPES = {
   ConfirmRecovering: "ConfirmRecovering",
   ConfirmCancelDelegationFromGrant: "ConfirmCancelDelegationFromGrant",
   ConfirmUndelegation: "ConfirmUndelegation",
+  CopyStake: "CopyStake",
 }

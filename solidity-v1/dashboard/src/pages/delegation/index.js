@@ -5,7 +5,6 @@ import { isEmptyArray } from "../../utils/array.utils"
 import Banner from "../../components/Banner"
 import Button from "../../components/Button"
 import { useModal } from "../../hooks/useModal"
-import CopyStakePage from "../CopyStakePage"
 import PageWrapper from "../../components/PageWrapper"
 import * as Icons from "../../components/Icons"
 import { WalletTokensPage } from "./WalletTokensPage"
@@ -95,9 +94,7 @@ const DelegationPageWrapperComponent = ({
             </div>
             <Button
               className="btn btn-tertiary btn-sm ml-a"
-              onClick={() =>
-                openModal(<CopyStakePage />, { isFullScreen: true })
-              }
+              onClick={() => openModal(MODAL_TYPES.CopyStake)}
             >
               upgrade my stake
             </Button>
