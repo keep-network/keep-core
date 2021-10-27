@@ -8,10 +8,12 @@ import {
   getDkgGroupSigners,
   genesis,
   signAndSubmitDkgResult,
+  DkgResult,
 } from "./utils/dkg"
 import type { DkgGroupSigners } from "./utils/dkg"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
+const { keccak256 } = ethers.utils
 
 const dkgState = {
   IDLE: 0,
@@ -449,27 +451,50 @@ describe("RandomBeacon", () => {
             ).to.be.revertedWith("Too few signatures")
           })
 
-          it("should succeed with threshold signers", async () => {
-            const filteredSigners = new Map(
-              Array.from(signers).filter(
-                ([index]) => index <= constants.signatureThreshold
+          context("with threshold signers", async () => {
+            let tx: ContractTransaction
+            let dkgResult: DkgResult
+            let dkgResultHash: string
+
+            beforeEach(async () => {
+              const filteredSigners = new Map(
+                Array.from(signers).filter(
+                  ([index]) => index <= constants.signatureThreshold
+                )
               )
-            )
 
-            const {
-              transaction: tx,
-              dkgResult,
-              dkgResultHash,
-            } = await signAndSubmitDkgResult(
-              randomBeacon,
-              groupPublicKey,
-              filteredSigners,
-              startBlock
-            )
+              ;({
+                transaction: tx,
+                dkgResult,
+                dkgResultHash,
+              } = await signAndSubmitDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                filteredSigners,
+                startBlock
+              ))
+            })
 
-            await expect(tx)
-              .to.emit(randomBeacon, "DkgResultSubmitted")
-              .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
+            it("should succeed with threshold signers", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultSubmitted")
+                .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
+            })
+
+            it("should register a candidate group", async () => {
+              const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+              expect(groupsRegistry).to.be.lengthOf(1)
+              expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+
+              const storedGroup = await randomBeacon["getGroup(bytes)"](
+                groupPublicKey
+              )
+
+              expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+              expect(storedGroup.activationTimestamp).to.be.equal(0)
+              expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+            })
           })
 
           it("should succeed for the first submitter", async () => {
@@ -499,6 +524,41 @@ describe("RandomBeacon", () => {
                 2
               )
             ).to.be.revertedWith("Submitter not eligible")
+          })
+
+          it("should register a candidate group", async () => {
+            const { dkgResult } = await signAndSubmitDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              signers,
+              startBlock
+            )
+
+            const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+            expect(groupsRegistry).to.be.lengthOf(1)
+            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+
+            const storedGroup = await randomBeacon["getGroup(bytes)"](
+              groupPublicKey
+            )
+
+            expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+            expect(storedGroup.activationTimestamp).to.be.equal(0)
+            expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+          })
+
+          it("should emit CandidateGroupRegistered event", async () => {
+            const { transaction: tx } = await signAndSubmitDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              signers,
+              startBlock
+            )
+
+            await expect(tx)
+              .to.emit(randomBeacon, "CandidateGroupRegistered")
+              .withArgs(groupPublicKey)
           })
 
           context(
@@ -726,6 +786,41 @@ describe("RandomBeacon", () => {
                 .to.emit(randomBeacon, "DkgResultSubmitted")
                 .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
             })
+
+            it("should register a candidate group", async () => {
+              const { dkgResult } = await signAndSubmitDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                signers,
+                startBlock
+              )
+
+              const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+              expect(groupsRegistry).to.be.lengthOf(1)
+              expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+
+              const storedGroup = await randomBeacon["getGroup(bytes)"](
+                groupPublicKey
+              )
+
+              expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+              expect(storedGroup.activationTimestamp).to.be.equal(0)
+              expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+            })
+
+            it("should emit CandidateGroupRegistered event", async () => {
+              const { transaction: tx } = await signAndSubmitDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                signers,
+                startBlock
+              )
+
+              await expect(tx)
+                .to.emit(randomBeacon, "CandidateGroupRegistered")
+                .withArgs(groupPublicKey)
+            })
           })
         })
       })
@@ -847,6 +942,27 @@ describe("RandomBeacon", () => {
               it("should clean dkg data", async () => {
                 await assertDkgResultCleanData(randomBeacon)
               })
+
+              it("should activate a candidate group", async () => {
+                // FIXME: Unclear why `tx.timestamp` is undefined
+                const expectedActivationTimestamp = (
+                  await ethers.provider.getBlock(tx.blockHash)
+                ).timestamp
+
+                const storedGroup = await randomBeacon["getGroup(bytes)"](
+                  groupPublicKey
+                )
+
+                expect(storedGroup.activationTimestamp).to.be.equal(
+                  expectedActivationTimestamp
+                )
+              })
+
+              it("should emit GroupActivated event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "GroupActivated")
+                  .withArgs(0, groupPublicKey)
+              })
             })
           })
 
@@ -891,20 +1007,41 @@ describe("RandomBeacon", () => {
             })
 
             context("with challenge period passed", async () => {
+              let tx: ContractTransaction
+
               beforeEach(async () => {
                 await mineBlocksTo(
                   resultSubmissionBlock + params.dkgResultChallengePeriodLength
                 )
+
+                tx = await randomBeacon.connect(thirdParty).approveDkgResult()
               })
 
-              it("should succeed", async () => {
-                const tx = await randomBeacon
-                  .connect(thirdParty)
-                  .approveDkgResult()
-
+              it("should emit DkgResultApproved event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultApproved")
                   .withArgs(dkgResultHash, await thirdParty.getAddress())
+              })
+
+              it("should activate a candidate group", async () => {
+                // FIXME: Unclear why `tx.timestamp` is undefined
+                const expectedActivationTimestamp = (
+                  await ethers.provider.getBlock(tx.blockHash)
+                ).timestamp
+
+                const storedGroup = await randomBeacon["getGroup(bytes)"](
+                  groupPublicKey
+                )
+
+                expect(storedGroup.activationTimestamp).to.be.equal(
+                  expectedActivationTimestamp
+                )
+              })
+
+              it("should emit GroupActivated event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "GroupActivated")
+                  .withArgs(0, groupPublicKey)
               })
             })
           })
@@ -1065,18 +1202,29 @@ describe("RandomBeacon", () => {
           })
 
           context("at the beginning of challenge period", async () => {
-            it("should be callable by a third party", async () => {
-              await randomBeacon.connect(thirdParty).challengeDkgResult()
-            })
+            context("called by a third party", async () => {
+              let tx: ContractTransaction
+              beforeEach(async () => {
+                tx = await randomBeacon.connect(thirdParty).challengeDkgResult()
+              })
 
-            it("should emit DkgResultChallenged event", async () => {
-              const tx = await randomBeacon
-                .connect(thirdParty)
-                .challengeDkgResult()
+              it("should emit DkgResultChallenged event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultChallenged")
+                  .withArgs(dkgResultHash, await thirdParty.getAddress())
+              })
 
-              await expect(tx)
-                .to.emit(randomBeacon, "DkgResultChallenged")
-                .withArgs(dkgResultHash, await thirdParty.getAddress())
+              it("should remove a candidate group", async () => {
+                const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+                expect(groupsRegistry).to.be.lengthOf(0)
+              })
+
+              it("should emit CandidateGroupRemoved event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "CandidateGroupRemoved")
+                  .withArgs(groupPublicKey)
+              })
             })
           })
 
@@ -1089,18 +1237,29 @@ describe("RandomBeacon", () => {
               )
             })
 
-            it("should be callable by a third party", async () => {
-              await randomBeacon.connect(thirdParty).challengeDkgResult()
-            })
+            context("called by a third party", async () => {
+              let tx: ContractTransaction
+              beforeEach(async () => {
+                tx = await randomBeacon.connect(thirdParty).challengeDkgResult()
+              })
 
-            it("should emit DkgResultChallenged event", async () => {
-              const tx = await randomBeacon
-                .connect(thirdParty)
-                .challengeDkgResult()
+              it("should emit DkgResultChallenged event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultChallenged")
+                  .withArgs(dkgResultHash, await thirdParty.getAddress())
+              })
 
-              await expect(tx)
-                .to.emit(randomBeacon, "DkgResultChallenged")
-                .withArgs(dkgResultHash, await thirdParty.getAddress())
+              it("should remove a candidate group", async () => {
+                const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+                expect(groupsRegistry).to.be.lengthOf(0)
+              })
+
+              it("should emit CandidateGroupRemoved event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "CandidateGroupRemoved")
+                  .withArgs(groupPublicKey)
+              })
             })
           })
 
