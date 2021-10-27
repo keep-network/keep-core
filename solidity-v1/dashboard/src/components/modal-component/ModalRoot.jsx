@@ -19,6 +19,7 @@ import {
   TopUpInitialization,
   ConfirmTopUpInitialization,
 } from "./staking"
+import { AddKeep, WithdrawKeep } from "./liquidity"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.Example]: ExampleModal,
@@ -35,6 +36,8 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.TopUpInitialization]: TopUpInitialization,
   [MODAL_TYPES.ConfirmTopUpInitialization]: ConfirmTopUpInitialization,
   [MODAL_TYPES.TopUpInitiatedConfirmation]: TopUpInitiatedConfirmation,
+  [MODAL_TYPES.KeepOnlyPoolAddKeep]: AddKeep,
+  [MODAL_TYPES.KeepOnlyPoolWithdrawKeep]: WithdrawKeep,
 }
 
 const modalRoot = document.getElementById("modal-root")

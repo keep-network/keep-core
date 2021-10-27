@@ -214,4 +214,6 @@ export const MODAL_TYPES = {
   TopUpInitiatedConfirmation: "TopUpInitiatedConfirmation",
   TopUpInitialization: "TopUpInitialization",
   ConfirmTopUpInitialization: "ConfirmTopUpInitialization",
+  KeepOnlyPoolAddKeep: "KeepOnlyPoolAddKeep",
+  KeepOnlyPoolWithdrawKeep: "KeepOnlyPoolWithdrawKeep",
 }
