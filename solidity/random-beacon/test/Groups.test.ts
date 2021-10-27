@@ -40,7 +40,7 @@ describe("Groups", () => {
         })
 
         it("should emit CandidateGroupRegistered event", async () => {
-          expect(tx)
+          await expect(tx)
             .to.emit(groups, "CandidateGroupRegistered")
             .withArgs(groupPublicKey)
         })
@@ -222,7 +222,7 @@ describe("Groups", () => {
           })
 
           it("should emit CandidateGroupRegistered event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "CandidateGroupRegistered")
               .withArgs(newGroupPublicKey)
           })
@@ -267,7 +267,7 @@ describe("Groups", () => {
           })
 
           it("should emit CandidateGroupRegistered event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "CandidateGroupRegistered")
               .withArgs(newGroupPublicKey)
           })
@@ -342,7 +342,7 @@ describe("Groups", () => {
           })
 
           it("should emit CandidateGroupRegistered event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "CandidateGroupRegistered")
               .withArgs(newGroupPublicKey)
           })
@@ -416,7 +416,7 @@ describe("Groups", () => {
         })
 
         it("should emit CandidateGroupRegistered event", async () => {
-          expect(tx)
+          await expect(tx)
             .to.emit(groups, "CandidateGroupRegistered")
             .withArgs(newGroupPublicKey)
         })
@@ -451,7 +451,7 @@ describe("Groups", () => {
         })
 
         it("should emit CandidateGroupRegistered event", async () => {
-          expect(tx)
+          await expect(tx)
             .to.emit(groups, "CandidateGroupRegistered")
             .withArgs(newGroupPublicKey)
         })
@@ -504,7 +504,7 @@ describe("Groups", () => {
         })
 
         it("should emit GroupActivated event", async () => {
-          expect(tx)
+          await expect(tx)
             .to.emit(groups, "GroupActivated")
             .withArgs(0, groupPublicKey)
         })
@@ -570,7 +570,7 @@ describe("Groups", () => {
           })
 
           it("should emit GroupActivated event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "GroupActivated")
               .withArgs(1, groupPublicKey2)
           })
@@ -623,7 +623,7 @@ describe("Groups", () => {
           })
 
           it("should emit GroupActivated event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "GroupActivated")
               .withArgs(1, groupPublicKey2)
           })
@@ -674,7 +674,7 @@ describe("Groups", () => {
           })
 
           it("should emit GroupActivated event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "GroupActivated")
               .withArgs(1, groupPublicKey2)
           })
@@ -720,7 +720,7 @@ describe("Groups", () => {
         })
 
         it("should emit CandidateGroupRemoved event", async () => {
-          expect(tx)
+          await expect(tx)
             .to.emit(groups, "CandidateGroupRemoved")
             .withArgs(groupPublicKey)
         })
@@ -785,7 +785,7 @@ describe("Groups", () => {
           })
 
           it("should emit CandidateGroupRemoved event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "CandidateGroupRemoved")
               .withArgs(groupPublicKey2)
           })
@@ -838,7 +838,7 @@ describe("Groups", () => {
           })
 
           it("should emit CandidateGroupRemoved event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "CandidateGroupRemoved")
               .withArgs(groupPublicKey2)
           })
@@ -891,7 +891,7 @@ describe("Groups", () => {
           })
 
           it("should emit CandidateGroupRemoved event", async () => {
-            expect(tx)
+            await expect(tx)
               .to.emit(groups, "CandidateGroupRemoved")
               .withArgs(groupPublicKey2)
           })
@@ -920,8 +920,6 @@ describe("Groups", () => {
       })
     })
   })
-
-  
 })
 
 function filterMisbehaved(
