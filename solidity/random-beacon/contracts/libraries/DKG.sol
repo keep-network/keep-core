@@ -4,6 +4,7 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./BytesLib.sol";
+import {ISortitionPool} from "../RandomBeacon.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -15,6 +16,8 @@ library DKG {
         // Time in blocks after which the next group member is eligible
         // to submit DKG result.
         uint256 resultSubmissionEligibilityDelay;
+        // Sortition Pool contract reference.
+        ISortitionPool sortitionPool;
     }
 
     struct Data {
@@ -52,9 +55,8 @@ library DKG {
         bytes signatures;
         // Indices of members corresponding to each signature. Indices have to be unique.
         uint256[] signingMemberIndices;
-        // Addresses of candidate group members as outputted by the group selection protocol.
-        // TODO: Modify according to https://github.com/keep-network/keep-core/pull/2666#discussion_r732629138
-        address[] members;
+        // IDs of candidate group members as outputted by the group selection protocol.
+        uint32[] members;
     }
 
     /// @notice States for phases of group creation. The states doesn't include
@@ -227,14 +229,18 @@ library DKG {
         uint8[] calldata misbehaved,
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
-        address[] memory members
+        uint32[] calldata members
     ) internal view {
         // TODO: Verify if submitter is valid staker and signatures come from valid
         // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
 
         require(submitterMemberIndex > 0, "Invalid submitter index");
+
+        ISortitionPool sortitionPool = self.parameters.sortitionPool;
+
         require(
-            members[submitterMemberIndex - 1] == msg.sender,
+            sortitionPool.getIDOperator(members[submitterMemberIndex - 1]) ==
+                msg.sender,
             "Unexpected submitter index"
         );
 
@@ -290,7 +296,8 @@ library DKG {
                 .toEthSignedMessageHash()
                 .recover(current);
             require(
-                members[memberIndex - 1] == recoveredAddress,
+                sortitionPool.getIDOperator(members[memberIndex - 1]) ==
+                    recoveredAddress,
                 "Invalid signature"
             );
         }
@@ -339,7 +346,7 @@ library DKG {
             "challenge period has already passed"
         );
 
-        // TODO: Verify members with sortition pool
+        // TODO: Verify hash of members with sortition pool
 
         // Adjust DKG result submission block start, so submission eligibility
         // starts from the beginning.

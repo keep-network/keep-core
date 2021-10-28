@@ -32,6 +32,8 @@ interface ISortitionPool {
     function isOperatorInPool(address operator) external view returns (bool);
 
     function isOperatorEligible(address operator) external view returns (bool);
+
+    function getIDOperator(uint32 id) external view returns (address);
 }
 
 /// @title Keep Random Beacon
@@ -186,6 +188,7 @@ contract RandomBeacon is Ownable {
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
+        dkg.parameters.sortitionPool = _sortitionPool;
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
         dkg.setResultSubmissionEligibilityDelay(10);
         dkgResultSubmissionReward = 0;
