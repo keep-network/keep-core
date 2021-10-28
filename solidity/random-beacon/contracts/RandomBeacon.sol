@@ -28,9 +28,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 ///         Sortition Pool contract, which is available at
 ///         https://github.com/keep-network/sortition-pools/blob/main/contracts/SortitionPool.sol
 interface ISortitionPool {
-    function joinPool(address operator) external;
+    function insertOperator(address operator) external;
 
-    function leavePool(address operator) external;
+    function removeOperator(address operator) external;
+
+    function updateOperatorStatus(address operator) external;
 
     function isOperatorInPool(address operator) external view returns (bool);
 
@@ -368,11 +370,28 @@ contract RandomBeacon is Ownable {
     /// @notice Registers caller in the sortition pool.
     function registerMemberCandidate() external {
         address operator = msg.sender;
+
         require(
             !sortitionPool.isOperatorInPool(operator),
             "Operator is already registered"
         );
-        sortitionPool.joinPool(operator);
+
+        uint256 punishmentDeadline = punishedOperators[operator];
+
+        require(
+            /* solhint-disable-next-line not-rely-on-time */
+            punishmentDeadline == 0 || block.timestamp > punishmentDeadline,
+            "Operator has an active punishment"
+        );
+
+        delete punishedOperators[operator];
+
+        gasStation.depositGas(operator);
+        sortitionPool.insertOperator(operator);
+    }
+
+    function updateMemberStatus() external {
+        sortitionPool.updateOperatorStatus(msg.sender);
     }
 
     /// @notice Checks whether the given operator is eligible to join the
@@ -559,22 +578,6 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    function joinSortitionPool() external {
-        address operator = msg.sender;
-        uint256 punishmentDeadline = punishedOperators[operator];
-
-        require(
-            /* solhint-disable-next-line not-rely-on-time */
-            punishmentDeadline == 0 || block.timestamp > punishmentDeadline,
-            "Operator has an active punishment"
-        );
-
-        delete punishedOperators[operator];
-
-        gasStation.depositGas(operator);
-        sortitionPool.joinPool(operator);
-    }
-
     function punishOperators(
         address[] memory operators,
         uint256 punishmentDuration
@@ -591,7 +594,7 @@ contract RandomBeacon is Ownable {
 
             gasStation.releaseGas(operator);
             // TODO: Is it possible to kick out operator when pool is locked?
-            sortitionPool.leavePool(operator);
+            sortitionPool.removeOperator(operator);
         }
     }
 

@@ -11,13 +11,17 @@ contract SortitionPoolStub is ISortitionPool {
 
     event OperatorsRemoved(address[] operators);
 
-    function joinPool(address operator) external override {
+    function insertOperator(address operator) external override {
         operators[operator] = true;
     }
 
-    function leavePool(address operator) external override {
+    function removeOperator(address operator) external override {
         delete operators[operator];
         delete eligibleOperators[operator];
+    }
+
+    function updateOperatorStatus(address operator) external override {
+        // no-op
     }
 
     function isOperatorInPool(address operator)
