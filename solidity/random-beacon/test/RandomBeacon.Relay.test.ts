@@ -184,14 +184,12 @@ describe("RandomBeacon - Relay", () => {
                   let tx: ContractTransaction
 
                   beforeEach(async () => {
-                    // When determining the eligibility queue, the
-                    // `(groupSignature % 64) + 1` equation points member `16`
-                    // as the first eligible one. This is why we use that
-                    // index as `submitRelayEntry` parameter. The `submitter`
-                    // signer represents that member too.
                     tx = await randomBeacon
                       .connect(member16)
-                      .submitRelayEntry(16, blsData.groupSignature)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex,
+                        blsData.groupSignature
+                      )
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
@@ -225,16 +223,16 @@ describe("RandomBeacon - Relay", () => {
                   let tx: ContractTransaction
 
                   beforeEach(async () => {
-                    // When determining the eligibility queue, the
-                    // `(groupSignature % 64) + 1` equation points member `16`
-                    // as the first eligible one. However, we wait 20 blocks
-                    // to make two more members eligible. The member `18`
-                    // submits the result.
+                    // We wait 20 blocks to make two more members eligible.
+                    // The member `18` submits the result.
                     await mineBlocks(20)
 
                     tx = await randomBeacon
                       .connect(member18)
-                      .submitRelayEntry(18, blsData.groupSignature)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex + 2,
+                        blsData.groupSignature
+                      )
                   })
 
                   it("should remove members who did not submit from the sortition pool", async () => {
@@ -278,14 +276,12 @@ describe("RandomBeacon - Relay", () => {
                     // due to the Hardhat auto-mine feature.
                     await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
 
-                    // When determining the eligibility queue, the
-                    // `(groupSignature % 64) + 1` equation points member `16`
-                    // as the first eligible one. This is why we use that
-                    // index as `submitRelayEntry` parameter. The `submitter`
-                    // signer represents that member too.
                     tx = await randomBeacon
                       .connect(member16)
-                      .submitRelayEntry(16, blsData.groupSignature)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex,
+                        blsData.groupSignature
+                      )
 
                     receipt = await tx.wait()
                   })
@@ -505,17 +501,21 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getPunishedMembers", () => {
-    // Group size is set to 8 in RelayStub contract.
-    const members = [
-      "0x69240c4C599e8aAE5edbe2e7284413de54C33084", // member index 1
-      "0x2c93C63bA855a205ec7b12E8b238027E268f4B21", // member index 2
-      "0xFa535f1b538c0C9b41522331Be3589a8B16b5F13", // member index 3
-      "0xd616385c394A8CbdDD2bf6bd24a0b6Ea1D0EFf6f", // member index 4
-      "0x44073d66381A124921e7cb88f936D8a03d2A8748", // member index 5
-      "0xD02E5b474Afcf9a11bCE04B53057C16DbF382f8f", // member index 6
-      "0x3F9164812469A0Ee635D63E79038302d84fe4821", // member index 7
-      "0xcC89758DE3153E8Dce621574FF0C22a7e4290e64", // member index 8
-    ]
+    let members: Address[]
+
+    beforeEach(async () => {
+      // Group size is set to 8 in RelayStub contract.
+      members = [
+        signersAddresses[0], // member index 1
+        signersAddresses[1], // member index 2
+        signersAddresses[2], // member index 3
+        signersAddresses[3], // member index 4
+        signersAddresses[4], // member index 5
+        signersAddresses[5], // member index 6
+        signersAddresses[6], // member index 7
+        signersAddresses[7], // member index 8
+      ]
+    })
 
     context("when submitter index is the first eligible index", () => {
       it("should return empty punished members list", async () => {
