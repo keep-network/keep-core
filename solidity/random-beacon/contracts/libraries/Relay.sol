@@ -202,7 +202,6 @@ library Relay {
 
         // Get the list of members addresses which should be punished due to
         // not submitting the entry on their turn.
-        /* solhint-disable-next-line no-unused-vars */
         address[] memory punishedMembers = getPunishedMembers(
             self,
             submitterIndex,
