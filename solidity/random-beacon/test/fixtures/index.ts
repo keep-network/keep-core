@@ -35,7 +35,7 @@ export const params = {
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
 
-interface DeployedContracts {
+export interface DeployedContracts {
   [key: string]: Contract
 }
 

@@ -1,30 +1,45 @@
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
-import group from "./data/group"
+import { getDkgGroupSigners } from "./utils/dkg"
 import { to1e18 } from "./functions"
-import { randomBeaconDeployment } from "./fixtures"
+import { constants, randomBeaconDeployment } from "./fixtures"
+import { createGroup } from "./utils/groups"
 import type {
   RandomBeacon,
-  SortitionPoolStub,
   TestToken,
-  StakingStub,
   RelayStub,
+  SortitionPoolStub,
+  StakingStub,
 } from "../typechain"
+import type { DkgGroupSigners } from "./utils/dkg"
 
 const { time } = helpers
 const { mineBlocks } = time
+const ZERO_ADDRESS = ethers.constants.AddressZero
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
+
+  // When determining the eligibility queue, the
+  // `(blsData.groupSignature % 64) + 1` equation points member`16` as the first
+  // eligible one. This is why we use that index as `submitRelayEntry` parameter.
+  // The `submitter` signer represents that member too.
+  const firstEligibleMemberIndex = 16
+  // In the invalid entry scenario `(blsData.nextGroupSignature % 64) + 1`
+  // gives 3 so that  member needs to submit the wrong relay entry.
+  const invalidEntryFirstEligibleMemberIndex = 3
 
   let requester: SignerWithAddress
   let member3: SignerWithAddress
   let member16: SignerWithAddress
   let member17: SignerWithAddress
   let member18: SignerWithAddress
+  let signers: DkgGroupSigners
+  const signersAddresses: Address[] = []
 
   let randomBeacon: RandomBeacon
   let sortitionPool: SortitionPoolStub
@@ -44,9 +59,24 @@ describe("RandomBeacon - Relay", () => {
     }
   }
 
-  // prettier-ignore
   before(async () => {
-    [requester, member3, member16, member17, member18] = await ethers.getSigners()
+    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+
+    signers = await getDkgGroupSigners(constants.groupSize, 1)
+
+    const signersAddressesIterator = signers.values()
+    let signerAddress = signersAddressesIterator.next()
+    while (!signerAddress.done) {
+      signersAddresses.push(signerAddress.value)
+      signerAddress = signersAddressesIterator.next()
+    }
+
+    member3 = await ethers.getSigner(
+      signers.get(invalidEntryFirstEligibleMemberIndex)
+    )
+    member16 = await ethers.getSigner(signers.get(firstEligibleMemberIndex))
+    member17 = await ethers.getSigner(signers.get(firstEligibleMemberIndex + 1))
+    member18 = await ethers.getSigner(signers.get(firstEligibleMemberIndex + 2))
   })
 
   beforeEach("load test fixture", async () => {
@@ -64,8 +94,7 @@ describe("RandomBeacon - Relay", () => {
   describe("requestRelayEntry", () => {
     context("when groups exist", () => {
       beforeEach(async () => {
-        // TODO: Currently `selectGroup` returns a hardcoded group. Once
-        //       proper implementation is ready, add the group manually here.
+        await createGroup(randomBeacon, signers)
       })
 
       context("when there is no other relay entry in progress", () => {
@@ -78,7 +107,9 @@ describe("RandomBeacon - Relay", () => {
               randomBeacon.address
             )
             await approveTestToken()
-            tx = await randomBeacon.connect(requester).requestRelayEntry()
+            tx = await randomBeacon
+              .connect(requester)
+              .requestRelayEntry(ZERO_ADDRESS)
           })
 
           it("should deposit relay request fee to the maintenance pool", async () => {
@@ -93,14 +124,14 @@ describe("RandomBeacon - Relay", () => {
           it("should emit RelayEntryRequested event", async () => {
             await expect(tx)
               .to.emit(randomBeacon, "RelayEntryRequested")
-              .withArgs(1, 1, blsData.previousEntry)
+              .withArgs(1, 0, blsData.previousEntry)
           })
         })
 
         context("when the requester doesn't pay the relay request fee", () => {
           it("should revert", async () => {
             await expect(
-              randomBeacon.connect(requester).requestRelayEntry()
+              randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
             ).to.be.revertedWith("Transfer amount exceeds allowance")
           })
         })
@@ -109,12 +140,12 @@ describe("RandomBeacon - Relay", () => {
       context("when there is an other relay entry in progress", () => {
         beforeEach(async () => {
           await approveTestToken()
-          await randomBeacon.connect(requester).requestRelayEntry()
+          await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         })
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.connect(requester).requestRelayEntry()
+            randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
           ).to.be.revertedWith("Another relay request in progress")
         })
       })
@@ -123,15 +154,24 @@ describe("RandomBeacon - Relay", () => {
     context("when no groups exist", () => {
       it("should revert", async () => {
         // TODO: Implement once proper `selectGroup` is ready.
+        await expect(
+          randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
+        ).to.be.revertedWith(
+          "reverted with panic code 0x12 (Division or modulo division by zero)"
+        )
       })
     })
   })
 
   describe("submitRelayEntry", () => {
+    beforeEach(async () => {
+      await createGroup(randomBeacon, signers)
+    })
+
     context("when relay request is in progress", () => {
       beforeEach(async () => {
         await approveTestToken()
-        await randomBeacon.connect(requester).requestRelayEntry()
+        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
       context("when relay entry is not timed out", () => {
@@ -144,14 +184,12 @@ describe("RandomBeacon - Relay", () => {
                   let tx: ContractTransaction
 
                   beforeEach(async () => {
-                    // When determining the eligibility queue, the
-                    // `(groupSignature % 64) + 1` equation points member `16`
-                    // as the first eligible one. This is why we use that
-                    // index as `submitRelayEntry` parameter. The `submitter`
-                    // signer represents that member too.
                     tx = await randomBeacon
                       .connect(member16)
-                      .submitRelayEntry(16, blsData.groupSignature)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex,
+                        blsData.groupSignature
+                      )
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
@@ -185,16 +223,16 @@ describe("RandomBeacon - Relay", () => {
                   let tx: ContractTransaction
 
                   beforeEach(async () => {
-                    // When determining the eligibility queue, the
-                    // `(groupSignature % 64) + 1` equation points member `16`
-                    // as the first eligible one. However, we wait 20 blocks
-                    // to make two more members eligible. The member `18`
-                    // submits the result.
+                    // We wait 20 blocks to make two more members eligible.
+                    // The member `18` submits the result.
                     await mineBlocks(20)
 
                     tx = await randomBeacon
                       .connect(member18)
-                      .submitRelayEntry(18, blsData.groupSignature)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex + 2,
+                        blsData.groupSignature
+                      )
                   })
 
                   it("should remove members who did not submit from the sortition pool", async () => {
@@ -238,14 +276,12 @@ describe("RandomBeacon - Relay", () => {
                     // due to the Hardhat auto-mine feature.
                     await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
 
-                    // When determining the eligibility queue, the
-                    // `(groupSignature % 64) + 1` equation points member `16`
-                    // as the first eligible one. This is why we use that
-                    // index as `submitRelayEntry` parameter. The `submitter`
-                    // signer represents that member too.
                     tx = await randomBeacon
                       .connect(member16)
-                      .submitRelayEntry(16, blsData.groupSignature)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex,
+                        blsData.groupSignature
+                      )
 
                     receipt = await tx.wait()
                   })
@@ -263,7 +299,7 @@ describe("RandomBeacon - Relay", () => {
                     // `750e18` to be slashed.
                     await expect(tx)
                       .to.emit(staking, "Slashed")
-                      .withArgs(to1e18(750), group.members)
+                      .withArgs(to1e18(750), signersAddresses)
                   })
 
                   it("should emit RelayEntrySubmitted event", async () => {
@@ -283,12 +319,13 @@ describe("RandomBeacon - Relay", () => {
 
             context("when entry is not valid", () => {
               it("should revert", async () => {
-                // In that case `(nextGroupSignature % 64) + 1` gives 3 so that
-                // member needs to submit the wrong relay entry.
                 await expect(
                   randomBeacon
                     .connect(member3)
-                    .submitRelayEntry(3, blsData.nextGroupSignature)
+                    .submitRelayEntry(
+                      invalidEntryFirstEligibleMemberIndex,
+                      blsData.nextGroupSignature
+                    )
                 ).to.be.revertedWith("Invalid entry")
               })
             })
@@ -299,7 +336,10 @@ describe("RandomBeacon - Relay", () => {
               await expect(
                 randomBeacon
                   .connect(member17)
-                  .submitRelayEntry(17, blsData.groupSignature)
+                  .submitRelayEntry(
+                    firstEligibleMemberIndex + 1,
+                    blsData.groupSignature
+                  )
               ).to.be.revertedWith("Submitter is not eligible")
             })
           })
@@ -343,7 +383,10 @@ describe("RandomBeacon - Relay", () => {
           await expect(
             randomBeacon
               .connect(member16)
-              .submitRelayEntry(16, blsData.nextGroupSignature)
+              .submitRelayEntry(
+                firstEligibleMemberIndex,
+                blsData.nextGroupSignature
+              )
           ).to.be.revertedWith("Relay request timed out")
         })
       })
@@ -354,7 +397,10 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon
             .connect(member16)
-            .submitRelayEntry(16, blsData.nextGroupSignature)
+            .submitRelayEntry(
+              firstEligibleMemberIndex,
+              blsData.nextGroupSignature
+            )
         ).to.be.revertedWith("No relay request in progress")
       })
     })
@@ -362,8 +408,10 @@ describe("RandomBeacon - Relay", () => {
 
   describe("reportRelayEntryTimeout", () => {
     beforeEach(async () => {
+      await createGroup(randomBeacon, signers)
+
       await approveTestToken()
-      await randomBeacon.connect(requester).requestRelayEntry()
+      await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
     context("when relay entry timed out", () => {
@@ -380,7 +428,7 @@ describe("RandomBeacon - Relay", () => {
       it("should slash entire stakes of all group members", async () => {
         await expect(tx)
           .to.emit(staking, "Slashed")
-          .withArgs(to1e18(1000), group.members)
+          .withArgs(to1e18(1000), signersAddresses)
       })
 
       it("should emit RelayEntryTimedOut event", async () => {
@@ -394,7 +442,7 @@ describe("RandomBeacon - Relay", () => {
       it("should request a new relay entry", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "RelayEntryRequested")
-          .withArgs(2, 1, blsData.previousEntry)
+          .withArgs(2, 0, blsData.previousEntry)
       })
     })
 
@@ -453,17 +501,21 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getPunishedMembers", () => {
-    // Group size is set to 8 in RelayStub contract.
-    const members = [
-      "0x69240c4C599e8aAE5edbe2e7284413de54C33084", // member index 1
-      "0x2c93C63bA855a205ec7b12E8b238027E268f4B21", // member index 2
-      "0xFa535f1b538c0C9b41522331Be3589a8B16b5F13", // member index 3
-      "0xd616385c394A8CbdDD2bf6bd24a0b6Ea1D0EFf6f", // member index 4
-      "0x44073d66381A124921e7cb88f936D8a03d2A8748", // member index 5
-      "0xD02E5b474Afcf9a11bCE04B53057C16DbF382f8f", // member index 6
-      "0x3F9164812469A0Ee635D63E79038302d84fe4821", // member index 7
-      "0xcC89758DE3153E8Dce621574FF0C22a7e4290e64", // member index 8
-    ]
+    let members: Address[]
+
+    beforeEach(async () => {
+      // Group size is set to 8 in RelayStub contract.
+      members = [
+        signersAddresses[0], // member index 1
+        signersAddresses[1], // member index 2
+        signersAddresses[2], // member index 3
+        signersAddresses[3], // member index 4
+        signersAddresses[4], // member index 5
+        signersAddresses[5], // member index 6
+        signersAddresses[6], // member index 7
+        signersAddresses[7], // member index 8
+      ]
+    })
 
     context("when submitter index is the first eligible index", () => {
       it("should return empty punished members list", async () => {
