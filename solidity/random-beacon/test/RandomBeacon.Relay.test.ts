@@ -2,16 +2,40 @@ import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
-import { getDkgGroupSigners } from "./utils/dkg"
 import { to1e18 } from "./functions"
 import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
-import type { RandomBeacon, TestToken, RelayStub } from "../typechain"
-import type { DkgGroupSigners } from "./utils/dkg"
+import type {
+  RandomBeacon,
+  TestToken,
+  RelayStub,
+  SortitionPoolStub,
+} from "../typechain"
+import { registerOperators, Operator } from "./utils/sortitionpool"
 
 const { time } = helpers
 const { mineBlocks } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
+
+const fixture = async () => {
+  const deployment = await randomBeaconDeployment()
+
+  // Accounts offset provided to slice getUnnamedAccounts have to include number
+  // of unnamed accounts that were already used.
+  const signers = await registerOperators(
+    deployment.sortitionPoolStub as SortitionPoolStub,
+    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+  )
+
+  return {
+    randomBeacon: deployment.randomBeacon as RandomBeacon,
+    testToken: deployment.testToken as TestToken,
+    relayStub: (await (
+      await ethers.getContractFactory("RelayStub")
+    ).deploy()) as RelayStub,
+    signers,
+  }
+}
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
@@ -29,40 +53,28 @@ describe("RandomBeacon - Relay", () => {
   let submitter: SignerWithAddress
   let other: SignerWithAddress
   let invalidEntrySubmitter: SignerWithAddress
-  let signers: DkgGroupSigners
+  let signers: Operator[]
 
   let randomBeacon: RandomBeacon
   let testToken: TestToken
   let relayStub: RelayStub
 
-  const fixture = async () => {
-    const deployment = await randomBeaconDeployment()
-
-    return {
-      randomBeacon: deployment.randomBeacon,
-      testToken: deployment.testToken,
-      relayStub: await (await ethers.getContractFactory("RelayStub")).deploy(),
-    }
-  }
-
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-
-    signers = await getDkgGroupSigners(constants.groupSize, 1)
-
-    submitter = await ethers.getSigner(signers.get(submitterMemberIndex))
-    invalidEntrySubmitter = await ethers.getSigner(
-      signers.get(invalidSubmitterMemberIndex)
-    )
-    other = await ethers.getSigner(signers.get(submitterMemberIndex + 1))
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ randomBeacon, testToken, relayStub, signers } =
+      await waffle.loadFixture(fixture))
 
-    randomBeacon = contracts.randomBeacon as RandomBeacon
-    testToken = contracts.testToken as TestToken
-    relayStub = contracts.relayStub as RelayStub
+    submitter = await ethers.getSigner(
+      signers[submitterMemberIndex - 1].address
+    )
+    invalidEntrySubmitter = await ethers.getSigner(
+      signers[invalidSubmitterMemberIndex - 1].address
+    )
+    other = await ethers.getSigner(signers[submitterMemberIndex + 1].address)
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
   })

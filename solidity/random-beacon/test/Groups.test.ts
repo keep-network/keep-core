@@ -1,29 +1,32 @@
-import { ethers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import type { ContractTransaction } from "ethers"
 import blsData from "./data/bls"
-import { noMisbehaved, getDkgGroupSigners } from "./utils/dkg"
+import { noMisbehaved } from "./utils/dkg"
 import { constants } from "./fixtures"
 import type { GroupsStub } from "../typechain"
-import type { DkgGroupSigners } from "./utils/dkg"
 
 const { keccak256 } = ethers.utils
 
+const fixture = async () => {
+  const GroupsStub = await ethers.getContractFactory("GroupsStub")
+  const groups = await GroupsStub.deploy()
+
+  return groups
+}
+
 describe("Groups", () => {
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
+  const members: number[] = []
 
-  let signers: DkgGroupSigners
   let groups: GroupsStub
-  let members: string[]
 
   before(async () => {
-    signers = await getDkgGroupSigners(constants.groupSize)
-    members = Array.from(signers.values())
+    for (let i = 0; i < constants.groupSize; i++) members.push(10000 + i)
   })
 
   beforeEach("load test fixture", async () => {
-    const GroupsStub = await ethers.getContractFactory("GroupsStub")
-    groups = await GroupsStub.deploy()
+    groups = await waffle.loadFixture(fixture)
   })
 
   describe("addCandidateGroup", async () => {
@@ -185,8 +188,8 @@ describe("Groups", () => {
     context("when existing group is already registered", async () => {
       const existingGroupPublicKey = "0x1234567890"
 
-      let existingGroupMembers: string[]
-      let newGroupMembers: string[]
+      let existingGroupMembers: number[]
+      let newGroupMembers: number[]
 
       beforeEach(async () => {
         existingGroupMembers = members.slice(30)
@@ -384,8 +387,8 @@ describe("Groups", () => {
     context("when existing group was popped", async () => {
       const existingGroupPublicKey = "0x1234567890"
 
-      let existingGroupMembers: string[]
-      let newGroupMembers: string[]
+      let existingGroupMembers: number[]
+      let newGroupMembers: number[]
 
       beforeEach(async () => {
         existingGroupMembers = members.slice(30)
@@ -537,8 +540,8 @@ describe("Groups", () => {
     })
 
     context("when two groups are registered", async () => {
-      let members1: string[]
-      let members2: string[]
+      let members1: number[]
+      let members2: number[]
 
       beforeEach(async () => {
         members1 = members.slice(30)
@@ -752,8 +755,8 @@ describe("Groups", () => {
     })
 
     context("when two groups are registered", async () => {
-      let members1: string[]
-      let members2: string[]
+      let members1: number[]
+      let members2: number[]
 
       beforeEach(async () => {
         members1 = members.slice(30)
@@ -921,9 +924,9 @@ describe("Groups", () => {
 })
 
 function filterMisbehaved(
-  members: string[],
+  members: number[],
   misbehavedIndices: number[]
-): string[] {
+): number[] {
   const expectedMembers = [...members]
   misbehavedIndices.reverse().forEach((value) => {
     expectedMembers[value - 1] = expectedMembers[expectedMembers.length - 1]

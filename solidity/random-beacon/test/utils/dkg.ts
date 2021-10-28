@@ -1,14 +1,10 @@
 /* eslint-disable no-await-in-loop */
 
-import { ethers, getUnnamedAccounts } from "hardhat"
-import { expect } from "chai"
-import type { Address } from "hardhat-deploy/types"
+import { ethers } from "hardhat"
 import type { BigNumber, ContractTransaction } from "ethers"
-import { constants } from "../fixtures"
 import blsData from "../data/bls"
 import type { RandomBeacon } from "../../typechain"
-
-export type DkgGroupSigners = Map<number, Address>
+import { Operator } from "./sortitionpool"
 
 export interface DkgResult {
   submitterMemberIndex: number
@@ -16,30 +12,10 @@ export interface DkgResult {
   misbehaved: number[]
   signatures: string
   signingMemberIndices: number[]
-  members: string[]
+  members: number[]
 }
 
 export const noMisbehaved = []
-
-export async function getDkgGroupSigners(
-  groupSize: number = constants.groupSize,
-  startAccountsOffset = 0
-): Promise<DkgGroupSigners> {
-  const signers = new Map<number, Address>()
-
-  for (let i = 1; i <= groupSize; i++) {
-    const signer = (await getUnnamedAccounts())[startAccountsOffset + i]
-
-    await expect(
-      signer,
-      `signer [${i}] is not defined; check hardhat network configuration`
-    ).is.not.empty
-
-    signers.set(i, signer)
-  }
-
-  return signers
-}
 
 export async function genesis(
   randomBeacon: RandomBeacon
@@ -61,19 +37,19 @@ export async function genesis(
 export async function signAndSubmitDkgResult(
   randomBeacon: RandomBeacon,
   groupPublicKey: string,
-  signers: DkgGroupSigners,
+  signers: Operator[],
   startBlock: number,
   submitterIndex = 1
 ): Promise<{
   transaction: ContractTransaction
   dkgResult: DkgResult
   dkgResultHash: string
-  members: string[]
+  members: number[]
 }> {
   const { members, signingMemberIndices, signaturesBytes } =
     await signDkgResult(signers, groupPublicKey, noMisbehaved, startBlock)
 
-  const dkgResult = {
+  const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
     groupPubKey: blsData.groupPubKey,
     misbehaved: noMisbehaved,
@@ -85,42 +61,47 @@ export async function signAndSubmitDkgResult(
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "(uint256 submitterMemberIndex, bytes groupPubKey, bytes misbehaved, bytes signatures, uint256[] signingMemberIndices, address[] members)",
+        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehaved, bytes signatures, uint256[] signingMemberIndices, uint32[] members)",
       ],
       [dkgResult]
     )
   )
 
   const transaction = await randomBeacon
-    .connect(await ethers.getSigner(signers.get(submitterIndex)))
+    .connect(await ethers.getSigner(signers[submitterIndex - 1].address))
     .submitDkgResult(dkgResult)
 
   return { transaction, dkgResult, dkgResultHash, members }
 }
 
 async function signDkgResult(
-  signers: DkgGroupSigners,
+  signers: Operator[],
   groupPublicKey: string,
   misbehaved: number[],
   startBlock: number
-) {
+): Promise<{
+  members: number[]
+  signingMemberIndices: number[]
+  signaturesBytes: string
+}> {
   const resultHash = ethers.utils.solidityKeccak256(
     ["bytes", "uint8[]", "uint256"],
     [groupPublicKey, misbehaved, startBlock]
   )
 
-  const members: string[] = []
+  const members: number[] = []
   const signingMemberIndices: number[] = []
   const signatures: string[] = []
 
-  // eslint-disable-next-line no-restricted-syntax
-  for (const [memberIndex, signer] of signers) {
-    members.push(signer)
+  for (let i = 0; i < signers.length; i++) {
+    const { id, address } = signers[i]
+    const signerIndex: number = i + 1
 
-    signingMemberIndices.push(memberIndex)
+    members.push(id)
 
-    const ethersSigner = await ethers.getSigner(signer)
+    signingMemberIndices.push(signerIndex)
 
+    const ethersSigner = await ethers.getSigner(address)
     const signature = await ethersSigner.signMessage(
       ethers.utils.arrayify(resultHash)
     )
