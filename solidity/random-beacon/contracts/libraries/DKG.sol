@@ -16,11 +16,11 @@ library DKG {
         // Time in blocks after which the next group member is eligible
         // to submit DKG result.
         uint256 resultSubmissionEligibilityDelay;
-        // Sortition Pool contract reference.
-        ISortitionPool sortitionPool;
     }
 
     struct Data {
+        // Address of the Sortition Pool contract.
+        ISortitionPool sortitionPool;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -118,6 +118,19 @@ library DKG {
         bytes32 indexed resultHash,
         address indexed challenger
     );
+
+    /// @notice Initializes the sortitionPool parameter. Can be performed only once.
+    /// @param _sortitionPool Value of the parameter.
+    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+        internal
+    {
+        require(
+            address(self.sortitionPool) == address(0),
+            "Sortition Pool address already set"
+        );
+
+        self.sortitionPool = _sortitionPool;
+    }
 
     /// @notice Determines the current state of group creation. It doesn't take
     ///         timeouts into consideration. The timeouts should be tracked and
@@ -236,7 +249,7 @@ library DKG {
 
         require(submitterMemberIndex > 0, "Invalid submitter index");
 
-        ISortitionPool sortitionPool = self.parameters.sortitionPool;
+        ISortitionPool sortitionPool = self.sortitionPool;
 
         require(
             sortitionPool.getIDOperator(members[submitterMemberIndex - 1]) ==

@@ -18,6 +18,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./BLS.sol";
 import "./Groups.sol";
+import {ISortitionPool} from "../RandomBeacon.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -40,6 +41,8 @@ library Relay {
         Request currentRequest;
         // Address of the T token contract.
         IERC20 tToken;
+        // Address of the Sortition Pool contract.
+        ISortitionPool sortitionPool;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
         // The number of blocks it takes for a group member to become
@@ -85,6 +88,19 @@ library Relay {
         );
 
         self.tToken = _tToken;
+    }
+
+    /// @notice Initializes the sortitionPool parameter. Can be performed only once.
+    /// @param _sortitionPool Value of the parameter.
+    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+        internal
+    {
+        require(
+            address(self.sortitionPool) == address(0),
+            "Sortition Pool address already set"
+        );
+
+        self.sortitionPool = _sortitionPool;
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
@@ -137,7 +153,9 @@ library Relay {
             "Invalid submitter index"
         );
         require(
-            group.members[submitterIndex - 1] == msg.sender,
+            self.sortitionPool.getIDOperator(
+                group.members[submitterIndex - 1]
+            ) == msg.sender,
             "Unexpected submitter index"
         );
 
