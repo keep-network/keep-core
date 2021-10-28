@@ -57,9 +57,8 @@ library DKG {
         address[] members;
     }
 
-    /// @notice States for phases of group creation.
-    /// The states doesn't include timeouts which should be tracked and notified
-    /// individually.
+    /// @notice States for phases of group creation. The states doesn't include
+    ///         timeouts which should be tracked and notified individually.
     enum State {
         // Group creation is not in progress. It is a state set after group creation
         // completion either by timeout or by a result approval.

@@ -3,8 +3,8 @@ pragma solidity ^0.8.6;
 
 /// @notice This library is used as a registry of created groups.
 /// @dev This library should be used along with DKG library that ensures linear
-/// groups creation (only one group creation happens at a time). A candidate group
-/// has to be popped or activated before adding a new candidate group.
+///      groups creation (only one group creation happens at a time). A candidate
+///      group has to be popped or activated before adding a new candidate group.
 library Groups {
     event CandidateGroupRegistered(bytes indexed groupPubKey);
 
@@ -29,7 +29,7 @@ library Groups {
     }
 
     /// @notice Adds a new candidate group. The group is stored with group public
-    /// key and active members, but is not yet activated.
+    ///         key and active members, but is not yet activated.
     /// @param groupPubKey Generated candidate group public key
     /// @param members Addresses of candidate group members as outputted by the
     ///        group selection protocol.
@@ -145,7 +145,7 @@ library Groups {
     // TODO: Add group termination and expiration
 
     /// @notice Gets the number of active groups. Candidate, expired and terminated
-    /// groups are not counted as active.
+    ///         groups are not counted as active.
     function numberOfActiveGroups(Data storage self)
         internal
         view
