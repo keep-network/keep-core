@@ -395,6 +395,7 @@ describe("RandomBeacon - Group Creation", () => {
 
   describe("submitDkgResult", async () => {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
+    // TODO: Add tests to cover misbehaved members
 
     context("with initial contract state", async () => {
       it("should revert with 'current state is not AWAITING_RESULT' error", async () => {

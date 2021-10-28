@@ -40,8 +40,8 @@ library DKG {
         uint256 submitterMemberIndex;
         // Generated candidate group public key
         bytes groupPubKey;
-        // Bytes array of misbehaved (disqualified or inactive)
-        bytes misbehaved;
+        // Array of misbehaved members indices (disqualified or inactive).
+        uint8[] misbehaved;
         // Concatenation of signatures from members supporting the result.
         // The message to be signed by each member is keccak256 hash of the
         // calculated group public key, misbehaved members as bytes and DKG
@@ -209,10 +209,11 @@ library DKG {
     ///      `\x19Ethereum signed message:\n` before signing, so the message to
     ///      sign is:
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
+    ///      Members indexing in the group starts with 1.
     /// @param submitterMemberIndex Claimed submitter candidate group member index
     /// @param groupPubKey Generated candidate group public key
-    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-    ///        group members indexes; Indexes reflect positions of members in the group,
+    /// @param misbehaved Array of misbehaved (disqualified or inactive) group
+    ///        members indices; Indices reflect positions of members in the group,
     ///        as outputted by the group selection protocol.
     /// @param signatures Concatenation of signatures from members supporting the
     ///        result.
@@ -224,7 +225,7 @@ library DKG {
         Data storage self,
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
-        bytes memory misbehaved,
+        uint8[] calldata misbehaved,
         bytes memory signatures,
         uint256[] memory signingMemberIndices,
         address[] memory members
