@@ -439,9 +439,7 @@ describe("RandomBeacon - Group Creation", () => {
 
           it("should revert with less than threshold signers", async () => {
             const filteredSigners = new Map(
-              Array.from(signers).filter(
-                ([index]) => index < constants.signatureThreshold
-              )
+              Array.from(signers).slice(0, constants.signatureThreshold - 1)
             )
 
             await expect(
@@ -461,9 +459,7 @@ describe("RandomBeacon - Group Creation", () => {
 
             beforeEach(async () => {
               const filteredSigners = new Map(
-                Array.from(signers).filter(
-                  ([index]) => index <= constants.signatureThreshold
-                )
+                Array.from(signers).slice(0, constants.signatureThreshold)
               )
 
               ;({
