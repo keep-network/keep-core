@@ -367,8 +367,8 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Registers caller in the sortition pool.
-    function registerMemberCandidate() external {
+    /// @notice Registers the caller in the sortition pool.
+    function registerOperator() external {
         address operator = msg.sender;
 
         require(
@@ -390,7 +390,7 @@ contract RandomBeacon is Ownable {
         sortitionPool.insertOperator(operator);
     }
 
-    function updateMemberStatus() external {
+    function updateOperatorStatus() external {
         sortitionPool.updateOperatorStatus(msg.sender);
     }
 
