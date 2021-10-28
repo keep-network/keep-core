@@ -61,9 +61,9 @@ library Groups {
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
 
-        self.groupsRegistry.push(groupPubKeyHash);
-
         setGroupMembers(group, members, misbehaved);
+
+        self.groupsRegistry.push(groupPubKeyHash);
 
         emit CandidateGroupRegistered(groupPubKey);
     }
