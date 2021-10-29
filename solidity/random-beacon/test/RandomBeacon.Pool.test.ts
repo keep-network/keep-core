@@ -103,7 +103,7 @@ describe("RandomBeacon - Pool", () => {
     })
   })
 
-  describe.only("updateOperatorStatus", () => {
+  describe("updateOperatorStatus", () => {
     let tx: ContractTransaction
 
     beforeEach(async () => {
