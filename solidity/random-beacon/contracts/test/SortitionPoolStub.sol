@@ -10,6 +10,7 @@ contract SortitionPoolStub is ISortitionPool {
     mapping(address => bool) public eligibleOperators;
 
     event OperatorsRemoved(address[] operators);
+    event OperatorStatusUpdated(address operator);
 
     function insertOperator(address operator) external override {
         operators[operator] = true;
@@ -21,7 +22,7 @@ contract SortitionPoolStub is ISortitionPool {
     }
 
     function updateOperatorStatus(address operator) external override {
-        // no-op
+        emit OperatorStatusUpdated(operator);
     }
 
     function isOperatorInPool(address operator)

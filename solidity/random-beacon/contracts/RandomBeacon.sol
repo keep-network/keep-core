@@ -585,16 +585,19 @@ contract RandomBeacon is Ownable {
         for (uint256 i = 0; i < operators.length; i++) {
             address operator = operators[i];
 
-            if (!sortitionPool.isOperatorInPool(operator)) {
-                continue;
-            }
-
+            // Set the punishment regardless the operator is actually registered
+            // in the sortition pool.
             /* solhint-disable-next-line not-rely-on-time */
             punishedOperators[operator] = block.timestamp + punishmentDuration;
 
-            gasStation.releaseGas(operator);
-            // TODO: Is it possible to kick out operator when pool is locked?
-            sortitionPool.removeOperator(operator);
+            // Perform operations on sortition pool only in case the operator
+            // is registered. Otherwise, the punishment set above will prevent
+            // the operator to join the pool in future.
+            if (sortitionPool.isOperatorInPool(operator)) {
+                gasStation.releaseGas(operator);
+                // TODO: Is it possible to kick out operator when pool is locked?
+                sortitionPool.removeOperator(operator);
+            }
         }
     }
 

@@ -19,4 +19,15 @@ contract RandomBeaconStub is RandomBeacon {
     function getCallbackData() external view returns (Callback.Data memory) {
         return callback;
     }
+
+    function hasGasDeposit(address operator) external view returns (bool) {
+        return gasStation.gasDeposits[operator][0] != 0;
+    }
+
+    function publicPunishOperators(
+        address[] memory operators,
+        uint256 punishmentDuration
+    ) external {
+        punishOperators(operators, punishmentDuration);
+    }
 }
