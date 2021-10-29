@@ -151,7 +151,7 @@ describe("RandomBeacon - Callback", () => {
             .connect(requester)
             .requestRelayEntry(callbackContract.address)
 
-          const tx = await randomBeacon
+          await randomBeacon
             .connect(submitter)
             .submitRelayEntry(16, blsData.groupSignature)
 
