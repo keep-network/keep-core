@@ -222,4 +222,5 @@ export const MODAL_TYPES = {
   CopyStake: "CopyStake",
   ConfirmTBTCMigration: "ConfirmTBTCMigration",
   TBTCMigrationCompleted: "TBTCMigrationCompleted",
+  ConfirmReleaseTokensFromGrant: "ConfirmReleaseTokensFromGrant",
 }

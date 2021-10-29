@@ -22,6 +22,7 @@ import {
   ConfirmUndelegation,
   ConfirmCancelDelegationFromGrant,
   CopyStake,
+  ConfirmReleaseTokensFromGrant,
 } from "./staking"
 import { AddKeep, WithdrawKeep } from "./liquidity"
 import { ConfirmMigration, MigrationCompleted } from "./tbtc-migration"
@@ -50,6 +51,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.CopyStake]: CopyStake,
   [MODAL_TYPES.ConfirmTBTCMigration]: ConfirmMigration,
   [MODAL_TYPES.TBTCMigrationCompleted]: MigrationCompleted,
+  [MODAL_TYPES.ConfirmReleaseTokensFromGrant]: ConfirmReleaseTokensFromGrant,
 }
 
 const modalRoot = document.getElementById("modal-root")
