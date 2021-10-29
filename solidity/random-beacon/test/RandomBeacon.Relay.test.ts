@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
@@ -10,6 +12,7 @@ import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
   RandomBeacon,
+  RandomBeaconStub,
   TestToken,
   RelayStub,
   SortitionPoolStub,
@@ -20,6 +23,7 @@ import type { DkgGroupSigners } from "./utils/dkg"
 const { time } = helpers
 const { mineBlocks } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
+const TWO_WEEKS = 1209600 // 2 weeks in seconds
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
@@ -165,6 +169,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("submitRelayEntry", () => {
     beforeEach(async () => {
+      await registerSortitionPoolOperators(signersAddresses)
       await createGroup(randomBeacon, signers)
     })
 
@@ -193,9 +198,8 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
-                    await expect(tx).to.not.emit(
-                      sortitionPool,
-                      "OperatorsRemoved"
+                    expect(await sortitionPool.operatorsCount()).to.be.equal(
+                      constants.groupSize
                     )
                   })
 
@@ -210,7 +214,6 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should terminate the relay request", async () => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                     expect(await randomBeacon.isRelayRequestInProgress()).to.be
                       .false
                   })
@@ -221,6 +224,7 @@ describe("RandomBeacon - Relay", () => {
                 "when other than first eligible member submits before the soft timeout",
                 () => {
                   let tx: ContractTransaction
+                  let txTimestamp: number
 
                   beforeEach(async () => {
                     // We wait 20 blocks to make two more members eligible.
@@ -233,12 +237,49 @@ describe("RandomBeacon - Relay", () => {
                         firstEligibleMemberIndex + 2,
                         blsData.groupSignature
                       )
+
+                    // Wait until tx is mined to get tx block timestamp.
+                    const receipt = await tx.wait()
+                    txTimestamp = (
+                      await ethers.provider.getBlock(receipt.blockNumber)
+                    ).timestamp
                   })
 
                   it("should remove members who did not submit from the sortition pool", async () => {
-                    await expect(tx)
-                      .to.emit(sortitionPool, "OperatorsRemoved")
-                      .withArgs([member16.address, member17.address])
+                    // Two members should be kicked out from the pool.
+                    expect(await sortitionPool.operatorsCount()).to.be.equal(
+                      constants.groupSize - 2
+                    )
+
+                    // Member 16 should be kicked out from the pool, blocked
+                    // against re-joining for 2 weeks, and his gas deposit
+                    // should be released.
+                    expect(
+                      await sortitionPool.isOperatorInPool(member16.address)
+                    ).to.be.false
+                    expect(
+                      await randomBeacon.punishedOperators(member16.address)
+                    ).to.be.equal(txTimestamp + TWO_WEEKS)
+                    expect(
+                      await (randomBeacon as RandomBeaconStub).hasGasDeposit(
+                        member16.address
+                      )
+                    ).to.be.false
+
+                    // Member 17 should be kicked out from the pool, blocked
+                    // against re-joining for 2 weeks, and his gas deposit
+                    // should be released.
+                    expect(
+                      await sortitionPool.isOperatorInPool(member17.address)
+                    ).to.be.false
+                    expect(
+                      await randomBeacon.punishedOperators(member17.address)
+                    ).to.be.equal(txTimestamp + TWO_WEEKS)
+                    expect(
+                      await (randomBeacon as RandomBeaconStub).hasGasDeposit(
+                        member17.address
+                      )
+                    ).to.be.false
                   })
 
                   it("should not slash any members", async () => {
@@ -252,7 +293,6 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should terminate the relay request", async () => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                     expect(await randomBeacon.isRelayRequestInProgress()).to.be
                       .false
                   })
@@ -287,9 +327,8 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
-                    await expect(tx).to.not.emit(
-                      sortitionPool,
-                      "OperatorsRemoved"
+                    expect(await sortitionPool.operatorsCount()).to.be.equal(
+                      constants.groupSize
                     )
                   })
 
@@ -309,7 +348,6 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should terminate the relay request", async () => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                     expect(await randomBeacon.isRelayRequestInProgress()).to.be
                       .false
                   })
@@ -638,7 +676,7 @@ describe("RandomBeacon - Relay", () => {
 
   async function assertMembersEligible(members: number[]) {
     for (let i = 0; i < members.length; i++) {
-      // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
+      // eslint-disable-next-line no-await-in-loop
       expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
         .be.true
     }
@@ -646,9 +684,21 @@ describe("RandomBeacon - Relay", () => {
 
   async function assertMembersNotEligible(members: number[]) {
     for (let i = 0; i < members.length; i++) {
-      // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
+      // eslint-disable-next-line no-await-in-loop
       expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
         .be.false
     }
+  }
+
+  async function registerSortitionPoolOperators(operatorsAddresses: Address[]) {
+    const operatorsSigners = await Promise.all(
+      operatorsAddresses.map(ethers.getSigner)
+    )
+
+    await Promise.all(
+      operatorsSigners.map((operatorSigner) =>
+        randomBeacon.connect(operatorSigner).registerOperator()
+      )
+    )
   }
 })
