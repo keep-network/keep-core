@@ -378,6 +378,7 @@ contract RandomBeacon is Ownable {
 
         uint256 punishmentDeadline = punishedOperators[operator];
 
+        // slither-disable-next-line incorrect-equality
         require(
             /* solhint-disable-next-line not-rely-on-time */
             punishmentDeadline == 0 || block.timestamp > punishmentDeadline,
@@ -587,8 +588,10 @@ contract RandomBeacon is Ownable {
 
             // Set the punishment regardless the operator is actually registered
             // in the sortition pool.
-            /* solhint-disable-next-line not-rely-on-time */
+            /* solhint-disable not-rely-on-time */
+            // slither-disable-next-line reentrancy-benign
             punishedOperators[operator] = block.timestamp + punishmentDuration;
+            /* solhint-enable not-rely-on-time */
 
             // Perform operations on sortition pool only in case the operator
             // is registered. Otherwise, the punishment set above will prevent
