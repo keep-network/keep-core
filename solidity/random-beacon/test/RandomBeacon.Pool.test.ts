@@ -107,6 +107,15 @@ describe("RandomBeacon - Pool", () => {
     let tx: ContractTransaction
 
     beforeEach(async () => {
+      // Operator is registered and gas deposit is made.
+      await randomBeacon
+        .connect(await ethers.getSigner(operator.address))
+        .registerOperator()
+
+      // We simulate the removal during status update directly on the
+      // sortition pool stub to leave the gas deposit untouched.
+      await sortitionPoolStub.removeOperator(operator.address)
+
       tx = await randomBeacon.connect(operator).updateOperatorStatus()
     })
 
@@ -114,6 +123,10 @@ describe("RandomBeacon - Pool", () => {
       await expect(tx)
         .to.emit(sortitionPoolStub, "OperatorStatusUpdated")
         .withArgs(operator.address)
+    })
+
+    it("should release the gas deposit if operator was removed from pool during the update", async () => {
+      expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.false
     })
   })
 

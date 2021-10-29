@@ -397,6 +397,12 @@ contract RandomBeacon is Ownable {
     /// @notice Updates the sortition pool status of the caller.
     function updateOperatorStatus() external {
         sortitionPool.updateOperatorStatus(msg.sender);
+
+        // If the operator has been removed from the sorition pool during the
+        // status update, release its gas deposit.
+        if (!sortitionPool.isOperatorInPool(msg.sender)) {
+            gasStation.releaseGas(msg.sender);
+        }
     }
 
     /// @notice Checks whether the given operator is eligible to join the
