@@ -368,6 +368,9 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Registers the caller in the sortition pool.
+    /// @dev Creates a gas deposit tied to the operator address. The gas
+    ///      deposit is released when the operator is kicked out from the
+    ///      sortition pool or leaves it during status update.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -391,6 +394,7 @@ contract RandomBeacon is Ownable {
         sortitionPool.insertOperator(operator);
     }
 
+    /// @notice Updates the sortition pool status of the caller.
     function updateOperatorStatus() external {
         sortitionPool.updateOperatorStatus(msg.sender);
     }
@@ -579,6 +583,14 @@ contract RandomBeacon is Ownable {
         }
     }
 
+    /// @notice Punishes the given operators by kicking them out from the
+    ///         sortition pool and blocking their re-join for a given period
+    ///         of time.
+    /// @dev By the way, this function releases gas deposits made by operators
+    ///      during their registration. See `registerOperator` function. This
+    ///      action makes punishments cheaper gas-wise.
+    /// @param operators Addresses of punished operators.
+    /// @param punishmentDuration Duration of the punishment period in seconds.
     function punishOperators(
         address[] memory operators,
         uint256 punishmentDuration

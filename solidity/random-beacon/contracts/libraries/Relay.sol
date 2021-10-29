@@ -147,6 +147,8 @@ library Relay {
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
     /// @param group Group data.
+    /// @return punishedMembers Array of members addresses which should be
+    ///         punished for not submitting relay entry on their turn.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
