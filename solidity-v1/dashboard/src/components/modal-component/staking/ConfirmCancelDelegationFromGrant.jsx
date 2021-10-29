@@ -7,7 +7,7 @@ import { useTypeTextToConfirmFormik } from "../../../hooks/useTypeTextToConfirmF
 import { withBaseModal } from "../withBaseModal"
 
 export const ConfirmCancelDelegationFromGrant = withBaseModal(
-  ({ tokenStakingEscrowAddress, onConfirm, onCancel }) => {
+  ({ tokenStakingEscrowAddress, onConfirm, onClose }) => {
     const formik = useTypeTextToConfirmFormik("CANCEL", onConfirm)
 
     return (
@@ -45,9 +45,9 @@ export const ConfirmCancelDelegationFromGrant = withBaseModal(
             type="submit"
             onClick={formik.handleSubmit}
           >
-            delegate
+            cancel delegation
           </Button>
-          <Button className="btn btn-unstyled" onClick={onCancel}>
+          <Button className="btn btn-unstyled" onClick={onClose}>
             Cancel
           </Button>
         </ModalFooter>

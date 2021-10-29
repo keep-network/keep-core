@@ -7,7 +7,7 @@ import { useTypeTextToConfirmFormik } from "../../../hooks/useTypeTextToConfirmF
 import { withBaseModal } from "../withBaseModal"
 
 export const ConfirmRecovering = withBaseModal(
-  ({ tokenStakingEscrowAddress, onConfirm, onCancel }) => {
+  ({ tokenStakingEscrowAddress, onConfirm, onClose }) => {
     const formik = useTypeTextToConfirmFormik("RECOVER", onConfirm)
 
     return (
@@ -47,7 +47,7 @@ export const ConfirmRecovering = withBaseModal(
           >
             recover
           </Button>
-          <Button className="btn btn-unstyled" onClick={onCancel}>
+          <Button className="btn btn-unstyled" onClick={onClose}>
             Cancel
           </Button>
         </ModalFooter>

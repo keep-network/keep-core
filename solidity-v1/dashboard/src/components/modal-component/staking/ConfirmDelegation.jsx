@@ -7,7 +7,7 @@ import { useTypeTextToConfirmFormik } from "../../../hooks/useTypeTextToConfirmF
 import { withBaseModal } from "../withBaseModal"
 
 export const ConfirmDelegation = withBaseModal(
-  ({ initializationPeriod, onConfirm, onCancel }) => {
+  ({ initializationPeriod, onConfirm, onClose }) => {
     const formik = useTypeTextToConfirmFormik("DELEGATE", onConfirm)
 
     return (
@@ -42,7 +42,7 @@ export const ConfirmDelegation = withBaseModal(
           >
             delegate
           </Button>
-          <Button className="btn btn-unstyled" onClick={onCancel}>
+          <Button className="btn btn-unstyled" onClick={onClose}>
             Cancel
           </Button>
         </ModalFooter>

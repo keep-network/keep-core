@@ -5,7 +5,7 @@ import { FormInputBase } from "../../FormInput"
 import { useTypeTextToConfirmFormik } from "../../../hooks/useTypeTextToConfirmFormik"
 import { withBaseModal } from "../withBaseModal"
 
-export const ConfirmUndelegation = withBaseModal(({ onConfirm, onCancel }) => {
+export const ConfirmUndelegation = withBaseModal(({ onConfirm, onClose }) => {
   const formik = useTypeTextToConfirmFormik("UNDELEGATE", onConfirm)
 
   return (
@@ -39,7 +39,7 @@ export const ConfirmUndelegation = withBaseModal(({ onConfirm, onCancel }) => {
         >
           undelegate
         </Button>
-        <Button className="btn btn-unstyled" onClick={onCancel}>
+        <Button className="btn btn-unstyled" onClick={onClose}>
           Cancel
         </Button>
       </ModalFooter>
