@@ -2,16 +2,15 @@ import { helpers } from "hardhat"
 import { signAndSubmitDkgResult } from "./dkg"
 import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
-
+import { Operator } from "./sortitionpool"
 import type { RandomBeacon } from "../../typechain"
-import type { DkgGroupSigners } from "./dkg"
 
 const { mineBlocks } = helpers.time
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createGroup(
   randomBeacon: RandomBeacon,
-  signers: DkgGroupSigners
+  signers: Operator[]
 ): Promise<void> {
   const { blockNumber: startBlock } = await randomBeacon.genesis()
   await mineBlocks(constants.offchainDkgTime)

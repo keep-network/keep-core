@@ -2,15 +2,18 @@
 
 pragma solidity ^0.8.6;
 
+import "@keep-network/sortition-pools/contracts/SortitionTree.sol";
 import "../RandomBeacon.sol";
 
 // Stub contract used in tests
-contract SortitionPoolStub is ISortitionPool {
+contract SortitionPoolStub is ISortitionPool, SortitionTree {
     mapping(address => bool) public operators;
     mapping(address => bool) public eligibleOperators;
 
     function joinPool(address operator) external override {
         operators[operator] = true;
+
+        allocateOperatorID(operator);
     }
 
     function isOperatorInPool(address operator)
@@ -34,5 +37,10 @@ contract SortitionPoolStub is ISortitionPool {
         returns (bool)
     {
         return eligibleOperators[operator];
+    }
+
+    // TODO: Fix sortition pool public API to accept/return uint32 for IDs
+    function getIDOperator(uint32 id) public view override returns (address) {
+        return SortitionTree.getIDOperator(id);
     }
 }

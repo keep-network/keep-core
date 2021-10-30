@@ -16,7 +16,7 @@ contract GroupsStub {
 
     function addCandidateGroup(
         bytes calldata groupPubKey,
-        address[] memory members,
+        uint32[] calldata members,
         uint8[] calldata misbehaved
     ) external {
         groups.addCandidateGroup(groupPubKey, members, misbehaved);

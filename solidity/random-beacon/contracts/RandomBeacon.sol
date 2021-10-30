@@ -32,6 +32,8 @@ interface ISortitionPool {
     function isOperatorInPool(address operator) external view returns (bool);
 
     function isOperatorEligible(address operator) external view returns (bool);
+
+    function getIDOperator(uint32 id) external view returns (address);
 }
 
 /// @title Keep Random Beacon
@@ -186,15 +188,18 @@ contract RandomBeacon is Ownable {
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(10);
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
         maliciousDkgResultSlashingAmount = 50000e18;
 
+        dkg.initSortitionPool(_sortitionPool);
+        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(10);
+
         relay.initSeedEntry();
         relay.initTToken(_tToken);
+        relay.initSortitionPool(_sortitionPool);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
     }

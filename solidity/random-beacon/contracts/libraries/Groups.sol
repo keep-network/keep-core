@@ -15,8 +15,7 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationTimestamp;
-        // TODO: Optimize members storing, see: https://github.com/keep-network/keep-core/pull/2666/files#r732629138
-        address[] members;
+        uint32[] members;
     }
 
     struct Data {
@@ -40,7 +39,7 @@ library Groups {
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
-        address[] memory members,
+        uint32[] calldata members,
         uint8[] calldata misbehaved
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
@@ -81,7 +80,7 @@ library Groups {
     // See https://github.com/keep-network/keep-core/pull/2666/files#r732629138
     function setGroupMembers(
         Group storage group,
-        address[] memory members,
+        uint32[] calldata members,
         uint8[] calldata misbehaved
     ) private {
         group.members = members;
