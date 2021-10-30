@@ -66,12 +66,10 @@ describe("Groups", () => {
           const misbehavedIndices: number[] = [1]
 
           beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
             tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
-              misbehaved
+              misbehavedIndices
             )
           })
 
@@ -89,12 +87,10 @@ describe("Groups", () => {
           const misbehavedIndices: number[] = [constants.groupSize]
 
           beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
             tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
-              misbehaved
+              misbehavedIndices
             )
           })
 
@@ -112,12 +108,10 @@ describe("Groups", () => {
           const misbehavedIndices: number[] = [24]
 
           beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
             tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
-              misbehaved
+              misbehavedIndices
             )
           })
 
@@ -135,12 +129,10 @@ describe("Groups", () => {
           const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
 
           beforeEach(async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
             tx = await groups.addCandidateGroup(
               groupPublicKey,
               members,
-              misbehaved
+              misbehavedIndices
             )
           })
 
@@ -157,10 +149,12 @@ describe("Groups", () => {
           const misbehavedIndices: number[] = [0]
 
           it("should panic", async () => {
-            const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
             await expect(
-              groups.addCandidateGroup(groupPublicKey, members, misbehaved)
+              groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehavedIndices
+              )
             ).to.be.revertedWith(
               "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
             )
@@ -173,10 +167,12 @@ describe("Groups", () => {
             const misbehavedIndices: number[] = [constants.groupSize + 1]
 
             it("should panic", async () => {
-              const misbehaved = ethers.utils.hexlify(misbehavedIndices)
-
               await expect(
-                groups.addCandidateGroup(groupPublicKey, members, misbehaved)
+                groups.addCandidateGroup(
+                  groupPublicKey,
+                  members,
+                  misbehavedIndices
+                )
               ).to.be.revertedWith(
                 "reverted with panic code 0x32 (Array accessed at an out-of-bounds or negative index)"
               )

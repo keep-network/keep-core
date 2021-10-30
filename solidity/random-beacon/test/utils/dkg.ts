@@ -13,13 +13,13 @@ export type DkgGroupSigners = Map<number, Address>
 export interface DkgResult {
   submitterMemberIndex: number
   groupPubKey: string
-  misbehaved: string
+  misbehaved: number[]
   signatures: string
   signingMemberIndices: number[]
   members: string[]
 }
 
-export const noMisbehaved = "0x"
+export const noMisbehaved = []
 
 export async function getDkgGroupSigners(
   groupSize: number = constants.groupSize,
@@ -101,11 +101,11 @@ export async function signAndSubmitDkgResult(
 async function signDkgResult(
   signers: DkgGroupSigners,
   groupPublicKey: string,
-  misbehaved: string,
+  misbehaved: number[],
   startBlock: number
 ) {
   const resultHash = ethers.utils.solidityKeccak256(
-    ["bytes", "bytes", "uint256"],
+    ["bytes", "uint8[]", "uint256"],
     [groupPublicKey, misbehaved, startBlock]
   )
 

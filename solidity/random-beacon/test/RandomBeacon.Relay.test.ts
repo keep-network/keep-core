@@ -129,7 +129,7 @@ describe("RandomBeacon - Relay", () => {
 
     context("when no groups exist", () => {
       it("should revert", async () => {
-        // TODO: Implement once proper `selectGroup` is ready.
+        // TODO: The error message should be updated to more meaningful text once `selectGroup` is ready.
         await expect(
           randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         ).to.be.revertedWith(

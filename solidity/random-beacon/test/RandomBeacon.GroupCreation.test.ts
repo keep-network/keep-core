@@ -395,6 +395,7 @@ describe("RandomBeacon - Group Creation", () => {
 
   describe("submitDkgResult", async () => {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
+    // TODO: Add tests to cover misbehaved members
 
     context("with initial contract state", async () => {
       it("should revert with 'current state is not AWAITING_RESULT' error", async () => {
@@ -438,9 +439,7 @@ describe("RandomBeacon - Group Creation", () => {
 
           it("should revert with less than threshold signers", async () => {
             const filteredSigners = new Map(
-              Array.from(signers).filter(
-                ([index]) => index < constants.signatureThreshold
-              )
+              Array.from(signers).slice(0, constants.signatureThreshold - 1)
             )
 
             await expect(
@@ -460,9 +459,7 @@ describe("RandomBeacon - Group Creation", () => {
 
             beforeEach(async () => {
               const filteredSigners = new Map(
-                Array.from(signers).filter(
-                  ([index]) => index <= constants.signatureThreshold
-                )
+                Array.from(signers).slice(0, constants.signatureThreshold)
               )
 
               ;({
