@@ -10,15 +10,6 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
     mapping(address => bool) public operators;
     mapping(address => bool) public eligibleOperators;
 
-    constructor() SortitionTree() {
-        // Fill operators IDs array so identifiers start with bigger number.
-        uint256 i = 100;
-        while (i > 0) {
-            allocateOperatorID(address(0));
-            i--;
-        }
-    }
-
     function joinPool(address operator) external override {
         operators[operator] = true;
 

@@ -20,11 +20,9 @@ const ZERO_ADDRESS = ethers.constants.AddressZero
 const fixture = async () => {
   const deployment = await randomBeaconDeployment()
 
-  // Accounts offset provided to slice getUnnamedAccounts have to include number
-  // of unnamed accounts that were already used.
   const signers = await registerOperators(
     deployment.sortitionPoolStub as SortitionPoolStub,
-    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+    (await getUnnamedAccounts()).slice(0, constants.groupSize)
   )
 
   return {
@@ -74,7 +72,7 @@ describe("RandomBeacon - Relay", () => {
     invalidEntrySubmitter = await ethers.getSigner(
       signers[invalidSubmitterMemberIndex - 1].address
     )
-    other = await ethers.getSigner(signers[submitterMemberIndex + 1].address)
+    other = await ethers.getSigner(signers[submitterMemberIndex].address)
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
   })
