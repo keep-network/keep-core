@@ -48,12 +48,8 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
         return eligibleOperators[operator];
     }
 
-    function getIDOperator(uint32 id)
-        public
-        view
-        override(ISortitionPool, SortitionTree)
-        returns (address)
-    {
+    // TODO: Fix sortition pool public API to accept/return uint32 for IDs
+    function getIDOperator(uint32 id) public view override returns (address) {
         return SortitionTree.getIDOperator(id);
     }
 }
