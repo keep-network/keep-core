@@ -308,6 +308,10 @@ library DKG {
             address recoveredAddress = resultHash
                 .toEthSignedMessageHash()
                 .recover(current);
+
+            // FIXME: Update sortition pool API to allow to fetch member addresses
+            //        by their IDs in one call.
+            // slither-disable-next-line calls-loop
             require(
                 sortitionPool.getIDOperator(members[memberIndex - 1]) ==
                     recoveredAddress,
