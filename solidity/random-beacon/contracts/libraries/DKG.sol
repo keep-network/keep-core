@@ -58,8 +58,8 @@ library DKG {
         // Indices of members corresponding to each signature. Must be in
         // range [1, 64] and unique.
         uint256[] signingMembersIndices;
-        // IDs of candidate group members as outputted by the group selection
-        // protocol.
+        // Identifiers of candidate group members as outputted by the group
+        // selection protocol.
         uint32[] members;
     }
 
@@ -236,8 +236,8 @@ library DKG {
     ///        result.
     /// @param signingMembersIndices Indices of members corresponding to each
     ///        signature; have to be unique
-    /// @param members Addresses of candidate group members as outputted by the
-    ///        group selection protocol.
+    /// @param members Identifiers of candidate group members as outputted by
+    ///        the group selection protocol.
     function verify(
         Data storage self,
         uint256 submitterMemberIndex,
