@@ -70,6 +70,13 @@ library Groups {
 
     /// @notice Sets addresses of members for the group eliminating members at
     ///         positions pointed by the misbehaved array.
+    ///
+    ///         NOTE THAT THIS FUNCTION CHANGES ORDER OF MEMBERS IN THE GROUP
+    ///         IF THERE IS AT LEAST ONE MISBEHAVED MEMBER
+    ///
+    ///         The final group members indexes should be obtained post-DKG
+    ///         and they may differ from the ones outputted by the group
+    ///         selection protocol.
     /// @param group The group storage.
     /// @param members Group member addresses as outputted by the group selection
     ///        protocol.
