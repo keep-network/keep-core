@@ -231,7 +231,8 @@ library DKG {
     /// @param submitterMemberIndex Claimed submitter candidate group member index
     /// @param groupPubKey Generated candidate group public key
     /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members indices; have to be unique
+    ///        inactive) group members indices; have to be unique and in
+    ///        ascending order
     /// @param signatures Concatenation of signatures from members supporting the
     ///        result.
     /// @param signingMembersIndices Indices of members corresponding to each
@@ -277,6 +278,16 @@ library DKG {
             misbehavedMembersIndices.length <= groupSize - signatureThreshold,
             "Unexpected misbehaved members count"
         );
+
+        if (misbehavedMembersIndices.length > 1) {
+            for (uint256 i = 1; i < misbehavedMembersIndices.length; i++) {
+                require(
+                    misbehavedMembersIndices[i - 1] <
+                        misbehavedMembersIndices[i],
+                    "Corrupted misbehaved members indices"
+                );
+            }
+        }
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Too short signatures array");
