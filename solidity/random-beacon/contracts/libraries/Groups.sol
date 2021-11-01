@@ -33,14 +33,15 @@ library Groups {
     /// @param groupPubKey Generated candidate group public key
     /// @param members Addresses of candidate group members as outputted by the
     ///        group selection protocol.
-    /// @param misbehaved Array of misbehaved (disqualified or inactive) group
-    ///        members indices; Indices reflect positions of members in the group,
-    ///        as outputted by the group selection protocol.
+    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
+    ///        inactive) group members indices; Indices reflect positions of
+    ///        members in the group, as outputted by the group selection
+    ///        protocol.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
         uint32[] calldata members,
-        uint8[] calldata misbehaved
+        uint8[] calldata misbehavedMembersIndices
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
@@ -60,7 +61,7 @@ library Groups {
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
 
-        setGroupMembers(group, members, misbehaved);
+        setGroupMembers(group, members, misbehavedMembersIndices);
 
         self.groupsRegistry.push(groupPubKeyHash);
 
@@ -72,25 +73,23 @@ library Groups {
     /// @param group The group storage.
     /// @param members Group member addresses as outputted by the group selection
     ///        protocol.
-    /// @param misbehaved Array of misbehaved (disqualified or inactive) group
-    ///        members indices in ascending order; Indices reflect positions
+    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
+    ///        inactive) group members. Indices reflect positions
     ///        of members in the group as outputted by the group selection
-    ///        protocol - member indices start from 1.
-    // TODO: This function should be optimized for members storing.
-    // See https://github.com/keep-network/keep-core/pull/2666/files#r732629138
+    ///        protocol.
     function setGroupMembers(
         Group storage group,
         uint32[] calldata members,
-        uint8[] calldata misbehaved
+        uint8[] calldata misbehavedMembersIndices
     ) private {
         group.members = members;
 
         // Iterate misbehaved array backwards, replace misbehaved
         // member with the last element and reduce array length
-        uint256 i = misbehaved.length;
+        uint256 i = misbehavedMembersIndices.length;
         while (i > 0) {
             // group member indices start from 1, so we need to -1 on misbehaved
-            uint8 memberArrayPosition = misbehaved[i - 1] - 1;
+            uint8 memberArrayPosition = misbehavedMembersIndices[i - 1] - 1;
             group.members[memberArrayPosition] = group.members[
                 group.members.length - 1
             ];
