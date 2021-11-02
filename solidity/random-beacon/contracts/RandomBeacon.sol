@@ -50,6 +50,9 @@ interface ISortitionPool {
 /// @notice This is an interface with just a few function signatures of the
 ///         Staking contract, which is available at
 ///         https://github.com/threshold-network/solidity-contracts/blob/main/contracts/staking/IStaking.sol
+///
+/// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
+///       staking interface from there.
 interface IStaking {
     function slash(uint256 amount, address[] memory operators) external;
 }
