@@ -520,47 +520,49 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("isEligible", () => {
+    const testGroupSize = 8
+
     it("should correctly manage the eligibility queue", async () => {
       await relayStub.setCurrentRequestStartBlock()
 
       // At the beginning only member 8 is eligible because
       // (blsData.groupSignature % groupSize) + 1 = 8.
-      await assertMembersEligible([8])
-      await assertMembersNotEligible([1, 2, 3, 4, 5, 6, 7])
+      await assertMembersEligible([8], testGroupSize)
+      await assertMembersNotEligible([1, 2, 3, 4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1])
-      await assertMembersNotEligible([2, 3, 4, 5, 6, 7])
+      await assertMembersEligible([8, 1], testGroupSize)
+      await assertMembersNotEligible([2, 3, 4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2])
-      await assertMembersNotEligible([3, 4, 5, 6, 7])
+      await assertMembersEligible([8, 1, 2], testGroupSize)
+      await assertMembersNotEligible([3, 4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3])
-      await assertMembersNotEligible([4, 5, 6, 7])
+      await assertMembersEligible([8, 1, 2, 3], testGroupSize)
+      await assertMembersNotEligible([4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4])
-      await assertMembersNotEligible([5, 6, 7])
+      await assertMembersEligible([8, 1, 2, 3, 4], testGroupSize)
+      await assertMembersNotEligible([5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4, 5])
-      await assertMembersNotEligible([6, 7])
+      await assertMembersEligible([8, 1, 2, 3, 4, 5], testGroupSize)
+      await assertMembersNotEligible([6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6])
-      await assertMembersNotEligible([7])
+      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6], testGroupSize)
+      await assertMembersNotEligible([7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6, 7])
+      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6, 7], testGroupSize)
     })
   })
 
@@ -568,7 +570,6 @@ describe("RandomBeacon - Relay", () => {
     let members: OperatorID[]
 
     beforeEach(async () => {
-      // Group size is set to 8 in RelayStub contract.
       members = [
         signersIDs[0], // member index 1
         signersIDs[1], // member index 2
@@ -628,6 +629,8 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getSlashingFactor", () => {
+    const testGroupSize = 8
+
     beforeEach(async () => {
       await relayStub.setCurrentRequestStartBlock()
     })
@@ -637,7 +640,7 @@ describe("RandomBeacon - Relay", () => {
         // `groupSize * relayEntrySubmissionEligibilityDelay`
         await mineBlocks(8 * 10)
 
-        expect(await relayStub.getSlashingFactor()).to.be.equal(0)
+        expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(0)
       })
     })
 
@@ -650,7 +653,7 @@ describe("RandomBeacon - Relay", () => {
         // `submissionDelay` factor. If so we can calculate the slashing factor
         // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
         // gives `1 * 1e18 / 5760 = 173611111111111` (0.017%).
-        expect(await relayStub.getSlashingFactor()).to.be.equal(
+        expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
           BigNumber.from("173611111111111")
         )
       })
@@ -667,7 +670,7 @@ describe("RandomBeacon - Relay", () => {
           // `submissionDelay` factor. If so we can calculate the slashing
           // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
           // gives `5760 * 1e18 / 5760 = 1000000000000000000` (100%).
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
+          expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
             BigNumber.from("1000000000000000000")
           )
         })
@@ -685,7 +688,7 @@ describe("RandomBeacon - Relay", () => {
           // We are exceeded the soft timeout by a value bigger than the
           // hard timeout. In that case the maximum value (100%) of the slashing
           // factor should be returned.
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
+          expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
             BigNumber.from("1000000000000000000")
           )
         })
@@ -700,19 +703,32 @@ describe("RandomBeacon - Relay", () => {
       .approve(randomBeacon.address, relayRequestFee)
   }
 
-  async function assertMembersEligible(members: number[]) {
+  async function assertMembersEligible(members: number[], groupSize: number) {
     for (let i = 0; i < members.length; i++) {
-      // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
-      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
-        .be.true
+      expect(
+        // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
+        await relayStub.isEligible(
+          members[i],
+          blsData.groupSignature,
+          groupSize
+        )
+      ).to.be.true
     }
   }
 
-  async function assertMembersNotEligible(members: number[]) {
+  async function assertMembersNotEligible(
+    members: number[],
+    groupSize: number
+  ) {
     for (let i = 0; i < members.length; i++) {
-      // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
-      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
-        .be.false
+      expect(
+        // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
+        await relayStub.isEligible(
+          members[i],
+          blsData.groupSignature,
+          groupSize
+        )
+      ).to.be.false
     }
   }
 })
