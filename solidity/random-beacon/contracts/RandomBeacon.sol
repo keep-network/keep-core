@@ -26,6 +26,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @notice This is an interface with just a few function signatures of the
 ///         Sortition Pool contract, which is available at
 ///         https://github.com/keep-network/sortition-pools/blob/main/contracts/SortitionPool.sol
+///
+/// TODO: Add a dependency to `keep-network/sortition-pools` and use sortition
+///       pool interface from there.
 interface ISortitionPool {
     function joinPool(address operator) external;
 
