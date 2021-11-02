@@ -279,15 +279,14 @@ library Relay {
     {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
-        // slither-disable-next-line reentrancy-events
+        emit RelayEntryTimedOut(self.currentRequest.id);
+
         self.staking.slash(
             self.relayEntrySubmissionFailureSlashingAmount,
             group.members
         );
 
         delete self.currentRequest;
-
-        emit RelayEntryTimedOut(self.requestCount);
     }
 
     /// @notice Returns whether a relay entry request is currently in progress.
