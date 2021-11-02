@@ -33,6 +33,8 @@ interface ISortitionPool {
 
     function isOperatorEligible(address operator) external view returns (bool);
 
+    function getIDOperator(uint32 id) external view returns (address);
+
     // TODO: Temporary function for testing only. Not sure how the removal
     //       mechanism will work at the moment.
     function removeOperators(address[] memory operators) external;
@@ -193,11 +195,13 @@ contract RandomBeacon is Ownable {
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(10);
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
+
+        dkg.initSortitionPool(_sortitionPool);
+        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(10);
 
         relay.initSeedEntry();
         relay.initSortitionPool(_sortitionPool);

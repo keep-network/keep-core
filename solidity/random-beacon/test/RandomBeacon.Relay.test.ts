@@ -4,7 +4,6 @@ import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
-import { getDkgGroupSigners } from "./utils/dkg"
 import { to1e18 } from "./functions"
 import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
@@ -15,11 +14,31 @@ import type {
   SortitionPoolStub,
   StakingStub,
 } from "../typechain"
-import type { DkgGroupSigners } from "./utils/dkg"
+import { registerOperators, Operator } from "./utils/sortitionpool"
 
 const { time } = helpers
 const { mineBlocks } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
+
+const fixture = async () => {
+  const deployment = await randomBeaconDeployment()
+
+  const signers = await registerOperators(
+    deployment.sortitionPoolStub as SortitionPoolStub,
+    (await getUnnamedAccounts()).slice(0, constants.groupSize)
+  )
+
+  return {
+    randomBeacon: deployment.randomBeacon as RandomBeacon,
+    sortitionPoolStub: deployment.sortitionPoolStub as SortitionPoolStub,
+    testToken: deployment.testToken as TestToken,
+    stakingStub: deployment.stakingStub as StakingStub,
+    relayStub: (await (
+      await ethers.getContractFactory("RelayStub")
+    ).deploy()) as RelayStub,
+    signers,
+  }
+}
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
@@ -38,7 +57,7 @@ describe("RandomBeacon - Relay", () => {
   let member16: SignerWithAddress
   let member17: SignerWithAddress
   let member18: SignerWithAddress
-  let signers: DkgGroupSigners
+  let signers: Operator[]
   const signersAddresses: Address[] = []
 
   let randomBeacon: RandomBeacon
@@ -47,46 +66,29 @@ describe("RandomBeacon - Relay", () => {
   let staking: StakingStub
   let relayStub: RelayStub
 
-  const fixture = async () => {
-    const deployment = await randomBeaconDeployment()
-
-    return {
-      randomBeacon: deployment.randomBeacon,
-      sortitionPoolStub: deployment.sortitionPoolStub,
-      testToken: deployment.testToken,
-      stakingStub: deployment.stakingStub,
-      relayStub: await (await ethers.getContractFactory("RelayStub")).deploy(),
-    }
-  }
-
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-
-    signers = await getDkgGroupSigners(constants.groupSize, 1)
-
-    const signersAddressesIterator = signers.values()
-    let signerAddress = signersAddressesIterator.next()
-    while (!signerAddress.done) {
-      signersAddresses.push(signerAddress.value)
-      signerAddress = signersAddressesIterator.next()
-    }
-
-    member3 = await ethers.getSigner(
-      signers.get(invalidEntryFirstEligibleMemberIndex)
-    )
-    member16 = await ethers.getSigner(signers.get(firstEligibleMemberIndex))
-    member17 = await ethers.getSigner(signers.get(firstEligibleMemberIndex + 1))
-    member18 = await ethers.getSigner(signers.get(firstEligibleMemberIndex + 2))
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ randomBeacon, sortitionPool, testToken, staking, relayStub, signers } =
+      await waffle.loadFixture(fixture))
 
-    randomBeacon = contracts.randomBeacon as RandomBeacon
-    sortitionPool = contracts.sortitionPoolStub as SortitionPoolStub
-    testToken = contracts.testToken as TestToken
-    staking = contracts.stakingStub as StakingStub
-    relayStub = contracts.relayStub as RelayStub
+    signersAddresses = signers.map((signer) => signer.address)
+
+    member3 = await ethers.getSigner(
+      signers[invalidEntryFirstEligibleMemberIndex - 1].address
+    )
+    member16 = await ethers.getSigner(
+      signers[firstEligibleMemberIndex - 1].address
+    )
+    member17 = await ethers.getSigner(
+      signers[firstEligibleMemberIndex + 1 - 1].address
+    )
+    member18 = await ethers.getSigner(
+      signers[firstEligibleMemberIndex + 2 - 1].address
+    )
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
   })
@@ -153,7 +155,7 @@ describe("RandomBeacon - Relay", () => {
 
     context("when no groups exist", () => {
       it("should revert", async () => {
-        // TODO: Implement once proper `selectGroup` is ready.
+        // TODO: The error message should be updated to more meaningful text once `selectGroup` is ready.
         await expect(
           randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         ).to.be.revertedWith(

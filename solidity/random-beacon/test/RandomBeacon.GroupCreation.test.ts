@@ -4,13 +4,9 @@ import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
 import type { RandomBeacon, RandomBeaconStub } from "../typechain"
-import {
-  getDkgGroupSigners,
-  genesis,
-  signAndSubmitDkgResult,
-  DkgResult,
-} from "./utils/dkg"
-import type { DkgGroupSigners } from "./utils/dkg"
+import { genesis, signAndSubmitDkgResult, DkgResult } from "./utils/dkg"
+import { SortitionPoolStub } from "../typechain/SortitionPoolStub"
+import { registerOperators, Operator } from "./utils/sortitionpool"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils
@@ -20,6 +16,21 @@ const dkgState = {
   KEY_GENERATION: 1,
   AWAITING_RESULT: 2,
   CHALLENGE: 3,
+}
+
+const fixture = async () => {
+  const contracts = await testDeployment()
+
+  // Accounts offset provided to slice getUnnamedAccounts have to include number
+  // of unnamed accounts that were already used.
+  const signers = await registerOperators(
+    contracts.sortitionPoolStub as SortitionPoolStub,
+    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+  )
+
+  const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
+
+  return { randomBeacon, signers }
 }
 
 // Test suite covering group creation in RandomBeacon contract.
@@ -32,22 +43,17 @@ describe("RandomBeacon - Group Creation", () => {
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
   let thirdParty: Signer
-  let signers: DkgGroupSigners
+  let signers: Operator[]
 
   let randomBeacon: RandomBeaconStub & RandomBeacon
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
-
-    // Accounts offset provided to getDkgGroupSigners have to include number of
-    // unnamed accounts that were already used.
-    signers = await getDkgGroupSigners(constants.groupSize, 1)
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(testDeployment)
-
-    randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ randomBeacon, signers } = await waffle.loadFixture(fixture))
   })
 
   describe("genesis", async () => {
@@ -395,6 +401,7 @@ describe("RandomBeacon - Group Creation", () => {
 
   describe("submitDkgResult", async () => {
     // TODO: Add more tests to cover the DKG result verification function thoroughly.
+    // TODO: Add tests to cover misbehaved members
 
     context("with initial contract state", async () => {
       it("should revert with 'current state is not AWAITING_RESULT' error", async () => {
@@ -437,10 +444,9 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           it("should revert with less than threshold signers", async () => {
-            const filteredSigners = new Map(
-              Array.from(signers).filter(
-                ([index]) => index < constants.signatureThreshold
-              )
+            const filteredSigners = signers.slice(
+              0,
+              constants.signatureThreshold - 1
             )
 
             await expect(
@@ -459,10 +465,9 @@ describe("RandomBeacon - Group Creation", () => {
             let dkgResultHash: string
 
             beforeEach(async () => {
-              const filteredSigners = new Map(
-                Array.from(signers).filter(
-                  ([index]) => index <= constants.signatureThreshold
-                )
+              const filteredSigners = signers.slice(
+                0,
+                constants.signatureThreshold
               )
 
               ;({
@@ -478,9 +483,16 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             it("should succeed with threshold signers", async () => {
+              const submitterIndex = 1
+              const expectedSubmitter = signers[submitterIndex - 1].address
+
               await expect(tx)
                 .to.emit(randomBeacon, "DkgResultSubmitted")
-                .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
+                .withArgs(
+                  dkgResultHash,
+                  dkgResult.groupPubKey,
+                  expectedSubmitter
+                )
             })
 
             it("should register a candidate group", async () => {
@@ -500,6 +512,9 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           it("should succeed for the first submitter", async () => {
+            const submitterIndex = 1
+            const expectedSubmitter = signers[submitterIndex - 1].address
+
             const {
               transaction: tx,
               dkgResult,
@@ -509,11 +524,11 @@ describe("RandomBeacon - Group Creation", () => {
               groupPublicKey,
               signers,
               startBlock,
-              1
+              submitterIndex
             )
             await expect(tx)
               .to.emit(randomBeacon, "DkgResultSubmitted")
-              .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
+              .withArgs(dkgResultHash, dkgResult.groupPubKey, expectedSubmitter)
           })
 
           it("should revert for the second submitter", async () => {
@@ -576,6 +591,9 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the first submitter", async () => {
+                const submitterIndex = 1
+                const expectedSubmitter = signers[submitterIndex - 1].address
+
                 const {
                   transaction: tx,
                   dkgResult,
@@ -585,7 +603,7 @@ describe("RandomBeacon - Group Creation", () => {
                   groupPublicKey,
                   signers,
                   startBlock,
-                  1
+                  submitterIndex
                 )
 
                 await expect(tx)
@@ -593,7 +611,7 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     dkgResultHash,
                     dkgResult.groupPubKey,
-                    signers.get(1)
+                    expectedSubmitter
                   )
               })
 
@@ -624,6 +642,9 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the first submitter", async () => {
+                const submitterIndex = 1
+                const expectedSubmitter = signers[submitterIndex - 1].address
+
                 const {
                   transaction: tx,
                   dkgResult,
@@ -633,7 +654,7 @@ describe("RandomBeacon - Group Creation", () => {
                   groupPublicKey,
                   signers,
                   startBlock,
-                  1
+                  submitterIndex
                 )
 
                 await expect(tx)
@@ -641,11 +662,14 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     dkgResultHash,
                     dkgResult.groupPubKey,
-                    signers.get(1)
+                    expectedSubmitter
                   )
               })
 
               it("should succeed for the second submitter", async () => {
+                const submitterIndex = 2
+                const expectedSubmitter = signers[submitterIndex - 1].address
+
                 const {
                   transaction: tx,
                   dkgResult,
@@ -655,7 +679,7 @@ describe("RandomBeacon - Group Creation", () => {
                   groupPublicKey,
                   signers,
                   startBlock,
-                  2
+                  submitterIndex
                 )
 
                 await expect(tx)
@@ -663,7 +687,7 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     dkgResultHash,
                     dkgResult.groupPubKey,
-                    signers.get(2)
+                    expectedSubmitter
                   )
               })
 
@@ -689,6 +713,9 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the first submitter", async () => {
+                const submitterIndex = 2
+                const expectedSubmitter = signers[submitterIndex - 1].address
+
                 const {
                   transaction: tx,
                   dkgResult,
@@ -698,7 +725,7 @@ describe("RandomBeacon - Group Creation", () => {
                   groupPublicKey,
                   signers,
                   startBlock,
-                  1
+                  submitterIndex
                 )
 
                 await expect(tx)
@@ -706,11 +733,14 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     dkgResultHash,
                     dkgResult.groupPubKey,
-                    signers.get(1)
+                    expectedSubmitter
                   )
               })
 
               it("should succeed for the last submitter", async () => {
+                const submitterIndex = constants.groupSize
+                const expectedSubmitter = signers[submitterIndex - 1].address
+
                 const {
                   transaction: tx,
                   dkgResult,
@@ -720,7 +750,7 @@ describe("RandomBeacon - Group Creation", () => {
                   groupPublicKey,
                   signers,
                   startBlock,
-                  constants.groupSize
+                  submitterIndex
                 )
 
                 await expect(tx)
@@ -728,7 +758,7 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     dkgResultHash,
                     dkgResult.groupPubKey,
-                    signers.get(constants.groupSize)
+                    expectedSubmitter
                   )
               })
             }
@@ -773,6 +803,9 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             it("should allow first member to submit", async () => {
+              const submitterIndex = 1
+              const expectedSubmitter = signers[submitterIndex - 1].address
+
               const {
                 transaction: tx,
                 dkgResult,
@@ -781,12 +814,17 @@ describe("RandomBeacon - Group Creation", () => {
                 randomBeacon,
                 groupPublicKey,
                 signers,
-                startBlock
+                startBlock,
+                submitterIndex
               )
 
               await expect(tx)
                 .to.emit(randomBeacon, "DkgResultSubmitted")
-                .withArgs(dkgResultHash, dkgResult.groupPubKey, signers.get(1))
+                .withArgs(
+                  dkgResultHash,
+                  dkgResult.groupPubKey,
+                  expectedSubmitter
+                )
             })
 
             it("should register a candidate group", async () => {
