@@ -564,7 +564,7 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("getPunishedMembers", () => {
+  describe("getInactiveMembers", () => {
     let members: OperatorID[]
 
     beforeEach(async () => {
@@ -582,47 +582,47 @@ describe("RandomBeacon - Relay", () => {
     })
 
     context("when submitter index is the first eligible index", () => {
-      it("should return empty punished members list", async () => {
-        const punishedMembers = await relayStub.getPunishedMembers(
+      it("should return empty inactive members list", async () => {
+        const inactiveMembers = await relayStub.getInactiveMembers(
           5,
           5,
           members
         )
 
-        await expect(punishedMembers.length).to.be.equal(0)
+        await expect(inactiveMembers.length).to.be.equal(0)
       })
     })
 
     context("when submitter index is bigger than first eligible index", () => {
-      it("should return a proper punished members list", async () => {
-        const punishedMembers = await relayStub.getPunishedMembers(
+      it("should return a proper inactive members list", async () => {
+        const inactiveMembers = await relayStub.getInactiveMembers(
           8,
           5,
           members
         )
 
-        await expect(punishedMembers.length).to.be.equal(3)
-        await expect(punishedMembers[0]).to.be.equal(members[4])
-        await expect(punishedMembers[1]).to.be.equal(members[5])
-        await expect(punishedMembers[2]).to.be.equal(members[6])
+        await expect(inactiveMembers.length).to.be.equal(3)
+        await expect(inactiveMembers[0]).to.be.equal(members[4])
+        await expect(inactiveMembers[1]).to.be.equal(members[5])
+        await expect(inactiveMembers[2]).to.be.equal(members[6])
       })
     })
 
     context("when submitter index is smaller than first eligible index", () => {
-      it("should return a proper punished members list", async () => {
-        const punishedMembers = await relayStub.getPunishedMembers(
+      it("should return a proper inactive members list", async () => {
+        const inactiveMembers = await relayStub.getInactiveMembers(
           3,
           5,
           members
         )
 
-        await expect(punishedMembers.length).to.be.equal(6)
-        await expect(punishedMembers[0]).to.be.equal(members[4])
-        await expect(punishedMembers[1]).to.be.equal(members[5])
-        await expect(punishedMembers[2]).to.be.equal(members[6])
-        await expect(punishedMembers[3]).to.be.equal(members[7])
-        await expect(punishedMembers[4]).to.be.equal(members[0])
-        await expect(punishedMembers[5]).to.be.equal(members[1])
+        await expect(inactiveMembers.length).to.be.equal(6)
+        await expect(inactiveMembers[0]).to.be.equal(members[4])
+        await expect(inactiveMembers[1]).to.be.equal(members[5])
+        await expect(inactiveMembers[2]).to.be.equal(members[6])
+        await expect(inactiveMembers[3]).to.be.equal(members[7])
+        await expect(inactiveMembers[4]).to.be.equal(members[0])
+        await expect(inactiveMembers[5]).to.be.equal(members[1])
       })
     })
   })

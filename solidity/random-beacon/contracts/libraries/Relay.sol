@@ -194,16 +194,16 @@ library Relay {
             "Invalid entry"
         );
 
-        // Get the list of members addresses which should be punished due to
-        // not submitting the entry on their turn.
-        uint32[] memory punishedMembersIDs = getPunishedMembers(
+        // Get the list of members IDs which should be considered inactive due
+        // to not submitting the entry on their turn.
+        uint32[] memory inactiveMembers = getInactiveMembers(
             self,
             submitterIndex,
             firstEligibleIndex,
             group,
             groupSize
         );
-        self.sortitionPool.removeOperators(punishedMembersIDs);
+        self.sortitionPool.removeOperators(inactiveMembers);
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
@@ -406,12 +406,12 @@ library Relay {
         }
     }
 
-    /// @notice Determines a list of members which should be punished due to
-    ///         not submitting a relay entry on their turn. Punished members
-    ///         are determined using the eligibility queue and are taken from
-    ///         the <firstEligibleIndex, submitterIndex) range. It also handles
-    ///         the `submitterIndex < firstEligibleIndex` case and wraps the
-    ///         queue accordingly.
+    /// @notice Determines a list of members which should be considered as
+    ///         inactive due to not submitting a relay entry on their turn.
+    ///         Inactive members are determined using the eligibility queue and
+    ///         are taken from the <firstEligibleIndex, submitterIndex) range.
+    ///         It also handles the `submitterIndex < firstEligibleIndex` case
+    ///         and wraps the queue accordingly.
     /// @dev This function doesn't use the constant `groupSize` directly and
     ///      use a `_groupSize` parameter instead to facilitate testing.
     ///      Big group sizes in tests make readability worse and dramatically
@@ -420,9 +420,9 @@ library Relay {
     /// @param _firstEligibleIndex First index of the given eligibility range.
     /// @param _group Group data.
     /// @param _groupSize _groupSize Group size.
-    /// @return An array of members addresses which should be punished due to
-    ///         not submitting a relay entry on their turn.
-    function getPunishedMembers(
+    /// @return An array of members IDs which should be  inactive due
+    ///         to not submitting a relay entry on their turn.
+    function getInactiveMembers(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
         uint256 _submitterIndex,
@@ -430,23 +430,23 @@ library Relay {
         Groups.Group memory _group,
         uint256 _groupSize
     ) internal view returns (uint32[] memory) {
-        uint256 punishedMembersCount = _submitterIndex >= _firstEligibleIndex
+        uint256 inactiveMembersCount = _submitterIndex >= _firstEligibleIndex
             ? _submitterIndex - _firstEligibleIndex
             : _groupSize - (_firstEligibleIndex - _submitterIndex);
 
-        uint32[] memory punishedMembersIDs = new uint32[](punishedMembersCount);
+        uint32[] memory inactiveMembersIDs = new uint32[](inactiveMembersCount);
 
-        for (uint256 i = 0; i < punishedMembersCount; i++) {
+        for (uint256 i = 0; i < inactiveMembersCount; i++) {
             uint256 memberIndex = _firstEligibleIndex + i;
 
             if (memberIndex > _groupSize) {
                 memberIndex = memberIndex - _groupSize;
             }
 
-            punishedMembersIDs[i] = _group.members[memberIndex - 1];
+            inactiveMembersIDs[i] = _group.members[memberIndex - 1];
         }
 
-        return punishedMembersIDs;
+        return inactiveMembersIDs;
     }
 
     /// @notice Computes the slashing factor which should be used during
