@@ -29,15 +29,18 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface ISortitionPool {
     function joinPool(address operator) external;
 
+    function removeOperators(uint32[] calldata ids) external;
+
     function isOperatorInPool(address operator) external view returns (bool);
 
     function isOperatorEligible(address operator) external view returns (bool);
 
     function getIDOperator(uint32 id) external view returns (address);
 
-    // TODO: Temporary function for testing only. Not sure how the removal
-    //       mechanism will work at the moment.
-    function removeOperators(address[] memory operators) external;
+    function getIDOperators(uint32[] calldata ids)
+        external
+        view
+        returns (address[] memory);
 }
 
 /// @title Staking contract interface

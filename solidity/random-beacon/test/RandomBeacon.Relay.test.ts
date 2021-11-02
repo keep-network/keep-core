@@ -14,7 +14,7 @@ import type {
   SortitionPoolStub,
   StakingStub,
 } from "../typechain"
-import { registerOperators, Operator } from "./utils/sortitionpool"
+import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
 
 const { time } = helpers
 const { mineBlocks } = time
@@ -30,9 +30,9 @@ const fixture = async () => {
 
   return {
     randomBeacon: deployment.randomBeacon as RandomBeacon,
-    sortitionPoolStub: deployment.sortitionPoolStub as SortitionPoolStub,
+    sortitionPool: deployment.sortitionPoolStub as SortitionPoolStub,
     testToken: deployment.testToken as TestToken,
-    stakingStub: deployment.stakingStub as StakingStub,
+    staking: deployment.stakingStub as StakingStub,
     relayStub: (await (
       await ethers.getContractFactory("RelayStub")
     ).deploy()) as RelayStub,
@@ -58,7 +58,8 @@ describe("RandomBeacon - Relay", () => {
   let member17: SignerWithAddress
   let member18: SignerWithAddress
   let signers: Operator[]
-  const signersAddresses: Address[] = []
+  let signersIDs: OperatorID[]
+  let signersAddresses: Address[]
 
   let randomBeacon: RandomBeacon
   let sortitionPool: SortitionPoolStub
@@ -75,6 +76,7 @@ describe("RandomBeacon - Relay", () => {
     ;({ randomBeacon, sortitionPool, testToken, staking, relayStub, signers } =
       await waffle.loadFixture(fixture))
 
+    signersIDs = signers.map((signer) => signer.id)
     signersAddresses = signers.map((signer) => signer.address)
 
     member3 = await ethers.getSigner(
@@ -503,19 +505,19 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getPunishedMembers", () => {
-    let members: Address[]
+    let members: OperatorID[]
 
     beforeEach(async () => {
       // Group size is set to 8 in RelayStub contract.
       members = [
-        signersAddresses[0], // member index 1
-        signersAddresses[1], // member index 2
-        signersAddresses[2], // member index 3
-        signersAddresses[3], // member index 4
-        signersAddresses[4], // member index 5
-        signersAddresses[5], // member index 6
-        signersAddresses[6], // member index 7
-        signersAddresses[7], // member index 8
+        signersIDs[0], // member index 1
+        signersIDs[1], // member index 2
+        signersIDs[2], // member index 3
+        signersIDs[3], // member index 4
+        signersIDs[4], // member index 5
+        signersIDs[5], // member index 6
+        signersIDs[6], // member index 7
+        signersIDs[7], // member index 8
       ]
     })
 

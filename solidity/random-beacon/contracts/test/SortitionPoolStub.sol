@@ -46,7 +46,24 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
         return SortitionTree.getIDOperator(id);
     }
 
-    function removeOperators(address[] memory _operators) external override {
+    function getIDOperators(uint32[] calldata ids)
+        public
+        view
+        override
+        returns (address[] memory)
+    {
+        address[] memory operators = new address[](ids.length);
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            operators[i] = SortitionTree.getIDOperator(ids[i]);
+        }
+
+        return operators;
+    }
+
+    function removeOperators(uint32[] calldata ids) external override {
+        address[] memory _operators = getIDOperators(ids);
+
         for (uint256 i = 0; i < _operators.length; i++) {
             delete operators[_operators[i]];
             delete eligibleOperators[_operators[i]];

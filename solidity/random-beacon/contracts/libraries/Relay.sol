@@ -204,14 +204,14 @@ library Relay {
 
         // Get the list of members addresses which should be punished due to
         // not submitting the entry on their turn.
-        address[] memory punishedMembers = getPunishedMembers(
+        uint32[] memory punishedMembersIDs = getPunishedMembers(
             self,
             submitterIndex,
             firstEligibleIndex,
             group,
             groupSize
         );
-        self.sortitionPool.removeOperators(punishedMembers);
+        self.sortitionPool.removeOperators(punishedMembersIDs);
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
@@ -219,8 +219,12 @@ library Relay {
         // the final result needs to be divided by 1e18.
         uint256 slashingAmount = (getSlashingFactor(self, groupSize) *
             self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
+        // TODO: This call will be removed from here in the follow-up PR.
         // slither-disable-next-line reentrancy-events
-        self.staking.slash(slashingAmount, group.members);
+        self.staking.slash(
+            slashingAmount,
+            self.sortitionPool.getIDOperators(group.members)
+        );
 
         self.previousEntry = entry;
         delete self.currentRequest;
@@ -285,7 +289,7 @@ library Relay {
 
         self.staking.slash(
             self.relayEntrySubmissionFailureSlashingAmount,
-            group.members
+            self.sortitionPool.getIDOperators(group.members)
         );
 
         delete self.currentRequest;
@@ -418,12 +422,12 @@ library Relay {
         uint256 _firstEligibleIndex,
         Groups.Group memory _group,
         uint256 _groupSize
-    ) internal view returns (address[] memory) {
+    ) internal view returns (uint32[] memory) {
         uint256 punishedMembersCount = _submitterIndex >= _firstEligibleIndex
             ? _submitterIndex - _firstEligibleIndex
             : _groupSize - (_firstEligibleIndex - _submitterIndex);
 
-        address[] memory punishedMembers = new address[](punishedMembersCount);
+        uint32[] memory punishedMembersIDs = new uint32[](punishedMembersCount);
 
         for (uint256 i = 0; i < punishedMembersCount; i++) {
             uint256 memberIndex = _firstEligibleIndex + i;
@@ -431,10 +435,10 @@ library Relay {
                 ? memberIndex - _groupSize
                 : memberIndex;
 
-            punishedMembers[i] = _group.members[memberIndex - 1];
+            punishedMembersIDs[i] = _group.members[memberIndex - 1];
         }
 
-        return punishedMembers;
+        return punishedMembersIDs;
     }
 
     /// @notice Computes the slashing factor which should be used during

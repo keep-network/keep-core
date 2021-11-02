@@ -39,8 +39,8 @@ contract RelayStub {
     function getPunishedMembers(
         uint256 submitterIndex,
         uint256 firstEligibleIndex,
-        address[] memory members
-    ) external view returns (address[] memory) {
+        uint32[] memory members
+    ) external view returns (uint32[] memory) {
         Groups.Group memory group;
         group.members = members;
 
