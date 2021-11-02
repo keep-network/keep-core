@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useMemo } from "react"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
 import TokenAmount from "../../components/TokenAmount"
@@ -8,12 +8,12 @@ import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
 import resourceTooltipProps from "../../constants/tooltips"
 import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
 import useGrantedBalanceInfo from "../../hooks/useGrantedBalanceInfo"
-import { lte } from "../../utils/arithmetics.utils"
+import { add, lte } from "../../utils/arithmetics.utils"
 import {
   useWeb3Address,
   useWeb3Context,
 } from "../../components/WithWeb3Context"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
@@ -33,11 +33,53 @@ const ThresholdUpgradePage = () => {
     }
   }, [dispatch, isConnected, address])
 
-  const { totalOwnedUnstakedBalance, totalKeepTokenBalance } =
+  const { delegations, undelegations } = useSelector((state) => state.staking)
+
+  const { totalOwnedStakedBalance, totalOwnedUnstakedBalance } =
     useKeepBalanceInfo()
 
-  const { totalGrantedUnstakedBalance, totalGrantedTokenBalance } =
+  const { totalGrantedStakedBalance, totalGrantedUnstakedBalance } =
     useGrantedBalanceInfo()
+
+  const notStakedTotalAmount = useMemo(() => {
+    return add(
+      totalOwnedUnstakedBalance,
+      totalGrantedUnstakedBalance
+    ).toString()
+  }, [totalOwnedUnstakedBalance, totalGrantedUnstakedBalance])
+
+  const stakedTotalAmount = useMemo(() => {
+    return add(totalOwnedStakedBalance, totalGrantedStakedBalance).toString()
+  }, [totalOwnedStakedBalance, totalGrantedStakedBalance])
+
+  const {
+    totalStakedPendingKeep,
+    totalStakedAvailableKeep,
+    totalUndelegatedAvailableKeep,
+  } = useMemo(() => {
+    const totalStakedPendingKeep = [...undelegations]
+      .filter((delegation) => !delegation.canRecoverStake)
+      .map(({ amount }) => amount)
+      .reduce(add, "0")
+      .toString()
+
+    const totalStakedAvailableKeep = [...delegations]
+      .map(({ amount }) => amount)
+      .reduce(add, "0")
+      .toString()
+
+    const totalUndelegatedAvailableKeep = [...undelegations]
+      .filter((delegation) => delegation.canRecoverStake)
+      .map(({ amount }) => amount)
+      .reduce(add, "0")
+      .toString()
+
+    return {
+      totalStakedPendingKeep,
+      totalStakedAvailableKeep,
+      totalUndelegatedAvailableKeep,
+    }
+  }, [delegations, undelegations])
 
   const onWithdrawFromGrant = () => {
     console.log("withdraw from grant clicked!")
@@ -46,10 +88,12 @@ const ThresholdUpgradePage = () => {
   return (
     <section className="threshold-upgrade-page">
       <section className="tile threshold-upgrade-page__explanation">
-        <Icons.CoveragePool className="threshold-upgrade-page__explanation__icon" />
+        <Icons.KeepTUpgrade className="threshold-upgrade-page__explanation__icon" />
         <header>
-          <h2 className="text-grey-70">Upgrade Your KEEP to T</h2>
-          <h3 className="text-grey-50">
+          <h2 className="text-grey-70 threshold-how-it-works-page__explanation-title">
+            Upgrade Your KEEP to T
+          </h2>
+          <h3 className="text-grey-50 threshold-how-it-works-page__explanation-description">
             Threshold Network is the network merger between Keep and NuCypher.
             Upgrade your KEEP to T below.
           </h3>
@@ -66,24 +110,24 @@ const ThresholdUpgradePage = () => {
         <h3 className="mb-1">Not staked</h3>
         <TokenAmount
           wrapperClassName={"not-staked__token-amount mb-2"}
-          amount={"500000320000000000000000"}
+          amount={notStakedTotalAmount}
           token={KEEP}
           withIcon
         />
         <AllocationProgressBar
           title={"wallet"}
           currentValue={totalOwnedUnstakedBalance}
-          totalValue={totalKeepTokenBalance}
+          totalValue={notStakedTotalAmount}
           className={"mb-1"}
         />
         <AllocationProgressBar
           title={"available grant allocation"}
           currentValue={totalGrantedUnstakedBalance}
-          totalValue={totalGrantedTokenBalance}
+          totalValue={notStakedTotalAmount}
           className={"mb-2"}
         />
         <div className="upgrade-not-staked">
-          <h4 className={"mb-1"}>Upgrade not staked tokens</h4>
+          <h4 className={"mb-1"}>Upgrade Not Staked Tokens</h4>
           <UpgradeTokensTile
             title={"Wallet"}
             btnText={"upgrade to t"}
@@ -113,7 +157,77 @@ const ThresholdUpgradePage = () => {
       </section>
 
       <section className="tile staked">
-        <h3>Staked</h3>
+        <div className="staked__title-container">
+          <h3 className="staked__title">Staked</h3>
+          <div className="staked__additional-info">
+            <span className="staked__additional-info-row mr-2">
+              <Icons.Success
+                width={16}
+                height={16}
+                className="staked__additional-info-icon staked__additional-info-icon--color-green"
+              />{" "}
+              ECDSA
+            </span>
+            <span className="staked__additional-info-row">
+              <Icons.Success
+                width={16}
+                height={16}
+                className="staked__additional-info-icon staked__additional-info-icon--color-green"
+              />{" "}
+              Random Beacon
+            </span>
+          </div>
+        </div>
+        <TokenAmount
+          wrapperClassName={"staked__token-amount mb-2"}
+          amount={stakedTotalAmount}
+          token={KEEP}
+          withIcon
+        />
+        <AllocationProgressBar
+          title={"staked"}
+          currentValue={totalStakedAvailableKeep}
+          totalValue={stakedTotalAmount}
+          className={"mb-1"}
+          secondaryValue={totalStakedPendingKeep}
+          withLegend
+          currentValueLegendLabel={"Staked"}
+          secondaryValueLegendLabel={"Pending Undelegation"}
+        />
+        <AllocationProgressBar
+          title={"undelegated"}
+          currentValue={totalUndelegatedAvailableKeep}
+          totalValue={stakedTotalAmount}
+          className={"mb-3"}
+        />
+        <div className="upgrade-staked">
+          <h4 className={"mb-1"}>Upgrade Staked Tokens</h4>
+          <UpgradeTokensTile
+            title={"Staked"}
+            btnText={"undelegate"}
+            className={"mb-1"}
+          >
+            <UpgradeTokensTile.Row
+              label={"Total Pending KEEP"}
+              amount={totalStakedPendingKeep}
+            />
+            <UpgradeTokensTile.Row
+              label={"Total Available KEEP"}
+              amount={totalStakedAvailableKeep}
+            />
+          </UpgradeTokensTile>
+          <UpgradeTokensTile
+            title={"Undelegated"}
+            btnText={"claim tokens"}
+            onBtnClick={onWithdrawFromGrant}
+            buttonDisabled={lte(totalGrantedUnstakedBalance, 0)}
+          >
+            <UpgradeTokensTile.Row
+              label={"Total Available KEEP"}
+              amount={totalUndelegatedAvailableKeep}
+            />
+          </UpgradeTokensTile>
+        </div>
       </section>
     </section>
   )

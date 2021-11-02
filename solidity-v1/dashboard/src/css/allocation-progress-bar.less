@@ -1,17 +1,31 @@
 .allocation-progress-bar {
-  grid-area: not-staked;
   token-allocation-data {
   }
 
   &__token-allocation {
   }
+
   &__progress-bar-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
   }
+
   &__progress-bar-wrapper {
     margin: 0 !important;
+    max-width: 85%;
   }
+
   &__allocation-percentage-value {
+  }
+
+  &__legend {
+    display: flex;
+    align-items: center;
+  }
+
+  &__legend-dot {
+    .dot(16px, @primary-color);
+    margin-right: 0.3rem;
   }
 }

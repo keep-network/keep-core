@@ -8,12 +8,12 @@ const HowItWorksPage = () => {
   return (
     <section className="threshold-how-it-works-page">
       <section className="tile threshold-how-it-works-page__explanation">
-        <Icons.CoveragePool className="threshold-how-it-works-page__explanation__icon" />
+        <Icons.KeepTUpgrade className="threshold-how-it-works-page__explanation__icon" />
         <header>
-          <h2 className="text-grey-70">
+          <h2 className="text-grey-70 threshold-how-it-works-page__explanation-title">
             How to move KEEP to Threshold Network
           </h2>
-          <h3 className="text-grey-50">
+          <h3 className="text-grey-50 threshold-how-it-works-page__explanation-description">
             Learn more below about upgrading your KEEP to T and get started with
             the Threshold Network.
           </h3>

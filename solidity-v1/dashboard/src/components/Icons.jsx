@@ -66,6 +66,7 @@ export { ReactComponent as Swap } from "../static/svg/swap.svg"
 export { ReactComponent as ChevronRight } from "../static/svg/chevron-right.svg"
 export { ReactComponent as Refresh } from "../static/svg/refresh.svg"
 export { ReactComponent as TTokenSymbol } from "../static/svg/t-token-symbol.svg"
+export { ReactComponent as KeepTUpgrade } from "../static/svg/keep-t-upgrade-logo.svg"
 
 const Badge = ({ height, width }) => (
   <svg
