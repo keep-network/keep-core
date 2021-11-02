@@ -431,9 +431,10 @@ library Relay {
 
         for (uint256 i = 0; i < punishedMembersCount; i++) {
             uint256 memberIndex = _firstEligibleIndex + i;
-            memberIndex = memberIndex > _groupSize
-                ? memberIndex - _groupSize
-                : memberIndex;
+
+            if (memberIndex > _groupSize) {
+                memberIndex = memberIndex - _groupSize;
+            }
 
             punishedMembersIDs[i] = _group.members[memberIndex - 1];
         }
