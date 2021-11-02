@@ -3,7 +3,10 @@ import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { constants, randomBeaconDeployment } from "./fixtures"
+import {
+  constants,
+  randomBeaconDeploymentWithStubSortitionPool,
+} from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type { DeployedContracts } from "./fixtures"
 import type {
@@ -18,7 +21,7 @@ import { registerOperators, Operator } from "./utils/sortitionpool"
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const deployment = await randomBeaconDeployment()
+  const deployment = await randomBeaconDeploymentWithStubSortitionPool()
 
   const contracts: DeployedContracts = {
     randomBeacon: deployment.randomBeacon,

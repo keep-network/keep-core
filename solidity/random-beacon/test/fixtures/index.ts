@@ -1,7 +1,9 @@
 import { Contract } from "ethers"
 import { ethers } from "hardhat"
 import type {
+  SortitionPool,
   SortitionPoolStub,
+  StakingContractStub,
   RandomBeaconStub,
   RandomBeaconGovernance,
 } from "../../typechain"
@@ -58,7 +60,7 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function randomBeaconDeployment(): Promise<DeployedContracts> {
+export async function randomBeaconDeploymentWithStubSortitionPool(): Promise<DeployedContracts> {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
   const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
 
@@ -85,8 +87,51 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function randomBeaconDeploymentWithRealSortitionPool(): Promise<DeployedContracts> {
+  const minStake = 2000
+  const poolWightDevisor = 2000
+  const dummySortitionPoolOperator =
+    "0x0000000000000000000000000000000000000001"
+  const StakingContractStub = await ethers.getContractFactory(
+    "StakingContractStub"
+  )
+  const stakingContractStub: StakingContractStub =
+    await StakingContractStub.deploy()
+
+  const SortitionPool = await ethers.getContractFactory("SortitionPool")
+  const sortitionPool: SortitionPool = await SortitionPool.deploy(
+    stakingContractStub.address,
+    minStake,
+    poolWightDevisor,
+    dummySortitionPoolOperator
+  )
+
+  const { testToken } = await testTokenDeployment()
+
+  const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
+    libraries: {
+      BLS: (await blsDeployment()).bls.address,
+    },
+  })
+
+  const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
+    sortitionPool.address,
+    testToken.address
+  )
+  await randomBeacon.deployed()
+
+  const contracts: DeployedContracts = {
+    sortitionPool,
+    stakingContractStub,
+    randomBeacon,
+    testToken,
+  }
+
+  return contracts
+}
+
 export async function testDeployment(): Promise<DeployedContracts> {
-  const contracts = await randomBeaconDeployment()
+  const contracts = await randomBeaconDeploymentWithStubSortitionPool()
 
   const RandomBeaconGovernance = await ethers.getContractFactory(
     "RandomBeaconGovernance"
