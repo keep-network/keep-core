@@ -36,7 +36,7 @@ contract RelayStub {
             );
     }
 
-    function getPunishedMembers(
+    function getInactiveMembers(
         uint256 submitterIndex,
         uint256 firstEligibleIndex,
         uint32[] memory members
@@ -45,7 +45,7 @@ contract RelayStub {
         group.members = members;
 
         return
-            relay.getPunishedMembers(
+            relay.getInactiveMembers(
                 submitterIndex,
                 firstEligibleIndex,
                 group,
