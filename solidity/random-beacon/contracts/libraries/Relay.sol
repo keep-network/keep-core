@@ -219,12 +219,15 @@ library Relay {
         // the final result needs to be divided by 1e18.
         uint256 slashingAmount = (getSlashingFactor(self, groupSize) *
             self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
+
         // TODO: This call will be removed from here in the follow-up PR.
-        // slither-disable-next-line reentrancy-events
-        self.staking.slash(
-            slashingAmount,
-            self.sortitionPool.getIDOperators(group.members)
-        );
+        if (slashingAmount > 0) {
+            // slither-disable-next-line reentrancy-events
+            self.staking.slash(
+                slashingAmount,
+                self.sortitionPool.getIDOperators(group.members)
+            );
+        }
 
         self.previousEntry = entry;
         delete self.currentRequest;
