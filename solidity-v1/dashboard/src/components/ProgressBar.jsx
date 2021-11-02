@@ -3,15 +3,22 @@ import BigNumber from "bignumber.js"
 import CircularProgressBar from "./CircularProgressBar"
 import { percentageOf, sub, lt } from "../utils/arithmetics.utils"
 import { formatValue } from "../utils/general.utils"
+import OnlyIf from "./OnlyIf"
 
 const defaultValue = 0
 const totalDefaultValue = 1
+const defaultSecondaryValue = 0
 
-const calculateWidth = (value, total) => {
+const calculateWidth = (value, total, secondaryValue = null) => {
   const valueInBn = new BigNumber(value || defaultValue)
   const totalInBn = new BigNumber(total || totalDefaultValue)
+  const secondaryValueInBn = new BigNumber(
+    secondaryValue || defaultSecondaryValue
+  )
 
-  return valueInBn.multipliedBy(100).div(totalInBn).toFixed(2).toString()
+  const finalValueInBn = valueInBn.plus(secondaryValueInBn)
+
+  return finalValueInBn.multipliedBy(100).div(totalInBn).toFixed(2).toString()
 }
 
 const ProgressBarContext = React.createContext({ value: 0, total: 0 })
@@ -26,18 +33,38 @@ const useProgressBarContext = () => {
   return context
 }
 
-const ProgressBar = ({ value, total, color, bgColor, children }) => {
+const ProgressBar = ({
+  value,
+  total,
+  color,
+  bgColor,
+  secondaryValue = null,
+  secondaryColor = null,
+  children,
+}) => {
   return (
-    <ProgressBarContext.Provider value={{ value, total, color, bgColor }}>
+    <ProgressBarContext.Provider
+      value={{ value, total, color, bgColor, secondaryValue, secondaryColor }}
+    >
       {children}
     </ProgressBarContext.Provider>
   )
 }
 
 const ProgressBarInline = ({ height = 10, className = "" }) => {
-  const { value, total, color, bgColor } = useProgressBarContext()
+  const { value, total, color, bgColor, secondaryValue, secondaryColor } =
+    useProgressBarContext()
 
-  const barWidth = useMemo(() => calculateWidth(value, total), [value, total])
+  const isDoubleColored = !!secondaryColor && !!secondaryValue
+
+  const barWidth = useMemo(
+    () => calculateWidth(value, total, secondaryValue),
+    [value, total, secondaryValue]
+  )
+  const secondaryBarWidth = useMemo(
+    () => calculateWidth(secondaryValue, total),
+    [secondaryValue, total]
+  )
 
   return (
     <div
@@ -48,12 +75,23 @@ const ProgressBarInline = ({ height = 10, className = "" }) => {
       }}
     >
       <div
-        className="progress-bar"
+        className={`progress-bar ${
+          isDoubleColored ? "progress-bar--main-color" : ""
+        }`}
         style={{
           width: `${barWidth}%`,
           backgroundColor: color,
         }}
       />
+      <OnlyIf condition={isDoubleColored}>
+        <div
+          className="progress-bar progress-bar--secondary-color"
+          style={{
+            width: `${secondaryBarWidth}%`,
+            backgroundColor: secondaryColor,
+          }}
+        />
+      </OnlyIf>
     </div>
   )
 }
