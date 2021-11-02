@@ -127,26 +127,18 @@ library Relay {
     ///         include a random number (by signing the previous entry's
     ///         random number).
     /// @param groupId Identifier of the group chosen to handle the request.
-    /// @param isFeeRequired Flag which determines whether the request fee
-    ///        should be required upon request creation.
-    function requestEntry(
-        Data storage self,
-        uint64 groupId,
-        bool isFeeRequired
-    ) internal {
+    function requestEntry(Data storage self, uint64 groupId) internal {
         require(
             !isRequestInProgress(self),
             "Another relay request in progress"
         );
 
-        if (isFeeRequired) {
-            // slither-disable-next-line reentrancy-events
-            self.tToken.safeTransferFrom(
-                msg.sender,
-                address(this),
-                self.relayRequestFee
-            );
-        }
+        // slither-disable-next-line reentrancy-events
+        self.tToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            self.relayRequestFee
+        );
 
         uint64 currentRequestId = ++self.requestCount;
 
@@ -281,19 +273,31 @@ library Relay {
             .relayEntrySubmissionFailureSlashingAmount = newRelayEntrySubmissionFailureSlashingAmount;
     }
 
-    /// @notice Reports a relay entry timeout.
-    /// @param group Group data.
-    function reportEntryTimeout(Data storage self, Groups.Group memory group)
-        internal
-    {
+    /// @notice Retries the current relay request in case a relay entry
+    ///         timeout was reported.
+    /// @param groupId ID of the group chosen to retry the current request.
+    function retryOnEntryTimeout(Data storage self, uint64 groupId) internal {
+        require(hasRequestTimedOut(self), "Relay request did not time out");
+
+        uint64 currentRequestId = self.currentRequest.id;
+
+        emit RelayEntryTimedOut(currentRequestId);
+
+        self.currentRequest = Request(
+            currentRequestId,
+            groupId,
+            uint128(block.number)
+        );
+
+        emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
+    }
+
+    /// @notice Cleans up the current relay request in case a relay entry
+    ///         timeout was reported.
+    function cleanupOnEntryTimeout(Data storage self) internal {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
         emit RelayEntryTimedOut(self.currentRequest.id);
-
-        self.staking.slash(
-            self.relayEntrySubmissionFailureSlashingAmount,
-            self.sortitionPool.getIDOperators(group.members)
-        );
 
         delete self.currentRequest;
     }

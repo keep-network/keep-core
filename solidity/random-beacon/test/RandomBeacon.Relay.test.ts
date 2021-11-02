@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
@@ -9,6 +11,7 @@ import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
   RandomBeacon,
+  RandomBeaconStub,
   TestToken,
   RelayStub,
   SortitionPoolStub,
@@ -98,7 +101,7 @@ describe("RandomBeacon - Relay", () => {
   describe("requestRelayEntry", () => {
     context("when groups exist", () => {
       beforeEach(async () => {
-        await createGroup(randomBeacon, signers)
+        await createGroup(randomBeacon as RandomBeaconStub, signers)
       })
 
       context("when there is no other relay entry in progress", () => {
@@ -169,7 +172,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("submitRelayEntry", () => {
     beforeEach(async () => {
-      await createGroup(randomBeacon, signers)
+      await createGroup(randomBeacon as RandomBeaconStub, signers)
     })
 
     context("when relay request is in progress", () => {
@@ -419,34 +422,91 @@ describe("RandomBeacon - Relay", () => {
     })
 
     context("when relay entry timed out", () => {
-      let tx: ContractTransaction
+      context(
+        "when other active groups exist after timeout is reported",
+        () => {
+          let tx: ContractTransaction
 
-      beforeEach(async () => {
-        // `groupSize * relayEntrySubmissionEligibilityDelay +
-        // relayEntryHardTimeout`.
-        await mineBlocks(64 * 10 + 5760)
+          beforeEach(async () => {
+            // Create another group in a rough way just to have an active group
+            // once the one handling the timed out request gets terminated.
+            // This makes the request retry possible. That group will not
+            // perform any signing so their public key can be arbitrary bytes.
+            // Also, that group is created just after the relay request is
+            // made to ensure it is not selected for signing the original request.
+            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
+              "0x01",
+              signersIDs
+            )
 
-        tx = await randomBeacon.reportRelayEntryTimeout()
-      })
+            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // relayEntryHardTimeout`.
+            await mineBlocks(64 * 10 + 5760)
 
-      it("should slash entire stakes of all group members", async () => {
-        await expect(tx)
-          .to.emit(staking, "Slashed")
-          .withArgs(to1e18(1000), signersAddresses)
-      })
+            tx = await randomBeacon.reportRelayEntryTimeout()
+          })
 
-      it("should emit RelayEntryTimedOut event", async () => {
-        await expect(tx).to.emit(randomBeacon, "RelayEntryTimedOut").withArgs(1)
-      })
+          it("should slash entire stakes of all group members", async () => {
+            await expect(tx)
+              .to.emit(staking, "Slashed")
+              .withArgs(to1e18(1000), signersAddresses)
+          })
 
-      it("should terminate the group", async () => {
-        // TODO: Implementation once `Groups` library is ready.
-      })
+          it("should terminate the group", async () => {
+            // TODO: Implementation once `Groups` library is ready.
+          })
 
-      it("should request a new relay entry", async () => {
-        await expect(tx)
-          .to.emit(randomBeacon, "RelayEntryRequested")
-          .withArgs(2, 0, blsData.previousEntry)
+          it("should emit RelayEntryTimedOut event", async () => {
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryTimedOut")
+              .withArgs(1)
+          })
+
+          it("should retry current relay request", async () => {
+            // We expect the same request ID because this is a retry.
+            // Group ID is still `0` because there is only one group
+            // after termination was performed.
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryRequested")
+              .withArgs(1, 0, blsData.previousEntry)
+
+            expect(await randomBeacon.isRelayRequestInProgress()).to.be.true
+          })
+        }
+      )
+
+      context("when no active groups exist after timeout is reported", () => {
+        let tx: ContractTransaction
+
+        beforeEach(async () => {
+          // `groupSize * relayEntrySubmissionEligibilityDelay +
+          // relayEntryHardTimeout`.
+          await mineBlocks(64 * 10 + 5760)
+
+          tx = await randomBeacon.reportRelayEntryTimeout()
+        })
+
+        it("should slash entire stakes of all group members", async () => {
+          await expect(tx)
+            .to.emit(staking, "Slashed")
+            .withArgs(to1e18(1000), signersAddresses)
+        })
+
+        it("should terminate the group", async () => {
+          // TODO: Implementation once `Groups` library is ready.
+        })
+
+        it("should emit RelayEntryTimedOut event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "RelayEntryTimedOut")
+            .withArgs(1)
+        })
+
+        it("should clean up current relay request data", async () => {
+          // TODO: Uncomment those assertions once termination is implemented.
+          // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+        })
       })
     })
 

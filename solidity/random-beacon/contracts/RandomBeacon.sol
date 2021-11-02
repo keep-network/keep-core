@@ -115,6 +115,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    IStaking public staking;
 
     // Libraries data storages
     DKG.Data internal dkg;
@@ -199,6 +200,7 @@ contract RandomBeacon is Ownable {
         IStaking _staking
     ) {
         sortitionPool = _sortitionPool;
+        staking = _staking;
 
         // Governable parameters
         callbackGasLimit = 200e3;
@@ -500,28 +502,18 @@ contract RandomBeacon is Ownable {
         return groups.getGroup(groupPubKey);
     }
 
-    /// @notice External version of _requestRelayEntry. Requires the request fee.
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number). Requires a request fee denominated in T token.
+    /// @param callbackContract Beacon consumer callback contract.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
         external
     {
-        _requestRelayEntry(callbackContract, true);
-    }
-
-    /// @notice Creates a request to generate a new relay entry, which will
-    ///         include a random number (by signing the previous entry's
-    ///         random number).
-    /// @param callbackContract Beacon consumer callback contract.
-    /// @param isFeeRequired Flag which determines whether the request fee
-    ///        should be required upon request creation.
-    function _requestRelayEntry(
-        IRandomBeaconConsumer callbackContract,
-        bool isFeeRequired
-    ) internal {
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(relay.previousEntry))
         );
 
-        relay.requestEntry(groupId, isFeeRequired);
+        relay.requestEntry(groupId);
 
         callback.setCallbackContract(callbackContract);
     }
@@ -549,15 +541,24 @@ contract RandomBeacon is Ownable {
     /// @notice Reports a relay entry timeout.
     function reportRelayEntryTimeout() external {
         uint64 groupId = relay.currentRequest.groupId;
-        relay.reportEntryTimeout(groups.getGroup(groupId));
+        address[] memory groupMembers = sortitionPool.getIDOperators(
+            groups.getGroup(groupId).members
+        );
 
-        // TODO: Once implemented, invoke:
-        // terminateGroup(groupId);
+        staking.slash(
+            relay.relayEntrySubmissionFailureSlashingAmount,
+            groupMembers
+        );
 
-        // In case we retry the timed out request, we can't require the
-        // the request fee to be payed.
+        // TODO: Once implemented, terminate group using `groupId`.
+
         if (groups.numberOfActiveGroups() > 0) {
-            _requestRelayEntry(callback.callbackContract, false);
+            groupId = groups.selectGroup(
+                uint256(keccak256(relay.previousEntry))
+            );
+            relay.retryOnEntryTimeout(groupId);
+        } else {
+            relay.cleanupOnEntryTimeout();
         }
     }
 
