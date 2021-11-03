@@ -430,7 +430,7 @@ contract RandomBeacon is Ownable {
         groups.addCandidateGroup(
             dkgResult.groupPubKey,
             dkgResult.members,
-            dkgResult.misbehaved
+            dkgResult.misbehavedMembersIndices
         );
     }
 
