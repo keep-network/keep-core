@@ -56,11 +56,11 @@ library Relay {
         uint256 relayEntrySubmissionFailureSlashingAmount;
     }
 
-    /// @notice Ideal size of a group in the threshold relay. A group has
-    ///         an ideal size if all their members behaved properly during
+    /// @notice Target DKG group size in the threshold relay. A group has
+    ///         the target size if all their members behaved properly during
     ///         group formation. Actual group size can be lower in groups
     ///         with proven misbehaved members.
-    uint256 public constant idealGroupSize = 64;
+    uint256 public constant dkgGroupSize = 64;
 
     /// @notice Seed used as the first relay entry value.
     /// It's a G1 point G * PI =
@@ -217,7 +217,7 @@ library Relay {
         // all group members. Note that `getSlashingFactor` returns the
         // factor multiplied by 1e18 to avoid precision loss. In that case
         // the final result needs to be divided by 1e18.
-        uint256 slashingAmount = (getSlashingFactor(self, idealGroupSize) *
+        uint256 slashingAmount = (getSlashingFactor(self, dkgGroupSize) *
             self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
 
         // TODO: This call will be removed from here in the follow-up PR.
@@ -332,7 +332,7 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 relayEntryTimeout = (idealGroupSize *
+        uint256 relayEntryTimeout = (dkgGroupSize *
             self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
 
