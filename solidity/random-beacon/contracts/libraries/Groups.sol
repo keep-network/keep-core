@@ -69,7 +69,7 @@ library Groups {
     }
 
     /// @notice Sets addresses of members for the group eliminating members at
-    ///         positions pointed by the misbehaved array.
+    ///         positions pointed by the misbehavedMembersIndices array.
     ///
     ///         NOTE THAT THIS FUNCTION CHANGES ORDER OF MEMBERS IN THE GROUP
     ///         IF THERE IS AT LEAST ONE MISBEHAVED MEMBER

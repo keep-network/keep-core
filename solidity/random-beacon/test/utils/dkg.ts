@@ -77,7 +77,7 @@ export async function signAndSubmitDkgResult(
 async function signDkgResult(
   signers: Operator[],
   groupPublicKey: string,
-  misbehaved: number[],
+  misbehavedMembersIndices: number[],
   startBlock: number
 ): Promise<{
   members: number[]
@@ -86,7 +86,7 @@ async function signDkgResult(
 }> {
   const resultHash = ethers.utils.solidityKeccak256(
     ["bytes", "uint8[]", "uint256"],
-    [groupPublicKey, misbehaved, startBlock]
+    [groupPublicKey, misbehavedMembersIndices, startBlock]
   )
 
   const members: number[] = []
