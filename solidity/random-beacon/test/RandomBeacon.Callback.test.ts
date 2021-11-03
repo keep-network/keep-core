@@ -4,18 +4,43 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
 import { constants, randomBeaconDeployment } from "./fixtures"
-import { getDkgGroupSigners } from "./utils/dkg"
 import { createGroup } from "./utils/groups"
-import type { DkgGroupSigners } from "./utils/dkg"
 import type { DeployedContracts } from "./fixtures"
 import type {
-  RandomBeacon,
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
+  SortitionPoolStub,
 } from "../typechain"
+import { registerOperators, Operator } from "./utils/sortitionpool"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
+
+const fixture = async () => {
+  const deployment = await randomBeaconDeployment()
+
+  const contracts: DeployedContracts = {
+    randomBeacon: deployment.randomBeacon,
+    testToken: deployment.testToken,
+    callbackContractStub: await (
+      await ethers.getContractFactory("CallbackContractStub")
+    ).deploy(),
+    callbackContractStub1: await (
+      await ethers.getContractFactory("CallbackContractStub")
+    ).deploy(),
+  }
+
+  // Accounts offset provided to slice getUnnamedAccounts have to include number
+  // of unnamed accounts that were already used.
+  const signers = await registerOperators(
+    deployment.sortitionPoolStub as SortitionPoolStub,
+    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+  )
+
+  await createGroup(contracts.randomBeacon as RandomBeaconStub, signers)
+
+  return { contracts, signers }
+}
 
 describe("RandomBeacon - Callback", () => {
   const relayRequestFee = to1e18(100)
@@ -32,42 +57,21 @@ describe("RandomBeacon - Callback", () => {
 
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
-  let signers: DkgGroupSigners
+  let signers: Operator[]
 
   let randomBeacon: RandomBeaconStub
   let testToken: TestToken
   let callbackContract: CallbackContractStub
   let callbackContract1: CallbackContractStub
 
-  const fixture = async () => {
-    const deployment = await randomBeaconDeployment()
-
-    const contracts: DeployedContracts = {
-      randomBeacon: deployment.randomBeacon,
-      testToken: deployment.testToken,
-      callbackContractStub: await (
-        await ethers.getContractFactory("CallbackContractStub")
-      ).deploy(),
-      callbackContractStub1: await (
-        await ethers.getContractFactory("CallbackContractStub")
-      ).deploy(),
-    }
-
-    await createGroup(contracts.randomBeacon as RandomBeacon, signers)
-
-    return contracts
-  }
-
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-
-    signers = await getDkgGroupSigners(constants.groupSize, 1)
-
-    submitter = await ethers.getSigner(signers.get(submitterMemberIndex))
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    let contracts
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ contracts, signers } = await waffle.loadFixture(fixture))
 
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
     testToken = contracts.testToken as TestToken
@@ -79,6 +83,10 @@ describe("RandomBeacon - Callback", () => {
       relayEntrySubmissionEligibilityDelay,
       relayEntryHardTimeout,
       callbackGasLimit
+    )
+
+    submitter = await ethers.getSigner(
+      signers[submitterMemberIndex - 1].address
     )
   })
 
@@ -151,7 +159,7 @@ describe("RandomBeacon - Callback", () => {
             .connect(requester)
             .requestRelayEntry(callbackContract.address)
 
-          const tx = await randomBeacon
+          await randomBeacon
             .connect(submitter)
             .submitRelayEntry(16, blsData.groupSignature)
 

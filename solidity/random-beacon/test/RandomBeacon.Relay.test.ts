@@ -6,7 +6,6 @@ import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
-import { getDkgGroupSigners } from "./utils/dkg"
 import { to1e18 } from "./functions"
 import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
@@ -18,12 +17,32 @@ import type {
   SortitionPoolStub,
   StakingStub,
 } from "../typechain"
-import type { DkgGroupSigners } from "./utils/dkg"
+import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
 
 const { time } = helpers
 const { mineBlocks } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const TWO_WEEKS = 1209600 // 2 weeks in seconds
+
+const fixture = async () => {
+  const deployment = await randomBeaconDeployment()
+
+  const signers = await registerOperators(
+    deployment.sortitionPoolStub as SortitionPoolStub,
+    (await getUnnamedAccounts()).slice(0, constants.groupSize)
+  )
+
+  return {
+    randomBeacon: deployment.randomBeacon as RandomBeacon,
+    sortitionPool: deployment.sortitionPoolStub as SortitionPoolStub,
+    testToken: deployment.testToken as TestToken,
+    staking: deployment.stakingStub as StakingStub,
+    relayStub: (await (
+      await ethers.getContractFactory("RelayStub")
+    ).deploy()) as RelayStub,
+    signers,
+  }
+}
 
 describe("RandomBeacon - Relay", () => {
   const relayRequestFee = to1e18(100)
@@ -42,8 +61,9 @@ describe("RandomBeacon - Relay", () => {
   let member16: SignerWithAddress
   let member17: SignerWithAddress
   let member18: SignerWithAddress
-  let signers: DkgGroupSigners
-  const signersAddresses: Address[] = []
+  let signers: Operator[]
+  let signersIDs: OperatorID[]
+  let signersAddresses: Address[]
 
   let randomBeacon: RandomBeacon
   let sortitionPool: SortitionPoolStub
@@ -51,46 +71,30 @@ describe("RandomBeacon - Relay", () => {
   let staking: StakingStub
   let relayStub: RelayStub
 
-  const fixture = async () => {
-    const deployment = await randomBeaconDeployment()
-
-    return {
-      randomBeacon: deployment.randomBeacon,
-      sortitionPoolStub: deployment.sortitionPoolStub,
-      testToken: deployment.testToken,
-      stakingStub: deployment.stakingStub,
-      relayStub: await (await ethers.getContractFactory("RelayStub")).deploy(),
-    }
-  }
-
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-
-    signers = await getDkgGroupSigners(constants.groupSize, 1)
-
-    const signersAddressesIterator = signers.values()
-    let signerAddress = signersAddressesIterator.next()
-    while (!signerAddress.done) {
-      signersAddresses.push(signerAddress.value)
-      signerAddress = signersAddressesIterator.next()
-    }
-
-    member3 = await ethers.getSigner(
-      signers.get(invalidEntryFirstEligibleMemberIndex)
-    )
-    member16 = await ethers.getSigner(signers.get(firstEligibleMemberIndex))
-    member17 = await ethers.getSigner(signers.get(firstEligibleMemberIndex + 1))
-    member18 = await ethers.getSigner(signers.get(firstEligibleMemberIndex + 2))
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ randomBeacon, sortitionPool, testToken, staking, relayStub, signers } =
+      await waffle.loadFixture(fixture))
 
-    randomBeacon = contracts.randomBeacon as RandomBeacon
-    sortitionPool = contracts.sortitionPoolStub as SortitionPoolStub
-    testToken = contracts.testToken as TestToken
-    staking = contracts.stakingStub as StakingStub
-    relayStub = contracts.relayStub as RelayStub
+    signersIDs = signers.map((signer) => signer.id)
+    signersAddresses = signers.map((signer) => signer.address)
+
+    member3 = await ethers.getSigner(
+      signers[invalidEntryFirstEligibleMemberIndex - 1].address
+    )
+    member16 = await ethers.getSigner(
+      signers[firstEligibleMemberIndex - 1].address
+    )
+    member17 = await ethers.getSigner(
+      signers[firstEligibleMemberIndex + 1 - 1].address
+    )
+    member18 = await ethers.getSigner(
+      signers[firstEligibleMemberIndex + 2 - 1].address
+    )
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
   })
@@ -98,7 +102,7 @@ describe("RandomBeacon - Relay", () => {
   describe("requestRelayEntry", () => {
     context("when groups exist", () => {
       beforeEach(async () => {
-        await createGroup(randomBeacon, signers)
+        await createGroup(randomBeacon as RandomBeaconStub, signers)
       })
 
       context("when there is no other relay entry in progress", () => {
@@ -157,7 +161,7 @@ describe("RandomBeacon - Relay", () => {
 
     context("when no groups exist", () => {
       it("should revert", async () => {
-        // TODO: Implement once proper `selectGroup` is ready.
+        // TODO: The error message should be updated to more meaningful text once `selectGroup` is ready.
         await expect(
           randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         ).to.be.revertedWith(
@@ -169,8 +173,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("submitRelayEntry", () => {
     beforeEach(async () => {
-      await registerSortitionPoolOperators(signersAddresses)
-      await createGroup(randomBeacon, signers)
+      await createGroup(randomBeacon as RandomBeaconStub, signers)
     })
 
     context("when relay request is in progress", () => {
@@ -453,34 +456,91 @@ describe("RandomBeacon - Relay", () => {
     })
 
     context("when relay entry timed out", () => {
-      let tx: ContractTransaction
+      context(
+        "when other active groups exist after timeout is reported",
+        () => {
+          let tx: ContractTransaction
 
-      beforeEach(async () => {
-        // `groupSize * relayEntrySubmissionEligibilityDelay +
-        // relayEntryHardTimeout`.
-        await mineBlocks(64 * 10 + 5760)
+          beforeEach(async () => {
+            // Create another group in a rough way just to have an active group
+            // once the one handling the timed out request gets terminated.
+            // This makes the request retry possible. That group will not
+            // perform any signing so their public key can be arbitrary bytes.
+            // Also, that group is created just after the relay request is
+            // made to ensure it is not selected for signing the original request.
+            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
+              "0x01",
+              signersIDs
+            )
 
-        tx = await randomBeacon.reportRelayEntryTimeout()
-      })
+            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // relayEntryHardTimeout`.
+            await mineBlocks(64 * 10 + 5760)
 
-      it("should slash entire stakes of all group members", async () => {
-        await expect(tx)
-          .to.emit(staking, "Slashed")
-          .withArgs(to1e18(1000), signersAddresses)
-      })
+            tx = await randomBeacon.reportRelayEntryTimeout()
+          })
 
-      it("should emit RelayEntryTimedOut event", async () => {
-        await expect(tx).to.emit(randomBeacon, "RelayEntryTimedOut").withArgs(1)
-      })
+          it("should slash entire stakes of all group members", async () => {
+            await expect(tx)
+              .to.emit(staking, "Slashed")
+              .withArgs(to1e18(1000), signersAddresses)
+          })
 
-      it("should terminate the group", async () => {
-        // TODO: Implementation once `Groups` library is ready.
-      })
+          it("should terminate the group", async () => {
+            // TODO: Implementation once `Groups` library is ready.
+          })
 
-      it("should request a new relay entry", async () => {
-        await expect(tx)
-          .to.emit(randomBeacon, "RelayEntryRequested")
-          .withArgs(2, 0, blsData.previousEntry)
+          it("should emit RelayEntryTimedOut event", async () => {
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryTimedOut")
+              .withArgs(1)
+          })
+
+          it("should retry current relay request", async () => {
+            // We expect the same request ID because this is a retry.
+            // Group ID is still `0` because there is only one group
+            // after termination was performed.
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryRequested")
+              .withArgs(1, 0, blsData.previousEntry)
+
+            expect(await randomBeacon.isRelayRequestInProgress()).to.be.true
+          })
+        }
+      )
+
+      context("when no active groups exist after timeout is reported", () => {
+        let tx: ContractTransaction
+
+        beforeEach(async () => {
+          // `groupSize * relayEntrySubmissionEligibilityDelay +
+          // relayEntryHardTimeout`.
+          await mineBlocks(64 * 10 + 5760)
+
+          tx = await randomBeacon.reportRelayEntryTimeout()
+        })
+
+        it("should slash entire stakes of all group members", async () => {
+          await expect(tx)
+            .to.emit(staking, "Slashed")
+            .withArgs(to1e18(1000), signersAddresses)
+        })
+
+        it("should terminate the group", async () => {
+          // TODO: Implementation once `Groups` library is ready.
+        })
+
+        it("should emit RelayEntryTimedOut event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "RelayEntryTimedOut")
+            .withArgs(1)
+        })
+
+        it("should clean up current relay request data", async () => {
+          // TODO: Uncomment those assertions once termination is implemented.
+          // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+        })
       })
     })
 
@@ -494,114 +554,117 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("isEligible", () => {
+    const testGroupSize = 8
+
     it("should correctly manage the eligibility queue", async () => {
       await relayStub.setCurrentRequestStartBlock()
 
       // At the beginning only member 8 is eligible because
       // (blsData.groupSignature % groupSize) + 1 = 8.
-      await assertMembersEligible([8])
-      await assertMembersNotEligible([1, 2, 3, 4, 5, 6, 7])
+      await assertMembersEligible([8], testGroupSize)
+      await assertMembersNotEligible([1, 2, 3, 4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1])
-      await assertMembersNotEligible([2, 3, 4, 5, 6, 7])
+      await assertMembersEligible([8, 1], testGroupSize)
+      await assertMembersNotEligible([2, 3, 4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2])
-      await assertMembersNotEligible([3, 4, 5, 6, 7])
+      await assertMembersEligible([8, 1, 2], testGroupSize)
+      await assertMembersNotEligible([3, 4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3])
-      await assertMembersNotEligible([4, 5, 6, 7])
+      await assertMembersEligible([8, 1, 2, 3], testGroupSize)
+      await assertMembersNotEligible([4, 5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4])
-      await assertMembersNotEligible([5, 6, 7])
+      await assertMembersEligible([8, 1, 2, 3, 4], testGroupSize)
+      await assertMembersNotEligible([5, 6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4, 5])
-      await assertMembersNotEligible([6, 7])
+      await assertMembersEligible([8, 1, 2, 3, 4, 5], testGroupSize)
+      await assertMembersNotEligible([6, 7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6])
-      await assertMembersNotEligible([7])
+      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6], testGroupSize)
+      await assertMembersNotEligible([7], testGroupSize)
 
       await mineBlocks(10)
 
-      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6, 7])
+      await assertMembersEligible([8, 1, 2, 3, 4, 5, 6, 7], testGroupSize)
     })
   })
 
-  describe("getPunishedMembers", () => {
-    let members: Address[]
+  describe("getInactiveMembers", () => {
+    let members: OperatorID[]
 
     beforeEach(async () => {
-      // Group size is set to 8 in RelayStub contract.
       members = [
-        signersAddresses[0], // member index 1
-        signersAddresses[1], // member index 2
-        signersAddresses[2], // member index 3
-        signersAddresses[3], // member index 4
-        signersAddresses[4], // member index 5
-        signersAddresses[5], // member index 6
-        signersAddresses[6], // member index 7
-        signersAddresses[7], // member index 8
+        signersIDs[0], // member index 1
+        signersIDs[1], // member index 2
+        signersIDs[2], // member index 3
+        signersIDs[3], // member index 4
+        signersIDs[4], // member index 5
+        signersIDs[5], // member index 6
+        signersIDs[6], // member index 7
+        signersIDs[7], // member index 8
       ]
     })
 
     context("when submitter index is the first eligible index", () => {
-      it("should return empty punished members list", async () => {
-        const punishedMembers = await relayStub.getPunishedMembers(
+      it("should return empty inactive members list", async () => {
+        const inactiveMembers = await relayStub.getInactiveMembers(
           5,
           5,
           members
         )
 
-        await expect(punishedMembers.length).to.be.equal(0)
+        await expect(inactiveMembers.length).to.be.equal(0)
       })
     })
 
     context("when submitter index is bigger than first eligible index", () => {
-      it("should return a proper punished members list", async () => {
-        const punishedMembers = await relayStub.getPunishedMembers(
+      it("should return a proper inactive members list", async () => {
+        const inactiveMembers = await relayStub.getInactiveMembers(
           8,
           5,
           members
         )
 
-        await expect(punishedMembers.length).to.be.equal(3)
-        await expect(punishedMembers[0]).to.be.equal(members[4])
-        await expect(punishedMembers[1]).to.be.equal(members[5])
-        await expect(punishedMembers[2]).to.be.equal(members[6])
+        await expect(inactiveMembers.length).to.be.equal(3)
+        await expect(inactiveMembers[0]).to.be.equal(members[4])
+        await expect(inactiveMembers[1]).to.be.equal(members[5])
+        await expect(inactiveMembers[2]).to.be.equal(members[6])
       })
     })
 
     context("when submitter index is smaller than first eligible index", () => {
-      it("should return a proper punished members list", async () => {
-        const punishedMembers = await relayStub.getPunishedMembers(
+      it("should return a proper inactive members list", async () => {
+        const inactiveMembers = await relayStub.getInactiveMembers(
           3,
           5,
           members
         )
 
-        await expect(punishedMembers.length).to.be.equal(6)
-        await expect(punishedMembers[0]).to.be.equal(members[4])
-        await expect(punishedMembers[1]).to.be.equal(members[5])
-        await expect(punishedMembers[2]).to.be.equal(members[6])
-        await expect(punishedMembers[3]).to.be.equal(members[7])
-        await expect(punishedMembers[4]).to.be.equal(members[0])
-        await expect(punishedMembers[5]).to.be.equal(members[1])
+        await expect(inactiveMembers.length).to.be.equal(6)
+        await expect(inactiveMembers[0]).to.be.equal(members[4])
+        await expect(inactiveMembers[1]).to.be.equal(members[5])
+        await expect(inactiveMembers[2]).to.be.equal(members[6])
+        await expect(inactiveMembers[3]).to.be.equal(members[7])
+        await expect(inactiveMembers[4]).to.be.equal(members[0])
+        await expect(inactiveMembers[5]).to.be.equal(members[1])
       })
     })
   })
 
   describe("getSlashingFactor", () => {
+    const testGroupSize = 8
+
     beforeEach(async () => {
       await relayStub.setCurrentRequestStartBlock()
     })
@@ -611,7 +674,7 @@ describe("RandomBeacon - Relay", () => {
         // `groupSize * relayEntrySubmissionEligibilityDelay`
         await mineBlocks(8 * 10)
 
-        expect(await relayStub.getSlashingFactor()).to.be.equal(0)
+        expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(0)
       })
     })
 
@@ -624,7 +687,7 @@ describe("RandomBeacon - Relay", () => {
         // `submissionDelay` factor. If so we can calculate the slashing factor
         // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
         // gives `1 * 1e18 / 5760 = 173611111111111` (0.017%).
-        expect(await relayStub.getSlashingFactor()).to.be.equal(
+        expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
           BigNumber.from("173611111111111")
         )
       })
@@ -641,7 +704,7 @@ describe("RandomBeacon - Relay", () => {
           // `submissionDelay` factor. If so we can calculate the slashing
           // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
           // gives `5760 * 1e18 / 5760 = 1000000000000000000` (100%).
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
+          expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
             BigNumber.from("1000000000000000000")
           )
         })
@@ -659,7 +722,7 @@ describe("RandomBeacon - Relay", () => {
           // We are exceeded the soft timeout by a value bigger than the
           // hard timeout. In that case the maximum value (100%) of the slashing
           // factor should be returned.
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
+          expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
             BigNumber.from("1000000000000000000")
           )
         })
@@ -674,31 +737,32 @@ describe("RandomBeacon - Relay", () => {
       .approve(randomBeacon.address, relayRequestFee)
   }
 
-  async function assertMembersEligible(members: number[]) {
+  async function assertMembersEligible(members: number[], groupSize: number) {
     for (let i = 0; i < members.length; i++) {
-      // eslint-disable-next-line no-await-in-loop
-      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
-        .be.true
+      expect(
+        // eslint-disable-next-line no-await-in-loop
+        await relayStub.isEligible(
+          members[i],
+          blsData.groupSignature,
+          groupSize
+        )
+      ).to.be.true
     }
   }
 
-  async function assertMembersNotEligible(members: number[]) {
+  async function assertMembersNotEligible(
+    members: number[],
+    groupSize: number
+  ) {
     for (let i = 0; i < members.length; i++) {
-      // eslint-disable-next-line no-await-in-loop
-      expect(await relayStub.isEligible(members[i], blsData.groupSignature)).to
-        .be.false
+      expect(
+        // eslint-disable-next-line no-await-in-loop
+        await relayStub.isEligible(
+          members[i],
+          blsData.groupSignature,
+          groupSize
+        )
+      ).to.be.false
     }
-  }
-
-  async function registerSortitionPoolOperators(operatorsAddresses: Address[]) {
-    const operatorsSigners = await Promise.all(
-      operatorsAddresses.map(ethers.getSigner)
-    )
-
-    await Promise.all(
-      operatorsSigners.map((operatorSigner) =>
-        randomBeacon.connect(operatorSigner).registerOperator()
-      )
-    )
   }
 })

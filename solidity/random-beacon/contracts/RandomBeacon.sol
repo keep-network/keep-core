@@ -27,22 +27,35 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @notice This is an interface with just a few function signatures of the
 ///         Sortition Pool contract, which is available at
 ///         https://github.com/keep-network/sortition-pools/blob/main/contracts/SortitionPool.sol
+///
+/// TODO: Add a dependency to `keep-network/sortition-pools` and use sortition
+///       pool interface from there.
 interface ISortitionPool {
     function insertOperator(address operator) external;
 
-    function removeOperator(address operator) external;
+    function removeOperators(uint32[] calldata ids) external;
 
-    function updateOperatorStatus(address operator) external;
+    function updateOperatorStatus(uint32 id) external;
 
     function isOperatorInPool(address operator) external view returns (bool);
 
     function isOperatorEligible(address operator) external view returns (bool);
+
+    function getIDOperator(uint32 id) external view returns (address);
+
+    function getIDOperators(uint32[] calldata ids)
+        external
+        view
+        returns (address[] memory);
 }
 
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
 ///         Staking contract, which is available at
 ///         https://github.com/threshold-network/solidity-contracts/blob/main/contracts/staking/IStaking.sol
+///
+/// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
+///       staking interface from there.
 interface IStaking {
     function slash(uint256 amount, address[] memory operators) external;
 }
@@ -106,6 +119,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    IStaking public staking;
 
     // Libraries data storages
     DKG.Data internal dkg;
@@ -200,18 +214,22 @@ contract RandomBeacon is Ownable {
     ) {
         // TODO: RandomBeacon must be the owner of the sortition pool.
         sortitionPool = _sortitionPool;
+        staking = _staking;
 
         // Governable parameters
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(10);
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
 
+        dkg.initSortitionPool(_sortitionPool);
+        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(10);
+
         relay.initSeedEntry();
+        relay.initSortitionPool(_sortitionPool);
         relay.initTToken(_tToken);
         relay.initStaking(_staking);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
@@ -396,7 +414,9 @@ contract RandomBeacon is Ownable {
 
     /// @notice Updates the sortition pool status of the caller.
     function updateOperatorStatus() external {
-        sortitionPool.updateOperatorStatus(msg.sender);
+        sortitionPool.updateOperatorStatus(
+            sortitionPool.getIDOperator(msg.sender)
+        );
 
         // If the operator has been removed from the sorition pool during the
         // status update, release its gas deposit.
@@ -526,28 +546,18 @@ contract RandomBeacon is Ownable {
         return groups.getGroup(groupPubKey);
     }
 
-    /// @notice External version of _requestRelayEntry. Requires the request fee.
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number). Requires a request fee denominated in T token.
+    /// @param callbackContract Beacon consumer callback contract.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
         external
     {
-        _requestRelayEntry(callbackContract, true);
-    }
-
-    /// @notice Creates a request to generate a new relay entry, which will
-    ///         include a random number (by signing the previous entry's
-    ///         random number).
-    /// @param callbackContract Beacon consumer callback contract.
-    /// @param isFeeRequired Flag which determines whether the request fee
-    ///        should be required upon request creation.
-    function _requestRelayEntry(
-        IRandomBeaconConsumer callbackContract,
-        bool isFeeRequired
-    ) internal {
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(relay.previousEntry))
         );
 
-        relay.requestEntry(groupId, isFeeRequired);
+        relay.requestEntry(groupId);
 
         callback.setCallbackContract(callbackContract);
     }
@@ -558,7 +568,7 @@ contract RandomBeacon is Ownable {
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
     {
-        address[] memory punishedMembers = relay.submitEntry(
+        uint32[] memory punishedMembers = relay.submitEntry(
             submitterIndex,
             entry,
             groups.getGroup(relay.currentRequest.groupId)
@@ -577,15 +587,24 @@ contract RandomBeacon is Ownable {
     /// @notice Reports a relay entry timeout.
     function reportRelayEntryTimeout() external {
         uint64 groupId = relay.currentRequest.groupId;
-        relay.reportEntryTimeout(groups.getGroup(groupId));
+        address[] memory groupMembers = sortitionPool.getIDOperators(
+            groups.getGroup(groupId).members
+        );
 
-        // TODO: Once implemented, invoke:
-        // terminateGroup(groupId);
+        staking.slash(
+            relay.relayEntrySubmissionFailureSlashingAmount,
+            groupMembers
+        );
 
-        // In case we retry the timed out request, we can't require the
-        // the request fee to be payed.
+        // TODO: Once implemented, terminate group using `groupId`.
+
         if (groups.numberOfActiveGroups() > 0) {
-            _requestRelayEntry(callback.callbackContract, false);
+            groupId = groups.selectGroup(
+                uint256(keccak256(relay.previousEntry))
+            );
+            relay.retryOnEntryTimeout(groupId);
+        } else {
+            relay.cleanupOnEntryTimeout();
         }
     }
 
@@ -595,12 +614,14 @@ contract RandomBeacon is Ownable {
     /// @dev By the way, this function releases gas deposits made by operators
     ///      during their registration. See `registerOperator` function. This
     ///      action makes punishments cheaper gas-wise.
-    /// @param operators Addresses of punished operators.
+    /// @param ids IDs of punished operators.
     /// @param punishmentDuration Duration of the punishment period in seconds.
     function punishOperators(
-        address[] memory operators,
+        uint32[] memory ids,
         uint256 punishmentDuration
     ) internal {
+        address[] memory operators = sortitionPool.getIDOperators(ids);
+
         for (uint256 i = 0; i < operators.length; i++) {
             address operator = operators[i];
 
@@ -616,10 +637,13 @@ contract RandomBeacon is Ownable {
             // the operator to join the pool in future.
             if (sortitionPool.isOperatorInPool(operator)) {
                 gasStation.releaseGas(operator);
-                // TODO: Is it possible to kick out operator when pool is locked?
-                sortitionPool.removeOperator(operator);
+
             }
         }
+
+        // TODO: Is it possible to kick out operator when pool is locked?
+        // TODO: Filter out ids
+        sortitionPool.removeOperators(ids);
     }
 
     /// @return Flag indicating whether a relay entry request is currently

@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import "./BytesLib.sol";
-
 /// @notice This library is used as a registry of created groups.
 /// @dev This library should be used along with DKG library that ensures linear
-/// groups creation (only one group creation happens at a time). A candidate group
-/// has to be popped or activated before adding a new candidate group.
+///      groups creation (only one group creation happens at a time). A candidate
+///      group has to be popped or activated before adding a new candidate group.
 library Groups {
-    using BytesLib for bytes;
-
     event CandidateGroupRegistered(bytes indexed groupPubKey);
 
     event CandidateGroupRemoved(bytes indexed groupPubKey);
@@ -19,8 +15,7 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationTimestamp;
-        // TODO: Optimize members storing, see: https://github.com/keep-network/keep-core/pull/2666/files#r732629138
-        address[] members;
+        uint32[] members;
     }
 
     struct Data {
@@ -33,18 +28,19 @@ library Groups {
     }
 
     /// @notice Adds a new candidate group. The group is stored with group public
-    /// key and active members, but is not yet activated.
+    ///         key and group members, but is not yet activated.
+    /// @dev The group members list is stored with all misbehaved members filtered out.
     /// @param groupPubKey Generated candidate group public key
     /// @param members Addresses of candidate group members as outputted by the
     ///        group selection protocol.
-    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-    ///        group members indexes; Indexes reflect positions of members in the group,
+    /// @param misbehaved Array of misbehaved (disqualified or inactive) group
+    ///        members indices; Indices reflect positions of members in the group,
     ///        as outputted by the group selection protocol.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
-        address[] memory members,
-        bytes memory misbehaved
+        uint32[] calldata members,
+        uint8[] calldata misbehaved
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
@@ -64,9 +60,9 @@ library Groups {
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
 
-        self.groupsRegistry.push(groupPubKeyHash);
-
         setGroupMembers(group, members, misbehaved);
+
+        self.groupsRegistry.push(groupPubKeyHash);
 
         emit CandidateGroupRegistered(groupPubKey);
     }
@@ -76,16 +72,16 @@ library Groups {
     /// @param group The group storage.
     /// @param members Group member addresses as outputted by the group selection
     ///        protocol.
-    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-    ///        group members indexes in ascending order; Indexes reflect positions
+    /// @param misbehaved Array of misbehaved (disqualified or inactive) group
+    ///        members indices in ascending order; Indices reflect positions
     ///        of members in the group as outputted by the group selection
-    ///        protocol - member indexes start from 1.
+    ///        protocol - member indices start from 1.
     // TODO: This function should be optimized for members storing.
     // See https://github.com/keep-network/keep-core/pull/2666/files#r732629138
     function setGroupMembers(
         Group storage group,
-        address[] memory members,
-        bytes memory misbehaved
+        uint32[] calldata members,
+        uint8[] calldata misbehaved
     ) private {
         group.members = members;
 
@@ -93,8 +89,8 @@ library Groups {
         // member with the last element and reduce array length
         uint256 i = misbehaved.length;
         while (i > 0) {
-            // group member indexes start from 1, so we need to -1 on misbehaved
-            uint256 memberArrayPosition = misbehaved.toUint8(i - 1) - 1;
+            // group member indices start from 1, so we need to -1 on misbehaved
+            uint8 memberArrayPosition = misbehaved[i - 1] - 1;
             group.members[memberArrayPosition] = group.members[
                 group.members.length - 1
             ];
@@ -149,7 +145,7 @@ library Groups {
     // TODO: Add group termination and expiration
 
     /// @notice Gets the number of active groups. Candidate, expired and terminated
-    /// groups are not counted as active.
+    ///         groups are not counted as active.
     function numberOfActiveGroups(Data storage self)
         internal
         view
