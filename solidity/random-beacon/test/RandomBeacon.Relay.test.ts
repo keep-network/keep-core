@@ -493,7 +493,7 @@ describe("RandomBeacon - Relay", () => {
           it("should emit RelayEntryTimedOut event", async () => {
             await expect(tx)
               .to.emit(randomBeacon, "RelayEntryTimedOut")
-              .withArgs(1)
+              .withArgs(1, 0)
           })
 
           it("should retry current relay request", async () => {
@@ -533,7 +533,7 @@ describe("RandomBeacon - Relay", () => {
         it("should emit RelayEntryTimedOut event", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "RelayEntryTimedOut")
-            .withArgs(1)
+            .withArgs(1, 0)
         })
 
         it("should clean up current relay request data", async () => {

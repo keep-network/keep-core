@@ -201,7 +201,10 @@ contract RandomBeacon is Ownable {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
-    event RelayEntryTimedOut(uint256 indexed requestId);
+    event RelayEntryTimedOutRelayEntryTimedOut(
+        uint256 indexed requestId,
+        uint64 terminatedGroupId
+    );
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 

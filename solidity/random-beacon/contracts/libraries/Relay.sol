@@ -77,7 +77,10 @@ library Relay {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
-    event RelayEntryTimedOut(uint256 indexed requestId);
+    event RelayEntryTimedOut(
+        uint256 indexed requestId,
+        uint64 terminatedGroupId
+    );
 
     /// @notice Initializes the very first `previousEntry` with an initial
     ///         `relaySeed` value. Can be performed only once.
@@ -288,7 +291,7 @@ library Relay {
 
         uint64 currentRequestId = self.currentRequest.id;
 
-        emit RelayEntryTimedOut(currentRequestId);
+        emit RelayEntryTimedOut(currentRequestId, self.currentRequest.groupId);
 
         self.currentRequest = Request(
             currentRequestId,
@@ -304,7 +307,10 @@ library Relay {
     function cleanupOnEntryTimeout(Data storage self) internal {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
-        emit RelayEntryTimedOut(self.currentRequest.id);
+        emit RelayEntryTimedOut(
+            self.currentRequest.id,
+            self.currentRequest.groupId
+        );
 
         delete self.currentRequest;
     }
