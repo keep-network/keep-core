@@ -26,6 +26,7 @@ import {
 } from "./staking"
 import { AddKeep, WithdrawKeep } from "./liquidity"
 import { ConfirmMigration, MigrationCompleted } from "./tbtc-migration"
+import { InitiateDeposit, WarningBeforeDeposit } from "./coverage-pools"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -52,6 +53,8 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ConfirmTBTCMigration]: ConfirmMigration,
   [MODAL_TYPES.TBTCMigrationCompleted]: MigrationCompleted,
   [MODAL_TYPES.ConfirmReleaseTokensFromGrant]: ConfirmReleaseTokensFromGrant,
+  [MODAL_TYPES.WarningBeforeCovPoolDeposit]: WarningBeforeDeposit,
+  [MODAL_TYPES.InitiateCovPoolDeposit]: InitiateDeposit,
 }
 
 const modalRoot = document.getElementById("modal-root")

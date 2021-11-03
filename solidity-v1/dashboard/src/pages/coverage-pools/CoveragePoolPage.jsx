@@ -1,17 +1,12 @@
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import {
-  DepositForm,
-  InitiateDepositModal,
-  MetricsSection,
-} from "../../components/coverage-pools"
+import { DepositForm, MetricsSection } from "../../components/coverage-pools"
 import TokenAmount from "../../components/TokenAmount"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import OnlyIf from "../../components/OnlyIf"
 import {
   fetchTvlRequest,
   fetchCovPoolDataRequest,
-  depositAssetPool,
   fetchAPYRequest,
   withdrawAssetPool,
 } from "../../actions/coverage-pool"
@@ -28,10 +23,10 @@ import { addAdditionalDataToModal } from "../../actions/modal"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
 import { Keep } from "../../contracts"
-import ConfirmationModal from "../../components/ConfirmationModal"
+import { MODAL_TYPES } from "../../constants/constants"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
-  const { openConfirmationModal } = useModal()
+  const { openConfirmationModal, openModal } = useModal()
   const dispatch = useDispatch()
   const {
     totalValueLocked,
@@ -72,34 +67,18 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     const { tokenAmount } = values
     const amount = KEEP.fromTokenUnit(tokenAmount).toString()
     if (hasRiskManagerOpenAuctions) {
-      await openConfirmationModal(
-        {
-          modalOptions: {
-            title: "Deposit",
-          },
-          btnText: "continue",
-          title: "Take note!",
-          subtitle:
-            "The coverage pool is about to cover an event. Do you want to continue with this deposit?",
-          withConfirmationInput: false,
-        },
-        ConfirmationModal
-      )
+      await openConfirmationModal(MODAL_TYPES.WarningBeforeCovPoolDeposit)
     }
-    await openConfirmationModal(
-      {
-        modalOptions: {
-          title: "Deposit",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-          },
-        },
-        submitBtnText: "deposit",
-        amount,
-      },
-      InitiateDepositModal
-    )
-    dispatch(depositAssetPool(amount, awaitingPromise))
+    openModal(MODAL_TYPES.InitiateCovPoolDeposit, {
+      amount,
+      estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
+        covBalance,
+        covTotalSupply,
+        totalValueLocked
+      ),
+      totalValueLocked,
+      covTotalSupply,
+    })
   }
 
   const onSubmitWithdrawForm = async (values, awaitingPromise) => {

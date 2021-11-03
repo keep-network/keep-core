@@ -45,6 +45,7 @@ import { KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
 import { showModal } from "../actions/modal"
 import { modalComponentType } from "../components/Modal"
+import { MODAL_TYPES } from "../constants/constants"
 
 function* fetchTvl() {
   try {
@@ -195,24 +196,20 @@ export function* subscribeToAssetPoolDepositedEvent() {
       Keep.coveragePoolV1.estimatedCollateralTokenBalance,
       shareOfPool
     )
+    const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
 
     if (isAddressedToCurrentAddress) {
       yield put(
         showModal({
-          modalComponentType:
-            modalComponentType.COV_POOLS.KEEP_DEPOSITED_SUCCESS,
-          componentProps: {
-            transactionFinished: true,
-            transactionHash: event.transactionHash,
+          modalType: MODAL_TYPES.InitiateCovPoolDeposit,
+          modalProps: {
             amount,
+            transactionHash: event.transactionHash,
             balanceAmount: updatedCovBalance,
             estimatedBalanceAmountInKeep: estimatedKeepBalance,
-          },
-          modalProps: {
-            title: "Deposit",
-            classes: {
-              modalWrapperClassName: "modal-wrapper__claim-tokens",
-            },
+            covKEEPReceived: covAmount,
+            covTotalSupply: updatedCovTotalSupply,
+            totalValueLocked: tvl,
           },
         })
       )
@@ -224,7 +221,6 @@ export function* subscribeToAssetPoolDepositedEvent() {
       shareOfPool
     )
 
-    const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
     const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
     const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
     const apy = yield call(Keep.coveragePoolV1.apy)
