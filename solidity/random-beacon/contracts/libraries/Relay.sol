@@ -425,34 +425,34 @@ library Relay {
     ///         are taken from the <firstEligibleIndex, submitterIndex) range.
     ///         It also handles the `submitterIndex < firstEligibleIndex` case
     ///         and wraps the queue accordingly.
-    /// @param _submitterIndex Index of the relay entry submitter.
-    /// @param _firstEligibleIndex First index of the given eligibility range.
-    /// @param _groupMembers IDs of the group members.
+    /// @param submitterIndex Index of the relay entry submitter.
+    /// @param firstEligibleIndex First index of the given eligibility range.
+    /// @param groupMembers IDs of the group members.
     /// @return An array of members IDs which should be  inactive due
     ///         to not submitting a relay entry on their turn.
     function getInactiveMembers(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
-        uint256 _submitterIndex,
-        uint256 _firstEligibleIndex,
-        uint32[] memory _groupMembers
+        uint256 submitterIndex,
+        uint256 firstEligibleIndex,
+        uint32[] memory groupMembers
     ) internal view returns (uint32[] memory) {
-        uint256 groupSize = _groupMembers.length;
+        uint256 groupSize = groupMembers.length;
 
-        uint256 inactiveMembersCount = _submitterIndex >= _firstEligibleIndex
-            ? _submitterIndex - _firstEligibleIndex
-            : groupSize - (_firstEligibleIndex - _submitterIndex);
+        uint256 inactiveMembersCount = submitterIndex >= firstEligibleIndex
+            ? submitterIndex - firstEligibleIndex
+            : groupSize - (firstEligibleIndex - submitterIndex);
 
         uint32[] memory inactiveMembersIDs = new uint32[](inactiveMembersCount);
 
         for (uint256 i = 0; i < inactiveMembersCount; i++) {
-            uint256 memberIndex = _firstEligibleIndex + i;
+            uint256 memberIndex = firstEligibleIndex + i;
 
             if (memberIndex > groupSize) {
                 memberIndex = memberIndex - groupSize;
             }
 
-            inactiveMembersIDs[i] = _groupMembers[memberIndex - 1];
+            inactiveMembersIDs[i] = groupMembers[memberIndex - 1];
         }
 
         return inactiveMembersIDs;
