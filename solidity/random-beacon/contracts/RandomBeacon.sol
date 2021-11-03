@@ -47,6 +47,8 @@ interface ISortitionPool {
         external
         view
         returns (address[] memory);
+
+    function getOperatorID(address operator) external view returns (uint32);
 }
 
 /// @title Staking contract interface
@@ -415,7 +417,7 @@ contract RandomBeacon is Ownable {
     /// @notice Updates the sortition pool status of the caller.
     function updateOperatorStatus() external {
         sortitionPool.updateOperatorStatus(
-            sortitionPool.getIDOperator(msg.sender)
+            sortitionPool.getOperatorID(msg.sender)
         );
 
         // If the operator has been removed from the sorition pool during the

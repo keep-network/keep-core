@@ -2,11 +2,13 @@
 
 pragma solidity ^0.8.6;
 
-import "@keep-network/sortition-pools/contracts/SortitionTree.sol";
+import "./SortitionTreeStub.sol";
 import "../RandomBeacon.sol";
 
 // Stub contract used in tests
-contract SortitionPoolStub is ISortitionPool, SortitionTree {
+contract SortitionPoolStub is ISortitionPool {
+    SortitionTreeStub internal sortitionTree;
+
     mapping(address => bool) public operators;
     uint256 public operatorsCount;
 
@@ -14,11 +16,15 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
 
     event OperatorStatusUpdated(uint32 id);
 
+    constructor() {
+        sortitionTree = new SortitionTreeStub();
+    }
+
     function insertOperator(address operator) external override {
         operators[operator] = true;
         operatorsCount++;
 
-        allocateOperatorID(operator);
+        sortitionTree.publicAllocateOperatorID(operator);
     }
 
     function removeOperators(uint32[] calldata ids) external override {
@@ -59,7 +65,7 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
     }
 
     function getIDOperator(uint32 id) public view override returns (address) {
-        return SortitionTree.getIDOperator(id);
+        return sortitionTree.getIDOperator(id);
     }
 
     function getIDOperators(uint32[] calldata ids)
@@ -71,9 +77,18 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
         address[] memory operators = new address[](ids.length);
 
         for (uint256 i = 0; i < ids.length; i++) {
-            operators[i] = SortitionTree.getIDOperator(ids[i]);
+            operators[i] = sortitionTree.getIDOperator(ids[i]);
         }
 
         return operators;
+    }
+
+    function getOperatorID(address operator)
+        public
+        view
+        override
+        returns (uint32)
+    {
+        return sortitionTree.getOperatorID(operator);
     }
 }

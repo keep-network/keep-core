@@ -39,7 +39,7 @@ contract RandomBeaconStub is RandomBeacon {
     }
 
     function publicPunishOperators(
-        address[] memory operators,
+        uint32[] memory operators,
         uint256 punishmentDuration
     ) external {
         punishOperators(operators, punishmentDuration);
