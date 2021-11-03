@@ -3,9 +3,9 @@ import { ethers } from "hardhat"
 import type {
   SortitionPool,
   SortitionPoolStub,
-  StakingContractStub,
   RandomBeaconStub,
   RandomBeaconGovernance,
+  StakingStub,
 } from "../../typechain"
 
 export const constants = {
@@ -64,6 +64,9 @@ export async function randomBeaconDeploymentWithStubSortitionPool(): Promise<Dep
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
   const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
 
+  const StakingStub = await ethers.getContractFactory("StakingStub")
+  const stakingStub: StakingStub = await StakingStub.deploy()
+
   const { testToken } = await testTokenDeployment()
 
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
@@ -74,7 +77,8 @@ export async function randomBeaconDeploymentWithStubSortitionPool(): Promise<Dep
 
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPoolStub.address,
-    testToken.address
+    testToken.address,
+    stakingStub.address
   )
   await randomBeacon.deployed()
 
@@ -82,6 +86,7 @@ export async function randomBeaconDeploymentWithStubSortitionPool(): Promise<Dep
     sortitionPoolStub,
     randomBeacon,
     testToken,
+    stakingStub,
   }
 
   return contracts
@@ -92,15 +97,12 @@ export async function randomBeaconDeploymentWithRealSortitionPool(): Promise<Dep
   const poolWightDevisor = 2000
   const dummySortitionPoolOperator =
     "0x0000000000000000000000000000000000000001"
-  const StakingContractStub = await ethers.getContractFactory(
-    "StakingContractStub"
-  )
-  const stakingContractStub: StakingContractStub =
-    await StakingContractStub.deploy()
+  const StakingStub = await ethers.getContractFactory("StakingStub")
+  const stakingStub: StakingStub = await StakingStub.deploy()
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool: SortitionPool = await SortitionPool.deploy(
-    stakingContractStub.address,
+    stakingStub.address,
     minStake,
     poolWightDevisor,
     dummySortitionPoolOperator
@@ -116,13 +118,14 @@ export async function randomBeaconDeploymentWithRealSortitionPool(): Promise<Dep
 
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPool.address,
-    testToken.address
+    testToken.address,
+    stakingStub.address
   )
   await randomBeacon.deployed()
 
   const contracts: DeployedContracts = {
     sortitionPool,
-    stakingContractStub,
+    stakingStub,
     randomBeacon,
     testToken,
   }

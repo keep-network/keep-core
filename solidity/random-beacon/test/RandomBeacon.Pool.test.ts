@@ -4,17 +4,13 @@ import { expect } from "chai"
 import { Signer, Contract } from "ethers"
 import { randomBeaconDeploymentWithRealSortitionPool } from "./fixtures"
 
-import type {
-  RandomBeacon,
-  SortitionPool,
-  StakingContractStub,
-} from "../typechain"
+import type { RandomBeacon, SortitionPool, StakingStub } from "../typechain"
 
 describe("RandomBeacon - Pool", () => {
   let operator: Signer
   let randomBeacon: Contract
   let sortitionPool: Contract
-  let stakingContractStub: Contract
+  let stakingStub: Contract
 
   // prettier-ignore
   before(async () => {
@@ -26,14 +22,14 @@ describe("RandomBeacon - Pool", () => {
       randomBeaconDeploymentWithRealSortitionPool
     )
     sortitionPool = contracts.sortitionPool as SortitionPool
-    stakingContractStub = contracts.stakingContractStub as StakingContractStub
+    stakingStub = contracts.stakingStub as StakingStub
     randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
   describe("registerMemberCandidate", () => {
     const minimumStake = 2000
     beforeEach(async () => {
-      await stakingContractStub.setStake(operator.getAddress(), minimumStake)
+      await stakingStub.setStake(operator.getAddress(), minimumStake)
     })
 
     context("when the operator is not registered yet", () => {
@@ -65,7 +61,7 @@ describe("RandomBeacon - Pool", () => {
     const minimumStake = 2000
     context("when the operator is eligible to join the sortition pool", () => {
       beforeEach(async () => {
-        await stakingContractStub.setStake(operator.getAddress(), minimumStake)
+        await stakingStub.setStake(operator.getAddress(), minimumStake)
       })
 
       it("should return true", async () => {
@@ -79,10 +75,7 @@ describe("RandomBeacon - Pool", () => {
       "when the operator is not eligible to join the sortition pool",
       () => {
         beforeEach(async () => {
-          await stakingContractStub.setStake(
-            operator.getAddress(),
-            minimumStake - 1
-          )
+          await stakingStub.setStake(operator.getAddress(), minimumStake - 1)
         })
 
         it("should return false", async () => {

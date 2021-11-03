@@ -10,6 +10,8 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
     mapping(address => bool) public operators;
     mapping(address => bool) public eligibleOperators;
 
+    event OperatorsRemoved(address[] operators);
+
     function joinPool(address operator) external override {
         operators[operator] = true;
 
@@ -42,5 +44,33 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
     // TODO: Fix sortition pool public API to accept/return uint32 for IDs
     function getIDOperator(uint32 id) public view override returns (address) {
         return SortitionTree.getIDOperator(id);
+    }
+
+    function getIDOperators(uint32[] calldata ids)
+        public
+        view
+        override
+        returns (address[] memory)
+    {
+        address[] memory operators = new address[](ids.length);
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            operators[i] = SortitionTree.getIDOperator(ids[i]);
+        }
+
+        return operators;
+    }
+
+    function removeOperators(uint32[] calldata ids) external override {
+        address[] memory _operators = getIDOperators(ids);
+
+        for (uint256 i = 0; i < _operators.length; i++) {
+            delete operators[_operators[i]];
+            delete eligibleOperators[_operators[i]];
+        }
+
+        if (_operators.length > 0) {
+            emit OperatorsRemoved(_operators);
+        }
     }
 }
