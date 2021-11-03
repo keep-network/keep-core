@@ -616,10 +616,9 @@ contract RandomBeacon is Ownable {
     ///      action makes punishments cheaper gas-wise.
     /// @param ids IDs of punished operators.
     /// @param punishmentDuration Duration of the punishment period in seconds.
-    function punishOperators(
-        uint32[] memory ids,
-        uint256 punishmentDuration
-    ) internal {
+    function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
+        internal
+    {
         address[] memory operators = sortitionPool.getIDOperators(ids);
 
         for (uint256 i = 0; i < operators.length; i++) {
@@ -637,7 +636,6 @@ contract RandomBeacon is Ownable {
             // the operator to join the pool in future.
             if (sortitionPool.isOperatorInPool(operator)) {
                 gasStation.releaseGas(operator);
-
             }
         }
 
