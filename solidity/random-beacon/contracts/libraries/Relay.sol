@@ -172,10 +172,10 @@ library Relay {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
-        uint256 actualGroupSize = group.members.length;
+        uint256 groupSize = group.members.length;
 
         require(
-            submitterIndex > 0 && submitterIndex <= actualGroupSize,
+            submitterIndex > 0 && submitterIndex <= groupSize,
             "Invalid submitter index"
         );
         require(
@@ -188,7 +188,7 @@ library Relay {
         (
             uint256 firstEligibleIndex,
             uint256 lastEligibleIndex
-        ) = getEligibilityRange(self, entry, actualGroupSize);
+        ) = getEligibilityRange(self, entry, groupSize);
         require(
             isEligible(
                 self,
@@ -437,19 +437,19 @@ library Relay {
         uint256 _firstEligibleIndex,
         uint32[] memory _groupMembers
     ) internal view returns (uint32[] memory) {
-        uint256 _groupSize = _groupMembers.length;
+        uint256 groupSize = _groupMembers.length;
 
         uint256 inactiveMembersCount = _submitterIndex >= _firstEligibleIndex
             ? _submitterIndex - _firstEligibleIndex
-            : _groupSize - (_firstEligibleIndex - _submitterIndex);
+            : groupSize - (_firstEligibleIndex - _submitterIndex);
 
         uint32[] memory inactiveMembersIDs = new uint32[](inactiveMembersCount);
 
         for (uint256 i = 0; i < inactiveMembersCount; i++) {
             uint256 memberIndex = _firstEligibleIndex + i;
 
-            if (memberIndex > _groupSize) {
-                memberIndex = memberIndex - _groupSize;
+            if (memberIndex > groupSize) {
+                memberIndex = memberIndex - groupSize;
             }
 
             inactiveMembersIDs[i] = _groupMembers[memberIndex - 1];
