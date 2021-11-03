@@ -628,7 +628,7 @@ contract RandomBeacon is Ownable {
         internal
     {
         address[] memory operators = sortitionPool.getIDOperators(ids);
-        uint256 operatorsInPoolCount;
+        uint256 operatorsInPoolCount = 0;
 
         for (uint256 i = 0; i < operators.length; i++) {
             if (sortitionPool.isOperatorInPool(operators[i])) {
@@ -637,7 +637,7 @@ contract RandomBeacon is Ownable {
         }
 
         uint32[] memory operatorsInPoolIDs = new uint32[](operatorsInPoolCount);
-        uint256 j;
+        uint256 j = 0;
 
         for (uint256 i = 0; i < operators.length; i++) {
             address operator = operators[i];
