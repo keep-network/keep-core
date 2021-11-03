@@ -7,7 +7,6 @@ import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type { DeployedContracts } from "./fixtures"
 import type {
-  RandomBeacon,
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
@@ -38,7 +37,7 @@ const fixture = async () => {
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await createGroup(contracts.randomBeacon as RandomBeacon, signers)
+  await createGroup(contracts.randomBeacon as RandomBeaconStub, signers)
 
   return { contracts, signers }
 }
