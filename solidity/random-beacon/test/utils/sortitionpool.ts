@@ -15,9 +15,8 @@ export async function registerOperators(
   for (let i = 0; i < addresses.length; i++) {
     const address = addresses[i]
 
-    await sortitionPool.joinPool(address)
-    // TODO: Fix sortition pool public API to accept/return uint32 for IDs
-    const id = (await sortitionPool.getOperatorID(address)).toNumber()
+    await sortitionPool.insertOperator(address)
+    const id = await sortitionPool.getOperatorID(address)
 
     operators.push({ id, address })
   }

@@ -570,13 +570,13 @@ contract RandomBeacon is Ownable {
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
     {
-        uint32[] memory punishedMembers = relay.submitEntry(
+        uint32[] memory inactiveMembers = relay.submitEntry(
             submitterIndex,
             entry,
             groups.getGroup(relay.currentRequest.groupId)
         );
 
-        punishOperators(punishedMembers, 2 weeks);
+        punishOperators(inactiveMembers, 2 weeks);
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             // TODO: Once implemented, invoke:
@@ -618,32 +618,49 @@ contract RandomBeacon is Ownable {
     ///      action makes punishments cheaper gas-wise.
     /// @param ids IDs of punished operators.
     /// @param punishmentDuration Duration of the punishment period in seconds.
+    ///
+    /// TODO: This method can be probably optimized in future (depends on
+    ///       changes in the sortition pool). Until then we need to make it
+    ///       that way because we need to make sure we remove operators which
+    ///       are actually in the pool to avoid revert. Two loops are needed
+    ///       because Solidity doesn't allow for memory arrays and mappings.
     function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
         internal
     {
         address[] memory operators = sortitionPool.getIDOperators(ids);
+        uint256 operatorsInPoolCount;
+
+        for (uint256 i = 0; i < operators.length; i++) {
+            if (sortitionPool.isOperatorInPool(operators[i])) {
+                operatorsInPoolCount++;
+            }
+        }
+
+        uint32[] memory operatorsInPoolIDs = new uint32[](operatorsInPoolCount);
+        uint256 j;
 
         for (uint256 i = 0; i < operators.length; i++) {
             address operator = operators[i];
 
-            // Set the punishment regardless the operator is actually registered
-            // in the sortition pool.
+            // Set the punishment regardless the operator is actually
+            // registered in the sortition pool. If the operator is not in pool
+            // at the moment, the punishment will prevent they to join during
+            // the given period.
             /* solhint-disable not-rely-on-time */
             // slither-disable-next-line reentrancy-benign
             punishedOperators[operator] = block.timestamp + punishmentDuration;
             /* solhint-enable not-rely-on-time */
 
-            // Perform operations on sortition pool only in case the operator
-            // is registered. Otherwise, the punishment set above will prevent
-            // the operator to join the pool in future.
             if (sortitionPool.isOperatorInPool(operator)) {
                 gasStation.releaseGas(operator);
+
+                operatorsInPoolIDs[j] = ids[i];
+                j++;
             }
         }
 
         // TODO: Is it possible to kick out operator when pool is locked?
-        // TODO: Filter out ids
-        sortitionPool.removeOperators(ids);
+        sortitionPool.removeOperators(operatorsInPoolIDs);
     }
 
     /// @return Flag indicating whether a relay entry request is currently
