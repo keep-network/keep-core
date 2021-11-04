@@ -149,6 +149,10 @@ library Relay {
     /// @param group Group data.
     /// @return inactiveMembers Array of members IDs which should be considered
     ///         inactive  for not submitting relay entry on their turn.
+    ///         The array is empty if none of the members missed their turn.
+    /// @return slashingAmount Amount by which group members should be slashed
+    ///         in case the relay entry was submitted after the soft timeout.
+    ///         The value is zero if entry was submitted on time.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
