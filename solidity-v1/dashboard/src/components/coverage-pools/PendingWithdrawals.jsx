@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react"
-import {
-  // claimTokensFromWithdrawal,
-  withdrawAssetPool,
-} from "../../actions/coverage-pool"
+import { reinitiateWithdraw } from "../../actions/coverage-pool"
 import { useDispatch, useSelector } from "react-redux"
-// import ClaimTokensModal from "./ClaimTokensModal"
 import { useModal } from "../../hooks/useModal"
-import ReinitiateWithdrawalModal from "./ReinitiateWithdrawalModal"
-import { addAdditionalDataToModal } from "../../actions/modal"
 import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import moment from "moment"
@@ -26,7 +20,7 @@ import { MODAL_TYPES } from "../../constants/constants"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
-  const { openConfirmationModal, openModal /** closeModal*/ } = useModal()
+  const { openModal } = useModal()
   const yourAddress = useWeb3Address()
 
   const {
@@ -58,68 +52,10 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
         totalValueLocked
       ),
     })
-    // dispatch(
-    //   addAdditionalDataToModal({
-    //     componentProps: {
-    //       totalValueLocked,
-    //       covTotalSupply,
-    //       covTokensAvailableToWithdraw,
-    //     },
-    //   })
-    // )
-    // await openConfirmationModal(
-    //   {
-    //     closeModal: closeModal,
-    //     submitBtnText: "claim",
-    //     covAmount,
-    //     totalValueLocked,
-    //     covTotalSupply,
-    //     address: yourAddress,
-    //     modalOptions: {
-    //       title: "Claim tokens",
-    //       classes: {
-    //         modalWrapperClassName: "modal-wrapper__claim-tokens",
-    //       },
-    //     },
-    //   },
-    //   ClaimTokensModal
-    // )
-    // dispatch(claimTokensFromWithdrawal(awaitingPromise))
   }
 
-  const onReinitiateWithdrawal = async (
-    pendingWithdrawal,
-    covTokensAvailableToWithdraw,
-    awaitingPromise
-  ) => {
-    dispatch(
-      addAdditionalDataToModal({
-        componentProps: {
-          totalValueLocked,
-          covTotalSupply,
-          covTokensAvailableToWithdraw,
-        },
-      })
-    )
-    const { amount } = await openConfirmationModal(
-      {
-        modalOptions: {
-          title: "Re-initiate withdrawal",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__reinitiate-withdrawal",
-          },
-        },
-        submitBtnText: "continue",
-        pendingWithdrawalBalance: pendingWithdrawal,
-        covTokensAvailableToWithdraw,
-        totalValueLocked,
-        covTotalSupply,
-        withdrawalDelay,
-        containerTitle: "You are about to re-initiate this withdrawal:",
-      },
-      ReinitiateWithdrawalModal
-    )
-    dispatch(withdrawAssetPool(amount, awaitingPromise))
+  const onReinitiateWithdrawal = () => {
+    dispatch(reinitiateWithdraw())
   }
 
   const formattedDataForDataTable =

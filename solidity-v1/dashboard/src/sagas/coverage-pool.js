@@ -30,12 +30,14 @@ import {
   COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
   RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
   RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
+  COVERAGE_POOL_REINITAITE_WITHDRAW,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
   logErrorAndThrow,
   logError,
   submitButtonHelper,
+  confirmModalSaga,
 } from "./utils"
 import { Keep } from "../contracts"
 import { add, eq, gt, sub } from "../utils/arithmetics.utils"
@@ -521,4 +523,52 @@ export function* watchClaimTokensFromWithdrawal() {
     COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
     claimTokensFromWithdrawalWorker
   )
+}
+
+function* reinitiateWithdraw(action) {
+  const {
+    pendingWithdrawal,
+    totalValueLocked,
+    covTotalSupply,
+    covTokensAvailableToWithdraw,
+    covBalance,
+  } = yield select(selectors.getCoveragePool)
+
+  const { task } = yield call(
+    confirmModalSaga,
+    MODAL_TYPES.ReInitiateCovPoolWithdraw,
+    {
+      pendingWithdrawal,
+      availableToWithdraw: covTokensAvailableToWithdraw,
+      totalValueLocked,
+      covTotalSupply,
+    }
+  )
+  const {
+    payload: { amount },
+  } = task
+
+  if (eq(amount, 0)) {
+    yield put(
+      showModal({
+        modalType: MODAL_TYPES.InitiateCovPoolWithdraw,
+        modalProps: {
+          amount: pendingWithdrawal,
+          covBalanceOf: covBalance,
+          estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
+            covBalance,
+            covTotalSupply,
+            totalValueLocked
+          ),
+          totalValueLocked,
+          covTotalSupply,
+          isReinitialization: true,
+        },
+      })
+    )
+  }
+}
+
+export function* watchReInitiateWithdraw() {
+  yield takeEvery(COVERAGE_POOL_REINITAITE_WITHDRAW, reinitiateWithdraw)
 }

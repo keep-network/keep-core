@@ -21,6 +21,7 @@ const InitiateWithdrawComponent = ({
   totalValueLocked,
   covTotalSupply,
   onClose,
+  isReinitialization = false,
   transactionHash = null,
 }) => {
   const formik = useAcceptTermToConfirmFormik()
@@ -88,7 +89,12 @@ const InitiateWithdrawComponent = ({
             className="btn btn-primary btn-lg mr-2"
             type="submit"
             onSubmitAction={(awaitingPromise) => {
-              dispatch(withdrawAssetPool(amount, awaitingPromise))
+              dispatch(
+                withdrawAssetPool(
+                  isReinitialization ? 0 : amount,
+                  awaitingPromise
+                )
+              )
             }}
             disabled={!(formik.isValid && formik.dirty)}
           >

@@ -38,6 +38,8 @@ export const COVERAGE_POOL_FETCH_APY_REQUEST = "coverage_pool/fetch_apy_request"
 export const COVERAGE_POOL_FETCH_APY_START = "coverage_pool/fetch_apy_start"
 export const COVERAGE_POOL_FETCH_APY_SUCCESS = "coverage_pool/fetch_apy_success"
 export const COVERAGE_POOL_FETCH_APY_ERROR = "coverage_pool/fetch_apy_error"
+export const COVERAGE_POOL_REINITAITE_WITHDRAW =
+  "coverage_pool/reinitiate_withdraw"
 
 export const fetchTvlStart = () => {
   return {
@@ -183,5 +185,11 @@ export const fetchAPYSuccess = (apy) => {
   return {
     type: COVERAGE_POOL_FETCH_APY_SUCCESS,
     payload: apy,
+  }
+}
+
+export const reinitiateWithdraw = () => {
+  return {
+    type: COVERAGE_POOL_REINITAITE_WITHDRAW,
   }
 }
