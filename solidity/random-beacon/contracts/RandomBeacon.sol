@@ -206,6 +206,18 @@ contract RandomBeacon is Ownable {
         uint64 terminatedGroupId
     );
 
+    event RelayEntrySoftTimeoutSlashingOccurred(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
+    event RelayEntrySubmissionFailureSlashingOccurred(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     /// @dev Assigns initial values to parameters to make the beacon work
@@ -236,7 +248,6 @@ contract RandomBeacon is Ownable {
         relay.initSeedEntry();
         relay.initSortitionPool(_sortitionPool);
         relay.initTToken(_tToken);
-        relay.initStaking(_staking);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
@@ -573,13 +584,31 @@ contract RandomBeacon is Ownable {
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
     {
-        uint32[] memory inactiveMembers = relay.submitEntry(
-            submitterIndex,
-            entry,
-            groups.getGroup(relay.currentRequest.groupId)
+        uint256 currentRequestId = relay.currentRequest.id;
+
+        Groups.Group memory group = groups.getGroup(
+            relay.currentRequest.groupId
         );
 
+        (uint32[] memory inactiveMembers, uint256 slashingAmount) = relay
+            .submitEntry(submitterIndex, entry, group);
+
         punishOperators(inactiveMembers, 2 weeks);
+
+        if (slashingAmount > 0) {
+            address[] memory groupMembers = sortitionPool.getIDOperators(
+                group.members
+            );
+
+            // slither-disable-next-line reentrancy-events
+            emit RelayEntrySoftTimeoutSlashingOccurred(
+                currentRequestId,
+                slashingAmount,
+                groupMembers
+            );
+
+            staking.slash(slashingAmount, groupMembers);
+        }
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             // TODO: Once implemented, invoke:
@@ -592,14 +621,19 @@ contract RandomBeacon is Ownable {
     /// @notice Reports a relay entry timeout.
     function reportRelayEntryTimeout() external {
         uint64 groupId = relay.currentRequest.groupId;
+        uint256 slashingAmount = relay
+            .relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembers = sortitionPool.getIDOperators(
             groups.getGroup(groupId).members
         );
 
-        staking.slash(
-            relay.relayEntrySubmissionFailureSlashingAmount,
+        emit RelayEntrySubmissionFailureSlashingOccurred(
+            relay.currentRequest.id,
+            slashingAmount,
             groupMembers
         );
+
+        staking.slash(slashingAmount, groupMembers);
 
         // TODO: Once implemented, terminate group using `groupId`.
 

@@ -18,7 +18,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./BLS.sol";
 import "./Groups.sol";
-import {ISortitionPool, IStaking} from "../RandomBeacon.sol";
+import {ISortitionPool} from "../RandomBeacon.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -43,8 +43,6 @@ library Relay {
         ISortitionPool sortitionPool;
         // Address of the T token contract.
         IERC20 tToken;
-        // Address of the staking contract.
-        IStaking staking;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
         // The number of blocks it takes for a group member to become
@@ -117,18 +115,6 @@ library Relay {
         self.tToken = _tToken;
     }
 
-    /// @notice Initializes the staking parameter. Can be performed
-    ///         only once.
-    /// @param _staking Value of the parameter.
-    function initStaking(Data storage self, IStaking _staking) internal {
-        require(
-            address(self.staking) == address(0),
-            "Staking address already set"
-        );
-
-        self.staking = _staking;
-    }
-
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
@@ -168,7 +154,10 @@ library Relay {
         uint256 submitterIndex,
         bytes calldata entry,
         Groups.Group memory group
-    ) internal returns (uint32[] memory inactiveMembers) {
+    )
+        internal
+        returns (uint32[] memory inactiveMembers, uint256 slashingAmount)
+    {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
@@ -217,24 +206,17 @@ library Relay {
         // all group members. Note that `getSlashingFactor` returns the
         // factor multiplied by 1e18 to avoid precision loss. In that case
         // the final result needs to be divided by 1e18.
-        uint256 slashingAmount = (getSlashingFactor(self, dkgGroupSize) *
-            self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
-
-        // TODO: This call will be removed from here in the follow-up PR.
-        if (slashingAmount > 0) {
-            // slither-disable-next-line reentrancy-events
-            self.staking.slash(
-                slashingAmount,
-                self.sortitionPool.getIDOperators(group.members)
-            );
-        }
+        slashingAmount =
+            (getSlashingFactor(self, dkgGroupSize) *
+                self.relayEntrySubmissionFailureSlashingAmount) /
+            1e18;
 
         self.previousEntry = entry;
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
 
-        return inactiveMembers;
+        return (inactiveMembers, slashingAmount);
     }
 
     /// @notice Set relayRequestFee parameter.

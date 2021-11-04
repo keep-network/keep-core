@@ -342,6 +342,13 @@ describe("RandomBeacon - Relay", () => {
                     await expect(tx)
                       .to.emit(staking, "Slashed")
                       .withArgs(to1e18(750), signersAddresses)
+
+                    await expect(tx)
+                      .to.emit(
+                        randomBeacon,
+                        "RelayEntrySoftTimeoutSlashingOccurred"
+                      )
+                      .withArgs(1, to1e18(750), signersAddresses)
                   })
 
                   it("should emit RelayEntrySubmitted event", async () => {
@@ -484,6 +491,13 @@ describe("RandomBeacon - Relay", () => {
             await expect(tx)
               .to.emit(staking, "Slashed")
               .withArgs(to1e18(1000), signersAddresses)
+
+            await expect(tx)
+              .to.emit(
+                randomBeacon,
+                "RelayEntrySubmissionFailureSlashingOccurred"
+              )
+              .withArgs(1, to1e18(1000), signersAddresses)
           })
 
           it("should terminate the group", async () => {
