@@ -39,6 +39,23 @@ export const MODAL_WITH_TIMELINE_STEPS = {
   CLAIM_TOKENS: 4,
 }
 
+const styles = {
+  defaultCard: {
+    wrapper: { padding: "1rem" },
+    title: {
+      margin: "0",
+    },
+    desc: {
+      marginTop: "0.4rem",
+    },
+  },
+  cooldownBanner: {
+    desc: {
+      marginBottom: 0,
+    },
+  },
+}
+
 const CovPoolTimeline = ({ step, withDescription = false }) => {
   return (
     <div className="modal__timeline">
@@ -52,17 +69,17 @@ const CovPoolTimeline = ({ step, withDescription = false }) => {
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
-            <Timeline.ElementDefaultCard>
-              <h4>Deposit your tokens</h4>
+            <Timeline.ElementDefaultCard style={styles.defaultCard.wrapper}>
+              <h4 style={styles.defaultCard.title}>Deposit your tokens</h4>
               <OnlyIf
                 condition={
                   step === MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS &&
                   withDescription
                 }
               >
-                <span className="text-grey-60">
+                <div className="text-grey-60" style={styles.defaultCard.desc}>
                   No min KEEP amount for your deposit.
-                </span>
+                </div>
               </OnlyIf>
             </Timeline.ElementDefaultCard>
           </Timeline.Content>
@@ -82,19 +99,18 @@ const CovPoolTimeline = ({ step, withDescription = false }) => {
           <Timeline.Content>
             <Timeline.ElementDefaultCard
               active={step > MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS}
+              style={styles.defaultCard.wrapper}
             >
-              <h4>Withdraw deposit</h4>
+              <h4 style={styles.defaultCard.title}>Withdraw deposit</h4>
               <OnlyIf
                 condition={
                   step === MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT &&
                   withDescription
                 }
               >
-                <span className="text-grey-60">
-                  Withdrawing requires two steps. First, there is a&nbsp;
-                  <strong>21 day cooldown</strong>. Second, after 21 days your
-                  tokens will be available to claim in the dashboard.
-                </span>
+                <div className="text-grey-60" style={styles.defaultCard.desc}>
+                  After cooldown, you will need to claim your tokens.
+                </div>
               </OnlyIf>
             </Timeline.ElementDefaultCard>
           </Timeline.Content>
@@ -141,24 +157,28 @@ const CovPoolTimeline = ({ step, withDescription = false }) => {
           <Timeline.Content>
             <Timeline.ElementDefaultCard
               active={step > MODAL_WITH_TIMELINE_STEPS.COOLDOWN}
+              style={styles.defaultCard.wrapper}
             >
-              <h4>Claim tokens</h4>
+              <h4 style={styles.defaultCard.title}>Claim tokens</h4>
               <OnlyIf
                 condition={
                   step === MODAL_WITH_TIMELINE_STEPS.CLAIM_TOKENS &&
                   withDescription
                 }
               >
-                <span className="text-grey-60">
+                <div className="text-grey-60" style={styles.defaultCard.desc}>
                   There’s a 2 day claim window to claim your tokens and rewards.
-                </span>
+                </div>
               </OnlyIf>
             </Timeline.ElementDefaultCard>
           </Timeline.Content>
         </Timeline.Element>
       </Timeline>
       <Banner className="mt-2">
-        <Banner.Description style={{ marginBottom: 0 }} className="text-black">
+        <Banner.Description
+          style={styles.cooldownBanner.desc}
+          className="text-black"
+        >
           During cooldown, your funds will accumulate rewards but are also
           subject to an insurance event.
         </Banner.Description>
