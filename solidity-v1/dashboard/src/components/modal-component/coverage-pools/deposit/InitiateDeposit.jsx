@@ -85,7 +85,7 @@ const InitiateDepositComponent = ({
               I confirm that I have read the{" "}
               <a
                 href={LINK.coveragePools.docs}
-                className="text-link"
+                className="text-link text-black"
                 rel="noopener noreferrer"
                 target="_blank"
               >
