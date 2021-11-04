@@ -187,7 +187,7 @@ contract RandomBeacon is Ownable {
         // Governable parameters
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
-        groupLifetime = 2 weeks;
+        groupLifetime = 93077; // ~2 weeks in blocks. Each block is mined every ~13sec
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         relayEntrySubmissionFailureSlashingAmount = 1000e18;
@@ -202,6 +202,9 @@ contract RandomBeacon is Ownable {
         relay.initSortitionPool(_sortitionPool);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
+
+        groups.setRelayEntryTimeout(relay.relayEntryTimeout());
+        groups.setGroupLifetime(groupLifetime);
     }
 
     /// @notice Updates the values of relay entry parameters.

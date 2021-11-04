@@ -241,13 +241,22 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 relayEntryTimeout = (groupSize *
-            self.relayEntrySubmissionEligibilityDelay) +
-            self.relayEntryHardTimeout;
-
         return
             isRequestInProgress(self) &&
-            block.number > self.currentRequest.startBlock + relayEntryTimeout;
+            block.number >
+            self.currentRequest.startBlock + relayEntryTimeout(self);
+    }
+
+    /// @notice Calculates a relay entry timeout.
+    /// @return Relay entry timeout in blocks.
+    function relayEntryTimeout(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return
+            (groupSize * self.relayEntrySubmissionEligibilityDelay) +
+            self.relayEntryHardTimeout;
     }
 
     /// @notice Determines the eligibility range for given relay entry basing on
