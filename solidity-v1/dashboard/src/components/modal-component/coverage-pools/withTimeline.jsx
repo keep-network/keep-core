@@ -10,6 +10,7 @@ import Timeline from "../../Timeline"
 import { colors } from "../../../constants/colors"
 import Chip from "../../Chip"
 import OnlyIf from "../../OnlyIf"
+import Banner from "../../Banner"
 
 export const withTimeline =
   ({ title, step, withDescription }) =>
@@ -156,6 +157,12 @@ const CovPoolTimeline = ({ step, withDescription = false }) => {
           </Timeline.Content>
         </Timeline.Element>
       </Timeline>
+      <Banner className="mt-2">
+        <Banner.Description style={{ marginBottom: 0 }} className="text-black">
+          During cooldown, your funds will accumulate rewards but are also
+          subject to an insurance event.
+        </Banner.Description>
+      </Banner>
     </div>
   )
 }
