@@ -18,7 +18,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./BLS.sol";
 import "./Groups.sol";
-import {ISortitionPool, IStaking} from "../RandomBeacon.sol";
+import {ISortitionPool, IRandomBeaconStaking} from "../RandomBeacon.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -44,7 +44,7 @@ library Relay {
         // Address of the T token contract.
         IERC20 tToken;
         // Address of the staking contract.
-        IStaking staking;
+        IRandomBeaconStaking staking;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
         // The number of blocks it takes for a group member to become
@@ -117,7 +117,9 @@ library Relay {
     /// @notice Initializes the staking parameter. Can be performed
     ///         only once.
     /// @param _staking Value of the parameter.
-    function initStaking(Data storage self, IStaking _staking) internal {
+    function initStaking(Data storage self, IRandomBeaconStaking _staking)
+        internal
+    {
         require(
             address(self.staking) == address(0),
             "Staking address already set"

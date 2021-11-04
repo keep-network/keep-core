@@ -5,7 +5,7 @@ pragma solidity ^0.8.6;
 import "../RandomBeacon.sol";
 
 // Stub contract used in tests
-contract StakingStub is IStaking {
+contract StakingStub is IRandomBeaconStaking {
     mapping(address => uint256) public stakedTokens;
 
     event Slashed(uint256 amount, address[] operators);
