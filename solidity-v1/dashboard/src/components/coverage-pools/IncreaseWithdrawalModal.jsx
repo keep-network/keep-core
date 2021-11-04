@@ -19,6 +19,8 @@ import { CoveragePoolV1ExchangeRate } from "./ExchangeRate"
 import { getPendingWithdrawalStatus } from "../../utils/coverage-pools.utils"
 import { PENDING_WITHDRAWAL_STATUS } from "../../constants/constants"
 
+const ONE_DAY_IN_SECONDS = 86400
+
 const getItems = (covKeepAmount, pendingWithdrawalStatus) => {
   if (pendingWithdrawalStatus === PENDING_WITHDRAWAL_STATUS.PENDING) {
     return [
@@ -423,7 +425,7 @@ const IncreaseWithdrawalModalTile = ({
           }
         >
           <div className={"modal-with-overview__delay text-grey-50"}>
-            {Math.floor(withdrawalDelay / (60 * 60 * 24))} days:{" "}
+            {Math.floor(withdrawalDelay / ONE_DAY_IN_SECONDS)} days:{" "}
             {endOfWithdrawalDelayDate.format("MM/DD")}
           </div>
         </OnlyIf>
