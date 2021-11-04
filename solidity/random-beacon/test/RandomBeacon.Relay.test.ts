@@ -25,16 +25,18 @@ const ZERO_ADDRESS = ethers.constants.AddressZero
 const TWO_WEEKS = 1209600 // 2 weeks in seconds
 
 const fixture = async () => {
-  const deployment = await randomBeaconDeployment()
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  const deployment = await randomBeaconDeployment(sortitionPoolStub)
 
   const signers = await registerOperators(
-    deployment.sortitionPoolStub as SortitionPoolStub,
+    deployment.sortitionPool as SortitionPoolStub,
     (await getUnnamedAccounts()).slice(0, constants.groupSize)
   )
 
   return {
     randomBeacon: deployment.randomBeacon as RandomBeacon,
-    sortitionPool: deployment.sortitionPoolStub as SortitionPoolStub,
+    sortitionPool: deployment.sortitionPool as SortitionPoolStub,
     testToken: deployment.testToken as TestToken,
     staking: deployment.stakingStub as StakingStub,
     relayStub: (await (

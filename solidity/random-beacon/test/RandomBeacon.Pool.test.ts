@@ -2,18 +2,21 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { Contract, ContractTransaction } from "ethers"
+import { ContractTransaction } from "ethers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { randomBeaconDeployment } from "./fixtures"
-import type { RandomBeaconStub, SortitionPoolStub } from "../typechain"
+import { randomBeaconDeployment, constants } from "./fixtures"
+import type { RandomBeaconStub, SortitionPool, StakingStub } from "../typechain"
 
 const { time } = helpers
 const { increaseTime } = time
 
+const fixture = async () => randomBeaconDeployment()
+
 describe("RandomBeacon - Pool", () => {
   let operator: SignerWithAddress
   let randomBeacon: RandomBeaconStub
-  let sortitionPoolStub: SortitionPoolStub
+  let sortitionPool: SortitionPool
+  let stakingStub: StakingStub
 
   // prettier-ignore
   before(async () => {
@@ -21,13 +24,18 @@ describe("RandomBeacon - Pool", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
+    const contracts = await waffle.loadFixture(fixture)
 
-    sortitionPoolStub = contracts.sortitionPoolStub as SortitionPoolStub
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
+    sortitionPool = contracts.sortitionPool as SortitionPool
+    stakingStub = contracts.stakingStub as StakingStub
   })
 
   describe("registerOperator", () => {
+    beforeEach(async () => {
+      await stakingStub.setStake(operator.address, constants.minimumStake)
+    })
+
     context("when the operator is not registered yet", () => {
       context("when there is no active punishment for given operator", () => {
         beforeEach(async () => {
@@ -39,7 +47,7 @@ describe("RandomBeacon - Pool", () => {
         })
 
         it("should register the operator", async () => {
-          expect(await sortitionPoolStub.operators(operator.address)).to.be.true
+          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be.true
         })
       })
 
@@ -48,7 +56,7 @@ describe("RandomBeacon - Pool", () => {
 
         beforeEach(async () => {
           await randomBeacon.connect(operator).registerOperator()
-          operatorID = await sortitionPoolStub.getOperatorID(operator.address)
+          operatorID = await sortitionPool.getOperatorID(operator.address)
 
           const punishmentDuration = 1209600 // 2 weeks
           await randomBeacon.publicPunishOperators(
@@ -66,7 +74,7 @@ describe("RandomBeacon - Pool", () => {
         })
 
         it("should register the operator", async () => {
-          expect(await sortitionPoolStub.operators(operator.address)).to.be.true
+          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be.true
         })
 
         it("should remove operator from punished operators map", async () => {
@@ -81,7 +89,7 @@ describe("RandomBeacon - Pool", () => {
 
         beforeEach(async () => {
           await randomBeacon.connect(operator).registerOperator()
-          operatorID = await sortitionPoolStub.getOperatorID(operator.address)
+          operatorID = await sortitionPool.getOperatorID(operator.address)
 
           const punishmentDuration = 1209600 // 2 weeks
           await randomBeacon.publicPunishOperators(
@@ -120,18 +128,18 @@ describe("RandomBeacon - Pool", () => {
     beforeEach(async () => {
       // Operator is registered and gas deposit is made.
       await randomBeacon.connect(operator).registerOperator()
-      operatorID = await sortitionPoolStub.getOperatorID(operator.address)
+      operatorID = await sortitionPool.getOperatorID(operator.address)
 
       // We simulate the removal during status update directly on the
       // sortition pool stub to leave the gas deposit untouched.
-      await sortitionPoolStub.removeOperators([operatorID])
+      await sortitionPool.removeOperators([operatorID])
 
       tx = await randomBeacon.connect(operator).updateOperatorStatus()
     })
 
     it("should update operator status", async () => {
       await expect(tx)
-        .to.emit(sortitionPoolStub, "OperatorStatusUpdated")
+        .to.emit(sortitionPool, "OperatorStatusUpdated")
         .withArgs(operatorID)
     })
 
@@ -143,7 +151,7 @@ describe("RandomBeacon - Pool", () => {
   describe("isOperatorEligible", () => {
     context("when the operator is eligible to join the sortition pool", () => {
       beforeEach(async () => {
-        await sortitionPoolStub.setOperatorEligibility(operator.address, true)
+        await stakingStub.setStake(operator.address, constants.minimumStake)
       })
 
       it("should return true", async () => {
@@ -156,10 +164,7 @@ describe("RandomBeacon - Pool", () => {
       "when the operator is not eligible to join the sortition pool",
       () => {
         beforeEach(async () => {
-          await sortitionPoolStub.setOperatorEligibility(
-            operator.address,
-            false
-          )
+          await stakingStub.setStake(operator.address, constants.minimumStake - 1)
         })
 
         it("should return false", async () => {

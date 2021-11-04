@@ -10,7 +10,7 @@ contract RandomBeaconStub is RandomBeacon {
     constructor(
         ISortitionPool _sortitionPool,
         IERC20 _tToken,
-        IStaking _staking
+        IRandomBeaconStaking _staking
     ) RandomBeacon(_sortitionPool, _tToken, _staking) {}
 
     function getDkgData() external view returns (DKG.Data memory) {

@@ -58,7 +58,7 @@ interface ISortitionPool {
 ///
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 ///       staking interface from there.
-interface IStaking {
+interface IRandomBeaconStaking {
     function slash(uint256 amount, address[] memory operators) external;
 }
 
@@ -121,7 +121,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
-    IStaking public staking;
+    IRandomBeaconStaking public staking;
 
     // Libraries data storages
     DKG.Data internal dkg;
@@ -227,7 +227,7 @@ contract RandomBeacon is Ownable {
     constructor(
         ISortitionPool _sortitionPool,
         IERC20 _tToken,
-        IStaking _staking
+        IRandomBeaconStaking _staking
     ) {
         // TODO: RandomBeacon must be the owner of the sortition pool.
         sortitionPool = _sortitionPool;
@@ -490,7 +490,7 @@ contract RandomBeacon is Ownable {
         groups.addCandidateGroup(
             dkgResult.groupPubKey,
             dkgResult.members,
-            dkgResult.misbehaved
+            dkgResult.misbehavedMembersIndices
         );
     }
 
