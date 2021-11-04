@@ -60,39 +60,9 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function randomBeaconDeploymentWithStubSortitionPool(): Promise<DeployedContracts> {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-
-  const StakingStub = await ethers.getContractFactory("StakingStub")
-  const stakingStub: StakingStub = await StakingStub.deploy()
-
-  const { testToken } = await testTokenDeployment()
-
-  const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
-    libraries: {
-      BLS: (await blsDeployment()).bls.address,
-    },
-  })
-
-  const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
-    sortitionPoolStub.address,
-    testToken.address,
-    stakingStub.address
-  )
-  await randomBeacon.deployed()
-
-  const contracts: DeployedContracts = {
-    sortitionPoolStub,
-    randomBeacon,
-    testToken,
-    stakingStub,
-  }
-
-  return contracts
-}
-
-export async function randomBeaconDeploymentWithRealSortitionPool(): Promise<DeployedContracts> {
+export async function randomBeaconDeployment(
+  sortitionPoolStub: Contract
+): Promise<DeployedContracts> {
   const minStake = 2000
   const poolWightDevisor = 2000
   const dummySortitionPoolOperator =
@@ -101,12 +71,15 @@ export async function randomBeaconDeploymentWithRealSortitionPool(): Promise<Dep
   const stakingStub: StakingStub = await StakingStub.deploy()
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
-  const sortitionPool: SortitionPool = await SortitionPool.deploy(
+  const realSortitionPool: SortitionPool = await SortitionPool.deploy(
     stakingStub.address,
     minStake,
     poolWightDevisor,
     dummySortitionPoolOperator
   )
+
+  // use the sortition pool stub if it's passed or the real sortition pool if not
+  const sortitionPool = sortitionPoolStub || realSortitionPool
 
   const { testToken } = await testTokenDeployment()
 
@@ -134,7 +107,9 @@ export async function randomBeaconDeploymentWithRealSortitionPool(): Promise<Dep
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
-  const contracts = await randomBeaconDeploymentWithStubSortitionPool()
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  const contracts = await randomBeaconDeployment(sortitionPoolStub)
 
   const RandomBeaconGovernance = await ethers.getContractFactory(
     "RandomBeaconGovernance"

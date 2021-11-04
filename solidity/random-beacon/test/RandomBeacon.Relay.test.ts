@@ -7,10 +7,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import {
-  constants,
-  randomBeaconDeploymentWithStubSortitionPool,
-} from "./fixtures"
+import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
   RandomBeacon,
@@ -27,16 +24,18 @@ const { mineBlocks } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const deployment = await randomBeaconDeploymentWithStubSortitionPool()
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  const deployment = await randomBeaconDeployment(sortitionPoolStub)
 
   const signers = await registerOperators(
-    deployment.sortitionPoolStub as SortitionPoolStub,
+    deployment.sortitionPool as SortitionPoolStub,
     (await getUnnamedAccounts()).slice(0, constants.groupSize)
   )
 
   return {
     randomBeacon: deployment.randomBeacon as RandomBeacon,
-    sortitionPool: deployment.sortitionPoolStub as SortitionPoolStub,
+    sortitionPool: deployment.sortitionPool as SortitionPoolStub,
     testToken: deployment.testToken as TestToken,
     staking: deployment.stakingStub as StakingStub,
     relayStub: (await (

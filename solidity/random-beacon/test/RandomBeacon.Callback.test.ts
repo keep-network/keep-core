@@ -3,10 +3,7 @@ import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import {
-  constants,
-  randomBeaconDeploymentWithStubSortitionPool,
-} from "./fixtures"
+import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type { DeployedContracts } from "./fixtures"
 import type {
@@ -20,7 +17,9 @@ import { registerOperators, Operator } from "./utils/sortitionpool"
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const deployment = await randomBeaconDeploymentWithStubSortitionPool()
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  const deployment = await randomBeaconDeployment(sortitionPoolStub)
 
   const contracts: DeployedContracts = {
     randomBeacon: deployment.randomBeacon,
@@ -36,7 +35,7 @@ const fixture = async () => {
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
-    deployment.sortitionPoolStub as SortitionPoolStub,
+    deployment.sortitionPool as SortitionPoolStub,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 

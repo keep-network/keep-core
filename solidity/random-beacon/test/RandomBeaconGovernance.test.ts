@@ -1,9 +1,19 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import type { Signer } from "ethers"
-import { randomBeaconDeploymentWithStubSortitionPool } from "./fixtures"
+import { randomBeaconDeployment } from "./fixtures"
 
-import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
+import type {
+  RandomBeacon,
+  RandomBeaconGovernance,
+  SortitionPoolStub,
+} from "../typechain"
+
+const fixture = async () => {
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  return randomBeaconDeployment(sortitionPoolStub)
+}
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
@@ -30,9 +40,7 @@ describe("RandomBeaconGovernance", () => {
   })
 
   beforeEach(async () => {
-    const contracts = await waffle.loadFixture(
-      randomBeaconDeploymentWithStubSortitionPool
-    )
+    const contracts = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
 
