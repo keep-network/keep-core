@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react"
 import {
-  claimTokensFromWithdrawal,
+  // claimTokensFromWithdrawal,
   withdrawAssetPool,
 } from "../../actions/coverage-pool"
 import { useDispatch, useSelector } from "react-redux"
-import ClaimTokensModal from "./ClaimTokensModal"
+// import ClaimTokensModal from "./ClaimTokensModal"
 import { useModal } from "../../hooks/useModal"
 import ReinitiateWithdrawalModal from "./ReinitiateWithdrawalModal"
 import { addAdditionalDataToModal } from "../../actions/modal"
@@ -22,10 +22,11 @@ import { SubmitButton } from "../Button"
 import { Keep } from "../../contracts"
 import { useWeb3Address } from "../WithWeb3Context"
 import { ResourceTooltipContent } from "../ResourceTooltip"
+import { MODAL_TYPES } from "../../constants/constants"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
-  const { openConfirmationModal, closeModal } = useModal()
+  const { openConfirmationModal, openModal /** closeModal*/ } = useModal()
   const yourAddress = useWeb3Address()
 
   const {
@@ -48,33 +49,42 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   })
 
   const onClaimTokensSubmitButtonClick = async (covAmount, awaitingPromise) => {
-    dispatch(
-      addAdditionalDataToModal({
-        componentProps: {
-          totalValueLocked,
-          covTotalSupply,
-          covTokensAvailableToWithdraw,
-        },
-      })
-    )
-    await openConfirmationModal(
-      {
-        closeModal: closeModal,
-        submitBtnText: "claim",
+    openModal(MODAL_TYPES.CovPoolClaimTokens, {
+      covAmount,
+      address: yourAddress,
+      collateralTokenAmount: Keep.coveragePoolV1.estimatedBalanceFor(
         covAmount,
-        totalValueLocked,
         covTotalSupply,
-        address: yourAddress,
-        modalOptions: {
-          title: "Claim tokens",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__claim-tokens",
-          },
-        },
-      },
-      ClaimTokensModal
-    )
-    dispatch(claimTokensFromWithdrawal(awaitingPromise))
+        totalValueLocked
+      ),
+    })
+    // dispatch(
+    //   addAdditionalDataToModal({
+    //     componentProps: {
+    //       totalValueLocked,
+    //       covTotalSupply,
+    //       covTokensAvailableToWithdraw,
+    //     },
+    //   })
+    // )
+    // await openConfirmationModal(
+    //   {
+    //     closeModal: closeModal,
+    //     submitBtnText: "claim",
+    //     covAmount,
+    //     totalValueLocked,
+    //     covTotalSupply,
+    //     address: yourAddress,
+    //     modalOptions: {
+    //       title: "Claim tokens",
+    //       classes: {
+    //         modalWrapperClassName: "modal-wrapper__claim-tokens",
+    //       },
+    //     },
+    //   },
+    //   ClaimTokensModal
+    // )
+    // dispatch(claimTokensFromWithdrawal(awaitingPromise))
   }
 
   const onReinitiateWithdrawal = async (

@@ -227,6 +227,7 @@ export const MODAL_TYPES = {
   InitiateCovPoolDeposit: "InitiateCovPoolDeposit",
   InitiateCovPoolWithdraw: "InitiateCovPoolWithdraw",
   CovPoolWithdrawInitialized: "CovPoolWithdrawInitialized",
+  CovPoolClaimTokens: "CovPoolClaimTokens",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {

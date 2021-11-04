@@ -31,6 +31,7 @@ import {
   WarningBeforeDeposit,
   InitiateWithdraw,
   WithdrawInitialized,
+  ClaimTokens,
 } from "./coverage-pools"
 
 const MODAL_TYPE_TO_COMPONENT = {
@@ -62,6 +63,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.InitiateCovPoolDeposit]: InitiateDeposit,
   [MODAL_TYPES.InitiateCovPoolWithdraw]: InitiateWithdraw,
   [MODAL_TYPES.CovPoolWithdrawInitialized]: WithdrawInitialized,
+  [MODAL_TYPES.CovPoolClaimTokens]: ClaimTokens,
 }
 
 const modalRoot = document.getElementById("modal-root")

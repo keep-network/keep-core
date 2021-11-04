@@ -338,19 +338,13 @@ export function* subscribeToWithdrawalCompletedEvent() {
     if (isAddressedToCurrentAddress) {
       yield put(
         showModal({
+          modalType: MODAL_TYPES.CovPoolClaimTokens,
           modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
-          componentProps: {
+          modalProps: {
             transactionHash: event.transactionHash,
-            transactionFinished: true,
             collateralTokenAmount: amount,
             covAmount,
             address: underwriter,
-          },
-          modalProps: {
-            title: "Claim tokens",
-            classes: {
-              modalWrapperClassName: "modal-wrapper__claim-tokens",
-            },
           },
         })
       )
