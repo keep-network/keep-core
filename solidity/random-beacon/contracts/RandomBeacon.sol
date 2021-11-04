@@ -648,7 +648,7 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Punishes the given operators by kicking them out from the
-    ///         sortition pool and blocking their re-join for a given period
+    ///         sortition pool and blocking their reinsertion for a given period
     ///         of time.
     /// @dev By the way, this function releases gas deposits made by operators
     ///      during their registration. See `registerOperator` function. This
