@@ -61,7 +61,7 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
 }
 
 export async function randomBeaconDeployment(
-  sortitionPoolStub: Contract
+  sortitionPoolStub?: Contract
 ): Promise<DeployedContracts> {
   const minStake = 2000
   const poolWightDevisor = 2000

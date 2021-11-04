@@ -6,7 +6,7 @@ import { randomBeaconDeployment } from "./fixtures"
 
 import type { RandomBeacon, SortitionPool, StakingStub } from "../typechain"
 
-const fixture = async () => randomBeaconDeployment(undefined)
+const fixture = async () => randomBeaconDeployment()
 
 describe("RandomBeacon - Pool", () => {
   let operator: Signer
