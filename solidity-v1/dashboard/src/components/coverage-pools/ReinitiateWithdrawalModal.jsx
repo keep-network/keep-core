@@ -19,6 +19,8 @@ const ReinitiateWithdrawalModal = ({
   totalValueLocked,
   covTotalSupply,
   withdrawalDelay,
+  withdrawalTimeout,
+  withdrawalInitiatedTimestamp,
   submitBtnText,
   onBtnClick,
   onCancel,
@@ -90,6 +92,8 @@ const ReinitiateWithdrawalModal = ({
             totalValueLocked={totalValueLocked}
             covTotalSupply={covTotalSupply}
             withdrawalDelay={withdrawalDelay}
+            withdrawalTimeout={withdrawalTimeout}
+            withdrawalInitiatedTimestamp={withdrawalInitiatedTimestamp}
             submitBtnText={"withdraw"}
             onBtnClick={onSubmit}
             onCancel={onCancel}

@@ -105,6 +105,8 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
         totalValueLocked,
         covTotalSupply,
         withdrawalDelay,
+        withdrawalTimeout,
+        withdrawalInitiatedTimestamp,
         containerTitle: "You are about to re-initiate this withdrawal:",
       },
       ReinitiateWithdrawalModal

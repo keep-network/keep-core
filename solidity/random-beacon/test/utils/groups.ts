@@ -3,7 +3,7 @@ import { signAndSubmitDkgResult } from "./dkg"
 import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
 import { Operator } from "./sortitionpool"
-import type { RandomBeacon } from "../../typechain"
+import type { RandomBeaconStub, RandomBeacon } from "../../typechain"
 
 const { mineBlocks } = helpers.time
 
