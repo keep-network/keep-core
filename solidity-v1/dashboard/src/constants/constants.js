@@ -193,3 +193,10 @@ export const TBTC_TOKEN_VERSION = {
   v1: "v1",
   v2: "v2",
 }
+
+export const PENDING_WITHDRAWAL_STATUS = {
+  NONE: "none",
+  PENDING: "pending",
+  AVAILABLE_TO_WITHDRAW: "available_to_withdraw",
+  EXPIRED: "expired",
+}
