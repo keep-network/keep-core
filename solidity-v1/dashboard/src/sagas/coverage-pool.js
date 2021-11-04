@@ -255,15 +255,17 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     } = event
 
     const address = yield select(selectors.getUserAddress)
-    const { covBalance } = yield select(selectors.getCoveragePool)
+    const { covBalance, totalValueLocked, covTotalSupply } = yield select(
+      selectors.getCoveragePool
+    )
     const { componentProps } = yield select(selectors.getModalData)
 
     if (!isSameEthAddress(address, underwriter)) {
       continue
     }
 
-    let modalType = modalComponentType.COV_POOLS.INITIATE_WITHDRAWAL
-    let title = "Withdraw"
+    let modalType = MODAL_TYPES.CovPoolWithdrawInitialized
+    // let title = "Withdraw"
     let amount = covAmount
     if (
       componentProps?.pendingWithdrawalBalance &&
@@ -272,7 +274,7 @@ export function* subscribeToWithdrawalInitiatedEvent() {
       eq(componentProps?.amount, 0)
     ) {
       modalType = modalComponentType.COV_POOLS.RE_INITIATE_WITHDRAWAL
-      title = "Re-initiate withdrawal"
+      // title = "Re-initiate withdrawal"
     } else if (
       componentProps?.pendingWithdrawalBalance &&
       componentProps?.amount &&
@@ -280,24 +282,26 @@ export function* subscribeToWithdrawalInitiatedEvent() {
       gt(componentProps?.amount, 0)
     ) {
       modalType = modalComponentType.COV_POOLS.INCREASE_WITHDRAWAL
-      title = "Re-initiate withdrawal"
+      // title = "Re-initiate withdrawal"
       amount = componentProps.amount
     }
 
     yield put(
       showModal({
-        modalComponentType: modalType,
-        componentProps: {
-          transactionFinished: true,
-          transactionHash: event.transactionHash,
-          pendingWithdrawalBalance: componentProps?.pendingWithdrawalBalance,
-          amount: amount,
-        },
+        modalType,
         modalProps: {
-          title,
-          classes: {
-            modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-          },
+          amount,
+          transactionHash: event.transactionHash,
+          totalValueLocked,
+          covTotalSupply,
+          covBalanceOf: covBalance,
+          estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
+            covBalance,
+            covTotalSupply,
+            totalValueLocked
+          ),
+          // pendingWithdrawalBalance: componentProps?.pendingWithdrawalBalance,
+          // amount: amount,
         },
       })
     )

@@ -225,6 +225,8 @@ export const MODAL_TYPES = {
   ConfirmReleaseTokensFromGrant: "ConfirmReleaseTokensFromGrant",
   WarningBeforeCovPoolDeposit: "WarningBeforeCovPoolDeposit",
   InitiateCovPoolDeposit: "InitiateCovPoolDeposit",
+  InitiateCovPoolWithdraw: "InitiateCovPoolWithdraw",
+  CovPoolWithdrawInitialized: "CovPoolWithdrawInitialized",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {
