@@ -31,7 +31,7 @@ contract RandomBeaconStub is RandomBeacon {
         group.groupPubKey = groupPubKey;
         group.members = members;
         /* solhint-disable-next-line not-rely-on-time */
-        group.activationTimestamp = block.timestamp;
+        group.activationBlockNumber = block.number;
 
         groups.groupsData[groupPubKeyHash] = group;
         groups.groupsRegistry.push(groupPubKeyHash);
