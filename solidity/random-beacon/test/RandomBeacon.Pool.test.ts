@@ -47,7 +47,8 @@ describe("RandomBeacon - Pool", () => {
         })
 
         it("should register the operator", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be.true
+          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+            .true
         })
       })
 
@@ -74,7 +75,8 @@ describe("RandomBeacon - Pool", () => {
         })
 
         it("should register the operator", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be.true
+          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+            .true
         })
 
         it("should remove operator from punished operators map", async () => {
@@ -127,20 +129,18 @@ describe("RandomBeacon - Pool", () => {
 
     beforeEach(async () => {
       // Operator is registered and gas deposit is made.
+      await stakingStub.setStake(operator.address, constants.minimumStake)
       await randomBeacon.connect(operator).registerOperator()
       operatorID = await sortitionPool.getOperatorID(operator.address)
 
-      // We simulate the removal during status update directly on the
-      // sortition pool stub to leave the gas deposit untouched.
-      await sortitionPool.removeOperators([operatorID])
+      // Simulate the operator became ineligible.
+      await stakingStub.setStake(operator.address, 0)
 
       tx = await randomBeacon.connect(operator).updateOperatorStatus()
     })
 
-    it("should update operator status", async () => {
-      await expect(tx)
-        .to.emit(sortitionPool, "OperatorStatusUpdated")
-        .withArgs(operatorID)
+    it("should remove operator from the pool", async () => {
+      expect(await sortitionPool.isOperatorInPool(operator.address)).to.be.false
     })
 
     it("should release the gas deposit if operator was removed from pool during the update", async () => {
@@ -164,7 +164,10 @@ describe("RandomBeacon - Pool", () => {
       "when the operator is not eligible to join the sortition pool",
       () => {
         beforeEach(async () => {
-          await stakingStub.setStake(operator.address, constants.minimumStake - 1)
+          await stakingStub.setStake(
+            operator.address,
+            constants.minimumStake.sub(1)
+          )
         })
 
         it("should return false", async () => {

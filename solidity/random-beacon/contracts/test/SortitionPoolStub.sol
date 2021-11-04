@@ -91,4 +91,8 @@ contract SortitionPoolStub is ISortitionPool {
     {
         return sortitionTree.getOperatorID(operator);
     }
+
+    function transferOwnership(address newOwner) public {
+        // no-op
+    }
 }

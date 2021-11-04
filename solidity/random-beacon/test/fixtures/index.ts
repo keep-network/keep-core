@@ -1,5 +1,5 @@
 import { Contract } from "ethers"
-import { ethers } from "hardhat"
+import { ethers, getNamedAccounts } from "hardhat"
 import type {
   SortitionPool,
   SortitionPoolStub,
@@ -7,12 +7,15 @@ import type {
   RandomBeaconGovernance,
   StakingStub,
 } from "../../typechain"
+import { to1e18 } from "../functions"
 
 export const constants = {
   groupSize: 64,
   groupThreshold: 33,
   signatureThreshold: 48, // groupThreshold + (groupSize - groupThreshold) / 2
   offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
+  minimumStake: to1e18(100000),
+  poolWeightDivisor: 2000,
 }
 
 export const params = {
@@ -61,25 +64,27 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
 }
 
 export async function randomBeaconDeployment(
-  sortitionPoolStub?: Contract
+  sortitionPoolStub?: SortitionPoolStub
 ): Promise<DeployedContracts> {
-  const minStake = 2000
-  const poolWightDevisor = 2000
-  const dummySortitionPoolOperator =
-    "0x0000000000000000000000000000000000000001"
+  const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+
   const StakingStub = await ethers.getContractFactory("StakingStub")
   const stakingStub: StakingStub = await StakingStub.deploy()
 
-  const SortitionPool = await ethers.getContractFactory("SortitionPool")
-  const realSortitionPool: SortitionPool = await SortitionPool.deploy(
-    stakingStub.address,
-    minStake,
-    poolWightDevisor,
-    dummySortitionPoolOperator
-  )
-
-  // use the sortition pool stub if it's passed or the real sortition pool if not
-  const sortitionPool = sortitionPoolStub || realSortitionPool
+  // Use the sortition pool stub if it's passed or the real sortition
+  // pool otherwise.
+  let sortitionPool: SortitionPool | SortitionPoolStub
+  if (typeof sortitionPoolStub !== "undefined") {
+    sortitionPool = sortitionPoolStub
+  } else {
+    const SortitionPool = await ethers.getContractFactory("SortitionPool")
+    sortitionPool = (await SortitionPool.deploy(
+      stakingStub.address,
+      constants.minimumStake,
+      constants.poolWeightDivisor,
+      deployer.address
+    )) as SortitionPool
+  }
 
   const { testToken } = await testTokenDeployment()
 
@@ -88,13 +93,14 @@ export async function randomBeaconDeployment(
       BLS: (await blsDeployment()).bls.address,
     },
   })
-
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPool.address,
     testToken.address,
     stakingStub.address
   )
   await randomBeacon.deployed()
+
+  await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
 
   const contracts: DeployedContracts = {
     sortitionPool,

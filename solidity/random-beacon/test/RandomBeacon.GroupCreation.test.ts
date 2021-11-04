@@ -5,7 +5,6 @@ import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
 import type { RandomBeacon, RandomBeaconStub } from "../typechain"
 import { genesis, signAndSubmitDkgResult, DkgResult } from "./utils/dkg"
-import { SortitionPoolStub } from "../typechain/SortitionPoolStub"
 import { registerOperators, Operator } from "./utils/sortitionpool"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
@@ -24,7 +23,7 @@ const fixture = async () => {
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
-    contracts.sortitionPool as SortitionPoolStub,
+    contracts.randomBeacon as RandomBeacon,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 

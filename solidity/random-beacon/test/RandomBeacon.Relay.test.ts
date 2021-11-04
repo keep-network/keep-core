@@ -2,7 +2,7 @@
 
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
-import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
+import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
@@ -14,7 +14,7 @@ import type {
   RandomBeaconStub,
   TestToken,
   RelayStub,
-  SortitionPoolStub,
+  SortitionPool,
   StakingStub,
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
@@ -25,18 +25,16 @@ const ZERO_ADDRESS = ethers.constants.AddressZero
 const TWO_WEEKS = 1209600 // 2 weeks in seconds
 
 const fixture = async () => {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-  const deployment = await randomBeaconDeployment(sortitionPoolStub)
+  const deployment = await randomBeaconDeployment()
 
   const signers = await registerOperators(
-    deployment.sortitionPool as SortitionPoolStub,
+    deployment.randomBeacon as RandomBeacon,
     (await getUnnamedAccounts()).slice(0, constants.groupSize)
   )
 
   return {
     randomBeacon: deployment.randomBeacon as RandomBeacon,
-    sortitionPool: deployment.sortitionPool as SortitionPoolStub,
+    sortitionPool: deployment.sortitionPool as SortitionPool,
     testToken: deployment.testToken as TestToken,
     staking: deployment.stakingStub as StakingStub,
     relayStub: (await (
@@ -60,6 +58,7 @@ describe("RandomBeacon - Relay", () => {
 
   let requester: SignerWithAddress
   let member3: SignerWithAddress
+  let member15: SignerWithAddress
   let member16: SignerWithAddress
   let member17: SignerWithAddress
   let member18: SignerWithAddress
@@ -68,7 +67,7 @@ describe("RandomBeacon - Relay", () => {
   let signersAddresses: Address[]
 
   let randomBeacon: RandomBeacon
-  let sortitionPool: SortitionPoolStub
+  let sortitionPool: SortitionPool
   let testToken: TestToken
   let staking: StakingStub
   let relayStub: RelayStub
@@ -87,6 +86,9 @@ describe("RandomBeacon - Relay", () => {
 
     member3 = await ethers.getSigner(
       signers[invalidEntryFirstEligibleMemberIndex - 1].address
+    )
+    member15 = await ethers.getSigner(
+      signers[firstEligibleMemberIndex - 1 - 1].address
     )
     member16 = await ethers.getSigner(
       signers[firstEligibleMemberIndex - 1].address
@@ -203,7 +205,7 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
-                    expect(await sortitionPool.operatorsCount()).to.be.equal(
+                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
                       constants.groupSize
                     )
                   })
@@ -252,7 +254,7 @@ describe("RandomBeacon - Relay", () => {
 
                   it("should remove members who did not submit from the sortition pool", async () => {
                     // Two members should be kicked out from the pool.
-                    expect(await sortitionPool.operatorsCount()).to.be.equal(
+                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
                       constants.groupSize - 2
                     )
 
@@ -329,7 +331,7 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
-                    expect(await sortitionPool.operatorsCount()).to.be.equal(
+                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
                       constants.groupSize
                     )
                   })
@@ -380,11 +382,13 @@ describe("RandomBeacon - Relay", () => {
                     // due to the Hardhat auto-mine feature.
                     await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
 
-                    // The member `18` submits the result.
+                    // The last eligible member `15` submits the result.
+                    // This is the worst case gas-wise as it requires to
+                    // kick out 63 members from the sortition pool.
                     tx = await randomBeacon
-                      .connect(member18)
+                      .connect(member15)
                       .submitRelayEntry(
-                        firstEligibleMemberIndex + 2,
+                        firstEligibleMemberIndex - 1,
                         blsData.groupSignature
                       )
 
@@ -396,14 +400,23 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should remove members who did not submit from the sortition pool", async () => {
-                    // Two members should be kicked out from the pool.
-                    expect(await sortitionPool.operatorsCount()).to.be.equal(
-                      constants.groupSize - 2
-                    )
+                    // 63 members should be kicked out from the pool. Only
+                    // one member should stay in the pool.
+                    expect(await sortitionPool.operatorsInPool()).to.be.equal(1)
 
-                    // Member 16 should be kicked out from the pool, blocked
-                    // against re-joining for 2 weeks, and his gas deposit
-                    // should be released.
+                    // Check if the right member stays in the pool. This
+                    // should be the submitter (member 15).
+                    expect(
+                      await sortitionPool.isOperatorInPool(member15.address)
+                    ).to.be.true
+
+                    // All members but member 15 should be kicked out from the
+                    // pool, blocked against re-joining for 2 weeks, and his gas
+                    // deposit should be released. Here we make the assertion
+                    // only for one punished member as making it for all
+                    // members is redundant given we assert for the number
+                    // of operators in pool and the identity of the operator
+                    // who stayed.
                     expect(
                       await sortitionPool.isOperatorInPool(member16.address)
                     ).to.be.false
@@ -413,21 +426,6 @@ describe("RandomBeacon - Relay", () => {
                     expect(
                       await (randomBeacon as RandomBeaconStub).hasGasDeposit(
                         member16.address
-                      )
-                    ).to.be.false
-
-                    // Member 17 should be kicked out from the pool, blocked
-                    // against re-joining for 2 weeks, and his gas deposit
-                    // should be released.
-                    expect(
-                      await sortitionPool.isOperatorInPool(member17.address)
-                    ).to.be.false
-                    expect(
-                      await randomBeacon.punishedOperators(member17.address)
-                    ).to.be.equal(txTimestamp + TWO_WEEKS)
-                    expect(
-                      await (randomBeacon as RandomBeaconStub).hasGasDeposit(
-                        member17.address
                       )
                     ).to.be.false
                   })
