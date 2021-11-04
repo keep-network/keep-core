@@ -411,10 +411,10 @@ describe("RandomBeacon - Relay", () => {
                     ).to.be.true
 
                     // All members but member 15 should be kicked out from the
-                    // pool, blocked against re-joining for 2 weeks, and his gas
-                    // deposit should be released. Here we make the assertion
-                    // only for one punished member as making it for all
-                    // members is redundant given we assert for the number
+                    // pool, blocked against re-joining for 2 weeks, and their
+                    // gas deposits should be released. Here we make the
+                    // assertion only for one punished member as making it for
+                    // all members is redundant given we assert for the number
                     // of operators in pool and the identity of the operator
                     // who stayed.
                     expect(
@@ -633,6 +633,13 @@ describe("RandomBeacon - Relay", () => {
           await expect(tx)
             .to.emit(staking, "Slashed")
             .withArgs(to1e18(1000), signersAddresses)
+
+          await expect(tx)
+            .to.emit(
+              randomBeacon,
+              "RelayEntrySubmissionFailureSlashingOccurred"
+            )
+            .withArgs(1, to1e18(1000), signersAddresses)
         })
 
         it("should terminate the group", async () => {
