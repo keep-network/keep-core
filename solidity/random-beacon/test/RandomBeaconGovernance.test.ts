@@ -1,13 +1,25 @@
-import { ethers } from "hardhat"
-import { Signer, Contract } from "ethers"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { helpers } from "hardhat"
+import type { Signer } from "ethers"
+import { randomBeaconDeployment } from "./fixtures"
+
+import type {
+  RandomBeacon,
+  RandomBeaconGovernance,
+  SortitionPoolStub,
+} from "../typechain"
+
+const fixture = async () => {
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  return randomBeaconDeployment(sortitionPoolStub)
+}
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
   let thirdParty: Signer
-  let randomBeacon: Contract
-  let randomBeaconGovernance: Contract
+  let randomBeacon: RandomBeacon
+  let randomBeaconGovernance: RandomBeaconGovernance
 
   const initialRelayRequestFee = 100000
   const initialRelayEntrySubmissionEligibilityDelay = 10
@@ -22,41 +34,48 @@ describe("RandomBeaconGovernance", () => {
   const initialRelayEntrySubmissionFailureSlashingAmount = 1000
   const initialMaliciousDkgResultSlashingAmount = 1000000000
 
+  // prettier-ignore
+  before(async () => {
+    [governance, thirdParty] = await ethers.getSigners()
+  })
+
   beforeEach(async () => {
-    const signers = await ethers.getSigners()
-    governance = signers[0]
-    thirdParty = signers[1]
+    const contracts = await waffle.loadFixture(fixture)
 
-    const SortitionPoolStub = await ethers.getContractFactory(
-      "SortitionPoolStub"
-    )
-    const sortitionPoolStub = await SortitionPoolStub.deploy()
-    await sortitionPoolStub.deployed()
+    randomBeacon = contracts.randomBeacon as RandomBeacon
 
-    const RandomBeacon = await ethers.getContractFactory("RandomBeacon")
-    randomBeacon = await RandomBeacon.deploy(sortitionPoolStub.address)
-    await randomBeacon.deployed()
-
-    await randomBeacon.connect(governance).updateRelayEntryParameters(
-      initialRelayRequestFee,
-      initialRelayEntrySubmissionEligibilityDelay,
-      initialRelayEntryHardTimeout,
-      initialCallbackGasLimit
-    )
-    await randomBeacon.connect(governance).updateGroupCreationParameters(
-      initialGroupCreationFrequency,
-      initialGroupLifeTime,
-      initialDkgResultChallengePeriodLength,
-      initialDkgResultSubmissionEligibilityDelay
-    )
-    await randomBeacon.connect(governance).updateRewardParameters(
-      initialDkgResultSubmissionReward,
-      initialSortitionPoolUnlockingReward
-    )
-    await randomBeacon.connect(governance).updateSlashingParameters(
-      initialRelayEntrySubmissionFailureSlashingAmount,
-      initialMaliciousDkgResultSlashingAmount
-    )
+    await randomBeacon
+      .connect(governance)
+      .updateRelayEntryParameters(
+        initialRelayRequestFee,
+        initialRelayEntrySubmissionEligibilityDelay,
+        initialRelayEntryHardTimeout,
+        initialCallbackGasLimit
+      )
+    await randomBeacon
+      .connect(governance)
+      .updateGroupCreationParameters(
+        initialGroupCreationFrequency,
+        initialGroupLifeTime
+      )
+    await randomBeacon
+      .connect(governance)
+      .updateDkgParameters(
+        initialDkgResultChallengePeriodLength,
+        initialDkgResultSubmissionEligibilityDelay
+      )
+    await randomBeacon
+      .connect(governance)
+      .updateRewardParameters(
+        initialDkgResultSubmissionReward,
+        initialSortitionPoolUnlockingReward
+      )
+    await randomBeacon
+      .connect(governance)
+      .updateSlashingParameters(
+        initialRelayEntrySubmissionFailureSlashingAmount,
+        initialMaliciousDkgResultSlashingAmount
+      )
 
     const RandomBeaconGovernance = await ethers.getContractFactory(
       "RandomBeaconGovernance"
@@ -147,37 +166,40 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayRequestFeeUpdate(123)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginRelayRequestFeeUpdate(123)
 
-        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayRequestFeeUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayRequestFeeUpdate()
+        })
 
-      it("should update the relay request fee", async () => {
-        expect(await randomBeacon.relayRequestFee()).to.be.equal(123)
-      })
+        it("should update the relay request fee", async () => {
+          expect(await randomBeacon.relayRequestFee()).to.be.equal(123)
+        })
 
-      it("should emit RelayRequestFeeUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeaconGovernance, "RelayRequestFeeUpdated")
-          .withArgs(123)
-      })
+        it("should emit RelayRequestFeeUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "RelayRequestFeeUpdated")
+            .withArgs(123)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingRelayRequestFeeUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingRelayRequestFeeUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginRelayEntrySubmissionEligibilityDelayUpdate", () => {
@@ -287,42 +309,45 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
 
-        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayEntrySubmissionEligibilityDelayUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntrySubmissionEligibilityDelayUpdate()
+        })
 
-      it("should update the relay entry submission eligibility delay", async () => {
-        expect(
-          await randomBeacon.relayEntrySubmissionEligibilityDelay()
-        ).to.be.equal(1)
-      })
+        it("should update the relay entry submission eligibility delay", async () => {
+          expect(
+            await randomBeacon.relayEntrySubmissionEligibilityDelay()
+          ).to.be.equal(1)
+        })
 
-      it("should emit RelayEntrySubmissionEligibilityDelayUpdated event", async () => {
-        await expect(tx)
-          .to.emit(
-            randomBeaconGovernance,
-            "RelayEntrySubmissionEligibilityDelayUpdated"
-          )
-          .withArgs(1)
-      })
+        it("should emit RelayEntrySubmissionEligibilityDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "RelayEntrySubmissionEligibilityDelayUpdated"
+            )
+            .withArgs(1)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingRelayEntrySubmissionEligibilityDelayUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingRelayEntrySubmissionEligibilityDelayUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginRelayEntryHardTimeoutUpdate", () => {
@@ -404,37 +429,40 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayEntryHardTimeoutUpdate(123)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginRelayEntryHardTimeoutUpdate(123)
 
-        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayEntryHardTimeoutUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntryHardTimeoutUpdate()
+        })
 
-      it("should update the relay entry hard timeout", async () => {
-        expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(123)
-      })
+        it("should update the relay entry hard timeout", async () => {
+          expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(123)
+        })
 
-      it("should emit RelayEntryHardTimeoutUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeaconGovernance, "RelayEntryHardTimeoutUpdated")
-          .withArgs(123)
-      })
+        it("should emit RelayEntryHardTimeoutUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "RelayEntryHardTimeoutUpdated")
+            .withArgs(123)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingRelayEntryHardTimeoutUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingRelayEntryHardTimeoutUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginCallbackGasLimitUpdate", () => {
@@ -559,37 +587,40 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginCallbackGasLimitUpdate(123)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginCallbackGasLimitUpdate(123)
 
-        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeCallbackGasLimitUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeCallbackGasLimitUpdate()
+        })
 
-      it("should update the callback gas limit", async () => {
-        expect(await randomBeacon.callbackGasLimit()).to.be.equal(123)
-      })
+        it("should update the callback gas limit", async () => {
+          expect(await randomBeacon.callbackGasLimit()).to.be.equal(123)
+        })
 
-      it("should emit CallbackGasLimitUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeaconGovernance, "CallbackGasLimitUpdated")
-          .withArgs(123)
-      })
+        it("should emit CallbackGasLimitUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "CallbackGasLimitUpdated")
+            .withArgs(123)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingCallbackGasLimitUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingCallbackGasLimitUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginGroupCreationFrequencyUpdate", () => {
@@ -609,9 +640,7 @@ describe("RandomBeaconGovernance", () => {
           randomBeaconGovernance
             .connect(governance)
             .beginGroupCreationFrequencyUpdate(0)
-        ).to.be.revertedWith(
-          "Group creation frequency must be > 0"
-        )
+        ).to.be.revertedWith("Group creation frequency must be > 0")
       })
     })
 
@@ -699,37 +728,40 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginGroupCreationFrequencyUpdate(1)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginGroupCreationFrequencyUpdate(1)
 
-        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeGroupCreationFrequencyUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeGroupCreationFrequencyUpdate()
+        })
 
-      it("should update the group creation frequency", async () => {
-        expect(await randomBeacon.groupCreationFrequency()).to.be.equal(1)
-      })
+        it("should update the group creation frequency", async () => {
+          expect(await randomBeacon.groupCreationFrequency()).to.be.equal(1)
+        })
 
-      it("should emit GroupCreationFrequencyUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeaconGovernance, "GroupCreationFrequencyUpdated")
-          .withArgs(1)
-      })
+        it("should emit GroupCreationFrequencyUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "GroupCreationFrequencyUpdated")
+            .withArgs(1)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingGroupCreationFrequencyUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingGroupCreationFrequencyUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginGroupLifetimeUpdate", () => {
@@ -851,37 +883,42 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
 
-        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeGroupLifetimeUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeGroupLifetimeUpdate()
+        })
 
-      it("should update the group lifetime", async () => {
-        expect(await randomBeacon.groupLifetime()).to.be.equal(2 * 24 * 60 * 60)
-      })
+        it("should update the group lifetime", async () => {
+          expect(await randomBeacon.groupLifetime()).to.be.equal(
+            2 * 24 * 60 * 60
+          )
+        })
 
-      it("should emit GroupLifetimeUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeaconGovernance, "GroupLifetimeUpdated")
-          .withArgs(2 * 24 * 60 * 60) // 2 days
-      })
+        it("should emit GroupLifetimeUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "GroupLifetimeUpdated")
+            .withArgs(2 * 24 * 60 * 60) // 2 days
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingGroupLifetimeUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingGroupLifetimeUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginDkgResultChallengePeriodLengthUpdate", () => {
@@ -901,9 +938,7 @@ describe("RandomBeaconGovernance", () => {
           randomBeaconGovernance
             .connect(governance)
             .beginDkgResultChallengePeriodLengthUpdate(9)
-        ).to.be.revertedWith(
-          "DKG result challenge period length must be >= 10"
-        )
+        ).to.be.revertedWith("DKG result challenge period length must be >= 10")
       })
     })
 
@@ -991,42 +1026,45 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(11)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginDkgResultChallengePeriodLengthUpdate(11)
 
-        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeDkgResultChallengePeriodLengthUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultChallengePeriodLengthUpdate()
+        })
 
-      it("should update the DKG result challenge period length", async () => {
-        expect(await randomBeacon.dkgResultChallengePeriodLength()).to.be.equal(
-          11
-        )
-      })
+        it("should update the DKG result challenge period length", async () => {
+          expect(
+            await randomBeacon.dkgResultChallengePeriodLength()
+          ).to.be.equal(11)
+        })
 
-      it("should emit DkgResultChallengePeriodLengthUpdated event", async () => {
-        await expect(tx)
-          .to.emit(
-            randomBeaconGovernance,
-            "DkgResultChallengePeriodLengthUpdated"
-          )
-          .withArgs(11)
-      })
+        it("should emit DkgResultChallengePeriodLengthUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "DkgResultChallengePeriodLengthUpdated"
+            )
+            .withArgs(11)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingDkgResultChallengePeriodLengthUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingDkgResultChallengePeriodLengthUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginDkgResultSubmissionEligibilityDelayUpdate", () => {
@@ -1075,9 +1113,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the DKG result submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
-          initialDkgResultSubmissionEligibilityDelay
-        )
+        expect(
+          await randomBeacon.dkgResultSubmissionEligibilityDelay()
+        ).to.be.equal(initialDkgResultSubmissionEligibilityDelay)
       })
 
       it("should start the governance delay timer", async () => {
@@ -1136,42 +1174,45 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionEligibilityDelayUpdate(1)
 
-        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeDkgResultSubmissionEligibilityDelayUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+        })
 
-      it("should update the DKG result submission eligibility delay", async () => {
-        expect(await randomBeacon.dkgResultSubmissionEligibilityDelay()).to.be.equal(
-          1
-        )
-      })
+        it("should update the DKG result submission eligibility delay", async () => {
+          expect(
+            await randomBeacon.dkgResultSubmissionEligibilityDelay()
+          ).to.be.equal(1)
+        })
 
-      it("should emit DkgResultSubmissionEligibilityDelayUpdated event", async () => {
-        await expect(tx)
-          .to.emit(
-            randomBeaconGovernance,
-            "DkgResultSubmissionEligibilityDelayUpdated"
-          )
-          .withArgs(1)
-      })
+        it("should emit DkgResultSubmissionEligibilityDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "DkgResultSubmissionEligibilityDelayUpdated"
+            )
+            .withArgs(1)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginDkgResultSubmissionRewardUpdate", () => {
@@ -1256,37 +1297,42 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginDkgResultSubmissionRewardUpdate(123)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionRewardUpdate(123)
 
-        await helpers.time.increaseTime(24 * 60 * 60)
+          await helpers.time.increaseTime(24 * 60 * 60)
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeDkgResultSubmissionRewardUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultSubmissionRewardUpdate()
+        })
 
-      it("should update the dkg result submission reward", async () => {
-        expect(await randomBeacon.dkgResultSubmissionReward()).to.be.equal(123)
-      })
+        it("should update the dkg result submission reward", async () => {
+          expect(await randomBeacon.dkgResultSubmissionReward()).to.be.equal(
+            123
+          )
+        })
 
-      it("should emit DkgResultSubmissionRewardUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeaconGovernance, "DkgResultSubmissionRewardUpdated")
-          .withArgs(123)
-      })
+        it("should emit DkgResultSubmissionRewardUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "DkgResultSubmissionRewardUpdated")
+            .withArgs(123)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingDkgResultSubmissionRewardUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingDkgResultSubmissionRewardUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginSortitionPoolUnlockingRewardUpdate", () => {
@@ -1371,42 +1417,45 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginSortitionPoolUnlockingRewardUpdate(123)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginSortitionPoolUnlockingRewardUpdate(123)
 
-        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeSortitionPoolUnlockingRewardUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeSortitionPoolUnlockingRewardUpdate()
+        })
 
-      it("should update the sortition pool unlocking reward", async () => {
-        expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
-          123
-        )
-      })
-
-      it("should emit SortitionPoolUnlockingRewardUpdated event", async () => {
-        await expect(tx)
-          .to.emit(
-            randomBeaconGovernance,
-            "SortitionPoolUnlockingRewardUpdated"
+        it("should update the sortition pool unlocking reward", async () => {
+          expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
+            123
           )
-          .withArgs(123)
-      })
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingSortitionPoolUnlockingRewardUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should emit SortitionPoolUnlockingRewardUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "SortitionPoolUnlockingRewardUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingSortitionPoolUnlockingRewardUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginRelayEntrySubmissionFailureSlashingAmountUpdate", () => {
@@ -1491,42 +1540,45 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
 
-        await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayEntrySubmissionFailureSlashingAmountUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntrySubmissionFailureSlashingAmountUpdate()
+        })
 
-      it("should update the relay entry submission failure slashing amount", async () => {
-        expect(
-          await randomBeacon.relayEntrySubmissionFailureSlashingAmount()
-        ).to.be.equal(123)
-      })
+        it("should update the relay entry submission failure slashing amount", async () => {
+          expect(
+            await randomBeacon.relayEntrySubmissionFailureSlashingAmount()
+          ).to.be.equal(123)
+        })
 
-      it("should emit RelayEntrySubmissionFailureSlashingAmountUpdated event", async () => {
-        await expect(tx)
-          .to.emit(
-            randomBeaconGovernance,
-            "RelayEntrySubmissionFailureSlashingAmountUpdated"
-          )
-          .withArgs(123)
-      })
+        it("should emit RelayEntrySubmissionFailureSlashingAmountUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "RelayEntrySubmissionFailureSlashingAmountUpdated"
+            )
+            .withArgs(123)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingRelayEntrySubmissionFailureSlashingAmountUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingRelayEntrySubmissionFailureSlashingAmountUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginMaliciousDkgResultSlashingAmountUpdate", () => {
@@ -1611,41 +1663,44 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
-    context("when the update process is initialized and governance delay passed", () => {
-      let tx
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
 
-      beforeEach(async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginMaliciousDkgResultSlashingAmountUpdate(123)
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-        await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeMaliciousDkgResultSlashingAmountUpdate()
-      })
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeMaliciousDkgResultSlashingAmountUpdate()
+        })
 
-      it("should update the malicious DKG result slashing amount", async () => {
-        expect(
-          await randomBeacon.maliciousDkgResultSlashingAmount()
-        ).to.be.equal(123)
-      })
+        it("should update the malicious DKG result slashing amount", async () => {
+          expect(
+            await randomBeacon.maliciousDkgResultSlashingAmount()
+          ).to.be.equal(123)
+        })
 
-      it("should emit MaliciousDkgResultSlashingAmountUpdated event", async () => {
-        await expect(tx)
-          .to.emit(
-            randomBeaconGovernance,
-            "MaliciousDkgResultSlashingAmountUpdated"
-          )
-          .withArgs(123)
-      })
+        it("should emit MaliciousDkgResultSlashingAmountUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "MaliciousDkgResultSlashingAmountUpdated"
+            )
+            .withArgs(123)
+        })
 
-      it("should reset the governance delay timer", async () => {
-        await expect(
-          randomBeaconGovernance.getRemainingMaliciousDkgResultSlashingAmountUpdateTime()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingMaliciousDkgResultSlashingAmountUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 })

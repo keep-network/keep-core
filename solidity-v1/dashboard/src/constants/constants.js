@@ -237,3 +237,10 @@ export const COV_POOL_TIMELINE_STEPS = {
   COOLDOWN: 3,
   CLAIM_TOKENS: 4,
 }
+
+export const PENDING_WITHDRAWAL_STATUS = {
+  NONE: "none",
+  PENDING: "pending",
+  AVAILABLE_TO_WITHDRAW: "available_to_withdraw",
+  EXPIRED: "expired",
+}
