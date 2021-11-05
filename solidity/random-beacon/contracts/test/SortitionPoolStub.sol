@@ -8,6 +8,7 @@ import "../RandomBeacon.sol";
 // Stub contract used in tests
 contract SortitionPoolStub is ISortitionPool {
     SortitionTreeStub internal sortitionTree;
+    bool internal locked;
 
     mapping(address => bool) public operators;
     uint256 public operatorsCount;
@@ -20,7 +21,17 @@ contract SortitionPoolStub is ISortitionPool {
         sortitionTree = new SortitionTreeStub();
     }
 
+    function lock() external override {
+        locked = true;
+    }
+
+    function unlock() external override {
+        locked = false;
+    }
+
     function insertOperator(address operator) external override {
+        require(!locked, "Pool is locked");
+
         operators[operator] = true;
         operatorsCount++;
 
@@ -28,6 +39,8 @@ contract SortitionPoolStub is ISortitionPool {
     }
 
     function removeOperators(uint32[] calldata ids) external override {
+        require(!locked, "Pool is locked");
+
         address[] memory _operators = getIDOperators(ids);
 
         for (uint256 i = 0; i < _operators.length; i++) {
@@ -38,6 +51,8 @@ contract SortitionPoolStub is ISortitionPool {
     }
 
     function updateOperatorStatus(uint32 id) external override {
+        require(!locked, "Pool is locked");
+
         emit OperatorStatusUpdated(id);
     }
 
@@ -94,5 +109,9 @@ contract SortitionPoolStub is ISortitionPool {
 
     function transferOwnership(address newOwner) public {
         // no-op
+    }
+
+    function isLocked() public view returns (bool) {
+        return locked;
     }
 }

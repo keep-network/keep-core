@@ -31,6 +31,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// TODO: Add a dependency to `keep-network/sortition-pools` and use sortition
 ///       pool interface from there.
 interface ISortitionPool {
+    function lock() external;
+
+    function unlock() external;
+
     function insertOperator(address operator) external;
 
     function removeOperators(uint32[] calldata ids) external;
@@ -168,6 +172,8 @@ contract RandomBeacon is Ownable {
     // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
 
     event DkgStarted(uint256 indexed seed);
+
+    event DkgStartFailed();
 
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
@@ -460,8 +466,7 @@ contract RandomBeacon is Ownable {
     /// @notice Creates a new group.
     /// @param seed Seed for DKG.
     function createGroup(uint256 seed) internal {
-        // TODO: Lock sortition pool.
-
+        sortitionPool.lock();
         dkg.start(seed);
     }
 
@@ -499,6 +504,8 @@ contract RandomBeacon is Ownable {
         dkg.notifyTimeout();
 
         // TODO: Pay a reward to the caller.
+
+        sortitionPool.unlock();
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
@@ -512,7 +519,8 @@ contract RandomBeacon is Ownable {
 
         // TODO: Handle DQ/IA
         // TODO: Release a rewards to DKG submitter.
-        // TODO: Unlock sortition pool
+
+        sortitionPool.unlock();
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -611,8 +619,15 @@ contract RandomBeacon is Ownable {
         }
 
         if (relay.requestCount % groupCreationFrequency == 0) {
-            // TODO: Once implemented, invoke:
-            // createGroup(uint256(keccak256(entry)));
+            // Just in case, make sure the group creation can be triggered to
+            // avoid unexpected revert. There is a possibility entries are
+            // submitted very quickly and if the group creation frequency
+            // is small enough, group creations may overlap.
+            if (dkg.currentState() == DKG.State.IDLE) {
+                createGroup(uint256(keccak256(entry)));
+            } else {
+                emit DkgStartFailed();
+            }
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
