@@ -34,7 +34,7 @@ const ProgressBar = ({ value, total, color, bgColor, children }) => {
   )
 }
 
-const ProgressBarInline = ({ height = 10, className = "" }) => {
+const ProgressBarInline = ({ height = 10, className = "", style = {} }) => {
   const { value, total, color, bgColor } = useProgressBarContext()
 
   const barWidth = useMemo(() => calculateWidth(value, total), [value, total])
@@ -45,6 +45,7 @@ const ProgressBarInline = ({ height = 10, className = "" }) => {
       style={{
         height: `${height}px`,
         backgroundColor: bgColor,
+        ...style,
       }}
     >
       <div
