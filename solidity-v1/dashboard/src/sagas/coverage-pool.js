@@ -296,6 +296,10 @@ export function* subscribeToWithdrawalInitiatedEvent() {
           transactionHash: event.transactionHash,
           pendingWithdrawalBalance: componentProps?.pendingWithdrawalBalance,
           amount: amount,
+          withdrawalDelay: componentProps?.withdrawalDelay,
+          withdrawalTimeout: componentProps?.withdrawalTimeout,
+          withdrawalInitiatedTimestamp:
+            componentProps?.withdrawalInitiatedTimestamp,
         },
         modalProps: {
           title,

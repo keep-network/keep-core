@@ -224,3 +224,10 @@ export const MODAL_TYPES = {
   TBTCMigrationCompleted: "TBTCMigrationCompleted",
   ConfirmReleaseTokensFromGrant: "ConfirmReleaseTokensFromGrant",
 }
+
+export const PENDING_WITHDRAWAL_STATUS = {
+  NONE: "none",
+  PENDING: "pending",
+  AVAILABLE_TO_WITHDRAW: "available_to_withdraw",
+  EXPIRED: "expired",
+}

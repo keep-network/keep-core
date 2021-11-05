@@ -9,3 +9,11 @@ ca823db2fc25dcf318df84d2b3efc74347aeb552
 62c0672b679fd050246f407e5150225197bdb386
 6101cdb704072e14cb06c554f72aca4fcba57973
 7fd8be4544dfc272df8eeea1450cad7a9a2f9cf3
+
+# Linting and formatting code for solidity/random-beacon.
+# Most of the changes were done by `yarn format:fix` to auto-fix the issues.
+f16cd52924a01369eb74201e2bc7abebae77cf96
+e8b771d6f6a8fd126544b9bb4ef67d6d81236e03
+bf154354a8f2b5edade16178fe83891fa1b334c2
+01a0eeaada9c8476a7ee2cd31ea3ddfed932365b
+8c40367ae039de2d55e57d547724fe1a9d5912db

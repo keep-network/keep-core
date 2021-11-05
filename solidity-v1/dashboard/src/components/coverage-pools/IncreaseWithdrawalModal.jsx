@@ -16,26 +16,73 @@ import { useWeb3Address } from "../WithWeb3Context"
 import { addAdditionalDataToModal } from "../../actions/modal"
 import TokenAmount from "../TokenAmount"
 import { CoveragePoolV1ExchangeRate } from "./ExchangeRate"
+import { getPendingWithdrawalStatus } from "../../utils/coverage-pools.utils"
+import { PENDING_WITHDRAWAL_STATUS } from "../../constants/constants"
 
-const getItems = (covKeepAmount) => {
-  return [
-    {
-      label: (
-        <>
-          Add&nbsp;
-          <strong>{covKEEP.displayAmountWithSymbol(covKeepAmount)}</strong>
-          &nbsp;to your existing expired withdrawal
-        </>
-      ),
-    },
-    {
-      label: (
-        <>
-          Reset the&nbsp;<strong>21 day</strong>&nbsp;cooldown period.
-        </>
-      ),
-    },
-  ]
+const ONE_DAY_IN_SECONDS = 86400
+
+const getItems = (covKeepAmount, pendingWithdrawalStatus) => {
+  if (pendingWithdrawalStatus === PENDING_WITHDRAWAL_STATUS.PENDING) {
+    return [
+      {
+        label: (
+          <>
+            Add&nbsp;
+            <strong>{covKEEP.displayAmountWithSymbol(covKeepAmount)}</strong>
+            &nbsp;to your existing withdrawal.
+          </>
+        ),
+      },
+      {
+        label: (
+          <>
+            Reset the&nbsp;<strong>21 day</strong>&nbsp;cooldown period.
+          </>
+        ),
+      },
+    ]
+  } else if (
+    pendingWithdrawalStatus === PENDING_WITHDRAWAL_STATUS.AVAILABLE_TO_WITHDRAW
+  ) {
+    return [
+      {
+        label: (
+          <>
+            Add&nbsp;
+            <strong>{covKEEP.displayAmountWithSymbol(covKeepAmount)}</strong>
+            &nbsp;to your existing claimable tokens.
+          </>
+        ),
+      },
+      {
+        label: (
+          <>
+            Reset the&nbsp;<strong>21 day</strong>&nbsp;cooldown period of your
+            currently claimable tokens.
+          </>
+        ),
+      },
+    ]
+  } else {
+    return [
+      {
+        label: (
+          <>
+            Add&nbsp;
+            <strong>{covKEEP.displayAmountWithSymbol(covKeepAmount)}</strong>
+            &nbsp;to your existing expired withdrawal
+          </>
+        ),
+      },
+      {
+        label: (
+          <>
+            Reset the&nbsp;<strong>21 day</strong>&nbsp;cooldown period.
+          </>
+        ),
+      },
+    ]
+  }
 }
 
 const IncreaseWithdrawalModal = ({
@@ -44,6 +91,8 @@ const IncreaseWithdrawalModal = ({
   totalValueLocked,
   covTotalSupply,
   withdrawalDelay,
+  withdrawalTimeout,
+  withdrawalInitiatedTimestamp,
   submitBtnText,
   onBtnClick,
   onCancel,
@@ -63,6 +112,9 @@ const IncreaseWithdrawalModal = ({
           componentProps: {
             pendingWithdrawalBalance: pendingWithdrawalBalance,
             amount: amount,
+            withdrawalDelay: withdrawalDelay,
+            withdrawalTimeout: withdrawalTimeout,
+            withdrawalInitiatedTimestamp: withdrawalInitiatedTimestamp,
           },
         })
       )
@@ -70,14 +122,26 @@ const IncreaseWithdrawalModal = ({
     }
   }
 
+  const pendingWithdrawalState = getPendingWithdrawalStatus(
+    withdrawalDelay,
+    withdrawalTimeout,
+    withdrawalInitiatedTimestamp
+  )
+
+  const withdrawalInfoTitle =
+    pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.EXPIRED
+      ? "Your new withdrawal amount"
+      : "You are about to withdraw"
+
   return (
     <ModalWithOverview
       className={`${className} withdraw-modal__main-container`}
       pendingWithdrawalBalance={pendingWithdrawalBalance}
       addedAmount={amount}
-      totalValueLocked={totalValueLocked}
-      covTotalSupply={covTotalSupply}
       withdrawalDelay={withdrawalDelay}
+      withdrawalTimeout={withdrawalTimeout}
+      withdrawalInitiatedTimestamp={withdrawalInitiatedTimestamp}
+      pendingWithdrawalState={pendingWithdrawalState}
     >
       <OnlyIf condition={step === 1}>
         <IncreaseWithdrawalModalStep1
@@ -86,18 +150,22 @@ const IncreaseWithdrawalModal = ({
           covTotalSupply={covTotalSupply}
           onSubmit={onSubmit}
           onCancel={onCancel}
+          pendingWithdrawalState={pendingWithdrawalState}
         />
       </OnlyIf>
       <OnlyIf condition={step === 2}>
         <WithdrawalInfo
           transactionFinished={transactionFinished}
-          containerTitle={"Your new withdrawal amount"}
+          containerTitle={withdrawalInfoTitle}
           submitBtnText={"withdraw"}
           onBtnClick={onSubmit}
           onCancel={onCancel}
           amount={add(pendingWithdrawalBalance, amount)}
+          pendingWithdrawalBalance={pendingWithdrawalBalance}
+          addedAmount={amount}
           totalValueLocked={totalValueLocked}
           covTotalSupply={covTotalSupply}
+          pendingWithdrawalState={pendingWithdrawalState}
         >
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Exchange Rate&nbsp;</h4>
@@ -144,18 +212,34 @@ const IncreaseWithdrawalModal = ({
 
 const IncreaseWithdrawalModalStep1 = ({
   addedAmount,
-  totalValueLocked,
-  covTotalSupply,
   onSubmit,
   onCancel,
+  pendingWithdrawalState,
 }) => {
-  const items = getItems(addedAmount)
+  const items = getItems(addedAmount, pendingWithdrawalState)
+
+  const getContentTitle = (pendingWithdrawalState) => {
+    if (
+      pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.AVAILABLE_TO_WITHDRAW
+    ) {
+      return "You have claimable tokens."
+    }
+
+    return "Take note!"
+  }
+
+  const getMainNote = (pendingWithdrawalState) => {
+    if (pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.EXPIRED) {
+      return "Your expired withdrawal needs to be re-initiated. This withdrawal will:"
+    }
+
+    return "This withdrawal will:"
+  }
+
   return (
     <div>
-      <h3 className={"mb-1"}>Take note!</h3>
-      <h4 className={"text-grey-70"}>
-        Your expired withdrawal needs to be re-initiated. This withdrawal will:
-      </h4>
+      <h3 className={"mb-1"}>{getContentTitle(pendingWithdrawalState)}</h3>
+      <h4 className={"text-grey-70"}>{getMainNote(pendingWithdrawalState)}:</h4>
       <List
         items={items}
         className="increase-withdrawal-modal-step1__list mt-1 mb-1"
@@ -183,7 +267,10 @@ const ModalWithOverview = ({
   totalValueLocked,
   covTotalSupply,
   withdrawalDelay,
+  withdrawalTimeout,
+  withdrawalInitiatedTimestamp,
   addedAmount,
+  pendingWithdrawalState,
 }) => {
   return (
     <div className={`modal-with-overview__content-container ${className}`}>
@@ -191,11 +278,11 @@ const ModalWithOverview = ({
       <div className={"modal-with-overview__overview-container"}>
         <h4 className={"mb-1"}>Overview</h4>
         <IncreaseWithdrawalModal.Tile
-          title={"expired withdrawal"}
           amount={pendingWithdrawalBalance}
-          totalValueLocked={totalValueLocked}
-          covTotalSupply={covTotalSupply}
           withdrawalDelay={withdrawalDelay}
+          withdrawalTimeout={withdrawalTimeout}
+          withdrawalInitiatedTimestamp={withdrawalInitiatedTimestamp}
+          pendingWithdrawalState={pendingWithdrawalState}
           expired
         />
         <h4 className={"modal-with-overview__added-amount text-grey-70"}>
@@ -211,11 +298,10 @@ const ModalWithOverview = ({
           />
         </h4>
         <IncreaseWithdrawalModal.Tile
-          title={"new withdrawal"}
           amount={add(pendingWithdrawalBalance, addedAmount)}
-          totalValueLocked={totalValueLocked}
-          covTotalSupply={covTotalSupply}
           withdrawalDelay={withdrawalDelay}
+          withdrawalTimeout={withdrawalTimeout}
+          pendingWithdrawalState={PENDING_WITHDRAWAL_STATUS.NONE}
         />
       </div>
     </div>
@@ -225,16 +311,103 @@ const ModalWithOverview = ({
 const IncreaseWithdrawalModalTile = ({
   title,
   amount,
-  totalValueLocked,
-  covTotalSupply,
   withdrawalDelay,
-  expired = false,
+  withdrawalTimeout,
+  /** if null then it is a new withdrawal */
+  withdrawalInitiatedTimestamp = null,
+  pendingWithdrawalState,
 }) => {
-  const endOfWithdrawalDate = moment().add(withdrawalDelay, "seconds")
+  const endOfWithdrawalDelayDate = withdrawalInitiatedTimestamp
+    ? moment.unix(withdrawalInitiatedTimestamp)
+    : moment()
+  endOfWithdrawalDelayDate.add(withdrawalDelay, "seconds")
+  const endOfWithdrawalTimeoutDate = withdrawalInitiatedTimestamp
+    ? moment.unix(withdrawalInitiatedTimestamp)
+    : moment()
+  endOfWithdrawalTimeoutDate
+    .add(withdrawalDelay, "seconds")
+    .add(withdrawalTimeout, "seconds")
+
+  const getTitle = () => {
+    if (!title) {
+      if (!withdrawalInitiatedTimestamp) {
+        return "new withdrawal"
+      }
+
+      if (
+        pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.PENDING ||
+        pendingWithdrawalState ===
+          PENDING_WITHDRAWAL_STATUS.AVAILABLE_TO_WITHDRAW
+      ) {
+        return "existing withdrawal"
+      } else if (pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.EXPIRED) {
+        return "expired withdrawal"
+      }
+    }
+
+    return title
+  }
+
+  const getMainClassModifier = () => {
+    if (!withdrawalInitiatedTimestamp) {
+      return "modal-with-overview__tile--new"
+    } else {
+      if (pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.PENDING) {
+        return ""
+      } else if (
+        pendingWithdrawalState ===
+        PENDING_WITHDRAWAL_STATUS.AVAILABLE_TO_WITHDRAW
+      ) {
+        return "modal-with-overview__tile--completed"
+      } else {
+        return "modal-with-overview__tile--expired"
+      }
+    }
+  }
+
+  const renderProgressBar = (
+    withdrawalInitiatedTimestamp,
+    endOfWithdrawalDelayDate,
+    currentDate
+  ) => {
+    const progressBarValueInSeconds = withdrawalInitiatedTimestamp
+      ? currentDate.diff(moment.unix(withdrawalInitiatedTimestamp), "seconds")
+      : 0
+    const progressBarTotalInSeconds = withdrawalInitiatedTimestamp
+      ? endOfWithdrawalDelayDate.diff(
+          moment.unix(withdrawalInitiatedTimestamp),
+          "seconds"
+        )
+      : 100
+
+    let mainColor = colors.yellowSecondary
+    if (
+      pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.AVAILABLE_TO_WITHDRAW
+    ) {
+      mainColor = colors.mint80
+    } else if (pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.EXPIRED) {
+      mainColor = colors.error
+    }
+
+    return (
+      <ProgressBar
+        value={progressBarValueInSeconds}
+        total={progressBarTotalInSeconds}
+        color={mainColor}
+        bgColor={colors.yellow30}
+      >
+        <ProgressBar.Inline
+          height={10}
+          className={"modal-with-overview__progress-bar"}
+        />
+      </ProgressBar>
+    )
+  }
+
   return (
-    <div className={"modal-with-overview__tile"}>
+    <div className={`modal-with-overview__tile ${getMainClassModifier()}`}>
       <h5 className={"modal-with-overview__tile-title text-grey-50"}>
-        {title}
+        {getTitle()}
       </h5>
       <div className={"modal-with-overview__withdrawal-info"}>
         <h4 className={"modal-with-overview__amount text-grey-70"}>
@@ -245,26 +418,40 @@ const IncreaseWithdrawalModalTile = ({
             symbolClassName={"h4 text-gray-70"}
           />
         </h4>
-        <OnlyIf condition={!expired}>
+        <OnlyIf
+          condition={
+            pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.PENDING ||
+            !withdrawalInitiatedTimestamp
+          }
+        >
           <div className={"modal-with-overview__delay text-grey-50"}>
-            21 days: {endOfWithdrawalDate.format("MM/DD")}
+            {Math.floor(withdrawalDelay / ONE_DAY_IN_SECONDS)} days:{" "}
+            {endOfWithdrawalDelayDate.format("MM/DD")}
           </div>
         </OnlyIf>
-        <OnlyIf condition={expired}>
+        <OnlyIf
+          condition={
+            pendingWithdrawalState ===
+            PENDING_WITHDRAWAL_STATUS.AVAILABLE_TO_WITHDRAW
+          }
+        >
+          <div className={"modal-with-overview__delay text-success"}>
+            Completed
+          </div>
+        </OnlyIf>
+        <OnlyIf
+          condition={
+            pendingWithdrawalState === PENDING_WITHDRAWAL_STATUS.EXPIRED
+          }
+        >
           <div className={"modal-with-overview__delay text-error"}>Expired</div>
         </OnlyIf>
       </div>
-      <ProgressBar
-        value={expired ? 100 : 0}
-        total={100}
-        color={colors.error}
-        bgColor={colors.yellow30}
-      >
-        <ProgressBar.Inline
-          height={10}
-          className={"modal-with-overview__progress-bar"}
-        />
-      </ProgressBar>
+      {renderProgressBar(
+        withdrawalInitiatedTimestamp,
+        endOfWithdrawalDelayDate,
+        moment()
+      )}
     </div>
   )
 }
