@@ -41,6 +41,9 @@ export const COVERAGE_POOL_FETCH_APY_ERROR = "coverage_pool/fetch_apy_error"
 export const COVERAGE_POOL_REINITAITE_WITHDRAW =
   "coverage_pool/reinitiate_withdraw"
 
+export const COVERAGE_POOL_INCREASE_WITHDRAWAL =
+  "coverage_pool/increase_withdrawal"
+
 export const fetchTvlStart = () => {
   return {
     type: COVERAGE_POOL_FETCH_TVL_START,
@@ -191,5 +194,12 @@ export const fetchAPYSuccess = (apy) => {
 export const reinitiateWithdraw = () => {
   return {
     type: COVERAGE_POOL_REINITAITE_WITHDRAW,
+  }
+}
+
+export const increaseWithdrawal = (amount) => {
+  return {
+    type: COVERAGE_POOL_INCREASE_WITHDRAWAL,
+    payload: { amount },
   }
 }

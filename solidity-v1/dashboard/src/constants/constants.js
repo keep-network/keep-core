@@ -229,6 +229,8 @@ export const MODAL_TYPES = {
   CovPoolWithdrawInitialized: "CovPoolWithdrawInitialized",
   CovPoolClaimTokens: "CovPoolClaimTokens",
   ReInitiateCovPoolWithdraw: "ReInitiateCovPoolWithdraw",
+  ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
+  IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {
@@ -238,9 +240,15 @@ export const COV_POOL_TIMELINE_STEPS = {
   CLAIM_TOKENS: 4,
 }
 
+/**
+ * Enum defines cov pools withdrawal status
+ * @readonly
+ * @enum {string}
+ */
 export const PENDING_WITHDRAWAL_STATUS = {
   NONE: "none",
   PENDING: "pending",
-  AVAILABLE_TO_WITHDRAW: "available_to_withdraw",
+  COMPLETED: "completed",
   EXPIRED: "expired",
+  NEW: "new",
 }

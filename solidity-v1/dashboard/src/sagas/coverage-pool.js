@@ -31,6 +31,7 @@ import {
   RISK_MANAGER_AUCTION_CREATED_EVENT_EMITTED,
   RISK_MANAGER_AUCTION_CLOSED_EVENT_EMITTED,
   COVERAGE_POOL_REINITAITE_WITHDRAW,
+  COVERAGE_POOL_INCREASE_WITHDRAWAL,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -43,11 +44,12 @@ import { Keep } from "../contracts"
 import { add, eq, gt, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { sendTransaction } from "./web3"
-import { KEEP } from "../utils/token.utils"
+import { covKEEP, KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
 import { showModal } from "../actions/modal"
 import { modalComponentType } from "../components/Modal"
 import { MODAL_TYPES } from "../constants/constants"
+import { getPendingWithdrawalStatus } from "../utils/coverage-pools.utils"
 
 function* fetchTvl() {
   try {
@@ -547,6 +549,7 @@ function* reinitiateWithdraw(action) {
   const {
     payload: { amount },
   } = task
+  const _amount = covKEEP.fromTokenUnit(amount)
 
   if (eq(amount, 0)) {
     yield put(
@@ -566,9 +569,71 @@ function* reinitiateWithdraw(action) {
         },
       })
     )
+    return
   }
+
+  yield* increaseWithdrawal(_amount)
 }
 
 export function* watchReInitiateWithdraw() {
   yield takeEvery(COVERAGE_POOL_REINITAITE_WITHDRAW, reinitiateWithdraw)
+}
+
+function* increaseWithdrawal(amount) {
+  const {
+    pendingWithdrawal,
+    totalValueLocked,
+    covTotalSupply,
+    covBalance,
+    withdrawalDelay,
+    withdrawalTimeout,
+    withdrawalInitiatedTimestamp,
+  } = yield select(selectors.getCoveragePool)
+  const address = yield select(selectors.getUserAddress)
+
+  const withdrawalStatus = getPendingWithdrawalStatus(
+    withdrawalDelay,
+    withdrawalTimeout,
+    withdrawalInitiatedTimestamp
+  )
+  const { isConfirmed } = yield call(
+    confirmModalSaga,
+    MODAL_TYPES.ConfirmCovPoolIncreaseWithdrawal,
+    {
+      covAmountToAdd: amount,
+      existingWithdrawalCovAmount: pendingWithdrawal,
+      withdrawalDelay,
+      withdrawalStatus,
+      withdrawalInitiatedTimestamp,
+    }
+  )
+  if (!isConfirmed) {
+    return
+  }
+
+  yield put(
+    showModal({
+      modalType: MODAL_TYPES.IncreaseCovPoolWithdrawal,
+      modalProps: {
+        existingWithdrawalCovAmount: pendingWithdrawal,
+        covAmountToAdd: amount,
+        address,
+        covBalanceOf: covBalance,
+        totalValueLocked,
+        covTotalSupply,
+        withdrawalDelay,
+        withdrawalStatus,
+        withdrawalInitiatedTimestamp,
+      },
+    })
+  )
+}
+
+export function* watchIncreaseWithdrawal() {
+  yield takeEvery(COVERAGE_POOL_INCREASE_WITHDRAWAL, function* (action) {
+    const {
+      payload: { amount },
+    } = action
+    yield* increaseWithdrawal(amount)
+  })
 }

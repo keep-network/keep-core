@@ -8,6 +8,7 @@ import {
   fetchTvlRequest,
   fetchCovPoolDataRequest,
   fetchAPYRequest,
+  increaseWithdrawal,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
 import { gt } from "../../utils/arithmetics.utils"
@@ -80,67 +81,21 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const onSubmitWithdrawForm = async (values, awaitingPromise) => {
     const { withdrawAmount } = values
     const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
-    openModal(MODAL_TYPES.InitiateCovPoolWithdraw, {
-      totalValueLocked,
-      covTotalSupply,
-      covBalanceOf: covBalance,
-      estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
-        covBalance,
+    if (withdrawalInitiatedTimestamp === 0) {
+      openModal(MODAL_TYPES.InitiateCovPoolWithdraw, {
+        totalValueLocked,
         covTotalSupply,
-        totalValueLocked
-      ),
-      amount,
-    })
-    // dispatch(
-    //   addAdditionalDataToModal({
-    //     componentProps: {
-    //       totalValueLocked,
-    //       covTotalSupply,
-    //       covTokensAvailableToWithdraw,
-    //     },
-    //   })
-    // )
-    // if (eq(withdrawalInitiatedTimestamp, 0)) {
-    //   await openConfirmationModal(
-    //     {
-    //       modalOptions: {
-    //         title: "Withdraw",
-    //         classes: {
-    //           modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-    //         },
-    //       },
-    //       submitBtnText: "withdraw",
-    //       amount,
-    //       covTotalSupply,
-    //       totalValueLocked,
-    //       covTokensAvailableToWithdraw,
-    //       containerTitle: "You are about to withdraw:",
-    //     },
-    //     InitiateCovPoolsWithdrawModal
-    //   )
-    //   dispatch(withdrawAssetPool(amount, awaitingPromise))
-    // } else {
-    //   const { amount: finalAmount } = await openConfirmationModal(
-    //     {
-    //       modalOptions: {
-    //         title: "Re-initiate withdrawal",
-    //         classes: {
-    //           modalWrapperClassName: "modal-wrapper__reinitiate-withdrawal",
-    //         },
-    //       },
-    //       submitBtnText: "continue",
-    //       pendingWithdrawalBalance: pendingWithdrawal,
-    //       initialAmountValue: amount,
-    //       covTokensAvailableToWithdraw,
-    //       covTotalSupply,
-    //       totalValueLocked,
-    //       withdrawalDelay,
-    //       containerTitle: "You are about to re-initiate this withdrawal:",
-    //     },
-    //     ReinitiateWithdrawalModal
-    //   )
-    //   dispatch(withdrawAssetPool(finalAmount, awaitingPromise))
-    // }
+        covBalanceOf: covBalance,
+        estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
+          covBalance,
+          covTotalSupply,
+          totalValueLocked
+        ),
+        amount,
+      })
+    } else {
+      dispatch(increaseWithdrawal(amount))
+    }
   }
 
   return (

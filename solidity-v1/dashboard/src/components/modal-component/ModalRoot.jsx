@@ -33,6 +33,8 @@ import {
   WithdrawInitialized,
   ClaimTokens,
   ReInitiateWithdraw,
+  ConfirmIncreaseWithdrawal,
+  IncreaseWithdrawal,
 } from "./coverage-pools"
 
 const MODAL_TYPE_TO_COMPONENT = {
@@ -66,6 +68,8 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.CovPoolWithdrawInitialized]: WithdrawInitialized,
   [MODAL_TYPES.CovPoolClaimTokens]: ClaimTokens,
   [MODAL_TYPES.ReInitiateCovPoolWithdraw]: ReInitiateWithdraw,
+  [MODAL_TYPES.ConfirmCovPoolIncreaseWithdrawal]: ConfirmIncreaseWithdrawal,
+  [MODAL_TYPES.IncreaseCovPoolWithdrawal]: IncreaseWithdrawal,
 }
 
 const modalRoot = document.getElementById("modal-root")
