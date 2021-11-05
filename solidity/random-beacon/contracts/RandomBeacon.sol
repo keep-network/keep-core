@@ -53,6 +53,8 @@ interface ISortitionPool {
         returns (address[] memory);
 
     function getOperatorID(address operator) external view returns (uint32);
+
+    function isLocked() external view returns (bool);
 }
 
 /// @title Staking contract interface

@@ -111,7 +111,7 @@ contract SortitionPoolStub is ISortitionPool {
         // no-op
     }
 
-    function isLocked() public view returns (bool) {
+    function isLocked() public view override returns (bool) {
         return locked;
     }
 }

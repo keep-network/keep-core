@@ -1,13 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
+import {
+  ethers,
+  waffle,
+  helpers,
+  getUnnamedAccounts,
+  getNamedAccounts,
+} from "hardhat"
 import { expect } from "chai"
 import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { constants, randomBeaconDeployment } from "./fixtures"
+import { constants, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
   RandomBeacon,
@@ -458,6 +464,62 @@ describe("RandomBeacon - Relay", () => {
                   })
                 }
               )
+
+              context("when group creation should be triggered", () => {
+                let tx: ContractTransaction
+
+                beforeEach(async () => {
+                  const deployer = await ethers.getSigner(
+                    (
+                      await getNamedAccounts()
+                    ).deployer
+                  )
+                  // Force group creation on each relay entry.
+                  await randomBeacon
+                    .connect(deployer)
+                    .updateGroupCreationParameters(1, params.groupLifeTime)
+                })
+
+                context("when dkg is idle", () => {
+                  beforeEach(async () => {
+                    tx = await randomBeacon
+                      .connect(member16)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex,
+                        blsData.groupSignature
+                      )
+                  })
+
+                  it("should lock the sortition pool", async () => {
+                    expect(await sortitionPool.isLocked()).to.be.true
+                  })
+
+                  it("should emit DkgStarted event", async () => {
+                    await expect(tx)
+                      .to.emit(randomBeacon, "DkgStarted")
+                      .withArgs(blsData.groupSignatureUint256)
+                  })
+                })
+
+                context("when dkg is not idle", () => {
+                  beforeEach(async () => {
+                    // Simulate a group creation process is currently in
+                    // progress.
+                    await (randomBeacon as RandomBeaconStub).publicCreateGroup()
+
+                    tx = await randomBeacon
+                      .connect(member16)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex,
+                        blsData.groupSignature
+                      )
+                  })
+
+                  it("should emit DkgStartFailed event", async () => {
+                    await expect(tx).to.emit(randomBeacon, "DkgStartFailed")
+                  })
+                })
+              })
             })
 
             context("when entry is not valid", () => {

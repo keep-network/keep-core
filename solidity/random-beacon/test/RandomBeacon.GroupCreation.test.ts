@@ -1,9 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
-import type { RandomBeacon, RandomBeaconStub } from "../typechain"
+import type {
+  RandomBeacon,
+  RandomBeaconStub,
+  ISortitionPool,
+} from "../typechain"
 import { genesis, signAndSubmitDkgResult, DkgResult } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/sortitionpool"
 
@@ -45,6 +51,7 @@ describe("RandomBeacon - Group Creation", () => {
   let signers: Operator[]
 
   let randomBeacon: RandomBeaconStub & RandomBeacon
+  let sortitionPool: ISortitionPool
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -53,6 +60,11 @@ describe("RandomBeacon - Group Creation", () => {
   beforeEach("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({ randomBeacon, signers } = await waffle.loadFixture(fixture))
+
+    sortitionPool = (await ethers.getContractAt(
+      "ISortitionPool",
+      await randomBeacon.sortitionPool()
+    )) as ISortitionPool
   })
 
   describe("genesis", async () => {
@@ -69,6 +81,10 @@ describe("RandomBeacon - Group Creation", () => {
       beforeEach("run genesis", async () => {
         // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;[tx, expectedSeed] = await genesis(randomBeacon)
+      })
+
+      it("should lock the sortition pool", async () => {
+        expect(await sortitionPool.isLocked()).to.be.true
       })
 
       it("should emit DkgStarted event", async () => {
@@ -1002,6 +1018,10 @@ describe("RandomBeacon - Group Creation", () => {
                   .to.emit(randomBeacon, "GroupActivated")
                   .withArgs(0, groupPublicKey)
               })
+
+              it("should unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.false
+              })
             })
           })
 
@@ -1082,13 +1102,19 @@ describe("RandomBeacon - Group Creation", () => {
                   .to.emit(randomBeacon, "GroupActivated")
                   .withArgs(0, groupPublicKey)
               })
+
+              it("should unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.false
+              })
             })
           })
         })
       })
 
       context("with max periods duration", async () => {
-        it("should succeed", async () => {
+        let tx: ContractTransaction
+
+        beforeEach(async () => {
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
           await signAndSubmitDkgResult(
@@ -1100,7 +1126,11 @@ describe("RandomBeacon - Group Creation", () => {
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
-          await randomBeacon.approveDkgResult()
+          tx = await randomBeacon.approveDkgResult()
+        })
+
+        it("should unlock the sortition pool", async () => {
+          expect(await sortitionPool.isLocked()).to.be.false
         })
       })
     })
@@ -1180,6 +1210,10 @@ describe("RandomBeacon - Group Creation", () => {
 
           it("should clean dkg data", async () => {
             await assertDkgResultCleanData(randomBeacon)
+          })
+
+          it("should unlock the sortition pool", async () => {
+            expect(await sortitionPool.isLocked()).to.be.false
           })
         })
       })

@@ -45,6 +45,10 @@ contract RandomBeaconStub is RandomBeacon {
         punishOperators(operators, punishmentDuration);
     }
 
+    function publicCreateGroup() external {
+        createGroup(0);
+    }
+
     function hasGasDeposit(address operator) external view returns (bool) {
         return gasStation.gasDeposits[operator][0] != 0;
     }
