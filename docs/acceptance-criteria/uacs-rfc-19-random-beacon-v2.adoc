@@ -11,7 +11,7 @@ This document stores User Acceptance Criteria for Random Beacon v2 feature. It
 will be used to gain common understanding of how Random Beacon v2 should act and
 will be utilised during the acceptance testing of the feature.
 
-== Usear Acceptance Criteria list
+== User Acceptance Criteria list
 
 [%header,cols="1,4"]
 |===
@@ -98,7 +98,7 @@ will be utilised during the acceptance testing of the feature.
 | If the transaction submitting the new relay entry gets approved, then: +
   - the BLS threshold signature should be accepted as a new relay entry +
 // TODO: revisit if 2 weeks removal time should be a governable parameter and if
-// it should be equall to 2 weeks or a different value
+// it should be equal to 2 weeks or a different value
   - operators who became eligible for submitting the relay entry before the
   member who submitted the relay entry should be punished by being removed from
   the sortition pool for a fixed amount of time (2 weeks) (in the same tx) +
@@ -177,7 +177,7 @@ will be utilised during the acceptance testing of the feature.
   `IRandomBeaconConsumer` interface.
 
 | Group creation
-| New groups should be crated with a fixed frequency of relay request (every
+| New groups should be created with a fixed frequency of relay request (every
   `N`-th relay entry request should result in the creation of a new group).
 
 | Group creation
@@ -211,7 +211,7 @@ will be utilised during the acceptance testing of the feature.
   arbitrary seed value.
 
 | Group creation - genesis
-| It should not be possible to perform beacon genesis if they are some active
+| It should not be possible to perform beacon genesis if there are some active
   groups.
 
 | Group creation - genesis
@@ -228,7 +228,7 @@ will be utilised during the acceptance testing of the feature.
   - triggering of the DKG (distributed key generation) +
   - the beacon should start the period of DKG result submission eligibility.
 
-| Croup creation - selecting members
+| Group creation - selecting members
 | Upon noticing the group creation start event, clients should choose the
   sortition pool members to the candidate group based on the current relay
   entry, ensuring that the higher is the stake of an operator, the higher is his
@@ -295,7 +295,8 @@ will be utilised during the acceptance testing of the feature.
   - notifier should receive 5% from the total slashed amount (in the same tx) +
   - the members of the signing group should be given another chance to publish
   the DKG result
-  - DKG timeout timer and the result subission eligibility order shoul be reset.
+  - DKG timeout timer and the result submission eligibility order should be
+  reset.
 
 | Group creation - DKG challenge
 | If the challenge notification was received within the challenge period and was
@@ -399,13 +400,13 @@ will be utilised during the acceptance testing of the feature.
 | When the sortition pool is locked, no operator can enter the pool.
 
 | Sortition pool - locking
-| When the ssortition pool is locked, no operator can leave the pool.
+| When the sortition pool is locked, no operator can leave the pool.
 
 | Sortition pool - locking
-| Once the ssortition pool gets unlocked, operators can leave the pool.
+| Once the sortition pool gets unlocked, operators can leave the pool.
 
 | Sortition pool - locking
-| Once the ssortition pool gets unlocked, new operators can join the pool.
+| Once the sortition pool gets unlocked, new operators can join the pool.
 
 // TODO: Once starting values for governable parameters are agreed upon,
 // add them to the UACs
