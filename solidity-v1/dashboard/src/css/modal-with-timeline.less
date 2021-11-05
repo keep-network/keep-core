@@ -20,12 +20,13 @@
 //   }
 // }
 
-.modal-with-timeline__content-wrapper {
+.modal-with-timeline__content-wrapper,
+.modal-with-withdraw-overview__content-wrapper {
   display: grid;
   grid-template-areas:
-    "modal-body timeline"
-    "modal-body timeline"
-    "modal-footer timeline";
+    "modal-body aside"
+    "modal-body aside"
+    "modal-footer aside";
   grid-template-columns: auto minmax(300px, 380px);
   grid-template-rows: 1fr 1fr 180px;
 
@@ -38,10 +39,15 @@
     align-self: flex-end;
   }
 
-  .modal__timeline {
-    grid-area: timeline;
+  .modal__timeline,
+  .modal__withdrawal-overview {
+    grid-area: aside;
     width: 100%;
     background-color: @color-brand-violet-10;
     padding: 2rem;
+  }
+
+  .modal__withdrawal-overview {
+    background-color: @color-yellow-10;
   }
 }
