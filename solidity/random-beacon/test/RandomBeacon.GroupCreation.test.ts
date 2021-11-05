@@ -3,10 +3,16 @@ import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
-import type { RandomBeacon, RandomBeaconStub } from "../typechain"
+import type {
+  RandomBeacon,
+  RandomBeaconGovernance,
+  RandomBeaconStub,
+  TestToken,
+} from "../typechain"
 import { genesis, signAndSubmitDkgResult, DkgResult } from "./utils/dkg"
 import { SortitionPoolStub } from "../typechain/SortitionPoolStub"
 import { registerOperators, Operator } from "./utils/sortitionpool"
+import { to1e18 } from "./functions"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils
@@ -29,8 +35,11 @@ const fixture = async () => {
   )
 
   const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
+  const randomBeaconGovernance =
+    contracts.randomBeaconGovernance as RandomBeaconGovernance
+  const testToken = contracts.testToken as TestToken
 
-  return { randomBeacon, signers }
+  return { randomBeaconGovernance, randomBeacon, testToken, signers }
 }
 
 // Test suite covering group creation in RandomBeacon contract.
@@ -40,12 +49,17 @@ describe("RandomBeacon - Group Creation", () => {
     constants.offchainDkgTime +
     constants.groupSize * params.dkgResultSubmissionEligibilityDelay
 
+  const dkgResultSubmissionReward = to1e18(5)
+  const sortitionPoolUnlockingReward = to1e18(10)
+
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
   let thirdParty: Signer
   let signers: Operator[]
 
+  let randomBeaconGovernance: RandomBeaconGovernance
   let randomBeacon: RandomBeaconStub & RandomBeacon
+  let testToken: TestToken
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -53,7 +67,19 @@ describe("RandomBeacon - Group Creation", () => {
 
   beforeEach("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ randomBeacon, signers } = await waffle.loadFixture(fixture))
+    ;({ randomBeaconGovernance, randomBeacon, testToken, signers } =
+      await waffle.loadFixture(fixture))
+
+    await randomBeaconGovernance.beginDkgResultSubmissionRewardUpdate(
+      dkgResultSubmissionReward
+    )
+    await randomBeaconGovernance.beginSortitionPoolUnlockingRewardUpdate(
+      sortitionPoolUnlockingReward
+    )
+    await helpers.time.increaseTime(12 * 60 * 60)
+    await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
+    await randomBeaconGovernance.finalizeSortitionPoolUnlockingRewardUpdate()
+    await testToken.mint(randomBeacon.address, to1e18(100))
   })
 
   describe("genesis", async () => {
@@ -930,6 +956,9 @@ describe("RandomBeacon - Group Creation", () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
 
+          let submitterAddress1: string
+          const submitterIndex1 = 1
+
           beforeEach(async () => {
             let tx: ContractTransaction
               // eslint-disable-next-line @typescript-eslint/no-extra-semi
@@ -937,9 +966,11 @@ describe("RandomBeacon - Group Creation", () => {
               randomBeacon,
               groupPublicKey,
               signers,
-              startBlock
+              startBlock,
+              submitterIndex1
             ))
 
+            submitterAddress1 = signers[submitterIndex1 - 1].address
             resultSubmissionBlock = tx.blockNumber
           })
 
@@ -968,8 +999,12 @@ describe("RandomBeacon - Group Creation", () => {
 
             context("called by a third party", async () => {
               let tx: ContractTransaction
+              let initialSubmitterBalance: BigNumber
 
               beforeEach(async () => {
+                initialSubmitterBalance = await testToken.balanceOf(
+                  submitterAddress1
+                )
                 tx = await randomBeacon.connect(thirdParty).approveDkgResult()
               })
 
@@ -998,6 +1033,14 @@ describe("RandomBeacon - Group Creation", () => {
                 )
               })
 
+              it("should reward the submitter with tokens from maintenance pool", async () => {
+                const currentSubmitterBalance: BigNumber =
+                  await testToken.balanceOf(submitterAddress1)
+                expect(
+                  currentSubmitterBalance.sub(initialSubmitterBalance)
+                ).to.be.equal(dkgResultSubmissionReward)
+              })
+
               it("should emit GroupActivated event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "GroupActivated")
@@ -1007,14 +1050,14 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           context("when there was a challenged result before", async () => {
+            // Submit a second result by another submitter
+            let submitterAddress2: string
+            const submitterIndex2 = 5
             beforeEach(async () => {
               await randomBeacon.challengeDkgResult()
 
-              // Submit a second result by another submitter
-              const submitterIndex = 5
-
               await mineBlocks(
-                params.dkgResultSubmissionEligibilityDelay * submitterIndex
+                params.dkgResultSubmissionEligibilityDelay * submitterIndex2
               )
 
               let tx: ContractTransaction
@@ -1024,9 +1067,10 @@ describe("RandomBeacon - Group Creation", () => {
                   groupPublicKey,
                   signers,
                   startBlock,
-                  submitterIndex
+                  submitterIndex2
                 ))
 
+              submitterAddress2 = signers[submitterIndex2 - 1].address
               resultSubmissionBlock = tx.blockNumber
             })
 
@@ -1048,10 +1092,15 @@ describe("RandomBeacon - Group Creation", () => {
 
             context("with challenge period passed", async () => {
               let tx: ContractTransaction
+              let initialSubmitterBalance: BigNumber
 
               beforeEach(async () => {
                 await mineBlocksTo(
                   resultSubmissionBlock + params.dkgResultChallengePeriodLength
+                )
+
+                initialSubmitterBalance = await testToken.balanceOf(
+                  submitterAddress2
                 )
 
                 tx = await randomBeacon.connect(thirdParty).approveDkgResult()
@@ -1076,6 +1125,14 @@ describe("RandomBeacon - Group Creation", () => {
                 expect(storedGroup.activationTimestamp).to.be.equal(
                   expectedActivationTimestamp
                 )
+              })
+
+              it("should reward the submitter with tokens from maintenance pool", async () => {
+                const currentSubmitterBalance: BigNumber =
+                  await testToken.balanceOf(submitterAddress2)
+                expect(
+                  currentSubmitterBalance.sub(initialSubmitterBalance)
+                ).to.be.equal(dkgResultSubmissionReward)
               })
 
               it("should emit GroupActivated event", async () => {
@@ -1170,8 +1227,12 @@ describe("RandomBeacon - Group Creation", () => {
 
         context("called by a third party", async () => {
           let tx: ContractTransaction
+          let initialNotifierBalance: BigNumber
 
           beforeEach(async () => {
+            initialNotifierBalance = await testToken.balanceOf(
+              await thirdParty.getAddress()
+            )
             tx = await randomBeacon.connect(thirdParty).notifyDkgTimeout()
           })
 
@@ -1181,6 +1242,15 @@ describe("RandomBeacon - Group Creation", () => {
 
           it("should clean dkg data", async () => {
             await assertDkgResultCleanData(randomBeacon)
+          })
+
+          it("should reward the notifier with tokens from maintenance pool", async () => {
+            const currentNotifierBalance: BigNumber = await testToken.balanceOf(
+              await thirdParty.getAddress()
+            )
+            expect(
+              currentNotifierBalance.sub(initialNotifierBalance)
+            ).to.be.equal(sortitionPoolUnlockingReward)
           })
         })
       })
@@ -1474,5 +1544,9 @@ async function assertDkgResultCleanData(randomBeacon: RandomBeaconStub) {
 
   expect(dkgData.submittedResultBlock, "unexpected submittedResultBlock").to.eq(
     0
+  )
+
+  expect(dkgData.resultSubmitter, "unexpected resultSubmitter").to.eq(
+    ethers.constants.AddressZero
   )
 }

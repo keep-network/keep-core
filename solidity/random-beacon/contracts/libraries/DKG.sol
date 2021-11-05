@@ -35,6 +35,8 @@ library DKG {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
+        // Address of the DKG result submitter
+        address resultSubmitter;
     }
 
     /// @notice DKG result.
@@ -191,6 +193,7 @@ library DKG {
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
+        self.resultSubmitter = msg.sender;
 
         emit DkgResultSubmitted(
             self.submittedResultHash,
@@ -339,7 +342,7 @@ library DKG {
     }
 
     /// @notice Notifies about DKG timeout.
-    function notifyTimeout(Data storage self) internal cleanup(self) {
+    function notifyTimeout(Data storage self) internal {
         require(hasDkgTimedOut(self), "dkg has not timed out");
 
         emit DkgTimedOut();
@@ -348,7 +351,7 @@ library DKG {
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
-    function approveResult(Data storage self) internal cleanup(self) {
+    function approveResult(Data storage self) internal {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -394,6 +397,7 @@ library DKG {
         bytes32 resultHash = self.submittedResultHash;
 
         delete self.submittedResultBlock;
+        delete self.resultSubmitter;
         delete self.submittedResultHash;
 
         emit DkgResultChallenged(resultHash, msg.sender);
@@ -435,11 +439,11 @@ library DKG {
 
     /// @notice Cleans up state after DKG completion.
     /// @dev Should be called after DKG times out or a result is approved.
-    modifier cleanup(Data storage self) {
-        _;
+    function cleanup(Data storage self) internal {
         delete self.startBlock;
         delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
+        delete self.resultSubmitter;
         delete self.submittedResultBlock;
     }
 }

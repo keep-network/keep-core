@@ -69,6 +69,7 @@ contract RandomBeacon is Ownable {
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
+    using SafeERC20 for IERC20;
 
     // Constant parameters
 
@@ -434,21 +435,28 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Notifies about DKG timeout.
+    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
+    ///         reward to the notifier.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-
-        // TODO: Pay a reward to the caller.
+        // Pay the sortition pool unlocking reward.
+        relay.tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
+        dkg.cleanup();
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
-    ///         valid and completes the group creation by activating the candidate
-    ///         group.
+    ///         valid, pays reward to the result submitter and completes the
+    ///         group creation by activating the candidate group.
     function approveDkgResult() external {
         dkg.approveResult();
-
+        // Pay the DKG result submission reward.
+        relay.tToken.safeTransfer(
+            dkg.resultSubmitter,
+            dkgResultSubmissionReward
+        );
         groups.activateCandidateGroup();
+        dkg.cleanup();
 
         // TODO: Handle DQ/IA
         // TODO: Release a rewards to DKG submitter.
