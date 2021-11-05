@@ -47,7 +47,6 @@ import { sendTransaction } from "./web3"
 import { covKEEP, KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
 import { showModal } from "../actions/modal"
-import { modalComponentType } from "../components/Modal"
 import { MODAL_TYPES } from "../constants/constants"
 import { getPendingWithdrawalStatus } from "../utils/coverage-pools.utils"
 
@@ -262,39 +261,17 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     const { covBalance, totalValueLocked, covTotalSupply } = yield select(
       selectors.getCoveragePool
     )
-    const { componentProps } = yield select(selectors.getModalData)
 
     if (!isSameEthAddress(address, underwriter)) {
       continue
     }
-
-    let modalType = MODAL_TYPES.CovPoolWithdrawInitialized
-    // let title = "Withdraw"
-    let amount = covAmount
-    if (
-      componentProps?.pendingWithdrawalBalance &&
-      componentProps?.amount &&
-      gt(componentProps?.pendingWithdrawalBalance, 0) &&
-      eq(componentProps?.amount, 0)
-    ) {
-      modalType = modalComponentType.COV_POOLS.RE_INITIATE_WITHDRAWAL
-      // title = "Re-initiate withdrawal"
-    } else if (
-      componentProps?.pendingWithdrawalBalance &&
-      componentProps?.amount &&
-      gt(componentProps?.pendingWithdrawalBalance, 0) &&
-      gt(componentProps?.amount, 0)
-    ) {
-      modalType = modalComponentType.COV_POOLS.INCREASE_WITHDRAWAL
-      // title = "Re-initiate withdrawal"
-      amount = componentProps.amount
-    }
-
+    // TODO: display modal with `WithdrawalOverview` component if a user
+    // increased existing withdrawal.
     yield put(
       showModal({
-        modalType,
+        modalType: MODAL_TYPES.CovPoolWithdrawInitialized,
         modalProps: {
-          amount,
+          amount: covAmount,
           transactionHash: event.transactionHash,
           totalValueLocked,
           covTotalSupply,
@@ -304,8 +281,6 @@ export function* subscribeToWithdrawalInitiatedEvent() {
             covTotalSupply,
             totalValueLocked
           ),
-          // pendingWithdrawalBalance: componentProps?.pendingWithdrawalBalance,
-          // amount: amount,
         },
       })
     )
@@ -343,7 +318,6 @@ export function* subscribeToWithdrawalCompletedEvent() {
       yield put(
         showModal({
           modalType: MODAL_TYPES.CovPoolClaimTokens,
-          modalComponentType: modalComponentType.COV_POOLS.WITHDRAWAL_COMPLETED,
           modalProps: {
             transactionHash: event.transactionHash,
             collateralTokenAmount: amount,
