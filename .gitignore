@@ -48,6 +48,7 @@ keep-client-snapshot.tar
 yarn-error.log
 
 # Hardhat
+hardhat-dependency-compiler/
 cache/
 export.json
 

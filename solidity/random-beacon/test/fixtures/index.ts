@@ -1,6 +1,7 @@
 import { Contract } from "ethers"
 import { ethers } from "hardhat"
 import type {
+  SortitionPool,
   SortitionPoolStub,
   RandomBeaconStub,
   RandomBeaconGovernance,
@@ -59,12 +60,26 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function randomBeaconDeployment(): Promise<DeployedContracts> {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-
+export async function randomBeaconDeployment(
+  sortitionPoolStub?: Contract
+): Promise<DeployedContracts> {
+  const minStake = 2000
+  const poolWightDevisor = 2000
+  const dummySortitionPoolOperator =
+    "0x0000000000000000000000000000000000000001"
   const StakingStub = await ethers.getContractFactory("StakingStub")
   const stakingStub: StakingStub = await StakingStub.deploy()
+
+  const SortitionPool = await ethers.getContractFactory("SortitionPool")
+  const realSortitionPool: SortitionPool = await SortitionPool.deploy(
+    stakingStub.address,
+    minStake,
+    poolWightDevisor,
+    dummySortitionPoolOperator
+  )
+
+  // use the sortition pool stub if it's passed or the real sortition pool if not
+  const sortitionPool = sortitionPoolStub || realSortitionPool
 
   const { testToken } = await testTokenDeployment()
 
@@ -75,24 +90,26 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   })
 
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
-    sortitionPoolStub.address,
+    sortitionPool.address,
     testToken.address,
     stakingStub.address
   )
   await randomBeacon.deployed()
 
   const contracts: DeployedContracts = {
-    sortitionPoolStub,
+    sortitionPool,
+    stakingStub,
     randomBeacon,
     testToken,
-    stakingStub,
   }
 
   return contracts
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
-  const contracts = await randomBeaconDeployment()
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  const contracts = await randomBeaconDeployment(sortitionPoolStub)
 
   const RandomBeaconGovernance = await ethers.getContractFactory(
     "RandomBeaconGovernance"
