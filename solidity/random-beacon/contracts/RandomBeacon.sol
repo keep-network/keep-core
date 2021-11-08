@@ -441,7 +441,7 @@ contract RandomBeacon is Ownable {
         dkg.notifyTimeout();
         // Pay the sortition pool unlocking reward.
         relay.tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
-        dkg.cleanup();
+        dkg.complete();
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
@@ -456,7 +456,7 @@ contract RandomBeacon is Ownable {
             dkgResultSubmissionReward
         );
         groups.activateCandidateGroup();
-        dkg.cleanup();
+        dkg.complete();
 
         // TODO: Handle DQ/IA
         // TODO: Release a rewards to DKG submitter.
