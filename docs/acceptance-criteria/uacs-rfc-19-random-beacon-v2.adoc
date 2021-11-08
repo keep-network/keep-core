@@ -289,6 +289,8 @@ will be utilised during the acceptance testing of the feature.
   successfully submit the DKG result to the chain: +
   - at the beginning (right after the challenge period passes) only one member
   with index `hash(new_group_pubkey) % group_size` should be eligible +
+  - the first eligible operator should be given additional time for submitting
+  the result, to cover for the time of off-chain DKG generation
   - after fixed amount of blocks another member (with index
   `(hash(new_group_pubkey) % group_size ) + 1` should become eligible (previous
   operator remains eligible) +
@@ -372,9 +374,10 @@ will be utilised during the acceptance testing of the feature.
 
 | Group creation - DKG timeout
 | The DKG submission timeout equals the group size multiplied by the number of
-  blocks for a member to become eligible to submit the DKG result. The timer
-  starts at the moment when the first member becomes eligible (the moment when
-  DKG was requested). The timer gets reset when a valid DKG result challenge is
+  blocks for a member to become eligible to submit the DKG result plus the
+  number of blocks covering for the time of DKG generation. The timer should
+  start when the first member becomes eligible (the moment when DKG was
+  requested). The timer gets reset when a valid DKG result challenge is
   submitted. 
 
 | Group creation - DKG timeout
