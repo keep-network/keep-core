@@ -505,7 +505,7 @@ function* reinitiateWithdraw(action) {
     covBalance,
   } = yield select(selectors.getCoveragePool)
 
-  const { task } = yield call(
+  const { isConfirmed, task } = yield call(
     confirmModalSaga,
     MODAL_TYPES.ReInitiateCovPoolWithdraw,
     {
@@ -515,6 +515,10 @@ function* reinitiateWithdraw(action) {
       covTotalSupply,
     }
   )
+  if (!isConfirmed) {
+    return
+  }
+
   const {
     payload: { amount },
   } = task
