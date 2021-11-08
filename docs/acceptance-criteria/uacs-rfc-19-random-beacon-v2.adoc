@@ -98,7 +98,9 @@ will be utilised during the acceptance testing of the feature.
   - is the submitter eligible to submit? +
   - hasn’t the hard timeout for the relay request be reached? +
   - does the transaction include punishing of misbehaving operators (when
-  aplicable)?
+  aplicable)? +
+  - is the BLS threshold signature valid? +
+  - is the relay request in progress?
 
 | Relay request - relay entry submission
 | When requesting a relay entry, it should be possible to pass an optional
