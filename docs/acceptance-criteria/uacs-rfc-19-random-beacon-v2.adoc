@@ -198,7 +198,7 @@ will be utilised during the acceptance testing of the feature.
   `IRandomBeaconConsumer` interface.
 
 | Group creation
-| New groups should be created with a fixed frequency of relay request (every
+| New groups should be created with a fixed frequency of relay requests (every
   `N`-th relay entry request should result in the creation of a new group).
 
 | Group creation
@@ -213,8 +213,8 @@ will be utilised during the acceptance testing of the feature.
   then (when the pool gets unlocked) for joining operators to pools.
 
 | Group creation
-| Group creation start transaction should be embedded into relay entry request
-  transaction.
+| Group creation start transaction should be embedded into relay entry
+  submission transaction.
 
 | Group creation
 | Group creation start transaction should lock the sortition pool and emit the
