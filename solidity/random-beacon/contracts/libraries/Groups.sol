@@ -26,7 +26,9 @@ library Groups {
         mapping(bytes32 => Group) groupsData;
         // Holds keccak256 hashes of group public keys in the order of registration.
         bytes32[] groupsRegistry;
-        // Group ids that were active but failed creating a relay entry.
+        // Group ids that were active but failed creating a relay entry. When an
+        // active-terminated group qualifies to become 'expired', then it will
+        // be removed from this array.
         uint64[] activeTerminatedGroups;
         // TODO: Remember about decreasing the counter in case of expiration or termination.
         uint64 activeGroupsCount;
