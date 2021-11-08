@@ -984,17 +984,12 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should activate a candidate group", async () => {
-                // FIXME: Unclear why `tx.number` is undefined
-                const expectedActivationBlockNumber = (
-                  await ethers.provider.getBlock(tx.blockHash)
-                ).number
-
                 const storedGroup = await randomBeacon["getGroup(bytes)"](
                   groupPublicKey
                 )
 
                 expect(storedGroup.activationBlockNumber).to.be.equal(
-                  expectedActivationBlockNumber
+                  tx.blockNumber
                 )
               })
 
@@ -1064,17 +1059,12 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should activate a candidate group", async () => {
-                // FIXME: Unclear why `tx.number` is undefined
-                const expectedActivationBlockNumber = (
-                  await ethers.provider.getBlock(tx.blockHash)
-                ).number
-
                 const storedGroup = await randomBeacon["getGroup(bytes)"](
                   groupPublicKey
                 )
 
                 expect(storedGroup.activationBlockNumber).to.be.equal(
-                  expectedActivationBlockNumber
+                  tx.blockNumber
                 )
               })
 

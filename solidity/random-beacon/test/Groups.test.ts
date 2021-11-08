@@ -511,14 +511,9 @@ describe("Groups", () => {
         })
 
         it("should set activation block number for the group", async () => {
-          // FIXME: Unclear why `tx.number` is undefined
-          const expectedActivationBlockNumber = (
-            await ethers.provider.getBlock(tx.blockHash)
-          ).number
-
           expect(
             (await groups.getGroup(groupPublicKey)).activationBlockNumber
-          ).to.be.equal(expectedActivationBlockNumber)
+          ).to.be.equal(tx.blockNumber)
         })
 
         it("should increase number of active groups", async () => {
@@ -583,14 +578,9 @@ describe("Groups", () => {
           })
 
           it("should set activation block number for the activated group", async () => {
-            // FIXME: Unclear why `tx.number` is undefined
-            const expectedActivationBlockNumber = (
-              await ethers.provider.getBlock(tx.blockHash)
-            ).number
-
             expect(
               (await groups.getGroup(groupPublicKey2)).activationBlockNumber
-            ).to.be.equal(expectedActivationBlockNumber)
+            ).to.be.equal(tx.blockNumber)
           })
 
           it("should increase number of active groups", async () => {
@@ -636,14 +626,9 @@ describe("Groups", () => {
           })
 
           it("should set activation block number for the activated group", async () => {
-            // FIXME: Unclear why `tx.number` is undefined
-            const expectedActivationBlockNumber = (
-              await ethers.provider.getBlock(tx.blockHash)
-            ).number
-
             expect(
               (await groups.getGroup(groupPublicKey2)).activationBlockNumber
-            ).to.be.equal(expectedActivationBlockNumber)
+            ).to.be.equal(tx.blockNumber)
           })
 
           it("should increase number of active groups", async () => {
@@ -681,14 +666,9 @@ describe("Groups", () => {
           })
 
           it("should set activation block number for the group", async () => {
-            // FIXME: Unclear why `tx.number` is undefined
-            const expectedActivationBlockNumber = (
-              await ethers.provider.getBlock(tx.blockHash)
-            ).number
-
             expect(
               (await groups.getGroup(groupPublicKey2)).activationBlockNumber
-            ).to.be.equal(expectedActivationBlockNumber)
+            ).to.be.equal(tx.blockNumber)
           })
 
           it("should increase number of active groups", async () => {
