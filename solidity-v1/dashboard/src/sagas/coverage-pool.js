@@ -276,11 +276,6 @@ export function* subscribeToWithdrawalInitiatedEvent() {
           totalValueLocked,
           covTotalSupply,
           covBalanceOf: covBalance,
-          estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
-            covBalance,
-            covTotalSupply,
-            totalValueLocked
-          ),
         },
       })
     )

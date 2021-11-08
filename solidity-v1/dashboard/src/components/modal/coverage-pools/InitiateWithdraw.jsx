@@ -13,11 +13,11 @@ import { useAcceptTermToConfirmFormik } from "../../../hooks/useAcceptTermToConf
 import { withdrawAssetPool } from "../../../actions/coverage-pool"
 import { covKEEP, KEEP } from "../../../utils/token.utils"
 import { COV_POOL_TIMELINE_STEPS, LINK } from "../../../constants/constants"
+import { Keep } from "../../../contracts"
 
 const InitiateWithdrawComponent = ({
   amount, // amount of covKEEP that user wants to withdraw
   covBalanceOf,
-  estimatedBalanceAmountInKeep, // estimated total balance of user in KEEP
   totalValueLocked,
   covTotalSupply,
   onClose,
@@ -35,7 +35,11 @@ const InitiateWithdrawComponent = ({
         </h3>
         <TokenAmount amount={amount} token={covKEEP} />
         <TokenAmount
-          amount={estimatedBalanceAmountInKeep}
+          amount={Keep.coveragePoolV1.estimatedBalanceFor(
+            amount,
+            covTotalSupply,
+            totalValueLocked
+          )}
           token={KEEP}
           amountClassName="text-grey-60"
           symbolClassName="text-grey-60"

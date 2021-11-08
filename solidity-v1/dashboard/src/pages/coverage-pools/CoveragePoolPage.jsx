@@ -89,11 +89,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         totalValueLocked,
         covTotalSupply,
         covBalanceOf: covBalance,
-        estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
-          covBalance,
-          covTotalSupply,
-          totalValueLocked
-        ),
         amount,
       })
     } else {
