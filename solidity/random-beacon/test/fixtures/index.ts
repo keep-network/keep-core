@@ -81,8 +81,7 @@ export async function randomBeaconDeployment(
     sortitionPool = (await SortitionPool.deploy(
       stakingStub.address,
       constants.minimumStake,
-      constants.poolWeightDivisor,
-      deployer.address
+      constants.poolWeightDivisor
     )) as SortitionPool
   }
 
