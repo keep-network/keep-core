@@ -72,6 +72,12 @@ will be utilised during the acceptance testing of the feature.
   the data provided by at least `blsThreshold=(group_size/2) + 1` members of the
   signing group).
 
+| Relay request - signature generation
+| Once the active group is selected as a signing group, it is tasked with the
+  generation of a BLS threshold signature (based on the current relay entry and
+  the data provided by at least `blsThreshold=(group_size/2) + 1` members of the
+  signing group).
+
 | Relay request - relay entry submission
 | During the signature submission eligibility period only selected members from
   the group should be eligible to successfully submit the new relay entry
@@ -150,6 +156,15 @@ will be utilised during the acceptance testing of the feature.
   amount of lost stake should incrementally increase from 0 (at the moment of
   soft relay entry timeout) to a fixed value (at the moment of hard relay entry
   timeout).
+
+| Relay request - relay entry timeouts
+| The hard relay entry timeout can occur as a result of the following two
+  scenarios: +
+  - the signing group did not generate the BLS threshold signature (e.g. because
+  of not reaching the `blsThreshold`) and hence operators elgible to publish the
+  result had nothing to submit +
+  - the signing group did genearte the BLS threshold signature, but none of the
+  eligible operators have submitted the result.
 
 | Relay request - relay entry timeouts
 | Anyone can send a transaction reporting hard relay entry timeout.
