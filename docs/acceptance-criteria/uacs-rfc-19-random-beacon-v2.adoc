@@ -50,8 +50,9 @@ will be utilised during the acceptance testing of the feature.
 
 | Relay request
 | If the relay entry request is deemed valid, then: +
-  - the fee provided by the requester should be deposited in the maintenance
-  pool (with an intention to cover the reimbursements for DKG-related actions) +
+  - the fee charged from the requester should be deposited in the maintenance
+  pool (the T balance of the random beacon contract) (with an intention to cover
+  the reimbursements for DKG-related actions) +
   - the current relay entry should be used by the beacon to select a signing
   group from the set of active groups (by hashing the relay entry and applying
   `modulo no_of_active_groups` operation on the result) +
