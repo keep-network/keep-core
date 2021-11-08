@@ -12,7 +12,7 @@ import { Column, DataTable } from "../DataTable"
 import resourceTooltipProps from "../../constants/tooltips"
 import TokenAmount from "../TokenAmount"
 import { covKEEP, KEEP } from "../../utils/token.utils"
-import { SubmitButton } from "../Button"
+import Button from "../Button"
 import { Keep } from "../../contracts"
 import { useWeb3Address } from "../WithWeb3Context"
 import { ResourceTooltipContent } from "../ResourceTooltip"
@@ -42,7 +42,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
     }
   })
 
-  const onClaimTokensSubmitButtonClick = async (covAmount, awaitingPromise) => {
+  const onClaimTokensSubmitButtonClick = (covAmount) => {
     openModal(MODAL_TYPES.CovPoolClaimTokens, {
       covAmount,
       address: yourAddress,
@@ -350,26 +350,19 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
           field="timestamp"
           renderContent={({ covAmount, timestamp }) => (
             <div className={"pending-withdrawal__button-container"}>
-              <SubmitButton
+              <Button
                 className="btn btn-lg btn-primary"
-                onSubmitAction={async (awaitingPromise) => {
+                onClick={() => {
                   if (isWithdrawalTimeoutOver(timestamp)) {
-                    await onReinitiateWithdrawal(
-                      covAmount,
-                      covTokensAvailableToWithdraw,
-                      awaitingPromise
-                    )
+                    onReinitiateWithdrawal()
                   } else {
-                    await onClaimTokensSubmitButtonClick(
-                      covAmount,
-                      awaitingPromise
-                    )
+                    onClaimTokensSubmitButtonClick(covAmount)
                   }
                 }}
                 disabled={!isWithdrawalDelayOver(timestamp)}
               >
                 {renderPendingWithdrawalButtonText(timestamp)}
-              </SubmitButton>
+              </Button>
               <span
                 className={
                   "pending-withdrawal__button-container__time-left-text"

@@ -1,6 +1,10 @@
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { DepositForm, MetricsSection } from "../../components/coverage-pools"
+import {
+  DepositForm,
+  MetricsSection,
+  WithdrawAmountForm,
+} from "../../components/coverage-pools"
 import TokenAmount from "../../components/TokenAmount"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import OnlyIf from "../../components/OnlyIf"
@@ -14,7 +18,6 @@ import { useModal } from "../../hooks/useModal"
 import { gt } from "../../utils/arithmetics.utils"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
-import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
 import Chip from "../../components/Chip"
 import ResourceTooltip from "../../components/ResourceTooltip"
@@ -60,7 +63,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     }
   }, [dispatch, address])
 
-  const onSubmitDepositForm = async (values, awaitingPromise) => {
+  const onSubmitDepositForm = async (values) => {
     const { tokenAmount } = values
     const amount = KEEP.fromTokenUnit(tokenAmount).toString()
     if (hasRiskManagerOpenAuctions) {
@@ -78,7 +81,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     })
   }
 
-  const onSubmitWithdrawForm = async (values, awaitingPromise) => {
+  const onSubmitWithdrawForm = async (values) => {
     const { withdrawAmount } = values
     const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
     if (withdrawalInitiatedTimestamp === 0) {

@@ -1,27 +1,27 @@
 import React from "react"
 import { withFormik } from "formik"
-import { lte } from "../utils/arithmetics.utils"
-import { getErrorsObj, validateAmountInRange } from "../forms/common-validators"
+import { lte } from "../../utils/arithmetics.utils"
+import {
+  getErrorsObj,
+  validateAmountInRange,
+} from "../../forms/common-validators"
 import {
   formatFloatingAmount,
   normalizeFloatingAmount,
-} from "../forms/form.utils"
-import FormInput from "./FormInput"
-import MaxAmountAddon from "./MaxAmountAddon"
-import { SubmitButton } from "./Button"
-import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
-import { covKEEP } from "../utils/token.utils"
+} from "../../forms/form.utils"
+import FormInput from "../FormInput"
+import MaxAmountAddon from "../MaxAmountAddon"
+import Button from "../Button"
+import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
+import { covKEEP } from "../../utils/token.utils"
 
 const WithdrawAmountForm = ({
   onCancel,
-  onSubmit,
   submitBtnText,
   withdrawAmount,
   withdrawalDelay, // <number> in seconds
   ...formikProps
 }) => {
-  const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken(
     "withdrawAmount",
     withdrawAmount,
@@ -48,13 +48,13 @@ const WithdrawAmountForm = ({
           </span>
         }
       />
-      <SubmitButton
+      <Button
         className="btn btn-lg btn-primary w-100"
-        onSubmitAction={onSubmitBtn}
+        onClick={formikProps.handleSubmit}
         disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         {submitBtnText}
-      </SubmitButton>
+      </Button>
     </form>
   )
 }
@@ -81,6 +81,10 @@ const WithdrawAmountFormWithFormik = withFormik({
     }
 
     return getErrorsObj(errors)
+  },
+  handleSubmit: (values, { props, resetForm }) => {
+    props.onSubmit(values)
+    resetForm({ withdrawAmount: "0" })
   },
   displayName: "CoveragePoolsWithdrawAmountForm",
 })(WithdrawAmountForm)
