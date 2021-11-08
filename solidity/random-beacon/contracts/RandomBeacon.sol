@@ -89,12 +89,6 @@ contract RandomBeacon is Ownable {
     ///         a fixed frequency of relay requests.
     uint256 public groupCreationFrequency;
 
-    /// @notice Group lifetime in seconds. When a group reached its lifetime, it
-    ///         is no longer selected for new relay requests but may still be
-    ///         responsible for submitting relay entry if relay request assigned
-    ///         to that group is still pending.
-    uint256 public groupLifetime;
-
     /// @notice Reward in T for submitting DKG result. The reward is paid to
     ///         a submitter of a valid DKG result when the DKG result challenge
     ///         period ends.
@@ -205,7 +199,7 @@ contract RandomBeacon is Ownable {
         // Governable parameters
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
-        groupLifetime = 93077; // ~2 weeks in blocks. Each block is mined every ~13sec
+
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
@@ -223,7 +217,6 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
         groups.setRelayEntryTimeout(relay.relayEntryTimeout());
-        groups.setGroupLifetime(groupLifetime);
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -262,17 +255,18 @@ contract RandomBeacon is Ownable {
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _groupCreationFrequency New group creation frequency
-    /// @param _groupLifetime New group lifetime
+    /// @param _groupLifetime New group lifetime in blocks
     function updateGroupCreationParameters(
         uint256 _groupCreationFrequency,
         uint256 _groupLifetime
     ) external onlyOwner {
         groupCreationFrequency = _groupCreationFrequency;
-        groupLifetime = _groupLifetime;
+
+        groups.setGroupLifetime(_groupLifetime);
 
         emit GroupCreationParametersUpdated(
             groupCreationFrequency,
-            groupLifetime
+            _groupLifetime
         );
     }
 
@@ -628,5 +622,13 @@ contract RandomBeacon is Ownable {
         returns (uint256)
     {
         return relay.relayEntrySubmissionFailureSlashingAmount;
+    }
+
+    /// @notice Group lifetime in blocks. When a group reached its lifetime, it
+    ///         is no longer selected for new relay requests but may still be
+    ///         responsible for submitting relay entry if relay request assigned
+    ///         to that group is still pending.
+    function groupLifetime() external view returns (uint256) {
+        return groups.groupLifetime;
     }
 }

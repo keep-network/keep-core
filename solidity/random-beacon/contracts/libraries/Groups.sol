@@ -32,7 +32,10 @@ library Groups {
         uint64 activeGroupsCount;
         // Points to the first active group, it is also the expired groups counter.
         uint64 expiredGroupOffset;
-        // Lifetime of a group in blocks after which group expires.
+        // Group lifetime in blocks. When a group reached its lifetime, it
+        // is no longer selected for new relay requests but may still be
+        // responsible for submitting relay entry if relay request assigned
+        // to that group is still pending.
         uint256 groupLifetime;
         // Calculated in the Relay.sol lib.
         uint256 relayEntryTimeout;
