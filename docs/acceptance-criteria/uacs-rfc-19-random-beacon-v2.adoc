@@ -85,7 +85,7 @@ will be utilised during the acceptance testing of the feature.
   - at the beginning (right after the challenge period passes) only one member
   (with index `new_entry % group_size` should be eligible +
   - after fixed amount of blocks another member (with index `(new_entry %
-  group_size ) + 1` should become eligible (previous operator remains eligible)
+  group_size ) + 1` should become eligible (previous operator remains eligible) +
   - next members should become eligible after each fixed amount of blocks.
 
 | Relay request - relay entry submission
@@ -96,7 +96,9 @@ will be utilised during the acceptance testing of the feature.
 | When determining validity of the relay entry submission, the following aspects
   should be taken into account: +
   - is the submitter eligible to submit? +
-  - hasn’t the hard timeout for the relay request be reached?
+  - hasn’t the hard timeout for the relay request be reached? +
+  - does the transaction include punishing of misbehaving operators (when
+  aplicable)?
 
 | Relay request - relay entry submission
 | When requesting a relay entry, it should be possible to pass an optional
@@ -110,7 +112,9 @@ will be utilised during the acceptance testing of the feature.
 // it should be equal to 2 weeks or a different value
   - operators who became eligible for submitting the relay entry before the
   member who submitted the relay entry should be punished by being removed from
-  the sortition pool for a fixed amount of time (2 weeks) (in the same tx) +
+  the sortition pool for a fixed amount of time (2 weeks) and, if the soft
+  timeout has passed, should get slashed the calculated amount of T (all
+  happening in the same tx) +
   - if an optional address of the `IRandomBeaconConsumer` interface was provided
   in the tx, the interface should be called +
   - the creation of a new signing group should be triggered (only sometimes, if
@@ -141,21 +145,19 @@ will be utilised during the acceptance testing of the feature.
   blocks for a member to become eligible to submit relay entry. The timer starts
   at the moment when the first member becomes eligible (the moment when the
   relay entry was requested). +
-  The hard relay entry timeout is a set value (measured in time units).
+  The hard relay entry timeout is a set value (expressed in blocks) and is
+  measured since the reaching of soft relay entry timeout.
 
 | Relay request - relay entry timeouts
 | If no entry was successfully submitted until soft relay timeout is reached,
   all operators in the group should start bleeding and losing their T stake. The
   amount of lost stake should incrementally increase from 0 (at the moment of
   soft relay entry timeout) to a fixed value (at the moment of hard relay entry
-  timeout).
-
-| Relay request - relay entry timeouts
-| If no entry was successfully submitted until soft relay timeout is reached,
-  all operators in the group should start bleeding and losing their T stake. The
-  amount of lost stake should incrementally increase from 0 (at the moment of
-  soft relay entry timeout) to a fixed value (at the moment of hard relay entry
-  timeout).
+  timeout). The slashing will be applied in transaction: +
+  - submitting the relay entry submission (if the result got submitted by one of
+  the operators between soft and hard timeout) +
+  - notifying about relay entry timeout (if no result was submitted before the
+  hard timeout).
 
 | Relay request - relay entry timeouts
 | The hard relay entry timeout can occur as a result of the following two
@@ -178,11 +180,17 @@ will be utilised during the acceptance testing of the feature.
   following aspects should be taken into account: +
   - does it reference the existing relay entry request? (if not, then
   notification invalid) +
-  - has the hard relay entry timeout passed? (if not, then notification invalid). +
+  - has the hard relay entry timeout passed? (if not, then notification invalid) +
+  - does the transaction include punishing of the misbehaving operators? (if not,
+  then notification invalid).
 
 | Relay request - relay entry timeouts
 | If the hard relay entry timeout notification was deemed justified, then: +
   - the signing group should get terminated +
+// TODO: revisit 2 weeks removal time
+  - all signing group members should be punished by being slashed the fixed
+  percentage of T and being removed from the sortition pool for a fixed amount
+  of time (2 weeks) +
   - the process of choosing a signing group and tasking it with a relay entry
   generation should be repeated (as part of the same relay entry request) +
   - if there are no active groups to choose from, the request should get
@@ -487,7 +495,8 @@ will be utilised during the acceptance testing of the feature.
 
 | Governable parameters
 | The hard timeout for a relay entry should be a governable parameter. Its
-  initial value should be set to 48 hours (may be specified in a different unit)
+  initial value should be set to 24 hours (expressed in blocks, where we assume
+  `1 block = 15s`).
 
 | Governable parameters
 | The callback gas limit should be a governable parameter. Its initial value
