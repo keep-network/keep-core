@@ -46,6 +46,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     totalAllocatedRewards,
     totalCoverageClaimed,
     withdrawalDelay,
+    withdrawalTimeout,
     pendingWithdrawal,
     withdrawalInitiatedTimestamp,
     hasRiskManagerOpenAuctions,
@@ -149,6 +150,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           covTotalSupply,
           totalValueLocked,
           withdrawalDelay,
+          withdrawalTimeout,
+          withdrawalInitiatedTimestamp,
           containerTitle: "You are about to re-initiate this withdrawal:",
         },
         ReinitiateWithdrawalModal

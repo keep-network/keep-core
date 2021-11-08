@@ -7,7 +7,6 @@ import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type { DeployedContracts } from "./fixtures"
 import type {
-  RandomBeacon,
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
@@ -18,7 +17,9 @@ import { registerOperators, Operator } from "./utils/sortitionpool"
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const deployment = await randomBeaconDeployment()
+  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
+  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
+  const deployment = await randomBeaconDeployment(sortitionPoolStub)
 
   const contracts: DeployedContracts = {
     randomBeacon: deployment.randomBeacon,
@@ -34,11 +35,11 @@ const fixture = async () => {
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
-    deployment.sortitionPoolStub as SortitionPoolStub,
+    deployment.sortitionPool as SortitionPoolStub,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await createGroup(contracts.randomBeacon as RandomBeacon, signers)
+  await createGroup(contracts.randomBeacon as RandomBeaconStub, signers)
 
   return { contracts, signers }
 }

@@ -9,9 +9,9 @@ import { Operator } from "./sortitionpool"
 export interface DkgResult {
   submitterMemberIndex: number
   groupPubKey: string
-  misbehaved: number[]
+  misbehavedMembersIndices: number[]
   signatures: string
-  signingMemberIndices: number[]
+  signingMembersIndices: number[]
   members: number[]
 }
 
@@ -46,22 +46,22 @@ export async function signAndSubmitDkgResult(
   dkgResultHash: string
   members: number[]
 }> {
-  const { members, signingMemberIndices, signaturesBytes } =
+  const { members, signingMembersIndices, signaturesBytes } =
     await signDkgResult(signers, groupPublicKey, noMisbehaved, startBlock)
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
     groupPubKey: blsData.groupPubKey,
-    misbehaved: noMisbehaved,
+    misbehavedMembersIndices: noMisbehaved,
     signatures: signaturesBytes,
-    signingMemberIndices,
+    signingMembersIndices,
     members,
   }
 
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehaved, bytes signatures, uint256[] signingMemberIndices, uint32[] members)",
+        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members)",
       ],
       [dkgResult]
     )
@@ -77,20 +77,20 @@ export async function signAndSubmitDkgResult(
 async function signDkgResult(
   signers: Operator[],
   groupPublicKey: string,
-  misbehaved: number[],
+  misbehavedMembersIndices: number[],
   startBlock: number
 ): Promise<{
   members: number[]
-  signingMemberIndices: number[]
+  signingMembersIndices: number[]
   signaturesBytes: string
 }> {
   const resultHash = ethers.utils.solidityKeccak256(
     ["bytes", "uint8[]", "uint256"],
-    [groupPublicKey, misbehaved, startBlock]
+    [groupPublicKey, misbehavedMembersIndices, startBlock]
   )
 
   const members: number[] = []
-  const signingMemberIndices: number[] = []
+  const signingMembersIndices: number[] = []
   const signatures: string[] = []
 
   for (let i = 0; i < signers.length; i++) {
@@ -98,8 +98,7 @@ async function signDkgResult(
     const signerIndex: number = i + 1
 
     members.push(id)
-
-    signingMemberIndices.push(signerIndex)
+    signingMembersIndices.push(signerIndex)
 
     const ethersSigner = await ethers.getSigner(address)
     const signature = await ethersSigner.signMessage(
@@ -111,5 +110,5 @@ async function signDkgResult(
 
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
-  return { members, signingMemberIndices, signaturesBytes }
+  return { members, signingMembersIndices, signaturesBytes }
 }
