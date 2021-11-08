@@ -410,10 +410,21 @@ will be utilised during the acceptance testing of the feature.
 | When the sortition pool is locked, no operator can leave the pool.
 
 | Sortition pool - locking
+| When the sortition pool is locked, no operator can update its state.
+
+| Sortition pool - locking
 | Once the sortition pool gets unlocked, operators can leave the pool.
 
 | Sortition pool - locking
 | Once the sortition pool gets unlocked, new operators can join the pool.
+
+| Sortition pool - locking
+| Once the sortition pool gets unlocked, operators can update their state.
+
+| Sortition pool - locking
+| Operator's staked amount can change regardless if the pool is at the moment in
+  the locked or in the unlocked state (e.g. operator can be slashed during the
+  lock as a result of relay entry timeout).
 
 // TODO: Once starting values for governable parameters are agreed upon,
 // add them to the UACs
