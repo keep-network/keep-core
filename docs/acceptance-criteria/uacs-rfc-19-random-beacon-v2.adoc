@@ -267,6 +267,7 @@ will be utilised during the acceptance testing of the feature.
   aspects should be taken into account: +
   - is the submitter eligible at the moment to send the tx? +
   - are there enough supporting signatures on the result? +
+  - are all the signatures valid? +
   - do the signatures come from the stakers with at least a minimum stake? +
   Only if all the above conditions have been met, the tx is considered valid.
 
