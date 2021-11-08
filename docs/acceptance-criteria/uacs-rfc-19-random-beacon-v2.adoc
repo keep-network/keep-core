@@ -22,9 +22,9 @@ will be utilised during the acceptance testing of the feature.
 | Anyone can send a relay entry request transaction.
 
 | Relay request
-| Processing of each relay entry request should always result in the generation
-  of a random number (relay entry) and sometimes also (if certain conditions are
-  met) in a creation of a new signing group.
+| Successful processing of each relay entry request should always result in the
+  generation of a random number (relay entry) and sometimes also (if certain
+  conditions are met) in a creation of a new signing group.
 
 | Relay request
 | When sending the relay request, the requester should provide a fixed fee in T.
@@ -160,13 +160,16 @@ will be utilised during the acceptance testing of the feature.
   following aspects should be taken into account: +
   - does it reference the existing relay entry request? (if not, then
   notification invalid) +
-  - has the hard relay entry timeout passed? (if not, then notification invalid) +
+  - has the hard relay entry timeout passed? (if not, then notification invalid). +
 
 | Relay request - relay entry timeouts
 | If the hard relay entry timeout notification was deemed justified, then: +
   - the signing group should get terminated +
   - the process of choosing a signing group and tasking it with a relay entry
-  generation should be repeated.
+  generation should be repeated (as part of the same relay entry request) +
+  - if there are no active groups to choose from, the request should get
+  terminated and no result should be produced (in order for the next requests to
+  get processed successfully, the manual genesis must be first triggered).
 
 | Relay entry utilisation
 | Applications wanting to use a relay entry should submit another transaction
