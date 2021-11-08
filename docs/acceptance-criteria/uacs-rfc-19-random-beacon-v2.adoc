@@ -37,8 +37,10 @@ will be utilised during the acceptance testing of the feature.
 | When determining validity of the relay entry request, the following aspects
   should be taken into account: +
   - isn’t the other relay entry request already pending? +
-  - has the requester provided the exact required fee? (if the fee is lower or
-  higher, the transaction should be reverted) +
+  - has the requester allowed the random beacon contract to pull the amount 
+  sufficient for covering the fee for the request? (if the allowance is lower, 
+  the transaction should be reverted; if it's higher, only the exact fee amount
+  should be charged) +
   - is there at least one active signing group?
 
 | Relay request
