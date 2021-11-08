@@ -106,7 +106,7 @@ const IncreaseWithdrawalComponent = ({
         </Banner>
       </ModalBody>
       <ModalFooter>
-        <form>
+        <form className="mb-1">
           <FormCheckboxBase
             name="checked"
             type="checkbox"

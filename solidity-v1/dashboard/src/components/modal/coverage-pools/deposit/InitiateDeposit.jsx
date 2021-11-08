@@ -75,7 +75,7 @@ const InitiateDepositComponent = ({
       </ModalBody>
       <ModalFooter>
         <OnlyIf condition={!transactionHash}>
-          <form>
+          <form className="mb-1">
             <FormCheckboxBase
               name="checked"
               type="checkbox"
