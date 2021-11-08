@@ -15,7 +15,7 @@ import {
   increaseWithdrawal,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
-import { gt } from "../../utils/arithmetics.utils"
+import { gt, eq } from "../../utils/arithmetics.utils"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
 import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
@@ -84,7 +84,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const onSubmitWithdrawForm = async (values) => {
     const { withdrawAmount } = values
     const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
-    if (withdrawalInitiatedTimestamp === 0) {
+    if (eq(withdrawalInitiatedTimestamp, 0)) {
       openModal(MODAL_TYPES.InitiateCovPoolWithdraw, {
         totalValueLocked,
         covTotalSupply,
