@@ -402,9 +402,9 @@ will be utilised during the acceptance testing of the feature.
 | Sortition pool - punishments
 // TODO: revisit 2 weeks removal time
 | After 2 weeks punish period elapses, operators removed from the sortition pool
-  should be automatically reinstated in the pool and should be able to earn the
-  rewards again (from membership in the pool and potentially submission of the
-  DKG result or unlocking the pool).
+  should be able to manually re-register in the sortition pool and should be
+  able to earn the rewards again (from membership in the pool and potentially
+  submission of the DKG result or unlocking the pool).
 
 | Sortition pool - punishments
 | The operation removing members from the sortition pool should be as cheap as
