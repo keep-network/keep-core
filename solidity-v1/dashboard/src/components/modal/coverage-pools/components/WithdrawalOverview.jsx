@@ -158,7 +158,7 @@ export const WithdrawalOverview = ({
         .unix(withdrawalInitiatedTimestamp)
         .add(withdrawalDelay, "seconds")
         .format("MM/DD")
-    } else if (withdrawalDelay === PENDING_WITHDRAWAL_STATUS.COMPLETED) {
+    } else if (withdrawalStatus === PENDING_WITHDRAWAL_STATUS.COMPLETED) {
       return "Completed"
     }
 
