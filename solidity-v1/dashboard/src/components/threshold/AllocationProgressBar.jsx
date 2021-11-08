@@ -13,8 +13,13 @@ const AllocationProgressBar = ({
   withLegend = false,
   currentValueLegendLabel = "",
   secondaryValueLegendLabel = "",
+  isDataFetching = false,
 }) => {
   const percentageValue = useMemo(() => {
+    if (isDataFetching) {
+      return "--"
+    }
+
     if (gt(totalValue, 0)) {
       return Math.round(
         (add(currentValue, secondaryValue | 0) / totalValue) * 100
@@ -22,7 +27,7 @@ const AllocationProgressBar = ({
     } else {
       return 0
     }
-  }, [currentValue, secondaryValue, totalValue])
+  }, [currentValue, secondaryValue, totalValue, isDataFetching])
 
   return (
     <div className={`allocation-progress-bar ${className}`}>
@@ -30,11 +35,11 @@ const AllocationProgressBar = ({
         <h5 className="text-gray-60">{title}</h5>
         <div className="allocation-progress-bar__progress-bar-container">
           <ProgressBar
-            value={currentValue}
-            total={totalValue}
+            value={isDataFetching ? 0 : currentValue}
+            total={isDataFetching ? 100 : totalValue}
             color={colors.secondary}
             bgColor={colors.grey20}
-            secondaryValue={secondaryValue}
+            secondaryValue={isDataFetching ? 0 : secondaryValue}
             secondaryColor={colors.yellowSecondary}
           >
             <ProgressBar.Inline

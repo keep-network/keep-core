@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
 import OnlyIf from "../OnlyIf"
@@ -47,15 +47,25 @@ const UpgradeTokensTile = ({
   )
 }
 
-const UpgradeTokenFileRow = ({ label, amount }) => {
-  return (
-    <div className={"upgrade-tokens-tile-row"}>
-      <span className="text-grey-50">{label}</span>
+const UpgradeTokenFileRow = ({ label, amount, isDataFetching = false }) => {
+  const renderTokenAmount = useMemo(() => {
+    if (isDataFetching) {
+      return <span>-- KEEP</span>
+    }
+
+    return (
       <TokenAmount
         amount={amount}
         symbolClassName="upgrade-token-tile-row__token-amount-symbol"
         amountClassName="upgrade-token-tile-row__token-amount-amount"
       />
+    )
+  }, [isDataFetching, amount])
+
+  return (
+    <div className={"upgrade-tokens-tile-row"}>
+      <span className="text-grey-50">{label}</span>
+      {renderTokenAmount}
     </div>
   )
 }

@@ -14,6 +14,8 @@ import {
   useWeb3Context,
 } from "../../components/WithWeb3Context"
 import { useDispatch, useSelector } from "react-redux"
+import { Skeleton } from "../../components/skeletons"
+import OnlyIf from "../../components/OnlyIf"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
@@ -33,7 +35,17 @@ const ThresholdUpgradePage = () => {
     }
   }, [dispatch, isConnected, address])
 
-  const { delegations, undelegations } = useSelector((state) => state.staking)
+  const { delegations, undelegations, isDelegationDataFetching } = useSelector(
+    (state) => state.staking
+  )
+
+  const { isFetching: isGrantDataFetching } = useSelector(
+    (state) => state.tokenGrants
+  )
+
+  const isDataFetching = useMemo(() => {
+    return isDelegationDataFetching || isGrantDataFetching
+  }, [isDelegationDataFetching, isGrantDataFetching])
 
   const { totalOwnedStakedBalance, totalOwnedUnstakedBalance } =
     useKeepBalanceInfo()
@@ -108,23 +120,37 @@ const ThresholdUpgradePage = () => {
 
       <section className="tile not-staked">
         <h3 className="mb-1">Not staked</h3>
-        <TokenAmount
-          wrapperClassName={"not-staked__token-amount mb-2"}
-          amount={notStakedTotalAmount}
-          token={KEEP}
-          withIcon
-        />
+        <OnlyIf condition={isDataFetching}>
+          <div className="not-staked__token-amount not-staked__token-amount--loading">
+            <Icons.KeepOutline
+              width={32}
+              height={32}
+              className={`token-amount__icon`}
+            />
+            <Skeleton tag="h2" shining color="grey-20" width="30%" />
+          </div>
+        </OnlyIf>
+        <OnlyIf condition={!isDataFetching}>
+          <TokenAmount
+            wrapperClassName={"not-staked__token-amount mb-2"}
+            amount={notStakedTotalAmount}
+            token={KEEP}
+            withIcon
+          />
+        </OnlyIf>
         <AllocationProgressBar
           title={"wallet"}
           currentValue={totalOwnedUnstakedBalance}
           totalValue={notStakedTotalAmount}
           className={"mb-1"}
+          isDataFetching={isDataFetching}
         />
         <AllocationProgressBar
           title={"available grant allocation"}
           currentValue={totalGrantedUnstakedBalance}
           totalValue={notStakedTotalAmount}
           className={"mb-2"}
+          isDataFetching={isDataFetching}
         />
         <div className="upgrade-not-staked">
           <h4 className={"mb-1"}>Upgrade Not Staked Tokens</h4>
@@ -133,17 +159,21 @@ const ThresholdUpgradePage = () => {
             btnText={"upgrade to t"}
             className={"mb-1"}
             isLink
+            buttonDisabled={isDataFetching}
           >
             <UpgradeTokensTile.Row
               label={"Liquid KEEP"}
               amount={totalOwnedUnstakedBalance}
+              isDataFetching={isDataFetching}
             />
           </UpgradeTokensTile>
           <UpgradeTokensTile
             title={"Grant Allocation"}
             btnText={"withdraw from grant"}
             onBtnClick={onWithdrawFromGrant}
-            buttonDisabled={lte(totalGrantedUnstakedBalance, 0)}
+            buttonDisabled={
+              lte(totalGrantedUnstakedBalance, 0) || isDataFetching
+            }
             titleTooltipProps={
               resourceTooltipProps.thresholdPageGrantAllocation
             }
@@ -151,6 +181,7 @@ const ThresholdUpgradePage = () => {
             <UpgradeTokensTile.Row
               label={"Available KEEP"}
               amount={totalGrantedUnstakedBalance}
+              isDataFetching={isDataFetching}
             />
           </UpgradeTokensTile>
         </div>
@@ -178,12 +209,24 @@ const ThresholdUpgradePage = () => {
             </span>
           </div>
         </div>
-        <TokenAmount
-          wrapperClassName={"staked__token-amount mb-2"}
-          amount={stakedTotalAmount}
-          token={KEEP}
-          withIcon
-        />
+        <OnlyIf condition={isDataFetching}>
+          <div className="staked__token-amount staked__token-amount--loading">
+            <Icons.KeepOutline
+              width={32}
+              height={32}
+              className={`token-amount__icon`}
+            />
+            <Skeleton tag="h2" shining color="grey-20" width="40%" />
+          </div>
+        </OnlyIf>
+        <OnlyIf condition={!isDataFetching}>
+          <TokenAmount
+            wrapperClassName={"staked__token-amount mb-2"}
+            amount={stakedTotalAmount}
+            token={KEEP}
+            withIcon
+          />
+        </OnlyIf>
         <AllocationProgressBar
           title={"staked"}
           currentValue={totalStakedAvailableKeep}
@@ -193,38 +236,46 @@ const ThresholdUpgradePage = () => {
           withLegend
           currentValueLegendLabel={"Staked"}
           secondaryValueLegendLabel={"Pending Undelegation"}
+          isDataFetching={isDataFetching}
         />
         <AllocationProgressBar
           title={"undelegated"}
           currentValue={totalUndelegatedAvailableKeep}
           totalValue={stakedTotalAmount}
           className={"mb-3"}
+          isDataFetching={isDataFetching}
         />
         <div className="upgrade-staked">
           <h4 className={"mb-1"}>Upgrade Staked Tokens</h4>
           <UpgradeTokensTile
             title={"Staked"}
             btnText={"undelegate"}
+            buttonDisabled={isDataFetching}
             className={"mb-1"}
           >
             <UpgradeTokensTile.Row
               label={"Total Pending KEEP"}
               amount={totalStakedPendingKeep}
+              isDataFetching={isDataFetching}
             />
             <UpgradeTokensTile.Row
               label={"Total Available KEEP"}
               amount={totalStakedAvailableKeep}
+              isDataFetching={isDataFetching}
             />
           </UpgradeTokensTile>
           <UpgradeTokensTile
             title={"Undelegated"}
             btnText={"claim tokens"}
             onBtnClick={onWithdrawFromGrant}
-            buttonDisabled={lte(totalGrantedUnstakedBalance, 0)}
+            buttonDisabled={
+              lte(totalGrantedUnstakedBalance, 0) || isDataFetching
+            }
           >
             <UpgradeTokensTile.Row
               label={"Total Available KEEP"}
               amount={totalUndelegatedAvailableKeep}
+              isDataFetching={isDataFetching}
             />
           </UpgradeTokensTile>
         </div>
