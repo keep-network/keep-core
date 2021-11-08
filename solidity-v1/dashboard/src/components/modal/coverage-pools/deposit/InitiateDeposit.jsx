@@ -102,7 +102,7 @@ const InitiateDepositComponent = ({
             }}
             disabled={!(formik.isValid && formik.dirty)}
           >
-            Deposit
+            deposit
           </SubmitButton>
         </OnlyIf>
         <Button
