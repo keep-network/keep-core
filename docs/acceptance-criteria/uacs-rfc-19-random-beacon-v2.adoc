@@ -293,8 +293,9 @@ will be utilised during the acceptance testing of the feature.
   - all sortition pool members who signed the result should be slashed (fixed
   amount) (in the same tx) +
   - notifier should receive 5% from the total slashed amount (in the same tx) +
+  - remaning 95% of the total slashed amount shoud be burned +
   - the members of the signing group should be given another chance to publish
-  the DKG result
+  the DKG result +
   - DKG timeout timer and the result submission eligibility order should be
   reset.
 
