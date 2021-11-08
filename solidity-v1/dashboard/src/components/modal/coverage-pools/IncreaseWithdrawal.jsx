@@ -27,7 +27,6 @@ const IncreaseWithdrawalComponent = ({
   covAmountToAdd,
   address,
   withdrawalStatus,
-  covBalanceOf,
   totalValueLocked,
   covTotalSupply,
   onClose,
@@ -47,7 +46,7 @@ const IncreaseWithdrawalComponent = ({
         <TokenAmount amount={amount} token={covKEEP} />
         <TokenAmount
           amount={Keep.coveragePoolV1.estimatedBalanceFor(
-            covBalanceOf,
+            amount,
             covTotalSupply,
             totalValueLocked
           )}
