@@ -61,6 +61,15 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
         return operators;
     }
 
+    function selectGroup(uint256, bytes32)
+        external
+        view
+        override
+        returns (uint32[] memory)
+    {
+        return new uint32[](0);
+    }
+
     function removeOperators(uint32[] calldata ids) external override {
         address[] memory _operators = getIDOperators(ids);
 

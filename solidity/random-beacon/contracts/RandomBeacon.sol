@@ -44,6 +44,11 @@ interface ISortitionPool {
         external
         view
         returns (address[] memory);
+
+    function selectGroup(uint256 groupSize, bytes32 seed)
+        external
+        view
+        returns (uint32[] memory);
 }
 
 /// @title Staking contract interface

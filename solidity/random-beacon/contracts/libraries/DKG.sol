@@ -27,12 +27,16 @@ library DKG {
         Parameters parameters;
         // Time in blocks at which DKG started.
         uint256 startBlock;
+        // Seed used to start DKG.
+        uint256 seed;
         // Time in blocks that should be added to result submission eligibility
         // delay calculation. It is used in case of a challenge to adjust
         // block calculation for members submission eligibility.
         uint256 resultSubmissionStartBlockOffset;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;
+        // Hash of group members submitted in the result.
+        bytes32 submittedGroupMembersHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
     }
@@ -163,6 +167,7 @@ library DKG {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
         self.startBlock = block.number;
+        self.seed = seed;
 
         emit DkgStarted(seed);
     }
@@ -190,6 +195,9 @@ library DKG {
         // slash the members from.
 
         self.submittedResultHash = keccak256(abi.encode(result));
+        self.submittedGroupMembersHash = keccak256(
+            abi.encodePacked(result.members)
+        );
         self.submittedResultBlock = block.number;
 
         emit DkgResultSubmitted(
@@ -367,7 +375,6 @@ library DKG {
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
-    // TODO: When implementing challenges verify what parameters are required.
     function challengeResult(Data storage self) internal {
         require(
             currentState(self) == State.CHALLENGE,
@@ -381,7 +388,20 @@ library DKG {
             "challenge period has already passed"
         );
 
-        // TODO: Verify hash of members with sortition pool
+        // Compute the actual group members hash by selecting actual members IDs
+        // based on seed used for current DKG execution.
+        bytes32 actualGroupMembersHash = keccak256(
+            abi.encodePacked(
+                self.sortitionPool.selectGroup(groupSize, bytes32(self.seed))
+            )
+        );
+
+        require(
+            self.submittedGroupMembersHash != actualGroupMembersHash,
+            "unjustified challenge"
+        );
+
+        // TODO: Determine members who signed the malicious result.
 
         // Adjust DKG result submission block start, so submission eligibility
         // starts from the beginning.
@@ -393,8 +413,9 @@ library DKG {
         // Load result hash from storage, as we are going to delete it.
         bytes32 resultHash = self.submittedResultHash;
 
-        delete self.submittedResultBlock;
         delete self.submittedResultHash;
+        delete self.submittedGroupMembersHash;
+        delete self.submittedResultBlock;
 
         emit DkgResultChallenged(resultHash, msg.sender);
     }
@@ -438,8 +459,10 @@ library DKG {
     modifier cleanup(Data storage self) {
         _;
         delete self.startBlock;
+        delete self.seed;
         delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
+        delete self.submittedGroupMembersHash;
         delete self.submittedResultBlock;
     }
 }
