@@ -116,6 +116,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
     // Libraries data storages
@@ -201,6 +202,7 @@ contract RandomBeacon is Ownable {
         IRandomBeaconStaking _staking
     ) {
         sortitionPool = _sortitionPool;
+        tToken = _tToken;
         staking = _staking;
 
         // Governable parameters
@@ -440,7 +442,7 @@ contract RandomBeacon is Ownable {
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
         // Pay the sortition pool unlocking reward.
-        relay.tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
+        tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
         dkg.complete();
     }
 
@@ -451,10 +453,7 @@ contract RandomBeacon is Ownable {
     function approveDkgResult() external {
         dkg.approveResult();
         // Pay the DKG result submission reward.
-        relay.tToken.safeTransfer(
-            dkg.resultSubmitter,
-            dkgResultSubmissionReward
-        );
+        tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
         groups.activateCandidateGroup();
         dkg.complete();
 
