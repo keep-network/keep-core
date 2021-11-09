@@ -716,7 +716,9 @@ contract RandomBeacon is Ownable {
         }
 
         // TODO: Is it possible to kick out operator when pool is locked?
-        sortitionPool.removeOperators(operatorsInPoolIDs);
+        if (operatorsInPoolIDs.length > 0) {
+            sortitionPool.removeOperators(operatorsInPoolIDs);
+        }
     }
 
     /// @return Flag indicating whether a relay entry request is currently
