@@ -21,6 +21,7 @@ import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Sortition Pool contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -70,6 +71,7 @@ interface IRandomBeaconStaking {
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
 contract RandomBeacon is Ownable {
+    using SafeERC20 for IERC20;
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
@@ -120,6 +122,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
     // Libraries data storages
@@ -211,6 +214,7 @@ contract RandomBeacon is Ownable {
         IRandomBeaconStaking _staking
     ) {
         sortitionPool = _sortitionPool;
+        tToken = _tToken;
         staking = _staking;
 
         // Governable parameters
@@ -472,6 +476,7 @@ contract RandomBeacon is Ownable {
     ///         the DKG result submission.
     function challengeDkgResult() external {
         bytes32 resultHash = dkg.submittedResultHash;
+        uint256 slashingAmount = maliciousDkgResultSlashingAmount;
         uint32[] memory maliciousMembers = dkg.challengeResult();
         address[] memory maliciousMembersAddresses = sortitionPool
             .getIDOperators(maliciousMembers);
@@ -480,13 +485,20 @@ contract RandomBeacon is Ownable {
 
         emit DkgMaliciousResultSlashingOccurred(
             resultHash,
-            maliciousDkgResultSlashingAmount,
+            slashingAmount,
             maliciousMembersAddresses
         );
 
-        staking.slash(
-            maliciousDkgResultSlashingAmount,
-            maliciousMembersAddresses
+        staking.slash(slashingAmount, maliciousMembersAddresses);
+
+        // The notifier should receive 5% of the total slashing amount. The
+        // contract doesn't make a direct transfer but an allowance instead
+        // as there is no guarantee the contract has a sufficient token
+        // balance at the moment. Making a transfer without funds would cause
+        // a revert of the challenge transaction.
+        tToken.safeIncreaseAllowance(
+            msg.sender,
+            (maliciousMembers.length * slashingAmount) / 20
         );
     }
 
