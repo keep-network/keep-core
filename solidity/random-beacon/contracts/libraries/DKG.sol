@@ -35,8 +35,10 @@ library DKG {
         uint256 resultSubmissionStartBlockOffset;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;
-        // Hash of group members submitted in the result.
-        bytes32 submittedGroupMembersHash;
+        // Hash of group members array submitted in the result.
+        bytes32 submittedResultGroupMembersHash;
+        // Identifiers of group members who signed the submitted result.
+        uint32[] submittedResultSigningMembers;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
     }
@@ -179,7 +181,7 @@ library DKG {
         );
         require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
-        verify(
+        uint32[] memory signingMembers = verify(
             self,
             result.submitterMemberIndex,
             result.groupPubKey,
@@ -195,9 +197,10 @@ library DKG {
         // slash the members from.
 
         self.submittedResultHash = keccak256(abi.encode(result));
-        self.submittedGroupMembersHash = keccak256(
+        self.submittedResultGroupMembersHash = keccak256(
             abi.encodePacked(result.members)
         );
+        self.submittedResultSigningMembers = signingMembers;
         self.submittedResultBlock = block.number;
 
         emit DkgResultSubmitted(
@@ -247,6 +250,8 @@ library DKG {
     ///        signature; have to be unique
     /// @param members Identifiers of candidate group members as outputted by
     ///        the group selection protocol.
+    /// @return signingMembers Identifiers of group members whose signatures of
+    ///         the DKG result hash were proven to be valid.
     function verify(
         Data storage self,
         uint256 submitterMemberIndex,
@@ -255,7 +260,7 @@ library DKG {
         bytes memory signatures,
         uint256[] memory signingMembersIndices,
         uint32[] calldata members
-    ) internal view {
+    ) internal view returns (uint32[] signingMembers) {
         // TODO: Verify if submitter is valid staker and signatures come from valid
         // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
 
@@ -316,8 +321,11 @@ library DKG {
         );
 
         bytes memory current; // Current signature to be checked.
-
         bool[] memory usedMemberIndices = new bool[](groupSize);
+        signingMembers = new uint32[](signaturesCount);
+        address[] memory membersAddresses = sortitionPool.getIDOperators(
+            members
+        );
 
         for (uint256 i = 0; i < signaturesCount; i++) {
             uint256 memberIndex = signingMembersIndices[i];
@@ -335,15 +343,15 @@ library DKG {
                 .toEthSignedMessageHash()
                 .recover(current);
 
-            // FIXME: Update sortition pool API to allow to fetch member addresses
-            //        by their IDs in one call.
-            // slither-disable-next-line calls-loop
+            signingMembers[i] = members[memberIndex - 1];
+
             require(
-                sortitionPool.getIDOperator(members[memberIndex - 1]) ==
-                    recoveredAddress,
+                membersAddresses[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
         }
+
+        return signingMembers;
     }
 
     /// @notice Notifies about DKG timeout.
@@ -375,7 +383,12 @@ library DKG {
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
-    function challengeResult(Data storage self) internal {
+    /// @return maliciousMembers Identifiers of group members who signed the
+    ///         malicious DKG result hash.
+    function challengeResult(Data storage self)
+        internal
+        returns (uint32[] memory maliciousMembers)
+    {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -397,11 +410,12 @@ library DKG {
         );
 
         require(
-            self.submittedGroupMembersHash != actualGroupMembersHash,
+            self.submittedResultGroupMembersHash != actualGroupMembersHash,
             "unjustified challenge"
         );
 
-        // TODO: Determine members who signed the malicious result.
+        // Consider all members who signed the wrong result as malicious.
+        maliciousMembers = self.submittedResultSigningMembers;
 
         // Adjust DKG result submission block start, so submission eligibility
         // starts from the beginning.
@@ -410,14 +424,11 @@ library DKG {
             self.startBlock -
             offchainDkgTime;
 
-        // Load result hash from storage, as we are going to delete it.
-        bytes32 resultHash = self.submittedResultHash;
+        emit DkgResultChallenged(self.submittedResultHash, msg.sender);
 
-        delete self.submittedResultHash;
-        delete self.submittedGroupMembersHash;
-        delete self.submittedResultBlock;
+        submittedResultCleanup(self);
 
-        emit DkgResultChallenged(resultHash, msg.sender);
+        return maliciousMembers;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.
@@ -461,8 +472,15 @@ library DKG {
         delete self.startBlock;
         delete self.seed;
         delete self.resultSubmissionStartBlockOffset;
+        submittedResultCleanup(self);
+    }
+
+    /// @notice Cleans up submitted result state either after DKG completion
+    ///         (as part of `cleanup` modifier) or after justified challenge.
+    function submittedResultCleanup(Data storage self) private {
         delete self.submittedResultHash;
-        delete self.submittedGroupMembersHash;
+        delete self.submittedResultGroupMembersHash;
+        delete self.submittedResultSigningMembers;
         delete self.submittedResultBlock;
     }
 }

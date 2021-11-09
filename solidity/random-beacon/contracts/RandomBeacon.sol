@@ -177,6 +177,12 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
+    event DkgMaliciousResultSlashingOccurred(
+        bytes32 indexed resultHash,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
     event CandidateGroupRegistered(bytes indexed groupPubKey);
 
     event CandidateGroupRemoved(bytes indexed groupPubKey);
@@ -465,12 +471,23 @@ contract RandomBeacon is Ownable {
     ///         It removes a candidate group that was previously registered with
     ///         the DKG result submission.
     function challengeDkgResult() external {
-        // TODO: Determine parameters required for DKG result challenges.
-        dkg.challengeResult();
+        bytes32 resultHash = dkg.submittedResultHash;
+        uint32[] memory maliciousMembers = dkg.challengeResult();
+        address[] memory maliciousMembersAddresses = sortitionPool
+            .getIDOperators(maliciousMembers);
 
         groups.popCandidateGroup();
 
-        // TODO: Implement slashing
+        emit DkgMaliciousResultSlashingOccurred(
+            resultHash,
+            maliciousDkgResultSlashingAmount,
+            maliciousMembersAddresses
+        );
+
+        staking.slash(
+            maliciousDkgResultSlashingAmount,
+            maliciousMembersAddresses
+        );
     }
 
     /// @notice Check current group creation state.
