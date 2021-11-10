@@ -1,4 +1,4 @@
-import React, { useCallback } from "react"
+import React from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
@@ -76,21 +76,10 @@ const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 
 const Wallet = ({ label, icon: IconComponent, connector, modalType }) => {
   const { openModal } = useModal()
-  const {
-    connectAppWithWallet,
-    abortWalletConnection,
-    connector: currentConnector,
-  } = useWeb3Context()
-
-  const customCloseModal = useCallback(() => {
-    if (currentConnector?.name !== WALLETS.EXPLORER_MODE.name) {
-      abortWalletConnection()
-    }
-  }, [abortWalletConnection, currentConnector])
+  const { connectAppWithWallet } = useWeb3Context()
 
   const openWalletModal = () => {
     openModal(modalType, {
-      onClose: customCloseModal,
       connector,
       connectAppWithWallet,
     })
