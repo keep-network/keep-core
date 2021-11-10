@@ -12,7 +12,7 @@ import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents
 import useAutoConnect from "./hooks/useAutoConnect"
 import useAutoWalletAddressInjectIntoUrl from "./hooks/useAutoWalletAddressInjectIntoUrl"
 import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers"
-import { ModalRoot } from "./components/modal-component"
+import { ModalRoot } from "./components/modal"
 
 const App = () => (
   <Provider store={store}>

@@ -129,9 +129,5 @@ export function* confirmModalSaga(modalType, modalProps) {
   })
   yield put(modalActions.hideModal())
   const isConfirmed = Boolean(yes)
-  if (!isConfirmed) {
-    throw new Error("Unconfirmed modal action ")
-  }
-
   return { isConfirmed, task: yes }
 }

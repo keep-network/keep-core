@@ -1,8 +1,5 @@
 import React from "react"
-import { withFormik } from "formik"
-import FormInput from "../../components/FormInput"
-import { SubmitButton } from "../../components/Button"
-import Divider from "../../components/Divider"
+import { FormInputBase } from "../../components/FormInput"
 import MaxAmountAddon from "../MaxAmountAddon"
 import {
   formatFloatingAmount,
@@ -10,32 +7,27 @@ import {
 } from "../../forms/form.utils"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import TokenAmount from "../TokenAmount"
-import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
-import {
-  validateAmountInRange,
-  getErrorsObj,
-} from "../../forms/common-validators"
-import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
+import { useSetMaxAmountToken } from "../../hooks/useSetMaxAmountToken"
 import { Keep } from "../../contracts"
 
 const AddAmountToWithdrawalForm = ({
   tokenAmount,
   onSubmit,
-  initialValue = "0",
   totalValueLocked,
   covTotalSupply,
-  ...formikProps
+  setMaxAmount,
+  inputProps,
 }) => {
-  const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken(
-    "tokenAmount",
+    inputProps.name,
     tokenAmount,
-    KEEP,
-    KEEP.decimals
+    setMaxAmount,
+    covKEEP,
+    covKEEP.decimals
   )
 
   return (
-    <form className="add-amount-to-withdraw-form">
+    <form className="add-amount-to-withdraw-form" onSubmit={onSubmit}>
       <div className="add-amount-to-withdraw-form__token-amount-wrapper">
         <h4>Add your available balance?</h4>
         <div className={"add-amount-to-withdraw-form__available-balance"}>
@@ -58,10 +50,11 @@ const AddAmountToWithdrawalForm = ({
             token={KEEP}
           />
         </div>
-        <FormInput
-          name="tokenAmount"
+        <FormInputBase
+          {...inputProps}
           type="text"
           label="Amount"
+          placeholder="0"
           normalize={normalizeFloatingAmount}
           format={formatFloatingAmount}
           inputAddon={
@@ -74,36 +67,8 @@ const AddAmountToWithdrawalForm = ({
           }
         />
       </div>
-      <Divider className="divider divider--tile-fluid" />
-      <SubmitButton
-        className="btn btn-lg btn-primary w-100"
-        onSubmitAction={onSubmitBtn}
-        disabled={!formikProps.isValid}
-      >
-        continue
-      </SubmitButton>
     </form>
   )
 }
 
-export default withFormik({
-  validateOnChange: true,
-  validateOnBlur: true,
-  mapPropsToValues: ({ initialValue }) => ({
-    tokenAmount: KEEP.toTokenUnit(initialValue).toString(),
-  }),
-  validate: (values, props) => {
-    const { tokenAmount } = values
-    const errors = {}
-
-    errors.tokenAmount = validateAmountInRange(
-      tokenAmount,
-      props.tokenAmount,
-      0,
-      covKEEP
-    )
-
-    return getErrorsObj(errors)
-  },
-  displayName: "CovPoolsAddAmountToWithdrawalForm",
-})(AddAmountToWithdrawalForm)
+export default AddAmountToWithdrawalForm

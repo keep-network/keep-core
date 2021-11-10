@@ -223,11 +223,32 @@ export const MODAL_TYPES = {
   ConfirmTBTCMigration: "ConfirmTBTCMigration",
   TBTCMigrationCompleted: "TBTCMigrationCompleted",
   ConfirmReleaseTokensFromGrant: "ConfirmReleaseTokensFromGrant",
+  WarningBeforeCovPoolDeposit: "WarningBeforeCovPoolDeposit",
+  InitiateCovPoolDeposit: "InitiateCovPoolDeposit",
+  InitiateCovPoolWithdraw: "InitiateCovPoolWithdraw",
+  CovPoolWithdrawInitialized: "CovPoolWithdrawInitialized",
+  CovPoolClaimTokens: "CovPoolClaimTokens",
+  ReInitiateCovPoolWithdraw: "ReInitiateCovPoolWithdraw",
+  ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
+  IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
 }
 
+export const COV_POOL_TIMELINE_STEPS = {
+  DEPOSITED_TOKENS: 1,
+  WITHDRAW_DEPOSIT: 2,
+  COOLDOWN: 3,
+  CLAIM_TOKENS: 4,
+}
+
+/**
+ * Enum defines cov pools withdrawal status
+ * @readonly
+ * @enum {string}
+ */
 export const PENDING_WITHDRAWAL_STATUS = {
   NONE: "none",
   PENDING: "pending",
-  AVAILABLE_TO_WITHDRAW: "available_to_withdraw",
+  COMPLETED: "completed",
   EXPIRED: "expired",
+  NEW: "new",
 }
