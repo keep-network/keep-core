@@ -59,7 +59,7 @@ const useAutoConnect = () => {
         openModal(MODAL_TYPES.ExplorerMode, {
           connectAppWithWallet,
           connector: explorerModeConnector,
-          ddress: walletAddressFromUrl,
+          address: walletAddressFromUrl,
           connectWithWalletOnMount: true,
         })
       }
