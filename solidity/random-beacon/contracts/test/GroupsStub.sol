@@ -30,8 +30,24 @@ contract GroupsStub {
         groups.activateCandidateGroup();
     }
 
+    function selectGroup(uint256 seed) external returns (uint64) {
+        return groups.selectGroup(seed);
+    }
+
+    function setGroupLifetime(uint256 groupLifetime) external {
+        return groups.setGroupLifetime(groupLifetime);
+    }
+
+    function setRelayEntryTimeout(uint256 timeout) external {
+        return groups.setRelayEntryTimeout(timeout);
+    }
+
     function getGroupsRegistry() external view returns (bytes32[] memory) {
         return groups.groupsRegistry;
+    }
+
+    function numberOfActiveGroups() external view returns (uint64) {
+        return groups.numberOfActiveGroups();
     }
 
     function getGroup(bytes memory groupPubKey)
@@ -42,7 +58,24 @@ contract GroupsStub {
         return groups.getGroup(groupPubKey);
     }
 
-    function numberOfActiveGroups() external view returns (uint64) {
-        return groups.numberOfActiveGroups();
+    // group id is an index in the groups.groupsRegistry array
+    function getGroupById(uint64 groupId)
+        external
+        view
+        returns (Groups.Group memory)
+    {
+        return groups.getGroup(groupId);
+    }
+
+    function isStaleGroup(bytes memory groupPubKey)
+        external
+        view
+        returns (bool)
+    {
+        return groups.isStaleGroup(groupPubKey);
+    }
+
+    function isStaleGroupById(uint64 groupId) external view returns (bool) {
+        return groups.isStaleGroup(groupId);
     }
 }
