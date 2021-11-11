@@ -92,6 +92,7 @@ const Undelegations = ({ undelegations, title }) => {
                   }
                   operatorAddress={undelegation.operatorAddress}
                   amount={undelegation.amount}
+                  btnText="claim"
                 />
               )
             )
