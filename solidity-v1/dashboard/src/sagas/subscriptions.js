@@ -250,6 +250,7 @@ function* observeUndelegatedEvent() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { operator, undelegatedAt },
       } = yield take(contractEventCahnnel)
 
@@ -267,6 +268,18 @@ function* observeUndelegatedEvent() {
       const undelegationPeriod = yield select(
         (state) => state.staking.undelegationPeriod
       )
+
+      yield put(
+        showModal({
+          modalType: MODAL_TYPES.UndelegationInitiated,
+          modalProps: {
+            txHash: transactionHash,
+            undelegatedAt,
+            undelegationPeriod,
+          },
+        })
+      )
+
       const undelegation = {
         ...delegation,
         undelegatedAt: moment.unix(undelegatedAt),
@@ -984,6 +997,7 @@ function* updateOperatorData() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { operator, undelegatedAt },
       } = yield take(contractEventCahnnel)
       const {
@@ -995,6 +1009,17 @@ function* updateOperatorData() {
       }
 
       const { undelegationPeriod } = yield select((state) => state.operator)
+
+      yield put(
+        showModal({
+          modalType: MODAL_TYPES.UndelegationInitiated,
+          modalProps: {
+            txHash: transactionHash,
+            undelegatedAt,
+            undelegationPeriod,
+          },
+        })
+      )
 
       const undelegationCompletedAt = moment
         .unix(undelegatedAt)
