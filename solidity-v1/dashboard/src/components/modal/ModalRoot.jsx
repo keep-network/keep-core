@@ -18,7 +18,9 @@ import {
   TopUpInitialization,
   ConfirmTopUpInitialization,
   ConfirmDelegation,
+  ClaimTokens as ClaimStakingTokens,
   ConfirmRecovering,
+  TokensClaimed,
   UndelegateStake,
   UndelegationInitiated,
   ConfirmCancelDelegationFromGrant,
@@ -56,6 +58,8 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.KeepOnlyPoolWithdrawKeep]: WithdrawKeep,
   [MODAL_TYPES.ConfirmDelegation]: ConfirmDelegation,
   [MODAL_TYPES.ConfirmRecovering]: ConfirmRecovering,
+  [MODAL_TYPES.ClaimStakingTokens]: ClaimStakingTokens,
+  [MODAL_TYPES.StakingTokensClaimed]: TokensClaimed,
   [MODAL_TYPES.ConfirmCancelDelegationFromGrant]:
     ConfirmCancelDelegationFromGrant,
   [MODAL_TYPES.UndelegateStake]: UndelegateStake,

@@ -91,6 +91,7 @@ const Undelegations = ({ undelegations, title }) => {
                     undelegation.managedGrantContractInstance
                   }
                   operatorAddress={undelegation.operatorAddress}
+                  amount={undelegation.amount}
                 />
               )
             )
