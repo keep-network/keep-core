@@ -104,13 +104,11 @@ will be utilised during the acceptance testing of the feature.
 | Relay request - relay entry submission
 | If the transaction submitting the new relay entry gets approved, then: +
   - the BLS threshold signature should be accepted as a new relay entry +
-// TODO: revisit if 2 weeks removal time should be a governable parameter and if
-// it should be equal to 2 weeks or a different value
   - operators who became eligible for submitting the relay entry before the
-  member who submitted the relay entry should be punished by being removed from
-  the sortition pool for a fixed amount of time (2 weeks) and, if the soft
-  timeout has passed, should get slashed the calculated amount of T (all
-  happening in the same tx) +
+  member who submitted the relay entry should be punished by being excluded from
+  earning rewards for a fixed amount of time and, if the soft timeout has
+  passed, should get slashed the calculated amount of T (all happening in the
+  same tx) +
   - if an optional address of the `IRandomBeaconConsumer` interface was provided
   in the tx, the interface should be called +
   - the creation of a new signing group should be triggered (only sometimes, if
@@ -183,10 +181,9 @@ will be utilised during the acceptance testing of the feature.
 | Relay request - relay entry timeouts
 | If the hard relay entry timeout notification was deemed justified, then: +
   - the signing group should get terminated +
-// TODO: revisit 2 weeks removal time
   - all signing group members should be punished by being slashed the fixed
-  percentage of T and being removed from the sortition pool for a fixed amount
-  of time (2 weeks) +
+  percentage of T and being excluded from earning rewards for a fixed amount of
+  time +
   - the process of choosing a signing group and tasking it with a relay entry
   generation should be repeated (as part of the same relay entry request) +
   - if there are no active groups to choose from, the request should get
@@ -361,10 +358,9 @@ will be utilised during the acceptance testing of the feature.
   candidate group +  
   - submitter should receive the fixed reward (in T), paid from the maintenance
   pool to the submitter’s address (in the same tx) +
-// TODO: revisit 2 weeks removal time
   - operators who became eligible for submitting the DKG result before the
-  member who submitted the DKG result should be punished by being removed from
-  the sortition pool for a fixed amount of time (2 weeks) (in the same tx).
+  member who submitted the DKG result should be punished by being excluded from
+  earning rewards for a fixed amount of time (in the same tx).
 
 | Group creation - DKG timeout
 | The DKG submission timeout equals the group size multiplied by the number of
@@ -397,22 +393,14 @@ will be utilised during the acceptance testing of the feature.
   the notifier.
 
 | Sortition pool - punishments
-// TODO: revisit 2 weeks removal time
-| Member of the sortition pool can be punished with 2 weeks removal from the
-  pool as a result of: +
+| Member of the sortition pool can be punished with temporary exclusion from 
+  earning rewards as a result of: +
   - misbehavior during the DKG submission +
   - misbehavior during relay entry submission.
 
 | Sortition pool - punishments
 | Operators punished with removal from the group should not earn rewards for the
   time of their absence in the pool.
-
-| Sortition pool - punishments
-// TODO: revisit 2 weeks removal time
-| After 2 weeks punish period elapses, operators removed from the sortition pool
-  should be able to manually re-register in the sortition pool and should be
-  able to earn the rewards again (from membership in the pool and potentially
-  submission of the DKG result or unlocking the pool).
 
 | Sortition pool - punishments
 | The operation removing members from the sortition pool should be as cheap as
@@ -496,6 +484,11 @@ will be utilised during the acceptance testing of the feature.
 | The hard timeout for a relay entry should be a governable parameter. Its
   initial value should be set to 24 hours (expressed in blocks, where we assume
   `1 block = 15s`).
+
+| Governable parameters
+| The length of the period during which operators won't be able to earn rewards
+  as a punishment for misbehaviour during submission of DKG or relay entry
+  should be a governable parameter. Its initial value should be set to 3 weeks.
 
 | Governable parameters
 | The callback gas limit should be a governable parameter. Its initial value
