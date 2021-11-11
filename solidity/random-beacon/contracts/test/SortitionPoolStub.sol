@@ -10,6 +10,8 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
     mapping(address => bool) public operators;
     mapping(address => bool) public eligibleOperators;
 
+    mapping(bytes32 => uint32[]) public groups;
+
     event OperatorsRemoved(address[] operators);
 
     function joinPool(address operator) external override {
@@ -61,13 +63,21 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
         return operators;
     }
 
-    function selectGroup(uint256, bytes32)
+    function setSelectGroupResult(bytes32 seed, uint32[] calldata members)
+        public
+    {
+        groups[seed] = members;
+    }
+
+    function selectGroup(uint256 groupSize, bytes32 seed)
         external
         view
         override
-        returns (uint32[] memory)
+        returns (uint32[] memory members)
     {
-        return new uint32[](0);
+        members = groups[seed];
+        require(groupSize == members.length, "Wrong group size");
+        return members;
     }
 
     function removeOperators(uint32[] calldata ids) external override {
