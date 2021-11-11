@@ -2,7 +2,7 @@ import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import blsData from "./data/bls"
-import { constants, params, testDeployment } from "./fixtures"
+import { constants, params, randomBeaconDeployment } from "./fixtures"
 import type { RandomBeacon, RandomBeaconStub } from "../typechain"
 import { genesis, signAndSubmitDkgResult, DkgResult } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
@@ -18,7 +18,7 @@ const dkgState = {
 }
 
 const fixture = async () => {
-  const contracts = await testDeployment()
+  const contracts = await randomBeaconDeployment()
 
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
