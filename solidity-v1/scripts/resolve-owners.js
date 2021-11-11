@@ -56,19 +56,18 @@ module.exports = async function () {
         const grant = await tokenGrant.getGrant.call(grantId)
         const grantee = grant.grantee
 
+        let grantType = "[SG]" // assume standard grant by default
+
         for (let j = 0; j < managedGrantCreatedEvents.length; j++) {
           if (grantee == managedGrantCreatedEvents[j].args["grantAddress"]) {
             // it is managed grant delegation
-            console.log(
-              `[MG], ${owner}, ${operator}, ${grantId}, ${stakingContract}, ${grantee}`
-            )
-            continue
+            grantType = "[MG]"
+            break
           }
         }
 
-        // it is not managed grant delegation (standard grant)
         console.log(
-          `[SG], ${owner}, ${operator}, ${grantId}, ${stakingContract}, ${grantee}`
+            `${grantType}, ${owner}, ${operator}, ${grantId}, ${stakingContract}, ${grantee}`
         )
       }
     }
