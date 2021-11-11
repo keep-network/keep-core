@@ -5,7 +5,7 @@ import blsData from "./data/bls"
 import { constants, params, testDeployment } from "./fixtures"
 import type { RandomBeacon, RandomBeaconStub } from "../typechain"
 import { genesis, signAndSubmitDkgResult, DkgResult } from "./utils/dkg"
-import { registerOperators, Operator } from "./utils/sortitionpool"
+import { registerOperators, Operator } from "./utils/operators"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils

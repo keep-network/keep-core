@@ -17,7 +17,7 @@ import type {
   SortitionPool,
   StakingStub,
 } from "../typechain"
-import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
+import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
 const { time } = helpers
 const { mineBlocks } = time

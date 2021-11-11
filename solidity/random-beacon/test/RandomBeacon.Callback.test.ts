@@ -12,7 +12,7 @@ import type {
   CallbackContractStub,
   SortitionPoolStub,
 } from "../typechain"
-import { registerOperators, Operator } from "./utils/sortitionpool"
+import { registerOperators, Operator } from "./utils/operators"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
