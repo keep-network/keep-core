@@ -72,12 +72,6 @@ will be utilised during the acceptance testing of the feature.
   the data provided by at least `blsThreshold=(group_size/2) + 1` members of the
   signing group).
 
-| Relay request - signature generation
-| Once the active group is selected as a signing group, it is tasked with the
-  generation of a BLS threshold signature (based on the current relay entry and
-  the data provided by at least `blsThreshold=(group_size/2) + 1` members of the
-  signing group).
-
 | Relay request - relay entry submission
 | During the signature submission eligibility period only selected members from
   the group should be eligible to successfully submit the new relay entry
