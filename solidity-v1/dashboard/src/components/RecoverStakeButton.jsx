@@ -18,7 +18,6 @@ const RecoverStakeButton = ({
   const onRecoverStake = async () => {
     const { tokenStakingEscrow } = await ContractsLoaded
     let destinationAddress = address
-    console.log("RecoverStakeButton")
     if (isFromGrant) {
       destinationAddress = tokenStakingEscrow.options.address
       await openConfirmationModal(MODAL_TYPES.ConfirmRecovering, {

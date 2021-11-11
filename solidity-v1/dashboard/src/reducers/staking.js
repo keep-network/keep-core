@@ -136,7 +136,7 @@ const removeFromDelegationOrUndelegation = (array, id) => {
     array,
     compareEthAddresses
   )
-  console.log("indexInArray", array, id)
+
   if (indexInArray === null) {
     return array
   }
