@@ -111,7 +111,7 @@ const InitiateDepositComponent = ({
           }`}
           onClick={onClose}
         >
-          Cancel
+          {transactionHash ? "close" : "Cancel"}
         </Button>
       </ModalFooter>
     </>
