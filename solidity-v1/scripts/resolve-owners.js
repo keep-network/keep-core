@@ -67,7 +67,7 @@ module.exports = async function () {
         }
 
         console.log(
-            `${grantType}, ${owner}, ${operator}, ${grantId}, ${stakingContract}, ${grantee}`
+          `${grantType}, ${owner}, ${operator}, ${grantId}, ${stakingContract}, ${grantee}`
         )
       }
     }
