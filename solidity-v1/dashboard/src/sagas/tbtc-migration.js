@@ -19,8 +19,7 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { sendTransaction, approveAndTransferToken } from "./web3"
 import { add } from "../utils/arithmetics.utils"
 import { showModal } from "../actions/modal"
-import { modalComponentType } from "../components/Modal"
-import { TBTC_TOKEN_VERSION } from "../constants/constants"
+import { MODAL_TYPES, TBTC_TOKEN_VERSION } from "../constants/constants"
 
 function* fetchData(action) {
   try {
@@ -88,17 +87,13 @@ export function* subscribeToTBTCV2MintedEvent() {
     })
     yield put(
       showModal({
-        modalComponentType:
-          modalComponentType.TBTC_MIGRATION.MIGRATION_COMPLETED,
-        componentProps: {
+        modalType: MODAL_TYPES.TBTCMigrationCompleted,
+        modalProps: {
           from: TBTC_TOKEN_VERSION.v1,
           to: TBTC_TOKEN_VERSION.v2,
           amount,
           txHash: transactionHash,
           address,
-        },
-        modalProps: {
-          title: "Upgrade",
         },
       })
     )
@@ -135,18 +130,14 @@ export function* subscribeToTBTCV2UnmintedEvent() {
 
     yield put(
       showModal({
-        modalComponentType:
-          modalComponentType.TBTC_MIGRATION.MIGRATION_COMPLETED,
-        componentProps: {
+        modalType: MODAL_TYPES.TBTCMigrationCompleted,
+        modalProps: {
           from: TBTC_TOKEN_VERSION.v2,
           to: TBTC_TOKEN_VERSION.v1,
           amount,
           txHash: transactionHash,
           address,
           fee,
-        },
-        modalProps: {
-          title: "Downgrade",
         },
       })
     )

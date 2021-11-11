@@ -3,8 +3,6 @@ import { withFormik, useField, useFormikContext } from "formik"
 import * as Icons from "../Icons"
 import FormInput from "../FormInput"
 import MaxAmountAddon from "../MaxAmountAddon"
-import { SubmitButton } from "../Button"
-import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
 import { Keep } from "../../contracts"
 import { normalizeFloatingAmount } from "../../forms/form.utils"
 import {
@@ -15,6 +13,7 @@ import { TBTC } from "../../utils/token.utils"
 import { sub } from "../../utils/arithmetics.utils"
 import { colors } from "../../constants/colors"
 import { TBTC_TOKEN_VERSION } from "../../constants/constants"
+import Button from "../Button"
 
 const styles = {
   tokenLabel: { margin: "0.5rem 0" },
@@ -37,9 +36,8 @@ const MigrationPortalForm = ({
   mintingFee = 0,
   tbtcV1Balance = 0,
   tbtcV2Balance = 0,
-  onSubmit = () => {},
+  ...formikProps
 }) => {
-  const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const { setFieldValue } = useFormikContext()
 
   const [fromField, , fromHelpers] = useField("from")
@@ -131,12 +129,12 @@ const MigrationPortalForm = ({
           from === TBTC_TOKEN_VERSION.v2 ? TBTC.displayAmount(mintingFee) : 0
         }`}
       </p>
-      <SubmitButton
+      <Button
         className="btn btn-primary btn-lg w-100 mt-1"
-        onSubmitAction={onSubmitBtn}
+        onClick={formikProps.handleSubmit}
       >
         {from === TBTC_TOKEN_VERSION.v1 ? "upgrade" : "downgrade"}
-      </SubmitButton>
+      </Button>
     </form>
   )
 }
@@ -147,6 +145,9 @@ export default withFormik({
     from: TBTC_TOKEN_VERSION.v1,
     to: TBTC_TOKEN_VERSION.v2,
   }),
+  handleSubmit: (values, { props }) => {
+    props.onSubmit(values)
+  },
   validate: (values, props) => {
     return getMaxAmount(values, props).then(
       ({ tokenBalance, maxTokenBalance }) => {

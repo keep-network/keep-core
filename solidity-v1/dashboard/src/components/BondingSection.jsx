@@ -5,11 +5,10 @@ import AddressShortcut from "./AddressShortcut"
 import Button from "./Button"
 import { KEEP, ETH } from "../utils/token.utils"
 import { useModal } from "../hooks/useModal"
-import AddEthModal from "./AddETHModal"
-import WithdrawEthModal from "./WithdrawETHModal"
 import AvailableEthAmount from "./AvailableEthAmount"
 import { gt } from "../utils/arithmetics.utils"
 import TokenAmount from "./TokenAmount"
+import { MODAL_TYPES } from "../constants/constants"
 
 export const BondingSection = ({ data }) => {
   return (
@@ -85,28 +84,22 @@ const ActionCell = React.memo(
     managedGrantAddress,
     isWithdrawableForOperator,
   }) => {
-    const { openModal, closeModal } = useModal()
+    const { openModal } = useModal()
 
     const onBtnClick = (event) => {
       const action = event.currentTarget.id
-      const title = action === "add" ? "Add ETH" : "Withdraw ETH"
 
-      const component =
-        action === "add" ? (
-          <AddEthModal
-            operatorAddress={operatorAddress}
-            closeModal={closeModal}
-          />
-        ) : (
-          <WithdrawEthModal
-            operatorAddress={operatorAddress}
-            availableETH={availableETH}
-            availableETHInWei={availableETHInWei}
-            closeModal={closeModal}
-            managedGrantAddress={managedGrantAddress}
-          />
-        )
-      openModal(component, { title })
+      const modalType =
+        action === "add"
+          ? MODAL_TYPES.BondingAddETH
+          : MODAL_TYPES.BondingWithdrawETH
+
+      openModal(modalType, {
+        operatorAddress,
+        availableETH,
+        availableETHInWei,
+        managedGrantAddress,
+      })
     }
 
     return (
