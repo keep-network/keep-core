@@ -69,8 +69,8 @@ const stakingReducer = (state = initialState, action) => {
     case "staking/remove_delegation":
       return {
         ...state,
-        undelegations: removeFromDelegationOrUndelegation(
-          [...state.undelegations],
+        delegations: removeFromDelegationOrUndelegation(
+          [...state.delegations],
           action.payload
         ),
       }
@@ -136,6 +136,7 @@ const removeFromDelegationOrUndelegation = (array, id) => {
     array,
     compareEthAddresses
   )
+  console.log("indexInArray", array, id)
   if (indexInArray === null) {
     return array
   }
