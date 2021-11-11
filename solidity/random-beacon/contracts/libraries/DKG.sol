@@ -181,15 +181,7 @@ library DKG {
         );
         require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
-        uint32[] memory signingMembers = verify(
-            self,
-            result.submitterMemberIndex,
-            result.groupPubKey,
-            result.misbehavedMembersIndices,
-            result.signatures,
-            result.signingMembersIndices,
-            result.members
-        );
+        uint32[] memory signingMembers = verify(self, result);
 
         // TODO: Check with sortition pool that all members have minimum stake.
         // Check all members in one call or at least members that signed the result.
@@ -239,38 +231,25 @@ library DKG {
     ///      sign is:
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     ///      Members indexing in the group starts with 1.
-    /// @param submitterMemberIndex Claimed submitter candidate group member index
-    /// @param groupPubKey Generated candidate group public key
-    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members indices; have to be unique and in
-    ///        ascending order
-    /// @param signatures Concatenation of signatures from members supporting the
-    ///        result.
-    /// @param signingMembersIndices Indices of members corresponding to each
-    ///        signature; have to be unique
-    /// @param members Identifiers of candidate group members as outputted by
-    ///        the group selection protocol.
+    /// @param result DKG result which will be verified.
     /// @return signingMembers Identifiers of group members whose signatures of
     ///         the DKG result hash were proven to be valid.
-    function verify(
-        Data storage self,
-        uint256 submitterMemberIndex,
-        bytes memory groupPubKey,
-        uint8[] calldata misbehavedMembersIndices,
-        bytes memory signatures,
-        uint256[] memory signingMembersIndices,
-        uint32[] calldata members
-    ) internal view returns (uint32[] signingMembers) {
+    function verify(Data storage self, Result calldata result)
+        internal
+        view
+        returns (uint32[] memory signingMembers)
+    {
         // TODO: Verify if submitter is valid staker and signatures come from valid
         // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
 
-        require(submitterMemberIndex > 0, "Invalid submitter index");
+        require(result.submitterMemberIndex > 0, "Invalid submitter index");
 
         ISortitionPool sortitionPool = self.sortitionPool;
 
         require(
-            sortitionPool.getIDOperator(members[submitterMemberIndex - 1]) ==
-                msg.sender,
+            sortitionPool.getIDOperator(
+                result.members[result.submitterMemberIndex - 1]
+            ) == msg.sender,
             "Unexpected submitter index"
         );
 
@@ -280,33 +259,41 @@ library DKG {
         require(
             block.number >=
                 (T_init +
-                    (submitterMemberIndex - 1) *
+                    (result.submitterMemberIndex - 1) *
                     self.parameters.resultSubmissionEligibilityDelay),
             "Submitter not eligible"
         );
 
-        require(groupPubKey.length == 128, "Malformed group public key");
+        require(result.groupPubKey.length == 128, "Malformed group public key");
 
         require(
-            misbehavedMembersIndices.length <= groupSize - signatureThreshold,
+            result.misbehavedMembersIndices.length <=
+                groupSize - signatureThreshold,
             "Unexpected misbehaved members count"
         );
 
-        if (misbehavedMembersIndices.length > 1) {
-            for (uint256 i = 1; i < misbehavedMembersIndices.length; i++) {
+        if (result.misbehavedMembersIndices.length > 1) {
+            for (
+                uint256 i = 1;
+                i < result.misbehavedMembersIndices.length;
+                i++
+            ) {
                 require(
-                    misbehavedMembersIndices[i - 1] <
-                        misbehavedMembersIndices[i],
+                    result.misbehavedMembersIndices[i - 1] <
+                        result.misbehavedMembersIndices[i],
                     "Corrupted misbehaved members indices"
                 );
             }
         }
 
-        uint256 signaturesCount = signatures.length / 65;
-        require(signatures.length >= 65, "Too short signatures array");
-        require(signatures.length % 65 == 0, "Malformed signatures array");
+        uint256 signaturesCount = result.signatures.length / 65;
+        require(result.signatures.length >= 65, "Too short signatures array");
         require(
-            signaturesCount == signingMembersIndices.length,
+            result.signatures.length % 65 == 0,
+            "Malformed signatures array"
+        );
+        require(
+            signaturesCount == result.signingMembersIndices.length,
             "Unexpected signatures count"
         );
         require(signaturesCount >= signatureThreshold, "Too few signatures");
@@ -314,8 +301,8 @@ library DKG {
 
         bytes32 resultHash = keccak256(
             abi.encodePacked(
-                groupPubKey,
-                misbehavedMembersIndices,
+                result.groupPubKey,
+                result.misbehavedMembersIndices,
                 self.startBlock
             )
         );
@@ -324,13 +311,13 @@ library DKG {
         bool[] memory usedMemberIndices = new bool[](groupSize);
         signingMembers = new uint32[](signaturesCount);
         address[] memory membersAddresses = sortitionPool.getIDOperators(
-            members
+            result.members
         );
 
         for (uint256 i = 0; i < signaturesCount; i++) {
-            uint256 memberIndex = signingMembersIndices[i];
+            uint256 memberIndex = result.signingMembersIndices[i];
             require(memberIndex > 0, "Invalid index");
-            require(memberIndex <= members.length, "Index out of range");
+            require(memberIndex <= result.members.length, "Index out of range");
 
             require(
                 !usedMemberIndices[memberIndex - 1],
@@ -338,12 +325,12 @@ library DKG {
             );
             usedMemberIndices[memberIndex - 1] = true;
 
-            current = signatures.slice(65 * i, 65);
+            current = result.signatures.slice(65 * i, 65);
             address recoveredAddress = resultHash
                 .toEthSignedMessageHash()
                 .recover(current);
 
-            signingMembers[i] = members[memberIndex - 1];
+            signingMembers[i] = result.members[memberIndex - 1];
 
             require(
                 membersAddresses[memberIndex - 1] == recoveredAddress,
