@@ -113,6 +113,7 @@ export const ModalRoot = () => {
         }
       }}
       onConfirm={!modalProps.isConfirmationModal ? undefined : _onConfirm}
+      isOpen={!!modalType}
       {...restProps}
     />,
     modalRoot

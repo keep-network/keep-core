@@ -1,5 +1,6 @@
 import React, { useContext } from "react"
 import * as Icons from "../Icons"
+import OnlyIf from "../OnlyIf"
 
 const ModalContext = React.createContext({
   isOpen: false,
@@ -31,7 +32,9 @@ export const Modal = ({
     <ModalContext.Provider
       value={{ isOpen, onClose, isCentered, closeOnOverlayClick, size }}
     >
-      <div className="modal">{children}</div>
+      <OnlyIf condition={isOpen}>
+        <div className="modal">{children}</div>
+      </OnlyIf>
     </ModalContext.Provider>
   )
 }
