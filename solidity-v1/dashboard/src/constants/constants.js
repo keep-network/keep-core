@@ -231,6 +231,7 @@ export const MODAL_TYPES = {
   ReInitiateCovPoolWithdraw: "ReInitiateCovPoolWithdraw",
   ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
   IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
+  WithdrawGrantedTokens: "WithdrawGrantedTokens",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {

@@ -16,11 +16,14 @@ import {
 import { useDispatch, useSelector } from "react-redux"
 import { Skeleton } from "../../components/skeletons"
 import OnlyIf from "../../components/OnlyIf"
+import { useModal } from "../../hooks/useModal"
+import { MODAL_TYPES } from "../../constants/constants"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
   const address = useWeb3Address()
   const dispatch = useDispatch()
+  const { openModal } = useModal()
 
   useEffect(() => {
     if (isConnected) {
@@ -39,7 +42,7 @@ const ThresholdUpgradePage = () => {
     (state) => state.staking
   )
 
-  const { isFetching: isGrantDataFetching } = useSelector(
+  const { grants, isFetching: isGrantDataFetching } = useSelector(
     (state) => state.tokenGrants
   )
 
@@ -95,6 +98,7 @@ const ThresholdUpgradePage = () => {
 
   const onWithdrawFromGrant = () => {
     console.log("withdraw from grant clicked!")
+    openModal(MODAL_TYPES.WithdrawGrantedTokens, { grants })
   }
 
   return (

@@ -36,6 +36,7 @@ import {
   ConfirmIncreaseWithdrawal,
   IncreaseWithdrawal,
 } from "./coverage-pools"
+import { WithdrawGrantedTokens } from "./threshold/WithdrawGrantedTokens"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -70,6 +71,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ReInitiateCovPoolWithdraw]: ReInitiateWithdraw,
   [MODAL_TYPES.ConfirmCovPoolIncreaseWithdrawal]: ConfirmIncreaseWithdrawal,
   [MODAL_TYPES.IncreaseCovPoolWithdrawal]: IncreaseWithdrawal,
+  [MODAL_TYPES.WithdrawGrantedTokens]: WithdrawGrantedTokens,
 }
 
 const modalRoot = document.getElementById("modal-root")
