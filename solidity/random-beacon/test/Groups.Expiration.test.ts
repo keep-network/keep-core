@@ -300,7 +300,6 @@ describe("Groups", () => {
       // count since we index from 0.
       await expireGroup(expiredCount - 1)
     }
-    const selectedGroup = await groups.callStatic.selectGroup(beaconValue)
-    return selectedGroup
+    return groups.callStatic.selectGroup(beaconValue)
   }
 })

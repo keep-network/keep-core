@@ -30,6 +30,10 @@ contract GroupsStub {
         groups.activateCandidateGroup();
     }
 
+    function terminateGroup(uint64 groupId) external {
+        return groups.terminateGroup(groupId);
+    }
+
     function selectGroup(uint256 seed) external returns (uint64) {
         return groups.selectGroup(seed);
     }
