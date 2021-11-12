@@ -5,6 +5,13 @@ import Button, { SubmitButton } from "../../Button"
 import { FormCheckboxBase } from "../../FormCheckbox"
 import { useFormik } from "formik"
 import useReleaseTokens from "../../../hooks/useReleaseTokens"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionItemButton,
+  AccordionItemHeading,
+  AccordionItemPanel,
+} from "react-accessible-accordion"
 
 export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   const releaseTokens = useReleaseTokens()
@@ -60,22 +67,36 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
 })
 
 const renderGrant = (grant, formik) => (
-  <FormCheckboxBase
-    key={`Grant-${grant.id}`}
-    name="grantIds"
-    type="checkbox"
-    value={grant.id}
-    checked={formik.values.grantIds.includes(grant.id)}
-    onChange={(e) => {
-      const set = new Set(formik.values.grantIds)
-      if (e.target.checked) {
-        set.add(grant.id)
-      } else {
-        set.delete(grant.id)
-      }
-      formik.setFieldValue("grantIds", [...set])
+  <div
+    style={{
+      display: "flex",
     }}
   >
-    Grant #{grant.id}
-  </FormCheckboxBase>
+    <FormCheckboxBase
+      key={`Grant-${grant.id}`}
+      name="grantIds"
+      type="checkbox"
+      value={grant.id}
+      checked={formik.values.grantIds.includes(grant.id)}
+      onChange={(e) => {
+        const set = new Set(formik.values.grantIds)
+        if (e.target.checked) {
+          set.add(grant.id)
+        } else {
+          set.delete(grant.id)
+        }
+        formik.setFieldValue("grantIds", [...set])
+      }}
+      withoutLabel
+    >
+      <Accordion allowZeroExpanded>
+        <AccordionItem>
+          <AccordionItemHeading>
+            <AccordionItemButton>Grant #{grant.id} details</AccordionItemButton>
+          </AccordionItemHeading>
+          <AccordionItemPanel>SuperTest</AccordionItemPanel>
+        </AccordionItem>
+      </Accordion>
+    </FormCheckboxBase>
+  </div>
 )
