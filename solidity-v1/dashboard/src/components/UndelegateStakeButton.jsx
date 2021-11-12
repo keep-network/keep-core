@@ -1,26 +1,10 @@
 import React from "react"
 import { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
-import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { ContractsLoaded } from "../contracts"
-import { withConfirmationModal } from "./ConfirmationModal"
 import { cancelStake, undelegateStake } from "../actions/web3"
 import { connect } from "react-redux"
-
-const confirmationModalOptions = {
-  modalOptions: { title: "Are you sure?" },
-  title: "You’re about to undelegate.",
-  subtitle: `Undelegating will return all of your tokens to their owner. There is an undelegation period of 2 months until the tokens will be completely undelegated.`,
-  btnText: "undelegate",
-  confirmationText: "UNDELEGATE",
-}
-
-const confirmCancelModalOptions = {
-  modalOptions: { title: "Are you sure?" },
-  title: "You’re about to cancel tokens.",
-  btnText: "cancel",
-  confirmationText: "CANCEL",
-}
+import { MODAL_TYPES } from "../constants/constants"
 
 const UndelegateStakeButton = (props) => {
   const { openConfirmationModal } = useModal()
@@ -37,14 +21,13 @@ const UndelegateStakeButton = (props) => {
     if (isInInitializationPeriod && isFromGrant) {
       const { tokenStakingEscrow } = await ContractsLoaded
       await openConfirmationModal(
+        MODAL_TYPES.ConfirmCancelDelegationFromGrant,
         {
-          ...confirmCancelModalOptions,
           tokenStakingEscrowAddress: tokenStakingEscrow.options.address,
-        },
-        withConfirmationModal(ConfirmCancelingFromGrant)
+        }
       )
     } else if (!isInInitializationPeriod) {
-      await openConfirmationModal(confirmationModalOptions)
+      await openConfirmationModal(MODAL_TYPES.ConfirmUndelegation)
     }
 
     if (isInInitializationPeriod) {
@@ -82,19 +65,3 @@ const mapDispatchToProps = {
 }
 
 export default connect(null, mapDispatchToProps)(UndelegateStakeButton)
-
-const ConfirmCancelingFromGrant = ({ tokenStakingEscrowAddress }) => {
-  return (
-    <>
-      <span>Canceling will deposit delegated tokens in the</span>
-      &nbsp;
-      <span>
-        <ViewAddressInBlockExplorer
-          address={tokenStakingEscrowAddress}
-          text="TokenStakingEscrow contract."
-        />
-      </span>
-      <p>You can withdraw them via Release tokens.</p>
-    </>
-  )
-}

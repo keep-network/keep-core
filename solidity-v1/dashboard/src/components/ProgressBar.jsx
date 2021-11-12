@@ -51,7 +51,7 @@ const ProgressBar = ({
   )
 }
 
-const ProgressBarInline = ({ height = 10, className = "" }) => {
+const ProgressBarInline = ({ height = 10, className = "", style = {} }) => {
   const { value, total, color, bgColor, secondaryValue, secondaryColor } =
     useProgressBarContext()
 
@@ -72,6 +72,7 @@ const ProgressBarInline = ({ height = 10, className = "" }) => {
       style={{
         height: `${height}px`,
         backgroundColor: bgColor,
+        ...style,
       }}
     >
       <div

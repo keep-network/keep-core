@@ -8,8 +8,6 @@ import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import { SubmitButton } from "./Button"
-import { useModal } from "../hooks/useModal"
-import AddTopUpModal, { TopUpInitiatedConfirmationModal } from "./AddTopUpModal"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
 
@@ -21,8 +19,6 @@ const DelegatedTokensTable = ({
   addKeep,
   undelegationPeriod,
 }) => {
-  const { openConfirmationModal, openModal } = useModal()
-
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
       const grant = grants.find(({ id }) => id === grantId)
@@ -44,40 +40,15 @@ const DelegatedTokensTable = ({
     const availableAmount = delegationData.isFromGrant
       ? getAvailableToStakeFromGrant(delegationData.grantId)
       : keepTokenBalance
-    const { amount } = await openConfirmationModal(
-      {
-        modalOptions: { title: "Add KEEP" },
-        submitBtnText: "add keep",
-        availableAmount,
-        currentAmount: delegationData.amount,
-        minimumAmount: 1,
-        ...delegationData,
-      },
-      AddTopUpModal
-    )
     addKeep(
       {
         ...delegationData,
-        amount,
         beneficiaryAddress: delegationData.beneficiary,
+        currentAmount: delegationData.amount,
+        availableAmount,
       },
       awaitingPromise
     )
-    try {
-      await awaitingPromise.promise
-      openModal(
-        <TopUpInitiatedConfirmationModal
-          {...delegationData}
-          addedAmount={KEEP.fromTokenUnit(amount).toString()}
-          currentAmount={delegationData.amount}
-        />,
-        {
-          title: "Add KEEP",
-        }
-      )
-    } catch (error) {
-      console.error("Unexpected error", error)
-    }
   }
 
   return (
@@ -200,7 +171,7 @@ DelegatedTokensTable.defaultProps = {
 const mapDispatchToProps = (dispatch) => ({
   addKeep: (values, meta) =>
     dispatch({
-      type: "staking/delegate_request",
+      type: "staking/top-up",
       payload: values,
       meta,
     }),

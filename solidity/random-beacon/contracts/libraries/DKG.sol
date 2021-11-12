@@ -4,6 +4,7 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./BytesLib.sol";
+import {ISortitionPool} from "../RandomBeacon.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -18,6 +19,8 @@ library DKG {
     }
 
     struct Data {
+        // Address of the Sortition Pool contract.
+        ISortitionPool sortitionPool;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -36,12 +39,14 @@ library DKG {
 
     /// @notice DKG result.
     struct Result {
-        // Claimed submitter candidate group member index
+        // Claimed submitter candidate group member index.
+        // Must be in range [1, 64].
         uint256 submitterMemberIndex;
         // Generated candidate group public key
         bytes groupPubKey;
-        // Bytes array of misbehaved (disqualified or inactive)
-        bytes misbehaved;
+        // Array of misbehaved members indices (disqualified or inactive).
+        // Must be in range [1, 64] and unique.
+        uint8[] misbehavedMembersIndices;
         // Concatenation of signatures from members supporting the result.
         // The message to be signed by each member is keccak256 hash of the
         // calculated group public key, misbehaved members as bytes and DKG
@@ -50,15 +55,16 @@ library DKG {
         // sign is:
         // `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
         bytes signatures;
-        // Indices of members corresponding to each signature. Indices have to be unique.
-        uint256[] signingMemberIndices;
-        // Addresses of candidate group members as outputted by the group selection protocol.
-        address[] members;
+        // Indices of members corresponding to each signature. Must be in
+        // range [1, 64] and unique.
+        uint256[] signingMembersIndices;
+        // Identifiers of candidate group members as outputted by the group
+        // selection protocol.
+        uint32[] members;
     }
 
-    /// @notice States for phases of group creation.
-    /// The states doesn't include timeouts which should be tracked and notified
-    /// individually.
+    /// @notice States for phases of group creation. The states doesn't include
+    ///         timeouts which should be tracked and notified individually.
     enum State {
         // Group creation is not in progress. It is a state set after group creation
         // completion either by timeout or by a result approval.
@@ -117,6 +123,19 @@ library DKG {
         address indexed challenger
     );
 
+    /// @notice Initializes the sortitionPool parameter. Can be performed only once.
+    /// @param _sortitionPool Value of the parameter.
+    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+        internal
+    {
+        require(
+            address(self.sortitionPool) == address(0),
+            "Sortition Pool address already set"
+        );
+
+        self.sortitionPool = _sortitionPool;
+    }
+
     /// @notice Determines the current state of group creation. It doesn't take
     ///         timeouts into consideration. The timeouts should be tracked and
     ///         notified separately.
@@ -159,11 +178,16 @@ library DKG {
             self,
             result.submitterMemberIndex,
             result.groupPubKey,
-            result.misbehaved,
+            result.misbehavedMembersIndices,
             result.signatures,
-            result.signingMemberIndices,
+            result.signingMembersIndices,
             result.members
         );
+
+        // TODO: Check with sortition pool that all members have minimum stake.
+        // Check all members in one call or at least members that signed the result.
+        // We need to know in advance that there will be something that we can
+        // slash the members from.
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
@@ -203,32 +227,37 @@ library DKG {
     ///      `\x19Ethereum signed message:\n` before signing, so the message to
     ///      sign is:
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
+    ///      Members indexing in the group starts with 1.
     /// @param submitterMemberIndex Claimed submitter candidate group member index
     /// @param groupPubKey Generated candidate group public key
-    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-    ///        group members indexes; Indexes reflect positions of members in the group,
-    ///        as outputted by the group selection protocol.
+    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
+    ///        inactive) group members indices; have to be unique and in
+    ///        ascending order
     /// @param signatures Concatenation of signatures from members supporting the
     ///        result.
-    /// @param signingMemberIndices Indices of members corresponding to each
-    ///        signature. Indices have to be unique.
-    /// @param members Addresses of candidate group members as outputted by the
-    ///        group selection protocol.
+    /// @param signingMembersIndices Indices of members corresponding to each
+    ///        signature; have to be unique
+    /// @param members Identifiers of candidate group members as outputted by
+    ///        the group selection protocol.
     function verify(
         Data storage self,
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
-        bytes memory misbehaved,
+        uint8[] calldata misbehavedMembersIndices,
         bytes memory signatures,
-        uint256[] memory signingMemberIndices,
-        address[] memory members
+        uint256[] memory signingMembersIndices,
+        uint32[] calldata members
     ) internal view {
         // TODO: Verify if submitter is valid staker and signatures come from valid
         // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
 
         require(submitterMemberIndex > 0, "Invalid submitter index");
+
+        ISortitionPool sortitionPool = self.sortitionPool;
+
         require(
-            members[submitterMemberIndex - 1] == msg.sender,
+            sortitionPool.getIDOperator(members[submitterMemberIndex - 1]) ==
+                msg.sender,
             "Unexpected submitter index"
         );
 
@@ -246,22 +275,36 @@ library DKG {
         require(groupPubKey.length == 128, "Malformed group public key");
 
         require(
-            misbehaved.length <= groupSize - signatureThreshold,
-            "Malformed misbehaved bytes"
+            misbehavedMembersIndices.length <= groupSize - signatureThreshold,
+            "Unexpected misbehaved members count"
         );
+
+        if (misbehavedMembersIndices.length > 1) {
+            for (uint256 i = 1; i < misbehavedMembersIndices.length; i++) {
+                require(
+                    misbehavedMembersIndices[i - 1] <
+                        misbehavedMembersIndices[i],
+                    "Corrupted misbehaved members indices"
+                );
+            }
+        }
 
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Too short signatures array");
         require(signatures.length % 65 == 0, "Malformed signatures array");
         require(
-            signaturesCount == signingMemberIndices.length,
+            signaturesCount == signingMembersIndices.length,
             "Unexpected signatures count"
         );
         require(signaturesCount >= signatureThreshold, "Too few signatures");
         require(signaturesCount <= groupSize, "Too many signatures");
 
         bytes32 resultHash = keccak256(
-            abi.encodePacked(groupPubKey, misbehaved, self.startBlock)
+            abi.encodePacked(
+                groupPubKey,
+                misbehavedMembersIndices,
+                self.startBlock
+            )
         );
 
         bytes memory current; // Current signature to be checked.
@@ -269,7 +312,7 @@ library DKG {
         bool[] memory usedMemberIndices = new bool[](groupSize);
 
         for (uint256 i = 0; i < signaturesCount; i++) {
-            uint256 memberIndex = signingMemberIndices[i];
+            uint256 memberIndex = signingMembersIndices[i];
             require(memberIndex > 0, "Invalid index");
             require(memberIndex <= members.length, "Index out of range");
 
@@ -283,8 +326,13 @@ library DKG {
             address recoveredAddress = resultHash
                 .toEthSignedMessageHash()
                 .recover(current);
+
+            // FIXME: Update sortition pool API to allow to fetch member addresses
+            //        by their IDs in one call.
+            // slither-disable-next-line calls-loop
             require(
-                members[memberIndex - 1] == recoveredAddress,
+                sortitionPool.getIDOperator(members[memberIndex - 1]) ==
+                    recoveredAddress,
                 "Invalid signature"
             );
         }
@@ -333,7 +381,7 @@ library DKG {
             "challenge period has already passed"
         );
 
-        // TODO: Verify members with sortition pool
+        // TODO: Verify hash of members with sortition pool
 
         // Adjust DKG result submission block start, so submission eligibility
         // starts from the beginning.

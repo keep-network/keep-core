@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js"
 import { useFormikContext } from "formik"
 import { KEEP } from "../utils/token.utils"
 
-const useSetMaxAmountToken = (
+const useSetMaxAmountTokenFormik = (
   filedName,
   availableAmount,
   token = KEEP,
@@ -10,6 +10,22 @@ const useSetMaxAmountToken = (
 ) => {
   const { setFieldValue } = useFormikContext()
 
+  return useSetMaxAmountToken(
+    filedName,
+    availableAmount,
+    setFieldValue,
+    token,
+    decimals
+  )
+}
+
+export const useSetMaxAmountToken = (
+  filedName,
+  availableAmount,
+  setFieldValue,
+  token = KEEP,
+  decimals = 0
+) => {
   const setMaxAvailableAmount = () => {
     setFieldValue(
       filedName,
@@ -23,4 +39,4 @@ const useSetMaxAmountToken = (
   return setMaxAvailableAmount
 }
 
-export default useSetMaxAmountToken
+export default useSetMaxAmountTokenFormik
