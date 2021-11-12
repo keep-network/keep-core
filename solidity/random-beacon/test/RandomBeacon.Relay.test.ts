@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop */
 
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
@@ -856,7 +856,6 @@ describe("RandomBeacon - Relay", () => {
   async function assertMembersEligible(members: number[], groupSize: number) {
     for (let i = 0; i < members.length; i++) {
       expect(
-        // eslint-disable-next-line no-await-in-loop
         await relayStub.isEligible(
           members[i],
           blsData.groupSignature,
@@ -872,7 +871,6 @@ describe("RandomBeacon - Relay", () => {
   ) {
     for (let i = 0; i < members.length; i++) {
       expect(
-        // eslint-disable-next-line no-await-in-loop
         await relayStub.isEligible(
           members[i],
           blsData.groupSignature,
