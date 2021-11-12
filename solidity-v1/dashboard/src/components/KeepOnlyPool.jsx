@@ -144,6 +144,7 @@ const KeepOnlyPool = ({
             <SubmitButton
               className="btn btn-primary btn-lg"
               onSubmitAction={addKEEP}
+              disabled={true}
             >
               {gt(lpBalance, 0) ? "add more keep" : "deposit keep"}
             </SubmitButton>
