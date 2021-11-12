@@ -166,7 +166,7 @@ const KeepOnlyPool = ({
               <APY.TooltipContent />
             </MetricsTile.Tooltip>
             <APY
-              apy={apy}
+              apy={0}
               isFetching={isAPYFetching}
               className="liquidity__info-tile__title text-mint-100"
             />
