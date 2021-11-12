@@ -27,7 +27,7 @@ const TWO_WEEKS = 1209600 // 2 weeks in seconds
 const fixture = async () => {
   const deployment = await randomBeaconDeployment()
 
-  const signers = await registerOperators(
+  const operators = await registerOperators(
     deployment.randomBeacon as RandomBeacon,
     (await getUnnamedAccounts()).slice(0, constants.groupSize)
   )
@@ -40,7 +40,7 @@ const fixture = async () => {
     relayStub: (await (
       await ethers.getContractFactory("RelayStub")
     ).deploy()) as RelayStub,
-    signers,
+    operators,
   }
 }
 
@@ -62,9 +62,9 @@ describe("RandomBeacon - Relay", () => {
   let member16: SignerWithAddress
   let member17: SignerWithAddress
   let member18: SignerWithAddress
-  let signers: Operator[]
-  let signersIDs: OperatorID[]
-  let signersAddresses: Address[]
+  let members: Operator[]
+  let membersIDs: OperatorID[]
+  let membersAddresses: Address[]
 
   let randomBeacon: RandomBeacon
   let sortitionPool: SortitionPool
@@ -77,27 +77,35 @@ describe("RandomBeacon - Relay", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ randomBeacon, sortitionPool, testToken, staking, relayStub, signers } =
-      await waffle.loadFixture(fixture))
+    let operators
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({
+      randomBeacon,
+      sortitionPool,
+      testToken,
+      staking,
+      relayStub,
+      operators,
+    } = await waffle.loadFixture(fixture))
 
-    signersIDs = signers.map((signer) => signer.id)
-    signersAddresses = signers.map((signer) => signer.address)
+    members = operators // All operators will be members of the group used in tests.
+    membersIDs = members.map((member) => member.id)
+    membersAddresses = members.map((member) => member.address)
 
     member3 = await ethers.getSigner(
-      signers[invalidEntryFirstEligibleMemberIndex - 1].address
+      members[invalidEntryFirstEligibleMemberIndex - 1].address
     )
     member15 = await ethers.getSigner(
-      signers[firstEligibleMemberIndex - 1 - 1].address
+      members[firstEligibleMemberIndex - 1 - 1].address
     )
     member16 = await ethers.getSigner(
-      signers[firstEligibleMemberIndex - 1].address
+      members[firstEligibleMemberIndex - 1].address
     )
     member17 = await ethers.getSigner(
-      signers[firstEligibleMemberIndex + 1 - 1].address
+      members[firstEligibleMemberIndex + 1 - 1].address
     )
     member18 = await ethers.getSigner(
-      signers[firstEligibleMemberIndex + 2 - 1].address
+      members[firstEligibleMemberIndex + 2 - 1].address
     )
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
@@ -106,7 +114,7 @@ describe("RandomBeacon - Relay", () => {
   describe("requestRelayEntry", () => {
     context("when groups exist", () => {
       beforeEach(async () => {
-        await createGroup(randomBeacon as RandomBeaconStub, signers)
+        await createGroup(randomBeacon as RandomBeaconStub, members)
       })
 
       context("when there is no other relay entry in progress", () => {
@@ -177,7 +185,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("submitRelayEntry", () => {
     beforeEach(async () => {
-      await createGroup(randomBeacon as RandomBeaconStub, signers)
+      await createGroup(randomBeacon as RandomBeaconStub, members)
     })
 
     context("when relay request is in progress", () => {
@@ -342,14 +350,14 @@ describe("RandomBeacon - Relay", () => {
                     // `750e18` to be slashed.
                     await expect(tx)
                       .to.emit(staking, "Slashed")
-                      .withArgs(to1e18(750), signersAddresses)
+                      .withArgs(to1e18(750), membersAddresses)
 
                     await expect(tx)
                       .to.emit(
                         randomBeacon,
                         "RelayEntrySoftTimeoutSlashingOccurred"
                       )
-                      .withArgs(1, to1e18(750), signersAddresses)
+                      .withArgs(1, to1e18(750), membersAddresses)
                   })
 
                   it("should emit RelayEntrySubmitted event", async () => {
@@ -436,14 +444,14 @@ describe("RandomBeacon - Relay", () => {
                     // `750e18` to be slashed.
                     await expect(tx)
                       .to.emit(staking, "Slashed")
-                      .withArgs(to1e18(750), signersAddresses)
+                      .withArgs(to1e18(750), membersAddresses)
 
                     await expect(tx)
                       .to.emit(
                         randomBeacon,
                         "RelayEntrySoftTimeoutSlashingOccurred"
                       )
-                      .withArgs(1, to1e18(750), signersAddresses)
+                      .withArgs(1, to1e18(750), membersAddresses)
                   })
 
                   it("should emit RelayEntrySubmitted event", async () => {
@@ -551,7 +559,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("reportRelayEntryTimeout", () => {
     beforeEach(async () => {
-      await createGroup(randomBeacon, signers)
+      await createGroup(randomBeacon, members)
 
       await approveTestToken()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
@@ -572,7 +580,7 @@ describe("RandomBeacon - Relay", () => {
             // made to ensure it is not selected for signing the original request.
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              signersIDs
+              membersIDs
             )
 
             // `groupSize * relayEntrySubmissionEligibilityDelay +
@@ -585,14 +593,14 @@ describe("RandomBeacon - Relay", () => {
           it("should slash the full slashing amount for all group members", async () => {
             await expect(tx)
               .to.emit(staking, "Slashed")
-              .withArgs(to1e18(1000), signersAddresses)
+              .withArgs(to1e18(1000), membersAddresses)
 
             await expect(tx)
               .to.emit(
                 randomBeacon,
                 "RelayEntrySubmissionFailureSlashingOccurred"
               )
-              .withArgs(1, to1e18(1000), signersAddresses)
+              .withArgs(1, to1e18(1000), membersAddresses)
           })
 
           it("should terminate the group", async () => {
@@ -632,14 +640,14 @@ describe("RandomBeacon - Relay", () => {
         it("should slash the full slashing amount for all group members", async () => {
           await expect(tx)
             .to.emit(staking, "Slashed")
-            .withArgs(to1e18(1000), signersAddresses)
+            .withArgs(to1e18(1000), membersAddresses)
 
           await expect(tx)
             .to.emit(
               randomBeacon,
               "RelayEntrySubmissionFailureSlashingOccurred"
             )
-            .withArgs(1, to1e18(1000), signersAddresses)
+            .withArgs(1, to1e18(1000), membersAddresses)
         })
 
         it("should terminate the group", async () => {
@@ -717,18 +725,18 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getInactiveMembers", () => {
-    let members: OperatorID[]
+    let groupMembers: OperatorID[]
 
     beforeEach(async () => {
-      members = [
-        signersIDs[0], // member index 1
-        signersIDs[1], // member index 2
-        signersIDs[2], // member index 3
-        signersIDs[3], // member index 4
-        signersIDs[4], // member index 5
-        signersIDs[5], // member index 6
-        signersIDs[6], // member index 7
-        signersIDs[7], // member index 8
+      groupMembers = [
+        membersIDs[0], // member index 1
+        membersIDs[1], // member index 2
+        membersIDs[2], // member index 3
+        membersIDs[3], // member index 4
+        membersIDs[4], // member index 5
+        membersIDs[5], // member index 6
+        membersIDs[6], // member index 7
+        membersIDs[7], // member index 8
       ]
     })
 
@@ -737,7 +745,7 @@ describe("RandomBeacon - Relay", () => {
         const inactiveMembers = await relayStub.getInactiveMembers(
           5,
           5,
-          members
+          groupMembers
         )
 
         await expect(inactiveMembers.length).to.be.equal(0)
@@ -749,13 +757,13 @@ describe("RandomBeacon - Relay", () => {
         const inactiveMembers = await relayStub.getInactiveMembers(
           8,
           5,
-          members
+          groupMembers
         )
 
         await expect(inactiveMembers.length).to.be.equal(3)
-        await expect(inactiveMembers[0]).to.be.equal(members[4])
-        await expect(inactiveMembers[1]).to.be.equal(members[5])
-        await expect(inactiveMembers[2]).to.be.equal(members[6])
+        await expect(inactiveMembers[0]).to.be.equal(groupMembers[4])
+        await expect(inactiveMembers[1]).to.be.equal(groupMembers[5])
+        await expect(inactiveMembers[2]).to.be.equal(groupMembers[6])
       })
     })
 
@@ -764,16 +772,16 @@ describe("RandomBeacon - Relay", () => {
         const inactiveMembers = await relayStub.getInactiveMembers(
           3,
           5,
-          members
+          groupMembers
         )
 
         await expect(inactiveMembers.length).to.be.equal(6)
-        await expect(inactiveMembers[0]).to.be.equal(members[4])
-        await expect(inactiveMembers[1]).to.be.equal(members[5])
-        await expect(inactiveMembers[2]).to.be.equal(members[6])
-        await expect(inactiveMembers[3]).to.be.equal(members[7])
-        await expect(inactiveMembers[4]).to.be.equal(members[0])
-        await expect(inactiveMembers[5]).to.be.equal(members[1])
+        await expect(inactiveMembers[0]).to.be.equal(groupMembers[4])
+        await expect(inactiveMembers[1]).to.be.equal(groupMembers[5])
+        await expect(inactiveMembers[2]).to.be.equal(groupMembers[6])
+        await expect(inactiveMembers[3]).to.be.equal(groupMembers[7])
+        await expect(inactiveMembers[4]).to.be.equal(groupMembers[0])
+        await expect(inactiveMembers[5]).to.be.equal(groupMembers[1])
       })
     })
   })
@@ -853,11 +861,14 @@ describe("RandomBeacon - Relay", () => {
       .approve(randomBeacon.address, relayRequestFee)
   }
 
-  async function assertMembersEligible(members: number[], groupSize: number) {
-    for (let i = 0; i < members.length; i++) {
+  async function assertMembersEligible(
+    checkedMembers: number[],
+    groupSize: number
+  ) {
+    for (let i = 0; i < checkedMembers.length; i++) {
       expect(
         await relayStub.isEligible(
-          members[i],
+          checkedMembers[i],
           blsData.groupSignature,
           groupSize
         )
@@ -866,13 +877,13 @@ describe("RandomBeacon - Relay", () => {
   }
 
   async function assertMembersNotEligible(
-    members: number[],
+    checkedMembers: number[],
     groupSize: number
   ) {
-    for (let i = 0; i < members.length; i++) {
+    for (let i = 0; i < checkedMembers.length; i++) {
       expect(
         await relayStub.isEligible(
-          members[i],
+          checkedMembers[i],
           blsData.groupSignature,
           groupSize
         )
