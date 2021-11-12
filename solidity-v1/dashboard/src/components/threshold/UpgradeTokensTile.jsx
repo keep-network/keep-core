@@ -2,16 +2,13 @@ import React, { useMemo } from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
 import OnlyIf from "../OnlyIf"
-import { LINK } from "../../constants/constants"
 import ResourceTooltip from "../ResourceTooltip"
+import NavLink from "../NavLink"
 
 const UpgradeTokensTile = ({
   title,
   className = "",
-  btnText,
-  onBtnClick,
-  buttonDisabled = false,
-  isLink = false,
+  renderButton = () => <UpgradeTokensTile.Button btnText={"button"} />,
   titleTooltipProps = null,
   children,
 }) => {
@@ -24,25 +21,7 @@ const UpgradeTokensTile = ({
         </OnlyIf>
       </div>
       <div>{children}</div>
-      <OnlyIf condition={!isLink}>
-        <Button
-          className="btn btn-primary btn-md upgrade-tokens-tile__button"
-          onClick={onBtnClick}
-          disabled={buttonDisabled}
-        >
-          {btnText}
-        </Button>
-      </OnlyIf>
-      <OnlyIf condition={isLink}>
-        <a
-          href={LINK.tbtcDapp}
-          rel="noopener noreferrer"
-          target="_blank"
-          className="btn btn-primary btn-md upgrade-tokens-tile__button"
-        >
-          {btnText} ↗
-        </a>
-      </OnlyIf>
+      {renderButton()}
     </div>
   )
 }
@@ -67,6 +46,47 @@ const UpgradeTokenFileRow = ({ label, amount, isDataFetching = false }) => {
       <span className="text-grey-50">{label}</span>
       {renderTokenAmount}
     </div>
+  )
+}
+
+UpgradeTokensTile.Button = ({
+  btnText,
+  onBtnClick,
+  buttonDisabled = false,
+  className = "",
+}) => {
+  return (
+    <Button
+      className={`btn btn-primary btn-md upgrade-tokens-tile__button ${className}`}
+      onClick={onBtnClick}
+      disabled={buttonDisabled}
+    >
+      {btnText}
+    </Button>
+  )
+}
+
+UpgradeTokensTile.Link = ({ linkText, to = "", className = "" }) => {
+  return (
+    <a
+      href={to}
+      rel="noopener noreferrer"
+      target="_blank"
+      className={`btn btn-primary btn-md upgrade-tokens-tile__button ${className}`}
+    >
+      {linkText} ↗
+    </a>
+  )
+}
+
+UpgradeTokensTile.NavLink = ({ linkText, to = "", className = "" }) => {
+  return (
+    <NavLink
+      to={to}
+      className={`btn btn-primary btn-md upgrade-tokens-tile__button ${className}`}
+    >
+      {linkText}
+    </NavLink>
   )
 }
 

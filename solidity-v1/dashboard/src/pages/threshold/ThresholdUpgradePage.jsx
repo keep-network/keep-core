@@ -160,6 +160,12 @@ const ThresholdUpgradePage = () => {
             className={"mb-1"}
             isLink
             buttonDisabled={isDataFetching}
+            renderButton={() => (
+              <UpgradeTokensTile.Link
+                to={"https://google.com"}
+                linkText={"upgrade to t"}
+              />
+            )}
           >
             <UpgradeTokensTile.Row
               label={"Liquid KEEP"}
@@ -169,14 +175,18 @@ const ThresholdUpgradePage = () => {
           </UpgradeTokensTile>
           <UpgradeTokensTile
             title={"Grant Allocation"}
-            btnText={"withdraw from grant"}
-            onBtnClick={onWithdrawFromGrant}
-            buttonDisabled={
-              lte(totalGrantedUnstakedBalance, 0) || isDataFetching
-            }
             titleTooltipProps={
               resourceTooltipProps.thresholdPageGrantAllocation
             }
+            renderButton={() => (
+              <UpgradeTokensTile.Button
+                btnText={"withdraw from grant"}
+                buttonDisabled={
+                  lte(totalGrantedUnstakedBalance, 0) || isDataFetching
+                }
+                onBtnClick={onWithdrawFromGrant}
+              />
+            )}
           >
             <UpgradeTokensTile.Row
               label={"Available KEEP"}
@@ -249,9 +259,14 @@ const ThresholdUpgradePage = () => {
           <h4 className={"mb-1"}>Upgrade Staked Tokens</h4>
           <UpgradeTokensTile
             title={"Staked"}
-            btnText={"undelegate"}
             buttonDisabled={isDataFetching}
             className={"mb-1"}
+            renderButton={() => (
+              <UpgradeTokensTile.NavLink
+                linkText={"undelegate"}
+                to={"/overview"}
+              />
+            )}
           >
             <UpgradeTokensTile.Row
               label={"Total Pending KEEP"}
@@ -266,11 +281,15 @@ const ThresholdUpgradePage = () => {
           </UpgradeTokensTile>
           <UpgradeTokensTile
             title={"Undelegated"}
-            btnText={"claim tokens"}
-            onBtnClick={onWithdrawFromGrant}
             buttonDisabled={
               lte(totalGrantedUnstakedBalance, 0) || isDataFetching
             }
+            renderButton={() => (
+              <UpgradeTokensTile.NavLink
+                linkText={"claim tokens"}
+                to={"/overview"}
+              />
+            )}
           >
             <UpgradeTokensTile.Row
               label={"Total Available KEEP"}
