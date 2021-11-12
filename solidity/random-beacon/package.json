@@ -3,7 +3,7 @@
   "version": "2.0.0-dev",
   "description": "Keep Random Beacon",
   "scripts": {
-    "clean": "rm -rf build && rm -rf cache && rm -rf typechain",
+    "clean": "hardhat clean",
     "build": "hardhat compile",
     "test": "hardhat test",
     "deploy": "hardhat deploy --export export.json",
