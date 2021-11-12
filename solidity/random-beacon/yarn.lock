@@ -597,12 +597,12 @@
   version "0.0.1"
   resolved "https://codeload.github.com/keep-network/prettier-config-keep/tar.gz/a1a333e7ac49928a0f6ed39421906dd1e46ab0f3"
 
-"@keep-network/sortition-pools@^1.2.0-dev.4":
-  version "1.2.0-dev.7"
-  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.7.tgz#c17db5bd53a00683db39207a2129a8d4b4241ee1"
-  integrity sha512-231jf0vm3Q3Ks2sgfb7BwUdJC6jpIpIuHVbmPqJv6JqSPGuomVQqXkbkgccePp+CXByWzJQ+dlww50br2HUbIg==
+"@keep-network/sortition-pools@^1.2.0-dev.7":
+  version "1.2.0-dev.9"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.9.tgz#500e666f5350f3b02438e915e74c8f669fe676b9"
+  integrity sha512-P1h1uDqRWxx6GY/Qo2uV9le5qrD1o8z34HCWedad48dNZW9CkvWOEL6gydLT9nKsRLRfSqeU3as/P0m3f1p9Ag==
   dependencies:
-    "@openzeppelin/contracts" "^2.4.0"
+    "@openzeppelin/contracts" "^4.3.2"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -637,11 +637,6 @@
   dependencies:
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
-
-"@openzeppelin/contracts@^2.4.0":
-  version "2.5.1"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-2.5.1.tgz#c76e3fc57aa224da3718ec351812a4251289db31"
-  integrity sha512-qIy6tLx8rtybEsIOAlrM4J/85s2q2nPkDqj/Rx46VakBZ0LwtFhXIVub96LXHczQX0vaqmAueDqNPXtbSXSaYQ==
 
 "@openzeppelin/contracts@^4.1.0", "@openzeppelin/contracts@^4.3.2":
   version "4.3.2"

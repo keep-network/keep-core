@@ -124,7 +124,6 @@ describe("RandomBeacon - Pool", () => {
   })
 
   describe("updateOperatorStatus", () => {
-    let tx: ContractTransaction
     let operatorID: number
 
     beforeEach(async () => {
@@ -136,7 +135,7 @@ describe("RandomBeacon - Pool", () => {
       // Simulate the operator became ineligible.
       await stakingStub.setStake(operator.address, 0)
 
-      tx = await randomBeacon.connect(operator).updateOperatorStatus()
+      await randomBeacon.connect(operator).updateOperatorStatus()
     })
 
     it("should remove operator from the pool", async () => {
