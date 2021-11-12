@@ -14,9 +14,7 @@ const useAutoWalletAddressInjectIntoUrl = () => {
   const locationHasChanged = useHasChanged(location.pathname)
 
   useEffect(() => {
-    console.log("USE EFFECTB ROS")
     if (locationHasChanged) return
-    console.log("location.pathname", location.pathname)
     // change url to the one with address when we connect to the explorer mode
     if (!walletAddressFromUrl && connector && yourAddress) {
       const newPathname = "/" + yourAddress + location.pathname
