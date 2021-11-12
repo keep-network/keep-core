@@ -19,11 +19,6 @@ const useAutoWalletAddressInjectIntoUrl = () => {
     if (!walletAddressFromUrl && connector && yourAddress) {
       const newPathname = "/" + yourAddress + location.pathname
       history.push({ pathname: newPathname })
-    }
-
-    if (!walletAddressFromUrl && connector && yourAddress) {
-      const newPathname = "/" + yourAddress + location.pathname
-      history.push({ pathname: newPathname })
     } else if (walletAddressFromUrl && connector && yourAddress) {
       if (!isSameEthAddress(yourAddress, walletAddressFromUrl)) {
         const newPathname =
