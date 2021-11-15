@@ -4,6 +4,7 @@ import {
   AccordionItemButton,
   AccordionItemState,
 } from "react-accessible-accordion"
+import * as Icons from "../components/Icons"
 
 const AccordionDefaultItemHeading = ({
   children,
@@ -24,7 +25,7 @@ const AccordionDefaultItemHeading = ({
               }`}
             >
               <h3>{children}</h3>
-              <div>{expanded ? "-" : "+"}</div>
+              {expanded ? <Icons.Subtract /> : <Icons.Add />}
             </AccordionItemButton>
           )
         }}

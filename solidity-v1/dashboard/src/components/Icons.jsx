@@ -42,6 +42,7 @@ import { ReactComponent as MetaMask } from "../static/svg/metamask.svg"
 import { ReactComponent as Trezor } from "../static/svg/trezor.svg"
 import { ReactComponent as Ledger } from "../static/svg/ledger.svg"
 import { ReactComponent as Add } from "../static/svg/add.svg"
+import { ReactComponent as Subtract } from "../static/svg/subtract.svg"
 import { ReactComponent as ArrowDown } from "../static/svg/arrow-down.svg"
 export { ReactComponent as Warning } from "../static/svg/warning.svg"
 export { ReactComponent as Wallet } from "../static/svg/wallet.svg"
@@ -405,5 +406,6 @@ export {
   NetworkStatusIndicator,
   Saddle,
   Add,
+  Subtract,
   ArrowDown,
 }
