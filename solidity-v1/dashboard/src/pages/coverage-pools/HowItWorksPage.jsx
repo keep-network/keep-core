@@ -8,29 +8,23 @@ import List from "../../components/List"
 import Timeline from "../../components/Timeline"
 import Chip from "../../components/Chip"
 import { colors } from "../../constants/colors"
+import {
+  Accordion,
+  AccordionItem,
+  AccordionItemPanel,
+} from "react-accessible-accordion"
+import AccordionDefaultItemHeading from "../../components/AccordionDefaultItemHeading"
 
 const triggers = [
   {
     label:
-      "When ETH-BTC price drops and undercollateralized deposit enters the liquidation state and no buyer will take the signer bonds auction.",
+      "When ETH-BTC price drops and there is not enough ETH as collateral for a deposit and in the liquidation state and no buyer is buying the ETH bonded by the stakers, the Coverage Pool will sell KEEP to buy BTC and cover the peg.",
   },
   {
     label:
-      "When no valid redemption signature is provided in the required time frame and the deposit enters the liquidation state and no buyer will take the signer bonds auction.",
+      "When no valid redemption signature is provided in the required time frame and the deposit enters the liquidation state and no buyer is buying the ETH bonded by the stakers, the Coverage Pool will sell KEEP to buy BTC and cover the peg.",
   },
 ]
-
-const expectations = [
-  {
-    label:
-      "You will deposit funds in the coverage pool which will secure the network and be used as coverage. Coverage is akin to filing a claim in traditional insurance and processing your own claim. The triggers of coverage are listed above.",
-  },
-  {
-    label:
-      "By providing coverage funds you will get to earn rewards which are allocated weekly and calculated based on your share in the pool.",
-  },
-]
-
 const about = [
   {
     label:
@@ -97,6 +91,10 @@ const HowItWorksPage = () => {
             read the docs
           </a>
         </div>
+      </section>
+
+      <section className="cov-how-it-works__diagram-section">
+        <Icons.CovPoolsHowItWorksDiagram />
       </section>
 
       <section className="coverage-pool-resources-grid">
@@ -175,48 +173,127 @@ const HowItWorksPage = () => {
           </Timeline>
         </section>
 
-        <section className="tile">
-          <h3 className="mb-1">Rewards pool</h3>
-          <h5 className="text-violet-80">how it works</h5>
-          <div className="text-grey-60">
-            <p>
-              The{" "}
-              <strong>rewards are in KEEP which are allocated weekly.</strong>
-            </p>
-            <p>
-              They will be calculated based on a variable APY. You can withdraw
-              you rewards alongside with your deposit in a single transaction.
-              You can withdraw partial amounts of the deposit and rewards.
-            </p>
-            <p>
-              As long as you keep your tokens in the pool your&nbsp;
-              <strong>rewards will be autocompounded</strong> and earn rewards
-              as well.
-            </p>
-          </div>
-        </section>
+        <section className="tile cov-pools-accordion-section">
+          <Accordion allowZeroExpanded className="mb-3">
+            <AccordionItem>
+              <AccordionDefaultItemHeading>
+                <h3>Coverage pool</h3>
+              </AccordionDefaultItemHeading>
+              <AccordionItemPanel>
+                <h5 className="text-violet-80 mb-1">what is it</h5>
+                <div className="text-grey-60">
+                  <p>
+                    A pool of capital that serves as external aid to maintain
+                    the 1:1 peg between tBTC and BTC deposits. Those who deposit
+                    into the pool are effectively underwriting a rare event
+                    where there&apos;s not enough money in the system to
+                    purchase BTC.
+                  </p>
+                </div>
+                <h5 className="text-violet-80 mb-1">how it works</h5>
+                <div className="text-grey-60">
+                  <p>
+                    Coverage pools serve as a ‘buyer of last resort’. A buyer of
+                    last resort is the buyer that will purchase enough tBTC when
+                    no-one else will, to make a depositor whole in the event
+                    liquidation if the stakers collateral is insufficient.
+                  </p>
+                  <p>
+                    When coverage is demanded some part of the collateral pool
+                    must be sold to obtain enough of the covered asset to
+                    fulfill the claim. Liquidating the coverage pool fairly
+                    means selling a basket of assets, in a fixed ratio, with
+                    good price discovery. For this reason, collateral is
+                    liquidated using a Dutch auction.
+                  </p>
+                </div>
+              </AccordionItemPanel>
+            </AccordionItem>
 
-        <section className="tile">
-          <h3 className="mb-1">Covering a hit</h3>
-          <List items={triggers}>
-            <List.Title className="h5 text-violet-80">Triggers</List.Title>
-            <List.Content className="bullets bullets--violet-80 text-grey-60" />
-          </List>
+            <AccordionItem>
+              <AccordionDefaultItemHeading>
+                <h3>Being an underwriter</h3>
+              </AccordionDefaultItemHeading>
+              <AccordionItemPanel>
+                <h5 className="text-violet-80 mb-1">
+                  becoming and underwriter
+                </h5>
+                <div className="text-grey-60">
+                  <p>
+                    When you make a deposit into the pool, you become an
+                    underwriter by securing the network. Because you provide
+                    capital and put your funds to risk you earn rewards. The job
+                    of an underwriter is quite passive, you don’t need to
+                    monitor the network or run a node.
+                  </p>
+                </div>
+                <h5 className="text-violet-80 mb-1">what to expect</h5>
+                <div className="text-grey-60">
+                  <p>
+                    As an underwriter you are entering into a position relative
+                    to tBTC, the asset that the coverage pool is backing, and
+                    you are exposed to insurance events (liquidation).
+                  </p>
+                  <p>
+                    Due to the sound math of the Coverage Pools a liquidation
+                    event is extremely rare and considered a black swan event.
+                  </p>
+                </div>
+              </AccordionItemPanel>
+            </AccordionItem>
 
-          <List items={expectations} className="mt-1">
-            <List.Title className="h5 text-violet-80">
-              What to expect as an underwriter
-            </List.Title>
-            <List.Content className="bullets bullets--violet-80 text-grey-60" />
-          </List>
-        </section>
+            <AccordionItem>
+              <AccordionDefaultItemHeading>
+                <h3>Insurance events</h3>
+              </AccordionDefaultItemHeading>
+              <AccordionItemPanel>
+                <List items={triggers}>
+                  <List.Title className="h5 text-violet-80">
+                    Triggers
+                  </List.Title>
+                  <List.Content className="bullets bullets--violet-80 text-grey-60" />
+                </List>
+              </AccordionItemPanel>
+            </AccordionItem>
 
-        <section className="tile">
-          <h3 className="mb-1">covKEEP</h3>
-          <List items={about}>
-            <List.Title className="h5 text-violet-80">About</List.Title>
-            <List.Content className="bullets bullets--violet-80 text-grey-60" />
-          </List>
+            <AccordionItem>
+              <AccordionDefaultItemHeading>
+                <h3>Earning rewards</h3>
+              </AccordionDefaultItemHeading>
+              <AccordionItemPanel>
+                <h5 className="text-violet-80 mb-1">how you earn</h5>
+                <div className="text-grey-60">
+                  <p>
+                    There are weekly rewards emissions. The rewards emitted are
+                    deposited in the Coverage Pool. Rewards are KEEP tokens.
+                  </p>
+                  <p>
+                    They will be calculated based on a variable APY. You can
+                    withdraw you rewards alongside with your deposit in a single
+                    transaction. You can withdraw partial amounts of the deposit
+                    and rewards.
+                  </p>
+                  <p>
+                    As long as you keep your tokens in the pool your{" "}
+                    <strong>rewards will be autocompounded</strong> and earn
+                    rewards as well.
+                  </p>
+                </div>
+              </AccordionItemPanel>
+            </AccordionItem>
+
+            <AccordionItem>
+              <AccordionDefaultItemHeading>
+                <h3>covKEEP</h3>
+              </AccordionDefaultItemHeading>
+              <AccordionItemPanel>
+                <List items={about}>
+                  <List.Title className="h5 text-violet-80">About</List.Title>
+                  <List.Content className="bullets bullets--violet-80 text-grey-60" />
+                </List>
+              </AccordionItemPanel>
+            </AccordionItem>
+          </Accordion>
         </section>
       </section>
     </>
