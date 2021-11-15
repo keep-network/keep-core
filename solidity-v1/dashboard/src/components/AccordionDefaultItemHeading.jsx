@@ -5,7 +5,7 @@ import {
   AccordionItemState,
 } from "react-accessible-accordion"
 
-const AccordionItemHeadingWithPlusMinusSign = ({
+const AccordionDefaultItemHeading = ({
   children,
   className = "",
   ...accordionItemButtonProps
@@ -26,4 +26,4 @@ const AccordionItemHeadingWithPlusMinusSign = ({
   )
 }
 
-export default AccordionItemHeadingWithPlusMinusSign
+export default AccordionDefaultItemHeading

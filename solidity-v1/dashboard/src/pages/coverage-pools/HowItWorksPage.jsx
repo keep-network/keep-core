@@ -13,7 +13,7 @@ import {
   AccordionItem,
   AccordionItemPanel,
 } from "react-accessible-accordion"
-import AccordionItemHeadingWithPlusMinusSign from "../../components/AccordionItemHeadingWithPlusMinusSign"
+import AccordionDefaultItemHeading from "../../components/AccordionDefaultItemHeading"
 
 const triggers = [
   {
@@ -176,9 +176,9 @@ const HowItWorksPage = () => {
         <section className="tile cov-pools-accordion-section">
           <Accordion allowZeroExpanded>
             <AccordionItem>
-              <AccordionItemHeadingWithPlusMinusSign>
+              <AccordionDefaultItemHeading>
                 Coverage pool
-              </AccordionItemHeadingWithPlusMinusSign>
+              </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <h5 className="text-violet-80 mb-1">what is it</h5>
                 <div className="text-grey-60">
@@ -211,9 +211,9 @@ const HowItWorksPage = () => {
             </AccordionItem>
 
             <AccordionItem>
-              <AccordionItemHeadingWithPlusMinusSign>
+              <AccordionDefaultItemHeading>
                 Being an underwriter
-              </AccordionItemHeadingWithPlusMinusSign>
+              </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <h5 className="text-violet-80 mb-1">
                   becoming and underwriter
@@ -243,9 +243,9 @@ const HowItWorksPage = () => {
             </AccordionItem>
 
             <AccordionItem>
-              <AccordionItemHeadingWithPlusMinusSign>
+              <AccordionDefaultItemHeading>
                 Insurance events
-              </AccordionItemHeadingWithPlusMinusSign>
+              </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <List items={triggers}>
                   <List.Title className="h5 text-violet-80">
@@ -257,9 +257,9 @@ const HowItWorksPage = () => {
             </AccordionItem>
 
             <AccordionItem>
-              <AccordionItemHeadingWithPlusMinusSign>
+              <AccordionDefaultItemHeading>
                 Earning rewards
-              </AccordionItemHeadingWithPlusMinusSign>
+              </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <h5 className="text-violet-80 mb-1">how you earn</h5>
                 <div className="text-grey-60">
@@ -283,9 +283,7 @@ const HowItWorksPage = () => {
             </AccordionItem>
 
             <AccordionItem>
-              <AccordionItemHeadingWithPlusMinusSign>
-                covKEEP
-              </AccordionItemHeadingWithPlusMinusSign>
+              <AccordionDefaultItemHeading>covKEEP</AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <List items={about}>
                   <List.Title className="h5 text-violet-80">About</List.Title>
