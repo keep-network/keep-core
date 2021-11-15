@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useState } from "react"
 import { withBaseModal } from "../withBaseModal"
 import { ModalBody, ModalFooter, ModalHeader } from "../Modal"
 import Button, { SubmitButton } from "../../Button"
@@ -20,6 +20,7 @@ import { add } from "../../../utils/arithmetics.utils"
 import OnlyIf from "../../OnlyIf"
 
 export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
+  const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(5)
   const releaseTokens = useReleaseTokens()
 
   const totalReadyToRelease = useMemo(() => {
@@ -73,8 +74,21 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
             </span>
           </div>
           <form>
-            {grants.map((grant) => renderGrant(grant, grants.length, formik))}
+            {grants
+              .slice(0, numberOfGrantsDisplayed)
+              .map((grant) => renderGrant(grant, grants.length, formik))}
           </form>
+          <OnlyIf condition={grants.length > numberOfGrantsDisplayed}>
+            <div
+              className="withdraw-granted-tokens__view-more-container"
+              onClick={() =>
+                setNumberOfGrantsDisplayed(numberOfGrantsDisplayed + 5)
+              }
+            >
+              <span>+&nbsp;</span>
+              View More
+            </div>
+          </OnlyIf>
         </div>
       </ModalBody>
       <ModalFooter>
@@ -97,7 +111,6 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
 })
 
 const renderGrant = (grant, totalNumberOfGrants, formik) => {
-  console.log("totalNumberOfGrants", totalNumberOfGrants)
   return (
     <div
       key={`Grant-${grant.id}`}
