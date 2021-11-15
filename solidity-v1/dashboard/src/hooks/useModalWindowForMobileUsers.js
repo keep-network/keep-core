@@ -1,7 +1,7 @@
-import MobileUsersModal from "../components/MobileUsersModal"
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import useCurrentWidth from "./useCurrentWidth"
 import { useModal } from "./useModal"
+import { MODAL_TYPES } from "../constants/constants"
 
 const MODAL_WINDOW_STATUS = {
   NOT_DISPLAYED: "NOT_DISPLAYED",
@@ -27,16 +27,9 @@ const useModalWindowForMobileUsers = () => {
       currentWidth < widthThreshold &&
       modalWindowStatus === MODAL_WINDOW_STATUS.NOT_DISPLAYED
     ) {
-      openModal(
-        <MobileUsersModal closeModal={customModalWindowForMobileUsersClose} />,
-        {
-          closeModal: customModalWindowForMobileUsersClose,
-          hideTitleBar: true,
-          classes: {
-            modalWrapperClassName: "modal-wrapper--max-width-for-mobile-users",
-          },
-        }
-      )
+      openModal(MODAL_TYPES.MobileUsers, {
+        onClose: customModalWindowForMobileUsersClose,
+      })
       setModalWindowStatus(MODAL_WINDOW_STATUS.IS_DISPLAYING)
     }
 

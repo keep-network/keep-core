@@ -58,6 +58,8 @@ export const LINK = {
       "https://forum.keep.network/t/shifting-incentives-towards-tbtc-v2-and-coverage-pool-version-2/322",
     removeIncentivesForKEEPTBTCpool:
       "https://forum.keep.network/t/proposal-remove-incentives-for-the-keep-tbtc-pool/56",
+    removeIncentivesForTBTCETHpool:
+      "https://forum.keep.network/t/proposal-to-remove-incentives-for-tbtc-eth-pool/341",
   },
   tbtcDapp: "https://dapp.tbtc.network",
 }
@@ -192,4 +194,63 @@ export const AUTH_CONTRACTS_LABEL = {
 export const TBTC_TOKEN_VERSION = {
   v1: "v1",
   v2: "v2",
+}
+
+/**
+ * Enum defines a supported types of Modals
+ * @readonly
+ * @enum {string}
+ */
+export const MODAL_TYPES = {
+  MobileUsers: "MobileUsers",
+  BondingAddETH: "BondingAddEth",
+  BondingWithdrawETH: "BondingWithdrawETH",
+  MetaMask: "MetaMask",
+  ExplorerMode: "ExplorerMode",
+  Ledger: "Ledger",
+  Trezor: "Trezor",
+  WalletConnect: "WalletConnect",
+  WalletSelection: "WalletSelection",
+  DelegationAlreadyExists: "DelegationAlreadyExists",
+  TopUpInitiatedConfirmation: "TopUpInitiatedConfirmation",
+  TopUpInitialization: "TopUpInitialization",
+  ConfirmTopUpInitialization: "ConfirmTopUpInitialization",
+  KeepOnlyPoolAddKeep: "KeepOnlyPoolAddKeep",
+  KeepOnlyPoolWithdrawKeep: "KeepOnlyPoolWithdrawKeep",
+  ConfirmDelegation: "ConfirmDelegation",
+  ConfirmRecovering: "ConfirmRecovering",
+  ConfirmCancelDelegationFromGrant: "ConfirmCancelDelegationFromGrant",
+  ConfirmUndelegation: "ConfirmUndelegation",
+  CopyStake: "CopyStake",
+  ConfirmTBTCMigration: "ConfirmTBTCMigration",
+  TBTCMigrationCompleted: "TBTCMigrationCompleted",
+  ConfirmReleaseTokensFromGrant: "ConfirmReleaseTokensFromGrant",
+  WarningBeforeCovPoolDeposit: "WarningBeforeCovPoolDeposit",
+  InitiateCovPoolDeposit: "InitiateCovPoolDeposit",
+  InitiateCovPoolWithdraw: "InitiateCovPoolWithdraw",
+  CovPoolWithdrawInitialized: "CovPoolWithdrawInitialized",
+  CovPoolClaimTokens: "CovPoolClaimTokens",
+  ReInitiateCovPoolWithdraw: "ReInitiateCovPoolWithdraw",
+  ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
+  IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
+}
+
+export const COV_POOL_TIMELINE_STEPS = {
+  DEPOSITED_TOKENS: 1,
+  WITHDRAW_DEPOSIT: 2,
+  COOLDOWN: 3,
+  CLAIM_TOKENS: 4,
+}
+
+/**
+ * Enum defines cov pools withdrawal status
+ * @readonly
+ * @enum {string}
+ */
+export const PENDING_WITHDRAWAL_STATUS = {
+  NONE: "none",
+  PENDING: "pending",
+  COMPLETED: "completed",
+  EXPIRED: "expired",
+  NEW: "new",
 }

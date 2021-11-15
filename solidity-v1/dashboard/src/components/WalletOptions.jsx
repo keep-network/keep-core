@@ -1,9 +1,7 @@
-import React, { useCallback } from "react"
+import React from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
-import LedgerModal from "./LedgerModal"
-import TrezorModal from "./TrezorModal"
 import {
   TrezorConnector,
   LedgerConnector,
@@ -11,10 +9,7 @@ import {
   injected,
   WalletConnectConnector,
 } from "../connectors"
-import MetaMaskModal from "./MetaMaskModal"
-import WallectConnectModal from "./WalletConnectModal"
-import { WALLETS } from "../constants/constants"
-import ExplorerModeModal from "./ExplorerModeModal"
+import { MODAL_TYPES, WALLETS } from "../constants/constants"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 
 const WALLETS_OPTIONS = [
@@ -23,6 +18,7 @@ const WALLETS_OPTIONS = [
     icon: Icons.MetaMask,
     isHardwareWallet: false,
     connector: injected,
+    modalType: MODAL_TYPES.MetaMask,
   },
   {
     label: "Ledger",
@@ -38,24 +34,28 @@ const WALLETS_OPTIONS = [
       LEDGER_LIVE: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
       LEDGER_LEGACY: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LEGACY),
     },
+    modalType: MODAL_TYPES.Ledger,
   },
   {
     label: "Trezor",
     icon: Icons.Trezor,
     isHardwareWallet: true,
     connector: new TrezorConnector(),
+    modalType: MODAL_TYPES.Trezor,
   },
   {
     label: "WalletConnect",
     icon: Icons.WalletConnect,
     isHardwareWallet: false,
     connector: new WalletConnectConnector(),
+    modalType: MODAL_TYPES.WalletConnect,
   },
   {
     label: "Explorer Mode",
     icon: Icons.Explore,
     isHardwareWallet: false,
     connector: new ExplorerModeConnector(),
+    modalType: MODAL_TYPES.ExplorerMode,
   },
 ]
 
@@ -74,54 +74,19 @@ const WalletOptions = ({ displayExplorerMode = true }) => {
 
 const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 
-const Wallet = ({ label, icon: IconComponent, connector }) => {
-  const { openModal, closeModal } = useModal()
-  const {
-    connectAppWithWallet,
-    abortWalletConnection,
-    connector: currentConnector,
-  } = useWeb3Context()
+const Wallet = ({ label, icon: IconComponent, connector, modalType }) => {
+  const { openModal } = useModal()
+  const { connectAppWithWallet } = useWeb3Context()
 
-  const customCloseModal = useCallback(() => {
-    if (currentConnector?.name !== WALLETS.EXPLORER_MODE.name) {
-      abortWalletConnection()
-    }
-    closeModal()
-  }, [abortWalletConnection, closeModal, currentConnector])
-
-  const renderModalContent = () => {
-    const defaultProps = { connector, closeModal, connectAppWithWallet }
-    switch (connector.name) {
-      case WALLETS.LEDGER.name:
-        return <LedgerModal {...defaultProps} />
-      case WALLETS.TREZOR.name:
-        return <TrezorModal {...defaultProps} />
-      case WALLETS.METAMASK.name:
-        return <MetaMaskModal {...defaultProps} />
-      case WALLETS.WALLET_CONNECT.name:
-        return <WallectConnectModal {...defaultProps} />
-      case WALLETS.EXPLORER_MODE.name:
-        return <ExplorerModeModal {...defaultProps} />
-      default:
-        return null
-    }
+  const openWalletModal = () => {
+    openModal(modalType, {
+      connector,
+      connectAppWithWallet,
+    })
   }
 
-  const modalTitle =
-    label === WALLETS.EXPLORER_MODE.label
-      ? "Connect Ethereum Address"
-      : "Connect Wallet"
-
   return (
-    <li
-      className="wallet__item"
-      onClick={async () => {
-        openModal(renderModalContent(), {
-          title: modalTitle,
-          closeModal: customCloseModal,
-        })
-      }}
-    >
+    <li className="wallet__item" onClick={openWalletModal}>
       <IconComponent className="wallet__item__icon" />
       {label}
     </li>

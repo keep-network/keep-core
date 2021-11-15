@@ -5,11 +5,12 @@ import {
   submitButtonHelper,
   logErrorAndThrow,
   identifyTaskByAddress,
+  confirmModalSaga,
 } from "./utils"
 import moment from "moment"
 import { sendTransaction } from "./web3"
 import { getContractDeploymentBlockNumber } from "../contracts"
-import { gt, sub } from "../utils/arithmetics.utils"
+import { add, gt, sub } from "../utils/arithmetics.utils"
 import { KEEP } from "../utils/token.utils"
 import { tokensPageService } from "../services/tokens-page.service"
 import {
@@ -20,7 +21,10 @@ import { isEmptyArray } from "../utils/array.utils"
 import { showMessage } from "../actions/messages"
 import { isSameEthAddress } from "../utils/general.utils"
 import { messageType } from "../components/Message"
-import { TOKEN_STAKING_ESCROW_CONTRACT_NAME } from "../constants/constants"
+import {
+  MODAL_TYPES,
+  TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+} from "../constants/constants"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -28,6 +32,62 @@ function* delegateStake(action) {
 
 export function* watchDelegateStakeRequest() {
   yield takeEvery("staking/delegate_request", delegateStake)
+}
+
+function* topUp(action) {
+  const {
+    beneficiaryAddress,
+    operatorAddress,
+    authorizerAddress,
+    currentAmount,
+    availableAmount,
+  } = action.payload
+  const { isConfirmed, task } = yield call(
+    confirmModalSaga,
+    MODAL_TYPES.TopUpInitialization,
+    {
+      authorizerAddress,
+      beneficiary: beneficiaryAddress,
+      operatorAddress,
+      currentAmount,
+      availableAmount,
+    }
+  )
+  if (!isConfirmed) {
+    return
+  }
+
+  const {
+    payload: { amount },
+  } = task
+  const _amount = KEEP.fromTokenUnit(amount).toString()
+
+  const { isConfirmed: isSecondModalConfirmed } = yield call(
+    confirmModalSaga,
+    MODAL_TYPES.ConfirmTopUpInitialization,
+    {
+      authorizerAddress,
+      beneficiary: beneficiaryAddress,
+      operatorAddress,
+      amountToAdd: _amount,
+      newAmount: add(currentAmount, _amount),
+    }
+  )
+
+  if (!isSecondModalConfirmed) {
+    return
+  }
+
+  yield* resolveStake({
+    payload: { ...action.payload, amount },
+    meta: action.meta,
+  })
+}
+
+export function* watchTopUp() {
+  yield takeEvery("staking/top-up", function* (action) {
+    yield call(submitButtonHelper, topUp, action)
+  })
 }
 
 function* resolveStake(action) {

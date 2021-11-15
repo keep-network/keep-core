@@ -4,12 +4,15 @@ import { expect } from "chai"
 import { Signer, Contract } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
 
-import type { RandomBeacon, SortitionPoolStub } from "../typechain"
+import type { RandomBeacon, SortitionPool, StakingStub } from "../typechain"
+
+const fixture = async () => randomBeaconDeployment()
 
 describe("RandomBeacon - Pool", () => {
   let operator: Signer
   let randomBeacon: Contract
-  let sortitionPoolStub: Contract
+  let sortitionPool: Contract
+  let stakingStub: Contract
 
   // prettier-ignore
   before(async () => {
@@ -17,13 +20,18 @@ describe("RandomBeacon - Pool", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
-
-    sortitionPoolStub = contracts.sortitionPoolStub as SortitionPoolStub
+    const contracts = await waffle.loadFixture(fixture)
+    sortitionPool = contracts.sortitionPool as SortitionPool
+    stakingStub = contracts.stakingStub as StakingStub
     randomBeacon = contracts.randomBeacon as RandomBeacon
   })
 
   describe("registerMemberCandidate", () => {
+    const minimumStake = 2000
+    beforeEach(async () => {
+      await stakingStub.setStake(operator.getAddress(), minimumStake)
+    })
+
     context("when the operator is not registered yet", () => {
       beforeEach(async () => {
         await randomBeacon.connect(operator).registerMemberCandidate()
@@ -31,7 +39,7 @@ describe("RandomBeacon - Pool", () => {
 
       it("should register the operator", async () => {
         await expect(
-          await sortitionPoolStub.operators(await operator.getAddress())
+          await sortitionPool.isOperatorInPool(await operator.getAddress())
         ).to.be.true
       })
     })
@@ -50,12 +58,10 @@ describe("RandomBeacon - Pool", () => {
   })
 
   describe("isOperatorEligible", () => {
+    const minimumStake = 2000
     context("when the operator is eligible to join the sortition pool", () => {
       beforeEach(async () => {
-        await sortitionPoolStub.setOperatorEligibility(
-          await operator.getAddress(),
-          true
-        )
+        await stakingStub.setStake(operator.getAddress(), minimumStake)
       })
 
       it("should return true", async () => {
@@ -69,10 +75,7 @@ describe("RandomBeacon - Pool", () => {
       "when the operator is not eligible to join the sortition pool",
       () => {
         beforeEach(async () => {
-          await sortitionPoolStub.setOperatorEligibility(
-            await operator.getAddress(),
-            false
-          )
+          await stakingStub.setStake(operator.getAddress(), minimumStake - 1)
         })
 
         it("should return false", async () => {

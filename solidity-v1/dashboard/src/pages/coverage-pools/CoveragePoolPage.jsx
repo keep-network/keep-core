@@ -2,8 +2,8 @@ import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
   DepositForm,
-  InitiateDepositModal,
   MetricsSection,
+  WithdrawAmountForm,
 } from "../../components/coverage-pools"
 import TokenAmount from "../../components/TokenAmount"
 import { useWeb3Address } from "../../components/WithWeb3Context"
@@ -11,27 +11,22 @@ import OnlyIf from "../../components/OnlyIf"
 import {
   fetchTvlRequest,
   fetchCovPoolDataRequest,
-  depositAssetPool,
   fetchAPYRequest,
-  withdrawAssetPool,
+  increaseWithdrawal,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
-import { eq, gt } from "../../utils/arithmetics.utils"
+import { gt, eq } from "../../utils/arithmetics.utils"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
-import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
 import Chip from "../../components/Chip"
-import InitiateCovPoolsWithdrawModal from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal"
-import ReinitiateWithdrawalModal from "../../components/coverage-pools/ReinitiateWithdrawalModal"
-import { addAdditionalDataToModal } from "../../actions/modal"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
 import { Keep } from "../../contracts"
-import ConfirmationModal from "../../components/ConfirmationModal"
+import { MODAL_TYPES } from "../../constants/constants"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
-  const { openConfirmationModal } = useModal()
+  const { openConfirmationModal, openModal } = useModal()
   const dispatch = useDispatch()
   const {
     totalValueLocked,
@@ -46,7 +41,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     totalAllocatedRewards,
     totalCoverageClaimed,
     withdrawalDelay,
-    pendingWithdrawal,
+    // pendingWithdrawal,
     withdrawalInitiatedTimestamp,
     hasRiskManagerOpenAuctions,
   } = useSelector((state) => state.coveragePool)
@@ -68,92 +63,36 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     }
   }, [dispatch, address])
 
-  const onSubmitDepositForm = async (values, awaitingPromise) => {
+  const onSubmitDepositForm = async (values) => {
     const { tokenAmount } = values
     const amount = KEEP.fromTokenUnit(tokenAmount).toString()
     if (hasRiskManagerOpenAuctions) {
-      await openConfirmationModal(
-        {
-          modalOptions: {
-            title: "Deposit",
-          },
-          btnText: "continue",
-          title: "Take note!",
-          subtitle:
-            "The coverage pool is about to cover an event. Do you want to continue with this deposit?",
-          withConfirmationInput: false,
-        },
-        ConfirmationModal
-      )
+      await openConfirmationModal(MODAL_TYPES.WarningBeforeCovPoolDeposit)
     }
-    await openConfirmationModal(
-      {
-        modalOptions: {
-          title: "Deposit",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-          },
-        },
-        submitBtnText: "deposit",
-        amount,
-      },
-      InitiateDepositModal
-    )
-    dispatch(depositAssetPool(amount, awaitingPromise))
+    openModal(MODAL_TYPES.InitiateCovPoolDeposit, {
+      amount,
+      estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
+        covBalance,
+        covTotalSupply,
+        totalValueLocked
+      ),
+      totalValueLocked,
+      covTotalSupply,
+    })
   }
 
-  const onSubmitWithdrawForm = async (values, awaitingPromise) => {
+  const onSubmitWithdrawForm = async (values) => {
     const { withdrawAmount } = values
     const amount = KEEP.fromTokenUnit(withdrawAmount).toString()
-    dispatch(
-      addAdditionalDataToModal({
-        componentProps: {
-          totalValueLocked,
-          covTotalSupply,
-          covTokensAvailableToWithdraw,
-        },
-      })
-    )
     if (eq(withdrawalInitiatedTimestamp, 0)) {
-      await openConfirmationModal(
-        {
-          modalOptions: {
-            title: "Withdraw",
-            classes: {
-              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
-            },
-          },
-          submitBtnText: "withdraw",
-          amount,
-          covTotalSupply,
-          totalValueLocked,
-          covTokensAvailableToWithdraw,
-          containerTitle: "You are about to withdraw:",
-        },
-        InitiateCovPoolsWithdrawModal
-      )
-      dispatch(withdrawAssetPool(amount, awaitingPromise))
+      openModal(MODAL_TYPES.InitiateCovPoolWithdraw, {
+        totalValueLocked,
+        covTotalSupply,
+        covBalanceOf: covBalance,
+        amount,
+      })
     } else {
-      const { amount: finalAmount } = await openConfirmationModal(
-        {
-          modalOptions: {
-            title: "Re-initiate withdrawal",
-            classes: {
-              modalWrapperClassName: "modal-wrapper__reinitiate-withdrawal",
-            },
-          },
-          submitBtnText: "continue",
-          pendingWithdrawalBalance: pendingWithdrawal,
-          initialAmountValue: amount,
-          covTokensAvailableToWithdraw,
-          covTotalSupply,
-          totalValueLocked,
-          withdrawalDelay,
-          containerTitle: "You are about to re-initiate this withdrawal:",
-        },
-        ReinitiateWithdrawalModal
-      )
-      dispatch(withdrawAssetPool(finalAmount, awaitingPromise))
+      dispatch(increaseWithdrawal(amount))
     }
   }
 
