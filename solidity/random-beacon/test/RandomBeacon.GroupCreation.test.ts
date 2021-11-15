@@ -957,7 +957,7 @@ describe("RandomBeacon - Group Creation", () => {
           let dkgResultHash: string
 
           let submitterAddress1: string
-          const submitterIndex1 = 1
+          const submitterIndex = 1
 
           beforeEach(async () => {
             let tx: ContractTransaction
@@ -967,10 +967,10 @@ describe("RandomBeacon - Group Creation", () => {
               groupPublicKey,
               signers,
               startBlock,
-              submitterIndex1
+              submitterIndex
             ))
 
-            submitterAddress1 = signers[submitterIndex1 - 1].address
+            submitterAddress1 = signers[submitterIndex - 1].address
             resultSubmissionBlock = tx.blockNumber
           })
 
@@ -1051,13 +1051,14 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("when there was a challenged result before", async () => {
             // Submit a second result by another submitter
-            let submitterAddress2: string
-            const submitterIndex2 = 5
+            let anotherSubmitterAddress: string
+            const anotherSubmitterIndex = 5
             beforeEach(async () => {
               await randomBeacon.challengeDkgResult()
 
               await mineBlocks(
-                params.dkgResultSubmissionEligibilityDelay * submitterIndex2
+                params.dkgResultSubmissionEligibilityDelay *
+                  anotherSubmitterIndex
               )
 
               let tx: ContractTransaction
@@ -1067,10 +1068,11 @@ describe("RandomBeacon - Group Creation", () => {
                   groupPublicKey,
                   signers,
                   startBlock,
-                  submitterIndex2
+                  anotherSubmitterIndex
                 ))
 
-              submitterAddress2 = signers[submitterIndex2 - 1].address
+              anotherSubmitterAddress =
+                signers[anotherSubmitterIndex - 1].address
               resultSubmissionBlock = tx.blockNumber
             })
 
@@ -1100,7 +1102,7 @@ describe("RandomBeacon - Group Creation", () => {
                 )
 
                 initialSubmitterBalance = await testToken.balanceOf(
-                  submitterAddress2
+                  anotherSubmitterAddress
                 )
 
                 tx = await randomBeacon.connect(thirdParty).approveDkgResult()
@@ -1129,7 +1131,7 @@ describe("RandomBeacon - Group Creation", () => {
 
               it("should reward the submitter with tokens from maintenance pool", async () => {
                 const currentSubmitterBalance: BigNumber =
-                  await testToken.balanceOf(submitterAddress2)
+                  await testToken.balanceOf(anotherSubmitterAddress)
                 expect(
                   currentSubmitterBalance.sub(initialSubmitterBalance)
                 ).to.be.equal(dkgResultSubmissionReward)
