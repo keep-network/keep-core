@@ -174,7 +174,7 @@ const HowItWorksPage = () => {
         </section>
 
         <section className="tile cov-pools-accordion-section">
-          <Accordion allowZeroExpanded>
+          <Accordion allowZeroExpanded className="mb-3">
             <AccordionItem>
               <AccordionDefaultItemHeading>
                 <h3>Coverage pool</h3>
