@@ -2,6 +2,10 @@
   &__form_checkbox {
   }
 
+  &__total-ready-to-release-amount {
+    display: inline;
+  }
+
   &__grants-accordion {
     width: 100%;
 
@@ -41,19 +45,27 @@
     font-weight: 400;
   }
 
-  &__accordion-info-row {
+  &__info-row {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
   }
 
   &__info-row-title {
     color: @color-grey-70;
-    font-weight: 500;
-    text-transform: uppercase;
+
+    &--small {
+      text-transform: uppercase;
+      font-weight: 500;
+      font-size: 12px;
+    }
   }
 
-  &__info-row-title {
-    color: @color-grey-60;
+  &__info-row-value {
+    color: @color-grey-70;
+    font-size: 14px;
+    &--small {
+      color: @color-grey-60;
+      font-size: 12px;
+    }
   }
 }

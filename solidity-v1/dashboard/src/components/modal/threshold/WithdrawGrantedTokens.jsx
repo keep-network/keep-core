@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 import { withBaseModal } from "../withBaseModal"
 import { ModalBody, ModalFooter, ModalHeader } from "../Modal"
 import Button, { SubmitButton } from "../../Button"
@@ -16,11 +16,17 @@ import { KEEP } from "../../../utils/token.utils"
 import TokenAmount from "../../TokenAmount"
 import { shortenAddress } from "../../../utils/general.utils"
 import moment from "moment"
+import { add } from "../../../utils/arithmetics.utils"
 
 export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   const releaseTokens = useReleaseTokens()
 
-  console.log("grants", grants)
+  const totalReadyToRelease = useMemo(() => {
+    return grants
+      .map((grant) => grant.readyToRelease)
+      .reduce((previous, current) => add(previous, current), 0)
+      .toString()
+  }, [grants])
 
   const onWithdrawClick = (awaitingPromise) => {
     for (const grantId of formik.values.grantIds) {
@@ -50,6 +56,21 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
           your token grant.
         </p>
         <div>
+          <div className="withdraw-granted-tokens__info-row">
+            <h4 className="withdraw-granted-tokens__info-row-title">
+              Withdraw:
+            </h4>
+            <span className="withdraw-granted-tokens__info-row-value mr-1">
+              total:{" "}
+              <TokenAmount
+                amount={totalReadyToRelease}
+                token={KEEP}
+                wrapperClassName="withdraw-granted-tokens__total-ready-to-release-amount"
+                amountClassName="text-grey-60"
+                symbolClassName="text-grey-60"
+              />
+            </span>
+          </div>
           <form>{grants.map((grant) => renderGrant(grant, formik))}</form>
         </div>
       </ModalBody>
@@ -105,7 +126,7 @@ const renderGrant = (grant, formik) => (
           <AccordionItemButton>
             <div className="withdraw-granted-tokens__token-amount">
               <TokenAmount
-                amount={grant.amount}
+                amount={grant.readyToRelease}
                 amountClassName={"h4 text-mint-100"}
                 symbolClassName={"h4 text-mint-100"}
                 token={KEEP}
@@ -117,27 +138,27 @@ const renderGrant = (grant, formik) => (
           </AccordionItemButton>
         </AccordionItemHeading>
         <AccordionItemPanel>
-          <div className="withdraw-granted-tokens__accordion-info-row">
-            <span className="withdraw-granted-tokens__info-row-title">
+          <div className="withdraw-granted-tokens__info-row">
+            <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
               token grant id
             </span>
-            <span className="withdraw-granted-tokens__info-row-value">
+            <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
               {grant.id}
             </span>
           </div>
-          <div className="withdraw-granted-tokens__accordion-info-row">
-            <span className="withdraw-granted-tokens__info-row-title">
+          <div className="withdraw-granted-tokens__info-row">
+            <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
               date issued
             </span>
-            <span className="withdraw-granted-tokens__info-row-value">
+            <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
               {moment.unix(grant.start).format("MM/DD/YYYY")}
             </span>
           </div>
-          <div className="withdraw-granted-tokens__accordion-info-row">
-            <span className="withdraw-granted-tokens__info-row-title">
+          <div className="withdraw-granted-tokens__info-row">
+            <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
               wallet
             </span>
-            <span className="withdraw-granted-tokens__info-row-value">
+            <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
               {shortenAddress(grant.grantee)}
             </span>
           </div>
