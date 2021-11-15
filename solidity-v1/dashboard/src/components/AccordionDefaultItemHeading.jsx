@@ -12,7 +12,7 @@ const AccordionDefaultItemHeading = ({
 }) => {
   return (
     <AccordionItemHeading
-      className={`accordion__heading--with-plus-minus-sign ${className}`}
+      className={`accordion__heading accordion__heading--default ${className}`}
     >
       <AccordionItemButton {...accordionItemButtonProps}>
         <h3>{children}</h3>
