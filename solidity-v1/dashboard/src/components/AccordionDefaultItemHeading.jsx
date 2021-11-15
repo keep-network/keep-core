@@ -24,7 +24,7 @@ const AccordionDefaultItemHeading = ({
                 expanded ? "accordion__button--expanded" : ""
               }`}
             >
-              <h3>{children}</h3>
+              {children}
               {expanded ? <Icons.Subtract /> : <Icons.Add />}
             </AccordionItemButton>
           )

@@ -177,7 +177,7 @@ const HowItWorksPage = () => {
           <Accordion allowZeroExpanded>
             <AccordionItem>
               <AccordionDefaultItemHeading>
-                Coverage pool
+                <h3>Coverage pool</h3>
               </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <h5 className="text-violet-80 mb-1">what is it</h5>
@@ -212,7 +212,7 @@ const HowItWorksPage = () => {
 
             <AccordionItem>
               <AccordionDefaultItemHeading>
-                Being an underwriter
+                <h3>Being an underwriter</h3>
               </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <h5 className="text-violet-80 mb-1">
@@ -244,7 +244,7 @@ const HowItWorksPage = () => {
 
             <AccordionItem>
               <AccordionDefaultItemHeading>
-                Insurance events
+                <h3>Insurance events</h3>
               </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <List items={triggers}>
@@ -258,7 +258,7 @@ const HowItWorksPage = () => {
 
             <AccordionItem>
               <AccordionDefaultItemHeading>
-                Earning rewards
+                <h3>Earning rewards</h3>
               </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <h5 className="text-violet-80 mb-1">how you earn</h5>
@@ -283,7 +283,9 @@ const HowItWorksPage = () => {
             </AccordionItem>
 
             <AccordionItem>
-              <AccordionDefaultItemHeading>covKEEP</AccordionDefaultItemHeading>
+              <AccordionDefaultItemHeading>
+                <h3>covKEEP</h3>
+              </AccordionDefaultItemHeading>
               <AccordionItemPanel>
                 <List items={about}>
                   <List.Title className="h5 text-violet-80">About</List.Title>
