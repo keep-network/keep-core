@@ -60,7 +60,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
             <h4 className="withdraw-granted-tokens__info-row-title">
               Withdraw:
             </h4>
-            <span className="withdraw-granted-tokens__info-row-value mr-1">
+            <span className="withdraw-granted-tokens__info-row-value">
               total:{" "}
               <TokenAmount
                 amount={totalReadyToRelease}
@@ -102,7 +102,7 @@ const renderGrant = (grant, formik) => (
     }}
   >
     <FormCheckboxBase
-      className="withdraw-granted-tokens__form_checkbox"
+      className="withdraw-granted-tokens__form_checkbox mr-1"
       name="grantIds"
       type="checkbox"
       value={grant.id}
