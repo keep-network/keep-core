@@ -35,17 +35,26 @@ const AllocationProgressBar = ({
         <h5 className="text-gray-60">{title}</h5>
         <div className="allocation-progress-bar__progress-bar-container">
           <ProgressBar
-            value={isDataFetching ? 0 : currentValue}
             total={isDataFetching ? 100 : totalValue}
-            color={colors.secondary}
             bgColor={colors.grey20}
-            secondaryValue={isDataFetching ? 0 : secondaryValue}
-            secondaryColor={colors.yellowSecondary}
           >
             <ProgressBar.Inline
               className="allocation-progress-bar__progress-bar-wrapper"
               height={20}
-            />
+            >
+              <ProgressBar.InlineItem
+                value={
+                  isDataFetching ? 0 : add(currentValue, secondaryValue | 0)
+                }
+                color={colors.secondary}
+              />
+              <OnlyIf condition={!!secondaryValue}>
+                <ProgressBar.InlineItem
+                  value={isDataFetching ? 0 : secondaryValue}
+                  color={colors.yellowSecondary}
+                />
+              </OnlyIf>
+            </ProgressBar.Inline>
           </ProgressBar>
           <span className="text-grey-70 ml-1 allocation-progress-bar__allocation-percentage-value">
             {/** TODO: 2 decimal places, maybe even print it as >99 % and <1%

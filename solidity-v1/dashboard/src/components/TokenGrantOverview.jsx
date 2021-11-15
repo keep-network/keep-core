@@ -168,7 +168,12 @@ export const TokenGrantWithdrawnTokensDetails = ({
         color={colors.secondary}
         bgColor={colors.bgSecondary}
       >
-        <ProgressBar.Inline height={20} />
+        <ProgressBar.Inline height={20}>
+          <ProgressBar.InlineItem
+            value={selectedGrant.released || 0}
+            color={colors.secondary}
+          />
+        </ProgressBar.Inline>
         <ProgressBar.Legend
           valueLabel="Withdrawn from Grant"
           leftValueLabel="Available to Withdraw"
