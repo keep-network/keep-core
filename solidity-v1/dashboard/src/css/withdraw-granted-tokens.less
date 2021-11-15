@@ -1,0 +1,59 @@
+.withdraw-granted-tokens {
+  &__form_checkbox {
+  }
+
+  &__grants-accordion {
+    width: 100%;
+
+    .accordion {
+      &__button {
+        border-bottom: none;
+        align-items: center;
+      }
+
+      &__button:after {
+        display: inline-block;
+        content: "";
+        height: 5px;
+        width: 5px;
+        margin-top: 5px;
+        border-bottom: 2px solid black;
+        border-right: 2px solid black;
+        transform: rotate(-135deg);
+      }
+
+      &__button[aria-expanded="true"]::after,
+      &__button[aria-selected="true"]::after {
+        transform: rotate(45deg);
+        transform-origin: 100% 40%;
+      }
+
+      &__panel {
+        padding: 0.1rem 1rem;
+      }
+    }
+  }
+
+  &__details-text {
+    margin-left: auto;
+    margin-right: 0.5rem;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  &__accordion-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+
+  &__info-row-title {
+    color: @color-grey-70;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  &__info-row-title {
+    color: @color-grey-60;
+  }
+}

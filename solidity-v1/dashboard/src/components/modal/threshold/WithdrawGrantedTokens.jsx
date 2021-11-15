@@ -12,9 +12,15 @@ import {
   AccordionItemHeading,
   AccordionItemPanel,
 } from "react-accessible-accordion"
+import { KEEP } from "../../../utils/token.utils"
+import TokenAmount from "../../TokenAmount"
+import { shortenAddress } from "../../../utils/general.utils"
+import moment from "moment"
 
 export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   const releaseTokens = useReleaseTokens()
+
+  console.log("grants", grants)
 
   const onWithdrawClick = (awaitingPromise) => {
     for (const grantId of formik.values.grantIds) {
@@ -68,12 +74,14 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
 
 const renderGrant = (grant, formik) => (
   <div
+    key={`Grant-${grant.id}`}
     style={{
       display: "flex",
+      alignItems: "baseline",
     }}
   >
     <FormCheckboxBase
-      key={`Grant-${grant.id}`}
+      className="withdraw-granted-tokens__form_checkbox"
       name="grantIds"
       type="checkbox"
       value={grant.id}
@@ -87,16 +95,54 @@ const renderGrant = (grant, formik) => (
         }
         formik.setFieldValue("grantIds", [...set])
       }}
-      withoutLabel
+    />
+    <Accordion
+      allowZeroExpanded
+      className={"withdraw-granted-tokens__grants-accordion"}
     >
-      <Accordion allowZeroExpanded>
-        <AccordionItem>
-          <AccordionItemHeading>
-            <AccordionItemButton>Grant #{grant.id} details</AccordionItemButton>
-          </AccordionItemHeading>
-          <AccordionItemPanel>SuperTest</AccordionItemPanel>
-        </AccordionItem>
-      </Accordion>
-    </FormCheckboxBase>
+      <AccordionItem>
+        <AccordionItemHeading>
+          <AccordionItemButton>
+            <div className="withdraw-granted-tokens__token-amount">
+              <TokenAmount
+                amount={grant.amount}
+                amountClassName={"h4 text-mint-100"}
+                symbolClassName={"h4 text-mint-100"}
+                token={KEEP}
+              />
+            </div>
+            <span className="withdraw-granted-tokens__details-text">
+              Details
+            </span>
+          </AccordionItemButton>
+        </AccordionItemHeading>
+        <AccordionItemPanel>
+          <div className="withdraw-granted-tokens__accordion-info-row">
+            <span className="withdraw-granted-tokens__info-row-title">
+              token grant id
+            </span>
+            <span className="withdraw-granted-tokens__info-row-value">
+              {grant.id}
+            </span>
+          </div>
+          <div className="withdraw-granted-tokens__accordion-info-row">
+            <span className="withdraw-granted-tokens__info-row-title">
+              date issued
+            </span>
+            <span className="withdraw-granted-tokens__info-row-value">
+              {moment.unix(grant.start).format("MM/DD/YYYY")}
+            </span>
+          </div>
+          <div className="withdraw-granted-tokens__accordion-info-row">
+            <span className="withdraw-granted-tokens__info-row-title">
+              wallet
+            </span>
+            <span className="withdraw-granted-tokens__info-row-value">
+              {shortenAddress(grant.grantee)}
+            </span>
+          </div>
+        </AccordionItemPanel>
+      </AccordionItem>
+    </Accordion>
   </div>
 )

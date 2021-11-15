@@ -10,18 +10,19 @@ export const FormCheckboxBase = ({
   name,
   checked,
   withoutLabel = false,
+  className = "",
   ...inputProps
 }) => {
   return (
     <>
-      <div className="form-checkbox">
+      <div className={`form-checkbox ${className}`}>
         <input id={name} checked={checked} {...inputProps} />
         <OnlyIf condition={!withoutLabel}>
           <label htmlFor={name}>{children}</label>
         </OnlyIf>
       </div>
       <OnlyIf condition={withoutLabel}>
-        <div>{children}</div>
+        <div className={"form-checkbox__text"}>{children}</div>
       </OnlyIf>
       <OnlyIf condition={withError && hasError}>
         <div className="form-error">{errorMsg}</div>
