@@ -8,7 +8,7 @@
   }
 
   &__button {
-    color: #444;
+    color: @color-black;
     cursor: pointer;
     padding: 18px;
     width: 100%;
@@ -17,11 +17,16 @@
     display: flex;
     justify-content: space-between;
     border-bottom: 1px solid @color-grey-50;
+
+    &--expanded {
+      border-bottom: none;
+    }
   }
 
   &__panel {
     padding: 15px;
     animation: fadein 0.35s ease-in;
+    border-bottom: 1px solid @color-grey-50;
   }
 }
 

@@ -14,14 +14,21 @@ const AccordionDefaultItemHeading = ({
     <AccordionItemHeading
       className={`accordion__heading accordion__heading--default ${className}`}
     >
-      <AccordionItemButton {...accordionItemButtonProps}>
-        <h3>{children}</h3>
-        <div>
-          <AccordionItemState>
-            {({ expanded }) => (expanded ? "-" : "+")}
-          </AccordionItemState>
-        </div>
-      </AccordionItemButton>
+      <AccordionItemState>
+        {({ expanded }) => {
+          return (
+            <AccordionItemButton
+              {...accordionItemButtonProps}
+              className={`accordion__button ${
+                expanded ? "accordion__button--expanded" : ""
+              }`}
+            >
+              <h3>{children}</h3>
+              <div>{expanded ? "-" : "+"}</div>
+            </AccordionItemButton>
+          )
+        }}
+      </AccordionItemState>
     </AccordionItemHeading>
   )
 }
