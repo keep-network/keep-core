@@ -52,6 +52,10 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.lpTokens,
     wrapperClassName: "tbtc-eth",
+    incentivesRemoved: true,
+    incentivesRemovedBannerProps: {
+      link: LINK.proposals.removeIncentivesForTBTCETHpool,
+    },
   },
   {
     id: "TBTC_SADDLE",

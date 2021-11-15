@@ -58,6 +58,8 @@ export const LINK = {
       "https://forum.keep.network/t/shifting-incentives-towards-tbtc-v2-and-coverage-pool-version-2/322",
     removeIncentivesForKEEPTBTCpool:
       "https://forum.keep.network/t/proposal-remove-incentives-for-the-keep-tbtc-pool/56",
+    removeIncentivesForTBTCETHpool:
+      "https://forum.keep.network/t/proposal-to-remove-incentives-for-tbtc-eth-pool/341",
   },
   tbtcDapp: "https://dapp.tbtc.network",
 }
