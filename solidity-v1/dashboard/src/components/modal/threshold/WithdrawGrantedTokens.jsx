@@ -73,7 +73,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
             </span>
           </div>
           <form>
-            {[grants[0]].map((grant) => renderGrant(grant, 1, formik))}
+            {grants.map((grant) => renderGrant(grant, grants.length, formik))}
           </form>
         </div>
       </ModalBody>
