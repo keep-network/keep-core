@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop */
 
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
-import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
+import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
@@ -14,7 +14,7 @@ import type {
   RandomBeaconStub,
   TestToken,
   RelayStub,
-  SortitionPoolStub,
+  SortitionPool,
   StakingStub,
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
@@ -22,26 +22,25 @@ import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
 const { time } = helpers
 const { mineBlocks } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
+const TWO_WEEKS = 1209600 // 2 weeks in seconds
 
 const fixture = async () => {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-  const deployment = await randomBeaconDeployment(sortitionPoolStub)
+  const deployment = await randomBeaconDeployment()
 
-  const signers = await registerOperators(
-    deployment.sortitionPool as SortitionPoolStub,
+  const operators = await registerOperators(
+    deployment.randomBeacon as RandomBeacon,
     (await getUnnamedAccounts()).slice(0, constants.groupSize)
   )
 
   return {
     randomBeacon: deployment.randomBeacon as RandomBeacon,
-    sortitionPool: deployment.sortitionPool as SortitionPoolStub,
+    sortitionPool: deployment.sortitionPool as SortitionPool,
     testToken: deployment.testToken as TestToken,
     staking: deployment.stakingStub as StakingStub,
     relayStub: (await (
       await ethers.getContractFactory("RelayStub")
     ).deploy()) as RelayStub,
-    signers,
+    operators,
   }
 }
 
@@ -58,43 +57,57 @@ describe("RandomBeacon - Relay", () => {
   const invalidEntryFirstEligibleMemberIndex = 3
 
   let requester: SignerWithAddress
+  let notifier: SignerWithAddress
   let member3: SignerWithAddress
+  let member15: SignerWithAddress
   let member16: SignerWithAddress
   let member17: SignerWithAddress
   let member18: SignerWithAddress
-  let signers: Operator[]
-  let signersIDs: OperatorID[]
-  let signersAddresses: Address[]
+  let members: Operator[]
+  let membersIDs: OperatorID[]
+  let membersAddresses: Address[]
 
   let randomBeacon: RandomBeacon
-  let sortitionPool: SortitionPoolStub
+  let sortitionPool: SortitionPool
   let testToken: TestToken
   let staking: StakingStub
   let relayStub: RelayStub
 
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+    notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
   })
 
   beforeEach("load test fixture", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ randomBeacon, sortitionPool, testToken, staking, relayStub, signers } =
-      await waffle.loadFixture(fixture))
+    let operators
+      // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({
+      randomBeacon,
+      sortitionPool,
+      testToken,
+      staking,
+      relayStub,
+      operators,
+    } = await waffle.loadFixture(fixture))
 
-    signersIDs = signers.map((signer) => signer.id)
-    signersAddresses = signers.map((signer) => signer.address)
+    members = operators // All operators will be members of the group used in tests.
+    membersIDs = members.map((member) => member.id)
+    membersAddresses = members.map((member) => member.address)
 
     member3 = await ethers.getSigner(
-      signers[invalidEntryFirstEligibleMemberIndex - 1].address
+      members[invalidEntryFirstEligibleMemberIndex - 1].address
+    )
+    member15 = await ethers.getSigner(
+      members[firstEligibleMemberIndex - 1 - 1].address
     )
     member16 = await ethers.getSigner(
-      signers[firstEligibleMemberIndex - 1].address
+      members[firstEligibleMemberIndex - 1].address
     )
     member17 = await ethers.getSigner(
-      signers[firstEligibleMemberIndex + 1 - 1].address
+      members[firstEligibleMemberIndex + 1 - 1].address
     )
     member18 = await ethers.getSigner(
-      signers[firstEligibleMemberIndex + 2 - 1].address
+      members[firstEligibleMemberIndex + 2 - 1].address
     )
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
@@ -103,7 +116,7 @@ describe("RandomBeacon - Relay", () => {
   describe("requestRelayEntry", () => {
     context("when groups exist", () => {
       beforeEach(async () => {
-        await createGroup(randomBeacon as RandomBeaconStub, signers)
+        await createGroup(randomBeacon as RandomBeaconStub, members)
       })
 
       context("when there is no other relay entry in progress", () => {
@@ -174,7 +187,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("submitRelayEntry", () => {
     beforeEach(async () => {
-      await createGroup(randomBeacon as RandomBeaconStub, signers)
+      await createGroup(randomBeacon as RandomBeaconStub, members)
     })
 
     context("when relay request is in progress", () => {
@@ -202,9 +215,8 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
-                    await expect(tx).to.not.emit(
-                      sortitionPool,
-                      "OperatorsRemoved"
+                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
+                      constants.groupSize
                     )
                   })
 
@@ -219,7 +231,6 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should terminate the relay request", async () => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                     expect(await randomBeacon.isRelayRequestInProgress()).to.be
                       .false
                   })
@@ -230,6 +241,7 @@ describe("RandomBeacon - Relay", () => {
                 "when other than first eligible member submits before the soft timeout",
                 () => {
                   let tx: ContractTransaction
+                  let txTimestamp: number
 
                   beforeEach(async () => {
                     // We wait 20 blocks to make two more members eligible.
@@ -242,12 +254,20 @@ describe("RandomBeacon - Relay", () => {
                         firstEligibleMemberIndex + 2,
                         blsData.groupSignature
                       )
+
+                    // Wait until tx is mined to get tx block timestamp.
+                    const receipt = await tx.wait()
+                    txTimestamp = (
+                      await ethers.provider.getBlock(receipt.blockNumber)
+                    ).timestamp
                   })
 
-                  it("should remove members who did not submit from the sortition pool", async () => {
-                    await expect(tx)
-                      .to.emit(sortitionPool, "OperatorsRemoved")
-                      .withArgs([member16.address, member17.address])
+                  it("should ban sortition pool rewards for members who did not submit", async () => {
+                    // TODO: Assert members 16 and 17 are banned for given
+                    //       punishment duration. This can be done once
+                    //       `banRewards` is correctly implemented on the
+                    //       sortition pool side. Remember about checking
+                    //       gas deposits as well.
                   })
 
                   it("should not slash any members", async () => {
@@ -261,7 +281,6 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should terminate the relay request", async () => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
                     expect(await randomBeacon.isRelayRequestInProgress()).to.be
                       .false
                   })
@@ -272,7 +291,6 @@ describe("RandomBeacon - Relay", () => {
                 "when first eligible member submits after the soft timeout",
                 () => {
                   let tx: ContractTransaction
-                  let receipt: ContractReceipt
 
                   beforeEach(async () => {
                     // Let's assume we want to submit the relay entry after 75%
@@ -291,24 +309,25 @@ describe("RandomBeacon - Relay", () => {
                         firstEligibleMemberIndex,
                         blsData.groupSignature
                       )
-
-                    receipt = await tx.wait()
                   })
 
                   it("should not remove any members from the sortition pool", async () => {
-                    await expect(tx).to.not.emit(
-                      sortitionPool,
-                      "OperatorsRemoved"
+                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
+                      constants.groupSize
                     )
                   })
 
-                  it("should slash 75% of slashing amount for all members ", async () => {
+                  it("should slash a correct portion of the slashing amount for all members ", async () => {
                     // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
                     // 75% of the soft timeout period elapsed so we expect
                     // `750e18` to be slashed.
                     await expect(tx)
                       .to.emit(staking, "Slashed")
-                      .withArgs(to1e18(750), signersAddresses)
+                      .withArgs(to1e18(750), membersAddresses)
+
+                    await expect(tx)
+                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
+                      .withArgs(1, to1e18(750), membersAddresses)
                   })
 
                   it("should emit RelayEntrySubmitted event", async () => {
@@ -318,7 +337,74 @@ describe("RandomBeacon - Relay", () => {
                   })
 
                   it("should terminate the relay request", async () => {
-                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                    expect(await randomBeacon.isRelayRequestInProgress()).to.be
+                      .false
+                  })
+                }
+              )
+
+              context(
+                "when other than first eligible member submits after the soft timeout",
+                () => {
+                  let tx: ContractTransaction
+                  let txTimestamp: number
+
+                  beforeEach(async () => {
+                    // Let's assume we want to submit the relay entry after 75%
+                    // of the soft timeout period elapses. If so we need to
+                    // mine the following number of blocks:
+                    // `groupSize * relayEntrySubmissionEligibilityDelay +
+                    // (0.75 * relayEntryHardTimeout)`. However, we need to
+                    // subtract one block because the relay entry submission
+                    // transaction will move the blockchain ahead by one block
+                    // due to the Hardhat auto-mine feature.
+                    await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
+
+                    // The last eligible member `15` submits the result.
+                    // This is the worst case gas-wise as it requires to
+                    // ban 63 members from the sortition pool rewards.
+                    tx = await randomBeacon
+                      .connect(member15)
+                      .submitRelayEntry(
+                        firstEligibleMemberIndex - 1,
+                        blsData.groupSignature
+                      )
+
+                    // Wait until tx is mined to get tx block timestamp.
+                    const receipt = await tx.wait()
+                    txTimestamp = (
+                      await ethers.provider.getBlock(receipt.blockNumber)
+                    ).timestamp
+                  })
+
+                  it("should ban sortition pool rewards for members who did not submit", async () => {
+                    // TODO: Assert all group members but the submitter (member 15)
+                    //       are banned for given punishment duration. This can
+                    //       be done once `banRewards` is correctly implemented
+                    //       on the sortition pool side. Remember about checking
+                    //       gas deposits as well.
+                  })
+
+                  it("should slash a correct portion of the slashing amount for all members ", async () => {
+                    // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
+                    // 75% of the soft timeout period elapsed so we expect
+                    // `750e18` to be slashed.
+                    await expect(tx)
+                      .to.emit(staking, "Slashed")
+                      .withArgs(to1e18(750), membersAddresses)
+
+                    await expect(tx)
+                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
+                      .withArgs(1, to1e18(750), membersAddresses)
+                  })
+
+                  it("should emit RelayEntrySubmitted event", async () => {
+                    await expect(tx)
+                      .to.emit(randomBeacon, "RelayEntrySubmitted")
+                      .withArgs(1, blsData.groupSignature)
+                  })
+
+                  it("should terminate the relay request", async () => {
                     expect(await randomBeacon.isRelayRequestInProgress()).to.be
                       .false
                   })
@@ -417,7 +503,7 @@ describe("RandomBeacon - Relay", () => {
 
   describe("reportRelayEntryTimeout", () => {
     beforeEach(async () => {
-      await createGroup(randomBeacon, signers)
+      await createGroup(randomBeacon, members)
 
       await approveTestToken()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
@@ -438,20 +524,24 @@ describe("RandomBeacon - Relay", () => {
             // made to ensure it is not selected for signing the original request.
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              signersIDs
+              membersIDs
             )
 
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`.
             await mineBlocks(64 * 10 + 5760)
 
-            tx = await randomBeacon.reportRelayEntryTimeout()
+            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
-          it("should slash entire stakes of all group members", async () => {
+          it("should slash the full slashing amount for all group members", async () => {
             await expect(tx)
-              .to.emit(staking, "Slashed")
-              .withArgs(to1e18(1000), signersAddresses)
+              .to.emit(staking, "Seized")
+              .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
+
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+              .withArgs(1, to1e18(1000), membersAddresses)
           })
 
           it("should terminate the group", async () => {
@@ -461,7 +551,7 @@ describe("RandomBeacon - Relay", () => {
           it("should emit RelayEntryTimedOut event", async () => {
             await expect(tx)
               .to.emit(randomBeacon, "RelayEntryTimedOut")
-              .withArgs(1)
+              .withArgs(1, 0)
           })
 
           it("should retry current relay request", async () => {
@@ -485,13 +575,17 @@ describe("RandomBeacon - Relay", () => {
           // relayEntryHardTimeout`.
           await mineBlocks(64 * 10 + 5760)
 
-          tx = await randomBeacon.reportRelayEntryTimeout()
+          tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
         })
 
-        it("should slash entire stakes of all group members", async () => {
+        it("should slash the full slashing amount for all group members", async () => {
           await expect(tx)
-            .to.emit(staking, "Slashed")
-            .withArgs(to1e18(1000), signersAddresses)
+            .to.emit(staking, "Seized")
+            .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
+
+          await expect(tx)
+            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+            .withArgs(1, to1e18(1000), membersAddresses)
         })
 
         it("should terminate the group", async () => {
@@ -501,7 +595,7 @@ describe("RandomBeacon - Relay", () => {
         it("should emit RelayEntryTimedOut event", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "RelayEntryTimedOut")
-            .withArgs(1)
+            .withArgs(1, 0)
         })
 
         it("should clean up current relay request data", async () => {
@@ -569,18 +663,18 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getInactiveMembers", () => {
-    let members: OperatorID[]
+    let groupMembers: OperatorID[]
 
     beforeEach(async () => {
-      members = [
-        signersIDs[0], // member index 1
-        signersIDs[1], // member index 2
-        signersIDs[2], // member index 3
-        signersIDs[3], // member index 4
-        signersIDs[4], // member index 5
-        signersIDs[5], // member index 6
-        signersIDs[6], // member index 7
-        signersIDs[7], // member index 8
+      groupMembers = [
+        membersIDs[0], // member index 1
+        membersIDs[1], // member index 2
+        membersIDs[2], // member index 3
+        membersIDs[3], // member index 4
+        membersIDs[4], // member index 5
+        membersIDs[5], // member index 6
+        membersIDs[6], // member index 7
+        membersIDs[7], // member index 8
       ]
     })
 
@@ -589,7 +683,7 @@ describe("RandomBeacon - Relay", () => {
         const inactiveMembers = await relayStub.getInactiveMembers(
           5,
           5,
-          members
+          groupMembers
         )
 
         await expect(inactiveMembers.length).to.be.equal(0)
@@ -601,13 +695,13 @@ describe("RandomBeacon - Relay", () => {
         const inactiveMembers = await relayStub.getInactiveMembers(
           8,
           5,
-          members
+          groupMembers
         )
 
         await expect(inactiveMembers.length).to.be.equal(3)
-        await expect(inactiveMembers[0]).to.be.equal(members[4])
-        await expect(inactiveMembers[1]).to.be.equal(members[5])
-        await expect(inactiveMembers[2]).to.be.equal(members[6])
+        await expect(inactiveMembers[0]).to.be.equal(groupMembers[4])
+        await expect(inactiveMembers[1]).to.be.equal(groupMembers[5])
+        await expect(inactiveMembers[2]).to.be.equal(groupMembers[6])
       })
     })
 
@@ -616,16 +710,16 @@ describe("RandomBeacon - Relay", () => {
         const inactiveMembers = await relayStub.getInactiveMembers(
           3,
           5,
-          members
+          groupMembers
         )
 
         await expect(inactiveMembers.length).to.be.equal(6)
-        await expect(inactiveMembers[0]).to.be.equal(members[4])
-        await expect(inactiveMembers[1]).to.be.equal(members[5])
-        await expect(inactiveMembers[2]).to.be.equal(members[6])
-        await expect(inactiveMembers[3]).to.be.equal(members[7])
-        await expect(inactiveMembers[4]).to.be.equal(members[0])
-        await expect(inactiveMembers[5]).to.be.equal(members[1])
+        await expect(inactiveMembers[0]).to.be.equal(groupMembers[4])
+        await expect(inactiveMembers[1]).to.be.equal(groupMembers[5])
+        await expect(inactiveMembers[2]).to.be.equal(groupMembers[6])
+        await expect(inactiveMembers[3]).to.be.equal(groupMembers[7])
+        await expect(inactiveMembers[4]).to.be.equal(groupMembers[0])
+        await expect(inactiveMembers[5]).to.be.equal(groupMembers[1])
       })
     })
   })
@@ -705,12 +799,14 @@ describe("RandomBeacon - Relay", () => {
       .approve(randomBeacon.address, relayRequestFee)
   }
 
-  async function assertMembersEligible(members: number[], groupSize: number) {
-    for (let i = 0; i < members.length; i++) {
+  async function assertMembersEligible(
+    checkedMembers: number[],
+    groupSize: number
+  ) {
+    for (let i = 0; i < checkedMembers.length; i++) {
       expect(
-        // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
         await relayStub.isEligible(
-          members[i],
+          checkedMembers[i],
           blsData.groupSignature,
           groupSize
         )
@@ -719,14 +815,13 @@ describe("RandomBeacon - Relay", () => {
   }
 
   async function assertMembersNotEligible(
-    members: number[],
+    checkedMembers: number[],
     groupSize: number
   ) {
-    for (let i = 0; i < members.length; i++) {
+    for (let i = 0; i < checkedMembers.length; i++) {
       expect(
-        // eslint-disable-next-line no-await-in-loop,@typescript-eslint/no-unused-expressions
         await relayStub.isEligible(
-          members[i],
+          checkedMembers[i],
           blsData.groupSignature,
           groupSize
         )

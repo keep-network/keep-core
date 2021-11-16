@@ -35,7 +35,7 @@ const fixture = async () => {
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
-    deployment.sortitionPool as SortitionPoolStub,
+    deployment.randomBeacon as RandomBeaconStub,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 

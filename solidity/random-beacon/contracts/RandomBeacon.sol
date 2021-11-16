@@ -14,9 +14,10 @@
 
 pragma solidity ^0.8.6;
 
+import "./libraries/DKG.sol";
+import "./libraries/GasStation.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
-import "./libraries/DKG.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -30,9 +31,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// TODO: Add a dependency to `keep-network/sortition-pools` and use sortition
 ///       pool interface from there.
 interface ISortitionPool {
-    function joinPool(address operator) external;
+    function insertOperator(address operator) external;
 
-    function removeOperators(uint32[] calldata ids) external;
+    function banRewards(uint32[] calldata operators, uint256 duration) external;
+
+    function updateOperatorStatus(uint32 id) external;
 
     function isOperatorInPool(address operator) external view returns (bool);
 
@@ -44,6 +47,8 @@ interface ISortitionPool {
         external
         view
         returns (address[] memory);
+
+    function getOperatorID(address operator) external view returns (uint32);
 }
 
 /// @title Staking contract interface
@@ -55,6 +60,13 @@ interface ISortitionPool {
 ///       staking interface from there.
 interface IRandomBeaconStaking {
     function slash(uint256 amount, address[] memory operators) external;
+
+    function seize(
+        uint256 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        address[] memory operators
+    ) external;
 }
 
 /// @title Keep Random Beacon
@@ -70,6 +82,7 @@ contract RandomBeacon is Ownable {
     using Relay for Relay.Data;
     using Callback for Callback.Data;
     using SafeERC20 for IERC20;
+    using GasStation for GasStation.Data;
 
     // Constant parameters
 
@@ -124,6 +137,7 @@ contract RandomBeacon is Ownable {
     Groups.Data internal groups;
     Relay.Data internal relay;
     Callback.Data internal callback;
+    GasStation.Data internal gasStation;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -188,7 +202,22 @@ contract RandomBeacon is Ownable {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
-    event RelayEntryTimedOut(uint256 indexed requestId);
+    event RelayEntryTimedOut(
+        uint256 indexed requestId,
+        uint64 terminatedGroupId
+    );
+
+    event RelayEntryDelaySlashed(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
+    event RelayEntryTimeoutSlashed(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
@@ -201,6 +230,7 @@ contract RandomBeacon is Ownable {
         IERC20 _tToken,
         IRandomBeaconStaking _staking
     ) {
+        // TODO: RandomBeacon must be the owner of the sortition pool.
         sortitionPool = _sortitionPool;
         tToken = _tToken;
         staking = _staking;
@@ -220,7 +250,6 @@ contract RandomBeacon is Ownable {
         relay.initSeedEntry();
         relay.initSortitionPool(_sortitionPool);
         relay.initTToken(_tToken);
-        relay.initStaking(_staking);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
@@ -374,14 +403,33 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Registers caller in the sortition pool.
-    function registerMemberCandidate() external {
+    /// @notice Registers the caller in the sortition pool.
+    /// @dev Creates a gas deposit tied to the operator address. The gas
+    ///      deposit is released when the operator is banned for sortition pool
+    ///      rewards or leaves the pool during status update.
+    function registerOperator() external {
         address operator = msg.sender;
+
         require(
             !sortitionPool.isOperatorInPool(operator),
             "Operator is already registered"
         );
-        sortitionPool.joinPool(operator);
+
+        gasStation.depositGas(operator);
+        sortitionPool.insertOperator(operator);
+    }
+
+    /// @notice Updates the sortition pool status of the caller.
+    function updateOperatorStatus() external {
+        sortitionPool.updateOperatorStatus(
+            sortitionPool.getOperatorID(msg.sender)
+        );
+
+        // If the operator has been removed from the sortition pool during the
+        // status update, release its gas deposit.
+        if (!sortitionPool.isOperatorInPool(msg.sender)) {
+            gasStation.releaseGas(msg.sender);
+        }
     }
 
     /// @notice Checks whether the given operator is eligible to join the
@@ -531,11 +579,34 @@ contract RandomBeacon is Ownable {
     function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
         external
     {
-        relay.submitEntry(
-            submitterIndex,
-            entry,
-            groups.getGroup(relay.currentRequest.groupId)
+        uint256 currentRequestId = relay.currentRequest.id;
+
+        Groups.Group memory group = groups.getGroup(
+            relay.currentRequest.groupId
         );
+
+        (uint32[] memory inactiveMembers, uint256 slashingAmount) = relay
+            .submitEntry(submitterIndex, entry, group);
+
+        if (inactiveMembers.length > 0) {
+            // TODO: Make the duration a governable parameter.
+            punishOperators(inactiveMembers, 2 weeks);
+        }
+
+        if (slashingAmount > 0) {
+            address[] memory groupMembers = sortitionPool.getIDOperators(
+                group.members
+            );
+
+            // slither-disable-next-line reentrancy-events
+            emit RelayEntryDelaySlashed(
+                currentRequestId,
+                slashingAmount,
+                groupMembers
+            );
+
+            staking.slash(slashingAmount, groupMembers);
+        }
 
         if (relay.requestCount % groupCreationFrequency == 0) {
             // TODO: Once implemented, invoke:
@@ -548,14 +619,20 @@ contract RandomBeacon is Ownable {
     /// @notice Reports a relay entry timeout.
     function reportRelayEntryTimeout() external {
         uint64 groupId = relay.currentRequest.groupId;
+        uint256 slashingAmount = relay
+            .relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembers = sortitionPool.getIDOperators(
             groups.getGroup(groupId).members
         );
 
-        staking.slash(
-            relay.relayEntrySubmissionFailureSlashingAmount,
+        emit RelayEntryTimeoutSlashed(
+            relay.currentRequest.id,
+            slashingAmount,
             groupMembers
         );
+
+        // TODO: Revisit whether the notifier should receive 5% of the slashing amount.
+        staking.seize(slashingAmount, 5, msg.sender, groupMembers);
 
         // TODO: Once implemented, terminate group using `groupId`.
 
@@ -567,6 +644,31 @@ contract RandomBeacon is Ownable {
         } else {
             relay.cleanupOnEntryTimeout();
         }
+    }
+
+    /// @notice Punishes the given operators by banning their sortition pool rewards.
+    /// @dev By the way, this function releases gas deposits made by operators
+    ///      during their registration. See `registerOperator` function. This
+    ///      action makes punishments cheaper gas-wise.
+    /// @param ids IDs of punished operators.
+    /// @param punishmentDuration Duration of the punishment period in seconds.
+    function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
+        internal
+    {
+        address[] memory operators = sortitionPool.getIDOperators(ids);
+
+        for (uint256 i = 0; i < operators.length; i++) {
+            // TODO: Do we need the operator to re-deposit gas once
+            //       current punishment is completed to use it for
+            //       future ones?
+            gasStation.releaseGas(operators[i]);
+        }
+
+        // TODO: Once `banRewards` is implemented on the pool side, make sure
+        //       it does not have an unexpected revert instruction which will
+        //       block entry submission. For example, an operator leaves
+        //       the pool just before it gets banned.
+        sortitionPool.banRewards(ids, punishmentDuration);
     }
 
     /// @return Flag indicating whether a relay entry request is currently

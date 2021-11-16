@@ -2,20 +2,40 @@
 
 pragma solidity ^0.8.6;
 
-import "@keep-network/sortition-pools/contracts/SortitionTree.sol";
+import "./SortitionTreeStub.sol";
 import "../RandomBeacon.sol";
 
 // Stub contract used in tests
-contract SortitionPoolStub is ISortitionPool, SortitionTree {
+contract SortitionPoolStub is ISortitionPool {
+    SortitionTreeStub internal sortitionTree;
+
     mapping(address => bool) public operators;
+    uint256 public operatorsCount;
+
     mapping(address => bool) public eligibleOperators;
 
-    event OperatorsRemoved(address[] operators);
+    event OperatorStatusUpdated(uint32 id);
 
-    function joinPool(address operator) external override {
+    constructor() {
+        sortitionTree = new SortitionTreeStub();
+    }
+
+    function insertOperator(address operator) external override {
         operators[operator] = true;
+        operatorsCount++;
 
-        allocateOperatorID(operator);
+        sortitionTree.publicAllocateOperatorID(operator);
+    }
+
+    function banRewards(uint32[] calldata ids, uint256 duration)
+        external
+        override
+    {
+        // no-op
+    }
+
+    function updateOperatorStatus(uint32 id) external override {
+        emit OperatorStatusUpdated(id);
     }
 
     function isOperatorInPool(address operator)
@@ -41,9 +61,8 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
         return eligibleOperators[operator];
     }
 
-    // TODO: Fix sortition pool public API to accept/return uint32 for IDs
     function getIDOperator(uint32 id) public view override returns (address) {
-        return SortitionTree.getIDOperator(id);
+        return sortitionTree.getIDOperator(id);
     }
 
     function getIDOperators(uint32[] calldata ids)
@@ -55,22 +74,22 @@ contract SortitionPoolStub is ISortitionPool, SortitionTree {
         address[] memory operators = new address[](ids.length);
 
         for (uint256 i = 0; i < ids.length; i++) {
-            operators[i] = SortitionTree.getIDOperator(ids[i]);
+            operators[i] = sortitionTree.getIDOperator(ids[i]);
         }
 
         return operators;
     }
 
-    function removeOperators(uint32[] calldata ids) external override {
-        address[] memory _operators = getIDOperators(ids);
+    function getOperatorID(address operator)
+        public
+        view
+        override
+        returns (uint32)
+    {
+        return sortitionTree.getOperatorID(operator);
+    }
 
-        for (uint256 i = 0; i < _operators.length; i++) {
-            delete operators[_operators[i]];
-            delete eligibleOperators[_operators[i]];
-        }
-
-        if (_operators.length > 0) {
-            emit OperatorsRemoved(_operators);
-        }
+    function transferOwnership(address newOwner) public {
+        // no-op
     }
 }
