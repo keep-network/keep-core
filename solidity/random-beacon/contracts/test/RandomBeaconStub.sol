@@ -38,13 +38,6 @@ contract RandomBeaconStub is RandomBeacon {
         groups.activeGroupsCount++;
     }
 
-    function publicPunishOperators(
-        uint32[] memory operators,
-        uint256 punishmentDuration
-    ) external {
-        punishOperators(operators, punishmentDuration);
-    }
-
     function hasGasDeposit(address operator) external view returns (bool) {
         return gasStation.gasDeposits[operator][0] != 0;
     }

@@ -33,7 +33,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface ISortitionPool {
     function insertOperator(address operator) external;
 
-    function removeOperators(uint32[] calldata ids) external;
+    function banRewards(uint32[] calldata operators, uint256 duration) external;
 
     function updateOperatorStatus(uint32 id) external;
 
@@ -138,14 +138,6 @@ contract RandomBeacon is Ownable {
     Relay.Data internal relay;
     Callback.Data internal callback;
     GasStation.Data internal gasStation;
-
-    // Other parameters
-
-    /// @notice List of operators who are prohibited to join the sortition
-    ///         pool within a specific period of time. The key of the mapping
-    ///         is operator address. The value is a timestamp when the
-    ///         punishment ends.
-    mapping(address => uint256) public punishedOperators;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -413,8 +405,8 @@ contract RandomBeacon is Ownable {
 
     /// @notice Registers the caller in the sortition pool.
     /// @dev Creates a gas deposit tied to the operator address. The gas
-    ///      deposit is released when the operator is kicked out from the
-    ///      sortition pool or leaves it during status update.
+    ///      deposit is released when the operator is banned for sortition pool
+    ///      rewards or leaves the pool during status update.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -422,17 +414,6 @@ contract RandomBeacon is Ownable {
             !sortitionPool.isOperatorInPool(operator),
             "Operator is already registered"
         );
-
-        uint256 punishmentDeadline = punishedOperators[operator];
-
-        // slither-disable-next-line incorrect-equality
-        require(
-            /* solhint-disable-next-line not-rely-on-time */
-            punishmentDeadline == 0 || block.timestamp > punishmentDeadline,
-            "Operator has an active punishment"
-        );
-
-        delete punishedOperators[operator];
 
         gasStation.depositGas(operator);
         sortitionPool.insertOperator(operator);
@@ -665,57 +646,29 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Punishes the given operators by kicking them out from the
-    ///         sortition pool and blocking their reinsertion for a given period
-    ///         of time.
+    /// @notice Punishes the given operators by banning their sortition pool rewards.
     /// @dev By the way, this function releases gas deposits made by operators
     ///      during their registration. See `registerOperator` function. This
     ///      action makes punishments cheaper gas-wise.
     /// @param ids IDs of punished operators.
     /// @param punishmentDuration Duration of the punishment period in seconds.
-    ///
-    /// TODO: This method can be probably optimized in future (depends on
-    ///       changes in the sortition pool). Until then we need to make it
-    ///       that way because we need to make sure we remove operators which
-    ///       are actually in the pool to avoid revert. Two loops are needed
-    ///       because Solidity doesn't allow for memory arrays and mappings.
     function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
         internal
     {
         address[] memory operators = sortitionPool.getIDOperators(ids);
-        uint256 operatorsInPoolCount = 0;
 
         for (uint256 i = 0; i < operators.length; i++) {
-            if (sortitionPool.isOperatorInPool(operators[i])) {
-                operatorsInPoolCount++;
-            }
+            // TODO: Do we need the operator to re-deposit gas once
+            //       current punishment is completed to use it for
+            //       future ones?
+            gasStation.releaseGas(operators[i]);
         }
 
-        uint32[] memory operatorsInPoolIDs = new uint32[](operatorsInPoolCount);
-        uint256 j = 0;
-
-        for (uint256 i = 0; i < operators.length; i++) {
-            address operator = operators[i];
-
-            // Set the punishment regardless the operator is actually
-            // registered in the sortition pool. If the operator is not in pool
-            // at the moment, the punishment will prevent them from joining
-            // during the given period.
-            /* solhint-disable not-rely-on-time */
-            // slither-disable-next-line reentrancy-benign
-            punishedOperators[operator] = block.timestamp + punishmentDuration;
-            /* solhint-enable not-rely-on-time */
-
-            if (sortitionPool.isOperatorInPool(operator)) {
-                gasStation.releaseGas(operator);
-
-                operatorsInPoolIDs[j] = ids[i];
-                j++;
-            }
-        }
-
-        // TODO: Is it possible to kick out operator when pool is locked?
-        sortitionPool.removeOperators(operatorsInPoolIDs);
+        // TODO: Once `banRewards` is implemented on the pool side, make sure
+        //       it does not have an unexpected revert instruction which will
+        //       block entry submission. For example, an operator leaves
+        //       the pool just before it gets banned.
+        sortitionPool.banRewards(ids, punishmentDuration);
     }
 
     /// @return Flag indicating whether a relay entry request is currently
