@@ -627,7 +627,7 @@ describe("RandomBeacon - Relay", () => {
           // relayEntryHardTimeout`.
           await mineBlocks(64 * 10 + 5760)
 
-          tx = await randomBeacon.reportRelayEntryTimeout()
+          tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
         })
 
         it("should slash the full slashing amount for all group members", async () => {
