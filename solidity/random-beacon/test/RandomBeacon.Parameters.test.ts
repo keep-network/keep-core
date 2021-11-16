@@ -4,7 +4,7 @@ import { expect } from "chai"
 import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
 
-import type { RandomBeacon, SortitionPoolStub } from "../typechain"
+import type { RandomBeaconStub, SortitionPoolStub } from "../typechain"
 
 const fixture = async () => {
   const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
@@ -15,7 +15,7 @@ const fixture = async () => {
 describe("RandomBeacon - Parameters", () => {
   let governance: Signer
   let thirdParty: Signer
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconStub
 
   // prettier-ignore
   before(async () => {
@@ -24,7 +24,7 @@ describe("RandomBeacon - Parameters", () => {
 
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(fixture)
-    randomBeacon = contracts.randomBeacon as RandomBeacon
+    randomBeacon = contracts.randomBeacon as RandomBeaconStub
   })
 
   describe("updateRelayEntryParameters", () => {
@@ -49,51 +49,79 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
-      beforeEach(async () => {
-        tx = await randomBeacon
-          .connect(governance)
-          .updateRelayEntryParameters(
-            relayRequestFee,
-            relayEntrySubmissionEligibilityDelay,
-            relayEntryHardTimeout,
+      context("when updating relay params", () => {
+        let tx
+        beforeEach(async () => {
+          tx = await randomBeacon
+            .connect(governance)
+            .updateRelayEntryParameters(
+              relayRequestFee,
+              relayEntrySubmissionEligibilityDelay,
+              relayEntryHardTimeout,
+              callbackGasLimit
+            )
+        })
+
+        it("should update the relay request fee", async () => {
+          expect(await randomBeacon.relayRequestFee()).to.be.equal(
+            relayRequestFee
+          )
+        })
+
+        it("should update the relay entry submission eligibility delay", async () => {
+          expect(
+            await randomBeacon.relayEntrySubmissionEligibilityDelay()
+          ).to.be.equal(relayEntrySubmissionEligibilityDelay)
+        })
+
+        it("should update the relay entry hard timeout", async () => {
+          expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(
+            relayEntryHardTimeout
+          )
+        })
+
+        it("should update the callback gas limit", async () => {
+          expect(await randomBeacon.callbackGasLimit()).to.be.equal(
             callbackGasLimit
           )
+        })
+
+        it("should emit the RelayEntryParametersUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "RelayEntryParametersUpdated")
+            .withArgs(
+              relayRequestFee,
+              relayEntrySubmissionEligibilityDelay,
+              relayEntryHardTimeout,
+              callbackGasLimit
+            )
+        })
       })
 
-      it("should update the relay request fee", async () => {
-        expect(await randomBeacon.relayRequestFee()).to.be.equal(
-          relayRequestFee
-        )
-      })
+      context("when updating groups params", () => {
+        it("should not update the relay entry timeout", async () => {
+          // groupSize: 64
+          // relayEntrySubmissionEligibilityDelay: 10
+          // relayEntryHardTimeout: 5760
+          // relayEntryTimeout = 64 * 10 + 5760
+          expect(await randomBeacon.getRelayEntryTimeout()).to.be.equal(6400)
+        })
 
-      it("should update the relay entry submission eligibility delay", async () => {
-        expect(
-          await randomBeacon.relayEntrySubmissionEligibilityDelay()
-        ).to.be.equal(relayEntrySubmissionEligibilityDelay)
-      })
-
-      it("should update the relay entry hard timeout", async () => {
-        expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(
-          relayEntryHardTimeout
-        )
-      })
-
-      it("should update the callback gas limit", async () => {
-        expect(await randomBeacon.callbackGasLimit()).to.be.equal(
-          callbackGasLimit
-        )
-      })
-
-      it("should emit the RelayEntryParametersUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeacon, "RelayEntryParametersUpdated")
-          .withArgs(
-            relayRequestFee,
-            relayEntrySubmissionEligibilityDelay,
-            relayEntryHardTimeout,
-            callbackGasLimit
-          )
+        it("should update the relay entry timeout", async () => {
+          await randomBeacon
+            .connect(governance)
+            .updateRelayEntryParameters(
+              relayRequestFee,
+              relayEntrySubmissionEligibilityDelay,
+              relayEntryHardTimeout,
+              callbackGasLimit
+            )
+          // groupSize: 64
+          // relayEntrySubmissionEligibilityDelay: 200
+          // relayEntryHardTimeout: 300
+          // relayEntryTimeout = 64 * 200 + 300
+          expect(await randomBeacon.getRelayEntryTimeout()).to.be.equal(13100)
+        })
       })
     })
   })

@@ -242,6 +242,10 @@ contract RandomBeacon is Ownable {
         );
         relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
 
+        // as part of the update, a relay entry timeout needs to be updated
+        // in the Groups lib.
+        groups.setRelayEntryTimeout(relay.relayEntryTimeout());
+
         emit RelayEntryParametersUpdated(
             _relayRequestFee,
             _relayEntrySubmissionEligibilityDelay,
