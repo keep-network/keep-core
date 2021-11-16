@@ -1,24 +1,17 @@
 import React from "react"
-import { SubmitButton } from "./Button"
+import { connect } from "react-redux"
+import Button, { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
 import { ContractsLoaded } from "../contracts"
-import { cancelStake, undelegateStake } from "../actions/web3"
-import { connect } from "react-redux"
 import { MODAL_TYPES } from "../constants/constants"
+import { cancelStake, undelegateStake } from "../actions/web3"
 
 const UndelegateStakeButton = (props) => {
-  const { openConfirmationModal } = useModal()
+  const { openConfirmationModal, openModal } = useModal()
 
-  const undelegate = async (awaitingPromise) => {
-    const {
-      operator,
-      isInInitializationPeriod,
-      isFromGrant,
-      cancelStake,
-      undelegateStake,
-    } = props
-
-    if (isInInitializationPeriod && isFromGrant) {
+  const onCancelStake = async (awaitingPromise) => {
+    const { isFromGrant, operator, cancelStake } = props
+    if (isFromGrant) {
       const { tokenStakingEscrow } = await ContractsLoaded
       await openConfirmationModal(
         MODAL_TYPES.ConfirmCancelDelegationFromGrant,
@@ -26,27 +19,40 @@ const UndelegateStakeButton = (props) => {
           tokenStakingEscrowAddress: tokenStakingEscrow.options.address,
         }
       )
-    } else if (!isInInitializationPeriod) {
-      await openConfirmationModal(MODAL_TYPES.ConfirmUndelegation)
     }
-
-    if (isInInitializationPeriod) {
-      cancelStake(operator, awaitingPromise)
-    } else {
-      undelegateStake(operator, awaitingPromise)
-    }
+    cancelStake(operator, awaitingPromise)
   }
 
-  return (
+  const undelegate = () => {
+    const { operator, undelegationPeriod, amount, authorizer, beneficiary } =
+      props
+
+    openModal(MODAL_TYPES.UndelegateStake, {
+      undelegationPeriod,
+      amount,
+      authorizer,
+      operator,
+      beneficiary,
+    })
+  }
+
+  return props.isInInitializationPeriod ? (
     <SubmitButton
       className={props.btnClassName}
-      onSubmitAction={undelegate}
-      pendingMessageTitle="Undelegate transaction is pending..."
+      onSubmitAction={onCancelStake}
       successCallback={props.successCallback}
       disabled={props.disabled}
     >
-      {props.isInInitializationPeriod ? "cancel" : props.btnText}
+      cancel
     </SubmitButton>
+  ) : (
+    <Button
+      className={props.btnClassName}
+      onClick={undelegate}
+      disabled={props.disabled}
+    >
+      {props.btnText}
+    </Button>
   )
 }
 
