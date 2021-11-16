@@ -98,6 +98,9 @@ describe("RandomBeacon - Relay", () => {
     )
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
+    // groupLifetime: 64 * 10 * 5760 + 100
+    // if the group lifetime is less than 6400 it will be expired on selection.
+    await randomBeacon.updateGroupCreationParameters(100, 6500)
   })
 
   describe("requestRelayEntry", () => {
@@ -162,12 +165,9 @@ describe("RandomBeacon - Relay", () => {
 
     context("when no groups exist", () => {
       it("should revert", async () => {
-        // TODO: The error message should be updated to more meaningful text once `selectGroup` is ready.
         await expect(
           randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        ).to.be.revertedWith(
-          "reverted with panic code 0x12 (Division or modulo division by zero)"
-        )
+        ).to.be.revertedWith("No active groups")
       })
     })
   })

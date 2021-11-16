@@ -48,6 +48,8 @@ describe("RandomBeacon - Callback", () => {
   const relayRequestFee = to1e18(100)
   const relayEntryHardTimeout = 5760
   const relayEntrySubmissionEligibilityDelay = 10
+  const groupCreationFrequency = 100
+  const groupLifetime = 200
 
   // When determining the eligibility queue, the `(blsData.groupSignature % 64) + 1`
   // equation points member`16` as the first eligible one. This is why we use that
@@ -85,6 +87,10 @@ describe("RandomBeacon - Callback", () => {
       relayEntrySubmissionEligibilityDelay,
       relayEntryHardTimeout,
       callbackGasLimit
+    )
+    await randomBeacon.updateGroupCreationParameters(
+      groupCreationFrequency,
+      groupLifetime
     )
 
     submitter = await ethers.getSigner(
