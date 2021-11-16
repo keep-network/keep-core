@@ -600,7 +600,9 @@ contract RandomBeacon is Ownable {
         (uint32[] memory inactiveMembers, uint256 slashingAmount) = relay
             .submitEntry(submitterIndex, entry, group);
 
-        punishOperators(inactiveMembers, 2 weeks);
+        if (inactiveMembers.length > 0) {
+            punishOperators(inactiveMembers, 2 weeks);
+        }
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
