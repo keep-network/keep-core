@@ -190,6 +190,8 @@ library Groups {
             "Group has been already terminated"
         );
         self.groupsData[self.groupsRegistry[groupId]].terminated = true;
+        // Expanding array for a new terminated group that is added below during
+        // sortition in ascending order.
         self.activeTerminatedGroups.push();
         self.activeGroupsCount--;
 
