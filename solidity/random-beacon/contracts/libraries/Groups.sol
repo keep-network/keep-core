@@ -218,9 +218,9 @@ library Groups {
     {
         expireOldGroups(self);
 
-        require(numberOfGroups(self) > 0, "No active groups");
+        require(numberOfActiveGroups(self) > 0, "No active groups");
 
-        uint64 selectedGroup = uint64(seed % numberOfGroups(self));
+        uint64 selectedGroup = uint64(seed % numberOfActiveGroups(self));
         uint64 result = shiftByTerminatedGroups(
             self,
             shiftByExpiredGroups(self, selectedGroup)
@@ -323,12 +323,6 @@ library Groups {
         returns (Group memory)
     {
         return self.groupsData[keccak256(groupPubKey)];
-    }
-
-    /// @notice Gets the number of active groups. Expired and terminated groups
-    ///         are not counted as active.
-    function numberOfGroups(Data storage self) internal view returns (uint64) {
-        return self.activeGroupsCount;
     }
 
     /// @notice Gets the number of active groups. Candidate, expired and terminated

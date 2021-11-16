@@ -14,7 +14,7 @@ const fixture = async () => {
 
 const { mineBlocksTo } = helpers.time
 
-describe.only("Groups", () => {
+describe("Groups", () => {
   const members: number[] = []
   const groupLifetime = 20
   const relayEntryTimeout = 10
