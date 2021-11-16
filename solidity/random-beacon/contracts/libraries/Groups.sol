@@ -195,8 +195,8 @@ library Groups {
         self.activeTerminatedGroups.push();
         self.activeGroupsCount--;
 
-        // Sorting activeTerminatedGroups in ascending order so a non-terminated
-        // group is properly selected.
+        // Sorting activeTerminatedGroups by groupId in ascending order so a
+        // non-terminated group is properly selected.
         uint256 i;
         for (
             i = self.activeTerminatedGroups.length - 1;
