@@ -450,7 +450,7 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |TokenStaking
-|`0x120BC70c5a8C9C8cD83e1E9CD73bed819A18D537`
+|`0x9b20291F016f5CcF8956585681C6c338082925BC`
 |===
 
 [%header,cols=2*]
@@ -459,10 +459,10 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |KeepRandomBeaconService
-|`0xb09ec9c5e33506D89501eE83B37741e3bf4b3565`
+|`0x70DB2e8bd0835FcEF45c7584938e7FD1442fabdd`
 
 |KeepRandomBeaconOperator
-|`0xc7fbeA51dDAd25d8074800031459e7B719612eFf`
+|`0xC5312D5E85263362fF6283b0e9F7E2a242a4d4D8`
 |===
 
 
