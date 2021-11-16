@@ -597,10 +597,10 @@
   version "0.0.1"
   resolved "https://codeload.github.com/keep-network/prettier-config-keep/tar.gz/a1a333e7ac49928a0f6ed39421906dd1e46ab0f3"
 
-"@keep-network/sortition-pools@^1.2.0-dev.7":
-  version "1.2.0-dev.9"
-  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.9.tgz#500e666f5350f3b02438e915e74c8f669fe676b9"
-  integrity sha512-P1h1uDqRWxx6GY/Qo2uV9le5qrD1o8z34HCWedad48dNZW9CkvWOEL6gydLT9nKsRLRfSqeU3as/P0m3f1p9Ag==
+"@keep-network/sortition-pools@1.2.0-dev.10":
+  version "1.2.0-dev.10"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.10.tgz#cd40a070e21087b38acaf047c04c529f9fdc4b83"
+  integrity sha512-nmpTrGSbpNEXaC5kCicUQeXRhwkDAHrQz17puiKzrXv2LGyqlgfgBGb4miRcAOgccivvwo6BtAUFhd6Rqvfd/A==
   dependencies:
     "@openzeppelin/contracts" "^4.3.2"
 
