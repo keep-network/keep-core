@@ -353,10 +353,7 @@ describe("RandomBeacon - Relay", () => {
                       .withArgs(to1e18(750), membersAddresses)
 
                     await expect(tx)
-                      .to.emit(
-                        randomBeacon,
-                        "RelayEntrySoftTimeoutSlashingOccurred"
-                      )
+                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
                       .withArgs(1, to1e18(750), membersAddresses)
                   })
 
@@ -447,10 +444,7 @@ describe("RandomBeacon - Relay", () => {
                       .withArgs(to1e18(750), membersAddresses)
 
                     await expect(tx)
-                      .to.emit(
-                        randomBeacon,
-                        "RelayEntrySoftTimeoutSlashingOccurred"
-                      )
+                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
                       .withArgs(1, to1e18(750), membersAddresses)
                   })
 
@@ -596,10 +590,7 @@ describe("RandomBeacon - Relay", () => {
               .withArgs(to1e18(1000), membersAddresses)
 
             await expect(tx)
-              .to.emit(
-                randomBeacon,
-                "RelayEntrySubmissionFailureSlashingOccurred"
-              )
+              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
               .withArgs(1, to1e18(1000), membersAddresses)
           })
 
@@ -643,10 +634,7 @@ describe("RandomBeacon - Relay", () => {
             .withArgs(to1e18(1000), membersAddresses)
 
           await expect(tx)
-            .to.emit(
-              randomBeacon,
-              "RelayEntrySubmissionFailureSlashingOccurred"
-            )
+            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
             .withArgs(1, to1e18(1000), membersAddresses)
         })
 

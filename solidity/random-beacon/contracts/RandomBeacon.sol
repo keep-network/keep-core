@@ -208,13 +208,13 @@ contract RandomBeacon is Ownable {
         uint64 terminatedGroupId
     );
 
-    event RelayEntrySoftTimeoutSlashingOccurred(
+    event RelayEntryDelaySlashed(
         uint256 indexed requestId,
         uint256 slashingAmount,
         address[] groupMembers
     );
 
-    event RelayEntrySubmissionFailureSlashingOccurred(
+    event RelayEntryTimeoutSlashed(
         uint256 indexed requestId,
         uint256 slashingAmount,
         address[] groupMembers
@@ -608,7 +608,7 @@ contract RandomBeacon is Ownable {
             );
 
             // slither-disable-next-line reentrancy-events
-            emit RelayEntrySoftTimeoutSlashingOccurred(
+            emit RelayEntryDelaySlashed(
                 currentRequestId,
                 slashingAmount,
                 groupMembers
@@ -634,7 +634,7 @@ contract RandomBeacon is Ownable {
             groups.getGroup(groupId).members
         );
 
-        emit RelayEntrySubmissionFailureSlashingOccurred(
+        emit RelayEntryTimeoutSlashed(
             relay.currentRequest.id,
             slashingAmount,
             groupMembers
