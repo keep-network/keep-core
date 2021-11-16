@@ -1,9 +1,5 @@
-import { PENDING_WITHDRAWAL_STATUS } from "../constants/constants"
 import moment from "moment"
-
-/**
- * @typedef {"none" | "pending" | "available_to_withdraw" | "expired"} PendingWithdrawalStatus
- */
+import { PENDING_WITHDRAWAL_STATUS } from "../constants/constants"
 
 /**
  *
@@ -11,7 +7,8 @@ import moment from "moment"
  * @param {Number} withdrawalTimeout - withdrawal timeout in seconds
  * @param {Number} withdrawalInitiatedTimestamp - unix timestamp of the
  * initiated withdrawal
- * @return {PendingWithdrawalStatus} - returns the status of the withdrawal
+ * @return {PENDING_WITHDRAWAL_STATUS} - returns the
+ * status of the withdrawal
  */
 export const getPendingWithdrawalStatus = (
   withdrawalDelay,
@@ -39,7 +36,7 @@ export const getPendingWithdrawalStatus = (
     currentDate.isAfter(endOfWithdrawalDelayDate) &&
     currentDate.isSameOrBefore(endOfWithdrawalTimeoutDate)
   ) {
-    return PENDING_WITHDRAWAL_STATUS.AVAILABLE_TO_WITHDRAW
+    return PENDING_WITHDRAWAL_STATUS.COMPLETED
   } else if (currentDate.isAfter(endOfWithdrawalTimeoutDate)) {
     return PENDING_WITHDRAWAL_STATUS.EXPIRED
   }

@@ -1,17 +1,14 @@
 import React, { useEffect } from "react"
-import {
-  MigrationPortalForm,
-  ConfirmMigrationModal,
-} from "../../components/tbtc-migration"
+import { MigrationPortalForm } from "../../components/tbtc-migration"
 import { TBTC } from "../../utils/token.utils"
 import { useModal } from "../../hooks/useModal"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import { useDispatch, useSelector } from "react-redux"
 import { tbtcV2Migration } from "../../actions"
-import { TBTC_TOKEN_VERSION } from "../../constants/constants"
+import { MODAL_TYPES } from "../../constants/constants"
 
 const TokenUpgradePortalPage = () => {
-  const { openConfirmationModal } = useModal()
+  const { openModal } = useModal()
   const address = useWeb3Address()
   const dispatch = useDispatch()
 
@@ -27,24 +24,12 @@ const TokenUpgradePortalPage = () => {
     const { amount, from, to } = values
     const _amount = TBTC.fromTokenUnit(amount).toString()
 
-    await openConfirmationModal(
-      {
-        modalOptions: {
-          title: to === TBTC_TOKEN_VERSION.v2 ? "Upgrade" : "Downgrade",
-        },
-        from,
-        to,
-        amount: _amount,
-        fee: unmintFee,
-      },
-      ConfirmMigrationModal
-    )
-
-    if (to === TBTC_TOKEN_VERSION.v2) {
-      dispatch(tbtcV2Migration.mint(_amount, awaitingPromise))
-    } else {
-      dispatch(tbtcV2Migration.unmint(_amount, awaitingPromise))
-    }
+    openModal(MODAL_TYPES.ConfirmTBTCMigration, {
+      from,
+      to,
+      amount: _amount,
+      fee: unmintFee,
+    })
   }
 
   return (

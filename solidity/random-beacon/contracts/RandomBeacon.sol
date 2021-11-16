@@ -74,6 +74,7 @@ contract RandomBeacon is Ownable {
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
+    using SafeERC20 for IERC20;
     using GasStation for GasStation.Data;
 
     // Constant parameters
@@ -121,6 +122,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
     // Libraries data storages
@@ -231,6 +233,7 @@ contract RandomBeacon is Ownable {
     ) {
         // TODO: RandomBeacon must be the owner of the sortition pool.
         sortitionPool = _sortitionPool;
+        tToken = _tToken;
         staking = _staking;
 
         // Governable parameters
@@ -494,24 +497,28 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Notifies about DKG timeout.
+    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
+    ///         reward to the notifier.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-
-        // TODO: Pay a reward to the caller.
+        // Pay the sortition pool unlocking reward.
+        tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
+        dkg.complete();
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
-    ///         valid and completes the group creation by activating the candidate
-    ///         group.
+    ///         valid, pays reward to the result submitter and completes the
+    ///         group creation by activating the candidate group.
     function approveDkgResult() external {
         dkg.approveResult();
-
+        // Pay the DKG result submission reward.
+        tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
         groups.activateCandidateGroup();
+        dkg.complete();
 
-        // TODO: Handle DQ/IA
-        // TODO: Release a rewards to DKG submitter.
+        // TODO: Handle DQ/IA. Should result submitter receive
+        //       reward if they failed to call this function?
         // TODO: Unlock sortition pool
     }
 

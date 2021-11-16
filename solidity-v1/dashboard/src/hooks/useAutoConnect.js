@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
-import ExplorerModeModal from "../components/ExplorerModeModal"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
@@ -8,6 +7,7 @@ import { injected } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
 import useIsExactRoutePath from "./useIsExactRoutePath"
 import { isSameEthAddress } from "../utils/general.utils"
+import { MODAL_TYPES } from "../constants/constants"
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -22,7 +22,7 @@ import { isSameEthAddress } from "../utils/general.utils"
  */
 const useAutoConnect = () => {
   const walletAddressFromUrl = useWalletAddressFromUrl()
-  const { openModal, closeModal } = useModal()
+  const { openModal } = useModal()
   const { connector, connectAppWithWallet } = useWeb3Context()
   const isExactRoutePath = useIsExactRoutePath()
   const [injectedTried, setInjectedTried] = useState(false)
@@ -56,25 +56,18 @@ const useAutoConnect = () => {
         })
       } else if (walletAddressFromUrl && !connector) {
         const explorerModeConnector = new ExplorerModeConnector()
-        openModal(
-          <ExplorerModeModal
-            connectAppWithWallet={connectAppWithWallet}
-            connector={explorerModeConnector}
-            closeModal={closeModal}
-            address={walletAddressFromUrl}
-            connectWithWalletOnMount={true}
-          />,
-          {
-            title: "Connect Ethereum Address",
-          }
-        )
+        openModal(MODAL_TYPES.ExplorerMode, {
+          connectAppWithWallet,
+          connector: explorerModeConnector,
+          address: walletAddressFromUrl,
+          connectWithWalletOnMount: true,
+        })
       }
     })
   }, [
     connectAppWithWallet,
     walletAddressFromUrl,
     injectedTried,
-    closeModal,
     openModal,
     connector,
     isExactRoutePath,

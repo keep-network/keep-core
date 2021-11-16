@@ -1,9 +1,8 @@
-import React, { useEffect } from "react"
+import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
-import { WALLETS } from "../constants/constants"
+import { MODAL_TYPES, WALLETS } from "../constants/constants"
 import { useModal } from "./useModal"
-import { WalletSelectionModal } from "../components/WalletSelectionModal"
 import { useLocation, useHistory } from "react-router-dom"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 import useHasChanged from "./useHasChanged"
@@ -41,9 +40,7 @@ const useSubscribeToConnectorEvents = () => {
         type: "transactions/transaction_added_to_queue",
         payload: payload,
       })
-      openModal(<WalletSelectionModal />, {
-        title: "Select Wallet",
-      })
+      openModal(MODAL_TYPES.WalletSelection)
     }
 
     const sendTransactionsFromQueue = (transactions) => {
