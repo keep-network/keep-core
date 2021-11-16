@@ -434,7 +434,7 @@ contract RandomBeacon is Ownable {
             sortitionPool.getOperatorID(msg.sender)
         );
 
-        // If the operator has been removed from the sorition pool during the
+        // If the operator has been removed from the sortition pool during the
         // status update, release its gas deposit.
         if (!sortitionPool.isOperatorInPool(msg.sender)) {
             gasStation.releaseGas(msg.sender);
@@ -681,8 +681,8 @@ contract RandomBeacon is Ownable {
 
             // Set the punishment regardless the operator is actually
             // registered in the sortition pool. If the operator is not in pool
-            // at the moment, the punishment will prevent they to join during
-            // the given period.
+            // at the moment, the punishment will prevent them from joining
+            // during the given period.
             /* solhint-disable not-rely-on-time */
             // slither-disable-next-line reentrancy-benign
             punishedOperators[operator] = block.timestamp + punishmentDuration;
