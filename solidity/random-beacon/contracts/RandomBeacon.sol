@@ -608,6 +608,7 @@ contract RandomBeacon is Ownable {
             .submitEntry(submitterIndex, entry, group);
 
         if (inactiveMembers.length > 0) {
+            // TODO: Make the duration a governable parameter.
             punishOperators(inactiveMembers, 2 weeks);
         }
 
