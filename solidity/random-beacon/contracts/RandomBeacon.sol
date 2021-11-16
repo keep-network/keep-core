@@ -60,6 +60,13 @@ interface ISortitionPool {
 ///       staking interface from there.
 interface IRandomBeaconStaking {
     function slash(uint256 amount, address[] memory operators) external;
+
+    function seize(
+        uint256 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        address[] memory operators
+    ) external;
 }
 
 /// @title Keep Random Beacon
@@ -642,7 +649,8 @@ contract RandomBeacon is Ownable {
             groupMembers
         );
 
-        staking.slash(slashingAmount, groupMembers);
+        // TODO: Revisit whether the notifier should receive 5% of the slashing amount.
+        staking.seize(slashingAmount, 5, msg.sender, groupMembers);
 
         // TODO: Once implemented, terminate group using `groupId`.
 

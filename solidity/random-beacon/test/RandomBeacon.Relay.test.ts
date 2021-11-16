@@ -57,6 +57,7 @@ describe("RandomBeacon - Relay", () => {
   const invalidEntryFirstEligibleMemberIndex = 3
 
   let requester: SignerWithAddress
+  let notifier: SignerWithAddress
   let member3: SignerWithAddress
   let member15: SignerWithAddress
   let member16: SignerWithAddress
@@ -74,6 +75,7 @@ describe("RandomBeacon - Relay", () => {
 
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+    notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
   })
 
   beforeEach("load test fixture", async () => {
@@ -581,13 +583,13 @@ describe("RandomBeacon - Relay", () => {
             // relayEntryHardTimeout`.
             await mineBlocks(64 * 10 + 5760)
 
-            tx = await randomBeacon.reportRelayEntryTimeout()
+            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
           it("should slash the full slashing amount for all group members", async () => {
             await expect(tx)
-              .to.emit(staking, "Slashed")
-              .withArgs(to1e18(1000), membersAddresses)
+              .to.emit(staking, "Seized")
+              .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
 
             await expect(tx)
               .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
@@ -630,8 +632,8 @@ describe("RandomBeacon - Relay", () => {
 
         it("should slash the full slashing amount for all group members", async () => {
           await expect(tx)
-            .to.emit(staking, "Slashed")
-            .withArgs(to1e18(1000), membersAddresses)
+            .to.emit(staking, "Seized")
+            .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
 
           await expect(tx)
             .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
