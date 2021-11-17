@@ -19,8 +19,6 @@ const DelegatedTokens = ({ data, cancelSuccessCallback }) => {
     isDelegationFromGrant,
     isInInitializationPeriod,
     undelegationPeriod,
-    isManagedGrant,
-    managedGrantContractInstance,
     delegationStatus,
     undelegationCompletedAt,
   } = data
@@ -60,16 +58,17 @@ const DelegatedTokens = ({ data, cancelSuccessCallback }) => {
         <UndelegateStakeButton
           btnText="undelegate tokens"
           btnClassName="btn btn-primary btn-lg self-start"
-          operator={yourAddress}
           successCallback={
             isInInitializationPeriod ? cancelSuccessCallback : () => {}
           }
           isFromGrant={isDelegationFromGrant}
           isInInitializationPeriod={isInInitializationPeriod}
-          isManagedGrant={isManagedGrant}
-          managedGrantContractInstance={managedGrantContractInstance}
-          disabled={stakedBalance === "0" || !stakedBalance}
+          amount={stakedBalance}
+          authorizer={authorizerAddress}
+          operator={yourAddress}
+          beneficiary={beneficiaryAddress}
           undelegationPeriod={undelegationPeriod}
+          disabled={stakedBalance === "0" || !stakedBalance}
         />
       )
     }

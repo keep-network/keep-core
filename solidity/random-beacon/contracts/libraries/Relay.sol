@@ -18,7 +18,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./BLS.sol";
 import "./Groups.sol";
-import {ISortitionPool, IRandomBeaconStaking} from "../RandomBeacon.sol";
+import {ISortitionPool} from "../RandomBeacon.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -43,8 +43,6 @@ library Relay {
         ISortitionPool sortitionPool;
         // Address of the T token contract.
         IERC20 tToken;
-        // Address of the staking contract.
-        IRandomBeaconStaking staking;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
         // The number of blocks it takes for a group member to become
@@ -56,11 +54,11 @@ library Relay {
         uint256 relayEntrySubmissionFailureSlashingAmount;
     }
 
-    /// @notice Ideal size of a group in the threshold relay. A group has
-    ///         an ideal size if all their members behaved properly during
+    /// @notice Target DKG group size in the threshold relay. A group has
+    ///         the target size if all their members behaved properly during
     ///         group formation. Actual group size can be lower in groups
     ///         with proven misbehaved members.
-    uint256 public constant idealGroupSize = 64;
+    uint256 public constant dkgGroupSize = 64;
 
     /// @notice Seed used as the first relay entry value.
     /// It's a G1 point G * PI =
@@ -77,7 +75,10 @@ library Relay {
 
     event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
 
-    event RelayEntryTimedOut(uint256 indexed requestId);
+    event RelayEntryTimedOut(
+        uint256 indexed requestId,
+        uint64 terminatedGroupId
+    );
 
     /// @notice Initializes the very first `previousEntry` with an initial
     ///         `relaySeed` value. Can be performed only once.
@@ -114,20 +115,6 @@ library Relay {
         self.tToken = _tToken;
     }
 
-    /// @notice Initializes the staking parameter. Can be performed
-    ///         only once.
-    /// @param _staking Value of the parameter.
-    function initStaking(Data storage self, IRandomBeaconStaking _staking)
-        internal
-    {
-        require(
-            address(self.staking) == address(0),
-            "Staking address already set"
-        );
-
-        self.staking = _staking;
-    }
-
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
@@ -160,19 +147,28 @@ library Relay {
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
     /// @param group Group data.
+    /// @return inactiveMembers Array of members IDs which should be considered
+    ///         inactive  for not submitting relay entry on their turn.
+    ///         The array is empty if none of the members missed their turn.
+    /// @return slashingAmount Amount by which group members should be slashed
+    ///         in case the relay entry was submitted after the soft timeout.
+    ///         The value is zero if entry was submitted on time.
     function submitEntry(
         Data storage self,
         uint256 submitterIndex,
         bytes calldata entry,
         Groups.Group memory group
-    ) internal {
+    )
+        internal
+        returns (uint32[] memory inactiveMembers, uint256 slashingAmount)
+    {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
-        uint256 actualGroupSize = group.members.length;
+        uint256 groupSize = group.members.length;
 
         require(
-            submitterIndex > 0 && submitterIndex <= actualGroupSize,
+            submitterIndex > 0 && submitterIndex <= groupSize,
             "Invalid submitter index"
         );
         require(
@@ -185,7 +181,7 @@ library Relay {
         (
             uint256 firstEligibleIndex,
             uint256 lastEligibleIndex
-        ) = getEligibilityRange(self, entry, actualGroupSize);
+        ) = getEligibilityRange(self, entry, groupSize);
         require(
             isEligible(
                 self,
@@ -203,34 +199,28 @@ library Relay {
 
         // Get the list of members IDs which should be considered inactive due
         // to not submitting the entry on their turn.
-        uint32[] memory inactiveMembers = getInactiveMembers(
+        inactiveMembers = getInactiveMembers(
             self,
             submitterIndex,
             firstEligibleIndex,
             group.members
         );
-        self.sortitionPool.removeOperators(inactiveMembers);
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
         // factor multiplied by 1e18 to avoid precision loss. In that case
         // the final result needs to be divided by 1e18.
-        uint256 slashingAmount = (getSlashingFactor(self, idealGroupSize) *
-            self.relayEntrySubmissionFailureSlashingAmount) / 1e18;
-
-        // TODO: This call will be removed from here in the follow-up PR.
-        if (slashingAmount > 0) {
-            // slither-disable-next-line reentrancy-events
-            self.staking.slash(
-                slashingAmount,
-                self.sortitionPool.getIDOperators(group.members)
-            );
-        }
+        slashingAmount =
+            (getSlashingFactor(self, dkgGroupSize) *
+                self.relayEntrySubmissionFailureSlashingAmount) /
+            1e18;
 
         self.previousEntry = entry;
         delete self.currentRequest;
 
         emit RelayEntrySubmitted(self.requestCount, entry);
+
+        return (inactiveMembers, slashingAmount);
     }
 
     /// @notice Set relayRequestFee parameter.
@@ -281,21 +271,28 @@ library Relay {
 
     /// @notice Retries the current relay request in case a relay entry
     ///         timeout was reported.
-    /// @param groupId ID of the group chosen to retry the current request.
-    function retryOnEntryTimeout(Data storage self, uint64 groupId) internal {
+    /// @param newGroupId ID of the group chosen to retry the current request.
+    function retryOnEntryTimeout(Data storage self, uint64 newGroupId)
+        internal
+    {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
-        uint64 currentRequestId = self.currentRequest.id;
+        Request memory currentRequest = self.currentRequest;
+        uint64 previousGroupId = currentRequest.groupId;
 
-        emit RelayEntryTimedOut(currentRequestId);
+        emit RelayEntryTimedOut(currentRequest.id, previousGroupId);
 
         self.currentRequest = Request(
-            currentRequestId,
-            groupId,
+            currentRequest.id,
+            newGroupId,
             uint128(block.number)
         );
 
-        emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
+        emit RelayEntryRequested(
+            currentRequest.id,
+            newGroupId,
+            self.previousEntry
+        );
     }
 
     /// @notice Cleans up the current relay request in case a relay entry
@@ -303,7 +300,10 @@ library Relay {
     function cleanupOnEntryTimeout(Data storage self) internal {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
-        emit RelayEntryTimedOut(self.currentRequest.id);
+        emit RelayEntryTimedOut(
+            self.currentRequest.id,
+            self.currentRequest.groupId
+        );
 
         delete self.currentRequest;
     }
@@ -325,7 +325,7 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 relayEntryTimeout = (idealGroupSize *
+        uint256 relayEntryTimeout = (dkgGroupSize *
             self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
 
@@ -418,34 +418,34 @@ library Relay {
     ///         are taken from the <firstEligibleIndex, submitterIndex) range.
     ///         It also handles the `submitterIndex < firstEligibleIndex` case
     ///         and wraps the queue accordingly.
-    /// @param _submitterIndex Index of the relay entry submitter.
-    /// @param _firstEligibleIndex First index of the given eligibility range.
-    /// @param _groupMembers IDs of the group members.
+    /// @param submitterIndex Index of the relay entry submitter.
+    /// @param firstEligibleIndex First index of the given eligibility range.
+    /// @param groupMembers IDs of the group members.
     /// @return An array of members IDs which should be  inactive due
     ///         to not submitting a relay entry on their turn.
     function getInactiveMembers(
         /* solhint-disable-next-line no-unused-vars */
         Data storage self,
-        uint256 _submitterIndex,
-        uint256 _firstEligibleIndex,
-        uint32[] memory _groupMembers
+        uint256 submitterIndex,
+        uint256 firstEligibleIndex,
+        uint32[] memory groupMembers
     ) internal view returns (uint32[] memory) {
-        uint256 _groupSize = _groupMembers.length;
+        uint256 groupSize = groupMembers.length;
 
-        uint256 inactiveMembersCount = _submitterIndex >= _firstEligibleIndex
-            ? _submitterIndex - _firstEligibleIndex
-            : _groupSize - (_firstEligibleIndex - _submitterIndex);
+        uint256 inactiveMembersCount = submitterIndex >= firstEligibleIndex
+            ? submitterIndex - firstEligibleIndex
+            : groupSize - (firstEligibleIndex - submitterIndex);
 
         uint32[] memory inactiveMembersIDs = new uint32[](inactiveMembersCount);
 
         for (uint256 i = 0; i < inactiveMembersCount; i++) {
-            uint256 memberIndex = _firstEligibleIndex + i;
+            uint256 memberIndex = firstEligibleIndex + i;
 
-            if (memberIndex > _groupSize) {
-                memberIndex = memberIndex - _groupSize;
+            if (memberIndex > groupSize) {
+                memberIndex = memberIndex - groupSize;
             }
 
-            inactiveMembersIDs[i] = _groupMembers[memberIndex - 1];
+            inactiveMembersIDs[i] = groupMembers[memberIndex - 1];
         }
 
         return inactiveMembersIDs;

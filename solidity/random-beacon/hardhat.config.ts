@@ -67,6 +67,9 @@ const config: HardhatUserConfig = {
     runOnCompile: true,
     strict: true,
   },
+  mocha: {
+    timeout: 60000,
+  },
   dependencyCompiler: {
     paths: ["@keep-network/sortition-pools/contracts/SortitionPool.sol"],
     keep: true,

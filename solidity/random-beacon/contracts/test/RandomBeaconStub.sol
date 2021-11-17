@@ -37,4 +37,8 @@ contract RandomBeaconStub is RandomBeacon {
         groups.groupsRegistry.push(groupPubKeyHash);
         groups.activeGroupsCount++;
     }
+
+    function hasGasDeposit(address operator) external view returns (bool) {
+        return gasStation.gasDeposits[operator][0] != 0;
+    }
 }
