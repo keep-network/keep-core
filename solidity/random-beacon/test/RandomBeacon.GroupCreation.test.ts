@@ -4,7 +4,7 @@ import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import blsData from "./data/bls"
-import { constants, params, testDeployment } from "./fixtures"
+import { constants, dkgState, params, testDeployment } from "./fixtures"
 import type {
   RandomBeacon,
   RandomBeaconGovernance,
@@ -18,13 +18,6 @@ import { to1e18 } from "./functions"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils
-
-const dkgState = {
-  IDLE: 0,
-  KEY_GENERATION: 1,
-  AWAITING_RESULT: 2,
-  CHALLENGE: 3,
-}
 
 const fixture = async () => {
   const contracts = await testDeployment()

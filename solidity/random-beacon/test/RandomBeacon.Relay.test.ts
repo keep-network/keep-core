@@ -13,7 +13,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { constants, params, randomBeaconDeployment } from "./fixtures"
+import { constants, dkgState, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
   RandomBeacon,
@@ -62,6 +62,7 @@ describe("RandomBeacon - Relay", () => {
   // gives 3 so that  member needs to submit the wrong relay entry.
   const invalidEntryFirstEligibleMemberIndex = 3
 
+  let deployer: SignerWithAddress
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let member3: SignerWithAddress
@@ -80,6 +81,7 @@ describe("RandomBeacon - Relay", () => {
   let relayStub: RelayStub
 
   before(async () => {
+    deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
     notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
   })
@@ -135,25 +137,82 @@ describe("RandomBeacon - Relay", () => {
               randomBeacon.address
             )
             await approveTestToken()
-            tx = await randomBeacon
-              .connect(requester)
-              .requestRelayEntry(ZERO_ADDRESS)
           })
 
-          it("should deposit relay request fee to the maintenance pool", async () => {
-            const currentMaintenancePoolBalance = await testToken.balanceOf(
-              randomBeacon.address
-            )
-            expect(
-              currentMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
-            ).to.be.equal(relayRequestFee)
-          })
+          context(
+            "when relay request does not hit group creation frequency threshold",
+            () => {
+              beforeEach(async () => {
+                tx = await randomBeacon
+                  .connect(requester)
+                  .requestRelayEntry(ZERO_ADDRESS)
+              })
 
-          it("should emit RelayEntryRequested event", async () => {
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryRequested")
-              .withArgs(1, 0, blsData.previousEntry)
-          })
+              it("should deposit relay request fee to the maintenance pool", async () => {
+                const currentMaintenancePoolBalance = await testToken.balanceOf(
+                  randomBeacon.address
+                )
+                expect(
+                  currentMaintenancePoolBalance.sub(
+                    previousMaintenancePoolBalance
+                  )
+                ).to.be.equal(relayRequestFee)
+              })
+
+              it("should emit RelayEntryRequested event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "RelayEntryRequested")
+                  .withArgs(1, 0, blsData.previousEntry)
+              })
+
+              it("should not warm up group creation", async () => {
+                expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                  dkgState.IDLE
+                )
+                expect(await sortitionPool.isLocked()).to.be.false
+              })
+            }
+          )
+
+          context(
+            "when relay request hits group creation frequency threshold",
+            () => {
+              beforeEach(async () => {
+                // Force group creation on each relay entry.
+                await randomBeacon
+                  .connect(deployer)
+                  .updateGroupCreationParameters(1, params.groupLifeTime)
+
+                tx = await randomBeacon
+                  .connect(requester)
+                  .requestRelayEntry(ZERO_ADDRESS)
+              })
+
+              it("should deposit relay request fee to the maintenance pool", async () => {
+                const currentMaintenancePoolBalance = await testToken.balanceOf(
+                  randomBeacon.address
+                )
+                expect(
+                  currentMaintenancePoolBalance.sub(
+                    previousMaintenancePoolBalance
+                  )
+                ).to.be.equal(relayRequestFee)
+              })
+
+              it("should emit RelayEntryRequested event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "RelayEntryRequested")
+                  .withArgs(1, 0, blsData.previousEntry)
+              })
+
+              it("should warm up group creation", async () => {
+                expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                  dkgState.WARMED_UP
+                )
+                expect(await sortitionPool.isLocked()).to.be.true
+              })
+            }
+          )
         })
 
         context("when the requester doesn't pay the relay request fee", () => {
@@ -417,59 +476,27 @@ describe("RandomBeacon - Relay", () => {
                 }
               )
 
-              context("when group creation should be triggered", () => {
+              context("when group creation is warmed up", () => {
                 let tx: ContractTransaction
 
                 beforeEach(async () => {
-                  const deployer = await ethers.getSigner(
-                    (
-                      await getNamedAccounts()
-                    ).deployer
-                  )
-                  // Force group creation on each relay entry.
-                  await randomBeacon
-                    .connect(deployer)
-                    .updateGroupCreationParameters(1, params.groupLifeTime)
+                  // Simulate group creation was warmed up upon request.
+                  await (
+                    randomBeacon as RandomBeaconStub
+                  ).publicCreateGroupWarmUp()
+
+                  tx = await randomBeacon
+                    .connect(member16)
+                    .submitRelayEntry(
+                      firstEligibleMemberIndex,
+                      blsData.groupSignature
+                    )
                 })
 
-                context("when dkg is idle", () => {
-                  beforeEach(async () => {
-                    tx = await randomBeacon
-                      .connect(member16)
-                      .submitRelayEntry(
-                        firstEligibleMemberIndex,
-                        blsData.groupSignature
-                      )
-                  })
-
-                  it("should lock the sortition pool", async () => {
-                    expect(await sortitionPool.isLocked()).to.be.true
-                  })
-
-                  it("should emit DkgStarted event", async () => {
-                    await expect(tx)
-                      .to.emit(randomBeacon, "DkgStarted")
-                      .withArgs(blsData.groupSignatureUint256)
-                  })
-                })
-
-                context("when dkg is not idle", () => {
-                  beforeEach(async () => {
-                    // Simulate a group creation process is currently in
-                    // progress.
-                    await (randomBeacon as RandomBeaconStub).publicCreateGroup()
-
-                    tx = await randomBeacon
-                      .connect(member16)
-                      .submitRelayEntry(
-                        firstEligibleMemberIndex,
-                        blsData.groupSignature
-                      )
-                  })
-
-                  it("should not emit DkgStarted event", async () => {
-                    await expect(tx).to.not.emit(randomBeacon, "DkgStarted")
-                  })
+                it("should emit DkgStarted event", async () => {
+                  await expect(tx)
+                    .to.emit(randomBeacon, "DkgStarted")
+                    .withArgs(blsData.groupSignatureUint256)
                 })
               })
             })
@@ -636,34 +663,92 @@ describe("RandomBeacon - Relay", () => {
           // `groupSize * relayEntrySubmissionEligibilityDelay +
           // relayEntryHardTimeout`.
           await mineBlocks(64 * 10 + 5760)
-
-          tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
         })
 
-        it("should slash the full slashing amount for all group members", async () => {
-          await expect(tx)
-            .to.emit(staking, "Seized")
-            .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
+        context("when group creation is warmed up", () => {
+          beforeEach(async () => {
+            // Simulate group creation was warmed up upon request.
+            await (randomBeacon as RandomBeaconStub).publicCreateGroupWarmUp()
 
-          await expect(tx)
-            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
-            .withArgs(1, to1e18(1000), membersAddresses)
+            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+          })
+
+          it("should slash the full slashing amount for all group members", async () => {
+            await expect(tx)
+              .to.emit(staking, "Seized")
+              .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
+
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+              .withArgs(1, to1e18(1000), membersAddresses)
+          })
+
+          it("should terminate the group", async () => {
+            // TODO: Implementation once `Groups` library is ready.
+          })
+
+          it("should emit RelayEntryTimedOut event", async () => {
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryTimedOut")
+              .withArgs(1, 0)
+          })
+
+          it("should clean up current relay request data", async () => {
+            // TODO: Uncomment those assertions once termination is implemented.
+            // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+            // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          })
+
+          it("should cool down group creation", async () => {
+            // TODO: Uncomment those assertions once termination is implemented.
+            // expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+            //   dkgState.IDLE
+            // )
+            // expect(await sortitionPool.isLocked()).to.be.false
+          })
         })
 
-        it("should terminate the group", async () => {
-          // TODO: Implementation once `Groups` library is ready.
-        })
+        context("when group creation is in other state", () => {
+          beforeEach(async () => {
+            // Simulate group creation is already in progress.
+            await (randomBeacon as RandomBeaconStub).publicCreateGroupWarmUp()
+            await (randomBeacon as RandomBeaconStub).publicCreateGroup()
 
-        it("should emit RelayEntryTimedOut event", async () => {
-          await expect(tx)
-            .to.emit(randomBeacon, "RelayEntryTimedOut")
-            .withArgs(1, 0)
-        })
+            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+          })
 
-        it("should clean up current relay request data", async () => {
-          // TODO: Uncomment those assertions once termination is implemented.
-          // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
-          // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          it("should slash the full slashing amount for all group members", async () => {
+            await expect(tx)
+              .to.emit(staking, "Seized")
+              .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
+
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+              .withArgs(1, to1e18(1000), membersAddresses)
+          })
+
+          it("should terminate the group", async () => {
+            // TODO: Implementation once `Groups` library is ready.
+          })
+
+          it("should emit RelayEntryTimedOut event", async () => {
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryTimedOut")
+              .withArgs(1, 0)
+          })
+
+          it("should clean up current relay request data", async () => {
+            // TODO: Uncomment those assertions once termination is implemented.
+            // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+            // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          })
+
+          it("should not cool down group creation", async () => {
+            expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+              dkgState.KEY_GENERATION
+            )
+            expect(await sortitionPool.isLocked()).to.be.true
+          })
         })
       })
     })

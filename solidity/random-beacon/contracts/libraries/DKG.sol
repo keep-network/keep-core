@@ -167,6 +167,8 @@ library DKG {
         }
     }
 
+    /// @notice Warms up the group creation process by locking the sortition
+    ///         pool.
     function warmUp(Data storage self) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
@@ -463,6 +465,8 @@ library DKG {
         self.sortitionPool.unlock();
     }
 
+    /// @notice Cancels the warm up of group creation process by unlocking
+    ///         the sortition pool.
     function coolDown(Data storage self) internal {
         require(
             currentState(self) == State.WARMED_UP,

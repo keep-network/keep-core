@@ -449,11 +449,16 @@ contract RandomBeacon is Ownable {
     function genesis() external {
         require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
-        dkg.warmUp();
+        createGroupWarmUp();
 
         createGroup(
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
         );
+    }
+
+    /// @notice Warms up the group creation process.
+    function createGroupWarmUp() internal {
+        dkg.warmUp();
     }
 
     /// @notice Creates a new group.
@@ -583,7 +588,7 @@ contract RandomBeacon is Ownable {
             relay.requestCount % groupCreationFrequency == 0 &&
             dkg.currentState() == DKG.State.IDLE
         ) {
-            dkg.warmUp();
+            createGroupWarmUp();
         }
     }
 

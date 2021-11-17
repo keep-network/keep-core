@@ -18,6 +18,14 @@ export const constants = {
   poolWeightDivisor: 2000,
 }
 
+export const dkgState = {
+  IDLE: 0,
+  WARMED_UP: 1,
+  KEY_GENERATION: 2,
+  AWAITING_RESULT: 3,
+  CHALLENGE: 4,
+}
+
 export const params = {
   relayRequestFee: 0,
   relayEntrySubmissionEligibilityDelay: 10,
