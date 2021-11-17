@@ -101,7 +101,6 @@ const ThresholdUpgradePage = () => {
   }, [delegations, undelegations])
 
   const onWithdrawFromGrant = () => {
-    console.log("withdraw from grant clicked!")
     openModal(MODAL_TYPES.WithdrawGrantedTokens, { grants })
   }
 
