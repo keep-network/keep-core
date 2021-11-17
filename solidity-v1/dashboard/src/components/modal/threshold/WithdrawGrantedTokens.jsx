@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react"
 import { withBaseModal } from "../withBaseModal"
 import { ModalBody, ModalFooter, ModalHeader } from "../Modal"
 import Button, { SubmitButton } from "../../Button"
-import { FormCheckboxBase } from "../../FormCheckbox"
 import { useFormik } from "formik"
 import useReleaseTokens from "../../../hooks/useReleaseTokens"
 import {
@@ -31,17 +30,16 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   }, [grants])
 
   const onWithdrawClick = (awaitingPromise) => {
-    for (const grantId of formik.values.grantIds) {
-      const selectedTokenGrant = grants.find((grant) => grant.id === grantId)
-      releaseTokens(selectedTokenGrant, awaitingPromise)
-    }
-    onClose()
+    const selectedTokenGrant = grants.find(
+      (grant) => grant.id === formik.values.selectedGrantId
+    )
+    releaseTokens(selectedTokenGrant, awaitingPromise)
   }
 
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
-      grantIds: [],
+      selectedGrantId: null,
     },
     onSubmit: (values) => {
       alert(JSON.stringify(values, null, 2))
@@ -98,7 +96,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
           onSubmitAction={(awaitingPromise) => {
             onWithdrawClick(awaitingPromise)
           }}
-          disabled={formik.values.grantIds.length === 0}
+          disabled={!formik.values.selectedGrantId}
         >
           withdraw
         </SubmitButton>
@@ -116,25 +114,22 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
       key={`Grant-${grant.id}`}
       style={{
         display: "flex",
-        alignItems: "baseline",
+        alignItems: "flex-start",
       }}
+      className={"withdraw-granted-tokens__grants-accordion-container"}
     >
-      <FormCheckboxBase
-        className="withdraw-granted-tokens__form_checkbox mr-1"
-        name="grantIds"
-        type="checkbox"
+      <input
+        className="radio-without-label"
+        type="radio"
+        name="selectedGrantId"
         value={grant.id}
-        checked={formik.values.grantIds.includes(grant.id)}
-        onChange={(e) => {
-          const set = new Set(formik.values.grantIds)
-          if (e.target.checked) {
-            set.add(grant.id)
-          } else {
-            set.delete(grant.id)
-          }
-          formik.setFieldValue("grantIds", [...set])
+        id={`grant-${grant.id}`}
+        checked={formik.values.selectedGrantId === grant.id}
+        onChange={() => {
+          formik.setFieldValue("selectedGrantId", grant.id)
         }}
       />
+      <label htmlFor={`grant-${grant.id}`} />
       <Accordion
         allowZeroExpanded={totalNumberOfGrants > 1}
         className={"withdraw-granted-tokens__grants-accordion"}
