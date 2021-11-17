@@ -18,6 +18,7 @@ import moment from "moment"
 import { add } from "../../../utils/arithmetics.utils"
 import OnlyIf from "../../OnlyIf"
 import List from "../../List"
+import * as Icons from "../../Icons"
 
 export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(5)
@@ -77,15 +78,15 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
               .map((grant) => renderGrant(grant, grants.length, formik))}
           </form>
           <OnlyIf condition={grants.length > numberOfGrantsDisplayed}>
-            <div
-              className="withdraw-granted-tokens__view-more-container"
+            <Button
+              className="withdraw-granted-tokens__view-more-button"
               onClick={() =>
                 setNumberOfGrantsDisplayed(numberOfGrantsDisplayed + 5)
               }
             >
-              <span>+&nbsp;</span>
-              View More
-            </div>
+              <Icons.Add />
+              &nbsp;View More
+            </Button>
           </OnlyIf>
         </div>
       </ModalBody>

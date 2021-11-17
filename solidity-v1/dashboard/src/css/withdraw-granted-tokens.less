@@ -93,11 +93,29 @@
     }
   }
 
-  &__view-more-container {
+  &__view-more-button {
     cursor: pointer;
     width: fit-content;
-    margin: auto;
+    display: flex;
+    align-self: center;
+    margin: 0 auto;
     font-size: 18px;
     color: @color-brand-violet;
+    background: none;
+    font-family: "Work Sans";
+    font-style: normal;
+    font-variant: normal;
+    font-feature-settings: normal;
+
+    .button-content {
+      display: flex;
+      align-items: center;
+
+      svg {
+        path {
+          fill: @color-brand-violet;
+        }
+      }
+    }
   }
 }
