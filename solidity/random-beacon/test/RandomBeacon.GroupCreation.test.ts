@@ -1423,16 +1423,6 @@ describe("RandomBeacon - Group Creation", () => {
                     submittedGroupMembers.map((member) => member.address)
                   )
               })
-
-              it("should reward the notifier", async () => {
-                // Reward is 5% of the total slashing amount.
-                expect(
-                  await testToken.allowance(
-                    randomBeacon.address,
-                    await thirdParty.getAddress()
-                  )
-                ).to.be.equal(to1e18(50000).mul(64).div(20))
-              })
             })
           })
 
@@ -1481,23 +1471,13 @@ describe("RandomBeacon - Group Creation", () => {
 
               it("should slash members who signed the result", async () => {
                 await expect(tx)
-                  .to.emit(staking, "Seize")
+                  .to.emit(staking, "Seized")
                   .withArgs(
                     to1e18(50000),
                     5,
                     await thirdParty.getAddress(),
                     submittedGroupMembers.map((member) => member.address)
                   )
-              })
-
-              it("should reward the notifier", async () => {
-                // Reward is 5% of the total slashing amount.
-                expect(
-                  await testToken.allowance(
-                    randomBeacon.address,
-                    await thirdParty.getAddress()
-                  )
-                ).to.be.equal(to1e18(50000).mul(64).div(20))
               })
             })
           })
