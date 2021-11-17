@@ -39,7 +39,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
-      selectedGrantId: null,
+      selectedGrantId: grants.length === 1 ? grants[0].id : null,
     },
   })
 
@@ -53,21 +53,23 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
           your token grant.
         </p>
         <div>
-          <div className="withdraw-granted-tokens__info-row">
-            <h4 className="withdraw-granted-tokens__info-row-title">
-              Withdraw:
-            </h4>
-            <span className="withdraw-granted-tokens__info-row-value">
-              total:{" "}
-              <TokenAmount
-                amount={totalReadyToRelease}
-                token={KEEP}
-                wrapperClassName="withdraw-granted-tokens__total-ready-to-release-amount"
-                amountClassName="text-grey-60"
-                symbolClassName="text-grey-60"
-              />
-            </span>
-          </div>
+          <OnlyIf condition={grants.length > 1}>
+            <div className="withdraw-granted-tokens__info-row">
+              <h4 className="withdraw-granted-tokens__info-row-title">
+                Withdraw:
+              </h4>
+              <span className="withdraw-granted-tokens__info-row-value">
+                total:{" "}
+                <TokenAmount
+                  amount={totalReadyToRelease}
+                  token={KEEP}
+                  wrapperClassName="withdraw-granted-tokens__total-ready-to-release-amount"
+                  amountClassName="text-grey-60"
+                  symbolClassName="text-grey-60"
+                />
+              </span>
+            </div>
+          </OnlyIf>
           <form>
             {grants
               .slice(0, numberOfGrantsDisplayed)
@@ -93,7 +95,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
           onSubmitAction={(awaitingPromise) => {
             onWithdrawClick(awaitingPromise)
           }}
-          disabled={!formik.values.selectedGrantId}
+          disabled={grants.length > 1 && !formik.values.selectedGrantId}
         >
           withdraw
         </SubmitButton>
@@ -115,18 +117,20 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
       }}
       className={"withdraw-granted-tokens__grants-accordion-container"}
     >
-      <input
-        className="radio-without-label"
-        type="radio"
-        name="selectedGrantId"
-        value={grant.id}
-        id={`grant-${grant.id}`}
-        checked={formik.values.selectedGrantId === grant.id}
-        onChange={() => {
-          formik.setFieldValue("selectedGrantId", grant.id)
-        }}
-      />
-      <label htmlFor={`grant-${grant.id}`} />
+      <OnlyIf condition={totalNumberOfGrants > 1}>
+        <input
+          className="radio-without-label"
+          type="radio"
+          name="selectedGrantId"
+          value={grant.id}
+          id={`grant-${grant.id}`}
+          checked={formik.values.selectedGrantId === grant.id}
+          onChange={() => {
+            formik.setFieldValue("selectedGrantId", grant.id)
+          }}
+        />
+        <label htmlFor={`grant-${grant.id}`} />
+      </OnlyIf>
       <Accordion
         allowZeroExpanded={totalNumberOfGrants > 1}
         className={"withdraw-granted-tokens__grants-accordion"}
@@ -146,10 +150,10 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
                   token={KEEP}
                 />
               </div>
-              <span className="withdraw-granted-tokens__details-text">
-                Details
-              </span>
               <OnlyIf condition={totalNumberOfGrants > 1}>
+                <span className="withdraw-granted-tokens__details-text">
+                  Details
+                </span>
                 <span className="withdraw-granted-tokens__expand-button" />
               </OnlyIf>
             </AccordionItemButton>
