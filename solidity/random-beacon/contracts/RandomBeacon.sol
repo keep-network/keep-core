@@ -176,8 +176,6 @@ contract RandomBeacon is Ownable {
 
     event DkgStarted(uint256 indexed seed);
 
-    event DkgStartFailed();
-
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         bytes indexed groupPubKey,
@@ -625,9 +623,6 @@ contract RandomBeacon is Ownable {
             if (dkg.currentState() == DKG.State.IDLE) {
                 // slither-disable-next-line reentrancy-events
                 createGroup(uint256(keccak256(entry)));
-            } else {
-                // slither-disable-next-line reentrancy-events
-                emit DkgStartFailed();
             }
         }
 

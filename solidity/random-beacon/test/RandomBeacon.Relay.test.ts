@@ -467,8 +467,8 @@ describe("RandomBeacon - Relay", () => {
                       )
                   })
 
-                  it("should emit DkgStartFailed event", async () => {
-                    await expect(tx).to.emit(randomBeacon, "DkgStartFailed")
+                  it("should not emit DkgStarted event", async () => {
+                    await expect(tx).to.not.emit(randomBeacon, "DkgStarted")
                   })
                 })
               })
