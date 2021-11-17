@@ -17,6 +17,7 @@ import { shortenAddress } from "../../../utils/general.utils"
 import moment from "moment"
 import { add } from "../../../utils/arithmetics.utils"
 import OnlyIf from "../../OnlyIf"
+import List from "../../List"
 
 export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(5)
@@ -159,30 +160,34 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
             </AccordionItemButton>
           </AccordionItemHeading>
           <AccordionItemPanel>
-            <div className="withdraw-granted-tokens__info-row">
-              <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
-                token grant id
-              </span>
-              <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
-                {grant.id}
-              </span>
-            </div>
-            <div className="withdraw-granted-tokens__info-row">
-              <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
-                date issued
-              </span>
-              <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
-                {moment.unix(grant.start).format("MM/DD/YYYY")}
-              </span>
-            </div>
-            <div className="withdraw-granted-tokens__info-row">
-              <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
-                wallet
-              </span>
-              <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
-                {shortenAddress(grant.grantee)}
-              </span>
-            </div>
+            <List>
+              <List.Content>
+                <List.Item className="flex row space-between">
+                  <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                    token grant id
+                  </span>
+                  <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                    {grant.id}
+                  </span>
+                </List.Item>
+                <List.Item className="flex row space-between">
+                  <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                    date issued
+                  </span>
+                  <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                    {moment.unix(grant.start).format("MM/DD/YYYY")}
+                  </span>
+                </List.Item>
+                <List.Item className="flex row space-between">
+                  <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                    wallet
+                  </span>
+                  <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                    {shortenAddress(grant.grantee)}
+                  </span>
+                </List.Item>
+              </List.Content>
+            </List>
           </AccordionItemPanel>
         </AccordionItem>
       </Accordion>
