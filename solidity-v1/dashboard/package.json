@@ -24,6 +24,7 @@
     "less-watch-compiler": "^1.10.0",
     "moment": "2.24.0",
     "react": "^16.13.1",
+    "react-accessible-accordion": "^4.0.0",
     "react-countup": "^4.3.3",
     "react-dom": "^16.13.1",
     "react-redux": "^7.2.1",

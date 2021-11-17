@@ -37,7 +37,7 @@ interface ISortitionPool {
 
     function insertOperator(address operator) external;
 
-    function removeOperators(uint32[] calldata ids) external;
+    function banRewards(uint32[] calldata operators, uint256 duration) external;
 
     function updateOperatorStatus(uint32 id) external;
 
@@ -66,6 +66,13 @@ interface ISortitionPool {
 ///       staking interface from there.
 interface IRandomBeaconStaking {
     function slash(uint256 amount, address[] memory operators) external;
+
+    function seize(
+        uint256 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        address[] memory operators
+    ) external;
 }
 
 /// @title Keep Random Beacon
@@ -80,6 +87,7 @@ contract RandomBeacon is Ownable {
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
+    using SafeERC20 for IERC20;
     using GasStation for GasStation.Data;
 
     // Constant parameters
@@ -127,6 +135,7 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     ISortitionPool public sortitionPool;
+    IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
     // Libraries data storages
@@ -135,14 +144,6 @@ contract RandomBeacon is Ownable {
     Relay.Data internal relay;
     Callback.Data internal callback;
     GasStation.Data internal gasStation;
-
-    // Other parameters
-
-    /// @notice List of operators who are prohibited to join the sortition
-    ///         pool within a specific period of time. The key of the mapping
-    ///         is operator address. The value is a timestamp when the
-    ///         punishment ends.
-    mapping(address => uint256) public punishedOperators;
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -214,13 +215,13 @@ contract RandomBeacon is Ownable {
         uint64 terminatedGroupId
     );
 
-    event RelayEntrySoftTimeoutSlashingOccurred(
+    event RelayEntryDelaySlashed(
         uint256 indexed requestId,
         uint256 slashingAmount,
         address[] groupMembers
     );
 
-    event RelayEntrySubmissionFailureSlashingOccurred(
+    event RelayEntryTimeoutSlashed(
         uint256 indexed requestId,
         uint256 slashingAmount,
         address[] groupMembers
@@ -239,6 +240,7 @@ contract RandomBeacon is Ownable {
     ) {
         // TODO: RandomBeacon must be the owner of the sortition pool.
         sortitionPool = _sortitionPool;
+        tToken = _tToken;
         staking = _staking;
 
         // Governable parameters
@@ -411,8 +413,8 @@ contract RandomBeacon is Ownable {
 
     /// @notice Registers the caller in the sortition pool.
     /// @dev Creates a gas deposit tied to the operator address. The gas
-    ///      deposit is released when the operator is kicked out from the
-    ///      sortition pool or leaves it during status update.
+    ///      deposit is released when the operator is banned for sortition pool
+    ///      rewards or leaves the pool during status update.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -420,17 +422,6 @@ contract RandomBeacon is Ownable {
             !sortitionPool.isOperatorInPool(operator),
             "Operator is already registered"
         );
-
-        uint256 punishmentDeadline = punishedOperators[operator];
-
-        // slither-disable-next-line incorrect-equality
-        require(
-            /* solhint-disable-next-line not-rely-on-time */
-            punishmentDeadline == 0 || block.timestamp > punishmentDeadline,
-            "Operator has an active punishment"
-        );
-
-        delete punishedOperators[operator];
 
         gasStation.depositGas(operator);
         sortitionPool.insertOperator(operator);
@@ -442,7 +433,7 @@ contract RandomBeacon is Ownable {
             sortitionPool.getOperatorID(msg.sender)
         );
 
-        // If the operator has been removed from the sorition pool during the
+        // If the operator has been removed from the sortition pool during the
         // status update, release its gas deposit.
         if (!sortitionPool.isOperatorInPool(msg.sender)) {
             gasStation.releaseGas(msg.sender);
@@ -501,26 +492,30 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Notifies about DKG timeout.
+    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
+    ///         reward to the notifier.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-
-        // TODO: Pay a reward to the caller.
-
+        // Pay the sortition pool unlocking reward.
+        tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
+        dkg.complete();
         sortitionPool.unlock();
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
-    ///         valid and completes the group creation by activating the candidate
-    ///         group.
+    ///         valid, pays reward to the result submitter and completes the
+    ///         group creation by activating the candidate group.
     function approveDkgResult() external {
         dkg.approveResult();
-
+        // Pay the DKG result submission reward.
+        tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
         groups.activateCandidateGroup();
+        dkg.complete();
 
         // TODO: Handle DQ/IA
         // TODO: Release a rewards to DKG submitter.
+        // TODO: Unlock sortition pool
 
         sortitionPool.unlock();
     }
@@ -603,7 +598,10 @@ contract RandomBeacon is Ownable {
         (uint32[] memory inactiveMembers, uint256 slashingAmount) = relay
             .submitEntry(submitterIndex, entry, group);
 
-        punishOperators(inactiveMembers, 2 weeks);
+        if (inactiveMembers.length > 0) {
+            // TODO: Make the duration a governable parameter.
+            punishOperators(inactiveMembers, 2 weeks);
+        }
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
@@ -611,7 +609,7 @@ contract RandomBeacon is Ownable {
             );
 
             // slither-disable-next-line reentrancy-events
-            emit RelayEntrySoftTimeoutSlashingOccurred(
+            emit RelayEntryDelaySlashed(
                 currentRequestId,
                 slashingAmount,
                 groupMembers
@@ -646,13 +644,14 @@ contract RandomBeacon is Ownable {
             groups.getGroup(groupId).members
         );
 
-        emit RelayEntrySubmissionFailureSlashingOccurred(
+        emit RelayEntryTimeoutSlashed(
             relay.currentRequest.id,
             slashingAmount,
             groupMembers
         );
 
-        staking.slash(slashingAmount, groupMembers);
+        // TODO: Revisit whether the notifier should receive 5% of the slashing amount.
+        staking.seize(slashingAmount, 5, msg.sender, groupMembers);
 
         // TODO: Once implemented, terminate group using `groupId`.
 
@@ -666,59 +665,29 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Punishes the given operators by kicking them out from the
-    ///         sortition pool and blocking their reinsertion for a given period
-    ///         of time.
+    /// @notice Punishes the given operators by banning their sortition pool rewards.
     /// @dev By the way, this function releases gas deposits made by operators
     ///      during their registration. See `registerOperator` function. This
     ///      action makes punishments cheaper gas-wise.
     /// @param ids IDs of punished operators.
     /// @param punishmentDuration Duration of the punishment period in seconds.
-    ///
-    /// TODO: This method can be probably optimized in future (depends on
-    ///       changes in the sortition pool). Until then we need to make it
-    ///       that way because we need to make sure we remove operators which
-    ///       are actually in the pool to avoid revert. Two loops are needed
-    ///       because Solidity doesn't allow for memory arrays and mappings.
     function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
         internal
     {
         address[] memory operators = sortitionPool.getIDOperators(ids);
-        uint256 operatorsInPoolCount = 0;
 
         for (uint256 i = 0; i < operators.length; i++) {
-            if (sortitionPool.isOperatorInPool(operators[i])) {
-                operatorsInPoolCount++;
-            }
+            // TODO: Do we need the operator to re-deposit gas once
+            //       current punishment is completed to use it for
+            //       future ones?
+            gasStation.releaseGas(operators[i]);
         }
 
-        uint32[] memory operatorsInPoolIDs = new uint32[](operatorsInPoolCount);
-        uint256 j = 0;
-
-        for (uint256 i = 0; i < operators.length; i++) {
-            address operator = operators[i];
-
-            // Set the punishment regardless the operator is actually
-            // registered in the sortition pool. If the operator is not in pool
-            // at the moment, the punishment will prevent they to join during
-            // the given period.
-            /* solhint-disable not-rely-on-time */
-            // slither-disable-next-line reentrancy-benign
-            punishedOperators[operator] = block.timestamp + punishmentDuration;
-            /* solhint-enable not-rely-on-time */
-
-            if (sortitionPool.isOperatorInPool(operator)) {
-                gasStation.releaseGas(operator);
-
-                operatorsInPoolIDs[j] = ids[i];
-                j++;
-            }
-        }
-
-        // TODO: Is it possible to kick out operator when pool is locked?
-        if (operatorsInPoolIDs.length > 0) {
-            sortitionPool.removeOperators(operatorsInPoolIDs);
-        }
+        // TODO: Once `banRewards` is implemented on the pool side, make sure
+        //       it does not have an unexpected revert instruction which will
+        //       block entry submission. For example, an operator leaves
+        //       the pool just before it gets banned.
+        sortitionPool.banRewards(ids, punishmentDuration);
     }
 
     /// @return Flag indicating whether a relay entry request is currently

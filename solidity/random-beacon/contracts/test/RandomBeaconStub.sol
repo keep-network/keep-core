@@ -38,13 +38,6 @@ contract RandomBeaconStub is RandomBeacon {
         groups.activeGroupsCount++;
     }
 
-    function publicPunishOperators(
-        uint32[] memory operators,
-        uint256 punishmentDuration
-    ) external {
-        punishOperators(operators, punishmentDuration);
-    }
-
     function publicCreateGroup() external {
         createGroup(0);
     }

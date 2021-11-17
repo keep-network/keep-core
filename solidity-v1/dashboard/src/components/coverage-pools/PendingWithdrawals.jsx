@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react"
-import {
-  claimTokensFromWithdrawal,
-  withdrawAssetPool,
-} from "../../actions/coverage-pool"
+import { reinitiateWithdraw } from "../../actions/coverage-pool"
 import { useDispatch, useSelector } from "react-redux"
-import ClaimTokensModal from "./ClaimTokensModal"
 import { useModal } from "../../hooks/useModal"
-import ReinitiateWithdrawalModal from "./ReinitiateWithdrawalModal"
-import { addAdditionalDataToModal } from "../../actions/modal"
 import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import moment from "moment"
@@ -18,14 +12,15 @@ import { Column, DataTable } from "../DataTable"
 import resourceTooltipProps from "../../constants/tooltips"
 import TokenAmount from "../TokenAmount"
 import { covKEEP, KEEP } from "../../utils/token.utils"
-import { SubmitButton } from "../Button"
+import Button from "../Button"
 import { Keep } from "../../contracts"
 import { useWeb3Address } from "../WithWeb3Context"
 import { ResourceTooltipContent } from "../ResourceTooltip"
+import { MODAL_TYPES } from "../../constants/constants"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
-  const { openConfirmationModal, closeModal } = useModal()
+  const { openModal } = useModal()
   const yourAddress = useWeb3Address()
 
   const {
@@ -47,71 +42,20 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
     }
   })
 
-  const onClaimTokensSubmitButtonClick = async (covAmount, awaitingPromise) => {
-    dispatch(
-      addAdditionalDataToModal({
-        componentProps: {
-          totalValueLocked,
-          covTotalSupply,
-          covTokensAvailableToWithdraw,
-        },
-      })
-    )
-    await openConfirmationModal(
-      {
-        closeModal: closeModal,
-        submitBtnText: "claim",
+  const onClaimTokensSubmitButtonClick = (covAmount) => {
+    openModal(MODAL_TYPES.CovPoolClaimTokens, {
+      covAmount,
+      address: yourAddress,
+      collateralTokenAmount: Keep.coveragePoolV1.estimatedBalanceFor(
         covAmount,
-        totalValueLocked,
         covTotalSupply,
-        address: yourAddress,
-        modalOptions: {
-          title: "Claim tokens",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__claim-tokens",
-          },
-        },
-      },
-      ClaimTokensModal
-    )
-    dispatch(claimTokensFromWithdrawal(awaitingPromise))
+        totalValueLocked
+      ),
+    })
   }
 
-  const onReinitiateWithdrawal = async (
-    pendingWithdrawal,
-    covTokensAvailableToWithdraw,
-    awaitingPromise
-  ) => {
-    dispatch(
-      addAdditionalDataToModal({
-        componentProps: {
-          totalValueLocked,
-          covTotalSupply,
-          covTokensAvailableToWithdraw,
-        },
-      })
-    )
-    const { amount } = await openConfirmationModal(
-      {
-        modalOptions: {
-          title: "Re-initiate withdrawal",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__reinitiate-withdrawal",
-          },
-        },
-        submitBtnText: "continue",
-        pendingWithdrawalBalance: pendingWithdrawal,
-        covTokensAvailableToWithdraw,
-        totalValueLocked,
-        covTotalSupply,
-        withdrawalDelay,
-        withdrawalTimeout,
-        withdrawalInitiatedTimestamp,
-        containerTitle: "You are about to re-initiate this withdrawal:",
-      },
-      ReinitiateWithdrawalModal
-    )
-    dispatch(withdrawAssetPool(amount, awaitingPromise))
+  const onReinitiateWithdrawal = () => {
+    dispatch(reinitiateWithdraw())
   }
 
   const formattedDataForDataTable =
@@ -406,26 +350,19 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
           field="timestamp"
           renderContent={({ covAmount, timestamp }) => (
             <div className={"pending-withdrawal__button-container"}>
-              <SubmitButton
+              <Button
                 className="btn btn-lg btn-primary"
-                onSubmitAction={async (awaitingPromise) => {
+                onClick={() => {
                   if (isWithdrawalTimeoutOver(timestamp)) {
-                    await onReinitiateWithdrawal(
-                      covAmount,
-                      covTokensAvailableToWithdraw,
-                      awaitingPromise
-                    )
+                    onReinitiateWithdrawal()
                   } else {
-                    await onClaimTokensSubmitButtonClick(
-                      covAmount,
-                      awaitingPromise
-                    )
+                    onClaimTokensSubmitButtonClick(covAmount)
                   }
                 }}
                 disabled={!isWithdrawalDelayOver(timestamp)}
               >
                 {renderPendingWithdrawalButtonText(timestamp)}
-              </SubmitButton>
+              </Button>
               <span
                 className={
                   "pending-withdrawal__button-container__time-left-text"

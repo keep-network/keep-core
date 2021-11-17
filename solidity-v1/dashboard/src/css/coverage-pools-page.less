@@ -191,14 +191,20 @@
   }
 }
 
+.cov-how-it-works__diagram-section {
+  .tile();
+  display: flex;
+  justify-content: center;
+}
+
 .coverage-pool-resources-grid {
   @media screen and (min-width: 1000px) {
     display: grid;
     grid-template-areas:
-      "overview   rewards-pool"
-      "overview   covering-hit"
-      "cov-KEEP   covering-hit";
+      "overview   accordion"
+      "overview   accordion";
     gap: 1rem;
+    grid-template-columns: 1fr 1fr;
 
     section {
       align-self: start;
@@ -209,15 +215,19 @@
       }
 
       &:nth-child(2) {
-        grid-area: rewards-pool;
+        grid-area: accordion;
+      }
+    }
+
+    .cov-pools-accordion-section {
+      padding: 0;
+
+      .accordion__button {
+        padding: 1.1rem 2.5rem;
       }
 
-      &:nth-child(3) {
-        grid-area: covering-hit;
-      }
-
-      &:nth-child(4) {
-        grid-area: cov-KEEP;
+      .accordion__panel {
+        padding: 1.1rem 2.5rem;
       }
     }
   }

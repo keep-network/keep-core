@@ -27,8 +27,12 @@ Banner.Title = ({ onClick, children, className = "" }) => {
   )
 }
 
-Banner.Description = ({ onClick, children, className = "" }) => {
-  return <div className={`banner__description ${className}`}>{children}</div>
+Banner.Description = ({ children, className = "", ...restProps }) => {
+  return (
+    <div className={`banner__description ${className}`} {...restProps}>
+      {children}
+    </div>
+  )
 }
 
 Banner.Action = ({ children, onClick, icon, className = "" }) => {

@@ -38,16 +38,11 @@ contract SortitionPoolStub is ISortitionPool {
         sortitionTree.publicAllocateOperatorID(operator);
     }
 
-    function removeOperators(uint32[] calldata ids) external override {
-        require(!locked, "Pool is locked");
-
-        address[] memory _operators = getIDOperators(ids);
-
-        for (uint256 i = 0; i < _operators.length; i++) {
-            delete operators[_operators[i]];
-            delete eligibleOperators[_operators[i]];
-            operatorsCount--;
-        }
+    function banRewards(uint32[] calldata ids, uint256 duration)
+        external
+        override
+    {
+        // no-op
     }
 
     function updateOperatorStatus(uint32 id) external override {

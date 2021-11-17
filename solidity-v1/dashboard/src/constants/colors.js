@@ -32,4 +32,5 @@ export const colors = {
   yellowPrimary: "#FFF9F1",
   yellowSecondary: "#FF9900",
   yellow30: "#FFEFD9",
+  red60: "#DE7171",
 }

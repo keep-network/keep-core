@@ -37,76 +37,17 @@ describe("RandomBeacon - Pool", () => {
     })
 
     context("when the operator is not registered yet", () => {
-      context("when there is no active punishment for given operator", () => {
-        beforeEach(async () => {
-          await randomBeacon.connect(operator).registerOperator()
-        })
-
-        it("should deposit gas", async () => {
-          expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.true
-        })
-
-        it("should register the operator", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
-            .true
-        })
+      beforeEach(async () => {
+        await randomBeacon.connect(operator).registerOperator()
       })
 
-      context("when punishment for given operator already elapsed", () => {
-        let operatorID: number
-
-        beforeEach(async () => {
-          await randomBeacon.connect(operator).registerOperator()
-          operatorID = await sortitionPool.getOperatorID(operator.address)
-
-          const punishmentDuration = 1209600 // 2 weeks
-          await randomBeacon.publicPunishOperators(
-            [operatorID],
-            punishmentDuration
-          )
-
-          await increaseTime(punishmentDuration)
-
-          await randomBeacon.connect(operator).registerOperator()
-        })
-
-        it("should deposit gas", async () => {
-          expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.true
-        })
-
-        it("should register the operator", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
-            .true
-        })
-
-        it("should remove operator from punished operators map", async () => {
-          expect(
-            await randomBeacon.punishedOperators(operator.address)
-          ).to.be.equal(0)
-        })
+      it("should deposit gas", async () => {
+        expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.true
       })
 
-      context("when there is an active punishment for given operator", () => {
-        let operatorID: number
-
-        beforeEach(async () => {
-          await randomBeacon.connect(operator).registerOperator()
-          operatorID = await sortitionPool.getOperatorID(operator.address)
-
-          const punishmentDuration = 1209600 // 2 weeks
-          await randomBeacon.publicPunishOperators(
-            [operatorID],
-            punishmentDuration
-          )
-
-          await increaseTime(punishmentDuration - 1)
-        })
-
-        it("should revert", async () => {
-          await expect(
-            randomBeacon.connect(operator).registerOperator()
-          ).to.be.revertedWith("Operator has an active punishment")
-        })
+      it("should register the operator", async () => {
+        expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+          .true
       })
     })
 
@@ -124,7 +65,6 @@ describe("RandomBeacon - Pool", () => {
   })
 
   describe("updateOperatorStatus", () => {
-    let tx: ContractTransaction
     let operatorID: number
 
     beforeEach(async () => {
@@ -136,7 +76,7 @@ describe("RandomBeacon - Pool", () => {
       // Simulate the operator became ineligible.
       await stakingStub.setStake(operator.address, 0)
 
-      tx = await randomBeacon.connect(operator).updateOperatorStatus()
+      await randomBeacon.connect(operator).updateOperatorStatus()
     })
 
     it("should remove operator from the pool", async () => {
