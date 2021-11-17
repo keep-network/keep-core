@@ -1403,9 +1403,9 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(groupPublicKey)
               })
 
-              it("should emit DkgMaliciousResultSlashingOccurred event", async () => {
+              it("should emit DkgResultMaliciousSlashed event", async () => {
                 await expect(tx)
-                  .to.emit(randomBeacon, "DkgMaliciousResultSlashingOccurred")
+                  .to.emit(randomBeacon, "DkgResultMaliciousSlashed")
                   .withArgs(
                     dkgResultHash,
                     to1e18(50000),
@@ -1415,9 +1415,11 @@ describe("RandomBeacon - Group Creation", () => {
 
               it("should slash members who signed the result", async () => {
                 await expect(tx)
-                  .to.emit(staking, "Slashed")
+                  .to.emit(staking, "Seized")
                   .withArgs(
                     to1e18(50000),
+                    5,
+                    await thirdParty.getAddress(),
                     submittedGroupMembers.map((member) => member.address)
                   )
               })
@@ -1467,9 +1469,9 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(groupPublicKey)
               })
 
-              it("should emit DkgMaliciousResultSlashingOccurred event", async () => {
+              it("should emit DkgResultMaliciousSlashed event", async () => {
                 await expect(tx)
-                  .to.emit(randomBeacon, "DkgMaliciousResultSlashingOccurred")
+                  .to.emit(randomBeacon, "DkgResultMaliciousSlashed")
                   .withArgs(
                     dkgResultHash,
                     to1e18(50000),
@@ -1479,9 +1481,11 @@ describe("RandomBeacon - Group Creation", () => {
 
               it("should slash members who signed the result", async () => {
                 await expect(tx)
-                  .to.emit(staking, "Slashed")
+                  .to.emit(staking, "Seize")
                   .withArgs(
                     to1e18(50000),
+                    5,
+                    await thirdParty.getAddress(),
                     submittedGroupMembers.map((member) => member.address)
                   )
               })

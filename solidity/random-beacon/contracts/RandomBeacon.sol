@@ -194,7 +194,7 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
-    event DkgMaliciousResultSlashingOccurred(
+    event DkgResultMaliciousSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
         address[] groupMembers
@@ -535,23 +535,13 @@ contract RandomBeacon is Ownable {
 
         groups.popCandidateGroup();
 
-        emit DkgMaliciousResultSlashingOccurred(
+        emit DkgResultMaliciousSlashed(
             resultHash,
             slashingAmount,
             maliciousMembersAddresses
         );
 
-        staking.slash(slashingAmount, maliciousMembersAddresses);
-
-        // The notifier should receive 5% of the total slashing amount. The
-        // contract doesn't make a direct transfer but an allowance instead
-        // as there is no guarantee the contract has a sufficient token
-        // balance at the moment. Making a transfer without funds would cause
-        // a revert of the challenge transaction.
-        tToken.safeIncreaseAllowance(
-            msg.sender,
-            (maliciousMembers.length * slashingAmount) / 20
-        );
+        staking.seize(slashingAmount, 5, msg.sender, maliciousMembersAddresses);
     }
 
     /// @notice Check current group creation state.
