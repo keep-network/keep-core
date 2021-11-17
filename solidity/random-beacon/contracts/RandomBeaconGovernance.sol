@@ -58,6 +58,9 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
+    uint256 public newSortitionPoolRewardsBanDuration;
+    uint256 public sortitionPoolRewardsBanDurationChangeInitiated;
+
     RandomBeacon public randomBeacon;
 
     // Long governance delay used for critical parameters giving a chance for
@@ -165,6 +168,14 @@ contract RandomBeaconGovernance is Ownable {
     );
     event MaliciousDkgResultSlashingAmountUpdated(
         uint256 maliciousDkgResultSlashingAmount
+    );
+
+    event SortitionPoolRewardsBanDurationUpdateStarted(
+        uint256 sortitionPoolRewardsBanDuration,
+        uint256 timestamp
+    );
+    event SortitionPoolRewardsBanDurationUpdated(
+        uint256 sortitionPoolRewardsBanDuration
     );
 
     /// @notice Reverts if called before the governance delay elapses.
@@ -559,7 +570,8 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
             newDkgResultSubmissionReward,
-            randomBeacon.sortitionPoolUnlockingReward()
+            randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.sortitionPoolRewardsBanDuration()
         );
         dkgResultSubmissionRewardChangeInitiated = 0;
         newDkgResultSubmissionReward = 0;
@@ -598,10 +610,52 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
-            newSortitionPoolUnlockingReward
+            newSortitionPoolUnlockingReward,
+            randomBeacon.sortitionPoolRewardsBanDuration()
         );
         sortitionPoolUnlockingRewardChangeInitiated = 0;
         newSortitionPoolUnlockingReward = 0;
+    }
+
+    /// @notice Begins the sortition pool rewards ban duration update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newSortitionPoolRewardsBanDuration New sortition pool rewards
+    ///        ban duration.
+    function beginSortitionPoolRewardsBanDurationUpdate(
+        uint256 _newSortitionPoolRewardsBanDuration
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newSortitionPoolRewardsBanDuration = _newSortitionPoolRewardsBanDuration;
+        sortitionPoolRewardsBanDurationChangeInitiated = block.timestamp;
+        emit SortitionPoolRewardsBanDurationUpdateStarted(
+            _newSortitionPoolRewardsBanDuration,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the sortition pool rewards ban duration update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeSortitionPoolRewardsBanDurationUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            sortitionPoolRewardsBanDurationChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit SortitionPoolRewardsBanDurationUpdated(
+            newSortitionPoolRewardsBanDuration
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateRewardParameters(
+            randomBeacon.dkgResultSubmissionReward(),
+            randomBeacon.sortitionPoolUnlockingReward(),
+            newSortitionPoolRewardsBanDuration
+        );
+        sortitionPoolRewardsBanDurationChangeInitiated = 0;
+        newSortitionPoolRewardsBanDuration = 0;
     }
 
     /// @notice Begins the relay entry submission failure slashing amount update
@@ -863,6 +917,21 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultSlashingAmountChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the sortition pool rewards ban
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingSortitionPoolRewardsBanDurationUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                sortitionPoolRewardsBanDurationChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }

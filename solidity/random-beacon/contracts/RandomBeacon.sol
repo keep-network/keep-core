@@ -128,6 +128,10 @@ contract RandomBeacon is Ownable {
     ///         `maliciousDkgResultSlashingAmount`.
     uint256 public maliciousDkgResultSlashingAmount;
 
+    /// @notice Duration of the sortition pool rewards ban imposed on operators
+    ///         who missed their turn for relay entry submission.
+    uint256 public sortitionPoolRewardsBanDuration;
+
     ISortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
@@ -158,7 +162,8 @@ contract RandomBeacon is Ownable {
 
     event RewardParametersUpdated(
         uint256 dkgResultSubmissionReward,
-        uint256 sortitionPoolUnlockingReward
+        uint256 sortitionPoolUnlockingReward,
+        uint256 sortitionPoolRewardsBanDuration
     );
 
     event SlashingParametersUpdated(
@@ -242,6 +247,7 @@ contract RandomBeacon is Ownable {
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
+        sortitionPoolRewardsBanDuration = 2 weeks;
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -334,15 +340,20 @@ contract RandomBeacon is Ownable {
     ///      validating parameters.
     /// @param _dkgResultSubmissionReward New DKG result submission reward
     /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
+    /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
+    ///        ban duration in seconds.
     function updateRewardParameters(
         uint256 _dkgResultSubmissionReward,
-        uint256 _sortitionPoolUnlockingReward
+        uint256 _sortitionPoolUnlockingReward,
+        uint256 _sortitionPoolRewardsBanDuration
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
         sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward
+            sortitionPoolUnlockingReward,
+            sortitionPoolRewardsBanDuration
         );
     }
 
@@ -589,8 +600,7 @@ contract RandomBeacon is Ownable {
             .submitEntry(submitterIndex, entry, group);
 
         if (inactiveMembers.length > 0) {
-            // TODO: Make the duration a governable parameter.
-            punishOperators(inactiveMembers, 2 weeks);
+            punishOperators(inactiveMembers, sortitionPoolRewardsBanDuration);
         }
 
         if (slashingAmount > 0) {
