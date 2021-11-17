@@ -48,7 +48,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
       <ModalHeader>Withdraw</ModalHeader>
       <ModalBody>
         <h3 className={"mb-1"}>Withdraw granted tokens</h3>
-        <p className={"mb-2"}>
+        <p className={"mb-2 text-grey-70"}>
           The following tokens are available to be released and withdrawn from
           your token grant.
         </p>
