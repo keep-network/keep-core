@@ -513,9 +513,8 @@ contract RandomBeacon is Ownable {
         groups.activateCandidateGroup();
         dkg.complete();
 
-        // TODO: Handle DQ/IA
-        // TODO: Release a rewards to DKG submitter.
-        // TODO: Unlock sortition pool
+        // TODO: Handle DQ/IA. Should result submitter receive
+        //       reward if they failed to call this function?
 
         sortitionPool.unlock();
     }
