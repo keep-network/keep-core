@@ -183,6 +183,7 @@ library DKG {
 
         self.startBlock = block.number;
 
+        // slither-disable-next-line reentrancy-events
         emit DkgStarted(seed);
     }
 
