@@ -7,9 +7,9 @@
 toc::[]
 
 == Purpose of the document
-This document stores User Acceptance Criteria for Random Beacon v2 feature. It
-will be used to gain common understanding of how Random Beacon v2 should act and
-will be utilised during the acceptance testing of the feature.
+This document stores User Acceptance Criteria for Random Beacon v2. It will be
+used to gain common understanding of how Random Beacon v2 should act and will be
+utilised during the acceptance testing of the feature.
 
 == User Acceptance Criteria list
 
@@ -19,24 +19,29 @@ will be utilised during the acceptance testing of the feature.
 | UAC
 
 | Relay request
-| Anyone can send a relay entry request transaction.
+| Anyone can request for a relay entry.
 
 | Relay request
-| Successful processing of each relay entry request should always result in the
-  generation of a random number (relay entry) and sometimes also (if certain
+| Successful processing of each relay request should always result in the
+  generation of a relay entry (random number) and sometimes also (if certain
   conditions are met) in a creation of a new signing group.
 
 | Relay request
 | When sending the relay request, the requester should provide a fixed fee in T.
 
 | Relay request
-| Upon receiving the relay entry request, the random beacon contract should
-  determine validity of the request.
+| When requesting a relay entry, it should be possible to pass an optional
+  address parameter - this is the address of a contract implementing
+  `IRandomBeaconConsumer` interface.
 
 | Relay request
-| When determining validity of the relay entry request, the following aspects
-  should be taken into account: +
-  - isn’t the other relay entry request already pending? +
+| Upon receiving the relay request, the random beacon contract should determine
+  validity of the request.
+
+| Relay request
+| When determining validity of the relay request, the following aspects should
+  be taken into account: +
+  - isn’t the other relay request already pending? +
   - has the requester allowed the random beacon contract to pull the amount 
   sufficient for covering the fee for the request? (if the allowance is lower, 
   the transaction should be reverted; if it's higher, only the exact fee amount
@@ -49,21 +54,20 @@ will be utilised during the acceptance testing of the feature.
   reverted).
 
 | Relay request
-| If the relay entry request is deemed valid, then: +
+| If the relay request is deemed valid, then: +
   - the fee charged from the requester should be deposited in the maintenance
-  pool (the T balance of the random beacon contract) (with an intention to cover
-  the reimbursements for DKG-related actions) +
-  - the current relay entry should be used by the beacon to select a signing
+  pool (the T balance of the random beacon contract) +
+  - the last relay entry should be used by the beacon to select a signing
   group from the set of active groups (by hashing the relay entry and applying
   `modulo no_of_active_groups` operation on the result) +
-  - the random beacon contract should emit an event informing about the signing
-  group selection +
+  - the random beacon contract should emit an event informing about the group
+  selected to sign the entry +
   - the beacon should start the period of signature submission eligibility +
   - the selected signing group should start off-chain signature generation (upon
   noticing event sent by the beacon).
 
 | Relay request
-| If the relay entry request is deemed invalid, then: +
+| If the relay request is deemed invalid, then: +
   - the transaction should be reverted.
 
 | Relay request - signature generation
@@ -74,12 +78,11 @@ will be utilised during the acceptance testing of the feature.
 
 | Relay request - relay entry submission
 | During the signature submission eligibility period only selected members from
-  the group should be eligible to successfully submit the new relay entry
-  result. +
-  - at the beginning (right after the challenge period passes) only one member
-  (with index `new_entry % group_size` should be eligible +
-  - after fixed amount of blocks another member (with index `(new_entry %
-  group_size ) + 1` should become eligible (previous operator remains eligible) +
+  the group should be eligible to successfully submit the new relay entry: +
+  - at the beginning only one member, with index `new_entry % group_size`,
+  should be eligible +
+  - after fixed amount of blocks another member, with index `(new_entry %
+  group_size ) + 1`, should become eligible (previous operator remains eligible) +
   - next members should become eligible after each fixed amount of blocks.
 
 | Relay request - relay entry submission
@@ -95,11 +98,6 @@ will be utilised during the acceptance testing of the feature.
   aplicable)? +
   - is the BLS threshold signature valid? +
   - is the relay request in progress?
-
-| Relay request - relay entry submission
-| When requesting a relay entry, it should be possible to pass an optional
-  address parameter - this is the address of a contract implementing
-  `IRandomBeaconConsumer` interface.
 
 | Relay request - relay entry submission
 | If the transaction submitting the new relay entry gets approved, then: +
@@ -120,7 +118,7 @@ will be utilised during the acceptance testing of the feature.
 
 | Relay request - relay entry submission
 | The transaction submitting relay entry should have a predictable cost and the
-  gas cost of this transaction should be as low as possible, below 200k gas.
+  gas cost of this transaction should be as low as possible, below 200k gas used.
 
 | Relay request - relay entry submission
 | It should be possible to send low gas callbacks (up to the fixed gas cost
@@ -148,7 +146,7 @@ will be utilised during the acceptance testing of the feature.
   amount of lost stake should incrementally increase from 0 (at the moment of
   soft relay entry timeout) to a fixed value (at the moment of hard relay entry
   timeout). The slashing will be applied in transaction: +
-  - submitting the relay entry submission (if the result got submitted by one of
+  - submitting the relay entry (if the result got submitted by one of
   the operators between soft and hard timeout) +
   - notifying about relay entry timeout (if no result was submitted before the
   hard timeout).
@@ -172,8 +170,8 @@ will be utilised during the acceptance testing of the feature.
 | Relay request - relay entry timeouts
 | When determining validity of the hard relay entry timeout notification, the
   following aspects should be taken into account: +
-  - does it reference the existing relay entry request? (if not, then
-  notification invalid) +
+  - does it reference the existing relay request? (if not, then notification
+  invalid) +
   - has the hard relay entry timeout passed? (if not, then notification invalid) +
   - does the transaction include punishing of the misbehaving operators? (if not,
   then notification invalid).
@@ -185,7 +183,7 @@ will be utilised during the acceptance testing of the feature.
   percentage of T and being excluded from earning rewards for a fixed amount of
   time +
   - the process of choosing a signing group and tasking it with a relay entry
-  generation should be repeated (as part of the same relay entry request) +
+  generation should be repeated (as part of the same relay request) +
   - if there are no active groups to choose from, the request should get
   terminated and no result should be produced (in order for the next requests to
   get processed successfully, the manual genesis must be first triggered).
@@ -200,12 +198,12 @@ will be utilised during the acceptance testing of the feature.
 
 | Group creation
 | New groups should be created with a fixed frequency of relay requests (every
-  `N`-th relay entry request should result in the creation of a new group).
+  `N`-th relay request should result in the creation of a new group).
 
 | Group creation
-| If according to group creation frequency the relay entry request is the one
-  that should trigger new group creation, the creation should be triggered once
-  a new relay entry appears on the chain (all off-chain clients should start the
+| If according to group creation frequency the relay request is the one that
+  should trigger new group creation, the creation should be triggered once a new
+  relay entry appears on the chain (all off-chain clients should start the
   process of creation of new group using the new entry value and a view
   sortition pool function call).
 
@@ -222,7 +220,8 @@ will be utilised during the acceptance testing of the feature.
   group creation start event.
 
 | Group creation
-| Group creation start transaction should be as cheap as possible.
+| Any logic related to group creation should not affect the gas cost of relay
+  entry transactions by more than a couple of thousands of gas units.
 
 | Group creation
 | The sortition pool should weigh operators by stake and allow to select the
@@ -318,7 +317,8 @@ will be utilised during the acceptance testing of the feature.
   - all sortition pool members who signed the result should be slashed (fixed
   amount) (in the same tx) +
   - notifier should receive 5% from the total slashed amount (in the same tx) +
-  - remaning 95% of the total slashed amount shoud be burned +
+  - remaning 95% of the total slashed amount should be burned or allocated for
+  the maintenance pool of the staking contract +
   - the members of the signing group should be given another chance to publish
   the DKG result +
   - DKG timeout timer and the result submission eligibility order should be
@@ -441,7 +441,8 @@ will be utilised during the acceptance testing of the feature.
 // add them to the UACs
 
 | Governable parameters
-| The frequency of relay requests should be a governable parameter.
+| Every `N`-th relay request initiates creation of a new signing group.
+  This group creation frequency should be a governable parameter.
 
 | Governable parameters
 | The length of the challenge period should be a governable parameter.
