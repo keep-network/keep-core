@@ -9,6 +9,7 @@ import type {
   RandomBeacon,
   RandomBeaconGovernance,
   RandomBeaconStub,
+  StakingStub,
   TestToken,
   SortitionPool,
 } from "../typechain"
@@ -37,9 +38,16 @@ const fixture = async () => {
   const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
   const randomBeaconGovernance =
     contracts.randomBeaconGovernance as RandomBeaconGovernance
+  const stakingStub = contracts.stakingStub as StakingStub
   const testToken = contracts.testToken as TestToken
 
-  return { randomBeaconGovernance, randomBeacon, testToken, signers }
+  return {
+    randomBeaconGovernance,
+    randomBeacon,
+    stakingStub,
+    testToken,
+    signers,
+  }
 }
 
 // Test suite covering group creation in RandomBeacon contract.
@@ -60,6 +68,7 @@ describe("RandomBeacon - Group Creation", () => {
 
   let randomBeaconGovernance: RandomBeaconGovernance
   let randomBeacon: RandomBeaconStub & RandomBeacon
+  let stakingStub: StakingStub
   let testToken: TestToken
   let sortitionPool: SortitionPool
 
@@ -70,8 +79,13 @@ describe("RandomBeacon - Group Creation", () => {
 
   beforeEach("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ randomBeaconGovernance, randomBeacon, testToken, signers } =
-      await waffle.loadFixture(fixture))
+    ;({
+      randomBeaconGovernance,
+      randomBeacon,
+      stakingStub,
+      testToken,
+      signers,
+    } = await waffle.loadFixture(fixture))
 
     await randomBeaconGovernance.beginDkgResultSubmissionRewardUpdate(
       dkgResultSubmissionReward
@@ -993,6 +1007,73 @@ describe("RandomBeacon - Group Creation", () => {
                 )
             })
           })
+
+          context(
+            "with the submitter's stake below the minimum authorization value",
+            async () => {
+              const lowStakeSubmitterIndex = 1
+
+              beforeEach(async () => {
+                const lowStakeSubmitter =
+                  signers[lowStakeSubmitterIndex - 1].address
+                const minimumAuthorization =
+                  await randomBeacon.minimumAuthorization()
+                stakingStub.setStake(
+                  lowStakeSubmitter,
+                  minimumAuthorization.sub(1)
+                )
+
+                await mineBlocksTo(
+                  startBlock +
+                    constants.offchainDkgTime +
+                    params.dkgResultSubmissionEligibilityDelay -
+                    1
+                )
+              })
+
+              it("should revert for submitter with stake below minimum authorization", async () => {
+                await expect(
+                  signAndSubmitDkgResult(
+                    randomBeacon,
+                    groupPublicKey,
+                    signers,
+                    startBlock,
+                    noMisbehaved,
+                    lowStakeSubmitterIndex
+                  )
+                ).to.be.revertedWith(
+                  "DKG submitter's stake must be >= minimumAuthorization"
+                )
+              })
+
+              it("should succeed for submitter with stake above minimum authorization", async () => {
+                const anotherSubmitterIndex = 2
+                const expectedSubmitter =
+                  signers[anotherSubmitterIndex - 1].address
+
+                const {
+                  transaction: tx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
+                  signers,
+                  startBlock,
+                  noMisbehaved,
+                  anotherSubmitterIndex
+                )
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgResultSubmitted")
+                  .withArgs(
+                    dkgResultHash,
+                    dkgResult.groupPubKey,
+                    expectedSubmitter
+                  )
+              })
+            }
+          )
         })
       })
 

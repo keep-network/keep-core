@@ -42,6 +42,15 @@ interface IRandomBeaconStaking {
         address notifier,
         address[] memory operators
     ) external;
+
+    function stakes(address operator)
+        external
+        view
+        returns (
+            uint96 tStake,
+            uint96 keepInTStake,
+            uint96 nuInTStake
+        );
 }
 
 /// @title Keep Random Beacon
@@ -515,6 +524,12 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
+
+        (uint96 submitterStake, , ) = staking.stakes(msg.sender);
+        require(
+            submitterStake >= authorization.minimumAuthorization,
+            "DKG submitter's stake must be >= minimumAuthorization"
+        );
 
         groups.addCandidateGroup(
             dkgResult.groupPubKey,
