@@ -41,9 +41,6 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
     initialValues: {
       selectedGrantId: null,
     },
-    onSubmit: (values) => {
-      alert(JSON.stringify(values, null, 2))
-    },
   })
 
   return (
