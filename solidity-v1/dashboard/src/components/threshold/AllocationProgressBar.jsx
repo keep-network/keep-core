@@ -31,7 +31,7 @@ const AllocationProgressBar = ({
 
   return (
     <div className={`allocation-progress-bar ${className}`}>
-      <div className="allocation-progress-bar__token-allocation">
+      <div>
         <h5 className="text-gray-60">{title}</h5>
         <div className="allocation-progress-bar__progress-bar-container">
           <ProgressBar
