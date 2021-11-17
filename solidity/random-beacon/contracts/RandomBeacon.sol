@@ -449,6 +449,8 @@ contract RandomBeacon is Ownable {
     function genesis() external {
         require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
+        dkg.warmUp();
+
         createGroup(
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
         );
@@ -457,7 +459,6 @@ contract RandomBeacon is Ownable {
     /// @notice Creates a new group.
     /// @param seed Seed for DKG.
     function createGroup(uint256 seed) internal {
-        sortitionPool.lock();
         dkg.start(seed);
     }
 
@@ -497,7 +498,6 @@ contract RandomBeacon is Ownable {
         // Pay the sortition pool unlocking reward.
         tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
         dkg.complete();
-        sortitionPool.unlock();
     }
 
     /// @notice Approves DKG result. Can be called after challenge period for the
@@ -513,8 +513,6 @@ contract RandomBeacon is Ownable {
 
         // TODO: Handle DQ/IA. Should result submitter receive
         //       reward if they failed to call this function?
-
-        sortitionPool.unlock();
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -578,6 +576,15 @@ contract RandomBeacon is Ownable {
         relay.requestEntry(groupId);
 
         callback.setCallbackContract(callbackContract);
+
+        // If current request should trigger group creation and group creation
+        // is not currently in progress we should start the warm up process.
+        if (
+            relay.requestCount % groupCreationFrequency == 0 &&
+            dkg.currentState() == DKG.State.IDLE
+        ) {
+            dkg.warmUp();
+        }
     }
 
     /// @notice Creates a new relay entry.
@@ -615,15 +622,10 @@ contract RandomBeacon is Ownable {
             staking.slash(slashingAmount, groupMembers);
         }
 
-        if (relay.requestCount % groupCreationFrequency == 0) {
-            // Just in case, make sure the group creation can be triggered to
-            // avoid unexpected revert. There is a possibility entries are
-            // submitted very quickly and if the group creation frequency
-            // is small enough, group creations may overlap.
-            if (dkg.currentState() == DKG.State.IDLE) {
-                // slither-disable-next-line reentrancy-events
-                createGroup(uint256(keccak256(entry)));
-            }
+        // If group creation is warmed up, that means the we should start
+        // the actual group creation process.
+        if (dkg.currentState() == DKG.State.WARMED_UP) {
+            createGroup(uint256(keccak256(entry)));
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
@@ -656,6 +658,12 @@ contract RandomBeacon is Ownable {
             relay.retryOnEntryTimeout(groupId);
         } else {
             relay.cleanupOnEntryTimeout();
+
+            // If group creation is warmed up, we should cool down it to
+            // avoid blocking the future group creation.
+            if (dkg.currentState() == DKG.State.WARMED_UP) {
+                dkg.coolDown();
+            }
         }
     }
 

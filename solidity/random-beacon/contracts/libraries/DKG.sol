@@ -71,6 +71,8 @@ library DKG {
         // Group creation is not in progress. It is a state set after group creation
         // completion either by timeout or by a result approval.
         IDLE,
+        // Group creation is warmed up and sortition pool is locked.
+        WARMED_UP,
         // Off-chain DKG protocol execution is in progress. A result is being calculated
         // by the clients in this state. It's not yet possible to submit the result.
         KEY_GENERATION,
@@ -148,21 +150,34 @@ library DKG {
     {
         state = State.IDLE;
 
-        if (self.startBlock > 0) {
-            state = State.KEY_GENERATION;
+        if (self.sortitionPool.isLocked()) {
+            state = State.WARMED_UP;
 
-            if (block.number > self.startBlock + offchainDkgTime) {
-                state = State.AWAITING_RESULT;
+            if (self.startBlock > 0) {
+                state = State.KEY_GENERATION;
 
-                if (self.submittedResultBlock > 0) {
-                    state = State.CHALLENGE;
+                if (block.number > self.startBlock + offchainDkgTime) {
+                    state = State.AWAITING_RESULT;
+
+                    if (self.submittedResultBlock > 0) {
+                        state = State.CHALLENGE;
+                    }
                 }
             }
         }
     }
 
-    function start(Data storage self, uint256 seed) internal {
+    function warmUp(Data storage self) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
+
+        self.sortitionPool.lock();
+    }
+
+    function start(Data storage self, uint256 seed) internal {
+        require(
+            currentState(self) == State.WARMED_UP,
+            "current state is not WARMED_UP"
+        );
 
         self.startBlock = block.number;
 
@@ -445,5 +460,15 @@ library DKG {
         delete self.submittedResultHash;
         delete self.resultSubmitter;
         delete self.submittedResultBlock;
+        self.sortitionPool.unlock();
+    }
+
+    function coolDown(Data storage self) internal {
+        require(
+            currentState(self) == State.WARMED_UP,
+            "current state is not WARMED_UP"
+        );
+
+        self.sortitionPool.unlock();
     }
 }
