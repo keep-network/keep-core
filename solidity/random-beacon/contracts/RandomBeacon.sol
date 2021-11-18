@@ -242,7 +242,6 @@ contract RandomBeacon is Ownable {
         IERC20 _tToken,
         IRandomBeaconStaking _staking
     ) {
-        // TODO: RandomBeacon must be the owner of the sortition pool.
         sortitionPool = _sortitionPool;
         tToken = _tToken;
         staking = _staking;
