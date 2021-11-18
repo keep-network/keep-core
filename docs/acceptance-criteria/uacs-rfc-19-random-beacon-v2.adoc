@@ -176,14 +176,14 @@ utilised during the acceptance testing of the feature.
   - does it reference the existing relay request? (if not, then notification
   invalid) +
   - has the hard relay entry timeout passed? (if not, then notification invalid) +
-  - does the transaction include punishing of the misbehaving operators? (if not,
-  then notification invalid).
+  - does the transaction include termination of the inactive group and punishing
+  its operators? (if not, then notification invalid).
 
 | Relay request - relay entry timeouts
 | If the hard relay entry timeout notification was deemed justified, then: +
   - the signing group should get terminated +
   - all signing group members should be punished by being slashed the fixed
-  percentage of T and being excluded from earning rewards for a fixed amount of
+  amount of T and being excluded from earning rewards for a fixed amount of
   time +
   - the process of choosing a signing group and tasking it with a relay entry
   generation should be repeated (as part of the same relay request) +
