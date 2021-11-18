@@ -5,17 +5,26 @@
 
   &__grants-accordion-container {
     label {
-      margin-top: 1.6rem;
+      &::before,
+      &::after {
+        margin-top: 1.3rem;
+      }
     }
   }
 
   &__grants-accordion {
     width: 100%;
-    border: 1px solid @color-grey-30;
-    border-radius: 0.5rem;
     margin: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
 
     .accordion {
+      &__item {
+        border: 1px solid @color-grey-30;
+        width: 90%;
+        align-self: flex-end;
+      }
+
       &__button {
         border-bottom: none;
         align-items: center;

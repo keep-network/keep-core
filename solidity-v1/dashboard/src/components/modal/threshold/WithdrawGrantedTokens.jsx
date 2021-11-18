@@ -68,16 +68,34 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
             </div>
           </OnlyIf>
           <form>
-            {grants
-              .slice(0, numberOfGrantsDisplayed)
-              .map((grant) =>
-                renderGrant(
-                  grant,
-                  grants.length,
-                  selectedGrant,
-                  setSelectedGrant
-                )
-              )}
+            <Accordion
+              allowZeroExpanded={grants.length > 1}
+              className={
+                "withdraw-granted-tokens__grants-accordion withdraw-granted-tokens__grants-accordion-container"
+              }
+              preExpanded={["1"]}
+            >
+              {grants
+                .slice(0, numberOfGrantsDisplayed)
+                .map((grant) =>
+                  renderGrant(
+                    grant,
+                    grants.length,
+                    selectedGrant,
+                    setSelectedGrant
+                  )
+                )}
+            </Accordion>
+            {/* {grants*/}
+            {/* .slice(0, numberOfGrantsDisplayed)*/}
+            {/* .map((grant) =>*/}
+            {/*   renderGrant(*/}
+            {/*     grant,*/}
+            {/*     grants.length,*/}
+            {/*     selectedGrant,*/}
+            {/*     setSelectedGrant*/}
+            {/*   )*/}
+            {/* )}*/}
           </form>
           <OnlyIf condition={grants.length > numberOfGrantsDisplayed}>
             <Button
@@ -120,87 +138,163 @@ const renderGrant = (
   setSelectedGrant
 ) => {
   return (
-    <div
-      key={`Grant-${grant.id}`}
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-      }}
-      className={"withdraw-granted-tokens__grants-accordion-container"}
-    >
-      <OnlyIf condition={totalNumberOfGrants > 1}>
-        <input
-          className="radio-without-label"
-          type="radio"
-          name="selectedGrantId"
-          value={grant.id}
-          id={`grant-${grant.id}`}
-          checked={selectedGrant?.id === grant?.id}
-          onChange={() => {
-            setSelectedGrant(grant)
-          }}
-        />
-        <label htmlFor={`grant-${grant.id}`} />
-      </OnlyIf>
-      <Accordion
-        allowZeroExpanded={totalNumberOfGrants > 1}
-        className={"withdraw-granted-tokens__grants-accordion"}
+    <>
+      <input
+        className="radio-without-label"
+        type="radio"
+        name="selectedGrantId"
+        value={grant.id}
+        id={`grant-${grant.id}`}
+        checked={selectedGrant?.id === grant?.id}
+        onChange={() => {
+          setSelectedGrant(grant)
+        }}
+      />
+      <label htmlFor={`grant-${grant.id}`} />
+      <AccordionItem
+        {...(totalNumberOfGrants === 1 ? { dangerouslySetExpanded: true } : {})}
       >
-        <AccordionItem
-          {...(totalNumberOfGrants === 1
-            ? { dangerouslySetExpanded: true }
-            : {})}
-        >
-          <AccordionItemHeading>
-            <AccordionItemButton>
-              <div className="withdraw-granted-tokens__token-amount">
-                <TokenAmount
-                  amount={grant.readyToRelease}
-                  amountClassName={"h4 text-mint-100"}
-                  symbolClassName={"h4 text-mint-100"}
-                  token={KEEP}
-                />
-              </div>
-              <OnlyIf condition={totalNumberOfGrants > 1}>
-                <span className="withdraw-granted-tokens__details-text">
-                  Details
+        <AccordionItemHeading>
+          <AccordionItemButton>
+            <div className="withdraw-granted-tokens__token-amount">
+              <TokenAmount
+                amount={grant.readyToRelease}
+                amountClassName={"h4 text-mint-100"}
+                symbolClassName={"h4 text-mint-100"}
+                token={KEEP}
+              />
+            </div>
+            <OnlyIf condition={totalNumberOfGrants > 1}>
+              <span className="withdraw-granted-tokens__details-text">
+                Details
+              </span>
+              <span className="withdraw-granted-tokens__expand-button" />
+            </OnlyIf>
+          </AccordionItemButton>
+        </AccordionItemHeading>
+        <AccordionItemPanel>
+          <List>
+            <List.Content>
+              <List.Item className="flex row center space-between">
+                <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                  token grant id
                 </span>
-                <span className="withdraw-granted-tokens__expand-button" />
-              </OnlyIf>
-            </AccordionItemButton>
-          </AccordionItemHeading>
-          <AccordionItemPanel>
-            <List>
-              <List.Content>
-                <List.Item className="flex row center space-between">
-                  <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
-                    token grant id
-                  </span>
-                  <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
-                    {grant.id}
-                  </span>
-                </List.Item>
-                <List.Item className="flex row center space-between">
-                  <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
-                    date issued
-                  </span>
-                  <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
-                    {moment.unix(grant.start).format("MM/DD/YYYY")}
-                  </span>
-                </List.Item>
-                <List.Item className="flex row center space-between">
-                  <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
-                    wallet
-                  </span>
-                  <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
-                    {shortenAddress(grant.grantee)}
-                  </span>
-                </List.Item>
-              </List.Content>
-            </List>
-          </AccordionItemPanel>
-        </AccordionItem>
-      </Accordion>
-    </div>
+                <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                  {grant.id}
+                </span>
+              </List.Item>
+              <List.Item className="flex row center space-between">
+                <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                  date issued
+                </span>
+                <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                  {moment.unix(grant.start).format("MM/DD/YYYY")}
+                </span>
+              </List.Item>
+              <List.Item className="flex row center space-between">
+                <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                  wallet
+                </span>
+                <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                  {shortenAddress(grant.grantee)}
+                </span>
+              </List.Item>
+            </List.Content>
+          </List>
+        </AccordionItemPanel>
+      </AccordionItem>
+    </>
   )
 }
+
+// const renderGrant2 = (
+//   grant,
+//   totalNumberOfGrants,
+//   selectedGrant,
+//   setSelectedGrant
+// ) => {
+//   return (
+//     <div
+//       key={`Grant-${grant.id}`}
+//       style={{
+//         display: "flex",
+//         alignItems: "flex-start",
+//       }}
+//       className={"withdraw-granted-tokens__grants-accordion-container"}
+//     >
+//       <OnlyIf condition={totalNumberOfGrants > 1}>
+//         <input
+//           className="radio-without-label"
+//           type="radio"
+//           name="selectedGrantId"
+//           value={grant.id}
+//           id={`grant-${grant.id}`}
+//           checked={selectedGrant?.id === grant?.id}
+//           onChange={() => {
+//             setSelectedGrant(grant)
+//           }}
+//         />
+//         <label htmlFor={`grant-${grant.id}`} />
+//       </OnlyIf>
+//       <Accordion
+//         allowZeroExpanded={totalNumberOfGrants > 1}
+//         className={"withdraw-granted-tokens__grants-accordion"}
+//       >
+//         <AccordionItem
+//           {...(totalNumberOfGrants === 1
+//             ? { dangerouslySetExpanded: true }
+//             : {})}
+//         >
+//           <AccordionItemHeading>
+//             <AccordionItemButton>
+//               <div className="withdraw-granted-tokens__token-amount">
+//                 <TokenAmount
+//                   amount={grant.readyToRelease}
+//                   amountClassName={"h4 text-mint-100"}
+//                   symbolClassName={"h4 text-mint-100"}
+//                   token={KEEP}
+//                 />
+//               </div>
+//               <OnlyIf condition={totalNumberOfGrants > 1}>
+//                 <span className="withdraw-granted-tokens__details-text">
+//                   Details
+//                 </span>
+//                 <span className="withdraw-granted-tokens__expand-button" />
+//               </OnlyIf>
+//             </AccordionItemButton>
+//           </AccordionItemHeading>
+//           <AccordionItemPanel>
+//             <List>
+//               <List.Content>
+//                 <List.Item className="flex row center space-between">
+//                   <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+//                     token grant id
+//                   </span>
+//                   <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+//                     {grant.id}
+//                   </span>
+//                 </List.Item>
+//                 <List.Item className="flex row center space-between">
+//                   <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+//                     date issued
+//                   </span>
+//                   <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+//                     {moment.unix(grant.start).format("MM/DD/YYYY")}
+//                   </span>
+//                 </List.Item>
+//                 <List.Item className="flex row center space-between">
+//                   <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+//                     wallet
+//                   </span>
+//                   <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+//                     {shortenAddress(grant.grantee)}
+//                   </span>
+//                 </List.Item>
+//               </List.Content>
+//             </List>
+//           </AccordionItemPanel>
+//         </AccordionItem>
+//       </Accordion>
+//     </div>
+//   )
+// }
