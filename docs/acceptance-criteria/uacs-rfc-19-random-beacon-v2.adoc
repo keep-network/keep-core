@@ -64,7 +64,9 @@ utilised during the acceptance testing of the feature.
   selected to sign the entry +
   - the beacon should start the period of signature submission eligibility +
   - the selected signing group should start off-chain signature generation (upon
-  noticing event sent by the beacon).
+  noticing event sent by the beacon). +
+  - the sortition pool should get locked as a preparation for creation of a new
+  signing group (only sometimes, every N-th relay request).
 
 | Relay request
 | If the relay request is deemed invalid, then: +
@@ -72,9 +74,9 @@ utilised during the acceptance testing of the feature.
 
 | Relay request - signature generation
 | Once the active group is selected as a signing group, it is tasked with the
-  generation of a BLS threshold signature (based on the current relay entry and
+  generation of a BLS threshold signature (based on the last relay entry and
   the data provided by at least `blsThreshold=(group_size/2) + 1` members of the
-  signing group).
+  signing group). This signature will be used as a proposed new relay entry.
 
 | Relay request - relay entry submission
 | During the signature submission eligibility period only selected members from
@@ -109,8 +111,9 @@ utilised during the acceptance testing of the feature.
   same tx) +
   - if an optional address of the `IRandomBeaconConsumer` interface was provided
   in the tx, the interface should be called +
-  - the creation of a new signing group should be triggered (only sometimes, if
-  it’s the right time).
+  - the process of creation of a new signing group should be triggered (only
+  sometimes, every N-th relay request, if a creation of group isn't already in
+  progress).
 
 | Relay request - relay entry submission
 | The transaction submitting relay entry is not reimbursable (i.e. the submitter
@@ -216,8 +219,7 @@ utilised during the acceptance testing of the feature.
   submission transaction.
 
 | Group creation
-| Group creation start transaction should lock the sortition pool and emit the
-  group creation start event.
+| Group creation start transaction should emit the group creation start event.
 
 | Group creation
 | Any logic related to group creation should not affect the gas cost of relay
@@ -243,24 +245,23 @@ utilised during the acceptance testing of the feature.
   all have expired.
 
 | Group creation
-| Group creation start transaction should result in: +
-  - selection of a candidate group consisting of `group_size` members of
-  sortition pool +
-  - triggering of the DKG (distributed key generation) +
-  - the beacon should start the period of DKG result submission eligibility.
+| Group creation start transaction should start the period of DKG result
+  submission eligibility.
 
 | Group creation - selecting members
-| Upon noticing the group creation start event, clients should choose the
-  sortition pool members to the candidate group based on the current relay
-  entry, ensuring that the higher is the stake of an operator, the higher is his
-  chance of being selected to the group.
+| Upon noticing the group creation start event, off-chain clients should call
+  the sortition function which should select `group_size` pool members to the
+  candidate group based on the current relay entry, ensuring that the higher is
+  the stake of an operator, the higher is his chance of being selected to the
+  group.
 
 | Group creation - DKG
-| After group members are determined, they should perform off-chain DKG,
-  resulting either in success or timeout. The success result should contain list
-  of members of the candidate group, the public key of the group and list of
-  misbehaving members (members who were inactive or were disqualified) and
-  should be submitted by eligible group member on-chain.
+| After group members are determined, clients should perform off-chain DKG
+  (distributed key generation), resulting either in success or timeout. The
+  success result should contain list of members of the candidate group, the
+  public key of the group and list of misbehaving members (members who were
+  inactive or were disqualified) and should be submitted by eligible group
+  member on-chain.
 
 | Group creation - DKG submission
 | When determining validity of the tx submitting the DKG result, the following
@@ -277,12 +278,13 @@ utilised during the acceptance testing of the feature.
 | Group creation - DKG submission
 | At a given moment, only selected members from the group should be eligible to
   successfully submit the DKG result to the chain: +
-  - at the beginning (right after the challenge period passes) only one member
-  with index `hash(new_group_pubkey) % group_size` should be eligible +
+  - at the beginning (right after group creation start transaction is submitted)
+  only one member, with index `hash(new_group_pubkey) % group_size`, should be
+  eligible +
   - the first eligible operator should be given additional time for submitting
-  the result, to cover for the time of off-chain DKG generation
-  - after fixed amount of blocks another member (with index
-  `(hash(new_group_pubkey) % group_size ) + 1` should become eligible (previous
+  the result, to cover for the time of off-chain DKG generation +
+  - after fixed amount of blocks another member, with index
+  `(hash(new_group_pubkey) % group_size ) + 1`, should become eligible (previous
   operator remains eligible) +
   - next members should become eligible after each fixed amount of blocks.
 
