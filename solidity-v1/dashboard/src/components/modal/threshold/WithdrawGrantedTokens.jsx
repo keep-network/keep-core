@@ -21,7 +21,10 @@ import List from "../../List"
 import * as Icons from "../../Icons"
 
 export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
-  const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(5)
+  const DEFAULT_GRANTS_TO_DISPLAY = 5
+  const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(
+    DEFAULT_GRANTS_TO_DISPLAY
+  )
   const releaseTokens = useReleaseTokens()
 
   const totalReadyToRelease = useMemo(() => {
@@ -81,7 +84,9 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
             <Button
               className="withdraw-granted-tokens__view-more-button"
               onClick={() =>
-                setNumberOfGrantsDisplayed(numberOfGrantsDisplayed + 5)
+                setNumberOfGrantsDisplayed(
+                  numberOfGrantsDisplayed + DEFAULT_GRANTS_TO_DISPLAY
+                )
               }
             >
               <Icons.Add />
