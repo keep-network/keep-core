@@ -163,7 +163,7 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
           <AccordionItemPanel>
             <List>
               <List.Content>
-                <List.Item className="flex row space-between">
+                <List.Item className="flex row center space-between">
                   <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
                     token grant id
                   </span>
@@ -171,7 +171,7 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
                     {grant.id}
                   </span>
                 </List.Item>
-                <List.Item className="flex row space-between">
+                <List.Item className="flex row center space-between">
                   <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
                     date issued
                   </span>
@@ -179,7 +179,7 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
                     {moment.unix(grant.start).format("MM/DD/YYYY")}
                   </span>
                 </List.Item>
-                <List.Item className="flex row space-between">
+                <List.Item className="flex row center space-between">
                   <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
                     wallet
                   </span>
