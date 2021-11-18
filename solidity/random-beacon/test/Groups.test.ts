@@ -61,7 +61,6 @@ describe("Groups", () => {
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationTimestamp).to.be.equal(0)
           expect(storedGroup.members).to.be.deep.equal(members)
-          expect(storedGroup.misbehavedMembers).to.be.deep.equal(noMisbehaved)
         })
       })
 
@@ -80,15 +79,10 @@ describe("Groups", () => {
           it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
             expectedMembers[0] = expectedMembers.pop()
-            const expectedMisbehavedMembers = [members[0]]
 
             expect(
               (await groups.getGroup(groupPublicKey)).members
             ).to.be.deep.equal(expectedMembers)
-
-            expect(
-              (await groups.getGroup(groupPublicKey)).misbehavedMembers
-            ).to.be.deep.equal(expectedMisbehavedMembers)
           })
         })
 
@@ -106,15 +100,10 @@ describe("Groups", () => {
           it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
             expectedMembers.pop()
-            const expectedMisbehavedMembers = [members[members.length - 1]]
 
             expect(
               (await groups.getGroup(groupPublicKey)).members
             ).to.be.deep.equal(expectedMembers)
-
-            expect(
-              (await groups.getGroup(groupPublicKey)).misbehavedMembers
-            ).to.be.deep.equal(expectedMisbehavedMembers)
           })
         })
 
@@ -132,15 +121,10 @@ describe("Groups", () => {
           it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
             expectedMembers[24 - 1] = expectedMembers.pop()
-            const expectedMisbehavedMembers = [members[24 - 1]]
 
             expect(
               (await groups.getGroup(groupPublicKey)).members
             ).to.be.deep.equal(expectedMembers)
-
-            expect(
-              (await groups.getGroup(groupPublicKey)).misbehavedMembers
-            ).to.be.deep.equal(expectedMisbehavedMembers)
           })
         })
 
@@ -156,16 +140,11 @@ describe("Groups", () => {
           })
 
           it("should filter out misbehaved members", async () => {
-            const [expectedMembers, expectedMisbehavedMembers] =
-              filterMisbehaved(members, misbehavedIndices)
+            const expectedMembers = filterMisbehaved(members, misbehavedIndices)
 
             expect(
               (await groups.getGroup(groupPublicKey)).members
             ).to.be.deep.equal(expectedMembers)
-
-            expect(
-              (await groups.getGroup(groupPublicKey)).misbehavedMembers
-            ).to.be.deep.equal(expectedMisbehavedMembers)
           })
         })
 
@@ -404,147 +383,6 @@ describe("Groups", () => {
         })
       })
     })
-
-    context(
-      "when there is already a group registered with misbehaved members",
-      async () => {
-        const existingGroupPublicKey = "0x1234567890"
-
-        let existingGroupMembers: number[]
-        let newGroupMembers: number[]
-
-        const existingMisbehavedIdxs = [2, 3, 4]
-        const newMisbehavedIdxs = [3, 4, 5]
-
-        beforeEach(async () => {
-          existingGroupMembers = members.slice(30)
-          newGroupMembers = members.slice(-30)
-
-          await groups.addCandidateGroup(
-            existingGroupPublicKey,
-            existingGroupMembers,
-            existingMisbehavedIdxs
-          )
-        })
-
-        context(
-          "when the candidate group has the same public key as the registered one",
-          async () => {
-            const newGroupPublicKey = existingGroupPublicKey
-            let tx: ContractTransaction
-
-            beforeEach(async () => {
-              tx = await groups.addCandidateGroup(
-                newGroupPublicKey,
-                newGroupMembers,
-                newMisbehavedIdxs
-              )
-            })
-
-            it("should emit CandidateGroupRegistered event", async () => {
-              await expect(tx)
-                .to.emit(groups, "CandidateGroupRegistered")
-                .withArgs(newGroupPublicKey)
-            })
-
-            it("should register group", async () => {
-              const groupsRegistry = await groups.getGroupsRegistry()
-
-              expect(groupsRegistry).to.be.lengthOf(2)
-              expect(groupsRegistry[1]).to.deep.equal(
-                keccak256(newGroupPublicKey)
-              )
-            })
-
-            it("should store group data", async () => {
-              const storedGroup = await groups.getGroup(newGroupPublicKey)
-              const [expectedMembers, expectedMisbehavedMembers] =
-                filterMisbehaved(newGroupMembers, newMisbehavedIdxs)
-
-              expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
-              expect(storedGroup.activationTimestamp).to.be.equal(0)
-              expect(storedGroup.members).to.be.deep.equal(expectedMembers)
-              expect(storedGroup.misbehavedMembers).to.be.deep.equal(
-                expectedMisbehavedMembers
-              )
-            })
-
-            it("should not update existing group entry", async () => {
-              const groupsRegistry = await groups.getGroupsRegistry()
-
-              expect(groupsRegistry[0]).to.deep.equal(
-                keccak256(existingGroupPublicKey)
-              )
-            })
-          }
-        )
-
-        context(
-          "when the candidate group has a different public key than the registered group",
-          async () => {
-            const newGroupPublicKey = groupPublicKey
-            let tx: ContractTransaction
-
-            beforeEach(async () => {
-              tx = await groups.addCandidateGroup(
-                newGroupPublicKey,
-                newGroupMembers,
-                newMisbehavedIdxs
-              )
-            })
-
-            it("should emit CandidateGroupRegistered event", async () => {
-              await expect(tx)
-                .to.emit(groups, "CandidateGroupRegistered")
-                .withArgs(newGroupPublicKey)
-            })
-
-            it("should register group", async () => {
-              const groupsRegistry = await groups.getGroupsRegistry()
-
-              expect(groupsRegistry).to.be.lengthOf(2)
-              expect(groupsRegistry[1]).to.deep.equal(
-                keccak256(newGroupPublicKey)
-              )
-            })
-
-            it("should store group data", async () => {
-              const storedGroup = await groups.getGroup(newGroupPublicKey)
-              const [expectedMembers, expectedMisbehavedMembers] =
-                filterMisbehaved(newGroupMembers, newMisbehavedIdxs)
-
-              expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
-              expect(storedGroup.activationTimestamp).to.be.equal(0)
-              expect(storedGroup.members).to.be.deep.equal(expectedMembers)
-              expect(storedGroup.misbehavedMembers).to.be.deep.equal(
-                expectedMisbehavedMembers
-              )
-            })
-
-            it("should not update existing group", async () => {
-              const groupsRegistry = await groups.getGroupsRegistry()
-
-              expect(groupsRegistry[0]).to.deep.equal(
-                keccak256(existingGroupPublicKey)
-              )
-
-              const storedGroup = await groups.getGroup(existingGroupPublicKey)
-              const [expectedMembers, expectedMisbehavedMembers] =
-                filterMisbehaved(existingGroupMembers, existingMisbehavedIdxs)
-
-              expect(storedGroup.groupPubKey).to.be.equal(
-                existingGroupPublicKey
-              )
-              expect(storedGroup.activationTimestamp).to.be.equal(0)
-              expect(storedGroup.members).to.be.deep.equal(expectedMembers)
-              expect(storedGroup.misbehavedMembers).to.be.deep.equal(
-                expectedMisbehavedMembers
-              )
-            })
-          }
-        )
-      }
-    )
 
     context("when existing group was popped", async () => {
       const existingGroupPublicKey = "0x1234567890"
@@ -1088,14 +926,12 @@ describe("Groups", () => {
 function filterMisbehaved(
   members: number[],
   misbehavedIndices: number[]
-): [number[], number[]] {
+): number[] {
   const expectedMembers = [...members]
-  const expectedMisbehavedMembers = []
   misbehavedIndices.reverse().forEach((value) => {
-    expectedMisbehavedMembers.push(expectedMembers[value - 1])
     expectedMembers[value - 1] = expectedMembers[expectedMembers.length - 1]
     expectedMembers.pop()
   })
 
-  return [expectedMembers, expectedMisbehavedMembers]
+  return expectedMembers
 }

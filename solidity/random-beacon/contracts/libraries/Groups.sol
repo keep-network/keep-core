@@ -16,7 +16,6 @@ library Groups {
         bytes groupPubKey;
         uint256 activationTimestamp;
         uint32[] members;
-        uint32[] misbehavedMembers;
     }
 
     struct Data {
@@ -29,8 +28,7 @@ library Groups {
     }
 
     /// @notice Adds a new candidate group. The group is stored with group public
-    ///         key, group members and group misbehaved members, but is not yet
-    ///         activated.
+    ///         key and group members, but is not yet activated.
     /// @dev The group members list is stored with all misbehaved members filtered out.
     /// @param groupPubKey Generated candidate group public key
     /// @param members Addresses of candidate group members as outputted by the
@@ -71,8 +69,7 @@ library Groups {
     }
 
     /// @notice Sets addresses of members for the group eliminating members at
-    ///         positions pointed by the misbehavedMembersIndices array. The
-    ///         eliminated members are stored as misbehaved members.
+    ///         positions pointed by the misbehavedMembersIndices array.
     ///
     ///         NOTE THAT THIS FUNCTION CHANGES ORDER OF MEMBERS IN THE GROUP
     ///         IF THERE IS AT LEAST ONE MISBEHAVED MEMBER
@@ -93,16 +90,13 @@ library Groups {
         uint8[] calldata misbehavedMembersIndices
     ) private {
         group.members = members;
-        delete group.misbehavedMembers;
 
         // Iterate misbehaved array backwards, replace misbehaved
         // member with the last element and reduce array length
         uint256 i = misbehavedMembersIndices.length;
         while (i > 0) {
             // group member indices start from 1, so we need to -1 on misbehaved
-            uint32 memberArrayPosition = misbehavedMembersIndices[i - 1] - 1;
-            uint32 misbehavedMember = group.members[memberArrayPosition];
-            group.misbehavedMembers.push(misbehavedMember);
+            uint8 memberArrayPosition = misbehavedMembersIndices[i - 1] - 1;
             group.members[memberArrayPosition] = group.members[
                 group.members.length - 1
             ];
@@ -168,19 +162,6 @@ library Groups {
         // TODO: Subtract expired and terminated groups
         // .sub(self.expiredGroupOffset).sub(
         //     self.activeTerminatedGroups.length)
-    }
-
-    /// @notice Returns the misbehaved members from the latest group in the
-    ///         group registry.
-    function getLatestMisbehavedMembers(Data storage self)
-        internal
-        view
-        returns (uint32[] memory)
-    {
-        Group storage latestGroup = self.groupsData[
-            self.groupsRegistry[self.groupsRegistry.length - 1]
-        ];
-        return latestGroup.misbehavedMembers;
     }
 
     function selectGroup(Data storage self, uint256 seed)

@@ -503,10 +503,9 @@ contract RandomBeacon is Ownable {
         dkg.approveResult();
         tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
 
-        uint32[] memory misbehavedMembers = groups.getLatestMisbehavedMembers();
-        if (misbehavedMembers.length > 0) {
+        if (dkg.submittedResultMisbehavedMembers.length > 0) {
             //TODO: Replace 2 weeks with governable parameter
-            punishOperators(misbehavedMembers, 2 weeks);
+            punishOperators(dkg.submittedResultMisbehavedMembers, 2 weeks);
         }
 
         groups.activateCandidateGroup();

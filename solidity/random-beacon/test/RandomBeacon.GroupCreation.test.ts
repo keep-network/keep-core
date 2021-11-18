@@ -1222,6 +1222,10 @@ describe("RandomBeacon - Group Creation", () => {
           //       implemented, check that members with indices 2, 10, 64 are
           //       punished.
         })
+
+        it("should clean dkg data", async () => {
+          await assertDkgResultCleanData(randomBeacon)
+        })
       })
     })
   })
@@ -1616,4 +1620,9 @@ async function assertDkgResultCleanData(randomBeacon: RandomBeaconStub) {
   expect(dkgData.resultSubmitter, "unexpected resultSubmitter").to.eq(
     ethers.constants.AddressZero
   )
+
+  expect(
+    dkgData.submittedResultMisbehavedMembers,
+    "unexpected submittedResultMisbehavedMembers"
+  ).to.deep.eq([])
 }
