@@ -218,6 +218,12 @@ contract RandomBeacon is Ownable {
         address[] groupMembers
     );
 
+    event RelayEntryDelaySlashingFailed(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
     event RelayEntryTimeoutSlashed(
         uint256 indexed requestId,
         uint256 slashingAmount,
@@ -225,6 +231,8 @@ contract RandomBeacon is Ownable {
     );
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
+
+    event BanRewardsFailed(uint32[] ids);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -608,14 +616,20 @@ contract RandomBeacon is Ownable {
                 group.members
             );
 
-            // slither-disable-next-line reentrancy-events
-            emit RelayEntryDelaySlashed(
-                currentRequestId,
-                slashingAmount,
-                groupMembers
-            );
-
-            staking.slash(slashingAmount, groupMembers);
+            try staking.slash(slashingAmount, groupMembers) {
+                // slither-disable-next-line reentrancy-events
+                emit RelayEntryDelaySlashed(
+                    currentRequestId,
+                    slashingAmount,
+                    groupMembers
+                );
+            } catch {
+                emit RelayEntryDelaySlashingFailed(
+                    currentRequestId,
+                    slashingAmount,
+                    groupMembers
+                );
+            }
         }
 
         if (relay.requestCount % groupCreationFrequency == 0) {
@@ -665,20 +679,18 @@ contract RandomBeacon is Ownable {
     function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
         internal
     {
-        address[] memory operators = sortitionPool.getIDOperators(ids);
+        try sortitionPool.banRewards(ids, punishmentDuration) {
+            address[] memory operators = sortitionPool.getIDOperators(ids);
 
-        for (uint256 i = 0; i < operators.length; i++) {
-            // TODO: Do we need the operator to re-deposit gas once
-            //       current punishment is completed to use it for
-            //       future ones?
-            gasStation.releaseGas(operators[i]);
+            for (uint256 i = 0; i < operators.length; i++) {
+                // TODO: Do we need the operator to re-deposit gas once
+                //       current punishment is completed to use it for
+                //       future ones?
+                gasStation.releaseGas(operators[i]);
+            }
+        } catch {
+            emit BanRewardsFailed(ids);
         }
-
-        // TODO: Once `banRewards` is implemented on the pool side, make sure
-        //       it does not have an unexpected revert instruction which will
-        //       block entry submission. For example, an operator leaves
-        //       the pool just before it gets banned.
-        sortitionPool.banRewards(ids, punishmentDuration);
     }
 
     /// @return Flag indicating whether a relay entry request is currently
