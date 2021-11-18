@@ -61,9 +61,9 @@ operators noticed the problem.
 New groups should be created with a fixed, governable frequency of relay
 requests. Instead of a ticket-based approach for group selection, we should
 use sortition pools. Group creation start transaction should be embedded into
-transaction submitting relay entry and should lock a sortition pool. From this
-moment, no operator can enter or leave the pool. Once a new relay entry appears
-on the chain, all off-chain clients should perform group selection optimistically, 
+relay request transaction and should lock a sortition pool. From this moment,
+no operator can enter or leave the pool. Once a new relay entry appears on the
+chain, all off-chain clients should perform group selection optimistically, 
 using the new entry value and a view sortition pool function call.
 After determining group members, clients should perform DKG as usual. 
 Once the group submits the result to the chain, a challenge period starts.
