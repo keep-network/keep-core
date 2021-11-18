@@ -20,9 +20,18 @@
 
     .accordion {
       &__item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      &__heading {
         border: 1px solid @color-grey-30;
         width: 90%;
         align-self: flex-end;
+
+        &--without-bottom-border {
+          border-bottom: none;
+        }
       }
 
       &__button {
@@ -50,8 +59,13 @@
       }
 
       &__panel {
+        border: 1px solid @color-grey-30;
+        border-top: none;
+        width: 90%;
+        align-self: flex-end;
         padding: 0.1rem 1rem 0.5rem 1rem;
-        border-bottom: none;
+        animation: none;
+        -webkit-animation: none;
       }
     }
   }
