@@ -56,7 +56,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
         </p>
         <div>
           <OnlyIf condition={grants.length > 1}>
-            <div className="withdraw-granted-tokens__info-row">
+            <div className="flex row center space-between">
               <h4 className="withdraw-granted-tokens__info-row-title">
                 Withdraw:
               </h4>
