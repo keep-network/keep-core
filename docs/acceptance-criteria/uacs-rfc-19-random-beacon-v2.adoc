@@ -281,8 +281,6 @@ utilised during the acceptance testing of the feature.
   - at the beginning (right after group creation start transaction is submitted)
   only one member, with index `hash(new_group_pubkey) % group_size`, should be
   eligible +
-  - the first eligible operator should be given additional time for submitting
-  the result, to cover for the time of off-chain DKG generation +
   - after fixed amount of blocks another member, with index
   `(hash(new_group_pubkey) % group_size ) + 1`, should become eligible (previous
   operator remains eligible) +
