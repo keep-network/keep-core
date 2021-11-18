@@ -406,7 +406,7 @@ describe("Groups", () => {
     })
 
     context(
-      "when there is already a group is registered with misbehaved members",
+      "when there is already a group registered with misbehaved members",
       async () => {
         const existingGroupPublicKey = "0x1234567890"
 

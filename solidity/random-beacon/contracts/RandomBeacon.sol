@@ -496,9 +496,9 @@ contract RandomBeacon is Ownable {
 
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
-    ///         valid, pays reward to the result submitter, punishes misbehaved
-    ///         group members and completes the group creation by activating the
-    ///         candidate group.
+    ///         valid, pays reward to the result submitter, bans misbehaved group
+    ///         members from the sortition pool rewards and completes the group
+    ///         creation by activating the candidate group.
     function approveDkgResult() external {
         dkg.approveResult();
         tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
