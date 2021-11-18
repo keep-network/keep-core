@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react"
 import { withBaseModal } from "../withBaseModal"
 import { ModalBody, ModalFooter, ModalHeader } from "../Modal"
 import Button, { SubmitButton } from "../../Button"
-import { useFormik } from "formik"
 import useReleaseTokens from "../../../hooks/useReleaseTokens"
 import {
   Accordion,
@@ -25,6 +24,9 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(
     DEFAULT_GRANTS_TO_DISPLAY
   )
+  const [selectedGrant, setSelectedGrant] = useState(
+    grants.length === 1 ? grants[0].id : null
+  )
   const releaseTokens = useReleaseTokens()
 
   const totalReadyToRelease = useMemo(() => {
@@ -35,18 +37,8 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   }, [grants])
 
   const onWithdrawClick = (awaitingPromise) => {
-    const selectedTokenGrant = grants.find(
-      (grant) => grant.id === formik.values.selectedGrantId
-    )
-    releaseTokens(selectedTokenGrant, awaitingPromise)
+    releaseTokens(selectedGrant, awaitingPromise)
   }
-
-  const formik = useFormik({
-    enableReinitialize: true,
-    initialValues: {
-      selectedGrantId: grants.length === 1 ? grants[0].id : null,
-    },
-  })
 
   return (
     <>
@@ -78,7 +70,14 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
           <form>
             {grants
               .slice(0, numberOfGrantsDisplayed)
-              .map((grant) => renderGrant(grant, grants.length, formik))}
+              .map((grant) =>
+                renderGrant(
+                  grant,
+                  grants.length,
+                  selectedGrant,
+                  setSelectedGrant
+                )
+              )}
           </form>
           <OnlyIf condition={grants.length > numberOfGrantsDisplayed}>
             <Button
@@ -102,7 +101,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
           onSubmitAction={(awaitingPromise) => {
             onWithdrawClick(awaitingPromise)
           }}
-          disabled={grants.length > 1 && !formik.values.selectedGrantId}
+          disabled={grants.length > 1 && !selectedGrant}
         >
           withdraw
         </SubmitButton>
@@ -114,7 +113,12 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
   )
 })
 
-const renderGrant = (grant, totalNumberOfGrants, formik) => {
+const renderGrant = (
+  grant,
+  totalNumberOfGrants,
+  selectedGrant,
+  setSelectedGrant
+) => {
   return (
     <div
       key={`Grant-${grant.id}`}
@@ -131,9 +135,9 @@ const renderGrant = (grant, totalNumberOfGrants, formik) => {
           name="selectedGrantId"
           value={grant.id}
           id={`grant-${grant.id}`}
-          checked={formik.values.selectedGrantId === grant.id}
+          checked={selectedGrant?.id === grant?.id}
           onChange={() => {
-            formik.setFieldValue("selectedGrantId", grant.id)
+            setSelectedGrant(grant)
           }}
         />
         <label htmlFor={`grant-${grant.id}`} />
