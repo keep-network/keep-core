@@ -56,7 +56,7 @@ const AllocationProgressBar = ({
               </OnlyIf>
             </ProgressBar.Inline>
           </ProgressBar>
-          <span className="text-grey-70 ml-1 allocation-progress-bar__allocation-percentage-value">
+          <span className="text-grey-70 ml-1">
             {/** TODO: 2 decimal places, maybe even print it as >99 % and <1%
               // when there is small difference betweent currentValue and total
               // Value */}
