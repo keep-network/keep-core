@@ -124,10 +124,6 @@ utilised during the acceptance testing of the feature.
   gas cost of this transaction should be as low as possible, below 200k gas used.
 
 | Relay request - relay entry submission
-| It should be possible to send low gas callbacks (up to the fixed gas cost
-  value) in the transaction submitting the relay entry.
-
-| Relay request - relay entry submission
 | Failure in the callback function should not revert the relay entry transaction.
 
 | Relay request - relay entry submission
@@ -191,11 +187,12 @@ utilised during the acceptance testing of the feature.
   terminated and no result should be produced (in order for the next requests to
   get processed successfully, the manual genesis must be first triggered).
 
-| Relay entry utilisation
-| Applications wanting to use a relay entry should submit another transaction
-  using the relay entry value previously set by the random beacon.
+| Relay entry callback
+| Applications wanting to use a relay entry should submit another transaction,
+  outside of the random beacon, in case the callback gas limit was not
+  sufficient.
 
-| Relay entry utilisation
+| Relay entry callback
 | Smart contract consuming new relay entry needs to implement
   `IRandomBeaconConsumer` interface.
 
