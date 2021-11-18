@@ -696,7 +696,7 @@ describe("RandomBeacon - Relay", () => {
         })
       })
 
-      context.only(
+      context(
         "when no active groups exist after timeout is reported and DKG is awaiting seed",
         () => {
           beforeEach(async () => {

@@ -1172,6 +1172,8 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       context("with max periods duration", async () => {
+        let tx: ContractTransaction
+
         beforeEach(async () => {
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
@@ -1184,7 +1186,15 @@ describe("RandomBeacon - Group Creation", () => {
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
-          await randomBeacon.approveDkgResult()
+          tx = await randomBeacon.approveDkgResult()
+        })
+
+        // Just an explicit assertion to make sure transaction passes correctly
+        // for max periods duration.
+        it("should succeed", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "GroupActivated")
+            .withArgs(0, groupPublicKey)
         })
 
         it("should unlock the sortition pool", async () => {
@@ -1369,6 +1379,10 @@ describe("RandomBeacon - Group Creation", () => {
                   .to.emit(randomBeacon, "CandidateGroupRemoved")
                   .withArgs(groupPublicKey)
               })
+
+              it("should not unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.true
+              })
             })
           })
 
@@ -1403,6 +1417,10 @@ describe("RandomBeacon - Group Creation", () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "CandidateGroupRemoved")
                   .withArgs(groupPublicKey)
+              })
+
+              it("should not unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.true
               })
             })
           })
