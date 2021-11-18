@@ -105,7 +105,7 @@ const HowItWorksPage = () => {
 
       <section className="tile threshold-how-it-works-page__upgrade-staked-keep">
         <h3 className="mb-1">Upgrade Staked KEEP Tokens</h3>
-        <List>
+        <List className="mb-3">
           <List.Title className="h5 text-violet-80">Staked Tokens</List.Title>
           <List.Content className="bullets bullets--violet-80 text-grey-60">
             <List.Item className="mb-1">
