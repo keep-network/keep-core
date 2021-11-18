@@ -61,6 +61,9 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newSortitionPoolRewardsBanDuration;
     uint256 public sortitionPoolRewardsBanDurationChangeInitiated;
 
+    uint256 public newRelayEntryTimeoutNotificationRewardMultiplier;
+    uint256 public relayEntryTimeoutNotificationRewardMultiplierChangeInitiated;
+
     RandomBeacon public randomBeacon;
 
     // Long governance delay used for critical parameters giving a chance for
@@ -176,6 +179,14 @@ contract RandomBeaconGovernance is Ownable {
     );
     event SortitionPoolRewardsBanDurationUpdated(
         uint256 sortitionPoolRewardsBanDuration
+    );
+
+    event RelayEntryTimeoutNotificationRewardMultiplierUpdateStarted(
+        uint256 relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 timestamp
+    );
+    event RelayEntryTimeoutNotificationRewardMultiplierUpdated(
+        uint256 relayEntryTimeoutNotificationRewardMultiplier
     );
 
     /// @notice Reverts if called before the governance delay elapses.
@@ -571,7 +582,8 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             newDkgResultSubmissionReward,
             randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.sortitionPoolRewardsBanDuration()
+            randomBeacon.sortitionPoolRewardsBanDuration(),
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
         );
         dkgResultSubmissionRewardChangeInitiated = 0;
         newDkgResultSubmissionReward = 0;
@@ -611,7 +623,8 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             newSortitionPoolUnlockingReward,
-            randomBeacon.sortitionPoolRewardsBanDuration()
+            randomBeacon.sortitionPoolRewardsBanDuration(),
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
         );
         sortitionPoolUnlockingRewardChangeInitiated = 0;
         newSortitionPoolUnlockingReward = 0;
@@ -652,10 +665,61 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
-            newSortitionPoolRewardsBanDuration
+            newSortitionPoolRewardsBanDuration,
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
         );
         sortitionPoolRewardsBanDurationChangeInitiated = 0;
         newSortitionPoolRewardsBanDuration = 0;
+    }
+
+    /// @notice Begins the relay entry timeout notification reward multiplier
+    ///         update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newRelayEntryTimeoutNotificationRewardMultiplier New relay
+    ///        entry timeout notification reward multiplier.
+    function beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(
+        uint256 _newRelayEntryTimeoutNotificationRewardMultiplier
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newRelayEntryTimeoutNotificationRewardMultiplier <= 100,
+            "Maximum value is 100"
+        );
+
+        newRelayEntryTimeoutNotificationRewardMultiplier = _newRelayEntryTimeoutNotificationRewardMultiplier;
+        relayEntryTimeoutNotificationRewardMultiplierChangeInitiated = block
+            .timestamp;
+        emit RelayEntryTimeoutNotificationRewardMultiplierUpdateStarted(
+            _newRelayEntryTimeoutNotificationRewardMultiplier,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the relay entry timeout notification reward
+    ///         multiplier update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            relayEntryTimeoutNotificationRewardMultiplierChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit RelayEntryTimeoutNotificationRewardMultiplierUpdated(
+            newRelayEntryTimeoutNotificationRewardMultiplier
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateRewardParameters(
+            randomBeacon.dkgResultSubmissionReward(),
+            randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.sortitionPoolRewardsBanDuration(),
+            newRelayEntryTimeoutNotificationRewardMultiplier
+        );
+        relayEntryTimeoutNotificationRewardMultiplierChangeInitiated = 0;
+        newRelayEntryTimeoutNotificationRewardMultiplier = 0;
     }
 
     /// @notice Begins the relay entry submission failure slashing amount update
@@ -932,6 +996,21 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 sortitionPoolRewardsBanDurationChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the relay entry timeout
+    ///         notification reward multiplier duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingRelayEntryTimeoutNotificationRewardMultiplierUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                relayEntryTimeoutNotificationRewardMultiplierChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }

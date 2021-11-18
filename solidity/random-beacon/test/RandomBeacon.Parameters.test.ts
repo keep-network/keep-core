@@ -196,6 +196,7 @@ describe("RandomBeacon - Parameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
     const sortitionPoolRewardsBanDuration = 300
+    const relayEntryTimeoutNotificationRewardMultiplier = 10
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -205,7 +206,8 @@ describe("RandomBeacon - Parameters", () => {
             .updateRewardParameters(
               dkgResultSubmissionReward,
               sortitionPoolUnlockingReward,
-              sortitionPoolRewardsBanDuration
+              sortitionPoolRewardsBanDuration,
+              relayEntryTimeoutNotificationRewardMultiplier
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -219,7 +221,8 @@ describe("RandomBeacon - Parameters", () => {
           .updateRewardParameters(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
-            sortitionPoolRewardsBanDuration
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
           )
       })
 
@@ -241,13 +244,20 @@ describe("RandomBeacon - Parameters", () => {
         ).to.be.equal(sortitionPoolRewardsBanDuration)
       })
 
+      it("should update the relay entry timeout notification reward multiplier", async () => {
+        expect(
+          await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+        ).to.be.equal(relayEntryTimeoutNotificationRewardMultiplier)
+      })
+
       it("should emit the RewardParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
           .withArgs(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
-            sortitionPoolRewardsBanDuration
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
           )
       })
     })

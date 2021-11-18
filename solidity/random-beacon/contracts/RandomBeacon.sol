@@ -132,6 +132,13 @@ contract RandomBeacon is Ownable {
     ///         who missed their turn for relay entry submission.
     uint256 public sortitionPoolRewardsBanDuration;
 
+    /// @notice Percentage of the relay entry notification rewards which will
+    ///         be transferred to the notifier. Notifiers are rewarded from
+    ///         a separate pool funded from slashed tokens. For example, if
+    ///         notification reward is 1000 and the value of the multiplier is
+    ///         5, the notifier will receive: 5% of 1000 = 50.
+    uint256 public relayEntryTimeoutNotificationRewardMultiplier;
+
     ISortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
@@ -163,7 +170,8 @@ contract RandomBeacon is Ownable {
     event RewardParametersUpdated(
         uint256 dkgResultSubmissionReward,
         uint256 sortitionPoolUnlockingReward,
-        uint256 sortitionPoolRewardsBanDuration
+        uint256 sortitionPoolRewardsBanDuration,
+        uint256 relayEntryTimeoutNotificationRewardMultiplier
     );
 
     event SlashingParametersUpdated(
@@ -256,6 +264,7 @@ contract RandomBeacon is Ownable {
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
+        relayEntryTimeoutNotificationRewardMultiplier = 5;
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -350,18 +359,23 @@ contract RandomBeacon is Ownable {
     /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
     /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
+    /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
+    ///        relay entry timeout notification reward multiplier.
     function updateRewardParameters(
         uint256 _dkgResultSubmissionReward,
         uint256 _sortitionPoolUnlockingReward,
-        uint256 _sortitionPoolRewardsBanDuration
+        uint256 _sortitionPoolRewardsBanDuration,
+        uint256 _relayEntryTimeoutNotificationRewardMultiplier
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
         sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
+        relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
-            sortitionPoolRewardsBanDuration
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
         );
     }
 
@@ -655,8 +669,12 @@ contract RandomBeacon is Ownable {
             groupMembers
         );
 
-        // TODO: Revisit whether the notifier should receive 5% of the slashing amount.
-        staking.seize(slashingAmount, 5, msg.sender, groupMembers);
+        staking.seize(
+            slashingAmount,
+            relayEntryTimeoutNotificationRewardMultiplier,
+            msg.sender,
+            groupMembers
+        );
 
         // TODO: Once implemented, terminate group using `groupId`.
 
