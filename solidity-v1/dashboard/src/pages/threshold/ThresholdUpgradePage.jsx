@@ -14,10 +14,9 @@ import {
   useWeb3Context,
 } from "../../components/WithWeb3Context"
 import { useDispatch, useSelector } from "react-redux"
-import { Skeleton } from "../../components/skeletons"
-import OnlyIf from "../../components/OnlyIf"
 import { useModal } from "../../hooks/useModal"
 import { MODAL_TYPES } from "../../constants/constants"
+import TokenAmountSkeleton from "../../components/skeletons/TokenAmountSkeleton"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
@@ -127,24 +126,24 @@ const ThresholdUpgradePage = () => {
 
       <section className="tile not-staked">
         <h3 className="mb-1">Not staked</h3>
-        <OnlyIf condition={isDataFetching}>
-          <div className="not-staked__token-amount not-staked__token-amount--loading">
-            <Icons.KeepOutline
-              width={32}
-              height={32}
-              className={`token-amount__icon`}
-            />
-            <Skeleton tag="h2" shining color="grey-20" width="30%" />
-          </div>
-        </OnlyIf>
-        <OnlyIf condition={!isDataFetching}>
+        {isDataFetching ? (
+          <TokenAmountSkeleton
+            wrapperClassName="not-staked__token-amount staked__token-amount--loading"
+            textStyles={{ width: "40%", marginLeft: ".3rem" }}
+            textClassName="h2"
+            icon={Icons.KeepOutline}
+            iconHeight={32}
+            iconWidth={32}
+            iconClassName="token-amount__icon keep-outline keep-outline--mint-80"
+          />
+        ) : (
           <TokenAmount
             wrapperClassName={"not-staked__token-amount mb-2"}
             amount={notStakedTotalAmount}
             token={KEEP}
             withIcon
           />
-        </OnlyIf>
+        )}
         <AllocationProgressBar
           title={"wallet"}
           currentValue={totalOwnedUnstakedBalance}
@@ -226,24 +225,24 @@ const ThresholdUpgradePage = () => {
             </span>
           </div>
         </div>
-        <OnlyIf condition={isDataFetching}>
-          <div className="staked__token-amount staked__token-amount--loading">
-            <Icons.KeepOutline
-              width={32}
-              height={32}
-              className={`token-amount__icon`}
-            />
-            <Skeleton tag="h2" shining color="grey-20" width="40%" />
-          </div>
-        </OnlyIf>
-        <OnlyIf condition={!isDataFetching}>
+        {isDataFetching ? (
+          <TokenAmountSkeleton
+            wrapperClassName="staked__token-amount staked__token-amount--loading"
+            textStyles={{ width: "40%", marginLeft: ".3rem" }}
+            textClassName="h2"
+            icon={Icons.KeepOutline}
+            iconHeight={32}
+            iconWidth={32}
+            iconClassName="token-amount__icon keep-outline keep-outline--mint-80"
+          />
+        ) : (
           <TokenAmount
             wrapperClassName={"staked__token-amount mb-2"}
             amount={stakedTotalAmount}
             token={KEEP}
             withIcon
           />
-        </OnlyIf>
+        )}
         <AllocationProgressBar
           title={"staked"}
           currentValue={totalStakedAvailableKeep}
