@@ -306,7 +306,7 @@ utilised during the acceptance testing of the feature.
   - does it reference existing DKG result (if not, then challenge invalid) +
   - within or outside of the challenge period for the specified DKG result (if
   outside, then invalid) +
-  - have all members who signed a DKG result been selected by the sortition pool
+  - have all members included in the result been selected by the sortition pool
   to be in the group (if yes, then challenge invalid).
 
 | Group creation - DKG challenge
@@ -335,8 +335,8 @@ utilised during the acceptance testing of the feature.
   - challenge transaction is reverted.
 
 | Group creation - DKG acceptance
-| Anyone can send a transaction requesting unlocking of the sortition pool and
-  requesting marking of the DKG result as accepted.
+| Anyone can request unlocking of the sortition pool and marking of the DKG
+  result as accepted (but not all requests will be processed positively).
 
 | Group creation - DKG acceptance
 | Upon processing the transaction unlocking the sortition pool and marking the
@@ -348,7 +348,14 @@ utilised during the acceptance testing of the feature.
   the DKG result, the following aspects should be taken into account: +
   - is the sortition pool locked? +
   - has the challenge period already passed? +
+  - is the sender eligible to accept the DKG result? +
   Only if all the above conditions have been met, the tx is considered valid.
+
+| Group creation - DKG acceptance
+| At the beginning (right after DKG result is submitted on chain) only the
+  submitter should be eligible to accept the DKG result and earn the reward.
+  After a fixed amount of time everybody should become eliglible to accept the
+  DKG result.
 
 | Group creation - DKG acceptance
 | If the transaction unlocking the sortition pool and marking the DKG result as
