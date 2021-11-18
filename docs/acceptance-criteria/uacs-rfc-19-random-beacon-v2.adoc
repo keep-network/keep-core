@@ -131,9 +131,9 @@ utilised during the acceptance testing of the feature.
 | Failure in the callback function should not revert the relay entry transaction.
 
 | Relay request - relay entry submission
-| The operation removing members from the sortition pool should be as cheap as
+| The operation excluding members from earning the rewards should be as cheap as
   possible so that the member submitting relay entry does not have to pay any
-  additional costs for removing inactive members from the pool.
+  additional costs for that exclusion.
 
 | Relay request - relay entry timeouts
 | The soft relay entry timeout equals the group size multiplied by the number of
@@ -399,14 +399,9 @@ utilised during the acceptance testing of the feature.
   - misbehavior during relay entry submission.
 
 | Sortition pool - punishments
-| Operators punished with removal from the group should not earn rewards for the
-  time of their absence in the pool.
-
-| Sortition pool - punishments
-| The operation removing members from the sortition pool should be as cheap as
+| The operation excluding members from earning the rewards should be as cheap as
   possible so that the member submitting the relay entry or the DKG result does
-  not have to pay any additional costs for removing inactive members from the
-  pool.
+  not have to pay any additional costs for that exclusion.
 
 | Sortition pool - rewards
 | Operators in the sortition pool can earn T for multiple activities: +
