@@ -152,14 +152,12 @@ const renderGrant = (
                 }`}
               >
                 <AccordionItemButton>
-                  <div className="withdraw-granted-tokens__token-amount">
-                    <TokenAmount
-                      amount={grant.readyToRelease}
-                      amountClassName={"h4 text-mint-100"}
-                      symbolClassName={"h4 text-mint-100"}
-                      token={KEEP}
-                    />
-                  </div>
+                  <TokenAmount
+                    amount={grant.readyToRelease}
+                    amountClassName={"h4 text-mint-100"}
+                    symbolClassName={"h4 text-mint-100"}
+                    token={KEEP}
+                  />
                   <OnlyIf condition={totalNumberOfGrants > 1}>
                     <span className="withdraw-granted-tokens__details-text">
                       Details
