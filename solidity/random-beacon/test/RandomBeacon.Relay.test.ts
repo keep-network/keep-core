@@ -661,94 +661,64 @@ describe("RandomBeacon - Relay", () => {
           // `groupSize * relayEntrySubmissionEligibilityDelay +
           // relayEntryHardTimeout`.
           await mineBlocks(64 * 10 + 5760)
+
+          // Simulate group creation is already in progress.
+          await (randomBeacon as RandomBeaconStub).publicDkgLockState()
+          await (randomBeacon as RandomBeaconStub).publicCreateGroup()
+
+          tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
         })
 
-        context("when DKG is awaiting a seed", () => {
+        it("should slash the full slashing amount for all group members", async () => {
+          await expect(tx)
+            .to.emit(staking, "Seized")
+            .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
+
+          await expect(tx)
+            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+            .withArgs(1, to1e18(1000), membersAddresses)
+        })
+
+        it("should terminate the group", async () => {
+          // TODO: Implementation once `Groups` library is ready.
+        })
+
+        it("should emit RelayEntryTimedOut event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "RelayEntryTimedOut")
+            .withArgs(1, 0)
+        })
+
+        it("should clean up current relay request data", async () => {
+          // TODO: Uncomment those assertions once termination is implemented.
+          // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+        })
+      })
+
+      context.only(
+        "when no active groups exist after timeout is reported and DKG is awaiting seed",
+        () => {
           beforeEach(async () => {
+            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // relayEntryHardTimeout`.
+            await mineBlocks(64 * 10 + 5760)
+
             // Simulate DKG is awaiting a seed.
             await (randomBeacon as RandomBeaconStub).publicDkgLockState()
 
-            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+            await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
-          it("should slash the full slashing amount for all group members", async () => {
-            await expect(tx)
-              .to.emit(staking, "Seized")
-              .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
-
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
-              .withArgs(1, to1e18(1000), membersAddresses)
-          })
-
-          it("should terminate the group", async () => {
-            // TODO: Implementation once `Groups` library is ready.
-          })
-
-          it("should emit RelayEntryTimedOut event", async () => {
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryTimedOut")
-              .withArgs(1, 0)
-          })
-
-          it("should clean up current relay request data", async () => {
-            // TODO: Uncomment those assertions once termination is implemented.
-            // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
-            // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
-          })
-
-          it("should cool down group creation", async () => {
+          it("should notify DKG seed timed out", async () => {
             // TODO: Uncomment those assertions once termination is implemented.
             // expect(await randomBeacon.getGroupCreationState()).to.be.equal(
             //   dkgState.IDLE
             // )
             // expect(await sortitionPool.isLocked()).to.be.false
           })
-        })
-
-        context("when group creation is in other state", () => {
-          beforeEach(async () => {
-            // Simulate group creation is already in progress.
-            await (randomBeacon as RandomBeaconStub).publicDkgLockState()
-            await (randomBeacon as RandomBeaconStub).publicCreateGroup()
-
-            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
-          })
-
-          it("should slash the full slashing amount for all group members", async () => {
-            await expect(tx)
-              .to.emit(staking, "Seized")
-              .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
-
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
-              .withArgs(1, to1e18(1000), membersAddresses)
-          })
-
-          it("should terminate the group", async () => {
-            // TODO: Implementation once `Groups` library is ready.
-          })
-
-          it("should emit RelayEntryTimedOut event", async () => {
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryTimedOut")
-              .withArgs(1, 0)
-          })
-
-          it("should clean up current relay request data", async () => {
-            // TODO: Uncomment those assertions once termination is implemented.
-            // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
-            // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
-          })
-
-          it("should not cool down group creation", async () => {
-            expect(await randomBeacon.getGroupCreationState()).to.be.equal(
-              dkgState.KEY_GENERATION
-            )
-            expect(await sortitionPool.isLocked()).to.be.true
-          })
-        })
-      })
+        }
+      )
     })
 
     context("when relay entry did not time out", () => {
