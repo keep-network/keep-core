@@ -609,6 +609,17 @@ describe("RandomBeacon - Group Creation", () => {
               .withArgs(groupPublicKey)
           })
 
+          it("should not unlock the sortition pool", async () => {
+            await signAndSubmitDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              signers,
+              startBlock
+            )
+
+            expect(await sortitionPool.isLocked()).to.be.true
+          })
+
           context(
             "with first submitter eligibility delay period almost ended",
             async () => {
@@ -1161,8 +1172,6 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       context("with max periods duration", async () => {
-        let tx: ContractTransaction
-
         beforeEach(async () => {
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
@@ -1175,7 +1184,7 @@ describe("RandomBeacon - Group Creation", () => {
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
-          tx = await randomBeacon.approveDkgResult()
+          await randomBeacon.approveDkgResult()
         })
 
         it("should unlock the sortition pool", async () => {
