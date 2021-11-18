@@ -1,14 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
-import { ContractTransaction } from "ethers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { randomBeaconDeployment, constants } from "./fixtures"
 import type { RandomBeaconStub, SortitionPool, StakingStub } from "../typechain"
-
-const { time } = helpers
-const { increaseTime } = time
 
 const fixture = async () => randomBeaconDeployment()
 
@@ -79,12 +75,15 @@ describe("RandomBeacon - Pool", () => {
       await randomBeacon.connect(operator).updateOperatorStatus()
     })
 
-    it("should remove operator from the pool", async () => {
-      expect(await sortitionPool.isOperatorInPool(operator.address)).to.be.false
-    })
+    context("when status update removes operator from sortition pool", () => {
+      it("should remove operator from the pool", async () => {
+        expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+          .false
+      })
 
-    it("should release the gas deposit if operator was removed from pool during the update", async () => {
-      expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.false
+      it("should release the gas deposit if operator was removed from pool during the update", async () => {
+        expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.false
+      })
     })
   })
 

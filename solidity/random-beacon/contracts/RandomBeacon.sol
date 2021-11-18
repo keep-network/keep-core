@@ -424,8 +424,8 @@ contract RandomBeacon is Ownable {
 
     /// @notice Registers the caller in the sortition pool.
     /// @dev Creates a gas deposit tied to the operator address. The gas
-    ///      deposit is released when the operator is banned for sortition pool
-    ///      rewards or leaves the pool during status update.
+    ///      deposit is released when the operator is banned from sortition
+    ///      pool rewards or leaves the pool during status update.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -608,7 +608,7 @@ contract RandomBeacon is Ownable {
             .submitEntry(submitterIndex, entry, group);
 
         if (inactiveMembers.length > 0) {
-            punishOperators(inactiveMembers, sortitionPoolRewardsBanDuration);
+            banFromRewards(inactiveMembers, sortitionPoolRewardsBanDuration);
         }
 
         if (slashingAmount > 0) {
@@ -670,25 +670,28 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Punishes the given operators by banning their sortition pool rewards.
+    /// @notice Ban given operators from sortition pool rewards.
     /// @dev By the way, this function releases gas deposits made by operators
     ///      during their registration. See `registerOperator` function. This
-    ///      action makes punishments cheaper gas-wise.
-    /// @param ids IDs of punished operators.
-    /// @param punishmentDuration Duration of the punishment period in seconds.
-    function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
-        internal
-    {
-        try sortitionPool.banRewards(ids, punishmentDuration) {
+    ///      action makes banning cheaper gas-wise.
+    /// @param ids IDs of banned operators.
+    /// @param banDuration Duration of the ban period in seconds.
+    function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
+        try sortitionPool.banRewards(ids, banDuration) {
             address[] memory operators = sortitionPool.getIDOperators(ids);
 
             for (uint256 i = 0; i < operators.length; i++) {
-                // TODO: Do we need the operator to re-deposit gas once
-                //       current punishment is completed to use it for
-                //       future ones?
+                // TODO: Once `banRewards` is implemented on pool side, revisit
+                //       gas station design. Current design is problematic
+                //       because operators deposit gas upon registration and
+                //       deposits are released either during status update
+                //       or rewards ban. The first case is natural as operator
+                //       leaves the pool but the latter is hard because deposit
+                //       is released and operator still stays in the pool.
                 gasStation.releaseGas(operators[i]);
             }
         } catch {
+            // slither-disable-next-line reentrancy-events
             emit BanRewardsFailed(ids);
         }
     }

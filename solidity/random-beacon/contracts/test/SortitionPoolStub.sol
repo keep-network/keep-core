@@ -6,6 +6,9 @@ import "./SortitionTreeStub.sol";
 import "../RandomBeacon.sol";
 
 // Stub contract used in tests
+//
+// TODO: Deprecated. This stub should be eventually removed in favor of real
+//       sortition pool.
 contract SortitionPoolStub is ISortitionPool {
     SortitionTreeStub internal sortitionTree;
 
