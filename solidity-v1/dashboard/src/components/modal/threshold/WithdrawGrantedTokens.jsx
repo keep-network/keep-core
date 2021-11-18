@@ -74,7 +74,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
               className={
                 "withdraw-granted-tokens__grants-accordion withdraw-granted-tokens__grants-accordion-container"
               }
-              preExpanded={["1"]}
+              preExpanded={grants.length === 0 ? [`grant-${grants[0].id}`] : []}
             >
               {grants
                 .slice(0, numberOfGrantsDisplayed)
@@ -130,9 +130,7 @@ const renderGrant = (
 ) => {
   return (
     <>
-      <AccordionItem
-        {...(totalNumberOfGrants === 1 ? { dangerouslySetExpanded: true } : {})}
-      >
+      <AccordionItem uuid={`grant-${grant.id}`}>
         <input
           className="radio-without-label"
           type="radio"
