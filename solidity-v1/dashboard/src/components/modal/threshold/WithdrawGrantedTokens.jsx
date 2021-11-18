@@ -164,7 +164,7 @@ const renderGrant = (
                     <span className="withdraw-granted-tokens__details-text">
                       Details
                     </span>
-                    <span className="withdraw-granted-tokens__expand-button" />
+                    {expanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
                   </OnlyIf>
                 </AccordionItemButton>
               </AccordionItemHeading>

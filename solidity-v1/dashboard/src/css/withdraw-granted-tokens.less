@@ -37,25 +37,6 @@
       &__button {
         border-bottom: none;
         align-items: center;
-
-        .withdraw-granted-tokens__expand-button {
-          display: inline-block;
-          content: "";
-          height: 7px;
-          width: 7px;
-          margin-top: 5px;
-          border-bottom: 1px solid black;
-          border-right: 1px solid black;
-          transform: rotate(-135deg);
-        }
-      }
-
-      &__button[aria-expanded="true"] > .withdraw-granted-tokens__expand-button,
-      &__button[aria-selected="true"]
-        > .withdraw-granted-tokens__expand-button {
-        transform: rotate(45deg);
-        transform-origin: 100% 40%;
-        margin-top: 3px;
       }
 
       &__panel {
