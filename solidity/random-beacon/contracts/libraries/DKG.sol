@@ -71,8 +71,8 @@ library DKG {
         // Group creation is not in progress. It is a state set after group creation
         // completion either by timeout or by a result approval.
         IDLE,
-        // Group creation is warmed up and sortition pool is locked.
-        WARMED_UP,
+        // Group creation is awaiting the seed and sortition pool is locked.
+        AWAITING_SEED,
         // Off-chain DKG protocol execution is in progress. A result is being calculated
         // by the clients in this state. It's not yet possible to submit the result.
         KEY_GENERATION,
@@ -151,7 +151,7 @@ library DKG {
         state = State.IDLE;
 
         if (self.sortitionPool.isLocked()) {
-            state = State.WARMED_UP;
+            state = State.AWAITING_SEED;
 
             if (self.startBlock > 0) {
                 state = State.KEY_GENERATION;
@@ -167,9 +167,9 @@ library DKG {
         }
     }
 
-    /// @notice Warms up the group creation process by locking the sortition
-    ///         pool.
-    function warmUp(Data storage self) internal {
+    /// @notice Locks the sortition pool and starts awaiting for the
+    ///         group creation seed.
+    function lockState(Data storage self) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
 
         self.sortitionPool.lock();
@@ -177,8 +177,8 @@ library DKG {
 
     function start(Data storage self, uint256 seed) internal {
         require(
-            currentState(self) == State.WARMED_UP,
-            "current state is not WARMED_UP"
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
         );
 
         self.startBlock = block.number;
@@ -366,6 +366,17 @@ library DKG {
         emit DkgTimedOut();
     }
 
+    /// @notice Notifies about the seed was not delivered and restores the
+    ///         initial DKG state (IDLE).
+    function notifySeedTimedOut(Data storage self) internal {
+        require(
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
+        );
+
+        self.sortitionPool.unlock();
+    }
+
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
@@ -463,17 +474,6 @@ library DKG {
         delete self.submittedResultHash;
         delete self.resultSubmitter;
         delete self.submittedResultBlock;
-        self.sortitionPool.unlock();
-    }
-
-    /// @notice Cancels the warm up of group creation process by unlocking
-    ///         the sortition pool.
-    function coolDown(Data storage self) internal {
-        require(
-            currentState(self) == State.WARMED_UP,
-            "current state is not WARMED_UP"
-        );
-
         self.sortitionPool.unlock();
     }
 }

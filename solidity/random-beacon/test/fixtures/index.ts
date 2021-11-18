@@ -20,7 +20,7 @@ export const constants = {
 
 export const dkgState = {
   IDLE: 0,
-  WARMED_UP: 1,
+  AWAITING_SEED: 1,
   KEY_GENERATION: 2,
   AWAITING_RESULT: 3,
   CHALLENGE: 4,

@@ -165,7 +165,7 @@ describe("RandomBeacon - Relay", () => {
                   .withArgs(1, 0, blsData.previousEntry)
               })
 
-              it("should not warm up group creation", async () => {
+              it("should not lock DKG state", async () => {
                 expect(await randomBeacon.getGroupCreationState()).to.be.equal(
                   dkgState.IDLE
                 )
@@ -205,9 +205,9 @@ describe("RandomBeacon - Relay", () => {
                   .withArgs(1, 0, blsData.previousEntry)
               })
 
-              it("should warm up group creation", async () => {
+              it("should lock DKG state", async () => {
                 expect(await randomBeacon.getGroupCreationState()).to.be.equal(
-                  dkgState.WARMED_UP
+                  dkgState.AWAITING_SEED
                 )
                 expect(await sortitionPool.isLocked()).to.be.true
               })
@@ -476,14 +476,12 @@ describe("RandomBeacon - Relay", () => {
                 }
               )
 
-              context("when group creation is warmed up", () => {
+              context("when DKG is awaiting a seed", () => {
                 let tx: ContractTransaction
 
                 beforeEach(async () => {
-                  // Simulate group creation was warmed up upon request.
-                  await (
-                    randomBeacon as RandomBeaconStub
-                  ).publicCreateGroupWarmUp()
+                  // Simulate DKG is awaiting a seed.
+                  await (randomBeacon as RandomBeaconStub).publicDkgLockState()
 
                   tx = await randomBeacon
                     .connect(member16)
@@ -665,10 +663,10 @@ describe("RandomBeacon - Relay", () => {
           await mineBlocks(64 * 10 + 5760)
         })
 
-        context("when group creation is warmed up", () => {
+        context("when DKG is awaiting a seed", () => {
           beforeEach(async () => {
-            // Simulate group creation was warmed up upon request.
-            await (randomBeacon as RandomBeaconStub).publicCreateGroupWarmUp()
+            // Simulate DKG is awaiting a seed.
+            await (randomBeacon as RandomBeaconStub).publicDkgLockState()
 
             tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
@@ -711,7 +709,7 @@ describe("RandomBeacon - Relay", () => {
         context("when group creation is in other state", () => {
           beforeEach(async () => {
             // Simulate group creation is already in progress.
-            await (randomBeacon as RandomBeaconStub).publicCreateGroupWarmUp()
+            await (randomBeacon as RandomBeaconStub).publicDkgLockState()
             await (randomBeacon as RandomBeaconStub).publicCreateGroup()
 
             tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()

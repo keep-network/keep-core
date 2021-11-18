@@ -449,16 +449,11 @@ contract RandomBeacon is Ownable {
     function genesis() external {
         require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
-        createGroupWarmUp();
+        dkg.lockState();
 
         createGroup(
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
         );
-    }
-
-    /// @notice Warms up the group creation process.
-    function createGroupWarmUp() internal {
-        dkg.warmUp();
     }
 
     /// @notice Creates a new group.
@@ -582,13 +577,15 @@ contract RandomBeacon is Ownable {
 
         callback.setCallbackContract(callbackContract);
 
-        // If current request should trigger group creation and group creation
-        // is not currently in progress we should start the warm up process.
+        // If the current request should trigger group creation we need to lock
+        // DKG state (lock sortition pool) to prevent operators from changing
+        // its state before relay entry is known. That entry will be used as a
+        // group selection seed.
         if (
             relay.requestCount % groupCreationFrequency == 0 &&
             dkg.currentState() == DKG.State.IDLE
         ) {
-            createGroupWarmUp();
+            dkg.lockState();
         }
     }
 
@@ -627,9 +624,9 @@ contract RandomBeacon is Ownable {
             staking.slash(slashingAmount, groupMembers);
         }
 
-        // If group creation is warmed up, that means the we should start
-        // the actual group creation process.
-        if (dkg.currentState() == DKG.State.WARMED_UP) {
+        // If DKG is awaiting a seed, that means the we should start the actual
+        // group creation process.
+        if (dkg.currentState() == DKG.State.AWAITING_SEED) {
             createGroup(uint256(keccak256(entry)));
         }
 
@@ -664,10 +661,10 @@ contract RandomBeacon is Ownable {
         } else {
             relay.cleanupOnEntryTimeout();
 
-            // If group creation is warmed up, we should cool down it to
+            // If DKG is awaiting a seed, we should notify about its timeout to
             // avoid blocking the future group creation.
-            if (dkg.currentState() == DKG.State.WARMED_UP) {
-                dkg.coolDown();
+            if (dkg.currentState() == DKG.State.AWAITING_SEED) {
+                dkg.notifySeedTimedOut();
             }
         }
     }
@@ -695,6 +692,13 @@ contract RandomBeacon is Ownable {
         //       block entry submission. For example, an operator leaves
         //       the pool just before it gets banned.
         sortitionPool.banRewards(ids, punishmentDuration);
+    }
+
+    /// @notice Locks the state of group creation.
+    /// @dev This function is meant to be used by test stubs which inherits
+    ///      from this contract and needs to lock the DKG state arbitrarily.
+    function dkgLockState() internal {
+        dkg.lockState();
     }
 
     /// @return Flag indicating whether a relay entry request is currently

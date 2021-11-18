@@ -38,8 +38,8 @@ contract RandomBeaconStub is RandomBeacon {
         groups.activeGroupsCount++;
     }
 
-    function publicCreateGroupWarmUp() external {
-        createGroupWarmUp();
+    function publicDkgLockState() external {
+        dkgLockState();
     }
 
     function publicCreateGroup() external {
