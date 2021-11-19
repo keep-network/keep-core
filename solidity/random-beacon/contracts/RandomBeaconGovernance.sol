@@ -64,6 +64,9 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayEntryTimeoutNotificationRewardMultiplier;
     uint256 public relayEntryTimeoutNotificationRewardMultiplierChangeInitiated;
 
+    uint96 public newMinimumStake;
+    uint256 public minimumStakeChangeInitiated;
+
     RandomBeacon public randomBeacon;
 
     // Long governance delay used for critical parameters giving a chance for
@@ -190,6 +193,9 @@ contract RandomBeaconGovernance is Ownable {
     event RelayEntryTimeoutNotificationRewardMultiplierUpdated(
         uint256 relayEntryTimeoutNotificationRewardMultiplier
     );
+
+    event MinimumStakeUpdateStarted(uint96 minimumStake, uint256 timestamp);
+    event MinimumStakeUpdated(uint96 minimumStake);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -806,6 +812,38 @@ contract RandomBeaconGovernance is Ownable {
         );
         maliciousDkgResultSlashingAmountChangeInitiated = 0;
         newMaliciousDkgResultSlashingAmount = 0;
+    }
+
+    /// @notice Begins the minimum stake amount update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newMinimumStake New minimum stake amount.
+    function beginMinimumStakeAmount(uint96 _newMinimumStake)
+        external
+        onlyOwner
+    {
+        /* solhint-disable not-rely-on-time */
+        newMinimumStake = _newMinimumStake;
+        minimumStakeChangeInitiated = block.timestamp;
+        emit MinimumStakeUpdateStarted(_newMinimumStake, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the minimum stake amount update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeMinimumStakeUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            minimumStakeChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit MinimumStakeUpdated(newMinimumStake);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateMinimumStake(newMinimumStake);
+        minimumStakeChangeInitiated = 0;
+        newMinimumStake = 0;
     }
 
     /// @notice Get the time remaining until the relay request fee can be

@@ -146,6 +146,11 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
+    /// @notice This amount is required to protect against griefing the staking
+    ///         contract and individual applications are allowed to require higher
+    ///         minimum stakes if necessary.
+    uint96 public minimumStake;
+
     ISortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
@@ -475,6 +480,11 @@ contract RandomBeacon is Ownable {
         if (!sortitionPool.isOperatorInPool(msg.sender)) {
             gasStation.releaseGas(msg.sender);
         }
+    }
+
+    /// @notice Updates the minimum stake amount.
+    function updateMinimumStake(uint96 minStake) external {
+        minimumStake = minStake;
     }
 
     /// @notice Checks whether the given operator is eligible to join the
