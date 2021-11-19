@@ -73,9 +73,9 @@ const ProgressBarInlineItem = ({ value = "0", color = colors.secondary }) => {
   )
 }
 
-const defaultDisplayLegendValuFn = (value) => value.toString()
+const defaultDisplayLegendValueFn = (value) => value.toString()
 export const ProgressBarLegendContext = React.createContext({
-  renderValuePattern: defaultDisplayLegendValuFn,
+  renderValuePattern: defaultDisplayLegendValueFn,
 })
 
 const useProgressBarLegendContext = () => {
@@ -93,7 +93,7 @@ const useProgressBarLegendContext = () => {
 const ProgressBarLegend = ({
   valueLabel,
   leftValueLabel,
-  renderValuePattern = defaultDisplayLegendValuFn,
+  renderValuePattern = defaultDisplayLegendValueFn,
 }) => {
   const { value, total, color, bgColor } = useProgressBarContext()
   const leftValue = useMemo(() => {

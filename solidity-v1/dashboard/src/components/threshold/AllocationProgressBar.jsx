@@ -35,7 +35,7 @@ const AllocationProgressBar = ({
   return (
     <div className={`allocation-progress-bar ${className}`}>
       <div>
-        <h5 className="text-gray-60">{title}</h5>
+        <h5 className="text-grey-60">{title}</h5>
         <div className="allocation-progress-bar__progress-bar-container">
           <ProgressBar
             total={isDataFetching ? 100 : totalValue}
