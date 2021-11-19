@@ -125,75 +125,73 @@ const renderGrant = (
   setSelectedGrant
 ) => {
   return (
-    <>
-      <AccordionItem uuid={`grant-${grant.id}`}>
-        <input
-          className="radio-without-label"
-          type="radio"
-          name="selectedGrantId"
-          value={grant.id}
-          id={`grant-${grant.id}`}
-          checked={selectedGrant?.id === grant?.id}
-          onChange={() => {
-            setSelectedGrant(grant)
-          }}
-        />
-        <label htmlFor={`grant-${grant.id}`} />
-        <AccordionItemState>
-          {({ expanded }) => {
-            return (
-              <AccordionItemHeading
-                className={`accordion__heading ${
-                  expanded ? "accordion__heading--without-bottom-border" : ""
-                }`}
-              >
-                <AccordionItemButton>
-                  <TokenAmount
-                    amount={grant.readyToRelease}
-                    amountClassName={"h4 text-mint-100"}
-                    symbolClassName={"h4 text-mint-100"}
-                    token={KEEP}
-                  />
-                  <OnlyIf condition={totalNumberOfGrants > 1}>
-                    <span className="withdraw-granted-tokens__details-text">
-                      Details
-                    </span>
-                    {expanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
-                  </OnlyIf>
-                </AccordionItemButton>
-              </AccordionItemHeading>
-            )
-          }}
-        </AccordionItemState>
-        <AccordionItemPanel>
-          <List>
-            <List.Content>
-              <List.Item className="flex row center space-between">
-                <span className="text-label text-label--without-hover text-grey-70">
-                  token grant id
-                </span>
-                <span className="text-grey-60 small">{grant.id}</span>
-              </List.Item>
-              <List.Item className="flex row center space-between">
-                <span className="text-label text-label--without-hover text-grey-70">
-                  date issued
-                </span>
-                <span className="text-grey-60 small">
-                  {moment.unix(grant.start).format("MM/DD/YYYY")}
-                </span>
-              </List.Item>
-              <List.Item className="flex row center space-between">
-                <span className="text-label text-label--without-hover text-grey-70">
-                  wallet
-                </span>
-                <span className="text-grey-60 small">
-                  {shortenAddress(grant.grantee)}
-                </span>
-              </List.Item>
-            </List.Content>
-          </List>
-        </AccordionItemPanel>
-      </AccordionItem>
-    </>
+    <AccordionItem uuid={`grant-${grant.id}`} key={`grant-${grant.id}`}>
+      <input
+        className="radio-without-label"
+        type="radio"
+        name="selectedGrantId"
+        value={grant.id}
+        id={`grant-${grant.id}`}
+        checked={selectedGrant?.id === grant?.id}
+        onChange={() => {
+          setSelectedGrant(grant)
+        }}
+      />
+      <label htmlFor={`grant-${grant.id}`} />
+      <AccordionItemState>
+        {({ expanded }) => {
+          return (
+            <AccordionItemHeading
+              className={`accordion__heading ${
+                expanded ? "accordion__heading--without-bottom-border" : ""
+              }`}
+            >
+              <AccordionItemButton>
+                <TokenAmount
+                  amount={grant.readyToRelease}
+                  amountClassName={"h4 text-mint-100"}
+                  symbolClassName={"h4 text-mint-100"}
+                  token={KEEP}
+                />
+                <OnlyIf condition={totalNumberOfGrants > 1}>
+                  <span className="withdraw-granted-tokens__details-text">
+                    Details
+                  </span>
+                  {expanded ? <Icons.ChevronUp /> : <Icons.ChevronDown />}
+                </OnlyIf>
+              </AccordionItemButton>
+            </AccordionItemHeading>
+          )
+        }}
+      </AccordionItemState>
+      <AccordionItemPanel>
+        <List>
+          <List.Content>
+            <List.Item className="flex row center space-between">
+              <span className="text-label text-label--without-hover text-grey-70">
+                token grant id
+              </span>
+              <span className="text-grey-60 small">{grant.id}</span>
+            </List.Item>
+            <List.Item className="flex row center space-between">
+              <span className="text-label text-label--without-hover text-grey-70">
+                date issued
+              </span>
+              <span className="text-grey-60 small">
+                {moment.unix(grant.start).format("MM/DD/YYYY")}
+              </span>
+            </List.Item>
+            <List.Item className="flex row center space-between">
+              <span className="text-label text-label--without-hover text-grey-70">
+                wallet
+              </span>
+              <span className="text-grey-60 small">
+                {shortenAddress(grant.grantee)}
+              </span>
+            </List.Item>
+          </List.Content>
+        </List>
+      </AccordionItemPanel>
+    </AccordionItem>
   )
 }
