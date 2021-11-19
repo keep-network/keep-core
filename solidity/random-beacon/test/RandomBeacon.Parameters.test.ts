@@ -195,6 +195,8 @@ describe("RandomBeacon - Parameters", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
+    const sortitionPoolRewardsBanDuration = 300
+    const relayEntryTimeoutNotificationRewardMultiplier = 10
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -203,7 +205,9 @@ describe("RandomBeacon - Parameters", () => {
             .connect(thirdParty)
             .updateRewardParameters(
               dkgResultSubmissionReward,
-              sortitionPoolUnlockingReward
+              sortitionPoolUnlockingReward,
+              sortitionPoolRewardsBanDuration,
+              relayEntryTimeoutNotificationRewardMultiplier
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -216,7 +220,9 @@ describe("RandomBeacon - Parameters", () => {
           .connect(governance)
           .updateRewardParameters(
             dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward
+            sortitionPoolUnlockingReward,
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
           )
       })
 
@@ -232,10 +238,27 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
+      it("should update the sortition pool rewards ban duration", async () => {
+        expect(
+          await randomBeacon.sortitionPoolRewardsBanDuration()
+        ).to.be.equal(sortitionPoolRewardsBanDuration)
+      })
+
+      it("should update the relay entry timeout notification reward multiplier", async () => {
+        expect(
+          await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+        ).to.be.equal(relayEntryTimeoutNotificationRewardMultiplier)
+      })
+
       it("should emit the RewardParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
-          .withArgs(dkgResultSubmissionReward, sortitionPoolUnlockingReward)
+          .withArgs(
+            dkgResultSubmissionReward,
+            sortitionPoolUnlockingReward,
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
+          )
       })
     })
   })

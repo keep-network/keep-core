@@ -134,6 +134,18 @@ contract RandomBeacon is Ownable {
     ///         `maliciousDkgResultSlashingAmount`.
     uint256 public maliciousDkgResultSlashingAmount;
 
+    /// @notice Duration of the sortition pool rewards ban imposed on operators
+    ///         who missed their turn for relay entry or DKG result submission.
+    uint256 public sortitionPoolRewardsBanDuration;
+
+    /// @notice Percentage of the relay entry notification rewards which will
+    ///         be transferred to the notifier. Notifiers are rewarded from
+    ///         a separate pool funded from slashed tokens. For example, if
+    ///         notification reward is 1000 and the value of the multiplier is
+    ///         5, the notifier will receive: 5% of 1000 = 50 per each
+    ///         operator affected.
+    uint256 public relayEntryTimeoutNotificationRewardMultiplier;
+
     ISortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
@@ -164,7 +176,9 @@ contract RandomBeacon is Ownable {
 
     event RewardParametersUpdated(
         uint256 dkgResultSubmissionReward,
-        uint256 sortitionPoolUnlockingReward
+        uint256 sortitionPoolUnlockingReward,
+        uint256 sortitionPoolRewardsBanDuration,
+        uint256 relayEntryTimeoutNotificationRewardMultiplier
     );
 
     event SlashingParametersUpdated(
@@ -223,6 +237,12 @@ contract RandomBeacon is Ownable {
         address[] groupMembers
     );
 
+    event RelayEntryDelaySlashingFailed(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
     event RelayEntryTimeoutSlashed(
         uint256 indexed requestId,
         uint256 slashingAmount,
@@ -230,6 +250,8 @@ contract RandomBeacon is Ownable {
     );
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
+
+    event BanRewardsFailed(uint32[] ids);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -252,6 +274,9 @@ contract RandomBeacon is Ownable {
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
+        // TODO: Revisit if initial value of 2 weeks is enough.
+        sortitionPoolRewardsBanDuration = 2 weeks;
+        relayEntryTimeoutNotificationRewardMultiplier = 5;
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -344,15 +369,25 @@ contract RandomBeacon is Ownable {
     ///      validating parameters.
     /// @param _dkgResultSubmissionReward New DKG result submission reward
     /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
+    /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
+    ///        ban duration in seconds.
+    /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
+    ///        relay entry timeout notification reward multiplier.
     function updateRewardParameters(
         uint256 _dkgResultSubmissionReward,
-        uint256 _sortitionPoolUnlockingReward
+        uint256 _sortitionPoolUnlockingReward,
+        uint256 _sortitionPoolRewardsBanDuration,
+        uint256 _relayEntryTimeoutNotificationRewardMultiplier
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
         sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
+        relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward
+            sortitionPoolUnlockingReward,
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
         );
     }
 
@@ -415,8 +450,8 @@ contract RandomBeacon is Ownable {
 
     /// @notice Registers the caller in the sortition pool.
     /// @dev Creates a gas deposit tied to the operator address. The gas
-    ///      deposit is released when the operator is banned for sortition pool
-    ///      rewards or leaves the pool during status update.
+    ///      deposit is released when the operator is banned from sortition
+    ///      pool rewards or leaves the pool during status update.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -602,8 +637,7 @@ contract RandomBeacon is Ownable {
             .submitEntry(submitterIndex, entry, group);
 
         if (inactiveMembers.length > 0) {
-            // TODO: Make the duration a governable parameter.
-            punishOperators(inactiveMembers, 2 weeks);
+            banFromRewards(inactiveMembers, sortitionPoolRewardsBanDuration);
         }
 
         if (slashingAmount > 0) {
@@ -611,14 +645,23 @@ contract RandomBeacon is Ownable {
                 group.members
             );
 
-            // slither-disable-next-line reentrancy-events
-            emit RelayEntryDelaySlashed(
-                currentRequestId,
-                slashingAmount,
-                groupMembers
-            );
-
-            staking.slash(slashingAmount, groupMembers);
+            try staking.slash(slashingAmount, groupMembers) {
+                // slither-disable-next-line reentrancy-events
+                emit RelayEntryDelaySlashed(
+                    currentRequestId,
+                    slashingAmount,
+                    groupMembers
+                );
+            } catch {
+                // Should never happen but we want to ensure a non-critical path
+                // failure from an external contract does not stop group members
+                // from submitting a valid relay entry.
+                emit RelayEntryDelaySlashingFailed(
+                    currentRequestId,
+                    slashingAmount,
+                    groupMembers
+                );
+            }
         }
 
         // If DKG is awaiting a seed, that means the we should start the actual
@@ -645,8 +688,12 @@ contract RandomBeacon is Ownable {
             groupMembers
         );
 
-        // TODO: Revisit whether the notifier should receive 5% of the slashing amount.
-        staking.seize(slashingAmount, 5, msg.sender, groupMembers);
+        staking.seize(
+            slashingAmount,
+            relayEntryTimeoutNotificationRewardMultiplier,
+            msg.sender,
+            groupMembers
+        );
 
         // TODO: Once implemented, terminate group using `groupId`.
 
@@ -666,29 +713,33 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Punishes the given operators by banning their sortition pool rewards.
+    /// @notice Ban given operators from sortition pool rewards.
     /// @dev By the way, this function releases gas deposits made by operators
     ///      during their registration. See `registerOperator` function. This
-    ///      action makes punishments cheaper gas-wise.
-    /// @param ids IDs of punished operators.
-    /// @param punishmentDuration Duration of the punishment period in seconds.
-    function punishOperators(uint32[] memory ids, uint256 punishmentDuration)
-        internal
-    {
-        address[] memory operators = sortitionPool.getIDOperators(ids);
+    ///      action makes banning cheaper gas-wise.
+    /// @param ids IDs of banned operators.
+    /// @param banDuration Duration of the ban period in seconds.
+    function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
+        try sortitionPool.banRewards(ids, banDuration) {
+            address[] memory operators = sortitionPool.getIDOperators(ids);
 
-        for (uint256 i = 0; i < operators.length; i++) {
-            // TODO: Do we need the operator to re-deposit gas once
-            //       current punishment is completed to use it for
-            //       future ones?
-            gasStation.releaseGas(operators[i]);
+            for (uint256 i = 0; i < operators.length; i++) {
+                // TODO: Once `banRewards` is implemented on pool side, revisit
+                //       gas station design. Current design is problematic
+                //       because operators deposit gas upon registration and
+                //       deposits are released either during status update
+                //       or rewards ban. The first case is natural as operator
+                //       leaves the pool but the latter is hard because deposit
+                //       is released and operator still stays in the pool.
+                gasStation.releaseGas(operators[i]);
+            }
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop group members
+            // from submitting a valid relay entry.
+            // slither-disable-next-line reentrancy-events
+            emit BanRewardsFailed(ids);
         }
-
-        // TODO: Once `banRewards` is implemented on the pool side, make sure
-        //       it does not have an unexpected revert instruction which will
-        //       block entry submission. For example, an operator leaves
-        //       the pool just before it gets banned.
-        sortitionPool.banRewards(ids, punishmentDuration);
     }
 
     /// @notice Locks the state of group creation.
