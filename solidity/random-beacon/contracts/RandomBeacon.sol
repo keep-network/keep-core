@@ -194,6 +194,10 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
+    event DkgStateLocked();
+
+    event DkgSeedTimedOut();
+
     event CandidateGroupRegistered(bytes indexed groupPubKey);
 
     event CandidateGroupRemoved(bytes indexed groupPubKey);

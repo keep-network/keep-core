@@ -103,6 +103,10 @@ describe("RandomBeacon - Group Creation", () => {
         expect(await sortitionPool.isLocked()).to.be.true
       })
 
+      it("should emit DkgStateLocked event", async () => {
+        await expect(tx).to.emit(randomBeacon, "DkgStateLocked")
+      })
+
       it("should emit DkgStarted event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "DkgStarted")

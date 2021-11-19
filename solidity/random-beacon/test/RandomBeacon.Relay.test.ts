@@ -211,6 +211,10 @@ describe("RandomBeacon - Relay", () => {
                 )
                 expect(await sortitionPool.isLocked()).to.be.true
               })
+
+              it("should emit DkgStateLocked event", async () => {
+                await expect(tx).to.emit(randomBeacon, "DkgStateLocked")
+              })
             }
           )
         })
@@ -695,6 +699,8 @@ describe("RandomBeacon - Relay", () => {
       context(
         "when no active groups exist after timeout is reported and DKG is awaiting seed",
         () => {
+          let tx: ContractTransaction
+
           beforeEach(async () => {
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`.
@@ -703,7 +709,7 @@ describe("RandomBeacon - Relay", () => {
             // Simulate DKG is awaiting a seed.
             await (randomBeacon as RandomBeaconStub).publicDkgLockState()
 
-            await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
           it("should notify DKG seed timed out", async () => {
@@ -712,6 +718,11 @@ describe("RandomBeacon - Relay", () => {
             //   dkgState.IDLE
             // )
             // expect(await sortitionPool.isLocked()).to.be.false
+          })
+
+          it("should emit DkgSeedTimedOut event", async () => {
+            // TODO: Uncomment those assertions once termination is implemented.
+            // await expect(tx).to.emit(randomBeacon, "DkgSeedTimedOut")
           })
         }
       )

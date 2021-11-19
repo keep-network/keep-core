@@ -127,6 +127,10 @@ library DKG {
         address indexed challenger
     );
 
+    event DkgStateLocked();
+
+    event DkgSeedTimedOut();
+
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
     function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
@@ -171,6 +175,8 @@ library DKG {
     ///         group creation seed.
     function lockState(Data storage self) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
+
+        emit DkgStateLocked();
 
         self.sortitionPool.lock();
     }
@@ -373,6 +379,8 @@ library DKG {
             currentState(self) == State.AWAITING_SEED,
             "current state is not AWAITING_SEED"
         );
+
+        emit DkgSeedTimedOut();
 
         self.sortitionPool.unlock();
     }
