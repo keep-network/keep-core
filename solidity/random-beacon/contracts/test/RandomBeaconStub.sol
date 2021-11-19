@@ -38,6 +38,10 @@ contract RandomBeaconStub is RandomBeacon {
         groups.activeGroupsCount++;
     }
 
+    function publicDkgLockState() external {
+        dkgLockState();
+    }
+
     function hasGasDeposit(address operator) external view returns (bool) {
         return gasStation.gasDeposits[operator][0] != 0;
     }

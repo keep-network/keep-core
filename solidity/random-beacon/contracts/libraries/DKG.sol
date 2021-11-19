@@ -77,6 +77,8 @@ library DKG {
         // Group creation is not in progress. It is a state set after group creation
         // completion either by timeout or by a result approval.
         IDLE,
+        // Group creation is awaiting the seed and sortition pool is locked.
+        AWAITING_SEED,
         // Off-chain DKG protocol execution is in progress. A result is being calculated
         // by the clients in this state. It's not yet possible to submit the result.
         KEY_GENERATION,
@@ -131,6 +133,10 @@ library DKG {
         address indexed challenger
     );
 
+    event DkgStateLocked();
+
+    event DkgSeedTimedOut();
+
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
     function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
@@ -154,25 +160,43 @@ library DKG {
     {
         state = State.IDLE;
 
-        if (self.startBlock > 0) {
-            state = State.KEY_GENERATION;
+        if (self.sortitionPool.isLocked()) {
+            state = State.AWAITING_SEED;
 
-            if (block.number > self.startBlock + offchainDkgTime) {
-                state = State.AWAITING_RESULT;
+            if (self.startBlock > 0) {
+                state = State.KEY_GENERATION;
 
-                if (self.submittedResultBlock > 0) {
-                    state = State.CHALLENGE;
+                if (block.number > self.startBlock + offchainDkgTime) {
+                    state = State.AWAITING_RESULT;
+
+                    if (self.submittedResultBlock > 0) {
+                        state = State.CHALLENGE;
+                    }
                 }
             }
         }
     }
 
-    function start(Data storage self, uint256 seed) internal {
+    /// @notice Locks the sortition pool and starts awaiting for the
+    ///         group creation seed.
+    function lockState(Data storage self) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
+
+        emit DkgStateLocked();
+
+        self.sortitionPool.lock();
+    }
+
+    function start(Data storage self, uint256 seed) internal {
+        require(
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
+        );
 
         self.startBlock = block.number;
         self.seed = seed;
 
+        // slither-disable-next-line reentrancy-events
         emit DkgStarted(seed);
     }
 
@@ -351,6 +375,19 @@ library DKG {
         emit DkgTimedOut();
     }
 
+    /// @notice Notifies about the seed was not delivered and restores the
+    ///         initial DKG state (IDLE).
+    function notifySeedTimedOut(Data storage self) internal {
+        require(
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
+        );
+
+        emit DkgSeedTimedOut();
+
+        self.sortitionPool.unlock();
+    }
+
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
@@ -462,6 +499,7 @@ library DKG {
         delete self.seed;
         delete self.resultSubmissionStartBlockOffset;
         submittedResultCleanup(self);
+        self.sortitionPool.unlock();
     }
 
     /// @notice Cleans up submitted result state either after DKG completion

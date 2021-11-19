@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import blsData from "./data/bls"
-import { constants, params, testDeployment } from "./fixtures"
+import { constants, dkgState, params, testDeployment } from "./fixtures"
 import type {
   RandomBeacon,
   RandomBeaconGovernance,
   RandomBeaconStub,
   TestToken,
+  ISortitionPool,
   SortitionPoolStub,
   StakingStub,
 } from "../typechain"
@@ -17,13 +20,6 @@ import { to1e18 } from "./functions"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils
-
-const dkgState = {
-  IDLE: 0,
-  KEY_GENERATION: 1,
-  AWAITING_RESULT: 2,
-  CHALLENGE: 3,
-}
 
 const fixture = async () => {
   const contracts = await testDeployment()
@@ -38,7 +34,6 @@ const fixture = async () => {
   const randomBeaconGovernance =
     contracts.randomBeaconGovernance as RandomBeaconGovernance
   const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
-  const sortitionPool = contracts.sortitionPool as SortitionPoolStub
   const staking = contracts.stakingStub as StakingStub
   const testToken = contracts.testToken as TestToken
 
@@ -69,9 +64,9 @@ describe("RandomBeacon - Group Creation", () => {
 
   let randomBeaconGovernance: RandomBeaconGovernance
   let randomBeacon: RandomBeaconStub & RandomBeacon
-  let sortitionPool: SortitionPoolStub
   let staking: StakingStub
   let testToken: TestToken
+  let sortitionPool: ISortitionPool
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -79,14 +74,8 @@ describe("RandomBeacon - Group Creation", () => {
 
   beforeEach("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({
-      randomBeaconGovernance,
-      randomBeacon,
-      sortitionPool,
-      staking,
-      testToken,
-      signers,
-    } = await waffle.loadFixture(fixture))
+    ;({ randomBeaconGovernance, randomBeacon, staking, testToken, signers } =
+      await waffle.loadFixture(fixture))
 
     await randomBeaconGovernance.beginDkgResultSubmissionRewardUpdate(
       dkgResultSubmissionReward
@@ -98,6 +87,11 @@ describe("RandomBeacon - Group Creation", () => {
     await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
     await randomBeaconGovernance.finalizeSortitionPoolUnlockingRewardUpdate()
     await testToken.mint(randomBeacon.address, to1e18(100))
+
+    sortitionPool = (await ethers.getContractAt(
+      "ISortitionPool",
+      await randomBeacon.sortitionPool()
+    )) as ISortitionPool
   })
 
   describe("genesis", async () => {
@@ -114,6 +108,14 @@ describe("RandomBeacon - Group Creation", () => {
       beforeEach("run genesis", async () => {
         // eslint-disable-next-line @typescript-eslint/no-extra-semi
         ;[tx, expectedSeed] = await genesis(randomBeacon)
+      })
+
+      it("should lock the sortition pool", async () => {
+        expect(await sortitionPool.isLocked()).to.be.true
+      })
+
+      it("should emit DkgStateLocked event", async () => {
+        await expect(tx).to.emit(randomBeacon, "DkgStateLocked")
       })
 
       it("should emit DkgStarted event", async () => {
@@ -263,7 +265,7 @@ describe("RandomBeacon - Group Creation", () => {
             beforeEach(async () => {
               // Make the challenge justified by forcing the pool to return
               // an other actual group than the submitted one.
-              await sortitionPool.setSelectGroupResult(
+              await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
               )
@@ -417,7 +419,7 @@ describe("RandomBeacon - Group Creation", () => {
             beforeEach(async () => {
               // Make the challenge justified by forcing the pool to return
               // an other actual group than the submitted one.
-              await sortitionPool.setSelectGroupResult(
+              await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
               )
@@ -638,6 +640,17 @@ describe("RandomBeacon - Group Creation", () => {
             await expect(tx)
               .to.emit(randomBeacon, "CandidateGroupRegistered")
               .withArgs(groupPublicKey)
+          })
+
+          it("should not unlock the sortition pool", async () => {
+            await signAndSubmitDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              signers,
+              startBlock
+            )
+
+            expect(await sortitionPool.isLocked()).to.be.true
           })
 
           context(
@@ -863,7 +876,7 @@ describe("RandomBeacon - Group Creation", () => {
 
               // Make the challenge justified by forcing the pool to return
               // an other actual group than the submitted one.
-              await sortitionPool.setSelectGroupResult(
+              await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
               )
@@ -1091,6 +1104,10 @@ describe("RandomBeacon - Group Creation", () => {
                   .to.emit(randomBeacon, "GroupActivated")
                   .withArgs(0, groupPublicKey)
               })
+
+              it("should unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.false
+              })
             })
           })
 
@@ -1101,7 +1118,7 @@ describe("RandomBeacon - Group Creation", () => {
             beforeEach(async () => {
               // Make the challenge justified by forcing the pool to return
               // an other actual group than the submitted one.
-              await sortitionPool.setSelectGroupResult(
+              await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
               )
@@ -1193,13 +1210,19 @@ describe("RandomBeacon - Group Creation", () => {
                   .to.emit(randomBeacon, "GroupActivated")
                   .withArgs(0, groupPublicKey)
               })
+
+              it("should unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.false
+              })
             })
           })
         })
       })
 
       context("with max periods duration", async () => {
-        it("should succeed", async () => {
+        let tx: ContractTransaction
+
+        beforeEach(async () => {
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
           await signAndSubmitDkgResult(
@@ -1211,7 +1234,19 @@ describe("RandomBeacon - Group Creation", () => {
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
-          await randomBeacon.approveDkgResult()
+          tx = await randomBeacon.approveDkgResult()
+        })
+
+        // Just an explicit assertion to make sure transaction passes correctly
+        // for max periods duration.
+        it("should succeed", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "GroupActivated")
+            .withArgs(0, groupPublicKey)
+        })
+
+        it("should unlock the sortition pool", async () => {
+          expect(await sortitionPool.isLocked()).to.be.false
         })
       })
     })
@@ -1305,6 +1340,10 @@ describe("RandomBeacon - Group Creation", () => {
               currentNotifierBalance.sub(initialNotifierBalance)
             ).to.be.equal(sortitionPoolUnlockingReward)
           })
+
+          it("should unlock the sortition pool", async () => {
+            expect(await sortitionPool.isLocked()).to.be.false
+          })
         })
       })
     })
@@ -1357,7 +1396,7 @@ describe("RandomBeacon - Group Creation", () => {
           beforeEach(async () => {
             // Set the sortition pool to determine an actual group members list.
             const actualGroupMembers = signers
-            await sortitionPool.setSelectGroupResult(
+            await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
               genesisSeed,
               actualGroupMembers.map((signer) => signer.id)
             )
@@ -1401,6 +1440,10 @@ describe("RandomBeacon - Group Creation", () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "CandidateGroupRemoved")
                   .withArgs(groupPublicKey)
+              })
+
+              it("should not unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.true
               })
 
               it("should emit DkgResultMaliciousSlashed event", async () => {
@@ -1459,6 +1502,10 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(groupPublicKey)
               })
 
+              it("should not unlock the sortition pool", async () => {
+                expect(await sortitionPool.isLocked()).to.be.true
+              })
+
               it("should emit DkgResultMaliciousSlashed event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultMaliciousSlashed")
@@ -1501,7 +1548,7 @@ describe("RandomBeacon - Group Creation", () => {
           beforeEach(async () => {
             // Set the sortition pool to determine an actual group members list.
             const actualGroupMembers = signers
-            await sortitionPool.setSelectGroupResult(
+            await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
               genesisSeed,
               actualGroupMembers.map((signer) => signer.id)
             )
@@ -1535,7 +1582,7 @@ describe("RandomBeacon - Group Creation", () => {
       await mineBlocks(constants.offchainDkgTime)
 
       const actualGroupMembers = signers
-      await sortitionPool.setSelectGroupResult(
+      await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
         genesisSeed as any,
         actualGroupMembers.map((member) => member.id)
       )
