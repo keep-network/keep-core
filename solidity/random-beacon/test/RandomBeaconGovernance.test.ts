@@ -1998,7 +1998,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingMimimumAuthorizationUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
       })
 
       it("should emit the MinimumAuthorizationUpdateStarted event", async () => {
@@ -2038,7 +2038,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginMinimumAuthorizationUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(24 * 13 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconGovernance
@@ -2058,7 +2058,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginMinimumAuthorizationUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
 
           tx = await randomBeaconGovernance
             .connect(governance)

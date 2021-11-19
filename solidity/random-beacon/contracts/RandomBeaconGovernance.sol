@@ -842,7 +842,7 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(
             minimumAuthorizationChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
         emit MinimumAuthorizationUpdated(newMinimumAuthorization);
@@ -1042,7 +1042,7 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 minimumAuthorizationChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
