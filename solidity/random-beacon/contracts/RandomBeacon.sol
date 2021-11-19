@@ -283,7 +283,7 @@ contract RandomBeacon is Ownable {
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
         // TODO: Revisit the initial value.
-        minimumStake = 100000;
+        minimumStake = 100e3;
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
