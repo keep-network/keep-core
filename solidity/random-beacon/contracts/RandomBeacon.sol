@@ -450,16 +450,9 @@ contract RandomBeacon is Ownable {
         require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
         dkg.lockState();
-
-        createGroup(
+        dkg.start(
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
         );
-    }
-
-    /// @notice Creates a new group.
-    /// @param seed Seed for DKG.
-    function createGroup(uint256 seed) internal {
-        dkg.start(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
@@ -627,7 +620,7 @@ contract RandomBeacon is Ownable {
         // If DKG is awaiting a seed, that means the we should start the actual
         // group creation process.
         if (dkg.currentState() == DKG.State.AWAITING_SEED) {
-            createGroup(uint256(keccak256(entry)));
+            dkg.start(uint256(keccak256(entry)));
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);

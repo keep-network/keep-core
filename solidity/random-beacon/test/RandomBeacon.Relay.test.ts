@@ -662,10 +662,6 @@ describe("RandomBeacon - Relay", () => {
           // relayEntryHardTimeout`.
           await mineBlocks(64 * 10 + 5760)
 
-          // Simulate group creation is already in progress.
-          await (randomBeacon as RandomBeaconStub).publicDkgLockState()
-          await (randomBeacon as RandomBeaconStub).publicCreateGroup()
-
           tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
         })
 
