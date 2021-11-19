@@ -943,6 +943,54 @@ describe("RandomBeacon - Group Creation", () => {
                 .withArgs(groupPublicKey)
             })
           })
+
+          context("with misbehaved members", async () => {
+            let tx: ContractTransaction
+            let dkgResult: DkgResult
+            let dkgResultHash: string
+
+            const misbehavedIndices = [2, 11, 30, 60, 64]
+            const expectedMisbehaved: number[] = []
+
+            beforeEach(async () => {
+              misbehavedIndices.forEach((index) => {
+                expectedMisbehaved.push(signers[index - 1].id)
+              })
+
+              // eslint-disable-next-line @typescript-eslint/no-extra-semi
+              ;({
+                transaction: tx,
+                dkgResult,
+                dkgResultHash,
+              } = await signAndSubmitDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                signers,
+                startBlock,
+                misbehavedIndices
+              ))
+            })
+
+            it("should store the misbehaved members", async () => {
+              const dkgData = await randomBeacon.getDkgData()
+              expect(dkgData.submittedResultMisbehavedMembers).to.deep.eq(
+                expectedMisbehaved
+              )
+            })
+
+            it("should succeed with misbehaved members", async () => {
+              const submitterIndex = 1
+              const expectedSubmitter = signers[submitterIndex - 1].address
+
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultSubmitted")
+                .withArgs(
+                  dkgResultHash,
+                  dkgResult.groupPubKey,
+                  expectedSubmitter
+                )
+            })
+          })
         })
       })
 
