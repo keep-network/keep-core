@@ -1,5 +1,8 @@
 import React, { useMemo } from "react"
-import ProgressBar from "../ProgressBar"
+import ProgressBar, {
+  ProgressBarLegendContext,
+  renderProgressBarLegendItem,
+} from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import OnlyIf from "../OnlyIf"
 import { add, gt } from "../../utils/arithmetics.utils"
@@ -55,27 +58,39 @@ const AllocationProgressBar = ({
                 />
               </OnlyIf>
             </ProgressBar.Inline>
+            <OnlyIf condition={withLegend}>
+              <div className="allocation-progress-bar__progress-bar-legend">
+                <ProgressBarLegendContext.Provider
+                  value={{ renderValuePattern: () => {} }}
+                >
+                  {renderProgressBarLegendItem(
+                    {
+                      value: secondaryValue,
+                      label: secondaryValueLegendLabel,
+                      color: colors.yellowSecondary,
+                    },
+                    "legend-item__pending-withdrawal",
+                    "allocation-progress-bar__progress-bar-legend-item"
+                  )}
+                  {renderProgressBarLegendItem(
+                    {
+                      value: currentValue,
+                      label: currentValueLegendLabel,
+                      color: colors.secondary,
+                    },
+                    "legend-item__staked",
+                    "allocation-progress-bar__progress-bar-legend-item"
+                  )}
+                </ProgressBarLegendContext.Provider>
+              </div>
+            </OnlyIf>
           </ProgressBar>
-          <span className="text-grey-70 ml-1">
+          <span className="text-grey-70 ml-1 allocation-progress-bar__percentage-value">
             {/** TODO: 2 decimal places, maybe even print it as >99 % and <1%
               // when there is small difference betweent currentValue and total
               // Value */}
             {percentageValue}%
           </span>
-        </div>
-        <div className={"allocation-progress-bar__legend"}>
-          <OnlyIf condition={withLegend}>
-            <div
-              className="allocation-progress-bar__legend-dot"
-              style={{ backgroundColor: colors.yellowSecondary }}
-            />
-            <span>{secondaryValueLegendLabel}</span>
-            <div
-              className="allocation-progress-bar__legend-dot ml-1"
-              style={{ backgroundColor: colors.secondary }}
-            />
-            <span>{currentValueLegendLabel}</span>
-          </OnlyIf>
         </div>
       </div>
     </div>

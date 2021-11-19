@@ -115,23 +115,25 @@ const ProgressBarLegend = ({
   )
 }
 
-export const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
-  const { renderValuePattern } = useProgressBarLegendContext()
-  const renderedValue = React.isValidElement(renderValuePattern)
-    ? React.cloneElement(renderValuePattern, { amount: value })
-    : renderValuePattern(value)
+export const ProgressBarLegendItem = React.memo(
+  ({ value, label, color, className = "" }) => {
+    const { renderValuePattern } = useProgressBarLegendContext()
+    const renderedValue = React.isValidElement(renderValuePattern)
+      ? React.cloneElement(renderValuePattern, { amount: value })
+      : renderValuePattern(value)
 
-  return (
-    <div className="progress-bar-legend__item">
-      <div className="legend__item__dot" style={{ backgroundColor: color }} />
-      <span className="legend__item__value">
-        {renderedValue}
-        &nbsp;
-      </span>
-      <span className="legend__item__label">{label}</span>
-    </div>
-  )
-})
+    return (
+      <div className={`progress-bar-legend__item ${className}`}>
+        <div className="legend__item__dot" style={{ backgroundColor: color }} />
+        <span className="legend__item__value">
+          {renderedValue}
+          &nbsp;
+        </span>
+        <span className="legend__item__label">{label}</span>
+      </div>
+    )
+  }
+)
 
 const ProgressBarCircular = (props) => {
   const { value, total, color, bgColor } = useProgressBarContext()
@@ -147,8 +149,8 @@ const ProgressBarCircular = (props) => {
   )
 }
 
-export const renderProgressBarLegendItem = (item, index) => (
-  <ProgressBarLegendItem key={index} {...item} />
+export const renderProgressBarLegendItem = (item, index, className = "") => (
+  <ProgressBarLegendItem key={index} {...item} className={className} />
 )
 
 const PercentageLabel = ({ text, className = "" }) => {
