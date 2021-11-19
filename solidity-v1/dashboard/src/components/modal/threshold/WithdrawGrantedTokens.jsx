@@ -105,9 +105,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
         <SubmitButton
           className="btn btn-primary btn-lg mr-2"
           type="submit"
-          onSubmitAction={(awaitingPromise) => {
-            onWithdrawClick(awaitingPromise)
-          }}
+          onSubmitAction={onWithdrawClick}
           disabled={grants.length > 1 && !selectedGrant}
         >
           withdraw
