@@ -64,8 +64,8 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayEntryTimeoutNotificationRewardMultiplier;
     uint256 public relayEntryTimeoutNotificationRewardMultiplierChangeInitiated;
 
-    uint96 public newMinimumStake;
-    uint256 public minimumStakeChangeInitiated;
+    uint96 public newMinimumAuthorization;
+    uint256 public minimumAuthorizationChangeInitiated;
 
     RandomBeacon public randomBeacon;
 
@@ -194,8 +194,11 @@ contract RandomBeaconGovernance is Ownable {
         uint256 relayEntryTimeoutNotificationRewardMultiplier
     );
 
-    event MinimumStakeUpdateStarted(uint96 minimumStake, uint256 timestamp);
-    event MinimumStakeUpdated(uint96 minimumStake);
+    event MinimumAuthorizationUpdateStarted(
+        uint96 minimumAuthorization,
+        uint256 timestamp
+    );
+    event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -814,36 +817,39 @@ contract RandomBeaconGovernance is Ownable {
         newMaliciousDkgResultSlashingAmount = 0;
     }
 
-    /// @notice Begins the minimum stake amount update process.
+    /// @notice Begins the minimum authorization amount update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newMinimumStake New minimum stake amount.
-    function beginMinimumStakeUpdate(uint96 _newMinimumStake)
+    /// @param _newMinimumAuthorization New minimum authorization amount.
+    function beginMinimumAuthorizationUpdate(uint96 _newMinimumAuthorization)
         external
         onlyOwner
     {
         /* solhint-disable not-rely-on-time */
-        newMinimumStake = _newMinimumStake;
-        minimumStakeChangeInitiated = block.timestamp;
-        emit MinimumStakeUpdateStarted(_newMinimumStake, block.timestamp);
+        newMinimumAuthorization = _newMinimumAuthorization;
+        minimumAuthorizationChangeInitiated = block.timestamp;
+        emit MinimumAuthorizationUpdateStarted(
+            _newMinimumAuthorization,
+            block.timestamp
+        );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the minimum stake amount update process.
+    /// @notice Finalizes the minimum authorization amount update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeMinimumStakeUpdate()
+    function finalizeMinimumAuthorizationUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            minimumStakeChangeInitiated,
+            minimumAuthorizationChangeInitiated,
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        emit MinimumStakeUpdated(newMinimumStake);
+        emit MinimumAuthorizationUpdated(newMinimumAuthorization);
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateMinimumStake(newMinimumStake);
-        minimumStakeChangeInitiated = 0;
-        newMinimumStake = 0;
+        randomBeacon.updateMinimumAuthorization(newMinimumAuthorization);
+        minimumAuthorizationChangeInitiated = 0;
+        newMinimumAuthorization = 0;
     }
 
     /// @notice Get the time remaining until the relay request fee can be
@@ -1025,16 +1031,17 @@ contract RandomBeaconGovernance is Ownable {
             );
     }
 
-    /// @notice Get the time remaining until the minimum stake amount can be updated.
+    /// @notice Get the time remaining until the minimum authorization amount
+    ///         can be updated.
     /// @return Remaining time in seconds.
-    function getRemainingMimimumStakeUpdateTime()
+    function getRemainingMimimumAuthorizationUpdateTime()
         external
         view
         returns (uint256)
     {
         return
             getRemainingChangeTime(
-                minimumStakeChangeInitiated,
+                minimumAuthorizationChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }

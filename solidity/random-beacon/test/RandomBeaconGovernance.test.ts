@@ -35,7 +35,7 @@ describe("RandomBeaconGovernance", () => {
   const initialMaliciousDkgResultSlashingAmount = 1000000000
   const initialSortitionPoolRewardsBanDuration = 1209600
   const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
-  const initialMinimumStake = 1000000
+  const initialMinimumAuthorization = 1000000
 
   // prettier-ignore
   before(async () => {
@@ -84,7 +84,7 @@ describe("RandomBeaconGovernance", () => {
 
     await randomBeacon
       .connect(governance)
-      .updateMinimumStake(initialMinimumStake)
+      .updateMinimumAuthorization(initialMinimumAuthorization)
 
     const RandomBeaconGovernance = await ethers.getContractFactory(
       "RandomBeaconGovernance"
@@ -1969,13 +1969,13 @@ describe("RandomBeaconGovernance", () => {
     )
   })
 
-  describe("beginMinimumStakeUpdate", () => {
+  describe("beginMinimumAuthorizationUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .beginMinimumStakeUpdate(123)
+            .beginMinimumAuthorizationUpdate(123)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -1986,38 +1986,38 @@ describe("RandomBeaconGovernance", () => {
       beforeEach(async () => {
         tx = await randomBeaconGovernance
           .connect(governance)
-          .beginMinimumStakeUpdate(123)
+          .beginMinimumAuthorizationUpdate(123)
       })
 
-      it("should not update the minimum stake amount", async () => {
-        expect(await randomBeacon.minimumStake()).to.be.equal(
-          initialMinimumStake
+      it("should not update the minimum authorization amount", async () => {
+        expect(await randomBeacon.minimumAuthorization()).to.be.equal(
+          initialMinimumAuthorization
         )
       })
 
       it("should start the governance delay timer", async () => {
         expect(
-          await randomBeaconGovernance.getRemainingMimimumStakeUpdateTime()
+          await randomBeaconGovernance.getRemainingMimimumAuthorizationUpdateTime()
         ).to.be.equal(12 * 60 * 60) // 12 hours
       })
 
-      it("should emit the MinimumStakeUpdateStarted event", async () => {
+      it("should emit the MinimumAuthorizationUpdateStarted event", async () => {
         const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
           .timestamp
         await expect(tx)
-          .to.emit(randomBeaconGovernance, "MinimumStakeUpdateStarted")
+          .to.emit(randomBeaconGovernance, "MinimumAuthorizationUpdateStarted")
           .withArgs(123, blockTimestamp)
       })
     })
   })
 
-  describe("finalizeMinimumStakeUpdate", () => {
+  describe("finalizeMinimumAuthorizationUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .finalizeMinimumStakeUpdate()
+            .finalizeMinimumAuthorizationUpdate()
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -2027,7 +2027,7 @@ describe("RandomBeaconGovernance", () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .finalizeMinimumStakeUpdate()
+            .finalizeMinimumAuthorizationUpdate()
         ).to.be.revertedWith("Change not initiated")
       })
     })
@@ -2036,14 +2036,14 @@ describe("RandomBeaconGovernance", () => {
       it("should revert", async () => {
         await randomBeaconGovernance
           .connect(governance)
-          .beginMinimumStakeUpdate(123)
+          .beginMinimumAuthorizationUpdate(123)
 
         await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .finalizeMinimumStakeUpdate()
+            .finalizeMinimumAuthorizationUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
       })
     })
@@ -2056,28 +2056,28 @@ describe("RandomBeaconGovernance", () => {
         beforeEach(async () => {
           await randomBeaconGovernance
             .connect(governance)
-            .beginMinimumStakeUpdate(123)
+            .beginMinimumAuthorizationUpdate(123)
 
           await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
           tx = await randomBeaconGovernance
             .connect(governance)
-            .finalizeMinimumStakeUpdate()
+            .finalizeMinimumAuthorizationUpdate()
         })
 
-        it("should update the minimum stake amount", async () => {
-          expect(await randomBeacon.minimumStake()).to.be.equal(123)
+        it("should update the minimum authorization amount", async () => {
+          expect(await randomBeacon.minimumAuthorization()).to.be.equal(123)
         })
 
-        it("should emit MinimumStakeUpdated event", async () => {
+        it("should emit MinimumAuthorizationUpdated event", async () => {
           await expect(tx)
-            .to.emit(randomBeaconGovernance, "MinimumStakeUpdated")
+            .to.emit(randomBeaconGovernance, "MinimumAuthorizationUpdated")
             .withArgs(123)
         })
 
         it("should reset the governance delay timer", async () => {
           await expect(
-            randomBeaconGovernance.getRemainingMimimumStakeUpdateTime()
+            randomBeaconGovernance.getRemainingMimimumAuthorizationUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

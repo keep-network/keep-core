@@ -148,8 +148,8 @@ contract RandomBeacon is Ownable {
 
     /// @notice This amount is required to protect against griefing the staking
     ///         contract and individual applications are allowed to require higher
-    ///         minimum stakes if necessary.
-    uint96 public minimumStake;
+    ///         minimum authorization if necessary.
+    uint96 public minimumAuthorization;
 
     ISortitionPool public sortitionPool;
     IERC20 public tToken;
@@ -283,7 +283,7 @@ contract RandomBeacon is Ownable {
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
         // TODO: Revisit the initial value.
-        minimumStake = 100e3;
+        minimumAuthorization = 100e3;
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -484,9 +484,9 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Updates the minimum stake amount.
-    function updateMinimumStake(uint96 minStake) external {
-        minimumStake = minStake;
+    /// @notice Updates the minimum authorization amount.
+    function updateMinimumAuthorization(uint96 minAuthorization) external {
+        minimumAuthorization = minAuthorization;
     }
 
     /// @notice Checks whether the given operator is eligible to join the
