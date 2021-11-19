@@ -132,16 +132,15 @@ const DelegatedTokensTable = ({
                     isFromGrant={delegation.isFromGrant}
                     btnClassName="btn btn-sm btn-secondary"
                     operator={delegation.operatorAddress}
-                    isManagedGrant={delegation.isManagedGrant}
-                    managedGrantContractInstance={
-                      delegation.managedGrantContractInstance
-                    }
+                    amount={delegation.amount}
+                    authorizer={delegation.authorizerAddress}
+                    beneficiary={delegation.beneficiary}
+                    undelegationPeriod={undelegationPeriod}
                     successCallback={
                       delegation.isInInitializationPeriod
                         ? cancelStakeSuccessCallback
                         : () => {}
                     }
-                    undelegationPeriod={undelegationPeriod}
                   />
                 </div>
                 <div>
