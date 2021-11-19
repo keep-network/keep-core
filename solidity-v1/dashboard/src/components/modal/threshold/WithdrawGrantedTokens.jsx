@@ -27,14 +27,14 @@ export const WithdrawGrantedTokens = withBaseModal(({ onClose }) => {
   const { grants: allGrants } = useSelector((state) => state.tokenGrants)
 
   const grants = useMemo(() => {
-    return [allGrants.filter((grant) => !eq(grant.amount, grant.released))[0]]
+    return allGrants.filter((grant) => !eq(grant.amount, grant.released))
   }, [allGrants])
 
   const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(
     DEFAULT_GRANTS_TO_DISPLAY
   )
   const [selectedGrant, setSelectedGrant] = useState(
-    grants.length === 1 ? grants[0].id : null
+    grants.length === 1 ? grants[0] : null
   )
   const releaseTokens = useReleaseTokens()
 
@@ -77,10 +77,8 @@ export const WithdrawGrantedTokens = withBaseModal(({ onClose }) => {
           <form>
             <Accordion
               allowZeroExpanded={grants.length > 1}
-              className={
-                "withdraw-granted-tokens__grants-accordion withdraw-granted-tokens__grants-accordion-container"
-              }
-              preExpanded={grants.length === 0 ? [`grant-${grants[0].id}`] : []}
+              className={"withdraw-granted-tokens__grants-accordion"}
+              preExpanded={grants.length === 1 ? [`grant-${grants[0].id}`] : []}
             >
               {grants
                 .slice(0, numberOfGrantsDisplayed)
@@ -162,7 +160,13 @@ const renderGrant = (
               }
               `}
             >
-              <AccordionItemButton>
+              <AccordionItemButton
+                className={`accordion__button ${
+                  totalNumberOfGrants === 1
+                    ? "accordion__button--cursor-default"
+                    : ""
+                }`}
+              >
                 <TokenAmount
                   amount={grant.readyToRelease}
                   amountClassName={"h4 text-mint-100"}

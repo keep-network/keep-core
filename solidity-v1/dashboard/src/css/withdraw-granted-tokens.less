@@ -3,20 +3,18 @@
     display: inline;
   }
 
-  &__grants-accordion-container {
+  &__grants-accordion {
+    width: 100%;
+    margin: 0.5rem 0;
+    display: flex;
+    flex-direction: column;
+
     label {
       &::before,
       &::after {
         margin-top: 1.3rem;
       }
     }
-  }
-
-  &__grants-accordion {
-    width: 100%;
-    margin: 0.5rem 0;
-    display: flex;
-    flex-direction: column;
 
     .accordion {
       &__item {
@@ -41,6 +39,10 @@
       &__button {
         border-bottom: none;
         align-items: center;
+
+        &--cursor-default {
+          cursor: default;
+        }
       }
 
       &__panel {
