@@ -44,8 +44,12 @@ const DefaultList = ({ thresholdPageListItem, className = "mb-2" }) => {
     <List
       items={thresholdPageListItem.listItems}
       className={`threshold-how-it-works-page__list ${className}`}
-      renderItem={(item) => {
-        return <List.Item className="list__item mb-1">{item}</List.Item>
+      renderItem={(item, index) => {
+        return (
+          <List.Item key={index} className="list__item mb-1">
+            {item}
+          </List.Item>
+        )
       }}
     >
       <List.Title className="h5 text-violet-80 mb-1">
