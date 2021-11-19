@@ -1,8 +1,5 @@
 import React, { useMemo } from "react"
-import ProgressBar, {
-  ProgressBarLegendContext,
-  renderProgressBarLegendItem,
-} from "../ProgressBar"
+import ProgressBar, { ProgressBarLegendContext } from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import OnlyIf from "../OnlyIf"
 import { add, gt } from "../../utils/arithmetics.utils"
@@ -63,24 +60,22 @@ const AllocationProgressBar = ({
                 <ProgressBarLegendContext.Provider
                   value={{ renderValuePattern: () => {} }}
                 >
-                  {renderProgressBarLegendItem(
-                    {
-                      value: secondaryValue,
-                      label: secondaryValueLegendLabel,
-                      color: colors.yellowSecondary,
-                    },
-                    "legend-item__pending-withdrawal",
-                    "allocation-progress-bar__progress-bar-legend-item"
-                  )}
-                  {renderProgressBarLegendItem(
-                    {
-                      value: currentValue,
-                      label: currentValueLegendLabel,
-                      color: colors.secondary,
-                    },
-                    "legend-item__staked",
-                    "allocation-progress-bar__progress-bar-legend-item"
-                  )}
+                  <ProgressBar.LegendItem
+                    value={secondaryValue?.toString()}
+                    label={secondaryValueLegendLabel}
+                    color={colors.yellowSecondary}
+                    className={
+                      "allocation-progress-bar__progress-bar-legend-item"
+                    }
+                  />
+                  <ProgressBar.LegendItem
+                    value={currentValue?.toString()}
+                    label={currentValueLegendLabel}
+                    color={colors.secondary}
+                    className={
+                      "allocation-progress-bar__progress-bar-legend-item"
+                    }
+                  />
                 </ProgressBarLegendContext.Provider>
               </div>
             </OnlyIf>
