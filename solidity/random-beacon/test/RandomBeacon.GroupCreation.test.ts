@@ -639,7 +639,8 @@ describe("RandomBeacon - Group Creation", () => {
               randomBeacon,
               groupPublicKey,
               signers,
-              startBlock
+              startBlock,
+              noMisbehaved
             )
 
             expect(await sortitionPool.isLocked()).to.be.true
@@ -1260,10 +1261,10 @@ describe("RandomBeacon - Group Creation", () => {
           await randomBeacon.approveDkgResult()
         })
 
-        it("should punish misbehaved operators", async () => {
+        it("should ban misbehaved operators from sortition pool rewards", async () => {
           // TODO: Once the `banRewards` function in the sortition-pools is
           //       implemented, check that members with indices 2, 10, 64 are
-          //       punished.
+          //       banned.
         })
 
         it("should clean dkg data", async () => {

@@ -542,8 +542,10 @@ contract RandomBeacon is Ownable {
         tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
 
         if (dkg.submittedResultMisbehavedMembers.length > 0) {
-            //TODO: Replace 2 weeks with governable parameter
-            banFromRewards(dkg.submittedResultMisbehavedMembers, 2 weeks);
+            banFromRewards(
+                dkg.submittedResultMisbehavedMembers,
+                sortitionPoolRewardsBanDuration
+            );
         }
 
         groups.activateCandidateGroup();
