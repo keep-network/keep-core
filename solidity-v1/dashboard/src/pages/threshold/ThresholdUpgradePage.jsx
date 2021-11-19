@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { useModal } from "../../hooks/useModal"
 import { MODAL_TYPES } from "../../constants/constants"
 import TokenAmountSkeleton from "../../components/skeletons/TokenAmountSkeleton"
+import ResourceTooltip from "../../components/ResourceTooltip"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
@@ -181,6 +182,7 @@ const ThresholdUpgradePage = () => {
           </UpgradeTokensTile>
           <UpgradeTokensTile
             title={"Grant Allocation"}
+            tooltipComponent={ResourceTooltip}
             titleTooltipProps={
               resourceTooltipProps.thresholdPageGrantAllocation
             }
