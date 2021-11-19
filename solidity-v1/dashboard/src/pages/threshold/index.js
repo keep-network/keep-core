@@ -3,8 +3,14 @@ import HowItWorksPage from "./HowItWorksPage"
 import ThresholdUpgradePage from "./ThresholdUpgradePage"
 import PageWrapper from "../../components/PageWrapper"
 
-const ThresholdPageContainer = ({ title, routes, withNewLabel }) => {
-  return <PageWrapper title={title} routes={routes} newPage={withNewLabel} />
+const ThresholdPageContainer = ({ routes, withNewLabel }) => {
+  return (
+    <PageWrapper
+      title={"Threshold Upgrade"}
+      routes={routes}
+      newPage={withNewLabel}
+    />
+  )
 }
 
 ThresholdPageContainer.route = {

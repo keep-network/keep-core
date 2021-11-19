@@ -71,6 +71,7 @@ export { ReactComponent as Refresh } from "../static/svg/refresh.svg"
 export { ReactComponent as CovPoolsHowItWorksDiagram } from "../static/svg/cov-pools-how-it-works-diagram.svg"
 export { ReactComponent as TTokenSymbol } from "../static/svg/t-token-symbol.svg"
 export { ReactComponent as KeepTUpgrade } from "../static/svg/keep-t-upgrade-logo.svg"
+export { ReactComponent as Star } from "../static/svg/star.svg"
 
 const Badge = ({ height, width }) => (
   <svg

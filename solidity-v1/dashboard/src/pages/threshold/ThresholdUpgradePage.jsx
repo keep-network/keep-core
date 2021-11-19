@@ -312,7 +312,7 @@ const ThresholdUpgradePage = () => {
 }
 
 ThresholdUpgradePage.route = {
-  title: "Threshold Upgrade",
+  title: "Upgrade",
   path: "/threshold/upgrade",
   exact: true,
 }

@@ -43,7 +43,7 @@ export const SideMenu = (props) => {
         />
         <NavLinkSection
           label="upgrade"
-          icon={<Icons.TBTC />}
+          icon={<Icons.Star />}
           subroutes={[
             {
               ...TBTCMigrationPage.route,
