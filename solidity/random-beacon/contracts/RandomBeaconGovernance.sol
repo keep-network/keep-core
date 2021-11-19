@@ -817,7 +817,7 @@ contract RandomBeaconGovernance is Ownable {
     /// @notice Begins the minimum stake amount update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newMinimumStake New minimum stake amount.
-    function beginMinimumStakeAmount(uint96 _newMinimumStake)
+    function beginMinimumStakeUpdate(uint96 _newMinimumStake)
         external
         onlyOwner
     {
@@ -1021,6 +1021,20 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultSlashingAmountChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the minimum stake amount can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingMimimumStakeUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                minimumStakeChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
