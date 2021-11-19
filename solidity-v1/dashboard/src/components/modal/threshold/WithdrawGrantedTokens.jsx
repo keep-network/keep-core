@@ -27,7 +27,7 @@ export const WithdrawGrantedTokens = withBaseModal(({ onClose }) => {
   const { grants: allGrants } = useSelector((state) => state.tokenGrants)
 
   const grants = useMemo(() => {
-    return allGrants.filter((grant) => !eq(grant.amount, grant.released))
+    return [allGrants.filter((grant) => !eq(grant.amount, grant.released))[0]]
   }, [allGrants])
 
   const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(
@@ -134,25 +134,33 @@ const renderGrant = (
 ) => {
   return (
     <AccordionItem uuid={`grant-${grant.id}`} key={`grant-${grant.id}`}>
-      <input
-        className="radio-without-label"
-        type="radio"
-        name="selectedGrantId"
-        value={grant.id}
-        id={`grant-${grant.id}`}
-        checked={selectedGrant?.id === grant?.id}
-        onChange={() => {
-          setSelectedGrant(grant)
-        }}
-      />
-      <label htmlFor={`grant-${grant.id}`} />
+      <OnlyIf condition={totalNumberOfGrants > 1}>
+        <input
+          className="radio-without-label"
+          type="radio"
+          name="selectedGrantId"
+          value={grant.id}
+          id={`grant-${grant.id}`}
+          checked={selectedGrant?.id === grant?.id}
+          onChange={() => {
+            setSelectedGrant(grant)
+          }}
+        />
+        <label htmlFor={`grant-${grant.id}`} />
+      </OnlyIf>
       <AccordionItemState>
         {({ expanded }) => {
           return (
             <AccordionItemHeading
               className={`accordion__heading ${
                 expanded ? "accordion__heading--without-bottom-border" : ""
-              }`}
+              }
+              ${
+                totalNumberOfGrants === 1
+                  ? "accordion__heading--full-width"
+                  : ""
+              }
+              `}
             >
               <AccordionItemButton>
                 <TokenAmount
@@ -172,7 +180,11 @@ const renderGrant = (
           )
         }}
       </AccordionItemState>
-      <AccordionItemPanel>
+      <AccordionItemPanel
+        className={`accordion__panel ${
+          totalNumberOfGrants === 1 ? "accordion__panel--full-width" : ""
+        }`}
+      >
         <List>
           <List.Content>
             <List.Item className="flex row center space-between">
