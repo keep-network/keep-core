@@ -58,7 +58,7 @@ const AllocationProgressBar = ({
             <OnlyIf condition={withLegend}>
               <div className="allocation-progress-bar__progress-bar-legend">
                 <ProgressBarLegendContext.Provider
-                  value={{ renderValuePattern: () => {} }}
+                  value={{ renderValuePattern: () => <></> }}
                 >
                   <ProgressBar.LegendItem
                     value={secondaryValue?.toString()}
