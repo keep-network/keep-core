@@ -15,7 +15,7 @@ import {
 } from "../../components/WithWeb3Context"
 import { useDispatch, useSelector } from "react-redux"
 import { useModal } from "../../hooks/useModal"
-import { MODAL_TYPES } from "../../constants/constants"
+import { LINK, MODAL_TYPES } from "../../constants/constants"
 import TokenAmountSkeleton from "../../components/skeletons/TokenAmountSkeleton"
 import ResourceTooltip from "../../components/ResourceTooltip"
 
@@ -169,7 +169,7 @@ const ThresholdUpgradePage = () => {
             buttonDisabled={isDataFetching}
             renderButton={() => (
               <UpgradeTokensTile.Link
-                to={"https://google.com"}
+                to={LINK.thresholdDapp}
                 linkText={"upgrade to t"}
               />
             )}

@@ -102,7 +102,7 @@ const HowItWorksPage = () => {
           <Icons.TTokenSymbol />
           <h4 className="button-container__title">Threshold</h4>
           <a
-            href={LINK.tbtcDapp}
+            href={LINK.thresholdDapp}
             rel="noopener noreferrer"
             target="_blank"
             className="btn btn-secondary btn-md"

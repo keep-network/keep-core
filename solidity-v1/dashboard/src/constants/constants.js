@@ -62,6 +62,7 @@ export const LINK = {
       "https://forum.keep.network/t/proposal-to-remove-incentives-for-tbtc-eth-pool/341",
   },
   tbtcDapp: "https://dapp.tbtc.network",
+  thresholdDapp: "https://dashboard.test.threshold.network/",
 }
 
 export const WALLETS = {
