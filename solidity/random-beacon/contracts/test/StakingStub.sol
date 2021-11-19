@@ -8,8 +8,6 @@ import "../RandomBeacon.sol";
 contract StakingStub is IRandomBeaconStaking {
     mapping(address => uint256) public stakedTokens;
 
-    bool public shouldFail;
-
     event Slashed(uint256 amount, address[] operators);
 
     event Seized(
@@ -23,10 +21,6 @@ contract StakingStub is IRandomBeaconStaking {
         external
         override
     {
-        if (shouldFail) {
-            revert("error");
-        }
-
         if (amount > 0 && operators.length > 0) {
             emit Slashed(amount, operators);
         }
@@ -38,10 +32,6 @@ contract StakingStub is IRandomBeaconStaking {
         address notifier,
         address[] memory operators
     ) external override {
-        if (shouldFail) {
-            revert("error");
-        }
-
         if (amount > 0 && operators.length > 0) {
             emit Seized(amount, rewardMultiplier, notifier, operators);
         }
@@ -56,9 +46,5 @@ contract StakingStub is IRandomBeaconStaking {
 
     function setStake(address operator, uint256 stake) public {
         stakedTokens[operator] = stake;
-    }
-
-    function setFailureFlag(bool _shouldFail) external {
-        shouldFail = _shouldFail;
     }
 }

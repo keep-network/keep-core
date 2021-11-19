@@ -129,14 +129,15 @@ contract RandomBeacon is Ownable {
     uint256 public maliciousDkgResultSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
-    ///         who missed their turn for relay entry submission.
+    ///         who missed their turn for relay entry or DKG result submission.
     uint256 public sortitionPoolRewardsBanDuration;
 
     /// @notice Percentage of the relay entry notification rewards which will
     ///         be transferred to the notifier. Notifiers are rewarded from
     ///         a separate pool funded from slashed tokens. For example, if
     ///         notification reward is 1000 and the value of the multiplier is
-    ///         5, the notifier will receive: 5% of 1000 = 50.
+    ///         5, the notifier will receive: 5% of 1000 = 50 per each
+    ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
     ISortitionPool public sortitionPool;
@@ -263,6 +264,7 @@ contract RandomBeacon is Ownable {
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
+        // TODO: Revisit if initial value of 2 weeks is enough.
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
 
@@ -638,6 +640,9 @@ contract RandomBeacon is Ownable {
                     groupMembers
                 );
             } catch {
+                // Should never happen but we want to ensure a non-critical path
+                // failure from an external contract does not stop group members
+                // from submitting a valid relay entry.
                 emit RelayEntryDelaySlashingFailed(
                     currentRequestId,
                     slashingAmount,
@@ -709,6 +714,9 @@ contract RandomBeacon is Ownable {
                 gasStation.releaseGas(operators[i]);
             }
         } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop group members
+            // from submitting a valid relay entry.
             // slither-disable-next-line reentrancy-events
             emit BanRewardsFailed(ids);
         }

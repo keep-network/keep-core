@@ -410,66 +410,6 @@ describe("RandomBeacon - Relay", () => {
                   })
                 }
               )
-
-              context(
-                "when other than first eligible member submits after the soft timeout " +
-                  "but both ban rewards and slashing actions revert",
-                () => {
-                  let tx: ContractTransaction
-                  let txTimestamp: number
-
-                  beforeEach(async () => {
-                    // Simulate soft timeout was violated (75% of time elapsed).
-                    // Need to subtract 2 blocks due to Hardhat auto-mine caused
-                    // by `setFailureFlag` and `submitRelayEntry` calls.
-                    await mineBlocks(64 * 10 + 0.75 * 5760 - 2)
-
-                    // Force staking contract stub to alway revert upon slashing.
-                    await staking.setFailureFlag(true)
-
-                    // The last eligible member `15` submits the result.
-                    // This is the worst case gas-wise as it requires to
-                    // ban 63 members from the sortition pool rewards.
-                    tx = await randomBeacon
-                      .connect(member15)
-                      .submitRelayEntry(
-                        firstEligibleMemberIndex - 1,
-                        blsData.groupSignature
-                      )
-
-                    // Wait until tx is mined to get tx block timestamp.
-                    const receipt = await tx.wait()
-                    txTimestamp = (
-                      await ethers.provider.getBlock(receipt.blockNumber)
-                    ).timestamp
-                  })
-
-                  it("should emit BanRewardsFailed", async () => {
-                    // TODO: Since real sortition pool is used and `banRewards`
-                    //       is not implemented at the moment, there is no
-                    //       possibility to force a revert. Once its possible,
-                    //       we should assert BanRewardsFailed was emitted with
-                    //       proper arguments and no gas slots were released.
-                  })
-
-                  it("should emit RelayEntryDelaySlashingFailed", async () => {
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntryDelaySlashingFailed")
-                      .withArgs(1, to1e18(750), membersAddresses)
-                  })
-
-                  it("should emit RelayEntrySubmitted event", async () => {
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntrySubmitted")
-                      .withArgs(1, blsData.groupSignature)
-                  })
-
-                  it("should terminate the relay request", async () => {
-                    expect(await randomBeacon.isRelayRequestInProgress()).to.be
-                      .false
-                  })
-                }
-              )
             })
 
             context("when entry is not valid", () => {
