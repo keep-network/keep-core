@@ -15,13 +15,21 @@ import { KEEP } from "../../../utils/token.utils"
 import TokenAmount from "../../TokenAmount"
 import { shortenAddress } from "../../../utils/general.utils"
 import moment from "moment"
-import { add } from "../../../utils/arithmetics.utils"
+import { add, eq } from "../../../utils/arithmetics.utils"
 import OnlyIf from "../../OnlyIf"
 import List from "../../List"
 import * as Icons from "../../Icons"
+import { useSelector } from "react-redux"
 
-export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
+export const WithdrawGrantedTokens = withBaseModal(({ onClose }) => {
   const DEFAULT_GRANTS_TO_DISPLAY = 5
+
+  const { grants: allGrants } = useSelector((state) => state.tokenGrants)
+
+  const grants = useMemo(() => {
+    return allGrants.filter((grant) => !eq(grant.amount, grant.released))
+  }, [allGrants])
+
   const [numberOfGrantsDisplayed, setNumberOfGrantsDisplayed] = useState(
     DEFAULT_GRANTS_TO_DISPLAY
   )

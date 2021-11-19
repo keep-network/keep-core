@@ -8,7 +8,7 @@ import UpgradeTokensTile from "../../components/threshold/UpgradeTokensTile"
 import resourceTooltipProps from "../../constants/tooltips"
 import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
 import useGrantedBalanceInfo from "../../hooks/useGrantedBalanceInfo"
-import { add, eq, lte } from "../../utils/arithmetics.utils"
+import { add, lte } from "../../utils/arithmetics.utils"
 import {
   useWeb3Address,
   useWeb3Context,
@@ -42,13 +42,9 @@ const ThresholdUpgradePage = () => {
     (state) => state.staking
   )
 
-  const { grants: allGrants, isFetching: isGrantDataFetching } = useSelector(
+  const { isFetching: isGrantDataFetching } = useSelector(
     (state) => state.tokenGrants
   )
-
-  const grants = useMemo(() => {
-    return allGrants.filter((grant) => !eq(grant.amount, grant.released))
-  }, [allGrants])
 
   const isDataFetching = useMemo(() => {
     return isDelegationDataFetching || isGrantDataFetching
@@ -101,7 +97,7 @@ const ThresholdUpgradePage = () => {
   }, [delegations, undelegations])
 
   const onWithdrawFromGrant = () => {
-    openModal(MODAL_TYPES.WithdrawGrantedTokens, { grants })
+    openModal(MODAL_TYPES.WithdrawGrantedTokens)
   }
 
   return (
