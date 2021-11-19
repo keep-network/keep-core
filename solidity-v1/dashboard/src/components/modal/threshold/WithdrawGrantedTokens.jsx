@@ -53,11 +53,9 @@ export const WithdrawGrantedTokens = withBaseModal(({ grants, onClose }) => {
         <div>
           <OnlyIf condition={grants.length > 1}>
             <div className="flex row center space-between">
-              <h4 className="withdraw-granted-tokens__info-row-title">
-                Withdraw:
-              </h4>
-              <span className="withdraw-granted-tokens__info-row-value">
-                total:{" "}
+              <h4 className="text-grey-70">Withdraw:</h4>
+              <span className="text-grey-70 small">
+                Total:{" "}
                 <TokenAmount
                   amount={totalReadyToRelease}
                   token={KEEP}
@@ -173,26 +171,24 @@ const renderGrant = (
           <List>
             <List.Content>
               <List.Item className="flex row center space-between">
-                <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                <span className="text-label text-label--without-hover text-grey-70">
                   token grant id
                 </span>
-                <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
-                  {grant.id}
-                </span>
+                <span className="text-grey-60 small">{grant.id}</span>
               </List.Item>
               <List.Item className="flex row center space-between">
-                <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                <span className="text-label text-label--without-hover text-grey-70">
                   date issued
                 </span>
-                <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                <span className="text-grey-60 small">
                   {moment.unix(grant.start).format("MM/DD/YYYY")}
                 </span>
               </List.Item>
               <List.Item className="flex row center space-between">
-                <span className="withdraw-granted-tokens__info-row-title withdraw-granted-tokens__info-row-title--small">
+                <span className="text-label text-label--without-hover text-grey-70">
                   wallet
                 </span>
-                <span className="withdraw-granted-tokens__info-row-value withdraw-granted-tokens__info-row-value--small">
+                <span className="text-grey-60 small">
                   {shortenAddress(grant.grantee)}
                 </span>
               </List.Item>
