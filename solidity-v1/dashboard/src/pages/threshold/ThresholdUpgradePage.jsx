@@ -42,26 +42,43 @@ const ThresholdUpgradePage = () => {
     (state) => state.staking
   )
 
-  const { isFetching: isGrantDataFetching } = useSelector(
+  const { grants, isFetching: isGrantDataFetching } = useSelector(
     (state) => state.tokenGrants
   )
 
+  const { value: keepBalance, isFetching: isKeepBalanceFetching } = useSelector(
+    (state) => state.keepTokenBalance
+  )
+
   const isDataFetching = useMemo(() => {
-    return isDelegationDataFetching || isGrantDataFetching
-  }, [isDelegationDataFetching, isGrantDataFetching])
+    return (
+      isDelegationDataFetching || isGrantDataFetching || isKeepBalanceFetching
+    )
+  }, [isDelegationDataFetching, isGrantDataFetching, isKeepBalanceFetching])
 
-  const { totalOwnedStakedBalance, totalOwnedUnstakedBalance } =
-    useKeepBalanceInfo()
+  const { totalOwnedStakedBalance } = useKeepBalanceInfo()
 
-  const { totalGrantedStakedBalance, totalGrantedUnstakedBalance } =
-    useGrantedBalanceInfo()
+  const { totalGrantedStakedBalance } = useGrantedBalanceInfo()
+
+  const totalGrantedReadyToReleaseTokens = useMemo(() => {
+    if (isDataFetching || grants.length === 0) return "0"
+    return grants
+      .map(({ readyToRelease }) => readyToRelease)
+      .reduce(add, "0")
+      .toString()
+  }, [grants, isDataFetching])
 
   const notStakedTotalAmount = useMemo(() => {
-    return add(
-      totalOwnedUnstakedBalance,
-      totalGrantedUnstakedBalance
-    ).toString()
-  }, [totalOwnedUnstakedBalance, totalGrantedUnstakedBalance])
+    if (isDataFetching) return "0"
+    return add(keepBalance, totalGrantedReadyToReleaseTokens).toString()
+  }, [keepBalance, totalGrantedReadyToReleaseTokens, isDataFetching])
+
+  // const notStakedTotalAmount = useMemo(() => {
+  //   return add(
+  //     totalOwnedUnstakedBalance,
+  //     totalGrantedUnstakedBalance
+  //   ).toString()
+  // }, [totalOwnedUnstakedBalance, totalGrantedUnstakedBalance])
 
   const stakedTotalAmount = useMemo(() => {
     return add(totalOwnedStakedBalance, totalGrantedStakedBalance).toString()
@@ -143,14 +160,14 @@ const ThresholdUpgradePage = () => {
         )}
         <AllocationProgressBar
           title={"wallet"}
-          currentValue={totalOwnedUnstakedBalance}
+          currentValue={keepBalance}
           totalValue={notStakedTotalAmount}
           className={"mb-1"}
           isDataFetching={isDataFetching}
         />
         <AllocationProgressBar
           title={"available grant allocation"}
-          currentValue={totalGrantedUnstakedBalance}
+          currentValue={totalGrantedReadyToReleaseTokens}
           totalValue={notStakedTotalAmount}
           className={"mb-2"}
           isDataFetching={isDataFetching}
@@ -172,7 +189,7 @@ const ThresholdUpgradePage = () => {
           >
             <UpgradeTokensTile.Row
               label={"Liquid KEEP"}
-              amount={totalOwnedUnstakedBalance}
+              amount={keepBalance}
               isDataFetching={isDataFetching}
             />
           </UpgradeTokensTile>
@@ -186,7 +203,7 @@ const ThresholdUpgradePage = () => {
               <UpgradeTokensTile.Button
                 btnText={"withdraw from grant"}
                 buttonDisabled={
-                  lte(totalGrantedUnstakedBalance, 0) || isDataFetching
+                  lte(totalGrantedReadyToReleaseTokens, 0) || isDataFetching
                 }
                 onBtnClick={onWithdrawFromGrant}
               />
@@ -194,7 +211,7 @@ const ThresholdUpgradePage = () => {
           >
             <UpgradeTokensTile.Row
               label={"Available KEEP"}
-              amount={totalGrantedUnstakedBalance}
+              amount={totalGrantedReadyToReleaseTokens}
               isDataFetching={isDataFetching}
             />
           </UpgradeTokensTile>
@@ -286,7 +303,7 @@ const ThresholdUpgradePage = () => {
           <UpgradeTokensTile
             title={"Undelegated"}
             buttonDisabled={
-              lte(totalGrantedUnstakedBalance, 0) || isDataFetching
+              lte(totalUndelegatedAvailableKeep, 0) || isDataFetching
             }
             renderButton={() => (
               <UpgradeTokensTile.NavLink
