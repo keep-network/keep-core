@@ -31,6 +31,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// TODO: Add a dependency to `keep-network/sortition-pools` and use sortition
 ///       pool interface from there.
 interface ISortitionPool {
+    function lock() external;
+
+    function unlock() external;
+
     function insertOperator(address operator) external;
 
     function banRewards(uint32[] calldata operators, uint256 duration) external;
@@ -49,6 +53,8 @@ interface ISortitionPool {
         returns (address[] memory);
 
     function getOperatorID(address operator) external view returns (uint32);
+
+    function isLocked() external view returns (bool);
 }
 
 /// @title Staking contract interface
@@ -187,6 +193,10 @@ contract RandomBeacon is Ownable {
         bytes32 indexed resultHash,
         address indexed challenger
     );
+
+    event DkgStateLocked();
+
+    event DkgSeedTimedOut();
 
     event CandidateGroupRegistered(bytes indexed groupPubKey);
 
@@ -443,17 +453,10 @@ contract RandomBeacon is Ownable {
     function genesis() external {
         require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
-        createGroup(
+        dkg.lockState();
+        dkg.start(
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
         );
-    }
-
-    /// @notice Creates a new group.
-    /// @param seed Seed for DKG.
-    function createGroup(uint256 seed) internal {
-        // TODO: Lock sortition pool.
-
-        dkg.start(seed);
     }
 
     /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
@@ -507,7 +510,6 @@ contract RandomBeacon is Ownable {
 
         // TODO: Handle DQ/IA. Should result submitter receive
         //       reward if they failed to call this function?
-        // TODO: Unlock sortition pool
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -571,6 +573,17 @@ contract RandomBeacon is Ownable {
         relay.requestEntry(groupId);
 
         callback.setCallbackContract(callbackContract);
+
+        // If the current request should trigger group creation we need to lock
+        // DKG state (lock sortition pool) to prevent operators from changing
+        // its state before relay entry is known. That entry will be used as a
+        // group selection seed.
+        if (
+            relay.requestCount % groupCreationFrequency == 0 &&
+            dkg.currentState() == DKG.State.IDLE
+        ) {
+            dkg.lockState();
+        }
     }
 
     /// @notice Creates a new relay entry.
@@ -608,9 +621,10 @@ contract RandomBeacon is Ownable {
             staking.slash(slashingAmount, groupMembers);
         }
 
-        if (relay.requestCount % groupCreationFrequency == 0) {
-            // TODO: Once implemented, invoke:
-            // createGroup(uint256(keccak256(entry)));
+        // If DKG is awaiting a seed, that means the we should start the actual
+        // group creation process.
+        if (dkg.currentState() == DKG.State.AWAITING_SEED) {
+            dkg.start(uint256(keccak256(entry)));
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
@@ -643,6 +657,12 @@ contract RandomBeacon is Ownable {
             relay.retryOnEntryTimeout(groupId);
         } else {
             relay.cleanupOnEntryTimeout();
+
+            // If DKG is awaiting a seed, we should notify about its timeout to
+            // avoid blocking the future group creation.
+            if (dkg.currentState() == DKG.State.AWAITING_SEED) {
+                dkg.notifySeedTimedOut();
+            }
         }
     }
 
@@ -669,6 +689,13 @@ contract RandomBeacon is Ownable {
         //       block entry submission. For example, an operator leaves
         //       the pool just before it gets banned.
         sortitionPool.banRewards(ids, punishmentDuration);
+    }
+
+    /// @notice Locks the state of group creation.
+    /// @dev This function is meant to be used by test stubs which inherits
+    ///      from this contract and needs to lock the DKG state arbitrarily.
+    function dkgLockState() internal {
+        dkg.lockState();
     }
 
     /// @return Flag indicating whether a relay entry request is currently
