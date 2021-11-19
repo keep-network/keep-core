@@ -1,14 +1,13 @@
 import React, { useMemo } from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
-import OnlyIf from "../OnlyIf"
 import NavLink from "../NavLink"
 
 const UpgradeTokensTile = ({
   title,
   className = "",
   renderButton = () => <UpgradeTokensTile.Button btnText={"button"} />,
-  tooltipComponent: TooltipComponent = null,
+  tooltipComponent: TooltipComponent = () => null,
   titleTooltipProps = null,
   children,
 }) => {
@@ -16,9 +15,7 @@ const UpgradeTokensTile = ({
     <div className={`upgrade-tokens-tile ${className}`}>
       <div className="upgrade-tokens-tile__title">
         <span>{title}</span>
-        <OnlyIf condition={TooltipComponent}>
-          <TooltipComponent tooltipClassName="ml-1" {...titleTooltipProps} />
-        </OnlyIf>
+        <TooltipComponent tooltipClassName="ml-1" {...titleTooltipProps} />
       </div>
       <div>{children}</div>
       {renderButton()}
