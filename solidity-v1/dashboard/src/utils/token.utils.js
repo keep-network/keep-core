@@ -72,13 +72,16 @@ export class Token {
    *
    * @param {*} amount An amount in the samllest unit of the token.
    * @param {number} decimals How many decimal places we want to display in the amount.
+   * @param {Function} formattingFn Function that formats the amount to display.
    *
    * @return {string} Formatted amount in readble format.
    */
-  displayAmount = (amount, decimals = this.decimalsToDisplay) => {
-    return this._displayAmount(amount, decimals, (amount, decimals) => {
-      return this.toFormat(amount, decimals)
-    })
+  displayAmount = (
+    amount,
+    decimals = this.decimalsToDisplay,
+    formattingFn = this.toFormat
+  ) => {
+    return this._displayAmount(amount, decimals, formattingFn)
   }
 
   /**
@@ -104,11 +107,19 @@ export class Token {
    * Displays an amount with a token symbol.
    *
    * @param {*} amount An amount to display.
+   * @param {number} decimals How many decimal places we want to display in the amount.
+   * @param {Function} formattingFn Function that formats the amount to display.
    *
    * @return {string} Formatted amount with a token symbol.
    */
-  displayAmountWithSymbol = (amount) => {
-    return `${this.displayAmount(amount)} ${this.symbol}`
+  displayAmountWithSymbol = (
+    amount,
+    decimals = this.decimalsToDisplay,
+    formattingFn = this.toFormat
+  ) => {
+    return `${this.displayAmount(amount, decimals, formattingFn)} ${
+      this.symbol
+    }`
   }
 
   /**

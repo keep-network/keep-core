@@ -35,6 +35,10 @@ library DKG {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
+        // Misbehaved (inactive or disqualified) members from the DKG result.
+        uint32[] submittedResultMisbehavedMembers;
+        // Address of the DKG result submitter
+        address resultSubmitter;
     }
 
     /// @notice DKG result.
@@ -69,6 +73,8 @@ library DKG {
         // Group creation is not in progress. It is a state set after group creation
         // completion either by timeout or by a result approval.
         IDLE,
+        // Group creation is awaiting the seed and sortition pool is locked.
+        AWAITING_SEED,
         // Off-chain DKG protocol execution is in progress. A result is being calculated
         // by the clients in this state. It's not yet possible to submit the result.
         KEY_GENERATION,
@@ -123,6 +129,10 @@ library DKG {
         address indexed challenger
     );
 
+    event DkgStateLocked();
+
+    event DkgSeedTimedOut();
+
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
     function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
@@ -146,24 +156,42 @@ library DKG {
     {
         state = State.IDLE;
 
-        if (self.startBlock > 0) {
-            state = State.KEY_GENERATION;
+        if (self.sortitionPool.isLocked()) {
+            state = State.AWAITING_SEED;
 
-            if (block.number > self.startBlock + offchainDkgTime) {
-                state = State.AWAITING_RESULT;
+            if (self.startBlock > 0) {
+                state = State.KEY_GENERATION;
 
-                if (self.submittedResultBlock > 0) {
-                    state = State.CHALLENGE;
+                if (block.number > self.startBlock + offchainDkgTime) {
+                    state = State.AWAITING_RESULT;
+
+                    if (self.submittedResultBlock > 0) {
+                        state = State.CHALLENGE;
+                    }
                 }
             }
         }
     }
 
-    function start(Data storage self, uint256 seed) internal {
+    /// @notice Locks the sortition pool and starts awaiting for the
+    ///         group creation seed.
+    function lockState(Data storage self) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
+
+        emit DkgStateLocked();
+
+        self.sortitionPool.lock();
+    }
+
+    function start(Data storage self, uint256 seed) internal {
+        require(
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
+        );
 
         self.startBlock = block.number;
 
+        // slither-disable-next-line reentrancy-events
         emit DkgStarted(seed);
     }
 
@@ -189,8 +217,16 @@ library DKG {
         // We need to know in advance that there will be something that we can
         // slash the members from.
 
+        for (uint256 i = 0; i < result.misbehavedMembersIndices.length; i++) {
+            // group member indices start from 1, so we need to -1 on misbehaved
+            uint32 memberArrayPosition = result.misbehavedMembersIndices[i] - 1;
+            self.submittedResultMisbehavedMembers.push(
+                result.members[memberArrayPosition]
+            );
+        }
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
+        self.resultSubmitter = msg.sender;
 
         emit DkgResultSubmitted(
             self.submittedResultHash,
@@ -339,16 +375,29 @@ library DKG {
     }
 
     /// @notice Notifies about DKG timeout.
-    function notifyTimeout(Data storage self) internal cleanup(self) {
+    function notifyTimeout(Data storage self) internal {
         require(hasDkgTimedOut(self), "dkg has not timed out");
 
         emit DkgTimedOut();
     }
 
+    /// @notice Notifies about the seed was not delivered and restores the
+    ///         initial DKG state (IDLE).
+    function notifySeedTimedOut(Data storage self) internal {
+        require(
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
+        );
+
+        emit DkgSeedTimedOut();
+
+        self.sortitionPool.unlock();
+    }
+
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
-    function approveResult(Data storage self) internal cleanup(self) {
+    function approveResult(Data storage self) internal {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -394,7 +443,9 @@ library DKG {
         bytes32 resultHash = self.submittedResultHash;
 
         delete self.submittedResultBlock;
+        delete self.resultSubmitter;
         delete self.submittedResultHash;
+        delete self.submittedResultMisbehavedMembers;
 
         emit DkgResultChallenged(resultHash, msg.sender);
     }
@@ -433,13 +484,15 @@ library DKG {
             .resultSubmissionEligibilityDelay = newResultSubmissionEligibilityDelay;
     }
 
-    /// @notice Cleans up state after DKG completion.
+    /// @notice Completes DKG by cleaning up state.
     /// @dev Should be called after DKG times out or a result is approved.
-    modifier cleanup(Data storage self) {
-        _;
+    function complete(Data storage self) internal {
         delete self.startBlock;
         delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
+        delete self.resultSubmitter;
+        delete self.submittedResultMisbehavedMembers;
         delete self.submittedResultBlock;
+        self.sortitionPool.unlock();
     }
 }

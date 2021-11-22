@@ -271,21 +271,28 @@ library Relay {
 
     /// @notice Retries the current relay request in case a relay entry
     ///         timeout was reported.
-    /// @param groupId ID of the group chosen to retry the current request.
-    function retryOnEntryTimeout(Data storage self, uint64 groupId) internal {
+    /// @param newGroupId ID of the group chosen to retry the current request.
+    function retryOnEntryTimeout(Data storage self, uint64 newGroupId)
+        internal
+    {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
-        uint64 currentRequestId = self.currentRequest.id;
+        Request memory currentRequest = self.currentRequest;
+        uint64 previousGroupId = currentRequest.groupId;
 
-        emit RelayEntryTimedOut(currentRequestId, self.currentRequest.groupId);
+        emit RelayEntryTimedOut(currentRequest.id, previousGroupId);
 
         self.currentRequest = Request(
-            currentRequestId,
-            groupId,
+            currentRequest.id,
+            newGroupId,
             uint128(block.number)
         );
 
-        emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
+        emit RelayEntryRequested(
+            currentRequest.id,
+            newGroupId,
+            self.previousEntry
+        );
     }
 
     /// @notice Cleans up the current relay request in case a relay entry

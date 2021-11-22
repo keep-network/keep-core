@@ -1,7 +1,7 @@
 import React from "react"
 import { withFormik } from "formik"
 import FormInput from "../../components/FormInput"
-import { SubmitButton } from "../../components/Button"
+import Button from "../../components/Button"
 import Divider from "../../components/Divider"
 import MaxAmountAddon from "../MaxAmountAddon"
 import {
@@ -13,7 +13,6 @@ import List from "../List"
 import * as Icons from "../Icons"
 import Chip from "../Chip"
 import TokenAmount from "../TokenAmount"
-import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
 import {
   validateAmountInRange,
   getErrorsObj,
@@ -24,8 +23,7 @@ import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
 
-const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
-  const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
+const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
   const onAddonClick = useSetMaxAmountToken(
     "tokenAmount",
     tokenAmount,
@@ -91,13 +89,14 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
         </List.Content>
       </List>
       <Divider className="divider divider--tile-fluid" />
-      <SubmitButton
+      <Button
         className="btn btn-lg btn-primary w-100"
-        onSubmitAction={onSubmitBtn}
+        type="submit"
+        onClick={formikProps.handleSubmit}
         disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         deposit
-      </SubmitButton>
+      </Button>
       <p className="text-center text-secondary mt-1 mb-0">
         Risk warning:&nbsp;
         <a
@@ -169,6 +168,10 @@ export default withFormik({
     }
 
     return getErrorsObj(errors)
+  },
+  handleSubmit: (values, { props, resetForm }) => {
+    props.onSubmit(values)
+    resetForm({ tokenAmount: "0" })
   },
   displayName: "CovPoolsDepositForm",
 })(DepositForm)

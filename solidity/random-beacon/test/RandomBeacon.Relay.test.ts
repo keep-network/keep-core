@@ -1,13 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop */
 
-import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
+import {
+  ethers,
+  waffle,
+  helpers,
+  getUnnamedAccounts,
+  getNamedAccounts,
+} from "hardhat"
 import { expect } from "chai"
 import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
 import { to1e18 } from "./functions"
-import { constants, randomBeaconDeployment } from "./fixtures"
+import { constants, dkgState, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
   RandomBeacon,
@@ -56,7 +62,9 @@ describe("RandomBeacon - Relay", () => {
   // gives 3 so that  member needs to submit the wrong relay entry.
   const invalidEntryFirstEligibleMemberIndex = 3
 
+  let deployer: SignerWithAddress
   let requester: SignerWithAddress
+  let notifier: SignerWithAddress
   let member3: SignerWithAddress
   let member15: SignerWithAddress
   let member16: SignerWithAddress
@@ -73,7 +81,9 @@ describe("RandomBeacon - Relay", () => {
   let relayStub: RelayStub
 
   before(async () => {
+    deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+    notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
   })
 
   beforeEach("load test fixture", async () => {
@@ -127,25 +137,86 @@ describe("RandomBeacon - Relay", () => {
               randomBeacon.address
             )
             await approveTestToken()
-            tx = await randomBeacon
-              .connect(requester)
-              .requestRelayEntry(ZERO_ADDRESS)
           })
 
-          it("should deposit relay request fee to the maintenance pool", async () => {
-            const currentMaintenancePoolBalance = await testToken.balanceOf(
-              randomBeacon.address
-            )
-            expect(
-              currentMaintenancePoolBalance.sub(previousMaintenancePoolBalance)
-            ).to.be.equal(relayRequestFee)
-          })
+          context(
+            "when relay request does not hit group creation frequency threshold",
+            () => {
+              beforeEach(async () => {
+                tx = await randomBeacon
+                  .connect(requester)
+                  .requestRelayEntry(ZERO_ADDRESS)
+              })
 
-          it("should emit RelayEntryRequested event", async () => {
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryRequested")
-              .withArgs(1, 0, blsData.previousEntry)
-          })
+              it("should deposit relay request fee to the maintenance pool", async () => {
+                const currentMaintenancePoolBalance = await testToken.balanceOf(
+                  randomBeacon.address
+                )
+                expect(
+                  currentMaintenancePoolBalance.sub(
+                    previousMaintenancePoolBalance
+                  )
+                ).to.be.equal(relayRequestFee)
+              })
+
+              it("should emit RelayEntryRequested event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "RelayEntryRequested")
+                  .withArgs(1, 0, blsData.previousEntry)
+              })
+
+              it("should not lock DKG state", async () => {
+                expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                  dkgState.IDLE
+                )
+                expect(await sortitionPool.isLocked()).to.be.false
+              })
+            }
+          )
+
+          context(
+            "when relay request hits group creation frequency threshold",
+            () => {
+              beforeEach(async () => {
+                // Force group creation on each relay entry.
+                await randomBeacon
+                  .connect(deployer)
+                  .updateGroupCreationParameters(1, params.groupLifeTime)
+
+                tx = await randomBeacon
+                  .connect(requester)
+                  .requestRelayEntry(ZERO_ADDRESS)
+              })
+
+              it("should deposit relay request fee to the maintenance pool", async () => {
+                const currentMaintenancePoolBalance = await testToken.balanceOf(
+                  randomBeacon.address
+                )
+                expect(
+                  currentMaintenancePoolBalance.sub(
+                    previousMaintenancePoolBalance
+                  )
+                ).to.be.equal(relayRequestFee)
+              })
+
+              it("should emit RelayEntryRequested event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "RelayEntryRequested")
+                  .withArgs(1, 0, blsData.previousEntry)
+              })
+
+              it("should lock DKG state", async () => {
+                expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+                  dkgState.AWAITING_SEED
+                )
+                expect(await sortitionPool.isLocked()).to.be.true
+              })
+
+              it("should emit DkgStateLocked event", async () => {
+                await expect(tx).to.emit(randomBeacon, "DkgStateLocked")
+              })
+            }
+          )
         })
 
         context("when the requester doesn't pay the relay request fee", () => {
@@ -260,41 +331,12 @@ describe("RandomBeacon - Relay", () => {
                     ).timestamp
                   })
 
-                  it("should remove members who did not submit from the sortition pool", async () => {
-                    // Two members should be kicked out from the pool.
-                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
-                      constants.groupSize - 2
-                    )
-
-                    // Member 16 should be kicked out from the pool, blocked
-                    // against re-joining for 2 weeks, and his gas deposit
-                    // should be released.
-                    expect(
-                      await sortitionPool.isOperatorInPool(member16.address)
-                    ).to.be.false
-                    expect(
-                      await randomBeacon.punishedOperators(member16.address)
-                    ).to.be.equal(txTimestamp + TWO_WEEKS)
-                    expect(
-                      await (randomBeacon as RandomBeaconStub).hasGasDeposit(
-                        member16.address
-                      )
-                    ).to.be.false
-
-                    // Member 17 should be kicked out from the pool, blocked
-                    // against re-joining for 2 weeks, and his gas deposit
-                    // should be released.
-                    expect(
-                      await sortitionPool.isOperatorInPool(member17.address)
-                    ).to.be.false
-                    expect(
-                      await randomBeacon.punishedOperators(member17.address)
-                    ).to.be.equal(txTimestamp + TWO_WEEKS)
-                    expect(
-                      await (randomBeacon as RandomBeaconStub).hasGasDeposit(
-                        member17.address
-                      )
-                    ).to.be.false
+                  it("should ban sortition pool rewards for members who did not submit", async () => {
+                    // TODO: Assert members 16 and 17 are banned for given
+                    //       punishment duration. This can be done once
+                    //       `banRewards` is correctly implemented on the
+                    //       sortition pool side. Remember about checking
+                    //       gas deposits as well.
                   })
 
                   it("should not slash any members", async () => {
@@ -353,10 +395,7 @@ describe("RandomBeacon - Relay", () => {
                       .withArgs(to1e18(750), membersAddresses)
 
                     await expect(tx)
-                      .to.emit(
-                        randomBeacon,
-                        "RelayEntrySoftTimeoutSlashingOccurred"
-                      )
+                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
                       .withArgs(1, to1e18(750), membersAddresses)
                   })
 
@@ -392,7 +431,7 @@ describe("RandomBeacon - Relay", () => {
 
                     // The last eligible member `15` submits the result.
                     // This is the worst case gas-wise as it requires to
-                    // kick out 63 members from the sortition pool.
+                    // ban 63 members from the sortition pool rewards.
                     tx = await randomBeacon
                       .connect(member15)
                       .submitRelayEntry(
@@ -407,35 +446,12 @@ describe("RandomBeacon - Relay", () => {
                     ).timestamp
                   })
 
-                  it("should remove members who did not submit from the sortition pool", async () => {
-                    // 63 members should be kicked out from the pool. Only
-                    // one member should stay in the pool.
-                    expect(await sortitionPool.operatorsInPool()).to.be.equal(1)
-
-                    // Check if the right member stays in the pool. This
-                    // should be the submitter (member 15).
-                    expect(
-                      await sortitionPool.isOperatorInPool(member15.address)
-                    ).to.be.true
-
-                    // All members but member 15 should be kicked out from the
-                    // pool, blocked against re-joining for 2 weeks, and their
-                    // gas deposits should be released. Here we make the
-                    // assertion only for one punished member as making it for
-                    // all members is redundant given we assert for the number
-                    // of operators in pool and the identity of the operator
-                    // who stayed.
-                    expect(
-                      await sortitionPool.isOperatorInPool(member16.address)
-                    ).to.be.false
-                    expect(
-                      await randomBeacon.punishedOperators(member16.address)
-                    ).to.be.equal(txTimestamp + TWO_WEEKS)
-                    expect(
-                      await (randomBeacon as RandomBeaconStub).hasGasDeposit(
-                        member16.address
-                      )
-                    ).to.be.false
+                  it("should ban sortition pool rewards for members who did not submit", async () => {
+                    // TODO: Assert all group members but the submitter (member 15)
+                    //       are banned for given punishment duration. This can
+                    //       be done once `banRewards` is correctly implemented
+                    //       on the sortition pool side. Remember about checking
+                    //       gas deposits as well.
                   })
 
                   it("should slash a correct portion of the slashing amount for all members ", async () => {
@@ -447,10 +463,7 @@ describe("RandomBeacon - Relay", () => {
                       .withArgs(to1e18(750), membersAddresses)
 
                     await expect(tx)
-                      .to.emit(
-                        randomBeacon,
-                        "RelayEntrySoftTimeoutSlashingOccurred"
-                      )
+                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
                       .withArgs(1, to1e18(750), membersAddresses)
                   })
 
@@ -466,6 +479,28 @@ describe("RandomBeacon - Relay", () => {
                   })
                 }
               )
+
+              context("when DKG is awaiting a seed", () => {
+                let tx: ContractTransaction
+
+                beforeEach(async () => {
+                  // Simulate DKG is awaiting a seed.
+                  await (randomBeacon as RandomBeaconStub).publicDkgLockState()
+
+                  tx = await randomBeacon
+                    .connect(member16)
+                    .submitRelayEntry(
+                      firstEligibleMemberIndex,
+                      blsData.groupSignature
+                    )
+                })
+
+                it("should emit DkgStarted event", async () => {
+                  await expect(tx)
+                    .to.emit(randomBeacon, "DkgStarted")
+                    .withArgs(blsData.groupSignatureUint256)
+                })
+              })
             })
 
             context("when entry is not valid", () => {
@@ -587,19 +622,16 @@ describe("RandomBeacon - Relay", () => {
             // relayEntryHardTimeout`.
             await mineBlocks(64 * 10 + 5760)
 
-            tx = await randomBeacon.reportRelayEntryTimeout()
+            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
           it("should slash the full slashing amount for all group members", async () => {
             await expect(tx)
-              .to.emit(staking, "Slashed")
-              .withArgs(to1e18(1000), membersAddresses)
+              .to.emit(staking, "Seized")
+              .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
 
             await expect(tx)
-              .to.emit(
-                randomBeacon,
-                "RelayEntrySubmissionFailureSlashingOccurred"
-              )
+              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
               .withArgs(1, to1e18(1000), membersAddresses)
           })
 
@@ -634,19 +666,16 @@ describe("RandomBeacon - Relay", () => {
           // relayEntryHardTimeout`.
           await mineBlocks(64 * 10 + 5760)
 
-          tx = await randomBeacon.reportRelayEntryTimeout()
+          tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
         })
 
         it("should slash the full slashing amount for all group members", async () => {
           await expect(tx)
-            .to.emit(staking, "Slashed")
-            .withArgs(to1e18(1000), membersAddresses)
+            .to.emit(staking, "Seized")
+            .withArgs(to1e18(1000), 5, notifier.address, membersAddresses)
 
           await expect(tx)
-            .to.emit(
-              randomBeacon,
-              "RelayEntrySubmissionFailureSlashingOccurred"
-            )
+            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
             .withArgs(1, to1e18(1000), membersAddresses)
         })
 
@@ -666,6 +695,37 @@ describe("RandomBeacon - Relay", () => {
           // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
         })
       })
+
+      context(
+        "when no active groups exist after timeout is reported and DKG is awaiting seed",
+        () => {
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // relayEntryHardTimeout`.
+            await mineBlocks(64 * 10 + 5760)
+
+            // Simulate DKG is awaiting a seed.
+            await (randomBeacon as RandomBeaconStub).publicDkgLockState()
+
+            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+          })
+
+          it("should notify DKG seed timed out", async () => {
+            // TODO: Uncomment those assertions once termination is implemented.
+            // expect(await randomBeacon.getGroupCreationState()).to.be.equal(
+            //   dkgState.IDLE
+            // )
+            // expect(await sortitionPool.isLocked()).to.be.false
+          })
+
+          it("should emit DkgSeedTimedOut event", async () => {
+            // TODO: Uncomment those assertions once termination is implemented.
+            // await expect(tx).to.emit(randomBeacon, "DkgSeedTimedOut")
+          })
+        }
+      )
     })
 
     context("when relay entry did not time out", () => {

@@ -39,6 +39,7 @@ export async function signAndSubmitDkgResult(
   groupPublicKey: string,
   signers: Operator[],
   startBlock: number,
+  misbehavedIndices: number[],
   submitterIndex = 1
 ): Promise<{
   transaction: ContractTransaction
@@ -47,12 +48,12 @@ export async function signAndSubmitDkgResult(
   members: number[]
 }> {
   const { members, signingMembersIndices, signaturesBytes } =
-    await signDkgResult(signers, groupPublicKey, noMisbehaved, startBlock)
+    await signDkgResult(signers, groupPublicKey, misbehavedIndices, startBlock)
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
     groupPubKey: blsData.groupPubKey,
-    misbehavedMembersIndices: noMisbehaved,
+    misbehavedMembersIndices: misbehavedIndices,
     signatures: signaturesBytes,
     signingMembersIndices,
     members,

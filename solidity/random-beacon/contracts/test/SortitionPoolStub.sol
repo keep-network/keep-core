@@ -6,8 +6,12 @@ import "./SortitionTreeStub.sol";
 import "../RandomBeacon.sol";
 
 // Stub contract used in tests
+//
+// TODO: Deprecated. This stub should be eventually removed in favor of real
+//       sortition pool.
 contract SortitionPoolStub is ISortitionPool {
     SortitionTreeStub internal sortitionTree;
+    bool internal locked;
 
     mapping(address => bool) public operators;
     uint256 public operatorsCount;
@@ -20,24 +24,33 @@ contract SortitionPoolStub is ISortitionPool {
         sortitionTree = new SortitionTreeStub();
     }
 
+    function lock() external override {
+        locked = true;
+    }
+
+    function unlock() external override {
+        locked = false;
+    }
+
     function insertOperator(address operator) external override {
+        require(!locked, "Pool is locked");
+
         operators[operator] = true;
         operatorsCount++;
 
         sortitionTree.publicAllocateOperatorID(operator);
     }
 
-    function removeOperators(uint32[] calldata ids) external override {
-        address[] memory _operators = getIDOperators(ids);
-
-        for (uint256 i = 0; i < _operators.length; i++) {
-            delete operators[_operators[i]];
-            delete eligibleOperators[_operators[i]];
-            operatorsCount--;
-        }
+    function banRewards(uint32[] calldata ids, uint256 duration)
+        external
+        override
+    {
+        // no-op
     }
 
     function updateOperatorStatus(uint32 id) external override {
+        require(!locked, "Pool is locked");
+
         emit OperatorStatusUpdated(id);
     }
 
@@ -94,5 +107,9 @@ contract SortitionPoolStub is ISortitionPool {
 
     function transferOwnership(address newOwner) public {
         // no-op
+    }
+
+    function isLocked() public view override returns (bool) {
+        return locked;
     }
 }

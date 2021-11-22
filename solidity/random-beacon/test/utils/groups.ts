@@ -1,5 +1,5 @@
 import { helpers } from "hardhat"
-import { signAndSubmitDkgResult } from "./dkg"
+import { noMisbehaved, signAndSubmitDkgResult } from "./dkg"
 import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
 import { Operator } from "./operators"
@@ -18,7 +18,8 @@ export async function createGroup(
     randomBeacon,
     blsData.groupPubKey,
     signers,
-    startBlock
+    startBlock,
+    noMisbehaved
   )
   await mineBlocks(params.dkgResultChallengePeriodLength)
   await randomBeacon.approveDkgResult()

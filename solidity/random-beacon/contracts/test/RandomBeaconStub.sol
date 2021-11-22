@@ -38,11 +38,8 @@ contract RandomBeaconStub is RandomBeacon {
         groups.activeGroupsCount++;
     }
 
-    function publicPunishOperators(
-        uint32[] memory operators,
-        uint256 punishmentDuration
-    ) external {
-        punishOperators(operators, punishmentDuration);
+    function publicDkgLockState() external {
+        dkgLockState();
     }
 
     function hasGasDeposit(address operator) external view returns (bool) {
