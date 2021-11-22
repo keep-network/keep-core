@@ -41,6 +41,8 @@ library DKG {
         uint32[] submittedResultSigningMembers;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
+        // Misbehaved (inactive or disqualified) members from the DKG result.
+        uint32[] submittedResultMisbehavedMembers;
         // Address of the DKG result submitter
         address resultSubmitter;
     }
@@ -214,6 +216,13 @@ library DKG {
         // We need to know in advance that there will be something that we can
         // slash the members from.
 
+        for (uint256 i = 0; i < result.misbehavedMembersIndices.length; i++) {
+            // group member indices start from 1, so we need to -1 on misbehaved
+            uint32 memberArrayPosition = result.misbehavedMembersIndices[i] - 1;
+            self.submittedResultMisbehavedMembers.push(
+                result.members[memberArrayPosition]
+            );
+        }
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultGroupMembersHash = keccak256(
             abi.encodePacked(result.members)
@@ -509,6 +518,7 @@ library DKG {
         delete self.submittedResultGroupMembersHash;
         delete self.submittedResultSigningMembers;
         delete self.submittedResultBlock;
+        delete self.submittedResultMisbehavedMembers;
         delete self.resultSubmitter;
     }
 }
