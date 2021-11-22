@@ -577,16 +577,17 @@ contract RandomBeacon is Ownable {
     ///         It removes a candidate group that was previously registered with
     ///         the DKG result submission.
     function challengeDkgResult() external {
-        bytes32 resultHash = dkg.submittedResultHash;
+        (bytes32 maliciousResultHash, uint32[] memory maliciousMembers) = dkg
+            .challengeResult();
+
         uint256 slashingAmount = maliciousDkgResultSlashingAmount;
-        uint32[] memory maliciousMembers = dkg.challengeResult();
         address[] memory maliciousMembersAddresses = sortitionPool
             .getIDOperators(maliciousMembers);
 
         groups.popCandidateGroup();
 
         emit DkgMaliciousResultSlashed(
-            resultHash,
+            maliciousResultHash,
             slashingAmount,
             maliciousMembersAddresses
         );

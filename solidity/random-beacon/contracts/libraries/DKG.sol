@@ -419,11 +419,12 @@ library DKG {
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
+    /// @return maliciousResultHash Hash of the malicious result.
     /// @return maliciousMembers Identifiers of group members who signed the
     ///         malicious DKG result hash.
     function challengeResult(Data storage self)
         internal
-        returns (uint32[] memory maliciousMembers)
+        returns (bytes32 maliciousResultHash, uint32[] memory maliciousMembers)
     {
         require(
             currentState(self) == State.CHALLENGE,
@@ -450,6 +451,8 @@ library DKG {
             "unjustified challenge"
         );
 
+        // Consider result hash as malicious.
+        maliciousResultHash = self.submittedResultHash;
         // Consider all members who signed the wrong result as malicious.
         maliciousMembers = self.submittedResultSigningMembers;
 
@@ -464,7 +467,7 @@ library DKG {
 
         submittedResultCleanup(self);
 
-        return maliciousMembers;
+        return (maliciousResultHash, maliciousMembers);
     }
 
     /// @notice Set resultChallengePeriodLength parameter.
