@@ -61,13 +61,10 @@ describe("RandomBeacon - Pool", () => {
   })
 
   describe("updateOperatorStatus", () => {
-    let operatorID: number
-
     beforeEach(async () => {
       // Operator is registered and gas deposit is made.
       await stakingStub.setStake(operator.address, constants.minimumStake)
       await randomBeacon.connect(operator).registerOperator()
-      operatorID = await sortitionPool.getOperatorID(operator.address)
 
       // Simulate the operator became ineligible.
       await stakingStub.setStake(operator.address, 0)
