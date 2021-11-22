@@ -78,7 +78,9 @@ export const WithdrawGrantedTokens = withBaseModal(({ onClose }) => {
             <Accordion
               allowZeroExpanded={grants.length > 1}
               className={"withdraw-granted-tokens__grants-accordion"}
-              preExpanded={grants.length === 1 ? [`grant-${grants[0].id}`] : []}
+              preExpanded={
+                grants.length === 1 ? [`grant-${selectedGrant.id}`] : []
+              }
             >
               {grants
                 .slice(0, numberOfGrantsDisplayed)
