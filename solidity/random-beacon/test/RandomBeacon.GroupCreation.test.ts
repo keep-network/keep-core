@@ -1562,9 +1562,9 @@ describe("RandomBeacon - Group Creation", () => {
                 expect(await sortitionPool.isLocked()).to.be.true
               })
 
-              it("should emit DkgResultMaliciousSlashed event", async () => {
+              it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultMaliciousSlashed")
+                  .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
                   .withArgs(
                     dkgResultHash,
                     to1e18(50000),
@@ -1622,9 +1622,9 @@ describe("RandomBeacon - Group Creation", () => {
                 expect(await sortitionPool.isLocked()).to.be.true
               })
 
-              it("should emit DkgResultMaliciousSlashed event", async () => {
+              it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultMaliciousSlashed")
+                  .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
                   .withArgs(
                     dkgResultHash,
                     to1e18(50000),
