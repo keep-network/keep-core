@@ -346,6 +346,10 @@ library DKG {
         bytes memory current; // Current signature to be checked.
         bool[] memory usedMemberIndices = new bool[](groupSize);
         signingMembers = new uint32[](signaturesCount);
+        // TODO: Revisit at optimization stage. We probably don't need to fetch
+        //       addresses of all members. Addresses of signing members should
+        //       be enough though this will require some additional processing
+        //       here. Compare two approaches gas-wise against a real pool.
         address[] memory membersAddresses = sortitionPool.getIDOperators(
             result.members
         );
