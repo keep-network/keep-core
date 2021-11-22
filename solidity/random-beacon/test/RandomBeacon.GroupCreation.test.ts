@@ -10,7 +10,6 @@ import type {
   RandomBeaconGovernance,
   RandomBeaconStub,
   TestToken,
-  ISortitionPool,
   SortitionPoolStub,
   StakingStub,
 } from "../typechain"
@@ -34,6 +33,7 @@ const fixture = async () => {
   const randomBeaconGovernance =
     contracts.randomBeaconGovernance as RandomBeaconGovernance
   const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
+  const sortitionPool = contracts.sortitionPool as SortitionPoolStub
   const staking = contracts.stakingStub as StakingStub
   const testToken = contracts.testToken as TestToken
 
@@ -64,9 +64,9 @@ describe("RandomBeacon - Group Creation", () => {
 
   let randomBeaconGovernance: RandomBeaconGovernance
   let randomBeacon: RandomBeaconStub & RandomBeacon
+  let sortitionPool: SortitionPoolStub
   let staking: StakingStub
   let testToken: TestToken
-  let sortitionPool: ISortitionPool
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -74,8 +74,14 @@ describe("RandomBeacon - Group Creation", () => {
 
   beforeEach("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ randomBeaconGovernance, randomBeacon, staking, testToken, signers } =
-      await waffle.loadFixture(fixture))
+    ;({
+      randomBeaconGovernance,
+      randomBeacon,
+      sortitionPool,
+      staking,
+      testToken,
+      signers,
+    } = await waffle.loadFixture(fixture))
 
     await randomBeaconGovernance.beginDkgResultSubmissionRewardUpdate(
       dkgResultSubmissionReward
@@ -87,11 +93,6 @@ describe("RandomBeacon - Group Creation", () => {
     await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
     await randomBeaconGovernance.finalizeSortitionPoolUnlockingRewardUpdate()
     await testToken.mint(randomBeacon.address, to1e18(100))
-
-    sortitionPool = (await ethers.getContractAt(
-      "ISortitionPool",
-      await randomBeacon.sortitionPool()
-    )) as ISortitionPool
   })
 
   describe("genesis", async () => {
