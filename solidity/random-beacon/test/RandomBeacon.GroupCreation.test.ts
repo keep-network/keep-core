@@ -272,7 +272,7 @@ describe("RandomBeacon - Group Creation", () => {
           context("when dkg result was challenged", async () => {
             beforeEach(async () => {
               // Make the challenge justified by forcing the pool to return
-              // an other actual group than the submitted one.
+              // another group than the submitted one.
               await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
@@ -427,7 +427,7 @@ describe("RandomBeacon - Group Creation", () => {
 
             beforeEach(async () => {
               // Make the challenge justified by forcing the pool to return
-              // an other actual group than the submitted one.
+              // another group than the submitted one.
               await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
@@ -908,7 +908,7 @@ describe("RandomBeacon - Group Creation", () => {
               )
 
               // Make the challenge justified by forcing the pool to return
-              // an other actual group than the submitted one.
+              // another group than the submitted one.
               await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
@@ -1203,7 +1203,7 @@ describe("RandomBeacon - Group Creation", () => {
             const anotherSubmitterIndex = 5
             beforeEach(async () => {
               // Make the challenge justified by forcing the pool to return
-              // an other actual group than the submitted one.
+              // another group than the submitted one.
               await (sortitionPool as SortitionPoolStub).setSelectGroupResult(
                 genesisSeed,
                 mixSigners(signers).map((signer) => signer.id)
