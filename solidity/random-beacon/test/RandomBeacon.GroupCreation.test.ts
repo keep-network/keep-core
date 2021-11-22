@@ -1675,7 +1675,8 @@ describe("RandomBeacon - Group Creation", () => {
               randomBeacon,
               groupPublicKey,
               actualGroupMembers,
-              startBlock
+              startBlock,
+              noMisbehaved
             )
           })
 
