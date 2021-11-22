@@ -47,7 +47,11 @@ const StakingPortBacker = artifacts.require("./StakingPortBacker.sol")
 const BeaconRewards = artifacts.require("./BeaconRewards.sol")
 const KeepVault = artifacts.require("./geyser/KeepVault.sol")
 
-let initializationPeriod = 43200 // ~12 hours
+// For testing purposes we change the value of initializationPeriod.
+// Modified value will only be applied on the Testnet.
+// IMPORTANT: Change is not intended for merge to `main`.
+let initializationPeriod = 120 // 2 min
+// let initializationPeriod = 43200 // ~12 hours
 const dkgContributionMargin = 1 // 1%
 const testNetworks = ["local", "ropsten", "keep_dev", "alfajores"]
 

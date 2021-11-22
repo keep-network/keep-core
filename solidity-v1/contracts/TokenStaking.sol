@@ -121,8 +121,12 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// The undelegation period is two weeks for the first two months and
     /// two months after that.
     function undelegationPeriod() public view returns (uint256) {
-        return
-            block.timestamp < deployedAt.add(twoMonths) ? twoWeeks : twoMonths;
+        // For testing purposes we change the value returned by the
+        // undelegationPeriod() function. Modified value will only be applied on
+        // the Testnet.
+        // IMPORTANT: Change is not intended for merge to `main`.
+        return 420; // 7 min
+        // block.timestamp < deployedAt.add(twoMonths) ? twoWeeks : twoMonths;
     }
 
     /// @notice Receives approval of token transfer and stakes the approved
