@@ -130,8 +130,10 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
 //             <h4 className="text-mint-100">500k KEEP</h4>
 //           </div>
 //         </div>
-//         <ProgressBar value={10} total={100} color={colors.primary}>
-//           <ProgressBar.Inline className="mb-0" />
+//         <ProgressBar total={100}>
+//           <ProgressBar.Inline className="mb-0">
+//             <ProgressBar.InlineItem value={10} color={colors.primary} />
+//           </ProgressBar.Inline>
 //         </ProgressBar>
 //         <div className="text-grey-40">500k KEEP</div>
 //         <Link to="/delegations" className="btn btn-secondary mt-1 w-100">
@@ -159,8 +161,10 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
 //           <h4 className="text-mint-100">1000 ETH</h4>
 //         </div>
 //       </div>
-//       <ProgressBar value={10} total={100} color={colors.primary}>
-//         <ProgressBar.Inline className="mb-0" />
+//       <ProgressBar total={100}>
+//         <ProgressBar.Inline className="mb-0">
+//           <ProgressBar.InlineItem value={10} color={colors.primary} />
+//         </ProgressBar.Inline>
 //       </ProgressBar>
 //       <div className="text-grey-40">1000 ETH Locked</div>
 //       <Link to="/applications/tbtc" className="btn btn-secondary mt-1 w-100">
