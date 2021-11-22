@@ -44,7 +44,7 @@ const AllocationProgressBar = ({
             >
               <ProgressBar.InlineItem
                 value={
-                  isDataFetching ? 0 : add(currentValue, secondaryValue | 0)
+                  isDataFetching ? 0 : add(currentValue, secondaryValue || 0)
                 }
                 color={colors.secondary}
               />
