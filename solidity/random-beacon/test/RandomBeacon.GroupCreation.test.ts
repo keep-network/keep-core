@@ -19,7 +19,7 @@ import {
   noMisbehaved,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
-
+import { to1e18 } from "./functions"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils
