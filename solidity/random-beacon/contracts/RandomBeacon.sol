@@ -214,7 +214,7 @@ contract RandomBeacon is Ownable {
         address indexed challenger
     );
 
-    event DkgResultMaliciousSlashed(
+    event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
         address[] groupMembers
@@ -585,7 +585,7 @@ contract RandomBeacon is Ownable {
 
         groups.popCandidateGroup();
 
-        emit DkgResultMaliciousSlashed(
+        emit DkgMaliciousResultSlashed(
             resultHash,
             slashingAmount,
             maliciousMembersAddresses
