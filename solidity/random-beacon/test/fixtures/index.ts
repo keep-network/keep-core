@@ -2,7 +2,6 @@ import { Contract } from "ethers"
 import { ethers, getNamedAccounts } from "hardhat"
 import type {
   SortitionPool,
-  SortitionPoolStub,
   RandomBeaconStub,
   RandomBeaconGovernance,
   StakingStub,
@@ -71,27 +70,18 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function randomBeaconDeployment(
-  sortitionPoolStub?: SortitionPoolStub
-): Promise<DeployedContracts> {
+export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
 
   const StakingStub = await ethers.getContractFactory("StakingStub")
   const stakingStub: StakingStub = await StakingStub.deploy()
 
-  // Use the sortition pool stub if it's passed or the real sortition
-  // pool otherwise.
-  let sortitionPool: SortitionPool | SortitionPoolStub
-  if (typeof sortitionPoolStub !== "undefined") {
-    sortitionPool = sortitionPoolStub
-  } else {
-    const SortitionPool = await ethers.getContractFactory("SortitionPool")
-    sortitionPool = (await SortitionPool.deploy(
-      stakingStub.address,
-      constants.minimumStake,
-      constants.poolWeightDivisor
-    )) as SortitionPool
-  }
+  const SortitionPool = await ethers.getContractFactory("SortitionPool")
+  const sortitionPool = (await SortitionPool.deploy(
+    stakingStub.address,
+    constants.minimumStake,
+    constants.poolWeightDivisor
+  )) as SortitionPool
 
   const { testToken } = await testTokenDeployment()
 
@@ -120,9 +110,7 @@ export async function randomBeaconDeployment(
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-  const contracts = await randomBeaconDeployment(sortitionPoolStub)
+  const contracts = await randomBeaconDeployment()
 
   const RandomBeaconGovernance = await ethers.getContractFactory(
     "RandomBeaconGovernance"

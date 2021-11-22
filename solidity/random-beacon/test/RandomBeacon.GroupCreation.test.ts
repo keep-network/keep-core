@@ -18,7 +18,7 @@ import {
   DkgResult,
   noMisbehaved,
 } from "./utils/dkg"
-import { registerOperators, Operator } from "./utils/sortitionpool"
+import { registerOperators, Operator } from "./utils/operators"
 import { to1e18 } from "./functions"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
