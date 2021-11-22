@@ -152,6 +152,14 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
+    /// @notice Percentage of the DKG malicious result notification reward
+    ///         which will be transferred to the notifier. Notifiers are rewarded
+    ///         from a separate pool funded from slashed tokens. For example, if
+    ///         notification reward is 1000 and the value of the multiplier is
+    ///         5, the notifier will receive: 5% of 1000 = 50 per each
+    ///         operator affected.
+    uint256 public dkgMaliciousResultNotificationRewardMultiplier;
+
     ISortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
@@ -184,7 +192,8 @@ contract RandomBeacon is Ownable {
         uint256 dkgResultSubmissionReward,
         uint256 sortitionPoolUnlockingReward,
         uint256 sortitionPoolRewardsBanDuration,
-        uint256 relayEntryTimeoutNotificationRewardMultiplier
+        uint256 relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 dkgMaliciousResultNotificationRewardMultiplier
     );
 
     event SlashingParametersUpdated(
@@ -288,6 +297,7 @@ contract RandomBeacon is Ownable {
         // TODO: Revisit if initial value of 2 weeks is enough.
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
+        dkgMaliciousResultNotificationRewardMultiplier = 5;
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -384,21 +394,26 @@ contract RandomBeacon is Ownable {
     ///        ban duration in seconds.
     /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
     ///        relay entry timeout notification reward multiplier.
+    /// @param _dkgMaliciousResultNotificationRewardMultiplier New value of the
+    ///        DKG malicious result notification reward multiplier.
     function updateRewardParameters(
         uint256 _dkgResultSubmissionReward,
         uint256 _sortitionPoolUnlockingReward,
         uint256 _sortitionPoolRewardsBanDuration,
-        uint256 _relayEntryTimeoutNotificationRewardMultiplier
+        uint256 _relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 _dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
         sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
+        dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
             sortitionPoolRewardsBanDuration,
-            relayEntryTimeoutNotificationRewardMultiplier
+            relayEntryTimeoutNotificationRewardMultiplier,
+            dkgMaliciousResultNotificationRewardMultiplier
         );
     }
 
@@ -592,7 +607,12 @@ contract RandomBeacon is Ownable {
             maliciousMembersAddresses
         );
 
-        staking.seize(slashingAmount, 5, msg.sender, maliciousMembersAddresses);
+        staking.seize(
+            slashingAmount,
+            dkgMaliciousResultNotificationRewardMultiplier,
+            msg.sender,
+            maliciousMembersAddresses
+        );
     }
 
     /// @notice Check current group creation state.

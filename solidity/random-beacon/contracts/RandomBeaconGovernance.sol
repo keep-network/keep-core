@@ -64,6 +64,10 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayEntryTimeoutNotificationRewardMultiplier;
     uint256 public relayEntryTimeoutNotificationRewardMultiplierChangeInitiated;
 
+    uint256 public newDkgMaliciousResultNotificationRewardMultiplier;
+    uint256
+        public dkgMaliciousResultNotificationRewardMultiplierChangeInitiated;
+
     RandomBeacon public randomBeacon;
 
     // Long governance delay used for critical parameters giving a chance for
@@ -92,6 +96,7 @@ contract RandomBeaconGovernance is Ownable {
     // - malicious DKG result slashing amount
     // - sortition pool unlocking reward
     // - relay entry timeout notification reward multiplier
+    // - DKG malicious result notification reward multiplier
     uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
 
     event RelayRequestFeeUpdateStarted(
@@ -189,6 +194,14 @@ contract RandomBeaconGovernance is Ownable {
     );
     event RelayEntryTimeoutNotificationRewardMultiplierUpdated(
         uint256 relayEntryTimeoutNotificationRewardMultiplier
+    );
+
+    event DkgMaliciousResultNotificationRewardMultiplierUpdateStarted(
+        uint256 dkgMaliciousResultNotificationRewardMultiplier,
+        uint256 timestamp
+    );
+    event DkgMaliciousResultNotificationRewardMultiplierUpdated(
+        uint256 dkgMaliciousResultNotificationRewardMultiplier
     );
 
     /// @notice Reverts if called before the governance delay elapses.
@@ -585,7 +598,8 @@ contract RandomBeaconGovernance is Ownable {
             newDkgResultSubmissionReward,
             randomBeacon.sortitionPoolUnlockingReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         dkgResultSubmissionRewardChangeInitiated = 0;
         newDkgResultSubmissionReward = 0;
@@ -626,7 +640,8 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.dkgResultSubmissionReward(),
             newSortitionPoolUnlockingReward,
             randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         sortitionPoolUnlockingRewardChangeInitiated = 0;
         newSortitionPoolUnlockingReward = 0;
@@ -668,7 +683,8 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
             newSortitionPoolRewardsBanDuration,
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         sortitionPoolRewardsBanDurationChangeInitiated = 0;
         newSortitionPoolRewardsBanDuration = 0;
@@ -718,10 +734,62 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
-            newRelayEntryTimeoutNotificationRewardMultiplier
+            newRelayEntryTimeoutNotificationRewardMultiplier,
+            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         relayEntryTimeoutNotificationRewardMultiplierChangeInitiated = 0;
         newRelayEntryTimeoutNotificationRewardMultiplier = 0;
+    }
+
+    /// @notice Begins the DKG malicious result notification reward multiplier
+    ///         update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgMaliciousResultNotificationRewardMultiplier New DKG
+    ///        malicious result notification reward multiplier.
+    function beginDkgMaliciousResultNotificationRewardMultiplierUpdate(
+        uint256 _newDkgMaliciousResultNotificationRewardMultiplier
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgMaliciousResultNotificationRewardMultiplier <= 100,
+            "Maximum value is 100"
+        );
+
+        newDkgMaliciousResultNotificationRewardMultiplier = _newDkgMaliciousResultNotificationRewardMultiplier;
+        dkgMaliciousResultNotificationRewardMultiplierChangeInitiated = block
+            .timestamp;
+        emit DkgMaliciousResultNotificationRewardMultiplierUpdateStarted(
+            _newDkgMaliciousResultNotificationRewardMultiplier,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG malicious result notification reward
+    ///         multiplier update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgMaliciousResultNotificationRewardMultiplierChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit DkgMaliciousResultNotificationRewardMultiplierUpdated(
+            newDkgMaliciousResultNotificationRewardMultiplier
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateRewardParameters(
+            randomBeacon.dkgResultSubmissionReward(),
+            randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.sortitionPoolRewardsBanDuration(),
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            newDkgMaliciousResultNotificationRewardMultiplier
+        );
+        dkgMaliciousResultNotificationRewardMultiplierChangeInitiated = 0;
+        newDkgMaliciousResultNotificationRewardMultiplier = 0;
     }
 
     /// @notice Begins the relay entry submission failure slashing amount update
@@ -1013,6 +1081,21 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntryTimeoutNotificationRewardMultiplierChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG malicious result
+    ///         notification reward multiplier duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgMaliciousResultNotificationRewardMultiplierUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                dkgMaliciousResultNotificationRewardMultiplierChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
