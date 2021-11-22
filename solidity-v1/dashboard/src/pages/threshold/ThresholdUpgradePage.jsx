@@ -73,13 +73,6 @@ const ThresholdUpgradePage = () => {
     return add(keepBalance, totalGrantedReadyToReleaseTokens).toString()
   }, [keepBalance, totalGrantedReadyToReleaseTokens, isDataFetching])
 
-  // const notStakedTotalAmount = useMemo(() => {
-  //   return add(
-  //     totalOwnedUnstakedBalance,
-  //     totalGrantedUnstakedBalance
-  //   ).toString()
-  // }, [totalOwnedUnstakedBalance, totalGrantedUnstakedBalance])
-
   const stakedTotalAmount = useMemo(() => {
     return add(totalOwnedStakedBalance, totalGrantedStakedBalance).toString()
   }, [totalOwnedStakedBalance, totalGrantedStakedBalance])
