@@ -225,6 +225,7 @@ export const MODAL_TYPES = {
   UndelegationInitiated: "UndelegationInitiated",
   ClaimStakingTokens: "ClaimStakingTokens",
   StakingTokensClaimed: "StakingTokensClaimed",
+  GrantTokensWithdrawn: "GrantTokensWithdrawn",
   CopyStake: "CopyStake",
   ConfirmTBTCMigration: "ConfirmTBTCMigration",
   TBTCMigrationCompleted: "TBTCMigrationCompleted",
