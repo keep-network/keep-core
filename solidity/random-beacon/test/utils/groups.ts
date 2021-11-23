@@ -1,4 +1,4 @@
-import { helpers } from "hardhat"
+import { helpers, ethers } from "hardhat"
 import { noMisbehaved, signAndSubmitDkgResult } from "./dkg"
 import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
@@ -13,14 +13,19 @@ export async function createGroup(
   signers: Operator[]
 ): Promise<void> {
   const { blockNumber: startBlock } = await randomBeacon.genesis()
+  const submitterIndex = 1
   await mineBlocks(constants.offchainDkgTime)
   await signAndSubmitDkgResult(
     randomBeacon,
     blsData.groupPubKey,
     signers,
     startBlock,
-    noMisbehaved
+    noMisbehaved,
+    submitterIndex
   )
+
   await mineBlocks(params.dkgResultChallengePeriodLength)
-  await randomBeacon.approveDkgResult()
+  await randomBeacon
+    .connect(await ethers.getSigner(signers[submitterIndex - 1].address))
+    .approveDkgResult()
 }

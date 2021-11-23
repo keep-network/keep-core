@@ -23,6 +23,7 @@ import "./libraries/Callback.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -54,8 +55,8 @@ contract RandomBeacon is Ownable {
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
-    using SafeERC20 for IERC20;
     using GasStation for GasStation.Data;
+    using SafeERC20 for IERC20;
 
     // Constant parameters
 
@@ -517,14 +518,23 @@ contract RandomBeacon is Ownable {
         dkg.complete();
     }
 
-    /// @notice Approves DKG result. Can be called after challenge period for the
-    ///         submitted result is finished. Considers the submitted result as
-    ///         valid, pays reward to the result submitter, bans misbehaved group
-    ///         members from the sortition pool rewards and completes the group
-    ///         creation by activating the candidate group.
+    /// @notice Approves DKG result. Can be called when the challenge period for
+    ///         the submitted result is finished. Considers the submitted result
+    ///         as valid, pays reward to the approver, bans misbehaved group
+    ///         members from the sortition pool rewards, and completes the group
+    ///         creation by activating the candidate group. For the first
+    ///         `resultSubmissionEligibilityDelay` blocks after the end of the
+    ///         challenge period can be called only by the DKG result submitter.
+    ///         After that time, can be called by anyone.
     function approveDkgResult() external {
         dkg.approveResult();
-        tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
+
+        uint256 maintenancePoolBalance = tToken.balanceOf(address(this));
+        uint256 rewardToPay = Math.min(
+            maintenancePoolBalance,
+            dkgResultSubmissionReward
+        );
+        tToken.safeTransfer(msg.sender, rewardToPay);
 
         if (dkg.submittedResultMisbehavedMembers.length > 0) {
             banFromRewards(
@@ -535,14 +545,8 @@ contract RandomBeacon is Ownable {
 
         groups.activateCandidateGroup();
         dkg.complete();
-
-        // TODO: Should result submitter receive reward if they failed to call
-        //       this function?
-        // TODO: Ensure this function is as cheap as possible and it is
-        //       profitable for the DKG result submitter to call it. Consider
-        //       giving the submitter some time to approve the result and if
-        //       don't, pay the submitter's reward to anybody who calls this
-        //       function.
+        // TODO: Check if this function is cheap enough and it will be
+        //       profitable for the DKG result submitter to call it.
         // TODO: Unlock sortition pool
     }
 
