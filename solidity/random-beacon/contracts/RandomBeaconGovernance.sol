@@ -79,6 +79,7 @@ contract RandomBeaconGovernance is Ownable {
     // - callback gas limit
     // - group lifetime
     // - relay entry submission failure slashing amount
+    // - minimum authorization
     uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
 
     // Short governance delay for non-critical parameters. Honest stakers should
