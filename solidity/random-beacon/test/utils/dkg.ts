@@ -5,6 +5,8 @@ import type { BigNumber, ContractTransaction } from "ethers"
 import blsData from "../data/bls"
 import type { RandomBeacon } from "../../typechain"
 import { Operator } from "./operators"
+// eslint-disable-next-line import/no-cycle
+import { selectGroup } from "./groups"
 
 export interface DkgResult {
   submitterMemberIndex: number
@@ -34,7 +36,30 @@ export async function genesis(
   return [tx, expectedSeed]
 }
 
-export async function signAndSubmitDkgResult(
+export async function signAndSubmitCorrectDkgResult(
+  randomBeacon: RandomBeacon,
+  groupPublicKey: string,
+  seed: BigNumber,
+  startBlock: number,
+  misbehavedIndices: number[],
+  submitterIndex = 1
+): Promise<{
+  transaction: ContractTransaction
+  dkgResult: DkgResult
+  dkgResultHash: string
+  members: number[]
+}> {
+  return signAndSubmitArbitraryDkgResult(
+    randomBeacon,
+    groupPublicKey,
+    await selectGroup(randomBeacon, seed),
+    startBlock,
+    misbehavedIndices,
+    submitterIndex
+  )
+}
+
+export async function signAndSubmitArbitraryDkgResult(
   randomBeacon: RandomBeacon,
   groupPublicKey: string,
   signers: Operator[],

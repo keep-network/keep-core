@@ -607,16 +607,12 @@ describe("RandomBeacon - Relay", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            // Create another group in a rough way just to have an active group
-            // once the one handling the timed out request gets terminated.
-            // This makes the request retry possible. That group will not
-            // perform any signing so their public key can be arbitrary bytes.
-            // Also, that group is created just after the relay request is
-            // made to ensure it is not selected for signing the original request.
-            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
-              "0x01",
-              membersIDs
-            )
+            // Simulate there is an other active group once the one handling
+            // the timed out request gets terminated. This makes the request
+            // retry possible.
+            await (
+              randomBeacon as RandomBeaconStub
+            ).incrementActiveGroupsCount()
 
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`.

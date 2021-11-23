@@ -35,16 +35,8 @@ library DKG {
         uint256 resultSubmissionStartBlockOffset;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;
-        // Hash of group members array submitted in the result.
-        bytes32 submittedResultGroupMembersHash;
-        // Identifiers of group members who signed the submitted result.
-        uint32[] submittedResultSigningMembers;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
-        // Misbehaved (inactive or disqualified) members from the DKG result.
-        uint32[] submittedResultMisbehavedMembers;
-        // Address of the DKG result submitter
-        address resultSubmitter;
     }
 
     /// @notice DKG result.
@@ -114,13 +106,15 @@ library DKG {
 
     event DkgStarted(uint256 indexed seed);
 
-    // TODO: Revisit properties returned in this event when working on result
-    // challenges and the client.
-    //  TODO: Should it also return seed to link the result with a DKG run?
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
+        uint256 indexed seed,
+        uint256 submitterMemberIndex,
         bytes indexed groupPubKey,
-        address indexed submitter
+        uint8[] misbehavedMembersIndices,
+        bytes signatures,
+        uint256[] signingMembersIndices,
+        uint32[] members
     );
 
     event DkgTimedOut();
@@ -209,32 +203,25 @@ library DKG {
         );
         require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
-        uint32[] memory signingMembers = verify(self, result);
+        verify(self, result);
 
         // TODO: Check with sortition pool that all members have minimum stake.
         // Check all members in one call or at least members that signed the result.
         // We need to know in advance that there will be something that we can
         // slash the members from.
 
-        for (uint256 i = 0; i < result.misbehavedMembersIndices.length; i++) {
-            // group member indices start from 1, so we need to -1 on misbehaved
-            uint32 memberArrayPosition = result.misbehavedMembersIndices[i] - 1;
-            self.submittedResultMisbehavedMembers.push(
-                result.members[memberArrayPosition]
-            );
-        }
         self.submittedResultHash = keccak256(abi.encode(result));
-        self.submittedResultGroupMembersHash = keccak256(
-            abi.encodePacked(result.members)
-        );
-        self.submittedResultSigningMembers = signingMembers;
         self.submittedResultBlock = block.number;
-        self.resultSubmitter = msg.sender;
 
         emit DkgResultSubmitted(
             self.submittedResultHash,
+            self.seed,
+            result.submitterMemberIndex,
             result.groupPubKey,
-            msg.sender
+            result.misbehavedMembersIndices,
+            result.signatures,
+            result.signingMembersIndices,
+            result.members
         );
     }
 
@@ -268,13 +255,7 @@ library DKG {
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     ///      Members indexing in the group starts with 1.
     /// @param result DKG result which will be verified.
-    /// @return signingMembers Identifiers of group members whose signatures of
-    ///         the DKG result hash were proven to be valid.
-    function verify(Data storage self, Result calldata result)
-        internal
-        view
-        returns (uint32[] memory signingMembers)
-    {
+    function verify(Data storage self, Result calldata result) internal view {
         // TODO: Verify if submitter is valid staker and signatures come from valid
         // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
 
@@ -345,7 +326,6 @@ library DKG {
 
         bytes memory current; // Current signature to be checked.
         bool[] memory usedMemberIndices = new bool[](groupSize);
-        signingMembers = new uint32[](signaturesCount);
         // TODO: Revisit at optimization stage. We probably don't need to fetch
         //       addresses of all members. Addresses of signing members should
         //       be enough though this will require some additional processing
@@ -370,15 +350,11 @@ library DKG {
                 .toEthSignedMessageHash()
                 .recover(current);
 
-            signingMembers[i] = result.members[memberIndex - 1];
-
             require(
                 membersAddresses[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
         }
-
-        return signingMembers;
     }
 
     /// @notice Notifies about DKG timeout.
@@ -404,7 +380,15 @@ library DKG {
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
     ///         valid and completes the group creation.
-    function approveResult(Data storage self) internal {
+    /// @dev Can be called after a challenge period for the submitted result.
+    /// @param result Result to approve. Must match the submitted result stored
+    ///        during `submitResult`.
+    /// @return submitterMember Identifier of member who submitted the result.
+    /// @return misbehavedMembers Identifiers of members who misbehaved during DKG.
+    function approveResult(Data storage self, Result calldata result)
+        internal
+        returns (uint32 submitterMember, uint32[] memory misbehavedMembers)
+    {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -417,16 +401,42 @@ library DKG {
             "challenge period has not passed yet"
         );
 
+        require(
+            keccak256(abi.encode(result)) == self.submittedResultHash,
+            "result under approval is different than the submitted one"
+        );
+
+        // Extract submitter member identifier. Submitter member index is in
+        // range [1, 64] so we need to -1 when fetching identifier from members
+        // array.
+        submitterMember = result.members[result.submitterMemberIndex - 1];
+
+        // Extract misbehaved members identifiers. Misbehaved members indices
+        // are in range [1, 64], so we need to -1 when fetching identifiers from
+        // members array.
+        misbehavedMembers = new uint32[](
+            result.misbehavedMembersIndices.length
+        );
+        for (uint256 i = 0; i < result.misbehavedMembersIndices.length; i++) {
+            misbehavedMembers[i] = result.members[
+                result.misbehavedMembersIndices[i] - 1
+            ];
+        }
+
         emit DkgResultApproved(self.submittedResultHash, msg.sender);
+
+        return (submitterMember, misbehavedMembers);
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
+    /// @param result Result to challenge. Must match the submitted result
+    ///        stored during `submitResult`.
     /// @return maliciousResultHash Hash of the malicious result.
     /// @return maliciousMembers Identifiers of group members who signed the
     ///         malicious DKG result hash.
-    function challengeResult(Data storage self)
+    function challengeResult(Data storage self, Result calldata result)
         internal
         returns (bytes32 maliciousResultHash, uint32[] memory maliciousMembers)
     {
@@ -442,6 +452,11 @@ library DKG {
             "challenge period has already passed"
         );
 
+        require(
+            keccak256(abi.encode(result)) == self.submittedResultHash,
+            "result under challenge is different than the submitted one"
+        );
+
         // Compute the actual group members hash by selecting actual members IDs
         // based on seed used for current DKG execution.
         bytes32 actualGroupMembersHash = keccak256(
@@ -451,14 +466,24 @@ library DKG {
         );
 
         require(
-            self.submittedResultGroupMembersHash != actualGroupMembersHash,
+            keccak256(abi.encodePacked(result.members)) !=
+                actualGroupMembersHash,
             "unjustified challenge"
         );
 
         // Consider result hash as malicious.
         maliciousResultHash = self.submittedResultHash;
-        // Consider all members who signed the wrong result as malicious.
-        maliciousMembers = self.submittedResultSigningMembers;
+
+        // Consider all members who signed the wrong result as malicious and
+        // extract their identifiers. Signing members indices are in range
+        // [1, 64], so we need to -1 when fetching identifiers from members
+        // array.
+        maliciousMembers = new uint32[](result.signingMembersIndices.length);
+        for (uint256 i = 0; i < result.signingMembersIndices.length; i++) {
+            maliciousMembers[i] = result.members[
+                result.signingMembersIndices[i] - 1
+            ];
+        }
 
         // Adjust DKG result submission block start, so submission eligibility
         // starts from the beginning.
@@ -519,13 +544,9 @@ library DKG {
     }
 
     /// @notice Cleans up submitted result state either after DKG completion
-    ///         (as part of `cleanup` modifier) or after justified challenge.
+    ///         (as part of `complete` method) or after justified challenge.
     function submittedResultCleanup(Data storage self) private {
         delete self.submittedResultHash;
-        delete self.submittedResultGroupMembersHash;
-        delete self.submittedResultSigningMembers;
         delete self.submittedResultBlock;
-        delete self.submittedResultMisbehavedMembers;
-        delete self.resultSubmitter;
     }
 }

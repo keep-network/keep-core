@@ -209,8 +209,13 @@ contract RandomBeacon is Ownable {
 
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
+        uint256 indexed seed,
+        uint256 submitterMemberIndex,
         bytes indexed groupPubKey,
-        address indexed submitter
+        uint8[] misbehavedMembersIndices,
+        bytes signatures,
+        uint256[] signingMembersIndices,
+        uint32[] members
     );
 
     event DkgTimedOut();
@@ -565,15 +570,19 @@ contract RandomBeacon is Ownable {
     ///         valid, pays reward to the result submitter, bans misbehaved group
     ///         members from the sortition pool rewards and completes the group
     ///         creation by activating the candidate group.
-    function approveDkgResult() external {
-        dkg.approveResult();
-        tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
+    /// @param dkgResult Result to approve. Must match the submitted result
+    ///        stored during `submitDkgResult`.
+    function approveDkgResult(DKG.Result calldata dkgResult) external {
+        (uint32 submitterMember, uint32[] memory misbehavedMembers) = dkg
+            .approveResult(dkgResult);
 
-        if (dkg.submittedResultMisbehavedMembers.length > 0) {
-            banFromRewards(
-                dkg.submittedResultMisbehavedMembers,
-                sortitionPoolRewardsBanDuration
-            );
+        tToken.safeTransfer(
+            sortitionPool.getIDOperator(submitterMember),
+            dkgResultSubmissionReward
+        );
+
+        if (misbehavedMembers.length > 0) {
+            banFromRewards(misbehavedMembers, sortitionPoolRewardsBanDuration);
         }
 
         groups.activateCandidateGroup();
@@ -586,16 +595,17 @@ contract RandomBeacon is Ownable {
         //       giving the submitter some time to approve the result and if
         //       don't, pay the submitter's reward to anybody who calls this
         //       function.
-        // TODO: Unlock sortition pool
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
     ///         It removes a candidate group that was previously registered with
     ///         the DKG result submission.
-    function challengeDkgResult() external {
+    /// @param dkgResult Result to challenge. Must match the submitted result
+    ///        stored during `submitDkgResult`.
+    function challengeDkgResult(DKG.Result calldata dkgResult) external {
         (bytes32 maliciousResultHash, uint32[] memory maliciousMembers) = dkg
-            .challengeResult();
+            .challengeResult(dkgResult);
 
         uint256 slashingAmount = maliciousDkgResultSlashingAmount;
         address[] memory maliciousMembersAddresses = sortitionPool
@@ -869,5 +879,14 @@ contract RandomBeacon is Ownable {
         returns (uint256)
     {
         return relay.relayEntrySubmissionFailureSlashingAmount;
+    }
+
+    /// @notice Selects a new group of operators based on the provided seed.
+    ///         At least one operator has to be registered in the pool,
+    ///         otherwise the function fails reverting the transaction.
+    /// @param seed Number used to select operators to the group.
+    /// @return IDs of selected group members.
+    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
+        return sortitionPool.selectGroup(DKG.groupSize, seed);
     }
 }

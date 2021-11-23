@@ -1,9 +1,11 @@
-import { helpers } from "hardhat"
-import { noMisbehaved, signAndSubmitDkgResult } from "./dkg"
+import { ethers, helpers } from "hardhat"
+import { BigNumber } from "ethers"
+// eslint-disable-next-line import/no-cycle
+import { noMisbehaved, signAndSubmitArbitraryDkgResult } from "./dkg"
 import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
 import { Operator } from "./operators"
-import type { RandomBeacon } from "../../typechain"
+import type { RandomBeacon, SortitionPool } from "../../typechain"
 
 const { mineBlocks } = helpers.time
 
@@ -14,7 +16,7 @@ export async function createGroup(
 ): Promise<void> {
   const { blockNumber: startBlock } = await randomBeacon.genesis()
   await mineBlocks(constants.offchainDkgTime)
-  await signAndSubmitDkgResult(
+  const { dkgResult } = await signAndSubmitArbitraryDkgResult(
     randomBeacon,
     blsData.groupPubKey,
     signers,
@@ -22,5 +24,23 @@ export async function createGroup(
     noMisbehaved
   )
   await mineBlocks(params.dkgResultChallengePeriodLength)
-  await randomBeacon.approveDkgResult()
+  await randomBeacon.approveDkgResult(dkgResult)
+}
+
+export async function selectGroup(
+  randomBeacon: RandomBeacon,
+  seed: BigNumber
+): Promise<Operator[]> {
+  const sortitionPool = (await ethers.getContractAt(
+    "SortitionPool",
+    await randomBeacon.sortitionPool()
+  )) as SortitionPool
+
+  const identifiers = await randomBeacon.selectGroup(seed.toHexString())
+  const addresses = await sortitionPool.getIDOperators(identifiers)
+
+  return identifiers.map((identifier, i) => ({
+    id: identifier,
+    address: addresses[i],
+  }))
 }
