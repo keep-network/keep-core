@@ -74,7 +74,7 @@ describe("RandomBeaconGovernance", () => {
 
     await randomBeacon
       .connect(governance)
-      .updateMinimumAuthorization(initialMinimumAuthorization)
+      .updateAuthorizationParameters(initialMinimumAuthorization)
 
     const RandomBeaconGovernance = await ethers.getContractFactory(
       "RandomBeaconGovernance"

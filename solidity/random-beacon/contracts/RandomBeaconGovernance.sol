@@ -848,7 +848,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         emit MinimumAuthorizationUpdated(newMinimumAuthorization);
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateMinimumAuthorization(newMinimumAuthorization);
+        randomBeacon.updateAuthorizationParameters(newMinimumAuthorization);
         minimumAuthorizationChangeInitiated = 0;
         newMinimumAuthorization = 0;
     }
