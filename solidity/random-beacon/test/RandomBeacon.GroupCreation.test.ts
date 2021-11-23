@@ -56,7 +56,6 @@ describe("RandomBeacon - Group Creation", () => {
 
   let thirdParty: Signer
   let submitter: Signer
-  let notSubmitter: Signer
   let signers: Operator[]
 
   let randomBeaconGovernance: RandomBeaconGovernance
@@ -67,7 +66,6 @@ describe("RandomBeacon - Group Creation", () => {
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
     submitter = await ethers.getSigner((await getUnnamedAccounts())[1])
-    notSubmitter = await ethers.getSigner((await getUnnamedAccounts())[55])
   })
 
   beforeEach("load test fixture", async () => {
@@ -1102,7 +1100,7 @@ describe("RandomBeacon - Group Creation", () => {
               )
             })
 
-            context("called by a submitter", async () => {
+            context("when called by a DKG result submitter", async () => {
               let tx: ContractTransaction
               let initialSubmitterBalance: BigNumber
 
@@ -1154,6 +1152,52 @@ describe("RandomBeacon - Group Creation", () => {
 
               it("should unlock the sortition pool", async () => {
                 expect(await sortitionPool.isLocked()).to.be.false
+              })
+            })
+
+            context("when called by a third party", async () => {
+              context("when the third party is not yet eligible", async () => {
+                beforeEach(async () => {
+                  await mineBlocks(
+                    params.relayEntrySubmissionEligibilityDelay - 1
+                  )
+                })
+
+                it("should revert", async () => {
+                  await expect(
+                    randomBeacon.connect(thirdParty).approveDkgResult()
+                  ).to.be.revertedWith(
+                    "Only the DKG result submitter can approve the result at this moment"
+                  )
+                })
+              })
+
+              context("when the third party is eligible", async () => {
+                let tx: ContractTransaction
+                let initApproverBalance: BigNumber
+
+                beforeEach(async () => {
+                  await mineBlocks(params.relayEntrySubmissionEligibilityDelay)
+                  initApproverBalance = await testToken.balanceOf(
+                    await thirdParty.getAddress()
+                  )
+                  tx = await randomBeacon.connect(thirdParty).approveDkgResult()
+                })
+
+                it("should succeed", async () => {
+                  await expect(tx)
+                    .to.emit(randomBeacon, "GroupActivated")
+                    .withArgs(0, groupPublicKey)
+                })
+
+                it("should pay the reward to the third party", async () => {
+                  const currentApproverBalance = await testToken.balanceOf(
+                    await thirdParty.getAddress()
+                  )
+                  expect(
+                    currentApproverBalance.sub(initApproverBalance)
+                  ).to.be.equal(dkgResultSubmissionReward)
+                })
               })
             })
           })
@@ -1321,68 +1365,6 @@ describe("RandomBeacon - Group Creation", () => {
 
         it("should clean dkg data", async () => {
           await assertDkgResultCleanData(randomBeacon)
-        })
-      })
-
-      context("when the approver is different than the submitter", async () => {
-        beforeEach(async () => {
-          await mineBlocksTo(startBlock + dkgTimeout - 1)
-          await signAndSubmitDkgResult(
-            randomBeacon,
-            groupPublicKey,
-            signers,
-            startBlock,
-            noMisbehaved
-          )
-        })
-
-        context("when the approver is not yet eligible", async () => {
-          beforeEach(async () => {
-            await mineBlocks(
-              params.dkgResultChallengePeriodLength +
-                params.relayEntrySubmissionEligibilityDelay -
-                1
-            )
-          })
-
-          it("should revert", async () => {
-            await expect(
-              randomBeacon.connect(notSubmitter).approveDkgResult()
-            ).to.be.revertedWith(
-              "Only the DKG result submitter can approve the result at this moment"
-            )
-          })
-        })
-
-        context("when the approver is eligible", async () => {
-          let tx: ContractTransaction
-          let initApproverBalance: BigNumber
-
-          beforeEach(async () => {
-            await mineBlocks(
-              params.dkgResultChallengePeriodLength +
-                params.relayEntrySubmissionEligibilityDelay
-            )
-            initApproverBalance = await testToken.balanceOf(
-              await notSubmitter.getAddress()
-            )
-            tx = await randomBeacon.connect(notSubmitter).approveDkgResult()
-          })
-
-          it("should succeed", async () => {
-            await expect(tx)
-              .to.emit(randomBeacon, "GroupActivated")
-              .withArgs(0, groupPublicKey)
-          })
-
-          it("should pay the reward to the approver", async () => {
-            const currentApproverBalance = await testToken.balanceOf(
-              await notSubmitter.getAddress()
-            )
-            expect(currentApproverBalance.sub(initApproverBalance)).to.be.equal(
-              dkgResultSubmissionReward
-            )
-          })
         })
       })
     })
