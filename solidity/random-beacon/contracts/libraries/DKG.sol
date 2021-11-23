@@ -394,12 +394,12 @@ library DKG {
         self.sortitionPool.unlock();
     }
 
-    /// @notice Approves DKG result. Can be called after challenge period for
-    ///         the submitted result is finished. For the first
-    ///         `resultSubmissionEligibilityDelay` blocks after the end of the
-    ///         challenge period can be called only by the DKG result submitter.
-    ///         After that can be called by anyone. Considers the submitted
-    ///         result as valid and completes the group creation.
+    /// @notice Approves DKG result. Can be called when the challenge period for
+    ///         the submitted result is finished. Considers the submitted result
+    ///         as valid. For the first `resultSubmissionEligibilityDelay`
+    ///         blocks after the end of the challenge period can be called only
+    ///         by the DKG result submitter. After that time, can be called by
+    ///         anyone.
     function approveResult(Data storage self) internal {
         require(
             currentState(self) == State.CHALLENGE,

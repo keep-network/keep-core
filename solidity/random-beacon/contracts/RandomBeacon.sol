@@ -533,14 +533,14 @@ contract RandomBeacon is Ownable {
         dkg.complete();
     }
 
-    /// @notice Approves DKG result. Can be called after challenge period for
-    ///         the submitted result is finished. For the first
+    /// @notice Approves DKG result. Can be called when the challenge period for
+    ///         the submitted result is finished. Considers the submitted result
+    ///         as valid, pays reward to the approver, bans misbehaved group
+    ///         members from the sortition pool rewards, and completes the group
+    ///         creation by activating the candidate group. For the first
     ///         `resultSubmissionEligibilityDelay` blocks after the end of the
     ///         challenge period can be called only by the DKG result submitter.
-    ///         After that can be called by anyone. Considers the submitted
-    ///         result as valid, pays reward to the approver, bans misbehaved
-    ///         group members from the sortition pool rewards and completes the
-    ///         group creation by activating the candidate group.
+    ///         After that time, can be called by anyone.
     function approveDkgResult() external {
         dkg.approveResult();
 
