@@ -131,7 +131,9 @@ const WithdrawOverviewTile = ({ title, amount, label, status }) => {
         </span>
       </h4>
       <ProgressBar {...getProgressBarProps()} bgColor={colors.grey20}>
-        <ProgressBar.Inline height={10} style={styles.progressBar} />
+        <ProgressBar.Inline height={10} style={styles.progressBar}>
+          <ProgressBar.InlineItem {...getProgressBarProps()} />
+        </ProgressBar.Inline>
       </ProgressBar>
     </div>
   )

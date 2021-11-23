@@ -9,11 +9,12 @@ export const FormCheckboxBase = ({
   errorMsg,
   name,
   checked,
+  className = "",
   ...inputProps
 }) => {
   return (
     <>
-      <div className="form-checkbox">
+      <div className={`form-checkbox ${className}`}>
         <input id={name} checked={checked} {...inputProps} />
         <label htmlFor={name}>{children}</label>
       </div>

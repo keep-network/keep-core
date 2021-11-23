@@ -6,10 +6,10 @@ import { colors } from "../../constants/colors"
 import DelegateStakeForm from "../../components/DelegateStakeForm"
 import ProgressBar from "../../components/ProgressBar"
 import { DelegationPageWrapper } from "./index"
-import { add } from "../../utils/arithmetics.utils"
 import DelegationOverview from "../../components/DelegationOverview"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
+import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
 
 const filterByOwned = (delegation) => !delegation.grantId
 
@@ -21,8 +21,6 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
     delegations,
     undelegations,
     isDelegationDataFetching,
-    ownedTokensDelegationsBalance,
-    ownedTokensUndelegationsBalance,
     areTopUpsFetching,
     topUps,
   } = useSelector((state) => state.staking)
@@ -37,16 +35,8 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
     return undelegations.filter(filterByOwned)
   }, [undelegations])
 
-  const totalOwnedStakedBalance = useMemo(() => {
-    return add(
-      ownedTokensDelegationsBalance,
-      ownedTokensUndelegationsBalance
-    ).toString()
-  }, [ownedTokensDelegationsBalance, ownedTokensUndelegationsBalance])
-
-  const totalBalance = useMemo(() => {
-    return add(totalOwnedStakedBalance, keepToken.value).toString()
-  }, [keepToken.value, totalOwnedStakedBalance])
+  const { totalOwnedStakedBalance, totalKeepTokenBalance } =
+    useKeepBalanceInfo()
 
   return (
     <>
@@ -59,7 +49,7 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
           <h4 className="mb-2">Tokens Staked</h4>
           <ProgressBar
             value={totalOwnedStakedBalance}
-            total={totalBalance}
+            total={totalKeepTokenBalance}
             color={colors.mint80}
             bgColor={colors.mint20}
           >

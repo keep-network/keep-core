@@ -23,12 +23,11 @@ import type {
   SortitionPool,
   StakingStub,
 } from "../typechain"
-import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
+import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
 const { time } = helpers
 const { mineBlocks } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
-const TWO_WEEKS = 1209600 // 2 weeks in seconds
 
 const fixture = async () => {
   const deployment = await randomBeaconDeployment()
@@ -310,7 +309,6 @@ describe("RandomBeacon - Relay", () => {
                 "when other than first eligible member submits before the soft timeout",
                 () => {
                   let tx: ContractTransaction
-                  let txTimestamp: number
 
                   beforeEach(async () => {
                     // We wait 20 blocks to make two more members eligible.
@@ -323,12 +321,6 @@ describe("RandomBeacon - Relay", () => {
                         firstEligibleMemberIndex + 2,
                         blsData.groupSignature
                       )
-
-                    // Wait until tx is mined to get tx block timestamp.
-                    const receipt = await tx.wait()
-                    txTimestamp = (
-                      await ethers.provider.getBlock(receipt.blockNumber)
-                    ).timestamp
                   })
 
                   it("should ban sortition pool rewards for members who did not submit", async () => {
@@ -416,7 +408,6 @@ describe("RandomBeacon - Relay", () => {
                 "when other than first eligible member submits after the soft timeout",
                 () => {
                   let tx: ContractTransaction
-                  let txTimestamp: number
 
                   beforeEach(async () => {
                     // Let's assume we want to submit the relay entry after 75%
@@ -438,12 +429,6 @@ describe("RandomBeacon - Relay", () => {
                         firstEligibleMemberIndex - 1,
                         blsData.groupSignature
                       )
-
-                    // Wait until tx is mined to get tx block timestamp.
-                    const receipt = await tx.wait()
-                    txTimestamp = (
-                      await ethers.provider.getBlock(receipt.blockNumber)
-                    ).timestamp
                   })
 
                   it("should ban sortition pool rewards for members who did not submit", async () => {

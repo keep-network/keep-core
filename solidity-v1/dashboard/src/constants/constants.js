@@ -62,6 +62,7 @@ export const LINK = {
       "https://forum.keep.network/t/proposal-to-remove-incentives-for-tbtc-eth-pool/341",
   },
   tbtcDapp: "https://dapp.tbtc.network",
+  thresholdDapp: "https://dashboard.test.threshold.network/",
 }
 
 export const WALLETS = {
@@ -224,6 +225,7 @@ export const MODAL_TYPES = {
   UndelegationInitiated: "UndelegationInitiated",
   ClaimStakingTokens: "ClaimStakingTokens",
   StakingTokensClaimed: "StakingTokensClaimed",
+  GrantTokensWithdrawn: "GrantTokensWithdrawn",
   CopyStake: "CopyStake",
   ConfirmTBTCMigration: "ConfirmTBTCMigration",
   TBTCMigrationCompleted: "TBTCMigrationCompleted",
@@ -236,6 +238,7 @@ export const MODAL_TYPES = {
   ReInitiateCovPoolWithdraw: "ReInitiateCovPoolWithdraw",
   ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
   IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
+  WithdrawGrantedTokens: "WithdrawGrantedTokens",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {

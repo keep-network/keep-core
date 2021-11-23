@@ -10,16 +10,13 @@ import type {
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
-  SortitionPoolStub,
 } from "../typechain"
-import { registerOperators, Operator } from "./utils/sortitionpool"
+import { registerOperators, Operator } from "./utils/operators"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-  const deployment = await randomBeaconDeployment(sortitionPoolStub)
+  const deployment = await randomBeaconDeployment()
 
   const contracts: DeployedContracts = {
     randomBeacon: deployment.randomBeacon,

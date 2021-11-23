@@ -20,42 +20,9 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-/// @title Sortition Pool contract interface
-/// @notice This is an interface with just a few function signatures of the
-///         Sortition Pool contract, which is available at
-///         https://github.com/keep-network/sortition-pools/blob/main/contracts/SortitionPool.sol
-///
-/// TODO: Add a dependency to `keep-network/sortition-pools` and use sortition
-///       pool interface from there.
-interface ISortitionPool {
-    function lock() external;
-
-    function unlock() external;
-
-    function insertOperator(address operator) external;
-
-    function banRewards(uint32[] calldata operators, uint256 duration) external;
-
-    function updateOperatorStatus(uint32 id) external;
-
-    function isOperatorInPool(address operator) external view returns (bool);
-
-    function isOperatorEligible(address operator) external view returns (bool);
-
-    function getIDOperator(uint32 id) external view returns (address);
-
-    function getIDOperators(uint32[] calldata ids)
-        external
-        view
-        returns (address[] memory);
-
-    function getOperatorID(address operator) external view returns (uint32);
-
-    function isLocked() external view returns (bool);
-}
 
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -150,7 +117,7 @@ contract RandomBeacon is Ownable {
     //          malicious DKG result or when a relay entry times out.
     uint96 public minimumAuthorization;
 
-    ISortitionPool public sortitionPool;
+    SortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
@@ -264,7 +231,7 @@ contract RandomBeacon is Ownable {
     ///      be updated with `update*` functions after the contract deployment
     ///      and before transferring the ownership to the governance contract.
     constructor(
-        ISortitionPool _sortitionPool,
+        SortitionPool _sortitionPool,
         IERC20 _tToken,
         IRandomBeaconStaking _staking
     ) {
@@ -552,17 +519,31 @@ contract RandomBeacon is Ownable {
 
     /// @notice Approves DKG result. Can be called after challenge period for the
     ///         submitted result is finished. Considers the submitted result as
-    ///         valid, pays reward to the result submitter and completes the
-    ///         group creation by activating the candidate group.
+    ///         valid, pays reward to the result submitter, bans misbehaved group
+    ///         members from the sortition pool rewards and completes the group
+    ///         creation by activating the candidate group.
     function approveDkgResult() external {
         dkg.approveResult();
-        // Pay the DKG result submission reward.
         tToken.safeTransfer(dkg.resultSubmitter, dkgResultSubmissionReward);
+
+        if (dkg.submittedResultMisbehavedMembers.length > 0) {
+            banFromRewards(
+                dkg.submittedResultMisbehavedMembers,
+                sortitionPoolRewardsBanDuration
+            );
+        }
+
         groups.activateCandidateGroup();
         dkg.complete();
 
-        // TODO: Handle DQ/IA. Should result submitter receive
-        //       reward if they failed to call this function?
+        // TODO: Should result submitter receive reward if they failed to call
+        //       this function?
+        // TODO: Ensure this function is as cheap as possible and it is
+        //       profitable for the DKG result submitter to call it. Consider
+        //       giving the submitter some time to approve the result and if
+        //       don't, pay the submitter's reward to anybody who calls this
+        //       function.
+        // TODO: Unlock sortition pool
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be

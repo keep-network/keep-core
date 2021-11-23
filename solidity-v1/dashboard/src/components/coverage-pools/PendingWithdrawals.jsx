@@ -83,15 +83,18 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
     )
     return (
       <ProgressBar
-        value={progressBarValueInSeconds}
         total={progressBarTotalInSeconds}
-        color={colors.yellowSecondary}
         bgColor={colors.yellowPrimary}
       >
         <ProgressBar.Inline
           height={20}
           className={"pending-withdrawal__progress-bar"}
-        />
+        >
+          <ProgressBar.InlineItem
+            value={progressBarValueInSeconds}
+            color={colors.yellowSecondary}
+          />
+        </ProgressBar.Inline>
       </ProgressBar>
     )
   }

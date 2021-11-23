@@ -64,6 +64,11 @@ const resourceTooltipProps = {
     redirectLink: "/coverage-pools/how-it-works",
     linkText: "How it works",
   },
+  thresholdPageGrantAllocation: {
+    title: "Grant Allocation",
+    content: "A grant is something that vests KEEP over a set period of time",
+    withRedirectLink: false,
+  },
 }
 
 export default resourceTooltipProps

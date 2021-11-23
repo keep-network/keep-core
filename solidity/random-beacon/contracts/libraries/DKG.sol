@@ -3,8 +3,8 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
-import {ISortitionPool} from "../RandomBeacon.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -20,7 +20,7 @@ library DKG {
 
     struct Data {
         // Address of the Sortition Pool contract.
-        ISortitionPool sortitionPool;
+        SortitionPool sortitionPool;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -35,6 +35,8 @@ library DKG {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
+        // Misbehaved (inactive or disqualified) members from the DKG result.
+        uint32[] submittedResultMisbehavedMembers;
         // Address of the DKG result submitter
         address resultSubmitter;
     }
@@ -133,7 +135,7 @@ library DKG {
 
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
         internal
     {
         require(
@@ -215,6 +217,13 @@ library DKG {
         // We need to know in advance that there will be something that we can
         // slash the members from.
 
+        for (uint256 i = 0; i < result.misbehavedMembersIndices.length; i++) {
+            // group member indices start from 1, so we need to -1 on misbehaved
+            uint32 memberArrayPosition = result.misbehavedMembersIndices[i] - 1;
+            self.submittedResultMisbehavedMembers.push(
+                result.members[memberArrayPosition]
+            );
+        }
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
         self.resultSubmitter = msg.sender;
@@ -280,7 +289,7 @@ library DKG {
 
         require(submitterMemberIndex > 0, "Invalid submitter index");
 
-        ISortitionPool sortitionPool = self.sortitionPool;
+        SortitionPool sortitionPool = self.sortitionPool;
 
         require(
             sortitionPool.getIDOperator(members[submitterMemberIndex - 1]) ==
@@ -436,6 +445,7 @@ library DKG {
         delete self.submittedResultBlock;
         delete self.resultSubmitter;
         delete self.submittedResultHash;
+        delete self.submittedResultMisbehavedMembers;
 
         emit DkgResultChallenged(resultHash, msg.sender);
     }
@@ -481,6 +491,7 @@ library DKG {
         delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
         delete self.resultSubmitter;
+        delete self.submittedResultMisbehavedMembers;
         delete self.submittedResultBlock;
         self.sortitionPool.unlock();
     }

@@ -65,8 +65,13 @@ export { ReactComponent as CoveragePool } from "../static/svg/coverage-pool.svg"
 export { ReactComponent as SaddleWhite } from "../static/svg/saddle-logo.svg"
 export { ReactComponent as Swap } from "../static/svg/swap.svg"
 export { ReactComponent as ChevronRight } from "../static/svg/chevron-right.svg"
+export { ReactComponent as ChevronUp } from "../static/svg/chevron-up.svg"
+export { ReactComponent as ChevronDown } from "../static/svg/chevron-down.svg"
 export { ReactComponent as Refresh } from "../static/svg/refresh.svg"
 export { ReactComponent as CovPoolsHowItWorksDiagram } from "../static/svg/cov-pools-how-it-works-diagram.svg"
+export { ReactComponent as TTokenSymbol } from "../static/svg/t-token-symbol.svg"
+export { ReactComponent as KeepTUpgrade } from "../static/svg/keep-t-upgrade-logo.svg"
+export { ReactComponent as Star } from "../static/svg/star.svg"
 
 const Badge = ({ height, width }) => (
   <svg

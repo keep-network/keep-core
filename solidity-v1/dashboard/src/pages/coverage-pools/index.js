@@ -11,7 +11,6 @@ CoveragePoolsPageContainer.route = {
   title: "Coverage Pool",
   path: "/coverage-pools",
   pages: [HowItWorksPage, CoveragePoolPage],
-  withNewLabel: true,
 }
 
 export default CoveragePoolsPageContainer

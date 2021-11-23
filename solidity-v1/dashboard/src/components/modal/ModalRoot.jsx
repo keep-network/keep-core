@@ -39,6 +39,8 @@ import {
   ConfirmIncreaseWithdrawal,
   IncreaseWithdrawal,
 } from "./coverage-pools"
+import { WithdrawGrantedTokens } from "./threshold/WithdrawGrantedTokens"
+import { GrantTokensWithdrawn } from "./threshold/GrantTokensWithdrawn"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -60,6 +62,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ConfirmRecovering]: ConfirmRecovering,
   [MODAL_TYPES.ClaimStakingTokens]: ClaimStakingTokens,
   [MODAL_TYPES.StakingTokensClaimed]: TokensClaimed,
+  [MODAL_TYPES.GrantTokensWithdrawn]: GrantTokensWithdrawn,
   [MODAL_TYPES.ConfirmCancelDelegationFromGrant]:
     ConfirmCancelDelegationFromGrant,
   [MODAL_TYPES.UndelegateStake]: UndelegateStake,
@@ -76,6 +79,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ReInitiateCovPoolWithdraw]: ReInitiateWithdraw,
   [MODAL_TYPES.ConfirmCovPoolIncreaseWithdrawal]: ConfirmIncreaseWithdrawal,
   [MODAL_TYPES.IncreaseCovPoolWithdrawal]: IncreaseWithdrawal,
+  [MODAL_TYPES.WithdrawGrantedTokens]: WithdrawGrantedTokens,
 }
 
 const modalRoot = document.getElementById("modal-root")
