@@ -113,6 +113,10 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
+    /// @notice This amount is required to execute slashing for providing a
+    //          malicious DKG result or when a relay entry times out.
+    uint96 public minimumAuthorization;
+
     SortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
@@ -123,6 +127,8 @@ contract RandomBeacon is Ownable {
     Relay.Data internal relay;
     Callback.Data internal callback;
     GasStation.Data internal gasStation;
+
+    event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -244,6 +250,8 @@ contract RandomBeacon is Ownable {
         // TODO: Revisit if initial value of 2 weeks is enough.
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
+        // TODO: Revisit the initial value.
+        minimumAuthorization = 100e3 * 1e18;
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -255,6 +263,16 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
+    }
+
+    /// @notice Updates the minimum authorization amount.
+    function updateMinimumAuthorization(uint96 _minimumAuthorization)
+        external
+        onlyOwner
+    {
+        minimumAuthorization = _minimumAuthorization;
+
+        emit MinimumAuthorizationUpdated(_minimumAuthorization);
     }
 
     /// @notice Updates the values of relay entry parameters.
