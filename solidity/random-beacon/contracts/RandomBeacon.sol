@@ -252,6 +252,7 @@ contract RandomBeacon is Ownable {
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
 
+        // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
         dkg.initSortitionPool(_sortitionPool);
