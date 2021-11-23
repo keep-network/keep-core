@@ -14,6 +14,7 @@
 
 pragma solidity ^0.8.6;
 
+import "./libraries/Authorization.sol";
 import "./libraries/DKG.sol";
 import "./libraries/GasStation.sol";
 import "./libraries/Groups.sol";
@@ -51,6 +52,7 @@ interface IRandomBeaconStaking {
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
 contract RandomBeacon is Ownable {
+    using Authorization for Authorization.Data;
     using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
@@ -114,22 +116,22 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
-    /// @notice This amount is required to execute slashing for providing a
-    //          malicious DKG result or when a relay entry times out.
-    uint96 public minimumAuthorization;
-
     SortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
     // Libraries data storages
+    Authorization.Data internal authorization;
     DKG.Data internal dkg;
     Groups.Data internal groups;
     Relay.Data internal relay;
     Callback.Data internal callback;
     GasStation.Data internal gasStation;
 
-    event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
+    event AuthorizationParametersUpdated(
+        uint96 minimumAuthorization,
+        uint64 authorizationDecreaseDelay
+    );
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -241,18 +243,18 @@ contract RandomBeacon is Ownable {
         tToken = _tToken;
         staking = _staking;
 
-        // Governable parameters
+        // TODO: revisit all initial values
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
         groupLifetime = 2 weeks;
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
-        // TODO: Revisit if initial value of 2 weeks is enough.
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
-        // TODO: Revisit the initial value.
-        minimumAuthorization = 100e3 * 1e18;
+
+        // slither-disable-next-line too-many-digits
+        authorization.setMinimumAuthorization(100000 * 1e18);
 
         dkg.initSortitionPool(_sortitionPool);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
@@ -266,14 +268,26 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
     }
 
-    /// @notice Updates the minimum authorization amount.
-    function updateMinimumAuthorization(uint96 _minimumAuthorization)
-        external
-        onlyOwner
-    {
-        minimumAuthorization = _minimumAuthorization;
+    /// @notice Updates the values of authorization parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _minimumAuthorization New minimum authorization amount
+    /// @param _authorizationDecreaseDelay New authorization decrease delay in
+    ///        seconds
+    function updateAuthorizationParameters(
+        uint96 _minimumAuthorization,
+        uint64 _authorizationDecreaseDelay
+    ) external onlyOwner {
+        authorization.setMinimumAuthorization(_minimumAuthorization);
+        authorization.setAuthorizationDecreaseDelay(
+            _authorizationDecreaseDelay
+        );
 
-        emit MinimumAuthorizationUpdated(_minimumAuthorization);
+        emit AuthorizationParametersUpdated(
+            _minimumAuthorization,
+            _authorizationDecreaseDelay
+        );
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -750,6 +764,22 @@ contract RandomBeacon is Ownable {
     ///      from this contract and needs to lock the DKG state arbitrarily.
     function dkgLockState() internal {
         dkg.lockState();
+    }
+
+    /// @notice The minimum authorization amount required so that operator can
+    ///         participate in the random beacon. This amount is required to
+    ///         execute slashing for providing a malicious DKG result or when
+    ///         a relay entry times out.
+    function minimumAuthorization() external view returns (uint96) {
+        return authorization.minimumAuthorization;
+    }
+
+    /// @notice Delay in seconds that needs to pass between the time
+    ///         authorization decrease is requested and the time that request
+    ///         gets approved. Protects against free-riders earning rewards and
+    ///         not being active in the network.
+    function authorizationDecreaseDelay() external view returns (uint64) {
+        return authorization.authorizationDecreaseDelay;
     }
 
     /// @return Flag indicating whether a relay entry request is currently
