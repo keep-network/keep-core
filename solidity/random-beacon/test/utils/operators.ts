@@ -2,15 +2,17 @@
 
 import { ethers } from "hardhat"
 import type { Address } from "hardhat-deploy/types"
-import { RandomBeacon } from "../../typechain"
+import type { BigNumber } from "ethers"
 import { constants } from "../fixtures"
+import type { RandomBeacon } from "../../typechain"
 
 export type OperatorID = number
 export type Operator = { id: OperatorID; address: Address }
 
 export async function registerOperators(
   randomBeacon: RandomBeacon,
-  addresses: Address[]
+  addresses: Address[],
+  stakeAmount: BigNumber = constants.minimumStake
 ): Promise<Operator[]> {
   const operators: Operator[] = []
 
@@ -27,7 +29,7 @@ export async function registerOperators(
   for (let i = 0; i < addresses.length; i++) {
     const address = addresses[i]
 
-    await staking.setStake(address, constants.minimumStake)
+    await staking.setStake(address, stakeAmount)
 
     await randomBeacon
       .connect(await ethers.getSigner(address))

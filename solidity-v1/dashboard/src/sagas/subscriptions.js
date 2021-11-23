@@ -382,6 +382,7 @@ function* observeTokenGrantWithdrawnEvent() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { grantId, amount },
       } = yield take(contractEventCahnnel)
 
@@ -392,6 +393,13 @@ function* observeTokenGrantWithdrawnEvent() {
         type: "token-grant/grant_withdrawn",
         payload: { grantId, amount, availableToStake },
       })
+
+      yield put(
+        showModal({
+          modalType: MODAL_TYPES.GrantTokensWithdrawn,
+          modalProps: { txHash: transactionHash },
+        })
+      )
     } catch (error) {
       console.error(`Failed subscribing to TokenGrantWithdrawn event`, error)
       contractEventCahnnel.close()

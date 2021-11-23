@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js"
 import CircularProgressBar from "./CircularProgressBar"
 import { percentageOf, sub, lt } from "../utils/arithmetics.utils"
 import { formatValue } from "../utils/general.utils"
+import { colors } from "../constants/colors"
 
 const defaultValue = 0
 const totalDefaultValue = 1
@@ -34,10 +35,13 @@ const ProgressBar = ({ value, total, color, bgColor, children }) => {
   )
 }
 
-const ProgressBarInline = ({ height = 10, className = "", style = {} }) => {
-  const { value, total, color, bgColor } = useProgressBarContext()
-
-  const barWidth = useMemo(() => calculateWidth(value, total), [value, total])
+const ProgressBarInline = ({
+  height = 10,
+  className = "",
+  style = {},
+  children,
+}) => {
+  const { bgColor } = useProgressBarContext()
 
   return (
     <div
@@ -48,20 +52,30 @@ const ProgressBarInline = ({ height = 10, className = "", style = {} }) => {
         ...style,
       }}
     >
-      <div
-        className="progress-bar"
-        style={{
-          width: `${barWidth}%`,
-          backgroundColor: color,
-        }}
-      />
+      {children}
     </div>
   )
 }
 
-const defaultDisplayLegendValuFn = (value) => value.toString()
+const ProgressBarInlineItem = ({ value = "0", color = colors.secondary }) => {
+  const { total } = useProgressBarContext()
+
+  const barWidth = useMemo(() => calculateWidth(value, total), [value, total])
+
+  return (
+    <div
+      className={"progress-bar"}
+      style={{
+        width: `${barWidth}%`,
+        backgroundColor: color,
+      }}
+    />
+  )
+}
+
+const defaultDisplayLegendValueFn = (value) => value.toString()
 export const ProgressBarLegendContext = React.createContext({
-  renderValuePattern: defaultDisplayLegendValuFn,
+  renderValuePattern: defaultDisplayLegendValueFn,
 })
 
 const useProgressBarLegendContext = () => {
@@ -79,7 +93,7 @@ const useProgressBarLegendContext = () => {
 const ProgressBarLegend = ({
   valueLabel,
   leftValueLabel,
-  renderValuePattern = defaultDisplayLegendValuFn,
+  renderValuePattern = defaultDisplayLegendValueFn,
 }) => {
   const { value, total, color, bgColor } = useProgressBarContext()
   const leftValue = useMemo(() => {
@@ -101,23 +115,25 @@ const ProgressBarLegend = ({
   )
 }
 
-export const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
-  const { renderValuePattern } = useProgressBarLegendContext()
-  const renderedValue = React.isValidElement(renderValuePattern)
-    ? React.cloneElement(renderValuePattern, { amount: value })
-    : renderValuePattern(value)
+export const ProgressBarLegendItem = React.memo(
+  ({ value, label, color, className = "" }) => {
+    const { renderValuePattern } = useProgressBarLegendContext()
+    const renderedValue = React.isValidElement(renderValuePattern)
+      ? React.cloneElement(renderValuePattern, { amount: value })
+      : renderValuePattern(value)
 
-  return (
-    <div className="progress-bar-legend__item">
-      <div className="legend__item__dot" style={{ backgroundColor: color }} />
-      <span className="legend__item__value">
-        {renderedValue}
-        &nbsp;
-      </span>
-      <span className="legend__item__label">{label}</span>
-    </div>
-  )
-})
+    return (
+      <div className={`progress-bar-legend__item ${className}`}>
+        <div className="legend__item__dot" style={{ backgroundColor: color }} />
+        <span className="legend__item__value">
+          {renderedValue}
+          &nbsp;
+        </span>
+        <span className="legend__item__label">{label}</span>
+      </div>
+    )
+  }
+)
 
 const ProgressBarCircular = (props) => {
   const { value, total, color, bgColor } = useProgressBarContext()
@@ -133,8 +149,8 @@ const ProgressBarCircular = (props) => {
   )
 }
 
-export const renderProgressBarLegendItem = (item, index) => (
-  <ProgressBarLegendItem key={index} {...item} />
+export const renderProgressBarLegendItem = (item, index, className = "") => (
+  <ProgressBarLegendItem key={index} {...item} className={className} />
 )
 
 const PercentageLabel = ({ text, className = "" }) => {
@@ -168,6 +184,7 @@ const PercentageLabel = ({ text, className = "" }) => {
 // }
 
 ProgressBar.Inline = ProgressBarInline
+ProgressBar.InlineItem = ProgressBarInlineItem
 ProgressBar.Legend = ProgressBarLegend
 ProgressBar.LegendItem = ProgressBarLegendItem
 ProgressBar.Circular = ProgressBarCircular

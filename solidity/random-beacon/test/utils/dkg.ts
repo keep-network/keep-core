@@ -4,7 +4,7 @@ import { ethers } from "hardhat"
 import type { BigNumber, ContractTransaction } from "ethers"
 import blsData from "../data/bls"
 import type { RandomBeacon } from "../../typechain"
-import { Operator } from "./sortitionpool"
+import { Operator } from "./operators"
 
 export interface DkgResult {
   submitterMemberIndex: number

@@ -20,9 +20,13 @@ const RecoverStakeButton = ({
     let destinationAddress = address
     if (isFromGrant) {
       destinationAddress = tokenStakingEscrow.options.address
-      await openConfirmationModal(MODAL_TYPES.ConfirmRecovering, {
-        tokenStakingEscrowAddress: destinationAddress,
-      })
+      try {
+        await openConfirmationModal(MODAL_TYPES.ConfirmRecovering, {
+          tokenStakingEscrowAddress: destinationAddress,
+        })
+      } catch (err) {
+        return
+      }
     }
 
     openModal(MODAL_TYPES.ClaimStakingTokens, {

@@ -1,5 +1,5 @@
 import { isSameEthAddress } from "../utils/general.utils"
-import { add, sub, gt } from "../utils/arithmetics.utils"
+import { add, sub, gt, lt } from "../utils/arithmetics.utils"
 import { findIndexAndObject } from "../utils/array.utils"
 
 const initialState = {
@@ -84,15 +84,26 @@ const findGrantAndUpdate = (
 
 const grantStaked = (grantToUpdate, { value }) => {
   grantToUpdate.staked = add(grantToUpdate.staked, value).toString()
-  grantToUpdate.readyToRelease = sub(
-    grantToUpdate.readyToRelease,
-    value
-  ).toString()
+  if (lt(value, grantToUpdate.readyToRelease)) {
+    grantToUpdate.readyToRelease = "0"
+  } else {
+    grantToUpdate.readyToRelease = sub(
+      grantToUpdate.readyToRelease,
+      value
+    ).toString()
+  }
 
   grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
     ? grantToUpdate.readyToRelease
     : "0"
-  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, value)
+  if (lt(value, grantToUpdate.availableToStake)) {
+    grantToUpdate.availableToStake = "0"
+  } else {
+    grantToUpdate.availableToStake = sub(
+      grantToUpdate.availableToStake,
+      value
+    ).toString()
+  }
 
   return grantToUpdate
 }
@@ -101,9 +112,16 @@ const grantWithdrawn = (
   grantToUpdate,
   { amount, availableToStake, operator }
 ) => {
-  grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
-  grantToUpdate.released = add(grantToUpdate.released, amount)
-  const unlocked = add(grantToUpdate.released, grantToUpdate.staked)
+  if (lt(amount, grantToUpdate.readyToRelease)) {
+    grantToUpdate.readyToRelease = "0"
+  } else {
+    grantToUpdate.readyToRelease = sub(
+      grantToUpdate.readyToRelease,
+      amount
+    ).toString()
+  }
+  grantToUpdate.released = add(grantToUpdate.released, amount).toString()
+  const unlocked = add(grantToUpdate.released, grantToUpdate.staked).toString()
   if (!gt(unlocked, grantToUpdate.amount)) {
     grantToUpdate.unlocked = unlocked
   }
