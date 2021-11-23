@@ -17,7 +17,7 @@ export async function registerOperators(
   const operators: Operator[] = []
 
   const sortitionPool = await ethers.getContractAt(
-    "ISortitionPool",
+    "SortitionPool",
     await randomBeacon.sortitionPool()
   )
 

@@ -20,42 +20,9 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-/// @title Sortition Pool contract interface
-/// @notice This is an interface with just a few function signatures of the
-///         Sortition Pool contract, which is available at
-///         https://github.com/keep-network/sortition-pools/blob/main/contracts/SortitionPool.sol
-///
-/// TODO: Add a dependency to `keep-network/sortition-pools` and use sortition
-///       pool interface from there.
-interface ISortitionPool {
-    function lock() external;
-
-    function unlock() external;
-
-    function insertOperator(address operator) external;
-
-    function banRewards(uint32[] calldata operators, uint256 duration) external;
-
-    function updateOperatorStatus(uint32 id) external;
-
-    function isOperatorInPool(address operator) external view returns (bool);
-
-    function isOperatorEligible(address operator) external view returns (bool);
-
-    function getIDOperator(uint32 id) external view returns (address);
-
-    function getIDOperators(uint32[] calldata ids)
-        external
-        view
-        returns (address[] memory);
-
-    function getOperatorID(address operator) external view returns (uint32);
-
-    function isLocked() external view returns (bool);
-}
 
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -146,7 +113,7 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
-    ISortitionPool public sortitionPool;
+    SortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
@@ -258,7 +225,7 @@ contract RandomBeacon is Ownable {
     ///      be updated with `update*` functions after the contract deployment
     ///      and before transferring the ownership to the governance contract.
     constructor(
-        ISortitionPool _sortitionPool,
+        SortitionPool _sortitionPool,
         IERC20 _tToken,
         IRandomBeaconStaking _staking
     ) {

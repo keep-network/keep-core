@@ -3,8 +3,8 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
-import {ISortitionPool} from "../RandomBeacon.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -20,7 +20,7 @@ library DKG {
 
     struct Data {
         // Address of the Sortition Pool contract.
-        ISortitionPool sortitionPool;
+        SortitionPool sortitionPool;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -135,7 +135,7 @@ library DKG {
 
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
         internal
     {
         require(
@@ -289,7 +289,7 @@ library DKG {
 
         require(submitterMemberIndex > 0, "Invalid submitter index");
 
-        ISortitionPool sortitionPool = self.sortitionPool;
+        SortitionPool sortitionPool = self.sortitionPool;
 
         require(
             sortitionPool.getIDOperator(members[submitterMemberIndex - 1]) ==

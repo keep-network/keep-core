@@ -10,7 +10,7 @@ import type {
   RandomBeaconGovernance,
   RandomBeaconStub,
   TestToken,
-  ISortitionPool,
+  SortitionPool,
 } from "../typechain"
 import {
   genesis,
@@ -60,7 +60,7 @@ describe("RandomBeacon - Group Creation", () => {
   let randomBeaconGovernance: RandomBeaconGovernance
   let randomBeacon: RandomBeaconStub & RandomBeacon
   let testToken: TestToken
-  let sortitionPool: ISortitionPool
+  let sortitionPool: SortitionPool
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -83,9 +83,9 @@ describe("RandomBeacon - Group Creation", () => {
     await testToken.mint(randomBeacon.address, to1e18(100))
 
     sortitionPool = (await ethers.getContractAt(
-      "ISortitionPool",
+      "SortitionPool",
       await randomBeacon.sortitionPool()
-    )) as ISortitionPool
+    )) as SortitionPool
   })
 
   describe("genesis", async () => {
