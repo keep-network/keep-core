@@ -1487,15 +1487,15 @@ describe("RandomBeacon - Group Creation", () => {
           await mineBlocksTo(startBlock + dkgTimeout)
         })
 
-        context("called by a submitter", async () => {
+        context("called by a third party", async () => {
           let tx: ContractTransaction
           let initialNotifierBalance: BigNumber
 
           beforeEach(async () => {
             initialNotifierBalance = await testToken.balanceOf(
-              await submitter.getAddress()
+              await thirdParty.getAddress()
             )
-            tx = await randomBeacon.connect(submitter).notifyDkgTimeout()
+            tx = await randomBeacon.connect(thirdParty).notifyDkgTimeout()
           })
 
           it("should emit DkgTimedOut event", async () => {
@@ -1508,7 +1508,7 @@ describe("RandomBeacon - Group Creation", () => {
 
           it("should reward the notifier with tokens from maintenance pool", async () => {
             const currentNotifierBalance: BigNumber = await testToken.balanceOf(
-              await submitter.getAddress()
+              await thirdParty.getAddress()
             )
             expect(
               currentNotifierBalance.sub(initialNotifierBalance)
