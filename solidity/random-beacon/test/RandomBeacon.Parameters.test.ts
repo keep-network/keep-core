@@ -124,6 +124,12 @@ describe("RandomBeacon - Parameters", () => {
           minimumAuthorization
         )
       })
+
+      it("should emit the MinimumAuthorizationUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "MinimumAuthorizationUpdated")
+          .withArgs(minimumAuthorization)
+      })
     })
   })
 

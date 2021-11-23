@@ -146,7 +146,7 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
-    /// @notice This amount is required to execute slashing for providing a 
+    /// @notice This amount is required to execute slashing for providing a
     //          malicious DKG result or when a relay entry times out.
     uint96 public minimumAuthorization;
 
@@ -160,6 +160,8 @@ contract RandomBeacon is Ownable {
     Relay.Data internal relay;
     Callback.Data internal callback;
     GasStation.Data internal gasStation;
+
+    event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -302,6 +304,8 @@ contract RandomBeacon is Ownable {
         onlyOwner
     {
         minimumAuthorization = _minimumAuthorization;
+
+        emit MinimumAuthorizationUpdated(_minimumAuthorization);
     }
 
     /// @notice Updates the values of relay entry parameters.
