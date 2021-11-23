@@ -67,6 +67,9 @@ contract RandomBeaconGovernance is Ownable {
     uint96 public newMinimumAuthorization;
     uint256 public minimumAuthorizationChangeInitiated;
 
+    uint64 public newAuthorizationDecreaseDelay;
+    uint256 public authorizationDecreaseDelayChangeInitiated;
+
     RandomBeacon public randomBeacon;
 
     // Long governance delay used for critical parameters giving a chance for
@@ -80,6 +83,7 @@ contract RandomBeaconGovernance is Ownable {
     // - group lifetime
     // - relay entry submission failure slashing amount
     // - minimum authorization
+    // - authorization decrease delay
     uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
 
     // Short governance delay for non-critical parameters. Honest stakers should
@@ -200,6 +204,12 @@ contract RandomBeaconGovernance is Ownable {
         uint256 timestamp
     );
     event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
+
+    event AuthorizationDecreaseDelayUpdateStarted(
+        uint64 authorizationDecreaseDelay,
+        uint256 timestamp
+    );
+    event AuthorizationDecreaseDelayUpdated(uint64 authorizationDecreaseDelay);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -848,9 +858,49 @@ contract RandomBeaconGovernance is Ownable {
     {
         emit MinimumAuthorizationUpdated(newMinimumAuthorization);
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateAuthorizationParameters(newMinimumAuthorization);
+        randomBeacon.updateAuthorizationParameters(
+            newMinimumAuthorization,
+            randomBeacon.authorizationDecreaseDelay()
+        );
         minimumAuthorizationChangeInitiated = 0;
         newMinimumAuthorization = 0;
+    }
+
+    /// @notice Begins the authorization decrease delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newAuthorizationDecreaseDelay New authorization decrease delay
+    function beginAuthorizationDecreaseDelayUpdate(
+        uint64 _newAuthorizationDecreaseDelay
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newAuthorizationDecreaseDelay = _newAuthorizationDecreaseDelay;
+        authorizationDecreaseDelayChangeInitiated = block.timestamp;
+        emit AuthorizationDecreaseDelayUpdateStarted(
+            _newAuthorizationDecreaseDelay,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the authorization decrease delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeAuthorizationDecreaseDelayUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            authorizationDecreaseDelayChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit AuthorizationDecreaseDelayUpdated(newAuthorizationDecreaseDelay);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateAuthorizationParameters(
+            randomBeacon.minimumAuthorization(),
+            newAuthorizationDecreaseDelay
+        );
+        authorizationDecreaseDelayChangeInitiated = 0;
+        newAuthorizationDecreaseDelay = 0;
     }
 
     /// @notice Get the time remaining until the relay request fee can be
@@ -1043,6 +1093,18 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 minimumAuthorizationChangeInitiated,
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    function getRemainingAuthorizationDecreaseDelayUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                authorizationDecreaseDelayChangeInitiated,
                 CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }

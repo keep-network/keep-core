@@ -3,9 +3,9 @@
 pragma solidity ^0.8.6;
 
 library Authorization {
-
     struct Data {
-       uint96 minimumAuthorization;
+        uint96 minimumAuthorization;
+        uint64 authorizationDecreaseDelay;
     }
 
     function setMinimumAuthorization(
@@ -13,5 +13,12 @@ library Authorization {
         uint96 _minimumAuthorization
     ) internal {
         self.minimumAuthorization = _minimumAuthorization;
+    }
+
+    function setAuthorizationDecreaseDelay(
+        Data storage self,
+        uint64 _authorizationDecreaseDelay
+    ) internal {
+        self.authorizationDecreaseDelay = _authorizationDecreaseDelay;
     }
 }

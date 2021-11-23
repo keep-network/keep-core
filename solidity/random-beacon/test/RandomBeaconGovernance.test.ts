@@ -26,6 +26,7 @@ describe("RandomBeaconGovernance", () => {
   const initialSortitionPoolRewardsBanDuration = 1209600
   const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
   const initialMinimumAuthorization = 1000000
+  const initialAuthorizationDecreaseDelay = 86400
 
   // prettier-ignore
   before(async () => {
@@ -74,7 +75,10 @@ describe("RandomBeaconGovernance", () => {
 
     await randomBeacon
       .connect(governance)
-      .updateAuthorizationParameters(initialMinimumAuthorization)
+      .updateAuthorizationParameters(
+        initialMinimumAuthorization,
+        initialAuthorizationDecreaseDelay
+      )
 
     const RandomBeaconGovernance = await ethers.getContractFactory(
       "RandomBeaconGovernance"
@@ -2068,6 +2072,127 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingMimimumAuthorizationUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginAuthorizationDecreaseDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginAuthorizationDecreaseDelayUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseDelayUpdate(123)
+      })
+
+      it("should not update the authorization decrease delay", async () => {
+        expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
+          initialAuthorizationDecreaseDelay
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
+        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+      })
+
+      it("should emit the AuthorizationDecreaseDelayUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "AuthorizationDecreaseDelayUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeAuthorizationDecreaseDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseDelayUpdate(123)
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginAuthorizationDecreaseDelayUpdate(123)
+
+          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        })
+
+        it("should update the authorization decrease delay", async () => {
+          expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
+            123
+          )
+        })
+
+        it("should emit AuthorizationDecreaseDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "AuthorizationDecreaseDelayUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

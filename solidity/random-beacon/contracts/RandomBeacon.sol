@@ -127,7 +127,10 @@ contract RandomBeacon is Ownable {
     Callback.Data internal callback;
     GasStation.Data internal gasStation;
 
-    event AuthorizationParametersUpdated(uint96 minimumAuthorization);
+    event AuthorizationParametersUpdated(
+        uint96 minimumAuthorization,
+        uint64 authorizationDecreaseDelay
+    );
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
@@ -263,14 +266,26 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
     }
 
-    /// @notice Updates the minimum authorization amount.
-    function updateAuthorizationParameters(uint96 _minimumAuthorization)
-        external
-        onlyOwner
-    {
+    /// @notice Updates the values of authorization parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _minimumAuthorization New minimum authorization amount
+    /// @param _authorizationDecreaseDelay New authorization decrease delay in
+    ///        seconds
+    function updateAuthorizationParameters(
+        uint96 _minimumAuthorization,
+        uint64 _authorizationDecreaseDelay
+    ) external onlyOwner {
         authorization.setMinimumAuthorization(_minimumAuthorization);
+        authorization.setAuthorizationDecreaseDelay(
+            _authorizationDecreaseDelay
+        );
 
-        emit AuthorizationParametersUpdated(_minimumAuthorization);
+        emit AuthorizationParametersUpdated(
+            _minimumAuthorization,
+            _authorizationDecreaseDelay
+        );
     }
 
     /// @notice Updates the values of relay entry parameters.
@@ -752,6 +767,14 @@ contract RandomBeacon is Ownable {
     ///         a relay entry times out.
     function minimumAuthorization() external view returns (uint96) {
         return authorization.minimumAuthorization;
+    }
+
+    /// @notice Delay in seconds that needs to pass between the time
+    ///         authorization decrease is requested and the time that request
+    ///         gets approved. Protects against free-riders earning rewards and
+    ///         not being active in the network.
+    function authorizationDecreaseDelay() external view returns (uint64) {
+        return authorization.authorizationDecreaseDelay;
     }
 
     /// @return Flag indicating whether a relay entry request is currently
