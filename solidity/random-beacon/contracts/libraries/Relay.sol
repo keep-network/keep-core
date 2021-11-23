@@ -16,9 +16,9 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BLS.sol";
 import "./Groups.sol";
-import {ISortitionPool} from "../RandomBeacon.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -40,7 +40,7 @@ library Relay {
         // Data of current request.
         Request currentRequest;
         // Address of the Sortition Pool contract.
-        ISortitionPool sortitionPool;
+        SortitionPool sortitionPool;
         // Address of the T token contract.
         IERC20 tToken;
         // Fee paid by the relay requester.
@@ -93,7 +93,7 @@ library Relay {
     /// @notice Initializes the sortitionPool parameter. Can be performed
     ///         only once.
     /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
         internal
     {
         require(

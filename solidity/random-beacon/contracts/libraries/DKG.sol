@@ -3,8 +3,8 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
-import {ISortitionPool} from "../RandomBeacon.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -20,7 +20,7 @@ library DKG {
 
     struct Data {
         // Address of the Sortition Pool contract.
-        ISortitionPool sortitionPool;
+        SortitionPool sortitionPool;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -135,7 +135,7 @@ library DKG {
 
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
         internal
     {
         require(
@@ -261,7 +261,7 @@ library DKG {
 
         require(result.submitterMemberIndex > 0, "Invalid submitter index");
 
-        ISortitionPool sortitionPool = self.sortitionPool;
+        SortitionPool sortitionPool = self.sortitionPool;
 
         require(
             sortitionPool.getIDOperator(
@@ -377,15 +377,18 @@ library DKG {
         self.sortitionPool.unlock();
     }
 
-    /// @notice Approves DKG result. Can be called after challenge period for the
-    ///         submitted result is finished. Considers the submitted result as
-    ///         valid and completes the group creation.
+    /// @notice Approves DKG result. Can be called when the challenge period for
+    ///         the submitted result is finished. Considers the submitted result
+    ///         as valid. For the first `resultSubmissionEligibilityDelay`
+    ///         blocks after the end of the challenge period can be called only
+    ///         by the DKG result submitter. After that time, can be called by
+    ///         anyone.
     /// @dev Can be called after a challenge period for the submitted result.
     /// @param result Result to approve. Must match the submitted result stored
     ///        during `submitResult`.
     /// @return submitterMember Identifier of member who submitted the result.
     /// @return misbehavedMembers Identifiers of members who misbehaved during DKG.
-    function approveResult(Data storage self, Result calldata result)
+    function approveResult(Data storage self)
         internal
         returns (uint32 submitterMember, uint32[] memory misbehavedMembers)
     {
@@ -394,11 +397,20 @@ library DKG {
             "current state is not CHALLENGE"
         );
 
+        uint256 challengePeriodEnd = self.submittedResultBlock +
+            self.parameters.resultChallengePeriodLength;
+
         require(
-            block.number >
-                self.submittedResultBlock +
-                    self.parameters.resultChallengePeriodLength,
+            block.number > challengePeriodEnd,
             "challenge period has not passed yet"
+        );
+
+        require(
+            msg.sender == self.resultSubmitter ||
+                block.number >
+                challengePeriodEnd +
+                    self.parameters.resultSubmissionEligibilityDelay,
+            "Only the DKG result submitter can approve the result at this moment"
         );
 
         require(

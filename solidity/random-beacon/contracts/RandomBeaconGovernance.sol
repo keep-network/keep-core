@@ -64,6 +64,9 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newRelayEntryTimeoutNotificationRewardMultiplier;
     uint256 public relayEntryTimeoutNotificationRewardMultiplierChangeInitiated;
 
+    uint96 public newMinimumAuthorization;
+    uint256 public minimumAuthorizationChangeInitiated;
+
     uint256 public newDkgMaliciousResultNotificationRewardMultiplier;
     uint256
         public dkgMaliciousResultNotificationRewardMultiplierChangeInitiated;
@@ -80,6 +83,7 @@ contract RandomBeaconGovernance is Ownable {
     // - callback gas limit
     // - group lifetime
     // - relay entry submission failure slashing amount
+    // - minimum authorization
     uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
 
     // Short governance delay for non-critical parameters. Honest stakers should
@@ -195,6 +199,12 @@ contract RandomBeaconGovernance is Ownable {
     event RelayEntryTimeoutNotificationRewardMultiplierUpdated(
         uint256 relayEntryTimeoutNotificationRewardMultiplier
     );
+
+    event MinimumAuthorizationUpdateStarted(
+        uint96 minimumAuthorization,
+        uint256 timestamp
+    );
+    event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
 
     event DkgMaliciousResultNotificationRewardMultiplierUpdateStarted(
         uint256 dkgMaliciousResultNotificationRewardMultiplier,
@@ -876,6 +886,41 @@ contract RandomBeaconGovernance is Ownable {
         newMaliciousDkgResultSlashingAmount = 0;
     }
 
+    /// @notice Begins the minimum authorization amount update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newMinimumAuthorization New minimum authorization amount.
+    function beginMinimumAuthorizationUpdate(uint96 _newMinimumAuthorization)
+        external
+        onlyOwner
+    {
+        /* solhint-disable not-rely-on-time */
+        newMinimumAuthorization = _newMinimumAuthorization;
+        minimumAuthorizationChangeInitiated = block.timestamp;
+        emit MinimumAuthorizationUpdateStarted(
+            _newMinimumAuthorization,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the minimum authorization amount update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeMinimumAuthorizationUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            minimumAuthorizationChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit MinimumAuthorizationUpdated(newMinimumAuthorization);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateMinimumAuthorization(newMinimumAuthorization);
+        minimumAuthorizationChangeInitiated = 0;
+        newMinimumAuthorization = 0;
+    }
+
     /// @notice Get the time remaining until the relay request fee can be
     ///         updated.
     /// @return Remaining time in seconds.
@@ -1052,6 +1097,21 @@ contract RandomBeaconGovernance is Ownable {
             getRemainingChangeTime(
                 maliciousDkgResultSlashingAmountChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the minimum authorization amount
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingMimimumAuthorizationUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                minimumAuthorizationChangeInitiated,
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }
 

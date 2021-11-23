@@ -1,4 +1,4 @@
-import { ethers, helpers } from "hardhat"
+import { helpers, ethers } from "hardhat"
 import { BigNumber } from "ethers"
 // eslint-disable-next-line import/no-cycle
 import { noMisbehaved, signAndSubmitArbitraryDkgResult } from "./dkg"
@@ -15,16 +15,21 @@ export async function createGroup(
   signers: Operator[]
 ): Promise<void> {
   const { blockNumber: startBlock } = await randomBeacon.genesis()
+  const submitterIndex = 1
   await mineBlocks(constants.offchainDkgTime)
   const { dkgResult } = await signAndSubmitArbitraryDkgResult(
     randomBeacon,
     blsData.groupPubKey,
     signers,
     startBlock,
-    noMisbehaved
+    noMisbehaved,
+    submitterIndex
   )
+
   await mineBlocks(params.dkgResultChallengePeriodLength)
-  await randomBeacon.approveDkgResult(dkgResult)
+  await randomBeacon
+    .connect(await ethers.getSigner(signers[submitterIndex - 1].address))
+    .approveDkgResult(dkgResult)
 }
 
 export async function selectGroup(

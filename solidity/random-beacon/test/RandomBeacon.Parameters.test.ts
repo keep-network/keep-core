@@ -92,6 +92,41 @@ describe("RandomBeacon - Parameters", () => {
     })
   })
 
+  describe("updateMinimumAuthorization", () => {
+    const minimumAuthorization = 4200000
+
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon
+            .connect(thirdParty)
+            .updateMinimumAuthorization(minimumAuthorization)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+      beforeEach(async () => {
+        tx = await randomBeacon
+          .connect(governance)
+          .updateMinimumAuthorization(minimumAuthorization)
+      })
+
+      it("should update the group creation frequency", async () => {
+        expect(await randomBeacon.minimumAuthorization()).to.be.equal(
+          minimumAuthorization
+        )
+      })
+
+      it("should emit the MinimumAuthorizationUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "MinimumAuthorizationUpdated")
+          .withArgs(minimumAuthorization)
+      })
+    })
+  })
+
   describe("updateGroupCreationParameters", () => {
     const groupCreationFrequency = 100
     const groupLifetime = 200

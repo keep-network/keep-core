@@ -4,4 +4,3 @@ cache/
 deployments/
 export.json
 typechain/
-hardhat-dependency-compiler/
