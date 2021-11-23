@@ -3,7 +3,6 @@ import { HardhatUserConfig } from "hardhat/config"
 import "@keep-network/hardhat-local-networks-config"
 import "@keep-network/hardhat-helpers"
 import "hardhat-deploy"
-import "hardhat-dependency-compiler"
 import "@tenderly/hardhat-tenderly"
 import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
@@ -69,10 +68,6 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 60000,
-  },
-  dependencyCompiler: {
-    paths: ["@keep-network/sortition-pools/contracts/SortitionPool.sol"],
-    keep: true,
   },
 }
 
