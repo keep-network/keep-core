@@ -34,7 +34,7 @@ describe("Groups", () => {
     context("when active groups were created", async () => {
       it("should be able to count the number of active groups", async () => {
         const expectedGroupCount = 23
-        await addGroups(expectedGroupCount)
+        await addGroups(1, expectedGroupCount)
         const numberOfGroups = await groups.numberOfActiveGroups()
         expect(numberOfGroups).to.be.equal(expectedGroupCount)
       })
@@ -137,7 +137,7 @@ describe("Groups", () => {
 
     context("when all groups expired", async () => {
       it("should revert group selection", async () => {
-        await addGroups(5)
+        await addGroups(1, 5)
 
         const currentBlock = await ethers.provider.getBlock("latest")
         await mineBlocksTo(currentBlock.number + groupLifetime)
@@ -148,7 +148,7 @@ describe("Groups", () => {
       })
 
       it("should allow to add and select new group", async () => {
-        await addGroups(5)
+        await addGroups(1, 5)
         const currentBlock = await ethers.provider.getBlock("latest")
         await mineBlocksTo(currentBlock.number + groupLifetime)
 
@@ -173,7 +173,7 @@ describe("Groups", () => {
       // - we check whether the first group is stale and assert it is not since
       //   an active group cannot be stale
       it("should not mark group as stale", async () => {
-        await addGroups(6)
+        await addGroups(1, 6)
 
         const isStale = await groups.isStaleGroup(ethers.utils.hexlify(1))
 
@@ -186,7 +186,7 @@ describe("Groups", () => {
         // - we check whether any of active groups is stale and assert it's not
         it("should not mark group as stale", async () => {
           const groupsCount = 15
-          await addGroups(groupsCount)
+          await addGroups(1, groupsCount)
           await expireGroup(8) // move height to expire first 9 groups (we index from 0)
 
           // this will move height by one and expire 9 + 1 groups
@@ -207,7 +207,7 @@ describe("Groups", () => {
         // - we check whether any of active groups is stale and assert it's not
         it("should not mark group as stale", async () => {
           const groupsCount = 15
-          await addGroups(groupsCount)
+          await addGroups(1, groupsCount)
           await expireGroup(8) // move height to expire first 9 groups (we index from 0)
 
           // this will move height by one and expire 9 + 1 groups
@@ -233,7 +233,7 @@ describe("Groups", () => {
         // - we check whether this group is a stale group and assert it is not since
         //   relay request timeout did not pass since the group expiration block
         it("should not mark group as stale", async () => {
-          await addGroups(6)
+          await addGroups(1, 6)
 
           await expireGroup(0)
           await groups.selectGroup(0)
@@ -252,7 +252,7 @@ describe("Groups", () => {
         // - we check whether this group is a stale group and assert it is stale since
         //   relay request timeout did pass since the group expiration block
         it("should mark group as stale", async () => {
-          await addGroups(6)
+          await addGroups(1, 6)
 
           await expireGroup(0)
           await groups.selectGroup(0)
@@ -266,10 +266,131 @@ describe("Groups", () => {
         })
       })
     })
+
+    context("when having a mix of terminated and expired groups", async () => {
+      it("EEETTAAAAA beacon_value seed = 5", async () => {
+        // existing: []
+        // new: [0x1,0x2,0x3]
+        await addGroups(1, 3)
+        await expireGroup(2) // expiring [0x1,0x2,0x3]
+
+        await groups.expireOldGroups()
+
+        // existing: [0x1, 0x2, 0x3]
+        // new: [0x4, 0x5]
+        await addGroups(4, 2)
+        await addTerminatedGroups(3, 2) // terminating [0x4, 0x5]
+
+        // move blocks so terminated blocks qualify for expiration
+        const currentBlock = await ethers.provider.getBlock("latest")
+        await mineBlocksTo(currentBlock.number + groupLifetime)
+
+        // [0x1, 0x2, 0x3, 0x4, 0x5]
+        // new: [0x6, 0x7, 0x8, 0x9, 0xa]
+        await addGroups(6, 5)
+
+        // First active index group that qualifies for selection
+        const selectedGroupId = await groups.callStatic.selectGroup(5)
+        expect(selectedGroupId).to.be.equal(5)
+      })
+
+      it("ETTAAAAAAA beacon_value seed = 1", async () => {
+        await addGroups(1, 1) // [0x1]
+        await expireGroup(0) // expiring [0x1]
+
+        await addGroups(2, 2) // [0x1] + [0x2,0x3]
+        await addTerminatedGroups(1, 2) // terminating [0x2,0x3]
+
+        await addGroups(4, 7) // [0x4,0x5,0x6,0x7,0x8,0x9,0xa]
+
+        // First active index group that qualifies for selection
+        const selectedGroupId = await groups.callStatic.selectGroup(1)
+        // 1 expired + 2 terminated + selected index (1)
+        expect(selectedGroupId).to.be.equal(4)
+      })
+
+      it("ETEATATAAA beacon_value seed = 2", async () => {
+        await addGroups(1, 3) // [0x1,0x2,0x3]
+        await groups.terminateGroup(1) // [0x2]
+
+        // move blocks so terminated blocks qualify for expiration
+        const currentBlock = await ethers.provider.getBlock("latest")
+        await mineBlocksTo(currentBlock.number + groupLifetime)
+
+        let activeTerminatedGroups = await groups.activeTerminatedGroups()
+        expect(activeTerminatedGroups.length).to.be.equal(1)
+
+        // 10 groups were created in total
+        await addGroups(4, 7) // [0x4,...,0xa]
+
+        await groups.terminateGroup(4)
+        await groups.terminateGroup(6)
+
+        await groups.expireOldGroups()
+
+        // two terminated groups do not qualify yet to be expired because of the
+        // current block #
+        activeTerminatedGroups = await groups.activeTerminatedGroups()
+        expect(activeTerminatedGroups.length).to.be.equal(2)
+        expect(activeTerminatedGroups[0]).to.be.equal(4)
+        expect(activeTerminatedGroups[1]).to.be.equal(6)
+
+        // 10 - 3 (expired) - 2 (terminated) = 5
+        const numberOfGroups = await groups.numberOfActiveGroups()
+        expect(numberOfGroups).to.be.equal(5)
+
+        // Second active index group that qualifies for selection
+        const selectedIndex = await groups.callStatic.selectGroup(2)
+
+        // expired ids: [0, 1, 2]
+        // terminated ids: [4, 6]
+        // active ids: [3, 5, 7, 8, 9]
+        expect(7).to.be.equal(selectedIndex)
+      })
+
+      it("EEEEEEEEET beacon_value seed = 2", async () => {
+        await addGroups(1, 9) // [0x1,..0x9]
+        await expireGroup(8) // expiring [0x1,..0x9]
+
+        await addGroups(10, 1) // [0x1,..0x9] + [0xa]
+        await groups.terminateGroup(9) // terminating [0xa]
+
+        await expect(groups.selectGroup(2)).to.be.revertedWith(
+          "No active groups"
+        )
+      })
+
+      it("should expire all active terminated groups when all of them qualify for expiration", async () => {
+        await addGroups(1, 31)
+
+        await groups.terminateGroup(10)
+        await groups.terminateGroup(12)
+        await groups.terminateGroup(20)
+        await groups.terminateGroup(25)
+        await groups.terminateGroup(30)
+
+        // move blocks so terminated blocks qualify for expiration
+        const currentBlock = await ethers.provider.getBlock("latest")
+        await mineBlocksTo(currentBlock.number + groupLifetime)
+
+        await groups.expireOldGroups()
+
+        const activeTerminatedGroups = await groups.activeTerminatedGroups()
+        expect(activeTerminatedGroups.length).to.be.equal(0)
+
+        // Total number of groups (expired + active) is equal to 100 now
+        await addGroups(32, 69)
+
+        const numberOfGroups = await groups.numberOfActiveGroups()
+        expect(numberOfGroups).to.be.equal(69)
+        const expiredGroupOffset = await groups.expiredGroupOffset()
+        expect(expiredGroupOffset).to.be.equal(31)
+      })
+    })
   })
 
-  async function addGroups(numberOfGroups) {
-    for (let i = 1; i <= numberOfGroups; i++) {
+  async function addGroups(firstGroup, numberOfGroups) {
+    for (let i = firstGroup; i < firstGroup + numberOfGroups; i++) {
       await groups.addCandidateGroup(
         ethers.utils.hexlify(i),
         members,
@@ -279,8 +400,8 @@ describe("Groups", () => {
     }
   }
 
-  async function expireGroup(groupIndex) {
-    const group = await groups.getGroupById(groupIndex)
+  async function expireGroup(groupId) {
+    const group = await groups.getGroupById(groupId)
     const activationBlock = group.activationBlockNumber
     const currentBlock = await ethers.provider.getBlock("latest")
 
@@ -293,8 +414,21 @@ describe("Groups", () => {
     }
   }
 
+  async function addTerminatedGroups(
+    firstGroupIdToTerminate,
+    numberOfTerminatedGroups
+  ) {
+    for (
+      let i = firstGroupIdToTerminate;
+      i < firstGroupIdToTerminate + numberOfTerminatedGroups;
+      i++
+    ) {
+      await groups.terminateGroup(i) // terminating by the group id
+    }
+  }
+
   async function runExpirationTest(numberOfGroups, expiredCount, beaconValue) {
-    await addGroups(numberOfGroups)
+    await addGroups(1, numberOfGroups)
     if (expiredCount > 0) {
       // expire group accepts group index, we need to subtract one from the
       // count since we index from 0.

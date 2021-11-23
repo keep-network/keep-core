@@ -145,8 +145,15 @@ library Groups {
             ) <
             block.number
         ) {
+            Group memory group = self.groupsData[
+                self.groupsRegistry[self.expiredGroupOffset]
+            ];
+            // Decrement only for non-terminated groups, because terminateGroup()
+            // function handles 'activeGroupsCount' counter for terminated groups.
+            if (!group.terminated) {
+                self.activeGroupsCount--;
+            }
             self.expiredGroupOffset++;
-            self.activeGroupsCount--;
         }
 
         // Go through all activeTerminatedGroups and if some of the terminated
@@ -156,7 +163,8 @@ library Groups {
         // based on how many non-expired groups have been terminated. Hence it is
         // important that a number of terminated groups matches the length of
         // activeTerminatedGroups[].
-        for (uint256 i = 0; i < self.activeTerminatedGroups.length; i++) {
+        uint256 i = 0;
+        while (i < self.activeTerminatedGroups.length) {
             if (self.expiredGroupOffset > self.activeTerminatedGroups[i]) {
                 // When 'i'th group qualifies for expiration, we need to remove
                 // it from the activeTerminatedGroups array manually by rearranging
@@ -173,10 +181,8 @@ library Groups {
                 // over in the loop above to an index "second to last". This is
                 // why we can safely remove it from here.
                 self.activeTerminatedGroups.pop();
-                // At this point the length of activeTerminatedGroups[] was shrinked
-                // by 1. We need to adjust 'i'th counter by 1 as well, otherwise
-                // it will overflow this array and throw an error.
-                i--;
+            } else {
+                i++;
             }
         }
     }

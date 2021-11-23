@@ -31,7 +31,7 @@ contract GroupsStub {
     }
 
     function terminateGroup(uint64 groupId) external {
-        return groups.terminateGroup(groupId);
+        groups.terminateGroup(groupId);
     }
 
     function selectGroup(uint256 seed) external returns (uint64) {
@@ -39,11 +39,11 @@ contract GroupsStub {
     }
 
     function setGroupLifetime(uint256 groupLifetime) external {
-        return groups.setGroupLifetime(groupLifetime);
+        groups.setGroupLifetime(groupLifetime);
     }
 
     function setRelayEntryTimeout(uint256 timeout) external {
-        return groups.setRelayEntryTimeout(timeout);
+        groups.setRelayEntryTimeout(timeout);
     }
 
     function getGroupsRegistry() external view returns (bytes32[] memory) {
@@ -81,5 +81,17 @@ contract GroupsStub {
 
     function isStaleGroupById(uint64 groupId) external view returns (bool) {
         return groups.isStaleGroup(groupId);
+    }
+
+    function activeTerminatedGroups() public view returns (uint64[] memory) {
+        return groups.activeTerminatedGroups;
+    }
+
+    function expireOldGroups() public {
+        groups.expireOldGroups();
+    }
+
+    function expiredGroupOffset() public view returns (uint256) {
+        return groups.expiredGroupOffset;
     }
 }
