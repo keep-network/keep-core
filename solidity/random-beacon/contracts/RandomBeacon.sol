@@ -297,6 +297,14 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
     }
 
+    /// @notice Updates the minimum authorization amount.
+    function updateMinimumAuthorization(uint96 minAuthorization)
+        external
+        onlyOwner
+    {
+        minimumAuthorization = minAuthorization;
+    }
+
     /// @notice Updates the values of relay entry parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
@@ -482,11 +490,6 @@ contract RandomBeacon is Ownable {
         if (!sortitionPool.isOperatorInPool(msg.sender)) {
             gasStation.releaseGas(msg.sender);
         }
-    }
-
-    /// @notice Updates the minimum authorization amount.
-    function updateMinimumAuthorization(uint96 minAuthorization) external {
-        minimumAuthorization = minAuthorization;
     }
 
     /// @notice Checks whether the given operator is eligible to join the
