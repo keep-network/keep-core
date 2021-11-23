@@ -2038,7 +2038,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginMinimumAuthorizationUpdate(123)
 
-        await helpers.time.increaseTime(24 * 13 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
 
         await expect(
           randomBeaconGovernance

@@ -297,11 +297,11 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Updates the minimum authorization amount.
-    function updateMinimumAuthorization(uint96 minAuthorization)
+    function updateMinimumAuthorization(uint96 _minimumAuthorization)
         external
         onlyOwner
     {
-        minimumAuthorization = minAuthorization;
+        minimumAuthorization = _minimumAuthorization;
     }
 
     /// @notice Updates the values of relay entry parameters.
