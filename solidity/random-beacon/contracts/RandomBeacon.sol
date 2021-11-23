@@ -146,9 +146,8 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public relayEntryTimeoutNotificationRewardMultiplier;
 
-    /// @notice This amount is required to protect against griefing the staking
-    ///         contract and individual applications are allowed to require higher
-    ///         minimum authorization if necessary.
+    /// @notice This amount is required to execute slashing for providing a 
+    //          malicious DKG result or when a relay entry times out.
     uint96 public minimumAuthorization;
 
     ISortitionPool public sortitionPool;
