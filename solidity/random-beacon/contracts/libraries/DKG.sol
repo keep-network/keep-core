@@ -406,18 +406,18 @@ library DKG {
             "current state is not CHALLENGE"
         );
 
+        uint256 challengePeriodEnd = self.submittedResultBlock +
+            self.parameters.resultChallengePeriodLength;
+
         require(
-            block.number >
-                self.submittedResultBlock +
-                    self.parameters.resultChallengePeriodLength,
+            block.number > challengePeriodEnd,
             "challenge period has not passed yet"
         );
 
         require(
             msg.sender == self.resultSubmitter ||
                 block.number >
-                self.submittedResultBlock +
-                    self.parameters.resultChallengePeriodLength +
+                challengePeriodEnd +
                     self.parameters.resultSubmissionEligibilityDelay,
             "Only the DKG result submitter can approve the result at this moment"
         );
