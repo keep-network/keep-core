@@ -39,10 +39,6 @@ library Relay {
         bytes previousEntry;
         // Data of current request.
         Request currentRequest;
-        // Address of the Sortition Pool contract.
-        SortitionPool sortitionPool;
-        // Address of the T token contract.
-        IERC20 tToken;
         // Fee paid by the relay requester.
         uint256 relayRequestFee;
         // The number of blocks it takes for a group member to become
@@ -90,31 +86,6 @@ library Relay {
         self.previousEntry = relaySeed;
     }
 
-    /// @notice Initializes the sortitionPool parameter. Can be performed
-    ///         only once.
-    /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
-        internal
-    {
-        require(
-            address(self.sortitionPool) == address(0),
-            "Sortition Pool address already set"
-        );
-
-        self.sortitionPool = _sortitionPool;
-    }
-
-    /// @notice Initializes the tToken parameter. Can be performed only once.
-    /// @param _tToken Value of the parameter.
-    function initTToken(Data storage self, IERC20 _tToken) internal {
-        require(
-            address(self.tToken) == address(0),
-            "T token address already set"
-        );
-
-        self.tToken = _tToken;
-    }
-
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
     ///         random number).
@@ -123,13 +94,6 @@ library Relay {
         require(
             !isRequestInProgress(self),
             "Another relay request in progress"
-        );
-
-        // slither-disable-next-line reentrancy-events
-        self.tToken.safeTransferFrom(
-            msg.sender,
-            address(this),
-            self.relayRequestFee
         );
 
         uint64 currentRequestId = ++self.requestCount;
@@ -144,6 +108,7 @@ library Relay {
     }
 
     /// @notice Creates a new relay entry.
+    /// @param sortitionPool SortitionPool owned by random beacon
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
     /// @param group Group data.
@@ -155,6 +120,7 @@ library Relay {
     ///         The value is zero if entry was submitted on time.
     function submitEntry(
         Data storage self,
+        SortitionPool sortitionPool,
         uint256 submitterIndex,
         bytes calldata entry,
         Groups.Group memory group
@@ -172,9 +138,8 @@ library Relay {
             "Invalid submitter index"
         );
         require(
-            self.sortitionPool.getIDOperator(
-                group.members[submitterIndex - 1]
-            ) == msg.sender,
+            sortitionPool.getIDOperator(group.members[submitterIndex - 1]) ==
+                msg.sender,
             "Unexpected submitter index"
         );
 
