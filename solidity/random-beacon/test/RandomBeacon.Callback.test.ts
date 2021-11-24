@@ -1,8 +1,7 @@
-import { ethers, waffle, getUnnamedAccounts } from "hardhat"
+import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
-import { to1e18 } from "./functions"
 import { constants, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type { DeployedContracts } from "./fixtures"
@@ -14,6 +13,8 @@ import type {
 import { registerOperators, Operator } from "./utils/operators"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
+
+const { to1e18 } = helpers.number
 
 const fixture = async () => {
   const deployment = await randomBeaconDeployment()

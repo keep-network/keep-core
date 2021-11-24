@@ -1,12 +1,13 @@
 import { Contract } from "ethers"
-import { ethers, getNamedAccounts } from "hardhat"
+import { ethers, helpers, getNamedAccounts } from "hardhat"
 import type {
   SortitionPool,
   RandomBeaconStub,
   RandomBeaconGovernance,
   StakingStub,
 } from "../../typechain"
-import { to1e18 } from "../functions"
+
+const { to1e18 } = helpers.number
 
 export const constants = {
   groupSize: 64,
