@@ -286,7 +286,8 @@ library DKG {
         require(result.groupPubKey.length == 128, "Malformed group public key");
 
         require(
-            groupSize - result.misbehavedMembersIndices.length >= activeThreshold,
+            groupSize - result.misbehavedMembersIndices.length >=
+                activeThreshold,
             "Too many members misbehaving during DKG"
         );
 
