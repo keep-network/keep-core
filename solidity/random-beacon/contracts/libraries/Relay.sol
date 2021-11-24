@@ -325,13 +325,13 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 relayEntryTimeout = (dkgGroupSize *
+        uint256 _relayEntryTimeout = (dkgGroupSize *
             self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
 
         return
             isRequestInProgress(self) &&
-            block.number > self.currentRequest.startBlock + relayEntryTimeout;
+            block.number > self.currentRequest.startBlock + _relayEntryTimeout;
     }
 
     /// @notice Calculates a relay entry timeout.
