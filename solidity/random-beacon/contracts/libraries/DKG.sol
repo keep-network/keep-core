@@ -19,8 +19,6 @@ library DKG {
     }
 
     struct Data {
-        // Address of the Sortition Pool contract.
-        SortitionPool sortitionPool;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -135,30 +133,17 @@ library DKG {
 
     event DkgSeedTimedOut();
 
-    /// @notice Initializes the sortitionPool parameter. Can be performed only once.
-    /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
-        internal
-    {
-        require(
-            address(self.sortitionPool) == address(0),
-            "Sortition Pool address already set"
-        );
-
-        self.sortitionPool = _sortitionPool;
-    }
-
     /// @notice Determines the current state of group creation. It doesn't take
     ///         timeouts into consideration. The timeouts should be tracked and
     ///         notified separately.
-    function currentState(Data storage self)
+    function currentState(Data storage self, SortitionPool sortitionPool)
         internal
         view
         returns (State state)
     {
         state = State.IDLE;
 
-        if (self.sortitionPool.isLocked()) {
+        if (sortitionPool.isLocked()) {
             state = State.AWAITING_SEED;
 
             if (self.startBlock > 0) {
@@ -177,17 +162,26 @@ library DKG {
 
     /// @notice Locks the sortition pool and starts awaiting for the
     ///         group creation seed.
-    function lockState(Data storage self) internal {
-        require(currentState(self) == State.IDLE, "current state is not IDLE");
+    function lockState(Data storage self, SortitionPool sortitionPool)
+        internal
+    {
+        require(
+            currentState(self, sortitionPool) == State.IDLE,
+            "current state is not IDLE"
+        );
 
         emit DkgStateLocked();
 
-        self.sortitionPool.lock();
+        sortitionPool.lock();
     }
 
-    function start(Data storage self, uint256 seed) internal {
+    function start(
+        Data storage self,
+        SortitionPool sortitionPool,
+        uint256 seed
+    ) internal {
         require(
-            currentState(self) == State.AWAITING_SEED,
+            currentState(self, sortitionPool) == State.AWAITING_SEED,
             "current state is not AWAITING_SEED"
         );
 
@@ -198,14 +192,21 @@ library DKG {
         emit DkgStarted(seed);
     }
 
-    function submitResult(Data storage self, Result calldata result) external {
+    function submitResult(
+        Data storage self,
+        SortitionPool sortitionPool,
+        Result calldata result
+    ) external {
         require(
-            currentState(self) == State.AWAITING_RESULT,
+            currentState(self, sortitionPool) == State.AWAITING_RESULT,
             "current state is not AWAITING_RESULT"
         );
-        require(!hasDkgTimedOut(self), "dkg timeout already passed");
+        require(
+            !hasDkgTimedOut(self, sortitionPool),
+            "dkg timeout already passed"
+        );
 
-        verify(self, result);
+        verify(self, sortitionPool, result);
 
         // TODO: Check with sortition pool that all members have minimum stake.
         // Check all members in one call or at least members that signed the result.
@@ -234,9 +235,13 @@ library DKG {
     ///         by result submission offset that include blocks that were mined
     ///         while invalid result has been registered until it got challenged.
     /// @return True if DKG timed out, false otherwise.
-    function hasDkgTimedOut(Data storage self) internal view returns (bool) {
+    function hasDkgTimedOut(Data storage self, SortitionPool sortitionPool)
+        internal
+        view
+        returns (bool)
+    {
         return
-            currentState(self) == State.AWAITING_RESULT &&
+            currentState(self, sortitionPool) == State.AWAITING_RESULT &&
             block.number >
             (self.startBlock +
                 offchainDkgTime +
@@ -257,13 +262,15 @@ library DKG {
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     ///      Members indexing in the group starts with 1.
     /// @param result DKG result which will be verified.
-    function verify(Data storage self, Result calldata result) internal view {
+    function verify(
+        Data storage self,
+        SortitionPool sortitionPool,
+        Result calldata result
+    ) internal view {
         // TODO: Verify if submitter is valid staker and signatures come from valid
         // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
 
         require(result.submitterMemberIndex > 0, "Invalid submitter index");
-
-        SortitionPool sortitionPool = self.sortitionPool;
 
         require(
             sortitionPool.getIDOperator(
@@ -360,23 +367,27 @@ library DKG {
     }
 
     /// @notice Notifies about DKG timeout.
-    function notifyTimeout(Data storage self) internal {
-        require(hasDkgTimedOut(self), "dkg has not timed out");
+    function notifyTimeout(Data storage self, SortitionPool sortitionPool)
+        internal
+    {
+        require(hasDkgTimedOut(self, sortitionPool), "dkg has not timed out");
 
         emit DkgTimedOut();
     }
 
     /// @notice Notifies about the seed was not delivered and restores the
     ///         initial DKG state (IDLE).
-    function notifySeedTimedOut(Data storage self) internal {
+    function notifySeedTimedOut(Data storage self, SortitionPool sortitionPool)
+        internal
+    {
         require(
-            currentState(self) == State.AWAITING_SEED,
+            currentState(self, sortitionPool) == State.AWAITING_SEED,
             "current state is not AWAITING_SEED"
         );
 
         emit DkgSeedTimedOut();
 
-        self.sortitionPool.unlock();
+        sortitionPool.unlock();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
@@ -389,12 +400,13 @@ library DKG {
     /// @param result Result to approve. Must match the submitted result stored
     ///        during `submitResult`.
     /// @return misbehavedMembers Identifiers of members who misbehaved during DKG.
-    function approveResult(Data storage self, Result calldata result)
-        external
-        returns (uint32[] memory misbehavedMembers)
-    {
+    function approveResult(
+        Data storage self,
+        SortitionPool sortitionPool,
+        Result calldata result
+    ) external returns (uint32[] memory misbehavedMembers) {
         require(
-            currentState(self) == State.CHALLENGE,
+            currentState(self, sortitionPool) == State.CHALLENGE,
             "current state is not CHALLENGE"
         );
 
@@ -414,7 +426,7 @@ library DKG {
         // Extract submitter member address. Submitter member index is in
         // range [1, 64] so we need to -1 when fetching identifier from members
         // array.
-        address submitterMember = self.sortitionPool.getIDOperator(
+        address submitterMember = sortitionPool.getIDOperator(
             result.members[result.submitterMemberIndex - 1]
         );
 
@@ -451,12 +463,16 @@ library DKG {
     /// @return maliciousResultHash Hash of the malicious result.
     /// @return maliciousMembers Identifiers of group members who signed the
     ///         malicious DKG result hash.
-    function challengeResult(Data storage self, Result calldata result)
+    function challengeResult(
+        Data storage self,
+        SortitionPool sortitionPool,
+        Result calldata result
+    )
         external
         returns (bytes32 maliciousResultHash, uint32[] memory maliciousMembers)
     {
         require(
-            currentState(self) == State.CHALLENGE,
+            currentState(self, sortitionPool) == State.CHALLENGE,
             "current state is not CHALLENGE"
         );
 
@@ -476,7 +492,7 @@ library DKG {
         // based on seed used for current DKG execution.
         bytes32 actualGroupMembersHash = keccak256(
             abi.encodePacked(
-                self.sortitionPool.selectGroup(groupSize, bytes32(self.seed))
+                sortitionPool.selectGroup(groupSize, bytes32(self.seed))
             )
         );
 
@@ -517,9 +533,13 @@ library DKG {
     /// @notice Set resultChallengePeriodLength parameter.
     function setResultChallengePeriodLength(
         Data storage self,
+        SortitionPool sortitionPool,
         uint256 newResultChallengePeriodLength
     ) internal {
-        require(currentState(self) == State.IDLE, "current state is not IDLE");
+        require(
+            currentState(self, sortitionPool) == State.IDLE,
+            "current state is not IDLE"
+        );
 
         require(
             newResultChallengePeriodLength > 0,
@@ -534,9 +554,13 @@ library DKG {
     /// @notice Set resultSubmissionEligibilityDelay parameter.
     function setResultSubmissionEligibilityDelay(
         Data storage self,
+        SortitionPool sortitionPool,
         uint256 newResultSubmissionEligibilityDelay
     ) internal {
-        require(currentState(self) == State.IDLE, "current state is not IDLE");
+        require(
+            currentState(self, sortitionPool) == State.IDLE,
+            "current state is not IDLE"
+        );
 
         require(
             newResultSubmissionEligibilityDelay > 0,
@@ -550,12 +574,12 @@ library DKG {
 
     /// @notice Completes DKG by cleaning up state.
     /// @dev Should be called after DKG times out or a result is approved.
-    function complete(Data storage self) internal {
+    function complete(Data storage self, SortitionPool sortitionPool) internal {
         delete self.startBlock;
         delete self.seed;
         delete self.resultSubmissionStartBlockOffset;
         submittedResultCleanup(self);
-        self.sortitionPool.unlock();
+        sortitionPool.unlock();
     }
 
     /// @notice Cleans up submitted result state either after DKG completion

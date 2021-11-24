@@ -278,9 +278,8 @@ contract RandomBeacon is Ownable {
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
-        dkg.initSortitionPool(_sortitionPool);
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(10);
+        dkg.setResultChallengePeriodLength(sortitionPool, 1440); // ~6h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(sortitionPool, 10);
 
         relay.initSeedEntry();
         relay.setRelayEntrySubmissionEligibilityDelay(10);
@@ -372,8 +371,12 @@ contract RandomBeacon is Ownable {
         uint256 _dkgResultChallengePeriodLength,
         uint256 _dkgResultSubmissionEligibilityDelay
     ) external onlyOwner {
-        dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
+        dkg.setResultChallengePeriodLength(
+            sortitionPool,
+            _dkgResultChallengePeriodLength
+        );
         dkg.setResultSubmissionEligibilityDelay(
+            sortitionPool,
             _dkgResultSubmissionEligibilityDelay
         );
 
@@ -513,8 +516,9 @@ contract RandomBeacon is Ownable {
     function genesis() external {
         require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
 
-        dkg.lockState();
+        dkg.lockState(sortitionPool);
         dkg.start(
+            sortitionPool,
             uint256(keccak256(abi.encodePacked(genesisSeed, block.number)))
         );
     }
@@ -539,7 +543,7 @@ contract RandomBeacon is Ownable {
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
-        dkg.submitResult(dkgResult);
+        dkg.submitResult(sortitionPool, dkgResult);
 
         groups.addCandidateGroup(
             dkgResult.groupPubKey,
@@ -551,10 +555,10 @@ contract RandomBeacon is Ownable {
     /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
     ///         reward to the notifier.
     function notifyDkgTimeout() external {
-        dkg.notifyTimeout();
+        dkg.notifyTimeout(sortitionPool);
         // Pay the sortition pool unlocking reward.
         tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
-        dkg.complete();
+        dkg.complete(sortitionPool);
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
@@ -568,7 +572,10 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(DKG.Result calldata dkgResult) external {
-        uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
+        uint32[] memory misbehavedMembers = dkg.approveResult(
+            sortitionPool,
+            dkgResult
+        );
 
         uint256 maintenancePoolBalance = tToken.balanceOf(address(this));
         uint256 rewardToPay = Math.min(
@@ -582,7 +589,7 @@ contract RandomBeacon is Ownable {
         }
 
         groups.activateCandidateGroup();
-        dkg.complete();
+        dkg.complete(sortitionPool);
         // TODO: Check if this function is cheap enough and it will be
         //       profitable for the DKG result submitter to call it.
     }
@@ -595,7 +602,7 @@ contract RandomBeacon is Ownable {
     ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
         (bytes32 maliciousResultHash, uint32[] memory maliciousMembers) = dkg
-            .challengeResult(dkgResult);
+            .challengeResult(sortitionPool, dkgResult);
 
         uint256 slashingAmount = maliciousDkgResultSlashingAmount;
         address[] memory maliciousMembersAddresses = sortitionPool
@@ -619,7 +626,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Check current group creation state.
     function getGroupCreationState() external view returns (DKG.State) {
-        return dkg.currentState();
+        return dkg.currentState(sortitionPool);
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
@@ -628,7 +635,7 @@ contract RandomBeacon is Ownable {
     ///         and DKG can be notified about the timeout.
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut() external view returns (bool) {
-        return dkg.hasDkgTimedOut();
+        return dkg.hasDkgTimedOut(sortitionPool);
     }
 
     function getGroupsRegistry() external view returns (bytes32[] memory) {
@@ -678,9 +685,9 @@ contract RandomBeacon is Ownable {
         // group selection seed.
         if (
             relay.requestCount % groupCreationFrequency == 0 &&
-            dkg.currentState() == DKG.State.IDLE
+            dkg.currentState(sortitionPool) == DKG.State.IDLE
         ) {
-            dkg.lockState();
+            dkg.lockState(sortitionPool);
         }
     }
 
@@ -729,8 +736,8 @@ contract RandomBeacon is Ownable {
 
         // If DKG is awaiting a seed, that means the we should start the actual
         // group creation process.
-        if (dkg.currentState() == DKG.State.AWAITING_SEED) {
-            dkg.start(uint256(keccak256(entry)));
+        if (dkg.currentState(sortitionPool) == DKG.State.AWAITING_SEED) {
+            dkg.start(sortitionPool, uint256(keccak256(entry)));
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
@@ -770,8 +777,8 @@ contract RandomBeacon is Ownable {
 
             // If DKG is awaiting a seed, we should notify about its timeout to
             // avoid blocking the future group creation.
-            if (dkg.currentState() == DKG.State.AWAITING_SEED) {
-                dkg.notifySeedTimedOut();
+            if (dkg.currentState(sortitionPool) == DKG.State.AWAITING_SEED) {
+                dkg.notifySeedTimedOut(sortitionPool);
             }
         }
     }
@@ -809,7 +816,7 @@ contract RandomBeacon is Ownable {
     /// @dev This function is meant to be used by test stubs which inherits
     ///      from this contract and needs to lock the DKG state arbitrarily.
     function dkgLockState() internal {
-        dkg.lockState();
+        dkg.lockState(sortitionPool);
     }
 
     /// @notice The minimum authorization amount required so that operator can
