@@ -156,16 +156,13 @@ const TokenBalance = ({
           {renderAmount()}
         </div>
       </header>
-      <ProgressBar
-        value={staked}
-        total={totalBalance}
-        color={colors.primary}
-        bgColor={colors.grey20}
-      >
+      <ProgressBar total={totalBalance} bgColor={colors.grey20}>
         <ProgressBar.Inline
           height={8}
           className={`balance__${type}__progressbar`}
-        />
+        >
+          <ProgressBar.InlineItem value={staked} color={colors.primary} />
+        </ProgressBar.Inline>
       </ProgressBar>
       <span className="text-small text-grey-40">
         {isConnected ? inPercentage : "-"}% Staked

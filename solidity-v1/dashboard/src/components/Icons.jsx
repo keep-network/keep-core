@@ -42,6 +42,7 @@ import { ReactComponent as MetaMask } from "../static/svg/metamask.svg"
 import { ReactComponent as Trezor } from "../static/svg/trezor.svg"
 import { ReactComponent as Ledger } from "../static/svg/ledger.svg"
 import { ReactComponent as Add } from "../static/svg/add.svg"
+import { ReactComponent as Subtract } from "../static/svg/subtract.svg"
 import { ReactComponent as ArrowDown } from "../static/svg/arrow-down.svg"
 export { ReactComponent as Warning } from "../static/svg/warning.svg"
 export { ReactComponent as Wallet } from "../static/svg/wallet.svg"
@@ -64,7 +65,13 @@ export { ReactComponent as CoveragePool } from "../static/svg/coverage-pool.svg"
 export { ReactComponent as SaddleWhite } from "../static/svg/saddle-logo.svg"
 export { ReactComponent as Swap } from "../static/svg/swap.svg"
 export { ReactComponent as ChevronRight } from "../static/svg/chevron-right.svg"
+export { ReactComponent as ChevronUp } from "../static/svg/chevron-up.svg"
+export { ReactComponent as ChevronDown } from "../static/svg/chevron-down.svg"
 export { ReactComponent as Refresh } from "../static/svg/refresh.svg"
+export { ReactComponent as CovPoolsHowItWorksDiagram } from "../static/svg/cov-pools-how-it-works-diagram.svg"
+export { ReactComponent as TTokenSymbol } from "../static/svg/t-token-symbol.svg"
+export { ReactComponent as KeepTUpgrade } from "../static/svg/keep-t-upgrade-logo.svg"
+export { ReactComponent as Star } from "../static/svg/star.svg"
 
 const Badge = ({ height, width }) => (
   <svg
@@ -404,5 +411,6 @@ export {
   NetworkStatusIndicator,
   Saddle,
   Add,
+  Subtract,
   ArrowDown,
 }

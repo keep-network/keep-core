@@ -3,17 +3,7 @@ import { expect } from "chai"
 import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
 
-import type {
-  RandomBeacon,
-  RandomBeaconGovernance,
-  SortitionPoolStub,
-} from "../typechain"
-
-const fixture = async () => {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-  return randomBeaconDeployment(sortitionPoolStub)
-}
+import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
@@ -33,6 +23,10 @@ describe("RandomBeaconGovernance", () => {
   const initialSortitionPoolUnlockingReward = 5000
   const initialRelayEntrySubmissionFailureSlashingAmount = 1000
   const initialMaliciousDkgResultSlashingAmount = 1000000000
+  const initialSortitionPoolRewardsBanDuration = 1209600
+  const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
+  const initialMinimumAuthorization = 1000000
+  const initialAuthorizationDecreaseDelay = 86400
 
   // prettier-ignore
   before(async () => {
@@ -40,7 +34,7 @@ describe("RandomBeaconGovernance", () => {
   })
 
   beforeEach(async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
 
@@ -68,13 +62,22 @@ describe("RandomBeaconGovernance", () => {
       .connect(governance)
       .updateRewardParameters(
         initialDkgResultSubmissionReward,
-        initialSortitionPoolUnlockingReward
+        initialSortitionPoolUnlockingReward,
+        initialSortitionPoolRewardsBanDuration,
+        initialRelayEntryTimeoutNotificationRewardMultiplier
       )
     await randomBeacon
       .connect(governance)
       .updateSlashingParameters(
         initialRelayEntrySubmissionFailureSlashingAmount,
         initialMaliciousDkgResultSlashingAmount
+      )
+
+    await randomBeacon
+      .connect(governance)
+      .updateAuthorizationParameters(
+        initialMinimumAuthorization,
+        initialAuthorizationDecreaseDelay
       )
 
     const RandomBeaconGovernance = await ethers.getContractFactory(
@@ -1698,6 +1701,498 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingMaliciousDkgResultSlashingAmountUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginSortitionPoolRewardsBanDurationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginSortitionPoolRewardsBanDurationUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginSortitionPoolRewardsBanDurationUpdate(123)
+      })
+
+      it("should not update the sortition pool rewards ban duration", async () => {
+        expect(
+          await randomBeacon.sortitionPoolRewardsBanDuration()
+        ).to.be.equal(initialSortitionPoolRewardsBanDuration)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingSortitionPoolRewardsBanDurationUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the SortitionPoolRewardsBanDurationUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "SortitionPoolRewardsBanDurationUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeSortitionPoolRewardsBanDurationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginSortitionPoolRewardsBanDurationUpdate(123)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginSortitionPoolRewardsBanDurationUpdate(123)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        })
+
+        it("should update the sortition pool rewards ban duration", async () => {
+          expect(
+            await randomBeacon.sortitionPoolRewardsBanDuration()
+          ).to.be.equal(123)
+        })
+
+        it("should emit SortitionPoolRewardsBanDurationUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "SortitionPoolRewardsBanDurationUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingSortitionPoolRewardsBanDurationUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginRelayEntryTimeoutNotificationRewardMultiplierUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called with value >100", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(101)
+        ).to.be.revertedWith("Maximum value is 100")
+      })
+    })
+
+    context("when the caller is the owner and value is correct", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
+      })
+
+      it("should not update the relay entry timeout notification reward multiplier", async () => {
+        expect(
+          await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+        ).to.be.equal(initialRelayEntryTimeoutNotificationRewardMultiplier)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingRelayEntryTimeoutNotificationRewardMultiplierUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the RelayEntryTimeoutNotificationRewardMultiplierUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "RelayEntryTimeoutNotificationRewardMultiplierUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
+        })
+
+        it("should update the relay entry timeout notification reward multiplier", async () => {
+          expect(
+            await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+          ).to.be.equal(100)
+        })
+
+        it("should emit RelayEntryTimeoutNotificationRewardMultiplierUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "RelayEntryTimeoutNotificationRewardMultiplierUpdated"
+            )
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingRelayEntryTimeoutNotificationRewardMultiplierUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginMinimumAuthorizationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginMinimumAuthorizationUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginMinimumAuthorizationUpdate(123)
+      })
+
+      it("should not update the minimum authorization amount", async () => {
+        expect(await randomBeacon.minimumAuthorization()).to.be.equal(
+          initialMinimumAuthorization
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingMimimumAuthorizationUpdateTime()
+        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+      })
+
+      it("should emit the MinimumAuthorizationUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(randomBeaconGovernance, "MinimumAuthorizationUpdateStarted")
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeMinimumAuthorizationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeMinimumAuthorizationUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeMinimumAuthorizationUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginMinimumAuthorizationUpdate(123)
+
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeMinimumAuthorizationUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginMinimumAuthorizationUpdate(123)
+
+          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeMinimumAuthorizationUpdate()
+        })
+
+        it("should update the minimum authorization amount", async () => {
+          expect(await randomBeacon.minimumAuthorization()).to.be.equal(123)
+        })
+
+        it("should emit MinimumAuthorizationUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "MinimumAuthorizationUpdated")
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingMimimumAuthorizationUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginAuthorizationDecreaseDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginAuthorizationDecreaseDelayUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseDelayUpdate(123)
+      })
+
+      it("should not update the authorization decrease delay", async () => {
+        expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
+          initialAuthorizationDecreaseDelay
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
+        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+      })
+
+      it("should emit the AuthorizationDecreaseDelayUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "AuthorizationDecreaseDelayUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeAuthorizationDecreaseDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseDelayUpdate(123)
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginAuthorizationDecreaseDelayUpdate(123)
+
+          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        })
+
+        it("should update the authorization decrease delay", async () => {
+          expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
+            123
+          )
+        })
+
+        it("should emit AuthorizationDecreaseDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "AuthorizationDecreaseDelayUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

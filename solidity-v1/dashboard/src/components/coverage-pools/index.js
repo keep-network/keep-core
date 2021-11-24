@@ -1,13 +1,13 @@
 import DepositForm from "./DepositForm"
-import InitiateDepositModal from "./InitiateDepositModal"
 import LearnMoreBanner from "./LearnMoreBanner"
 import MetricsSection from "./MetricsSection"
 import CooldownPeriodBanner from "./CooldownPeriodBanner"
+import WithdrawAmountForm from "./WithdrawAmountForm"
 
 export {
   DepositForm,
-  InitiateDepositModal,
   LearnMoreBanner,
   MetricsSection,
   CooldownPeriodBanner,
+  WithdrawAmountForm,
 }

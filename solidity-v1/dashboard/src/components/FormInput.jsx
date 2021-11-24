@@ -4,7 +4,7 @@ import * as Icons from "./Icons"
 import Tooltip from "./Tooltip"
 import OnlyIf from "./OnlyIf"
 
-const FormInput = ({
+const FormInputBase = ({
   label,
   format,
   normalize,
@@ -13,11 +13,12 @@ const FormInput = ({
   leftIconComponent = null,
   inputAddon,
   tooltipProps = {},
+  hasError,
+  errorMsg,
   ...props
 }) => {
-  const [field, meta, helpers] = useField(props.name, props.type)
-  const inputAddonRef = useRef(null)
   const [inputPaddingRight, setInputPaddingRight] = useState(0)
+  const inputAddonRef = useRef(null)
 
   useLayoutEffect(() => {
     const inputAddonStyles = window.getComputedStyle(inputAddonRef.current)
@@ -67,13 +68,12 @@ const FormInput = ({
           </div>
         </OnlyIf>
         <input
-          {...field}
           {...props}
           onChange={(event) => {
             const value = event && event.target ? event.target.value : event
-            helpers.setValue(normalize ? normalize(value) : value)
+            props.onChange(event, normalize ? normalize(value) : value)
           }}
-          value={format ? format(field.value) : field.value}
+          value={format ? format(props.value) : props.value}
           style={{
             paddingRight: `${inputPaddingRight}px`,
             borderStyle: `${leftIconComponent ? "none" : "solid"}`,
@@ -83,15 +83,29 @@ const FormInput = ({
           {inputAddon}
         </div>
       </div>
-      {meta.touched && meta.error ? (
-        <div className="form-input__error">{meta.error}</div>
-      ) : null}
+      {hasError ? <div className="form-input__error">{errorMsg}</div> : null}
     </div>
   )
 }
 
-FormInput.defaultProps = {
+FormInputBase.defaultProps = {
   tooltipText: null,
 }
 
+const FormInput = (props) => {
+  const [field, meta, helpers] = useField(props.name, props.type)
+
+  return (
+    <FormInputBase
+      {...props}
+      {...field}
+      onChange={(_, value) => helpers.setValue(value)}
+      hasError={meta.touched && meta.error}
+      errorMsg={meta.error}
+    />
+  )
+}
+
 export default React.memo(FormInput)
+
+export { FormInputBase }

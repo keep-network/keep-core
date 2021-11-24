@@ -25,10 +25,13 @@ const List = ({
   renderItem = renderListItem,
   className = "",
   children,
+  ...restProps
 }) => {
   return (
     <ListContext.Provider value={{ items, renderItem }}>
-      <section className={`list ${className}`}> {children}</section>
+      <section className={`list ${className}`} {...restProps}>
+        {children}
+      </section>
     </ListContext.Provider>
   )
 }

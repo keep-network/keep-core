@@ -1,4 +1,4 @@
-import { add, sub, gt } from "../utils/arithmetics.utils"
+import { add, sub, gt, lt } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import moment from "moment"
@@ -175,16 +175,27 @@ const grantDeposited = (
 }
 
 const grantStaked = (grantToUpdate, { amount }) => {
-  grantToUpdate.staked = add(grantToUpdate.staked, amount).toString()
-  grantToUpdate.readyToRelease = sub(
-    grantToUpdate.readyToRelease,
-    amount
-  ).toString()
+  grantToUpdate.staked = add(grantToUpdate.staked, value).toString()
+  if (lt(amount, grantToUpdate.readyToRelease)) {
+    grantToUpdate.readyToRelease = "0"
+  } else {
+    grantToUpdate.readyToRelease = sub(
+      grantToUpdate.readyToRelease,
+      amount
+    ).toString()
+  }
 
   grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
     ? grantToUpdate.readyToRelease
     : "0"
-  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, amount)
+  if (lt(amount, grantToUpdate.availableToStake)) {
+    grantToUpdate.availableToStake = "0"
+  } else {
+    grantToUpdate.availableToStake = sub(
+      grantToUpdate.availableToStake,
+      amount
+    ).toString()
+  }
 
   return grantToUpdate
 }
@@ -193,9 +204,16 @@ const grantWithdrawn = (
   grantToUpdate,
   { amount, availableToStake, operator }
 ) => {
-  grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
-  grantToUpdate.released = add(grantToUpdate.released, amount)
-  const unlocked = add(grantToUpdate.released, grantToUpdate.staked)
+  if (lt(amount, grantToUpdate.readyToRelease)) {
+    grantToUpdate.readyToRelease = sub(
+      grantToUpdate.readyToRelease,
+      amount
+    ).toString()
+  } else {
+    grantToUpdate.readyToRelease = "0"
+  }
+  grantToUpdate.released = add(grantToUpdate.released, amount).toString()
+  const unlocked = add(grantToUpdate.released, grantToUpdate.staked).toString()
   if (!gt(unlocked, grantToUpdate.amount)) {
     grantToUpdate.unlocked = unlocked
   }

@@ -3,14 +3,7 @@ import { expect } from "chai"
 
 import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
-
-import type { RandomBeaconStub, SortitionPoolStub } from "../typechain"
-
-const fixture = async () => {
-  const SortitionPoolStub = await ethers.getContractFactory("SortitionPoolStub")
-  const sortitionPoolStub: SortitionPoolStub = await SortitionPoolStub.deploy()
-  return randomBeaconDeployment(sortitionPoolStub)
-}
+import type { RandomBeaconStub } from "../typechain"
 
 describe("RandomBeacon - Parameters", () => {
   let governance: Signer
@@ -23,7 +16,7 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    const contracts = await waffle.loadFixture(randomBeaconDeployment)
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
   })
 
@@ -126,6 +119,55 @@ describe("RandomBeacon - Parameters", () => {
     })
   })
 
+  describe("updateAuthorizationParameters", () => {
+    const minimumAuthorization = 4200000
+    const authorizationDecreaseDelay = 86400
+
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon
+            .connect(thirdParty)
+            .updateAuthorizationParameters(
+              minimumAuthorization,
+              authorizationDecreaseDelay
+            )
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeacon
+          .connect(governance)
+          .updateAuthorizationParameters(
+            minimumAuthorization,
+            authorizationDecreaseDelay
+          )
+      })
+
+      it("should update the group creation frequency", async () => {
+        expect(await randomBeacon.minimumAuthorization()).to.be.equal(
+          minimumAuthorization
+        )
+      })
+
+      it("should update the authorization decrease delay", async () => {
+        expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
+          authorizationDecreaseDelay
+        )
+      })
+
+      it("should emit the AuthorizationParametersUpdated event", async () => {
+        await expect(tx)
+          .to.emit(randomBeacon, "AuthorizationParametersUpdated")
+          .withArgs(minimumAuthorization, authorizationDecreaseDelay)
+      })
+    })
+  })
+
   describe("updateGroupCreationParameters", () => {
     const groupCreationFrequency = 100
     const groupLifetime = 200
@@ -223,6 +265,8 @@ describe("RandomBeacon - Parameters", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
+    const sortitionPoolRewardsBanDuration = 300
+    const relayEntryTimeoutNotificationRewardMultiplier = 10
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -231,7 +275,9 @@ describe("RandomBeacon - Parameters", () => {
             .connect(thirdParty)
             .updateRewardParameters(
               dkgResultSubmissionReward,
-              sortitionPoolUnlockingReward
+              sortitionPoolUnlockingReward,
+              sortitionPoolRewardsBanDuration,
+              relayEntryTimeoutNotificationRewardMultiplier
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -244,7 +290,9 @@ describe("RandomBeacon - Parameters", () => {
           .connect(governance)
           .updateRewardParameters(
             dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward
+            sortitionPoolUnlockingReward,
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
           )
       })
 
@@ -260,10 +308,27 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
+      it("should update the sortition pool rewards ban duration", async () => {
+        expect(
+          await randomBeacon.sortitionPoolRewardsBanDuration()
+        ).to.be.equal(sortitionPoolRewardsBanDuration)
+      })
+
+      it("should update the relay entry timeout notification reward multiplier", async () => {
+        expect(
+          await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
+        ).to.be.equal(relayEntryTimeoutNotificationRewardMultiplier)
+      })
+
       it("should emit the RewardParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
-          .withArgs(dkgResultSubmissionReward, sortitionPoolUnlockingReward)
+          .withArgs(
+            dkgResultSubmissionReward,
+            sortitionPoolUnlockingReward,
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier
+          )
       })
     })
   })

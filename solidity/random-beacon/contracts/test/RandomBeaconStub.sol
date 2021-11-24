@@ -1,14 +1,15 @@
 pragma solidity ^0.8.6;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "../RandomBeacon.sol";
 import "../libraries/DKG.sol";
 import "../libraries/Callback.sol";
 import "../libraries/Groups.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract RandomBeaconStub is RandomBeacon {
     constructor(
-        ISortitionPool _sortitionPool,
+        SortitionPool _sortitionPool,
         IERC20 _tToken,
         IRandomBeaconStaking _staking
     ) RandomBeacon(_sortitionPool, _tToken, _staking) {}
@@ -57,5 +58,13 @@ contract RandomBeaconStub is RandomBeacon {
         // just add groupId without sorting for simplicity
         groups.activeTerminatedGroups.push(groupId);
         groups.activeGroupsCount--;
+    }
+
+    function publicDkgLockState() external {
+        dkgLockState();
+    }
+
+    function hasGasDeposit(address operator) external view returns (bool) {
+        return gasStation.gasDeposits[operator][0] != 0;
     }
 }

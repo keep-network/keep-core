@@ -580,10 +580,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
-"@keep-network/hardhat-helpers@^0.2.0-pre.4":
-  version "0.2.0-pre.4"
-  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.2.0-pre.4.tgz#692ca5096b2f40aca83c0d1629e2103e7cd8e3d9"
-  integrity sha512-g77I9irZueqxljBo8xJ4J0EpVhWFq+yo1FPe8lAl9udSc4RQ69oyBNSLOZf92YA3DVWakmq0ZQ9RRGX/+8YPYw==
+"@keep-network/hardhat-helpers@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.4.0.tgz#2ac2416c80300624cc4dd17a35798cfa91929dcb"
+  integrity sha512-aH0gFosxal/CjBrPP8f+mYZG0jgRjGMrDFLQf1fuRBHIMIoBdf6Y42EQ6UpmxXoPxK7o21DzBsjLaGFjCEsG3w==
 
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.0":
   version "0.1.0-pre.0"
@@ -597,12 +597,12 @@
   version "0.0.1"
   resolved "https://codeload.github.com/keep-network/prettier-config-keep/tar.gz/a1a333e7ac49928a0f6ed39421906dd1e46ab0f3"
 
-"@keep-network/sortition-pools@^1.2.0-dev.4":
-  version "1.2.0-dev.4"
-  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.4.tgz#082c764239c4fdb23ead90f6c0936aadae161a3a"
-  integrity sha512-q8fFdkN+DIZFmoG3skjQUvz76g7qF9gFxRRNWTJKaq7QF4kg46z2ucVlvwEL6Nyu5/6NUKrXD3oEGgFgFgiuKw==
+"@keep-network/sortition-pools@1.2.0-dev.11":
+  version "1.2.0-dev.11"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.11.tgz#b2f52aa658cd234a893ff32f2488e7fbb515dd5a"
+  integrity sha512-dHbIAS3JgZmtla3Ap8K2RH2XrlRhUB9bi7PRdrDU1B12qUEp68SNbHf0xgZrucOluQtBFg8q6KXsnWEZknulVQ==
   dependencies:
-    "@openzeppelin/contracts" "^2.4.0"
+    "@openzeppelin/contracts" "^4.3.2"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -638,15 +638,15 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@openzeppelin/contracts@^2.4.0":
-  version "2.5.1"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-2.5.1.tgz#c76e3fc57aa224da3718ec351812a4251289db31"
-  integrity sha512-qIy6tLx8rtybEsIOAlrM4J/85s2q2nPkDqj/Rx46VakBZ0LwtFhXIVub96LXHczQX0vaqmAueDqNPXtbSXSaYQ==
-
 "@openzeppelin/contracts@^4.1.0", "@openzeppelin/contracts@^4.3.2":
   version "4.3.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.3.2.tgz#ff80affd6d352dbe1bbc5b4e1833c41afd6283b6"
   integrity sha512-AybF1cesONZStg5kWf6ao9OlqTZuPqddvprc0ky7lrUVOjXeKpmQ2Y9FK+6ygxasb+4aic4O5pneFBfwVsRRRg==
+
+"@openzeppelin/contracts@^4.3.3":
+  version "4.3.3"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.3.3.tgz#ff6ee919fc2a1abaf72b22814bfb72ed129ec137"
+  integrity sha512-tDBopO1c98Yk7Cv/PZlHqrvtVjlgK5R4J6jxLwoO7qxK4xqOiZG+zSkIvGFpPZ0ikc3QOED3plgdqjgNTnBc7g==
 
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
@@ -4983,11 +4983,6 @@ hardhat-contract-sizer@^2.1.1:
   dependencies:
     cli-table3 "^0.6.0"
     colors "^1.4.0"
-
-hardhat-dependency-compiler@^1.1.1:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/hardhat-dependency-compiler/-/hardhat-dependency-compiler-1.1.2.tgz#02867b7c6dd3de4924d9d3d6593feab8408f1eeb"
-  integrity sha512-LVnsPSZnGvzWVvlpewlkPKlPtFP/S9V41RC1fd/ygZc4jkG8ubNlfE82nwiGw5oPueHSmFi6TACgmyrEOokK8w==
 
 hardhat-deploy@^0.9.1:
   version "0.9.3"

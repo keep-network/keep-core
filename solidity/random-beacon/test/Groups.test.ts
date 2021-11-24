@@ -594,7 +594,7 @@ describe("Groups", () => {
           let activationBlockNumber1: number
           let tx: ContractTransaction
 
-          // TODO: Update as the latest group got actiavted
+          // TODO: Update as the latest group got activated
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,
@@ -799,7 +799,7 @@ describe("Groups", () => {
           let activationBlockNumber1: number
           let tx: ContractTransaction
 
-          // TODO: Update as the latest group got actiavted
+          // TODO: Update as the latest group got activated
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,

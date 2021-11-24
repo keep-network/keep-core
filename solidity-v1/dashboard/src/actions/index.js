@@ -1,5 +1,6 @@
 import * as TBTCV2MigrationActions from "./tbtc-migration"
 import * as KeepBalanceActions from "./keep-balance"
+import * as modal from "./modal"
 
 // COPY STAKE
 export const FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST =
@@ -53,4 +54,8 @@ export const tbtcV2Migration = {
 
 export const keepBalanceActions = {
   ...KeepBalanceActions,
+}
+
+export const modalActions = {
+  ...modal,
 }

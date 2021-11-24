@@ -3,8 +3,8 @@
 pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
-import {ISortitionPool} from "../RandomBeacon.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -20,7 +20,7 @@ library DKG {
 
     struct Data {
         // Address of the Sortition Pool contract.
-        ISortitionPool sortitionPool;
+        SortitionPool sortitionPool;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -35,6 +35,10 @@ library DKG {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
+        // Misbehaved (inactive or disqualified) members from the DKG result.
+        uint32[] submittedResultMisbehavedMembers;
+        // Address of the DKG result submitter
+        address resultSubmitter;
     }
 
     /// @notice DKG result.
@@ -69,6 +73,8 @@ library DKG {
         // Group creation is not in progress. It is a state set after group creation
         // completion either by timeout or by a result approval.
         IDLE,
+        // Group creation is awaiting the seed and sortition pool is locked.
+        AWAITING_SEED,
         // Off-chain DKG protocol execution is in progress. A result is being calculated
         // by the clients in this state. It's not yet possible to submit the result.
         KEY_GENERATION,
@@ -85,16 +91,18 @@ library DKG {
     /// @dev Size of a group in the threshold relay.
     uint256 public constant groupSize = 64;
 
-    /// @dev Minimum number of group members needed to interact according to the
-    ///      protocol to produce a relay entry.
+    /// @dev The minimum number of group members needed to interact according to
+    ///      the protocol to produce a relay entry. The adversary can not learn
+    ///      anything about the key as long as it does not break into
+    ///      groupThreshold+1 of members.
     uint256 public constant groupThreshold = 33;
 
-    /// @dev The minimum number of signatures required to support DKG result.
-    ///      This number needs to be at least the same as the signing threshold
-    ///      and it is recommended to make it higher than the signing threshold
-    ///      to keep a safety margin for in case some members become inactive.
-    uint256 public constant signatureThreshold =
-        groupThreshold + (groupSize - groupThreshold) / 2;
+    /// @dev The minimum number of active and properly behaving group members
+    ///      during the DKG needed to accept the result. This number is higher
+    ///      than `groupThreshold` to keep a safety margin for members becoming
+    ///      inactive after DKG so that the group can still produce a relay
+    ///      entry.
+    uint256 public constant activeThreshold = 58; // 90% of groupSize
 
     /// @notice Time in blocks after which DKG result is complete and ready to be
     //          published by clients.
@@ -123,9 +131,13 @@ library DKG {
         address indexed challenger
     );
 
+    event DkgStateLocked();
+
+    event DkgSeedTimedOut();
+
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, ISortitionPool _sortitionPool)
+    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
         internal
     {
         require(
@@ -146,28 +158,46 @@ library DKG {
     {
         state = State.IDLE;
 
-        if (self.startBlock > 0) {
-            state = State.KEY_GENERATION;
+        if (self.sortitionPool.isLocked()) {
+            state = State.AWAITING_SEED;
 
-            if (block.number > self.startBlock + offchainDkgTime) {
-                state = State.AWAITING_RESULT;
+            if (self.startBlock > 0) {
+                state = State.KEY_GENERATION;
 
-                if (self.submittedResultBlock > 0) {
-                    state = State.CHALLENGE;
+                if (block.number > self.startBlock + offchainDkgTime) {
+                    state = State.AWAITING_RESULT;
+
+                    if (self.submittedResultBlock > 0) {
+                        state = State.CHALLENGE;
+                    }
                 }
             }
         }
     }
 
-    function start(Data storage self, uint256 seed) internal {
+    /// @notice Locks the sortition pool and starts awaiting for the
+    ///         group creation seed.
+    function lockState(Data storage self) internal {
         require(currentState(self) == State.IDLE, "current state is not IDLE");
+
+        emit DkgStateLocked();
+
+        self.sortitionPool.lock();
+    }
+
+    function start(Data storage self, uint256 seed) internal {
+        require(
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
+        );
 
         self.startBlock = block.number;
 
+        // slither-disable-next-line reentrancy-events
         emit DkgStarted(seed);
     }
 
-    function submitResult(Data storage self, Result calldata result) internal {
+    function submitResult(Data storage self, Result calldata result) external {
         require(
             currentState(self) == State.AWAITING_RESULT,
             "current state is not AWAITING_RESULT"
@@ -189,8 +219,16 @@ library DKG {
         // We need to know in advance that there will be something that we can
         // slash the members from.
 
+        for (uint256 i = 0; i < result.misbehavedMembersIndices.length; i++) {
+            // group member indices start from 1, so we need to -1 on misbehaved
+            uint32 memberArrayPosition = result.misbehavedMembersIndices[i] - 1;
+            self.submittedResultMisbehavedMembers.push(
+                result.members[memberArrayPosition]
+            );
+        }
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
+        self.resultSubmitter = msg.sender;
 
         emit DkgResultSubmitted(
             self.submittedResultHash,
@@ -253,7 +291,7 @@ library DKG {
 
         require(submitterMemberIndex > 0, "Invalid submitter index");
 
-        ISortitionPool sortitionPool = self.sortitionPool;
+        SortitionPool sortitionPool = self.sortitionPool;
 
         require(
             sortitionPool.getIDOperator(members[submitterMemberIndex - 1]) ==
@@ -275,8 +313,8 @@ library DKG {
         require(groupPubKey.length == 128, "Malformed group public key");
 
         require(
-            misbehavedMembersIndices.length <= groupSize - signatureThreshold,
-            "Unexpected misbehaved members count"
+            groupSize - misbehavedMembersIndices.length >= activeThreshold,
+            "Too many members misbehaving during DKG"
         );
 
         if (misbehavedMembersIndices.length > 1) {
@@ -296,7 +334,7 @@ library DKG {
             signaturesCount == signingMembersIndices.length,
             "Unexpected signatures count"
         );
-        require(signaturesCount >= signatureThreshold, "Too few signatures");
+        require(signaturesCount >= groupThreshold, "Too few signatures");
         require(signaturesCount <= groupSize, "Too many signatures");
 
         bytes32 resultHash = keccak256(
@@ -339,26 +377,51 @@ library DKG {
     }
 
     /// @notice Notifies about DKG timeout.
-    function notifyTimeout(Data storage self) internal cleanup(self) {
+    function notifyTimeout(Data storage self) internal {
         require(hasDkgTimedOut(self), "dkg has not timed out");
 
         emit DkgTimedOut();
     }
 
-    /// @notice Approves DKG result. Can be called after challenge period for the
-    ///         submitted result is finished. Considers the submitted result as
-    ///         valid and completes the group creation.
-    function approveResult(Data storage self) internal cleanup(self) {
+    /// @notice Notifies about the seed was not delivered and restores the
+    ///         initial DKG state (IDLE).
+    function notifySeedTimedOut(Data storage self) internal {
+        require(
+            currentState(self) == State.AWAITING_SEED,
+            "current state is not AWAITING_SEED"
+        );
+
+        emit DkgSeedTimedOut();
+
+        self.sortitionPool.unlock();
+    }
+
+    /// @notice Approves DKG result. Can be called when the challenge period for
+    ///         the submitted result is finished. Considers the submitted result
+    ///         as valid. For the first `resultSubmissionEligibilityDelay`
+    ///         blocks after the end of the challenge period can be called only
+    ///         by the DKG result submitter. After that time, can be called by
+    ///         anyone.
+    function approveResult(Data storage self) external {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
         );
 
+        uint256 challengePeriodEnd = self.submittedResultBlock +
+            self.parameters.resultChallengePeriodLength;
+
         require(
-            block.number >
-                self.submittedResultBlock +
-                    self.parameters.resultChallengePeriodLength,
+            block.number > challengePeriodEnd,
             "challenge period has not passed yet"
+        );
+
+        require(
+            msg.sender == self.resultSubmitter ||
+                block.number >
+                challengePeriodEnd +
+                    self.parameters.resultSubmissionEligibilityDelay,
+            "Only the DKG result submitter can approve the result at this moment"
         );
 
         emit DkgResultApproved(self.submittedResultHash, msg.sender);
@@ -368,7 +431,7 @@ library DKG {
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
     // TODO: When implementing challenges verify what parameters are required.
-    function challengeResult(Data storage self) internal {
+    function challengeResult(Data storage self) external {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -394,7 +457,9 @@ library DKG {
         bytes32 resultHash = self.submittedResultHash;
 
         delete self.submittedResultBlock;
+        delete self.resultSubmitter;
         delete self.submittedResultHash;
+        delete self.submittedResultMisbehavedMembers;
 
         emit DkgResultChallenged(resultHash, msg.sender);
     }
@@ -433,13 +498,15 @@ library DKG {
             .resultSubmissionEligibilityDelay = newResultSubmissionEligibilityDelay;
     }
 
-    /// @notice Cleans up state after DKG completion.
+    /// @notice Completes DKG by cleaning up state.
     /// @dev Should be called after DKG times out or a result is approved.
-    modifier cleanup(Data storage self) {
-        _;
+    function complete(Data storage self) internal {
         delete self.startBlock;
         delete self.resultSubmissionStartBlockOffset;
         delete self.submittedResultHash;
+        delete self.resultSubmitter;
+        delete self.submittedResultMisbehavedMembers;
         delete self.submittedResultBlock;
+        self.sortitionPool.unlock();
     }
 }

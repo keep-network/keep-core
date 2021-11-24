@@ -11,7 +11,7 @@ import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { getEventsFromTransaction, ZERO_ADDRESS } from "../utils/ethereum.utils"
-import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import { LIQUIDITY_REWARD_PAIRS, MODAL_TYPES } from "../constants/constants"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
@@ -31,6 +31,7 @@ import {
 import { keepBalanceActions } from "../actions"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
+import { showModal } from "../actions/modal"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
@@ -249,6 +250,7 @@ function* observeUndelegatedEvent() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { operator, undelegatedAt },
       } = yield take(contractEventCahnnel)
 
@@ -266,6 +268,18 @@ function* observeUndelegatedEvent() {
       const undelegationPeriod = yield select(
         (state) => state.staking.undelegationPeriod
       )
+
+      yield put(
+        showModal({
+          modalType: MODAL_TYPES.UndelegationInitiated,
+          modalProps: {
+            txHash: transactionHash,
+            undelegatedAt,
+            undelegationPeriod,
+          },
+        })
+      )
+
       const undelegation = {
         ...delegation,
         undelegatedAt: moment.unix(undelegatedAt),
@@ -314,6 +328,7 @@ function* observeRecoveredStakeEvent() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { operator },
       } = yield take(contractEventCahnnel)
 
@@ -325,6 +340,13 @@ function* observeRecoveredStakeEvent() {
       if (!recoveredUndelegation) {
         return
       }
+
+      yield put(
+        showModal({
+          modalType: MODAL_TYPES.StakingTokensClaimed,
+          modalProps: { txHash: transactionHash },
+        })
+      )
 
       if (!recoveredUndelegation.isFromGrant) {
         yield put({ type: "staking/remove_undelegation", payload: operator })
@@ -360,6 +382,7 @@ function* observeTokenGrantWithdrawnEvent() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { grantId, amount },
       } = yield take(contractEventCahnnel)
 
@@ -370,6 +393,13 @@ function* observeTokenGrantWithdrawnEvent() {
         type: "token-grant/grant_withdrawn",
         payload: { grantId, amount, availableToStake },
       })
+
+      yield put(
+        showModal({
+          modalType: MODAL_TYPES.GrantTokensWithdrawn,
+          modalProps: { txHash: transactionHash },
+        })
+      )
     } catch (error) {
       console.error(`Failed subscribing to TokenGrantWithdrawn event`, error)
       contractEventCahnnel.close()
@@ -444,6 +474,7 @@ function* observeDepositedEvent() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { operator, grantId, amount },
       } = yield take(contractEventCahnnel)
 
@@ -454,6 +485,13 @@ function* observeDepositedEvent() {
 
         const availableToWitdrawGrant = yield call(
           grantContract.methods.withdrawable(grantId).call
+        )
+
+        yield put(
+          showModal({
+            modalType: MODAL_TYPES.StakingTokensClaimed,
+            modalProps: { txHash: transactionHash },
+          })
         )
 
         yield put({
@@ -514,6 +552,18 @@ function* observeTopUpInitiatedEvent() {
       )
 
       if (delegation) {
+        yield put(
+          showModal({
+            modalType: MODAL_TYPES.TopUpInitiatedConfirmation,
+            modalProps: {
+              addedAmount: topUp,
+              currentAmount: delegation.amount,
+              authorizerAddress: delegation.authorizerAddress,
+              beneficiary: delegation.beneficiary,
+              operatorAddress: delegation.operatorAddress,
+            },
+          })
+        )
         yield put({
           type: "staking/top_up_initiated",
           payload: { operator, topUp },
@@ -971,6 +1021,7 @@ function* updateOperatorData() {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { operator, undelegatedAt },
       } = yield take(contractEventCahnnel)
       const {
@@ -982,6 +1033,17 @@ function* updateOperatorData() {
       }
 
       const { undelegationPeriod } = yield select((state) => state.operator)
+
+      yield put(
+        showModal({
+          modalType: MODAL_TYPES.UndelegationInitiated,
+          modalProps: {
+            txHash: transactionHash,
+            undelegatedAt,
+            undelegationPeriod,
+          },
+        })
+      )
 
       const undelegationCompletedAt = moment
         .unix(undelegatedAt)
