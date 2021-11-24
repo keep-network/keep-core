@@ -283,8 +283,6 @@ contract RandomBeacon is Ownable {
         dkg.setResultSubmissionEligibilityDelay(10);
 
         relay.initSeedEntry();
-        relay.initSortitionPool(_sortitionPool);
-        relay.initTToken(_tToken);
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
@@ -666,6 +664,12 @@ contract RandomBeacon is Ownable {
 
         relay.requestEntry(groupId);
 
+        tToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            relay.relayRequestFee
+        );
+
         callback.setCallbackContract(callbackContract);
 
         // If the current request should trigger group creation we need to lock
@@ -693,7 +697,7 @@ contract RandomBeacon is Ownable {
         );
 
         (uint32[] memory inactiveMembers, uint256 slashingAmount) = relay
-            .submitEntry(submitterIndex, entry, group);
+            .submitEntry(sortitionPool, submitterIndex, entry, group);
 
         if (inactiveMembers.length > 0) {
             banFromRewards(inactiveMembers, sortitionPoolRewardsBanDuration);
