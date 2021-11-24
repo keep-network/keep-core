@@ -331,8 +331,7 @@ library Relay {
 
         return
             isRequestInProgress(self) &&
-            block.number >
-            self.currentRequest.startBlock + relayEntryTimeout;
+            block.number > self.currentRequest.startBlock + relayEntryTimeout;
     }
 
     /// @notice Calculates a relay entry timeout.
@@ -343,7 +342,7 @@ library Relay {
         returns (uint256)
     {
         return
-            (idealGroupSize * self.relayEntrySubmissionEligibilityDelay) +
+            (dkgGroupSize * self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
     }
 
