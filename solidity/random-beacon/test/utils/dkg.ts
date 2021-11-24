@@ -37,6 +37,9 @@ export async function genesis(
   return [tx, expectedSeed]
 }
 
+// Sign and submit a correct DKG result which cannot be challenged because used
+// signers belong to an actual group selected by the sortition pool for given
+// seed.
 export async function signAndSubmitCorrectDkgResult(
   randomBeacon: RandomBeacon,
   groupPublicKey: string,
@@ -60,6 +63,9 @@ export async function signAndSubmitCorrectDkgResult(
   )
 }
 
+// Sign and submit an arbitrary DKG result using given signers. Signers don't
+// need to be part of the actual sortition pool group. This function is useful
+// for preparing invalid or malicious results for testing purposes.
 export async function signAndSubmitArbitraryDkgResult(
   randomBeacon: RandomBeacon,
   groupPublicKey: string,
