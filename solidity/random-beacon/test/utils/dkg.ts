@@ -46,7 +46,8 @@ export async function signAndSubmitCorrectDkgResult(
   seed: BigNumber,
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex = 1
+  submitterIndex = 1,
+  numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
   dkgResult: DkgResult
@@ -59,7 +60,8 @@ export async function signAndSubmitCorrectDkgResult(
     await selectGroup(randomBeacon, seed),
     startBlock,
     misbehavedIndices,
-    submitterIndex
+    submitterIndex,
+    numberOfSignatures
   )
 }
 
