@@ -453,22 +453,17 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         context("when malicious dkg result was submitted", async () => {
-          let resultSubmissionBlock: number
           let dkgResult: DkgResult
 
           beforeEach(async () => {
-            let tx: ContractTransaction
-            ;({ transaction: tx, dkgResult } =
-              await signAndSubmitArbitraryDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                // Mix signers to make the result malicious.
-                mixSigners(await selectGroup(randomBeacon, genesisSeed)),
-                startBlock,
-                noMisbehaved
-              ))
-
-            resultSubmissionBlock = tx.blockNumber
+            ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              // Mix signers to make the result malicious.
+              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+              startBlock,
+              noMisbehaved
+            ))
           })
 
           context("when dkg result was challenged", async () => {
@@ -806,7 +801,6 @@ describe("RandomBeacon - Group Creation", () => {
 
               it("should succeed for the first submitter", async () => {
                 const submitterIndex = 1
-                const expectedSubmitter = signers[submitterIndex - 1].address
 
                 const {
                   transaction: tx,
@@ -1081,12 +1075,8 @@ describe("RandomBeacon - Group Creation", () => {
             let dkgResultHash: string
 
             const misbehavedIndices = [2, 9, 11, 30, 60, 64]
-            const expectedMisbehaved: number[] = []
 
             beforeEach(async () => {
-              misbehavedIndices.forEach((index) => {
-                expectedMisbehaved.push(signers[index - 1].id)
-              })
               ;({
                 transaction: tx,
                 dkgResult,
@@ -1763,15 +1753,10 @@ describe("RandomBeacon - Group Creation", () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
           let dkgResult: DkgResult
-          let submittedGroupMembers: Operator[]
+          let expectedSigners: string[]
 
           beforeEach(async () => {
             let tx: ContractTransaction
-
-            // Mix signers to make the result malicious.
-            submittedGroupMembers = mixSigners(
-              await selectGroup(randomBeacon, genesisSeed)
-            )
             ;({
               transaction: tx,
               dkgResult,
@@ -1779,10 +1764,17 @@ describe("RandomBeacon - Group Creation", () => {
             } = await signAndSubmitArbitraryDkgResult(
               randomBeacon,
               groupPublicKey,
-              submittedGroupMembers,
+              // Mix signers to make the result malicious.
+              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
               startBlock,
               noMisbehaved
             ))
+
+            expectedSigners = await sortitionPool.getIDOperators(
+              dkgResult.signingMembersIndices.map(
+                (index) => dkgResult.members[index - 1]
+              )
+            )
 
             resultSubmissionBlock = tx.blockNumber
           })
@@ -1821,11 +1813,7 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
-                  .withArgs(
-                    dkgResultHash,
-                    to1e18(50000),
-                    submittedGroupMembers.map((member) => member.address)
-                  )
+                  .withArgs(dkgResultHash, to1e18(50000), expectedSigners)
               })
 
               it("should slash members who signed the result", async () => {
@@ -1835,7 +1823,7 @@ describe("RandomBeacon - Group Creation", () => {
                     to1e18(50000),
                     5,
                     await thirdParty.getAddress(),
-                    submittedGroupMembers.map((member) => member.address)
+                    expectedSigners
                   )
               })
             })
@@ -1883,11 +1871,7 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
-                  .withArgs(
-                    dkgResultHash,
-                    to1e18(50000),
-                    submittedGroupMembers.map((member) => member.address)
-                  )
+                  .withArgs(dkgResultHash, to1e18(50000), expectedSigners)
               })
 
               it("should slash members who signed the result", async () => {
@@ -1897,7 +1881,7 @@ describe("RandomBeacon - Group Creation", () => {
                     to1e18(50000),
                     5,
                     await thirdParty.getAddress(),
-                    submittedGroupMembers.map((member) => member.address)
+                    expectedSigners
                   )
               })
             })
@@ -1951,16 +1935,11 @@ describe("RandomBeacon - Group Creation", () => {
 
       await mineBlocks(constants.offchainDkgTime)
 
-      // Mix signers to make the result malicious.
-      const submittedGroupMembers = mixSigners(
-        await selectGroup(randomBeacon, genesisSeed)
-      )
-
       // Submit result 1 at the beginning of the submission period
       ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
         randomBeacon,
         groupPublicKey,
-        submittedGroupMembers,
+        signers,
         startBlock,
         noMisbehaved
       ))
@@ -1992,7 +1971,7 @@ describe("RandomBeacon - Group Creation", () => {
       ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
         randomBeacon,
         groupPublicKey,
-        submittedGroupMembers,
+        signers,
         startBlock,
         noMisbehaved,
         constants.groupSize / 2
@@ -2027,7 +2006,7 @@ describe("RandomBeacon - Group Creation", () => {
       ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
         randomBeacon,
         groupPublicKey,
-        submittedGroupMembers,
+        signers,
         startBlock,
         noMisbehaved,
         constants.groupSize
@@ -2069,7 +2048,7 @@ describe("RandomBeacon - Group Creation", () => {
         signAndSubmitArbitraryDkgResult(
           randomBeacon,
           groupPublicKey,
-          submittedGroupMembers,
+          signers,
           startBlock,
           noMisbehaved,
           constants.groupSize
