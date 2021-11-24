@@ -72,7 +72,8 @@ export async function signAndSubmitArbitraryDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex = 1
+  submitterIndex = 1,
+  numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
   dkgResult: DkgResult
@@ -80,7 +81,13 @@ export async function signAndSubmitArbitraryDkgResult(
   members: number[]
 }> {
   const { members, signingMembersIndices, signaturesBytes } =
-    await signDkgResult(signers, groupPublicKey, misbehavedIndices, startBlock)
+    await signDkgResult(
+      signers,
+      groupPublicKey,
+      misbehavedIndices,
+      startBlock,
+      numberOfSignatures
+    )
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
@@ -111,7 +118,8 @@ async function signDkgResult(
   signers: Operator[],
   groupPublicKey: string,
   misbehavedMembersIndices: number[],
-  startBlock: number
+  startBlock: number,
+  numberOfSignatures: number
 ): Promise<{
   members: number[]
   signingMembersIndices: number[]
@@ -125,12 +133,17 @@ async function signDkgResult(
   const members: number[] = []
   const signingMembersIndices: number[] = []
   const signatures: string[] = []
-
   for (let i = 0; i < signers.length; i++) {
     const { id, address } = signers[i]
+    members.push(id)
+
+    if (signatures.length === numberOfSignatures) {
+      // eslint-disable-next-line no-continue
+      continue
+    }
+
     const signerIndex: number = i + 1
 
-    members.push(id)
     signingMembersIndices.push(signerIndex)
 
     const ethersSigner = await ethers.getSigner(address)

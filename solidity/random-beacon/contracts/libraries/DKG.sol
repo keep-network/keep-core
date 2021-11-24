@@ -89,16 +89,18 @@ library DKG {
     /// @dev Size of a group in the threshold relay.
     uint256 public constant groupSize = 64;
 
-    /// @dev Minimum number of group members needed to interact according to the
-    ///      protocol to produce a relay entry.
+    /// @dev The minimum number of group members needed to interact according to
+    ///      the protocol to produce a relay entry. The adversary can not learn
+    ///      anything about the key as long as it does not break into
+    ///      groupThreshold+1 of members.
     uint256 public constant groupThreshold = 33;
 
-    /// @dev The minimum number of signatures required to support DKG result.
-    ///      This number needs to be at least the same as the signing threshold
-    ///      and it is recommended to make it higher than the signing threshold
-    ///      to keep a safety margin for in case some members become inactive.
-    uint256 public constant signatureThreshold =
-        groupThreshold + (groupSize - groupThreshold) / 2;
+    /// @dev The minimum number of active and properly behaving group members
+    ///      during the DKG needed to accept the result. This number is higher
+    ///      than `groupThreshold` to keep a safety margin for members becoming
+    ///      inactive after DKG so that the group can still produce a relay
+    ///      entry.
+    uint256 public constant activeThreshold = 58; // 90% of groupSize
 
     /// @notice Time in blocks after which DKG result is complete and ready to be
     //          published by clients.
@@ -284,9 +286,8 @@ library DKG {
         require(result.groupPubKey.length == 128, "Malformed group public key");
 
         require(
-            result.misbehavedMembersIndices.length <=
-                groupSize - signatureThreshold,
-            "Unexpected misbehaved members count"
+            groupSize - result.misbehavedMembersIndices.length >= activeThreshold,
+            "Too many members misbehaving during DKG"
         );
 
         if (result.misbehavedMembersIndices.length > 1) {
@@ -313,7 +314,7 @@ library DKG {
             signaturesCount == result.signingMembersIndices.length,
             "Unexpected signatures count"
         );
-        require(signaturesCount >= signatureThreshold, "Too few signatures");
+        require(signaturesCount >= groupThreshold, "Too few signatures");
         require(signaturesCount <= groupSize, "Too many signatures");
 
         bytes32 resultHash = keccak256(

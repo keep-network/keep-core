@@ -566,24 +566,28 @@ describe("RandomBeacon - Group Creation", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
-          it("should revert with less than threshold signers", async () => {
-            const filteredSigners = signers.slice(
-              0,
-              constants.signatureThreshold - 1
-            )
-
-            await expect(
-              signAndSubmitArbitraryDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                filteredSigners,
-                startBlock,
-                noMisbehaved
+          context("with less signatures on the result than required", () => {
+            it("should revert", async () => {
+              const filteredSigners = signers.slice(
+                0,
+                constants.signatureThreshold - 1
               )
-            ).to.be.revertedWith("Too few signatures")
+
+              await expect(
+                signAndSubmitArbitraryDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
+                  filteredSigners,
+                  startBlock,
+                  noMisbehaved,
+                  1,
+                  32
+                )
+              ).to.be.revertedWith("Too few signatures")
+            })
           })
 
-          context("with threshold signers", async () => {
+          context("with enough signatures on the result", async () => {
             let tx: ContractTransaction
             let dkgResult: DkgResult
             let dkgResultHash: string
@@ -603,11 +607,13 @@ describe("RandomBeacon - Group Creation", () => {
                 groupPublicKey,
                 filteredSigners,
                 startBlock,
-                noMisbehaved
+                noMisbehaved,
+                1,
+                33
               ))
             })
 
-            it("should succeed with threshold signers", async () => {
+            it("should succeed", async () => {
               await expect(tx)
                 .to.emit(randomBeacon, "DkgResultSubmitted")
                 .withArgs(
@@ -1053,12 +1059,28 @@ describe("RandomBeacon - Group Creation", () => {
             })
           })
 
+          context("with too many misbehaving members", () => {
+            const misbehavedIndices = [2, 9, 11, 12, 30, 60, 64]
+
+            it("should revert", async () => {
+              await expect(
+                signAndSubmitCorrectDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
+                  genesisSeed,
+                  startBlock,
+                  misbehavedIndices
+                )
+              ).to.be.revertedWith("Too many members misbehaving during DKG")
+            })
+          })
+
           context("with misbehaved members", async () => {
             let tx: ContractTransaction
             let dkgResult: DkgResult
             let dkgResultHash: string
 
-            const misbehavedIndices = [2, 11, 30, 60, 64]
+            const misbehavedIndices = [2, 9, 11, 30, 60, 64]
             const expectedMisbehaved: number[] = []
 
             beforeEach(async () => {
