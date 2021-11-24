@@ -2,9 +2,12 @@
 
 import { ethers } from "hardhat"
 import type { BigNumber, ContractTransaction } from "ethers"
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "../data/bls"
-import type { RandomBeacon } from "../../typechain"
+import type { RandomBeacon, SortitionPool } from "../../typechain"
 import { Operator } from "./operators"
+// eslint-disable-next-line import/no-cycle
+import { selectGroup } from "./groups"
 
 export interface DkgResult {
   submitterMemberIndex: number
@@ -34,7 +37,38 @@ export async function genesis(
   return [tx, expectedSeed]
 }
 
-export async function signAndSubmitDkgResult(
+// Sign and submit a correct DKG result which cannot be challenged because used
+// signers belong to an actual group selected by the sortition pool for given
+// seed.
+export async function signAndSubmitCorrectDkgResult(
+  randomBeacon: RandomBeacon,
+  groupPublicKey: string,
+  seed: BigNumber,
+  startBlock: number,
+  misbehavedIndices: number[],
+  submitterIndex = 1,
+  numberOfSignatures = 33
+): Promise<{
+  transaction: ContractTransaction
+  dkgResult: DkgResult
+  dkgResultHash: string
+  members: number[]
+}> {
+  return signAndSubmitArbitraryDkgResult(
+    randomBeacon,
+    groupPublicKey,
+    await selectGroup(randomBeacon, seed),
+    startBlock,
+    misbehavedIndices,
+    submitterIndex,
+    numberOfSignatures
+  )
+}
+
+// Sign and submit an arbitrary DKG result using given signers. Signers don't
+// need to be part of the actual sortition pool group. This function is useful
+// for preparing invalid or malicious results for testing purposes.
+export async function signAndSubmitArbitraryDkgResult(
   randomBeacon: RandomBeacon,
   groupPublicKey: string,
   signers: Operator[],
@@ -125,4 +159,20 @@ async function signDkgResult(
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
   return { members, signingMembersIndices, signaturesBytes }
+}
+
+export async function getDkgResultSubmitterSigner(
+  randomBeacon: RandomBeacon,
+  dkgResult: DkgResult
+): Promise<SignerWithAddress> {
+  const sortitionPool = (await ethers.getContractAt(
+    "SortitionPool",
+    await randomBeacon.sortitionPool()
+  )) as SortitionPool
+
+  const submitterMember = await sortitionPool.getIDOperator(
+    dkgResult.members[dkgResult.submitterMemberIndex - 1]
+  )
+
+  return ethers.getSigner(submitterMember)
 }

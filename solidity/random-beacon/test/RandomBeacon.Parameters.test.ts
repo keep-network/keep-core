@@ -240,6 +240,7 @@ describe("RandomBeacon - Parameters", () => {
     const sortitionPoolUnlockingReward = 200
     const sortitionPoolRewardsBanDuration = 300
     const relayEntryTimeoutNotificationRewardMultiplier = 10
+    const dkgMaliciousResultNotificationRewardMultiplier = 20
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -250,7 +251,8 @@ describe("RandomBeacon - Parameters", () => {
               dkgResultSubmissionReward,
               sortitionPoolUnlockingReward,
               sortitionPoolRewardsBanDuration,
-              relayEntryTimeoutNotificationRewardMultiplier
+              relayEntryTimeoutNotificationRewardMultiplier,
+              dkgMaliciousResultNotificationRewardMultiplier
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -265,7 +267,8 @@ describe("RandomBeacon - Parameters", () => {
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
             sortitionPoolRewardsBanDuration,
-            relayEntryTimeoutNotificationRewardMultiplier
+            relayEntryTimeoutNotificationRewardMultiplier,
+            dkgMaliciousResultNotificationRewardMultiplier
           )
       })
 
@@ -293,6 +296,12 @@ describe("RandomBeacon - Parameters", () => {
         ).to.be.equal(relayEntryTimeoutNotificationRewardMultiplier)
       })
 
+      it("should update the DKG malicious result notification reward multiplier", async () => {
+        expect(
+          await randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+        ).to.be.equal(dkgMaliciousResultNotificationRewardMultiplier)
+      })
+
       it("should emit the RewardParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
@@ -300,7 +309,8 @@ describe("RandomBeacon - Parameters", () => {
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
             sortitionPoolRewardsBanDuration,
-            relayEntryTimeoutNotificationRewardMultiplier
+            relayEntryTimeoutNotificationRewardMultiplier,
+            dkgMaliciousResultNotificationRewardMultiplier
           )
       })
     })
