@@ -27,6 +27,7 @@ describe("RandomBeaconGovernance", () => {
   const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
   const initialMinimumAuthorization = 1000000
   const initialAuthorizationDecreaseDelay = 86400
+  const initialDkgMaliciousResultNotificationRewardMultiplier = 5
 
   // prettier-ignore
   before(async () => {
@@ -64,7 +65,8 @@ describe("RandomBeaconGovernance", () => {
         initialDkgResultSubmissionReward,
         initialSortitionPoolUnlockingReward,
         initialSortitionPoolRewardsBanDuration,
-        initialRelayEntryTimeoutNotificationRewardMultiplier
+        initialRelayEntryTimeoutNotificationRewardMultiplier,
+        initialDkgMaliciousResultNotificationRewardMultiplier
       )
     await randomBeacon
       .connect(governance)
@@ -2193,6 +2195,139 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginDkgMaliciousResultNotificationRewardMultiplierUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called with value >100", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(101)
+        ).to.be.revertedWith("Maximum value is 100")
+      })
+    })
+
+    context("when the caller is the owner and value is correct", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
+      })
+
+      it("should not update the DKG malicious result notification reward multiplier", async () => {
+        expect(
+          await randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+        ).to.be.equal(initialDkgMaliciousResultNotificationRewardMultiplier)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingDkgMaliciousResultNotificationRewardMultiplierUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the DkgMaliciousResultNotificationRewardMultiplierUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "DkgMaliciousResultNotificationRewardMultiplierUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
+        })
+
+        it("should update the DKG malicious result notification reward multiplier", async () => {
+          expect(
+            await randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+          ).to.be.equal(100)
+        })
+
+        it("should emit DkgMaliciousResultNotificationRewardMultiplierUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "DkgMaliciousResultNotificationRewardMultiplierUpdated"
+            )
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingDkgMaliciousResultNotificationRewardMultiplierUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

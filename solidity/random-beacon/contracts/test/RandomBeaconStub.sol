@@ -36,6 +36,9 @@ contract RandomBeaconStub is RandomBeacon {
 
         groups.groupsData[groupPubKeyHash] = group;
         groups.groupsRegistry.push(groupPubKeyHash);
+    }
+
+    function incrementActiveGroupsCount() external {
         groups.activeGroupsCount++;
     }
 
