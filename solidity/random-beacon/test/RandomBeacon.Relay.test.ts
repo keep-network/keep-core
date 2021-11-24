@@ -12,7 +12,6 @@ import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import blsData from "./data/bls"
-import { to1e18 } from "./functions"
 import { constants, dkgState, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
@@ -25,8 +24,8 @@ import type {
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
-const { time } = helpers
-const { mineBlocks } = time
+const { mineBlocks } = helpers.time
+const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {

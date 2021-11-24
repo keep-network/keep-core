@@ -580,10 +580,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
-"@keep-network/hardhat-helpers@^0.2.0-pre.4":
-  version "0.2.0-pre.4"
-  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.2.0-pre.4.tgz#692ca5096b2f40aca83c0d1629e2103e7cd8e3d9"
-  integrity sha512-g77I9irZueqxljBo8xJ4J0EpVhWFq+yo1FPe8lAl9udSc4RQ69oyBNSLOZf92YA3DVWakmq0ZQ9RRGX/+8YPYw==
+"@keep-network/hardhat-helpers@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.4.0.tgz#2ac2416c80300624cc4dd17a35798cfa91929dcb"
+  integrity sha512-aH0gFosxal/CjBrPP8f+mYZG0jgRjGMrDFLQf1fuRBHIMIoBdf6Y42EQ6UpmxXoPxK7o21DzBsjLaGFjCEsG3w==
 
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.0":
   version "0.1.0-pre.0"

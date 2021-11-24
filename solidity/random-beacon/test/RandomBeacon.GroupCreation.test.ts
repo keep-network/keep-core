@@ -23,10 +23,10 @@ import {
   getDkgResultSubmitterSigner,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
-import { to1e18 } from "./functions"
 import { selectGroup } from "./utils/groups"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
+const { to1e18 } = helpers.number
 const { keccak256 } = ethers.utils
 
 const fixture = async () => {

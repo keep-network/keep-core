@@ -1,12 +1,13 @@
 import { Contract } from "ethers"
-import { ethers, getNamedAccounts } from "hardhat"
+import { ethers, helpers, getNamedAccounts } from "hardhat"
 import type {
   SortitionPool,
   RandomBeaconStub,
   RandomBeaconGovernance,
   StakingStub,
 } from "../../typechain"
-import { to1e18 } from "../functions"
+
+const { to1e18 } = helpers.number
 
 export const constants = {
   groupSize: 64,
@@ -85,9 +86,14 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const { testToken } = await testTokenDeployment()
 
+  const DKG = await ethers.getContractFactory("DKG")
+  const dkg = await DKG.deploy()
+  await dkg.deployed()
+
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
+      DKG: dkg.address,
     },
   })
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(

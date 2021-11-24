@@ -198,7 +198,7 @@ library DKG {
         emit DkgStarted(seed);
     }
 
-    function submitResult(Data storage self, Result calldata result) internal {
+    function submitResult(Data storage self, Result calldata result) external {
         require(
             currentState(self) == State.AWAITING_RESULT,
             "current state is not AWAITING_RESULT"
@@ -390,7 +390,7 @@ library DKG {
     ///        during `submitResult`.
     /// @return misbehavedMembers Identifiers of members who misbehaved during DKG.
     function approveResult(Data storage self, Result calldata result)
-        internal
+        external
         returns (uint32[] memory misbehavedMembers)
     {
         require(
@@ -452,7 +452,7 @@ library DKG {
     /// @return maliciousMembers Identifiers of group members who signed the
     ///         malicious DKG result hash.
     function challengeResult(Data storage self, Result calldata result)
-        internal
+        external
         returns (bytes32 maliciousResultHash, uint32[] memory maliciousMembers)
     {
         require(
