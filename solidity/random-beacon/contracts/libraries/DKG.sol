@@ -197,7 +197,7 @@ library DKG {
         emit DkgStarted(seed);
     }
 
-    function submitResult(Data storage self, Result calldata result) internal {
+    function submitResult(Data storage self, Result calldata result) external {
         require(
             currentState(self) == State.AWAITING_RESULT,
             "current state is not AWAITING_RESULT"
@@ -402,7 +402,7 @@ library DKG {
     ///         blocks after the end of the challenge period can be called only
     ///         by the DKG result submitter. After that time, can be called by
     ///         anyone.
-    function approveResult(Data storage self) internal {
+    function approveResult(Data storage self) external {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"
@@ -431,7 +431,7 @@ library DKG {
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @dev Can be called during a challenge period for the submitted result.
     // TODO: When implementing challenges verify what parameters are required.
-    function challengeResult(Data storage self) internal {
+    function challengeResult(Data storage self) external {
         require(
             currentState(self) == State.CHALLENGE,
             "current state is not CHALLENGE"

@@ -85,9 +85,14 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const { testToken } = await testTokenDeployment()
 
+  const DKG = await ethers.getContractFactory("DKG")
+  const dkg = await DKG.deploy()
+  await dkg.deployed()
+
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
+      DKG: dkg.address,
     },
   })
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
