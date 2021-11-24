@@ -20,7 +20,7 @@ import type {
 import { registerOperators, Operator, OperatorID } from "./utils/sortitionpool"
 
 const { time } = helpers
-const { mineBlocks } = time
+const { mineBlocks, mineBlocksTo } = time
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
@@ -473,6 +473,47 @@ describe("RandomBeacon - Relay", () => {
               .withArgs(1, 0, blsData.previousEntry)
 
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.true
+          })
+        }
+      )
+
+      context(
+        "when timeout happens after all the group terminate or expire",
+        () => {
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            // Create another group in a rough way just to have an active group
+            // once the one handling the timed out request gets terminated.
+            // This makes the request retry possible. That group will not
+            // perform any signing so their public key can be arbitrary bytes.
+            // Also, that group is created just after the relay request is
+            // made to ensure it is not selected for signing the original request.
+            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
+              "0x01",
+              signersIDs
+            )
+          })
+
+          it("should clean up current relay request data", async () => {
+            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // relayEntryHardTimeout`. This times out the relay entry
+            await mineBlocks(64 * 10 + 5760)
+
+            await (randomBeacon as RandomBeaconStub).roughlyTerminateGroup(0)
+
+            const registry = await randomBeacon.getGroupsRegistry()
+            const secondGroupLifetime = await (
+              randomBeacon as RandomBeaconStub
+            ).groupLifetimeOf(registry[1])
+
+            // Expire second group
+            await mineBlocksTo(Number(secondGroupLifetime) + 1)
+
+            tx = await randomBeacon.reportRelayEntryTimeout()
+
+            await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+            expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
         }
       )

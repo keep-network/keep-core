@@ -41,4 +41,21 @@ contract RandomBeaconStub is RandomBeacon {
     function getRelayEntryTimeout() external view returns (uint256) {
         return groups.relayEntryTimeout;
     }
+
+    function groupLifetimeOf(bytes32 groupPubKeyHash)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            groups.groupsData[groupPubKeyHash].activationBlockNumber +
+            groups.groupLifetime;
+    }
+
+    function roughlyTerminateGroup(uint64 groupId) public {
+        groups.groupsData[groups.groupsRegistry[groupId]].terminated = true;
+        // just add groupId without sorting for simplicity
+        groups.activeTerminatedGroups.push(groupId);
+        groups.activeGroupsCount--;
+    }
 }

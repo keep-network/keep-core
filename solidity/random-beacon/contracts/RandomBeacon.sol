@@ -552,6 +552,7 @@ contract RandomBeacon is Ownable {
         );
 
         // TODO: Once implemented, terminate group using `groupId`.
+        groups.expireOldGroups();
 
         if (groups.numberOfActiveGroups() > 0) {
             groupId = groups.selectGroup(
