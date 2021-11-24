@@ -557,8 +557,7 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(DKG.Result calldata dkgResult) external {
-        (, uint32[] memory misbehavedMembers) = dkg
-            .approveResult(dkgResult);
+        uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         uint256 maintenancePoolBalance = tToken.balanceOf(address(this));
         uint256 rewardToPay = Math.min(

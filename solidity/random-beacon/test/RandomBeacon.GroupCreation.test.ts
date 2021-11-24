@@ -3,6 +3,7 @@
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "./data/bls"
 import { constants, dkgState, params, testDeployment } from "./fixtures"
 import type {
@@ -19,6 +20,7 @@ import {
   signAndSubmitArbitraryDkgResult,
   DkgResult,
   noMisbehaved,
+  getDkgResultSubmitterSigner,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
 import { to1e18 } from "./functions"
@@ -67,7 +69,6 @@ describe("RandomBeacon - Group Creation", () => {
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
   let thirdParty: Signer
-  let submitter: Signer
   let signers: Operator[]
 
   let randomBeaconGovernance: RandomBeaconGovernance
@@ -78,7 +79,6 @@ describe("RandomBeacon - Group Creation", () => {
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
-    submitter = await ethers.getSigner((await getUnnamedAccounts())[1])
   })
 
   beforeEach("load test fixture", async () => {
@@ -265,6 +265,12 @@ describe("RandomBeacon - Group Creation", () => {
           context("when dkg result was approved", async () => {
             beforeEach(async () => {
               await mineBlocks(params.dkgResultChallengePeriodLength)
+
+              const submitter = await getDkgResultSubmitterSigner(
+                randomBeacon,
+                dkgResult
+              )
+
               await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
             })
 
@@ -430,6 +436,11 @@ describe("RandomBeacon - Group Creation", () => {
             beforeEach(async () => {
               await mineBlocksTo(
                 resultSubmissionBlock + params.dkgResultChallengePeriodLength
+              )
+
+              const submitter = await getDkgResultSubmitterSigner(
+                randomBeacon,
+                dkgResult
               )
 
               await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
@@ -1117,15 +1128,20 @@ describe("RandomBeacon - Group Creation", () => {
     // Just to make `approveDkgResult` call possible.
     const stubDkgResult: DkgResult = {
       groupPubKey: blsData.groupPubKey,
-      members: [1],
-      misbehavedMembersIndices: [1],
-      signatures: "0x01",
-      signingMembersIndices: [1],
+      members: [1, 2, 3, 4],
+      misbehavedMembersIndices: [],
+      signatures: "0x01020304",
+      signingMembersIndices: [1, 2, 3, 4],
       submitterMemberIndex: 1,
     }
 
     context("with initial contract state", async () => {
       it("should revert with 'current state is not CHALLENGE' error", async () => {
+        const submitter = await getDkgResultSubmitterSigner(
+          randomBeacon,
+          stubDkgResult
+        )
+
         await expect(
           randomBeacon.connect(submitter).approveDkgResult(stubDkgResult)
         ).to.be.revertedWith("current state is not CHALLENGE")
@@ -1144,6 +1160,11 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       it("should revert with 'current state is not CHALLENGE' error", async () => {
+        const submitter = await getDkgResultSubmitterSigner(
+          randomBeacon,
+          stubDkgResult
+        )
+
         await expect(
           randomBeacon.connect(submitter).approveDkgResult(stubDkgResult)
         ).to.be.revertedWith("current state is not CHALLENGE")
@@ -1156,6 +1177,11 @@ describe("RandomBeacon - Group Creation", () => {
 
         context("with dkg result not submitted", async () => {
           it("should revert with 'current state is not CHALLENGE' error", async () => {
+            const submitter = await getDkgResultSubmitterSigner(
+              randomBeacon,
+              stubDkgResult
+            )
+
             await expect(
               randomBeacon.connect(submitter).approveDkgResult(stubDkgResult)
             ).to.be.revertedWith("current state is not CHALLENGE")
@@ -1166,6 +1192,7 @@ describe("RandomBeacon - Group Creation", () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
           let dkgResult: DkgResult
+          let submitter: SignerWithAddress
           const submitterIndex = 1
 
           beforeEach(async () => {
@@ -1183,6 +1210,11 @@ describe("RandomBeacon - Group Creation", () => {
               noMisbehaved,
               submitterIndex
             ))
+
+            submitter = await getDkgResultSubmitterSigner(
+              randomBeacon,
+              dkgResult
+            )
 
             resultSubmissionBlock = tx.blockNumber
           })
@@ -1277,7 +1309,7 @@ describe("RandomBeacon - Group Creation", () => {
 
                 it("should revert", async () => {
                   await expect(
-                    randomBeacon.connect(thirdParty).approveDkgResult()
+                    randomBeacon.connect(thirdParty).approveDkgResult(dkgResult)
                   ).to.be.revertedWith(
                     "Only the DKG result submitter can approve the result at this moment"
                   )
@@ -1293,7 +1325,9 @@ describe("RandomBeacon - Group Creation", () => {
                   initApproverBalance = await testToken.balanceOf(
                     await thirdParty.getAddress()
                   )
-                  tx = await randomBeacon.connect(thirdParty).approveDkgResult()
+                  tx = await randomBeacon
+                    .connect(thirdParty)
+                    .approveDkgResult(dkgResult)
                 })
 
                 it("should succeed", async () => {
@@ -1360,7 +1394,9 @@ describe("RandomBeacon - Group Creation", () => {
 
               it("should revert with 'challenge period has not passed yet' error", async () => {
                 await expect(
-                  randomBeacon.connect(anotherSubmitter).approveDkgResult(dkgResult)
+                  randomBeacon
+                    .connect(anotherSubmitter)
+                    .approveDkgResult(dkgResult)
                 ).to.be.revertedWith("challenge period has not passed yet")
               })
             })
@@ -1440,6 +1476,11 @@ describe("RandomBeacon - Group Creation", () => {
             noMisbehaved
           )
 
+          const submitter = await getDkgResultSubmitterSigner(
+            randomBeacon,
+            dkgResult
+          )
+
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
           tx = await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
@@ -1470,6 +1511,12 @@ describe("RandomBeacon - Group Creation", () => {
             startBlock,
             misbehavedIndices
           )
+
+          const submitter = await getDkgResultSubmitterSigner(
+            randomBeacon,
+            dkgResult
+          )
+
           await mineBlocks(params.dkgResultChallengePeriodLength)
           await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
         })
@@ -1492,13 +1539,11 @@ describe("RandomBeacon - Group Creation", () => {
         let maintenancePoolBalance: BigNumber
         let tx: ContractTransaction
         let initApproverBalance: BigNumber
+        let submitter: SignerWithAddress
 
         beforeEach(async () => {
           maintenancePoolBalance = await testToken.balanceOf(
             randomBeacon.address
-          )
-          initApproverBalance = await testToken.balanceOf(
-            await submitter.getAddress()
           )
 
           // Set the DKG result submission reward to twice the amount of test
@@ -1509,20 +1554,26 @@ describe("RandomBeacon - Group Creation", () => {
           await helpers.time.increaseTime(12 * 60 * 60)
           await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
 
-          const [genesisTx] = await genesis(randomBeacon)
+          const [genesisTx, genesisSeed] = await genesis(randomBeacon)
           const startBlock: number = genesisTx.blockNumber
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
-          await signAndSubmitDkgResult(
+          const { dkgResult } = await signAndSubmitCorrectDkgResult(
             randomBeacon,
             groupPublicKey,
-            signers,
+            genesisSeed,
             startBlock,
             noMisbehaved
           )
 
+          submitter = await getDkgResultSubmitterSigner(randomBeacon, dkgResult)
+
+          initApproverBalance = await testToken.balanceOf(
+            await submitter.getAddress()
+          )
+
           await mineBlocks(params.dkgResultChallengePeriodLength)
-          tx = await randomBeacon.connect(submitter).approveDkgResult()
+          tx = await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
         })
 
         it("should succeed", async () => {
@@ -1641,13 +1692,13 @@ describe("RandomBeacon - Group Creation", () => {
   })
 
   describe("challengeDkgResult", async () => {
-    // Just to make `approveDkgResult` call possible.
+    // Just to make `challengeDkgResult` call possible.
     const stubDkgResult: DkgResult = {
       groupPubKey: blsData.groupPubKey,
-      members: [1],
-      misbehavedMembersIndices: [1],
-      signatures: "0x01",
-      signingMembersIndices: [1],
+      members: [1, 2, 3, 4],
+      misbehavedMembersIndices: [],
+      signatures: "0x01020304",
+      signingMembersIndices: [1, 2, 3, 4],
       submitterMemberIndex: 1,
     }
 

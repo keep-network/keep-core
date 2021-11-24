@@ -386,11 +386,10 @@ library DKG {
     /// @dev Can be called after a challenge period for the submitted result.
     /// @param result Result to approve. Must match the submitted result stored
     ///        during `submitResult`.
-    /// @return submitterMember Identifier of member who submitted the result.
     /// @return misbehavedMembers Identifiers of members who misbehaved during DKG.
-    function approveResult(Data storage self)
+    function approveResult(Data storage self, Result calldata result)
         internal
-        returns (uint32 submitterMember, uint32[] memory misbehavedMembers)
+        returns (uint32[] memory misbehavedMembers)
     {
         require(
             currentState(self) == State.CHALLENGE,
@@ -406,22 +405,24 @@ library DKG {
         );
 
         require(
-            msg.sender == self.resultSubmitter ||
+            keccak256(abi.encode(result)) == self.submittedResultHash,
+            "result under approval is different than the submitted one"
+        );
+
+        // Extract submitter member address. Submitter member index is in
+        // range [1, 64] so we need to -1 when fetching identifier from members
+        // array.
+        address submitterMember = self.sortitionPool.getIDOperator(
+            result.members[result.submitterMemberIndex - 1]
+        );
+
+        require(
+            msg.sender == submitterMember ||
                 block.number >
                 challengePeriodEnd +
                     self.parameters.resultSubmissionEligibilityDelay,
             "Only the DKG result submitter can approve the result at this moment"
         );
-
-        require(
-            keccak256(abi.encode(result)) == self.submittedResultHash,
-            "result under approval is different than the submitted one"
-        );
-
-        // Extract submitter member identifier. Submitter member index is in
-        // range [1, 64] so we need to -1 when fetching identifier from members
-        // array.
-        submitterMember = result.members[result.submitterMemberIndex - 1];
 
         // Extract misbehaved members identifiers. Misbehaved members indices
         // are in range [1, 64], so we need to -1 when fetching identifiers from
@@ -437,7 +438,7 @@ library DKG {
 
         emit DkgResultApproved(self.submittedResultHash, msg.sender);
 
-        return (submitterMember, misbehavedMembers);
+        return misbehavedMembers;
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be

@@ -2,8 +2,9 @@
 
 import { ethers } from "hardhat"
 import type { BigNumber, ContractTransaction } from "ethers"
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import blsData from "../data/bls"
-import type { RandomBeacon } from "../../typechain"
+import type { RandomBeacon, SortitionPool } from "../../typechain"
 import { Operator } from "./operators"
 // eslint-disable-next-line import/no-cycle
 import { selectGroup } from "./groups"
@@ -137,4 +138,20 @@ async function signDkgResult(
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
   return { members, signingMembersIndices, signaturesBytes }
+}
+
+export async function getDkgResultSubmitterSigner(
+  randomBeacon: RandomBeacon,
+  dkgResult: DkgResult
+): Promise<SignerWithAddress> {
+  const sortitionPool = (await ethers.getContractAt(
+    "SortitionPool",
+    await randomBeacon.sortitionPool()
+  )) as SortitionPool
+
+  const submitterMember = await sortitionPool.getIDOperator(
+    dkgResult.members[dkgResult.submitterMemberIndex - 1]
+  )
+
+  return ethers.getSigner(submitterMember)
 }
