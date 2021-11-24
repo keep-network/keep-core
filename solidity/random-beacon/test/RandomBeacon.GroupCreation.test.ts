@@ -475,9 +475,6 @@ describe("RandomBeacon - Group Creation", () => {
             let challengeBlockNumber: number
 
             beforeEach(async () => {
-              // Make the challenge justified by forcing the pool to return
-              // another group than the submitted one.
-
               const tx = await randomBeacon.challengeDkgResult(dkgResult)
               challengeBlockNumber = tx.blockNumber
             })
