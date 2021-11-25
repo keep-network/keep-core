@@ -38,10 +38,6 @@ contract RandomBeaconStub is RandomBeacon {
         groups.groupsRegistry.push(groupPubKeyHash);
     }
 
-    function getRelayEntryTimeout() external view returns (uint256) {
-        return groups.relayEntryTimeout;
-    }
-
     function groupLifetimeOf(bytes32 groupPubKeyHash)
         external
         view

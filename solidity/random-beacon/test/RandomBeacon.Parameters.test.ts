@@ -90,32 +90,6 @@ describe("RandomBeacon - Parameters", () => {
             )
         })
       })
-
-      context("when updating groups params", () => {
-        it("should not update the relay entry timeout", async () => {
-          // groupSize: 64
-          // relayEntrySubmissionEligibilityDelay: 10
-          // relayEntryHardTimeout: 5760
-          // relayEntryTimeout = 64 * 10 + 5760
-          expect(await randomBeacon.getRelayEntryTimeout()).to.be.equal(6400)
-        })
-
-        it("should update the relay entry timeout", async () => {
-          await randomBeacon
-            .connect(governance)
-            .updateRelayEntryParameters(
-              relayRequestFee,
-              relayEntrySubmissionEligibilityDelay,
-              relayEntryHardTimeout,
-              callbackGasLimit
-            )
-          // groupSize: 64
-          // relayEntrySubmissionEligibilityDelay: 200
-          // relayEntryHardTimeout: 300
-          // relayEntryTimeout = 64 * 200 + 300
-          expect(await randomBeacon.getRelayEntryTimeout()).to.be.equal(13100)
-        })
-      })
     })
   })
 

@@ -31,8 +31,6 @@ library Groups {
         // responsible for submitting relay entry if relay request assigned
         // to that group is still pending.
         uint256 groupLifetime;
-        // Calculated in the Relay.sol lib.
-        uint256 relayEntryTimeout;
     }
 
     event CandidateGroupRegistered(bytes indexed groupPubKey);
@@ -223,12 +221,6 @@ library Groups {
         return result;
     }
 
-    /// @notice Setter for relay entry timeout.
-    /// @param timeout Relay entry timout calculated in Relay.sol lib.
-    function setRelayEntryTimeout(Data storage self, uint256 timeout) internal {
-        self.relayEntryTimeout = timeout;
-    }
-
     /// @notice Setter for group lifetime.
     /// @param lifetime Lifetime of a group in blocks.
     function setGroupLifetime(Data storage self, uint256 lifetime) internal {
@@ -254,54 +246,6 @@ library Groups {
         return
             self.groupsData[groupPubKeyHash].activationBlockNumber +
             self.groupLifetime;
-    }
-
-    /// @notice Gets the cutoff time in blocks after which the given group is
-    ///         considered as stale. Stale group is an expired group which is no
-    ///         longer performing any operations.
-    function groupStaleTime(Data storage self, bytes32 groupPubKeyHash)
-        internal
-        view
-        returns (uint256)
-    {
-        return groupLifetimeOf(self, groupPubKeyHash) + self.relayEntryTimeout;
-    }
-
-    /// @notice Checks if a group with the given index is a stale group.
-    ///         Stale group is an expired group which is no longer performing any
-    ///         operations. It is important to understand that an expired group
-    ///         may still perform some operations for which it was selected when
-    ///         it was still active. We consider a group to be stale when it's
-    ///         expired and when its expiration time and potentially executed
-    ///         operation timeout are both in the past.
-    function isStaleGroup(Data storage self, bytes memory groupPubKey)
-        internal
-        view
-        returns (bool)
-    {
-        // TODO: Can a group be considered as "stale" if "expiredGroupOffset" was
-        //       not moved forward which means that group selection wasn't triggered?
-        //       In other words can it be stale when it's not officially expired?
-        return groupStaleTime(self, keccak256(groupPubKey)) < block.number;
-    }
-
-    /// @notice Checks if a group with the given index is a stale group.
-    ///         Stale group is an expired group which is no longer performing any
-    ///         operations. It is important to understand that an expired group
-    ///         may still perform some operations for which it was selected when
-    ///         it was still active. We consider a group to be stale when it's
-    ///         expired and when its expiration time and potentially executed
-    ///         operation timeout are both in the past.
-    function isStaleGroup(Data storage self, uint64 groupId)
-        internal
-        view
-        returns (bool)
-    {
-        // TODO: Can a group be considered as "stale" if "expiredGroupOffset" was
-        //       not moved forward (group selection wasn't triggered)?
-        //       In other words can it be stale when it's not officially expired?
-        return
-            groupStaleTime(self, self.groupsRegistry[groupId]) < block.number;
     }
 
     function getGroup(Data storage self, uint64 groupId)

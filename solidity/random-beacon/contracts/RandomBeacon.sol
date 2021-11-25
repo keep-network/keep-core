@@ -280,8 +280,6 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
-
-        groups.setRelayEntryTimeout(relay.relayEntryTimeout());
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -328,10 +326,6 @@ contract RandomBeacon is Ownable {
             _relayEntrySubmissionEligibilityDelay
         );
         relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
-
-        // as part of the update, a relay entry timeout needs to be updated
-        // in the Groups lib.
-        groups.setRelayEntryTimeout(relay.relayEntryTimeout());
 
         emit RelayEntryParametersUpdated(
             _relayRequestFee,

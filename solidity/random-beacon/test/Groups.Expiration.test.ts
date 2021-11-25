@@ -28,7 +28,6 @@ describe("Groups", () => {
   describe("expireOldGroups", async () => {
     beforeEach(async () => {
       await groups.setGroupLifetime(groupLifetime)
-      await groups.setRelayEntryTimeout(relayEntryTimeout)
     })
 
     context("when active groups were created", async () => {
@@ -165,105 +164,6 @@ describe("Groups", () => {
 
         expect(numberOfGroups).to.be.equal(1)
         expect(selected).to.be.equal(5)
-      })
-    })
-
-    context("when a group is active", async () => {
-      // - we start with [AAAAAA]
-      // - we check whether the first group is stale and assert it is not since
-      //   an active group cannot be stale
-      it("should not mark group as stale", async () => {
-        await addGroups(1, 6)
-
-        const isStale = await groups.isStaleGroup(ethers.utils.hexlify(1))
-
-        expect(isStale).to.be.equal(false)
-      })
-
-      context("when there are other expired groups", async () => {
-        // - we start with [AAAAAAAAAAAAAAA]
-        // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
-        // - we check whether any of active groups is stale and assert it's not
-        it("should not mark group as stale", async () => {
-          const groupsCount = 15
-          await addGroups(1, groupsCount)
-          await expireGroup(8) // move height to expire first 9 groups (we index from 0)
-
-          // this will move height by one and expire 9 + 1 groups
-          await groups.selectGroup(0)
-
-          for (let i = 10; i < groupsCount; i++) {
-            const isStale = await groups.isStaleGroupById(i)
-
-            expect(isStale).to.be.equal(false)
-          }
-        })
-      })
-
-      context("when there are other stale groups", async () => {
-        // - we start with [AAAAAAAAAAAAAAA]
-        // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
-        // - we mine as many blocks as needed to mark expired groups as stale
-        // - we check whether any of active groups is stale and assert it's not
-        it("should not mark group as stale", async () => {
-          const groupsCount = 15
-          await addGroups(1, groupsCount)
-          await expireGroup(8) // move height to expire first 9 groups (we index from 0)
-
-          // this will move height by one and expire 9 + 1 groups
-          await groups.selectGroup(0)
-          const currentBlock = await ethers.provider.getBlock("latest")
-
-          await mineBlocksTo(relayEntryTimeout + currentBlock.number)
-
-          for (let i = 10; i < groupsCount; i++) {
-            const isStale = await groups.isStaleGroupById(i)
-
-            expect(isStale).to.be.equal(false)
-          }
-        })
-      })
-    })
-
-    context("when a group is expired", async () => {
-      context("when a group can still sign a relay entry", async () => {
-        // - we start with [AAAAAA]
-        // - we mine as many blocks as needed to qualify the first group as expired
-        //   and we run group selection to mark it as such; we have [EAAAAA]
-        // - we check whether this group is a stale group and assert it is not since
-        //   relay request timeout did not pass since the group expiration block
-        it("should not mark group as stale", async () => {
-          await addGroups(1, 6)
-
-          await expireGroup(0)
-          await groups.selectGroup(0)
-
-          const isStale = await groups.isStaleGroupById(0)
-
-          expect(isStale).to.be.equal(false)
-        })
-      })
-
-      context("when a group can no longer sign a relay entry", async () => {
-        // - we start with [AAAAAA]
-        // - we mine as many blocks as needed to qualify the first group as expired
-        //   and we run group selection to mark it as such; we have [EAAAAA]
-        // - we mine as many blocks as defined by relay request timeout
-        // - we check whether this group is a stale group and assert it is stale since
-        //   relay request timeout did pass since the group expiration block
-        it("should mark group as stale", async () => {
-          await addGroups(1, 6)
-
-          await expireGroup(0)
-          await groups.selectGroup(0)
-
-          const currentBlock = await ethers.provider.getBlock("latest")
-          await mineBlocksTo(currentBlock.number + relayEntryTimeout)
-
-          const isStale = await groups.isStaleGroupById(0)
-
-          expect(isStale).to.be.equal(true)
-        })
       })
     })
 

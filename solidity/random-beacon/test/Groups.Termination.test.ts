@@ -28,7 +28,6 @@ describe("Groups", () => {
   describe("terminateGroup", async () => {
     beforeEach(async () => {
       await groups.setGroupLifetime(groupLifetime)
-      await groups.setRelayEntryTimeout(relayEntryTimeout)
     })
 
     context(

@@ -46,10 +46,6 @@ contract GroupsStub {
         groups.setGroupLifetime(groupLifetime);
     }
 
-    function setRelayEntryTimeout(uint256 timeout) external {
-        groups.setRelayEntryTimeout(timeout);
-    }
-
     function getGroupsRegistry() external view returns (bytes32[] memory) {
         return groups.groupsRegistry;
     }
@@ -73,18 +69,6 @@ contract GroupsStub {
         returns (Groups.Group memory)
     {
         return groups.getGroup(groupId);
-    }
-
-    function isStaleGroup(bytes memory groupPubKey)
-        external
-        view
-        returns (bool)
-    {
-        return groups.isStaleGroup(groupPubKey);
-    }
-
-    function isStaleGroupById(uint64 groupId) external view returns (bool) {
-        return groups.isStaleGroup(groupId);
     }
 
     function activeTerminatedGroups() public view returns (uint64[] memory) {
