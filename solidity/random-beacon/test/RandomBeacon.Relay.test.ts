@@ -632,7 +632,7 @@ describe("RandomBeacon - Relay", () => {
       )
 
       context(
-        "when timeout happens after all the group terminate or expire",
+        "when group is terminated that was supposed to submit a relay request and another group expires",
         () => {
           let tx: ContractTransaction
 
