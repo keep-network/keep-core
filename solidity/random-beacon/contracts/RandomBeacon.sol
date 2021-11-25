@@ -204,7 +204,7 @@ contract RandomBeacon is Ownable {
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
-        address[] groupMembers
+        address maliciousSubmitter
     );
 
     event DkgStateLocked();
@@ -274,7 +274,7 @@ contract RandomBeacon is Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
-        dkgMaliciousResultNotificationRewardMultiplier = 5;
+        dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
@@ -594,26 +594,29 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
-        (bytes32 maliciousResultHash, uint32[] memory maliciousMembers) = dkg
+        (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
 
         uint256 slashingAmount = maliciousDkgResultSlashingAmount;
-        address[] memory maliciousMembersAddresses = sortitionPool
-            .getIDOperators(maliciousMembers);
+        address maliciousSubmitterAddresses = sortitionPool.getIDOperator(
+            maliciousSubmitter
+        );
 
         groups.popCandidateGroup();
 
         emit DkgMaliciousResultSlashed(
             maliciousResultHash,
             slashingAmount,
-            maliciousMembersAddresses
+            maliciousSubmitterAddresses
         );
 
+        address[] memory operatorWrapper = new address[](1);
+        operatorWrapper[0] = maliciousSubmitterAddresses;
         staking.seize(
             slashingAmount,
             dkgMaliciousResultNotificationRewardMultiplier,
             msg.sender,
-            maliciousMembersAddresses
+            operatorWrapper
         );
     }
 
