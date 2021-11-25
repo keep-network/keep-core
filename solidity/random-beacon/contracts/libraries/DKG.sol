@@ -5,6 +5,7 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
+import "./Submission.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -205,6 +206,24 @@ library DKG {
         );
         require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
+        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
+            .getEligibilityRange(
+                self.seed,
+                block.number,
+                self.startBlock,
+                self.parameters.resultSubmissionEligibilityDelay,
+                groupSize
+            );
+
+        require(
+            Submission.isEligible(
+                result.submitterMemberIndex,
+                firstEligibleIndex,
+                lastEligibleIndex
+            ),
+            "Submitter is not eligible"
+        );
+
         verify(self, result);
 
         // TODO: Check with sortition pool that all members have minimum stake.
@@ -270,17 +289,6 @@ library DKG {
                 result.members[result.submitterMemberIndex - 1]
             ) == msg.sender,
             "Unexpected submitter index"
-        );
-
-        uint256 T_init = self.startBlock +
-            offchainDkgTime +
-            self.resultSubmissionStartBlockOffset;
-        require(
-            block.number >=
-                (T_init +
-                    (result.submitterMemberIndex - 1) *
-                    self.parameters.resultSubmissionEligibilityDelay),
-            "Submitter not eligible"
         );
 
         require(result.groupPubKey.length == 128, "Malformed group public key");
