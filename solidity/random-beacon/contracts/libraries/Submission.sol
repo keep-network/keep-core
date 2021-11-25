@@ -36,7 +36,7 @@ library Submission {
         uint256 eligibilityDelay,
         uint256 groupSize
     )
-        external
+        internal
         view
         returns (uint256 firstEligibleIndex, uint256 lastEligibleIndex)
     {
@@ -74,7 +74,7 @@ library Submission {
         uint256 submitterIndex,
         uint256 firstEligibleIndex,
         uint256 lastEligibleIndex
-    ) external view returns (bool) {
+    ) internal view returns (bool) {
         if (firstEligibleIndex <= lastEligibleIndex) {
             // First eligible index is equal or smaller than the last.
             // We just need to make sure the submitter index is in range
@@ -108,7 +108,7 @@ library Submission {
         uint256 submitterIndex,
         uint256 firstEligibleIndex,
         uint32[] memory groupMembers
-    ) external view returns (uint32[] memory) {
+    ) internal view returns (uint32[] memory) {
         uint256 groupSize = groupMembers.length;
 
         uint256 inactiveMembersCount = submitterIndex >= firstEligibleIndex

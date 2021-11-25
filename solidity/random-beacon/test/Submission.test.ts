@@ -2,8 +2,7 @@
 
 import { ethers, helpers, waffle } from "hardhat"
 import { expect } from "chai"
-import { submissionDeployment } from "./fixtures"
-import type { Submission } from "../typechain"
+import type { SubmissionStub } from "../typechain"
 import { OperatorID } from "./utils/operators"
 import blsData from "./data/bls"
 
@@ -12,13 +11,19 @@ const testSeed = blsData.groupSignatureUint256
 const testGroupSize = 8
 const testEligibilityDelay = 10
 
+const fixture = async () => ({
+  submissionStub: (await (
+    await ethers.getContractFactory("SubmissionStub")
+  ).deploy()) as SubmissionStub,
+})
+
 describe("Submission", () => {
-  let submission: Submission
+  let submissionStub: SubmissionStub
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(submissionDeployment)
+    const contracts = await waffle.loadFixture(fixture)
 
-    submission = contracts.submission as Submission
+    submissionStub = contracts.submissionStub as SubmissionStub
   })
 
   describe("isEligible", () => {
@@ -77,7 +82,7 @@ describe("Submission", () => {
 
     context("when submitter index is the first eligible index", () => {
       it("should return empty inactive members list", async () => {
-        const inactiveMembers = await submission.getInactiveMembers(
+        const inactiveMembers = await submissionStub.getInactiveMembers(
           5,
           5,
           groupMembers
@@ -89,7 +94,7 @@ describe("Submission", () => {
 
     context("when submitter index is bigger than first eligible index", () => {
       it("should return a proper inactive members list", async () => {
-        const inactiveMembers = await submission.getInactiveMembers(
+        const inactiveMembers = await submissionStub.getInactiveMembers(
           8,
           5,
           groupMembers
@@ -104,7 +109,7 @@ describe("Submission", () => {
 
     context("when submitter index is smaller than first eligible index", () => {
       it("should return a proper inactive members list", async () => {
-        const inactiveMembers = await submission.getInactiveMembers(
+        const inactiveMembers = await submissionStub.getInactiveMembers(
           3,
           5,
           groupMembers
@@ -129,7 +134,7 @@ describe("Submission", () => {
       .number
 
     const [firstEligibleIndex, lastEligibleIndex] =
-      await submission.getEligibilityRange(
+      await submissionStub.getEligibilityRange(
         testSeed,
         protocolSubmissionBlock,
         protocolStartBlock,
@@ -139,7 +144,7 @@ describe("Submission", () => {
 
     for (let i = 0; i < checkedMembers.length; i++) {
       expect(
-        await submission.isEligible(
+        await submissionStub.isEligible(
           checkedMembers[i],
           firstEligibleIndex,
           lastEligibleIndex
@@ -156,7 +161,7 @@ describe("Submission", () => {
       .number
 
     const [firstEligibleIndex, lastEligibleIndex] =
-      await submission.getEligibilityRange(
+      await submissionStub.getEligibilityRange(
         testSeed,
         protocolSubmissionBlock,
         protocolStartBlock,
@@ -166,7 +171,7 @@ describe("Submission", () => {
 
     for (let i = 0; i < checkedMembers.length; i++) {
       expect(
-        await submission.isEligible(
+        await submissionStub.isEligible(
           checkedMembers[i],
           firstEligibleIndex,
           lastEligibleIndex
