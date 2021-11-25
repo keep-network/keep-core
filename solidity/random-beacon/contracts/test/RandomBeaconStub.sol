@@ -38,10 +38,6 @@ contract RandomBeaconStub is RandomBeacon {
         groups.groupsRegistry.push(groupPubKeyHash);
     }
 
-    function incrementActiveGroupsCount() external {
-        groups.activeGroupsCount++;
-    }
-
     function getRelayEntryTimeout() external view returns (uint256) {
         return groups.relayEntryTimeout;
     }
@@ -60,7 +56,6 @@ contract RandomBeaconStub is RandomBeacon {
         groups.groupsData[groups.groupsRegistry[groupId]].terminated = true;
         // just add groupId without sorting for simplicity
         groups.activeTerminatedGroups.push(groupId);
-        groups.activeGroupsCount--;
     }
 
     function publicDkgLockState() external {

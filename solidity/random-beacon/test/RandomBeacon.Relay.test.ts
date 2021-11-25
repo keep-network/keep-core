@@ -591,13 +591,6 @@ describe("RandomBeacon - Relay", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            // Simulate there is an other active group once the one handling
-            // the timed out request gets terminated. This makes the request
-            // retry possible.
-            await (
-              randomBeacon as RandomBeaconStub
-            ).incrementActiveGroupsCount()
-
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`.
             await mineBlocks(64 * 10 + 5760)

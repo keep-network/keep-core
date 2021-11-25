@@ -24,8 +24,6 @@ library Groups {
         // active-terminated group qualifies to become 'expired', then it will
         // be removed from this array.
         uint64[] activeTerminatedGroups;
-        // TODO: Remember about decreasing the counter in case of expiration or termination.
-        uint64 activeGroupsCount;
         // Points to the first active group, it is also the expired groups counter.
         uint64 expiredGroupOffset;
         // Group lifetime in blocks. When a group reached its lifetime, it
@@ -119,8 +117,6 @@ library Groups {
         // solhint-disable-next-line not-rely-on-time
         group.activationBlockNumber = block.number;
 
-        self.activeGroupsCount++;
-
         emit GroupActivated(
             uint64(self.groupsRegistry.length - 1),
             group.groupPubKey
@@ -145,14 +141,6 @@ library Groups {
             ) <
             block.number
         ) {
-            Group memory group = self.groupsData[
-                self.groupsRegistry[self.expiredGroupOffset]
-            ];
-            // Decrement only for non-terminated groups, because terminateGroup()
-            // function handles 'activeGroupsCount' counter for terminated groups.
-            if (!group.terminated) {
-                self.activeGroupsCount--;
-            }
             self.expiredGroupOffset++;
         }
 
@@ -199,7 +187,6 @@ library Groups {
         // Expanding array for a new terminated group that is added below during
         // sortition in ascending order.
         self.activeTerminatedGroups.push();
-        self.activeGroupsCount--;
 
         // Sorting activeTerminatedGroups by groupId in ascending order so a
         // non-terminated group is properly selected.
@@ -340,7 +327,22 @@ library Groups {
         view
         returns (uint64)
     {
-        return self.activeGroupsCount;
+        if (self.groupsRegistry.length == 0) {
+            return 0;
+        }
+
+        bytes32 pubKeyHashLastGroup = self.groupsRegistry[
+            self.groupsRegistry.length - 1
+        ];
+        uint256 activeGroups = self.groupsRegistry.length -
+            self.expiredGroupOffset -
+            self.activeTerminatedGroups.length;
+        // checks if the last group was activated
+        if (self.groupsData[pubKeyHashLastGroup].activationBlockNumber == 0) {
+            activeGroups--;
+        }
+
+        return uint64(activeGroups);
     }
 
     /// @notice Evaluates the shift of a selected group index based on the number

@@ -558,31 +558,32 @@ describe("Groups", () => {
               members1,
               noMisbehaved
             )
+
+            tx = await groups.activateCandidateGroup()
+
             await groups.addCandidateGroup(
               groupPublicKey2,
               members2,
               noMisbehaved
             )
-
-            tx = await groups.activateCandidateGroup()
           })
 
           it("should emit GroupActivated event", async () => {
             await expect(tx)
               .to.emit(groups, "GroupActivated")
-              .withArgs(1, groupPublicKey2)
-          })
-
-          it("should not set activation block number for the other group", async () => {
-            expect(
-              (await groups.getGroup(groupPublicKey1)).activationBlockNumber
-            ).to.be.equal(0)
+              .withArgs(0, groupPublicKey1)
           })
 
           it("should set activation block number for the activated group", async () => {
             expect(
-              (await groups.getGroup(groupPublicKey2)).activationBlockNumber
+              (await groups.getGroup(groupPublicKey1)).activationBlockNumber
             ).to.be.equal(tx.blockNumber)
+          })
+
+          it("should not set activation block number for the other group", async () => {
+            expect(
+              (await groups.getGroup(groupPublicKey2)).activationBlockNumber
+            ).to.be.equal(0)
           })
 
           it("should increase number of active groups", async () => {
@@ -592,7 +593,8 @@ describe("Groups", () => {
 
         context("when the other group is active", async () => {
           let activationBlockNumber1: number
-          let tx: ContractTransaction
+          let tx1: ContractTransaction
+          let tx2: ContractTransaction
 
           // TODO: Update as the latest group got activated
           beforeEach(async () => {
@@ -601,7 +603,8 @@ describe("Groups", () => {
               members1,
               noMisbehaved
             )
-            const tx1 = await groups.activateCandidateGroup()
+
+            tx1 = await groups.activateCandidateGroup()
             activationBlockNumber1 = (
               await ethers.provider.getBlock(tx1.blockHash)
             ).number
@@ -612,11 +615,17 @@ describe("Groups", () => {
               noMisbehaved
             )
 
-            tx = await groups.activateCandidateGroup()
+            tx2 = await groups.activateCandidateGroup()
           })
 
-          it("should emit GroupActivated event", async () => {
-            await expect(tx)
+          it("should emit GroupActivated event for the first group", async () => {
+            await expect(tx1)
+              .to.emit(groups, "GroupActivated")
+              .withArgs(0, groupPublicKey1)
+          })
+
+          it("should emit GroupActivated event for the second group", async () => {
+            await expect(tx2)
               .to.emit(groups, "GroupActivated")
               .withArgs(1, groupPublicKey2)
           })
@@ -630,7 +639,7 @@ describe("Groups", () => {
           it("should set activation block number for the activated group", async () => {
             expect(
               (await groups.getGroup(groupPublicKey2)).activationBlockNumber
-            ).to.be.equal(tx.blockNumber)
+            ).to.be.equal(tx2.blockNumber)
           })
 
           it("should increase number of active groups", async () => {
@@ -652,11 +661,6 @@ describe("Groups", () => {
               members1,
               noMisbehaved
             )
-            await groups.addCandidateGroup(
-              groupPublicKey2,
-              members2,
-              noMisbehaved
-            )
 
             tx = await groups.activateCandidateGroup()
           })
@@ -664,12 +668,20 @@ describe("Groups", () => {
           it("should emit GroupActivated event", async () => {
             await expect(tx)
               .to.emit(groups, "GroupActivated")
-              .withArgs(1, groupPublicKey2)
+              .withArgs(0, groupPublicKey1)
+          })
+
+          it("should not emit GroupActivated event", async () => {
+            await expect(
+              groups.addCandidateGroup(groupPublicKey2, members2, noMisbehaved)
+            ).to.be.revertedWith(
+              "group with this public key was already activated"
+            )
           })
 
           it("should set activation block number for the group", async () => {
             expect(
-              (await groups.getGroup(groupPublicKey2)).activationBlockNumber
+              (await groups.getGroup(groupPublicKey1)).activationBlockNumber
             ).to.be.equal(tx.blockNumber)
           })
 
