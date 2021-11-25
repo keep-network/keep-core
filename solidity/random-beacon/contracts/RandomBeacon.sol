@@ -97,6 +97,9 @@ contract RandomBeacon is Ownable {
     ///         `sortitionPoolUnlockingReward`.
     uint256 public sortitionPoolUnlockingReward;
 
+    /// @notice Reward in T for notifying the operator is ineligible.
+    uint256 public ineligibleOperatorNotifierReward;
+
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
     ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
@@ -164,6 +167,7 @@ contract RandomBeacon is Ownable {
     event RewardParametersUpdated(
         uint256 dkgResultSubmissionReward,
         uint256 sortitionPoolUnlockingReward,
+        uint256 ineligibleOperatorNotifierReward,
         uint256 sortitionPoolRewardsBanDuration,
         uint256 relayEntryTimeoutNotificationRewardMultiplier,
         uint256 dkgMaliciousResultNotificationRewardMultiplier
@@ -271,6 +275,7 @@ contract RandomBeacon is Ownable {
         groupLifetime = 2 weeks;
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
+        ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
@@ -389,6 +394,8 @@ contract RandomBeacon is Ownable {
     ///      validating parameters.
     /// @param _dkgResultSubmissionReward New DKG result submission reward
     /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
+    /// @param _ineligibleOperatorNotifierReward New value of the ineligible
+    ///        operator notifier reward.
     /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
     /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
@@ -398,18 +405,21 @@ contract RandomBeacon is Ownable {
     function updateRewardParameters(
         uint256 _dkgResultSubmissionReward,
         uint256 _sortitionPoolUnlockingReward,
+        uint256 _ineligibleOperatorNotifierReward,
         uint256 _sortitionPoolRewardsBanDuration,
         uint256 _relayEntryTimeoutNotificationRewardMultiplier,
         uint256 _dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
         sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        ineligibleOperatorNotifierReward = _ineligibleOperatorNotifierReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
         dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
