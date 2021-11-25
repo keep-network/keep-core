@@ -35,7 +35,7 @@ library Relay {
 
     // TODO:  Documentation.
     struct IneligibleOperatorInfo {
-        uint256 entry;
+        bytes entry;
         uint256 submissionBlock;
         uint256 eligibilityDelay;
         uint256 requestStartBlock;
@@ -133,9 +133,6 @@ library Relay {
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
     /// @param group Group data.
-    /// @return inactiveMembers Array of members IDs which should be considered
-    ///         inactive  for not submitting relay entry on their turn.
-    ///         The array is empty if none of the members missed their turn.
     /// @return slashingAmount Amount by which group members should be slashed
     ///         in case the relay entry was submitted after the soft timeout.
     ///         The value is zero if entry was submitted on time.
@@ -305,7 +302,7 @@ library Relay {
 
         (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
             .getEligibilityRange(
-                info.entry,
+                uint256(keccak256(info.entry)),
                 info.submissionBlock,
                 info.requestStartBlock,
                 info.eligibilityDelay,
