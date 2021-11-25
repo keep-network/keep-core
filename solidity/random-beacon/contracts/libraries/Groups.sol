@@ -58,9 +58,15 @@ library Groups {
         // We use group from storage that is assumed to be a struct set to the
         // default values. We need to remember to overwrite fields in case a
         // candidate group was already registered before and popped.
+        // To ensure we modify only a new group or a popped one, we check the
+        // group has not been activated.
         Group storage group = self.groupsData[groupPubKeyHash];
-        group.groupPubKey = groupPubKey;
+        require(
+            group.activationTimestamp == 0,
+            "Cannot add group that has been activated"
+        );
 
+        group.groupPubKey = groupPubKey;
         setGroupMembers(group, members, misbehavedMembersIndices);
 
         self.groupsRegistry.push(groupPubKeyHash);
