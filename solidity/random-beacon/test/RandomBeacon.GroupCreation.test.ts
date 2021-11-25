@@ -1743,7 +1743,7 @@ describe("RandomBeacon - Group Creation", () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
           let dkgResult: DkgResult
-          let expectedSigners: string[]
+          let submitter: SignerWithAddress
 
           beforeEach(async () => {
             let tx: ContractTransaction
@@ -1760,10 +1760,9 @@ describe("RandomBeacon - Group Creation", () => {
               noMisbehaved
             ))
 
-            expectedSigners = await sortitionPool.getIDOperators(
-              dkgResult.signingMembersIndices.map(
-                (index) => dkgResult.members[index - 1]
-              )
+            submitter = await getDkgResultSubmitterSigner(
+              randomBeacon,
+              dkgResult
             )
 
             resultSubmissionBlock = tx.blockNumber
@@ -1803,17 +1802,17 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
-                  .withArgs(dkgResultHash, to1e18(50000), expectedSigners)
+                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
               })
 
-              it("should slash members who signed the result", async () => {
+              it("should slash malicious result submitter", async () => {
                 await expect(tx)
                   .to.emit(staking, "Seized")
                   .withArgs(
                     to1e18(50000),
-                    5,
+                    100,
                     await thirdParty.getAddress(),
-                    expectedSigners
+                    [submitter.address]
                   )
               })
             })
@@ -1861,17 +1860,17 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
-                  .withArgs(dkgResultHash, to1e18(50000), expectedSigners)
+                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
               })
 
-              it("should slash members who signed the result", async () => {
+              it("should slash malicious result submitter", async () => {
                 await expect(tx)
                   .to.emit(staking, "Seized")
                   .withArgs(
                     to1e18(50000),
-                    5,
+                    100,
                     await thirdParty.getAddress(),
-                    expectedSigners
+                    [submitter.address]
                   )
               })
             })
