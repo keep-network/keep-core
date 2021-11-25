@@ -15,9 +15,11 @@
 pragma solidity ^0.8.6;
 
 library Submission {
-    /// @notice Determines the submitter eligibility range for given parameters.
+    /// @notice Determines the submission eligibility range for given parameters.
     /// @param seed Value for which the eligibility range should be determined.
-    /// @param protocolStartBlock Starting block of the protocol the submitter
+    /// @param protocolSubmissionBlock Result submission block of the protocol
+    ///        the submission eligibility range is calculated for.
+    /// @param protocolStartBlock Starting block of the protocol the submission
     ///        eligibility range is calculated for.
     /// @param eligibilityDelay Delay in blocks each group member needs to wait
     ///        before becoming eligible.
@@ -29,6 +31,7 @@ library Submission {
     ///         to submit.
     function getEligibilityRange(
         uint256 seed,
+        uint256 protocolSubmissionBlock,
         uint256 protocolStartBlock,
         uint256 eligibilityDelay,
         uint256 groupSize
@@ -45,7 +48,8 @@ library Submission {
         // equivalent to floored division. That gives the desired result.
         // Shift value should be in range <0, groupSize-1> so we must cap
         // it explicitly.
-        uint256 shift = (block.number - protocolStartBlock) / eligibilityDelay;
+        uint256 shift = (protocolSubmissionBlock - protocolStartBlock) /
+            eligibilityDelay;
         shift = shift > groupSize - 1 ? groupSize - 1 : shift;
 
         // Last eligible index must be wrapped if their value is bigger than

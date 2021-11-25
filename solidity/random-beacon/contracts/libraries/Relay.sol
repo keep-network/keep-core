@@ -147,6 +147,7 @@ library Relay {
         (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
             .getEligibilityRange(
                 uint256(keccak256(entry)),
+                block.number,
                 self.currentRequest.startBlock,
                 self.relayEntrySubmissionEligibilityDelay,
                 groupSize

@@ -125,9 +125,13 @@ describe("Submission", () => {
     protocolStartBlock: number,
     checkedMembers: number[]
   ) {
+    const protocolSubmissionBlock = (await ethers.provider.getBlock("latest"))
+      .number
+
     const [firstEligibleIndex, lastEligibleIndex] =
       await submission.getEligibilityRange(
         testSeed,
+        protocolSubmissionBlock,
         protocolStartBlock,
         testEligibilityDelay,
         testGroupSize
@@ -148,9 +152,13 @@ describe("Submission", () => {
     protocolStartBlock: number,
     checkedMembers: number[]
   ) {
+    const protocolSubmissionBlock = (await ethers.provider.getBlock("latest"))
+      .number
+
     const [firstEligibleIndex, lastEligibleIndex] =
       await submission.getEligibilityRange(
         testSeed,
+        protocolSubmissionBlock,
         protocolStartBlock,
         testEligibilityDelay,
         testGroupSize
