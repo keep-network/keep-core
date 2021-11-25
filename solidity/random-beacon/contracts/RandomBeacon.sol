@@ -693,12 +693,12 @@ contract RandomBeacon is Ownable {
             relay.currentRequest.groupId
         );
 
-        (uint32[] memory inactiveMembers, uint256 slashingAmount) = relay
-            .submitEntry(sortitionPool, submitterIndex, entry, group);
-
-        if (inactiveMembers.length > 0) {
-            banFromRewards(inactiveMembers, sortitionPoolRewardsBanDuration);
-        }
+        uint256 slashingAmount = relay.submitEntry(
+            sortitionPool,
+            submitterIndex,
+            entry,
+            group
+        );
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
@@ -773,14 +773,20 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    // TODO: Document
+    // TODO: Documentation.
     function notifyRelayEntryOperatorIneligibleForRewards(
         Relay.IneligibleOperatorInfo calldata info
     ) external {
-        relay.notifyOperatorIneligibleForRewards(info);
+        uint32[] memory ineligibleOperators = relay
+            .notifyOperatorIneligibleForRewards(info);
 
-        // TODO: Get ineligible operators and ban them from rewards.
-        // TODO: Pay the notifier reward.
+        banFromRewards(ineligibleOperators, sortitionPoolRewardsBanDuration);
+
+        uint256 notifierReward = Math.min(
+            tToken.balanceOf(address(this)),
+            ineligibleOperatorNotifierReward * ineligibleOperators.length
+        );
+        tToken.safeTransfer(msg.sender, notifierReward);
     }
 
     /// @notice Ban given operators from sortition pool rewards.
@@ -789,8 +795,8 @@ contract RandomBeacon is Ownable {
     function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
         try sortitionPool.banRewards(ids, banDuration) {} catch {
             // Should never happen but we want to ensure a non-critical path
-            // failure from an external contract does not stop group members
-            // from submitting a valid relay entry.
+            // failure from an external contract does not stop the protocol
+            // from being successfully executed.
             // slither-disable-next-line reentrancy-events
             emit BanRewardsFailed(ids);
         }

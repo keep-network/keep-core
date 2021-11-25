@@ -33,7 +33,7 @@ library Relay {
         uint128 startBlock;
     }
 
-    // TODO: Document
+    // TODO:  Documentation.
     struct IneligibleOperatorInfo {
         uint256 entry;
         uint256 submissionBlock;
@@ -59,6 +59,8 @@ library Relay {
         uint256 relayEntryHardTimeout;
         // Slashing amount for not submitting relay entry
         uint256 relayEntrySubmissionFailureSlashingAmount;
+        // TODO: Documentation.
+        bytes32 ineligibleOperatorInfo;
     }
 
     /// @notice Target DKG group size in the threshold relay. A group has
@@ -80,7 +82,15 @@ library Relay {
         bytes previousEntry
     );
 
-    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+    event RelayEntrySubmitted(
+        uint256 indexed requestId,
+        bytes entry,
+        uint256 submissionBlock,
+        uint256 eligibilityDelay,
+        uint256 requestStartBlock,
+        uint256 submitterIndex,
+        uint32[] groupMembers
+    );
 
     event RelayEntryTimedOut(
         uint256 indexed requestId,
@@ -135,10 +145,7 @@ library Relay {
         uint256 submitterIndex,
         bytes calldata entry,
         Groups.Group memory group
-    )
-        internal
-        returns (uint32[] memory inactiveMembers, uint256 slashingAmount)
-    {
+    ) internal returns (uint256 slashingAmount) {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
@@ -159,8 +166,16 @@ library Relay {
             "Invalid entry"
         );
 
-        // TODO: Store `ineligibleOperatorRelayEntryInfo` and emit all
-        //       needed params as part of `RelayEntrySubmitted`.
+        // Prepare all information needed to perform eligibility check in
+        // future.
+        IneligibleOperatorInfo memory info = IneligibleOperatorInfo(
+            entry,
+            block.number,
+            self.relayEntrySubmissionEligibilityDelay,
+            self.currentRequest.startBlock,
+            submitterIndex,
+            group.members
+        );
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
@@ -172,11 +187,20 @@ library Relay {
             1e18;
 
         self.previousEntry = entry;
+        self.ineligibleOperatorInfo = keccak256(abi.encode(info));
         delete self.currentRequest;
 
-        emit RelayEntrySubmitted(self.requestCount, entry);
+        emit RelayEntrySubmitted(
+            self.requestCount,
+            entry,
+            info.submissionBlock,
+            info.eligibilityDelay,
+            info.requestStartBlock,
+            info.submitterIndex,
+            info.groupMembers
+        );
 
-        return (inactiveMembers, slashingAmount);
+        return slashingAmount;
     }
 
     /// @notice Set relayRequestFee parameter.
@@ -264,11 +288,20 @@ library Relay {
         delete self.currentRequest;
     }
 
+    // TODO: Documentation.
     function notifyOperatorIneligibleForRewards(
-        IneligibleOperatorInfo calldata info,
-        Groups.Group memory group
+        Data storage self,
+        IneligibleOperatorInfo calldata info
     ) internal returns (uint32[] memory ineligibleOperators) {
-        // TODO: Check hash of passed info against stored `ineligibleOperatorRelayEntryInfo`
+        require(
+            self.ineligibleOperatorInfo != bytes32(0),
+            "No pending ineligible operators info"
+        );
+
+        require(
+            keccak256(abi.encode(info)) == self.ineligibleOperatorInfo,
+            "Info parameter is different than the stored one"
+        );
 
         (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
             .getEligibilityRange(
@@ -279,9 +312,41 @@ library Relay {
                 info.groupMembers.length
             );
 
-        // TODO: Determine who should be considered ineligible using
-        //       Submission.getInactiveMembers and Submission.isEligible.
-        //       Save result to ineligibleOperators
+        // Check if the actual result submitter was eligible to do so.
+        //
+        // If the submitter was eligible to submit, that means its index
+        // was within the eligibility range. In this case, all members within
+        // range <firstEligibleIndex, submitterIndex) are considered inactive
+        // thus ineligible for rewards.
+        //
+        // If the submitter was not eligible to submit, that means its
+        // index was beyond the eligibility range and the submitter
+        // submitted the result before their turn. In this case, all members
+        // within range <firstEligibleIndex, lastEligibleIndex) are considered
+        // inactive thus ineligible for rewards. The last eligible member
+        // is not considered invalid because its submission turn is still
+        // going on when it is overtaken by a member who is not yet eligible.
+        // The actual submitter is also not punished for early submission
+        // because there is no reward for submitting relay entry. That
+        // submitter incurs unnecessary gas costs anyway and does not harm
+        // any other party of the protocol.
+        uint256 submitterIndex = Submission.isEligible(
+            info.submitterIndex,
+            firstEligibleIndex,
+            lastEligibleIndex
+        )
+            ? info.submitterIndex
+            : lastEligibleIndex;
+
+        ineligibleOperators = Submission.getInactiveMembers(
+            submitterIndex,
+            firstEligibleIndex,
+            info.groupMembers
+        );
+
+        require(ineligibleOperators.length > 0, "No ineligible operators");
+
+        delete self.ineligibleOperatorInfo;
 
         return ineligibleOperators;
     }
