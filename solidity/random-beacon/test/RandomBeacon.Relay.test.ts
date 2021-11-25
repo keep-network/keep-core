@@ -326,8 +326,7 @@ describe("RandomBeacon - Relay", () => {
                     // TODO: Assert members 16 and 17 are banned for given
                     //       punishment duration. This can be done once
                     //       `banRewards` is correctly implemented on the
-                    //       sortition pool side. Remember about checking
-                    //       gas deposits as well.
+                    //       sortition pool side.
                   })
 
                   it("should not slash any members", async () => {
@@ -434,8 +433,7 @@ describe("RandomBeacon - Relay", () => {
                     // TODO: Assert all group members but the submitter (member 15)
                     //       are banned for given punishment duration. This can
                     //       be done once `banRewards` is correctly implemented
-                    //       on the sortition pool side. Remember about checking
-                    //       gas deposits as well.
+                    //       on the sortition pool side.
                   })
 
                   it("should slash a correct portion of the slashing amount for all members ", async () => {
