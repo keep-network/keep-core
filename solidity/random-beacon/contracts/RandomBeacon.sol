@@ -16,7 +16,6 @@ pragma solidity ^0.8.6;
 
 import "./libraries/Authorization.sol";
 import "./libraries/DKG.sol";
-import "./libraries/GasStation.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
@@ -59,7 +58,6 @@ contract RandomBeacon is Ownable {
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
-    using GasStation for GasStation.Data;
 
     // Constant parameters
 
@@ -137,7 +135,6 @@ contract RandomBeacon is Ownable {
     Groups.Data internal groups;
     Relay.Data internal relay;
     Callback.Data internal callback;
-    GasStation.Data internal gasStation;
 
     event AuthorizationParametersUpdated(
         uint96 minimumAuthorization,
@@ -474,9 +471,6 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Registers the caller in the sortition pool.
-    /// @dev Creates a gas deposit tied to the operator address. The gas
-    ///      deposit is released when the operator is banned from sortition
-    ///      pool rewards or leaves the pool during status update.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -485,7 +479,6 @@ contract RandomBeacon is Ownable {
             "Operator is already registered"
         );
 
-        gasStation.depositGas(operator);
         sortitionPool.insertOperator(operator);
     }
 
@@ -494,12 +487,6 @@ contract RandomBeacon is Ownable {
         sortitionPool.updateOperatorStatus(
             sortitionPool.getOperatorID(msg.sender)
         );
-
-        // If the operator has been removed from the sortition pool during the
-        // status update, release its gas deposit.
-        if (!sortitionPool.isOperatorInPool(msg.sender)) {
-            gasStation.releaseGas(msg.sender);
-        }
     }
 
     /// @notice Checks whether the given operator is eligible to join the
@@ -777,26 +764,10 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Ban given operators from sortition pool rewards.
-    /// @dev By the way, this function releases gas deposits made by operators
-    ///      during their registration. See `registerOperator` function. This
-    ///      action makes banning cheaper gas-wise.
     /// @param ids IDs of banned operators.
     /// @param banDuration Duration of the ban period in seconds.
     function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
-        try sortitionPool.banRewards(ids, banDuration) {
-            address[] memory operators = sortitionPool.getIDOperators(ids);
-
-            for (uint256 i = 0; i < operators.length; i++) {
-                // TODO: Once `banRewards` is implemented on pool side, revisit
-                //       gas station design. Current design is problematic
-                //       because operators deposit gas upon registration and
-                //       deposits are released either during status update
-                //       or rewards ban. The first case is natural as operator
-                //       leaves the pool but the latter is hard because deposit
-                //       is released and operator still stays in the pool.
-                gasStation.releaseGas(operators[i]);
-            }
-        } catch {
+        try sortitionPool.banRewards(ids, banDuration) {} catch {
             // Should never happen but we want to ensure a non-critical path
             // failure from an external contract does not stop group members
             // from submitting a valid relay entry.
