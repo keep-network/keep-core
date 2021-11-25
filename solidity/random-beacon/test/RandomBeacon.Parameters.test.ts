@@ -238,7 +238,8 @@ describe("RandomBeacon - Parameters", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
-    const sortitionPoolRewardsBanDuration = 300
+    const ineligibleOperatorNotifierReward = 300
+    const sortitionPoolRewardsBanDuration = 400
     const relayEntryTimeoutNotificationRewardMultiplier = 10
     const dkgMaliciousResultNotificationRewardMultiplier = 20
 
@@ -250,6 +251,7 @@ describe("RandomBeacon - Parameters", () => {
             .updateRewardParameters(
               dkgResultSubmissionReward,
               sortitionPoolUnlockingReward,
+              ineligibleOperatorNotifierReward,
               sortitionPoolRewardsBanDuration,
               relayEntryTimeoutNotificationRewardMultiplier,
               dkgMaliciousResultNotificationRewardMultiplier
@@ -266,6 +268,7 @@ describe("RandomBeacon - Parameters", () => {
           .updateRewardParameters(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
@@ -282,6 +285,12 @@ describe("RandomBeacon - Parameters", () => {
         expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
           sortitionPoolUnlockingReward
         )
+      })
+
+      it("should update the ineligible operator notifier reward", async () => {
+        expect(
+          await randomBeacon.ineligibleOperatorNotifierReward()
+        ).to.be.equal(ineligibleOperatorNotifierReward)
       })
 
       it("should update the sortition pool rewards ban duration", async () => {
@@ -308,6 +317,7 @@ describe("RandomBeacon - Parameters", () => {
           .withArgs(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier

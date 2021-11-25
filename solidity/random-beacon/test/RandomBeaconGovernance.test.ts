@@ -21,6 +21,7 @@ describe("RandomBeaconGovernance", () => {
   const initialDkgResultSubmissionEligibilityDelay = 10
   const initialDkgResultSubmissionReward = 500000
   const initialSortitionPoolUnlockingReward = 5000
+  const initialIneligibleOperatorNotifierReward = 6000
   const initialRelayEntrySubmissionFailureSlashingAmount = 1000
   const initialMaliciousDkgResultSlashingAmount = 1000000000
   const initialSortitionPoolRewardsBanDuration = 1209600
@@ -64,6 +65,7 @@ describe("RandomBeaconGovernance", () => {
       .updateRewardParameters(
         initialDkgResultSubmissionReward,
         initialSortitionPoolUnlockingReward,
+        initialIneligibleOperatorNotifierReward,
         initialSortitionPoolRewardsBanDuration,
         initialRelayEntryTimeoutNotificationRewardMultiplier,
         initialDkgMaliciousResultNotificationRewardMultiplier
@@ -1457,6 +1459,129 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingSortitionPoolUnlockingRewardUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginIneligibleOperatorNotifierRewardUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginIneligibleOperatorNotifierRewardUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginIneligibleOperatorNotifierRewardUpdate(123)
+      })
+
+      it("should not update the ineligible operator notifier reward", async () => {
+        expect(
+          await randomBeacon.ineligibleOperatorNotifierReward()
+        ).to.be.equal(initialIneligibleOperatorNotifierReward)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingIneligibleOperatorNotifierRewardUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the IneligibleOperatorNotifierRewardUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "IneligibleOperatorNotifierRewardUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeIneligibleOperatorNotifierRewardUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeIneligibleOperatorNotifierRewardUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeIneligibleOperatorNotifierRewardUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginIneligibleOperatorNotifierRewardUpdate(123)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeIneligibleOperatorNotifierRewardUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginIneligibleOperatorNotifierRewardUpdate(123)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeIneligibleOperatorNotifierRewardUpdate()
+        })
+
+        it("should update the ineligible operator notifier reward", async () => {
+          expect(
+            await randomBeacon.ineligibleOperatorNotifierReward()
+          ).to.be.equal(123)
+        })
+
+        it("should emit IneligibleOperatorNotifierRewardUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "IneligibleOperatorNotifierRewardUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingIneligibleOperatorNotifierRewardUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }
