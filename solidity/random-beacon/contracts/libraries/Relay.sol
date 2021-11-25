@@ -19,6 +19,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BLS.sol";
 import "./Groups.sol";
+import "./Submission.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -143,13 +144,17 @@ library Relay {
             "Unexpected submitter index"
         );
 
-        (
-            uint256 firstEligibleIndex,
-            uint256 lastEligibleIndex
-        ) = getEligibilityRange(self, entry, groupSize);
+        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
+            .getEligibilityRange(
+                uint256(keccak256(entry)),
+                block.number,
+                self.currentRequest.startBlock,
+                self.relayEntrySubmissionEligibilityDelay,
+                groupSize
+            );
+
         require(
-            isEligible(
-                self,
+            Submission.isEligible(
                 submitterIndex,
                 firstEligibleIndex,
                 lastEligibleIndex
@@ -164,8 +169,7 @@ library Relay {
 
         // Get the list of members IDs which should be considered inactive due
         // to not submitting the entry on their turn.
-        inactiveMembers = getInactiveMembers(
-            self,
+        inactiveMembers = Submission.getInactiveMembers(
             submitterIndex,
             firstEligibleIndex,
             group.members
@@ -297,123 +301,6 @@ library Relay {
         return
             isRequestInProgress(self) &&
             block.number > self.currentRequest.startBlock + relayEntryTimeout;
-    }
-
-    /// @notice Determines the eligibility range for given relay entry basing on
-    ///         current block number.
-    /// @dev Parameters _entry and _groupSize are passed because the first
-    ///      eligible index is computed as `_entry % _groupSize`. This function
-    ///      doesn't use the constant `groupSize` directly to facilitate
-    ///      testing. Big group sizes in tests make readability worse and
-    ///      dramatically increase the time of execution.
-    /// @param _entry Entry value for which the eligibility range should be
-    ///        determined.
-    /// @param _groupSize Group size for which eligibility range should be determined.
-    /// @return firstEligibleIndex Index of the first member which is eligible
-    ///         to submit the relay entry.
-    /// @return lastEligibleIndex Index of the last member which is eligible
-    ///         to submit the relay entry.
-    function getEligibilityRange(
-        Data storage self,
-        bytes calldata _entry,
-        uint256 _groupSize
-    )
-        internal
-        view
-        returns (uint256 firstEligibleIndex, uint256 lastEligibleIndex)
-    {
-        // Modulo `groupSize` will give indexes in range <0, groupSize-1>
-        // We count member indexes from `1` so we need to add `1` to the result.
-        firstEligibleIndex = (uint256(keccak256(_entry)) % _groupSize) + 1;
-
-        // Shift is computed by leveraging Solidity integer division which is
-        // equivalent to floored division. That gives the desired result.
-        // Shift value should be in range <0, groupSize-1> so we must cap
-        // it explicitly.
-        uint256 shift = (block.number - self.currentRequest.startBlock) /
-            self.relayEntrySubmissionEligibilityDelay;
-        shift = shift > _groupSize - 1 ? _groupSize - 1 : shift;
-
-        // Last eligible index must be wrapped if their value is bigger than
-        // the group size. If wrapping occurs, the lastEligibleIndex is smaller
-        // than the firstEligibleIndex. In that case, the eligibility queue
-        // can look as follows: 1, 2 (last), 3, 4, 5, 6, 7 (first), 8.
-        lastEligibleIndex = firstEligibleIndex + shift;
-        lastEligibleIndex = lastEligibleIndex > _groupSize
-            ? lastEligibleIndex - _groupSize
-            : lastEligibleIndex;
-
-        return (firstEligibleIndex, lastEligibleIndex);
-    }
-
-    /// @notice Returns whether the given submitter index is eligible to submit
-    ///         a relay entry within given eligibility range.
-    /// @param _submitterIndex Index of the submitter whose eligibility is checked.
-    /// @param _firstEligibleIndex First index of the given eligibility range.
-    /// @param _lastEligibleIndex Last index of the given eligibility range.
-    /// @return True if eligible. False otherwise.
-    function isEligible(
-        /* solhint-disable-next-line no-unused-vars */
-        Data storage self,
-        uint256 _submitterIndex,
-        uint256 _firstEligibleIndex,
-        uint256 _lastEligibleIndex
-    ) internal view returns (bool) {
-        if (_firstEligibleIndex <= _lastEligibleIndex) {
-            // First eligible index is equal or smaller than the last.
-            // We just need to make sure the submitter index is in range
-            // <firstEligibleIndex, lastEligibleIndex>.
-            return
-                _firstEligibleIndex <= _submitterIndex &&
-                _submitterIndex <= _lastEligibleIndex;
-        } else {
-            // First eligible index is bigger than the last. We need to deal
-            // with wrapped range and check whether the submitter index is
-            // either in range <1, lastEligibleIndex> or
-            // <firstEligibleIndex, groupSize>.
-            return
-                _submitterIndex <= _lastEligibleIndex ||
-                _firstEligibleIndex <= _submitterIndex;
-        }
-    }
-
-    /// @notice Determines a list of members which should be considered as
-    ///         inactive due to not submitting a relay entry on their turn.
-    ///         Inactive members are determined using the eligibility queue and
-    ///         are taken from the <firstEligibleIndex, submitterIndex) range.
-    ///         It also handles the `submitterIndex < firstEligibleIndex` case
-    ///         and wraps the queue accordingly.
-    /// @param submitterIndex Index of the relay entry submitter.
-    /// @param firstEligibleIndex First index of the given eligibility range.
-    /// @param groupMembers IDs of the group members.
-    /// @return An array of members IDs which should be  inactive due
-    ///         to not submitting a relay entry on their turn.
-    function getInactiveMembers(
-        /* solhint-disable-next-line no-unused-vars */
-        Data storage self,
-        uint256 submitterIndex,
-        uint256 firstEligibleIndex,
-        uint32[] memory groupMembers
-    ) internal view returns (uint32[] memory) {
-        uint256 groupSize = groupMembers.length;
-
-        uint256 inactiveMembersCount = submitterIndex >= firstEligibleIndex
-            ? submitterIndex - firstEligibleIndex
-            : groupSize - (firstEligibleIndex - submitterIndex);
-
-        uint32[] memory inactiveMembersIDs = new uint32[](inactiveMembersCount);
-
-        for (uint256 i = 0; i < inactiveMembersCount; i++) {
-            uint256 memberIndex = firstEligibleIndex + i;
-
-            if (memberIndex > groupSize) {
-                memberIndex = memberIndex - groupSize;
-            }
-
-            inactiveMembersIDs[i] = groupMembers[memberIndex - 1];
-        }
-
-        return inactiveMembersIDs;
     }
 
     /// @notice Computes the slashing factor which should be used during
