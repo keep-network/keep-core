@@ -24,6 +24,7 @@ import {
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
 import { selectGroup } from "./utils/groups"
+import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
@@ -528,13 +529,16 @@ describe("RandomBeacon - Group Creation", () => {
 
     context("with group creation in progress", async () => {
       let startBlock: number
-      let genesisSeed
+      let genesisSeed: BigNumber
+      let firstEligibleSubmitterIndex: number
 
       beforeEach("run genesis", async () => {
         const [genesisTx, seed] = await genesis(randomBeacon)
 
         startBlock = genesisTx.blockNumber
         genesisSeed = seed
+
+        firstEligibleSubmitterIndex = firstEligibleIndex(genesisSeed)
       })
 
       context("with group creation not timed out", async () => {
@@ -575,7 +579,7 @@ describe("RandomBeacon - Group Creation", () => {
                   filteredSigners,
                   startBlock,
                   noMisbehaved,
-                  1,
+                  firstEligibleSubmitterIndex,
                   32
                 )
               ).to.be.revertedWith("Too few signatures")
@@ -603,7 +607,7 @@ describe("RandomBeacon - Group Creation", () => {
                 filteredSigners,
                 startBlock,
                 noMisbehaved,
-                1,
+                firstEligibleSubmitterIndex,
                 33
               ))
             })
@@ -640,7 +644,7 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           it("should succeed for the first submitter", async () => {
-            const submitterIndex = 1
+            const submitterIndex = firstEligibleSubmitterIndex
 
             const {
               transaction: tx,
@@ -678,7 +682,7 @@ describe("RandomBeacon - Group Creation", () => {
                 noMisbehaved,
                 2
               )
-            ).to.be.revertedWith("Submitter not eligible")
+            ).to.be.revertedWith("Submitter is not eligible")
           })
 
           it("should register a candidate group", async () => {
@@ -743,7 +747,7 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the first submitter", async () => {
-                const submitterIndex = 1
+                const submitterIndex = firstEligibleSubmitterIndex
 
                 const {
                   transaction: tx,
@@ -782,7 +786,7 @@ describe("RandomBeacon - Group Creation", () => {
                     noMisbehaved,
                     2
                   )
-                ).to.be.revertedWith("Submitter not eligible")
+                ).to.be.revertedWith("Submitter is not eligible")
               })
             }
           )
@@ -800,7 +804,7 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the first submitter", async () => {
-                const submitterIndex = 1
+                const submitterIndex = firstEligibleSubmitterIndex
 
                 const {
                   transaction: tx,
@@ -830,7 +834,10 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the second submitter", async () => {
-                const submitterIndex = 2
+                const submitterIndex = shiftEligibleIndex(
+                  firstEligibleSubmitterIndex,
+                  1
+                )
 
                 const {
                   transaction: tx,
@@ -869,7 +876,7 @@ describe("RandomBeacon - Group Creation", () => {
                     noMisbehaved,
                     3
                   )
-                ).to.be.revertedWith("Submitter not eligible")
+                ).to.be.revertedWith("Submitter is not eligible")
               })
             }
           )
@@ -882,7 +889,7 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the first submitter", async () => {
-                const submitterIndex = 2
+                const submitterIndex = firstEligibleSubmitterIndex
 
                 const {
                   transaction: tx,
@@ -912,7 +919,10 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should succeed for the last submitter", async () => {
-                const submitterIndex = constants.groupSize
+                const submitterIndex = shiftEligibleIndex(
+                  firstEligibleSubmitterIndex,
+                  constants.groupSize - 1
+                )
 
                 const {
                   transaction: tx,
@@ -979,14 +989,15 @@ describe("RandomBeacon - Group Creation", () => {
                 // Mix signers to make the result malicious.
                 mixSigners(await selectGroup(randomBeacon, genesisSeed)),
                 startBlock,
-                noMisbehaved
+                noMisbehaved,
+                firstEligibleSubmitterIndex
               )
 
               await randomBeacon.challengeDkgResult(dkgResult)
             })
 
             it("should allow first member to submit", async () => {
-              const submitterIndex = 1
+              const submitterIndex = firstEligibleSubmitterIndex
 
               const {
                 transaction: tx,
@@ -1930,7 +1941,7 @@ describe("RandomBeacon - Group Creation", () => {
     it("should enforce submission start offset", async () => {
       let dkgResult: DkgResult
 
-      const [genesisTx, genesisSeed] = await genesis(randomBeacon)
+      const [genesisTx] = await genesis(randomBeacon)
       const startBlock = genesisTx.blockNumber
 
       await mineBlocks(constants.offchainDkgTime)

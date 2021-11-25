@@ -8,6 +8,8 @@ import type { RandomBeacon, SortitionPool } from "../../typechain"
 import { Operator } from "./operators"
 // eslint-disable-next-line import/no-cycle
 import { selectGroup } from "./groups"
+import { firstEligibleIndex } from "./submission"
+import { constants } from "../fixtures"
 
 export interface DkgResult {
   submitterMemberIndex: number
@@ -46,7 +48,7 @@ export async function signAndSubmitCorrectDkgResult(
   seed: BigNumber,
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex = 1,
+  submitterIndex?: number,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
@@ -54,6 +56,10 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResultHash: string
   members: number[]
 }> {
+  if (!submitterIndex) {
+    // eslint-disable-next-line no-param-reassign
+    submitterIndex = firstEligibleIndex(seed, constants.groupSize)
+  }
   return signAndSubmitArbitraryDkgResult(
     randomBeacon,
     groupPublicKey,

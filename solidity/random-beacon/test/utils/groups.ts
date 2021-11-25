@@ -6,6 +6,7 @@ import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
 import { Operator } from "./operators"
 import type { RandomBeacon, SortitionPool } from "../../typechain"
+import { firstEligibleIndex } from "./submission"
 
 const { mineBlocks } = helpers.time
 
@@ -15,8 +16,19 @@ export async function createGroup(
   signers: Operator[]
 ): Promise<void> {
   const { blockNumber: startBlock } = await randomBeacon.genesis()
-  const submitterIndex = 1
+
+  const dkgSeed: BigNumber = ethers.BigNumber.from(
+    ethers.utils.keccak256(
+      ethers.utils.solidityPack(
+        ["uint256", "uint256"],
+        [await randomBeacon.genesisSeed(), startBlock]
+      )
+    )
+  )
+  const submitterIndex = firstEligibleIndex(dkgSeed, constants.groupSize)
+
   await mineBlocks(constants.offchainDkgTime)
+
   const { dkgResult } = await signAndSubmitArbitraryDkgResult(
     randomBeacon,
     blsData.groupPubKey,
@@ -27,6 +39,7 @@ export async function createGroup(
   )
 
   await mineBlocks(params.dkgResultChallengePeriodLength)
+
   await randomBeacon
     .connect(await ethers.getSigner(signers[submitterIndex - 1].address))
     .approveDkgResult(dkgResult)
