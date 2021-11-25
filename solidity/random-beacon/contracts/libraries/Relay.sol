@@ -299,18 +299,6 @@ library Relay {
             block.number > self.currentRequest.startBlock + _relayEntryTimeout;
     }
 
-    /// @notice Calculates a relay entry timeout.
-    /// @return Relay entry timeout in blocks.
-    function relayEntryTimeout(Data storage self)
-        internal
-        view
-        returns (uint256)
-    {
-        return
-            (dkgGroupSize * self.relayEntrySubmissionEligibilityDelay) +
-            self.relayEntryHardTimeout;
-    }
-
     /// @notice Determines the eligibility range for given relay entry basing on
     ///         current block number.
     /// @dev Parameters _entry and _groupSize are passed because the first
