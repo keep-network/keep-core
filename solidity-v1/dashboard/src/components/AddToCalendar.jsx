@@ -1,5 +1,8 @@
 import React from "react"
 import * as moment from "moment"
+import { CompoundDropdown as Dropdown } from "./Dropdown"
+import * as Icons from "./Icons"
+import { ADD_TO_CALENDAR_OPTIONS } from "../constants/constants"
 
 const makeTime = (time) => {
   return moment(time)
@@ -49,6 +52,17 @@ const makeICSCalendarUrl = (event) => {
   return encodeURI(`data:text/calendar;charset=utf8,${components.join("\n")}`)
 }
 
+const options = [
+  {
+    label: "Google Calendar",
+    value: ADD_TO_CALENDAR_OPTIONS.GOOGLE_CALENDER,
+  },
+  {
+    label: "Apple Calendar",
+    value: ADD_TO_CALENDAR_OPTIONS.APPLE_CALENDAR,
+  },
+]
+
 const AddToCalendar = ({ ...reactAddToCalendarProps }) => {
   const event = {
     name: "Coverage Pools - Tokens Ready To Claim",
@@ -56,9 +70,58 @@ const AddToCalendar = ({ ...reactAddToCalendarProps }) => {
     startsAt: moment().format("YYYY-MM-DD HH:mm:ss"),
     endsAt: moment().add(2, "days").format("YYYY-MM-DD HH:mm:ss"),
   }
-  console.log("google calnedar url", makeGoogleCalendarUrl(event))
-  console.log("ics calendar api", makeICSCalendarUrl(event))
-  return <></>
+
+  const onCalendarSelect = (selectedCalendar) => {
+    console.log("selectedCalendar", selectedCalendar)
+    switch (selectedCalendar) {
+      case ADD_TO_CALENDAR_OPTIONS.GOOGLE_CALENDER: {
+        const win = window.open(makeGoogleCalendarUrl(event))
+        win.focus()
+        break
+      }
+      case ADD_TO_CALENDAR_OPTIONS.APPLE_CALENDAR: {
+        const win = window.open(makeICSCalendarUrl(event))
+        win.focus()
+        break
+      }
+      default:
+        return
+    }
+  }
+
+  return (
+    <Dropdown
+      selectedItem={options[0]}
+      onSelect={onCalendarSelect}
+      comparePropertyName="label"
+      className="add-to-calendar-dropdown"
+      rounded
+    >
+      <Dropdown.Trigger
+        className={"add-to-calendar-dropdown__trigger"}
+        withTriggerArrow={false}
+      >
+        <div className="flex row center">
+          <Icons.Calendar width={14} height={14} />
+          <span className="text-label text-label--without-hover text-black ml-1">
+            ADD TO CALENDAR
+          </span>
+        </div>
+      </Dropdown.Trigger>
+      <Dropdown.Options className="add-to-calendar-dropdown__options">
+        {options.map((option) => {
+          return (
+            <Dropdown.Option
+              key={`dropdown-${option.value}`}
+              value={option.value}
+            >
+              {option.label}
+            </Dropdown.Option>
+          )
+        })}
+      </Dropdown.Options>
+    </Dropdown>
+  )
 }
 
 export default AddToCalendar

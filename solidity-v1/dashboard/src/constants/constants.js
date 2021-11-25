@@ -260,3 +260,8 @@ export const PENDING_WITHDRAWAL_STATUS = {
   EXPIRED: "expired",
   NEW: "new",
 }
+
+export const ADD_TO_CALENDAR_OPTIONS = {
+  GOOGLE_CALENDER: "google-calendar",
+  APPLE_CALENDAR: "apple-calendar",
+}
