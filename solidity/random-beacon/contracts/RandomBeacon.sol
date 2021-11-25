@@ -776,6 +776,16 @@ contract RandomBeacon is Ownable {
         }
     }
 
+    // TODO: Document
+    function notifyRelayEntryOperatorIneligibleForRewards(
+        Relay.IneligibleOperatorInfo calldata info
+    ) external {
+        relay.notifyOperatorIneligibleForRewards(info);
+
+        // TODO: Get ineligible operators and ban them from rewards.
+        // TODO: Pay the notifier reward.
+    }
+
     /// @notice Ban given operators from sortition pool rewards.
     /// @dev By the way, this function releases gas deposits made by operators
     ///      during their registration. See `registerOperator` function. This

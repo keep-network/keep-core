@@ -33,6 +33,16 @@ library Relay {
         uint128 startBlock;
     }
 
+    // TODO: Document
+    struct IneligibleOperatorInfo {
+        uint256 entry;
+        uint256 submissionBlock;
+        uint256 eligibilityDelay;
+        uint256 requestStartBlock;
+        uint256 submitterIndex;
+        uint32[] groupMembers;
+    }
+
     struct Data {
         // Total count of all requests.
         uint64 requestCount;
@@ -144,36 +154,13 @@ library Relay {
             "Unexpected submitter index"
         );
 
-        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
-            .getEligibilityRange(
-                uint256(keccak256(entry)),
-                block.number,
-                self.currentRequest.startBlock,
-                self.relayEntrySubmissionEligibilityDelay,
-                groupSize
-            );
-
-        require(
-            Submission.isEligible(
-                submitterIndex,
-                firstEligibleIndex,
-                lastEligibleIndex
-            ),
-            "Submitter is not eligible"
-        );
-
         require(
             BLS.verify(group.groupPubKey, self.previousEntry, entry),
             "Invalid entry"
         );
 
-        // Get the list of members IDs which should be considered inactive due
-        // to not submitting the entry on their turn.
-        inactiveMembers = Submission.getInactiveMembers(
-            submitterIndex,
-            firstEligibleIndex,
-            group.members
-        );
+        // TODO: Store `ineligibleOperatorRelayEntryInfo` and emit all
+        //       needed params as part of `RelayEntrySubmitted`.
 
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
@@ -275,6 +262,28 @@ library Relay {
         );
 
         delete self.currentRequest;
+    }
+
+    function notifyOperatorIneligibleForRewards(
+        IneligibleOperatorInfo calldata info,
+        Groups.Group memory group
+    ) internal returns (uint32[] memory ineligibleOperators) {
+        // TODO: Check hash of passed info against stored `ineligibleOperatorRelayEntryInfo`
+
+        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
+            .getEligibilityRange(
+                info.entry,
+                info.submissionBlock,
+                info.requestStartBlock,
+                info.eligibilityDelay,
+                info.groupMembers.length
+            );
+
+        // TODO: Determine who should be considered ineligible using
+        //       Submission.getInactiveMembers and Submission.isEligible.
+        //       Save result to ineligibleOperators
+
+        return ineligibleOperators;
     }
 
     /// @notice Returns whether a relay entry request is currently in progress.
