@@ -61,6 +61,16 @@ export async function blsDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function submissionDeployment(): Promise<DeployedContracts> {
+  const Submission = await ethers.getContractFactory("Submission")
+  const submission = await Submission.deploy()
+  await submission.deployed()
+
+  const contracts: DeployedContracts = { submission }
+
+  return contracts
+}
+
 export async function testTokenDeployment(): Promise<DeployedContracts> {
   const TestToken = await ethers.getContractFactory("TestToken")
   const testToken = await TestToken.deploy()
@@ -93,6 +103,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
+      Submission: (await submissionDeployment()).submission.address,
       DKG: dkg.address,
     },
   })
