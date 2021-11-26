@@ -26,7 +26,7 @@ import { Keep } from "../../contracts"
 import { MODAL_TYPES } from "../../constants/constants"
 import { CoveragePoolV1ExchangeRate } from "../../components/coverage-pools/ExchangeRate"
 
-const CoveragePoolPage = ({ title, withNewLabel }) => {
+const CoveragePoolPage = () => {
   const { openConfirmationModal, openModal } = useModal()
   const dispatch = useDispatch()
   const {
@@ -42,7 +42,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     totalAllocatedRewards,
     totalCoverageClaimed,
     withdrawalDelay,
-    // pendingWithdrawal,
     withdrawalInitiatedTimestamp,
     hasRiskManagerOpenAuctions,
   } = useSelector((state) => state.coveragePool)
