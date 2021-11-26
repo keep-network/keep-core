@@ -24,6 +24,7 @@ import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
 import { Keep } from "../../contracts"
 import { MODAL_TYPES } from "../../constants/constants"
+import { CoveragePoolV1ExchangeRate } from "../../components/coverage-pools/ExchangeRate"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal, openModal } = useModal()
@@ -141,7 +142,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               />
             </OnlyIf>
             <OnlyIf condition={hasCovKEEPTokens}>
-              <span className={"coverage-pool__share-of-pool text-grey-40"}>
+              <span className={"coverage-pool__share-of-pool text-grey-70"}>
                 {displayPercentageValue(shareOfPool * 100, false)} of pool
               </span>
             </OnlyIf>
@@ -179,6 +180,13 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               <ResourceTooltip
                 tooltipClassName={"ml-1"}
                 {...resourceTooltipProps.covPoolsAvailableToWithdraw}
+              />
+              <CoveragePoolV1ExchangeRate
+                covToken={covKEEP}
+                collateralToken={KEEP}
+                covTotalSupply={covTotalSupply}
+                totalValueLocked={totalValueLocked}
+                className="ml-a text-grey-70"
               />
             </div>
             <TokenAmount
