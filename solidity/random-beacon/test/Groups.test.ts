@@ -549,7 +549,7 @@ describe("Groups", () => {
         const groupPublicKey1 = "0x0001"
         const groupPublicKey2 = "0x0002"
 
-        context("when both groups are candidate", async () => {
+        context("when candidate group added after activation", async () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
@@ -652,7 +652,7 @@ describe("Groups", () => {
         const groupPublicKey1 = groupPublicKey
         const groupPublicKey2 = groupPublicKey
 
-        context("when both groups are candidate", async () => {
+        context("when the first group is active", async () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
@@ -722,13 +722,11 @@ describe("Groups", () => {
 
         it("should remove registered group", async () => {
           const groupsRegistry = await groups.getGroupsRegistry()
-
           expect(groupsRegistry).to.be.lengthOf(0)
         })
 
         it("should not update stored group data", async () => {
           const storedGroup = await groups.getGroup(groupPublicKey)
-
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
           expect(storedGroup.members).to.be.deep.equal(members)
@@ -761,57 +759,10 @@ describe("Groups", () => {
         const groupPublicKey1 = "0x0001"
         const groupPublicKey2 = "0x0002"
 
-        context("when both groups are candidate", async () => {
-          let tx: ContractTransaction
-
-          beforeEach(async () => {
-            await groups.addCandidateGroup(
-              groupPublicKey1,
-              members1,
-              noMisbehaved
-            )
-            await groups.addCandidateGroup(
-              groupPublicKey2,
-              members2,
-              noMisbehaved
-            )
-
-            tx = await groups.popCandidateGroup()
-          })
-
-          it("should emit CandidateGroupRemoved event", async () => {
-            await expect(tx)
-              .to.emit(groups, "CandidateGroupRemoved")
-              .withArgs(groupPublicKey2)
-          })
-
-          it("should remove registered group", async () => {
-            const groupsRegistry = await groups.getGroupsRegistry()
-
-            expect(groupsRegistry).to.be.lengthOf(1)
-            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey1))
-          })
-
-          it("should not update stored group data", async () => {
-            const storedGroup1 = await groups.getGroup(groupPublicKey1)
-
-            expect(storedGroup1.groupPubKey).to.be.equal(groupPublicKey1)
-            expect(storedGroup1.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup1.members).to.be.deep.equal(members1)
-
-            const storedGroup2 = await groups.getGroup(groupPublicKey2)
-
-            expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
-            expect(storedGroup2.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup2.members).to.be.deep.equal(members2)
-          })
-        })
-
         context("when the other group is active", async () => {
           let activationBlockNumber1: number
           let tx: ContractTransaction
 
-          // TODO: Update as the latest group got activated
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,
@@ -853,57 +804,6 @@ describe("Groups", () => {
               activationBlockNumber1
             )
             expect(storedGroup1.members).to.be.deep.equal(members1)
-
-            const storedGroup2 = await groups.getGroup(groupPublicKey2)
-
-            expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
-            expect(storedGroup2.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup2.members).to.be.deep.equal(members2)
-          })
-        })
-      })
-
-      context("with the same group public key", async () => {
-        const groupPublicKey1 = groupPublicKey
-        const groupPublicKey2 = groupPublicKey
-
-        context("when both groups are candidate", async () => {
-          let tx: ContractTransaction
-
-          beforeEach(async () => {
-            await groups.addCandidateGroup(
-              groupPublicKey1,
-              members1,
-              noMisbehaved
-            )
-            await groups.addCandidateGroup(
-              groupPublicKey2,
-              members2,
-              noMisbehaved
-            )
-
-            tx = await groups.popCandidateGroup()
-          })
-
-          it("should emit CandidateGroupRemoved event", async () => {
-            await expect(tx)
-              .to.emit(groups, "CandidateGroupRemoved")
-              .withArgs(groupPublicKey2)
-          })
-
-          it("should remove registered group", async () => {
-            const groupsRegistry = await groups.getGroupsRegistry()
-
-            expect(groupsRegistry).to.be.lengthOf(1)
-            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey1))
-          })
-
-          it("should not update stored group data", async () => {
-            const storedGroup1 = await groups.getGroup(groupPublicKey1)
-
-            expect(storedGroup1.groupPubKey).to.be.equal(groupPublicKey1)
-            expect(storedGroup1.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup1.members).to.be.deep.equal(members2)
 
             const storedGroup2 = await groups.getGroup(groupPublicKey2)
 
