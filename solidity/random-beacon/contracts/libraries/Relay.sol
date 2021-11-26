@@ -192,6 +192,27 @@ library Relay {
         return (inactiveMembers, slashingAmount);
     }
 
+    /// @notice Validates if the reporting of an unauthorized group signing can
+    ///         be performed. The signature verification is done by BLS lib.
+    function validateUnauthorizedSigning(
+        Data storage self,
+        bytes memory signedMsgSender,
+        Groups.Group memory group
+    ) internal {
+        require(isRequestInProgress(self), "No relay request in progress");
+
+        require(!group.terminated, "Group cannot be terminated");
+
+        require(
+            BLS.verifyBytes(
+                group.groupPubKey,
+                abi.encodePacked(msg.sender),
+                signedMsgSender
+            ),
+            "Invalid signature"
+        );
+    }
+
     /// @notice Set relayRequestFee parameter.
     /// @param newRelayRequestFee New value of the parameter.
     function setRelayRequestFee(Data storage self, uint256 newRelayRequestFee)

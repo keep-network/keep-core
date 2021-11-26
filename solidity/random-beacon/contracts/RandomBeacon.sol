@@ -752,7 +752,7 @@ contract RandomBeacon is Ownable {
             groupMembers
         );
 
-        // TODO: Once implemented, terminate group using `groupId`.
+        groups.terminateGroup(groupId);
         groups.expireOldGroups();
 
         if (groups.numberOfActiveGroups() > 0) {
@@ -769,6 +769,36 @@ contract RandomBeacon is Ownable {
                 dkg.notifySeedTimedOut();
             }
         }
+    }
+
+    /// @notice Reports unauthorized groups signing. Must provide a valid signature
+    ///         of the sender's address as a message. Successful signature
+    ///         verification means the private key has been leaked and all group
+    ///         members should be punished by slashing their tokens. Group has
+    ///         to be active or expired. Unauthorized signing cannot be reported
+    ///         for a terminated group. In case of reporting unauthorized
+    ///         signing for a terminated group, or when the signature is invalid,
+    ///         function reverts.
+    /// @param signedMsgSender Signature of the sender's address as a message.
+    function reportUnauthorizedSigning(bytes memory signedMsgSender) external {
+        Groups.Group memory group = groups.getGroup(
+            relay.currentRequest.groupId
+        );
+        relay.validateUnauthorizedSigning(signedMsgSender, group);
+
+        uint64 groupId = relay.currentRequest.groupId;
+
+        groups.terminateGroup(groupId);
+
+        address[] memory groupMembers = sortitionPool.getIDOperators(
+            groups.getGroup(groupId).members
+        );
+        staking.seize(
+            authorization.minimumAuthorization,
+            100,
+            msg.sender,
+            groupMembers
+        );
     }
 
     /// @notice Ban given operators from sortition pool rewards.
