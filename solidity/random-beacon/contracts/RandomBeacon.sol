@@ -253,6 +253,8 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
+    event RewardsBanned(uint32[] ids, uint256 duration);
+
     event BanRewardsFailed(uint32[] ids);
 
     /// @dev Assigns initial values to parameters to make the beacon work
@@ -799,7 +801,9 @@ contract RandomBeacon is Ownable {
     /// @param ids IDs of banned operators.
     /// @param banDuration Duration of the ban period in seconds.
     function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
-        try sortitionPool.banRewards(ids, banDuration) {} catch {
+        try sortitionPool.banRewards(ids, banDuration) {
+            emit RewardsBanned(ids, banDuration);
+        } catch {
             // Should never happen but we want to ensure a non-critical path
             // failure from an external contract does not stop the protocol
             // from being successfully executed.
