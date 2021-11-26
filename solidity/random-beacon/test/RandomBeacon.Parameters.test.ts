@@ -3,13 +3,12 @@ import { expect } from "chai"
 
 import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
-
-import type { RandomBeacon } from "../typechain"
+import type { RandomBeaconStub } from "../typechain"
 
 describe("RandomBeacon - Parameters", () => {
   let governance: Signer
   let thirdParty: Signer
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconStub
 
   // prettier-ignore
   before(async () => {
@@ -18,7 +17,7 @@ describe("RandomBeacon - Parameters", () => {
 
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
-    randomBeacon = contracts.randomBeacon as RandomBeacon
+    randomBeacon = contracts.randomBeacon as RandomBeaconStub
   })
 
   describe("updateRelayEntryParameters", () => {
