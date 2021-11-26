@@ -33,13 +33,19 @@ library Relay {
         uint128 startBlock;
     }
 
-    // TODO:  Documentation.
     struct IneligibleOperatorInfo {
+        // Relay entry value.
         bytes entry;
+        // Submission block of the relay entry.
         uint256 submissionBlock;
+        // Submission eligibility delay value in force at the moment of
+        // relay entry submission.
         uint256 eligibilityDelay;
+        // Relay request start block.
         uint256 requestStartBlock;
+        // Index of the group member who submitted the relay entry.
         uint256 submitterIndex;
+        // Identifiers of all group members.
         uint32[] groupMembers;
     }
 
@@ -59,7 +65,7 @@ library Relay {
         uint256 relayEntryHardTimeout;
         // Slashing amount for not submitting relay entry
         uint256 relayEntrySubmissionFailureSlashingAmount;
-        // TODO: Documentation.
+        // Hash of the ineligible operator info for latest completed relay entry.
         bytes32 ineligibleOperatorInfo;
     }
 
@@ -285,7 +291,16 @@ library Relay {
         delete self.currentRequest;
     }
 
-    // TODO: Documentation.
+    /// @notice Notifies about operators ineligible for rewards due to not
+    ///         submitting relay entry on their turn during the latest
+    ///         completed relay request. This method reverts if ineligible
+    ///         operators were already reported or if there was no ineligible
+    ///         operators during latest completed relay request (first eligible
+    ///         operator submitted the result).
+    /// @param info Information required to determine operators ineligible for
+    ///        rewards. Must match the hash of information stored during the
+    ///        latest relay entry submission.
+    /// @return ineligibleOperators Identifiers of ineligible operators.
     function notifyOperatorIneligibleForRewards(
         Data storage self,
         IneligibleOperatorInfo calldata info

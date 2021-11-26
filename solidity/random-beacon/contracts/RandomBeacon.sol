@@ -781,7 +781,18 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    // TODO: Documentation.
+    /// @notice Notifies about operators ineligible for rewards due to not
+    ///         submitting relay entry on their turn during the latest
+    ///         completed relay request. This method reverts if ineligible
+    ///         operators were already reported or if there was no ineligible
+    ///         operators during latest completed relay request (first eligible
+    ///         operator submitted the result). The notifier calling this
+    ///         method is rewarded from the maintenance pool. The total reward
+    ///         scales with the number of operators marked as ineligible for
+    ///         rewards.
+    /// @param info Information required to determine operators ineligible for
+    ///        rewards. Must match the hash of information stored during the
+    ///        latest relay entry submission.
     function notifyRelayEntryOperatorIneligibleForRewards(
         Relay.IneligibleOperatorInfo calldata info
     ) external {
@@ -917,7 +928,9 @@ contract RandomBeacon is Ownable {
         return sortitionPool.selectGroup(DKG.groupSize, seed);
     }
 
-    // TODO: Documentation.
+    /// @return Hash of the latest ineligible operator relay entry info.
+    ///         If a successful notification was performed, this value
+    ///         will be equal to 32 zeroed bytes.
     function ineligibleOperatorRelayEntryInfo()
         external
         view
