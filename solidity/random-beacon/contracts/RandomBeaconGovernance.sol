@@ -470,7 +470,7 @@ contract RandomBeaconGovernance is Ownable {
 
     /// @notice Begins the group lifetime update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newGroupLifetime New group lifetime in seconds
+    /// @param _newGroupLifetime New group lifetime in blocks
     function beginGroupLifetimeUpdate(uint256 _newGroupLifetime)
         external
         onlyOwner

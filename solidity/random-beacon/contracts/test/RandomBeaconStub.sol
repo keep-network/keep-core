@@ -22,8 +22,36 @@ contract RandomBeaconStub is RandomBeacon {
         return callback;
     }
 
-    function incrementActiveGroupsCount() external {
-        groups.activeGroupsCount++;
+    function roughlyAddGroup(
+        bytes calldata groupPubKey,
+        uint32[] calldata members
+    ) external {
+        bytes32 groupPubKeyHash = keccak256(groupPubKey);
+
+        Groups.Group memory group;
+        group.groupPubKey = groupPubKey;
+        group.members = members;
+        /* solhint-disable-next-line not-rely-on-time */
+        group.activationBlockNumber = block.number;
+
+        groups.groupsData[groupPubKeyHash] = group;
+        groups.groupsRegistry.push(groupPubKeyHash);
+    }
+
+    function groupLifetimeOf(bytes32 groupPubKeyHash)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            groups.groupsData[groupPubKeyHash].activationBlockNumber +
+            groups.groupLifetime;
+    }
+
+    function roughlyTerminateGroup(uint64 groupId) public {
+        groups.groupsData[groups.groupsRegistry[groupId]].terminated = true;
+        // just add groupId without sorting for simplicity
+        groups.activeTerminatedGroups.push(groupId);
     }
 
     function publicDkgLockState() external {
