@@ -42,6 +42,8 @@ library Groups {
     /// @notice Adds a new candidate group. The group is stored with group public
     ///         key and group members, but is not yet activated.
     /// @dev The group members list is stored with all misbehaved members filtered out.
+    ///      The code calling this function should ensure that the number of
+    ///      candidate (not activated) groups is never more than one.
     /// @param groupPubKey Generated candidate group public key
     /// @param members Addresses of candidate group members as outputted by the
     ///        group selection protocol.

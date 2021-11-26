@@ -48,7 +48,7 @@ library BLS {
 
     /**
      * @dev VerifyBytes wraps the functionality of BLS.verify, but hashes a message
-     * to a point on G1 and marshal to bytes first to allow raw bytes verificaion.
+     * to a point on G1 and marshal to bytes first to allow raw bytes verification.
      */
     function verifyBytes(
         bytes memory publicKey,
