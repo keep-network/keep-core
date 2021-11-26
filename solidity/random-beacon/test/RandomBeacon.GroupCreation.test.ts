@@ -561,6 +561,49 @@ describe("RandomBeacon - Group Creation", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
+          context("with malformed group public key", async () => {
+            it("should revert", async () => {
+              const empty = "0x"
+              const tooShort = groupPublicKey.substring(
+                0,
+                groupPublicKey.length - 2
+              )
+              const tooLong = `${groupPublicKey}ff`
+
+              await expect(
+                signAndSubmitArbitraryDkgResult(
+                  randomBeacon,
+                  empty,
+                  signers,
+                  startBlock,
+                  noMisbehaved
+                )
+              ).to.be.revertedWith("Malformed group public key")
+
+              await expect(
+                signAndSubmitArbitraryDkgResult(
+                  randomBeacon,
+                  tooShort,
+                  signers,
+                  startBlock,
+                  noMisbehaved
+                )
+              ).to.be.revertedWith("Malformed group public key")
+
+              await expect(
+                signAndSubmitArbitraryDkgResult(
+                  randomBeacon,
+                  tooLong,
+                  signers,
+                  startBlock,
+                  noMisbehaved
+                )
+              ).to.be.revertedWith("Malformed group public key")
+            })
+          })
+          // TODO: expand tests to ensure all possible cases of corrupted input
+          //       data are covered
+
           context("with less signatures on the result than required", () => {
             it("should revert", async () => {
               const filteredSigners = signers.slice(
@@ -1388,10 +1431,8 @@ describe("RandomBeacon - Group Creation", () => {
             await randomBeacon.challengeDkgResult(dkgResult)
 
             await mineBlocks(
-              params.dkgResultSubmissionEligibilityDelay *
-                anotherSubmitterIndex
+              params.dkgResultSubmissionEligibilityDelay * anotherSubmitterIndex
             )
-
             ;({
               transaction: tx,
               dkgResult,
@@ -1838,12 +1879,9 @@ describe("RandomBeacon - Group Creation", () => {
               it("should slash malicious result submitter", async () => {
                 await expect(tx)
                   .to.emit(staking, "Seized")
-                  .withArgs(
-                    to1e18(50000),
-                    100,
-                    await thirdParty.getAddress(),
-                    [submitter.address]
-                  )
+                  .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                    submitter.address,
+                  ])
               })
             })
           })
@@ -1896,12 +1934,9 @@ describe("RandomBeacon - Group Creation", () => {
               it("should slash malicious result submitter", async () => {
                 await expect(tx)
                   .to.emit(staking, "Seized")
-                  .withArgs(
-                    to1e18(50000),
-                    100,
-                    await thirdParty.getAddress(),
-                    [submitter.address]
-                  )
+                  .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                    submitter.address,
+                  ])
               })
             })
           })
