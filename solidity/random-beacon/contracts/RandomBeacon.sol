@@ -16,7 +16,6 @@ pragma solidity ^0.8.6;
 
 import "./libraries/Authorization.sol";
 import "./libraries/DKG.sol";
-import "./libraries/GasStation.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
@@ -59,7 +58,6 @@ contract RandomBeacon is Ownable {
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
-    using GasStation for GasStation.Data;
 
     // Constant parameters
 
@@ -80,12 +78,6 @@ contract RandomBeacon is Ownable {
     ///         a fixed frequency of relay requests.
     uint256 public groupCreationFrequency;
 
-    /// @notice Group lifetime in seconds. When a group reached its lifetime, it
-    ///         is no longer selected for new relay requests but may still be
-    ///         responsible for submitting relay entry if relay request assigned
-    ///         to that group is still pending.
-    uint256 public groupLifetime;
-
     /// @notice Reward in T for submitting DKG result. The reward is paid to
     ///         a submitter of a valid DKG result when the DKG result challenge
     ///         period ends.
@@ -96,6 +88,9 @@ contract RandomBeacon is Ownable {
     ///         locked and someone needs to unlock it. Anyone can do it and earn
     ///         `sortitionPoolUnlockingReward`.
     uint256 public sortitionPoolUnlockingReward;
+
+    /// @notice Reward in T for notifying the operator is ineligible.
+    uint256 public ineligibleOperatorNotifierReward;
 
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
@@ -137,7 +132,6 @@ contract RandomBeacon is Ownable {
     Groups.Data internal groups;
     Relay.Data internal relay;
     Callback.Data internal callback;
-    GasStation.Data internal gasStation;
 
     event AuthorizationParametersUpdated(
         uint96 minimumAuthorization,
@@ -164,6 +158,7 @@ contract RandomBeacon is Ownable {
     event RewardParametersUpdated(
         uint256 dkgResultSubmissionReward,
         uint256 sortitionPoolUnlockingReward,
+        uint256 ineligibleOperatorNotifierReward,
         uint256 sortitionPoolRewardsBanDuration,
         uint256 relayEntryTimeoutNotificationRewardMultiplier,
         uint256 dkgMaliciousResultNotificationRewardMultiplier
@@ -268,9 +263,10 @@ contract RandomBeacon is Ownable {
         // TODO: revisit all initial values
         callbackGasLimit = 200e3;
         groupCreationFrequency = 10;
-        groupLifetime = 2 weeks;
+
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
+        ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
@@ -286,6 +282,8 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
+
+        groups.setGroupLifetime(80640); // ~2weeks assuming 15s block time
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -346,17 +344,18 @@ contract RandomBeacon is Ownable {
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _groupCreationFrequency New group creation frequency
-    /// @param _groupLifetime New group lifetime
+    /// @param _groupLifetime New group lifetime in blocks
     function updateGroupCreationParameters(
         uint256 _groupCreationFrequency,
         uint256 _groupLifetime
     ) external onlyOwner {
         groupCreationFrequency = _groupCreationFrequency;
-        groupLifetime = _groupLifetime;
+
+        groups.setGroupLifetime(_groupLifetime);
 
         emit GroupCreationParametersUpdated(
             groupCreationFrequency,
-            groupLifetime
+            _groupLifetime
         );
     }
 
@@ -389,6 +388,8 @@ contract RandomBeacon is Ownable {
     ///      validating parameters.
     /// @param _dkgResultSubmissionReward New DKG result submission reward
     /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
+    /// @param _ineligibleOperatorNotifierReward New value of the ineligible
+    ///        operator notifier reward.
     /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
     /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
@@ -398,18 +399,21 @@ contract RandomBeacon is Ownable {
     function updateRewardParameters(
         uint256 _dkgResultSubmissionReward,
         uint256 _sortitionPoolUnlockingReward,
+        uint256 _ineligibleOperatorNotifierReward,
         uint256 _sortitionPoolRewardsBanDuration,
         uint256 _relayEntryTimeoutNotificationRewardMultiplier,
         uint256 _dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
         sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
+        ineligibleOperatorNotifierReward = _ineligibleOperatorNotifierReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
         dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
@@ -474,9 +478,6 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Registers the caller in the sortition pool.
-    /// @dev Creates a gas deposit tied to the operator address. The gas
-    ///      deposit is released when the operator is banned from sortition
-    ///      pool rewards or leaves the pool during status update.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -485,7 +486,6 @@ contract RandomBeacon is Ownable {
             "Operator is already registered"
         );
 
-        gasStation.depositGas(operator);
         sortitionPool.insertOperator(operator);
     }
 
@@ -494,12 +494,6 @@ contract RandomBeacon is Ownable {
         sortitionPool.updateOperatorStatus(
             sortitionPool.getOperatorID(msg.sender)
         );
-
-        // If the operator has been removed from the sortition pool during the
-        // status update, release its gas deposit.
-        if (!sortitionPool.isOperatorInPool(msg.sender)) {
-            gasStation.releaseGas(msg.sender);
-        }
     }
 
     /// @notice Checks whether the given operator is eligible to join the
@@ -762,6 +756,7 @@ contract RandomBeacon is Ownable {
         );
 
         // TODO: Once implemented, terminate group using `groupId`.
+        groups.expireOldGroups();
 
         if (groups.numberOfActiveGroups() > 0) {
             groupId = groups.selectGroup(
@@ -780,26 +775,10 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Ban given operators from sortition pool rewards.
-    /// @dev By the way, this function releases gas deposits made by operators
-    ///      during their registration. See `registerOperator` function. This
-    ///      action makes banning cheaper gas-wise.
     /// @param ids IDs of banned operators.
     /// @param banDuration Duration of the ban period in seconds.
     function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
-        try sortitionPool.banRewards(ids, banDuration) {
-            address[] memory operators = sortitionPool.getIDOperators(ids);
-
-            for (uint256 i = 0; i < operators.length; i++) {
-                // TODO: Once `banRewards` is implemented on pool side, revisit
-                //       gas station design. Current design is problematic
-                //       because operators deposit gas upon registration and
-                //       deposits are released either during status update
-                //       or rewards ban. The first case is natural as operator
-                //       leaves the pool but the latter is hard because deposit
-                //       is released and operator still stays in the pool.
-                gasStation.releaseGas(operators[i]);
-            }
-        } catch {
+        try sortitionPool.banRewards(ids, banDuration) {} catch {
             // Should never happen but we want to ensure a non-critical path
             // failure from an external contract does not stop group members
             // from submitting a valid relay entry.
@@ -894,6 +873,14 @@ contract RandomBeacon is Ownable {
         returns (uint256)
     {
         return relay.relayEntrySubmissionFailureSlashingAmount;
+    }
+
+    /// @notice Group lifetime in blocks. When a group reached its lifetime, it
+    ///         is no longer selected for new relay requests but may still be
+    ///         responsible for submitting relay entry if relay request assigned
+    ///         to that group is still pending.
+    function groupLifetime() external view returns (uint256) {
+        return groups.groupLifetime;
     }
 
     /// @notice Selects a new group of operators based on the provided seed.
