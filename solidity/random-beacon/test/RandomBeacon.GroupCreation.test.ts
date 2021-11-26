@@ -1492,15 +1492,15 @@ describe("RandomBeacon - Group Creation", () => {
                 .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
             })
 
-              it("should activate a candidate group", async () => {
-                const storedGroup = await randomBeacon["getGroup(bytes)"](
-                  groupPublicKey
-                )
+            it("should activate a candidate group", async () => {
+              const storedGroup = await randomBeacon["getGroup(bytes)"](
+                groupPublicKey
+              )
 
-                expect(storedGroup.activationBlockNumber).to.be.equal(
-                  tx.blockNumber
-                )
-              })
+              expect(storedGroup.activationBlockNumber).to.be.equal(
+                tx.blockNumber
+              )
+            })
 
             it("should reward the submitter with tokens from maintenance pool", async () => {
               const currentSubmitterBalance: BigNumber =
