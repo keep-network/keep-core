@@ -1197,7 +1197,7 @@ describe("RandomBeacon - Group Creation", () => {
           })
         })
 
-        context("with malicious dkg result submitted", async () => {
+        context("with dkg result submitted", async () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
           let dkgResult: DkgResult
@@ -1210,11 +1210,10 @@ describe("RandomBeacon - Group Creation", () => {
               transaction: tx,
               dkgResult,
               dkgResultHash,
-            } = await signAndSubmitArbitraryDkgResult(
+            } = await signAndSubmitCorrectDkgResult(
               randomBeacon,
               groupPublicKey,
-              // Mix signers to make the result malicious.
-              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+              genesisSeed,
               startBlock,
               noMisbehaved,
               submitterIndex
@@ -1351,83 +1350,105 @@ describe("RandomBeacon - Group Creation", () => {
               })
             })
           })
+        })
 
-          context("when there was a challenged result before", async () => {
-            // Submit a second result by another submitter
-            const anotherSubmitterIndex = 5
-            let anotherSubmitter: Signer
+        context("when there was a challenged result before", async () => {
+          let resultSubmissionBlock: number
+          let dkgResultHash: string
+          let dkgResult: DkgResult
 
-            beforeEach(async () => {
-              await randomBeacon.challengeDkgResult(dkgResult)
+          // First result is malicious and submitter is also malicious
+          const maliciousSubmitter = 1
 
-              await mineBlocks(
-                params.dkgResultSubmissionEligibilityDelay *
-                  anotherSubmitterIndex
-              )
+          // Submit a second result by another submitter
+          const anotherSubmitterIndex = 5
+          let anotherSubmitter: Signer
 
-              let tx: ContractTransaction
-              ;({
-                transaction: tx,
-                dkgResult,
-                dkgResultHash,
-              } = await signAndSubmitCorrectDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                genesisSeed,
-                startBlock,
-                noMisbehaved,
+          beforeEach(async () => {
+            let tx: ContractTransaction
+            ;({
+              transaction: tx,
+              dkgResult,
+              dkgResultHash,
+            } = await signAndSubmitArbitraryDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              // Mix signers to make the result malicious.
+              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+              startBlock,
+              noMisbehaved,
+              maliciousSubmitter
+            ))
+
+            await randomBeacon.challengeDkgResult(dkgResult)
+
+            await mineBlocks(
+              params.dkgResultSubmissionEligibilityDelay *
                 anotherSubmitterIndex
-              ))
+            )
 
-              anotherSubmitter = await ethers.getSigner(
-                await sortitionPool.getIDOperator(
-                  dkgResult.members[anotherSubmitterIndex - 1]
-                )
+            ;({
+              transaction: tx,
+              dkgResult,
+              dkgResultHash,
+            } = await signAndSubmitCorrectDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              genesisSeed,
+              startBlock,
+              noMisbehaved,
+              anotherSubmitterIndex
+            ))
+
+            anotherSubmitter = await ethers.getSigner(
+              await sortitionPool.getIDOperator(
+                dkgResult.members[anotherSubmitterIndex - 1]
               )
-              resultSubmissionBlock = tx.blockNumber
+            )
+            resultSubmissionBlock = tx.blockNumber
+          })
+
+          context("with challenge period not passed", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(
+                resultSubmissionBlock +
+                  params.dkgResultChallengePeriodLength -
+                  1
+              )
             })
 
-            context("with challenge period not passed", async () => {
-              beforeEach(async () => {
-                await mineBlocksTo(
-                  resultSubmissionBlock +
-                    params.dkgResultChallengePeriodLength -
-                    1
-                )
-              })
-
-              it("should revert with 'challenge period has not passed yet' error", async () => {
-                await expect(
-                  randomBeacon
-                    .connect(anotherSubmitter)
-                    .approveDkgResult(dkgResult)
-                ).to.be.revertedWith("challenge period has not passed yet")
-              })
-            })
-
-            context("with challenge period passed", async () => {
-              let tx: ContractTransaction
-              let initialSubmitterBalance: BigNumber
-
-              beforeEach(async () => {
-                await mineBlocksTo(
-                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
-                )
-
-                initialSubmitterBalance = await testToken.balanceOf(
-                  await anotherSubmitter.getAddress()
-                )
-
-                tx = await randomBeacon
+            it("should revert with 'challenge period has not passed yet' error", async () => {
+              await expect(
+                randomBeacon
                   .connect(anotherSubmitter)
                   .approveDkgResult(dkgResult)
-              })
+              ).to.be.revertedWith("challenge period has not passed yet")
+            })
+          })
 
-              it("should emit DkgResultApproved event", async () => {
-                await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultApproved")
-                  .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
-              })
+          context("with challenge period passed", async () => {
+            let tx: ContractTransaction
+            let initialSubmitterBalance: BigNumber
+
+            beforeEach(async () => {
+              await mineBlocksTo(
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
+              )
+
+              initialSubmitterBalance = await testToken.balanceOf(
+                await anotherSubmitter.getAddress()
+              )
+
+              tx = await randomBeacon
+                .connect(anotherSubmitter)
+                .approveDkgResult(dkgResult)
+            })
+
+            it("should emit DkgResultApproved event", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultApproved")
+                .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
+            })
 
               it("should activate a candidate group", async () => {
                 const storedGroup = await randomBeacon["getGroup(bytes)"](
@@ -1439,23 +1460,22 @@ describe("RandomBeacon - Group Creation", () => {
                 )
               })
 
-              it("should reward the submitter with tokens from maintenance pool", async () => {
-                const currentSubmitterBalance: BigNumber =
-                  await testToken.balanceOf(await anotherSubmitter.getAddress())
-                expect(
-                  currentSubmitterBalance.sub(initialSubmitterBalance)
-                ).to.be.equal(dkgResultSubmissionReward)
-              })
+            it("should reward the submitter with tokens from maintenance pool", async () => {
+              const currentSubmitterBalance: BigNumber =
+                await testToken.balanceOf(await anotherSubmitter.getAddress())
+              expect(
+                currentSubmitterBalance.sub(initialSubmitterBalance)
+              ).to.be.equal(dkgResultSubmissionReward)
+            })
 
-              it("should emit GroupActivated event", async () => {
-                await expect(tx)
-                  .to.emit(randomBeacon, "GroupActivated")
-                  .withArgs(0, groupPublicKey)
-              })
+            it("should emit GroupActivated event", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "GroupActivated")
+                .withArgs(0, groupPublicKey)
+            })
 
-              it("should unlock the sortition pool", async () => {
-                expect(await sortitionPool.isLocked()).to.be.false
-              })
+            it("should unlock the sortition pool", async () => {
+              expect(await sortitionPool.isLocked()).to.be.false
             })
           })
         })
