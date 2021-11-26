@@ -16,7 +16,11 @@ import Button from "../Button"
 import { Keep } from "../../contracts"
 import { useWeb3Address } from "../WithWeb3Context"
 import { ResourceTooltipContent } from "../ResourceTooltip"
-import { MODAL_TYPES } from "../../constants/constants"
+import {
+  COVERAGE_POOL_CLAIM_TOKENS_CALENDAR_EVENT,
+  MODAL_TYPES,
+} from "../../constants/constants"
+import AddToCalendar from "../AddToCalendar"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
@@ -100,40 +104,6 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   }
 
   const renderCooldownStatus = (timestamp) => {
-    const loadingBar = renderLoadingBarCooldownStatus(timestamp)
-    const endTime = renderWithdrawalCooldownEndTime(timestamp)
-    return (
-      <>
-        {loadingBar}
-        {endTime}
-      </>
-    )
-  }
-
-  const renderWithdrawalCooldownEndTime = (timestamp) => {
-    const endOfWithdrawalDelayDate = moment
-      .unix(timestamp)
-      .add(withdrawalDelay, "seconds")
-    return (
-      <div className={"pending-withdrawal__cooldown-end-date text-grey-70"}>
-        <span>
-          {endOfWithdrawalDelayDate.format("MM/DD/YYYY")} at{" "}
-          {endOfWithdrawalDelayDate.format("HH:mm:ss")}{" "}
-          {/* TODO: Add to calendar button */}
-          {/* <a
-            href={"http://google.com"}
-            className="arrow-link"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Add to calendar
-          </a> */}
-        </span>
-      </div>
-    )
-  }
-
-  const renderLoadingBarCooldownStatus = (timestamp) => {
     const withdrawalDate = moment.unix(timestamp)
     const currentDate = moment.unix(currentDateInUnix)
     const endOfWithdrawalDelayDate = moment
@@ -150,10 +120,10 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
       .duration(endOfWithdrawalDelayDate.diff(currentDate))
       .seconds()
 
-    const timeUntilAvailableText =
+    const timeUntilAvailable =
       days > 0
-        ? `${days}d ${hours}h ${minutes}m until available`
-        : `${hours}h ${minutes}m ${seconds}s until available`
+        ? `${days}d ${hours}h ${minutes}m`
+        : `${hours}h ${minutes}m ${seconds}s`
 
     let cooldownStatus = <></>
     if (currentDate.isBefore(endOfWithdrawalDelayDate, "seconds")) {
@@ -165,16 +135,41 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
             currentDate
           )}
           <div className={"pending-withdrawal__cooldown-time-container"}>
-            <span>{timeUntilAvailableText}</span>
+            <span
+              className={"text-label text-label--without-hover text-black"}
+            >{`Available: ${endOfWithdrawalDelayDate.format(
+              "MM/DD/YYYY"
+            )}, in ${timeUntilAvailable}`}</span>
           </div>
+          <AddToCalendar
+            {...COVERAGE_POOL_CLAIM_TOKENS_CALENDAR_EVENT}
+            startsAt={moment
+              .unix(timestamp)
+              .add(withdrawalDelay, "seconds")
+              .format("YYYY-MM-DD HH:mm:ss")}
+            endsAt={moment
+              .unix(timestamp)
+              .add(withdrawalDelay, "seconds")
+              .add(withdrawalTimeout, "seconds")
+              .format("YYYY-MM-DD HH:mm:ss")}
+            className="pending-withdrawal__add-to-calendar-dropdown"
+          />
         </>
       )
     } else {
       cooldownStatus = (
-        <div className={"pending-withdrawal__cooldown-completed"}>
-          <Icons.Success className={"success-icon"} />{" "}
-          <span>Cooldown completed</span>
-        </div>
+        <>
+          <div className={"pending-withdrawal__cooldown-completed"}>
+            <Icons.Success className={"success-icon"} />{" "}
+            <span>Cooldown completed</span>
+          </div>
+          <div className={"pending-withdrawal__cooldown-end-date text-grey-70"}>
+            <span>
+              {endOfWithdrawalDelayDate.format("MM/DD/YYYY")} at{" "}
+              {endOfWithdrawalDelayDate.format("HH:mm:ss")}{" "}
+            </span>
+          </div>
+        </>
       )
     }
 

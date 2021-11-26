@@ -265,3 +265,8 @@ export const ADD_TO_CALENDAR_OPTIONS = {
   GOOGLE_CALENDER: "google-calendar",
   APPLE_CALENDAR: "apple-calendar",
 }
+
+export const COVERAGE_POOL_CLAIM_TOKENS_CALENDAR_EVENT = {
+  name: "Coverage Pools - Tokens Ready To Claim",
+  details: "You have 48 hours to claim your tokens!",
+}

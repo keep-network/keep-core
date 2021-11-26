@@ -258,9 +258,13 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     } = event
 
     const address = yield select(selectors.getUserAddress)
-    const { covBalance, totalValueLocked, covTotalSupply } = yield select(
-      selectors.getCoveragePool
-    )
+    const {
+      covBalance,
+      totalValueLocked,
+      covTotalSupply,
+      withdrawalDelay,
+      withdrawalTimeout,
+    } = yield select(selectors.getCoveragePool)
 
     if (!isSameEthAddress(address, underwriter)) {
       continue
@@ -276,6 +280,9 @@ export function* subscribeToWithdrawalInitiatedEvent() {
           totalValueLocked,
           covTotalSupply,
           covBalanceOf: covBalance,
+          timestamp,
+          withdrawalDelay,
+          withdrawalTimeout,
         },
       })
     )

@@ -63,16 +63,21 @@ const options = [
   },
 ]
 
-const AddToCalendar = ({ ...reactAddToCalendarProps }) => {
+const AddToCalendar = ({
+  name = "New Event",
+  details = "Event details",
+  startsAt = moment().format("YYYY-MM-DD HH:mm:ss"), // date in YYY-MM-DD HH:mm:ss format
+  endsAt = moment().add(2, "hours").format("YYYY-MM-DD HH:mm:ss"), // date in YYY-MM-DD HH:mm:ss format
+  className = "",
+}) => {
   const event = {
-    name: "Coverage Pools - Tokens Ready To Claim",
-    details: "You have 48 hours to claim your tokens!",
-    startsAt: moment().format("YYYY-MM-DD HH:mm:ss"),
-    endsAt: moment().add(2, "days").format("YYYY-MM-DD HH:mm:ss"),
+    name,
+    details,
+    startsAt,
+    endsAt,
   }
 
   const onCalendarSelect = (selectedCalendar) => {
-    console.log("selectedCalendar", selectedCalendar)
     switch (selectedCalendar) {
       case ADD_TO_CALENDAR_OPTIONS.GOOGLE_CALENDER: {
         const win = window.open(makeGoogleCalendarUrl(event))
@@ -94,7 +99,7 @@ const AddToCalendar = ({ ...reactAddToCalendarProps }) => {
       selectedItem={options[0]}
       onSelect={onCalendarSelect}
       comparePropertyName="label"
-      className="add-to-calendar-dropdown"
+      className={`add-to-calendar-dropdown ${className}`}
       rounded
     >
       <Dropdown.Trigger
