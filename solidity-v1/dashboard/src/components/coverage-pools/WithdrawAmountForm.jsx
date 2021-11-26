@@ -51,7 +51,6 @@ const WithdrawAmountForm = ({
       <Button
         className="btn btn-lg btn-primary w-100"
         onClick={formikProps.handleSubmit}
-        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         {submitBtnText}
       </Button>
@@ -69,8 +68,8 @@ const WithdrawAmountFormWithFormik = withFormik({
     const { withdrawAmount } = values
     const errors = {}
 
-    if (lte(props.withdrawAmount || 0, 0)) {
-      errors.withdrawAmount = "The value should be greater than zero"
+    if (lte(withdrawAmount || 0, 0)) {
+      errors.withdrawAmount = "The value should be greater than zero."
     } else {
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,

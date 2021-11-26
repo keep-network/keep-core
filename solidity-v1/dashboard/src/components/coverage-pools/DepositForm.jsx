@@ -93,7 +93,6 @@ const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
         className="btn btn-lg btn-primary w-100"
         type="submit"
         onClick={formikProps.handleSubmit}
-        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         deposit
       </Button>
