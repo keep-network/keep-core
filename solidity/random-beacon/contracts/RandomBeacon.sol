@@ -218,7 +218,15 @@ contract RandomBeacon is Ownable {
         bytes previousEntry
     );
 
-    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+    event RelayEntrySubmitted(
+        uint256 indexed requestId,
+        bytes entry,
+        uint256 submissionBlock,
+        uint256 eligibilityDelay,
+        uint256 requestStartBlock,
+        uint256 submitterIndex,
+        uint32[] groupMembers
+    );
 
     event RelayEntryTimedOut(
         uint256 indexed requestId,
@@ -903,5 +911,14 @@ contract RandomBeacon is Ownable {
     /// @return IDs of selected group members.
     function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
         return sortitionPool.selectGroup(DKG.groupSize, seed);
+    }
+
+    // TODO: Documentation.
+    function ineligibleOperatorRelayEntryInfo()
+        external
+        view
+        returns (bytes32)
+    {
+        return relay.ineligibleOperatorInfo;
     }
 }
