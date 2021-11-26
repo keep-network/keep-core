@@ -115,6 +115,15 @@ contract RandomBeacon is Ownable {
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
+    ///         reporting about unauthorized signing. Notifiers are rewarded
+    ///         from a notifiers treasury pool. For example, if a
+    ///         notification reward is 1000 and the value of the multiplier is
+    ///         5, the notifier will receive: 5% of 1000 = 50 per each
+    ///         operator affected.
+    uint256 public unauthorizedSigningNotificationRewardMultiplier;
+
+    /// @notice Percentage of the staking contract malicious behavior
+    ///         notification reward which will be transferred to the notifier
     ///         reporting about a malicious DKG result. Notifiers are rewarded
     ///         from a separate pool funded from slashed tokens. For example, if
     ///         notification reward is 1000 and the value of the multiplier is
@@ -161,6 +170,7 @@ contract RandomBeacon is Ownable {
         uint256 ineligibleOperatorNotifierReward,
         uint256 sortitionPoolRewardsBanDuration,
         uint256 relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 unauthorizedSigningNotificationRewardMultiplier,
         uint256 dkgMaliciousResultNotificationRewardMultiplier
     );
 
@@ -270,6 +280,7 @@ contract RandomBeacon is Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
+        unauthorizedSigningNotificationRewardMultiplier = 5;
         dkgMaliciousResultNotificationRewardMultiplier = 5;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
@@ -394,6 +405,8 @@ contract RandomBeacon is Ownable {
     ///        ban duration in seconds.
     /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
     ///        relay entry timeout notification reward multiplier.
+    /// @param _unauthorizedSigningNotificationRewardMultiplier New value of the
+    ///        unauthorized signing notification reward multiplier.
     /// @param _dkgMaliciousResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
     function updateRewardParameters(
@@ -402,6 +415,7 @@ contract RandomBeacon is Ownable {
         uint256 _ineligibleOperatorNotifierReward,
         uint256 _sortitionPoolRewardsBanDuration,
         uint256 _relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 _unauthorizedSigningNotificationRewardMultiplier,
         uint256 _dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
@@ -409,6 +423,7 @@ contract RandomBeacon is Ownable {
         ineligibleOperatorNotifierReward = _ineligibleOperatorNotifierReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
+        unauthorizedSigningNotificationRewardMultiplier = _unauthorizedSigningNotificationRewardMultiplier;
         dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
@@ -416,6 +431,7 @@ contract RandomBeacon is Ownable {
             ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
         );
     }

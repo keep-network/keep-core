@@ -26,6 +26,7 @@ describe("RandomBeaconGovernance", () => {
   const initialMaliciousDkgResultSlashingAmount = 1000000000
   const initialSortitionPoolRewardsBanDuration = 1209600
   const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
+  const initialUnauthorizedSignatureNotificationRewardMultiplier = 5
   const initialMinimumAuthorization = 1000000
   const initialAuthorizationDecreaseDelay = 86400
   const initialDkgMaliciousResultNotificationRewardMultiplier = 5
@@ -68,6 +69,7 @@ describe("RandomBeaconGovernance", () => {
         initialIneligibleOperatorNotifierReward,
         initialSortitionPoolRewardsBanDuration,
         initialRelayEntryTimeoutNotificationRewardMultiplier,
+        initialUnauthorizedSignatureNotificationRewardMultiplier,
         initialDkgMaliciousResultNotificationRewardMultiplier
       )
     await randomBeacon

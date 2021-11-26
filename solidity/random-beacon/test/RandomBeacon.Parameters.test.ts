@@ -240,6 +240,7 @@ describe("RandomBeacon - Parameters", () => {
     const ineligibleOperatorNotifierReward = 300
     const sortitionPoolRewardsBanDuration = 400
     const relayEntryTimeoutNotificationRewardMultiplier = 10
+    const unauthorizedSigningNotificationRewardMultiplier = 10
     const dkgMaliciousResultNotificationRewardMultiplier = 20
 
     context("when the caller is not the owner", () => {
@@ -253,6 +254,7 @@ describe("RandomBeacon - Parameters", () => {
               ineligibleOperatorNotifierReward,
               sortitionPoolRewardsBanDuration,
               relayEntryTimeoutNotificationRewardMultiplier,
+              unauthorizedSigningNotificationRewardMultiplier,
               dkgMaliciousResultNotificationRewardMultiplier
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
@@ -270,6 +272,7 @@ describe("RandomBeacon - Parameters", () => {
             ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
           )
       })
