@@ -93,7 +93,7 @@ export async function signAndSubmitArbitraryDkgResult(
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
-    groupPubKey: blsData.groupPubKey,
+    groupPubKey: groupPublicKey,
     misbehavedMembersIndices: misbehavedIndices,
     signatures: signaturesBytes,
     signingMembersIndices,
