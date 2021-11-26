@@ -3,7 +3,6 @@
 import { ethers } from "hardhat"
 import type { BigNumber, ContractTransaction } from "ethers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import blsData from "../data/bls"
 import type { RandomBeacon, SortitionPool } from "../../typechain"
 import { Operator } from "./operators"
 // eslint-disable-next-line import/no-cycle
@@ -116,7 +115,7 @@ export async function signAndSubmitArbitraryDkgResult(
   return { transaction, dkgResult, dkgResultHash, members }
 }
 
-async function signDkgResult(
+export async function signDkgResult(
   signers: Operator[],
   groupPublicKey: string,
   misbehavedMembersIndices: number[],

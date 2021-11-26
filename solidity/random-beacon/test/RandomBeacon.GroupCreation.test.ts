@@ -16,6 +16,7 @@ import type {
 } from "../typechain"
 import {
   genesis,
+  signDkgResult,
   signAndSubmitCorrectDkgResult,
   signAndSubmitArbitraryDkgResult,
   DkgResult,
@@ -602,7 +603,7 @@ describe("RandomBeacon - Group Creation", () => {
             })
           })
           // TODO: expand tests to ensure all possible cases of corrupted input
-          //       data are covered
+          //       data are covered; extract them to a separate test file
 
           context("with less signatures on the result than required", () => {
             it("should revert", async () => {
@@ -1963,6 +1964,50 @@ describe("RandomBeacon - Group Creation", () => {
             await expect(
               randomBeacon.challengeDkgResult(dkgResult)
             ).to.be.revertedWith("unjustified challenge")
+          })
+        })
+
+        // TODO: add more test cases and extract them to a separate test file
+        context("with result signed by someone else", async () => {
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            const selectedSigners = await selectGroup(randomBeacon, genesisSeed)
+            const maliciousSigners = Array(constants.groupSize).fill(signers[0])
+            const submitterIndex = 1
+            const submitter = selectedSigners[submitterIndex - 1].address
+
+            // maliciousSigners sign the result but properly selected
+            // selectedSigners are presented in DKG result
+            const { signingMembersIndices, signaturesBytes } =
+              await signDkgResult(
+                maliciousSigners,
+                groupPublicKey,
+                noMisbehaved,
+                startBlock,
+                33
+              )
+
+            const dkgResult: DkgResult = {
+              submitterMemberIndex: submitterIndex,
+              groupPubKey: groupPublicKey,
+              misbehavedMembersIndices: noMisbehaved,
+              signatures: signaturesBytes,
+              signingMembersIndices,
+              members: selectedSigners.map((s) => s.id),
+            }
+
+            await randomBeacon
+              .connect(await ethers.getSigner(submitter))
+              .submitDkgResult(dkgResult)
+
+            tx = await randomBeacon
+              .connect(thirdParty)
+              .challengeDkgResult(dkgResult)
+          })
+
+          it("should consider the result as malicious", async () => {
+            await expect(tx).to.emit(randomBeacon, "DkgResultChallenged")
           })
         })
       })
