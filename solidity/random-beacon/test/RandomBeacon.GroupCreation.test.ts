@@ -28,7 +28,7 @@ import { selectGroup } from "./utils/groups"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
-const { keccak256 } = ethers.utils
+const { keccak256, solidityPack } = ethers.utils
 
 const fixture = async () => {
   const contracts = await testDeployment()
@@ -647,6 +647,14 @@ describe("RandomBeacon - Group Creation", () => {
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+              expect(storedGroup.checksum).to.be.equal(
+                keccak256(
+                  solidityPack(
+                    ["bytes", "uint32[]"],
+                    [storedGroup.groupPubKey, storedGroup.members]
+                  )
+                )
+              )
             })
           })
 
@@ -713,6 +721,14 @@ describe("RandomBeacon - Group Creation", () => {
             expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+            expect(storedGroup.checksum).to.be.equal(
+              keccak256(
+                solidityPack(
+                  ["bytes", "uint32[]"],
+                  [storedGroup.groupPubKey, storedGroup.members]
+                )
+              )
+            )
           })
 
           it("should emit CandidateGroupRegistered event", async () => {
@@ -1047,6 +1063,14 @@ describe("RandomBeacon - Group Creation", () => {
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+              expect(storedGroup.checksum).to.be.equal(
+                keccak256(
+                  solidityPack(
+                    ["bytes", "uint32[]"],
+                    [storedGroup.groupPubKey, storedGroup.members]
+                  )
+                )
+              )
             })
 
             it("should emit CandidateGroupRegistered event", async () => {

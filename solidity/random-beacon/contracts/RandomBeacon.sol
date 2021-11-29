@@ -692,36 +692,42 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Creates a new relay entry.
+    /// @notice Creates a new relay entry. Parameters `groupPubKey` and
+    ///         `groupMembers` must match to the fields of the stored group
+    ///         chosen to submit the relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
-        external
-    {
+    /// @param groupPubKey Public key of the group chosen to submit the
+    ///        relay entry.
+    /// @param groupMembers Identifiers of members of the group chosen to
+    ///        submit the relay entry.
+    function submitRelayEntry(
+        uint256 submitterIndex,
+        bytes calldata entry,
+        bytes calldata groupPubKey,
+        uint32[] calldata groupMembers
+    ) external {
         uint256 currentRequestId = relay.currentRequest.id;
-
-        Groups.Group memory group = groups.getGroup(
-            relay.currentRequest.groupId
-        );
 
         uint256 slashingAmount = relay.submitEntry(
             sortitionPool,
             submitterIndex,
             entry,
-            group
+            groupPubKey,
+            groupMembers,
+            groups.getGroupChecksum(relay.currentRequest.groupId)
         );
 
         if (slashingAmount > 0) {
-            address[] memory groupMembers = sortitionPool.getIDOperators(
-                group.members
-            );
+            address[] memory groupMembersAddresses = sortitionPool
+                .getIDOperators(groupMembers);
 
-            try staking.slash(slashingAmount, groupMembers) {
+            try staking.slash(slashingAmount, groupMembersAddresses) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembers
+                    groupMembersAddresses
                 );
             } catch {
                 // Should never happen but we want to ensure a non-critical path
@@ -730,7 +736,7 @@ contract RandomBeacon is Ownable {
                 emit RelayEntryDelaySlashingFailed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembers
+                    groupMembersAddresses
                 );
             }
         }

@@ -13,6 +13,8 @@ library Groups {
         // When selected group does not create a relay entry on-time it should
         // be marked as terminated.
         bool terminated;
+        // Hash of packed groupPubKey and members.
+        bytes32 checksum;
     }
 
     struct Data {
@@ -76,6 +78,13 @@ library Groups {
         group.groupPubKey = groupPubKey;
 
         setGroupMembers(group, members, misbehavedMembersIndices);
+
+        // Checksum must be computed after `setGroupMembers` because we need to
+        // capture actual group members with misbehaved ones already taken
+        // into account.
+        group.checksum = keccak256(
+            abi.encodePacked(groupPubKey, group.members)
+        );
 
         self.groupsRegistry.push(groupPubKeyHash);
 
@@ -256,6 +265,14 @@ library Groups {
         returns (Group memory)
     {
         return self.groupsData[self.groupsRegistry[groupId]];
+    }
+
+    function getGroupChecksum(Data storage self, uint64 groupId)
+        internal
+        view
+        returns (bytes32)
+    {
+        return self.groupsData[self.groupsRegistry[groupId]].checksum;
     }
 
     function getGroup(Data storage self, bytes memory groupPubKey)

@@ -10,7 +10,7 @@ import type {
   TestToken,
   CallbackContractStub,
 } from "../typechain"
-import { registerOperators, Operator } from "./utils/operators"
+import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
@@ -32,14 +32,14 @@ const fixture = async () => {
 
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
-  const signers = await registerOperators(
+  const operators = await registerOperators(
     deployment.randomBeacon as RandomBeaconStub,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await createGroup(contracts.randomBeacon as RandomBeaconStub, signers)
+  await createGroup(contracts.randomBeacon as RandomBeaconStub, operators)
 
-  return { contracts, signers }
+  return { contracts, operators }
 }
 
 describe("RandomBeacon - Callback", () => {
@@ -59,7 +59,9 @@ describe("RandomBeacon - Callback", () => {
 
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
-  let signers: Operator[]
+  let operators: Operator[]
+  let members: Operator[]
+  let membersIDs: OperatorID[]
 
   let randomBeacon: RandomBeaconStub
   let testToken: TestToken
@@ -73,7 +75,10 @@ describe("RandomBeacon - Callback", () => {
   beforeEach("load test fixture", async () => {
     let contracts
       // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ contracts, signers } = await waffle.loadFixture(fixture))
+    ;({ contracts, operators } = await waffle.loadFixture(fixture))
+
+    members = operators // All operators will be members of the group used in tests.
+    membersIDs = members.map((member) => member.id)
 
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
     testToken = contracts.testToken as TestToken
@@ -92,7 +97,7 @@ describe("RandomBeacon - Callback", () => {
     )
 
     submitter = await ethers.getSigner(
-      signers[submitterMemberIndex - 1].address
+      members[submitterMemberIndex - 1].address
     )
   })
 
@@ -121,7 +126,12 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(16, blsData.groupSignature)
+          .submitRelayEntry(
+            16,
+            blsData.groupSignature,
+            blsData.groupPubKey,
+            membersIDs
+          )
 
         await approveTestToken()
 
@@ -138,7 +148,12 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(16, blsData.groupSignature)
+          .submitRelayEntry(
+            16,
+            blsData.groupSignature,
+            blsData.groupPubKey,
+            membersIDs
+          )
 
         await approveTestToken()
 
@@ -167,7 +182,12 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            .submitRelayEntry(
+              16,
+              blsData.groupSignature,
+              blsData.groupPubKey,
+              membersIDs
+            )
 
           const lastEntry = await callbackContract.lastEntry()
           await expect(lastEntry).to.equal(blsData.groupSignatureUint256)
@@ -194,7 +214,12 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            .submitRelayEntry(
+              16,
+              blsData.groupSignature,
+              blsData.groupPubKey,
+              membersIDs
+            )
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
@@ -210,7 +235,12 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            .submitRelayEntry(
+              16,
+              blsData.groupSignature,
+              blsData.groupPubKey,
+              membersIDs
+            )
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
