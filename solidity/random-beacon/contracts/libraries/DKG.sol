@@ -208,7 +208,7 @@ library DKG {
 
         (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
             .getEligibilityRange(
-                self.seed,
+                uint256(keccak256(result.groupPubKey)),
                 block.number,
                 self.startBlock,
                 self.parameters.resultSubmissionEligibilityDelay,
