@@ -42,6 +42,11 @@ interface IRandomBeaconStaking {
         address notifier,
         address[] memory operators
     ) external;
+
+    function eligibleStake(address operator, address operatorContract)
+        external
+        view
+        returns (uint256);
 }
 
 /// @title Keep Random Beacon
@@ -486,21 +491,18 @@ contract RandomBeacon is Ownable {
             "Operator is already registered"
         );
 
-        sortitionPool.insertOperator(operator);
+        sortitionPool.insertOperator(
+            operator,
+            staking.eligibleStake(operator, address(this))
+        );
     }
 
     /// @notice Updates the sortition pool status of the caller.
     function updateOperatorStatus() external {
         sortitionPool.updateOperatorStatus(
-            sortitionPool.getOperatorID(msg.sender)
+            msg.sender,
+            staking.eligibleStake(msg.sender, address(this))
         );
-    }
-
-    /// @notice Checks whether the given operator is eligible to join the
-    ///         sortition pool.
-    /// @param operator Address of the operator
-    function isOperatorEligible(address operator) external view returns (bool) {
-        return sortitionPool.isOperatorEligible(operator);
     }
 
     /// @notice Triggers group selection if there are no active groups.
