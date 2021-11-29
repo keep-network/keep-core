@@ -70,7 +70,12 @@ library Relay {
         bytes previousEntry
     );
 
-    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+    event RelayEntrySubmitted(
+        uint256 indexed requestId,
+        uint64 groupId,
+        uint256 submitterIndex,
+        bytes entry
+    );
 
     event RelayEntryTimedOut(
         uint256 indexed requestId,
@@ -152,10 +157,15 @@ library Relay {
                 self.relayEntrySubmissionFailureSlashingAmount) /
             1e18;
 
+        emit RelayEntrySubmitted(
+            self.currentRequest.id,
+            self.currentRequest.groupId,
+            submitterIndex,
+            entry
+        );
+
         self.previousEntry = entry;
         delete self.currentRequest;
-
-        emit RelayEntrySubmitted(self.requestCount, entry);
 
         return slashingAmount;
     }

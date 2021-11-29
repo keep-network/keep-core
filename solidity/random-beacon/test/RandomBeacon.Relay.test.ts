@@ -314,7 +314,12 @@ describe("RandomBeacon - Relay", () => {
               it("should emit RelayEntrySubmitted event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "RelayEntrySubmitted")
-                  .withArgs(1, blsData.groupSignature)
+                  .withArgs(
+                    1,
+                    0,
+                    firstEligibleMemberIndex,
+                    blsData.groupSignature
+                  )
               })
 
               it("should terminate the relay request", async () => {
@@ -364,7 +369,12 @@ describe("RandomBeacon - Relay", () => {
               it("should emit RelayEntrySubmitted event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "RelayEntrySubmitted")
-                  .withArgs(1, blsData.groupSignature)
+                  .withArgs(
+                    1,
+                    0,
+                    firstEligibleMemberIndex,
+                    blsData.groupSignature
+                  )
               })
 
               it("should terminate the relay request", async () => {
