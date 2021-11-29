@@ -293,50 +293,10 @@ describe("RandomBeacon - Relay", () => {
                 await expect(tx).to.not.emit(staking, "Slashed")
               })
 
-              it("should store proper ineligibleOperatorInfo", async () => {
-                expect(
-                  await randomBeacon.ineligibleOperatorRelayEntryInfo()
-                ).to.be.equal(
-                  ethers.utils.keccak256(
-                    ethers.utils.defaultAbiCoder.encode(
-                      [
-                        "(" +
-                          "bytes entry, " +
-                          "uint256 submissionBlock, " +
-                          "uint256 eligibilityDelay, " +
-                          "uint256 requestStartBlock, " +
-                          "uint256 submitterIndex, " +
-                          "uint32[] groupMembers" +
-                          ")",
-                      ],
-                      [
-                        {
-                          entry: blsData.groupSignature,
-                          submissionBlock: receipt.blockNumber,
-                          eligibilityDelay:
-                            params.relayEntrySubmissionEligibilityDelay,
-                          requestStartBlock,
-                          submitterIndex: firstEligibleMemberIndex,
-                          groupMembers: membersIDs,
-                        },
-                      ]
-                    )
-                  )
-                )
-              })
-
               it("should emit RelayEntrySubmitted event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "RelayEntrySubmitted")
-                  .withArgs(
-                    1,
-                    blsData.groupSignature,
-                    receipt.blockNumber,
-                    params.relayEntrySubmissionEligibilityDelay,
-                    requestStartBlock,
-                    firstEligibleMemberIndex,
-                    membersIDs
-                  )
+                  .withArgs(1, blsData.groupSignature)
               })
 
               it("should terminate the relay request", async () => {
@@ -383,50 +343,10 @@ describe("RandomBeacon - Relay", () => {
                   .withArgs(1, to1e18(750), membersAddresses)
               })
 
-              it("should store proper ineligibleOperatorInfo", async () => {
-                expect(
-                  await randomBeacon.ineligibleOperatorRelayEntryInfo()
-                ).to.be.equal(
-                  ethers.utils.keccak256(
-                    ethers.utils.defaultAbiCoder.encode(
-                      [
-                        "(" +
-                          "bytes entry, " +
-                          "uint256 submissionBlock, " +
-                          "uint256 eligibilityDelay, " +
-                          "uint256 requestStartBlock, " +
-                          "uint256 submitterIndex, " +
-                          "uint32[] groupMembers" +
-                          ")",
-                      ],
-                      [
-                        {
-                          entry: blsData.groupSignature,
-                          submissionBlock: receipt.blockNumber,
-                          eligibilityDelay:
-                            params.relayEntrySubmissionEligibilityDelay,
-                          requestStartBlock,
-                          submitterIndex: firstEligibleMemberIndex,
-                          groupMembers: membersIDs,
-                        },
-                      ]
-                    )
-                  )
-                )
-              })
-
               it("should emit RelayEntrySubmitted event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "RelayEntrySubmitted")
-                  .withArgs(
-                    1,
-                    blsData.groupSignature,
-                    receipt.blockNumber,
-                    params.relayEntrySubmissionEligibilityDelay,
-                    requestStartBlock,
-                    firstEligibleMemberIndex,
-                    membersIDs
-                  )
+                  .withArgs(1, blsData.groupSignature)
               })
 
               it("should terminate the relay request", async () => {
