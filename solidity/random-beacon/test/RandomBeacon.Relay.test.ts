@@ -132,11 +132,13 @@ describe("RandomBeacon - Relay", () => {
 
       context("when there is no other relay entry in progress", () => {
         context("when the requester pays the relay request fee", () => {
-          let tx
-          let previousMaintenancePoolBalance
+          let tx: ContractTransaction
+          let previousDkgRewardsPoolBalance: BigNumber
+          let previousRandomBeaconBalance: BigNumber
 
           beforeEach(async () => {
-            previousMaintenancePoolBalance = await testToken.balanceOf(
+            previousDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
+            previousRandomBeaconBalance = await testToken.balanceOf(
               randomBeacon.address
             )
             await approveTestToken()
@@ -151,14 +153,22 @@ describe("RandomBeacon - Relay", () => {
                   .requestRelayEntry(ZERO_ADDRESS)
               })
 
-              it("should deposit relay request fee to the maintenance pool", async () => {
-                const currentMaintenancePoolBalance = await testToken.balanceOf(
+              it("should deposit relay request fee to the DKG rewards pool", async () => {
+                // Assert correct pool bookkeeping.
+                const currentDkgRewardsPoolBalance =
+                  await randomBeacon.dkgRewardsPool()
+                expect(
+                  currentDkgRewardsPoolBalance.sub(
+                    previousDkgRewardsPoolBalance
+                  )
+                ).to.be.equal(relayRequestFee)
+
+                // Assert actual transfer took place.
+                const currentRandomBeaconBalance = await testToken.balanceOf(
                   randomBeacon.address
                 )
                 expect(
-                  currentMaintenancePoolBalance.sub(
-                    previousMaintenancePoolBalance
-                  )
+                  currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
                 ).to.be.equal(relayRequestFee)
               })
 
@@ -191,14 +201,22 @@ describe("RandomBeacon - Relay", () => {
                   .requestRelayEntry(ZERO_ADDRESS)
               })
 
-              it("should deposit relay request fee to the maintenance pool", async () => {
-                const currentMaintenancePoolBalance = await testToken.balanceOf(
+              it("should deposit relay request fee to the DKG rewards pool", async () => {
+                // Assert correct pool bookkeeping.
+                const currentDkgRewardsPoolBalance =
+                  await randomBeacon.dkgRewardsPool()
+                expect(
+                  currentDkgRewardsPoolBalance.sub(
+                    previousDkgRewardsPoolBalance
+                  )
+                ).to.be.equal(relayRequestFee)
+
+                // Assert actual transfer took place.
+                const currentRandomBeaconBalance = await testToken.balanceOf(
                   randomBeacon.address
                 )
                 expect(
-                  currentMaintenancePoolBalance.sub(
-                    previousMaintenancePoolBalance
-                  )
+                  currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
                 ).to.be.equal(relayRequestFee)
               })
 
@@ -718,6 +736,48 @@ describe("RandomBeacon - Relay", () => {
         })
       }
     )
+  })
+
+  describe("fundHeartbeatNotifierRewardsPool", () => {
+    const amount = to1e18(1000)
+
+    let previousHeartbeatNotifierRewardsPoolBalance: BigNumber
+    let previousRandomBeaconBalance: BigNumber
+
+    beforeEach(async () => {
+      previousHeartbeatNotifierRewardsPoolBalance =
+        await randomBeacon.heartbeatNotifierRewardsPool()
+      previousRandomBeaconBalance = await testToken.balanceOf(
+        randomBeacon.address
+      )
+
+      await testToken.mint(deployer.address, amount)
+      await testToken.connect(deployer).approve(randomBeacon.address, amount)
+
+      await randomBeacon.fundHeartbeatNotifierRewardsPool(
+        deployer.address,
+        amount
+      )
+    })
+
+    it("should increase the heartbeat notifier rewards pool balance", async () => {
+      const currentHeartbeatNotifierRewardsPoolBalance =
+        await randomBeacon.heartbeatNotifierRewardsPool()
+      expect(
+        currentHeartbeatNotifierRewardsPoolBalance.sub(
+          previousHeartbeatNotifierRewardsPoolBalance
+        )
+      ).to.be.equal(amount)
+    })
+
+    it("should transfer tokens to the random beacon contract", async () => {
+      const currentRandomBeaconBalance = await testToken.balanceOf(
+        randomBeacon.address
+      )
+      expect(
+        currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
+      ).to.be.equal(amount)
+    })
   })
 
   async function approveTestToken() {
