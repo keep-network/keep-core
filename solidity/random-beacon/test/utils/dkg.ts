@@ -53,10 +53,15 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResultHash: string
   members: number[]
 }> {
+  const sortitionPool = (await ethers.getContractAt(
+    "SortitionPool",
+    await randomBeacon.sortitionPool()
+  )) as SortitionPool
+
   return signAndSubmitArbitraryDkgResult(
     randomBeacon,
     groupPublicKey,
-    await selectGroup(randomBeacon, seed),
+    await selectGroup(sortitionPool, seed),
     startBlock,
     misbehavedIndices,
     submitterIndex,

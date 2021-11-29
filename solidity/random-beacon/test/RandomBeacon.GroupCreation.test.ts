@@ -291,7 +291,7 @@ describe("RandomBeacon - Group Creation", () => {
               randomBeacon,
               groupPublicKey,
               // Mix signers to make the result malicious
-              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+              mixSigners(await selectGroup(sortitionPool, genesisSeed)),
               startBlock,
               noMisbehaved
             ))
@@ -461,7 +461,7 @@ describe("RandomBeacon - Group Creation", () => {
               randomBeacon,
               groupPublicKey,
               // Mix signers to make the result malicious.
-              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+              mixSigners(await selectGroup(sortitionPool, genesisSeed)),
               startBlock,
               noMisbehaved
             ))
@@ -1021,7 +1021,7 @@ describe("RandomBeacon - Group Creation", () => {
                 randomBeacon,
                 groupPublicKey,
                 // Mix signers to make the result malicious.
-                mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+                mixSigners(await selectGroup(sortitionPool, genesisSeed)),
                 startBlock,
                 noMisbehaved
               )
@@ -1418,7 +1418,7 @@ describe("RandomBeacon - Group Creation", () => {
               randomBeacon,
               groupPublicKey,
               // Mix signers to make the result malicious.
-              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+              mixSigners(await selectGroup(sortitionPool, genesisSeed)),
               startBlock,
               noMisbehaved,
               maliciousSubmitter
@@ -1817,7 +1817,7 @@ describe("RandomBeacon - Group Creation", () => {
               randomBeacon,
               groupPublicKey,
               // Mix signers to make the result malicious.
-              mixSigners(await selectGroup(randomBeacon, genesisSeed)),
+              mixSigners(await selectGroup(sortitionPool, genesisSeed)),
               startBlock,
               noMisbehaved
             ))
@@ -1972,7 +1972,10 @@ describe("RandomBeacon - Group Creation", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            const selectedSigners = await selectGroup(randomBeacon, genesisSeed)
+            const selectedSigners = await selectGroup(
+              sortitionPool,
+              genesisSeed
+            )
             const maliciousSigners = Array(constants.groupSize).fill(signers[0])
             const submitterIndex = 1
             const submitter = selectedSigners[submitterIndex - 1].address

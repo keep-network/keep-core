@@ -33,15 +33,13 @@ export async function createGroup(
 }
 
 export async function selectGroup(
-  randomBeacon: RandomBeacon,
+  sortitionPool: SortitionPool,
   seed: BigNumber
 ): Promise<Operator[]> {
-  const sortitionPool = (await ethers.getContractAt(
-    "SortitionPool",
-    await randomBeacon.sortitionPool()
-  )) as SortitionPool
-
-  const identifiers = await randomBeacon.selectGroup(seed.toHexString())
+  const identifiers = await sortitionPool.selectGroup(
+    constants.groupSize,
+    seed.toHexString()
+  )
   const addresses = await sortitionPool.getIDOperators(identifiers)
 
   return identifiers.map((identifier, i) => ({
