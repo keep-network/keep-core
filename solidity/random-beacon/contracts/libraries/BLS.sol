@@ -22,7 +22,7 @@ library BLS {
 
     /// @dev Wraps the functionality of BLS.verify, but hashes a message to
     ///      a point on G1 and marshal to bytes first to allow raw bytes
-    ///      verificaion.
+    ///      verification.
     function verifyBytes(
         bytes memory publicKey,
         bytes memory message,
