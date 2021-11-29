@@ -1,15 +1,15 @@
-import { BigNumber } from "ethers"
+import { BigNumber, BigNumberish } from "ethers"
 import { constants } from "../fixtures"
 
 /* eslint-disable import/prefer-default-export */
 export function firstEligibleIndex(
-  seed: BigNumber,
+  seed: BigNumberish,
   groupSize?: number
 ): number {
   // eslint-disable-next-line no-param-reassign
   if (!groupSize) groupSize = constants.groupSize
 
-  return seed.mod(groupSize).add(1).toNumber()
+  return BigNumber.from(seed).mod(groupSize).add(1).toNumber()
 }
 
 export function shiftEligibleIndex(
