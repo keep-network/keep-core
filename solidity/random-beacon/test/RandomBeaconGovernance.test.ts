@@ -1992,7 +1992,7 @@ describe("RandomBeaconGovernance", () => {
       it("should not update the unauthorized signing notification reward multiplier", async () => {
         expect(
           await randomBeacon.unauthorizedSigningNotificationRewardMultiplier()
-        ).to.be.equal(initialUnauthorizedSigningNotificationRewardMultiplier)
+        ).to.be.equal(initialUnauthorizedSignatureNotificationRewardMultiplier)
       })
 
       it("should start the governance delay timer", async () => {

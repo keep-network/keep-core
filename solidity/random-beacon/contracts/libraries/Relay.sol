@@ -196,11 +196,13 @@ library Relay {
     ///         be performed. The signature verification is done by BLS lib.
     /// @param signedMsgSender Signature of the sender's address as a message.
     /// @param group Group that is being verified against private key leakage.
+    /* solhint-disable no-unused-vars */
     function validateUnauthorizedSigning(
         Data storage self,
         bytes memory signedMsgSender,
         Groups.Group memory group
     ) internal {
+        /* solhint-enable no-unused-vars */
         require(!group.terminated, "Group cannot be terminated");
 
         require(
