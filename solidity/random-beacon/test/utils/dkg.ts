@@ -58,8 +58,12 @@ export async function signAndSubmitCorrectDkgResult(
 }> {
   if (!submitterIndex) {
     // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(seed, constants.groupSize)
+    submitterIndex = firstEligibleIndex(
+      ethers.utils.keccak256(groupPublicKey),
+      constants.groupSize
+    )
   }
+
   return signAndSubmitArbitraryDkgResult(
     randomBeacon,
     groupPublicKey,
@@ -80,7 +84,7 @@ export async function signAndSubmitArbitraryDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex = 1,
+  submitterIndex?: number,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
@@ -96,6 +100,11 @@ export async function signAndSubmitArbitraryDkgResult(
       startBlock,
       numberOfSignatures
     )
+
+  if (!submitterIndex) {
+    // eslint-disable-next-line no-param-reassign
+    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
+  }
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
