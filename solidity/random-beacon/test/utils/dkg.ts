@@ -55,6 +55,7 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   members: number[]
+  submitter: SignerWithAddress
 }> {
   if (!submitterIndex) {
     // eslint-disable-next-line no-param-reassign
@@ -91,6 +92,7 @@ export async function signAndSubmitArbitraryDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   members: number[]
+  submitter: SignerWithAddress
 }> {
   const { members, signingMembersIndices, signaturesBytes } =
     await signDkgResult(
@@ -124,11 +126,13 @@ export async function signAndSubmitArbitraryDkgResult(
     )
   )
 
+  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+
   const transaction = await randomBeacon
-    .connect(await ethers.getSigner(signers[submitterIndex - 1].address))
+    .connect(submitter)
     .submitDkgResult(dkgResult)
 
-  return { transaction, dkgResult, dkgResultHash, members }
+  return { transaction, dkgResult, dkgResultHash, members, submitter }
 }
 
 async function signDkgResult(
@@ -174,20 +178,4 @@ async function signDkgResult(
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
   return { members, signingMembersIndices, signaturesBytes }
-}
-
-export async function getDkgResultSubmitterSigner(
-  randomBeacon: RandomBeacon,
-  dkgResult: DkgResult
-): Promise<SignerWithAddress> {
-  const sortitionPool = (await ethers.getContractAt(
-    "SortitionPool",
-    await randomBeacon.sortitionPool()
-  )) as SortitionPool
-
-  const submitterMember = await sortitionPool.getIDOperator(
-    dkgResult.members[dkgResult.submitterMemberIndex - 1]
-  )
-
-  return ethers.getSigner(submitterMember)
 }
