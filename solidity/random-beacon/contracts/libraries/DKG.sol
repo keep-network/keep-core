@@ -206,11 +206,15 @@ library DKG {
         );
         require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
+        uint256 T_init = self.startBlock +
+            offchainDkgTime +
+            self.resultSubmissionStartBlockOffset;
+
         (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
             .getEligibilityRange(
                 uint256(keccak256(result.groupPubKey)),
                 block.number,
-                self.startBlock,
+                T_init,
                 self.parameters.resultSubmissionEligibilityDelay,
                 groupSize
             );
