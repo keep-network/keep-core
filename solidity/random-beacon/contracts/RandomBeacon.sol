@@ -831,8 +831,6 @@ contract RandomBeacon is Ownable {
     /// @notice Makes a transfer using heartbeat notifier rewards pool.
     /// @param to Address of the recipient.
     /// @param value Token value transferred to the recipient.
-    // TODO: Remove Slither ignore condition once this function is used.
-    // slither-disable-next-line dead-code
     function transferHeartbeatNotifierRewards(address to, uint256 value)
         internal
     {
