@@ -5,6 +5,7 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
+import "../DKGValidator.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -21,6 +22,8 @@ library DKG {
     struct Data {
         // Address of the Sortition Pool contract.
         SortitionPool sortitionPool;
+        // Address of the DKGValidator contract.
+        DKGValidator dkgValidator;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -131,24 +134,35 @@ library DKG {
 
     event DkgResultChallenged(
         bytes32 indexed resultHash,
-        address indexed challenger
+        address indexed challenger,
+        string reason
     );
 
     event DkgStateLocked();
 
     event DkgSeedTimedOut();
 
-    /// @notice Initializes the sortitionPool parameter. Can be performed only once.
-    /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
-        internal
-    {
+    /// @notice Initializes SortitionPool and DKGValidator addresses.
+    ///        Can be performed only once.
+    /// @param _sortitionPool Sortition Pool reference
+    /// @param _dkgValidator DKGValidator reference
+    function init(
+        Data storage self,
+        SortitionPool _sortitionPool,
+        DKGValidator _dkgValidator
+    ) internal {
         require(
             address(self.sortitionPool) == address(0),
             "Sortition Pool address already set"
         );
 
+        require(
+            address(self.dkgValidator) == address(0),
+            "DKG Validator address already set"
+        );
+
         self.sortitionPool = _sortitionPool;
+        self.dkgValidator = _dkgValidator;
     }
 
     /// @notice Determines the current state of group creation. It doesn't take
@@ -201,10 +215,12 @@ library DKG {
         emit DkgStarted(seed);
     }
 
-    /// @notice Allows to submit DKG result. The submitted result goes through
-    ///         some basic validation and before it gets accepted, it needs to
+    /// @notice Allows to submit DKG result. The submitted result does not go
+    ///         through a validation and before it gets accepted, it needs to
     ///         wait through the challenge period during which everyone has
-    ///         a chance to challenge the result as invalid one.
+    ///         a chance to challenge the result as invalid one. Submitter of
+    ///         the result needs to be in the sortition pool and if the result
+    ///         gets challenged, the submitter will get slashed.
     function submitResult(Data storage self, Result calldata result) external {
         require(
             currentState(self) == State.AWAITING_RESULT,
@@ -224,7 +240,21 @@ library DKG {
             "Submitter not eligible"
         );
 
-        validateSubmittedResult(self, result);
+        SortitionPool sortitionPool = self.sortitionPool;
+
+        // Submitter must be an operator in the sortition pool.
+        // Declared submitter's member index in the DKG result needs to match
+        // the address calling this function.
+        require(
+            sortitionPool.isOperatorInPool(msg.sender),
+            "Submitter not in the sortition pool"
+        );
+        require(
+            sortitionPool.getIDOperator(
+                result.members[result.submitterMemberIndex - 1]
+            ) == msg.sender,
+            "Unexpected submitter index"
+        );
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
@@ -257,96 +287,6 @@ library DKG {
                 self.resultSubmissionStartBlockOffset +
                 groupSize *
                 self.parameters.resultSubmissionEligibilityDelay);
-    }
-
-    /// @notice Performs basic validation of the submitted DKG result.
-    function validateSubmittedResult(Data storage self, Result calldata result)
-        internal
-        view
-    {
-        SortitionPool sortitionPool = self.sortitionPool;
-
-        // Submitter must be an operator in the sortition pool.
-        // Declared submitter's member index in the DKG result needs to match
-        // the address calling this function.
-        require(
-            sortitionPool.isOperatorInPool(msg.sender),
-            "Submitter not in the sortition pool"
-        );
-        require(
-            sortitionPool.getIDOperator(
-                result.members[result.submitterMemberIndex - 1]
-            ) == msg.sender,
-            "Unexpected submitter index"
-        );
-
-        // Group public key needs to be 128 bytes long.
-        require(result.groupPubKey.length == 128, "Malformed group public key");
-
-        // The number of misbehaved members can not exceed the threshold.
-        // Misbehaved member indices needs to be unique, between [1,64],
-        // and sorted in ascending order.
-        uint8[] calldata misbehavedMembersIndices = result
-            .misbehavedMembersIndices;
-        require(
-            groupSize - misbehavedMembersIndices.length >= activeThreshold,
-            "Too many members misbehaving during DKG"
-        );
-        if (misbehavedMembersIndices.length > 1) {
-            for (uint256 i = 1; i < misbehavedMembersIndices.length; i++) {
-                require(
-                    misbehavedMembersIndices[i - 1] >= 1 &&
-                        misbehavedMembersIndices[i - 1] <= groupSize &&
-                        misbehavedMembersIndices[i - 1] <
-                        misbehavedMembersIndices[i],
-                    "Corrupted misbehaved members indices"
-                );
-            }
-            uint8 last = misbehavedMembersIndices[
-                misbehavedMembersIndices.length - 1
-            ];
-            require(
-                last >= 1 && last <= groupSize,
-                "Corrupted misbehaved members indices"
-            );
-        }
-
-        // Each signature needs to be 65 bytes long and signatures need to be
-        // provided.
-        uint256 signaturesCount = result.signatures.length / 65;
-        require(result.signatures.length > 0, "No signatures provided");
-        require(
-            result.signatures.length % 65 == 0,
-            "Malformed signatures array"
-        );
-
-        // We expect the same amount of signatures as the number of declared
-        // group member indices that signed the result.
-        uint256[] calldata signingMembersIndices = result.signingMembersIndices;
-        require(
-            signaturesCount == signingMembersIndices.length,
-            "Unexpected signatures count"
-        );
-        require(signaturesCount >= groupThreshold, "Too few signatures");
-        require(signaturesCount <= groupSize, "Too many signatures");
-
-        // Signing member indices needs to be unique, between [1,64], and sorted
-        // in ascending order.
-        for (uint256 i = 1; i < signingMembersIndices.length; i++) {
-            require(
-                signingMembersIndices[i - 1] >= 1 &&
-                    signingMembersIndices[i - 1] <= groupSize &&
-                    signingMembersIndices[i - 1] < signingMembersIndices[i],
-                "Corrupted signing member indices"
-            );
-            uint256 last = signingMembersIndices[
-                signingMembersIndices.length - 1
-            ];
-            require(
-                last >= 1 && last <= groupSize,
-                "Corrupted signing member indices"
-            );
-        }
     }
 
     /// @notice Notifies about DKG timeout.
@@ -461,16 +401,26 @@ library DKG {
             "result under challenge is different than the submitted one"
         );
 
-        bool areSignaturesValid = hasValidSignatures(self, result);
-        bool areMembersValid = true;
-        if (areSignaturesValid) {
-            areMembersValid = hasValidGroupMembers(self, result);
-        }
+        try
+            self.dkgValidator.validate(result, self.seed, self.startBlock)
+        returns (bool isValid, string memory errorMsg) {
+            if (isValid) {
+                revert("unjustified challenge");
+            }
 
-        require(
-            !areMembersValid || !areSignaturesValid,
-            "unjustified challenge"
-        );
+            emit DkgResultChallenged(
+                self.submittedResultHash,
+                msg.sender,
+                errorMsg
+            );
+        } catch {
+            // if the validation reverted we consider the DKG result as invalid
+            emit DkgResultChallenged(
+                self.submittedResultHash,
+                msg.sender,
+                "validation reverted"
+            );
+        }
 
         // Consider result hash as malicious.
         maliciousResultHash = self.submittedResultHash;
@@ -483,68 +433,9 @@ library DKG {
             self.startBlock -
             offchainDkgTime;
 
-        emit DkgResultChallenged(self.submittedResultHash, msg.sender);
-
         submittedResultCleanup(self);
 
         return (maliciousResultHash, maliciousSubmitter);
-    }
-
-    function hasValidGroupMembers(Data storage self, Result calldata result)
-        internal
-        view
-        returns (bool)
-    {
-        // Compute the actual group members hash by selecting actual members IDs
-        // based on seed used for current DKG execution.
-        bytes32 actualGroupMembersHash = keccak256(
-            abi.encodePacked(
-                self.sortitionPool.selectGroup(groupSize, bytes32(self.seed))
-            )
-        );
-
-        // TODO: check what is more efficient - computing hash or iterating
-        return
-            keccak256(abi.encodePacked(result.members)) ==
-            actualGroupMembersHash;
-    }
-
-    function hasValidSignatures(Data storage self, Result calldata result)
-        internal
-        view
-        returns (bool)
-    {
-        bytes32 hash = keccak256(
-            abi.encodePacked(
-                result.groupPubKey,
-                result.misbehavedMembersIndices,
-                self.startBlock
-            )
-        );
-
-        SortitionPool sortitionPool = self.sortitionPool;
-
-        address[] memory membersAddresses = sortitionPool.getIDOperators(
-            result.members
-        );
-
-        bytes memory current; // Current signature to be checked.
-
-        uint256 signaturesCount = result.signatures.length / 65;
-        for (uint256 i = 0; i < signaturesCount; i++) {
-            uint256 memberIndex = result.signingMembersIndices[i];
-
-            current = result.signatures.slice(65 * i, 65);
-            address recoveredAddress = hash.toEthSignedMessageHash().recover(
-                current
-            );
-
-            if (membersAddresses[memberIndex - 1] != recoveredAddress) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.

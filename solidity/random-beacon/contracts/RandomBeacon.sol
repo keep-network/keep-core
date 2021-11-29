@@ -198,7 +198,8 @@ contract RandomBeacon is Ownable {
 
     event DkgResultChallenged(
         bytes32 indexed resultHash,
-        address indexed challenger
+        address indexed challenger,
+        string reason
     );
 
     event DkgMaliciousResultSlashed(
@@ -259,7 +260,8 @@ contract RandomBeacon is Ownable {
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
-        IRandomBeaconStaking _staking
+        IRandomBeaconStaking _staking,
+        DKGValidator _dkgValidator
     ) {
         sortitionPool = _sortitionPool;
         tToken = _tToken;
@@ -279,7 +281,7 @@ contract RandomBeacon is Ownable {
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
-        dkg.initSortitionPool(_sortitionPool);
+        dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
         dkg.setResultSubmissionEligibilityDelay(10);
 
