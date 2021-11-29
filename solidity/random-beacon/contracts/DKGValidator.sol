@@ -93,10 +93,15 @@ contract DKGValidator {
             return (false, "Too many members misbehaving during DKG");
         }
         if (misbehavedMembersIndices.length > 1) {
+            if (
+                misbehavedMembersIndices[0] < 1 ||
+                misbehavedMembersIndices[misbehavedMembersIndices.length - 1] >
+                64
+            ) {
+                return (false, "Corrupted misbehaved members indices");
+            }
             for (uint256 i = 1; i < misbehavedMembersIndices.length; i++) {
                 if (
-                    misbehavedMembersIndices[i - 1] < 1 ||
-                    misbehavedMembersIndices[i - 1] > groupSize ||
                     misbehavedMembersIndices[i - 1] >=
                     misbehavedMembersIndices[i]
                 ) {
@@ -136,12 +141,14 @@ contract DKGValidator {
 
         // Signing member indices needs to be unique, between [1,64], and sorted
         // in ascending order.
+        if (
+            signingMembersIndices[0] < 1 ||
+            signingMembersIndices[signingMembersIndices.length - 1] > 64
+        ) {
+            return (false, "Corrupted signing member indices");
+        }
         for (uint256 i = 1; i < signingMembersIndices.length; i++) {
-            if (
-                signingMembersIndices[i - 1] < 1 ||
-                signingMembersIndices[i - 1] > groupSize ||
-                signingMembersIndices[i - 1] >= signingMembersIndices[i]
-            ) {
+            if (signingMembersIndices[i - 1] >= signingMembersIndices[i]) {
                 return (false, "Corrupted signing member indices");
             }
             uint256 last = signingMembersIndices[
