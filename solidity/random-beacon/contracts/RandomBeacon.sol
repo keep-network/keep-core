@@ -126,6 +126,11 @@ contract RandomBeacon is Ownable {
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
+    // TODO: Documentation.
+    uint256 public dkgRewardsPool;
+    // TODO: Documentation.
+    uint256 public heartbeatNotifierRewardsPool;
+
     // Libraries data storages
     Authorization.Data internal authorization;
     DKG.Data internal dkg;
@@ -548,8 +553,9 @@ contract RandomBeacon is Ownable {
     ///         reward to the notifier.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-        // Pay the sortition pool unlocking reward.
-        tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
+
+        transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
+
         dkg.complete();
     }
 
@@ -566,12 +572,7 @@ contract RandomBeacon is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        uint256 maintenancePoolBalance = tToken.balanceOf(address(this));
-        uint256 rewardToPay = Math.min(
-            maintenancePoolBalance,
-            dkgResultSubmissionReward
-        );
-        tToken.safeTransfer(msg.sender, rewardToPay);
+        transferDkgRewards(msg.sender, dkgResultSubmissionReward);
 
         if (misbehavedMembers.length > 0) {
             banFromRewards(misbehavedMembers, sortitionPoolRewardsBanDuration);
@@ -660,11 +661,7 @@ contract RandomBeacon is Ownable {
 
         relay.requestEntry(groupId);
 
-        tToken.safeTransferFrom(
-            msg.sender,
-            address(this),
-            relay.relayRequestFee
-        );
+        fundDkgRewardsPool(msg.sender, relay.relayRequestFee);
 
         callback.setCallbackContract(callbackContract);
 
@@ -771,6 +768,36 @@ contract RandomBeacon is Ownable {
                 dkg.notifySeedTimedOut();
             }
         }
+    }
+
+    // TODO: Documentation.
+    function fundDkgRewardsPool(address from, uint256 value) public {
+        dkgRewardsPool += value;
+        tToken.safeTransferFrom(from, address(this), value);
+    }
+
+    // TODO: Documentation.
+    function fundHeartbeatNotifierRewardsPool(address from, uint256 value)
+        external
+    {
+        heartbeatNotifierRewardsPool += value;
+        tToken.safeTransferFrom(from, address(this), value);
+    }
+
+    // TODO: Documentation.
+    function transferDkgRewards(address to, uint256 value) internal {
+        uint256 actualValue = Math.min(dkgRewardsPool, value);
+        dkgRewardsPool -= actualValue;
+        tToken.safeTransfer(to, actualValue);
+    }
+
+    // TODO: Documentation.
+    function transferHeartbeatNotifierRewards(address to, uint256 value)
+        internal
+    {
+        uint256 actualValue = Math.min(heartbeatNotifierRewardsPool, value);
+        heartbeatNotifierRewardsPool -= actualValue;
+        tToken.safeTransfer(to, actualValue);
     }
 
     /// @notice Ban given operators from sortition pool rewards.
