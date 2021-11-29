@@ -3,13 +3,12 @@ import { expect } from "chai"
 
 import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
-
-import type { RandomBeacon } from "../typechain"
+import type { RandomBeaconStub } from "../typechain"
 
 describe("RandomBeacon - Parameters", () => {
   let governance: Signer
   let thirdParty: Signer
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconStub
 
   // prettier-ignore
   before(async () => {
@@ -18,7 +17,7 @@ describe("RandomBeacon - Parameters", () => {
 
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
-    randomBeacon = contracts.randomBeacon as RandomBeacon
+    randomBeacon = contracts.randomBeacon as RandomBeaconStub
   })
 
   describe("updateRelayEntryParameters", () => {
@@ -238,7 +237,8 @@ describe("RandomBeacon - Parameters", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
-    const sortitionPoolRewardsBanDuration = 300
+    const ineligibleOperatorNotifierReward = 300
+    const sortitionPoolRewardsBanDuration = 400
     const relayEntryTimeoutNotificationRewardMultiplier = 10
     const dkgMaliciousResultNotificationRewardMultiplier = 20
 
@@ -250,6 +250,7 @@ describe("RandomBeacon - Parameters", () => {
             .updateRewardParameters(
               dkgResultSubmissionReward,
               sortitionPoolUnlockingReward,
+              ineligibleOperatorNotifierReward,
               sortitionPoolRewardsBanDuration,
               relayEntryTimeoutNotificationRewardMultiplier,
               dkgMaliciousResultNotificationRewardMultiplier
@@ -266,6 +267,7 @@ describe("RandomBeacon - Parameters", () => {
           .updateRewardParameters(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
@@ -282,6 +284,12 @@ describe("RandomBeacon - Parameters", () => {
         expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
           sortitionPoolUnlockingReward
         )
+      })
+
+      it("should update the ineligible operator notifier reward", async () => {
+        expect(
+          await randomBeacon.ineligibleOperatorNotifierReward()
+        ).to.be.equal(ineligibleOperatorNotifierReward)
       })
 
       it("should update the sortition pool rewards ban duration", async () => {
@@ -308,6 +316,7 @@ describe("RandomBeacon - Parameters", () => {
           .withArgs(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier

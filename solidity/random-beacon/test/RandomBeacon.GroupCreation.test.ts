@@ -622,7 +622,7 @@ describe("RandomBeacon - Group Creation", () => {
               )
 
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-              expect(storedGroup.activationTimestamp).to.be.equal(0)
+              expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
             })
           })
@@ -688,7 +688,7 @@ describe("RandomBeacon - Group Creation", () => {
             )
 
             expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-            expect(storedGroup.activationTimestamp).to.be.equal(0)
+            expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
           })
 
@@ -1029,7 +1029,7 @@ describe("RandomBeacon - Group Creation", () => {
               )
 
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-              expect(storedGroup.activationTimestamp).to.be.equal(0)
+              expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
             })
 
@@ -1251,17 +1251,12 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should activate a candidate group", async () => {
-                // FIXME: Unclear why `tx.timestamp` is undefined
-                const expectedActivationTimestamp = (
-                  await ethers.provider.getBlock(tx.blockHash)
-                ).timestamp
-
                 const storedGroup = await randomBeacon["getGroup(bytes)"](
                   groupPublicKey
                 )
 
-                expect(storedGroup.activationTimestamp).to.be.equal(
-                  expectedActivationTimestamp
+                expect(storedGroup.activationBlockNumber).to.be.equal(
+                  tx.blockNumber
                 )
               })
 
@@ -1410,17 +1405,12 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should activate a candidate group", async () => {
-                // FIXME: Unclear why `tx.timestamp` is undefined
-                const expectedActivationTimestamp = (
-                  await ethers.provider.getBlock(tx.blockHash)
-                ).timestamp
-
                 const storedGroup = await randomBeacon["getGroup(bytes)"](
                   groupPublicKey
                 )
 
-                expect(storedGroup.activationTimestamp).to.be.equal(
-                  expectedActivationTimestamp
+                expect(storedGroup.activationBlockNumber).to.be.equal(
+                  tx.blockNumber
                 )
               })
 
@@ -2054,5 +2044,8 @@ async function assertDkgResultCleanData(randomBeacon: RandomBeaconStub) {
 }
 
 function mixSigners(signers: Operator[]): Operator[] {
-  return [...signers.slice(1), signers[0]]
+  return signers
+    .map((v) => ({ v, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ v }) => v)
 }

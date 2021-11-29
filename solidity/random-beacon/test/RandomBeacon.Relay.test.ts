@@ -24,7 +24,7 @@ import type {
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
-const { mineBlocks } = helpers.time
+const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
@@ -117,6 +117,9 @@ describe("RandomBeacon - Relay", () => {
     )
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
+    // groupLifetime: 64 * 10 * 5760 + 100
+    // if the group lifetime is less than 6400 it will be expired on selection.
+    await randomBeacon.updateGroupCreationParameters(100, 6500)
   })
 
   describe("requestRelayEntry", () => {
@@ -242,12 +245,9 @@ describe("RandomBeacon - Relay", () => {
 
     context("when no groups exist", () => {
       it("should revert", async () => {
-        // TODO: The error message should be updated to more meaningful text once `selectGroup` is ready.
         await expect(
           randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        ).to.be.revertedWith(
-          "reverted with panic code 0x12 (Division or modulo division by zero)"
-        )
+        ).to.be.revertedWith("No active groups")
       })
     })
   })
@@ -589,13 +589,6 @@ describe("RandomBeacon - Relay", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            // Simulate there is an other active group once the one handling
-            // the timed out request gets terminated. This makes the request
-            // retry possible.
-            await (
-              randomBeacon as RandomBeaconStub
-            ).incrementActiveGroupsCount()
-
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`.
             await mineBlocks(64 * 10 + 5760)
@@ -632,6 +625,47 @@ describe("RandomBeacon - Relay", () => {
               .withArgs(1, 0, blsData.previousEntry)
 
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.true
+          })
+        }
+      )
+
+      context(
+        "when group is terminated that was supposed to submit a relay request and another group expires",
+        () => {
+          let tx: ContractTransaction
+
+          beforeEach(async () => {
+            // Create another group in a rough way just to have an active group
+            // once the one handling the timed out request gets terminated.
+            // This makes the request retry possible. That group will not
+            // perform any signing so their public key can be arbitrary bytes.
+            // Also, that group is created just after the relay request is
+            // made to ensure it is not selected for signing the original request.
+            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
+              "0x01",
+              membersIDs
+            )
+          })
+
+          it("should clean up current relay request data", async () => {
+            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // relayEntryHardTimeout`. This times out the relay entry
+            await mineBlocks(64 * 10 + 5760)
+
+            await (randomBeacon as RandomBeaconStub).roughlyTerminateGroup(0)
+
+            const registry = await randomBeacon.getGroupsRegistry()
+            const secondGroupLifetime = await (
+              randomBeacon as RandomBeaconStub
+            ).groupLifetimeOf(registry[1])
+
+            // Expire second group
+            await mineBlocksTo(Number(secondGroupLifetime) + 1)
+
+            tx = await randomBeacon.reportRelayEntryTimeout()
+
+            await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+            expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
         }
       )

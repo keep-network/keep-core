@@ -52,6 +52,9 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newSortitionPoolUnlockingReward;
     uint256 public sortitionPoolUnlockingRewardChangeInitiated;
 
+    uint256 public newIneligibleOperatorNotifierReward;
+    uint256 public ineligibleOperatorNotifierRewardChangeInitiated;
+
     uint256 public newRelayEntrySubmissionFailureSlashingAmount;
     uint256 public relayEntrySubmissionFailureSlashingAmountChangeInitiated;
 
@@ -103,6 +106,7 @@ contract RandomBeaconGovernance is Ownable {
     // - sortition pool rewards ban duration
     // - malicious DKG result slashing amount
     // - sortition pool unlocking reward
+    // - ineligible operator notifier reward
     // - relay entry timeout notification reward multiplier
     // - DKG malicious result notification reward multiplier
     uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
@@ -170,6 +174,14 @@ contract RandomBeaconGovernance is Ownable {
     );
     event SortitionPoolUnlockingRewardUpdated(
         uint256 sortitionPoolUnlockingReward
+    );
+
+    event IneligibleOperatorNotifierRewardUpdateStarted(
+        uint256 ineligibleOperatorNotifierReward,
+        uint256 timestamp
+    );
+    event IneligibleOperatorNotifierRewardUpdated(
+        uint256 ineligibleOperatorNotifierReward
     );
 
     event RelayEntrySubmissionFailureSlashingAmountUpdateStarted(
@@ -458,7 +470,7 @@ contract RandomBeaconGovernance is Ownable {
 
     /// @notice Begins the group lifetime update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newGroupLifetime New group lifetime in seconds
+    /// @param _newGroupLifetime New group lifetime in blocks
     function beginGroupLifetimeUpdate(uint256 _newGroupLifetime)
         external
         onlyOwner
@@ -617,6 +629,7 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             newDkgResultSubmissionReward,
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
@@ -659,12 +672,57 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             newSortitionPoolUnlockingReward,
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         sortitionPoolUnlockingRewardChangeInitiated = 0;
         newSortitionPoolUnlockingReward = 0;
+    }
+
+    /// @notice Begins the ineligible operator notifier reward update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newIneligibleOperatorNotifierReward New ineligible operator
+    ///        notifier reward.
+    function beginIneligibleOperatorNotifierRewardUpdate(
+        uint256 _newIneligibleOperatorNotifierReward
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newIneligibleOperatorNotifierReward = _newIneligibleOperatorNotifierReward;
+        ineligibleOperatorNotifierRewardChangeInitiated = block.timestamp;
+        emit IneligibleOperatorNotifierRewardUpdateStarted(
+            _newIneligibleOperatorNotifierReward,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the ineligible operator notifier reward update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeIneligibleOperatorNotifierRewardUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            ineligibleOperatorNotifierRewardChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit IneligibleOperatorNotifierRewardUpdated(
+            newIneligibleOperatorNotifierReward
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateRewardParameters(
+            randomBeacon.dkgResultSubmissionReward(),
+            randomBeacon.sortitionPoolUnlockingReward(),
+            newIneligibleOperatorNotifierReward,
+            randomBeacon.sortitionPoolRewardsBanDuration(),
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+        );
+        ineligibleOperatorNotifierRewardChangeInitiated = 0;
+        newIneligibleOperatorNotifierReward = 0;
     }
 
     /// @notice Begins the sortition pool rewards ban duration update process.
@@ -702,6 +760,7 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             newSortitionPoolRewardsBanDuration,
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
@@ -753,6 +812,7 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             newRelayEntryTimeoutNotificationRewardMultiplier,
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
@@ -804,6 +864,7 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             newDkgMaliciousResultNotificationRewardMultiplier
@@ -1116,6 +1177,21 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 sortitionPoolUnlockingRewardChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the ineligible operator notifier
+    ///         reward can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingIneligibleOperatorNotifierRewardUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                ineligibleOperatorNotifierRewardChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
