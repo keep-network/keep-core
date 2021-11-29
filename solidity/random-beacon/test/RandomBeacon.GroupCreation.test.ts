@@ -4,6 +4,7 @@ import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { describe } from "mocha"
 import blsData from "./data/bls"
 import { constants, dkgState, params, testDeployment } from "./fixtures"
 import type {
@@ -107,9 +108,10 @@ describe("RandomBeacon - Group Creation", () => {
     await testToken
       .connect(thirdParty)
       .approve(randomBeacon.address, dkgRewardsPoolDonate)
-    await randomBeacon
-      .connect(thirdParty)
-      .fundDkgRewardsPool(await thirdParty.getAddress(), dkgRewardsPoolDonate)
+    await randomBeacon.fundDkgRewardsPool(
+      await thirdParty.getAddress(),
+      dkgRewardsPoolDonate
+    )
   })
 
   describe("genesis", async () => {
@@ -2094,6 +2096,44 @@ describe("RandomBeacon - Group Creation", () => {
       ).to.be.revertedWith("dkg timeout already passed")
 
       await randomBeacon.notifyDkgTimeout()
+    })
+  })
+
+  describe("fundDkgRewardsPool", () => {
+    const amount = to1e18(1000)
+
+    let previousDkgRewardsPoolBalance: BigNumber
+    let previousRandomBeaconBalance: BigNumber
+
+    beforeEach(async () => {
+      previousDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
+      previousRandomBeaconBalance = await testToken.balanceOf(
+        randomBeacon.address
+      )
+
+      await testToken.mint(await thirdParty.getAddress(), amount)
+      await testToken.connect(thirdParty).approve(randomBeacon.address, amount)
+
+      await randomBeacon.fundDkgRewardsPool(
+        await thirdParty.getAddress(),
+        amount
+      )
+    })
+
+    it("should increase the DKG rewards pool balance", async () => {
+      const currentDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
+      expect(
+        currentDkgRewardsPoolBalance.sub(previousDkgRewardsPoolBalance)
+      ).to.be.equal(amount)
+    })
+
+    it("should transfer tokens to the random beacon contract", async () => {
+      const currentRandomBeaconBalance = await testToken.balanceOf(
+        randomBeacon.address
+      )
+      expect(
+        currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
+      ).to.be.equal(amount)
     })
   })
 })
