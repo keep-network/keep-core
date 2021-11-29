@@ -16,7 +16,6 @@ import blsData from "./data/bls"
 import { constants, dkgState, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type {
-  RandomBeaconGovernance,
   RandomBeacon,
   RandomBeaconStub,
   TestToken,
@@ -26,7 +25,7 @@ import type {
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
-const { mineBlocks, mineBlocksTo, increaseTime } = helpers.time
+const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
@@ -67,13 +66,8 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let member3: SignerWithAddress
-  let member15: SignerWithAddress
   let member16: SignerWithAddress
-  let member17: SignerWithAddress
   let member18: SignerWithAddress
-  let member32: SignerWithAddress
-  let member48: SignerWithAddress
-  let member56: SignerWithAddress
   let members: Operator[]
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
@@ -109,26 +103,11 @@ describe("RandomBeacon - Relay", () => {
     member3 = await ethers.getSigner(
       members[invalidEntryFirstEligibleMemberIndex - 1].address
     )
-    member15 = await ethers.getSigner(
-      members[firstEligibleMemberIndex - 1 - 1].address
-    )
     member16 = await ethers.getSigner(
       members[firstEligibleMemberIndex - 1].address
     )
-    member17 = await ethers.getSigner(
-      members[firstEligibleMemberIndex + 1 - 1].address
-    )
     member18 = await ethers.getSigner(
       members[firstEligibleMemberIndex + 2 - 1].address
-    )
-    member32 = await ethers.getSigner(
-      members[firstEligibleMemberIndex + 16 - 1].address
-    )
-    member48 = await ethers.getSigner(
-      members[firstEligibleMemberIndex + 32 - 1].address
-    )
-    member56 = await ethers.getSigner(
-      members[firstEligibleMemberIndex + 40 - 1].address
     )
 
     await randomBeacon.updateRelayEntryParameters(to1e18(100), 10, 5760, 0)
@@ -749,302 +728,6 @@ describe("RandomBeacon - Relay", () => {
         await expect(randomBeacon.reportRelayEntryTimeout()).to.be.revertedWith(
           "Relay request did not time out"
         )
-      })
-    })
-  })
-
-  describe("notifyRelayEntryOperatorIneligibleForRewards", () => {
-    let requestStartBlock: number
-
-    beforeEach(async () => {
-      // Load the maintenance pool in order to pay notifier rewards.
-      await testToken.mint(
-        randomBeacon.address,
-        ineligibleOperatorNotifierReward.mul(64)
-      )
-
-      await createGroup(randomBeacon as RandomBeaconStub, members)
-
-      await approveTestToken()
-
-      const tx = await randomBeacon
-        .connect(requester)
-        .requestRelayEntry(ZERO_ADDRESS)
-      const receipt = await tx.wait()
-      requestStartBlock = receipt.blockNumber
-    })
-
-    context("when there is a pending ineligible operators info", () => {
-      context("when info parameter is same as the stored one", () => {
-        context("when first eligible member submitted the result", () => {
-          let submissionBlock: number
-
-          beforeEach(async () => {
-            const tx = await randomBeacon
-              .connect(member16)
-              .submitRelayEntry(
-                firstEligibleMemberIndex,
-                blsData.groupSignature
-              )
-            const receipt = await tx.wait()
-            submissionBlock = receipt.blockNumber
-          })
-
-          it("should revert", async () => {
-            await expect(
-              randomBeacon.notifyRelayEntryOperatorIneligibleForRewards({
-                entry: blsData.groupSignature,
-                submissionBlock,
-                eligibilityDelay: params.relayEntrySubmissionEligibilityDelay,
-                requestStartBlock,
-                submitterIndex: firstEligibleMemberIndex,
-                groupMembers: membersIDs,
-              })
-            ).to.be.revertedWith("No ineligible operators")
-          })
-        })
-
-        context(
-          "when a member from the middle of eligibility range submitted the result",
-          () => {
-            let tx: ContractTransaction
-            let initialNotifierBalance: BigNumber
-
-            beforeEach(async () => {
-              // We wait 320 blocks to make half of the group eligible. In that
-              // case the first eligible member is `16` and the last eligible
-              // member is `48`. We chose one member from the middle (e.g. `32`)
-              // to submit the result.
-              await mineBlocks(320)
-
-              initialNotifierBalance = await testToken.balanceOf(
-                notifier.address
-              )
-
-              const submitterIndex = firstEligibleMemberIndex + 16
-              const submitRelayEntryTx = await randomBeacon
-                .connect(member32)
-                .submitRelayEntry(submitterIndex, blsData.groupSignature)
-              const submitRelayEntryReceipt = await submitRelayEntryTx.wait()
-
-              tx = await randomBeacon
-                .connect(notifier)
-                .notifyRelayEntryOperatorIneligibleForRewards({
-                  entry: blsData.groupSignature,
-                  submissionBlock: submitRelayEntryReceipt.blockNumber,
-                  eligibilityDelay: params.relayEntrySubmissionEligibilityDelay,
-                  requestStartBlock,
-                  submitterIndex,
-                  groupMembers: membersIDs,
-                })
-            })
-
-            it("should clean up ineligible operator info", async () => {
-              expect(
-                await randomBeacon.ineligibleOperatorRelayEntryInfo()
-              ).to.be.equal(
-                "0x0000000000000000000000000000000000000000000000000000000000000000"
-              )
-            })
-
-            it("should ban sortition pool rewards for members who did not submit", async () => {
-              await expect(tx).to.emit(randomBeacon, "RewardsBanned").withArgs(
-                // All members from range <16, 32) should be banned.
-                // Parameters passed to `slice` must be zero-based hence
-                // they are subtracted by one.
-                membersIDs.slice(15, 31),
-                // 2 weeks in seconds as this is initial value of the
-                // ban duration.
-                1209600
-              )
-
-              // TODO: Once `banRewards` is implemented on sortition pool side,
-              //       assert correct state using the sortition pool.
-            })
-
-            it("should pay the notifier reward", async () => {
-              const currentNotifierBalance = await testToken.balanceOf(
-                notifier.address
-              )
-              // 16 members were banned from rewards.
-              expect(
-                currentNotifierBalance.sub(initialNotifierBalance)
-              ).to.be.equal(ineligibleOperatorNotifierReward.mul(16))
-            })
-          }
-        )
-
-        context("when last eligible member submitted the result", () => {
-          let tx: ContractTransaction
-          let initialNotifierBalance: BigNumber
-
-          beforeEach(async () => {
-            // We wait 320 blocks to make half of the group eligible. In that
-            // case the first eligible member is `16` and the last eligible
-            // member is `48`. The last eligible member submits.
-            await mineBlocks(320)
-
-            initialNotifierBalance = await testToken.balanceOf(notifier.address)
-
-            const submitterIndex = firstEligibleMemberIndex + 32
-            const submitRelayEntryTx = await randomBeacon
-              .connect(member48)
-              .submitRelayEntry(submitterIndex, blsData.groupSignature)
-            const submitRelayEntryReceipt = await submitRelayEntryTx.wait()
-
-            tx = await randomBeacon
-              .connect(notifier)
-              .notifyRelayEntryOperatorIneligibleForRewards({
-                entry: blsData.groupSignature,
-                submissionBlock: submitRelayEntryReceipt.blockNumber,
-                eligibilityDelay: params.relayEntrySubmissionEligibilityDelay,
-                requestStartBlock,
-                submitterIndex,
-                groupMembers: membersIDs,
-              })
-          })
-
-          it("should clean up ineligible operator info", async () => {
-            expect(
-              await randomBeacon.ineligibleOperatorRelayEntryInfo()
-            ).to.be.equal(
-              "0x0000000000000000000000000000000000000000000000000000000000000000"
-            )
-          })
-
-          it("should ban sortition pool rewards for members who did not submit", async () => {
-            await expect(tx).to.emit(randomBeacon, "RewardsBanned").withArgs(
-              // All members from range <16, 48) should be banned.
-              // Parameters passed to `slice` must be zero-based hence
-              // they are subtracted by one.
-              membersIDs.slice(15, 47),
-              // 2 weeks in seconds as this is initial value of the
-              // ban duration.
-              1209600
-            )
-
-            // TODO: Once `banRewards` is implemented on sortition pool side,
-            //       assert correct state using the sortition pool.
-          })
-
-          it("should pay the notifier reward", async () => {
-            const currentNotifierBalance = await testToken.balanceOf(
-              notifier.address
-            )
-            // 32 members were banned from rewards.
-            expect(
-              currentNotifierBalance.sub(initialNotifierBalance)
-            ).to.be.equal(ineligibleOperatorNotifierReward.mul(32))
-          })
-        })
-
-        context("when a not yet eligible member submitted the result", () => {
-          let tx: ContractTransaction
-          let initialNotifierBalance: BigNumber
-
-          beforeEach(async () => {
-            // We wait 320 blocks to make half of the group eligible. In that
-            // case the first eligible member is `16` and the last eligible
-            // member is `48`. A not yet eligible member `56` submits.
-            await mineBlocks(320)
-
-            initialNotifierBalance = await testToken.balanceOf(notifier.address)
-
-            const submitterIndex = firstEligibleMemberIndex + 40
-            const submitRelayEntryTx = await randomBeacon
-              .connect(member56)
-              .submitRelayEntry(submitterIndex, blsData.groupSignature)
-            const submitRelayEntryReceipt = await submitRelayEntryTx.wait()
-
-            tx = await randomBeacon
-              .connect(notifier)
-              .notifyRelayEntryOperatorIneligibleForRewards({
-                entry: blsData.groupSignature,
-                submissionBlock: submitRelayEntryReceipt.blockNumber,
-                eligibilityDelay: params.relayEntrySubmissionEligibilityDelay,
-                requestStartBlock,
-                submitterIndex,
-                groupMembers: membersIDs,
-              })
-          })
-
-          it("should clean up ineligible operator info", async () => {
-            expect(
-              await randomBeacon.ineligibleOperatorRelayEntryInfo()
-            ).to.be.equal(
-              "0x0000000000000000000000000000000000000000000000000000000000000000"
-            )
-          })
-
-          it("should ban sortition pool rewards for members who did not submit", async () => {
-            await expect(tx).to.emit(randomBeacon, "RewardsBanned").withArgs(
-              // All members from range <16, 48) should be banned.
-              // Parameters passed to `slice` must be zero-based hence
-              // they are subtracted by one.
-              membersIDs.slice(15, 47),
-              // 2 weeks in seconds as this is initial value of the
-              // ban duration.
-              1209600
-            )
-
-            // TODO: Once `banRewards` is implemented on sortition pool side,
-            //       assert correct state using the sortition pool.
-          })
-
-          it("should pay the notifier reward", async () => {
-            const currentNotifierBalance = await testToken.balanceOf(
-              notifier.address
-            )
-            // 32 members were banned from rewards.
-            expect(
-              currentNotifierBalance.sub(initialNotifierBalance)
-            ).to.be.equal(ineligibleOperatorNotifierReward.mul(32))
-          })
-        })
-      })
-
-      context("when info parameter is different than the stored one", () => {
-        let submissionBlock: number
-
-        beforeEach(async () => {
-          const tx = await randomBeacon
-            .connect(member16)
-            .submitRelayEntry(firstEligibleMemberIndex, blsData.groupSignature)
-          const receipt = await tx.wait()
-          submissionBlock = receipt.blockNumber
-        })
-
-        it("should revert", async () => {
-          await expect(
-            randomBeacon.notifyRelayEntryOperatorIneligibleForRewards({
-              entry: blsData.groupSignature,
-              // Corrupt the passed info param by setting a wrong `submissionBlock`.
-              submissionBlock: submissionBlock + 1,
-              eligibilityDelay: params.relayEntrySubmissionEligibilityDelay,
-              requestStartBlock,
-              submitterIndex: firstEligibleMemberIndex,
-              groupMembers: membersIDs,
-            })
-          ).to.be.revertedWith(
-            "Info parameter is different than the stored one"
-          )
-        })
-      })
-    })
-
-    context("when there is no pending ineligible operators info", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeacon.notifyRelayEntryOperatorIneligibleForRewards({
-            // Passing empty info param as it doesn't matter here anyway.
-            entry: "0x00",
-            submissionBlock: 0,
-            eligibilityDelay: 0,
-            requestStartBlock: 0,
-            submitterIndex: 0,
-            groupMembers: [],
-          })
-        ).to.be.revertedWith("No pending ineligible operators info")
       })
     })
   })
