@@ -530,15 +530,12 @@ describe("RandomBeacon - Group Creation", () => {
     context("with group creation in progress", async () => {
       let startBlock: number
       let genesisSeed: BigNumber
-      let firstEligibleSubmitterIndex: number
 
       beforeEach("run genesis", async () => {
         const [genesisTx, seed] = await genesis(randomBeacon)
 
         startBlock = genesisTx.blockNumber
         genesisSeed = seed
-
-        firstEligibleSubmitterIndex = firstEligibleIndex(genesisSeed)
       })
 
       context("with group creation not timed out", async () => {
@@ -680,7 +677,7 @@ describe("RandomBeacon - Group Creation", () => {
                 genesisSeed,
                 startBlock,
                 noMisbehaved,
-                2
+                shiftEligibleIndex(firstEligibleSubmitterIndex, 1)
               )
             ).to.be.revertedWith("Submitter is not eligible")
           })
@@ -784,7 +781,7 @@ describe("RandomBeacon - Group Creation", () => {
                     genesisSeed,
                     startBlock,
                     noMisbehaved,
-                    2
+                    shiftEligibleIndex(firstEligibleSubmitterIndex, 1)
                   )
                 ).to.be.revertedWith("Submitter is not eligible")
               })
@@ -1213,7 +1210,7 @@ describe("RandomBeacon - Group Creation", () => {
           let dkgResultHash: string
           let dkgResult: DkgResult
           let submitter: SignerWithAddress
-          const submitterIndex = 1
+          const submitterIndex = firstEligibleSubmitterIndex
 
           beforeEach(async () => {
             let tx: ContractTransaction
