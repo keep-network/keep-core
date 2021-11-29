@@ -37,7 +37,6 @@
     "@types/node": "^16.10.5",
     "chai": "^4.3.4",
     "eslint": "^7.30.0",
-    "eslint-config-keep": "github:keep-network/eslint-config-keep#0c27ade",
     "eslint-plugin-import": "^2.18.2",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.7",
