@@ -1354,6 +1354,21 @@ contract RandomBeaconGovernance is Ownable {
             );
     }
 
+    /// @notice Get the time remaining until the unauthorized signing
+    ///         notification reward multiplier duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingUnauthorizedSigningNotificationRewardMultiplierUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                unauthorizedSigningNotificationRewardMultiplierChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
     /// @notice Get the time remaining until the DKG malicious result
     ///         notification reward multiplier duration can be updated.
     /// @return Remaining time in seconds.

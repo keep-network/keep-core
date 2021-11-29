@@ -787,7 +787,7 @@ describe("RandomBeacon - Relay", () => {
           )
           tx = await randomBeacon
             .connect(notifier)
-            .reportUnauthorizedSigning(notifierSignature)
+            .reportUnauthorizedSigning(notifierSignature, 0)
         })
 
         it("should terminate the group", async () => {
@@ -800,7 +800,7 @@ describe("RandomBeacon - Relay", () => {
         it("should call staking contract to seize the min stake", async () => {
           await expect(tx)
             .to.emit(staking, "Seized")
-            .withArgs(to1e18(100000), 100, notifier.address, membersAddresses)
+            .withArgs(to1e18(100000), 5, notifier.address, membersAddresses)
         })
       })
     })
@@ -819,7 +819,7 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon
             .connect(notifier)
-            .reportUnauthorizedSigning(notifierSignature)
+            .reportUnauthorizedSigning(notifierSignature, 0)
         ).to.be.revertedWith("Group cannot be terminated")
       })
     })
@@ -831,7 +831,7 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon
             .connect(notifier)
-            .reportUnauthorizedSigning(notifierSignature)
+            .reportUnauthorizedSigning(notifierSignature, 0)
         ).to.be.revertedWith("Invalid signature")
       })
     })

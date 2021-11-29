@@ -796,7 +796,7 @@ contract RandomBeacon is Ownable {
     ///         signing for a terminated group, or when the signature is invalid,
     ///         function reverts.
     /// @param signedMsgSender Signature of the sender's address as a message.
-    /// @param uint64 groupId Group that is being reported for leaking a private key.
+    /// @param groupId Group that is being reported for leaking a private key.
     function reportUnauthorizedSigning(
         bytes memory signedMsgSender,
         uint64 groupId

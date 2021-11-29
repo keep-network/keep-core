@@ -322,6 +322,7 @@ describe("RandomBeacon - Parameters", () => {
             ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
           )
       })

@@ -197,6 +197,7 @@ library Relay {
     /// @param signedMsgSender Signature of the sender's address as a message.
     /// @param group Group that is being verified against private key leakage.
     function validateUnauthorizedSigning(
+        Data storage self,
         bytes memory signedMsgSender,
         Groups.Group memory group
     ) internal {
