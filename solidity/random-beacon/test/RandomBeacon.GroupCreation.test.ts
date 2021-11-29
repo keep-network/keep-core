@@ -558,20 +558,15 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("with less signatures on the result than required", () => {
             it("should revert", async () => {
-              const filteredSigners = signers.slice(
-                0,
-                constants.signatureThreshold - 1
-              )
-
               await expect(
                 signAndSubmitArbitraryDkgResult(
                   randomBeacon,
                   groupPublicKey,
-                  filteredSigners,
+                  signers,
                   startBlock,
                   noMisbehaved,
                   firstEligibleSubmitterIndex,
-                  32
+                  constants.groupThreshold - 1
                 )
               ).to.be.revertedWith("Too few signatures")
             })
@@ -583,11 +578,6 @@ describe("RandomBeacon - Group Creation", () => {
             let dkgResultHash: string
 
             beforeEach(async () => {
-              const filteredSigners = signers.slice(
-                0,
-                constants.signatureThreshold
-              )
-
               ;({
                 transaction: tx,
                 dkgResult,
@@ -595,11 +585,11 @@ describe("RandomBeacon - Group Creation", () => {
               } = await signAndSubmitArbitraryDkgResult(
                 randomBeacon,
                 groupPublicKey,
-                filteredSigners,
+                signers,
                 startBlock,
                 noMisbehaved,
                 firstEligibleSubmitterIndex,
-                33
+                constants.groupThreshold
               ))
             })
 
