@@ -493,7 +493,7 @@ contract RandomBeacon is Ownable {
 
         sortitionPool.insertOperator(
             operator,
-            staking.eligibleStake(msg.sender, address(this))
+            staking.eligibleStake(operator, address(this))
         );
     }
 
