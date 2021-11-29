@@ -194,13 +194,12 @@ library Relay {
 
     /// @notice Validates if the reporting of an unauthorized group signing can
     ///         be performed. The signature verification is done by BLS lib.
+    /// @param signedMsgSender Signature of the sender's address as a message.
+    /// @param group Group that is being verified against private key leakage.
     function validateUnauthorizedSigning(
-        Data storage self,
         bytes memory signedMsgSender,
         Groups.Group memory group
     ) internal {
-        require(isRequestInProgress(self), "No relay request in progress");
-
         require(!group.terminated, "Group cannot be terminated");
 
         require(

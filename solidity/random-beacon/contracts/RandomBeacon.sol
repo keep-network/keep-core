@@ -796,13 +796,14 @@ contract RandomBeacon is Ownable {
     ///         signing for a terminated group, or when the signature is invalid,
     ///         function reverts.
     /// @param signedMsgSender Signature of the sender's address as a message.
-    function reportUnauthorizedSigning(bytes memory signedMsgSender) external {
-        Groups.Group memory group = groups.getGroup(
-            relay.currentRequest.groupId
-        );
-        relay.validateUnauthorizedSigning(signedMsgSender, group);
+    /// @param uint64 groupId Group that is being reported for leaking a private key.
+    function reportUnauthorizedSigning(
+        bytes memory signedMsgSender,
+        uint64 groupId
+    ) external {
+        Groups.Group memory group = groups.getGroup(groupId);
 
-        uint64 groupId = relay.currentRequest.groupId;
+        relay.validateUnauthorizedSigning(signedMsgSender, group);
 
         groups.terminateGroup(groupId);
 
@@ -811,7 +812,7 @@ contract RandomBeacon is Ownable {
         );
         staking.seize(
             authorization.minimumAuthorization,
-            100,
+            unauthorizedSigningNotificationRewardMultiplier,
             msg.sender,
             groupMembers
         );
