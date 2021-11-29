@@ -1342,15 +1342,18 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("when there was a challenged result before", async () => {
             // Submit a second result by another submitter
-            const anotherSubmitterIndex = 5
+            const submitterIndexShift = 5
+            const anotherSubmitterIndex = shiftEligibleIndex(
+              submitterIndex,
+              submitterIndexShift
+            )
             let anotherSubmitter: Signer
 
             beforeEach(async () => {
               await randomBeacon.challengeDkgResult(dkgResult)
 
               await mineBlocks(
-                params.dkgResultSubmissionEligibilityDelay *
-                  anotherSubmitterIndex
+                params.dkgResultSubmissionEligibilityDelay * submitterIndexShift
               )
 
               let tx: ContractTransaction
