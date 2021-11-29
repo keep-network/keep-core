@@ -2098,5 +2098,5 @@ async function assertDkgResultCleanData(randomBeacon: RandomBeaconStub) {
 }
 
 function mixSigners(signers: Operator[]): Operator[] {
-  return [...signers.slice(0, 63), signers[0]]
+  return [...signers.slice(1), signers[0]]
 }
