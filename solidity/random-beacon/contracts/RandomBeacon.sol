@@ -771,6 +771,20 @@ contract RandomBeacon is Ownable {
     }
 
     // TODO: Documentation.
+    function notifyFailedHeartbeat() external {
+        uint32[] memory ineligibleOperators;
+
+        // TODO: Determine ineligible operators.
+
+        banFromRewards(ineligibleOperators, sortitionPoolRewardsBanDuration);
+
+        transferHeartbeatNotifierRewards(
+            msg.sender,
+            ineligibleOperatorNotifierReward * ineligibleOperators.length
+        );
+    }
+
+    // TODO: Documentation.
     function fundDkgRewardsPool(address from, uint256 value) public {
         dkgRewardsPool += value;
         tToken.safeTransferFrom(from, address(this), value);
