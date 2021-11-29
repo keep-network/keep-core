@@ -20,6 +20,7 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
+import "./libraries/Heartbeat.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -792,10 +793,31 @@ contract RandomBeacon is Ownable {
     }
 
     // TODO: Documentation.
-    function notifyFailedHeartbeat() external {
-        uint32[] memory ineligibleOperators;
+    function notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim)
+        external
+    {
+        require(
+            keccak256(
+                abi.encodePacked(claim.groupPubKey, claim.groupMembers)
+            ) == groups.getGroupChecksum(claim.groupId),
+            "Passed group data are wrong"
+        );
 
-        // TODO: Determine ineligible operators.
+        require(
+            groups.groupLifetimeOf(keccak256(claim.groupPubKey)) >=
+                block.number,
+            "Group must be active"
+        );
+
+        require(
+            !isGroupTerminated(claim.groupId),
+            "Group must not be terminated"
+        );
+
+        uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
+            claim,
+            sortitionPool
+        );
 
         banFromRewards(ineligibleOperators, sortitionPoolRewardsBanDuration);
 

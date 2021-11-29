@@ -267,20 +267,20 @@ library Groups {
         return self.groupsData[self.groupsRegistry[groupId]];
     }
 
-    function getGroupChecksum(Data storage self, uint64 groupId)
-        internal
-        view
-        returns (bytes32)
-    {
-        return self.groupsData[self.groupsRegistry[groupId]].checksum;
-    }
-
     function getGroup(Data storage self, bytes memory groupPubKey)
         internal
         view
         returns (Group memory)
     {
         return self.groupsData[keccak256(groupPubKey)];
+    }
+
+    function getGroupChecksum(Data storage self, uint64 groupId)
+        internal
+        view
+        returns (bytes32)
+    {
+        return self.groupsData[self.groupsRegistry[groupId]].checksum;
     }
 
     /// @notice Gets the number of active groups. Candidate, expired and terminated
