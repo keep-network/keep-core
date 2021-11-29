@@ -67,6 +67,9 @@ describe("RandomBeacon - Group Creation", () => {
   const sortitionPoolUnlockingReward = to1e18(10)
 
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
+  const firstEligibleSubmitterIndex: number = firstEligibleIndex(
+    keccak256(blsData.groupPubKey)
+  )
 
   let thirdParty: Signer
   let signers: Operator[]
