@@ -113,9 +113,6 @@ library Relay {
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
     /// @param group Group data.
-    /// @return inactiveMembers Array of members IDs which should be considered
-    ///         inactive  for not submitting relay entry on their turn.
-    ///         The array is empty if none of the members missed their turn.
     /// @return slashingAmount Amount by which group members should be slashed
     ///         in case the relay entry was submitted after the soft timeout.
     ///         The value is zero if entry was submitted on time.
@@ -125,10 +122,7 @@ library Relay {
         uint256 submitterIndex,
         bytes calldata entry,
         Groups.Group memory group
-    )
-        internal
-        returns (uint32[] memory inactiveMembers, uint256 slashingAmount)
-    {
+    ) internal returns (uint256 slashingAmount) {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
@@ -144,35 +138,9 @@ library Relay {
             "Unexpected submitter index"
         );
 
-        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
-            .getEligibilityRange(
-                uint256(keccak256(entry)),
-                block.number,
-                self.currentRequest.startBlock,
-                self.relayEntrySubmissionEligibilityDelay,
-                groupSize
-            );
-
-        require(
-            Submission.isEligible(
-                submitterIndex,
-                firstEligibleIndex,
-                lastEligibleIndex
-            ),
-            "Submitter is not eligible"
-        );
-
         require(
             BLS.verify(group.groupPubKey, self.previousEntry, entry),
             "Invalid entry"
-        );
-
-        // Get the list of members IDs which should be considered inactive due
-        // to not submitting the entry on their turn.
-        inactiveMembers = Submission.getInactiveMembers(
-            submitterIndex,
-            firstEligibleIndex,
-            group.members
         );
 
         // If the soft timeout has been exceeded apply stake slashing for
@@ -189,7 +157,7 @@ library Relay {
 
         emit RelayEntrySubmitted(self.requestCount, entry);
 
-        return (inactiveMembers, slashingAmount);
+        return slashingAmount;
     }
 
     /// @notice Set relayRequestFee parameter.

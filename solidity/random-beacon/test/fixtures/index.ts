@@ -2,6 +2,7 @@ import { Contract } from "ethers"
 import { ethers, helpers, getNamedAccounts } from "hardhat"
 import type {
   SortitionPool,
+  DKGValidator,
   RandomBeaconStub,
   RandomBeaconGovernance,
   StakingStub,
@@ -78,8 +79,6 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    stakingStub.address,
-    constants.minimumStake,
     constants.poolWeightDivisor
   )) as SortitionPool
 
@@ -88,6 +87,12 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const DKG = await ethers.getContractFactory("DKG")
   const dkg = await DKG.deploy()
   await dkg.deployed()
+
+  const DKGValidator = await ethers.getContractFactory("DKGValidator")
+  const dkgValidator = (await DKGValidator.deploy(
+    sortitionPool.address
+  )) as DKGValidator
+  await dkgValidator.deployed()
 
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
@@ -98,7 +103,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPool.address,
     testToken.address,
-    stakingStub.address
+    stakingStub.address,
+    dkgValidator.address
   )
   await randomBeacon.deployed()
 

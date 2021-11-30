@@ -3,7 +3,6 @@
 import { ethers } from "hardhat"
 import type { BigNumber, ContractTransaction } from "ethers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import blsData from "../data/bls"
 import type { RandomBeacon, SortitionPool } from "../../typechain"
 import { Operator } from "./operators"
 // eslint-disable-next-line import/no-cycle
@@ -65,10 +64,15 @@ export async function signAndSubmitCorrectDkgResult(
     )
   }
 
+  const sortitionPool = (await ethers.getContractAt(
+    "SortitionPool",
+    await randomBeacon.sortitionPool()
+  )) as SortitionPool
+
   return signAndSubmitArbitraryDkgResult(
     randomBeacon,
     groupPublicKey,
-    await selectGroup(randomBeacon, seed),
+    await selectGroup(sortitionPool, seed),
     startBlock,
     misbehavedIndices,
     submitterIndex,
@@ -110,7 +114,7 @@ export async function signAndSubmitArbitraryDkgResult(
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
-    groupPubKey: blsData.groupPubKey,
+    groupPubKey: groupPublicKey,
     misbehavedMembersIndices: misbehavedIndices,
     signatures: signaturesBytes,
     signingMembersIndices,
@@ -135,7 +139,7 @@ export async function signAndSubmitArbitraryDkgResult(
   return { transaction, dkgResult, dkgResultHash, members, submitter }
 }
 
-async function signDkgResult(
+export async function signDkgResult(
   signers: Operator[],
   groupPublicKey: string,
   misbehavedMembersIndices: number[],

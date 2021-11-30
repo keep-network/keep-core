@@ -102,7 +102,7 @@ library Submission {
     /// @param submitterIndex Index of the submitter.
     /// @param firstEligibleIndex First index of the given eligibility range.
     /// @param groupMembers IDs of the group members.
-    /// @return An array of members IDs which should be  inactive due
+    /// @return An array of members IDs which should be considered inactive due
     ///         to not submitting on their turn.
     function getInactiveMembers(
         uint256 submitterIndex,
