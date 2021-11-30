@@ -5,6 +5,7 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
+import "../DKGValidator.sol";
 
 library DKG {
     using BytesLib for bytes;
@@ -21,6 +22,8 @@ library DKG {
     struct Data {
         // Address of the Sortition Pool contract.
         SortitionPool sortitionPool;
+        // Address of the DKGValidator contract.
+        DKGValidator dkgValidator;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -47,18 +50,21 @@ library DKG {
         // Generated candidate group public key
         bytes groupPubKey;
         // Array of misbehaved members indices (disqualified or inactive).
-        // Must be in range [1, 64] and unique.
+        // Indices must be in range [1, 64], unique, and sorted in ascending
+        // order.
         uint8[] misbehavedMembersIndices;
         // Concatenation of signatures from members supporting the result.
         // The message to be signed by each member is keccak256 hash of the
-        // calculated group public key, misbehaved members as bytes and DKG
+        // calculated group public key, misbehaved members indices and DKG
         // start block. The calculated hash should be prefixed with prefixed with
         // `\x19Ethereum signed message:\n` before signing, so the message to
         // sign is:
-        // `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
+        // `\x19Ethereum signed message:\n${keccak256(
+        //    groupPubKey, misbehavedMembersIndices, dkgStartBlock
+        // )}`
         bytes signatures;
-        // Indices of members corresponding to each signature. Must be in
-        // range [1, 64] and unique.
+        // Indices of members corresponding to each signature. Indices must be
+        // be in range [1, 64], unique, and sorted in ascending order.
         uint256[] signingMembersIndices;
         // Identifiers of candidate group members as outputted by the group
         // selection protocol.
@@ -128,24 +134,35 @@ library DKG {
 
     event DkgResultChallenged(
         bytes32 indexed resultHash,
-        address indexed challenger
+        address indexed challenger,
+        string reason
     );
 
     event DkgStateLocked();
 
     event DkgSeedTimedOut();
 
-    /// @notice Initializes the sortitionPool parameter. Can be performed only once.
-    /// @param _sortitionPool Value of the parameter.
-    function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
-        internal
-    {
+    /// @notice Initializes SortitionPool and DKGValidator addresses.
+    ///        Can be performed only once.
+    /// @param _sortitionPool Sortition Pool reference
+    /// @param _dkgValidator DKGValidator reference
+    function init(
+        Data storage self,
+        SortitionPool _sortitionPool,
+        DKGValidator _dkgValidator
+    ) internal {
         require(
             address(self.sortitionPool) == address(0),
             "Sortition Pool address already set"
         );
 
+        require(
+            address(self.dkgValidator) == address(0),
+            "DKG Validator address already set"
+        );
+
         self.sortitionPool = _sortitionPool;
+        self.dkgValidator = _dkgValidator;
     }
 
     /// @notice Determines the current state of group creation. It doesn't take
@@ -198,6 +215,12 @@ library DKG {
         emit DkgStarted(seed);
     }
 
+    /// @notice Allows to submit DKG result. The submitted result does not go
+    ///         through a validation and before it gets accepted, it needs to
+    ///         wait through the challenge period during which everyone has
+    ///         a chance to challenge the result as invalid one. Submitter of
+    ///         the result needs to be in the sortition pool and if the result
+    ///         gets challenged, the submitter will get slashed.
     function submitResult(Data storage self, Result calldata result) external {
         require(
             currentState(self) == State.AWAITING_RESULT,
@@ -205,12 +228,33 @@ library DKG {
         );
         require(!hasDkgTimedOut(self), "dkg timeout already passed");
 
-        verify(self, result);
+        // Check submitter's eligibility to call this function
+        uint256 T_init = self.startBlock +
+            offchainDkgTime +
+            self.resultSubmissionStartBlockOffset;
+        require(
+            block.number >=
+                (T_init +
+                    (result.submitterMemberIndex - 1) *
+                    self.parameters.resultSubmissionEligibilityDelay),
+            "Submitter not eligible"
+        );
 
-        // TODO: Check with sortition pool that all members have minimum stake.
-        // Check all members in one call or at least members that signed the result.
-        // We need to know in advance that there will be something that we can
-        // slash the members from.
+        SortitionPool sortitionPool = self.sortitionPool;
+
+        // Submitter must be an operator in the sortition pool.
+        // Declared submitter's member index in the DKG result needs to match
+        // the address calling this function.
+        require(
+            sortitionPool.isOperatorInPool(msg.sender),
+            "Submitter not in the sortition pool"
+        );
+        require(
+            sortitionPool.getIDOperator(
+                result.members[result.submitterMemberIndex - 1]
+            ) == msg.sender,
+            "Unexpected submitter index"
+        );
 
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
@@ -243,120 +287,6 @@ library DKG {
                 self.resultSubmissionStartBlockOffset +
                 groupSize *
                 self.parameters.resultSubmissionEligibilityDelay);
-    }
-
-    /// @notice Verifies the submitted DKG result against supporting member
-    ///         signatures and if the submitter is eligible to submit at the current
-    ///         block. Every signature supporting the result has to be from a unique
-    ///         group member.
-    /// @dev The message to be signed by each member is keccak256 hash of the
-    ///      calculated group public key, misbehaved members as bytes and DKG
-    ///      start block. The calculated hash should be prefixed with prefixed with
-    ///      `\x19Ethereum signed message:\n` before signing, so the message to
-    ///      sign is:
-    ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
-    ///      Members indexing in the group starts with 1.
-    /// @param result DKG result which will be verified.
-    function verify(Data storage self, Result calldata result) internal view {
-        // TODO: Verify if submitter is valid staker and signatures come from valid
-        // stakers https://github.com/keep-network/keep-core/pull/2654#discussion_r728226906.
-
-        require(result.submitterMemberIndex > 0, "Invalid submitter index");
-
-        SortitionPool sortitionPool = self.sortitionPool;
-
-        require(
-            sortitionPool.getIDOperator(
-                result.members[result.submitterMemberIndex - 1]
-            ) == msg.sender,
-            "Unexpected submitter index"
-        );
-
-        uint256 T_init = self.startBlock +
-            offchainDkgTime +
-            self.resultSubmissionStartBlockOffset;
-        require(
-            block.number >=
-                (T_init +
-                    (result.submitterMemberIndex - 1) *
-                    self.parameters.resultSubmissionEligibilityDelay),
-            "Submitter not eligible"
-        );
-
-        require(result.groupPubKey.length == 128, "Malformed group public key");
-
-        require(
-            groupSize - result.misbehavedMembersIndices.length >=
-                activeThreshold,
-            "Too many members misbehaving during DKG"
-        );
-
-        if (result.misbehavedMembersIndices.length > 1) {
-            for (
-                uint256 i = 1;
-                i < result.misbehavedMembersIndices.length;
-                i++
-            ) {
-                require(
-                    result.misbehavedMembersIndices[i - 1] <
-                        result.misbehavedMembersIndices[i],
-                    "Corrupted misbehaved members indices"
-                );
-            }
-        }
-
-        uint256 signaturesCount = result.signatures.length / 65;
-        require(result.signatures.length >= 65, "Too short signatures array");
-        require(
-            result.signatures.length % 65 == 0,
-            "Malformed signatures array"
-        );
-        require(
-            signaturesCount == result.signingMembersIndices.length,
-            "Unexpected signatures count"
-        );
-        require(signaturesCount >= groupThreshold, "Too few signatures");
-        require(signaturesCount <= groupSize, "Too many signatures");
-
-        bytes32 resultHash = keccak256(
-            abi.encodePacked(
-                result.groupPubKey,
-                result.misbehavedMembersIndices,
-                self.startBlock
-            )
-        );
-
-        bytes memory current; // Current signature to be checked.
-        bool[] memory usedMemberIndices = new bool[](groupSize);
-        // TODO: Revisit at optimization stage. We probably don't need to fetch
-        //       addresses of all members. Addresses of signing members should
-        //       be enough though this will require some additional processing
-        //       here. Compare two approaches gas-wise against a real pool.
-        address[] memory membersAddresses = sortitionPool.getIDOperators(
-            result.members
-        );
-
-        for (uint256 i = 0; i < signaturesCount; i++) {
-            uint256 memberIndex = result.signingMembersIndices[i];
-            require(memberIndex > 0, "Invalid index");
-            require(memberIndex <= result.members.length, "Index out of range");
-
-            require(
-                !usedMemberIndices[memberIndex - 1],
-                "Duplicate member index"
-            );
-            usedMemberIndices[memberIndex - 1] = true;
-
-            current = result.signatures.slice(65 * i, 65);
-            address recoveredAddress = resultHash
-                .toEthSignedMessageHash()
-                .recover(current);
-
-            require(
-                membersAddresses[memberIndex - 1] == recoveredAddress,
-                "Invalid signature"
-            );
-        }
     }
 
     /// @notice Notifies about DKG timeout.
@@ -449,11 +379,10 @@ library DKG {
     /// @param result Result to challenge. Must match the submitted result
     ///        stored during `submitResult`.
     /// @return maliciousResultHash Hash of the malicious result.
-    /// @return maliciousMembers Identifiers of group members who signed the
-    ///         malicious DKG result hash.
+    /// @return maliciousSubmitter Identifier of the malicious submitter.
     function challengeResult(Data storage self, Result calldata result)
         external
-        returns (bytes32 maliciousResultHash, uint32[] memory maliciousMembers)
+        returns (bytes32 maliciousResultHash, uint32 maliciousSubmitter)
     {
         require(
             currentState(self) == State.CHALLENGE,
@@ -472,33 +401,37 @@ library DKG {
             "result under challenge is different than the submitted one"
         );
 
-        // Compute the actual group members hash by selecting actual members IDs
-        // based on seed used for current DKG execution.
-        bytes32 actualGroupMembersHash = keccak256(
-            abi.encodePacked(
-                self.sortitionPool.selectGroup(groupSize, bytes32(self.seed))
-            )
-        );
+        // https://github.com/crytic/slither/issues/982
+        // slither-disable-next-line unused-return
+        try
+            self.dkgValidator.validate(result, self.seed, self.startBlock)
+        returns (
+            // slither-disable-next-line uninitialized-local,variable-scope
+            bool isValid,
+            // slither-disable-next-line uninitialized-local,variable-scope
+            string memory errorMsg
+        ) {
+            if (isValid) {
+                revert("unjustified challenge");
+            }
 
-        require(
-            keccak256(abi.encodePacked(result.members)) !=
-                actualGroupMembersHash,
-            "unjustified challenge"
-        );
+            emit DkgResultChallenged(
+                self.submittedResultHash,
+                msg.sender,
+                errorMsg
+            );
+        } catch {
+            // if the validation reverted we consider the DKG result as invalid
+            emit DkgResultChallenged(
+                self.submittedResultHash,
+                msg.sender,
+                "validation reverted"
+            );
+        }
 
         // Consider result hash as malicious.
         maliciousResultHash = self.submittedResultHash;
-
-        // Consider all members who signed the wrong result as malicious and
-        // extract their identifiers. Signing members indices are in range
-        // [1, 64], so we need to -1 when fetching identifiers from members
-        // array.
-        maliciousMembers = new uint32[](result.signingMembersIndices.length);
-        for (uint256 i = 0; i < result.signingMembersIndices.length; i++) {
-            maliciousMembers[i] = result.members[
-                result.signingMembersIndices[i] - 1
-            ];
-        }
+        maliciousSubmitter = result.members[result.submitterMemberIndex - 1];
 
         // Adjust DKG result submission block start, so submission eligibility
         // starts from the beginning.
@@ -507,11 +440,9 @@ library DKG {
             self.startBlock -
             offchainDkgTime;
 
-        emit DkgResultChallenged(self.submittedResultHash, msg.sender);
-
         submittedResultCleanup(self);
 
-        return (maliciousResultHash, maliciousMembers);
+        return (maliciousResultHash, maliciousSubmitter);
     }
 
     /// @notice Set resultChallengePeriodLength parameter.
