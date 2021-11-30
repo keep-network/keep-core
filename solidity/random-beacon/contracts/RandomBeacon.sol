@@ -821,21 +821,6 @@ contract RandomBeacon is Ownable {
         tToken.safeTransfer(to, actualValue);
     }
 
-    /// @notice Ban given operators from sortition pool rewards.
-    /// @param ids IDs of banned operators.
-    /// @param banDuration Duration of the ban period in seconds.
-    function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
-        try sortitionPool.banRewards(ids, banDuration) {
-            emit RewardsBanned(ids, banDuration);
-        } catch {
-            // Should never happen but we want to ensure a non-critical path
-            // failure from an external contract does not stop the protocol
-            // from being successfully executed.
-            // slither-disable-next-line reentrancy-events
-            emit BanRewardsFailed(ids);
-        }
-    }
-
     /// @notice Locks the state of group creation.
     /// @dev This function is meant to be used by test stubs which inherits
     ///      from this contract and needs to lock the DKG state arbitrarily.
