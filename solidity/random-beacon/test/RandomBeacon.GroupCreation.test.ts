@@ -1772,6 +1772,7 @@ describe("RandomBeacon - Group Creation", () => {
               transaction: tx,
               dkgResult,
               dkgResultHash,
+              submitter,
             } = await signAndSubmitArbitraryDkgResult(
               randomBeacon,
               groupPublicKey,
@@ -1780,11 +1781,6 @@ describe("RandomBeacon - Group Creation", () => {
               startBlock,
               noMisbehaved
             ))
-
-            submitter = await getDkgResultSubmitterSigner(
-              randomBeacon,
-              dkgResult
-            )
 
             resultSubmissionBlock = tx.blockNumber
           })
