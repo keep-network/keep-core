@@ -1365,12 +1365,8 @@ describe("RandomBeacon - Group Creation", () => {
               params.dkgResultSubmissionEligibilityDelay * submitterIndexShift
             )
 
-            let tx: ContractTransaction
-            ;({
-              transaction: tx,
-              dkgResult,
-              dkgResultHash,
-            } = await signAndSubmitArbitraryDkgResult(
+            const { dkgResult: maliciousDkgResult } =
+              await signAndSubmitArbitraryDkgResult(
               randomBeacon,
               groupPublicKey,
               // Mix signers to make the result malicious.
@@ -1378,13 +1374,15 @@ describe("RandomBeacon - Group Creation", () => {
               startBlock,
               noMisbehaved,
               maliciousSubmitter
-            ))
+              )
 
-            await randomBeacon.challengeDkgResult(dkgResult)
+            await randomBeacon.challengeDkgResult(maliciousDkgResult)
 
             await mineBlocks(
               params.dkgResultSubmissionEligibilityDelay * anotherSubmitterIndex
             )
+
+            let tx: ContractTransaction
             ;({
               transaction: tx,
               dkgResult,
