@@ -1946,7 +1946,7 @@ describe("RandomBeacon - Group Creation", () => {
         signers,
         startBlock,
         noMisbehaved,
-        constants.groupSize / 2
+        shiftEligibleIndex(firstEligibleSubmitterIndex, constants.groupSize / 2)
       ))
 
       await expect(
@@ -1981,7 +1981,7 @@ describe("RandomBeacon - Group Creation", () => {
         signers,
         startBlock,
         noMisbehaved,
-        constants.groupSize
+        shiftEligibleIndex(firstEligibleSubmitterIndex, constants.groupSize - 1)
       ))
 
       await expect(
@@ -2023,7 +2023,10 @@ describe("RandomBeacon - Group Creation", () => {
           signers,
           startBlock,
           noMisbehaved,
-          constants.groupSize
+          shiftEligibleIndex(
+            firstEligibleSubmitterIndex,
+            constants.groupSize - 1
+          )
         )
       ).to.be.revertedWith("dkg timeout already passed")
 
