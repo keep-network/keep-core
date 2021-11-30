@@ -17,32 +17,19 @@ export async function createGroup(
 ): Promise<void> {
   const { blockNumber: startBlock } = await randomBeacon.genesis()
 
-  const dkgSeed: BigNumber = ethers.BigNumber.from(
-    ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ["uint256", "uint256"],
-        [await randomBeacon.genesisSeed(), startBlock]
-      )
-    )
-  )
-  const submitterIndex = firstEligibleIndex(dkgSeed, constants.groupSize)
-
   await mineBlocks(constants.offchainDkgTime)
 
-  const { dkgResult } = await signAndSubmitArbitraryDkgResult(
+  const { dkgResult, submitter } = await signAndSubmitArbitraryDkgResult(
     randomBeacon,
     blsData.groupPubKey,
     signers,
     startBlock,
-    noMisbehaved,
-    submitterIndex
+    noMisbehaved
   )
 
   await mineBlocks(params.dkgResultChallengePeriodLength)
 
-  await randomBeacon
-    .connect(await ethers.getSigner(signers[submitterIndex - 1].address))
-    .approveDkgResult(dkgResult)
+  await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
 }
 
 export async function selectGroup(
