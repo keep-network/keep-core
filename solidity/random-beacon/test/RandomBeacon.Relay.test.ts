@@ -802,6 +802,12 @@ describe("RandomBeacon - Relay", () => {
             .to.emit(staking, "Seized")
             .withArgs(to1e18(100000), 5, notifier.address, membersAddresses)
         })
+
+        it("should emit unauthorized signing slashing event", async () => {
+          await expect(tx)
+              .to.emit(randomBeacon, "UnauthorizedSigningSlashed")
+              .withArgs(0, to1e18(100000), membersAddresses)
+        })
       })
     })
 

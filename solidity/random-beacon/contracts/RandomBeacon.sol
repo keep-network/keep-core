@@ -253,6 +253,12 @@ contract RandomBeacon is Ownable {
         address[] groupMembers
     );
 
+    event UnauthorizedSigningSlashed(
+        uint64 indexed groupId,
+        uint256 minimumAuthorization,
+        address[] groupMembers
+    );
+
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     event BanRewardsFailed(uint32[] ids);
@@ -819,6 +825,13 @@ contract RandomBeacon is Ownable {
         address[] memory groupMembers = sortitionPool.getIDOperators(
             groups.getGroup(groupId).members
         );
+
+        emit UnauthorizedSigningSlashed(
+            groupId,
+            authorization.minimumAuthorization,
+            groupMembers
+        );
+
         staking.seize(
             authorization.minimumAuthorization,
             unauthorizedSigningNotificationRewardMultiplier,
