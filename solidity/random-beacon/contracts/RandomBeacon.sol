@@ -107,7 +107,7 @@ contract RandomBeacon is Ownable {
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
     ///         reporting about relay entry timeout. Notifiers are rewarded
-    ///         from a separate pool funded from slashed tokens. For example, if
+    ///         from a notifiers treasury pool. For example, if
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
@@ -125,7 +125,7 @@ contract RandomBeacon is Ownable {
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
     ///         reporting about a malicious DKG result. Notifiers are rewarded
-    ///         from a separate pool funded from slashed tokens. For example, if
+    ///         from a notifiers treasury pool. For example, if
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
