@@ -310,7 +310,7 @@ contract RandomBeacon is Ownable {
         sortitionPoolUnlockingReward = 0;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
-        unauthorizedSigningSlashingAmount = 100000 * 1e18;
+        unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
         unauthorizedSigningNotificationRewardMultiplier = 5;
