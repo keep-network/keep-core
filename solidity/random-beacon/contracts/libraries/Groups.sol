@@ -259,6 +259,18 @@ library Groups {
             self.groupLifetime;
     }
 
+    /// @notice Checks if group with the given index is active and non-terminated.
+    function isGroupActive(Data storage self, uint64 groupId)
+        internal
+        view
+        returns (bool)
+    {
+        return
+            groupLifetimeOf(self, self.groupsRegistry[groupId]) >=
+            block.number &&
+            !isGroupTerminated(self, groupId);
+    }
+
     function getGroup(Data storage self, uint64 groupId)
         internal
         view

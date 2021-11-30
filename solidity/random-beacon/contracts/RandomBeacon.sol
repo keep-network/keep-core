@@ -817,14 +817,8 @@ contract RandomBeacon is Ownable {
         );
 
         require(
-            groups.groupLifetimeOf(keccak256(claim.groupPubKey)) >=
-                block.number,
-            "Group must be active"
-        );
-
-        require(
-            !groups.isGroupTerminated(claim.groupId),
-            "Group must not be terminated"
+            groups.isGroupActive(claim.groupId),
+            "Group must be active and non-terminated"
         );
 
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
