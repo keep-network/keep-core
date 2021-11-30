@@ -401,9 +401,16 @@ library DKG {
             "result under challenge is different than the submitted one"
         );
 
+        // https://github.com/crytic/slither/issues/982
+        // slither-disable-next-line unused-return
         try
             self.dkgValidator.validate(result, self.seed, self.startBlock)
-        returns (bool isValid, string memory errorMsg) {
+        returns (
+            // slither-disable-next-line uninitialized-local,variable-scope
+            bool isValid,
+            // slither-disable-next-line uninitialized-local,variable-scope
+            string memory errorMsg
+        ) {
             if (isValid) {
                 revert("unjustified challenge");
             }
