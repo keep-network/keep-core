@@ -6,11 +6,9 @@ import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
 import { Operator } from "./operators"
 import type { RandomBeacon, SortitionPool } from "../../typechain"
-import { firstEligibleIndex } from "./submission"
 
 const { mineBlocks } = helpers.time
 
-// eslint-disable-next-line import/prefer-default-export
 export async function createGroup(
   randomBeacon: RandomBeacon,
   signers: Operator[]
