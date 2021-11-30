@@ -627,48 +627,6 @@ describe("RandomBeacon - Group Creation", () => {
             })
           })
 
-          it("should succeed for the first submitter", async () => {
-            const submitterIndex = firstEligibleSubmitterIndex
-
-            const {
-              transaction: tx,
-              dkgResult,
-              dkgResultHash,
-            } = await signAndSubmitCorrectDkgResult(
-              randomBeacon,
-              groupPublicKey,
-              genesisSeed,
-              startBlock,
-              noMisbehaved,
-              submitterIndex
-            )
-            await expect(tx)
-              .to.emit(randomBeacon, "DkgResultSubmitted")
-              .withArgs(
-                dkgResultHash,
-                genesisSeed,
-                dkgResult.submitterMemberIndex,
-                dkgResult.groupPubKey,
-                dkgResult.misbehavedMembersIndices,
-                dkgResult.signatures,
-                dkgResult.signingMembersIndices,
-                dkgResult.members
-              )
-          })
-
-          it("should revert for the second submitter", async () => {
-            await expect(
-              signAndSubmitCorrectDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                genesisSeed,
-                startBlock,
-                noMisbehaved,
-                shiftEligibleIndex(firstEligibleSubmitterIndex, 1)
-              )
-            ).to.be.revertedWith("Submitter is not eligible")
-          })
-
           it("should register a candidate group", async () => {
             const { dkgResult } = await signAndSubmitCorrectDkgResult(
               randomBeacon,
@@ -718,224 +676,131 @@ describe("RandomBeacon - Group Creation", () => {
             expect(await sortitionPool.isLocked()).to.be.true
           })
 
-          context(
-            "with first submitter eligibility delay period almost ended",
-            async () => {
-              beforeEach(async () => {
-                await mineBlocksTo(
-                  startBlock +
-                    constants.offchainDkgTime +
-                    params.dkgResultSubmissionEligibilityDelay -
-                    2
-                )
-              })
+          describe("submission eligibility verification", async () => {
+            let submissionStartBlockNumber: number
 
+            beforeEach(() => {
+              submissionStartBlockNumber =
+                startBlock + constants.offchainDkgTime
+            })
+
+            context("at the beginning of submission period", async () => {
               it("should succeed for the first submitter", async () => {
-                const submitterIndex = firstEligibleSubmitterIndex
-
-                const {
-                  transaction: tx,
-                  dkgResult,
-                  dkgResultHash,
-                } = await signAndSubmitCorrectDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  genesisSeed,
-                  startBlock,
-                  noMisbehaved,
-                  submitterIndex
-                )
-
-                await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(
-                    dkgResultHash,
-                    genesisSeed,
-                    dkgResult.submitterMemberIndex,
-                    dkgResult.groupPubKey,
-                    dkgResult.misbehavedMembersIndices,
-                    dkgResult.signatures,
-                    dkgResult.signingMembersIndices,
-                    dkgResult.members
-                  )
+                await assertSubmissionSucceeds(firstSubmitterIndex)
               })
 
               it("should revert for the second submitter", async () => {
-                await expect(
-                  signAndSubmitCorrectDkgResult(
-                    randomBeacon,
-                    groupPublicKey,
-                    genesisSeed,
-                    startBlock,
-                    noMisbehaved,
-                    shiftEligibleIndex(firstEligibleSubmitterIndex, 1)
+                await assertSubmissionReverts(secondSubmitterIndex)
+              })
+
+              it("should revert for the last submitter", async () => {
+                await assertSubmissionReverts(lastSubmitterIndex)
+              })
+            })
+
+            context(
+              "with first submitter eligibility delay period almost ended",
+              async () => {
+                beforeEach(async () => {
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      params.dkgResultSubmissionEligibilityDelay -
+                      2
                   )
-                ).to.be.revertedWith("Submitter is not eligible")
-              })
-            }
-          )
+                })
 
-          context(
-            "with first submitter eligibility delay period ended",
-            async () => {
-              beforeEach(async () => {
-                await mineBlocksTo(
-                  startBlock +
-                    constants.offchainDkgTime +
-                    params.dkgResultSubmissionEligibilityDelay -
-                    1
-                )
-              })
+                it("should succeed for the first submitter", async () => {
+                  await assertSubmissionSucceeds(firstSubmitterIndex)
+                })
 
-              it("should succeed for the first submitter", async () => {
-                const submitterIndex = firstEligibleSubmitterIndex
+                it("should revert for the second submitter", async () => {
+                  await assertSubmissionReverts(secondSubmitterIndex)
+                })
 
-                const {
-                  transaction: tx,
-                  dkgResult,
-                  dkgResultHash,
-                } = await signAndSubmitCorrectDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  genesisSeed,
-                  startBlock,
-                  noMisbehaved,
-                  submitterIndex
-                )
+                it("should revert for the last submitter", async () => {
+                  await assertSubmissionReverts(lastSubmitterIndex)
+                })
+              }
+            )
 
-                await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(
-                    dkgResultHash,
-                    genesisSeed,
-                    dkgResult.submitterMemberIndex,
-                    dkgResult.groupPubKey,
-                    dkgResult.misbehavedMembersIndices,
-                    dkgResult.signatures,
-                    dkgResult.signingMembersIndices,
-                    dkgResult.members
+            context(
+              "with first submitter eligibility delay period ended",
+              async () => {
+                beforeEach(async () => {
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      params.dkgResultSubmissionEligibilityDelay -
+                      1
                   )
-              })
+                })
 
-              it("should succeed for the second submitter", async () => {
-                const submitterIndex = shiftEligibleIndex(
-                  firstEligibleSubmitterIndex,
-                  1
-                )
+                it("should succeed for the first submitter", async () => {
+                  await assertSubmissionSucceeds(firstSubmitterIndex)
+                })
 
-                const {
-                  transaction: tx,
-                  dkgResult,
-                  dkgResultHash,
-                } = await signAndSubmitCorrectDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  genesisSeed,
-                  startBlock,
-                  noMisbehaved,
-                  submitterIndex
-                )
+                it("should succeed for the second submitter", async () => {
+                  await assertSubmissionSucceeds(secondSubmitterIndex)
+                })
 
-                await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(
-                    dkgResultHash,
-                    genesisSeed,
-                    dkgResult.submitterMemberIndex,
-                    dkgResult.groupPubKey,
-                    dkgResult.misbehavedMembersIndices,
-                    dkgResult.signatures,
-                    dkgResult.signingMembersIndices,
-                    dkgResult.members
+                it("should revert for the third submitter", async () => {
+                  await assertSubmissionReverts(thirdSubmitterIndex)
+                })
+
+                it("should revert for the last submitter", async () => {
+                  await assertSubmissionReverts(lastSubmitterIndex)
+                })
+              }
+            )
+
+            context(
+              "with the last submitter eligibility delay period almost ended",
+              async () => {
+                beforeEach(async () => {
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      constants.groupSize *
+                        params.dkgResultSubmissionEligibilityDelay -
+                      1
                   )
-              })
+                })
 
-              it("should revert for the third submitter", async () => {
-                await expect(
-                  signAndSubmitCorrectDkgResult(
-                    randomBeacon,
-                    groupPublicKey,
-                    genesisSeed,
-                    startBlock,
-                    noMisbehaved,
-                    3
+                it("should succeed for the first submitter", async () => {
+                  await assertSubmissionSucceeds(firstSubmitterIndex)
+                })
+
+                it("should succeed for the last submitter", async () => {
+                  await assertSubmissionSucceeds(lastSubmitterIndex)
+                })
+              }
+            )
+
+            context(
+              "with the last submitter eligibility delay period ended",
+              async () => {
+                beforeEach(async () => {
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      constants.groupSize *
+                        params.dkgResultSubmissionEligibilityDelay
                   )
-                ).to.be.revertedWith("Submitter is not eligible")
-              })
-            }
-          )
+                })
 
-          context(
-            "with the last submitter eligibility delay period almost ended",
-            async () => {
-              beforeEach(async () => {
-                await mineBlocksTo(startBlock + dkgTimeout - 1)
-              })
-
-              it("should succeed for the first submitter", async () => {
-                const submitterIndex = firstEligibleSubmitterIndex
-
-                const {
-                  transaction: tx,
-                  dkgResult,
-                  dkgResultHash,
-                } = await signAndSubmitCorrectDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  genesisSeed,
-                  startBlock,
-                  noMisbehaved,
-                  submitterIndex
-                )
-
-                await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(
-                    dkgResultHash,
-                    genesisSeed,
-                    dkgResult.submitterMemberIndex,
-                    dkgResult.groupPubKey,
-                    dkgResult.misbehavedMembersIndices,
-                    dkgResult.signatures,
-                    dkgResult.signingMembersIndices,
-                    dkgResult.members
+                it("should revert for the first submitter", async () => {
+                  await assertSubmissionReverts(
+                    firstSubmitterIndex,
+                    "dkg timeout already passed"
                   )
-              })
+                })
 
-              it("should succeed for the last submitter", async () => {
-                const submitterIndex = shiftEligibleIndex(
-                  firstEligibleSubmitterIndex,
-                  constants.groupSize - 1
-                )
-
-                const {
-                  transaction: tx,
-                  dkgResult,
-                  dkgResultHash,
-                } = await signAndSubmitCorrectDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  genesisSeed,
-                  startBlock,
-                  noMisbehaved,
-                  submitterIndex
-                )
-
-                await expect(tx)
-                  .to.emit(randomBeacon, "DkgResultSubmitted")
-                  .withArgs(
-                    dkgResultHash,
-                    genesisSeed,
-                    dkgResult.submitterMemberIndex,
-                    dkgResult.groupPubKey,
-                    dkgResult.misbehavedMembersIndices,
-                    dkgResult.signatures,
-                    dkgResult.signingMembersIndices,
-                    dkgResult.members
+                it("should revert for the last submitter", async () => {
+                  await assertSubmissionReverts(
+                    lastSubmitterIndex,
+                    "dkg timeout already passed"
                   )
-              })
-            }
-          )
+                })
+              }
+            )
+          })
 
           context("with dkg result approved", async () => {
             beforeEach(async () => {
@@ -964,6 +829,8 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           context("with dkg result challenged", async () => {
+            let challengeBlockNumber: number
+
             beforeEach(async () => {
               await mineBlocksTo(startBlock + constants.offchainDkgTime)
 
@@ -977,37 +844,8 @@ describe("RandomBeacon - Group Creation", () => {
                 firstEligibleSubmitterIndex
               )
 
-              await randomBeacon.challengeDkgResult(dkgResult)
-            })
-
-            it("should allow first member to submit", async () => {
-              const submitterIndex = firstEligibleSubmitterIndex
-
-              const {
-                transaction: tx,
-                dkgResult,
-                dkgResultHash,
-              } = await signAndSubmitCorrectDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                genesisSeed,
-                startBlock,
-                noMisbehaved,
-                submitterIndex
-              )
-
-              await expect(tx)
-                .to.emit(randomBeacon, "DkgResultSubmitted")
-                .withArgs(
-                  dkgResultHash,
-                  genesisSeed,
-                  dkgResult.submitterMemberIndex,
-                  dkgResult.groupPubKey,
-                  dkgResult.misbehavedMembersIndices,
-                  dkgResult.signatures,
-                  dkgResult.signingMembersIndices,
-                  dkgResult.members
-                )
+              const tx = await randomBeacon.challengeDkgResult(dkgResult)
+              challengeBlockNumber = tx.blockNumber
             })
 
             it("should register a candidate group", async () => {
@@ -1045,6 +883,131 @@ describe("RandomBeacon - Group Creation", () => {
               await expect(tx)
                 .to.emit(randomBeacon, "CandidateGroupRegistered")
                 .withArgs(groupPublicKey)
+            })
+
+            describe("submission eligibility verification", async () => {
+              let submissionStartBlockNumber: number
+
+              beforeEach(() => {
+                submissionStartBlockNumber = challengeBlockNumber
+              })
+
+              context("at the beginning of submission period", async () => {
+                it("should succeed for the first submitter", async () => {
+                  await assertSubmissionSucceeds(firstSubmitterIndex)
+                })
+
+                it("should revert for the second submitter", async () => {
+                  await assertSubmissionReverts(secondSubmitterIndex)
+                })
+
+                it("should revert for the last submitter", async () => {
+                  await assertSubmissionReverts(lastSubmitterIndex)
+                })
+              })
+
+              context(
+                "with first submitter eligibility delay period almost ended",
+                async () => {
+                  beforeEach(async () => {
+                    await mineBlocksTo(
+                      submissionStartBlockNumber +
+                        params.dkgResultSubmissionEligibilityDelay -
+                        2
+                    )
+                  })
+
+                  it("should succeed for the first submitter", async () => {
+                    await assertSubmissionSucceeds(firstSubmitterIndex)
+                  })
+
+                  it("should revert for the second submitter", async () => {
+                    await assertSubmissionReverts(secondSubmitterIndex)
+                  })
+
+                  it("should revert for the last submitter", async () => {
+                    await assertSubmissionReverts(lastSubmitterIndex)
+                  })
+                }
+              )
+
+              context(
+                "with first submitter eligibility delay period ended",
+                async () => {
+                  beforeEach(async () => {
+                    await mineBlocksTo(
+                      submissionStartBlockNumber +
+                        params.dkgResultSubmissionEligibilityDelay -
+                        1
+                    )
+                  })
+
+                  it("should succeed for the first submitter", async () => {
+                    await assertSubmissionSucceeds(firstSubmitterIndex)
+                  })
+
+                  it("should succeed for the second submitter", async () => {
+                    await assertSubmissionSucceeds(secondSubmitterIndex)
+                  })
+
+                  it("should revert for the third submitter", async () => {
+                    await assertSubmissionReverts(thirdSubmitterIndex)
+                  })
+
+                  it("should revert for the last submitter", async () => {
+                    await assertSubmissionReverts(lastSubmitterIndex)
+                  })
+                }
+              )
+
+              context(
+                "with the last submitter eligibility delay period almost ended",
+                async () => {
+                  beforeEach(async () => {
+                    await mineBlocksTo(
+                      submissionStartBlockNumber +
+                        constants.groupSize *
+                          params.dkgResultSubmissionEligibilityDelay -
+                        1
+                    )
+                  })
+
+                  it("should succeed for the first submitter", async () => {
+                    await assertSubmissionSucceeds(firstSubmitterIndex)
+                  })
+
+                  it("should succeed for the last submitter", async () => {
+                    await assertSubmissionSucceeds(lastSubmitterIndex)
+                  })
+                }
+              )
+
+              context(
+                "with the last submitter eligibility delay period ended",
+                async () => {
+                  beforeEach(async () => {
+                    await mineBlocksTo(
+                      submissionStartBlockNumber +
+                        constants.groupSize *
+                          params.dkgResultSubmissionEligibilityDelay
+                    )
+                  })
+
+                  it("should revert for the first submitter", async () => {
+                    await assertSubmissionReverts(
+                      firstSubmitterIndex,
+                      "dkg timeout already passed"
+                    )
+                  })
+
+                  it("should revert for the last submitter", async () => {
+                    await assertSubmissionReverts(
+                      lastSubmitterIndex,
+                      "dkg timeout already passed"
+                    )
+                  })
+                }
+              )
             })
           })
 
@@ -1125,6 +1088,61 @@ describe("RandomBeacon - Group Creation", () => {
           })
         })
       })
+
+      // Submission Eligibility Test Helpers
+      const firstSubmitterIndex = firstEligibleSubmitterIndex
+      const secondSubmitterIndex = shiftEligibleIndex(firstSubmitterIndex, 1)
+      const thirdSubmitterIndex = shiftEligibleIndex(firstSubmitterIndex, 2)
+      const lastSubmitterIndex = shiftEligibleIndex(
+        firstSubmitterIndex,
+        constants.groupSize - 1
+      )
+
+      async function assertSubmissionSucceeds(
+        submitterIndex: number
+      ): Promise<void> {
+        const {
+          transaction: tx,
+          dkgResult,
+          dkgResultHash,
+        } = await signAndSubmitCorrectDkgResult(
+          randomBeacon,
+          groupPublicKey,
+          genesisSeed,
+          startBlock,
+          noMisbehaved,
+          submitterIndex
+        )
+
+        await expect(tx)
+          .to.emit(randomBeacon, "DkgResultSubmitted")
+          .withArgs(
+            dkgResultHash,
+            genesisSeed,
+            dkgResult.submitterMemberIndex,
+            dkgResult.groupPubKey,
+            dkgResult.misbehavedMembersIndices,
+            dkgResult.signatures,
+            dkgResult.signingMembersIndices,
+            dkgResult.members
+          )
+      }
+
+      async function assertSubmissionReverts(
+        submitterIndex: number,
+        message = "Submitter is not eligible"
+      ): Promise<void> {
+        await expect(
+          signAndSubmitCorrectDkgResult(
+            randomBeacon,
+            groupPublicKey,
+            genesisSeed,
+            startBlock,
+            noMisbehaved,
+            submitterIndex
+          )
+        ).to.be.revertedWith(message)
+      }
     })
   })
 
