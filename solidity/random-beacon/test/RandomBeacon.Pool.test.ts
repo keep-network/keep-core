@@ -75,34 +75,4 @@ describe("RandomBeacon - Pool", () => {
       })
     })
   })
-
-  describe("isOperatorEligible", () => {
-    context("when the operator is eligible to join the sortition pool", () => {
-      beforeEach(async () => {
-        await stakingStub.setStake(operator.address, constants.minimumStake)
-      })
-
-      it("should return true", async () => {
-        await expect(await randomBeacon.isOperatorEligible(operator.address)).to
-          .be.true
-      })
-    })
-
-    context(
-      "when the operator is not eligible to join the sortition pool",
-      () => {
-        beforeEach(async () => {
-          await stakingStub.setStake(
-            operator.address,
-            constants.minimumStake.sub(1)
-          )
-        })
-
-        it("should return false", async () => {
-          await expect(await randomBeacon.isOperatorEligible(operator.address))
-            .to.be.false
-        })
-      }
-    )
-  })
 })

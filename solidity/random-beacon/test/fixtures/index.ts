@@ -79,8 +79,6 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    stakingStub.address,
-    constants.minimumStake,
     constants.poolWeightDivisor
   )) as SortitionPool
 
