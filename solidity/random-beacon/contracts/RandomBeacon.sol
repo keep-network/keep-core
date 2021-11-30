@@ -811,7 +811,7 @@ contract RandomBeacon is Ownable {
         );
 
         require(
-            !isGroupTerminated(claim.groupId),
+            !groups.isGroupTerminated(claim.groupId),
             "Group must not be terminated"
         );
 
@@ -820,7 +820,10 @@ contract RandomBeacon is Ownable {
             sortitionPool
         );
 
-        banFromRewards(ineligibleOperators, sortitionPoolRewardsBanDuration);
+        sortitionPool.banRewards(
+            ineligibleOperators,
+            sortitionPoolRewardsBanDuration
+        );
 
         transferHeartbeatNotifierRewards(
             msg.sender,

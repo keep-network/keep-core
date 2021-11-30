@@ -51,10 +51,7 @@ library Heartbeat {
         // Validate signatures array is properly formed and number of
         // signatures and signers is correct.
         uint256 signaturesCount = claim.signatures.length / signatureByteSize;
-        require(
-            claim.signatures.length >= signatureByteSize,
-            "Too short signatures array"
-        );
+        require(claim.signatures.length != 0, "No signatures provided");
         require(
             claim.signatures.length % signatureByteSize == 0,
             "Malformed signatures array"
@@ -110,33 +107,28 @@ library Heartbeat {
     }
 
     // TODO: Documentation.
-    function validateMembersIndices(uint256[] indices, uint256 groupSize)
-        internal
-    {
+    function validateMembersIndices(
+        uint256[] calldata indices,
+        uint256 groupSize
+    ) internal view {
         require(
             indices.length > 0 && indices.length <= groupSize,
-            "Invalid indices count"
+            "Corrupted members indices"
+        );
+
+        // Check if first and last indices are in range <1, groupSize>.
+        // This check combined with the loop below makes sure every single
+        // index is in the correct range.
+        require(
+            indices[0] > 0 && indices[indices.length - 1] <= groupSize,
+            "Corrupted members indices"
         );
 
         for (uint256 i = 0; i < indices.length - 1; i++) {
-            uint256 checkedIndex = indices[i];
-
-            // Check whether given index is within <1, groupSize> range.
-            require(
-                checkedIndex > 0 && checkedIndex <= groupSize,
-                "Invalid index"
-            );
-
             // Check whether given index is smaller than the next one. This
             // way we are sure indexes are ordered in the ascending order
             // and there are no duplicates.
-            require(checkedIndex < indices[i + 1], "Corrupted indices");
+            require(indices[i] < indices[i + 1], "Corrupted members indices");
         }
-
-        // Check whether the last index is within <1, groupSize> range.
-        // It must be checked separately as the loop terminates one index
-        // before.
-        uint256 lastIndex = indices[indices.length - 1];
-        require(lastIndex > 0 && lastIndex <= groupSize, "Invalid index");
     }
 }
