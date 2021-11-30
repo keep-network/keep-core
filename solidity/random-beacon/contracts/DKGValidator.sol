@@ -108,12 +108,6 @@ contract DKGValidator {
                     return (false, "Corrupted misbehaved members indices");
                 }
             }
-            uint8 last = misbehavedMembersIndices[
-                misbehavedMembersIndices.length - 1
-            ];
-            if (last < 1 || last > groupSize) {
-                return (false, "Corrupted misbehaved members indices");
-            }
         }
 
         // Each signature needs to be 65 bytes long and signatures need to be
@@ -149,12 +143,6 @@ contract DKGValidator {
         }
         for (uint256 i = 1; i < signingMembersIndices.length; i++) {
             if (signingMembersIndices[i - 1] >= signingMembersIndices[i]) {
-                return (false, "Corrupted signing member indices");
-            }
-            uint256 last = signingMembersIndices[
-                signingMembersIndices.length - 1
-            ];
-            if (last < 1 || last > groupSize) {
                 return (false, "Corrupted signing member indices");
             }
         }
