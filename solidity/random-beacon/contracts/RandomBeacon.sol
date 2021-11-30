@@ -279,6 +279,13 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
+    event FailedHeartbeatNotified(
+        uint64 groupId,
+        uint256 nonce,
+        uint32[] ineligibleOperators,
+        address notifier
+    );
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -821,10 +828,19 @@ contract RandomBeacon is Ownable {
             "Group must be active and non-terminated"
         );
 
+        uint256 nonce = failedHeartbeatNonce[claim.groupId]++;
+
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
             claim,
             sortitionPool,
-            failedHeartbeatNonce[claim.groupId]++
+            nonce
+        );
+
+        emit FailedHeartbeatNotified(
+            claim.groupId,
+            nonce,
+            ineligibleOperators,
+            msg.sender
         );
 
         sortitionPool.banRewards(
