@@ -37,7 +37,8 @@ library Heartbeat {
     // TODO: Documentation. Remember to note group data must be validated outside.
     function verifyFailureClaim(
         FailureClaim calldata claim,
-        SortitionPool sortitionPool
+        SortitionPool sortitionPool,
+        uint256 nonce
     ) internal view returns (uint32[] memory failedMembers) {
         uint256 groupSize = claim.groupMembers.length;
         // At least half of the members plus one must vote for the claim.
@@ -70,7 +71,11 @@ library Heartbeat {
         // Each signing member needs to sign the hash of packed `groupPubKey`
         // and `failedMembersIndices` parameters.
         bytes32 signedMessageHash = keccak256(
-            abi.encodePacked(claim.groupPubKey, claim.failedMembersIndices)
+            abi.encodePacked(
+                nonce,
+                claim.groupPubKey,
+                claim.failedMembersIndices
+            )
         );
 
         // TODO: We probably don't need to fetch addresses of all members.

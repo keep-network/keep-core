@@ -128,6 +128,13 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public dkgMaliciousResultNotificationRewardMultiplier;
 
+    // Other parameters
+
+    /// @notice Stores current failed heartbeat nonce for given group.
+    ///         Each claim is made with an unique nonce which protects
+    ///         against claim replay.
+    mapping(uint64 => uint256) public failedHeartbeatNonce; // groupId -> nonce
+
     // External dependencies
 
     SortitionPool public sortitionPool;
@@ -822,7 +829,8 @@ contract RandomBeacon is Ownable {
 
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
             claim,
-            sortitionPool
+            sortitionPool,
+            failedHeartbeatNonce[claim.groupId]++
         );
 
         sortitionPool.banRewards(
