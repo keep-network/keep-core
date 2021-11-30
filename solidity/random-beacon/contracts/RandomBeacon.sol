@@ -105,6 +105,11 @@ contract RandomBeacon is Ownable {
     ///         `maliciousDkgResultSlashingAmount`.
     uint256 public maliciousDkgResultSlashingAmount;
 
+    /// @notice Slashing amount when an unauthorized signing has been proved,
+    ///         which means the private key has been leaked and all the group
+    ///         members should be punished.
+    uint256 public unauthorizedSigningSlashingAmount;
+
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for relay entry or DKG result submission.
     uint256 public sortitionPoolRewardsBanDuration;
@@ -198,7 +203,8 @@ contract RandomBeacon is Ownable {
 
     event SlashingParametersUpdated(
         uint256 relayEntrySubmissionFailureSlashingAmount,
-        uint256 maliciousDkgResultSlashingAmount
+        uint256 maliciousDkgResultSlashingAmount,
+        uint256 unauthorizedSigningSlashingAmount
     );
 
     event DkgStarted(uint256 indexed seed);
@@ -276,7 +282,7 @@ contract RandomBeacon is Ownable {
 
     event UnauthorizedSigningSlashed(
         uint64 indexed groupId,
-        uint256 minimumAuthorization,
+        uint256 unauthorizedSigningSlashingAmount,
         address[] groupMembers
     );
 
@@ -304,6 +310,7 @@ contract RandomBeacon is Ownable {
         sortitionPoolUnlockingReward = 0;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
+        unauthorizedSigningSlashingAmount = 100000 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
         unauthorizedSigningNotificationRewardMultiplier = 5;
@@ -505,17 +512,22 @@ contract RandomBeacon is Ownable {
     ///        submission failure amount
     /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
+    /// @param _unauthorizedSigningSlashingAmount New unauthorized signing
+    ///        slashing amount
     function updateSlashingParameters(
         uint256 _relayEntrySubmissionFailureSlashingAmount,
-        uint256 _maliciousDkgResultSlashingAmount
+        uint256 _maliciousDkgResultSlashingAmount,
+        uint256 _unauthorizedSigningSlashingAmount
     ) external onlyOwner {
         relay.setRelayEntrySubmissionFailureSlashingAmount(
             _relayEntrySubmissionFailureSlashingAmount
         );
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
+        unauthorizedSigningSlashingAmount = _unauthorizedSigningSlashingAmount;
         emit SlashingParametersUpdated(
             _relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount
+            maliciousDkgResultSlashingAmount,
+            unauthorizedSigningSlashingAmount
         );
     }
 
@@ -843,12 +855,12 @@ contract RandomBeacon is Ownable {
 
         emit UnauthorizedSigningSlashed(
             groupId,
-            authorization.minimumAuthorization,
+            unauthorizedSigningSlashingAmount,
             groupMembers
         );
 
         staking.seize(
-            authorization.minimumAuthorization,
+            unauthorizedSigningSlashingAmount,
             unauthorizedSigningNotificationRewardMultiplier,
             msg.sender,
             groupMembers

@@ -332,6 +332,7 @@ describe("RandomBeacon - Parameters", () => {
   describe("updateSlashingParameters", () => {
     const relayEntrySubmissionFailureSlashingAmount = 100
     const maliciousDkgResultSlashingAmount = 200
+    const unauthorizedSigningSlashingAmount = 150
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -340,7 +341,8 @@ describe("RandomBeacon - Parameters", () => {
             .connect(thirdParty)
             .updateSlashingParameters(
               relayEntrySubmissionFailureSlashingAmount,
-              maliciousDkgResultSlashingAmount
+              maliciousDkgResultSlashingAmount,
+              unauthorizedSigningSlashingAmount
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -353,7 +355,8 @@ describe("RandomBeacon - Parameters", () => {
           .connect(governance)
           .updateSlashingParameters(
             relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount
+            maliciousDkgResultSlashingAmount,
+            unauthorizedSigningSlashingAmount
           )
       })
 
@@ -369,12 +372,19 @@ describe("RandomBeacon - Parameters", () => {
         ).to.be.equal(maliciousDkgResultSlashingAmount)
       })
 
+      it("should update the unauthorized signing slashing amount", async () => {
+        expect(
+          await randomBeacon.unauthorizedSigningSlashingAmount()
+        ).to.be.equal(unauthorizedSigningSlashingAmount)
+      })
+
       it("should emit the SlashingParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "SlashingParametersUpdated")
           .withArgs(
             relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount
+            maliciousDkgResultSlashingAmount,
+            unauthorizedSigningSlashingAmount
           )
       })
     })
