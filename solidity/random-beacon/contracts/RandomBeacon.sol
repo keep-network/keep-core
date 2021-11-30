@@ -106,6 +106,11 @@ contract RandomBeacon is Ownable {
     ///         `maliciousDkgResultSlashingAmount`.
     uint256 public maliciousDkgResultSlashingAmount;
 
+    /// @notice Slashing amount when an unauthorized signing has been proved,
+    ///         which means the private key has been leaked and all the group
+    ///         members should be punished.
+    uint256 public unauthorizedSigningSlashingAmount;
+
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for relay entry or DKG result submission.
     uint256 public sortitionPoolRewardsBanDuration;
@@ -113,7 +118,7 @@ contract RandomBeacon is Ownable {
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
     ///         reporting about relay entry timeout. Notifiers are rewarded
-    ///         from a separate pool funded from slashed tokens. For example, if
+    ///         from a notifiers treasury pool. For example, if
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
@@ -121,8 +126,17 @@ contract RandomBeacon is Ownable {
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
+    ///         reporting about unauthorized signing. Notifiers are rewarded
+    ///         from a notifiers treasury pool. For example, if a
+    ///         notification reward is 1000 and the value of the multiplier is
+    ///         5, the notifier will receive: 5% of 1000 = 50 per each
+    ///         operator affected.
+    uint256 public unauthorizedSigningNotificationRewardMultiplier;
+
+    /// @notice Percentage of the staking contract malicious behavior
+    ///         notification reward which will be transferred to the notifier
     ///         reporting about a malicious DKG result. Notifiers are rewarded
-    ///         from a separate pool funded from slashed tokens. For example, if
+    ///         from a notifiers treasury pool. For example, if
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
@@ -191,12 +205,14 @@ contract RandomBeacon is Ownable {
         uint256 ineligibleOperatorNotifierReward,
         uint256 sortitionPoolRewardsBanDuration,
         uint256 relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 unauthorizedSigningNotificationRewardMultiplier,
         uint256 dkgMaliciousResultNotificationRewardMultiplier
     );
 
     event SlashingParametersUpdated(
         uint256 relayEntrySubmissionFailureSlashingAmount,
-        uint256 maliciousDkgResultSlashingAmount
+        uint256 maliciousDkgResultSlashingAmount,
+        uint256 unauthorizedSigningSlashingAmount
     );
 
     event DkgStarted(uint256 indexed seed);
@@ -277,6 +293,12 @@ contract RandomBeacon is Ownable {
         address[] groupMembers
     );
 
+    event UnauthorizedSigningSlashed(
+        uint64 indexed groupId,
+        uint256 unauthorizedSigningSlashingAmount,
+        address[] groupMembers
+    );
+
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     event FailedHeartbeatNotified(
@@ -308,8 +330,10 @@ contract RandomBeacon is Ownable {
         sortitionPoolUnlockingReward = 0;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
+        unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
+        unauthorizedSigningNotificationRewardMultiplier = 5;
         dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
@@ -434,6 +458,8 @@ contract RandomBeacon is Ownable {
     ///        ban duration in seconds.
     /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
     ///        relay entry timeout notification reward multiplier.
+    /// @param _unauthorizedSigningNotificationRewardMultiplier New value of the
+    ///        unauthorized signing notification reward multiplier.
     /// @param _dkgMaliciousResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
     function updateRewardParameters(
@@ -442,6 +468,7 @@ contract RandomBeacon is Ownable {
         uint256 _ineligibleOperatorNotifierReward,
         uint256 _sortitionPoolRewardsBanDuration,
         uint256 _relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 _unauthorizedSigningNotificationRewardMultiplier,
         uint256 _dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
         dkgResultSubmissionReward = _dkgResultSubmissionReward;
@@ -449,6 +476,7 @@ contract RandomBeacon is Ownable {
         ineligibleOperatorNotifierReward = _ineligibleOperatorNotifierReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
+        unauthorizedSigningNotificationRewardMultiplier = _unauthorizedSigningNotificationRewardMultiplier;
         dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             dkgResultSubmissionReward,
@@ -456,6 +484,7 @@ contract RandomBeacon is Ownable {
             ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
         );
     }
@@ -503,17 +532,22 @@ contract RandomBeacon is Ownable {
     ///        submission failure amount
     /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
+    /// @param _unauthorizedSigningSlashingAmount New unauthorized signing
+    ///        slashing amount
     function updateSlashingParameters(
         uint256 _relayEntrySubmissionFailureSlashingAmount,
-        uint256 _maliciousDkgResultSlashingAmount
+        uint256 _maliciousDkgResultSlashingAmount,
+        uint256 _unauthorizedSigningSlashingAmount
     ) external onlyOwner {
         relay.setRelayEntrySubmissionFailureSlashingAmount(
             _relayEntrySubmissionFailureSlashingAmount
         );
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
+        unauthorizedSigningSlashingAmount = _unauthorizedSigningSlashingAmount;
         emit SlashingParametersUpdated(
             _relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount
+            maliciousDkgResultSlashingAmount,
+            unauthorizedSigningSlashingAmount
         );
     }
 
@@ -793,7 +827,7 @@ contract RandomBeacon is Ownable {
             groupMembers
         );
 
-        // TODO: Once implemented, terminate group using `groupId`.
+        groups.terminateGroup(groupId);
         groups.expireOldGroups();
 
         if (groups.numberOfActiveGroups() > 0) {
@@ -810,6 +844,53 @@ contract RandomBeacon is Ownable {
                 dkg.notifySeedTimedOut();
             }
         }
+    }
+
+    /// @notice Reports unauthorized groups signing. Must provide a valid signature
+    ///         of the sender's address as a message. Successful signature
+    ///         verification means the private key has been leaked and all group
+    ///         members should be punished by slashing their tokens. Group has
+    ///         to be active or expired. Unauthorized signing cannot be reported
+    ///         for a terminated group. In case of reporting unauthorized
+    ///         signing for a terminated group, or when the signature is invalid,
+    ///         function reverts.
+    /// @param signedMsgSender Signature of the sender's address as a message.
+    /// @param groupId Group that is being reported for leaking a private key.
+    function reportUnauthorizedSigning(
+        bytes memory signedMsgSender,
+        uint64 groupId
+    ) external {
+        Groups.Group memory group = groups.getGroup(groupId);
+
+        require(!group.terminated, "Group cannot be terminated");
+
+        require(
+            BLS.verifyBytes(
+                group.groupPubKey,
+                abi.encodePacked(msg.sender),
+                signedMsgSender
+            ),
+            "Invalid signature"
+        );
+
+        groups.terminateGroup(groupId);
+
+        address[] memory groupMembers = sortitionPool.getIDOperators(
+            groups.getGroup(groupId).members
+        );
+
+        emit UnauthorizedSigningSlashed(
+            groupId,
+            unauthorizedSigningSlashingAmount,
+            groupMembers
+        );
+
+        staking.seize(
+            unauthorizedSigningSlashingAmount,
+            unauthorizedSigningNotificationRewardMultiplier,
+            msg.sender,
+            groupMembers
+        );
     }
 
     /// @notice Notifies about a failed group heartbeat. Using this function,

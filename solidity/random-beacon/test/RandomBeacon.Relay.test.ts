@@ -13,7 +13,13 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import { describe } from "mocha"
 import blsData from "./data/bls"
-import { constants, dkgState, params, randomBeaconDeployment } from "./fixtures"
+import {
+  constants,
+  dkgState,
+  params,
+  randomBeaconDeployment,
+  blsDeployment,
+} from "./fixtures"
 import { createGroup } from "./utils/groups"
 import { signHeartbeatFailureClaim } from "./utils/heartbeat"
 import type {
@@ -23,6 +29,7 @@ import type {
   RelayStub,
   SortitionPool,
   StakingStub,
+  BLS,
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
@@ -38,6 +45,8 @@ const fixture = async () => {
     (await getUnnamedAccounts()).slice(0, constants.groupSize)
   )
 
+  const bls = await blsDeployment()
+
   return {
     randomBeacon: deployment.randomBeacon as RandomBeacon,
     sortitionPool: deployment.sortitionPool as SortitionPool,
@@ -47,6 +56,7 @@ const fixture = async () => {
       await ethers.getContractFactory("RelayStub")
     ).deploy()) as RelayStub,
     operators,
+    bls: bls.bls as BLS,
   }
 }
 
@@ -72,6 +82,7 @@ describe("RandomBeacon - Relay", () => {
   let members: Operator[]
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
+  let bls: BLS
 
   let randomBeacon: RandomBeacon
   let sortitionPool: SortitionPool
@@ -95,6 +106,7 @@ describe("RandomBeacon - Relay", () => {
       staking,
       relayStub,
       operators,
+      bls,
     } = await waffle.loadFixture(fixture))
 
     members = operators // All operators will be members of the group used in tests.
@@ -564,6 +576,11 @@ describe("RandomBeacon - Relay", () => {
             // relayEntryHardTimeout`.
             await mineBlocks(64 * 10 + 5760)
 
+            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
+              "0x01",
+              membersIDs
+            )
+
             tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
@@ -578,7 +595,10 @@ describe("RandomBeacon - Relay", () => {
           })
 
           it("should terminate the group", async () => {
-            // TODO: Implementation once `Groups` library is ready.
+            const isGroupTeminated = await (
+              randomBeacon as RandomBeaconStub
+            ).isGroupTerminated(0)
+            expect(isGroupTeminated).to.be.equal(true)
           })
 
           it("should emit RelayEntryTimedOut event", async () => {
@@ -589,11 +609,11 @@ describe("RandomBeacon - Relay", () => {
 
           it("should retry current relay request", async () => {
             // We expect the same request ID because this is a retry.
-            // Group ID is still `0` because there is only one group
-            // after termination was performed.
+            // Group ID is `1` because we take an active group from `groupsRegistry`
+            // array. Group with an index `0` was terminated.
             await expect(tx)
               .to.emit(randomBeacon, "RelayEntryRequested")
-              .withArgs(1, 0, blsData.previousEntry)
+              .withArgs(1, 1, blsData.previousEntry)
 
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.true
           })
@@ -601,7 +621,7 @@ describe("RandomBeacon - Relay", () => {
       )
 
       context(
-        "when group is terminated that was supposed to submit a relay request and another group expires",
+        "when a group that was supposed to submit a relay request is terminated and another group expires",
         () => {
           let tx: ContractTransaction
 
@@ -622,8 +642,6 @@ describe("RandomBeacon - Relay", () => {
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`. This times out the relay entry
             await mineBlocks(64 * 10 + 5760)
-
-            await (randomBeacon as RandomBeaconStub).roughlyTerminateGroup(0)
 
             const registry = await randomBeacon.getGroupsRegistry()
             const secondGroupLifetime = await (
@@ -663,7 +681,10 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          // TODO: Implementation once `Groups` library is ready.
+          const isGroupTeminated = await (
+            randomBeacon as RandomBeaconStub
+          ).isGroupTerminated(0)
+          expect(isGroupTeminated).to.be.equal(true)
         })
 
         it("should emit RelayEntryTimedOut event", async () => {
@@ -673,9 +694,8 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should clean up current relay request data", async () => {
-          // TODO: Uncomment those assertions once termination is implemented.
-          // await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
-          // expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
         })
       })
 
@@ -714,6 +734,80 @@ describe("RandomBeacon - Relay", () => {
         await expect(randomBeacon.reportRelayEntryTimeout()).to.be.revertedWith(
           "Relay request did not time out"
         )
+      })
+    })
+  })
+
+  describe("reportUnauthorizedSigning", () => {
+    beforeEach(async () => {
+      await createGroup(randomBeacon as RandomBeaconStub, members)
+
+      await approveTestToken()
+      await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
+    })
+
+    context("when a group is active", () => {
+      context("when provided signature is valid", () => {
+        let tx
+        beforeEach(async () => {
+          const notifierSignature = await bls.sign(
+            notifier.address,
+            blsData.secretKey
+          )
+          tx = await randomBeacon
+            .connect(notifier)
+            .reportUnauthorizedSigning(notifierSignature, 0)
+        })
+
+        it("should terminate the group", async () => {
+          const isGroupTeminated = await (
+            randomBeacon as RandomBeaconStub
+          ).isGroupTerminated(0)
+          expect(isGroupTeminated).to.be.equal(true)
+        })
+
+        it("should call staking contract to seize the min stake", async () => {
+          await expect(tx)
+            .to.emit(staking, "Seized")
+            .withArgs(to1e18(100000), 5, notifier.address, membersAddresses)
+        })
+
+        it("should emit unauthorized signing slashing event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "UnauthorizedSigningSlashed")
+            .withArgs(0, to1e18(100000), membersAddresses)
+        })
+      })
+    })
+
+    context("when group is terminated", () => {
+      it("should revert", async () => {
+        // `groupSize * relayEntrySubmissionEligibilityDelay +
+        // relayEntryHardTimeout`.
+        await mineBlocks(64 * 10 + 5760)
+        await (randomBeacon as RandomBeaconStub).roughlyTerminateGroup(0)
+
+        const notifierSignature = await bls.sign(
+          notifier.address,
+          blsData.secretKey
+        )
+        await expect(
+          randomBeacon
+            .connect(notifier)
+            .reportUnauthorizedSigning(notifierSignature, 0)
+        ).to.be.revertedWith("Group cannot be terminated")
+      })
+    })
+
+    context("when provided signature is not valid", () => {
+      it("should revert", async () => {
+        // the valid key is 123 instead of 42
+        const notifierSignature = await bls.sign(notifier.address, 42)
+        await expect(
+          randomBeacon
+            .connect(notifier)
+            .reportUnauthorizedSigning(notifierSignature, 0)
+        ).to.be.revertedWith("Invalid signature")
       })
     })
   })
