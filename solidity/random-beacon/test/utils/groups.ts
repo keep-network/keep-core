@@ -1,10 +1,10 @@
 import { helpers, ethers } from "hardhat"
-import { BigNumber } from "ethers"
+import type { BigNumber } from "ethers"
 // eslint-disable-next-line import/no-cycle
 import { noMisbehaved, signAndSubmitArbitraryDkgResult } from "./dkg"
 import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
-import { Operator } from "./operators"
+import type { Operator } from "./operators"
 import type { RandomBeacon, SortitionPool } from "../../typechain"
 
 const { mineBlocks } = helpers.time
