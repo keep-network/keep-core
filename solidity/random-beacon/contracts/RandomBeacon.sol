@@ -214,13 +214,14 @@ contract RandomBeacon is Ownable {
 
     event DkgResultChallenged(
         bytes32 indexed resultHash,
-        address indexed challenger
+        address indexed challenger,
+        string reason
     );
 
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
-        address[] groupMembers
+        address maliciousSubmitter
     );
 
     event DkgStateLocked();
@@ -278,7 +279,8 @@ contract RandomBeacon is Ownable {
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
-        IRandomBeaconStaking _staking
+        IRandomBeaconStaking _staking,
+        DKGValidator _dkgValidator
     ) {
         sortitionPool = _sortitionPool;
         tToken = _tToken;
@@ -294,11 +296,11 @@ contract RandomBeacon is Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
         relayEntryTimeoutNotificationRewardMultiplier = 5;
-        dkgMaliciousResultNotificationRewardMultiplier = 5;
+        dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
-        dkg.initSortitionPool(_sortitionPool);
+        dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
         dkg.setResultSubmissionEligibilityDelay(10);
 
@@ -608,26 +610,29 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
-        (bytes32 maliciousResultHash, uint32[] memory maliciousMembers) = dkg
+        (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
 
         uint256 slashingAmount = maliciousDkgResultSlashingAmount;
-        address[] memory maliciousMembersAddresses = sortitionPool
-            .getIDOperators(maliciousMembers);
+        address maliciousSubmitterAddresses = sortitionPool.getIDOperator(
+            maliciousSubmitter
+        );
 
         groups.popCandidateGroup();
 
         emit DkgMaliciousResultSlashed(
             maliciousResultHash,
             slashingAmount,
-            maliciousMembersAddresses
+            maliciousSubmitterAddresses
         );
 
+        address[] memory operatorWrapper = new address[](1);
+        operatorWrapper[0] = maliciousSubmitterAddresses;
         staking.seize(
             slashingAmount,
             dkgMaliciousResultNotificationRewardMultiplier,
             msg.sender,
-            maliciousMembersAddresses
+            operatorWrapper
         );
     }
 
