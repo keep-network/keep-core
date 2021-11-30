@@ -12,11 +12,11 @@
 //
 //                           Trust math, not hardware.
 
+pragma solidity ^0.8.6;
+
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./libraries/BytesLib.sol";
 import "./libraries/DKG.sol";
-
-pragma solidity ^0.8.6;
 
 /// @title DKG result validator
 /// @notice DKGValidator allows performing a full validation of DKG result,

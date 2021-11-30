@@ -1958,7 +1958,7 @@ describe("RandomBeacon - Group Creation", () => {
     it("should enforce submission start offset", async () => {
       let dkgResult: DkgResult
 
-      const [genesisTx, genesisSeed] = await genesis(randomBeacon)
+      const [genesisTx] = await genesis(randomBeacon)
       const startBlock = genesisTx.blockNumber
 
       await mineBlocks(constants.offchainDkgTime)
