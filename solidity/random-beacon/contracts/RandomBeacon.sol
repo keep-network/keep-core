@@ -803,7 +803,16 @@ contract RandomBeacon is Ownable {
     ) external {
         Groups.Group memory group = groups.getGroup(groupId);
 
-        relay.validateUnauthorizedSigning(signedMsgSender, group);
+        require(!group.terminated, "Group cannot be terminated");
+
+        require(
+            BLS.verifyBytes(
+                group.groupPubKey,
+                abi.encodePacked(msg.sender),
+                signedMsgSender
+            ),
+            "Invalid signature"
+        );
 
         groups.terminateGroup(groupId);
 
