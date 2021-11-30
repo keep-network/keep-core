@@ -11,6 +11,7 @@ import { expect } from "chai"
 import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
+import { describe } from "mocha"
 import blsData from "./data/bls"
 import { constants, dkgState, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
@@ -64,9 +65,7 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let member3: SignerWithAddress
-  let member15: SignerWithAddress
   let member16: SignerWithAddress
-  let member17: SignerWithAddress
   let member18: SignerWithAddress
   let members: Operator[]
   let membersIDs: OperatorID[]
@@ -103,14 +102,8 @@ describe("RandomBeacon - Relay", () => {
     member3 = await ethers.getSigner(
       members[invalidEntryFirstEligibleMemberIndex - 1].address
     )
-    member15 = await ethers.getSigner(
-      members[firstEligibleMemberIndex - 1 - 1].address
-    )
     member16 = await ethers.getSigner(
       members[firstEligibleMemberIndex - 1].address
-    )
-    member17 = await ethers.getSigner(
-      members[firstEligibleMemberIndex + 1 - 1].address
     )
     member18 = await ethers.getSigner(
       members[firstEligibleMemberIndex + 2 - 1].address
@@ -265,250 +258,139 @@ describe("RandomBeacon - Relay", () => {
 
       context("when relay entry is not timed out", () => {
         context("when submitter index is valid", () => {
-          context("when submitter is eligible", () => {
-            context("when entry is valid", () => {
-              context(
-                "when first eligible member submits before the soft timeout",
-                () => {
-                  let tx: ContractTransaction
+          context("when entry is valid", () => {
+            context("when result is submitted before the soft timeout", () => {
+              let tx: ContractTransaction
 
-                  beforeEach(async () => {
-                    tx = await randomBeacon
-                      .connect(member16)
-                      .submitRelayEntry(
-                        firstEligibleMemberIndex,
-                        blsData.groupSignature
-                      )
-                  })
+              beforeEach(async () => {
+                tx = await randomBeacon
+                  .connect(member16)
+                  .submitRelayEntry(
+                    firstEligibleMemberIndex,
+                    blsData.groupSignature
+                  )
+              })
 
-                  it("should not remove any members from the sortition pool", async () => {
-                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
-                      constants.groupSize
-                    )
-                  })
+              it("should not slash any members", async () => {
+                await expect(tx).to.not.emit(staking, "Slashed")
+              })
 
-                  it("should not slash any members", async () => {
-                    await expect(tx).to.not.emit(staking, "Slashed")
-                  })
+              it("should emit RelayEntrySubmitted event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "RelayEntrySubmitted")
+                  .withArgs(1, blsData.groupSignature)
+              })
 
-                  it("should emit RelayEntrySubmitted event", async () => {
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntrySubmitted")
-                      .withArgs(1, blsData.groupSignature)
-                  })
+              it("should terminate the relay request", async () => {
+                expect(await randomBeacon.isRelayRequestInProgress()).to.be
+                  .false
+              })
+            })
 
-                  it("should terminate the relay request", async () => {
-                    expect(await randomBeacon.isRelayRequestInProgress()).to.be
-                      .false
-                  })
-                }
-              )
+            context("when result is submitted after the soft timeout", () => {
+              let tx: ContractTransaction
 
-              context(
-                "when other than first eligible member submits before the soft timeout",
-                () => {
-                  let tx: ContractTransaction
+              beforeEach(async () => {
+                // Let's assume we want to submit the relay entry after 75%
+                // of the soft timeout period elapses. If so we need to
+                // mine the following number of blocks:
+                // `groupSize * relayEntrySubmissionEligibilityDelay +
+                // (0.75 * relayEntryHardTimeout)`. However, we need to
+                // subtract one block because the relay entry submission
+                // transaction will move the blockchain ahead by one block
+                // due to the Hardhat auto-mine feature.
+                await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
 
-                  beforeEach(async () => {
-                    // We wait 20 blocks to make two more members eligible.
-                    // The member `18` submits the result.
-                    await mineBlocks(20)
+                tx = await randomBeacon
+                  .connect(member16)
+                  .submitRelayEntry(
+                    firstEligibleMemberIndex,
+                    blsData.groupSignature
+                  )
+              })
 
-                    tx = await randomBeacon
-                      .connect(member18)
-                      .submitRelayEntry(
-                        firstEligibleMemberIndex + 2,
-                        blsData.groupSignature
-                      )
-                  })
+              it("should slash a correct portion of the slashing amount for all members ", async () => {
+                // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
+                // 75% of the soft timeout period elapsed so we expect
+                // `750e18` to be slashed.
+                await expect(tx)
+                  .to.emit(staking, "Slashed")
+                  .withArgs(to1e18(750), membersAddresses)
 
-                  it("should ban sortition pool rewards for members who did not submit", async () => {
-                    // TODO: Assert members 16 and 17 are banned for given
-                    //       punishment duration. This can be done once
-                    //       `banRewards` is correctly implemented on the
-                    //       sortition pool side.
-                  })
+                await expect(tx)
+                  .to.emit(randomBeacon, "RelayEntryDelaySlashed")
+                  .withArgs(1, to1e18(750), membersAddresses)
+              })
 
-                  it("should not slash any members", async () => {
-                    await expect(tx).to.not.emit(staking, "Slashed")
-                  })
+              it("should emit RelayEntrySubmitted event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "RelayEntrySubmitted")
+                  .withArgs(1, blsData.groupSignature)
+              })
 
-                  it("should emit RelayEntrySubmitted event", async () => {
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntrySubmitted")
-                      .withArgs(1, blsData.groupSignature)
-                  })
+              it("should terminate the relay request", async () => {
+                expect(await randomBeacon.isRelayRequestInProgress()).to.be
+                  .false
+              })
+            })
 
-                  it("should terminate the relay request", async () => {
-                    expect(await randomBeacon.isRelayRequestInProgress()).to.be
-                      .false
-                  })
-                }
-              )
-
-              context(
-                "when first eligible member submits after the soft timeout",
-                () => {
-                  let tx: ContractTransaction
-
-                  beforeEach(async () => {
-                    // Let's assume we want to submit the relay entry after 75%
-                    // of the soft timeout period elapses. If so we need to
-                    // mine the following number of blocks:
-                    // `groupSize * relayEntrySubmissionEligibilityDelay +
-                    // (0.75 * relayEntryHardTimeout)`. However, we need to
-                    // subtract one block because the relay entry submission
-                    // transaction will move the blockchain ahead by one block
-                    // due to the Hardhat auto-mine feature.
-                    await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
-
-                    tx = await randomBeacon
-                      .connect(member16)
-                      .submitRelayEntry(
-                        firstEligibleMemberIndex,
-                        blsData.groupSignature
-                      )
-                  })
-
-                  it("should not remove any members from the sortition pool", async () => {
-                    expect(await sortitionPool.operatorsInPool()).to.be.equal(
-                      constants.groupSize
-                    )
-                  })
-
-                  it("should slash a correct portion of the slashing amount for all members ", async () => {
-                    // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
-                    // 75% of the soft timeout period elapsed so we expect
-                    // `750e18` to be slashed.
-                    await expect(tx)
-                      .to.emit(staking, "Slashed")
-                      .withArgs(to1e18(750), membersAddresses)
-
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
-                      .withArgs(1, to1e18(750), membersAddresses)
-                  })
-
-                  it("should emit RelayEntrySubmitted event", async () => {
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntrySubmitted")
-                      .withArgs(1, blsData.groupSignature)
-                  })
-
-                  it("should terminate the relay request", async () => {
-                    expect(await randomBeacon.isRelayRequestInProgress()).to.be
-                      .false
-                  })
-                }
-              )
-
-              context(
-                "when other than first eligible member submits after the soft timeout",
-                () => {
-                  let tx: ContractTransaction
-
-                  beforeEach(async () => {
-                    // Let's assume we want to submit the relay entry after 75%
-                    // of the soft timeout period elapses. If so we need to
-                    // mine the following number of blocks:
-                    // `groupSize * relayEntrySubmissionEligibilityDelay +
-                    // (0.75 * relayEntryHardTimeout)`. However, we need to
-                    // subtract one block because the relay entry submission
-                    // transaction will move the blockchain ahead by one block
-                    // due to the Hardhat auto-mine feature.
-                    await mineBlocks(64 * 10 + 0.75 * 5760 - 1)
-
-                    // The last eligible member `15` submits the result.
-                    // This is the worst case gas-wise as it requires to
-                    // ban 63 members from the sortition pool rewards.
-                    tx = await randomBeacon
-                      .connect(member15)
-                      .submitRelayEntry(
-                        firstEligibleMemberIndex - 1,
-                        blsData.groupSignature
-                      )
-                  })
-
-                  it("should ban sortition pool rewards for members who did not submit", async () => {
-                    // TODO: Assert all group members but the submitter (member 15)
-                    //       are banned for given punishment duration. This can
-                    //       be done once `banRewards` is correctly implemented
-                    //       on the sortition pool side.
-                  })
-
-                  it("should slash a correct portion of the slashing amount for all members ", async () => {
-                    // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
-                    // 75% of the soft timeout period elapsed so we expect
-                    // `750e18` to be slashed.
-                    await expect(tx)
-                      .to.emit(staking, "Slashed")
-                      .withArgs(to1e18(750), membersAddresses)
-
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntryDelaySlashed")
-                      .withArgs(1, to1e18(750), membersAddresses)
-                  })
-
-                  it("should emit RelayEntrySubmitted event", async () => {
-                    await expect(tx)
-                      .to.emit(randomBeacon, "RelayEntrySubmitted")
-                      .withArgs(1, blsData.groupSignature)
-                  })
-
-                  it("should terminate the relay request", async () => {
-                    expect(await randomBeacon.isRelayRequestInProgress()).to.be
-                      .false
-                  })
-                }
-              )
-
-              context("when DKG is awaiting a seed", () => {
+            context(
+              "when result is submitted by a member who is not yet eligible",
+              () => {
                 let tx: ContractTransaction
 
                 beforeEach(async () => {
-                  // Simulate DKG is awaiting a seed.
-                  await (randomBeacon as RandomBeaconStub).publicDkgLockState()
-
+                  // Member 18 is not yet eligible as the first eligible member
+                  // is member 16.
                   tx = await randomBeacon
-                    .connect(member16)
+                    .connect(member18)
                     .submitRelayEntry(
-                      firstEligibleMemberIndex,
+                      firstEligibleMemberIndex + 2,
                       blsData.groupSignature
                     )
                 })
 
-                it("should emit DkgStarted event", async () => {
-                  await expect(tx)
-                    .to.emit(randomBeacon, "DkgStarted")
-                    .withArgs(blsData.groupSignatureUint256)
+                // We don't repeat all checks made in the above scenarios and
+                // just assert the member was able to submit the result.
+                it("should succeed", async () => {
+                  await expect(tx).to.emit(randomBeacon, "RelayEntrySubmitted")
                 })
-              })
-            })
+              }
+            )
 
-            context("when entry is not valid", () => {
-              it("should revert", async () => {
-                await expect(
-                  randomBeacon
-                    .connect(member3)
-                    .submitRelayEntry(
-                      invalidEntryFirstEligibleMemberIndex,
-                      blsData.nextGroupSignature
-                    )
-                ).to.be.revertedWith("Invalid entry")
+            context("when DKG is awaiting a seed", () => {
+              let tx: ContractTransaction
+
+              beforeEach(async () => {
+                // Simulate DKG is awaiting a seed.
+                await (randomBeacon as RandomBeaconStub).publicDkgLockState()
+
+                tx = await randomBeacon
+                  .connect(member16)
+                  .submitRelayEntry(
+                    firstEligibleMemberIndex,
+                    blsData.groupSignature
+                  )
+              })
+
+              it("should emit DkgStarted event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgStarted")
+                  .withArgs(blsData.groupSignatureUint256)
               })
             })
           })
 
-          context("when submitter is not eligible", () => {
+          context("when entry is not valid", () => {
             it("should revert", async () => {
               await expect(
                 randomBeacon
-                  .connect(member17)
+                  .connect(member3)
                   .submitRelayEntry(
-                    firstEligibleMemberIndex + 1,
-                    blsData.groupSignature
+                    invalidEntryFirstEligibleMemberIndex,
+                    blsData.nextGroupSignature
                   )
-              ).to.be.revertedWith("Submitter is not eligible")
+              ).to.be.revertedWith("Invalid entry")
             })
           })
         })
@@ -711,8 +593,6 @@ describe("RandomBeacon - Relay", () => {
       context(
         "when no active groups exist after timeout is reported and DKG is awaiting seed",
         () => {
-          let tx: ContractTransaction
-
           beforeEach(async () => {
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`.
@@ -721,7 +601,7 @@ describe("RandomBeacon - Relay", () => {
             // Simulate DKG is awaiting a seed.
             await (randomBeacon as RandomBeaconStub).publicDkgLockState()
 
-            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+            await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
           it("should notify DKG seed timed out", async () => {
