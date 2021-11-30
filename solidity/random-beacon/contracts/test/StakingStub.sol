@@ -38,9 +38,15 @@ contract StakingStub is IRandomBeaconStaking {
         }
     }
 
-    function rolesOf(
-        address operator
-    ) external view returns (address owner, address beneficiary, address authorizer) {
+    function rolesOf(address operator)
+        external
+        view
+        returns (
+            address owner,
+            address beneficiary,
+            address authorizer
+        )
+    {
         return (operator, operator, operator);
     }
 

@@ -619,9 +619,10 @@ contract RandomBeacon is Ownable {
         transferDkgRewards(msg.sender, dkgResultSubmissionReward);
 
         if (misbehavedMembers.length > 0) {
-            sortitionPool.banRewards(
+            sortitionPool.setRewardIneligibility(
                 misbehavedMembers,
-                sortitionPoolRewardsBanDuration
+                // solhint-disable-next-line not-rely-on-time
+                block.timestamp + sortitionPoolRewardsBanDuration
             );
         }
 
