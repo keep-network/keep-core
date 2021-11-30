@@ -40,7 +40,7 @@ contract StakingStub is IRandomBeaconStaking {
     function eligibleStake(
         address operator,
         address // operatorContract
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         return stakedTokens[operator];
     }
 
