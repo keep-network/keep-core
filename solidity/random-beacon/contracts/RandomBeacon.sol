@@ -127,16 +127,33 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public dkgMaliciousResultNotificationRewardMultiplier;
 
+    // External dependencies
+
     SortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
 
+    // Token bookkeeping
+
+    /// @notice Rewards pool for DKG actions. This pool is funded from relay
+    ///         request fees and external donates. Funds are used to cover
+    ///         rewards for actors approving DKG result or notifying about
+    ///         DKG timeout.
+    uint256 public dkgRewardsPool;
+    /// @notice Rewards pool for heartbeat notifiers. This pool is funded from
+    ///         external donates. Funds are used to cover rewards for actors
+    ///         notifying about failed heartbeats.
+    uint256 public heartbeatNotifierRewardsPool;
+
     // Libraries data storages
+
     Authorization.Data internal authorization;
     DKG.Data internal dkg;
     Groups.Data internal groups;
     Relay.Data internal relay;
     Callback.Data internal callback;
+
+    // Events
 
     event AuthorizationParametersUpdated(
         uint96 minimumAuthorization,
@@ -173,8 +190,6 @@ contract RandomBeacon is Ownable {
         uint256 relayEntrySubmissionFailureSlashingAmount,
         uint256 maliciousDkgResultSlashingAmount
     );
-
-    // Events copied from library to workaround issue https://github.com/ethereum/solidity/issues/9765
 
     event DkgStarted(uint256 indexed seed);
 
@@ -250,8 +265,6 @@ contract RandomBeacon is Ownable {
     );
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
-
-    event BanRewardsFailed(uint32[] ids);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -550,8 +563,9 @@ contract RandomBeacon is Ownable {
     ///         reward to the notifier.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-        // Pay the sortition pool unlocking reward.
-        tToken.safeTransfer(msg.sender, sortitionPoolUnlockingReward);
+
+        transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
+
         dkg.complete();
     }
 
@@ -568,15 +582,13 @@ contract RandomBeacon is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        uint256 maintenancePoolBalance = tToken.balanceOf(address(this));
-        uint256 rewardToPay = Math.min(
-            maintenancePoolBalance,
-            dkgResultSubmissionReward
-        );
-        tToken.safeTransfer(msg.sender, rewardToPay);
+        transferDkgRewards(msg.sender, dkgResultSubmissionReward);
 
         if (misbehavedMembers.length > 0) {
-            banFromRewards(misbehavedMembers, sortitionPoolRewardsBanDuration);
+            sortitionPool.banRewards(
+                misbehavedMembers,
+                sortitionPoolRewardsBanDuration
+            );
         }
 
         groups.activateCandidateGroup();
@@ -665,11 +677,7 @@ contract RandomBeacon is Ownable {
 
         relay.requestEntry(groupId);
 
-        tToken.safeTransferFrom(
-            msg.sender,
-            address(this),
-            relay.relayRequestFee
-        );
+        fundDkgRewardsPool(msg.sender, relay.relayRequestFee);
 
         callback.setCallbackContract(callbackContract);
 
@@ -697,12 +705,12 @@ contract RandomBeacon is Ownable {
             relay.currentRequest.groupId
         );
 
-        (uint32[] memory inactiveMembers, uint256 slashingAmount) = relay
-            .submitEntry(sortitionPool, submitterIndex, entry, group);
-
-        if (inactiveMembers.length > 0) {
-            banFromRewards(inactiveMembers, sortitionPoolRewardsBanDuration);
-        }
+        uint256 slashingAmount = relay.submitEntry(
+            sortitionPool,
+            submitterIndex,
+            entry,
+            group
+        );
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
@@ -778,17 +786,46 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Ban given operators from sortition pool rewards.
-    /// @param ids IDs of banned operators.
-    /// @param banDuration Duration of the ban period in seconds.
-    function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
-        try sortitionPool.banRewards(ids, banDuration) {} catch {
-            // Should never happen but we want to ensure a non-critical path
-            // failure from an external contract does not stop group members
-            // from submitting a valid relay entry.
-            // slither-disable-next-line reentrancy-events
-            emit BanRewardsFailed(ids);
-        }
+    /// @notice Funds the DKG rewards pool.
+    /// @param from Address of the funder. The funder must give a sufficient
+    ///        allowance for this contract to make a successful call.
+    /// @param value Token value transferred by the funder.
+    function fundDkgRewardsPool(address from, uint256 value) public {
+        dkgRewardsPool += value;
+        tToken.safeTransferFrom(from, address(this), value);
+    }
+
+    /// @notice Funds the heartbeat notifier rewards pool.
+    /// @param from Address of the funder. The funder must give a sufficient
+    ///        allowance for this contract to make a successful call.
+    /// @param value Token value transferred by the funder.
+    function fundHeartbeatNotifierRewardsPool(address from, uint256 value)
+        external
+    {
+        heartbeatNotifierRewardsPool += value;
+        tToken.safeTransferFrom(from, address(this), value);
+    }
+
+    /// @notice Makes a transfer using DKG rewards pool.
+    /// @param to Address of the recipient.
+    /// @param value Token value transferred to the recipient.
+    function transferDkgRewards(address to, uint256 value) internal {
+        uint256 actualValue = Math.min(dkgRewardsPool, value);
+        dkgRewardsPool -= actualValue;
+        tToken.safeTransfer(to, actualValue);
+    }
+
+    /// @notice Makes a transfer using heartbeat notifier rewards pool.
+    /// @param to Address of the recipient.
+    /// @param value Token value transferred to the recipient.
+    // TODO: Remove Slither ignore condition once this function is used.
+    // slither-disable-next-line dead-code
+    function transferHeartbeatNotifierRewards(address to, uint256 value)
+        internal
+    {
+        uint256 actualValue = Math.min(heartbeatNotifierRewardsPool, value);
+        heartbeatNotifierRewardsPool -= actualValue;
+        tToken.safeTransfer(to, actualValue);
     }
 
     /// @notice Locks the state of group creation.

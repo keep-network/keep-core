@@ -100,7 +100,17 @@ describe("RandomBeacon - Group Creation", () => {
     await helpers.time.increaseTime(12 * 60 * 60)
     await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
     await randomBeaconGovernance.finalizeSortitionPoolUnlockingRewardUpdate()
-    await testToken.mint(randomBeacon.address, to1e18(100))
+
+    // Fund DKG rewards pool to make testing of rewards possible.
+    const dkgRewardsPoolDonate = to1e18(100)
+    await testToken.mint(await thirdParty.getAddress(), dkgRewardsPoolDonate)
+    await testToken
+      .connect(thirdParty)
+      .approve(randomBeacon.address, dkgRewardsPoolDonate)
+    await randomBeacon.fundDkgRewardsPool(
+      await thirdParty.getAddress(),
+      dkgRewardsPoolDonate
+    )
   })
 
   describe("genesis", async () => {
@@ -1215,9 +1225,12 @@ describe("RandomBeacon - Group Creation", () => {
 
             context("when called by a DKG result submitter", async () => {
               let tx: ContractTransaction
+              let initialDkgRewardsPoolBalance: BigNumber
               let initialSubmitterBalance: BigNumber
 
               beforeEach(async () => {
+                initialDkgRewardsPoolBalance =
+                  await randomBeacon.dkgRewardsPool()
                 initialSubmitterBalance = await testToken.balanceOf(
                   await submitter.getAddress()
                 )
@@ -1246,7 +1259,13 @@ describe("RandomBeacon - Group Creation", () => {
                 )
               })
 
-              it("should reward the submitter with tokens from maintenance pool", async () => {
+              it("should reward the submitter with tokens from DKG rewards pool", async () => {
+                const currentDkgRewardsPoolBalance =
+                  await randomBeacon.dkgRewardsPool()
+                expect(
+                  initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
+                ).to.be.equal(dkgResultSubmissionReward)
+
                 const currentSubmitterBalance: BigNumber =
                   await testToken.balanceOf(await submitter.getAddress())
                 expect(
@@ -1284,10 +1303,13 @@ describe("RandomBeacon - Group Creation", () => {
 
               context("when the third party is eligible", async () => {
                 let tx: ContractTransaction
+                let initialDkgRewardsPoolBalance: BigNumber
                 let initApproverBalance: BigNumber
 
                 beforeEach(async () => {
                   await mineBlocks(params.relayEntrySubmissionEligibilityDelay)
+                  initialDkgRewardsPoolBalance =
+                    await randomBeacon.dkgRewardsPool()
                   initApproverBalance = await testToken.balanceOf(
                     await thirdParty.getAddress()
                   )
@@ -1303,6 +1325,14 @@ describe("RandomBeacon - Group Creation", () => {
                 })
 
                 it("should pay the reward to the third party", async () => {
+                  const currentDkgRewardsPoolBalance =
+                    await randomBeacon.dkgRewardsPool()
+                  expect(
+                    initialDkgRewardsPoolBalance.sub(
+                      currentDkgRewardsPoolBalance
+                    )
+                  ).to.be.equal(dkgResultSubmissionReward)
+
                   const currentApproverBalance = await testToken.balanceOf(
                     await thirdParty.getAddress()
                   )
@@ -1389,12 +1419,15 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("with challenge period passed", async () => {
             let tx: ContractTransaction
+            let initialDkgRewardsPoolBalance: BigNumber
             let initialSubmitterBalance: BigNumber
 
             beforeEach(async () => {
               await mineBlocksTo(
                 resultSubmissionBlock + params.dkgResultChallengePeriodLength
               )
+
+              initialDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
 
               initialSubmitterBalance = await testToken.balanceOf(
                 await anotherSubmitter.getAddress()
@@ -1421,7 +1454,13 @@ describe("RandomBeacon - Group Creation", () => {
               )
             })
 
-            it("should reward the submitter with tokens from maintenance pool", async () => {
+            it("should reward the submitter with tokens from DKG rewards pool", async () => {
+              const currentDkgRewardsPoolBalance =
+                await randomBeacon.dkgRewardsPool()
+              expect(
+                initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
+              ).to.be.equal(dkgResultSubmissionReward)
+
               const currentSubmitterBalance: BigNumber =
                 await testToken.balanceOf(await anotherSubmitter.getAddress())
               expect(
@@ -1514,22 +1553,20 @@ describe("RandomBeacon - Group Creation", () => {
     })
 
     context(
-      "when the balance of maintenance pool is smaller than the DKG submission reward",
+      "when the balance of DKG rewards pool is smaller than the DKG submission reward",
       async () => {
-        let maintenancePoolBalance: BigNumber
+        let dkgRewardsPoolBalance: BigNumber
         let tx: ContractTransaction
         let initApproverBalance: BigNumber
         let submitter: SignerWithAddress
 
         beforeEach(async () => {
-          maintenancePoolBalance = await testToken.balanceOf(
-            randomBeacon.address
-          )
+          dkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
 
           // Set the DKG result submission reward to twice the amount of test
-          // tokens in the maintenance pool
+          // tokens in the DKG rewards pool
           await randomBeaconGovernance.beginDkgResultSubmissionRewardUpdate(
-            maintenancePoolBalance.mul(2)
+            dkgRewardsPoolBalance.mul(2)
           )
           await helpers.time.increaseTime(12 * 60 * 60)
           await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
@@ -1562,12 +1599,14 @@ describe("RandomBeacon - Group Creation", () => {
             .withArgs(0, groupPublicKey)
         })
 
-        it("should pay the approver the whole maintenance pool balance", async () => {
+        it("should pay the approver the whole DKG rewards pool balance", async () => {
+          expect(await randomBeacon.dkgRewardsPool()).to.be.equal(0)
+
           const currentApproverBalance = await testToken.balanceOf(
             await submitter.getAddress()
           )
           expect(currentApproverBalance.sub(initApproverBalance)).to.be.equal(
-            maintenancePoolBalance
+            dkgRewardsPoolBalance
           )
         })
       }
@@ -1637,9 +1676,12 @@ describe("RandomBeacon - Group Creation", () => {
 
         context("called by a third party", async () => {
           let tx: ContractTransaction
+          let initialDkgRewardsPoolBalance: BigNumber
           let initialNotifierBalance: BigNumber
 
           beforeEach(async () => {
+            initialDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
+
             initialNotifierBalance = await testToken.balanceOf(
               await thirdParty.getAddress()
             )
@@ -1654,7 +1696,13 @@ describe("RandomBeacon - Group Creation", () => {
             await assertDkgResultCleanData(randomBeacon)
           })
 
-          it("should reward the notifier with tokens from maintenance pool", async () => {
+          it("should reward the notifier with tokens from DKG rewards pool", async () => {
+            const currentDkgRewardsPoolBalance =
+              await randomBeacon.dkgRewardsPool()
+            expect(
+              initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
+            ).to.be.equal(sortitionPoolUnlockingReward)
+
             const currentNotifierBalance: BigNumber = await testToken.balanceOf(
               await thirdParty.getAddress()
             )
@@ -2028,6 +2076,44 @@ describe("RandomBeacon - Group Creation", () => {
       ).to.be.revertedWith("dkg timeout already passed")
 
       await randomBeacon.notifyDkgTimeout()
+    })
+  })
+
+  describe("fundDkgRewardsPool", () => {
+    const amount = to1e18(1000)
+
+    let previousDkgRewardsPoolBalance: BigNumber
+    let previousRandomBeaconBalance: BigNumber
+
+    beforeEach(async () => {
+      previousDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
+      previousRandomBeaconBalance = await testToken.balanceOf(
+        randomBeacon.address
+      )
+
+      await testToken.mint(await thirdParty.getAddress(), amount)
+      await testToken.connect(thirdParty).approve(randomBeacon.address, amount)
+
+      await randomBeacon.fundDkgRewardsPool(
+        await thirdParty.getAddress(),
+        amount
+      )
+    })
+
+    it("should increase the DKG rewards pool balance", async () => {
+      const currentDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
+      expect(
+        currentDkgRewardsPoolBalance.sub(previousDkgRewardsPoolBalance)
+      ).to.be.equal(amount)
+    })
+
+    it("should transfer tokens to the random beacon contract", async () => {
+      const currentRandomBeaconBalance = await testToken.balanceOf(
+        randomBeacon.address
+      )
+      expect(
+        currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
+      ).to.be.equal(amount)
     })
   })
 })
