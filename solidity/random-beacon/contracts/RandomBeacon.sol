@@ -245,10 +245,6 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event RewardsBanned(uint32[] ids, uint256 duration);
-
-    event BanRewardsFailed(uint32[] ids);
-
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -574,7 +570,10 @@ contract RandomBeacon is Ownable {
         tToken.safeTransfer(msg.sender, rewardToPay);
 
         if (misbehavedMembers.length > 0) {
-            banFromRewards(misbehavedMembers, sortitionPoolRewardsBanDuration);
+            sortitionPool.banRewards(
+                misbehavedMembers,
+                sortitionPoolRewardsBanDuration
+            );
         }
 
         groups.activateCandidateGroup();
@@ -770,21 +769,6 @@ contract RandomBeacon is Ownable {
             if (dkg.currentState() == DKG.State.AWAITING_SEED) {
                 dkg.notifySeedTimedOut();
             }
-        }
-    }
-
-    /// @notice Ban given operators from sortition pool rewards.
-    /// @param ids IDs of banned operators.
-    /// @param banDuration Duration of the ban period in seconds.
-    function banFromRewards(uint32[] memory ids, uint256 banDuration) internal {
-        try sortitionPool.banRewards(ids, banDuration) {
-            emit RewardsBanned(ids, banDuration);
-        } catch {
-            // Should never happen but we want to ensure a non-critical path
-            // failure from an external contract does not stop the protocol
-            // from being successfully executed.
-            // slither-disable-next-line reentrancy-events
-            emit BanRewardsFailed(ids);
         }
     }
 
