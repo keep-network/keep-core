@@ -22,19 +22,43 @@ library Heartbeat {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
-    // TODO: Documentation.
     struct FailureClaim {
+        // ID of the group raising the claim.
         uint64 groupId;
+        // Public key of the group.
         bytes groupPubKey;
+        // Identifiers of all group members.
         uint32[] groupMembers;
+        // Indices of members accused of failed heartbeat. Indices must be in
+        // range <1, groupMembers.length>, unique, and sorted in ascending order.
         uint256[] failedMembersIndices;
+        // Concatenation of signatures from members supporting the claim.
+        // The message to be signed by each member is failed heartbeat nonce
+        // for given group, keccak256 hash of the group public key, and failed
+        // members indices. The calculated hash should be prefixed with prefixed
+        // with `\x19Ethereum signed message:\n` before signing, so the message
+        // to sign is:
+        // `\x19Ethereum signed message:\n${keccak256(
+        //    nonce, groupPubKey, failedMembersIndices
+        // )}`
         bytes signatures;
+        // Indices of members corresponding to each signature. Indices must be
+        // in range <1, groupMembers.length>, unique, and sorted in ascending
+        // order.
         uint256[] signingMembersIndices;
     }
 
     uint256 public constant signatureByteSize = 65;
 
-    // TODO: Documentation. Remember to note group data must be validated outside.
+    /// @notice Verifies the failure claim according to rules mentioned in
+    ///         `FailureClaim` struct documentation. Reverts if verification
+    ///         fails.
+    /// @param claim Failure claim. Group data passed in the claim must be
+    ///        validated by the calling code. This function assumes they are
+    ///        all correct.
+    /// @param sortitionPool Sortition pool used by the application performing
+    ///        claim verification.
+    /// @return failedMembers Identifiers of members who failed the heartbeat.
     function verifyFailureClaim(
         FailureClaim calldata claim,
         SortitionPool sortitionPool,
@@ -78,8 +102,6 @@ library Heartbeat {
             )
         );
 
-        // TODO: We probably don't need to fetch addresses of all members.
-        //       Check gas consumption in case we fetch only signing members.
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             claim.groupMembers
         );
@@ -111,7 +133,12 @@ library Heartbeat {
         return failedMembers;
     }
 
-    // TODO: Documentation.
+    /// @notice Validates members indices array. Array is considered valid
+    ///         if its size and each single index are in <1, groupSize> range,
+    ///         indexes are unique, and sorted in an ascending order.
+    ///         Reverts if validation fails..
+    /// @param indices Array to validate.
+    /// @param groupSize Group size used as reference.
     function validateMembersIndices(
         uint256[] calldata indices,
         uint256 groupSize

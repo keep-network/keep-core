@@ -812,7 +812,20 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    // TODO: Documentation.
+    /// @notice Notifies about a failed group heartbeat. Using this function,
+    ///         a majority of the group can decide about punishing specific
+    ///         group members who failed to provide a heartbeat. If provided
+    ///         claim is proved to be valid and signed by sufficient number
+    ///         of group members, operators of members deemed as failed are
+    ///         banned for sortition pool rewards for duration specified by
+    ///         `sortitionPoolRewardsBanDuration` parameter. The submitter
+    ///         of the claim is rewarded from `heartbeatNotifierRewardsPool`.
+    ///         Exact reward amount is multiplication of operators marked as
+    ///         ineligible and `ineligibleOperatorNotifierReward` factor.
+    ///         This function can be called only for active and non-terminated
+    ///         groups.
+    /// @param claim Failure claim. Group data passed in the claim must
+    ///        match the stored group data.
     function notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim)
         external
     {
