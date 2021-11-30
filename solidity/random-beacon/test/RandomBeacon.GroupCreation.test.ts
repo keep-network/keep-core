@@ -4,7 +4,6 @@ import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { describe } from "mocha"
 import blsData from "./data/bls"
 import { constants, dkgState, params, testDeployment } from "./fixtures"
 import type {

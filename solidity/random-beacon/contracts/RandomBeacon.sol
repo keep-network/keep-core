@@ -266,10 +266,6 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event RewardsBanned(uint32[] ids, uint256 duration);
-
-    event BanRewardsFailed(uint32[] ids);
-
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -591,7 +587,10 @@ contract RandomBeacon is Ownable {
         transferDkgRewards(msg.sender, dkgResultSubmissionReward);
 
         if (misbehavedMembers.length > 0) {
-            banFromRewards(misbehavedMembers, sortitionPoolRewardsBanDuration);
+            sortitionPool.banRewards(
+                misbehavedMembers,
+                sortitionPoolRewardsBanDuration
+            );
         }
 
         groups.activateCandidateGroup();
