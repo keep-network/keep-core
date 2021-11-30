@@ -36,6 +36,10 @@ contract DKGValidator {
     ///      entry.
     uint256 public constant activeThreshold = 58; // 90% of groupSize
 
+    /// @dev Size in bytes of a single signature produced by operator supporting
+    ///      DKG result.
+    uint256 public constant signatureByteSize = 65;
+
     SortitionPool public sortitionPool;
 
     constructor(SortitionPool _sortitionPool) {
@@ -85,7 +89,7 @@ contract DKGValidator {
         }
 
         // The number of misbehaved members can not exceed the threshold.
-        // Misbehaved member indices needs to be unique, between [1,64],
+        // Misbehaved member indices needs to be unique, between [1, groupSize],
         // and sorted in ascending order.
         uint8[] calldata misbehavedMembersIndices = result
             .misbehavedMembersIndices;
@@ -96,7 +100,7 @@ contract DKGValidator {
             if (
                 misbehavedMembersIndices[0] < 1 ||
                 misbehavedMembersIndices[misbehavedMembersIndices.length - 1] >
-                64
+                groupSize
             ) {
                 return (false, "Corrupted misbehaved members indices");
             }
@@ -110,13 +114,13 @@ contract DKGValidator {
             }
         }
 
-        // Each signature needs to be 65 bytes long and signatures need to be
-        // provided.
-        uint256 signaturesCount = result.signatures.length / 65;
+        // Each signature needs to have a correct length and signatures need to
+        // be provided.
+        uint256 signaturesCount = result.signatures.length / signatureByteSize;
         if (result.signatures.length == 0) {
             return (false, "No signatures provided");
         }
-        if (result.signatures.length % 65 != 0) {
+        if (result.signatures.length % signatureByteSize != 0) {
             return (false, "Malformed signatures array");
         }
 
@@ -133,11 +137,11 @@ contract DKGValidator {
             return (false, "Too many signatures");
         }
 
-        // Signing member indices needs to be unique, between [1,64], and sorted
-        // in ascending order.
+        // Signing member indices needs to be unique, between [1,groupSize],
+        // and sorted in ascending order.
         if (
             signingMembersIndices[0] < 1 ||
-            signingMembersIndices[signingMembersIndices.length - 1] > 64
+            signingMembersIndices[signingMembersIndices.length - 1] > groupSize
         ) {
             return (false, "Corrupted signing member indices");
         }
@@ -199,11 +203,14 @@ contract DKGValidator {
 
         bytes memory current; // Current signature to be checked.
 
-        uint256 signaturesCount = result.signatures.length / 65;
+        uint256 signaturesCount = result.signatures.length / signatureByteSize;
         for (uint256 i = 0; i < signaturesCount; i++) {
             uint256 memberIndex = result.signingMembersIndices[i];
 
-            current = result.signatures.slice(65 * i, 65);
+            current = result.signatures.slice(
+                signatureByteSize * i,
+                signatureByteSize
+            );
             address recoveredAddress = hash.toEthSignedMessageHash().recover(
                 current
             );
