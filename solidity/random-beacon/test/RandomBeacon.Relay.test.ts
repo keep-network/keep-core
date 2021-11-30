@@ -8,7 +8,7 @@ import {
   getNamedAccounts,
 } from "hardhat"
 import { expect } from "chai"
-import { BigNumber, ContractReceipt, ContractTransaction } from "ethers"
+import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import { describe } from "mocha"
@@ -60,7 +60,6 @@ describe("RandomBeacon - Relay", () => {
   // In the invalid entry scenario `(blsData.nextGroupSignature % 64) + 1`
   // gives 3 so that  member needs to submit the wrong relay entry.
   const invalidEntryFirstEligibleMemberIndex = 3
-  const ineligibleOperatorNotifierReward = to1e18(200)
 
   let deployer: SignerWithAddress
   let requester: SignerWithAddress
@@ -114,14 +113,6 @@ describe("RandomBeacon - Relay", () => {
     // groupLifetime: 64 * 10 * 5760 + 100
     // if the group lifetime is less than 6400 it will be expired on selection.
     await randomBeacon.updateGroupCreationParameters(100, 6500)
-    await randomBeacon.updateRewardParameters(
-      0,
-      0,
-      ineligibleOperatorNotifierReward,
-      1209600,
-      5,
-      5
-    )
   })
 
   describe("requestRelayEntry", () => {
@@ -273,8 +264,6 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("submitRelayEntry", () => {
-    let requestStartBlock: number
-
     beforeEach(async () => {
       await createGroup(randomBeacon as RandomBeaconStub, members)
     })
@@ -282,11 +271,7 @@ describe("RandomBeacon - Relay", () => {
     context("when relay request is in progress", () => {
       beforeEach(async () => {
         await approveTestToken()
-        const tx = await randomBeacon
-          .connect(requester)
-          .requestRelayEntry(ZERO_ADDRESS)
-        const receipt = await tx.wait()
-        requestStartBlock = receipt.blockNumber
+        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
       context("when relay entry is not timed out", () => {
@@ -294,7 +279,6 @@ describe("RandomBeacon - Relay", () => {
           context("when entry is valid", () => {
             context("when result is submitted before the soft timeout", () => {
               let tx: ContractTransaction
-              let receipt: ContractReceipt
 
               beforeEach(async () => {
                 tx = await randomBeacon
@@ -303,8 +287,6 @@ describe("RandomBeacon - Relay", () => {
                     firstEligibleMemberIndex,
                     blsData.groupSignature
                   )
-
-                receipt = await tx.wait()
               })
 
               it("should not slash any members", async () => {
@@ -325,7 +307,6 @@ describe("RandomBeacon - Relay", () => {
 
             context("when result is submitted after the soft timeout", () => {
               let tx: ContractTransaction
-              let receipt: ContractReceipt
 
               beforeEach(async () => {
                 // Let's assume we want to submit the relay entry after 75%
@@ -344,8 +325,6 @@ describe("RandomBeacon - Relay", () => {
                     firstEligibleMemberIndex,
                     blsData.groupSignature
                   )
-
-                receipt = await tx.wait()
               })
 
               it("should slash a correct portion of the slashing amount for all members ", async () => {
@@ -632,8 +611,6 @@ describe("RandomBeacon - Relay", () => {
       context(
         "when no active groups exist after timeout is reported and DKG is awaiting seed",
         () => {
-          let tx: ContractTransaction
-
           beforeEach(async () => {
             // `groupSize * relayEntrySubmissionEligibilityDelay +
             // relayEntryHardTimeout`.
@@ -642,7 +619,7 @@ describe("RandomBeacon - Relay", () => {
             // Simulate DKG is awaiting a seed.
             await (randomBeacon as RandomBeaconStub).publicDkgLockState()
 
-            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+            await randomBeacon.connect(notifier).reportRelayEntryTimeout()
           })
 
           it("should notify DKG seed timed out", async () => {
