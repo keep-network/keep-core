@@ -546,6 +546,15 @@ contract RandomBeacon is Ownable {
         );
     }
 
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        sortitionPool.withdrawIneligible(recipient);
+    }
+
     /// @notice Registers the caller in the sortition pool.
     function registerOperator() external {
         address operator = msg.sender;
