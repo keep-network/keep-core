@@ -45,6 +45,12 @@ library Heartbeat {
         uint256[] signingMembersIndices;
     }
 
+    /// @notice The minimum number of group members needed to interact according
+    ///         to the protocol to produce a valid failure claim.
+    uint256 public constant groupThreshold = 33;
+
+    /// @notice Size in bytes of a single signature produced by member
+    ///         supporting the failure claim.
     uint256 public constant signatureByteSize = 65;
 
     /// @notice Verifies the failure claim according to rules mentioned in
@@ -63,8 +69,6 @@ library Heartbeat {
         uint256 nonce
     ) external view returns (uint32[] memory failedMembers) {
         uint256 groupSize = group.members.length;
-        // At least half of the members plus one must vote for the claim.
-        uint256 groupThreshold = (groupSize / 2) + 1;
 
         // Validate failed members indices. Maximum indices count is equal to
         // the group size and is not limited deliberately to leave a theoretical
