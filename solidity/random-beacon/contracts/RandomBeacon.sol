@@ -301,12 +301,7 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event HeartbeatFailed(
-        uint64 groupId,
-        uint256 nonce,
-        uint32[] ineligibleOperators,
-        address notifier
-    );
+    event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -913,7 +908,7 @@ contract RandomBeacon is Ownable {
             nonce
         );
 
-        emit HeartbeatFailed(groupId, nonce, ineligibleOperators, msg.sender);
+        emit HeartbeatFailed(groupId, nonce, msg.sender);
 
         sortitionPool.setRewardIneligibility(
             ineligibleOperators,

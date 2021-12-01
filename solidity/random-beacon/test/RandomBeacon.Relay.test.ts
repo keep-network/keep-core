@@ -838,12 +838,7 @@ describe("RandomBeacon - Relay", () => {
               it("should emit HeartbeatFailed event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "HeartbeatFailed")
-                  .withArgs(
-                    groupId,
-                    nonce.toNumber(),
-                    membersIDs.slice(0, 31),
-                    notifier.address
-                  )
+                  .withArgs(groupId, nonce.toNumber(), notifier.address)
               })
 
               it("should ban sortition pool rewards for ineligible operators", async () => {
