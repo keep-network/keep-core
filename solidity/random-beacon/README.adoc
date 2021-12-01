@@ -62,7 +62,7 @@ sortition pool and mark the DKG result as accepted calling
 `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)` to receive a
 reward. In case the submitter does not call the approve function within a
 specific number of blocks (governable value), anyone can do that and receive the
-submitter's reward as described in Fees and Rewards section.
+submitter's reward as described in <<fees-and-rewards,Fees and Rewards>> section.
 
 There is a timeout before which DKG result should be submitted. The timeout
 equals the group size multiplied by the number of blocks for a member to become
@@ -71,8 +71,9 @@ member becomes eligible.
 
 In case the DKG result was not submitted before a timeout, anyone can notify DKG
 timed out calling `RandomBeacon.notifyDkgTimeout()` and receive a reward, as
-described in Fees and Rewards section. DKG timeout includes the situation when
-no new relay entry was produced and sortition could not be performed.
+described in <<fees-and-rewards,Fees and Rewards>> section. DKG timeout includes
+the situation when no new relay entry was produced and sortition could not be
+performed.
 
 The sortition pool weights operators by their authorized stake amount and allows
 selecting the same operator multiple times. Off-chain DKG protocol executes in
@@ -89,7 +90,8 @@ handled in the relay request transaction.
 Anyone can request for a new relay entry (random number) calling
 `RandomBeacon.requestRelayEntry(IRandomBeaconConsumer callbackContract)`
 function and providing an optional callback parameter. The requester needs to
-approve enough tokens for a fee, as described in Fees and Rewards section.
+approve enough tokens for a fee, as described in
+<<fees-and-rewards,Fees and Rewards>> section.
 
 In `requestRelayEntry` transaction, groups that reached their maximum lifetime
 are getting expired and one of the remaining active groups is tasked with
@@ -99,9 +101,9 @@ tasked with producing a new relay entry. If so, they should start off-chain
 protocol to sign the previous relay entry producing a new relay entry this way.
 
 Off-chain clients are expected to follow the order when submitting relay entry
-to minimize and distribute costs evenly, as described in Fees and Rewards
-section but no ordering is enforced on-chain. New relay entry should be
-submitted using 
+to minimize and distribute costs evenly, as described in
+<<fees-and-rewards,Fees and Rewards>> section but no ordering is enforced
+on-chain. New relay entry should be submitted using 
 `RandomBeaocn.submitRelayEntry(uint256 submitterIndex, bytes calldata entry)`
 function.
 
@@ -172,6 +174,7 @@ notifier's reward. The function unlocks the sortition pool and clears up DKG
 data but no slashing for DKG timeout is executed and no one is losing any
 rewards.
 
+[[fees-and-rewards]]
 === Fees and Rewards
 
 Relay requester should provide a fee in T. The value of the fee is a governable
@@ -216,12 +219,13 @@ so on.
 
 If some group members are notoriously ignoring their duty, the group can vote on
 failed heartbeat notification for these operators - more on that in the
-Heartbeats section.
+<<heartbeats,Heartbeats>> section.
 
 T rewards will be distributed continuously to all operators in the beacon
 sortition pool, excluding operators who were marked as ineligible for rewards
 due to failing the heartbeat. 
 
+[[heartbeats]]
 === Heartbeats
 
 Off-chain clients are free to execute any heartbeat protocol they want to ensure
