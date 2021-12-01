@@ -113,17 +113,11 @@ library Relay {
         emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
     }
 
-    /// @notice Creates a new relay entry. Hash of packed `groupPubKey` and
-    ///         `groupMembers` parameters must match the `groupChecksum` parameter.
+    /// @notice Creates a new relay entry.
     /// @param sortitionPool SortitionPool owned by random beacon
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    /// @param groupPubKey Public key of the group chosen to submit the
-    ///        relay entry.
-    /// @param groupMembers Identifiers of members of the group chosen to
-    ///        submit the relay entry.
-    /// @param groupChecksum Checksum of the group chosen to submit the relay
-    ///        entry, fetched from group data.
+    /// @param group Group data.
     /// @return slashingAmount Amount by which group members should be slashed
     ///         in case the relay entry was submitted after the soft timeout.
     ///         The value is zero if entry was submitted on time.
@@ -132,31 +126,25 @@ library Relay {
         SortitionPool sortitionPool,
         uint256 submitterIndex,
         bytes calldata entry,
-        bytes calldata groupPubKey,
-        uint32[] calldata groupMembers,
-        bytes32 groupChecksum
+        Groups.Group storage group
     ) internal returns (uint256 slashingAmount) {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
-        require(
-            keccak256(abi.encodePacked(groupPubKey, groupMembers)) ==
-                groupChecksum,
-            "Passed group data are wrong"
-        );
+        uint256 groupSize = group.members.length;
 
         require(
-            submitterIndex > 0 && submitterIndex <= groupMembers.length,
+            submitterIndex > 0 && submitterIndex <= groupSize,
             "Invalid submitter index"
         );
         require(
-            sortitionPool.getIDOperator(groupMembers[submitterIndex - 1]) ==
+            sortitionPool.getIDOperator(group.members[submitterIndex - 1]) ==
                 msg.sender,
             "Unexpected submitter index"
         );
 
         require(
-            BLS.verify(groupPubKey, self.previousEntry, entry),
+            BLS.verify(group.groupPubKey, self.previousEntry, entry),
             "Invalid entry"
         );
 

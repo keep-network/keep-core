@@ -618,14 +618,6 @@ describe("RandomBeacon - Group Creation", () => {
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
-              expect(storedGroup.checksum).to.be.equal(
-                keccak256(
-                  solidityPack(
-                    ["bytes", "uint32[]"],
-                    [storedGroup.groupPubKey, storedGroup.members]
-                  )
-                )
-              )
             })
           })
 
@@ -650,14 +642,6 @@ describe("RandomBeacon - Group Creation", () => {
             expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
-            expect(storedGroup.checksum).to.be.equal(
-              keccak256(
-                solidityPack(
-                  ["bytes", "uint32[]"],
-                  [storedGroup.groupPubKey, storedGroup.members]
-                )
-              )
-            )
           })
 
           it("should emit CandidateGroupRegistered event", async () => {
@@ -879,14 +863,6 @@ describe("RandomBeacon - Group Creation", () => {
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
-              expect(storedGroup.checksum).to.be.equal(
-                keccak256(
-                  solidityPack(
-                    ["bytes", "uint32[]"],
-                    [storedGroup.groupPubKey, storedGroup.members]
-                  )
-                )
-              )
             })
 
             it("should emit CandidateGroupRegistered event", async () => {

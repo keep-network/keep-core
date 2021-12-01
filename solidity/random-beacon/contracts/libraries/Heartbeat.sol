@@ -15,6 +15,7 @@
 pragma solidity ^0.8.6;
 
 import "./BytesLib.sol";
+import "./Groups.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 
@@ -25,10 +26,6 @@ library Heartbeat {
     struct FailureClaim {
         // ID of the group raising the claim.
         uint64 groupId;
-        // Public key of the group.
-        bytes groupPubKey;
-        // Identifiers of all group members.
-        uint32[] groupMembers;
         // Indices of members accused of failed heartbeat. Indices must be in
         // range <1, groupMembers.length>, unique, and sorted in ascending order.
         uint256[] failedMembersIndices;
@@ -53,18 +50,19 @@ library Heartbeat {
     /// @notice Verifies the failure claim according to rules mentioned in
     ///         `FailureClaim` struct documentation. Reverts if verification
     ///         fails.
-    /// @param claim Failure claim. Group data passed in the claim must be
-    ///        validated by the calling code. This function assumes they are
-    ///        all correct.
     /// @param sortitionPool Sortition pool used by the application performing
     ///        claim verification.
+    /// @param claim Failure claim.
+    /// @param group Group raising the claim.
+    /// @param nonce Current nonce for group used in the claim.
     /// @return failedMembers Identifiers of members who failed the heartbeat.
     function verifyFailureClaim(
-        FailureClaim calldata claim,
         SortitionPool sortitionPool,
+        FailureClaim calldata claim,
+        Groups.Group storage group,
         uint256 nonce
     ) external view returns (uint32[] memory failedMembers) {
-        uint256 groupSize = claim.groupMembers.length;
+        uint256 groupSize = group.members.length;
         // At least half of the members plus one must vote for the claim.
         uint256 groupThreshold = (groupSize / 2) + 1;
 
@@ -97,13 +95,13 @@ library Heartbeat {
         bytes32 signedMessageHash = keccak256(
             abi.encodePacked(
                 nonce,
-                claim.groupPubKey,
+                group.groupPubKey,
                 claim.failedMembersIndices
             )
         );
 
-        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
-            claim.groupMembers
+        address[] memory groupMembers = sortitionPool.getIDOperators(
+            group.members
         );
 
         // Verify each signature.
@@ -119,7 +117,7 @@ library Heartbeat {
                 .recover(checkedSignature);
 
             require(
-                groupMembersAddresses[memberIndex - 1] == recoveredAddress,
+                groupMembers[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
         }
@@ -127,7 +125,7 @@ library Heartbeat {
         failedMembers = new uint32[](claim.failedMembersIndices.length);
         for (uint256 i = 0; i < claim.failedMembersIndices.length; i++) {
             uint256 memberIndex = claim.failedMembersIndices[i];
-            failedMembers[i] = claim.groupMembers[memberIndex - 1];
+            failedMembers[i] = group.members[memberIndex - 1];
         }
 
         return failedMembers;

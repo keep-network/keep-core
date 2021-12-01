@@ -748,42 +748,36 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Creates a new relay entry. Parameters `groupPubKey` and
-    ///         `groupMembers` must match to the fields of the stored group
-    ///         chosen to submit the relay entry.
+    /// @notice Creates a new relay entry.
     /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    /// @param groupPubKey Public key of the group chosen to submit the
-    ///        relay entry.
-    /// @param groupMembers Identifiers of members of the group chosen to
-    ///        submit the relay entry.
-    function submitRelayEntry(
-        uint256 submitterIndex,
-        bytes calldata entry,
-        bytes calldata groupPubKey,
-        uint32[] calldata groupMembers
-    ) external {
+    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
+        external
+    {
         uint256 currentRequestId = relay.currentRequest.id;
+
+        Groups.Group storage group = groups.getGroup(
+            relay.currentRequest.groupId
+        );
 
         uint256 slashingAmount = relay.submitEntry(
             sortitionPool,
             submitterIndex,
             entry,
-            groupPubKey,
-            groupMembers,
-            groups.getGroupChecksum(relay.currentRequest.groupId)
+            group
         );
 
         if (slashingAmount > 0) {
-            address[] memory groupMembersAddresses = sortitionPool
-                .getIDOperators(groupMembers);
+            address[] memory groupMembers = sortitionPool.getIDOperators(
+                group.members
+            );
 
-            try staking.slash(slashingAmount, groupMembersAddresses) {
+            try staking.slash(slashingAmount, groupMembers) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembersAddresses
+                    groupMembers
                 );
             } catch {
                 // Should never happen but we want to ensure a non-critical path
@@ -792,7 +786,7 @@ contract RandomBeacon is Ownable {
                 emit RelayEntryDelaySlashingFailed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembersAddresses
+                    groupMembers
                 );
             }
         }
@@ -906,33 +900,29 @@ contract RandomBeacon is Ownable {
     ///         ineligible and `ineligibleOperatorNotifierReward` factor.
     ///         This function can be called only for active and non-terminated
     ///         groups.
-    /// @param claim Failure claim. Group data passed in the claim must
-    ///        match the stored group data.
+    /// @param claim Failure claim.
     function notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim)
         external
     {
-        require(
-            keccak256(
-                abi.encodePacked(claim.groupPubKey, claim.groupMembers)
-            ) == groups.getGroupChecksum(claim.groupId),
-            "Passed group data are wrong"
-        );
+        uint64 groupId = claim.groupId;
 
         require(
-            groups.isGroupActive(claim.groupId),
+            groups.isGroupActive(groupId),
             "Group must be active and non-terminated"
         );
 
-        uint256 nonce = failedHeartbeatNonce[claim.groupId]++;
+        Groups.Group storage group = groups.getGroup(groupId);
+        uint256 nonce = failedHeartbeatNonce[groupId]++;
 
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
-            claim,
             sortitionPool,
+            claim,
+            group,
             nonce
         );
 
         emit FailedHeartbeatNotified(
-            claim.groupId,
+            groupId,
             nonce,
             ineligibleOperators,
             msg.sender
