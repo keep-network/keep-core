@@ -3,7 +3,7 @@ import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
-import { injected } from "../connectors"
+import { metaMaskInjectedConnector } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
 import useIsExactRoutePath from "./useIsExactRoutePath"
 import { isSameEthAddress } from "../utils/general.utils"
@@ -41,13 +41,13 @@ const useAutoConnect = () => {
 
   useEffect(() => {
     if (injectedTried) return
-    injected.getAccounts().then((accounts) => {
+    metaMaskInjectedConnector.getAccounts().then((accounts) => {
       setInjectedTried(true)
       if (
         (!isEmptyArray(accounts) && isExactRoutePath) ||
         isWalletFromUrlSameAsInMetamask(accounts)
       ) {
-        connectAppWithWallet(injected, false).catch((error) => {
+        connectAppWithWallet(metaMaskInjectedConnector, false).catch((error) => {
           // Just log an error, we don't want to do anything else.
           console.log(
             "Eager injected connector cannot connect with the dapp:",
