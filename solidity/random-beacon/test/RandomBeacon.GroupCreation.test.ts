@@ -27,7 +27,7 @@ import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
-const { keccak256, solidityPack } = ethers.utils
+const { keccak256 } = ethers.utils
 
 const fixture = async () => {
   const contracts = await testDeployment()
