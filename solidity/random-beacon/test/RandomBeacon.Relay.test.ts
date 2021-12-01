@@ -766,7 +766,7 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe.only("notifyFailedHeartbeat", () => {
+  describe("notifyFailedHeartbeat", () => {
     const groupId = 0
     const stubSignatures = "0x00"
     const stubMembersIndices = []
