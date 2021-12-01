@@ -7,14 +7,6 @@ class MetaMaskInjectedConnector extends AbstractConnector {
   constructor() {
     super(WALLETS.METAMASK.name)
 
-    if (!window.ethereum) {
-      throw new Error("Can't find any injected provider")
-    }
-    
-    if (!window.ethereum.isMetaMask) {
-      throw new Error("The injected provider is not MetaMask! Please select the correct wallet!")
-    }
-    
     this.provider = window.ethereum
   }
 

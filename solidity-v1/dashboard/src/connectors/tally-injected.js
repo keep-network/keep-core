@@ -5,17 +5,8 @@ import { UserRejectedConnectionRequestError } from "./utils"
 
 class TallyInjectedConnector extends AbstractConnector {
   constructor() {
-    super(WALLETS.TALLY.name)
-
-    if (!window.ethereum) {
-      throw new Error("Can't find any injected provider")
-    }
-    
-    if (!window.ethereum.isTally) {
-      throw new Error("The injected provider is not MetaMask! Please select the correct wallet!")
-    }
-    
-    this.provider = window.ethereum
+    super(WALLETS.TALLY.name)    
+    this.provider = window.tally
   }
 
   _onAccountChanged = ([address]) => {
@@ -32,15 +23,13 @@ class TallyInjectedConnector extends AbstractConnector {
 
   enable = async () => {
     if (!this.provider) {
-      throw new Error("window.ethereum provider not found")
+      throw new Error("window.tally provider not found")
     }
 
     try {
       const accounts = await this.provider.request({
         method: "eth_requestAccounts",
       })
-      // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
-      this.provider.autoRefreshOnNetworkChange = false
       if (this.provider && this.provider.on) {
         this.provider.on("accountsChanged", this._onAccountChanged)
         this.provider.on("disconnect", this._onDisconnect)
@@ -59,7 +48,7 @@ class TallyInjectedConnector extends AbstractConnector {
   }
 
   disconnect = async () => {
-    // window.ethereum injected by MetaMask does not provide a method to
+    // window.tally injected by Tally does not provide a method to
     // disconnect a wallet.
     this._onDisconnect()
     this.provider.removeListener("accountsChanged", this._onAccountChanged)
