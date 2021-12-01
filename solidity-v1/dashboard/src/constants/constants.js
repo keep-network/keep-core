@@ -208,6 +208,7 @@ export const MODAL_TYPES = {
   BondingAddETH: "BondingAddEth",
   BondingWithdrawETH: "BondingWithdrawETH",
   MetaMask: "MetaMask",
+  Tally: "Tally",
   ExplorerMode: "ExplorerMode",
   Ledger: "Ledger",
   Trezor: "Trezor",
