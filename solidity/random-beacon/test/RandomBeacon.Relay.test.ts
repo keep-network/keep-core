@@ -852,7 +852,8 @@ describe("RandomBeacon - Relay", () => {
 
                   it("should ban sortition pool rewards for ineligible operators", async () => {
                     const now = await helpers.time.lastBlockTime()
-                    const expectedUntil = now + 1209600 // 2 weeks
+                    const expectedUntil =
+                      now + params.sortitionPoolRewardsBanDuration
 
                     await expect(tx)
                       .to.emit(sortitionPool, "IneligibleForRewards")

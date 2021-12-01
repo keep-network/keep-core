@@ -37,6 +37,7 @@ export const params = {
   dkgResultSubmissionEligibilityDelay: 10,
   dkgResultSubmissionReward: 0,
   sortitionPoolUnlockingReward: 0,
+  sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
   relayEntrySubmissionFailureSlashingAmount: ethers.BigNumber.from(10)
     .pow(18)
     .mul(1000),
