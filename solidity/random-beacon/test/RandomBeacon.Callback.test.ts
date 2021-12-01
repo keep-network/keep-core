@@ -10,7 +10,7 @@ import type {
   TestToken,
   CallbackContractStub,
 } from "../typechain"
-import { registerOperators, Operator, OperatorID } from "./utils/operators"
+import { registerOperators, Operator } from "./utils/operators"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
