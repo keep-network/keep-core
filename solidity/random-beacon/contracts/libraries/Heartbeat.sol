@@ -103,7 +103,7 @@ library Heartbeat {
                 group.groupPubKey,
                 claim.failedMembersIndices
             )
-        );
+        ).toEthSignedMessageHash();
 
         address[] memory groupMembers = sortitionPool.getIDOperators(
             group.members
@@ -118,9 +118,9 @@ library Heartbeat {
                 signatureByteSize * i,
                 signatureByteSize
             );
-            address recoveredAddress = signedMessageHash
-                .toEthSignedMessageHash()
-                .recover(checkedSignature);
+            address recoveredAddress = signedMessageHash.recover(
+                checkedSignature
+            );
 
             require(
                 groupMembers[memberIndex - 1] == recoveredAddress,
