@@ -20,6 +20,7 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
+import "./libraries/Heartbeat.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
@@ -119,6 +120,13 @@ contract RandomBeacon is Ownable, IApplication {
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
     uint256 public dkgMaliciousResultNotificationRewardMultiplier;
+
+    // Other parameters
+
+    /// @notice Stores current failed heartbeat nonce for given group.
+    ///         Each claim is made with an unique nonce which protects
+    ///         against claim replay.
+    mapping(uint64 => uint256) public failedHeartbeatNonce; // groupId -> nonce
 
     // External dependencies
 
@@ -234,7 +242,11 @@ contract RandomBeacon is Ownable, IApplication {
         bytes previousEntry
     );
 
-    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+    event RelayEntrySubmitted(
+        uint256 indexed requestId,
+        address submitter,
+        bytes entry
+    );
 
     event RelayEntryTimedOut(
         uint256 indexed requestId,
@@ -266,6 +278,8 @@ contract RandomBeacon is Ownable, IApplication {
     );
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
+
+    event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
 
     modifier onlyStaking() {
         require(
@@ -518,13 +532,22 @@ contract RandomBeacon is Ownable, IApplication {
         );
     }
 
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        sortitionPool.withdrawIneligible(recipient);
+    }
+
     function authorizationIncreased(address operator, uint96 amount)
         external
         override
         onlyStaking
-    {
-        authorization.authorizationIncreased(operator, amount);
-    }
+        {
+            authorization.authorizationIncreased(operator, amount);
+        }
 
     function authorizationDecreaseRequested(address operator, uint96 amount)
         external
@@ -722,23 +745,15 @@ contract RandomBeacon is Ownable, IApplication {
     }
 
     /// @notice Creates a new relay entry.
-    /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
-        external
-    {
+    function submitRelayEntry(bytes calldata entry) external {
         uint256 currentRequestId = relay.currentRequest.id;
 
-        Groups.Group memory group = groups.getGroup(
+        Groups.Group storage group = groups.getGroup(
             relay.currentRequest.groupId
         );
 
-        uint256 slashingAmount = relay.submitEntry(
-            sortitionPool,
-            submitterIndex,
-            entry,
-            group
-        );
+        uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
@@ -861,6 +876,59 @@ contract RandomBeacon is Ownable, IApplication {
         );
     }
 
+    /// @notice Notifies about a failed group heartbeat. Using this function,
+    ///         a majority of the group can decide about punishing specific
+    ///         group members who failed to provide a heartbeat. If provided
+    ///         claim is proved to be valid and signed by sufficient number
+    ///         of group members, operators of members deemed as failed are
+    ///         banned for sortition pool rewards for duration specified by
+    ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
+    ///         the claim must be one of the claim signers. The sender is
+    ///         rewarded from `heartbeatNotifierRewardsPool`. Exact reward
+    ///         amount is multiplication of operators marked as ineligible
+    ///         and `ineligibleOperatorNotifierReward` factor. This function
+    ///         can be called only for active and non-terminated groups.
+    /// @param claim Failure claim.
+    /// @param nonce Current failed heartbeat nonce for given group. Must
+    ///        be the same as the stored one.
+    function notifyFailedHeartbeat(
+        Heartbeat.FailureClaim calldata claim,
+        uint256 nonce
+    ) external {
+        uint64 groupId = claim.groupId;
+
+        require(nonce == failedHeartbeatNonce[groupId], "Invalid nonce");
+
+        require(
+            groups.isGroupActive(groupId),
+            "Group must be active and non-terminated"
+        );
+
+        Groups.Group storage group = groups.getGroup(groupId);
+
+        uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
+            sortitionPool,
+            claim,
+            group,
+            nonce
+        );
+
+        failedHeartbeatNonce[groupId]++;
+
+        emit HeartbeatFailed(groupId, nonce, msg.sender);
+
+        sortitionPool.setRewardIneligibility(
+            ineligibleOperators,
+            // solhint-disable-next-line not-rely-on-time
+            block.timestamp + sortitionPoolRewardsBanDuration
+        );
+
+        transferHeartbeatNotifierRewards(
+            msg.sender,
+            ineligibleOperatorNotifierReward * ineligibleOperators.length
+        );
+    }
+
     /// @notice Funds the DKG rewards pool.
     /// @param from Address of the funder. The funder must give a sufficient
     ///        allowance for this contract to make a successful call.
@@ -893,8 +961,6 @@ contract RandomBeacon is Ownable, IApplication {
     /// @notice Makes a transfer using heartbeat notifier rewards pool.
     /// @param to Address of the recipient.
     /// @param value Token value transferred to the recipient.
-    // TODO: Remove Slither ignore condition once this function is used.
-    // slither-disable-next-line dead-code
     function transferHeartbeatNotifierRewards(address to, uint256 value)
         internal
     {

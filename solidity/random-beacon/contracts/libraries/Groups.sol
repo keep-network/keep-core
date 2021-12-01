@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 /// @notice This library is used as a registry of created groups.
 /// @dev This library should be used along with DKG library that ensures linear
@@ -250,10 +250,22 @@ library Groups {
             self.groupLifetime;
     }
 
+    /// @notice Checks if group with the given index is active and non-terminated.
+    function isGroupActive(Data storage self, uint64 groupId)
+        internal
+        view
+        returns (bool)
+    {
+        return
+            groupLifetimeOf(self, self.groupsRegistry[groupId]) >=
+            block.number &&
+            !isGroupTerminated(self, groupId);
+    }
+
     function getGroup(Data storage self, uint64 groupId)
         internal
         view
-        returns (Group memory)
+        returns (Group storage)
     {
         return self.groupsData[self.groupsRegistry[groupId]];
     }
@@ -261,7 +273,7 @@ library Groups {
     function getGroup(Data storage self, bytes memory groupPubKey)
         internal
         view
-        returns (Group memory)
+        returns (Group storage)
     {
         return self.groupsData[keccak256(groupPubKey)];
     }

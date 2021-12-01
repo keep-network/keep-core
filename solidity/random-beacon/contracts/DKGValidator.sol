@@ -12,7 +12,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./libraries/BytesLib.sol";
@@ -207,7 +207,7 @@ contract DKGValidator {
                 result.misbehavedMembersIndices,
                 startBlock
             )
-        );
+        ).toEthSignedMessageHash();
 
         address[] memory membersAddresses = sortitionPool.getIDOperators(
             result.members
@@ -223,9 +223,7 @@ contract DKGValidator {
                 signatureByteSize * i,
                 signatureByteSize
             );
-            address recoveredAddress = hash.toEthSignedMessageHash().recover(
-                current
-            );
+            address recoveredAddress = hash.recover(current);
 
             if (membersAddresses[memberIndex - 1] != recoveredAddress) {
                 return false;

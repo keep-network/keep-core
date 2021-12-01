@@ -12,7 +12,7 @@
 
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "./RandomBeacon.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -1156,6 +1156,14 @@ contract RandomBeaconGovernance is Ownable {
         );
         authorizationDecreaseDelayChangeInitiated = 0;
         newAuthorizationDecreaseDelay = 0;
+    }
+
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        randomBeacon.withdrawIneligibleRewards(recipient);
     }
 
     /// @notice Get the time remaining until the relay request fee can be

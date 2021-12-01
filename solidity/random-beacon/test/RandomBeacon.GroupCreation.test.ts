@@ -1539,7 +1539,7 @@ describe("RandomBeacon - Group Creation", () => {
 
         it("should ban misbehaved operators from sortition pool rewards", async () => {
           const now = await helpers.time.lastBlockTime()
-          const expectedUntil = now + 1209600 // 2 weeks
+          const expectedUntil = now + params.sortitionPoolRewardsBanDuration
 
           await expect(tx)
             .to.emit(sortitionPool, "IneligibleForRewards")
