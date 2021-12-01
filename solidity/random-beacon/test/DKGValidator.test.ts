@@ -16,8 +16,18 @@ import type { SortitionPool, DKGValidator } from "../typechain"
 const { to1e18 } = helpers.number
 
 const fixture = async () => {
+  const TestToken = await ethers.getContractFactory("TestToken")
+  const testToken = await TestToken.deploy()
+  await testToken.deployed()
+
+  const StakingStub = await ethers.getContractFactory("StakingStub")
+  const stakingStub = await StakingStub.deploy()
+  await stakingStub.deployed()
+
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
+    stakingStub.address,
+    testToken.address,
     constants.poolWeightDivisor
   )) as SortitionPool
 
@@ -54,6 +64,8 @@ describe("DKGValidator", () => {
     for (let i = 0; i < operators.length; i++) {
       await sortitionPool.insertOperator(operators[i], to1e18(100))
     }
+
+    await sortitionPool.lock()
 
     selectedOperators = await selectGroup(sortitionPool, dkgSeed)
 
