@@ -5,6 +5,7 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
+import "./Submission.sol";
 import "../DKGValidator.sol";
 
 library DKG {
@@ -96,8 +97,8 @@ library DKG {
     uint256 public constant groupSize = 64;
 
     /// @dev The minimum number of group members needed to interact according to
-    ///      the protocol to produce a relay entry. The adversary can not learn
-    ///      anything about the key as long as it does not break into
+    ///      the protocol to provide signatures for the DKG result. The adversary
+    ///      can not learn anything about the key as long as it does not break into
     ///      groupThreshold+1 of members.
     uint256 public constant groupThreshold = 33;
 
@@ -232,12 +233,23 @@ library DKG {
         uint256 T_init = self.startBlock +
             offchainDkgTime +
             self.resultSubmissionStartBlockOffset;
+
+        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
+            .getEligibilityRange(
+                uint256(keccak256(result.groupPubKey)),
+                block.number,
+                T_init,
+                self.parameters.resultSubmissionEligibilityDelay,
+                groupSize
+            );
+
         require(
-            block.number >=
-                (T_init +
-                    (result.submitterMemberIndex - 1) *
-                    self.parameters.resultSubmissionEligibilityDelay),
-            "Submitter not eligible"
+            Submission.isEligible(
+                result.submitterMemberIndex,
+                firstEligibleIndex,
+                lastEligibleIndex
+            ),
+            "Submitter is not eligible"
         );
 
         SortitionPool sortitionPool = self.sortitionPool;
