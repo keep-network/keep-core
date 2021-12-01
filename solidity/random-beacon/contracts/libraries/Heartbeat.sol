@@ -32,8 +32,8 @@ library Heartbeat {
         // Concatenation of signatures from members supporting the claim.
         // The message to be signed by each member is failed heartbeat nonce
         // for given group, keccak256 hash of the group public key, and failed
-        // members indices. The calculated hash should be prefixed with prefixed
-        // with `\x19Ethereum signed message:\n` before signing, so the message
+        // members indices. The calculated hash should be prefixed with
+        // `\x19Ethereum signed message:\n` before signing, so the message
         // to sign is:
         // `\x19Ethereum signed message:\n${keccak256(
         //    nonce, groupPubKey, failedMembersIndices
