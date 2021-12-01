@@ -63,7 +63,7 @@ library Heartbeat {
         FailureClaim calldata claim,
         SortitionPool sortitionPool,
         uint256 nonce
-    ) internal view returns (uint32[] memory failedMembers) {
+    ) external view returns (uint32[] memory failedMembers) {
         uint256 groupSize = claim.groupMembers.length;
         // At least half of the members plus one must vote for the claim.
         uint256 groupThreshold = (groupSize / 2) + 1;

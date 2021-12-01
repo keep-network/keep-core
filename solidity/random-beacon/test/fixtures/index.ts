@@ -90,6 +90,10 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const dkg = await DKG.deploy()
   await dkg.deployed()
 
+  const Heartbeat = await ethers.getContractFactory("Heartbeat")
+  const heartbeat = await Heartbeat.deploy()
+  await heartbeat.deployed()
+
   const DKGValidator = await ethers.getContractFactory("DKGValidator")
   const dkgValidator = (await DKGValidator.deploy(
     sortitionPool.address
@@ -100,6 +104,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
       DKG: dkg.address,
+      Heartbeat: heartbeat.address,
     },
   })
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
