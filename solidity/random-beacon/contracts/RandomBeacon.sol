@@ -938,9 +938,10 @@ contract RandomBeacon is Ownable {
             msg.sender
         );
 
-        sortitionPool.banRewards(
+        sortitionPool.setRewardIneligibility(
             ineligibleOperators,
-            sortitionPoolRewardsBanDuration
+            // solhint-disable-next-line not-rely-on-time
+            block.timestamp + sortitionPoolRewardsBanDuration
         );
 
         transferHeartbeatNotifierRewards(
