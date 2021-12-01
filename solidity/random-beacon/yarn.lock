@@ -593,10 +593,10 @@
     deepmerge "^4.2.2"
     untildify "^4.0.0"
 
-"@keep-network/sortition-pools@1.2.0-dev.23":
-  version "1.2.0-dev.23"
-  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.23.tgz#aae663be5bb1f2604888f1ca7e6205c220a465fb"
-  integrity sha512-BdZyQiz3EERM6y4d2waExDAeX8HiDt7kqXJvdvJXNOTN7YaO+0Pm8RNLcyRI9Sps8OLq0VVE53uy1JgwRXSZ8Q==
+"@keep-network/sortition-pools@1.2.0-dev.24":
+  version "1.2.0-dev.24"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-1.2.0-dev.24.tgz#ed2bd34297ba3832d8981f2f5705489caece2115"
+  integrity sha512-k6PgZ3Svv4nCAP3bE3jfPoz7V6WUf9f8qKSrlMUGB6TkrgoSwg7I9mrC5UCawTrd3QL86FI/3hZt+4FJvZt74w==
   dependencies:
     "@openzeppelin/contracts" "^4.3.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
