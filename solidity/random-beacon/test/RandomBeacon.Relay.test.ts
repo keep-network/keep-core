@@ -801,7 +801,7 @@ describe("RandomBeacon - Relay", () => {
                     // Assume claim sender is the first signing member.
                     claimSender = await ethers.getSigner(members[0].address)
 
-                    await donateHeartbeatNotifierRewardsPool(
+                    await fundHeartbeatNotifierRewardsPool(
                       ineligibleOperatorNotifierReward.mul(
                         validFailedMembersIndices.length
                       )
@@ -1259,7 +1259,7 @@ describe("RandomBeacon - Relay", () => {
 
         context("when failed members indices are incorrect", () => {
           const assertFailedMembersIndicesCorrupted = async (
-            failedMembersIndices
+            failedMembersIndices: number[]
           ) => {
             const { signatures, signingMembersIndices } =
               await signHeartbeatFailureClaim(
@@ -1350,7 +1350,7 @@ describe("RandomBeacon - Relay", () => {
         })
       })
 
-      context("when group active but terminated", () => {
+      context("when group is active but terminated", () => {
         beforeEach(async () => {
           // Simulate group was terminated.
           await (randomBeacon as RandomBeaconStub).roughlyTerminateGroup(
@@ -1426,13 +1426,15 @@ describe("RandomBeacon - Relay", () => {
       .approve(randomBeacon.address, relayRequestFee)
   }
 
-  async function donateHeartbeatNotifierRewardsPool(donate: BigNumber) {
-    await testToken.mint(deployer.address, donate)
-    await testToken.connect(deployer).approve(randomBeacon.address, donate)
+  async function fundHeartbeatNotifierRewardsPool(donateAmount: BigNumber) {
+    await testToken.mint(deployer.address, donateAmount)
+    await testToken
+      .connect(deployer)
+      .approve(randomBeacon.address, donateAmount)
 
     await randomBeacon.fundHeartbeatNotifierRewardsPool(
       deployer.address,
-      donate
+      donateAmount
     )
   }
 })
