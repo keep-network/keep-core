@@ -1,1 +1,33 @@
-= Keep Random Beacon
+= Keep Random Beacon v2
+
+The Keep Network requires a trusted source of randomness for the process of
+trustless group election. While the network requires that randomness to function
+correctly, the source of randomness is itself broadly applicable. This trusted
+source of randomness takes the form of a BLS Threshold Relay.
+
+== Overview
+
+The threshold relay is a way of generating verifiable randomness that is
+resistant to bad actors both in the relay network and on the anchoring Ethereum
+blockchain. The basic functioning of the relay is:
+
+- Some number of groups exist in the relay.
+- An arbitrary seed value `v_s` counts as the first entry in the relay.
+- A request `r_i` is dispatched to the chain for a new entry.
+- The previous entry `v_s` is used to choose a group to produce the response to
+  the request.
+- `v_s` is signed by at least a subset of the chosen group members, and the
+  resulting signature is the entry generated in response to the request. It is
+  published to the anchoring blockchain as the entry `v_i`.
+- The new entry `v_i` may trigger the formation of a new group from the set of
+  all members in the relay.
+- A group expires after a certain amount of time.
+
+== Prior Work
+
+Smart contracts for the first version of the random beacon are available in
+link:./../../solidity-v1[`solidity-v1` directory]. The new version uses the same
+approach for BLS signatures as v1 but replaces ticket-based group selection with
+an optimistic sortition pool call. It also redesigns staker rewards and offers
+a more operator-friendly approach for relay entry timeouts. Last but not least,
+most parameters for the relay are now governable. 
