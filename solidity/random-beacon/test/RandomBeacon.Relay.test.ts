@@ -876,7 +876,11 @@ describe("RandomBeacon - Relay", () => {
     const groupId = 0
     const stubSignatures = "0x00"
     const stubMembersIndices = []
-    const validFailedMembersIndices = [1, 2, 3, 4]
+    // Use 31 element `failedMembersIndices` array to simulate the most gas
+    // expensive real-world case. If group size is 64, the required threshold
+    // is 33 so we assume 31 operators at most will be marked as ineligible
+    // during a single `notifyFailedHeartbeat` call.
+    const validFailedMembersIndices = Array.from(Array(31), (_, i) => i + 1)
     const groupThreshold = 33
 
     let group
@@ -897,7 +901,11 @@ describe("RandomBeacon - Relay", () => {
               let initialHeartbeatNotifierRewardsPoolBalance: BigNumber
 
               beforeEach(async () => {
-                await donateHeartbeatNotifierRewardsPool(to1e18(1000))
+                await donateHeartbeatNotifierRewardsPool(
+                  ineligibleOperatorNotifierReward.mul(
+                    validFailedMembersIndices.length
+                  )
+                )
 
                 nonce = await randomBeacon.failedHeartbeatNonce(groupId)
 
@@ -939,16 +947,18 @@ describe("RandomBeacon - Relay", () => {
                   .withArgs(
                     groupId,
                     nonce.toNumber(),
-                    membersIDs.slice(0, 4),
+                    membersIDs.slice(0, 31),
                     notifier.address
                   )
               })
 
               it("should ban sortition pool rewards for ineligible operators", async () => {
-                // TODO: Once `banRewards` is implemented on sortition pool
-                //       side, assert all members listed in `failedMembersIndices`
-                //       were banned for sortition pool rewards for expected
-                //       duration.
+                const now = await helpers.time.lastBlockTime()
+                const expectedUntil = now + 1209600 // 2 weeks
+
+                await expect(tx)
+                  .to.emit(sortitionPool, "IneligibleForRewards")
+                  .withArgs(membersIDs.slice(0, 31), expectedUntil)
               })
 
               it("should pay notifier reward from heartbeat notifier rewards pool", async () => {
