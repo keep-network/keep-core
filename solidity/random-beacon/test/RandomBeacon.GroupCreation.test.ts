@@ -20,6 +20,7 @@ import {
   signAndSubmitArbitraryDkgResult,
   DkgResult,
   noMisbehaved,
+  signAndSubmitUnrecoverableDkgResult,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
 import { selectGroup } from "./utils/groups"
@@ -1916,6 +1917,71 @@ describe("RandomBeacon - Group Creation", () => {
             })
           })
         })
+
+        context(
+          "with dkg result submitted with unrecoverable signatures",
+          async () => {
+            let dkgResultHash: string
+            let dkgResult: DkgResult
+            let submitter: SignerWithAddress
+            let tx: ContractTransaction
+
+            beforeEach(async () => {
+              ;({ dkgResult, dkgResultHash, submitter } =
+                await signAndSubmitUnrecoverableDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
+                  await selectGroup(sortitionPool, genesisSeed),
+                  startBlock,
+                  noMisbehaved
+                ))
+
+              tx = await randomBeacon
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+            })
+
+            it("should emit DkgResultChallenged event", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultChallenged")
+                .withArgs(
+                  dkgResultHash,
+                  await thirdParty.getAddress(),
+                  "validation reverted"
+                )
+            })
+
+            it("should remove a candidate group", async () => {
+              const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+              expect(groupsRegistry).to.be.lengthOf(0)
+            })
+
+            it("should emit CandidateGroupRemoved event", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "CandidateGroupRemoved")
+                .withArgs(groupPublicKey)
+            })
+
+            it("should not unlock the sortition pool", async () => {
+              expect(await sortitionPool.isLocked()).to.be.true
+            })
+
+            it("should emit DkgMaliciousResultSlashed event", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
+                .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+            })
+
+            it("should slash malicious result submitter", async () => {
+              await expect(tx)
+                .to.emit(staking, "Seized")
+                .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                  submitter.address,
+                ])
+            })
+          }
+        )
 
         context("with correct dkg result submitted", async () => {
           let dkgResult: DkgResult
