@@ -21,7 +21,8 @@
   "dependencies": {
     "@keep-network/sortition-pools": "1.2.0-dev.23",
     "@openzeppelin/contracts": "^4.3.3",
-    "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf"
+    "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
+    "@threshold-network/solidity-contracts": "github:threshold-network/solidity-contracts#5383719"
   },
   "devDependencies": {
     "@keep-network/hardhat-helpers": "^0.4.0",

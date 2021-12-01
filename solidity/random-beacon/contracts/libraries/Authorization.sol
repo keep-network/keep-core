@@ -58,7 +58,9 @@ library Authorization {
         Data storage self,
         uint256 _authorizationDecreaseDelay
     ) internal {
-        self.parameters.authorizationDecreaseDelay = uint64(_authorizationDecreaseDelay);
+        self.parameters.authorizationDecreaseDelay = uint64(
+            _authorizationDecreaseDelay
+        );
     }
 
     /// @notice Used by T staking contract to inform the random beacon that the
@@ -67,21 +69,21 @@ library Authorization {
     function authorizationIncreased(
         Data storage self,
         address operator,
-        uint256 amount
+        uint96 amount
     ) external {
         require(
             amount >= self.parameters.minimumAuthorization,
             "Below minimum authorization amount"
         );
 
-        updateAuthorization(self, operator, uint96(amount));
+        updateAuthorization(self, operator, amount);
     }
 
     // pass sortition pool as a parameter
     function authorizationDecreaseRequested(
         Data storage self,
         address operator,
-        uint256 amount
+        uint96 amount
     ) external {
         require(
             amount == 0 || amount >= self.parameters.minimumAuthorization,
@@ -89,7 +91,7 @@ library Authorization {
         );
 
         self.authorizationDecreaseRequests[operator] = AuthorizationDecrease(
-            uint96(amount),
+            amount,
             // solhint-disable-next-line not-rely-on-time
             uint64(block.timestamp)
         );

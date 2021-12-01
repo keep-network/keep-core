@@ -12,7 +12,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "./libraries/Authorization.sol";
 import "./libraries/DKG.sol";
@@ -21,33 +21,12 @@ import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-
-/// @title Staking contract interface
-/// @notice This is an interface with just a few function signatures of the
-///         Staking contract, which is available at
-///         https://github.com/threshold-network/solidity-contracts/blob/main/contracts/staking/IStaking.sol
-///
-/// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
-///       staking interface from there.
-interface IRandomBeaconStaking {
-    function slash(uint256 amount, address[] memory operators) external;
-
-    function seize(
-        uint256 amount,
-        uint256 rewardMultiplier,
-        address notifier,
-        address[] memory operators
-    ) external;
-
-    function eligibleStake(address operator, address operatorContract)
-        external
-        view
-        returns (uint256);
-}
 
 /// @title Keep Random Beacon
 /// @notice Keep Random Beacon contract. It lets anyone request a new
@@ -56,7 +35,7 @@ interface IRandomBeaconStaking {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable {
+contract RandomBeacon is Ownable, IApplication {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
     using DKG for DKG.Data;
@@ -145,7 +124,7 @@ contract RandomBeacon is Ownable {
 
     SortitionPool public sortitionPool;
     IERC20 public tToken;
-    IRandomBeaconStaking public staking;
+    IStaking public staking;
 
     // Token bookkeeping
 
@@ -288,6 +267,14 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
+    modifier onlyStaking() {
+        require(
+            msg.sender == staking,
+            "Can only be called by the staking contract"
+        );
+        _;
+    }
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -295,7 +282,7 @@ contract RandomBeacon is Ownable {
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
-        IRandomBeaconStaking _staking,
+        IStaking _staking,
         DKGValidator _dkgValidator
     ) {
         sortitionPool = _sortitionPool;
@@ -531,27 +518,33 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice Registers the caller in the sortition pool.
-    function registerOperator() external {
-        address operator = msg.sender;
-
-        require(
-            !sortitionPool.isOperatorInPool(operator),
-            "Operator is already registered"
-        );
-
-        sortitionPool.insertOperator(
-            operator,
-            staking.eligibleStake(operator, address(this))
-        );
+    function authorizationIncreased(address operator, uint96 amount)
+        external
+        override
+        onlyStaking
+    {
+        authorization.authorizationIncreased(operator, amount);
     }
 
-    /// @notice Updates the sortition pool status of the caller.
-    function updateOperatorStatus() external {
-        sortitionPool.updateOperatorStatus(
-            msg.sender,
-            staking.eligibleStake(msg.sender, address(this))
-        );
+    function authorizationDecreaseRequested(address operator, uint96 amount)
+        external
+        override
+        onlyStaking
+    {
+        authorization.authorizationDecreaseRequested(operator, amount);
+    }
+
+    function approveAuthorizationDecrease(address operator) external {
+        authorization.approveAuthorizationDecrease(operator);
+        staking.approveAuthorizationDecrease(operator);
+    }
+
+    function involuntaryAuthorizationDecrease(address operator, uint96 amount)
+        external
+        override
+        onlyStaking
+    {
+        authorization.updateAuthorization(operator, amount);
     }
 
     /// @notice Triggers group selection if there are no active groups.
