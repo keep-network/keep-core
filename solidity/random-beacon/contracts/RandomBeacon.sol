@@ -890,12 +890,12 @@ contract RandomBeacon is Ownable {
     ///         claim is proved to be valid and signed by sufficient number
     ///         of group members, operators of members deemed as failed are
     ///         banned for sortition pool rewards for duration specified by
-    ///         `sortitionPoolRewardsBanDuration` parameter. The submitter
-    ///         of the claim is rewarded from `heartbeatNotifierRewardsPool`.
-    ///         Exact reward amount is multiplication of operators marked as
-    ///         ineligible and `ineligibleOperatorNotifierReward` factor.
-    ///         This function can be called only for active and non-terminated
-    ///         groups.
+    ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
+    ///         the claim must be one of the claim signers. The sender is
+    ///         rewarded from `heartbeatNotifierRewardsPool`. Exact reward
+    ///         amount is multiplication of operators marked as ineligible
+    ///         and `ineligibleOperatorNotifierReward` factor. This function
+    ///         can be called only for active and non-terminated groups.
     /// @param claim Failure claim.
     /// @param nonce Current failed heartbeat nonce for given group. Must
     ///        be the same as the stored one.

@@ -106,6 +106,7 @@ library Heartbeat {
 
         // Verify each signature.
         bytes memory checkedSignature;
+        bool senderSignatureExists;
         for (uint256 i = 0; i < signaturesCount; i++) {
             uint256 memberIndex = claim.signingMembersIndices[i];
             checkedSignature = claim.signatures.slice(
@@ -120,7 +121,13 @@ library Heartbeat {
                 groupMembers[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
+
+            if (!senderSignatureExists && msg.sender == recoveredAddress) {
+                senderSignatureExists = true;
+            }
         }
+
+        require(senderSignatureExists, "Sender must be claim signer");
 
         failedMembers = new uint32[](claim.failedMembersIndices.length);
         for (uint256 i = 0; i < claim.failedMembersIndices.length; i++) {

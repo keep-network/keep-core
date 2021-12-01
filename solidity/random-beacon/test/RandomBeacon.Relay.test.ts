@@ -790,90 +790,131 @@ describe("RandomBeacon - Relay", () => {
           context("when signatures array is correct", () => {
             context("when signing members indices are correct", () => {
               context("when all signatures are correct", () => {
-                let tx: ContractTransaction
-                let nonce: BigNumber
-                let initialNotifierBalance: BigNumber
-                let initialHeartbeatNotifierRewardsPoolBalance: BigNumber
+                context("when claim sender signed the claim", () => {
+                  let tx: ContractTransaction
+                  let nonce: BigNumber
+                  let initialNotifierBalance: BigNumber
+                  let initialHeartbeatNotifierRewardsPoolBalance: BigNumber
+                  let claimSender: SignerWithAddress
 
-                beforeEach(async () => {
-                  await donateHeartbeatNotifierRewardsPool(
-                    ineligibleOperatorNotifierReward.mul(
+                  beforeEach(async () => {
+                    // Assume claim sender is the first signing member.
+                    claimSender = await ethers.getSigner(members[0].address)
+
+                    await donateHeartbeatNotifierRewardsPool(
+                      ineligibleOperatorNotifierReward.mul(
+                        validFailedMembersIndices.length
+                      )
+                    )
+
+                    nonce = await randomBeacon.failedHeartbeatNonce(groupId)
+
+                    initialNotifierBalance = await testToken.balanceOf(
+                      claimSender.address
+                    )
+
+                    initialHeartbeatNotifierRewardsPoolBalance =
+                      await randomBeacon.heartbeatNotifierRewardsPool()
+
+                    const { signatures, signingMembersIndices } =
+                      await signHeartbeatFailureClaim(
+                        members,
+                        nonce.toNumber(),
+                        group.groupPubKey,
+                        validFailedMembersIndices,
+                        groupThreshold
+                      )
+
+                    tx = await randomBeacon
+                      .connect(claimSender)
+                      .notifyFailedHeartbeat(
+                        {
+                          groupId,
+                          failedMembersIndices: validFailedMembersIndices,
+                          signatures,
+                          signingMembersIndices,
+                        },
+                        nonce
+                      )
+                  })
+
+                  it("should increment failed heartbeat nonce for the group", async () => {
+                    expect(
+                      await randomBeacon.failedHeartbeatNonce(groupId)
+                    ).to.be.equal(nonce.add(1))
+                  })
+
+                  it("should emit HeartbeatFailed event", async () => {
+                    await expect(tx)
+                      .to.emit(randomBeacon, "HeartbeatFailed")
+                      .withArgs(groupId, nonce.toNumber(), claimSender.address)
+                  })
+
+                  it("should ban sortition pool rewards for ineligible operators", async () => {
+                    const now = await helpers.time.lastBlockTime()
+                    const expectedUntil = now + 1209600 // 2 weeks
+
+                    await expect(tx)
+                      .to.emit(sortitionPool, "IneligibleForRewards")
+                      .withArgs(membersIDs.slice(0, 31), expectedUntil)
+                  })
+
+                  it("should pay notifier reward from heartbeat notifier rewards pool", async () => {
+                    const expectedReward = ineligibleOperatorNotifierReward.mul(
                       validFailedMembersIndices.length
                     )
-                  )
 
-                  nonce = await randomBeacon.failedHeartbeatNonce(groupId)
-
-                  initialNotifierBalance = await testToken.balanceOf(
-                    notifier.address
-                  )
-
-                  initialHeartbeatNotifierRewardsPoolBalance =
-                    await randomBeacon.heartbeatNotifierRewardsPool()
-
-                  const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
-                      members,
-                      nonce.toNumber(),
-                      group.groupPubKey,
-                      validFailedMembersIndices,
-                      groupThreshold
+                    const currentNotifierBalance = await testToken.balanceOf(
+                      claimSender.address
                     )
+                    expect(
+                      currentNotifierBalance.sub(initialNotifierBalance)
+                    ).to.be.equal(expectedReward)
 
-                  tx = await randomBeacon
-                    .connect(notifier)
-                    .notifyFailedHeartbeat(
-                      {
-                        groupId,
-                        failedMembersIndices: validFailedMembersIndices,
-                        signatures,
-                        signingMembersIndices,
-                      },
-                      0
-                    )
+                    const currentHeartbeatNotifierRewardsPoolBalance =
+                      await randomBeacon.heartbeatNotifierRewardsPool()
+                    expect(
+                      initialHeartbeatNotifierRewardsPoolBalance.sub(
+                        currentHeartbeatNotifierRewardsPoolBalance
+                      )
+                    ).to.be.equal(expectedReward)
+                  })
                 })
 
-                it("should increment failed heartbeat nonce for the group", async () => {
-                  expect(
-                    await randomBeacon.failedHeartbeatNonce(groupId)
-                  ).to.be.equal(nonce.add(1))
-                })
+                context(
+                  "when claim sender did not sign the claim",
+                  async () => {
+                    it("should revert", async () => {
+                      const { signatures, signingMembersIndices } =
+                        await signHeartbeatFailureClaim(
+                          members,
+                          0,
+                          group.groupPubKey,
+                          validFailedMembersIndices,
+                          groupThreshold
+                        )
 
-                it("should emit HeartbeatFailed event", async () => {
-                  await expect(tx)
-                    .to.emit(randomBeacon, "HeartbeatFailed")
-                    .withArgs(groupId, nonce.toNumber(), notifier.address)
-                })
+                      // Assume claim sender is member `34` - the first member
+                      // who did not sign the claim. We take index `33` since
+                      // `members` array is zero-based.
+                      const claimSender = await ethers.getSigner(
+                        members[33].address
+                      )
 
-                it("should ban sortition pool rewards for ineligible operators", async () => {
-                  const now = await helpers.time.lastBlockTime()
-                  const expectedUntil = now + 1209600 // 2 weeks
-
-                  await expect(tx)
-                    .to.emit(sortitionPool, "IneligibleForRewards")
-                    .withArgs(membersIDs.slice(0, 31), expectedUntil)
-                })
-
-                it("should pay notifier reward from heartbeat notifier rewards pool", async () => {
-                  const expectedReward = ineligibleOperatorNotifierReward.mul(
-                    validFailedMembersIndices.length
-                  )
-
-                  const currentNotifierBalance = await testToken.balanceOf(
-                    notifier.address
-                  )
-                  expect(
-                    currentNotifierBalance.sub(initialNotifierBalance)
-                  ).to.be.equal(expectedReward)
-
-                  const currentHeartbeatNotifierRewardsPoolBalance =
-                    await randomBeacon.heartbeatNotifierRewardsPool()
-                  expect(
-                    initialHeartbeatNotifierRewardsPoolBalance.sub(
-                      currentHeartbeatNotifierRewardsPoolBalance
-                    )
-                  ).to.be.equal(expectedReward)
-                })
+                      await expect(
+                        randomBeacon.connect(claimSender).notifyFailedHeartbeat(
+                          {
+                            groupId,
+                            failedMembersIndices: validFailedMembersIndices,
+                            signatures,
+                            signingMembersIndices,
+                          },
+                          0
+                        )
+                      ).to.be.revertedWith("Sender must be claim signer")
+                    })
+                  }
+                )
               })
 
               context("when one of the signatures is incorrect", () => {
