@@ -835,9 +835,9 @@ describe("RandomBeacon - Relay", () => {
                 ).to.be.equal(nonce.add(1))
               })
 
-              it("should emit FailedHeartbeatNotified event", async () => {
+              it("should emit HeartbeatFailed event", async () => {
                 await expect(tx)
-                  .to.emit(randomBeacon, "FailedHeartbeatNotified")
+                  .to.emit(randomBeacon, "HeartbeatFailed")
                   .withArgs(
                     groupId,
                     nonce.toNumber(),

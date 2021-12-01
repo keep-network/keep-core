@@ -301,7 +301,7 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event FailedHeartbeatNotified(
+    event HeartbeatFailed(
         uint64 groupId,
         uint256 nonce,
         uint32[] ineligibleOperators,
@@ -913,12 +913,7 @@ contract RandomBeacon is Ownable {
             nonce
         );
 
-        emit FailedHeartbeatNotified(
-            groupId,
-            nonce,
-            ineligibleOperators,
-            msg.sender
-        );
+        emit HeartbeatFailed(groupId, nonce, ineligibleOperators, msg.sender);
 
         sortitionPool.setRewardIneligibility(
             ineligibleOperators,
