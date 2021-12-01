@@ -222,10 +222,41 @@ T rewards will be distributed continuously to all operators in the beacon
 sortition pool, excluding operators who were marked as ineligible for rewards
 due to failing the heartbeat. 
 
+=== Heartbeats
 
+Off-chain clients are free to execute any heartbeat protocol they want to ensure
+group members are alive and nodes are operating properly. One example is signing
+some piece of information every nth blocks and first making sure this piece of
+information can not be used for `RandomBeacon.reportUnauthorizedSigning()` -
+that is, that the signed information can not become `msg.sender` for
+`reportUnauthorizedSigning` call.
 
+Group members are free to choose together which members failed the heartbeat and
+sign failed heartbeat claim. If the required threshold of group members signed
+the heartbeat failure claim, they can submit it to
+`RandomBeacon.notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim, uint256 nonce)`
+function and have the group members who failed the heartbeat excluded from
+sortition pool rewards for a governable time period. The submitter of the failed
+heartbeat claim receives a reward from a separate notifier reward pool, funded
+by DAO  for heartbeat failure claims specifically. This pool is expected to be
+funded by DAO from tokens saved from sortition pool rewards as a result of
+having some operators marked as ineligible for rewards due to failing a
+heartbeat.
 
-
+This approach is theoretically susceptible to group members colluding together
+but because a reasonably high number of operators is needed to sign a claim and
+operators signing the claim other than the submitter receive nothing in return,
+we consider this approach safe and good enough. An important advantage of this
+approach is that honest players can decide off-chain when it makes sense to
+submit a heartbeat fail report and mark someone as ineligible for rewards. For
+example, marking an operator ineligible for rewards for the next two weeks have
+a higher impact than prolonging reward ineligibility for 10 minutes for an
+operator that was already marked as ineligible for rewards. This approach does
+not increase the gas cost of a happy path and leaves some freedom to group
+members. They may mark as ineligible operators who turned off their nodes,
+operators whose nodes never participate in signing because they are
+misconfigured, or operators who notoriously miss their turn in submitting relay
+entry.
 
 == Build
 
