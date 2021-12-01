@@ -294,7 +294,7 @@ describe("RandomBeacon - Relay", () => {
             it("should emit RelayEntrySubmitted event", async () => {
               await expect(tx)
                 .to.emit(randomBeacon, "RelayEntrySubmitted")
-                .withArgs(1, 0, submitter.address, blsData.groupSignature)
+                .withArgs(1, submitter.address, blsData.groupSignature)
             })
 
             it("should terminate the relay request", async () => {
@@ -337,7 +337,7 @@ describe("RandomBeacon - Relay", () => {
             it("should emit RelayEntrySubmitted event", async () => {
               await expect(tx)
                 .to.emit(randomBeacon, "RelayEntrySubmitted")
-                .withArgs(1, 0, submitter.address, blsData.groupSignature)
+                .withArgs(1, submitter.address, blsData.groupSignature)
             })
 
             it("should terminate the relay request", async () => {
@@ -766,7 +766,7 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("notifyFailedHeartbeat", () => {
+  describe.only("notifyFailedHeartbeat", () => {
     const groupId = 0
     const stubSignatures = "0x00"
     const stubMembersIndices = []

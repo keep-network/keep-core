@@ -72,7 +72,6 @@ library Relay {
 
     event RelayEntrySubmitted(
         uint256 indexed requestId,
-        uint64 groupId,
         address submitter,
         bytes entry
     );
@@ -141,12 +140,7 @@ library Relay {
                 self.relayEntrySubmissionFailureSlashingAmount) /
             1e18;
 
-        emit RelayEntrySubmitted(
-            self.currentRequest.id,
-            self.currentRequest.groupId,
-            msg.sender,
-            entry
-        );
+        emit RelayEntrySubmitted(self.currentRequest.id, msg.sender, entry);
 
         self.previousEntry = entry;
         delete self.currentRequest;

@@ -265,7 +265,6 @@ contract RandomBeacon is Ownable {
 
     event RelayEntrySubmitted(
         uint256 indexed requestId,
-        uint64 groupId,
         address submitter,
         bytes entry
     );
