@@ -90,18 +90,49 @@ Anyone can request for a new relay entry (random number) calling
 `RandomBeacon.requestRelayEntry(IRandomBeaconConsumer callbackContract)`
 function and providing an optional callback parameter. The requester needs to
 approve enough tokens for a fee, as described in Fees and Rewards section.
+
 In `requestRelayEntry` transaction, groups that reached their maximum lifetime
 are getting expired and one of the remaining active groups is tasked with
 producing a new relay entry. All off-chain clients are expected to react to
 `RelayEntryRequested` event and check if a group they are a member of has been
 tasked with producing a new relay entry. If so, they should start off-chain
 protocol to sign the previous relay entry producing a new relay entry this way.
+
 Off-chain clients are expected to follow the order when submitting relay entry
 to minimize and distribute costs evenly, as described in Fees and Rewards
 section but no ordering is enforced on-chain. New relay entry should be
 submitted using 
 `RandomBeaocn.submitRelayEntry(uint256 submitterIndex, bytes calldata entry)`
 function.
+
+=== Callbacks
+
+Random Beacon supports simple, low gas budget callbacks from a relay entry
+submit transaction with a gas limit being a governable parameter.
+
+Smart contract consuming new relay entry needs to implement `IRandomBeaconConsumer`
+interface. The gas limit for `__beaconCallback` is initially set to 50k gas
+which is enough to `SSTORE` new relay entry, block height in which the entry was
+submitted, and to emit an event. Callback gas limit is a governable value.
+Failure in the callback function does not revert the relay entry transaction.
+
+When requesting a relay entry, it is possible to pass an optional address
+parameter - this is the address of a contract implementing
+`IRandomBeaconConsumer` interface that should be called when a new relay entry
+is submitted to the chain.
+
+```
+interface IRandomBeaconConsumer {
+    /// @notice Receives relay entry produced by Keep Random Beacon. This function
+    /// should be called only by Keep Random Beacon.
+    ///
+    /// @param relayEntry Relay entry (random number) produced by Keep Random
+    ///                   Beacon.
+    /// @param blockNumber Block number at which the relay entry was submitted
+    ///                    to the chain.
+    function __beaconCallback(uint256 relayEntry, uint256 blockNumber) external;
+}
+```
 
 == Build
 
