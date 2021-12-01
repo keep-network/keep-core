@@ -27,7 +27,7 @@ library Heartbeat {
         // ID of the group raising the claim.
         uint64 groupId;
         // Indices of members accused of failed heartbeat. Indices must be in
-        // range <1, groupMembers.length>, unique, and sorted in ascending order.
+        // range [1, groupMembers.length], unique, and sorted in ascending order.
         uint256[] failedMembersIndices;
         // Concatenation of signatures from members supporting the claim.
         // The message to be signed by each member is failed heartbeat nonce
@@ -40,7 +40,7 @@ library Heartbeat {
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
-        // in range <1, groupMembers.length>, unique, and sorted in ascending
+        // in range [1, groupMembers.length], unique, and sorted in ascending
         // order.
         uint256[] signingMembersIndices;
     }
@@ -87,7 +87,8 @@ library Heartbeat {
         require(signaturesCount <= groupSize, "Too many signatures");
 
         // Validate signing members indices. Note that `signingMembersIndices`
-        // were already partially validated during signature validation.
+        // were already partially validated during `signatures` parameter
+        // validation.
         validateMembersIndices(claim.signingMembersIndices, groupSize);
 
         // Each signing member needs to sign the hash of packed `groupPubKey`
@@ -139,9 +140,9 @@ library Heartbeat {
     }
 
     /// @notice Validates members indices array. Array is considered valid
-    ///         if its size and each single index are in <1, groupSize> range,
+    ///         if its size and each single index are in [1, groupSize] range,
     ///         indexes are unique, and sorted in an ascending order.
-    ///         Reverts if validation fails..
+    ///         Reverts if validation fails.
     /// @param indices Array to validate.
     /// @param groupSize Group size used as reference.
     function validateMembersIndices(
@@ -153,7 +154,7 @@ library Heartbeat {
             "Corrupted members indices"
         );
 
-        // Check if first and last indices are in range <1, groupSize>.
+        // Check if first and last indices are in range [1, groupSize].
         // This check combined with the loop below makes sure every single
         // index is in the correct range.
         require(
