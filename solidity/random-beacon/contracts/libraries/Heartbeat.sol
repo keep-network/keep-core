@@ -96,7 +96,9 @@ library Heartbeat {
         validateMembersIndices(claim.signingMembersIndices, groupSize);
 
         // Each signing member needs to sign the hash of packed `groupPubKey`
-        // and `failedMembersIndices` parameters.
+        // and `failedMembersIndices` parameters. Usage of group public key
+        // and not group ID is important because it provides uniqueness of
+        // signed messages and prevent against reusing them in future.
         bytes32 signedMessageHash = keccak256(
             abi.encodePacked(
                 nonce,
