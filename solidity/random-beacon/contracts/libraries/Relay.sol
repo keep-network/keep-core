@@ -73,7 +73,7 @@ library Relay {
     event RelayEntrySubmitted(
         uint256 indexed requestId,
         uint64 groupId,
-        uint256 submitterIndex,
+        address submitter,
         bytes entry
     );
 
@@ -114,37 +114,21 @@ library Relay {
     }
 
     /// @notice Creates a new relay entry.
-    /// @param sortitionPool SortitionPool owned by random beacon
-    /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    /// @param group Group data.
+    /// @param groupPubKey Public key of the group which signed the relay entry.
     /// @return slashingAmount Amount by which group members should be slashed
     ///         in case the relay entry was submitted after the soft timeout.
     ///         The value is zero if entry was submitted on time.
     function submitEntry(
         Data storage self,
-        SortitionPool sortitionPool,
-        uint256 submitterIndex,
         bytes calldata entry,
-        Groups.Group storage group
+        bytes storage groupPubKey
     ) internal returns (uint256 slashingAmount) {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
-        uint256 groupSize = group.members.length;
-
         require(
-            submitterIndex > 0 && submitterIndex <= groupSize,
-            "Invalid submitter index"
-        );
-        require(
-            sortitionPool.getIDOperator(group.members[submitterIndex - 1]) ==
-                msg.sender,
-            "Unexpected submitter index"
-        );
-
-        require(
-            BLS.verify(group.groupPubKey, self.previousEntry, entry),
+            BLS.verify(groupPubKey, self.previousEntry, entry),
             "Invalid entry"
         );
 
@@ -160,7 +144,7 @@ library Relay {
         emit RelayEntrySubmitted(
             self.currentRequest.id,
             self.currentRequest.groupId,
-            submitterIndex,
+            msg.sender,
             entry
         );
 

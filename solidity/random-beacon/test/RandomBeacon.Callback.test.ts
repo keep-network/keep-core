@@ -49,12 +49,6 @@ describe("RandomBeacon - Callback", () => {
   const groupCreationFrequency = 100
   const groupLifetime = 200
 
-  // When determining the eligibility queue, the `(blsData.groupSignature % 64) + 1`
-  // equation points member`16` as the first eligible one. This is why we use that
-  // index as `submitRelayEntry` parameter. The `submitter` signer represents that
-  // member too.
-  const submitterMemberIndex = 16
-
   let callbackGasLimit = 50000
 
   let requester: SignerWithAddress
@@ -68,6 +62,7 @@ describe("RandomBeacon - Callback", () => {
 
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+    submitter = await ethers.getSigner((await getUnnamedAccounts())[2])
   })
 
   beforeEach("load test fixture", async () => {
@@ -89,10 +84,6 @@ describe("RandomBeacon - Callback", () => {
     await randomBeacon.updateGroupCreationParameters(
       groupCreationFrequency,
       groupLifetime
-    )
-
-    submitter = await ethers.getSigner(
-      signers[submitterMemberIndex - 1].address
     )
   })
 
@@ -121,7 +112,7 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(16, blsData.groupSignature)
+          .submitRelayEntry(blsData.groupSignature)
 
         await approveTestToken()
 
@@ -138,7 +129,7 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(16, blsData.groupSignature)
+          .submitRelayEntry(blsData.groupSignature)
 
         await approveTestToken()
 
@@ -167,7 +158,7 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            .submitRelayEntry(blsData.groupSignature)
 
           const lastEntry = await callbackContract.lastEntry()
           await expect(lastEntry).to.equal(blsData.groupSignatureUint256)
@@ -194,7 +185,7 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            .submitRelayEntry(blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
@@ -210,7 +201,7 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            .submitRelayEntry(blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")

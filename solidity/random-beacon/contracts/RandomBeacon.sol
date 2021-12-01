@@ -266,7 +266,7 @@ contract RandomBeacon is Ownable {
     event RelayEntrySubmitted(
         uint256 indexed requestId,
         uint64 groupId,
-        uint256 submitterIndex,
+        address submitter,
         bytes entry
     );
 
@@ -749,23 +749,15 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Creates a new relay entry.
-    /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
-        external
-    {
+    function submitRelayEntry(bytes calldata entry) external {
         uint256 currentRequestId = relay.currentRequest.id;
 
         Groups.Group storage group = groups.getGroup(
             relay.currentRequest.groupId
         );
 
-        uint256 slashingAmount = relay.submitEntry(
-            sortitionPool,
-            submitterIndex,
-            entry,
-            group
-        );
+        uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
