@@ -1520,10 +1520,13 @@ describe("RandomBeacon - Group Creation", () => {
 
       context("with misbehaved operators", async () => {
         const misbehavedIndices = [2, 10, 64]
+        let misbehavedIds
+        let tx: ContractTransaction
+
         beforeEach(async () => {
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
-          const { dkgResult } = await signAndSubmitCorrectDkgResult(
+          const { dkgResult, members } = await signAndSubmitCorrectDkgResult(
             randomBeacon,
             groupPublicKey,
             genesisSeed,
@@ -1531,19 +1534,24 @@ describe("RandomBeacon - Group Creation", () => {
             misbehavedIndices
           )
 
+          misbehavedIds = misbehavedIndices.map((i) => members[i - 1])
+
           const submitter = await getDkgResultSubmitterSigner(
             randomBeacon,
             dkgResult
           )
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
-          await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
+          tx = await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
         })
 
         it("should ban misbehaved operators from sortition pool rewards", async () => {
-          // TODO: Once the `banRewards` function in the sortition-pools is
-          //       implemented, check that members with indices 2, 10, 64 are
-          //       banned.
+          const now = await helpers.time.lastBlockTime()
+          const expectedUntil = now + 1209600 // 2 weeks
+
+          await expect(tx)
+            .to.emit(sortitionPool, "IneligibleForRewards")
+            .withArgs(misbehavedIds, expectedUntil)
         })
 
         it("should clean dkg data", async () => {
@@ -1950,7 +1958,7 @@ describe("RandomBeacon - Group Creation", () => {
     it("should enforce submission start offset", async () => {
       let dkgResult: DkgResult
 
-      const [genesisTx, genesisSeed] = await genesis(randomBeacon)
+      const [genesisTx] = await genesis(randomBeacon)
       const startBlock = genesisTx.blockNumber
 
       await mineBlocks(constants.offchainDkgTime)
