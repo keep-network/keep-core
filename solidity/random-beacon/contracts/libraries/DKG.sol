@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";

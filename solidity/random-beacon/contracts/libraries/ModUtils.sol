@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 library ModUtils {
     /// @dev Wraps the modular exponent pre-compile introduced in Byzantium.
