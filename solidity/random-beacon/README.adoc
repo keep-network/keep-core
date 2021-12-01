@@ -172,6 +172,61 @@ notifier's reward. The function unlocks the sortition pool and clears up DKG
 data but no slashing for DKG timeout is executed and no one is losing any
 rewards.
 
+=== Fees and Rewards
+
+Relay requester should provide a fee in T. The value of the fee is a governable
+parameter. The entire fee is deposited in the DKG rewards pool that is used to
+reimburse for different actions related to DKG.
+
+There is a fixed, governable reward for submitting and approving (after the
+challenge period!) DKG result paid from the DKG rewards pool. The reward is paid
+to the DKG result submitter in the transaction approving the DKG result. If the
+DKG result submitter failed to approve the result after the challenge period,
+anyone can do that and receive the submitter's reward.
+
+The logic triggering new group selection is embedded in relay request
+transaction and is as cheap as possible, so no additional reward is paid for
+triggering DKG.
+
+In case the DKG result has not been submitted on time, anyone can unlock the
+pool and receive a fixed, governable reward for reporting DKG timeout. The
+reward is paid from the DKG reward pool. 
+
+The order in which operators are supposed to submit DKG result is enforced
+on-chain. The first member eligible to submit the DKG result is a member with
+index `hash(new_group_pubkey) % group_size`, then also
+`(hash(new_group_pubkey) % group_size) + 1`. For example, if
+`hash(new_group_pubkey) % group_size = 62`, `group_size = 64`, group members are
+becoming eligible in the following order:
+`62, 63, 64, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..., 61`. Governance needs to ensure
+that both the frequency of relay requests with which a new DKG starts and the
+fee for a single request make DKG result submitter reward attractive enough so
+that no one wants to bail out from submitting the result.
+
+The transaction submitting relay entry is not reimbursable and implementation
+ensures the gas cost of this transaction is as low as possible, below 200k gas
+when no callback is executed.
+
+Everyone is eligible to submit relay entry at any time but off-chain clients are
+expected to agree and follow the following order to minimize the gas cost and
+distribute costs: the first group member eligible to submit the result is
+`new_entry MOD group_size`; then, if the selected member does not provide entry
+within the governable eligibility period, `(new_entry MOD group_size) + 1` and
+so on.
+
+If some group members are notoriously ignoring their duty, the group can vote on
+failed heartbeat notification for these operators - more on that in the
+Heartbeats section.
+
+T rewards will be distributed continuously to all operators in the beacon
+sortition pool, excluding operators who were marked as ineligible for rewards
+due to failing the heartbeat. 
+
+
+
+
+
+
 == Build
 
 Random beacon contracts use https://hardhat.org/[*Hardhat*] development
