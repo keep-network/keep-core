@@ -32,6 +32,58 @@ an optimistic sortition pool call. It also redesigns staker rewards and offers
 a more operator-friendly approach for relay entry timeouts. Last but not least,
 most parameters for the relay are now governable. 
 
+== The Mechanism
+
+=== Group Creation
+
+New groups are created with a fixed, governable frequency of relay requests.
+Instead of a v1 ticket-based approach for group selection, we use sortition
+pool. Group creation start transaction is embedded into relay request
+transaction and locks a sortition pool. From this moment, no operator can enter
+or leave the pool. Once a new relay entry appears on the chain, all off-chain
+clients perform group selection optimistically calling
+`RandomBeacon.selectGroup(seed)` view function for free. Seed is available in
+`DkgStarted` event emitted when the group creation starts. After determining
+group members, clients should perform off-chain distributed key generation (DKG).
+Selected group member submits the result to the chain calling
+`RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)` function. Once the
+result is submitted, a challenge period starts.
+
+During the challenge period, anyone can notify that the submitted DKG result is
+malicious calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult)`
+function. Malicious DKG result may contain corrupted data, group members not
+selected by the pool, or incorrect supporting signatures. If such malicious
+result is submitted and challenged, the result submitter gets slashed and the
+malicious result is immediately discarded. The length of the challenge period
+and slashing amount are governable parameters.
+
+Once the challenge period passes, DKG result submitter should unlock the
+sortition pool and mark the DKG result as accepted calling
+`RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)` to receive a
+reward. In case the submitter does not call the approve function within a
+specific number of blocks (governable value), anyone can do that and receive the
+submitter's reward as described in Fees and Rewards section.
+
+There is a timeout before which DKG result should be submitted. The timeout
+equals the group size multiplied by the number of blocks for a member to become
+eligible to submit DKG result. The timer starts at the moment when the first
+member becomes eligible.
+
+In case the DKG result was not submitted before a timeout, anyone can notify DKG
+timed out calling `RandomBeacon.notifyDkgTimeout()` and receive a reward, as
+described in Fees and Rewards section. DKG timeout includes the situation when
+no new relay entry was produced and sortition could not be performed.
+
+The sortition pool weights operators by their authorized stake amount and allows
+selecting the same operator multiple times. Off-chain DKG protocol executes in
+the same way as for v1 and inactive/disqualified members during the off-chain
+protocol are marked as ineligible for rewards for a certain, governable, period
+of time when DKG result is approved.
+
+Each group created in the system remains active for a certain, governable period
+of time. Group that expired is no longer selected for any new work and group is
+handled in the relay request transaction.
+
 == Build
 
 Random beacon contracts use https://hardhat.org/[*Hardhat*] development
