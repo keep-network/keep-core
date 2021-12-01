@@ -84,6 +84,25 @@ Each group created in the system remains active for a certain, governable period
 of time. Group that expired is no longer selected for any new work and group is
 handled in the relay request transaction.
 
+=== Relay Request and Relay Entry
+
+Anyone can request for a new relay entry (random number) calling
+`RandomBeacon.requestRelayEntry(IRandomBeaconConsumer callbackContract)`
+function and providing an optional callback parameter. The requester needs to
+approve enough tokens for a fee, as described in Fees and Rewards section.
+In `requestRelayEntry` transaction, groups that reached their maximum lifetime
+are getting expired and one of the remaining active groups is tasked with
+producing a new relay entry. All off-chain clients are expected to react to
+`RelayEntryRequested` event and check if a group they are a member of has been
+tasked with producing a new relay entry. If so, they should start off-chain
+protocol to sign the previous relay entry producing a new relay entry this way.
+Off-chain clients are expected to follow the order when submitting relay entry
+to minimize and distribute costs evenly, as described in Fees and Rewards
+section but no ordering is enforced on-chain. New relay entry should be
+submitted using 
+`RandomBeaocn.submitRelayEntry(uint256 submitterIndex, bytes calldata entry)`
+function.
+
 == Build
 
 Random beacon contracts use https://hardhat.org/[*Hardhat*] development
