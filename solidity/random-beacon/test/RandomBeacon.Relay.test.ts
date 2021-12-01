@@ -800,7 +800,7 @@ describe("RandomBeacon - Relay", () => {
                     signaturesCount: number,
                     modifySignatures: (signatures: string) => string,
                     modifySigningMemberIndices: (
-                      modifySigningMemberIndices: number[]
+                      signingMemberIndices: number[]
                     ) => number[]
                   ) => {
                     let tx: ContractTransaction
