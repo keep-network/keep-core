@@ -24,8 +24,10 @@ describe("RandomBeaconGovernance", () => {
   const initialIneligibleOperatorNotifierReward = 6000
   const initialRelayEntrySubmissionFailureSlashingAmount = 1000
   const initialMaliciousDkgResultSlashingAmount = 1000000000
+  const initialUnauthorizedSigningSlashingAmount = 1000000000
   const initialSortitionPoolRewardsBanDuration = 1209600
   const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
+  const initialUnauthorizedSignatureNotificationRewardMultiplier = 5
   const initialMinimumAuthorization = 1000000
   const initialAuthorizationDecreaseDelay = 86400
   const initialDkgMaliciousResultNotificationRewardMultiplier = 5
@@ -68,13 +70,15 @@ describe("RandomBeaconGovernance", () => {
         initialIneligibleOperatorNotifierReward,
         initialSortitionPoolRewardsBanDuration,
         initialRelayEntryTimeoutNotificationRewardMultiplier,
+        initialUnauthorizedSignatureNotificationRewardMultiplier,
         initialDkgMaliciousResultNotificationRewardMultiplier
       )
     await randomBeacon
       .connect(governance)
       .updateSlashingParameters(
         initialRelayEntrySubmissionFailureSlashingAmount,
-        initialMaliciousDkgResultSlashingAmount
+        initialMaliciousDkgResultSlashingAmount,
+        initialUnauthorizedSigningSlashingAmount
       )
 
     await randomBeacon
@@ -1711,6 +1715,129 @@ describe("RandomBeaconGovernance", () => {
     )
   })
 
+  describe("beginUnauthorizedSigningSlashingAmountUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginUnauthorizedSigningSlashingAmountUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginUnauthorizedSigningSlashingAmountUpdate(123)
+      })
+
+      it("should not update the unauthorized signing slashing amount", async () => {
+        expect(
+          await randomBeacon.unauthorizedSigningSlashingAmount()
+        ).to.be.equal(initialUnauthorizedSigningSlashingAmount)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingUnauthorizedSigningSlashingAmountUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the UnauthorizedSigningSlashingAmountUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "UnauthorizedSigningSlashingAmountUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeUnauthorizedSigningSlashingAmountUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeUnauthorizedSigningSlashingAmountUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeUnauthorizedSigningSlashingAmountUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginUnauthorizedSigningSlashingAmountUpdate(123)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeUnauthorizedSigningSlashingAmountUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginUnauthorizedSigningSlashingAmountUpdate(123)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeUnauthorizedSigningSlashingAmountUpdate()
+        })
+
+        it("should update the unauthorized signing slashing amount", async () => {
+          expect(
+            await randomBeacon.unauthorizedSigningSlashingAmount()
+          ).to.be.equal(123)
+        })
+
+        it("should emit UnauthorizedSigningSlashingAmountUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "UnauthorizedSigningSlashingAmountUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingUnauthorizedSigningSlashingAmountUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
   describe("beginMaliciousDkgResultSlashingAmountUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -1951,6 +2078,139 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingSortitionPoolRewardsBanDurationUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginUnauthorizedSigningNotificationRewardMultiplierUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called with value >100", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(101)
+        ).to.be.revertedWith("Maximum value is 100")
+      })
+    })
+
+    context("when the caller is the owner and value is correct", () => {
+      let tx
+
+      beforeEach(async () => {
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
+      })
+
+      it("should not update the unauthorized signing notification reward multiplier", async () => {
+        expect(
+          await randomBeacon.unauthorizedSigningNotificationRewardMultiplier()
+        ).to.be.equal(initialUnauthorizedSignatureNotificationRewardMultiplier)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingUnauthorizedSigningNotificationRewardMultiplierUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the UnauthorizedSigningNotificationRewardMultiplierUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "UnauthorizedSigningNotificationRewardMultiplierUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        beforeEach(async () => {
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
+        })
+
+        it("should update the unauthorized signing notification reward multiplier", async () => {
+          expect(
+            await randomBeacon.unauthorizedSigningNotificationRewardMultiplier()
+          ).to.be.equal(100)
+        })
+
+        it("should emit UnauthorizedSigningNotificationRewardMultiplierUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "UnauthorizedSigningNotificationRewardMultiplierUpdated"
+            )
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingUnauthorizedSigningNotificationRewardMultiplierUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

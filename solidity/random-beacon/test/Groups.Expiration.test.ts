@@ -17,7 +17,6 @@ const { mineBlocksTo } = helpers.time
 describe("Groups", () => {
   const members: number[] = []
   const groupLifetime = 20
-  const relayEntryTimeout = 10
 
   let groups: GroupsStub
 

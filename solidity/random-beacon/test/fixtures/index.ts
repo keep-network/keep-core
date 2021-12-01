@@ -74,15 +74,17 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
 
+  const { testToken } = await testTokenDeployment()
+
   const StakingStub = await ethers.getContractFactory("StakingStub")
   const stakingStub: StakingStub = await StakingStub.deploy()
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
+    stakingStub.address,
+    testToken.address,
     constants.poolWeightDivisor
   )) as SortitionPool
-
-  const { testToken } = await testTokenDeployment()
 
   const DKG = await ethers.getContractFactory("DKG")
   const dkg = await DKG.deploy()

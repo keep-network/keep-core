@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import type { ContractTransaction } from "ethers"
 import blsData from "./data/bls"
