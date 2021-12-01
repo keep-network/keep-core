@@ -897,10 +897,15 @@ contract RandomBeacon is Ownable {
     ///         This function can be called only for active and non-terminated
     ///         groups.
     /// @param claim Failure claim.
-    function notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim)
-        external
-    {
+    /// @param nonce Current failed heartbeat nonce for given group. Must
+    ///        be the same as the stored one.
+    function notifyFailedHeartbeat(
+        Heartbeat.FailureClaim calldata claim,
+        uint256 nonce
+    ) external {
         uint64 groupId = claim.groupId;
+
+        require(nonce == failedHeartbeatNonce[groupId], "Invalid nonce");
 
         require(
             groups.isGroupActive(groupId),
@@ -908,7 +913,6 @@ contract RandomBeacon is Ownable {
         );
 
         Groups.Group storage group = groups.getGroup(groupId);
-        uint256 nonce = failedHeartbeatNonce[groupId]++;
 
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
             sortitionPool,
@@ -916,6 +920,8 @@ contract RandomBeacon is Ownable {
             group,
             nonce
         );
+
+        failedHeartbeatNonce[groupId]++;
 
         emit HeartbeatFailed(groupId, nonce, msg.sender);
 
