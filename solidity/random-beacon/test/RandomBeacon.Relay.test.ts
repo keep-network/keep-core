@@ -133,7 +133,8 @@ describe("RandomBeacon - Relay", () => {
       ineligibleOperatorNotifierReward,
       1209600,
       5,
-      5
+      5,
+      100
     )
   })
 
