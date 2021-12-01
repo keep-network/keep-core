@@ -66,6 +66,7 @@ export const LINK = {
 }
 
 export const WALLETS = {
+  TALLY: {label: "Tally", name: "TALLY"},
   METAMASK: { label: "MetaMask", name: "METAMASK" },
   TREZOR: { label: "Trezor", name: "TREZOR" },
   LEDGER: { label: "Ledger", name: "LEDGER" },
