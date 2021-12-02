@@ -94,37 +94,44 @@ library AltBn128 {
         view
         returns (G1Point memory)
     {
-        bytes32 h = sha256(m);
-        uint256 x = uint256(h) % p;
-        uint256 y;
+        unchecked {
+            bytes32 h = sha256(m);
+            uint256 x = uint256(h) % p;
+            uint256 y;
 
-        while (true) {
-            y = g1YFromX(x);
-            if (y > 0) {
-                return G1Point(x, y);
+            while (true) {
+                y = g1YFromX(x);
+                if (y > 0) {
+                    return G1Point(x, y);
+                }
+                x += 1;
             }
-            x += 1;
         }
     }
 
     /// @dev Decompress a point on G1 from a single uint256.
     function g1Decompress(bytes32 m) internal view returns (G1Point memory) {
-        bytes32 mX = bytes32(0);
-        bytes1 leadX = m[0] & 0x7f;
-        // slither-disable-next-line incorrect-shift
-        uint256 mask = 0xff << (31 * 8);
-        mX = (m & ~bytes32(mask)) | (leadX >> 0);
+        unchecked {
+            bytes32 mX = bytes32(0);
+            bytes1 leadX = m[0] & 0x7f;
+            // slither-disable-next-line incorrect-shift
+            uint256 mask = 0xff << (31 * 8);
+            mX = (m & ~bytes32(mask)) | (leadX >> 0);
 
-        uint256 x = uint256(mX);
-        uint256 y = g1YFromX(x);
+            uint256 x = uint256(mX);
+            uint256 y = g1YFromX(x);
 
-        if (parity(y) != (m[0] & 0x80) >> 7) {
-            y = p - y;
+            if (parity(y) != (m[0] & 0x80) >> 7) {
+                y = p - y;
+            }
+
+            require(
+                isG1PointOnCurve(G1Point(x, y)),
+                "Malformed bn256.G1 point."
+            );
+
+            return G1Point(x, y);
         }
-
-        require(isG1PointOnCurve(G1Point(x, y)), "Malformed bn256.G1 point.");
-
-        return G1Point(x, y);
     }
 
     /// @dev Wraps the point addition pre-compile introduced in Byzantium.
@@ -514,7 +521,9 @@ library AltBn128 {
                 (x, y) = _gfP2Multiply(x, y, ax, ay);
             }
 
-            exp = exp / 2;
+            unchecked {
+                exp = exp / 2;
+            }
             (ax, ay) = _gfP2Multiply(ax, ay, ax, ay);
         }
     }
