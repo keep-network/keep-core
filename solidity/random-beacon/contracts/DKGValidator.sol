@@ -209,13 +209,12 @@ contract DKGValidator {
             )
         );
 
+        uint256[] calldata signingMembersIndices = result.signingMembersIndices;
         uint32[] memory signingMemberIds = new uint32[](
-            result.signingMembersIndices.length
+            signingMembersIndices.length
         );
-        for (uint256 i = 0; i < result.signingMembersIndices.length; i++) {
-            signingMemberIds[i] = result.members[
-                result.signingMembersIndices[i] - 1
-            ];
+        for (uint256 i = 0; i < signingMembersIndices.length; i++) {
+            signingMemberIds[i] = result.members[signingMembersIndices[i] - 1];
         }
 
         address[] memory signingMemberAddresses = sortitionPool.getIDOperators(
