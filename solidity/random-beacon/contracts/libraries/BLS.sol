@@ -48,11 +48,10 @@ library BLS {
         AltBn128.G1Point memory _signature = AltBn128.g1Unmarshal(signature);
 
         return
-            AltBn128.pairing(
-                AltBn128.G1Point(_signature.x, AltBn128.getP() - _signature.y),
-                AltBn128.g2(),
+            _verify(
+                AltBn128.g2Unmarshal(publicKey),
                 AltBn128.g1Unmarshal(message),
-                AltBn128.g2Unmarshal(publicKey)
+                _signature
             );
     }
 
