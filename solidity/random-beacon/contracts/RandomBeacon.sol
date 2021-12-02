@@ -317,31 +317,32 @@ contract RandomBeacon is Ownable {
         staking = _staking;
 
         // TODO: revisit all initial values
-        callbackGasLimit = 200e3;
-        groupCreationFrequency = 10;
+        callbackGasLimit = 50000;
+        groupCreationFrequency = 5;
 
-        dkgResultSubmissionReward = 0;
-        sortitionPoolUnlockingReward = 0;
+        dkgResultSubmissionReward = 1000e18;
+        sortitionPoolUnlockingReward = 100e18;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
-        relayEntryTimeoutNotificationRewardMultiplier = 5;
-        unauthorizedSigningNotificationRewardMultiplier = 5;
+        relayEntryTimeoutNotificationRewardMultiplier = 40;
+        unauthorizedSigningNotificationRewardMultiplier = 50;
         dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
         dkg.init(_sortitionPool, _dkgValidator);
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(10);
+        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(20);
 
         relay.initSeedEntry();
-        relay.setRelayEntrySubmissionEligibilityDelay(10);
+        relay.setRelayRequestFee(200e18);
+        relay.setRelayEntrySubmissionEligibilityDelay(20);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
-        groups.setGroupLifetime(80640); // ~2weeks assuming 15s block time
+        groups.setGroupLifetime(403200); // ~10 months assuming 15s block time
     }
 
     /// @notice Updates the values of authorization parameters.
