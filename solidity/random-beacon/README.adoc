@@ -306,11 +306,11 @@ Please make sure you have the following prerequisites installed on your machine:
 === Build contracts
 
 To build the smart contracts, install node packages first:
-```
+```sh
 yarn install
 ```
 Once packages are installed, you can build the smart contracts using:
-```
+```sh
 yarn build
 ```
 Compiled contracts will land in the `build/` directory.
@@ -319,6 +319,6 @@ Compiled contracts will land in the `build/` directory.
 
 There are multiple test scenarios living in the `test` directory.
 You can run them by doing:
-```
+```sh
 yarn test
 ```
