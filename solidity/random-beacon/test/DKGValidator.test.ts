@@ -117,7 +117,7 @@ describe("DKGValidator", () => {
       }
     }
 
-    context("for a valid DKG result", () => {
+    context("when DKG result is valid", () => {
       it("should pass", async () => {
         const result = await testValidate(
           selectedOperators,
@@ -133,7 +133,7 @@ describe("DKGValidator", () => {
     // just a basic test ensuring group members validation
     // is called; detailed test cases are implemented for
     // validateGroupMembers function
-    context("for a DKG result with invalid group members", () => {
+    context("when DKG result contains invalid group members", () => {
       it("should return validation error", async () => {
         const shuffledOperators = shuffle(selectedOperators)
 
@@ -151,7 +151,7 @@ describe("DKGValidator", () => {
     // just a basic test ensuring signatures validation
     // is called; detailed test cases are implemented for
     // validateSignatures function
-    context("for a DKG result with invalid signatures", () => {
+    context("when DKG result contains invalid signatures", () => {
       it("should return validation error", async () => {
         const shuffledOperators = shuffle(selectedOperators)
 
@@ -191,7 +191,7 @@ describe("DKGValidator", () => {
       }
     }
 
-    context("for a valid DKG result", () => {
+    context("when DKG result is valid", () => {
       it("should pass", async () => {
         const result = await testValidateFields(
           selectedOperators,
@@ -204,159 +204,208 @@ describe("DKGValidator", () => {
       })
     })
 
-    context("for malformed group public key", () => {
-      it("should return validation error", async () => {
-        const empty = "0x"
-        const tooShort = groupPublicKey.substring(0, groupPublicKey.length - 2)
-        const tooLong = `${groupPublicKey}ff`
+    context("when group public key is malformed", () => {
+      context("when key is empty", () => {
+        it("should return validation error", async () => {
+          const empty = "0x"
+          const result = await testValidateFields(
+            selectedOperators,
+            empty,
+            noMisbehaved
+          )
 
-        let result = await testValidateFields(
-          selectedOperators,
-          empty,
-          noMisbehaved
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Malformed group public key")
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Malformed group public key")
+      context("when key is too short", () => {
+        it("should return validation error", async () => {
+          const tooShort = groupPublicKey.substring(
+            0,
+            groupPublicKey.length - 2
+          )
+          const result = await testValidateFields(
+            selectedOperators,
+            tooShort,
+            noMisbehaved
+          )
 
-        result = await testValidateFields(
-          selectedOperators,
-          tooShort,
-          noMisbehaved
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Malformed group public key")
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Malformed group public key")
+      context("when key is too long", () => {
+        it("should return validation error", async () => {
+          const tooLong = `${groupPublicKey}ff`
+          const result = await testValidateFields(
+            selectedOperators,
+            tooLong,
+            noMisbehaved
+          )
 
-        result = await testValidateFields(
-          selectedOperators,
-          tooLong,
-          noMisbehaved
-        )
-
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Malformed group public key")
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Malformed group public key")
+        })
       })
     })
 
-    context("for malformed misbehaved array", () => {
-      it("should return validation error", async () => {
-        const lessThanOne = [0, 1, 2]
-        const higherThanGroupSize = [1, 2, 65]
-        const unsorted = [1, 2, 3, 60, 4]
-        const tooMany = [2, 4, 15, 17, 50, 53, 64]
+    context("when misbehaved array is malformed", () => {
+      context("when index is less than one", async () => {
+        it("should return validation error", async () => {
+          const lessThanOne = [0, 1, 2]
+          const result = await testValidateFields(
+            selectedOperators,
+            groupPublicKey,
+            lessThanOne
+          )
 
-        let result = await testValidateFields(
-          selectedOperators,
-          groupPublicKey,
-          lessThanOne
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal(
+            "Corrupted misbehaved members indices"
+          )
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Corrupted misbehaved members indices")
+      context("when index is higher than group size", () => {
+        it("should return validation error", async () => {
+          const higherThanGroupSize = [1, 2, 65]
+          const result = await testValidateFields(
+            selectedOperators,
+            groupPublicKey,
+            higherThanGroupSize
+          )
 
-        result = await testValidateFields(
-          selectedOperators,
-          groupPublicKey,
-          higherThanGroupSize
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal(
+            "Corrupted misbehaved members indices"
+          )
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Corrupted misbehaved members indices")
+      context("when indices are unsorted", () => {
+        it("should return validation error", async () => {
+          const unsorted = [1, 2, 3, 60, 4]
+          const result = await testValidateFields(
+            selectedOperators,
+            groupPublicKey,
+            unsorted
+          )
 
-        result = await testValidateFields(
-          selectedOperators,
-          groupPublicKey,
-          unsorted
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal(
+            "Corrupted misbehaved members indices"
+          )
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Corrupted misbehaved members indices")
+      context("when there are too many indices", () => {
+        it("should return validation error", async () => {
+          const tooMany = [2, 4, 15, 17, 50, 53, 64]
+          const result = await testValidateFields(
+            selectedOperators,
+            groupPublicKey,
+            tooMany
+          )
 
-        result = await testValidateFields(
-          selectedOperators,
-          groupPublicKey,
-          tooMany
-        )
-
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal(
-          "Too many members misbehaving during DKG"
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal(
+            "Too many members misbehaving during DKG"
+          )
+        })
       })
     })
 
-    context("for malformed signatures array", async () => {
-      it("should return validation error", async () => {
-        const noSignatures = 0
-        const tooFewSignatures = 32
-        const maxSignatures = 64
-        const singleSignatureLength = 130
+    context("when signatures array is malformed", async () => {
+      context("when there are no signatures", () => {
+        it("should return validation error", async () => {
+          const noSignatures = 0
+          const result = await testValidateFields(
+            selectedOperators,
+            groupPublicKey,
+            noMisbehaved,
+            noSignatures
+          )
 
-        let result = await testValidateFields(
-          selectedOperators,
-          groupPublicKey,
-          noMisbehaved,
-          noSignatures
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("No signatures provided")
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("No signatures provided")
+      context("when signatures are of incorrect length", () => {
+        it("should return validation error", async () => {
+          const dkgResult = await prepareDkgResult(
+            selectedOperators,
+            selectedOperators,
+            groupPublicKey,
+            noMisbehaved,
+            dkgStartBlock
+          )
+          dkgResult.signatures += "ff"
+          const result = await validator.validateFields(dkgResult)
 
-        let dkgResult = await prepareDkgResult(
-          selectedOperators,
-          selectedOperators,
-          groupPublicKey,
-          noMisbehaved,
-          dkgStartBlock
-        )
-        dkgResult.signatures += "ff"
-        result = await validator.validateFields(dkgResult)
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Malformed signatures array")
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Malformed signatures array")
+      context("when there are more signatures than signers", () => {
+        it("should return validation error", async () => {
+          const signatureHexStrLength = 130
+          const dkgResult = await prepareDkgResult(
+            selectedOperators,
+            selectedOperators,
+            groupPublicKey,
+            noMisbehaved,
+            dkgStartBlock
+          )
+          dkgResult.signatures += "f".repeat(signatureHexStrLength)
+          const result = await validator.validateFields(dkgResult)
 
-        dkgResult = await prepareDkgResult(
-          selectedOperators,
-          selectedOperators,
-          groupPublicKey,
-          noMisbehaved,
-          dkgStartBlock
-        )
-        dkgResult.signatures += "f".repeat(singleSignatureLength)
-        result = await validator.validateFields(dkgResult)
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Unexpected signatures count")
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Unexpected signatures count")
+      context("when there are too few signatures", () => {
+        it("should return validation error", async () => {
+          const tooFewSignatures = 32
+          const result = await testValidateFields(
+            selectedOperators,
+            groupPublicKey,
+            noMisbehaved,
+            tooFewSignatures
+          )
 
-        result = await testValidateFields(
-          selectedOperators,
-          groupPublicKey,
-          noMisbehaved,
-          tooFewSignatures
-        )
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Too few signatures")
+        })
+      })
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Too few signatures")
+      context("when there are too many signatures", () => {
+        it("should return validation error", async () => {
+          const signatureHexStrLength = 130
+          const maxSignatures = 64
+          const dkgResult = await prepareDkgResult(
+            selectedOperators,
+            selectedOperators,
+            groupPublicKey,
+            noMisbehaved,
+            dkgStartBlock,
+            maxSignatures
+          )
+          dkgResult.signatures += "f".repeat(signatureHexStrLength)
+          dkgResult.signingMembersIndices.push(65)
+          const result = await validator.validateFields(dkgResult)
 
-        dkgResult = await prepareDkgResult(
-          selectedOperators,
-          selectedOperators,
-          groupPublicKey,
-          noMisbehaved,
-          dkgStartBlock,
-          maxSignatures
-        )
-        dkgResult.signatures += "f".repeat(singleSignatureLength)
-        dkgResult.signingMembersIndices.push(65)
-        result = await validator.validateFields(dkgResult)
-
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Too many signatures")
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Too many signatures")
+        })
       })
     })
 
-    context("for malformed signing members indices array", async () => {
+    context("when signing members indices array is malformed", async () => {
       const testSigningMembers = async (_signingMembersIndices) => {
         const dkgResult = await prepareDkgResult(
           selectedOperators,
@@ -375,30 +424,43 @@ describe("DKGValidator", () => {
         }
       }
 
-      it("should return validation error", async () => {
-        const indicesStartWithZero = [
-          0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 17, 18, 19, 20,
-          21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
-        ]
-        let result = await testSigningMembers(indicesStartWithZero)
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Corrupted signing member indices")
+      context("when index is zero", () => {
+        it("should return validation error", async () => {
+          const indicesStartWithZero = [
+            0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+          ]
+          const result = await testSigningMembers(indicesStartWithZero)
 
-        const indicesEndWithTooBig = [
-          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 17, 18, 19, 20,
-          21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 65,
-        ]
-        result = await testSigningMembers(indicesEndWithTooBig)
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Corrupted signing member indices")
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Corrupted signing member indices")
+        })
+      })
 
-        const indicesUnsorted = [
-          1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-          21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 31, 33,
-        ]
-        result = await testSigningMembers(indicesUnsorted)
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Corrupted signing member indices")
+      context("when index is greater than group size", () => {
+        it("should return validation error", async () => {
+          const indicesEndWithTooBig = [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 65,
+          ]
+          const result = await testSigningMembers(indicesEndWithTooBig)
+
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Corrupted signing member indices")
+        })
+      })
+
+      context("when indices are unsorted", () => {
+        it("should return validation error", async () => {
+          const indicesUnsorted = [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 31, 33,
+          ]
+          const result = await testSigningMembers(indicesUnsorted)
+
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Corrupted signing member indices")
+        })
       })
     })
   })
@@ -416,14 +478,14 @@ describe("DKGValidator", () => {
       return validator.validateGroupMembers(dkgResult, dkgSeed)
     }
 
-    context("for a valid DKG result", () => {
+    context("when DKG result is valid", () => {
       it("should pass", async () => {
         const isValid = await testValidateGroupMembers(selectedOperators)
         expect(isValid).to.be.true
       })
     })
 
-    context("for operators other than selected", () => {
+    context("when there are operators other then selected", () => {
       it("should fail the validation", async () => {
         const isValid = await testValidateGroupMembers(
           shuffle(selectedOperators)
@@ -446,7 +508,7 @@ describe("DKGValidator", () => {
       return validator.validateSignatures(dkgResult, dkgStartBlock)
     }
 
-    context("for a valid DKG result", () => {
+    context("when DKG result is valid", () => {
       it("should pass", async () => {
         const isValid = await testValidateSignatures(
           selectedOperators,
@@ -458,7 +520,7 @@ describe("DKGValidator", () => {
     })
 
     context(
-      "for signature provided by one malicious, selected operator",
+      "when signatures provided by one malicious, selected operator",
       () => {
         it("should fail the validation", async () => {
           const maliciousSigners = Array(constants.groupSize).fill(
@@ -474,7 +536,7 @@ describe("DKGValidator", () => {
       }
     )
 
-    context("for signatures not matching signers", () => {
+    context("when signatures do not matching signers", () => {
       it("should fail the validation", async () => {
         const dkgResult = await prepareDkgResult(
           selectedOperators,
@@ -500,7 +562,7 @@ describe("DKGValidator", () => {
       })
     })
 
-    context("for signatures containing wrong resultHash", () => {
+    context("when signatures contain wrong result hash", () => {
       const signWithWrongResultHash = async (signingOperators: Operator[]) => {
         const wrongResultHash = ethers.utils.solidityKeccak256(
           ["bytes", "uint8[]", "uint256"],
@@ -541,7 +603,7 @@ describe("DKGValidator", () => {
       })
     })
 
-    context("for signatures consisting of random bytes", () => {
+    context("when signatures consist of random bytes", () => {
       it("should revert", async () => {
         const numberOfSignatures = 33
         const signatureHexStrLength = 2 * 65
@@ -557,6 +619,7 @@ describe("DKGValidator", () => {
           signatureHexStrLength * numberOfSignatures
         )}`
         dkgResult.signatures = wrongSignatures
+
         await expect(
           validator.validateSignatures(dkgResult, dkgStartBlock)
         ).to.be.revertedWith("ECDSA: invalid signature 's' value")
