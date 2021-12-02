@@ -337,6 +337,7 @@ contract RandomBeacon is Ownable {
         dkg.setResultSubmissionEligibilityDelay(20);
 
         relay.initSeedEntry();
+        relay.setRelayRequestFee(200e18);
         relay.setRelayEntrySubmissionEligibilityDelay(20);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
