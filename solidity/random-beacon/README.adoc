@@ -50,7 +50,7 @@ now governable.
 
 === Group Creation
 
-New groups are created with a fixed, governable frequency of relay requests.
+New groups are created with a fixed frequency of relay requests.
 Instead of a v1 ticket-based approach for group selection, we use a sortition
 pool. Group creation start transaction is embedded into relay request
 transaction and locks a sortition pool. From this moment, no operator can enter
@@ -68,15 +68,14 @@ malicious calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult
 function. A malicious DKG result may contain corrupted data, group members not
 selected by the pool, or incorrect supporting signatures. If such malicious
 result is submitted and challenged, the result submitter gets slashed and the
-malicious result is immediately discarded. The length of the challenge period
-and slashing amount are governable parameters.
+malicious result is immediately discarded.
 
 Once the challenge period passes, and no challenges are reported,
 the DKG result submitter should unlock the sortition pool and mark the DKG result as
 accepted calling
 `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)` to receive a
 reward. In case the submitter does not call the approve function within a
-specific governable number of blocks, anyone can do that and receive the
+specific number of blocks, anyone can do that and receive the
 submitter's reward as described in <<fees-and-rewards,Fees and Rewards>> section.
 
 There is a timeout before which a DKG result should be submitted. The timeout
@@ -93,10 +92,10 @@ performed.
 The sortition pool weights operators by their authorized stake amount and allows
 selecting the same operator multiple times. Off-chain DKG protocol executes in
 the same way as for v1 and inactive/disqualified members during the off-chain
-protocol are marked as ineligible for rewards for a certain, governable, period
+protocol are marked as ineligible for rewards for a certain period
 of time when the DKG result is approved.
 
-Each group created in the system remains active for a certain, governable period
+Each group created in the system remains active for a certain period
 of time. A group that expired is no longer selected for any new work. Group
 expiration is performed in the relay request transaction.
 
@@ -124,7 +123,7 @@ function.
 === Callbacks
 
 Random Beacon supports simple, low gas budget callbacks from a relay entry
-submit a transaction with a gas limit being a governable parameter.
+submit a transaction with a gas limit.
 
 When requesting a relay entry, it is possible to pass an optional address
 parameter - this is the address of a contract implementing
@@ -134,7 +133,7 @@ is submitted to the chain.
 Smart contract consuming new relay entry needs to implement `IRandomBeaconConsumer`
 interface. The gas limit for `__beaconCallback` is initially set to 50k gas
 which is enough to `SSTORE` new relay entry, block height in which the entry was
-submitted, and to emit an event. Callback gas limit is a governable value.
+submitted, and to emit an event.
 Failure in the callback function does not revert the relay entry transaction.
 
 ```solidity
@@ -163,7 +162,7 @@ on-chain but off-chain clients are expected to agree and follow it.
 
 If no entry was provided within the soft timeout, all operators in the group
 start bleeding and losing their stake. The bleeding increases linearly from 0 to
-the governable slashing amount per operator over time, until the hard timeout is
+the slashing amount per operator over time, until the hard timeout is
 reached or until a relay entry is submitted by the group.
 
 The time for a single group member to become eligible to submit a result and the
@@ -197,11 +196,10 @@ rewards.
 [[fees-and-rewards]]
 === Fees and Rewards
 
-Relay requester should provide a fee in T. The value of the fee is a governable
-parameter. The entire fee is deposited in the DKG rewards pool that is used to
-reimburse for different actions related to DKG.
+Relay requester should provide a fee in T. The entire fee is deposited in the DKG
+rewards pool that is used to reimburse for different actions related to DKG.
 
-There is a fixed, governable reward for submitting and approving a DKG result
+There is a fixed reward for submitting and approving a DKG result
 paid from the DKG rewards pool. The reward is paid
 to the DKG result submitter in the transaction approving the DKG result. If the
 DKG result submitter failed to approve the result after the challenge period,
@@ -212,13 +210,13 @@ transaction and is as cheap as possible, so no additional reward is paid for
 triggering DKG.
 
 In case the DKG result has not been submitted on time, anyone can unlock the
-pool and receive a fixed, governable reward for reporting DKG timeout. The
+pool and receive a fixed reward for reporting DKG timeout. The
 reward is paid from the DKG reward pool. 
 
 [[dkg-submit-eligibility]]
 The order in which operators are supposed to submit a DKG result is enforced
 on-chain. The first member eligible to submit the DKG result is a member with
-index `keccak256(new_group_pubkey) % group_size`. Then after a governable
+index `keccak256(new_group_pubkey) % group_size`. Then after a
 submission eligibility delays, members with subsequent indices are becoming
 eligible one after another.
 
@@ -239,8 +237,7 @@ Everyone is eligible to submit relay entry at any time but off-chain clients are
 expected to agree and follow the following order to minimize the gas cost and
 distribute costs: the first group member eligible to submit the result is
 `new_entry % group_size`; then, if the selected member does not provide an entry
-within the governable eligibility period, `(new_entry % group_size) + 1` and
-so on.
+within the eligibility period, `(new_entry % group_size) + 1` and so on.
 
 If some group members are notoriously ignoring their duty, the group can vote on
 failed <<heartbeats,heartbeat>> notification for these operators.
@@ -266,7 +263,7 @@ heartbeat failure claim. If the required threshold of group members signed
 the heartbeat failure claim, they can submit it to
 `RandomBeacon.notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim, uint256 nonce)`
 function and have the group members who failed the heartbeat excluded from
-the sortition pool rewards for a governable time period.
+the sortition pool rewards for a specific time period.
 
 The submitter of the failed heartbeat claim receives a reward from a separate
 notifier reward pool, funded by DAO for heartbeat failure claims specifically.
@@ -342,7 +339,7 @@ _~6h assuming 15s block time_
 |Group lifetime in blocks
 |Yes
 d|`80640 blocks` +
-_~2weeks assuming 15s block time_
+_~2 weeks assuming 15s block time_
 
 4+s|Relay Entry
 
