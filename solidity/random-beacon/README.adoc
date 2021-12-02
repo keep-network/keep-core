@@ -126,7 +126,6 @@ function.
 Random Beacon supports simple, low gas budget callbacks from a relay entry
 submit a transaction with a gas limit being a governable parameter.
 
-
 When requesting a relay entry, it is possible to pass an optional address
 parameter - this is the address of a contract implementing
 `IRandomBeaconConsumer` interface that should be called when a new relay entry
@@ -270,7 +269,7 @@ function and have the group members who failed the heartbeat excluded from
 the sortition pool rewards for a governable time period.
 
 The submitter of the failed heartbeat claim receives a reward from a separate
-notifier reward pool, funded by DAO  for heartbeat failure claims specifically.
+notifier reward pool, funded by DAO for heartbeat failure claims specifically.
 This pool is expected to be funded by DAO with tokens saved from sortition pool
 rewards as a result of having operators marked as ineligible for rewards due to
 failing a heartbeat.
