@@ -280,8 +280,8 @@ presented below.
 
 Please make sure you have the following prerequisites installed on your machine:
 
-- https://nodejs.org[Node.js] >12.22.1
-- https://yarnpkg.com[Yarn] >1.22.10
+- https://nodejs.org[Node.js] >=14.18.2
+- https://yarnpkg.com[Yarn] >=1.22.17
 
 === Build contracts
 
