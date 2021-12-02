@@ -139,7 +139,8 @@ library Relay {
             BLS._verify(
                 AltBn128.g2Unmarshal(groupPubKey),
                 _self.previousEntry,
-                AltBn128.g1Unmarshal(entry)),
+                AltBn128.g1Unmarshal(entry)
+            ),
             "Invalid entry"
         );
 
@@ -152,11 +153,7 @@ library Relay {
                 _self.relayEntrySubmissionFailureSlashingAmount) /
             1e18;
 
-        emit RelayEntrySubmitted(
-            _self.currentRequestID,
-            msg.sender,
-            entry
-        );
+        emit RelayEntrySubmitted(_self.currentRequestID, msg.sender, entry);
 
         self.previousEntry = AltBn128.g1Unmarshal(entry);
         self.currentRequestID = 0;
@@ -184,8 +181,9 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self
-            .relayEntrySubmissionEligibilityDelay = uint32(newRelayEntrySubmissionEligibilityDelay);
+        self.relayEntrySubmissionEligibilityDelay = uint32(
+            newRelayEntrySubmissionEligibilityDelay
+        );
     }
 
     /// @notice Set relayEntryHardTimeout parameter.
@@ -208,8 +206,9 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self
-            .relayEntrySubmissionFailureSlashingAmount = uint96(newRelayEntrySubmissionFailureSlashingAmount);
+        self.relayEntrySubmissionFailureSlashingAmount = uint96(
+            newRelayEntrySubmissionFailureSlashingAmount
+        );
     }
 
     /// @notice Retries the current relay request in case a relay entry
@@ -294,7 +293,7 @@ library Relay {
         returns (bool)
     {
         uint256 _relayEntryTimeout = (dkgGroupSize *
-                                      self.relayEntrySubmissionEligibilityDelay) +
+            self.relayEntrySubmissionEligibilityDelay) +
             self.relayEntryHardTimeout;
 
         return

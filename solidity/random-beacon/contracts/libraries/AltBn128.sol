@@ -112,7 +112,10 @@ library AltBn128 {
                 y = p - y;
             }
 
-            require(isG1PointOnCurve(G1Point(x, y)), "Malformed bn256.G1 point.");
+            require(
+                isG1PointOnCurve(G1Point(x, y)),
+                "Malformed bn256.G1 point."
+            );
 
             return G1Point(x, y);
         }
