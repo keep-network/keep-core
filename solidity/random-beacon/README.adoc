@@ -46,10 +46,9 @@ clients perform group selection optimistically calling
 `RandomBeacon.selectGroup(seed)` view function for free. Seed is available in
 `DkgStarted` event emitted when the group creation starts. After determining
 group members, clients should perform off-chain distributed key generation (DKG).
-Eligible group member - see <<fees-and-rewards,Fees and Rewards>> section -
-submits the result to the chain calling
-`RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)` function. Once the
-result is submitted, a challenge period starts.
+ <<dkg-submit-eligibility,Eligible group member>> submits the result to the chain
+ calling `RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)` function.
+ Once the result is submitted, a challenge period starts.
 
 During the challenge period, anyone can notify that the submitted DKG result is
 malicious calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult)`
@@ -205,6 +204,7 @@ In case the DKG result has not been submitted on time, anyone can unlock the
 pool and receive a fixed, governable reward for reporting DKG timeout. The
 reward is paid from the DKG reward pool. 
 
+[[dkg-submit-eligibility]]
 The order in which operators are supposed to submit a DKG result is enforced
 on-chain. The first member eligible to submit the DKG result is a member with
 index `keccak256(new_group_pubkey) % group_size`. Then after a governable
