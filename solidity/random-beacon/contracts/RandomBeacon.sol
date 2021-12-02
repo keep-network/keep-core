@@ -318,7 +318,7 @@ contract RandomBeacon is Ownable {
 
         // TODO: revisit all initial values
         callbackGasLimit = 50000;
-        groupCreationFrequency = 10;
+        groupCreationFrequency = 5;
 
         dkgResultSubmissionReward = 0;
         sortitionPoolUnlockingReward = 0;
@@ -341,7 +341,7 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
-        groups.setGroupLifetime(80640); // ~2weeks assuming 15s block time
+        groups.setGroupLifetime(403200); // ~10 months assuming 15s block time
     }
 
     /// @notice Updates the values of authorization parameters.
