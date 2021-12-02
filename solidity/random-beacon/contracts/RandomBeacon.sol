@@ -483,41 +483,6 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice The number of blocks for which a DKG result can be challenged.
-    ///         Anyone can challenge DKG result for a certain number of blocks
-    ///         before the result is fully accepted and the group registered in
-    ///         the pool of active groups. If the challenge gets accepted, all
-    ///         operators who signed the malicious result get slashed for
-    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
-    ///         rewarded.
-    function dkgResultChallengePeriodLength() public view returns (uint256) {
-        return dkg.parameters.resultChallengePeriodLength;
-    }
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the DKG result. At first, there is only one
-    ///         member in the group eligible to submit the DKG result. Then,
-    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the DKG result at that moment. After
-    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible to submit the DKG result so that
-    ///         there are three group members eligible to submit the DKG result
-    ///         at that moment. This continues until all group members are
-    ///         eligible to submit the DKG result or until the DKG result is
-    ///         submitted. If all members became eligible to submit the DKG
-    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
-    ///         without the DKG result submitted, DKG is considered as timed out
-    ///         and no DKG result for this group creation can be submitted
-    ///         anymore.
-    function dkgResultSubmissionEligibilityDelay()
-        public
-        view
-        returns (uint256)
-    {
-        return dkg.parameters.resultSubmissionEligibilityDelay;
-    }
-
     /// @notice Updates the values of slashing parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
@@ -1070,6 +1035,41 @@ contract RandomBeacon is Ownable {
     ///         to that group is still pending.
     function groupLifetime() external view returns (uint256) {
         return groups.groupLifetime;
+    }
+
+    /// @notice The number of blocks for which a DKG result can be challenged.
+    ///         Anyone can challenge DKG result for a certain number of blocks
+    ///         before the result is fully accepted and the group registered in
+    ///         the pool of active groups. If the challenge gets accepted, all
+    ///         operators who signed the malicious result get slashed for
+    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
+    ///         rewarded.
+    function dkgResultChallengePeriodLength() public view returns (uint256) {
+        return dkg.parameters.resultChallengePeriodLength;
+    }
+
+    /// @notice The number of blocks it takes for a group member to become
+    ///         eligible to submit the DKG result. At first, there is only one
+    ///         member in the group eligible to submit the DKG result. Then,
+    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the DKG result at that moment. After
+    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
+    ///         group member becomes eligible to submit the DKG result so that
+    ///         there are three group members eligible to submit the DKG result
+    ///         at that moment. This continues until all group members are
+    ///         eligible to submit the DKG result or until the DKG result is
+    ///         submitted. If all members became eligible to submit the DKG
+    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
+    ///         without the DKG result submitted, DKG is considered as timed out
+    ///         and no DKG result for this group creation can be submitted
+    ///         anymore.
+    function dkgResultSubmissionEligibilityDelay()
+        public
+        view
+        returns (uint256)
+    {
+        return dkg.parameters.resultSubmissionEligibilityDelay;
     }
 
     /// @notice Selects a new group of operators based on the provided seed.
