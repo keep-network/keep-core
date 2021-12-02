@@ -333,7 +333,7 @@ contract RandomBeacon is Ownable {
         authorization.setMinimumAuthorization(100000 * 1e18);
 
         dkg.init(_sortitionPool, _dkgValidator);
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
+        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionEligibilityDelay(20);
 
         relay.initSeedEntry();
