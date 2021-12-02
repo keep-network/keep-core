@@ -321,7 +321,7 @@ contract RandomBeacon is Ownable {
         groupCreationFrequency = 5;
 
         dkgResultSubmissionReward = 1000e18;
-        sortitionPoolUnlockingReward = 0;
+        sortitionPoolUnlockingReward = 100e18;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
