@@ -27,21 +27,23 @@ export const dkgState = {
 }
 
 export const params = {
-  relayRequestFee: to1e18(200),
-  relayEntrySubmissionEligibilityDelay: 20,
+  relayRequestFee: 0,
+  relayEntrySubmissionEligibilityDelay: 10,
   relayEntryHardTimeout: 5760,
-  callbackGasLimit: 50000,
-  groupCreationFrequency: 5,
-  groupLifeTime: 403200, // ~10 months assuming 15s block time
-  dkgResultChallengePeriodLength: 11520, // ~48h assuming 15s block time
-  dkgResultSubmissionEligibilityDelay: 20,
-  dkgResultSubmissionReward: to1e18(1000),
-  sortitionPoolUnlockingReward: to1e18(100),
+  callbackGasLimit: 200000,
+  groupCreationFrequency: 10,
+  groupLifeTime: 60 * 60 * 24 * 14, // 2 weeks
+  dkgResultChallengePeriodLength: 1440,
+  dkgResultSubmissionEligibilityDelay: 10,
+  dkgResultSubmissionReward: 0,
+  sortitionPoolUnlockingReward: 0,
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
-  relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
-  maliciousDkgResultSlashingAmount: to1e18(50000),
-  relayEntryTimeoutNotificationRewardMultiplier: 40,
-  unauthorizedSigningNotificationRewardMultiplier: 50,
+  relayEntrySubmissionFailureSlashingAmount: ethers.BigNumber.from(10)
+    .pow(18)
+    .mul(1000),
+  maliciousDkgResultSlashingAmount: ethers.BigNumber.from(10)
+    .pow(18)
+    .mul(50000),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
