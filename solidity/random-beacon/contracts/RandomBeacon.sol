@@ -326,8 +326,8 @@ contract RandomBeacon is Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
-        relayEntryTimeoutNotificationRewardMultiplier = 5;
-        unauthorizedSigningNotificationRewardMultiplier = 5;
+        relayEntryTimeoutNotificationRewardMultiplier = 40;
+        unauthorizedSigningNotificationRewardMultiplier = 50;
         dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
