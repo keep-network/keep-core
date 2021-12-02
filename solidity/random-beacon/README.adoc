@@ -118,7 +118,7 @@ Off-chain clients are expected to follow the order when submitting relay entry
 to minimize and distribute costs evenly, as described in
 <<fees-and-rewards,Fees and Rewards>> section but no ordering is enforced
 on-chain. New relay entry should be submitted using 
-`RandomBeaocn.submitRelayEntry(bytes calldata entry)`
+`RandomBeacon.submitRelayEntry(bytes calldata entry)`
 function.
 
 === Callbacks
@@ -176,7 +176,7 @@ requests and associated risk.
 ==== Hard Relay Entry Timeout
 
 When the hard timeout is reached, anyone can notify about this fact by calling
-`RandomBeacon.reportRelayEntryTimeout()` function and receiving a notifier
+`RandomBeacon.reportRelayEntryTimeout()` function and receive a notifier
 reward. The group which failed to submit a relay entry is terminated, group
 members are slashed, and if there are still active groups in the beacon, another
 group is selected and tasked with producing relay entry for the given relay
