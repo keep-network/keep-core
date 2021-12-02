@@ -754,10 +754,10 @@ contract RandomBeacon is Ownable {
     /// @notice Creates a new relay entry.
     /// @param entry Group BLS signature over the previous entry.
     function submitRelayEntry(bytes calldata entry) external {
-        uint256 currentRequestId = relay.currentRequest.id;
+        uint256 currentRequestId = relay.currentRequestID;
 
         Groups.Group storage group = groups.getGroup(
-            relay.currentRequest.groupId
+            relay.currentRequestGroupID
         );
 
         uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
@@ -797,7 +797,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Reports a relay entry timeout.
     function reportRelayEntryTimeout() external {
-        uint64 groupId = relay.currentRequest.groupId;
+        uint64 groupId = relay.currentRequestGroupID;
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembers = sortitionPool.getIDOperators(
@@ -805,7 +805,7 @@ contract RandomBeacon is Ownable {
         );
 
         emit RelayEntryTimeoutSlashed(
-            relay.currentRequest.id,
+            relay.currentRequestID,
             slashingAmount,
             groupMembers
         );
