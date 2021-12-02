@@ -289,6 +289,160 @@ operators whose nodes never participate in signing because they are
 misconfigured, or operators who notoriously miss their turn in submitting relay
 entry.
 
+== Parameters
+
+[%header,cols="3m,4,^1,^2m,2e"]
+|=== 
+^|Property Name
+^|Description
+|Governable
+|Default Value
+^|Comment
+
+5+s|DKG
+
+|groupSize
+|Size of a group in the threshold relay
+|No
+|64
+|
+
+|groupThreshold
+|The minimum number of group members needed to interact according to the protocol
+to provide signatures for the DKG result. 
+|No
+|33
+|
+
+|activeThreshold
+|The minimum number of active and properly behaving group members during the DKG
+needed to accept the result.
+|No
+|58
+|90% of groupSize
+
+|offchainDkgTime
+|Time in blocks after which DKG result is complete and ready to be published by
+clients
+|No
+|72 blocks
+|5 * (1 + 5) + 2 * (1 + 10) + 20
+
+|resultChallengePeriodLength
+|Time in blocks during which a submitted result can be challenged
+|Yes
+|1440 blocks
+|~6h assuming 15s block time
+
+|resultSubmissionEligibilityDelay
+|Time in blocks after which the next group member is eligible to submit DKG result
+|Yes
+|10 blocks
+|
+
+5+s|Groups
+
+|groupLifetime
+|Group lifetime in blocks
+|Yes
+|80640 blocks
+|~2weeks assuming 15s block time
+
+5+s|Relay Entry
+
+|relayEntrySubmissionEligibilityDelay
+|The number of blocks it takes for a group member to become eligible to submit the
+relay entry
+|Yes
+|10 blocks
+|
+
+|relayEntryHardTimeout
+|Hard timeout in blocks for a group to submit the relay entry
+|Yes
+|5760 blocks
+|~24h assuming 15s block time
+
+|relayEntrySubmissionFailureSlashingAmount
+|Slashing amount for not submitting relay entry
+|Yes
+|1000e18
+|1 000 T
+
+5+s|Random Beacon
+
+|callbackGasLimit
+|Relay entry callback gas limit
+|Yes
+|
+|
+
+|groupCreationFrequency
+|The frequency of new group creation
+|Yes
+|
+|
+
+|dkgResultSubmissionReward
+|Reward in T for submitting DKG result
+|Yes
+|
+|
+
+|sortitionPoolUnlockingReward
+|Reward in T for unlocking the sortition pool if DKG timed out
+|Yes
+|
+|
+
+|ineligibleOperatorNotifierReward
+|Reward in T for notifying the operator is ineligible
+|Yes
+|
+|
+
+|maliciousDkgResultSlashingAmount
+|Slashing amount for supporting malicious DKG result
+|Yes
+|
+|
+
+|unauthorizedSigningSlashingAmount
+|Slashing amount when an unauthorized signing has been proved
+|Yes
+|
+|
+
+|sortitionPoolRewardsBanDuration
+|Duration of the sortition pool rewards ban imposed on operators who missed their
+turn for relay entry or DKG result submission
+|Yes
+|
+|
+
+|relayEntryTimeoutNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about relay entry timeout
+|Yes
+|
+|
+
+|unauthorizedSigningNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about unauthorized signing
+|Yes
+|
+|
+
+|dkgMaliciousResultNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about a malicious DKG result
+|Yes
+|
+|
+
+|===
+
 == Build
 
 Random beacon contracts use https://hardhat.org/[*Hardhat*] development
