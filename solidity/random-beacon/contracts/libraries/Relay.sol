@@ -131,13 +131,14 @@ library Relay {
         bytes calldata entry,
         bytes storage groupPubKey
     ) internal returns (uint256 slashingAmount) {
-        require(isRequestInProgress(self), "No relay request in progress");
-        require(!hasRequestTimedOut(self), "Relay request timed out");
+        Data memory _self = self;
+        require(_isRequestInProgress(_self), "No relay request in progress");
+        require(!_hasRequestTimedOut(_self), "Relay request timed out");
 
         require(
             BLS._verify(
                 AltBn128.g2Unmarshal(groupPubKey),
-                self.previousEntry,
+                _self.previousEntry,
                 AltBn128.g1Unmarshal(entry)),
             "Invalid entry"
         );
@@ -147,12 +148,12 @@ library Relay {
         // factor multiplied by 1e18 to avoid precision loss. In that case
         // the final result needs to be divided by 1e18.
         slashingAmount =
-            (getSlashingFactor(self, dkgGroupSize) *
-                self.relayEntrySubmissionFailureSlashingAmount) /
+            (_getSlashingFactor(_self, dkgGroupSize) *
+                _self.relayEntrySubmissionFailureSlashingAmount) /
             1e18;
 
         emit RelayEntrySubmitted(
-            self.currentRequestID,
+            _self.currentRequestID,
             msg.sender,
             entry
         );
@@ -275,6 +276,32 @@ library Relay {
             block.number > self.currentRequestStartBlock + _relayEntryTimeout;
     }
 
+    /// @notice Returns whether a relay entry request is currently in progress.
+    /// @return True if there is a request in progress. False otherwise.
+    function _isRequestInProgress(Data memory self)
+        internal
+        view
+        returns (bool)
+    {
+        return self.currentRequestID != 0;
+    }
+
+    /// @notice Returns whether the current relay request has timed out.
+    /// @return True if the request timed out. False otherwise.
+    function _hasRequestTimedOut(Data memory self)
+        internal
+        view
+        returns (bool)
+    {
+        uint256 _relayEntryTimeout = (dkgGroupSize *
+                                      self.relayEntrySubmissionEligibilityDelay) +
+            self.relayEntryHardTimeout;
+
+        return
+            _isRequestInProgress(self) &&
+            block.number > self.currentRequestStartBlock + _relayEntryTimeout;
+    }
+
     /// @notice Computes the slashing factor which should be used during
     ///         slashing of the group which exceeded the soft timeout.
     /// @dev This function doesn't use the constant `groupSize` directly and
@@ -288,6 +315,36 @@ library Relay {
     ///         1e18 to obtain a proper result. The slashing factor is
     ///         always in range <0, 1e18>.
     function getSlashingFactor(Data storage self, uint256 _groupSize)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 softTimeoutBlock = self.currentRequestStartBlock +
+            (_groupSize * self.relayEntrySubmissionEligibilityDelay);
+
+        if (block.number > softTimeoutBlock) {
+            uint256 submissionDelay = block.number - softTimeoutBlock;
+            uint256 slashingFactor = (submissionDelay * 1e18) /
+                self.relayEntryHardTimeout;
+            return slashingFactor > 1e18 ? 1e18 : slashingFactor;
+        }
+
+        return 0;
+    }
+
+    /// @notice Computes the slashing factor which should be used during
+    ///         slashing of the group which exceeded the soft timeout.
+    /// @dev This function doesn't use the constant `groupSize` directly and
+    ///      use a `_groupSize` parameter instead to facilitate testing.
+    ///      Big group sizes in tests make readability worse and dramatically
+    ///      increase the time of execution.
+    /// @param _groupSize _groupSize Group size.
+    /// @return A slashing factor represented as a fraction multiplied by 1e18
+    ///         to avoid precision loss. When using this factor during slashing
+    ///         amount computations, the final result should be divided by
+    ///         1e18 to obtain a proper result. The slashing factor is
+    ///         always in range <0, 1e18>.
+    function _getSlashingFactor(Data memory self, uint256 _groupSize)
         internal
         view
         returns (uint256)
