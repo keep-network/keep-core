@@ -209,15 +209,17 @@ contract DKGValidator {
             )
         );
 
-        uint32[] memory signerIds = new uint32[](
+        uint32[] memory signingMemberIds = new uint32[](
             result.signingMembersIndices.length
         );
         for (uint256 i = 0; i < result.signingMembersIndices.length; i++) {
-            signerIds[i] = result.members[result.signingMembersIndices[i] - 1];
+            signingMemberIds[i] = result.members[
+                result.signingMembersIndices[i] - 1
+            ];
         }
 
-        address[] memory signersAddresses = sortitionPool.getIDOperators(
-            signerIds
+        address[] memory signingMemberAddresses = sortitionPool.getIDOperators(
+            signingMemberIds
         );
 
         bytes memory current; // Current signature to be checked.
@@ -232,7 +234,7 @@ contract DKGValidator {
                 current
             );
 
-            if (signersAddresses[i] != recoveredAddress) {
+            if (signingMemberAddresses[i] != recoveredAddress) {
                 return false;
             }
         }
