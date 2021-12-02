@@ -9,6 +9,7 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import TokenAmount from "../TokenAmount"
 import { useSetMaxAmountToken } from "../../hooks/useSetMaxAmountToken"
 import { Keep } from "../../contracts"
+import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../pages/coverage-pools/CoveragePoolPage"
 
 const AddAmountToWithdrawalForm = ({
   tokenAmount,
@@ -23,7 +24,7 @@ const AddAmountToWithdrawalForm = ({
     tokenAmount,
     setMaxAmount,
     covKEEP,
-    covKEEP.decimals
+    COV_POOLS_FORMS_MAX_DECIMAL_PLACES
   )
 
   return (

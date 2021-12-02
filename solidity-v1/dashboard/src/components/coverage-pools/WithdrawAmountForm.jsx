@@ -14,6 +14,7 @@ import MaxAmountAddon from "../MaxAmountAddon"
 import Button from "../Button"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { covKEEP } from "../../utils/token.utils"
+import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../pages/coverage-pools/CoveragePoolPage"
 
 const WithdrawAmountForm = ({
   onCancel,
@@ -68,14 +69,15 @@ const WithdrawAmountFormWithFormik = withFormik({
     const { withdrawAmount } = values
     const errors = {}
 
-    if (lte(withdrawAmount || 0, 0)) {
-      errors.withdrawAmount = "The value should be greater than zero."
+    if (lte(props.withdrawAmount || 0, 0)) {
+      errors.withdrawAmount = "Insufficient funds"
     } else {
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,
         props.withdrawAmount,
-        1,
-        covKEEP
+        1000000000000,
+        covKEEP,
+        COV_POOLS_FORMS_MAX_DECIMAL_PLACES
       )
     }
 
