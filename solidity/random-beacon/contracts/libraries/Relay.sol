@@ -47,14 +47,14 @@ library Relay {
         // Previous entry value.
         AltBn128.G1Point previousEntry;
         // Fee paid by the relay requester.
-        uint256 relayRequestFee;
+        uint96 relayRequestFee;
         // The number of blocks it takes for a group member to become
         // eligible to submit the relay entry.
-        uint256 relayEntrySubmissionEligibilityDelay;
+        uint32 relayEntrySubmissionEligibilityDelay;
         // Hard timeout in blocks for a group to submit the relay entry.
-        uint256 relayEntryHardTimeout;
+        uint32 relayEntryHardTimeout;
         // Slashing amount for not submitting relay entry
-        uint256 relayEntrySubmissionFailureSlashingAmount;
+        uint96 relayEntrySubmissionFailureSlashingAmount;
     }
 
     /// @notice Target DKG group size in the threshold relay. A group has
@@ -173,7 +173,7 @@ library Relay {
     {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayRequestFee = newRelayRequestFee;
+        self.relayRequestFee = uint96(newRelayRequestFee);
     }
 
     /// @notice Set relayEntrySubmissionEligibilityDelay parameter.
@@ -185,7 +185,7 @@ library Relay {
         require(!isRequestInProgress(self), "Relay request in progress");
 
         self
-            .relayEntrySubmissionEligibilityDelay = newRelayEntrySubmissionEligibilityDelay;
+            .relayEntrySubmissionEligibilityDelay = uint32(newRelayEntrySubmissionEligibilityDelay);
     }
 
     /// @notice Set relayEntryHardTimeout parameter.
@@ -196,7 +196,7 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntryHardTimeout = newRelayEntryHardTimeout;
+        self.relayEntryHardTimeout = uint32(newRelayEntryHardTimeout);
     }
 
     /// @notice Set relayEntrySubmissionFailureSlashingAmount parameter.
@@ -209,7 +209,7 @@ library Relay {
         require(!isRequestInProgress(self), "Relay request in progress");
 
         self
-            .relayEntrySubmissionFailureSlashingAmount = newRelayEntrySubmissionFailureSlashingAmount;
+            .relayEntrySubmissionFailureSlashingAmount = uint96(newRelayEntrySubmissionFailureSlashingAmount);
     }
 
     /// @notice Retries the current relay request in case a relay entry
