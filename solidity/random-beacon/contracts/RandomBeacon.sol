@@ -320,7 +320,7 @@ contract RandomBeacon is Ownable {
         callbackGasLimit = 50000;
         groupCreationFrequency = 5;
 
-        dkgResultSubmissionReward = 0;
+        dkgResultSubmissionReward = 1000e18;
         sortitionPoolUnlockingReward = 0;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
