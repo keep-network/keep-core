@@ -38,7 +38,7 @@ now governable.
 === Group Creation
 
 New groups are created with a fixed, governable frequency of relay requests.
-Instead of a v1 ticket-based approach for group selection, we use sortition
+Instead of a v1 ticket-based approach for group selection, we use a sortition
 pool. Group creation start transaction is embedded into relay request
 transaction and locks a sortition pool. From this moment, no operator can enter
 or leave the pool. Once a new relay entry appears on the chain, all off-chain
@@ -97,10 +97,9 @@ approve enough tokens for a fee, as described in
 
 In `requestRelayEntry` transaction, groups that reached their maximum lifetime
 are getting expired and one of the remaining active groups is tasked with
-producing a new relay entry. All off-chain clients are expected to react to
-`RelayEntryRequested` event and check if a group they are a member of has been
-tasked with producing a new relay entry. If so, they should start off-chain
-protocol to sign the previous relay entry producing a new relay entry this way.
+producing a new relay entry. The off-chain clients are expected to monitor the
+`RelayEntryRequested` event. If a client is a part of a picked group they should
+start the off-chain protocol to sign the previous relay entry producing a new one.
 
 Off-chain clients are expected to follow the order when submitting relay entry
 to minimize and distribute costs evenly, as described in
