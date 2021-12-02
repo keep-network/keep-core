@@ -138,7 +138,7 @@ which is enough to `SSTORE` new relay entry, block height in which the entry was
 submitted, and to emit an event. Callback gas limit is a governable value.
 Failure in the callback function does not revert the relay entry transaction.
 
-```
+```solidity
 interface IRandomBeaconConsumer {
     /// @notice Receives relay entry produced by Keep Random Beacon. This function
     /// should be called only by Keep Random Beacon.
