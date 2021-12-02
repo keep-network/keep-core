@@ -317,7 +317,7 @@ contract RandomBeacon is Ownable {
         staking = _staking;
 
         // TODO: revisit all initial values
-        callbackGasLimit = 200e3;
+        callbackGasLimit = 50000;
         groupCreationFrequency = 10;
 
         dkgResultSubmissionReward = 0;
