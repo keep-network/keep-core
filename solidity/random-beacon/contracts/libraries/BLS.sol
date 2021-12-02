@@ -48,14 +48,14 @@ library BLS {
         AltBn128.G1Point memory _signature = AltBn128.g1Unmarshal(signature);
 
         return
-            _verify(
+            verify(
                 AltBn128.g2Unmarshal(publicKey),
                 AltBn128.g1Unmarshal(message),
                 _signature
             );
     }
 
-    function _verify(
+    function verify(
         AltBn128.G2Point memory publicKey,
         AltBn128.G1Point memory message,
         AltBn128.G1Point memory signature

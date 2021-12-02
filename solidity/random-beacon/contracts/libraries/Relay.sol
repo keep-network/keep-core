@@ -25,15 +25,6 @@ import "./Submission.sol";
 library Relay {
     using SafeERC20 for IERC20;
 
-    struct Request {
-        // Request identifier.
-        uint64 id;
-        // Identifier of group responsible for signing.
-        uint64 groupId;
-        // Request start block.
-        uint128 startBlock;
-    }
-
     struct Data {
         // Total count of all requests.
         uint64 requestCount;
@@ -136,7 +127,7 @@ library Relay {
         require(!_hasRequestTimedOut(_self), "Relay request timed out");
 
         require(
-            BLS._verify(
+            BLS.verify(
                 AltBn128.g2Unmarshal(groupPubKey),
                 _self.previousEntry,
                 AltBn128.g1Unmarshal(entry)
@@ -259,6 +250,16 @@ library Relay {
         return self.currentRequestID != 0;
     }
 
+    /// @notice Returns whether a relay entry request is currently in progress.
+    /// @return True if there is a request in progress. False otherwise.
+    function _isRequestInProgress(Data memory self)
+        internal
+        view
+        returns (bool)
+    {
+        return self.currentRequestID != 0;
+    }
+
     /// @notice Returns whether the current relay request has timed out.
     /// @return True if the request timed out. False otherwise.
     function hasRequestTimedOut(Data storage self)
@@ -273,16 +274,6 @@ library Relay {
         return
             isRequestInProgress(self) &&
             block.number > self.currentRequestStartBlock + _relayEntryTimeout;
-    }
-
-    /// @notice Returns whether a relay entry request is currently in progress.
-    /// @return True if there is a request in progress. False otherwise.
-    function _isRequestInProgress(Data memory self)
-        internal
-        view
-        returns (bool)
-    {
-        return self.currentRequestID != 0;
     }
 
     /// @notice Returns whether the current relay request has timed out.
