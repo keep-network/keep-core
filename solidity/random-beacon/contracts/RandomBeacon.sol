@@ -730,7 +730,7 @@ contract RandomBeacon is Ownable {
         external
     {
         uint64 groupId = groups.selectGroup(
-            uint256(keccak256(relay.previousEntry))
+            uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
         );
 
         relay.requestEntry(groupId);
@@ -822,7 +822,7 @@ contract RandomBeacon is Ownable {
 
         if (groups.numberOfActiveGroups() > 0) {
             groupId = groups.selectGroup(
-                uint256(keccak256(relay.previousEntry))
+                uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
             );
             relay.retryOnEntryTimeout(groupId);
         } else {

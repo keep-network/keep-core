@@ -17,6 +17,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "./AltBn128.sol";
 import "./BLS.sol";
 import "./Groups.sol";
 import "./Submission.sol";
@@ -37,7 +38,7 @@ library Relay {
         // Total count of all requests.
         uint64 requestCount;
         // Previous entry value.
-        bytes previousEntry;
+        AltBn128.G1Point previousEntry;
         // Data of current request.
         Request currentRequest;
         // Fee paid by the relay requester.
@@ -85,10 +86,10 @@ library Relay {
     ///         `relaySeed` value. Can be performed only once.
     function initSeedEntry(Data storage self) internal {
         require(
-            self.previousEntry.length == 0,
+            self.previousEntry.x == 0 && self.previousEntry.y == 0,
             "Seed entry already initialized"
         );
-        self.previousEntry = relaySeed;
+        self.previousEntry = AltBn128.g1Unmarshal(relaySeed);
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
@@ -109,7 +110,11 @@ library Relay {
             uint128(block.number)
         );
 
-        emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
+        emit RelayEntryRequested(
+            currentRequestId,
+            groupId,
+            AltBn128.g1Marshal(self.previousEntry)
+        );
     }
 
     /// @notice Creates a new relay entry.
@@ -127,7 +132,10 @@ library Relay {
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
         require(
-            BLS.verify(groupPubKey, self.previousEntry, entry),
+            BLS._verify(
+                AltBn128.g2Unmarshal(groupPubKey),
+                self.previousEntry,
+                AltBn128.g1Unmarshal(entry)),
             "Invalid entry"
         );
 
@@ -140,9 +148,13 @@ library Relay {
                 self.relayEntrySubmissionFailureSlashingAmount) /
             1e18;
 
-        emit RelayEntrySubmitted(self.currentRequest.id, msg.sender, entry);
+        emit RelayEntrySubmitted(
+            self.currentRequest.id,
+            msg.sender,
+            entry
+        );
 
-        self.previousEntry = entry;
+        self.previousEntry = AltBn128.g1Unmarshal(entry);
         delete self.currentRequest;
 
         return slashingAmount;
@@ -216,7 +228,7 @@ library Relay {
         emit RelayEntryRequested(
             currentRequest.id,
             newGroupId,
-            self.previousEntry
+            AltBn128.g1Marshal(self.previousEntry)
         );
     }
 
