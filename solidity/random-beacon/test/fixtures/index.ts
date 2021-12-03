@@ -13,7 +13,6 @@ const { to1e18 } = helpers.number
 export const constants = {
   groupSize: 64,
   groupThreshold: 33,
-  signatureThreshold: 48, // groupThreshold + (groupSize - groupThreshold) / 2
   offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
   minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
@@ -38,12 +37,16 @@ export const params = {
   dkgResultSubmissionEligibilityDelay: 10,
   dkgResultSubmissionReward: 0,
   sortitionPoolUnlockingReward: 0,
-  relayEntrySubmissionFailureSlashingAmount: ethers.BigNumber.from(10)
-    .pow(18)
-    .mul(1000),
-  maliciousDkgResultSlashingAmount: ethers.BigNumber.from(10)
-    .pow(18)
-    .mul(50000),
+  sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
+  relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
+  maliciousDkgResultSlashingAmount: to1e18(50000),
+  relayEntryTimeoutNotificationRewardMultiplier: 40,
+  unauthorizedSigningNotificationRewardMultiplier: 50,
+  dkgMaliciousResultNotificationRewardMultiplier: 100,
+  ineligibleOperatorNotifierReward: to1e18(200),
+  unauthorizedSigningSlashingAmount: to1e18(100000),
+  minimumAuthorization: to1e18(100000),
+  authorizationDecreaseDelay: 0,
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -91,6 +94,10 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const dkg = await DKG.deploy()
   await dkg.deployed()
 
+  const Heartbeat = await ethers.getContractFactory("Heartbeat")
+  const heartbeat = await Heartbeat.deploy()
+  await heartbeat.deployed()
+
   const DKGValidator = await ethers.getContractFactory("DKGValidator")
   const dkgValidator = (await DKGValidator.deploy(
     sortitionPool.address
@@ -101,6 +108,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
       DKG: dkg.address,
+      Heartbeat: heartbeat.address,
     },
   })
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
@@ -112,6 +120,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   await randomBeacon.deployed()
 
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
+
+  await setFixtureParameters(randomBeacon)
 
   const contracts: DeployedContracts = {
     sortitionPool,
@@ -137,4 +147,44 @@ export async function testDeployment(): Promise<DeployedContracts> {
   const newContracts = { randomBeaconGovernance }
 
   return { ...contracts, ...newContracts }
+}
+
+async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
+  await randomBeacon.updateAuthorizationParameters(
+    params.minimumAuthorization,
+    params.authorizationDecreaseDelay
+  )
+
+  await randomBeacon.updateRelayEntryParameters(
+    params.relayRequestFee,
+    params.relayEntrySubmissionEligibilityDelay,
+    params.relayEntryHardTimeout,
+    params.callbackGasLimit
+  )
+
+  await randomBeacon.updateRewardParameters(
+    params.dkgResultSubmissionReward,
+    params.sortitionPoolUnlockingReward,
+    params.ineligibleOperatorNotifierReward,
+    params.sortitionPoolRewardsBanDuration,
+    params.relayEntryTimeoutNotificationRewardMultiplier,
+    params.unauthorizedSigningNotificationRewardMultiplier,
+    params.dkgMaliciousResultNotificationRewardMultiplier
+  )
+
+  await randomBeacon.updateGroupCreationParameters(
+    params.groupCreationFrequency,
+    params.groupLifeTime
+  )
+
+  await randomBeacon.updateDkgParameters(
+    params.dkgResultChallengePeriodLength,
+    params.dkgResultSubmissionEligibilityDelay
+  )
+
+  await randomBeacon.updateSlashingParameters(
+    params.relayEntrySubmissionFailureSlashingAmount,
+    params.maliciousDkgResultSlashingAmount,
+    params.unauthorizedSigningSlashingAmount
+  )
 }

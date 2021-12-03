@@ -19,7 +19,7 @@
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'"
   },
   "dependencies": {
-    "@keep-network/sortition-pools": "1.2.0-dev.23",
+    "@keep-network/sortition-pools": "1.2.0-dev.24",
     "@openzeppelin/contracts": "^4.3.3",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf"
   },

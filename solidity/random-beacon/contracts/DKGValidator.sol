@@ -12,7 +12,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./libraries/BytesLib.sol";
@@ -207,27 +207,31 @@ contract DKGValidator {
                 result.misbehavedMembersIndices,
                 startBlock
             )
-        );
+        ).toEthSignedMessageHash();
 
-        address[] memory membersAddresses = sortitionPool.getIDOperators(
-            result.members
+        uint256[] calldata signingMembersIndices = result.signingMembersIndices;
+        uint32[] memory signingMemberIds = new uint32[](
+            signingMembersIndices.length
+        );
+        for (uint256 i = 0; i < signingMembersIndices.length; i++) {
+            signingMemberIds[i] = result.members[signingMembersIndices[i] - 1];
+        }
+
+        address[] memory signingMemberAddresses = sortitionPool.getIDOperators(
+            signingMemberIds
         );
 
         bytes memory current; // Current signature to be checked.
 
         uint256 signaturesCount = result.signatures.length / signatureByteSize;
         for (uint256 i = 0; i < signaturesCount; i++) {
-            uint256 memberIndex = result.signingMembersIndices[i];
-
             current = result.signatures.slice(
                 signatureByteSize * i,
                 signatureByteSize
             );
-            address recoveredAddress = hash.toEthSignedMessageHash().recover(
-                current
-            );
+            address recoveredAddress = hash.recover(current);
 
-            if (membersAddresses[memberIndex - 1] != recoveredAddress) {
+            if (signingMemberAddresses[i] != recoveredAddress) {
                 return false;
             }
         }

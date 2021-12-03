@@ -12,7 +12,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 library Submission {
     /// @notice Determines the submission eligibility range for given parameters.

@@ -15,7 +15,7 @@ contract RelayStub {
     }
 
     function setCurrentRequestStartBlock() external {
-        relay.currentRequest.startBlock = uint128(block.number);
+        relay.currentRequestStartBlock = uint64(block.number);
     }
 
     function getSlashingFactor(uint256 groupSize)

@@ -12,7 +12,7 @@
 //
 //                           Trust math, not hardware.
 
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "./libraries/Authorization.sol";
 import "./libraries/DKG.sol";
@@ -20,6 +20,7 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
+import "./libraries/Heartbeat.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -141,6 +142,13 @@ contract RandomBeacon is Ownable {
     ///         operator affected.
     uint256 public dkgMaliciousResultNotificationRewardMultiplier;
 
+    // Other parameters
+
+    /// @notice Stores current failed heartbeat nonce for given group.
+    ///         Each claim is made with an unique nonce which protects
+    ///         against claim replay.
+    mapping(uint64 => uint256) public failedHeartbeatNonce; // groupId -> nonce
+
     // External dependencies
 
     SortitionPool public sortitionPool;
@@ -255,7 +263,11 @@ contract RandomBeacon is Ownable {
         bytes previousEntry
     );
 
-    event RelayEntrySubmitted(uint256 indexed requestId, bytes entry);
+    event RelayEntrySubmitted(
+        uint256 indexed requestId,
+        address submitter,
+        bytes entry
+    );
 
     event RelayEntryTimedOut(
         uint256 indexed requestId,
@@ -288,6 +300,8 @@ contract RandomBeacon is Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
+    event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -303,31 +317,32 @@ contract RandomBeacon is Ownable {
         staking = _staking;
 
         // TODO: revisit all initial values
-        callbackGasLimit = 200e3;
-        groupCreationFrequency = 10;
+        callbackGasLimit = 50000;
+        groupCreationFrequency = 5;
 
-        dkgResultSubmissionReward = 0;
-        sortitionPoolUnlockingReward = 0;
+        dkgResultSubmissionReward = 1000e18;
+        sortitionPoolUnlockingReward = 100e18;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
-        relayEntryTimeoutNotificationRewardMultiplier = 5;
-        unauthorizedSigningNotificationRewardMultiplier = 5;
+        relayEntryTimeoutNotificationRewardMultiplier = 40;
+        unauthorizedSigningNotificationRewardMultiplier = 50;
         dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
         dkg.init(_sortitionPool, _dkgValidator);
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(10);
+        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(20);
 
         relay.initSeedEntry();
-        relay.setRelayEntrySubmissionEligibilityDelay(10);
+        relay.setRelayRequestFee(200e18);
+        relay.setRelayEntrySubmissionEligibilityDelay(20);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
-        groups.setGroupLifetime(80640); // ~2weeks assuming 15s block time
+        groups.setGroupLifetime(403200); // ~10 months assuming 15s block time
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -469,41 +484,6 @@ contract RandomBeacon is Ownable {
         );
     }
 
-    /// @notice The number of blocks for which a DKG result can be challenged.
-    ///         Anyone can challenge DKG result for a certain number of blocks
-    ///         before the result is fully accepted and the group registered in
-    ///         the pool of active groups. If the challenge gets accepted, all
-    ///         operators who signed the malicious result get slashed for
-    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
-    ///         rewarded.
-    function dkgResultChallengePeriodLength() public view returns (uint256) {
-        return dkg.parameters.resultChallengePeriodLength;
-    }
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the DKG result. At first, there is only one
-    ///         member in the group eligible to submit the DKG result. Then,
-    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the DKG result at that moment. After
-    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible to submit the DKG result so that
-    ///         there are three group members eligible to submit the DKG result
-    ///         at that moment. This continues until all group members are
-    ///         eligible to submit the DKG result or until the DKG result is
-    ///         submitted. If all members became eligible to submit the DKG
-    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
-    ///         without the DKG result submitted, DKG is considered as timed out
-    ///         and no DKG result for this group creation can be submitted
-    ///         anymore.
-    function dkgResultSubmissionEligibilityDelay()
-        public
-        view
-        returns (uint256)
-    {
-        return dkg.parameters.resultSubmissionEligibilityDelay;
-    }
-
     /// @notice Updates the values of slashing parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
@@ -529,6 +509,15 @@ contract RandomBeacon is Ownable {
             maliciousDkgResultSlashingAmount,
             unauthorizedSigningSlashingAmount
         );
+    }
+
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        sortitionPool.withdrawIneligible(recipient);
     }
 
     /// @notice Registers the caller in the sortition pool.
@@ -707,7 +696,7 @@ contract RandomBeacon is Ownable {
         external
     {
         uint64 groupId = groups.selectGroup(
-            uint256(keccak256(relay.previousEntry))
+            uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
         );
 
         relay.requestEntry(groupId);
@@ -729,23 +718,15 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Creates a new relay entry.
-    /// @param submitterIndex Index of the entry submitter.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(uint256 submitterIndex, bytes calldata entry)
-        external
-    {
-        uint256 currentRequestId = relay.currentRequest.id;
+    function submitRelayEntry(bytes calldata entry) external {
+        uint256 currentRequestId = relay.currentRequestID;
 
-        Groups.Group memory group = groups.getGroup(
-            relay.currentRequest.groupId
+        Groups.Group storage group = groups.getGroup(
+            relay.currentRequestGroupID
         );
 
-        uint256 slashingAmount = relay.submitEntry(
-            sortitionPool,
-            submitterIndex,
-            entry,
-            group
-        );
+        uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
@@ -782,7 +763,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Reports a relay entry timeout.
     function reportRelayEntryTimeout() external {
-        uint64 groupId = relay.currentRequest.groupId;
+        uint64 groupId = relay.currentRequestGroupID;
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembers = sortitionPool.getIDOperators(
@@ -790,7 +771,7 @@ contract RandomBeacon is Ownable {
         );
 
         emit RelayEntryTimeoutSlashed(
-            relay.currentRequest.id,
+            relay.currentRequestID,
             slashingAmount,
             groupMembers
         );
@@ -807,7 +788,7 @@ contract RandomBeacon is Ownable {
 
         if (groups.numberOfActiveGroups() > 0) {
             groupId = groups.selectGroup(
-                uint256(keccak256(relay.previousEntry))
+                uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
             );
             relay.retryOnEntryTimeout(groupId);
         } else {
@@ -868,6 +849,59 @@ contract RandomBeacon is Ownable {
         );
     }
 
+    /// @notice Notifies about a failed group heartbeat. Using this function,
+    ///         a majority of the group can decide about punishing specific
+    ///         group members who failed to provide a heartbeat. If provided
+    ///         claim is proved to be valid and signed by sufficient number
+    ///         of group members, operators of members deemed as failed are
+    ///         banned for sortition pool rewards for duration specified by
+    ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
+    ///         the claim must be one of the claim signers. The sender is
+    ///         rewarded from `heartbeatNotifierRewardsPool`. Exact reward
+    ///         amount is multiplication of operators marked as ineligible
+    ///         and `ineligibleOperatorNotifierReward` factor. This function
+    ///         can be called only for active and non-terminated groups.
+    /// @param claim Failure claim.
+    /// @param nonce Current failed heartbeat nonce for given group. Must
+    ///        be the same as the stored one.
+    function notifyFailedHeartbeat(
+        Heartbeat.FailureClaim calldata claim,
+        uint256 nonce
+    ) external {
+        uint64 groupId = claim.groupId;
+
+        require(nonce == failedHeartbeatNonce[groupId], "Invalid nonce");
+
+        require(
+            groups.isGroupActive(groupId),
+            "Group must be active and non-terminated"
+        );
+
+        Groups.Group storage group = groups.getGroup(groupId);
+
+        uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
+            sortitionPool,
+            claim,
+            group,
+            nonce
+        );
+
+        failedHeartbeatNonce[groupId]++;
+
+        emit HeartbeatFailed(groupId, nonce, msg.sender);
+
+        sortitionPool.setRewardIneligibility(
+            ineligibleOperators,
+            // solhint-disable-next-line not-rely-on-time
+            block.timestamp + sortitionPoolRewardsBanDuration
+        );
+
+        transferHeartbeatNotifierRewards(
+            msg.sender,
+            ineligibleOperatorNotifierReward * ineligibleOperators.length
+        );
+    }
+
     /// @notice Funds the DKG rewards pool.
     /// @param from Address of the funder. The funder must give a sufficient
     ///        allowance for this contract to make a successful call.
@@ -900,8 +934,6 @@ contract RandomBeacon is Ownable {
     /// @notice Makes a transfer using heartbeat notifier rewards pool.
     /// @param to Address of the recipient.
     /// @param value Token value transferred to the recipient.
-    // TODO: Remove Slither ignore condition once this function is used.
-    // slither-disable-next-line dead-code
     function transferHeartbeatNotifierRewards(address to, uint256 value)
         internal
     {
@@ -1004,6 +1036,41 @@ contract RandomBeacon is Ownable {
     ///         to that group is still pending.
     function groupLifetime() external view returns (uint256) {
         return groups.groupLifetime;
+    }
+
+    /// @notice The number of blocks for which a DKG result can be challenged.
+    ///         Anyone can challenge DKG result for a certain number of blocks
+    ///         before the result is fully accepted and the group registered in
+    ///         the pool of active groups. If the challenge gets accepted, all
+    ///         operators who signed the malicious result get slashed for
+    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
+    ///         rewarded.
+    function dkgResultChallengePeriodLength() public view returns (uint256) {
+        return dkg.parameters.resultChallengePeriodLength;
+    }
+
+    /// @notice The number of blocks it takes for a group member to become
+    ///         eligible to submit the DKG result. At first, there is only one
+    ///         member in the group eligible to submit the DKG result. Then,
+    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
+    ///         group member becomes eligible so that there are two group
+    ///         members eligible to submit the DKG result at that moment. After
+    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
+    ///         group member becomes eligible to submit the DKG result so that
+    ///         there are three group members eligible to submit the DKG result
+    ///         at that moment. This continues until all group members are
+    ///         eligible to submit the DKG result or until the DKG result is
+    ///         submitted. If all members became eligible to submit the DKG
+    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
+    ///         without the DKG result submitted, DKG is considered as timed out
+    ///         and no DKG result for this group creation can be submitted
+    ///         anymore.
+    function dkgResultSubmissionEligibilityDelay()
+        public
+        view
+        returns (uint256)
+    {
+        return dkg.parameters.resultSubmissionEligibilityDelay;
     }
 
     /// @notice Selects a new group of operators based on the provided seed.
