@@ -1123,9 +1123,6 @@ describe("RandomBeacon - Group Creation", () => {
         })
       })
 
-      // TODO: Check challenge adjust start block calculation for eligibility
-      // TODO: Check that challenges add up the delay
-
       context("with group creation timed out", async () => {
         beforeEach("increase time", async () => {
           await mineBlocksTo(startBlock + dkgTimeout)
