@@ -175,18 +175,20 @@ contract DKGValidator {
         view
         returns (bool)
     {
-        // Compute the actual group members hash by selecting actual members IDs
-        // based on seed used for current DKG execution.
-        bytes32 actualGroupMembersHash = keccak256(
-            abi.encodePacked(
-                sortitionPool.selectGroup(groupSize, bytes32(seed))
-            )
+        uint32[] calldata resultMembers = result.members;
+        uint32[] memory actualGroupMembers = sortitionPool.selectGroup(
+            groupSize,
+            bytes32(seed)
         );
-
-        // TODO: check what is more efficient - computing hash or iterating
-        return
-            keccak256(abi.encodePacked(result.members)) ==
-            actualGroupMembersHash;
+        if (resultMembers.length != actualGroupMembers.length) {
+            return false;
+        }
+        for (uint256 i = 0; i < resultMembers.length; i++) {
+            if (resultMembers[i] != actualGroupMembers[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /// @notice Performs validation of signatures supplied in DKG result.
