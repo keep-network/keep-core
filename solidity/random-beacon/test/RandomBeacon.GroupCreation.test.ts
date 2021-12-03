@@ -148,29 +148,29 @@ describe("RandomBeacon - Group Creation", () => {
     })
 
     context("with no active groups", async () => {
-    context("with genesis in progress", async () => {
-      let startBlock: number
-      let genesisSeed: BigNumber
+      context("with genesis in progress", async () => {
+        let startBlock: number
+        let genesisSeed: BigNumber
 
-      beforeEach("run genesis", async () => {
-        const [genesisTx, seed] = await genesis(randomBeacon)
-        startBlock = genesisTx.blockNumber
-        genesisSeed = seed
-      })
-
-      context("with dkg result not submitted", async () => {
-        it("should revert with 'current state is not IDLE' error", async () => {
-          await expect(randomBeacon.genesis()).to.be.revertedWith(
-            "current state is not IDLE"
-          )
+        beforeEach("run genesis", async () => {
+          const [genesisTx, seed] = await genesis(randomBeacon)
+          startBlock = genesisTx.blockNumber
+          genesisSeed = seed
         })
-      })
 
-      context("with dkg result submitted", async () => {
+        context("with dkg result not submitted", async () => {
+          it("should revert with 'current state is not IDLE' error", async () => {
+            await expect(randomBeacon.genesis()).to.be.revertedWith(
+              "current state is not IDLE"
+            )
+          })
+        })
+
+        context("with dkg result submitted", async () => {
           let dkgResult: DkgResult
 
-        beforeEach(async () => {
-          await mineBlocks(constants.offchainDkgTime)
+          beforeEach(async () => {
+            await mineBlocks(constants.offchainDkgTime)
           })
 
           context("with valid dkg result submitted", async () => {
@@ -178,11 +178,11 @@ describe("RandomBeacon - Group Creation", () => {
 
             beforeEach(async () => {
               ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
-            randomBeacon,
-            groupPublicKey,
-            genesisSeed,
-            startBlock,
-            noMisbehaved
+                randomBeacon,
+                groupPublicKey,
+                genesisSeed,
+                startBlock,
+                noMisbehaved
               ))
             })
 
@@ -190,8 +190,8 @@ describe("RandomBeacon - Group Creation", () => {
               it("should revert with 'current state is not IDLE' error", async () => {
                 await expect(randomBeacon.genesis()).to.be.revertedWith(
                   "current state is not IDLE"
-          )
-        })
+                )
+              })
             })
 
             context("with dkg result approved", async () => {
@@ -228,11 +228,11 @@ describe("RandomBeacon - Group Creation", () => {
                 await randomBeacon.challengeDkgResult(dkgResult)
               })
 
-          it("should revert with 'current state is not IDLE' error", async () => {
-            await expect(randomBeacon.genesis()).to.be.revertedWith(
-              "current state is not IDLE"
-            )
-          })
+              it("should revert with 'current state is not IDLE' error", async () => {
+                await expect(randomBeacon.genesis()).to.be.revertedWith(
+                  "current state is not IDLE"
+                )
+              })
             })
           })
 
@@ -240,7 +240,7 @@ describe("RandomBeacon - Group Creation", () => {
             beforeEach(async () => {
               await mineBlocksTo(startBlock + dkgTimeout)
               await randomBeacon.notifyDkgTimeout()
-        })
+            })
 
             context("with dkg result not approved", async () => {
               it("should start DKG", async () => {
