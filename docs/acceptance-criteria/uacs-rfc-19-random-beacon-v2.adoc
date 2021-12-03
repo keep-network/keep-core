@@ -290,8 +290,9 @@ utilised during the acceptance testing of the feature.
   - a challenge period should start.
 
 | Group creation - DKG challenge
-| Anyone can send a challenge notification that submitted DKG result contains
-  group members not selected by the pool.
+| Anyone can send a challenge notification informing that submitted DKG result
+  is malitious (contains corrupted data, group members not selected by the pool,
+  or incorrect supporting signatures).
 
 | Group creation - DKG challenge
 | Upon processing the challenge notification, the random beacon contract should
@@ -303,8 +304,9 @@ utilised during the acceptance testing of the feature.
   - does it reference existing DKG result (if not, then challenge invalid) +
   - within or outside of the challenge period for the specified DKG result (if
   outside, then invalid) +
-  - have all members included in the result been selected by the sortition pool
-  to be in the group (if yes, then challenge invalid).
+  - is referenced DKG result indeed malitious (contains corrupted data, group
+  members not selected by the pool, or incorrect supporting signatures)? (if no,
+  then challenge invalid).
 
 | Group creation - DKG challenge
 | If the challenge notification was received within the challenge period and was
