@@ -23,7 +23,7 @@ import {
   signAndSubmitUnrecoverableDkgResult,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
-import { selectGroup } from "./utils/groups"
+import { createGroup, selectGroup } from "./utils/groups"
 import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
@@ -147,6 +147,7 @@ describe("RandomBeacon - Group Creation", () => {
       })
     })
 
+    context("with no active groups", async () => {
     context("with genesis in progress", async () => {
       let startBlock: number
       let genesisSeed: BigNumber
@@ -166,27 +167,104 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       context("with dkg result submitted", async () => {
+          let dkgResult: DkgResult
+
         beforeEach(async () => {
           await mineBlocks(constants.offchainDkgTime)
-          await signAndSubmitCorrectDkgResult(
+          })
+
+          context("with valid dkg result submitted", async () => {
+            let submitter: Signer
+
+            beforeEach(async () => {
+              ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
             randomBeacon,
             groupPublicKey,
             genesisSeed,
             startBlock,
             noMisbehaved
+              ))
+            })
+
+            context("with dkg result not approved", async () => {
+              it("should revert with 'current state is not IDLE' error", async () => {
+                await expect(randomBeacon.genesis()).to.be.revertedWith(
+                  "current state is not IDLE"
           )
         })
+            })
 
-        // TODO: Add test cases to cover results that are approved, challenged or
-        // pending.
+            context("with dkg result approved", async () => {
+              beforeEach(async () => {
+                await mineBlocks(params.dkgResultChallengePeriodLength)
 
-        context("with dkg result not approved", async () => {
+                await randomBeacon
+                  .connect(submitter)
+                  .approveDkgResult(dkgResult)
+              })
+
+              it("should revert with 'not awaiting genesis'' error", async () => {
+                await expect(randomBeacon.genesis()).to.be.revertedWith(
+                  "not awaiting genesis'"
+                )
+              })
+            })
+          })
+
+          context("with malicious dkg result submitted", async () => {
+            beforeEach(async () => {
+              ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                // Mix signers to make the result malicious
+                mixSigners(await selectGroup(sortitionPool, genesisSeed)),
+                startBlock,
+                noMisbehaved
+              ))
+            })
+
+            context("with dkg result challenged", async () => {
+              beforeEach(async () => {
+                await randomBeacon.challengeDkgResult(dkgResult)
+              })
+
           it("should revert with 'current state is not IDLE' error", async () => {
             await expect(randomBeacon.genesis()).to.be.revertedWith(
               "current state is not IDLE"
             )
           })
+            })
+          })
+
+          context("with dkg timeout reported", async () => {
+            beforeEach(async () => {
+              await mineBlocksTo(startBlock + dkgTimeout)
+              await randomBeacon.notifyDkgTimeout()
         })
+
+            context("with dkg result not approved", async () => {
+              it("should start DKG", async () => {
+                const [tx, expectedSeed] = await genesis(randomBeacon)
+
+                await expect(tx)
+                  .to.emit(randomBeacon, "DkgStarted")
+                  .withArgs(expectedSeed)
+              })
+            })
+          })
+        })
+      })
+    })
+
+    context("with existing active group", async () => {
+      beforeEach(async () => {
+        await createGroup(randomBeacon, signers)
+      })
+
+      it("should revert with 'current state is not IDLE' error", async () => {
+        await expect(randomBeacon.genesis()).to.be.revertedWith(
+          "not awaiting genesis"
+        )
       })
     })
   })
