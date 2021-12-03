@@ -3,7 +3,10 @@ import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
-import { metaMaskInjectedConnector, tallyInjectedConnector } from "../connectors"
+import {
+  metaMaskInjectedConnector,
+  tallyInjectedConnector,
+} from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
 import useIsExactRoutePath from "./useIsExactRoutePath"
 import { isSameEthAddress } from "../utils/general.utils"
@@ -43,7 +46,7 @@ const useAutoConnect = () => {
     if (injectedTried) return
 
     if (window.tally) {
-        tallyInjectedConnector.getAccounts().then((accounts) => {
+      tallyInjectedConnector.getAccounts().then((accounts) => {
         setInjectedTried(true)
         if (
           (!isEmptyArray(accounts) && isExactRoutePath) ||
@@ -66,20 +69,22 @@ const useAutoConnect = () => {
           })
         }
       })
-    } else if (window.ethereum && window.ethereum.isMetaMask){
+    } else if (window.ethereum && window.ethereum.isMetaMask) {
       metaMaskInjectedConnector.getAccounts().then((accounts) => {
         setInjectedTried(true)
         if (
           (!isEmptyArray(accounts) && isExactRoutePath) ||
           isWalletFromUrlSameAsInMetamask(accounts)
         ) {
-          connectAppWithWallet(metaMaskInjectedConnector, false).catch((error) => {
-            // Just log an error, we don't want to do anything else.
-            console.log(
-              "Eager injected connector cannot connect with the dapp:",
-              error.message
-            )
-          })
+          connectAppWithWallet(metaMaskInjectedConnector, false).catch(
+            (error) => {
+              // Just log an error, we don't want to do anything else.
+              console.log(
+                "Eager injected connector cannot connect with the dapp:",
+                error.message
+              )
+            }
+          )
         } else if (walletAddressFromUrl && !connector) {
           const explorerModeConnector = new ExplorerModeConnector()
           openModal(MODAL_TYPES.ExplorerMode, {

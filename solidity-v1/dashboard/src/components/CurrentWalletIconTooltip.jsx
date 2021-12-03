@@ -21,7 +21,7 @@ const CurrentWalletIconTooltip = () => {
       case WALLETS.TALLY.name:
         tooltipText = getTooltipText(WALLETS.TALLY.label)
         iconComponent = <Icons.Tally className="flex" />
-        break      
+        break
       case WALLETS.METAMASK.name:
         tooltipText = getTooltipText(WALLETS.METAMASK.label)
         iconComponent = <Icons.MetaMask className="flex" />

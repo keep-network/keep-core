@@ -14,7 +14,7 @@ import { MODAL_TYPES, WALLETS } from "../constants/constants"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 
 const WALLETS_OPTIONS = [
-    {
+  {
     label: "Tally",
     icon: Icons.Tally,
     isHardwareWallet: false,
