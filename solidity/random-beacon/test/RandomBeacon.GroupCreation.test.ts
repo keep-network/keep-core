@@ -158,9 +158,9 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       context("with dkg result not submitted", async () => {
-        it("should revert with 'current state is not IDLE' error", async () => {
+        it("should revert with 'Current state is not IDLE' error", async () => {
           await expect(randomBeacon.genesis()).to.be.revertedWith(
-            "current state is not IDLE"
+            "Current state is not IDLE"
           )
         })
       })
@@ -181,9 +181,9 @@ describe("RandomBeacon - Group Creation", () => {
         // pending.
 
         context("with dkg result not approved", async () => {
-          it("should revert with 'current state is not IDLE' error", async () => {
+          it("should revert with 'Current state is not IDLE' error", async () => {
             await expect(randomBeacon.genesis()).to.be.revertedWith(
-              "current state is not IDLE"
+              "Current state is not IDLE"
             )
           })
         })
@@ -522,7 +522,7 @@ describe("RandomBeacon - Group Creation", () => {
     // TODO: Add tests to cover misbehaved members
 
     context("with initial contract state", async () => {
-      it("should revert with 'current state is not AWAITING_RESULT' error", async () => {
+      it("should revert with 'Current state is not AWAITING_RESULT' error", async () => {
         await expect(
           signAndSubmitArbitraryDkgResult(
             randomBeacon,
@@ -531,7 +531,7 @@ describe("RandomBeacon - Group Creation", () => {
             1,
             noMisbehaved
           )
-        ).to.be.revertedWith("current state is not AWAITING_RESULT")
+        ).to.be.revertedWith("Current state is not AWAITING_RESULT")
       })
     })
 
@@ -552,7 +552,7 @@ describe("RandomBeacon - Group Creation", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
           })
 
-          it("should revert with 'current state is not AWAITING_RESULT' error", async () => {
+          it("should revert with 'Current state is not AWAITING_RESULT' error", async () => {
             await expect(
               signAndSubmitCorrectDkgResult(
                 randomBeacon,
@@ -561,7 +561,7 @@ describe("RandomBeacon - Group Creation", () => {
                 startBlock,
                 noMisbehaved
               )
-            ).to.be.revertedWith("current state is not AWAITING_RESULT")
+            ).to.be.revertedWith("Current state is not AWAITING_RESULT")
           })
         })
 
@@ -783,14 +783,14 @@ describe("RandomBeacon - Group Creation", () => {
                 it("should revert for the first submitter", async () => {
                   await assertSubmissionReverts(
                     firstSubmitterIndex,
-                    "dkg timeout already passed"
+                    "DKG timeout already passed"
                   )
                 })
 
                 it("should revert for the last submitter", async () => {
                   await assertSubmissionReverts(
                     lastSubmitterIndex,
-                    "dkg timeout already passed"
+                    "DKG timeout already passed"
                   )
                 })
               }
@@ -810,7 +810,7 @@ describe("RandomBeacon - Group Creation", () => {
               )
             })
 
-            it("should revert 'current state is not AWAITING_RESULT' error", async () => {
+            it("should revert 'Current state is not AWAITING_RESULT' error", async () => {
               await expect(
                 signAndSubmitCorrectDkgResult(
                   randomBeacon,
@@ -819,7 +819,7 @@ describe("RandomBeacon - Group Creation", () => {
                   startBlock,
                   noMisbehaved
                 )
-              ).to.be.revertedWith("current state is not AWAITING_RESULT")
+              ).to.be.revertedWith("Current state is not AWAITING_RESULT")
             })
           })
 
@@ -991,14 +991,14 @@ describe("RandomBeacon - Group Creation", () => {
                   it("should revert for the first submitter", async () => {
                     await assertSubmissionReverts(
                       firstSubmitterIndex,
-                      "dkg timeout already passed"
+                      "DKG timeout already passed"
                     )
                   })
 
                   it("should revert for the last submitter", async () => {
                     await assertSubmissionReverts(
                       lastSubmitterIndex,
-                      "dkg timeout already passed"
+                      "DKG timeout already passed"
                     )
                   })
                 }
@@ -1054,7 +1054,7 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         context("with timeout not notified", async () => {
-          it("should revert with dkg timeout already passed error", async () => {
+          it("should revert with DKG timeout already passed error", async () => {
             await expect(
               signAndSubmitCorrectDkgResult(
                 randomBeacon,
@@ -1063,7 +1063,7 @@ describe("RandomBeacon - Group Creation", () => {
                 startBlock,
                 noMisbehaved
               )
-            ).to.be.revertedWith("dkg timeout already passed")
+            ).to.be.revertedWith("DKG timeout already passed")
           })
         })
       })
@@ -1137,10 +1137,10 @@ describe("RandomBeacon - Group Creation", () => {
     }
 
     context("with initial contract state", async () => {
-      it("should revert with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'Current state is not CHALLENGE' error", async () => {
         await expect(
           randomBeacon.approveDkgResult(stubDkgResult)
-        ).to.be.revertedWith("current state is not CHALLENGE")
+        ).to.be.revertedWith("Current state is not CHALLENGE")
       })
     })
 
@@ -1155,10 +1155,10 @@ describe("RandomBeacon - Group Creation", () => {
         genesisSeed = seed
       })
 
-      it("should revert with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'Current state is not CHALLENGE' error", async () => {
         await expect(
           randomBeacon.approveDkgResult(stubDkgResult)
-        ).to.be.revertedWith("current state is not CHALLENGE")
+        ).to.be.revertedWith("Current state is not CHALLENGE")
       })
 
       context("with off-chain dkg time passed", async () => {
@@ -1167,10 +1167,10 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         context("with dkg result not submitted", async () => {
-          it("should revert with 'current state is not CHALLENGE' error", async () => {
+          it("should revert with 'Current state is not CHALLENGE' error", async () => {
             await expect(
               randomBeacon.approveDkgResult(stubDkgResult)
-            ).to.be.revertedWith("current state is not CHALLENGE")
+            ).to.be.revertedWith("Current state is not CHALLENGE")
           })
         })
 
@@ -1209,10 +1209,10 @@ describe("RandomBeacon - Group Creation", () => {
               )
             })
 
-            it("should revert with 'challenge period has not passed yet' error", async () => {
+            it("should revert with 'Challenge period has not passed yet' error", async () => {
               await expect(
                 randomBeacon.connect(submitter).approveDkgResult(dkgResult)
-              ).to.be.revertedWith("challenge period has not passed yet")
+              ).to.be.revertedWith("Challenge period has not passed yet")
             })
           })
 
@@ -1410,12 +1410,12 @@ describe("RandomBeacon - Group Creation", () => {
               )
             })
 
-            it("should revert with 'challenge period has not passed yet' error", async () => {
+            it("should revert with 'Challenge period has not passed yet' error", async () => {
               await expect(
                 randomBeacon
                   .connect(anotherSubmitter)
                   .approveDkgResult(dkgResult)
-              ).to.be.revertedWith("challenge period has not passed yet")
+              ).to.be.revertedWith("Challenge period has not passed yet")
             })
           })
 
@@ -1615,9 +1615,9 @@ describe("RandomBeacon - Group Creation", () => {
 
   describe("notifyDkgTimeout", async () => {
     context("with initial contract state", async () => {
-      it("should revert with 'dkg has not timed out' error", async () => {
+      it("should revert with 'DKG has not timed out' error", async () => {
         await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-          "dkg has not timed out"
+          "DKG has not timed out"
         )
       })
     })
@@ -1637,9 +1637,9 @@ describe("RandomBeacon - Group Creation", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
           })
 
-          it("should revert with 'dkg has not timed out' error", async () => {
+          it("should revert with 'DKG has not timed out' error", async () => {
             await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-              "dkg has not timed out"
+              "DKG has not timed out"
             )
           })
         })
@@ -1649,9 +1649,9 @@ describe("RandomBeacon - Group Creation", () => {
             await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
-          it("should revert with 'dkg has not timed out' error", async () => {
+          it("should revert with 'DKG has not timed out' error", async () => {
             await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-              "dkg has not timed out"
+              "DKG has not timed out"
             )
           })
         })
@@ -1661,9 +1661,9 @@ describe("RandomBeacon - Group Creation", () => {
             await mineBlocksTo(startBlock + dkgTimeout - 1)
           })
 
-          it("should revert with 'dkg has not timed out' error", async () => {
+          it("should revert with 'DKG has not timed out' error", async () => {
             await expect(randomBeacon.notifyDkgTimeout()).to.be.revertedWith(
-              "dkg has not timed out"
+              "DKG has not timed out"
             )
           })
         })
@@ -1731,10 +1731,10 @@ describe("RandomBeacon - Group Creation", () => {
     }
 
     context("with initial contract state", async () => {
-      it("should revert with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'Current state is not CHALLENGE' error", async () => {
         await expect(
           randomBeacon.challengeDkgResult(stubDkgResult)
-        ).to.be.revertedWith("current state is not CHALLENGE")
+        ).to.be.revertedWith("Current state is not CHALLENGE")
       })
     })
 
@@ -1749,10 +1749,10 @@ describe("RandomBeacon - Group Creation", () => {
         genesisSeed = seed
       })
 
-      it("should revert with 'current state is not CHALLENGE' error", async () => {
+      it("should revert with 'Current state is not CHALLENGE' error", async () => {
         await expect(
           randomBeacon.challengeDkgResult(stubDkgResult)
-        ).to.be.revertedWith("current state is not CHALLENGE")
+        ).to.be.revertedWith("Current state is not CHALLENGE")
       })
 
       context("with off-chain dkg time passed", async () => {
@@ -1761,10 +1761,10 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         context("with dkg result not submitted", async () => {
-          it("should revert with 'current state is not CHALLENGE' error", async () => {
+          it("should revert with 'Current state is not CHALLENGE' error", async () => {
             await expect(
               randomBeacon.challengeDkgResult(stubDkgResult)
-            ).to.be.revertedWith("current state is not CHALLENGE")
+            ).to.be.revertedWith("Current state is not CHALLENGE")
           })
         })
 
@@ -1910,10 +1910,10 @@ describe("RandomBeacon - Group Creation", () => {
               )
             })
 
-            it("should revert with 'challenge period has already passed' error", async () => {
+            it("should revert with 'Challenge period has already passed' error", async () => {
               await expect(
                 randomBeacon.challengeDkgResult(dkgResult)
-              ).to.be.revertedWith("challenge period has already passed")
+              ).to.be.revertedWith("Challenge period has already passed")
             })
           })
         })
@@ -2109,7 +2109,7 @@ describe("RandomBeacon - Group Creation", () => {
 
       await expect(
         randomBeacon.callStatic.notifyDkgTimeout()
-      ).to.be.revertedWith("dkg has not timed out")
+      ).to.be.revertedWith("DKG has not timed out")
 
       await randomBeacon.challengeDkgResult(dkgResult)
       expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
@@ -2137,7 +2137,7 @@ describe("RandomBeacon - Group Creation", () => {
             constants.groupSize - 1
           )
         )
-      ).to.be.revertedWith("dkg timeout already passed")
+      ).to.be.revertedWith("DKG timeout already passed")
 
       await randomBeacon.notifyDkgTimeout()
     })
