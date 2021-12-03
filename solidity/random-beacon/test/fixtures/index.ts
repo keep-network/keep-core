@@ -38,12 +38,15 @@ export const params = {
   dkgResultSubmissionReward: 0,
   sortitionPoolUnlockingReward: 0,
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
-  relayEntrySubmissionFailureSlashingAmount: ethers.BigNumber.from(10)
-    .pow(18)
-    .mul(1000),
-  maliciousDkgResultSlashingAmount: ethers.BigNumber.from(10)
-    .pow(18)
-    .mul(50000),
+  relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
+  maliciousDkgResultSlashingAmount: to1e18(50000),
+  relayEntryTimeoutNotificationRewardMultiplier: 40,
+  unauthorizedSigningNotificationRewardMultiplier: 50,
+  dkgMaliciousResultNotificationRewardMultiplier: 100,
+  ineligibleOperatorNotifierReward: to1e18(200),
+  unauthorizedSigningSlashingAmount: to1e18(100000),
+  minimumAuthorization: to1e18(100000),
+  authorizationDecreaseDelay: 0,
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -118,6 +121,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
 
+  await setFixtureParameters(randomBeacon)
+
   const contracts: DeployedContracts = {
     sortitionPool,
     stakingStub,
@@ -142,4 +147,44 @@ export async function testDeployment(): Promise<DeployedContracts> {
   const newContracts = { randomBeaconGovernance }
 
   return { ...contracts, ...newContracts }
+}
+
+async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
+  await randomBeacon.updateAuthorizationParameters(
+    params.minimumAuthorization,
+    params.authorizationDecreaseDelay
+  )
+
+  await randomBeacon.updateRelayEntryParameters(
+    params.relayRequestFee,
+    params.relayEntrySubmissionEligibilityDelay,
+    params.relayEntryHardTimeout,
+    params.callbackGasLimit
+  )
+
+  await randomBeacon.updateRewardParameters(
+    params.dkgResultSubmissionReward,
+    params.sortitionPoolUnlockingReward,
+    params.ineligibleOperatorNotifierReward,
+    params.sortitionPoolRewardsBanDuration,
+    params.relayEntryTimeoutNotificationRewardMultiplier,
+    params.unauthorizedSigningNotificationRewardMultiplier,
+    params.dkgMaliciousResultNotificationRewardMultiplier
+  )
+
+  await randomBeacon.updateGroupCreationParameters(
+    params.groupCreationFrequency,
+    params.groupLifeTime
+  )
+
+  await randomBeacon.updateDkgParameters(
+    params.dkgResultChallengePeriodLength,
+    params.dkgResultSubmissionEligibilityDelay
+  )
+
+  await randomBeacon.updateSlashingParameters(
+    params.relayEntrySubmissionFailureSlashingAmount,
+    params.maliciousDkgResultSlashingAmount,
+    params.unauthorizedSigningSlashingAmount
+  )
 }

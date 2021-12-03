@@ -139,6 +139,69 @@ export async function signAndSubmitArbitraryDkgResult(
   return { transaction, dkgResult, dkgResultHash, members, submitter }
 }
 
+// Signs and submits a DKG result containing signatures with random bytes.
+// Attempting to recover addresses from such signatures causes a revert. It is
+// useful for preparing malicious DKG results.
+export async function signAndSubmitUnrecoverableDkgResult(
+  randomBeacon: RandomBeacon,
+  groupPublicKey: string,
+  signers: Operator[],
+  startBlock: number,
+  misbehavedIndices: number[],
+  submitterIndex?: number,
+  numberOfSignatures = 33
+): Promise<{
+  transaction: ContractTransaction
+  dkgResult: DkgResult
+  dkgResultHash: string
+  members: number[]
+  submitter: SignerWithAddress
+}> {
+  const { members, signingMembersIndices } = await signDkgResult(
+    signers,
+    groupPublicKey,
+    misbehavedIndices,
+    startBlock,
+    numberOfSignatures
+  )
+
+  if (!submitterIndex) {
+    // eslint-disable-next-line no-param-reassign
+    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
+  }
+
+  const signatureHexStrLength = 2 * 65
+  const unrecoverableSignatures = `0x${"a".repeat(
+    signatureHexStrLength * numberOfSignatures
+  )}`
+
+  const dkgResult: DkgResult = {
+    submitterMemberIndex: submitterIndex,
+    groupPubKey: groupPublicKey,
+    misbehavedMembersIndices: misbehavedIndices,
+    signatures: unrecoverableSignatures,
+    signingMembersIndices,
+    members,
+  }
+
+  const dkgResultHash = ethers.utils.keccak256(
+    ethers.utils.defaultAbiCoder.encode(
+      [
+        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members)",
+      ],
+      [dkgResult]
+    )
+  )
+
+  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+
+  const transaction = await randomBeacon
+    .connect(submitter)
+    .submitDkgResult(dkgResult)
+
+  return { transaction, dkgResult, dkgResultHash, members, submitter }
+}
+
 export async function signDkgResult(
   signers: Operator[],
   groupPublicKey: string,
