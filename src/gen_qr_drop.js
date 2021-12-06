@@ -4,7 +4,7 @@ const { toBN } = require('../test/helpers/utils');
 const Wallet = require('ethereumjs-wallet').default;
 const { promisify } = require('util');
 const randomBytesAsync = promisify(require('crypto').randomBytes);
-const { ether } = require('@openzeppelin/test-helpers');
+const { BN, ether } = require('@openzeppelin/test-helpers');
 const qr = require('qr-image');
 const fs = require('fs');
 
