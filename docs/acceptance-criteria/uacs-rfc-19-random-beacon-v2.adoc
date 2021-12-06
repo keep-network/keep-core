@@ -46,7 +46,9 @@ utilised during the acceptance testing of the feature.
   sufficient for covering the fee for the request? (if the allowance is lower, 
   the transaction should be reverted; if it's higher, only the exact fee amount
   should be charged) +
-  - is there at least one active signing group?
+  - does the transaction perform expiration of all signing groups that reached
+  the fixed expiration threshold? +
+  - is there at least one active signing group remaining? +
 
 | Relay request
 | If a relay request is submitted before the previous relay request finished
@@ -57,6 +59,7 @@ utilised during the acceptance testing of the feature.
 | If the relay request is deemed valid, then: +
   - the fee charged from the requester should be deposited in the maintenance
   pool (the T balance of the random beacon contract) +
+  - signing groups that reached the expiration threshold should get expired +
   - the last relay entry should be used by the beacon to select a signing
   group from the set of active groups (by hashing the relay entry and applying
   `modulo no_of_active_groups` operation on the result) +
@@ -401,6 +404,16 @@ utilised during the acceptance testing of the feature.
   - the fixed amount reward (in T) should be sent from the maintenance pool to
   the notifier.
 
+| Group expiration
+| Each group created in the system should reach expiration threshold after a
+  fixed period of time.
+
+| Group expiration
+| Group expiration should be performed in the relay request transaction.
+
+| Group expiration
+| A group that expired should be no longer selected for any new work.
+
 | Sortition pool - punishments
 | Member of the sortition pool can be punished with temporary exclusion from 
   earning rewards as a result of: +
@@ -449,6 +462,11 @@ utilised during the acceptance testing of the feature.
 | Every `N`-th relay request initiates creation of a new signing group.
   This group creation frequency (`groupCreationFrequency`) should be a governable
   parameter.
+
+| Governable parameters
+| The time since the creation of a new signing group after that group gets
+  expired (`groupLifetime`) should be a governable parameter and should be
+  initally set to `80640 blocks` (~2 weeks, assuming 15s block time).
 
 | Governable parameters
 | The length of the challenge period (`resultChallengePeriodLength`) should be a
