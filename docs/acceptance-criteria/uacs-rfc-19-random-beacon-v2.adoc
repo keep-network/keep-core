@@ -184,6 +184,10 @@ utilised during the acceptance testing of the feature.
   - all signing group members should be punished by being slashed the fixed
   amount of T and being excluded from earning rewards for a fixed amount of
   time +
+  - the notifier should receive fixed part of the total slashed amount (in the
+  same tx) +
+  - remaning part of the total slashed amount should be burned or allocated for
+  the maintenance pool of the staking contract +
   - the process of choosing a signing group and tasking it with a relay entry
   generation should be repeated (as part of the same relay request) +
   - if there are no active groups to choose from, the request should get
@@ -364,7 +368,7 @@ utilised during the acceptance testing of the feature.
   accepted gets approved, then: +
   - the sortition pool should get unlocked +
   - the DKG result should be accepted and a group should be created based on the
-  candidate group +  
+  candidate group +
   - the DKG result accepter should receive the fixed reward (in T), paid from
   the maintenance pool to the submitter’s address (in the same tx) +
   - operators marked as inactive/disqualified during DKG protocol execution
@@ -479,7 +483,13 @@ utilised during the acceptance testing of the feature.
 | Governable parameters
 | The max slashing amount for not submitting the relay entry before the hard
   timeout (`relayEntrySubmissionFailureSlashingAmount`) should be a governable
-  parameter and should be initally set to `1000e18` (1000 T)
+  parameter and should be initally set to `1000e18` (1000 T).
+
+| Governable parameters
+| Percentage of the amount slashed from the group as a result of a hard timeout,
+  transfered as a reward to the notifier 
+  (`relayEntryTimeoutNotificationRewardMultiplier`) should be a governable
+  parameter.
 
 | Governable parameters
 | The reward for submitting a DKG result (`dkgResultSubmissionReward`) should be
