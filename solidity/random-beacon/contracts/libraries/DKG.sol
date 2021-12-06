@@ -108,19 +108,6 @@ library DKG {
     /// @dev Size of a group in the threshold relay.
     uint256 public constant groupSize = 64;
 
-    /// @dev The minimum number of group members needed to interact according to
-    ///      the protocol to provide signatures for the DKG result. The adversary
-    ///      can not learn anything about the key as long as it does not break into
-    ///      groupThreshold+1 of members.
-    uint256 public constant groupThreshold = 33;
-
-    /// @dev The minimum number of active and properly behaving group members
-    ///      during the DKG needed to accept the result. This number is higher
-    ///      than `groupThreshold` to keep a safety margin for members becoming
-    ///      inactive after DKG so that the group can still produce a relay
-    ///      entry.
-    uint256 public constant activeThreshold = 58; // 90% of groupSize
-
     /// @notice Time in blocks after which DKG result is complete and ready to be
     //          published by clients.
     uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;

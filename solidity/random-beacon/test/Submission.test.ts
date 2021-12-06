@@ -73,59 +73,6 @@ describe("Submission", () => {
     })
   })
 
-  describe("getInactiveMembers", () => {
-    let groupMembers: OperatorID[]
-
-    beforeEach(async () => {
-      groupMembers = [1, 2, 3, 4, 5, 6, 7, 8]
-    })
-
-    context("when submitter index is the first eligible index", () => {
-      it("should return empty inactive members list", async () => {
-        const inactiveMembers = await submissionStub.getInactiveMembers(
-          5,
-          5,
-          groupMembers
-        )
-
-        await expect(inactiveMembers.length).to.be.equal(0)
-      })
-    })
-
-    context("when submitter index is bigger than first eligible index", () => {
-      it("should return a proper inactive members list", async () => {
-        const inactiveMembers = await submissionStub.getInactiveMembers(
-          8,
-          5,
-          groupMembers
-        )
-
-        await expect(inactiveMembers.length).to.be.equal(3)
-        await expect(inactiveMembers[0]).to.be.equal(groupMembers[4])
-        await expect(inactiveMembers[1]).to.be.equal(groupMembers[5])
-        await expect(inactiveMembers[2]).to.be.equal(groupMembers[6])
-      })
-    })
-
-    context("when submitter index is smaller than first eligible index", () => {
-      it("should return a proper inactive members list", async () => {
-        const inactiveMembers = await submissionStub.getInactiveMembers(
-          3,
-          5,
-          groupMembers
-        )
-
-        await expect(inactiveMembers.length).to.be.equal(6)
-        await expect(inactiveMembers[0]).to.be.equal(groupMembers[4])
-        await expect(inactiveMembers[1]).to.be.equal(groupMembers[5])
-        await expect(inactiveMembers[2]).to.be.equal(groupMembers[6])
-        await expect(inactiveMembers[3]).to.be.equal(groupMembers[7])
-        await expect(inactiveMembers[4]).to.be.equal(groupMembers[0])
-        await expect(inactiveMembers[5]).to.be.equal(groupMembers[1])
-      })
-    })
-  })
-
   async function assertMembersEligible(
     protocolStartBlock: number,
     checkedMembers: number[]
