@@ -113,7 +113,7 @@ utilised during the acceptance testing of the feature.
   passed, should get slashed the calculated amount of T (all happening in the
   same tx) +
   - if an optional address of the `IRandomBeaconConsumer` interface was provided
-  in the tx, the interface should be called +
+  in the tx, the interface should be called (with a fixed gas limit) +
   - the process of creation of a new signing group should be triggered (only
   sometimes, every N-th relay request, if a creation of group isn't already in
   progress).
@@ -515,8 +515,8 @@ utilised during the acceptance testing of the feature.
   (`sortitionPoolRewardsBanDuration`) should be a governable parameter.
 
 | Governable parameters
-// Initial value: 50k gas?
-| The callback gas limit (`callbackGasLimit`) should be a governable parameter.
+| The callback gas limit (`callbackGasLimit`) should be a governable parameter
+  and should be initially set to `50000`.
 
 | Governable parameters
 | All random beacon governable parameters should be modifiable by the authorized
