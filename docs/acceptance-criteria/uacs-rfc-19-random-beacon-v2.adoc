@@ -124,7 +124,8 @@ utilised during the acceptance testing of the feature.
 
 | Relay request - relay entry submission
 | The transaction submitting relay entry should have a predictable cost and the
-  gas cost of this transaction should be as low as possible, below 200k gas used.
+  gas cost of this transaction should be as low as possible, below 200k gas used
+  (when no callback is executed).
 
 | Relay request - relay entry submission
 | Failure in the callback function should not revert the relay entry transaction.
