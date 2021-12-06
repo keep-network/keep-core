@@ -11,7 +11,7 @@ contract RelayStub {
 
     constructor() {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
-        relay.setRelayEntryHardTimeout(5760);
+        relay.setRelayEntryHardTimeout(100);
     }
 
     function setCurrentRequestStartBlock() external {

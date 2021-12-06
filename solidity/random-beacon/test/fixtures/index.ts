@@ -27,13 +27,13 @@ export const dkgState = {
 }
 
 export const params = {
-  relayRequestFee: 0,
+  relayRequestFee: to1e18(100),
   relayEntrySubmissionEligibilityDelay: 10,
-  relayEntryHardTimeout: 5760,
+  relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
   groupCreationFrequency: 10,
-  groupLifeTime: 60 * 60 * 24 * 14, // 2 weeks
-  dkgResultChallengePeriodLength: 1440,
+  groupLifeTime: 1000,
+  dkgResultChallengePeriodLength: 100,
   dkgResultSubmissionEligibilityDelay: 10,
   dkgResultSubmissionReward: 0,
   sortitionPoolUnlockingReward: 0,
