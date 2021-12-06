@@ -364,6 +364,9 @@ utilised during the acceptance testing of the feature.
   candidate group +  
   - the DKG result accepter should receive the fixed reward (in T), paid from
   the maintenance pool to the submitter’s address (in the same tx) +
+  - operators marked as inactive/disqualified during DKG protocol execution
+  should be punished by being excluded from earning rewards for a fixed amount
+  of time (in the same tx) +
   - operators who became eligible for submitting the DKG result before the
   member who submitted the DKG result should be punished by being excluded from
   earning rewards for a fixed amount of time (in the same tx).
@@ -401,6 +404,7 @@ utilised during the acceptance testing of the feature.
 | Sortition pool - punishments
 | Member of the sortition pool can be punished with temporary exclusion from 
   earning rewards as a result of: +
+  - inactivity or disqualification during off-chain DKG +
   - misbehavior during the DKG submission +
   - misbehavior during relay entry submission.
 
