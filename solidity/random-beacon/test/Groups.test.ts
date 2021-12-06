@@ -596,7 +596,6 @@ describe("Groups", () => {
           let tx1: ContractTransaction
           let tx2: ContractTransaction
 
-          // TODO: Update as the latest group got activated
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,
