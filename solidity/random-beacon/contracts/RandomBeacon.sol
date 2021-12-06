@@ -617,8 +617,6 @@ contract RandomBeacon is Ownable {
 
         groups.activateCandidateGroup();
         dkg.complete();
-        // TODO: Check if this function is cheap enough and it will be
-        //       profitable for the DKG result submitter to call it.
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
