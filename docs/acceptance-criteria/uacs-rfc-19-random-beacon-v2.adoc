@@ -81,11 +81,14 @@ utilised during the acceptance testing of the feature.
   the data provided by at least `blsThreshold=(group_size/2) + 1` members of the
   signing group). This signature will be used as a proposed new relay entry.
 
-| Relay request - relay entry submission
-| During the signature submission eligibility period only selected members from
-  the group should be eligible to successfully submit the new relay entry: +
-  - at the beginning only one member, with index `new_entry % group_size`,
-  should be eligible +
+ | Relay request - relay entry submission
+ | Anyone can send a transaction submitting a new relay entry.
+
+ | Relay request - relay entry submission
+ | Off-chain clients are expected to agree and follow the following order to
+   minimize the gas cost and distribute costs: +
+   - at the beginning only one member, with index `new_entry % group_size`,
+  should be eligible to submit a new relay entry +
   - after fixed amount of blocks another member, with index `(new_entry %
   group_size ) + 1`, should become eligible (previous operator remains eligible) +
   - next members should become eligible after each fixed amount of blocks.
@@ -97,21 +100,13 @@ utilised during the acceptance testing of the feature.
 | Relay request - relay entry submission
 | When determining validity of the relay entry submission, the following aspects
   should be taken into account: +
-  - is the submitter eligible to submit? +
   - hasn’t the hard timeout for the relay request be reached? +
-  - does the transaction include punishing of misbehaving operators (when
-  aplicable)? +
   - is the BLS threshold signature valid? +
   - is the relay request in progress?
 
 | Relay request - relay entry submission
 | If the transaction submitting the new relay entry gets approved, then: +
   - the BLS threshold signature should be accepted as a new relay entry +
-  - operators who became eligible for submitting the relay entry before the
-  member who submitted the relay entry should be punished by being excluded from
-  earning rewards for a fixed amount of time and, if the soft timeout has
-  passed, should get slashed the calculated amount of T (all happening in the
-  same tx) +
   - if an optional address of the `IRandomBeaconConsumer` interface was provided
   in the tx, the interface should be called (with a fixed gas limit) +
   - the process of creation of a new signing group should be triggered (only
@@ -423,8 +418,7 @@ utilised during the acceptance testing of the feature.
 | Member of the sortition pool can be punished with temporary exclusion from 
   earning rewards as a result of: +
   - inactivity or disqualification during off-chain DKG +
-  - misbehavior during the DKG submission +
-  - misbehavior during relay entry submission.
+  - misbehavior during the DKG submission.
 
 | Sortition pool - punishments
 | The operation excluding members from earning the rewards should be as cheap as
