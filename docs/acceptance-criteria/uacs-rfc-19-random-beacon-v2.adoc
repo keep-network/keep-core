@@ -351,7 +351,7 @@ utilised during the acceptance testing of the feature.
   Only if all the above conditions have been met, the tx is considered valid.
 
 | Group creation - DKG acceptance
-| At the beginning (right after DKG result is submitted on chain) only the
+| At the beginning (right after DKG result is submitted on chain) only the result
   submitter should be eligible to accept the DKG result and earn the reward.
   After a fixed amount of time everybody should become eliglible to accept the
   DKG result.
@@ -362,8 +362,8 @@ utilised during the acceptance testing of the feature.
   - the sortition pool should get unlocked +
   - the DKG result should be accepted and a group should be created based on the
   candidate group +  
-  - submitter should receive the fixed reward (in T), paid from the maintenance
-  pool to the submitter’s address (in the same tx) +
+  - the DKG result accepter should receive the fixed reward (in T), paid from
+  the maintenance pool to the submitter’s address (in the same tx) +
   - operators who became eligible for submitting the DKG result before the
   member who submitted the DKG result should be punished by being excluded from
   earning rewards for a fixed amount of time (in the same tx).
