@@ -449,6 +449,9 @@ Contract addresses needed to boot the Random Beacon client:
 |Token
 |
 
+|KeepToken
+|`0x29DDc999E81E585D500BcA2FD2A8bcA677680e72`
+
 |TokenStaking
 |`0xaCb7e9405073a80E15a0B78D9E3F4ecCD8a3b68a`
 |===
