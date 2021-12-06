@@ -443,30 +443,29 @@ utilised during the acceptance testing of the feature.
 
 | Governable parameters
 | Every `N`-th relay request initiates creation of a new signing group.
-  This group creation frequency should be a governable parameter.
-
-| Governable parameters
-| The length of the challenge period should be a governable parameter.
-
-| Governable parameters
-| The slashing amount for submitting malicious DKG result should be a governable
+  This group creation frequency (`groupCreationFrequency`) should be a governable
   parameter.
 
 | Governable parameters
+| The length of the challenge period (`resultChallengePeriodLength`) should be a
+  governable parameter and should be initally set to `1440 blocks`.
+
+| Governable parameters
+| The slashing amount for submitting malicious DKG result
+  (`maliciousDkgResultSlashingAmount`) should be a governable parameter.
+
+| Governable parameters
 | The max slashing amount for not submitting the relay entry before the hard
-  timeout should be a governable parameter.
+  timeout (`relayEntrySubmissionFailureSlashingAmount`) should be a governable
+  parameter and should be initally set to `1000e18` (1000 T)
 
 | Governable parameters
-| The reward for submitting a DKG result should be a governable parameter.
+| The reward for submitting a DKG result (`dkgResultSubmissionReward`) should be
+  a governable parameter.
 
 | Governable parameters
-| The reward for unlocking the sortition pool if DKG timed out should be a
-  governable parameter.
-
-| Governable parameters
-| Number of blocks after which a new operator is added to the list of operators
-  eligible for submitting the DKG result and unlocking the group should be a
-  governable parameter. Its initial value should be set to 10 blocks.
+| The reward for unlocking the sortition pool if DKG timed out
+  (`sortitionPoolUnlockingReward`) should be a governable parameter.
 
 | Governable parameters
 | The value of the fee for processing a relay request should be a governable
@@ -474,27 +473,28 @@ utilised during the acceptance testing of the feature.
 
 | Governable parameters
 | The frequency (in blocks) of adding new group members as eligible to submit
-  relay entry should be a governable parameter. Its initial value should be set
-  to 10 blocks.
+  relay entry (`relayEntrySubmissionEligibilityDelay`) should be a governable
+  parameter. Its initial value should be set to 10 blocks.
 
 | Governable parameters
 | The frequency (in blocks) of adding new group members as eligible to submit a
-  DKG result should be a governable parameter. Its initial value should be set
-  to 10 blocks.
+  DKG result (`resultSubmissionEligibilityDelay`) should be a governable
+  parameter. Its initial value should be set to 10 blocks.
 
 | Governable parameters
-| The hard timeout for a relay entry should be a governable parameter. Its
-  initial value should be set to 24 hours (expressed in blocks, where we assume
-  `1 block = 15s`).
+| The hard timeout for a relay entry (`relayEntryHardTimeout`) should be a
+  governable parameter. Its initial value should be set to `5760 blocks` (~24h,
+  assuming 15s block time).
 
+// Initial value: 3 weeks?
 | Governable parameters
 | The length of the period during which operators won't be able to earn rewards
   as a punishment for misbehaviour during submission of DKG or relay entry
-  should be a governable parameter. Its initial value should be set to 3 weeks.
+  (`sortitionPoolRewardsBanDuration`) should be a governable parameter.
 
 | Governable parameters
-| The callback gas limit should be a governable parameter. Its initial value
-  should be set to 50k gas.
+// Initial value: 50k gas?
+| The callback gas limit (`callbackGasLimit`) should be a governable parameter.
 
 | Governable parameters
 | All random beacon governable parameters should be modifiable by the authorized
