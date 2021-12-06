@@ -1,15 +1,21 @@
 import json
 from eth_utils import to_checksum_address
 
-with open('dune.json') as in_f:
-    d = json.load(in_f)
+monthly_files = [
+    'data/21_08.json',
+    'data/21_09.json',
+    'data/21_10.json',
+    'data/21_11.json',
+    'data/bf.json'
+]
 
-with open('dune2.json') as in_f:
-    d2 = json.load(in_f)
+data_in = []
+for filename in monthly_files:
+    with open(filename) as in_f:
+        data_in.extend(json.load(in_f)['data']['get_result_by_result_id'])
 
 dataset = []
-
-for e in d['data']['get_result_by_result_id'] + d2['data']['get_result_by_result_id']:
+for e in data_in:
     dataset.append({
         # 'tx_hash': e['data']['tx_hash'].replace('\\', '0'),
         'tx_from': e['data']['tx_from'].replace('\\', '0'),
@@ -96,9 +102,9 @@ for e in dataset:
     else:
         drop_data[addr] = int(e['inch_refund'] * 1e18)
 
-for k in sorted(drop_data.values(), reverse=True)[:5]:
-    print(k)
-print(len(drop_data))
+# for k in sorted(drop_data.values(), reverse=True)[:5]:
+#     print(k)
+# print(len(drop_data))
 
 for k in drop_data.keys():
     drop_data[k] = str(drop_data[k])
