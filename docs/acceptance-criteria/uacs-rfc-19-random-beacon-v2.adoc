@@ -57,8 +57,8 @@ utilised during the acceptance testing of the feature.
 
 | Relay request
 | If the relay request is deemed valid, then: +
-  - the fee charged from the requester should be deposited in the maintenance
-  pool (the T balance of the random beacon contract) +
+  - the fee charged from the requester should be deposited in the rewards pool
+  (the T balance of the random beacon contract) +
   - signing groups that reached the expiration threshold should get expired +
   - the last relay entry should be used by the beacon to select a signing
   group from the set of active groups (by hashing the relay entry and applying
@@ -187,7 +187,7 @@ utilised during the acceptance testing of the feature.
   - the notifier should receive fixed part of the total slashed amount (in the
   same tx) +
   - remaning part of the total slashed amount should be burned or allocated for
-  the maintenance pool of the staking contract +
+  the rewards pool of the staking contract +
   - the process of choosing a signing group and tasking it with a relay entry
   generation should be repeated (as part of the same relay request) +
   - if there are no active groups to choose from, the request should get
@@ -324,7 +324,7 @@ utilised during the acceptance testing of the feature.
   amount) (in the same tx) +
   - notifier should receive 5% from the total slashed amount (in the same tx) +
   - remaning 95% of the total slashed amount should be burned or allocated for
-  the maintenance pool of the staking contract +
+  the rewards pool of the staking contract +
   - the members of the signing group should be given another chance to publish
   the DKG result +
   - DKG timeout timer and the result submission eligibility order should be
@@ -370,7 +370,7 @@ utilised during the acceptance testing of the feature.
   - the DKG result should be accepted and a group should be created based on the
   candidate group +
   - the DKG result accepter should receive the fixed reward (in T), paid from
-  the maintenance pool to the submitter’s address (in the same tx) +
+  the rewards pool to the submitter’s address (in the same tx) +
   - operators marked as inactive/disqualified during DKG protocol execution
   should be punished by being excluded from earning rewards for a fixed amount
   of time (in the same tx) +
@@ -405,8 +405,8 @@ utilised during the acceptance testing of the feature.
 | Group creation - DKG timeout
 | If the DKG timeout notification was deemed justified, then: +
   - the pool should be unlocked +
-  - the fixed amount reward (in T) should be sent from the maintenance pool to
-  the notifier.
+  - the fixed amount reward (in T) should be sent from the rewards pool to the
+  notifier.
 
 | Group expiration
 | Each group created in the system should reach expiration threshold after a
