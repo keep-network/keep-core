@@ -3,7 +3,6 @@
 import { ethers, helpers, waffle } from "hardhat"
 import { expect } from "chai"
 import type { SubmissionStub } from "../typechain"
-import { OperatorID } from "./utils/operators"
 import blsData from "./data/bls"
 
 const { mineBlocks } = helpers.time

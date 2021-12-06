@@ -16,7 +16,6 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./AltBn128.sol";
 import "./BLS.sol";
 import "./Groups.sol";
