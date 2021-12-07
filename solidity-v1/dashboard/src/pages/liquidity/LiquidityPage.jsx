@@ -5,7 +5,6 @@ import {
   useWeb3Context,
 } from "../../components/WithWeb3Context"
 import PageWrapper from "../../components/PageWrapper"
-import CardContainer from "../../components/CardContainer"
 import LiquidityRewardCard from "../../components/LiquidityRewardCard"
 import {
   LINK,
@@ -21,6 +20,7 @@ import Banner from "../../components/Banner"
 import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
 import KeepOnlyPool from "../../components/KeepOnlyPool"
+import MasonryFlexContainer from "../../components/MasonryFlexContainer"
 
 const cards = [
   {
@@ -33,27 +33,6 @@ const cards = [
     viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.viewPoolLink,
     pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.lpTokens,
-    wrapperClassName: "tbtc-v2-saddle",
-  },
-  {
-    id: "KEEP_ETH",
-    title: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label,
-    liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName,
-    MainIcon: Icons.KeepBlackGreen,
-    SecondaryIcon: Icons.EthToken,
-    viewPoolLink: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink,
-    pool: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool,
-    lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens,
-    wrapperClassName: "keep-eth",
-  },
-  {
-    id: "TBTCV2_MBTC",
-    title: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.label,
-    MainIcon: Icons.TBTC,
-    SecondaryIcon: Icons.Saddle,
-    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.viewPoolLink,
-    pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.pool,
-    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.lpTokens,
     wrapperClassName: "tbtc-v2-saddle",
   },
   {
@@ -72,6 +51,17 @@ const cards = [
     },
   },
   {
+    id: "KEEP_ETH",
+    title: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label,
+    liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName,
+    MainIcon: Icons.KeepBlackGreen,
+    SecondaryIcon: Icons.EthToken,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens,
+    wrapperClassName: "keep-eth",
+  },
+  {
     id: "TBTC_SADDLE",
     title: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label,
     liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.contractName,
@@ -85,6 +75,16 @@ const cards = [
     incentivesRemovedBannerProps: {
       link: LINK.proposals.shiftingIncentivesToCoveragePools,
     },
+  },
+  {
+    id: "TBTCV2_MBTC",
+    title: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.label,
+    MainIcon: Icons.TBTC,
+    SecondaryIcon: Icons.Saddle,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.lpTokens,
+    wrapperClassName: "tbtc-v2-saddle",
   },
   {
     id: "KEEP_TBTC",
@@ -205,7 +205,7 @@ const LiquidityPage = ({ headerTitle }) => {
         liquidityContractName={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.contractName}
         pool={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool}
       />
-      <CardContainer>
+      <MasonryFlexContainer maxHeight={"1700px"}>
         {cards.map(({ id, ...data }) => {
           if (data.pool === POOL_TYPE.MSTABLE) {
             return (
@@ -231,7 +231,7 @@ const LiquidityPage = ({ headerTitle }) => {
             />
           )
         })}
-      </CardContainer>
+      </MasonryFlexContainer>
     </PageWrapper>
   )
 }
