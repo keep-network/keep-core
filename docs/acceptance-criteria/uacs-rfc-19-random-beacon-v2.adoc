@@ -441,6 +441,33 @@ utilised during the acceptance testing of the feature.
 | Group expiration
 | A group that expired should be no longer selected for any new work.
 
+| Groups - punishing for unauthorised signing
+| It should be possible for any operator to send a notication informing about
+  unauthorized groups signing (leaked signature).
+
+| Groups - punishing for unauthorised signing
+| Upon receiving the transaction notifying about the unauthorized groups
+  signing, the random beacon should determine its validity.
+  
+| Groups - punishing for unauthorised signing
+  When determining validity of transaction notifying about the unauthorized
+  groups signing, the following aspects should be taken into account: +
+  - is the group indicated by the submitter as the one that leaked signature 
+  active and non-terminated? +
+  - does the signature provided by the submitter match the provided message and
+  the corresponding public key?
+
+| Groups - punishing for unauthorised signing
+| If the transaction notifying about the unauthorized groups signing is deemed
+  valid, then: +
+  - the group that leaked the signature should get terminated (in the same tx) +
+  - all members of the group should get slashed a fixed amount of T (in the same
+  tx) +
+  - notifier should receive fixed part of the total slashed amount (in the same
+  tx) +
+  - remaning part of the total slashed amount should be burned or allocated for
+  the rewards pool of the staking contract.
+  
 | Sortition pool - punishments
 | Member of the sortition pool can be punished with temporary exclusion from 
   earning rewards as a result of: +
@@ -556,6 +583,16 @@ utilised during the acceptance testing of the feature.
 | The length of the period during which operators won't be able to earn rewards
   as a punishment for misbehaviour during submission of DKG or relay entry
   (`sortitionPoolRewardsBanDuration`) should be a governable parameter.
+
+| Governable parameters
+| The amount slashed from the members of the group that leaked signature 
+  (`unauthorizedSigningSlashingAmount`) should be a governable parameter.
+
+| Governable parameters
+| Percentage of the amount slashed from the members of the group that leaked
+  signature, transfered as a reward to the notifier,
+  (`unauthorizedSigningNotificationRewardMultiplier`) should be a governable
+  parameter.
 
 | Governable parameters
 | The callback gas limit (`callbackGasLimit`) should be a governable parameter
