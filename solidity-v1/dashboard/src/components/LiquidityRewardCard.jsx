@@ -79,7 +79,7 @@ const LiquidityRewardCard = ({
     let linkText = ""
 
     if (incentivesRemoved) {
-      bannerIcon = Icons.Warning
+      bannerIcon = Icons.Bell
       const bannerProps = {
         ...defaultIncentivesRemovedBannerProps,
         ...incentivesRemovedBannerProps,
