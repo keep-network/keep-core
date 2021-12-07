@@ -93,6 +93,32 @@ utilised during the acceptance testing of the feature.
   group_size ) + 1`, should become eligible (previous operator remains eligible) +
   - next members should become eligible after each fixed amount of blocks.
 
+| Relay request - punishing inactive operators
+| It should be possible for a member of the group to send a notication informing
+  about group members notoriously ignoring their duty in relay entry (what will
+  be considered as ignoring the duties and how will it be checked should depend
+  on the off-chain algorithm - suggested mechanism: heartbeats).
+  
+| Relay request - punishing inactive operators
+| Upon receiving the transaction notifying about the misbehaving operators, the
+  random beacon should determine its validity.
+  
+| Relay request - punishing inactive operators
+  When determining validity of the transaction notifying about the misbehaving
+  operators, the following aspects should be taken into account: +
+  - was the transaction signed by at least half of the operators in the group? +
+  - are the operators who signed the transactions members of an active,
+  non-terminated group?
+
+| Relay request - punishing inactive operators
+| If the transaction notifying about the misbehaving operators gets approved,
+  then: +
+  - operators deemed as misbehaving should be excluded from earning the
+  sortition-pool rewards for a fixed amount of time +
+  - the submitter of the claim should get rewarded a fixed amount of T (per one
+  misbehaving operator) from the special reward pool (funded from the savings
+  made by previous exclusions of the operators from earning the rewards).
+
 | Relay request - relay entry submission
 | Upon receiving the transaction submitting the relay entry, the random beacon
   contract should determine validity of the transaction.
@@ -475,6 +501,11 @@ utilised during the acceptance testing of the feature.
 | Governable parameters
 | The slashing amount for submitting malicious DKG result
   (`maliciousDkgResultSlashingAmount`) should be a governable parameter.
+
+| Governable parameters
+| The reward for notifying about an operator notouriously ignoring their duty in
+  the relay entry generation (`ineligibleOperatorNotifierReward`) should be
+  a governable parameter.
 
 | Governable parameters
 | The max slashing amount for not submitting the relay entry before the hard
