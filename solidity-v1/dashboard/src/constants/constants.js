@@ -90,6 +90,7 @@ export const SIGNING_GROUP_STATUS = {
 
 export const POOL_TYPE = {
   SADDLE: "SADDLE",
+  MSTABLE: "MSTABLE",
   UNISWAP: "UNISWAP",
   TOKEN_GEYSER: "TOKEN_GEYSER",
 }
@@ -142,6 +143,12 @@ export const LIQUIDITY_REWARD_PAIRS = {
         iconName: "EthToken",
       },
     ],
+  },
+  TBTCV2_MBTC: {
+    label: "TBTCv2 + mBTC",
+    viewPoolLink:
+      "https://app.mstable.org/#/mbtc/pools/0xb61a6f928b3f069a68469ddb670f20eeeb4921e0",
+    pool: POOL_TYPE.MSTABLE,
   },
   KEEP_TBTC: {
     contractName: LP_REWARDS_KEEP_TBTC_CONTRACT_NAME,

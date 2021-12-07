@@ -12,6 +12,7 @@ import { gt } from "../utils/arithmetics.utils"
 import { POOL_TYPE } from "../constants/constants"
 import { APY, LPTokenBalance, ShareOfPool } from "./liquidity"
 import MetricsTile from "./MetricsTile"
+import OnlyIf from "./OnlyIf"
 
 const defaultIncentivesRemovedBannerProps = {
   title: "Incentives removed",
@@ -31,12 +32,12 @@ const LiquidityRewardCard = ({
   // Percentage of the deposited liquidity tokens in the `LPRewards` pool.
   percentageOfTotalPool,
   // Current reward balance earned in `LPRewards` contract.
-  rewardBalance,
+  rewardBalance = "0",
   // Balance of the wrapped token.
-  wrappedTokenBalance,
+  wrappedTokenBalance = "0",
   // Balance of wrapped token deposited in the `LPRewards` contract.
-  lpBalance,
-  lpTokenBalance,
+  lpBalance = "0",
+  lpTokenBalance = "0",
   lpTokens,
   isFetching,
   wrapperClassName = "",
@@ -48,6 +49,7 @@ const LiquidityRewardCard = ({
   incentivesRemovedBannerProps = {
     ...defaultIncentivesRemovedBannerProps,
   },
+  isExternal = false, // set true if you can't interact with the pool inside of dapp
 }) => {
   const hasWrappedTokens = useMemo(
     () => gt(wrappedTokenBalance, 0),
@@ -55,6 +57,19 @@ const LiquidityRewardCard = ({
   )
 
   const hasDepositedWrappedTokens = useMemo(() => gt(lpBalance, 0), [lpBalance])
+
+  const poolName = useMemo(() => {
+    switch (pool) {
+      case POOL_TYPE.UNISWAP:
+        return "Uniswap pool"
+      case POOL_TYPE.SADDLE:
+        return "Saddle pool"
+      case POOL_TYPE.MSTABLE:
+        return "mStable"
+      default:
+        return "Uniswap pool"
+    }
+  }, [pool])
 
   const renderUserInfoBanner = () => {
     let bannerIcon = null
@@ -75,18 +90,24 @@ const LiquidityRewardCard = ({
       linkText = bannerProps.linkText
     } else {
       bannerIcon = !hasDepositedWrappedTokens ? Icons.Rewards : Icons.Wallet
-      bannerTitle = !hasDepositedWrappedTokens
-        ? "Start earning rewards"
-        : "No LP Tokens found in wallet"
-      bannerDescription = !hasDepositedWrappedTokens
-        ? "Get LP tokens by adding liquidity first to the"
-        : "Get more by adding liquidity to the"
-      link = viewPoolLink
-      linkText = pool === POOL_TYPE.SADDLE ? "Saddle pool" : "Uniswap pool"
+      bannerTitle =
+        !hasDepositedWrappedTokens || isExternal
+          ? "Start earning rewards"
+          : "No LP Tokens found in wallet"
+      if (isExternal) {
+        bannerDescription =
+          "Deposit your TBTC into the mStable pool to earn with low impermanent loss risk."
+      } else {
+        bannerDescription = !hasDepositedWrappedTokens
+          ? "Get LP tokens by adding liquidity first to the"
+          : "Get more by adding liquidity to the"
+        link = viewPoolLink
+        linkText = pool === POOL_TYPE.SADDLE ? "Saddle pool" : "Uniswap pool"
+      }
     }
 
     return (
-      !hasWrappedTokens && (
+      (!hasWrappedTokens || isExternal) && (
         <Banner
           className={`liquidity-info-banner ${
             incentivesRemoved ? "liquidity-info-banner--warning mt-2" : ""
@@ -112,17 +133,19 @@ const LiquidityRewardCard = ({
               }`}
             >
               {bannerDescription}
-              &nbsp;
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href={link}
-                className={`text-link ${
-                  incentivesRemoved ? "text-grey-60" : "text-white"
-                }`}
-              >
-                {linkText}
-              </a>
+              <OnlyIf condition={link && linkText}>
+                &nbsp;
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={link}
+                  className={`text-link ${
+                    incentivesRemoved ? "text-grey-60" : "text-white"
+                  }`}
+                >
+                  {linkText}
+                </a>
+              </OnlyIf>
             </Banner.Description>
           </div>
         </Banner>
@@ -140,8 +163,8 @@ const LiquidityRewardCard = ({
         />
         <h2 className={"h2--alt text-grey-70"}>{title}</h2>
       </div>
-      <h4 className="liquidity__card-subtitle text-grey-40">
-        {pool === POOL_TYPE.SADDLE ? "Saddle Pool" : "Uniswap Pool"}
+      <h4 className="liquidity__card-subtitle text-grey-40 mb-2">
+        {poolName}
         &nbsp;
         <a
           target="_blank"
@@ -163,11 +186,11 @@ const LiquidityRewardCard = ({
           to your share of the total pool.
         </Tooltip>
       </h4>
-      {!incentivesRemoved && (
+      {!isExternal && !incentivesRemoved && (
         <div
           className={`liquidity__info${
             gt(lpBalance, 0) ? "" : "--locked"
-          } mt-2 mb-2`}
+          } mb-2`}
         >
           <MetricsTile className="liquidity__info-tile bg-mint-10">
             <MetricsTile.Tooltip className="liquidity__info-tile__tooltip">
@@ -191,56 +214,68 @@ const LiquidityRewardCard = ({
         </div>
       )}
       {renderUserInfoBanner()}
-      <LPTokenBalance lpTokens={lpTokens} lpTokenBalance={lpTokenBalance} />
-      <div className={"liquidity__reward-balance"}>
-        <h4 className={"liquidity__reward-balance__title text-grey-70"}>
-          Your rewards
-        </h4>
-        <span className={"liquidity__reward-balance__subtitle text-grey-40"}>
-          Rewards allocated on a weekly basis.
-        </span>
-        <div className={"liquidity__reward-balance_values text-grey-70"}>
-          <h3 className={"liquidity__reward-balance_values_label"}>
-            <Icons.KeepOutline />
-            <span>KEEP</span>
-          </h3>
-          {isFetching ? (
-            <Skeleton tag="h3" shining color="grey-20" className="ml-3" />
-          ) : (
-            <h3>
-              <CountUp
-                end={KEEP.toTokenUnit(rewardBalance).toNumber()}
-                separator={","}
-                preserveValue
-              />
+      <OnlyIf condition={!isExternal}>
+        <LPTokenBalance lpTokens={lpTokens} lpTokenBalance={lpTokenBalance} />
+        <div className={"liquidity__reward-balance"}>
+          <h4 className={"liquidity__reward-balance__title text-grey-70"}>
+            Your rewards
+          </h4>
+          <span className={"liquidity__reward-balance__subtitle text-grey-40"}>
+            Rewards allocated on a weekly basis.
+          </span>
+          <div className={"liquidity__reward-balance_values text-grey-70"}>
+            <h3 className={"liquidity__reward-balance_values_label"}>
+              <Icons.KeepOutline />
+              <span>KEEP</span>
             </h3>
-          )}
+            {isFetching ? (
+              <Skeleton tag="h3" shining color="grey-20" className="ml-3" />
+            ) : (
+              <h3>
+                <CountUp
+                  end={KEEP.toTokenUnit(rewardBalance).toNumber()}
+                  separator={","}
+                  preserveValue
+                />
+              </h3>
+            )}
+          </div>
         </div>
-      </div>
-      <SubmitButton
-        className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
-        disabled={!gt(wrappedTokenBalance, 0) || incentivesRemoved}
-        onSubmitAction={(awaitingPromise) =>
-          addLpTokens(poolId, wrappedTokenBalance, awaitingPromise)
-        }
-      >
-        {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
-      </SubmitButton>
+        <SubmitButton
+          className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
+          disabled={!gt(wrappedTokenBalance, 0) || incentivesRemoved}
+          onSubmitAction={(awaitingPromise) =>
+            addLpTokens(poolId, wrappedTokenBalance, awaitingPromise)
+          }
+        >
+          {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
+        </SubmitButton>
 
-      <SubmitButton
-        className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
-        disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
-        onSubmitAction={(awaitingPromise) =>
-          withdrawLiquidityRewards(poolId, lpBalance, awaitingPromise)
-        }
-      >
-        withdraw all
-      </SubmitButton>
-      {(gt(rewardBalance, 0) || gt(lpBalance, 0)) && (
-        <div className={"text-validation text-center"}>
-          Withdraw includes rewards and principal
-        </div>
-      )}
+        <SubmitButton
+          className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
+          disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
+          onSubmitAction={(awaitingPromise) =>
+            withdrawLiquidityRewards(poolId, lpBalance, awaitingPromise)
+          }
+        >
+          withdraw all
+        </SubmitButton>
+        {(gt(rewardBalance, 0) || gt(lpBalance, 0)) && (
+          <div className={"text-validation text-center"}>
+            Withdraw includes rewards and principal
+          </div>
+        )}
+      </OnlyIf>
+      <OnlyIf condition={isExternal}>
+        <a
+          href={viewPoolLink}
+          rel="noopener noreferrer"
+          target="_blank"
+          className={`btn btn-primary btn-lg w-100 mt-2`}
+        >
+          go to pool
+        </a>
+      </OnlyIf>
     </Card>
   )
 }

@@ -7,7 +7,11 @@ import {
 import PageWrapper from "../../components/PageWrapper"
 import CardContainer from "../../components/CardContainer"
 import LiquidityRewardCard from "../../components/LiquidityRewardCard"
-import { LINK, LIQUIDITY_REWARD_PAIRS } from "../../constants/constants"
+import {
+  LINK,
+  LIQUIDITY_REWARD_PAIRS,
+  POOL_TYPE,
+} from "../../constants/constants"
 import * as Icons from "../../components/Icons"
 import {
   addMoreLpTokens,
@@ -41,6 +45,16 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens,
     wrapperClassName: "keep-eth",
+  },
+  {
+    id: "TBTCV2_MBTC",
+    title: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.label,
+    MainIcon: Icons.TBTC,
+    SecondaryIcon: Icons.Saddle,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.lpTokens,
+    wrapperClassName: "tbtc-v2-saddle",
   },
   {
     id: "TBTC_ETH",
@@ -192,24 +206,31 @@ const LiquidityPage = ({ headerTitle }) => {
         pool={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool}
       />
       <CardContainer>
-        {cards.map(({ id, ...data }) => (
-          <LiquidityRewardCard
-            key={id}
-            poolId={id}
-            {...data}
-            apy={liquidityPools[id].apy}
-            percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
-            rewardBalance={liquidityPools[id].reward}
-            wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
-            lpBalance={liquidityPools[id].lpBalance}
-            lpTokenBalance={liquidityPools[id].lpTokenBalance}
-            rewardMultiplier={liquidityPools[id].rewardMultiplier}
-            isFetching={liquidityPools[id].isFetching}
-            addLpTokens={addLpTokens}
-            withdrawLiquidityRewards={withdrawLiquidityRewards}
-            isAPYFetching={liquidityPools[id].isAPYFetching}
-          />
-        ))}
+        {cards.map(({ id, ...data }) => {
+          if (data.pool === POOL_TYPE.MSTABLE) {
+            return (
+              <LiquidityRewardCard key={id} poolId={id} {...data} isExternal />
+            )
+          }
+          return (
+            <LiquidityRewardCard
+              key={id}
+              poolId={id}
+              {...data}
+              apy={liquidityPools[id].apy}
+              percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
+              rewardBalance={liquidityPools[id].reward}
+              wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
+              lpBalance={liquidityPools[id].lpBalance}
+              lpTokenBalance={liquidityPools[id].lpTokenBalance}
+              rewardMultiplier={liquidityPools[id].rewardMultiplier}
+              isFetching={liquidityPools[id].isFetching}
+              addLpTokens={addLpTokens}
+              withdrawLiquidityRewards={withdrawLiquidityRewards}
+              isAPYFetching={liquidityPools[id].isAPYFetching}
+            />
+          )
+        })}
       </CardContainer>
     </PageWrapper>
   )
