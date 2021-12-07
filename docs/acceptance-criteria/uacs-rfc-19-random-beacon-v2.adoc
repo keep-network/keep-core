@@ -472,7 +472,8 @@ utilised during the acceptance testing of the feature.
 | Member of the sortition pool can be punished with temporary exclusion from 
   earning rewards as a result of: +
   - inactivity or disqualification during off-chain DKG +
-  - misbehavior during the DKG submission.
+  - misbehavior during the DKG submission +
+  - notorious ignoring of the duties during relay entry generation.
 
 | Sortition pool - punishments
 | The operation excluding members from earning the rewards should be as cheap as
