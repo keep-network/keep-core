@@ -318,8 +318,9 @@ utilised during the acceptance testing of the feature.
   transaction in which notification happened) +
   - all sortition pool members who signed the result should be slashed (fixed
   amount) (in the same tx) +
-  - notifier should receive 5% from the total slashed amount (in the same tx) +
-  - remaning 95% of the total slashed amount should be burned or allocated for
+  - notifier should receive fixed part of the total slashed amount (in the same
+  tx) +
+  - remaning part of the total slashed amount should be burned or allocated for
   the rewards pool of the staking contract +
   - the members of the signing group should be given another chance to publish
   the DKG result +
@@ -482,7 +483,7 @@ utilised during the acceptance testing of the feature.
 
 | Governable parameters
 | Percentage of the amount slashed from the group as a result of a hard timeout,
-  transfered as a reward to the notifier 
+  transfered as a reward to the notifier,
   (`relayEntryTimeoutNotificationRewardMultiplier`) should be a governable
   parameter.
 
@@ -493,6 +494,12 @@ utilised during the acceptance testing of the feature.
 | Governable parameters
 | The reward for unlocking the sortition pool if DKG timed out
   (`sortitionPoolUnlockingReward`) should be a governable parameter.
+
+| Governable parameters
+| Percentage of the amount slashed from the group as a result of signing a
+  malitious DKG result, transfered as a reward to the notifier,
+  (`dkgMaliciousResultNotificationRewardMultiplier`) should be a governable
+  parameter.
 
 | Governable parameters
 | The value of the fee for processing a relay request should be a governable
