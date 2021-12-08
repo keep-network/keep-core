@@ -55,7 +55,7 @@ describe("DKGValidator", () => {
   let prepareDkgResult
   let validator: DKGValidator
 
-  beforeEach("load test fixture", async () => {
+  before("load test fixture", async () => {
     const contracts = await waffle.loadFixture(fixture)
     const { sortitionPool } = contracts
     validator = contracts.dkgValidator
