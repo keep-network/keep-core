@@ -204,16 +204,6 @@ const LiquidityPage = ({ headerTitle }) => {
           <Banner.CloseIcon onClick={hideBanner} />
         </Banner>
       )}
-
-      <KeepOnlyPool
-        {...KEEP_ONLY}
-        percentageOfTotalPool={KEEP_ONLY.shareOfPoolInPercent}
-        rewardBalance={KEEP_ONLY.reward}
-        addLpTokens={addLpTokens}
-        withdrawLiquidityRewards={withdrawLiquidityRewards}
-        liquidityContractName={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.contractName}
-        pool={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool}
-      />
       <MasonryFlexContainer maxHeight={"2060px"}>
         {cards.map(({ id, ...data }) => {
           if (data.pool === POOL_TYPE.MSTABLE) {
