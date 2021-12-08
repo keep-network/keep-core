@@ -21,6 +21,7 @@ import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
 import KeepOnlyPool from "../../components/KeepOnlyPool"
 import MasonryFlexContainer from "../../components/MasonryFlexContainer"
+import KeepOnlyPoolCard from "../../components/liquidity/KeepOnlyPoolCard"
 
 const cards = [
   {
@@ -75,6 +76,14 @@ const cards = [
     incentivesRemovedBannerProps: {
       link: LINK.proposals.shiftingIncentivesToCoveragePools,
     },
+  },
+  {
+    id: "KEEP_ONLY",
+    title: LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.label,
+    pool: LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool,
+    MainIcon: Icons.KeepBlackGreen,
+    SecondaryIcon: Icons.Saddle,
+    incentivesRemoved: true,
   },
   {
     id: "TBTCV2_MBTC",
@@ -205,11 +214,28 @@ const LiquidityPage = ({ headerTitle }) => {
         liquidityContractName={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.contractName}
         pool={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool}
       />
-      <MasonryFlexContainer maxHeight={"1700px"}>
+      <MasonryFlexContainer maxHeight={"2060px"}>
         {cards.map(({ id, ...data }) => {
           if (data.pool === POOL_TYPE.MSTABLE) {
             return (
-              <LiquidityRewardCard key={id} poolId={id} {...data} isExternal />
+              <LiquidityRewardCard
+                key={id}
+                poolId={id}
+                {...data}
+                displaySubtitle
+                displayGoToPoolButton
+              />
+            )
+          }
+          if (data.pool === POOL_TYPE.TOKEN_GEYSER) {
+            return (
+              <KeepOnlyPoolCard
+                key={id}
+                poolId={id}
+                {...data}
+                lpBalance={KEEP_ONLY.lpBalance}
+                rewardBalance={KEEP_ONLY.reward}
+              />
             )
           }
           return (
@@ -228,6 +254,10 @@ const LiquidityPage = ({ headerTitle }) => {
               addLpTokens={addLpTokens}
               withdrawLiquidityRewards={withdrawLiquidityRewards}
               isAPYFetching={liquidityPools[id].isAPYFetching}
+              displaySubtitle
+              displayMetrics={!data.incentivesRemoved}
+              displayLPTokenBalance
+              displayRewards
             />
           )
         })}

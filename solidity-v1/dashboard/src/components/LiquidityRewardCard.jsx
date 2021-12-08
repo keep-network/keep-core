@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import CountUp from "react-countup"
 import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
@@ -50,11 +50,31 @@ const LiquidityRewardCard = ({
     ...defaultIncentivesRemovedBannerProps,
   },
   isExternal = false, // set true if you can't interact with the pool inside of dapp
+  displaySubtitle = false,
+  displayMetrics = false,
+  displayLPTokenBalance = false,
+  displayRewards = false,
+  displayGoToPoolButton = false,
+  displayBanner = false,
+  userInfoBannerProps = null,
+  children,
 }) => {
+  const [displayBannerFlag, setDisplayBannerFlag] = useState(displayBanner)
+
   const hasWrappedTokens = useMemo(
     () => gt(wrappedTokenBalance, 0),
     [wrappedTokenBalance]
   )
+
+  useEffect(() => {
+    if (displayBanner) {
+      setDisplayBannerFlag(true)
+    } else if (!hasWrappedTokens || incentivesRemoved) {
+      setDisplayBannerFlag(true)
+    } else {
+      setDisplayBannerFlag(false)
+    }
+  }, [hasWrappedTokens, displayBanner, setDisplayBannerFlag, incentivesRemoved])
 
   const hasDepositedWrappedTokens = useMemo(() => gt(lpBalance, 0), [lpBalance])
 
@@ -89,25 +109,27 @@ const LiquidityRewardCard = ({
       link = bannerProps.link
       linkText = bannerProps.linkText
     } else {
-      bannerIcon = !hasDepositedWrappedTokens ? Icons.Rewards : Icons.Wallet
-      bannerTitle =
-        !hasDepositedWrappedTokens || isExternal
+      const bannerProps = {
+        icon: !hasDepositedWrappedTokens ? Icons.Rewards : Icons.Wallet,
+        title: !hasDepositedWrappedTokens
           ? "Start earning rewards"
-          : "No LP Tokens found in wallet"
-      if (isExternal) {
-        bannerDescription =
-          "Deposit your TBTC into the mStable pool to earn with low impermanent loss risk."
-      } else {
-        bannerDescription = !hasDepositedWrappedTokens
+          : "No LP Tokens found in wallet",
+        description: !hasDepositedWrappedTokens
           ? "Get LP tokens by adding liquidity first to the"
-          : "Get more by adding liquidity to the"
-        link = viewPoolLink
-        linkText = pool === POOL_TYPE.SADDLE ? "Saddle pool" : "Uniswap pool"
+          : "Get more by adding liquidity to the",
+        link: viewPoolLink,
+        linkText: pool === POOL_TYPE.SADDLE ? "Saddle pool" : "Uniswap pool",
+        ...userInfoBannerProps,
       }
+      bannerIcon = bannerProps.icon
+      bannerTitle = bannerProps.title
+      bannerDescription = bannerProps.description
+      link = bannerProps.link
+      linkText = bannerProps.linkText
     }
 
     return (
-      (!hasWrappedTokens || isExternal) && (
+      displayBannerFlag && (
         <Banner
           className={`liquidity-info-banner ${
             incentivesRemoved ? "liquidity-info-banner--warning mt-2" : ""
@@ -122,14 +144,14 @@ const LiquidityRewardCard = ({
           <div className={"liquidity-info-banner__content"}>
             <Banner.Title
               className={`liquidity-info-banner__content__title ${
-                incentivesRemoved ? "text-grey-60" : "text-white"
+                incentivesRemoved ? "text-black" : "text-white"
               }`}
             >
               {bannerTitle}
             </Banner.Title>
             <Banner.Description
               className={`liquidity-info-banner__content__description ${
-                incentivesRemoved ? "text-grey-60" : "text-white"
+                incentivesRemoved ? "text-black" : "text-white"
               }`}
             >
               {bannerDescription}
@@ -156,37 +178,43 @@ const LiquidityRewardCard = ({
   return (
     <Card className={`liquidity__card tile ${wrapperClassName}`}>
       <div className={"liquidity__card-title"}>
-        <DoubleIcon
-          MainIcon={MainIcon}
-          SecondaryIcon={SecondaryIcon}
-          className={`liquidity__double-icon-container`}
-        />
+        {!!SecondaryIcon ? (
+          <DoubleIcon
+            MainIcon={MainIcon}
+            SecondaryIcon={SecondaryIcon}
+            className={`liquidity__double-icon-container`}
+          />
+        ) : (
+          <MainIcon width={24} height={24} className={"mr-1"} />
+        )}
         <h2 className={"h2--alt text-grey-70"}>{title}</h2>
       </div>
-      <h4 className="liquidity__card-subtitle text-grey-40 mb-2">
-        {poolName}
-        &nbsp;
-        <a
-          target="_blank"
-          rel="noopener noreferrer"
-          href={viewPoolLink}
-          className="text-small"
-        >
-          View pool
-        </a>
-        &nbsp;
-        <Tooltip
-          simple
-          delay={0}
-          triggerComponent={Icons.MoreInfo}
-          className={"liquidity__card-subtitle__tooltip"}
-        >
-          LP tokens represent the amount of money you&apos;ve deposited into a
-          liquidity pool as a liquidity provider. KEEP rewards are proportional
-          to your share of the total pool.
-        </Tooltip>
-      </h4>
-      {!isExternal && !incentivesRemoved && (
+      <OnlyIf condition={displaySubtitle}>
+        <h4 className="liquidity__card-subtitle text-grey-40 mb-2">
+          {poolName}
+          &nbsp;
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href={viewPoolLink}
+            className="text-small"
+          >
+            View pool
+          </a>
+          &nbsp;
+          <Tooltip
+            simple
+            delay={0}
+            triggerComponent={Icons.MoreInfo}
+            className={"liquidity__card-subtitle__tooltip"}
+          >
+            LP tokens represent the amount of money you&apos;ve deposited into a
+            liquidity pool as a liquidity provider. KEEP rewards are
+            proportional to your share of the total pool.
+          </Tooltip>
+        </h4>
+      </OnlyIf>
+      {displayMetrics && (
         <div
           className={`liquidity__info${
             gt(lpBalance, 0) ? "" : "--locked"
@@ -214,8 +242,11 @@ const LiquidityRewardCard = ({
         </div>
       )}
       {renderUserInfoBanner()}
-      <OnlyIf condition={!isExternal}>
+      <OnlyIf condition={displayLPTokenBalance}>
         <LPTokenBalance lpTokens={lpTokens} lpTokenBalance={lpTokenBalance} />
+      </OnlyIf>
+      {children}
+      <OnlyIf condition={displayRewards}>
         <div className={"liquidity__reward-balance"}>
           <h4 className={"liquidity__reward-balance__title text-grey-70"}>
             Your rewards
@@ -241,16 +272,17 @@ const LiquidityRewardCard = ({
             )}
           </div>
         </div>
-        <SubmitButton
-          className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
-          disabled={!gt(wrappedTokenBalance, 0) || incentivesRemoved}
-          onSubmitAction={(awaitingPromise) =>
-            addLpTokens(poolId, wrappedTokenBalance, awaitingPromise)
-          }
-        >
-          {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
-        </SubmitButton>
-
+        <OnlyIf condition={!incentivesRemoved}>
+          <SubmitButton
+            className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
+            disabled={!gt(wrappedTokenBalance, 0) || incentivesRemoved}
+            onSubmitAction={(awaitingPromise) =>
+              addLpTokens(poolId, wrappedTokenBalance, awaitingPromise)
+            }
+          >
+            {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
+          </SubmitButton>
+        </OnlyIf>
         <SubmitButton
           className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
           disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
@@ -266,7 +298,7 @@ const LiquidityRewardCard = ({
           </div>
         )}
       </OnlyIf>
-      <OnlyIf condition={isExternal}>
+      <OnlyIf condition={displayGoToPoolButton}>
         <a
           href={viewPoolLink}
           rel="noopener noreferrer"
