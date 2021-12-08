@@ -35,8 +35,8 @@ export const params = {
   groupLifeTime: 1000,
   dkgResultChallengePeriodLength: 100,
   dkgResultSubmissionEligibilityDelay: 10,
-  dkgResultSubmissionReward: 0,
-  sortitionPoolUnlockingReward: 0,
+  dkgResultSubmissionReward: to1e18(5),
+  sortitionPoolUnlockingReward: to1e18(10),
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
   relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
   maliciousDkgResultSlashingAmount: to1e18(50000),
