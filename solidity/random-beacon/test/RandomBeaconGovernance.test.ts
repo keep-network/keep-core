@@ -4,7 +4,8 @@ import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
 
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
-import { createSnapshot, restoreSnapshot } from "./utils/snapshot"
+
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer

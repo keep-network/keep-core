@@ -25,11 +25,11 @@ import {
 import { registerOperators, Operator } from "./utils/operators"
 import { selectGroup } from "./utils/groups"
 import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
-import { createSnapshot, restoreSnapshot } from "./utils/snapshot"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const { keccak256 } = ethers.utils
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const fixture = async () => {
   const contracts = await testDeployment()

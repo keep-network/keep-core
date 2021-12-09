@@ -11,9 +11,9 @@ import type {
   CallbackContractStub,
 } from "../typechain"
 import { registerOperators, Operator } from "./utils/operators"
-import { createSnapshot, restoreSnapshot } from "./utils/snapshot"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const fixture = async () => {
   const deployment = await randomBeaconDeployment()

@@ -31,11 +31,11 @@ import type {
   BLS,
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
-import { createSnapshot, restoreSnapshot } from "./utils/snapshot"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 async function fixture() {
   const deployment = await randomBeaconDeployment()
