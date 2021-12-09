@@ -509,31 +509,30 @@ be utilized during the acceptance testing of the feature.
   the locked or in the unlocked state (e.g. operator can be slashed during the
   lock as a result of relay entry timeout).
 
-// TODO: Once starting values for governable parameters are agreed upon,
-// add them to the UACs
-
 | Governable parameters
 | Every `N`-th relay request initiates a creation of a new signing group.
   This group creation frequency (`groupCreationFrequency`) should be a governable
-  parameter.
+  parameter and should be initially set to `5`.
 
 | Governable parameters
 | The time since the creation of a new signing group after that group gets
   expired (`groupLifetime`) should be a governable parameter and should be
-  initially set to `80640 blocks` (~2 weeks, assuming 15s block time).
+  initially set to `403200 blocks` (~10 weeks, assuming 15s block time).
 
 | Governable parameters
 | The length of the challenge period (`resultChallengePeriodLength`) should be a
-  governable parameter and should be initially set to `1440 blocks`.
+  governable parameter and should be initially set to `11520 blocks` (~48h,
+  assuming 15s block time).
 
 | Governable parameters
 | The slashing amount for submitting malicious DKG result
-  (`maliciousDkgResultSlashingAmount`) should be a governable parameter.
+  (`maliciousDkgResultSlashingAmount`) should be a governable parameter and
+  should be initially set to `50000e18` (50000 T).
 
 | Governable parameters
 | The reward for notifying about an operator notoriously ignoring their duty in
   the relay entry generation (`ineligibleOperatorNotifierReward`) should be
-  a governable parameter.
+  a governable parameter and should be initially set to `0`.
 
 | Governable parameters
 | The max slashing amount for not submitting the relay entry before the hard
@@ -544,21 +543,22 @@ be utilized during the acceptance testing of the feature.
 | Percentage of the amount slashed from the group as a result of a hard timeout,
   transferred as a reward to the notifier,
   (`relayEntryTimeoutNotificationRewardMultiplier`) should be a governable
-  parameter.
+  parameter. Its initial value should be set to `40`.
 
 | Governable parameters
 | The reward for submitting a DKG result (`dkgResultSubmissionReward`) should be
-  a governable parameter.
+  a governable parameter and should be initially set to `1000e18` (1000 T).
 
 | Governable parameters
 | The reward for unlocking the sortition pool if DKG timed out
-  (`sortitionPoolUnlockingReward`) should be a governable parameter.
+  (`sortitionPoolUnlockingReward`) should be a governable parameter and should
+  be initially set to `100e18` (100 T).
 
 | Governable parameters
 | Percentage of the amount slashed from the group as a result of signing a
   malicious DKG result, transferred as a reward to the notifier,
   (`dkgMaliciousResultNotificationRewardMultiplier`) should be a governable
-  parameter.
+  parameter.  Its initial value should be set to `100`.
 
 | Governable parameters
 | The value of the fee for processing a relay request should be a governable
@@ -567,33 +567,34 @@ be utilized during the acceptance testing of the feature.
 | Governable parameters
 | The frequency (in blocks) of adding new group members as eligible to submit
   relay entry (`relayEntrySubmissionEligibilityDelay`) should be a governable
-  parameter. Its initial value should be set to 10 blocks.
+  parameter. Its initial value should be set to `20` blocks.
 
 | Governable parameters
 | The frequency (in blocks) of adding new group members as eligible to submit a
   DKG result (`resultSubmissionEligibilityDelay`) should be a governable
-  parameter. Its initial value should be set to 10 blocks.
+  parameter. Its initial value should be set to `20` blocks.
 
 | Governable parameters
 | The hard timeout for a relay entry (`relayEntryHardTimeout`) should be a
   governable parameter. Its initial value should be set to `5760 blocks` (~24h,
   assuming 15s block time).
 
-// Initial value: 3 weeks?
 | Governable parameters
 | The length of the period during which operators won't be able to earn rewards
   as a punishment for misbehavior during submission of DKG or relay entry
-  (`sortitionPoolRewardsBanDuration`) should be a governable parameter.
+  (`sortitionPoolRewardsBanDuration`) should be a governable parameter. Its
+  initial value should be set to `2 weeks`.
 
 | Governable parameters
 | The amount slashed from the members of the group that leaked signature 
-  (`unauthorizedSigningSlashingAmount`) should be a governable parameter.
+  (`unauthorizedSigningSlashingAmount`) should be a governable parameter and
+  should be initially set to `100e3 * 1e18` (100 000 T).
 
 | Governable parameters
 | Percentage of the amount slashed from the members of the group that leaked
   signature, transferred as a reward to the notifier,
   (`unauthorizedSigningNotificationRewardMultiplier`) should be a governable
-  parameter.
+  parameter.  Its initial value should be set to `50`.
 
 | Governable parameters
 | The callback gas limit (`callbackGasLimit`) should be a governable parameter
