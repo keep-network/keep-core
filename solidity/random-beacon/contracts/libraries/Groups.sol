@@ -74,12 +74,12 @@ library Groups {
 
         require(
             self.groupsData[groupPubKeyHash].activationBlockNumber == 0,
-            "group with this public key was already activated"
+            "Group with this public key was already activated"
         );
 
         require(
             self.groupsRegistry.length <= type(uint64).max,
-            "max number of registered groups reached"
+            "Max number of registered groups reached"
         );
 
         // We use group from storage that is assumed to be a struct set to the
@@ -106,7 +106,7 @@ library Groups {
 
         require(
             self.groupsData[groupPubKeyHash].activationBlockNumber == 0,
-            "the latest registered group was already activated"
+            "The latest registered group was already activated"
         );
 
         self.groupsRegistry.pop();
@@ -124,7 +124,7 @@ library Groups {
 
         require(
             group.activationBlockNumber == 0,
-            "the latest registered group was already activated"
+            "The latest registered group was already activated"
         );
 
         // solhint-disable-next-line not-rely-on-time

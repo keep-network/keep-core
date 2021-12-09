@@ -545,7 +545,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Triggers group selection if there are no active groups.
     function genesis() external {
-        require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
+        require(groups.numberOfActiveGroups() == 0, "Not awaiting genesis");
 
         dkg.lockState();
         dkg.start(
@@ -617,8 +617,6 @@ contract RandomBeacon is Ownable {
 
         groups.activateCandidateGroup();
         dkg.complete();
-        // TODO: Check if this function is cheap enough and it will be
-        //       profitable for the DKG result submitter to call it.
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be

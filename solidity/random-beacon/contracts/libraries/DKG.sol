@@ -108,19 +108,6 @@ library DKG {
     /// @dev Size of a group in the threshold relay.
     uint256 public constant groupSize = 64;
 
-    /// @dev The minimum number of group members needed to interact according to
-    ///      the protocol to provide signatures for the DKG result. The adversary
-    ///      can not learn anything about the key as long as it does not break into
-    ///      groupThreshold+1 of members.
-    uint256 public constant groupThreshold = 33;
-
-    /// @dev The minimum number of active and properly behaving group members
-    ///      during the DKG needed to accept the result. This number is higher
-    ///      than `groupThreshold` to keep a safety margin for members becoming
-    ///      inactive after DKG so that the group can still produce a relay
-    ///      entry.
-    uint256 public constant activeThreshold = 58; // 90% of groupSize
-
     /// @notice Time in blocks after which DKG result is complete and ready to be
     //          published by clients.
     uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
@@ -208,7 +195,7 @@ library DKG {
     /// @notice Locks the sortition pool and starts awaiting for the
     ///         group creation seed.
     function lockState(Data storage self) internal {
-        require(currentState(self) == State.IDLE, "current state is not IDLE");
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
 
         emit DkgStateLocked();
 
@@ -218,7 +205,7 @@ library DKG {
     function start(Data storage self, uint256 seed) internal {
         require(
             currentState(self) == State.AWAITING_SEED,
-            "current state is not AWAITING_SEED"
+            "Current state is not AWAITING_SEED"
         );
 
         self.startBlock = block.number;
@@ -237,9 +224,9 @@ library DKG {
     function submitResult(Data storage self, Result calldata result) external {
         require(
             currentState(self) == State.AWAITING_RESULT,
-            "current state is not AWAITING_RESULT"
+            "Current state is not AWAITING_RESULT"
         );
-        require(!hasDkgTimedOut(self), "dkg timeout already passed");
+        require(!hasDkgTimedOut(self), "DKG timeout already passed");
 
         // Check submitter's eligibility to call this function
         uint256 T_init = self.startBlock +
@@ -315,7 +302,7 @@ library DKG {
 
     /// @notice Notifies about DKG timeout.
     function notifyTimeout(Data storage self) internal {
-        require(hasDkgTimedOut(self), "dkg has not timed out");
+        require(hasDkgTimedOut(self), "DKG has not timed out");
 
         emit DkgTimedOut();
     }
@@ -325,7 +312,7 @@ library DKG {
     function notifySeedTimedOut(Data storage self) internal {
         require(
             currentState(self) == State.AWAITING_SEED,
-            "current state is not AWAITING_SEED"
+            "Current state is not AWAITING_SEED"
         );
 
         emit DkgSeedTimedOut();
@@ -349,7 +336,7 @@ library DKG {
     {
         require(
             currentState(self) == State.CHALLENGE,
-            "current state is not CHALLENGE"
+            "Current state is not CHALLENGE"
         );
 
         uint256 challengePeriodEnd = self.submittedResultBlock +
@@ -357,12 +344,12 @@ library DKG {
 
         require(
             block.number > challengePeriodEnd,
-            "challenge period has not passed yet"
+            "Challenge period has not passed yet"
         );
 
         require(
             keccak256(abi.encode(result)) == self.submittedResultHash,
-            "result under approval is different than the submitted one"
+            "Result under approval is different than the submitted one"
         );
 
         // Extract submitter member address. Submitter member index is in
@@ -410,19 +397,19 @@ library DKG {
     {
         require(
             currentState(self) == State.CHALLENGE,
-            "current state is not CHALLENGE"
+            "Current state is not CHALLENGE"
         );
 
         require(
             block.number <=
                 self.submittedResultBlock +
                     self.parameters.resultChallengePeriodLength,
-            "challenge period has already passed"
+            "Challenge period has already passed"
         );
 
         require(
             keccak256(abi.encode(result)) == self.submittedResultHash,
-            "result under challenge is different than the submitted one"
+            "Result under challenge is different than the submitted one"
         );
 
         // https://github.com/crytic/slither/issues/982
@@ -474,11 +461,11 @@ library DKG {
         Data storage self,
         uint256 newResultChallengePeriodLength
     ) internal {
-        require(currentState(self) == State.IDLE, "current state is not IDLE");
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
 
         require(
             newResultChallengePeriodLength > 0,
-            "new value should be greater than zero"
+            "New value should be greater than zero"
         );
 
         self
@@ -491,11 +478,11 @@ library DKG {
         Data storage self,
         uint256 newResultSubmissionEligibilityDelay
     ) internal {
-        require(currentState(self) == State.IDLE, "current state is not IDLE");
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
 
         require(
             newResultSubmissionEligibilityDelay > 0,
-            "new value should be greater than zero"
+            "New value should be greater than zero"
         );
 
         self

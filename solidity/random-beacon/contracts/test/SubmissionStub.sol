@@ -37,17 +37,4 @@ contract SubmissionStub {
                 lastEligibleIndex
             );
     }
-
-    function getInactiveMembers(
-        uint256 submitterIndex,
-        uint256 firstEligibleIndex,
-        uint32[] memory groupMembers
-    ) external view returns (uint32[] memory) {
-        return
-            Submission.getInactiveMembers(
-                submitterIndex,
-                firstEligibleIndex,
-                groupMembers
-            );
-    }
 }
