@@ -8,8 +8,8 @@ toc::[]
 
 == Purpose of the document
 This document stores User Acceptance Criteria for Random Beacon v2. It will be
-used to gain common understanding of how Random Beacon v2 should act and will be
-utilised during the acceptance testing of the feature.
+used to gain a common understanding of how Random Beacon v2 should act and will
+be utilized during the acceptance testing of the feature.
 
 == User Acceptance Criteria list
 
@@ -19,7 +19,7 @@ utilised during the acceptance testing of the feature.
 | UAC
 
 | Relay request
-| Anyone can request for a relay entry.
+| Anyone can request a relay entry.
 
 | Relay request
 | Successful processing of each relay request should always result in the
@@ -68,7 +68,7 @@ utilised during the acceptance testing of the feature.
   - the beacon should start the period of signature submission eligibility +
   - the selected signing group should start off-chain signature generation (upon
   noticing event sent by the beacon). +
-  - the sortition pool should get locked as a preparation for creation of a new
+  - the sortition pool should get locked as preparation for creation of a new
   signing group (only sometimes, every N-th relay request).
 
 | Relay request
@@ -89,15 +89,15 @@ utilised during the acceptance testing of the feature.
    minimize the gas cost and distribute costs: +
    - at the beginning only one member, with index `new_entry % group_size`,
   should be eligible to submit a new relay entry +
-  - after fixed amount of blocks another member, with index `(new_entry %
+  - after a fixed amount of blocks another member, with index `(new_entry %
   group_size ) + 1`, should become eligible (previous operator remains eligible) +
   - next members should become eligible after each fixed amount of blocks.
 
 | Relay request - punishing inactive operators
-| It should be possible for a member of the group to send a notication informing
-  about group members notoriously ignoring their duty in relay entry (what will
-  be considered as ignoring the duties and how will it be checked should depend
-  on the off-chain algorithm - suggested mechanism: heartbeats).
+| It should be possible for a member of the group to send a notification
+  informing about group members notoriously ignoring their duty in relay entry
+  (what will be considered as ignoring the duties and how will it be checked
+  should depend on the off-chain algorithm - suggested mechanism: heartbeats).
   
 | Relay request - punishing inactive operators
 | Upon receiving the transaction notifying about the misbehaving operators, the
@@ -126,7 +126,7 @@ utilised during the acceptance testing of the feature.
 | Relay request - relay entry submission
 | When determining validity of the relay entry submission, the following aspects
   should be taken into account: +
-  - hasn’t the hard timeout for the relay request be reached? +
+  - hasn’t the hard timeout for the relay request been reached? +
   - is the BLS threshold signature valid? +
   - is the relay request in progress?
 
@@ -136,7 +136,7 @@ utilised during the acceptance testing of the feature.
   - if an optional address of the `IRandomBeaconConsumer` interface was provided
   in the tx, the interface should be called (with a fixed gas limit) +
   - the process of creation of a new signing group should be triggered (only
-  sometimes, every N-th relay request, if a creation of group isn't already in
+  sometimes, every N-th relay request, if creation of group isn't already in
   progress).
 
 | Relay request - relay entry submission
@@ -162,14 +162,14 @@ utilised during the acceptance testing of the feature.
   at the moment when the first member becomes eligible (the moment when the
   relay entry was requested). +
   The hard relay entry timeout is a set value (expressed in blocks) and is
-  measured since the reaching of soft relay entry timeout.
+  measured since the reaching of the soft relay entry timeout.
 
 | Relay request - relay entry timeouts
 | If no entry was successfully submitted until soft relay timeout is reached,
   all operators in the group should start bleeding and losing their T stake. The
   amount of lost stake should incrementally increase from 0 (at the moment of
   soft relay entry timeout) to a fixed value (at the moment of hard relay entry
-  timeout). The slashing will be applied in transaction: +
+  timeout). The slashing will be applied in the transaction: +
   - submitting the relay entry (if the result got submitted by one of
   the operators between soft and hard timeout) +
   - notifying about relay entry timeout (if no result was submitted before the
@@ -179,9 +179,9 @@ utilised during the acceptance testing of the feature.
 | The hard relay entry timeout can occur as a result of the following two
   scenarios: +
   - the signing group did not generate the BLS threshold signature (e.g. because
-  of not reaching the `blsThreshold`) and hence operators elgible to publish the
+  of not reaching the `blsThreshold`) and hence operators eligible to publish the
   result had nothing to submit +
-  - the signing group did genearte the BLS threshold signature, but none of the
+  - the signing group did generate the BLS threshold signature, but none of the
   eligible operators have submitted the result.
 
 | Relay request - relay entry timeouts
@@ -206,9 +206,9 @@ utilised during the acceptance testing of the feature.
   - all signing group members should be punished by being slashed the fixed
   amount of T and being excluded from earning rewards for a fixed amount of
   time +
-  - the notifier should receive fixed part of the total slashed amount (in the
+  - the notifier should receive a fixed part of the total slashed amount (in the
   same tx) +
-  - remaning part of the total slashed amount should be burned or allocated for
+  - remaining part of the total slashed amount should be burned or allocated for
   the rewards pool of the staking contract +
   - the process of choosing a signing group and tasking it with a relay entry
   generation should be repeated (as part of the same relay request) +
@@ -249,7 +249,7 @@ utilised during the acceptance testing of the feature.
 
 | Group creation
 | Any logic related to group creation should not affect the gas cost of relay
-  entry transactions by more than a couple of thousands of gas units.
+  entry transactions by more than a couple of thousand units of gas.
 
 | Group creation
 | The sortition pool should weigh operators by stake and allow to select the
@@ -283,10 +283,10 @@ utilised during the acceptance testing of the feature.
 
 | Group creation - DKG
 | After group members are determined, clients should perform off-chain DKG
-  (distributed key generation), resulting either in success or timeout. The
-  success result should contain list of members of the candidate group, the
+  (distributed key generation), resulting in either a success or a timeout. The
+  success result should contain a list of members of the candidate group, the
   public key of the group and list of misbehaving members (members who were
-  inactive or were disqualified) and should be submitted by eligible group
+  inactive or were disqualified) and should be submitted by the eligible group
   member on-chain.
 
 | Group creation - DKG submission
@@ -307,7 +307,7 @@ utilised during the acceptance testing of the feature.
   - at the beginning (right after group creation start transaction is submitted)
   only one member, with index `hash(new_group_pubkey) % group_size`, should be
   eligible +
-  - after fixed amount of blocks another member, with index
+  - after a fixed amount of blocks another member, with index
   `(hash(new_group_pubkey) % group_size ) + 1`, should become eligible (previous
   operator remains eligible) +
   - next members should become eligible after each fixed amount of blocks.
@@ -320,7 +320,7 @@ utilised during the acceptance testing of the feature.
 
 | Group creation - DKG challenge
 | Anyone can send a challenge notification informing that submitted DKG result
-  is malitious (contains corrupted data, group members not selected by the pool,
+  is malicious (contains corrupted data, group members not selected by the pool,
   or incorrect supporting signatures).
 
 | Group creation - DKG challenge
@@ -330,10 +330,10 @@ utilised during the acceptance testing of the feature.
 | Group creation - DKG challenge
 | When determining validity of the challenge, the following aspects should be
   taken into account: +
-  - does it reference existing DKG result (if not, then challenge invalid) +
+  - does it reference an existing DKG result (if not, then challenge invalid) +
   - within or outside of the challenge period for the specified DKG result (if
   outside, then invalid) +
-  - is referenced DKG result indeed malitious (contains corrupted data, group
+  - is referenced DKG result indeed malicious (contains corrupted data, group
   members not selected by the pool, or incorrect supporting signatures)? (if no,
   then challenge invalid).
 
@@ -344,9 +344,9 @@ utilised during the acceptance testing of the feature.
   transaction in which notification happened) +
   - all sortition pool members who signed the result should be slashed (fixed
   amount) (in the same tx) +
-  - notifier should receive fixed part of the total slashed amount (in the same
+  - notifier should receive a fixed part of the total slashed amount (in the same
   tx) +
-  - remaning part of the total slashed amount should be burned or allocated for
+  - remaining part of the total slashed amount should be burned or allocated for
   the rewards pool of the staking contract +
   - the members of the signing group should be given another chance to publish
   the DKG result +
@@ -383,7 +383,7 @@ utilised during the acceptance testing of the feature.
 | Group creation - DKG acceptance
 | At the beginning (right after DKG result is submitted on chain) only the result
   submitter should be eligible to accept the DKG result and earn the reward.
-  After a fixed amount of time everybody should become eliglible to accept the
+  After a fixed amount of time everybody should become eligible to accept the
   DKG result.
 
 | Group creation - DKG acceptance
@@ -432,7 +432,7 @@ utilised during the acceptance testing of the feature.
   notifier.
 
 | Group expiration
-| Each group created in the system should reach expiration threshold after a
+| Each group created in the system should reach the expiration threshold after a
   fixed period of time.
 
 | Group expiration
@@ -441,15 +441,15 @@ utilised during the acceptance testing of the feature.
 | Group expiration
 | A group that expired should be no longer selected for any new work.
 
-| Groups - punishing for unauthorised signing
-| It should be possible for any operator to send a notication informing about
+| Groups - punishing for unauthorized signing
+| It should be possible for any operator to send a notification informing about
   unauthorized groups signing (leaked signature).
 
-| Groups - punishing for unauthorised signing
+| Groups - punishing for unauthorized signing
 | Upon receiving the transaction notifying about the unauthorized groups
   signing, the random beacon should determine its validity.
   
-| Groups - punishing for unauthorised signing
+| Groups - punishing for unauthorized signing
   When determining validity of transaction notifying about the unauthorized
   groups signing, the following aspects should be taken into account: +
   - is the group indicated by the submitter as the one that leaked signature 
@@ -463,9 +463,9 @@ utilised during the acceptance testing of the feature.
   - the group that leaked the signature should get terminated (in the same tx) +
   - all members of the group should get slashed a fixed amount of T (in the same
   tx) +
-  - notifier should receive fixed part of the total slashed amount (in the same
+  - notifier should receive a fixed part of the total slashed amount (in the same
   tx) +
-  - remaning part of the total slashed amount should be burned or allocated for
+  - remaining part of the total slashed amount should be burned or allocated for
   the rewards pool of the staking contract.
   
 | Sortition pool - punishments
@@ -513,36 +513,36 @@ utilised during the acceptance testing of the feature.
 // add them to the UACs
 
 | Governable parameters
-| Every `N`-th relay request initiates creation of a new signing group.
+| Every `N`-th relay request initiates a creation of a new signing group.
   This group creation frequency (`groupCreationFrequency`) should be a governable
   parameter.
 
 | Governable parameters
 | The time since the creation of a new signing group after that group gets
   expired (`groupLifetime`) should be a governable parameter and should be
-  initally set to `80640 blocks` (~2 weeks, assuming 15s block time).
+  initially set to `80640 blocks` (~2 weeks, assuming 15s block time).
 
 | Governable parameters
 | The length of the challenge period (`resultChallengePeriodLength`) should be a
-  governable parameter and should be initally set to `1440 blocks`.
+  governable parameter and should be initially set to `1440 blocks`.
 
 | Governable parameters
 | The slashing amount for submitting malicious DKG result
   (`maliciousDkgResultSlashingAmount`) should be a governable parameter.
 
 | Governable parameters
-| The reward for notifying about an operator notouriously ignoring their duty in
+| The reward for notifying about an operator notoriously ignoring their duty in
   the relay entry generation (`ineligibleOperatorNotifierReward`) should be
   a governable parameter.
 
 | Governable parameters
 | The max slashing amount for not submitting the relay entry before the hard
   timeout (`relayEntrySubmissionFailureSlashingAmount`) should be a governable
-  parameter and should be initally set to `1000e18` (1000 T).
+  parameter and should be initially set to `1000e18` (1000 T).
 
 | Governable parameters
 | Percentage of the amount slashed from the group as a result of a hard timeout,
-  transfered as a reward to the notifier,
+  transferred as a reward to the notifier,
   (`relayEntryTimeoutNotificationRewardMultiplier`) should be a governable
   parameter.
 
@@ -556,7 +556,7 @@ utilised during the acceptance testing of the feature.
 
 | Governable parameters
 | Percentage of the amount slashed from the group as a result of signing a
-  malitious DKG result, transfered as a reward to the notifier,
+  malicious DKG result, transferred as a reward to the notifier,
   (`dkgMaliciousResultNotificationRewardMultiplier`) should be a governable
   parameter.
 
@@ -582,7 +582,7 @@ utilised during the acceptance testing of the feature.
 // Initial value: 3 weeks?
 | Governable parameters
 | The length of the period during which operators won't be able to earn rewards
-  as a punishment for misbehaviour during submission of DKG or relay entry
+  as a punishment for misbehavior during submission of DKG or relay entry
   (`sortitionPoolRewardsBanDuration`) should be a governable parameter.
 
 | Governable parameters
@@ -591,7 +591,7 @@ utilised during the acceptance testing of the feature.
 
 | Governable parameters
 | Percentage of the amount slashed from the members of the group that leaked
-  signature, transfered as a reward to the notifier,
+  signature, transferred as a reward to the notifier,
   (`unauthorizedSigningNotificationRewardMultiplier`) should be a governable
   parameter.
 
