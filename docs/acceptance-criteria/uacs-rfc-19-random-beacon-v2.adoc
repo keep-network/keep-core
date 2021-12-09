@@ -104,7 +104,7 @@ be utilized during the acceptance testing of the feature.
   random beacon should determine its validity.
   
 | Relay request - punishing inactive operators
-  When determining validity of the transaction notifying about the misbehaving
+|  When determining validity of the transaction notifying about the misbehaving
   operators, the following aspects should be taken into account: +
   - was the transaction signed by at least half of the operators in the group? +
   - are the operators who signed the transactions members of an active,
@@ -450,7 +450,7 @@ be utilized during the acceptance testing of the feature.
   signing, the random beacon should determine its validity.
   
 | Groups - punishing for unauthorized signing
-  When determining validity of transaction notifying about the unauthorized
+| When determining validity of transaction notifying about the unauthorized
   groups signing, the following aspects should be taken into account: +
   - is the group indicated by the submitter as the one that leaked signature 
   active and non-terminated? +
