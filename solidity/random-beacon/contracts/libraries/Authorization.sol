@@ -49,7 +49,7 @@ library Authorization {
     /// @notice Initializes the sortitionPool parameter. Can be performed only once.
     /// @param _sortitionPool Value of the parameter.
     function initSortitionPool(Data storage self, SortitionPool _sortitionPool)
-        internal
+        external
     {
         require(
             address(self.sortitionPool) == address(0),
@@ -62,14 +62,14 @@ library Authorization {
     function setMinimumAuthorization(
         Data storage self,
         uint256 _minimumAuthorization
-    ) internal {
+    ) external {
         self.parameters.minimumAuthorization = uint96(_minimumAuthorization);
     }
 
     function setAuthorizationDecreaseDelay(
         Data storage self,
         uint256 _authorizationDecreaseDelay
-    ) internal {
+    ) external {
         self.parameters.authorizationDecreaseDelay = uint64(
             _authorizationDecreaseDelay
         );
@@ -110,7 +110,7 @@ library Authorization {
     }
 
     function approveAuthorizationDecrease(Data storage self, address operator)
-        internal
+        external
     {
         AuthorizationDecrease memory request = self
             .authorizationDecreaseRequests[operator];

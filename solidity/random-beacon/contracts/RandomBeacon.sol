@@ -283,7 +283,7 @@ contract RandomBeacon is Ownable, IApplication {
 
     modifier onlyStaking() {
         require(
-            msg.sender == staking,
+            msg.sender == address(staking),
             "Can only be called by the staking contract"
         );
         _;
@@ -511,9 +511,9 @@ contract RandomBeacon is Ownable, IApplication {
         external
         override
         onlyStaking
-        {
-            authorization.authorizationIncreased(operator, amount);
-        }
+    {
+        authorization.authorizationIncreased(operator, amount);
+    }
 
     function authorizationDecreaseRequested(address operator, uint96 amount)
         external
@@ -640,7 +640,7 @@ contract RandomBeacon is Ownable, IApplication {
         address[] memory operatorWrapper = new address[](1);
         operatorWrapper[0] = maliciousSubmitterAddresses;
         staking.seize(
-            slashingAmount,
+            uint96(slashingAmount),
             dkgMaliciousResultNotificationRewardMultiplier,
             msg.sender,
             operatorWrapper
@@ -726,7 +726,7 @@ contract RandomBeacon is Ownable, IApplication {
                 group.members
             );
 
-            try staking.slash(slashingAmount, groupMembers) {
+            try staking.slash(uint96(slashingAmount), groupMembers) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
@@ -770,7 +770,7 @@ contract RandomBeacon is Ownable, IApplication {
         );
 
         staking.seize(
-            slashingAmount,
+            uint96(slashingAmount),
             relayEntryTimeoutNotificationRewardMultiplier,
             msg.sender,
             groupMembers
@@ -835,7 +835,7 @@ contract RandomBeacon is Ownable, IApplication {
         );
 
         staking.seize(
-            unauthorizedSigningSlashingAmount,
+            uint96(unauthorizedSigningSlashingAmount),
             unauthorizedSigningNotificationRewardMultiplier,
             msg.sender,
             groupMembers

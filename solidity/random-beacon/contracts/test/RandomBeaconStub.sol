@@ -12,7 +12,7 @@ contract RandomBeaconStub is RandomBeacon {
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
-        IRandomBeaconStaking _staking,
+        IStaking _staking,
         DKGValidator _dkgValidator
     ) RandomBeacon(_sortitionPool, _tToken, _staking, _dkgValidator) {}
 

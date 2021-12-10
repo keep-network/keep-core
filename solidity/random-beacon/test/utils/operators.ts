@@ -29,11 +29,8 @@ export async function registerOperators(
   for (let i = 0; i < addresses.length; i++) {
     const address = addresses[i]
 
-    await staking.setStake(address, stakeAmount)
-
-    await randomBeacon
-      .connect(await ethers.getSigner(address))
-      .registerOperator()
+    await staking.stake(address, address, address, stakeAmount)
+    await staking.increaseAuthorization(address, staking.address, stakeAmount)
 
     const id = await sortitionPool.getOperatorID(address)
 
