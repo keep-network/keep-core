@@ -82,7 +82,7 @@ library Authorization {
     ///
     ///         If the authorization is decreased to the amount higher than the
     ///         minimum authorization, in-pool weight and rewarded stake are
-    ///         reduced in the sortition pool immediatelly so that the operator,
+    ///         reduced in the sortition pool immediately so that the operator,
     ///         during the autorization decrease delay period, can not be 
     ///         selected to new groups with stake authorization amount higher
     ///         than the one to which it is deauthorizing to. Authorized stake
@@ -90,7 +90,7 @@ library Authorization {
     ///         approved.
     ///
     ///         If the operator is requesting authorization decrease to zero,
-    ///         in pool-weight is reduced to zero immediatelly and operator is
+    ///         in pool-weight is reduced to zero immediately and operator is
     ///         removed from the sortition pool. Rewarded stake stays at the
     ///         same level as before. Operator, during the authorization
     ///         decrease delay period, can not be selected to new groups but
@@ -141,4 +141,36 @@ library Authorization {
             uint64(block.timestamp) + self.parameters.authorizationDecreaseDelay
         );
     }
+
+    /// @notice Approves the previously registered authorization decrease
+    ///         request. Reverts if authorization decrease delay have not passed
+    ///         yet or if the auhorization decrease was not requested for the
+    ///         given operator.
+    function approveAuthorizationDecrease(
+        Data storage self,
+        TokenStaking tokenStaking,
+        address operator
+    ) external {
+        AuthorizationDecrease memory request = self
+            .authorizationDecreaseRequests[operator];
+        require(
+            request.decreasingAt > 0,
+            "Authorization decrease not requested"
+        );
+        require(
+            // solhint-disable-next-line not-rely-on-time
+            request.decreasingAt > block.timestamp,
+            "Authorization decrease delay not passsed"
+        );
+
+        tokenStaking.approveAuthorizationDecrease(operator);
+        delete self.authorizationDecreaseRequests[operator];
+    }
+
+    // TODO: involuntaryAuthorizationDecrease
+
+    // TODO: withdrawal of sortition pool rewards in RandomBeacon and the code
+    //       allowing to calculate reward reduction based on the time passed
+    //       between authorization decrase delay passed and the moment
+    //       withdrawRewards is called.
 }
