@@ -76,5 +76,69 @@ library Authorization {
         }
     }
 
-   
+    /// @notice Used by T staking contract to inform the random beacon that the
+    ///         authorization decrease for the given operator has been regitered. 
+    ///         Can only be called when the sortition pool is not locked.
+    ///
+    ///         If the authorization is decreased to the amount higher than the
+    ///         minimum authorization, in-pool weight and rewarded stake are
+    ///         reduced in the sortition pool immediatelly so that the operator,
+    ///         during the autorization decrease delay period, can not be 
+    ///         selected to new groups with stake authorization amount higher
+    ///         than the one to which it is deauthorizing to. Authorized stake
+    ///         amount remains the same until deauthorization request is
+    ///         approved.
+    ///
+    ///         If the operator is requesting authorization decrease to zero,
+    ///         in pool-weight is reduced to zero immediatelly and operator is
+    ///         removed from the sortition pool. Rewarded stake stays at the
+    ///         same level as before. Operator, during the authorization
+    ///         decrease delay period, can not be selected to new groups but
+    ///         it should still earn rewards based on their last authrized stake
+    ///         until authorization decrease request is approved.
+    ///
+    ///         Overwrites pending authorization decrease request if the one
+    ///         pending is for the amount higher than the minimum authorization.
+    ///
+    ///         Reverts if authorization decrease to 0 is pending.
+    ///         Reverts if authorization decrease is requested to non-zero value
+    ///         below the minimum authorization amount.
+    ///         Reverts if the sortition pool is locked.
+    function authorizationDecreaseRequested(
+        Data storage self,
+        SortitionPool sortitionPool,
+        address operator,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external {
+        require(
+            toAmount == 0 || toAmount >= self.parameters.minimumAuthorization,
+            "Authorization amount should be 0 or above the minimum"
+        );
+
+        if (toAmount == 0) {
+            // Update in-pool weight to 0 but keep rewards the same until
+            // authorization decrease is not approved. We do not want that
+            // operator to be selected to new groups.
+            sortitionPool.updateOperatorStatusAndRewards(
+                operator,
+                0,
+                fromAmount
+            );
+        } else {
+            // Update in-pool weight and rewards weight to the new authorization
+            // amount. The operator should be selected to new groups with the
+            // new weight.
+            sortitionPool.updateOperatorStatus(operator, toAmount);
+        }
+
+        // Register new authorization decrease request but do not decrease
+        // authorization immediatelly. There might be still some groups that
+        // might need slashing the higher amount.
+        self.authorizationDecreaseRequests[operator] = AuthorizationDecrease(
+            toAmount,
+            // solhint-disable-next-line not-rely-on-time
+            uint64(block.timestamp) + self.parameters.authorizationDecreaseDelay
+        );
+    }
 }
