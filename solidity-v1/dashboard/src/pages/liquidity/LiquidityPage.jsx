@@ -19,7 +19,6 @@ import {
 import Banner from "../../components/Banner"
 import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
-import KeepOnlyPool from "../../components/KeepOnlyPool"
 import MasonryFlexContainer from "../../components/MasonryFlexContainer"
 import KeepOnlyPoolCard from "../../components/liquidity/KeepOnlyPoolCard"
 

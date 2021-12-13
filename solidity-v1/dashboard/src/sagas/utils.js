@@ -64,6 +64,8 @@ export function* getLPRewardsWrapper(liquidityRewardPair) {
   const contracts = yield getContractsContext()
   const web3 = yield getWeb3Context()
 
+  if (!liquidityRewardPair.contractName) return null
+
   const LPRewardsContract = contracts[liquidityRewardPair.contractName]
   const LiquidityRewards = yield call(
     [LiquidityRewardsFactory, LiquidityRewardsFactory.initialize],
