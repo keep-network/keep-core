@@ -213,6 +213,11 @@ const LiquidityPage = ({ headerTitle }) => {
                 {...data}
                 displaySubtitle
                 displayGoToPoolButton
+                userInfoBannerProps={{
+                  description:
+                    "Deposit your TBTC into the mStable pool to earn with low impermanent loss risk.",
+                  linkText: "",
+                }}
               />
             )
           }
