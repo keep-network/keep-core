@@ -28,7 +28,7 @@ const cards = [
     title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.label,
     liquidityPairContractName:
       LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.contractName,
-    MainIcon: Icons.TBTC,
+    MainIcon: Icons.TBTC_V2,
     SecondaryIcon: Icons.Saddle,
     viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.viewPoolLink,
     pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.pool,
@@ -87,8 +87,8 @@ const cards = [
   {
     id: "TBTCV2_MBTC",
     title: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.label,
-    MainIcon: Icons.TBTC,
-    SecondaryIcon: Icons.Saddle,
+    MainIcon: Icons.TBTC_V2,
+    SecondaryIcon: Icons.MBTC,
     viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.viewPoolLink,
     pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.lpTokens,
