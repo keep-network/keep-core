@@ -20,13 +20,8 @@ const fixture = async () => {
   const testToken = await TestToken.deploy()
   await testToken.deployed()
 
-  const StakingStub = await ethers.getContractFactory("StakingStub")
-  const stakingStub = await StakingStub.deploy()
-  await stakingStub.deployed()
-
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    stakingStub.address,
     testToken.address,
     constants.poolWeightDivisor
   )) as SortitionPool
