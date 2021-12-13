@@ -22,6 +22,7 @@ import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
 import { LINK } from "../../constants/constants"
+import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../pages/coverage-pools/CoveragePoolPage"
 
 const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
   const onAddonClick = useSetMaxAmountToken(
@@ -53,10 +54,16 @@ const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
           label="Amount"
           placeholder="0"
           normalize={(value) => {
-            return normalizeFloatingAmount(value, 10)
+            return normalizeFloatingAmount(
+              value,
+              COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+            )
           }}
           format={(value) => {
-            return formatFloatingAmount(value, 10)
+            return formatFloatingAmount(
+              value,
+              COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+            )
           }}
           leftIconComponent={
             <Icons.KeepOutline

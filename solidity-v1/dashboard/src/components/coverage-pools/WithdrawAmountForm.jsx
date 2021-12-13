@@ -41,10 +41,13 @@ const WithdrawAmountForm = ({
         label="Withdraw Amount"
         placeholder="0"
         normalize={(value) => {
-          return normalizeFloatingAmount(value, 6)
+          return normalizeFloatingAmount(
+            value,
+            COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+          )
         }}
         format={(value) => {
-          return formatFloatingAmount(value, 6)
+          return formatFloatingAmount(value, COV_POOLS_FORMS_MAX_DECIMAL_PLACES)
         }}
         inputAddon={<MaxAmountAddon onClick={onAddonClick} text="Max Amount" />}
         leftIconComponent={
