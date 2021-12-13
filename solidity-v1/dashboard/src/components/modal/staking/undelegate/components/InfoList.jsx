@@ -1,6 +1,8 @@
 import React from "react"
 import moment from "moment"
 import List from "../../../../List"
+import AddToCalendar from "../../../../AddToCalendar"
+import { UNDELEGATE_STAKE_CALENDAR_EVENT } from "../../../../../constants/constants"
 
 export const InfoList = ({ undelegationPeriod, undelegatedAt }) => {
   const undelegationCompletedAt = moment
@@ -15,6 +17,14 @@ export const InfoList = ({ undelegationPeriod, undelegatedAt }) => {
           Tokens will be available in {undelegationPeriodInRelativeTime}, on{" "}
           {undelegationCompletedAt.format("D MMM YYYY")}.
           {/* TODO: Add `add to calendar` button */}
+          <AddToCalendar
+            {...UNDELEGATE_STAKE_CALENDAR_EVENT}
+            startsAt={undelegationCompletedAt.format("YYYY-MM-DD HH:mm:ss")}
+            endsAt={undelegationCompletedAt
+              .add(15, "minutes")
+              .format("YYYY-MM-DD HH:mm:ss")}
+            className={"bullets__add-to-calendar"}
+          />
         </List.Item>
         <List.Item>
           Withdraw your tokens and upgrade your KEEP to T using the portal on
