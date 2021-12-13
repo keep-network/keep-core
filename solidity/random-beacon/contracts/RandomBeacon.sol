@@ -952,7 +952,7 @@ contract RandomBeacon is Ownable {
     ///         execute slashing for providing a malicious DKG result or when
     ///         a relay entry times out.
     function minimumAuthorization() external view returns (uint96) {
-        return authorization.minimumAuthorization;
+        return authorization.parameters.minimumAuthorization;
     }
 
     /// @notice Delay in seconds that needs to pass between the time
@@ -960,7 +960,7 @@ contract RandomBeacon is Ownable {
     ///         gets approved. Protects against free-riders earning rewards and
     ///         not being active in the network.
     function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.authorizationDecreaseDelay;
+        return authorization.parameters.authorizationDecreaseDelay;
     }
 
     /// @return Flag indicating whether a relay entry request is currently
