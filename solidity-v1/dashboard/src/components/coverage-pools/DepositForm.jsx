@@ -52,8 +52,12 @@ const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={normalizeFloatingAmount}
-          format={formatFloatingAmount}
+          normalize={(value) => {
+            return normalizeFloatingAmount(value, 10)
+          }}
+          format={(value) => {
+            return formatFloatingAmount(value, 10)
+          }}
           leftIconComponent={
             <Icons.KeepOutline
               className="keep-outline--grey-60"

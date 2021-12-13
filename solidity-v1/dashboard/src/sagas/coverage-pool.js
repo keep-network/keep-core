@@ -531,7 +531,7 @@ function* reinitiateWithdraw(action) {
   } = task
   const _amount = covKEEP.fromTokenUnit(amount)
 
-  if (eq(amount, 0)) {
+  if (Number.isInteger(Number(amount)) && eq(amount, 0)) {
     yield put(
       showModal({
         modalType: MODAL_TYPES.InitiateCovPoolWithdraw,
