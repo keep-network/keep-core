@@ -41,10 +41,10 @@ import {
   confirmModalSaga,
 } from "./utils"
 import { Keep } from "../contracts"
-import { add, eq, gt, sub } from "../utils/arithmetics.utils"
+import { add, gt, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { sendTransaction } from "./web3"
-import { covKEEP, KEEP } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
 import { showModal } from "../actions/modal"
 import { MODAL_TYPES } from "../constants/constants"
@@ -504,55 +504,27 @@ export function* watchClaimTokensFromWithdrawal() {
 }
 
 function* reinitiateWithdraw(action) {
-  const {
-    pendingWithdrawal,
-    totalValueLocked,
-    covTotalSupply,
-    covTokensAvailableToWithdraw,
-    covBalance,
-  } = yield select(selectors.getCoveragePool)
+  const { pendingWithdrawal, totalValueLocked, covTotalSupply, covBalance } =
+    yield select(selectors.getCoveragePool)
 
-  const { isConfirmed, task } = yield call(
-    confirmModalSaga,
-    MODAL_TYPES.ReInitiateCovPoolWithdraw,
-    {
-      pendingWithdrawal,
-      availableToWithdraw: covTokensAvailableToWithdraw,
-      totalValueLocked,
-      covTotalSupply,
-    }
-  )
-  if (!isConfirmed) {
-    return
-  }
-
-  const {
-    payload: { amount },
-  } = task
-  const _amount = covKEEP.fromTokenUnit(amount)
-
-  if (Number.isInteger(Number(amount)) && eq(amount, 0)) {
-    yield put(
-      showModal({
-        modalType: MODAL_TYPES.InitiateCovPoolWithdraw,
-        modalProps: {
-          amount: pendingWithdrawal,
-          covBalanceOf: covBalance,
-          estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
-            covBalance,
-            covTotalSupply,
-            totalValueLocked
-          ),
-          totalValueLocked,
+  yield put(
+    showModal({
+      modalType: MODAL_TYPES.InitiateCovPoolWithdraw,
+      modalProps: {
+        amount: pendingWithdrawal,
+        covBalanceOf: covBalance,
+        estimatedBalanceAmountInKeep: Keep.coveragePoolV1.estimatedBalanceFor(
+          covBalance,
           covTotalSupply,
-          isReinitialization: true,
-        },
-      })
-    )
-    return
-  }
-
-  yield* increaseWithdrawal(_amount)
+          totalValueLocked
+        ),
+        totalValueLocked,
+        covTotalSupply,
+        isReinitialization: true,
+        bodyTitle: "You are about to re-withdraw",
+      },
+    })
+  )
 }
 
 export function* watchReInitiateWithdraw() {

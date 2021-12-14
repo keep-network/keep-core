@@ -32,6 +32,7 @@ const InitiateWithdrawComponent = ({
   timestamp = null,
   withdrawalDelay = 1814400, // 21 days
   withdrawalTimeout = 172800, // 2 days
+  bodyTitle = null,
 }) => {
   const formik = useAcceptTermToConfirmFormik()
   const dispatch = useDispatch()
@@ -40,7 +41,11 @@ const InitiateWithdrawComponent = ({
     <>
       <ModalBody>
         <h3 className="mb-1">
-          {transactionHash ? "Almost there..." : "You are about to withdraw:"}
+          {bodyTitle
+            ? bodyTitle
+            : transactionHash
+            ? "Almost there..."
+            : "You are about to withdraw:"}
         </h3>
         <TokenAmount amount={amount} token={covKEEP} />
         <TokenAmount
