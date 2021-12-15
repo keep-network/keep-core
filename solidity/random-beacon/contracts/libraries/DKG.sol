@@ -82,6 +82,9 @@ library DKG {
         // Identifiers of candidate group members as outputted by the group
         // selection protocol.
         uint32[] members;
+        // Identifiers of candidate group members as outputted by the group
+        // selection protocol excluding IA/DQ members
+        uint32[] activeMembers;
     }
 
     /// @notice States for phases of group creation. The states doesn't include
@@ -122,14 +125,15 @@ library DKG {
         uint8[] misbehavedMembersIndices,
         bytes signatures,
         uint256[] signingMembersIndices,
-        uint32[] members
+        bytes32 membersHash
     );
 
     event DkgTimedOut();
 
     event DkgResultApproved(
         bytes32 indexed resultHash,
-        address indexed approver
+        address indexed approver,
+        uint32[] members
     );
 
     event DkgResultChallenged(
@@ -278,7 +282,7 @@ library DKG {
             result.misbehavedMembersIndices,
             result.signatures,
             result.signingMembersIndices,
-            result.members
+            keccak256(abi.encode(result.members))
         );
     }
 
@@ -379,7 +383,11 @@ library DKG {
             ];
         }
 
-        emit DkgResultApproved(self.submittedResultHash, msg.sender);
+        emit DkgResultApproved(
+            self.submittedResultHash,
+            msg.sender,
+            result.members
+        );
 
         return misbehavedMembers;
     }

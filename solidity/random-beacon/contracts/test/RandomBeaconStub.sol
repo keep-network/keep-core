@@ -26,13 +26,13 @@ contract RandomBeaconStub is RandomBeacon {
 
     function roughlyAddGroup(
         bytes calldata groupPubKey,
-        uint32[] calldata members
+        bytes32 activeMembersHash
     ) external {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
         Groups.Group memory group;
         group.groupPubKey = groupPubKey;
-        group.members = members;
+        group.activeMembersHash = activeMembersHash;
         /* solhint-disable-next-line not-rely-on-time */
         group.activationBlockNumber = block.number;
 

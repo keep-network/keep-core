@@ -225,14 +225,15 @@ contract RandomBeacon is Ownable {
         uint8[] misbehavedMembersIndices,
         bytes signatures,
         uint256[] signingMembersIndices,
-        uint32[] members
+        bytes32 membersHash
     );
 
     event DkgTimedOut();
 
     event DkgResultApproved(
         bytes32 indexed resultHash,
-        address indexed approver
+        address indexed approver,
+        uint32[] members
     );
 
     event DkgResultChallenged(
@@ -577,8 +578,7 @@ contract RandomBeacon is Ownable {
 
         groups.addCandidateGroup(
             dkgResult.groupPubKey,
-            dkgResult.members,
-            dkgResult.misbehavedMembersIndices
+            dkgResult.activeMembers
         );
     }
 
@@ -717,7 +717,9 @@ contract RandomBeacon is Ownable {
 
     /// @notice Creates a new relay entry.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(bytes calldata entry) external {
+    function submitRelayEntry(bytes calldata entry, uint32[] calldata members)
+        external
+    {
         uint256 currentRequestId = relay.currentRequestID;
 
         Groups.Group storage group = groups.getGroup(
@@ -728,7 +730,7 @@ contract RandomBeacon is Ownable {
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
-                group.members
+                members
             );
 
             try staking.slash(slashingAmount, groupMembers) {
@@ -760,13 +762,11 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Reports a relay entry timeout.
-    function reportRelayEntryTimeout() external {
+    function reportRelayEntryTimeout(uint32[] calldata members) external {
         uint64 groupId = relay.currentRequestGroupID;
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            groups.getGroup(groupId).members
-        );
+        address[] memory groupMembers = sortitionPool.getIDOperators(members);
 
         emit RelayEntryTimeoutSlashed(
             relay.currentRequestID,
@@ -812,7 +812,8 @@ contract RandomBeacon is Ownable {
     /// @param groupId Group that is being reported for leaking a private key.
     function reportUnauthorizedSigning(
         bytes memory signedMsgSender,
-        uint64 groupId
+        uint64 groupId,
+        uint32[] calldata members
     ) external {
         Groups.Group memory group = groups.getGroup(groupId);
 
@@ -829,9 +830,7 @@ contract RandomBeacon is Ownable {
 
         groups.terminateGroup(groupId);
 
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            groups.getGroup(groupId).members
-        );
+        address[] memory groupMembers = sortitionPool.getIDOperators(members);
 
         emit UnauthorizedSigningSlashed(
             groupId,
@@ -864,7 +863,8 @@ contract RandomBeacon is Ownable {
     ///        be the same as the stored one.
     function notifyFailedHeartbeat(
         Heartbeat.FailureClaim calldata claim,
-        uint256 nonce
+        uint256 nonce,
+        uint32[] calldata members
     ) external {
         uint64 groupId = claim.groupId;
 
@@ -881,7 +881,8 @@ contract RandomBeacon is Ownable {
             sortitionPool,
             claim,
             group,
-            nonce
+            nonce,
+            members
         );
 
         failedHeartbeatNonce[groupId]++;

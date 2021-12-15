@@ -22,7 +22,8 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationBlockNumber;
-        uint32[] members;
+        // Hash of active group members identifiers array (excluding IA/DQ members).
+        bytes32 activeMembersHash;
         // When selected group does not create a relay entry on-time it should
         // be marked as terminated.
         bool terminated;
@@ -58,17 +59,12 @@ library Groups {
     ///      The code calling this function should ensure that the number of
     ///      candidate (not activated) groups is never more than one.
     /// @param groupPubKey Generated candidate group public key
-    /// @param members Addresses of candidate group members as outputted by the
-    ///        group selection protocol.
-    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members indices; Indices reflect positions of
-    ///        members in the group, as outputted by the group selection
-    ///        protocol.
+    /// @param activeMembers Addresses of active candidate group members as outputted
+    ///        by the group selection protocol.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
-        uint32[] calldata members,
-        uint8[] calldata misbehavedMembersIndices
+        uint32[] calldata activeMembers
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
@@ -87,8 +83,7 @@ library Groups {
         // candidate group was already registered before and popped.
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
-
-        setGroupMembers(group, members, misbehavedMembersIndices);
+        group.activeMembersHash = keccak256(abi.encode(activeMembers));
 
         self.groupsRegistry.push(groupPubKeyHash);
 
@@ -341,42 +336,5 @@ library Groups {
         }
 
         return shiftedIndex;
-    }
-
-    /// @notice Sets addresses of members for the group eliminating members at
-    ///         positions pointed by the misbehavedMembersIndices array.
-    ///
-    ///         NOTE THAT THIS FUNCTION CHANGES ORDER OF MEMBERS IN THE GROUP
-    ///         IF THERE IS AT LEAST ONE MISBEHAVED MEMBER
-    ///
-    ///         The final group members indexes should be obtained post-DKG
-    ///         and they may differ from the ones outputted by the group
-    ///         selection protocol.
-    /// @param group The group storage.
-    /// @param members Group member addresses as outputted by the group selection
-    ///        protocol.
-    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members. Indices reflect positions
-    ///        of members in the group as outputted by the group selection
-    ///        protocol.
-    function setGroupMembers(
-        Group storage group,
-        uint32[] calldata members,
-        uint8[] calldata misbehavedMembersIndices
-    ) private {
-        group.members = members;
-
-        // Iterate misbehaved array backwards, replace misbehaved
-        // member with the last element and reduce array length
-        uint256 i = misbehavedMembersIndices.length;
-        while (i > 0) {
-            // group member indices start from 1, so we need to -1 on misbehaved
-            uint8 memberArrayPosition = misbehavedMembersIndices[i - 1] - 1;
-            group.members[memberArrayPosition] = group.members[
-                group.members.length - 1
-            ];
-            group.members.pop();
-            i--;
-        }
     }
 }

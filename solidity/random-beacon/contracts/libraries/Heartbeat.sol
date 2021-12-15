@@ -66,9 +66,10 @@ library Heartbeat {
         SortitionPool sortitionPool,
         FailureClaim calldata claim,
         Groups.Group storage group,
-        uint256 nonce
+        uint256 nonce,
+        uint32[] calldata members
     ) external view returns (uint32[] memory failedMembers) {
-        uint256 groupSize = group.members.length;
+        uint256 groupSize = members.length;
 
         // Validate failed members indices. Maximum indices count is equal to
         // the group size and is not limited deliberately to leave a theoretical
@@ -107,10 +108,6 @@ library Heartbeat {
             )
         ).toEthSignedMessageHash();
 
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            group.members
-        );
-
         // Verify each signature.
         bytes memory checkedSignature;
         bool senderSignatureExists = false;
@@ -125,7 +122,8 @@ library Heartbeat {
             );
 
             require(
-                groupMembers[memberIndex - 1] == recoveredAddress,
+                sortitionPool.getIDOperators(members)[memberIndex - 1] ==
+                    recoveredAddress,
                 "Invalid signature"
             );
 
@@ -139,7 +137,7 @@ library Heartbeat {
         failedMembers = new uint32[](claim.failedMembersIndices.length);
         for (uint256 i = 0; i < claim.failedMembersIndices.length; i++) {
             uint256 memberIndex = claim.failedMembersIndices[i];
-            failedMembers[i] = group.members[memberIndex - 1];
+            failedMembers[i] = members[memberIndex - 1];
         }
 
         return failedMembers;

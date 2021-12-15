@@ -83,6 +83,12 @@ contract DKGValidator {
             return (false, "Invalid group members");
         }
 
+        // At this point all members and misbehaved members were verified and
+        // we can validate active members.
+        if (!validateActiveGroupMembers(result)) {
+            return (false, "Invalid active group members");
+        }
+
         return (true, "");
     }
 
@@ -187,6 +193,42 @@ contract DKGValidator {
         return
             keccak256(abi.encodePacked(result.members)) ==
             actualGroupMembersHash;
+    }
+
+    /// @notice Performs validation of active group members as declared in DKG
+    ///         result against all members and misbehaved members. This function
+    ///         can be used only after all the members and misbehaved members
+    ///         validity has been checked.
+    /// @return true if active group members are valid. False otherwise.
+    function validateActiveGroupMembers(DKG.Result calldata result)
+        internal
+        view
+        returns (bool)
+    {
+        // If no misbehaved members, then 'members' array should be equal to
+        // 'activeMembers' array
+        if (result.misbehavedMembersIndices.length == 0) {
+            return
+                keccak256(abi.encode(result.members)) ==
+                keccak256(abi.encode(result.activeMembers));
+        }
+
+        for (uint256 i = 0; i < result.misbehavedMembersIndices.length; i++) {
+            // group member indices start from 1, so we need to -1 on misbehaved
+            uint256 misbehavedMemberArrayPosition = result
+                .misbehavedMembersIndices[i - 1] - 1;
+            for (uint256 j = 0; j < result.activeMembers.length; j++) {
+                // active members array should not contain any misbehaved members
+                if (
+                    result.members[misbehavedMemberArrayPosition] ==
+                    result.activeMembers[j]
+                ) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     /// @notice Performs validation of signatures supplied in DKG result.
