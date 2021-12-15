@@ -42,34 +42,36 @@ const useAutoConnect = () => {
     [walletAddressFromUrl]
   )
 
-  const connectWallet = (connector) => {
-    connector.getAccounts().then((accounts) => {
-      setInjectedTried(true)
-      if (
-        (!isEmptyArray(accounts) && isExactRoutePath) ||
-        isWalletFromUrlSameAsInMetamask(accounts)
-      ) {
-        connectAppWithWallet(connector, false).catch((error) => {
-          // Just log an error, we don't want to do anything else.
-          console.log(
-            "Eager injected connector cannot connect with the dapp:",
-            error.message
-          )
-        })
-      } else if (walletAddressFromUrl && !connector) {
-        const explorerModeConnector = new ExplorerModeConnector()
-        openModal(MODAL_TYPES.ExplorerMode, {
-          connectAppWithWallet,
-          connector: explorerModeConnector,
-          address: walletAddressFromUrl,
-          connectWithWalletOnMount: true,
-        })
-      }
-    })
-  }
 
   useEffect(() => {
     if (injectedTried) return
+    
+    const connectWallet = (connector) => {
+      connector.getAccounts().then((accounts) => {
+        setInjectedTried(true)
+        if (
+          (!isEmptyArray(accounts) && isExactRoutePath) ||
+          isWalletFromUrlSameAsInMetamask(accounts)
+        ) {
+          connectAppWithWallet(connector, false).catch((error) => {
+            // Just log an error, we don't want to do anything else.
+            console.log(
+              "Eager injected connector cannot connect with the dapp:",
+              error.message
+            )
+          })
+        } else if (walletAddressFromUrl && !connector) {
+          const explorerModeConnector = new ExplorerModeConnector()
+          openModal(MODAL_TYPES.ExplorerMode, {
+            connectAppWithWallet,
+            connector: explorerModeConnector,
+            address: walletAddressFromUrl,
+            connectWithWalletOnMount: true,
+          })
+        }
+      })
+    }
+
     if (window.tally) {
       connectWallet(tallyInjectedConnector)
     } else if (window.ethereum && window.ethereum.isMetaMask) {
