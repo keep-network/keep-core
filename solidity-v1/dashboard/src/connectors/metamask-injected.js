@@ -3,7 +3,7 @@ import { InjectedConnector } from "./injected-connector"
 
 class MetaMaskInjectedConnector extends InjectedConnector {
   constructor() {
-    super(WALLETS.METAMASK.name, window.ethereum)
+    super(WALLETS.METAMASK.name, "ethereum")
   }
 }
 

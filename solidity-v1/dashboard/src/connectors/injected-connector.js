@@ -4,9 +4,13 @@ import BigNumber from "bignumber.js"
 import { UserRejectedConnectionRequestError } from "./utils"
 
 class InjectedConnector extends AbstractConnector {
-  constructor(walletName, provider) {
+  constructor(walletName, providerPropertyNameOnWindow) {
     super(walletName)
-    this.provider = provider
+    this.providerPropertyNameOnWindow = providerPropertyNameOnWindow
+  }
+
+  get provider() {
+    return window[this.providerPropertyNameOnWindow]
   }
 
   _onAccountChanged = ([address]) => {
@@ -23,9 +27,13 @@ class InjectedConnector extends AbstractConnector {
 
   enable = async () => {
     if (!this.provider) {
-      throw new Error(
-        `The window provider for ${this.name} wallet can not be found!`
-      )
+      if (window[this.providerPropertyNameOnWindow]) {
+        this.provider = window[this.providerPropertyNameOnWindow]
+      } else {
+        throw new Error(
+          `The window provider for ${this.name} wallet can not be found!`
+        )
+      }
     }
 
     try {
@@ -56,8 +64,8 @@ class InjectedConnector extends AbstractConnector {
   }
 
   disconnect = async () => {
-    // window.tally injected by Tally does not provide a method to
-    // disconnect a wallet.
+    //  window.ethereum injected by MetaMask and window.tally injected by Tally
+    // does not provide a method to disconnect a wallet.
     this._onDisconnect()
     this.provider.removeListener("accountsChanged", this._onAccountChanged)
     this.provider.removeListener("disconnect", this._onDisconnect)

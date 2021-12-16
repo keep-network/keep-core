@@ -30,11 +30,11 @@ const useAutoConnect = () => {
   const isExactRoutePath = useIsExactRoutePath()
   const [injectedTried, setInjectedTried] = useState(false)
 
-  const isWalletFromUrlSameAsInMetamask = useCallback(
-    (metamaskAccounts) => {
+  const isWalletFromUrlSameAsInProvider = useCallback(
+    (providerAccount) => {
       return (
         walletAddressFromUrl &&
-        metamaskAccounts.some((account) =>
+        providerAccount.some((account) =>
           isSameEthAddress(account, walletAddressFromUrl)
         )
       )
@@ -42,16 +42,15 @@ const useAutoConnect = () => {
     [walletAddressFromUrl]
   )
 
-
   useEffect(() => {
     if (injectedTried) return
-    
+
     const connectWallet = (connector) => {
       connector.getAccounts().then((accounts) => {
         setInjectedTried(true)
         if (
           (!isEmptyArray(accounts) && isExactRoutePath) ||
-          isWalletFromUrlSameAsInMetamask(accounts)
+          isWalletFromUrlSameAsInProvider(accounts)
         ) {
           connectAppWithWallet(connector, false).catch((error) => {
             // Just log an error, we don't want to do anything else.
@@ -84,7 +83,7 @@ const useAutoConnect = () => {
     openModal,
     connector,
     isExactRoutePath,
-    isWalletFromUrlSameAsInMetamask,
+    isWalletFromUrlSameAsInProvider,
   ])
 }
 
