@@ -5,6 +5,8 @@ import { randomBeaconDeployment } from "./fixtures"
 
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
 
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
+
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
   let thirdParty: Signer
@@ -35,9 +37,7 @@ describe("RandomBeaconGovernance", () => {
   // prettier-ignore
   before(async () => {
     [governance, thirdParty] = await ethers.getSigners()
-  })
 
-  beforeEach(async () => {
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
@@ -112,10 +112,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginRelayRequestFeeUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the relay request fee", async () => {
@@ -163,6 +169,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginRelayRequestFeeUpdate(123)
@@ -174,6 +182,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeRelayRequestFeeUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -182,7 +192,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginRelayRequestFeeUpdate(123)
@@ -192,6 +204,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeRelayRequestFeeUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the relay request fee", async () => {
@@ -238,6 +254,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is at least one", () => {
       it("should accept the value", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
@@ -246,16 +264,24 @@ describe("RandomBeaconGovernance", () => {
           .beginRelayEntrySubmissionEligibilityDelayUpdate(2)
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the relay entry submission eligibility delay", async () => {
@@ -306,6 +332,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
@@ -317,6 +345,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeRelayEntrySubmissionEligibilityDelayUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -325,7 +355,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginRelayEntrySubmissionEligibilityDelayUpdate(1)
@@ -335,6 +367,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeRelayEntrySubmissionEligibilityDelayUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the relay entry submission eligibility delay", async () => {
@@ -375,10 +411,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntryHardTimeoutUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the relay entry hard timeout", async () => {
@@ -426,6 +468,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntryHardTimeoutUpdate(123)
@@ -437,6 +481,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeRelayEntryHardTimeoutUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -445,7 +491,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginRelayEntryHardTimeoutUpdate(123)
@@ -455,6 +503,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeRelayEntryHardTimeoutUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the relay entry hard timeout", async () => {
@@ -499,6 +551,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is at least one", () => {
       it("should accept the value", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginCallbackGasLimitUpdate(1)
@@ -507,6 +561,8 @@ describe("RandomBeaconGovernance", () => {
           .beginCallbackGasLimitUpdate(2)
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
@@ -522,21 +578,31 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is one million", () => {
       it("should accept the value", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginCallbackGasLimitUpdate(1000000)
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginCallbackGasLimitUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the callback gas limit", async () => {
@@ -584,6 +650,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginCallbackGasLimitUpdate(123)
@@ -595,6 +663,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeCallbackGasLimitUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -603,7 +673,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginCallbackGasLimitUpdate(123)
@@ -613,6 +685,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeCallbackGasLimitUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the callback gas limit", async () => {
@@ -657,6 +733,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is at least one", () => {
       it("should accept the value", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
@@ -665,16 +743,24 @@ describe("RandomBeaconGovernance", () => {
           .beginGroupCreationFrequencyUpdate(2)
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the group creation frequency timeout", async () => {
@@ -725,6 +811,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
@@ -736,6 +824,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeGroupCreationFrequencyUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -744,7 +834,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginGroupCreationFrequencyUpdate(1)
@@ -754,6 +846,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeGroupCreationFrequencyUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the group creation frequency", async () => {
@@ -798,11 +894,15 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is one day", () => {
       it("should accept the value", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginGroupLifetimeUpdate(24 * 60 * 60) // 24 hours
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
@@ -818,21 +918,31 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is 2 weeks", () => {
       it("should accept the value", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginGroupLifetimeUpdate(14 * 24 * 60 * 60) // 14 days
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the group lifetime", async () => {
@@ -880,6 +990,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
@@ -891,6 +1003,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeGroupLifetimeUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -899,7 +1013,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
@@ -909,6 +1025,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeGroupLifetimeUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the group lifetime", async () => {
@@ -955,6 +1075,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is at least 10", () => {
       it("should accept the value", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(10)
@@ -963,16 +1085,24 @@ describe("RandomBeaconGovernance", () => {
           .beginDkgResultChallengePeriodLengthUpdate(11)
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(11)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the DKG result challenge period length", async () => {
@@ -1023,6 +1153,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(11)
@@ -1034,6 +1166,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeDkgResultChallengePeriodLengthUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1042,7 +1176,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginDkgResultChallengePeriodLengthUpdate(11)
@@ -1052,6 +1188,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeDkgResultChallengePeriodLengthUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the DKG result challenge period length", async () => {
@@ -1103,24 +1243,34 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the update value is at least one", () => {
       it("should accept the value", async () => {
-        randomBeaconGovernance
+        await createSnapshot()
+
+        await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultSubmissionEligibilityDelayUpdate(1)
-        randomBeaconGovernance
+        await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultSubmissionEligibilityDelayUpdate(2)
 
         // works, did not revert
+
+        await restoreSnapshot()
       })
     })
 
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the DKG result submission eligibility delay", async () => {
@@ -1171,6 +1321,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultSubmissionEligibilityDelayUpdate(1)
@@ -1182,6 +1334,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeDkgResultSubmissionEligibilityDelayUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1190,7 +1344,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginDkgResultSubmissionEligibilityDelayUpdate(1)
@@ -1200,6 +1356,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the DKG result submission eligibility delay", async () => {
@@ -1240,10 +1400,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultSubmissionRewardUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the dkg result submission reward", async () => {
@@ -1294,6 +1460,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginDkgResultSubmissionRewardUpdate(123)
@@ -1305,6 +1473,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeDkgResultSubmissionRewardUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1313,7 +1483,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginDkgResultSubmissionRewardUpdate(123)
@@ -1323,6 +1495,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeDkgResultSubmissionRewardUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the dkg result submission reward", async () => {
@@ -1360,10 +1536,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginSortitionPoolUnlockingRewardUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the sortition pool unlocking reward", async () => {
@@ -1414,6 +1596,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginSortitionPoolUnlockingRewardUpdate(123)
@@ -1425,6 +1609,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeSortitionPoolUnlockingRewardUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1433,7 +1619,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginSortitionPoolUnlockingRewardUpdate(123)
@@ -1443,6 +1631,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeSortitionPoolUnlockingRewardUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the sortition pool unlocking reward", async () => {
@@ -1483,10 +1675,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginIneligibleOperatorNotifierRewardUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the ineligible operator notifier reward", async () => {
@@ -1537,6 +1735,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginIneligibleOperatorNotifierRewardUpdate(123)
@@ -1548,6 +1748,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeIneligibleOperatorNotifierRewardUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1556,7 +1758,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginIneligibleOperatorNotifierRewardUpdate(123)
@@ -1566,6 +1770,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeIneligibleOperatorNotifierRewardUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the ineligible operator notifier reward", async () => {
@@ -1606,10 +1814,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the relay entry submission failure slashing amount", async () => {
@@ -1660,6 +1874,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
@@ -1671,6 +1887,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeRelayEntrySubmissionFailureSlashingAmountUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1679,7 +1897,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
@@ -1689,6 +1909,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeRelayEntrySubmissionFailureSlashingAmountUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the relay entry submission failure slashing amount", async () => {
@@ -1729,10 +1953,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginUnauthorizedSigningSlashingAmountUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the unauthorized signing slashing amount", async () => {
@@ -1783,6 +2013,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginUnauthorizedSigningSlashingAmountUpdate(123)
@@ -1794,6 +2026,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeUnauthorizedSigningSlashingAmountUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1802,7 +2036,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginUnauthorizedSigningSlashingAmountUpdate(123)
@@ -1812,6 +2048,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeUnauthorizedSigningSlashingAmountUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the unauthorized signing slashing amount", async () => {
@@ -1852,10 +2092,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginMaliciousDkgResultSlashingAmountUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the malicious DKG result slashing amount", async () => {
@@ -1906,6 +2152,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginMaliciousDkgResultSlashingAmountUpdate(123)
@@ -1917,6 +2165,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeMaliciousDkgResultSlashingAmountUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -1925,7 +2175,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginMaliciousDkgResultSlashingAmountUpdate(123)
@@ -1935,6 +2187,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeMaliciousDkgResultSlashingAmountUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the malicious DKG result slashing amount", async () => {
@@ -1975,10 +2231,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginSortitionPoolRewardsBanDurationUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the sortition pool rewards ban duration", async () => {
@@ -2029,6 +2291,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginSortitionPoolRewardsBanDurationUpdate(123)
@@ -2040,6 +2304,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeSortitionPoolRewardsBanDurationUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -2048,7 +2314,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginSortitionPoolRewardsBanDurationUpdate(123)
@@ -2058,6 +2326,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeSortitionPoolRewardsBanDurationUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the sortition pool rewards ban duration", async () => {
@@ -2108,10 +2380,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner and value is correct", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the unauthorized signing notification reward multiplier", async () => {
@@ -2162,6 +2440,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
@@ -2173,6 +2453,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -2181,7 +2463,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
@@ -2191,6 +2475,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the unauthorized signing notification reward multiplier", async () => {
@@ -2241,10 +2529,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner and value is correct", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the relay entry timeout notification reward multiplier", async () => {
@@ -2295,6 +2589,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
@@ -2306,6 +2602,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -2314,7 +2612,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
@@ -2324,6 +2624,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the relay entry timeout notification reward multiplier", async () => {
@@ -2364,10 +2668,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginMinimumAuthorizationUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the minimum authorization amount", async () => {
@@ -2415,6 +2725,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginMinimumAuthorizationUpdate(123)
@@ -2426,6 +2738,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeMinimumAuthorizationUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -2434,7 +2748,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginMinimumAuthorizationUpdate(123)
@@ -2444,6 +2760,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeMinimumAuthorizationUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the minimum authorization amount", async () => {
@@ -2479,10 +2799,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginAuthorizationDecreaseDelayUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the authorization decrease delay", async () => {
@@ -2533,6 +2859,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginAuthorizationDecreaseDelayUpdate(123)
@@ -2542,6 +2870,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeAuthorizationDecreaseDelayUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -2550,7 +2880,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginAuthorizationDecreaseDelayUpdate(123)
@@ -2560,6 +2892,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeAuthorizationDecreaseDelayUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the authorization decrease delay", async () => {
@@ -2610,10 +2946,16 @@ describe("RandomBeaconGovernance", () => {
     context("when the caller is the owner and value is correct", () => {
       let tx
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeaconGovernance
           .connect(governance)
           .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should not update the DKG malicious result notification reward multiplier", async () => {
@@ -2664,6 +3006,8 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the governance delay has not passed", () => {
       it("should revert", async () => {
+        await createSnapshot()
+
         await randomBeaconGovernance
           .connect(governance)
           .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
@@ -2675,6 +3019,8 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
       })
     })
 
@@ -2683,7 +3029,9 @@ describe("RandomBeaconGovernance", () => {
       () => {
         let tx
 
-        beforeEach(async () => {
+        before(async () => {
+          await createSnapshot()
+
           await randomBeaconGovernance
             .connect(governance)
             .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
@@ -2693,6 +3041,10 @@ describe("RandomBeaconGovernance", () => {
           tx = await randomBeaconGovernance
             .connect(governance)
             .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the DKG malicious result notification reward multiplier", async () => {

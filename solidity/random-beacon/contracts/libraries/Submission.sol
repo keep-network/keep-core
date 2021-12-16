@@ -92,41 +92,4 @@ library Submission {
                 firstEligibleIndex <= submitterIndex;
         }
     }
-
-    /// @notice Determines a list of members which should be considered as
-    ///         inactive due to not submitting on their turn.
-    ///         Inactive members are determined using the eligibility queue and
-    ///         are taken from the <firstEligibleIndex, submitterIndex) range.
-    ///         It also handles the `submitterIndex < firstEligibleIndex` case
-    ///         and wraps the queue accordingly.
-    /// @param submitterIndex Index of the submitter.
-    /// @param firstEligibleIndex First index of the given eligibility range.
-    /// @param groupMembers IDs of the group members.
-    /// @return An array of members IDs which should be considered inactive due
-    ///         to not submitting on their turn.
-    function getInactiveMembers(
-        uint256 submitterIndex,
-        uint256 firstEligibleIndex,
-        uint32[] memory groupMembers
-    ) internal view returns (uint32[] memory) {
-        uint256 groupSize = groupMembers.length;
-
-        uint256 inactiveMembersCount = submitterIndex >= firstEligibleIndex
-            ? submitterIndex - firstEligibleIndex
-            : groupSize - (firstEligibleIndex - submitterIndex);
-
-        uint32[] memory inactiveMembersIDs = new uint32[](inactiveMembersCount);
-
-        for (uint256 i = 0; i < inactiveMembersCount; i++) {
-            uint256 memberIndex = firstEligibleIndex + i;
-
-            if (memberIndex > groupSize) {
-                memberIndex = memberIndex - groupSize;
-            }
-
-            inactiveMembersIDs[i] = groupMembers[memberIndex - 1];
-        }
-
-        return inactiveMembersIDs;
-    }
 }

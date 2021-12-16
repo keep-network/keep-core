@@ -342,7 +342,7 @@ contract RandomBeacon is Ownable {
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
-        groups.setGroupLifetime(403200); // ~10 months assuming 15s block time
+        groups.setGroupLifetime(403200); // ~10 weeks assuming 15s block time
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -545,7 +545,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Triggers group selection if there are no active groups.
     function genesis() external {
-        require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
+        require(groups.numberOfActiveGroups() == 0, "Not awaiting genesis");
 
         dkg.lockState();
         dkg.start(
@@ -617,8 +617,6 @@ contract RandomBeacon is Ownable {
 
         groups.activateCandidateGroup();
         dkg.complete();
-        // TODO: Check if this function is cheap enough and it will be
-        //       profitable for the DKG result submitter to call it.
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be

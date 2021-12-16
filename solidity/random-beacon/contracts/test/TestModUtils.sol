@@ -103,7 +103,7 @@ contract TestModUtils {
                 leg = ModUtils.legendre(j, smallOddPrimes[i]);
                 require(
                     leg == 0 || leg == 1 || leg == -1,
-                    "legendre() should only return [-1, 0, 1]"
+                    "Legendre() should only return [-1, 0, 1]"
                 );
             }
         }
@@ -120,7 +120,7 @@ contract TestModUtils {
             );
             require(
                 leg == smallOddPrimesLegendre[i][2],
-                "legendre() result differed from list"
+                "Legendre() result differed from list"
             );
         }
     }
