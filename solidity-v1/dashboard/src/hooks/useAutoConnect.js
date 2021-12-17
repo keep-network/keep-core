@@ -45,14 +45,14 @@ const useAutoConnect = () => {
   useEffect(() => {
     if (injectedTried) return
 
-    const connectWallet = (connector) => {
-      connector.getAccounts().then((accounts) => {
+    const connectWallet = (injectedConnector) => {
+      injectedConnector.getAccounts().then((accounts) => {
         setInjectedTried(true)
         if (
           (!isEmptyArray(accounts) && isExactRoutePath) ||
           isWalletFromUrlSameAsInProvider(accounts)
         ) {
-          connectAppWithWallet(connector, false).catch((error) => {
+          connectAppWithWallet(injectedConnector, false).catch((error) => {
             // Just log an error, we don't want to do anything else.
             console.log(
               "Eager injected connector cannot connect with the dapp:",
