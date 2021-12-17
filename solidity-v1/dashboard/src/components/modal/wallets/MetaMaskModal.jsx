@@ -5,7 +5,7 @@ import * as Icons from "../../Icons"
 import { withBaseModal } from "../withBaseModal"
 
 const rejectedConnectionErrorMsg =
-  "You rejected the connection request in MetaMask. Please close and try again, and click confirm connection in MetaMask window."
+  "You rejected the connection request in MetaMask. Please close and try again, then click confirm connection in MetaMask window."
 
 const MetaMaskModalBase = ({ connector, connectAppWithWallet, onClose }) => {
   return (

@@ -5,7 +5,7 @@ import * as Icons from "../../Icons"
 import { withBaseModal } from "../withBaseModal"
 
 const rejectedConnectionErrorMsg =
-  "You rejected the connection request in Tally. Please close and try again, and click confirm connection in Tally window."
+  "You rejected the connection request in Tally. Please close and try again, then click confirm connection in Tally window."
 
 const TallyModalBase = ({ connector, connectAppWithWallet, onClose }) => {
   return (

@@ -31,10 +31,10 @@ const useAutoConnect = () => {
   const [injectedTried, setInjectedTried] = useState(false)
 
   const isWalletFromUrlSameAsInProvider = useCallback(
-    (providerAccount) => {
+    (providerAccounts) => {
       return (
         walletAddressFromUrl &&
-        providerAccount.some((account) =>
+        providerAccounts.some((account) =>
           isSameEthAddress(account, walletAddressFromUrl)
         )
       )
