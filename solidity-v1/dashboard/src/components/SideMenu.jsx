@@ -16,7 +16,7 @@ import Chip from "./Chip"
 import NavLink from "./NavLink"
 import CoveragePoolPage from "../pages/coverage-pools"
 import TBTCMigrationPage from "../pages/tbtc-migration"
-import ThresholdPage from "../pages/threshold"
+// import ThresholdPage from "../pages/threshold"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -49,7 +49,7 @@ export const SideMenu = (props) => {
               ...TBTCMigrationPage.route,
               title: "TBTC v2.0",
             },
-            ThresholdPage.route,
+            // ThresholdPage.route,
           ]}
         />
         <NavLinkSection
