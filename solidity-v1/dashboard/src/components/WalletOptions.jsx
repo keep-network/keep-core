@@ -6,18 +6,26 @@ import {
   TrezorConnector,
   LedgerConnector,
   LEDGER_DERIVATION_PATHS,
-  injected,
+  metaMaskInjectedConnector,
   WalletConnectConnector,
+  tallyInjectedConnector,
 } from "../connectors"
 import { MODAL_TYPES, WALLETS } from "../constants/constants"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 
 const WALLETS_OPTIONS = [
   {
+    label: "Tally",
+    icon: Icons.Tally,
+    isHardwareWallet: false,
+    connector: tallyInjectedConnector,
+    modalType: MODAL_TYPES.Tally,
+  },
+  {
     label: "MetaMask",
     icon: Icons.MetaMask,
     isHardwareWallet: false,
-    connector: injected,
+    connector: metaMaskInjectedConnector,
     modalType: MODAL_TYPES.MetaMask,
   },
   {

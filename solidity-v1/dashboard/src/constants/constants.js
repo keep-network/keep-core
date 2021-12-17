@@ -66,6 +66,7 @@ export const LINK = {
 }
 
 export const WALLETS = {
+  TALLY: { label: "Tally", name: "TALLY" },
   METAMASK: { label: "MetaMask", name: "METAMASK" },
   TREZOR: { label: "Trezor", name: "TREZOR" },
   LEDGER: { label: "Ledger", name: "LEDGER" },
@@ -207,6 +208,7 @@ export const MODAL_TYPES = {
   BondingAddETH: "BondingAddEth",
   BondingWithdrawETH: "BondingWithdrawETH",
   MetaMask: "MetaMask",
+  Tally: "Tally",
   ExplorerMode: "ExplorerMode",
   Ledger: "Ledger",
   Trezor: "Trezor",

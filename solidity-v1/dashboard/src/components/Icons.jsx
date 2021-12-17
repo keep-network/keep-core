@@ -39,6 +39,7 @@ import { ReactComponent as Time } from "../static/svg/time.svg"
 import { ReactComponent as KeepDashboardLogo } from "../static/svg/token-dashboard-logo.svg"
 import { ReactComponent as NetworkStatusIndicator } from "../static/svg/network-status-indicator.svg"
 import { ReactComponent as MetaMask } from "../static/svg/metamask.svg"
+import { ReactComponent as Tally } from "../static/svg/tally.svg"
 import { ReactComponent as Trezor } from "../static/svg/trezor.svg"
 import { ReactComponent as Ledger } from "../static/svg/ledger.svg"
 import { ReactComponent as Add } from "../static/svg/add.svg"
@@ -371,6 +372,7 @@ export {
   Ledger,
   Trezor,
   MetaMask,
+  Tally,
   Coinbase,
   Authorizer,
   Operations,

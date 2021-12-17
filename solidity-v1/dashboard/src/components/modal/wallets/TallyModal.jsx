@@ -5,20 +5,20 @@ import * as Icons from "../../Icons"
 import { withBaseModal } from "../withBaseModal"
 
 const rejectedConnectionErrorMsg =
-  "You rejected the connection request in MetaMask. Please close and try again, then click confirm connection in MetaMask window."
+  "You rejected the connection request in Tally. Please close and try again, then click confirm connection in Tally window."
 
-const MetaMaskModalBase = ({ connector, connectAppWithWallet, onClose }) => {
+const TallyModalBase = ({ connector, connectAppWithWallet, onClose }) => {
   return (
     <>
       <ModalHeader>Connect wallet</ModalHeader>
 
       <SelectedWalletModal
-        icon={<Icons.MetaMask />}
-        walletName="MetaMask"
+        icon={<Icons.Tally />}
+        walletName="Tally"
         description={
           connector.getProvider()
-            ? "The MetaMask login screen will open in an external window."
-            : "Please install the MetaMask extension"
+            ? "The Tally login screen will open in an external window."
+            : "Please install the Tally extension"
         }
         connector={connector}
         connectAppWithWallet={connectAppWithWallet}
@@ -28,7 +28,7 @@ const MetaMaskModalBase = ({ connector, connectAppWithWallet, onClose }) => {
       >
         {!connector.getProvider() && (
           <a
-            href="https://metamask.io"
+            href="https://tally.cash"
             className="btn btn-lg btn-primary mt-1 mb-1"
             target="_blank"
             rel="noopener noreferrer"
@@ -41,4 +41,4 @@ const MetaMaskModalBase = ({ connector, connectAppWithWallet, onClose }) => {
   )
 }
 
-export const MetaMaskModal = React.memo(withBaseModal(MetaMaskModalBase))
+export const TallyModal = React.memo(withBaseModal(TallyModalBase))
