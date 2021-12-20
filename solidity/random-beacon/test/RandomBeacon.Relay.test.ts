@@ -19,7 +19,7 @@ import {
   randomBeaconDeployment,
   blsDeployment,
 } from "./fixtures"
-import { createGroup } from "./utils/groups"
+import { createGroup, selectGroup } from "./utils/groups"
 import { signHeartbeatFailureClaim } from "./utils/heartbeat"
 import type {
   RandomBeacon,
@@ -32,6 +32,7 @@ import type {
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
+const { keccak256, defaultAbiCoder } = ethers.utils
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
@@ -70,7 +71,7 @@ describe("RandomBeacon - Relay", () => {
   let notifier: SignerWithAddress
   let submitter: SignerWithAddress
   let members: Operator[]
-  let membersIDs: OperatorID[]
+  let activeMembersIDs: OperatorID[]
   let membersAddresses: Address[]
 
   let randomBeacon: RandomBeacon
@@ -95,7 +96,7 @@ describe("RandomBeacon - Relay", () => {
       operators: members,
     } = await waffle.loadFixture(fixture))
 
-    membersIDs = members.map((member) => member.id)
+    activeMembersIDs = members.map((member) => member.id)
     membersAddresses = members.map((member) => member.address)
   })
 
@@ -309,7 +310,7 @@ describe("RandomBeacon - Relay", () => {
 
               tx = await randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.groupSignature)
+                .submitRelayEntry(blsData.groupSignature, activeMembersIDs)
             })
 
             after(async () => {
@@ -354,7 +355,7 @@ describe("RandomBeacon - Relay", () => {
 
               tx = await randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.groupSignature)
+                .submitRelayEntry(blsData.groupSignature, activeMembersIDs)
             })
 
             after(async () => {
@@ -396,7 +397,7 @@ describe("RandomBeacon - Relay", () => {
 
               tx = await randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.groupSignature)
+                .submitRelayEntry(blsData.groupSignature, activeMembersIDs)
             })
 
             after(async () => {
@@ -416,7 +417,7 @@ describe("RandomBeacon - Relay", () => {
             await expect(
               randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.nextGroupSignature)
+                .submitRelayEntry(blsData.nextGroupSignature, activeMembersIDs)
             ).to.be.revertedWith("Invalid entry")
           })
         })
@@ -432,7 +433,7 @@ describe("RandomBeacon - Relay", () => {
           await expect(
             randomBeacon
               .connect(submitter)
-              .submitRelayEntry(blsData.nextGroupSignature)
+              .submitRelayEntry(blsData.nextGroupSignature, activeMembersIDs)
           ).to.be.revertedWith("Relay request timed out")
         })
       })
@@ -443,7 +444,7 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon
             .connect(submitter)
-            .submitRelayEntry(blsData.nextGroupSignature)
+            .submitRelayEntry(blsData.nextGroupSignature, activeMembersIDs)
         ).to.be.revertedWith("No relay request in progress")
       })
     })
@@ -479,10 +480,14 @@ describe("RandomBeacon - Relay", () => {
 
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              membersIDs
+              keccak256(
+                defaultAbiCoder.encode(["uint32[]"], [activeMembersIDs])
+              )
             )
 
-            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+            tx = await randomBeacon
+              .connect(notifier)
+              .reportRelayEntryTimeout(activeMembersIDs)
           })
 
           after(async () => {
@@ -546,7 +551,9 @@ describe("RandomBeacon - Relay", () => {
             // made to ensure it is not selected for signing the original request.
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              membersIDs
+              keccak256(
+                defaultAbiCoder.encode(["uint32[]"], [activeMembersIDs])
+              )
             )
 
             await mineBlocks(
@@ -563,7 +570,7 @@ describe("RandomBeacon - Relay", () => {
             // Expire second group
             await mineBlocksTo(Number(secondGroupLifetime) + 1)
 
-            tx = await randomBeacon.reportRelayEntryTimeout()
+            tx = await randomBeacon.reportRelayEntryTimeout(activeMembersIDs)
           })
 
           after(async () => {
@@ -588,7 +595,9 @@ describe("RandomBeacon - Relay", () => {
               params.relayEntryHardTimeout
           )
 
-          tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+          tx = await randomBeacon
+            .connect(notifier)
+            .reportRelayEntryTimeout(activeMembersIDs)
         })
 
         after(async () => {
@@ -646,7 +655,9 @@ describe("RandomBeacon - Relay", () => {
             // Simulate DKG is awaiting a seed.
             await (randomBeacon as RandomBeaconStub).publicDkgLockState()
 
-            tx = await randomBeacon.connect(notifier).reportRelayEntryTimeout()
+            tx = await randomBeacon
+              .connect(notifier)
+              .reportRelayEntryTimeout(activeMembersIDs)
           })
 
           after(async () => {
@@ -669,9 +680,9 @@ describe("RandomBeacon - Relay", () => {
 
     context("when relay entry did not time out", () => {
       it("should revert", async () => {
-        await expect(randomBeacon.reportRelayEntryTimeout()).to.be.revertedWith(
-          "Relay request did not time out"
-        )
+        await expect(
+          randomBeacon.reportRelayEntryTimeout(activeMembersIDs)
+        ).to.be.revertedWith("Relay request did not time out")
       })
     })
   })
@@ -702,7 +713,7 @@ describe("RandomBeacon - Relay", () => {
           )
           tx = await randomBeacon
             .connect(notifier)
-            .reportUnauthorizedSigning(notifierSignature, 0)
+            .reportUnauthorizedSigning(notifierSignature, 0, activeMembersIDs)
         })
 
         after(async () => {
@@ -760,7 +771,7 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon
             .connect(notifier)
-            .reportUnauthorizedSigning(notifierSignature, 0)
+            .reportUnauthorizedSigning(notifierSignature, 0, activeMembersIDs)
         ).to.be.revertedWith("Group cannot be terminated")
       })
     })
@@ -772,7 +783,7 @@ describe("RandomBeacon - Relay", () => {
         await expect(
           randomBeacon
             .connect(notifier)
-            .reportUnauthorizedSigning(notifierSignature, 0)
+            .reportUnauthorizedSigning(notifierSignature, 0, activeMembersIDs)
         ).to.be.revertedWith("Invalid signature")
       })
     })
@@ -1000,7 +1011,8 @@ describe("RandomBeacon - Relay", () => {
                               signingMembersIndices
                             ),
                           },
-                          0
+                          0,
+                          activeMembersIDs
                         )
                     })
 
@@ -1030,7 +1042,7 @@ describe("RandomBeacon - Relay", () => {
                         now + params.sortitionPoolRewardsBanDuration
 
                       const expectedIneligibleMembersIDs =
-                        failedMembersIndices.map((i) => membersIDs[i - 1])
+                        failedMembersIndices.map((i) => activeMembersIDs[i - 1])
 
                       await expect(tx)
                         .to.emit(sortitionPool, "IneligibleForRewards")
@@ -1170,7 +1182,8 @@ describe("RandomBeacon - Relay", () => {
                             signatures,
                             signingMembersIndices,
                           },
-                          0
+                          0,
+                          activeMembersIDs
                         )
                       ).to.be.revertedWith("Sender must be claim signer")
                     })
@@ -1200,7 +1213,8 @@ describe("RandomBeacon - Relay", () => {
                         signatures: signatures + invalidSignature.slice(2),
                         signingMembersIndices: [...signingMembersIndices, 33],
                       },
-                      0
+                      0,
+                      activeMembersIDs
                     )
                   ).to.be.revertedWith("Invalid signature")
                 }
@@ -1290,7 +1304,8 @@ describe("RandomBeacon - Relay", () => {
                           // Remove the first signing member index
                           signingMembersIndices: signingMembersIndices.slice(1),
                         },
-                        0
+                        0,
+                        activeMembersIDs
                       )
                     ).to.be.revertedWith("Unexpected signatures count")
                   })
@@ -1318,7 +1333,8 @@ describe("RandomBeacon - Relay", () => {
                         signatures,
                         signingMembersIndices,
                       },
-                      0
+                      0,
+                      activeMembersIDs
                     )
                   ).to.be.revertedWith("Corrupted members indices")
                 })
@@ -1347,7 +1363,8 @@ describe("RandomBeacon - Relay", () => {
                           signatures,
                           signingMembersIndices,
                         },
-                        0
+                        0,
+                        activeMembersIDs
                       )
                     ).to.be.revertedWith("Corrupted members indices")
                   })
@@ -1378,7 +1395,8 @@ describe("RandomBeacon - Relay", () => {
                           signatures,
                           signingMembersIndices,
                         },
-                        0
+                        0,
+                        activeMembersIDs
                       )
                     ).to.be.revertedWith("Corrupted members indices")
                   })
@@ -1400,7 +1418,8 @@ describe("RandomBeacon - Relay", () => {
                       signatures,
                       signingMembersIndices: stubMembersIndices,
                     },
-                    0
+                    0,
+                    activeMembersIDs
                   )
                 ).to.be.revertedWith("No signatures provided")
               })
@@ -1420,7 +1439,8 @@ describe("RandomBeacon - Relay", () => {
                         signatures,
                         signingMembersIndices: stubMembersIndices,
                       },
-                      0
+                      0,
+                      activeMembersIDs
                     )
                   ).to.be.revertedWith("Malformed signatures array")
                 })
@@ -1450,7 +1470,8 @@ describe("RandomBeacon - Relay", () => {
                         signatures: `0x${signatures.slice(132)}`,
                         signingMembersIndices,
                       },
-                      0
+                      0,
+                      activeMembersIDs
                     )
                   ).to.be.revertedWith("Unexpected signatures count")
                 })
@@ -1479,7 +1500,8 @@ describe("RandomBeacon - Relay", () => {
                         signatures,
                         signingMembersIndices,
                       },
-                      0
+                      0,
+                      activeMembersIDs
                     )
                   ).to.be.revertedWith("Too few signatures")
                 })
@@ -1510,7 +1532,8 @@ describe("RandomBeacon - Relay", () => {
                         signingMembersIndices[0],
                       ],
                     },
-                    0
+                    0,
+                    activeMembersIDs
                   )
                 ).to.be.revertedWith("Too many signatures")
               })
@@ -1539,7 +1562,8 @@ describe("RandomBeacon - Relay", () => {
                   signatures,
                   signingMembersIndices,
                 },
-                0
+                0,
+                activeMembersIDs
               )
             ).to.be.revertedWith("Corrupted members indices")
           }
@@ -1634,7 +1658,8 @@ describe("RandomBeacon - Relay", () => {
                 signatures: stubSignatures,
                 signingMembersIndices: stubMembersIndices,
               },
-              0
+              0,
+              activeMembersIDs
             )
           ).to.be.revertedWith("Group must be active and non-terminated")
         })
@@ -1668,7 +1693,8 @@ describe("RandomBeacon - Relay", () => {
                 signatures: stubSignatures,
                 signingMembersIndices: stubMembersIndices,
               },
-              0
+              0,
+              activeMembersIDs
             )
           ).to.be.revertedWith("Group must be active and non-terminated")
         })
@@ -1685,7 +1711,8 @@ describe("RandomBeacon - Relay", () => {
               signatures: stubSignatures,
               signingMembersIndices: stubMembersIndices,
             },
-            1
+            1,
+            activeMembersIDs
           ) // Initial nonce is `0`.
         ).to.be.revertedWith("Invalid nonce")
       })

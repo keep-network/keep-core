@@ -1,6 +1,9 @@
+/* eslint-disable no-await-in-loop */
+
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { BigNumber } from "ethers"
 import blsData from "./data/bls"
 import { constants, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
@@ -10,7 +13,7 @@ import type {
   TestToken,
   CallbackContractStub,
 } from "../typechain"
-import { registerOperators, Operator } from "./utils/operators"
+import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -42,6 +45,9 @@ const fixture = async () => {
 }
 
 describe("RandomBeacon - Callback", () => {
+  const dkgSeed: BigNumber = BigNumber.from(
+    "31415926535897932384626433832795028841971693993751058209749445923078164062862"
+  )
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
   let signers: Operator[]
@@ -50,6 +56,7 @@ describe("RandomBeacon - Callback", () => {
   let testToken: TestToken
   let callbackContract: CallbackContractStub
   let callbackContract1: CallbackContractStub
+  let membersIDs: OperatorID[]
 
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -63,6 +70,7 @@ describe("RandomBeacon - Callback", () => {
     testToken = contracts.testToken as TestToken
     callbackContract = contracts.callbackContractStub as CallbackContractStub
     callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
+    membersIDs = signers.map((member) => member.id)
   })
 
   describe("requestRelayEntry", () => {
@@ -93,7 +101,7 @@ describe("RandomBeacon - Callback", () => {
         await restoreSnapshot()
       })
 
-      it("should be reset to zero callback address", async () => {
+      it("should reset to zero callback address", async () => {
         await createSnapshot()
 
         await randomBeacon
@@ -102,7 +110,7 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(blsData.groupSignature)
+          .submitRelayEntry(blsData.groupSignature, membersIDs)
 
         await approveTestToken()
 
@@ -123,7 +131,7 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(blsData.groupSignature)
+          .submitRelayEntry(blsData.groupSignature, membersIDs)
 
         await approveTestToken()
 
@@ -163,7 +171,7 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(blsData.groupSignature)
+            .submitRelayEntry(blsData.groupSignature, membersIDs)
 
           const lastEntry = await callbackContract.lastEntry()
           await expect(lastEntry).to.equal(blsData.groupSignatureUint256)
@@ -193,7 +201,7 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(blsData.groupSignature)
+            .submitRelayEntry(blsData.groupSignature, membersIDs)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
@@ -213,7 +221,7 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(blsData.groupSignature)
+            .submitRelayEntry(blsData.groupSignature, membersIDs)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")

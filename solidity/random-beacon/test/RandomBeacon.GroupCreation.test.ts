@@ -28,7 +28,7 @@ import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
-const { keccak256 } = ethers.utils
+const { keccak256, defaultAbiCoder } = ethers.utils
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const fixture = async () => {
@@ -759,7 +759,9 @@ describe("RandomBeacon - Group Creation", () => {
                   dkgResult.misbehavedMembersIndices,
                   dkgResult.signatures,
                   dkgResult.signingMembersIndices,
-                  dkgResult.members
+                  keccak256(
+                    defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
+                  )
                 )
             })
 
@@ -775,7 +777,11 @@ describe("RandomBeacon - Group Creation", () => {
 
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
-              expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+              expect(storedGroup.activeMembersHash).to.be.equal(
+                keccak256(
+                  defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
+                )
+              )
             })
           })
 
@@ -801,7 +807,11 @@ describe("RandomBeacon - Group Creation", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+            expect(storedGroup.activeMembersHash).to.be.equal(
+              keccak256(
+                defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
+              )
+            )
 
             await restoreSnapshot()
           })
@@ -1076,7 +1086,11 @@ describe("RandomBeacon - Group Creation", () => {
 
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
-              expect(storedGroup.members).to.be.deep.equal(dkgResult.members)
+              expect(storedGroup.activeMembersHash).to.be.equal(
+                keccak256(
+                  defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
+                )
+              )
 
               await restoreSnapshot()
             })
@@ -1286,7 +1300,9 @@ describe("RandomBeacon - Group Creation", () => {
                   dkgResult.misbehavedMembersIndices,
                   dkgResult.signatures,
                   dkgResult.signingMembersIndices,
-                  dkgResult.members
+                  keccak256(
+                    defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
+                  )
                 )
             })
           })
@@ -1359,7 +1375,7 @@ describe("RandomBeacon - Group Creation", () => {
             dkgResult.misbehavedMembersIndices,
             dkgResult.signatures,
             dkgResult.signingMembersIndices,
-            dkgResult.members
+            keccak256(defaultAbiCoder.encode(["uint32[]"], [dkgResult.members]))
           )
 
         await restoreSnapshot()
@@ -1388,6 +1404,7 @@ describe("RandomBeacon - Group Creation", () => {
     const stubDkgResult: DkgResult = {
       groupPubKey: blsData.groupPubKey,
       members: [1, 2, 3, 4],
+      activeMembers: [1, 2, 3, 4],
       misbehavedMembersIndices: [],
       signatures: "0x01020304",
       signingMembersIndices: [1, 2, 3, 4],
@@ -1536,7 +1553,11 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgResultApproved event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultApproved")
-                  .withArgs(dkgResultHash, await submitter.getAddress())
+                  .withArgs(
+                    dkgResultHash,
+                    await submitter.getAddress(),
+                    dkgResult.members
+                  )
               })
 
               it("should clean dkg data", async () => {
@@ -1767,7 +1788,11 @@ describe("RandomBeacon - Group Creation", () => {
             it("should emit DkgResultApproved event", async () => {
               await expect(tx)
                 .to.emit(randomBeacon, "DkgResultApproved")
-                .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
+                .withArgs(
+                  dkgResultHash,
+                  await anotherSubmitter.getAddress(),
+                  dkgResult.members
+                )
             })
 
             it("should activate a candidate group", async () => {
@@ -2102,6 +2127,7 @@ describe("RandomBeacon - Group Creation", () => {
     const stubDkgResult: DkgResult = {
       groupPubKey: blsData.groupPubKey,
       members: [1, 2, 3, 4],
+      activeMembers: [1, 2, 3, 4],
       misbehavedMembersIndices: [],
       signatures: "0x01020304",
       signingMembersIndices: [1, 2, 3, 4],

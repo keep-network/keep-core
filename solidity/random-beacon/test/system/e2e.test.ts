@@ -141,7 +141,10 @@ describe("System -- e2e", () => {
 
         const txSubmitRelayEntry = await randomBeacon
           .connect(genesisDkgResult.submitter)
-          .submitRelayEntry(blsData.groupSignatures[i - 1])
+          .submitRelayEntry(
+            blsData.groupSignatures[i - 1],
+            genesisDkgResult.activeMembers
+          )
 
         // every 5th relay request triggers a new dkg
         if (i % groupCreationFrequency === 0) {

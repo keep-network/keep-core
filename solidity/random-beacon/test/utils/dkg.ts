@@ -17,6 +17,7 @@ export interface DkgResult {
   signatures: string
   signingMembersIndices: number[]
   members: number[]
+  activeMembers: number[]
 }
 
 export const noMisbehaved = []
@@ -54,6 +55,7 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   members: number[]
+  activeMembers: number[]
   submitter: SignerWithAddress
 }> {
   if (!submitterIndex) {
@@ -96,9 +98,10 @@ export async function signAndSubmitArbitraryDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   members: number[]
+  activeMembers: number[]
   submitter: SignerWithAddress
 }> {
-  const { members, signingMembersIndices, signaturesBytes } =
+  const { members, activeMembers, signingMembersIndices, signaturesBytes } =
     await signDkgResult(
       signers,
       groupPublicKey,
@@ -119,12 +122,13 @@ export async function signAndSubmitArbitraryDkgResult(
     signatures: signaturesBytes,
     signingMembersIndices,
     members,
+    activeMembers,
   }
 
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members)",
+        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members, uint32[] activeMembers)",
       ],
       [dkgResult]
     )
@@ -136,7 +140,14 @@ export async function signAndSubmitArbitraryDkgResult(
     .connect(submitter)
     .submitDkgResult(dkgResult)
 
-  return { transaction, dkgResult, dkgResultHash, members, submitter }
+  return {
+    transaction,
+    dkgResult,
+    dkgResultHash,
+    members,
+    activeMembers,
+    submitter,
+  }
 }
 
 // Signs and submits a DKG result containing signatures with random bytes.
@@ -157,7 +168,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
   members: number[]
   submitter: SignerWithAddress
 }> {
-  const { members, signingMembersIndices } = await signDkgResult(
+  const { members, activeMembers, signingMembersIndices } = await signDkgResult(
     signers,
     groupPublicKey,
     misbehavedIndices,
@@ -182,12 +193,13 @@ export async function signAndSubmitUnrecoverableDkgResult(
     signatures: unrecoverableSignatures,
     signingMembersIndices,
     members,
+    activeMembers,
   }
 
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members)",
+        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members, uint32[] activeMembers)",
       ],
       [dkgResult]
     )
@@ -210,6 +222,7 @@ export async function signDkgResult(
   numberOfSignatures: number
 ): Promise<{
   members: number[]
+  activeMembers: number[]
   signingMembersIndices: number[]
   signaturesBytes: string
 }> {
@@ -219,11 +232,23 @@ export async function signDkgResult(
   )
 
   const members: number[] = []
+  const activeMembers: number[] = []
   const signingMembersIndices: number[] = []
   const signatures: string[] = []
   for (let i = 0; i < signers.length; i++) {
     const { id, address } = signers[i]
     members.push(id)
+
+    let isActiveId = true
+    for (let j = 0; j < misbehavedMembersIndices.length; j++) {
+      if (misbehavedMembersIndices[j] === id) {
+        isActiveId = false // id is a misbehaved id
+        break
+      }
+    }
+    if (isActiveId) {
+      activeMembers.push(id)
+    }
 
     if (signatures.length === numberOfSignatures) {
       // eslint-disable-next-line no-continue
@@ -244,5 +269,5 @@ export async function signDkgResult(
 
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
-  return { members, signingMembersIndices, signaturesBytes }
+  return { members, activeMembers, signingMembersIndices, signaturesBytes }
 }

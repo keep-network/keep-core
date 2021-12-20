@@ -2,7 +2,6 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { noMisbehaved } from "./utils/dkg"
 import type { GroupsStub } from "../typechain"
 
 const fixture = async () => {
@@ -150,11 +149,7 @@ describe("Groups", () => {
         const currentBlock = await ethers.provider.getBlock("latest")
         await mineBlocksTo(currentBlock.number + groupLifetime)
 
-        await groups.addCandidateGroup(
-          ethers.utils.hexlify(6),
-          members,
-          noMisbehaved
-        )
+        await groups.addCandidateGroup(ethers.utils.hexlify(6), members)
         await groups.activateCandidateGroup()
 
         const selected = await groups.callStatic.selectGroup(0)
@@ -290,11 +285,7 @@ describe("Groups", () => {
 
   async function addGroups(firstGroup, numberOfGroups) {
     for (let i = firstGroup; i < firstGroup + numberOfGroups; i++) {
-      await groups.addCandidateGroup(
-        ethers.utils.hexlify(i),
-        members,
-        noMisbehaved
-      )
+      await groups.addCandidateGroup(ethers.utils.hexlify(i), members)
       await groups.activateCandidateGroup()
     }
   }
