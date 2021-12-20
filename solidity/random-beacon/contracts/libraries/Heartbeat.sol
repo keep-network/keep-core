@@ -69,12 +69,10 @@ library Heartbeat {
         uint256 nonce,
         uint32[] calldata members
     ) external view returns (uint32[] memory failedMembers) {
-        uint256 groupSize = members.length;
-
         // Validate failed members indices. Maximum indices count is equal to
         // the group size and is not limited deliberately to leave a theoretical
         // possibility to accuse more members than `groupSize - groupThreshold`.
-        validateMembersIndices(claim.failedMembersIndices, groupSize);
+        validateMembersIndices(claim.failedMembersIndices, members.length);
 
         // Validate signatures array is properly formed and number of
         // signatures and signers is correct.
@@ -89,12 +87,12 @@ library Heartbeat {
             "Unexpected signatures count"
         );
         require(signaturesCount >= groupThreshold, "Too few signatures");
-        require(signaturesCount <= groupSize, "Too many signatures");
+        require(signaturesCount <= members.length, "Too many signatures");
 
         // Validate signing members indices. Note that `signingMembersIndices`
         // were already partially validated during `signatures` parameter
         // validation.
-        validateMembersIndices(claim.signingMembersIndices, groupSize);
+        validateMembersIndices(claim.signingMembersIndices, members.length);
 
         // Each signing member needs to sign the hash of packed `groupPubKey`
         // and `failedMembersIndices` parameters. Usage of group public key
@@ -108,9 +106,11 @@ library Heartbeat {
             )
         ).toEthSignedMessageHash();
 
+        address[] memory groupMembers = sortitionPool.getIDOperators(members);
+
         // Verify each signature.
         bytes memory checkedSignature;
-        bool senderSignatureExists = false;
+        bool senderSignatureExists;
         for (uint256 i = 0; i < signaturesCount; i++) {
             uint256 memberIndex = claim.signingMembersIndices[i];
             checkedSignature = claim.signatures.slice(
@@ -122,8 +122,7 @@ library Heartbeat {
             );
 
             require(
-                sortitionPool.getIDOperators(members)[memberIndex - 1] ==
-                    recoveredAddress,
+                groupMembers[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
 
