@@ -421,6 +421,17 @@ describe("RandomBeacon - Relay", () => {
             ).to.be.revertedWith("Invalid entry")
           })
         })
+
+        context("when active members are not valid", () => {
+          it("should revert", async () => {
+            const invalidMembersId = [0, 1, 42]
+            await expect(
+              randomBeacon
+                .connect(submitter)
+                .submitRelayEntry(blsData.nextGroupSignature, invalidMembersId)
+            ).to.be.revertedWith("Invalid active members")
+          })
+        })
       })
 
       context("when relay entry is timed out", () => {
@@ -685,6 +696,15 @@ describe("RandomBeacon - Relay", () => {
         ).to.be.revertedWith("Relay request did not time out")
       })
     })
+
+    context("when active members are invalid", () => {
+      it("should revert", async () => {
+        const invalidMembersId = [0, 1, 42]
+        await expect(
+          randomBeacon.reportRelayEntryTimeout(invalidMembersId)
+        ).to.be.revertedWith("Invalid active members")
+      })
+    })
   })
 
   describe("reportUnauthorizedSigning", () => {
@@ -785,6 +805,18 @@ describe("RandomBeacon - Relay", () => {
             .connect(notifier)
             .reportUnauthorizedSigning(notifierSignature, 0, activeMembersIDs)
         ).to.be.revertedWith("Invalid signature")
+      })
+    })
+
+    context("when active members are not valid", () => {
+      it("should revert", async () => {
+        const notifierSignature = await bls.sign(notifier.address, 42)
+        const invalidMembersId = [0, 1, 42]
+        await expect(
+          randomBeacon
+            .connect(notifier)
+            .reportUnauthorizedSigning(notifierSignature, 0, invalidMembersId)
+        ).to.be.revertedWith("Invalid active members")
       })
     })
   })
@@ -1715,6 +1747,24 @@ describe("RandomBeacon - Relay", () => {
             activeMembersIDs
           ) // Initial nonce is `0`.
         ).to.be.revertedWith("Invalid nonce")
+      })
+    })
+
+    context("when active members are invalid", () => {
+      it("should revert", async () => {
+        const invalidMembersId = [0, 1, 42]
+        await expect(
+          randomBeacon.notifyFailedHeartbeat(
+            {
+              groupId,
+              failedMembersIndices: stubMembersIndices,
+              signatures: stubSignatures,
+              signingMembersIndices: stubMembersIndices,
+            },
+            0,
+            invalidMembersId
+          )
+        ).to.be.revertedWith("Invalid active members")
       })
     })
   })

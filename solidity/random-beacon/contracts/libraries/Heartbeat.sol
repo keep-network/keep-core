@@ -110,7 +110,7 @@ library Heartbeat {
 
         // Verify each signature.
         bytes memory checkedSignature;
-        bool senderSignatureExists;
+        bool senderSignatureExists = false;
         for (uint256 i = 0; i < signaturesCount; i++) {
             uint256 memberIndex = claim.signingMembersIndices[i];
             checkedSignature = claim.signatures.slice(

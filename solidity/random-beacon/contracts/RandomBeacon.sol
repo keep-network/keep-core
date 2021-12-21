@@ -717,20 +717,27 @@ contract RandomBeacon is Ownable {
 
     /// @notice Creates a new relay entry.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(bytes calldata entry, uint32[] calldata members)
-        external
-    {
+    /// @param activeMembers Active group member ids array.
+    function submitRelayEntry(
+        bytes calldata entry,
+        uint32[] calldata activeMembers
+    ) external {
         uint256 currentRequestId = relay.currentRequestID;
 
         Groups.Group storage group = groups.getGroup(
             relay.currentRequestGroupID
         );
 
+        require(
+            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
+            "Invalid active members"
+        );
+
         uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
             address[] memory groupMembers = sortitionPool.getIDOperators(
-                members
+                activeMembers
             );
 
             try staking.slash(slashingAmount, groupMembers) {
@@ -762,11 +769,20 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Reports a relay entry timeout.
-    function reportRelayEntryTimeout(uint32[] calldata members) external {
+    /// @param activeMembers Active group member ids array.
+    function reportRelayEntryTimeout(uint32[] calldata activeMembers) external {
         uint64 groupId = relay.currentRequestGroupID;
+        Groups.Group memory group = groups.getGroup(groupId);
+
+        require(
+            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
+            "Invalid active members"
+        );
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
-        address[] memory groupMembers = sortitionPool.getIDOperators(members);
+        address[] memory groupMembers = sortitionPool.getIDOperators(
+            activeMembers
+        );
 
         emit RelayEntryTimeoutSlashed(
             relay.currentRequestID,
@@ -810,12 +826,18 @@ contract RandomBeacon is Ownable {
     ///         function reverts.
     /// @param signedMsgSender Signature of the sender's address as a message.
     /// @param groupId Group that is being reported for leaking a private key.
+    /// @param activeMembers Active group member ids array.
     function reportUnauthorizedSigning(
         bytes memory signedMsgSender,
         uint64 groupId,
-        uint32[] calldata members
+        uint32[] calldata activeMembers
     ) external {
         Groups.Group memory group = groups.getGroup(groupId);
+
+        require(
+            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
+            "Invalid active members"
+        );
 
         require(!group.terminated, "Group cannot be terminated");
 
@@ -830,7 +852,9 @@ contract RandomBeacon is Ownable {
 
         groups.terminateGroup(groupId);
 
-        address[] memory groupMembers = sortitionPool.getIDOperators(members);
+        address[] memory groupMembers = sortitionPool.getIDOperators(
+            activeMembers
+        );
 
         emit UnauthorizedSigningSlashed(
             groupId,
@@ -861,10 +885,11 @@ contract RandomBeacon is Ownable {
     /// @param claim Failure claim.
     /// @param nonce Current failed heartbeat nonce for given group. Must
     ///        be the same as the stored one.
+    /// @param activeMembers Active group member ids array.
     function notifyFailedHeartbeat(
         Heartbeat.FailureClaim calldata claim,
         uint256 nonce,
-        uint32[] calldata members
+        uint32[] calldata activeMembers
     ) external {
         uint64 groupId = claim.groupId;
 
@@ -877,12 +902,17 @@ contract RandomBeacon is Ownable {
 
         Groups.Group storage group = groups.getGroup(groupId);
 
+        require(
+            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
+            "Invalid active members"
+        );
+
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
             sortitionPool,
             claim,
             group,
             nonce,
-            members
+            activeMembers
         );
 
         failedHeartbeatNonce[groupId]++;
