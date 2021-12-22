@@ -12,6 +12,7 @@ import {
 } from "../connectors"
 import { MODAL_TYPES, WALLETS } from "../constants/constants"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
+import { messageType, useShowMessage } from "./Message"
 
 const WALLETS_OPTIONS = [
   {
@@ -85,12 +86,23 @@ const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 const Wallet = ({ label, icon: IconComponent, connector, modalType }) => {
   const { openModal } = useModal()
   const { connectAppWithWallet } = useWeb3Context()
+  const showMessage = useShowMessage()
 
   const openWalletModal = () => {
-    openModal(modalType, {
-      connector,
-      connectAppWithWallet,
-    })
+    if (label === "MetaMask" && window.ethereum?.isTally) {
+      showMessage({
+        messageType: messageType.ERROR,
+        messageProps: {
+          content: `Please uncheck "Use Tally as default wallet" option in Tally wallet to connect to MetaMask`,
+          sticky: true,
+        },
+      })
+    } else {
+      openModal(modalType, {
+        connector,
+        connectAppWithWallet,
+      })
+    }
   }
 
   return (
