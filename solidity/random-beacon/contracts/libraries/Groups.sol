@@ -359,25 +359,31 @@ library Groups {
         uint32[] calldata members,
         uint8[] calldata misbehavedMembersIndices
     ) private {
-        // members that generated a group signing key
-        uint32[] memory groupMembers = new uint32[](
-            members.length - misbehavedMembersIndices.length
-        );
-
-        uint256 k = 0; // misbehaved members counter
-        uint256 j = 0; // group members counter
-        // group member indices start from 1, so we need to -1 on misbehaved
-        uint8 misbehavedMemberArrayPosition = misbehavedMembersIndices[k] - 1;
-        for (uint256 i = 0; i < members.length; i++) {
-            if (i != misbehavedMemberArrayPosition) {
-                groupMembers[j] = members[i];
-                j++;
-            } else {
-                k++;
-                misbehavedMemberArrayPosition = misbehavedMembersIndices[k] - 1;
+        if (misbehavedMembersIndices.length > 0) {
+            // members that generated a group signing key
+            uint32[] memory groupMembers = new uint32[](
+                members.length - misbehavedMembersIndices.length
+            );
+            uint256 k = 0; // misbehaved members counter
+            uint256 j = 0; // group members counter
+            // group member indices start from 1, so we need to -1 on misbehaved
+            uint8 misbehavedMemberArrayPosition = misbehavedMembersIndices[k] -
+                1;
+            for (uint256 i = 0; i < members.length; i++) {
+                if (i != misbehavedMemberArrayPosition) {
+                    groupMembers[j] = members[i];
+                    j++;
+                } else if (k < misbehavedMembersIndices.length - 1) {
+                    k++;
+                    misbehavedMemberArrayPosition =
+                        misbehavedMembersIndices[k] -
+                        1;
+                }
             }
-        }
 
-        group.membersHash = keccak256(abi.encode(groupMembers));
+            group.membersHash = keccak256(abi.encode(groupMembers));
+        } else {
+            group.membersHash = keccak256(abi.encode(members));
+        }
     }
 }
