@@ -83,7 +83,6 @@ contract DKGValidator {
             return (false, "Invalid group members");
         }
 
-
         return (true, "");
     }
 
@@ -218,7 +217,7 @@ contract DKGValidator {
             signingMemberIds[i] = result.members[signingMembersIndices[i] - 1];
         }
 
-        address[] memory signingMemberAddresses = sortitionPool.getIDOperators(
+        address[] memory selectedOperators = sortitionPool.getIDOperators(
             signingMemberIds
         );
 
@@ -232,7 +231,7 @@ contract DKGValidator {
             );
             address recoveredAddress = hash.recover(current);
 
-            if (signingMemberAddresses[i] != recoveredAddress) {
+            if (selectedOperators[i] != recoveredAddress) {
                 return false;
             }
         }

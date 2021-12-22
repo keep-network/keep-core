@@ -360,7 +360,9 @@ library Groups {
         uint8[] calldata misbehavedMembersIndices
     ) private {
         // members that generated a group signing key
-        uint32[] memory groupMembers = new uint32[](members.length - misbehavedMembersIndices.length);
+        uint32[] memory groupMembers = new uint32[](
+            members.length - misbehavedMembersIndices.length
+        );
 
         uint256 k = 0; // misbehaved members counter
         uint256 j = 0; // group members counter

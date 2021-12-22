@@ -578,7 +578,8 @@ contract RandomBeacon is Ownable {
 
         groups.addCandidateGroup(
             dkgResult.groupPubKey,
-            dkgResult.activeMembers
+            dkgResult.members,
+            dkgResult.misbehavedMembersIndices
         );
     }
 
@@ -717,10 +718,10 @@ contract RandomBeacon is Ownable {
 
     /// @notice Creates a new relay entry.
     /// @param entry Group BLS signature over the previous entry.
-    /// @param activeMembers Active group member ids array.
+    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
     function submitRelayEntry(
         bytes calldata entry,
-        uint32[] calldata activeMembers
+        uint32[] calldata groupMembers
     ) external {
         uint256 currentRequestId = relay.currentRequestID;
 
@@ -729,23 +730,23 @@ contract RandomBeacon is Ownable {
         );
 
         require(
-            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
-            "Invalid active members"
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
         );
 
         uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
-            address[] memory groupMembers = sortitionPool.getIDOperators(
-                activeMembers
+            address[] memory activeOperators = sortitionPool.getIDOperators(
+                groupMembers
             );
 
-            try staking.slash(slashingAmount, groupMembers) {
+            try staking.slash(slashingAmount, activeOperators) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembers
+                    activeOperators
                 );
             } catch {
                 // Should never happen but we want to ensure a non-critical path
@@ -754,7 +755,7 @@ contract RandomBeacon is Ownable {
                 emit RelayEntryDelaySlashingFailed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembers
+                    activeOperators
                 );
             }
         }
@@ -769,32 +770,32 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Reports a relay entry timeout.
-    /// @param activeMembers Active group member ids array.
-    function reportRelayEntryTimeout(uint32[] calldata activeMembers) external {
+    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
+    function reportRelayEntryTimeout(uint32[] calldata groupMembers) external {
         uint64 groupId = relay.currentRequestGroupID;
-        Groups.Group memory group = groups.getGroup(groupId);
+        Groups.Group storage group = groups.getGroup(groupId);
 
         require(
-            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
-            "Invalid active members"
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
         );
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            activeMembers
+        address[] memory activeOperators = sortitionPool.getIDOperators(
+            groupMembers
         );
 
         emit RelayEntryTimeoutSlashed(
             relay.currentRequestID,
             slashingAmount,
-            groupMembers
+            activeOperators
         );
 
         staking.seize(
             slashingAmount,
             relayEntryTimeoutNotificationRewardMultiplier,
             msg.sender,
-            groupMembers
+            activeOperators
         );
 
         groups.terminateGroup(groupId);
@@ -826,17 +827,17 @@ contract RandomBeacon is Ownable {
     ///         function reverts.
     /// @param signedMsgSender Signature of the sender's address as a message.
     /// @param groupId Group that is being reported for leaking a private key.
-    /// @param activeMembers Active group member ids array.
+    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
     function reportUnauthorizedSigning(
         bytes memory signedMsgSender,
         uint64 groupId,
-        uint32[] calldata activeMembers
+        uint32[] calldata groupMembers
     ) external {
         Groups.Group memory group = groups.getGroup(groupId);
 
         require(
-            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
-            "Invalid active members"
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
         );
 
         require(!group.terminated, "Group cannot be terminated");
@@ -852,21 +853,21 @@ contract RandomBeacon is Ownable {
 
         groups.terminateGroup(groupId);
 
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            activeMembers
+        address[] memory activeOperators = sortitionPool.getIDOperators(
+            groupMembers
         );
 
         emit UnauthorizedSigningSlashed(
             groupId,
             unauthorizedSigningSlashingAmount,
-            groupMembers
+            activeOperators
         );
 
         staking.seize(
             unauthorizedSigningSlashingAmount,
             unauthorizedSigningNotificationRewardMultiplier,
             msg.sender,
-            groupMembers
+            activeOperators
         );
     }
 
@@ -885,11 +886,11 @@ contract RandomBeacon is Ownable {
     /// @param claim Failure claim.
     /// @param nonce Current failed heartbeat nonce for given group. Must
     ///        be the same as the stored one.
-    /// @param activeMembers Active group member ids array.
+    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
     function notifyFailedHeartbeat(
         Heartbeat.FailureClaim calldata claim,
         uint256 nonce,
-        uint32[] calldata activeMembers
+        uint32[] calldata groupMembers
     ) external {
         uint64 groupId = claim.groupId;
 
@@ -903,8 +904,8 @@ contract RandomBeacon is Ownable {
         Groups.Group storage group = groups.getGroup(groupId);
 
         require(
-            group.activeMembersHash == keccak256(abi.encode(activeMembers)),
-            "Invalid active members"
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
         );
 
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
@@ -912,7 +913,7 @@ contract RandomBeacon is Ownable {
             claim,
             group,
             nonce,
-            activeMembers
+            groupMembers
         );
 
         failedHeartbeatNonce[groupId]++;

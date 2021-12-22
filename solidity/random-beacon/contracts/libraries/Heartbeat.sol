@@ -61,6 +61,7 @@ library Heartbeat {
     /// @param claim Failure claim.
     /// @param group Group raising the claim.
     /// @param nonce Current nonce for group used in the claim.
+    /// @param members Group member ids that participated in dkg (excluding IA/DQ).
     /// @return failedMembers Identifiers of members who failed the heartbeat.
     function verifyFailureClaim(
         SortitionPool sortitionPool,
@@ -106,7 +107,9 @@ library Heartbeat {
             )
         ).toEthSignedMessageHash();
 
-        address[] memory groupMembers = sortitionPool.getIDOperators(members);
+        address[] memory selectedOperators = sortitionPool.getIDOperators(
+            members
+        );
 
         // Verify each signature.
         bytes memory checkedSignature;
@@ -122,7 +125,7 @@ library Heartbeat {
             );
 
             require(
-                groupMembers[memberIndex - 1] == recoveredAddress,
+                selectedOperators[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
 
