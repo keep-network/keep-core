@@ -22,8 +22,8 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationBlockNumber;
-        // Hash of active group members identifiers array (excluding IA/DQ members).
-        bytes32 activeMembersHash;
+        // Hash of group members identifiers array (excluding IA/DQ members).
+        bytes32 membersHash;
         // When selected group does not create a relay entry on-time it should
         // be marked as terminated.
         bool terminated;
@@ -59,12 +59,17 @@ library Groups {
     ///      The code calling this function should ensure that the number of
     ///      candidate (not activated) groups is never more than one.
     /// @param groupPubKey Generated candidate group public key
-    /// @param activeMembers Addresses of active candidate group members as outputted
-    ///        by the group selection protocol.
+    /// @param members Addresses of candidate group members as outputted by the
+    ///        group selection protocol.
+    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
+    ///        inactive) group members indices; Indices reflect positions of
+    ///        members in the group, as outputted by the group selection
+    ///        protocol.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
-        uint32[] calldata activeMembers
+        uint32[] calldata members,
+        uint8[] calldata misbehavedMembersIndices
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
@@ -83,7 +88,8 @@ library Groups {
         // candidate group was already registered before and popped.
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
-        group.activeMembersHash = keccak256(abi.encode(activeMembers));
+
+        setGroupMembersHash(group, members, misbehavedMembersIndices);
 
         self.groupsRegistry.push(groupPubKeyHash);
 
@@ -336,5 +342,40 @@ library Groups {
         }
 
         return shiftedIndex;
+    }
+
+    /// @notice Sets a hash of group members that participated in a group signing
+    ///         key generation. This function filters out IA/DQ members before
+    ///         hashing.
+    /// @param group The group storage.
+    /// @param members Group member addresses as outputted by the group selection
+    ///        protocol.
+    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
+    ///        inactive) group members. Indices reflect positions
+    ///        of members in the group as outputted by the group selection
+    ///        protocol. Indices must be in ascending order.
+    function setGroupMembersHash(
+        Group storage group,
+        uint32[] calldata members,
+        uint8[] calldata misbehavedMembersIndices
+    ) private {
+        // members that generated a group signing key
+        uint32[] memory groupMembers = new uint32[](members.length - misbehavedMembersIndices.length);
+
+        uint256 k = 0; // misbehaved members counter
+        uint256 j = 0; // group members counter
+        // group member indices start from 1, so we need to -1 on misbehaved
+        uint8 misbehavedMemberArrayPosition = misbehavedMembersIndices[k] - 1;
+        for (uint256 i = 0; i < members.length; i++) {
+            if (i != misbehavedMemberArrayPosition) {
+                groupMembers[j] = members[i];
+                j++;
+            } else {
+                k++;
+                misbehavedMemberArrayPosition = misbehavedMembersIndices[k] - 1;
+            }
+        }
+
+        group.membersHash = keccak256(abi.encode(groupMembers));
     }
 }
