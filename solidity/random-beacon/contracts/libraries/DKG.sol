@@ -82,9 +82,6 @@ library DKG {
         // Identifiers of candidate group members as outputted by the group
         // selection protocol.
         uint32[] members;
-        // Identifiers of candidate group members as outputted by the group
-        // selection protocol excluding IA/DQ members
-        uint32[] activeMembers;
     }
 
     /// @notice States for phases of group creation. The states doesn't include
