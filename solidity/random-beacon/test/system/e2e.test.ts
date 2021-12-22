@@ -125,7 +125,7 @@ describe("System -- e2e", () => {
         genesisTx.blockNumber,
         noMisbehaved
       )
-      activeGroupMembers.push(dkgResult.activeMembers)
+      activeGroupMembers.push(dkgResult.members)
 
       await mineBlocks(params.dkgResultChallengePeriodLength)
 
@@ -174,7 +174,7 @@ describe("System -- e2e", () => {
             txSubmitRelayEntry.blockNumber,
             noMisbehaved
           )
-          activeGroupMembers.push(dkgResult.activeMembers)
+          activeGroupMembers.push(dkgResult.members)
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 

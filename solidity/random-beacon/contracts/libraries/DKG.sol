@@ -380,6 +380,8 @@ library DKG {
             ];
         }
 
+        // TODO: Emit only those members that participated in dkg (exclude IA/DQ)
+        //       Add tests.
         emit DkgResultApproved(
             self.submittedResultHash,
             msg.sender,

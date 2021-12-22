@@ -6,6 +6,7 @@ import type { ContractTransaction } from "ethers"
 import blsData from "./data/bls"
 import { constants } from "./fixtures"
 import type { GroupsStub } from "../typechain"
+import { noMisbehaved } from "./utils/dkg"
 
 const { keccak256, defaultAbiCoder } = ethers.utils
 
@@ -36,7 +37,11 @@ describe("Groups", () => {
 
       context("with no misbehaved members", async () => {
         beforeEach(async () => {
-          tx = await groups.addCandidateGroup(groupPublicKey, members)
+          tx = await groups.addCandidateGroup(
+            groupPublicKey,
+            members,
+            noMisbehaved
+          )
         })
 
         it("should emit CandidateGroupRegistered event", async () => {
@@ -57,23 +62,29 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
+          expect(storedGroup.membersHash).to.be.equal(
+            keccak256(defaultAbiCoder.encode(["uint32[]"], [members]))
+          )
         })
       })
+
+      // TODO: add test context (with misbehaved members)
     })
 
     context("when existing group is already registered", async () => {
       const existingGroupPublicKey = "0x1234567890"
 
-      let activeGroupMembers: number[]
-      let newActiveGroupMembers: number[]
+      let existingGroupMembers: number[]
+      let newGroupMembers: number[]
 
       beforeEach(async () => {
-        activeGroupMembers = members.slice(30)
-        newActiveGroupMembers = members.slice(-30)
+        existingGroupMembers = members.slice(30)
+        newGroupMembers = members.slice(-30)
 
         await groups.addCandidateGroup(
           existingGroupPublicKey,
-          activeGroupMembers
+          existingGroupMembers,
+          noMisbehaved
         )
       })
 
@@ -90,7 +101,8 @@ describe("Groups", () => {
           beforeEach(async () => {
             tx = await groups.addCandidateGroup(
               newGroupPublicKey,
-              newActiveGroupMembers
+              newGroupMembers,
+              noMisbehaved
             )
           })
 
@@ -114,10 +126,8 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.activeMembersHash).to.be.equal(
-              keccak256(
-                defaultAbiCoder.encode(["uint32[]"], [newActiveGroupMembers])
-              )
+            expect(storedGroup.membersHash).to.be.equal(
+              keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
             )
           })
 
@@ -138,7 +148,8 @@ describe("Groups", () => {
           beforeEach(async () => {
             tx = await groups.addCandidateGroup(
               newGroupPublicKey,
-              newActiveGroupMembers
+              newGroupMembers,
+              noMisbehaved
             )
           })
 
@@ -162,10 +173,8 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.activeMembersHash).to.be.equal(
-              keccak256(
-                defaultAbiCoder.encode(["uint32[]"], [newActiveGroupMembers])
-              )
+            expect(storedGroup.membersHash).to.be.equal(
+              keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
             )
           })
 
@@ -180,9 +189,9 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.activeMembersHash).to.be.equal(
+            expect(storedGroup.membersHash).to.be.equal(
               keccak256(
-                defaultAbiCoder.encode(["uint32[]"], [activeGroupMembers])
+                defaultAbiCoder.encode(["uint32[]"], [existingGroupMembers])
               )
             )
           })
@@ -203,7 +212,11 @@ describe("Groups", () => {
 
           it("should revert with 'Group with this public key was already activated' error", async () => {
             await expect(
-              groups.addCandidateGroup(newGroupPublicKey, newActiveGroupMembers)
+              groups.addCandidateGroup(
+                newGroupPublicKey,
+                newGroupMembers,
+                noMisbehaved
+              )
             ).to.be.revertedWith(
               "Group with this public key was already activated"
             )
@@ -218,7 +231,8 @@ describe("Groups", () => {
           beforeEach(async () => {
             tx = await groups.addCandidateGroup(
               newGroupPublicKey,
-              newActiveGroupMembers
+              newGroupMembers,
+              noMisbehaved
             )
           })
 
@@ -242,10 +256,8 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.activeMembersHash).to.be.equal(
-              keccak256(
-                defaultAbiCoder.encode(["uint32[]"], [newActiveGroupMembers])
-              )
+            expect(storedGroup.membersHash).to.be.equal(
+              keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
             )
           })
 
@@ -262,6 +274,11 @@ describe("Groups", () => {
             expect(storedGroup.activationBlockNumber).to.be.equal(
               existingGroup.activationBlockNumber
             )
+            expect(storedGroup.membersHash).to.be.equal(
+              keccak256(
+                defaultAbiCoder.encode(["uint32[]"], [existingGroupMembers])
+              )
+            )
           })
         })
       })
@@ -270,16 +287,17 @@ describe("Groups", () => {
     context("when existing group was popped", async () => {
       const existingGroupPublicKey = "0x1234567890"
 
-      let activeGroupMembers: number[]
-      let newActiveGroupMembers: number[]
+      let existingGroupMembers: number[]
+      let newGroupMembers: number[]
 
       beforeEach(async () => {
-        activeGroupMembers = members.slice(30)
-        newActiveGroupMembers = members.slice(-30)
+        existingGroupMembers = members.slice(30)
+        newGroupMembers = members.slice(-30)
 
         await groups.addCandidateGroup(
           existingGroupPublicKey,
-          activeGroupMembers
+          existingGroupMembers,
+          noMisbehaved
         )
 
         await groups.popCandidateGroup()
@@ -293,7 +311,8 @@ describe("Groups", () => {
         beforeEach(async () => {
           tx = await groups.addCandidateGroup(
             newGroupPublicKey,
-            newActiveGroupMembers
+            newGroupMembers,
+            noMisbehaved
           )
         })
 
@@ -315,10 +334,8 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.activeMembersHash).to.be.equal(
-            keccak256(
-              defaultAbiCoder.encode(["uint32[]"], [newActiveGroupMembers])
-            )
+          expect(storedGroup.membersHash).to.be.equal(
+            keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
           )
         })
       })
@@ -331,7 +348,8 @@ describe("Groups", () => {
         beforeEach(async () => {
           tx = await groups.addCandidateGroup(
             newGroupPublicKey,
-            newActiveGroupMembers
+            newGroupMembers,
+            noMisbehaved
           )
         })
 
@@ -353,10 +371,8 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.activeMembersHash).to.be.equal(
-            keccak256(
-              defaultAbiCoder.encode(["uint32[]"], [newActiveGroupMembers])
-            )
+          expect(storedGroup.membersHash).to.be.equal(
+            keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
           )
         })
 
@@ -365,9 +381,9 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.activeMembersHash).to.be.equal(
+          expect(storedGroup.membersHash).to.be.equal(
             keccak256(
-              defaultAbiCoder.encode(["uint32[]"], [activeGroupMembers])
+              defaultAbiCoder.encode(["uint32[]"], [existingGroupMembers])
             )
           )
         })
@@ -386,7 +402,7 @@ describe("Groups", () => {
 
     context("when one group is registered", async () => {
       beforeEach(async () => {
-        await groups.addCandidateGroup(groupPublicKey, members)
+        await groups.addCandidateGroup(groupPublicKey, members, noMisbehaved)
       })
 
       context("when the group is candidate", async () => {
@@ -443,11 +459,19 @@ describe("Groups", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            await groups.addCandidateGroup(groupPublicKey1, members1)
+            await groups.addCandidateGroup(
+              groupPublicKey1,
+              members1,
+              noMisbehaved
+            )
 
             tx = await groups.activateCandidateGroup()
 
-            await groups.addCandidateGroup(groupPublicKey2, members2)
+            await groups.addCandidateGroup(
+              groupPublicKey2,
+              members2,
+              noMisbehaved
+            )
           })
 
           it("should emit GroupActivated event", async () => {
@@ -480,14 +504,22 @@ describe("Groups", () => {
 
           // TODO: Update as the latest group got activated
           beforeEach(async () => {
-            await groups.addCandidateGroup(groupPublicKey1, members1)
+            await groups.addCandidateGroup(
+              groupPublicKey1,
+              members1,
+              noMisbehaved
+            )
 
             tx1 = await groups.activateCandidateGroup()
             activationBlockNumber1 = (
               await ethers.provider.getBlock(tx1.blockHash)
             ).number
 
-            await groups.addCandidateGroup(groupPublicKey2, members2)
+            await groups.addCandidateGroup(
+              groupPublicKey2,
+              members2,
+              noMisbehaved
+            )
 
             tx2 = await groups.activateCandidateGroup()
           })
@@ -532,11 +564,19 @@ describe("Groups", () => {
             let tx: ContractTransaction
 
             beforeEach(async () => {
-              await groups.addCandidateGroup(groupPublicKey1, members1)
+              await groups.addCandidateGroup(
+                groupPublicKey1,
+                members1,
+                noMisbehaved
+              )
 
               await groups.popCandidateGroup()
 
-              await groups.addCandidateGroup(groupPublicKey2, members2)
+              await groups.addCandidateGroup(
+                groupPublicKey2,
+                members2,
+                noMisbehaved
+              )
 
               tx = await groups.activateCandidateGroup()
             })
@@ -573,7 +613,7 @@ describe("Groups", () => {
 
     context("when one group is registered", async () => {
       beforeEach(async () => {
-        await groups.addCandidateGroup(groupPublicKey, members)
+        await groups.addCandidateGroup(groupPublicKey, members, noMisbehaved)
       })
 
       context("when the group is candidate", async () => {
@@ -598,7 +638,7 @@ describe("Groups", () => {
           const storedGroup = await groups.getGroup(groupPublicKey)
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.activeMembersHash).to.be.equal(
+          expect(storedGroup.membersHash).to.be.equal(
             keccak256(defaultAbiCoder.encode(["uint32[]"], [members]))
           )
         })
@@ -635,13 +675,21 @@ describe("Groups", () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
-            await groups.addCandidateGroup(groupPublicKey1, members1)
+            await groups.addCandidateGroup(
+              groupPublicKey1,
+              members1,
+              noMisbehaved
+            )
             const tx1 = await groups.activateCandidateGroup()
             activationBlockNumber1 = (
               await ethers.provider.getBlock(tx1.blockHash)
             ).number
 
-            await groups.addCandidateGroup(groupPublicKey2, members2)
+            await groups.addCandidateGroup(
+              groupPublicKey2,
+              members2,
+              noMisbehaved
+            )
 
             tx = await groups.popCandidateGroup()
           })
@@ -666,7 +714,7 @@ describe("Groups", () => {
             expect(storedGroup1.activationBlockNumber).to.be.equal(
               activationBlockNumber1
             )
-            expect(storedGroup1.activeMembersHash).to.be.equal(
+            expect(storedGroup1.membersHash).to.be.equal(
               keccak256(defaultAbiCoder.encode(["uint32[]"], [members1]))
             )
 
@@ -674,7 +722,7 @@ describe("Groups", () => {
 
             expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
             expect(storedGroup2.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup2.activeMembersHash).to.be.equal(
+            expect(storedGroup2.membersHash).to.be.equal(
               keccak256(defaultAbiCoder.encode(["uint32[]"], [members2]))
             )
           })

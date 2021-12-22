@@ -85,15 +85,6 @@ describe("DKGValidator", () => {
         _startBlock,
         _numberOfSignatures
       )
-      const activeMembers = _groupMembers.slice()
-
-      for (let i = 0; i < _misbehaved.length; i++) {
-        for (let j = 0; j < activeMembers.length; j++) {
-          if (_misbehaved[i] === activeMembers[j].id) {
-            activeMembers.splice(j, 1)
-          }
-        }
-      }
 
       const dkgResult: DkgResult = {
         submitterMemberIndex: _submitterIndex,
@@ -102,7 +93,6 @@ describe("DKGValidator", () => {
         signatures: signaturesBytes,
         signingMembersIndices,
         members: _groupMembers.map((m) => m.id),
-        activeMembers: activeMembers.map((m) => m.id),
       }
 
       return dkgResult
