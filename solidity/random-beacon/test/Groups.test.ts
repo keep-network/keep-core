@@ -68,7 +68,124 @@ describe("Groups", () => {
         })
       })
 
-      // TODO: add test context (with misbehaved members)
+      context("with misbehaved members", async () => {
+        context("with first member misbehaved", async () => {
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [1]
+
+            await groups.addCandidateGroup(
+              groupPublicKey,
+              members,
+              misbehavedIndices
+            )
+
+            const expectedMembers = [...members]
+            expectedMembers.splice(0, 1)
+
+            expect(
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(
+              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
+            )
+          })
+        })
+
+        context("with last member misbehaved", async () => {
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [constants.groupSize]
+            await groups.addCandidateGroup(
+              groupPublicKey,
+              members,
+              misbehavedIndices
+            )
+            const expectedMembers = [...members]
+            expectedMembers.pop()
+
+            expect(
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(
+              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
+            )
+          })
+        })
+
+        context("with middle member misbehaved", async () => {
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [24]
+            await groups.addCandidateGroup(
+              groupPublicKey,
+              members,
+              misbehavedIndices
+            )
+
+            const expectedMembers = [...members]
+            expectedMembers.splice(23, 1)
+
+            expect(
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(
+              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
+            )
+          })
+        })
+
+        context("with multiple members misbehaved", async () => {
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
+            await groups.addCandidateGroup(
+              groupPublicKey,
+              members,
+              misbehavedIndices
+            )
+            const expectedMembers = [...members]
+            expectedMembers.splice(0, 1) // index -1
+            expectedMembers.splice(14, 1) // index -2 (cause expectedMembers already shrinked)
+            expectedMembers.splice(32, 1) // index -3
+            expectedMembers.splice(constants.groupSize - 4, 1) // index -4
+
+            expect(
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(
+              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
+            )
+          })
+        })
+
+        context("with misbehaved member index 0", async () => {
+          const misbehavedIndices: number[] = [0]
+
+          it("should panic", async () => {
+            await expect(
+              groups.addCandidateGroup(
+                groupPublicKey,
+                members,
+                misbehavedIndices
+              )
+            ).to.be.revertedWith(
+              "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
+            )
+          })
+        })
+
+        context(
+          "with misbehaved member index greater than group size",
+          async () => {
+            const misbehavedIndices: number[] = [constants.groupSize + 1]
+
+            it("should panic", async () => {
+              await expect(
+                groups.addCandidateGroup(
+                  groupPublicKey,
+                  members,
+                  misbehavedIndices
+                )
+              ).to.be.revertedWith(
+                "reverted with panic code 0x32 (Array accessed at an out-of-bounds or negative index)"
+              )
+            })
+          }
+        )
+      })
     })
 
     context("when existing group is already registered", async () => {
