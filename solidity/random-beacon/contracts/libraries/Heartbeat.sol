@@ -56,6 +56,8 @@ library Heartbeat {
     /// @notice Verifies the failure claim according to rules mentioned in
     ///         `FailureClaim` struct documentation. Reverts if verification
     ///         fails.
+    /// @dev Group members hash is validated upstream in
+    ///      RandomBeacon.notifyFailedHeartbeat()
     /// @param sortitionPool Sortition pool used by the application performing
     ///        claim verification.
     /// @param claim Failure claim.
