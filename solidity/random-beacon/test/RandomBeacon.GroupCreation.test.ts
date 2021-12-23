@@ -759,9 +759,7 @@ describe("RandomBeacon - Group Creation", () => {
                   dkgResult.misbehavedMembersIndices,
                   dkgResult.signatures,
                   dkgResult.signingMembersIndices,
-                  keccak256(
-                    defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
-                  )
+                  dkgResult.members
                 )
             })
 
@@ -1300,9 +1298,7 @@ describe("RandomBeacon - Group Creation", () => {
                   dkgResult.misbehavedMembersIndices,
                   dkgResult.signatures,
                   dkgResult.signingMembersIndices,
-                  keccak256(
-                    defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
-                  )
+                  dkgResult.members
                 )
             })
           })
@@ -1375,7 +1371,7 @@ describe("RandomBeacon - Group Creation", () => {
             dkgResult.misbehavedMembersIndices,
             dkgResult.signatures,
             dkgResult.signingMembersIndices,
-            keccak256(defaultAbiCoder.encode(["uint32[]"], [dkgResult.members]))
+            dkgResult.members
           )
 
         await restoreSnapshot()
@@ -1555,7 +1551,9 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     dkgResultHash,
                     await submitter.getAddress(),
-                    dkgResult.members
+                    keccak256(
+                      defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
+                    )
                   )
               })
 
@@ -1790,7 +1788,9 @@ describe("RandomBeacon - Group Creation", () => {
                 .withArgs(
                   dkgResultHash,
                   await anotherSubmitter.getAddress(),
-                  dkgResult.members
+                  keccak256(
+                    defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
+                  )
                 )
             })
 

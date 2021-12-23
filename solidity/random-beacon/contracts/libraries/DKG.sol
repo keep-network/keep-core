@@ -122,7 +122,7 @@ library DKG {
         uint8[] misbehavedMembersIndices,
         bytes signatures,
         uint256[] signingMembersIndices,
-        bytes32 membersHash
+        uint32[] members
     );
 
     event DkgTimedOut();
@@ -130,7 +130,7 @@ library DKG {
     event DkgResultApproved(
         bytes32 indexed resultHash,
         address indexed approver,
-        uint32[] members
+        bytes32 membersHash
     );
 
     event DkgResultChallenged(
@@ -271,6 +271,8 @@ library DKG {
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
 
+        // To recreate the members that took part in dkg, the result.members array
+        // should be filtered from result.misbehavedMembersIndices
         emit DkgResultSubmitted(
             self.submittedResultHash,
             self.seed,
@@ -279,7 +281,7 @@ library DKG {
             result.misbehavedMembersIndices,
             result.signatures,
             result.signingMembersIndices,
-            keccak256(abi.encode(result.members))
+            result.members
         );
     }
 
@@ -380,10 +382,12 @@ library DKG {
             ];
         }
 
+        // Emitted hashed members include misbehaved members.
+        // TODO: should we exclude misbehaved members before submitting?
         emit DkgResultApproved(
             self.submittedResultHash,
             msg.sender,
-            result.members
+            keccak256(abi.encode(result.members))
         );
 
         return misbehavedMembers;
