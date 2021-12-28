@@ -1548,13 +1548,7 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgResultApproved event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "DkgResultApproved")
-                  .withArgs(
-                    dkgResultHash,
-                    await submitter.getAddress(),
-                    keccak256(
-                      defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
-                    )
-                  )
+                  .withArgs(dkgResultHash, await submitter.getAddress())
               })
 
               it("should clean dkg data", async () => {
@@ -1785,13 +1779,7 @@ describe("RandomBeacon - Group Creation", () => {
             it("should emit DkgResultApproved event", async () => {
               await expect(tx)
                 .to.emit(randomBeacon, "DkgResultApproved")
-                .withArgs(
-                  dkgResultHash,
-                  await anotherSubmitter.getAddress(),
-                  keccak256(
-                    defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
-                  )
-                )
+                .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
             })
 
             it("should activate a candidate group", async () => {

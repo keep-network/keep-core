@@ -232,8 +232,7 @@ contract RandomBeacon is Ownable {
 
     event DkgResultApproved(
         bytes32 indexed resultHash,
-        address indexed approver,
-        bytes32 membersHash
+        address indexed approver
     );
 
     event DkgResultChallenged(

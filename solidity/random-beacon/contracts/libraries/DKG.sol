@@ -129,8 +129,7 @@ library DKG {
 
     event DkgResultApproved(
         bytes32 indexed resultHash,
-        address indexed approver,
-        bytes32 membersHash
+        address indexed approver
     );
 
     event DkgResultChallenged(
@@ -382,13 +381,7 @@ library DKG {
             ];
         }
 
-        // Emitted hashed members include misbehaved members.
-        // TODO: should we exclude misbehaved members before submitting?
-        emit DkgResultApproved(
-            self.submittedResultHash,
-            msg.sender,
-            keccak256(abi.encode(result.members))
-        );
+        emit DkgResultApproved(self.submittedResultHash, msg.sender);
 
         return misbehavedMembers;
     }
