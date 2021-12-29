@@ -136,7 +136,7 @@ library Relay {
     }
 
     /// @notice Calculates the slashing amount for all group members.
-    /// @dev Should be used when a soft timeout was hit.
+    /// @dev Must be used when a soft timeout was hit.
     /// @return Amount by which group members should be slashed
     ///         in case the relay entry was submitted after the soft timeout.
     function calculateSlashingAmount(Data storage self)
@@ -147,25 +147,16 @@ library Relay {
             (dkgGroupSize * self.relayEntrySubmissionEligibilityDelay);
 
         uint256 submissionDelay = block.number - softTimeoutBlock;
-        // A slashing factor represented as a fraction multiplied by 1e18
-        // to avoid precision loss. When using this factor during slashing
-        // amount computations, the final result should be divided by
-        // 1e18 to obtain a proper result. The slashing factor is
-        // always in range <0, 1e18>
-        uint256 slashingFactor = (submissionDelay * 1e18) /
-            self.relayEntryHardTimeout;
-        if (slashingFactor > 1e18) {
-            slashingFactor = 1e18;
+        // The slashing amount is a result of a calculated portion of the submission
+        // delay blocks. The max delay can be set up to relayEntryHardTimeout, which
+        // in consequence sets the max slashing amount.
+        if (submissionDelay > self.relayEntryHardTimeout) {
+            submissionDelay = self.relayEntryHardTimeout;
         }
 
-        // TODO: see if the result is the same:
-        // return submissionDelay * self.relayEntrySubmissionFailureSlashingAmount / self.relayEntryHardTimeout;
-
-        // 'slashingFactor' factor was multiplied by 1e18 to avoid a precision loss.
-        // The final result should be divided by 1e18.
         return
-            (slashingFactor * self.relayEntrySubmissionFailureSlashingAmount) /
-            1e18;
+            (submissionDelay * self.relayEntrySubmissionFailureSlashingAmount) /
+            self.relayEntryHardTimeout;
     }
 
     /// @notice Set relayRequestFee parameter.

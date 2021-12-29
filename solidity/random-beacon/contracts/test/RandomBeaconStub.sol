@@ -28,13 +28,11 @@ contract RandomBeaconStub is RandomBeacon {
         external
     {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
-
         Groups.Group memory group;
         group.groupPubKey = groupPubKey;
         group.membersHash = membersHash;
         /* solhint-disable-next-line not-rely-on-time */
         group.activationBlockNumber = block.number;
-
         groups.groupsData[groupPubKeyHash] = group;
         groups.groupsRegistry.push(groupPubKeyHash);
     }

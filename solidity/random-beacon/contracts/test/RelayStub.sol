@@ -12,9 +12,14 @@ contract RelayStub {
     constructor() {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(100);
+        relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
     }
 
     function setCurrentRequestStartBlock() external {
         relay.currentRequestStartBlock = uint64(block.number);
+    }
+
+    function calculateSlashingAmount() external returns (uint256) {
+        return relay.calculateSlashingAmount();
     }
 }

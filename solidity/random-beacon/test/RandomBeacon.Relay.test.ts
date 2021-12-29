@@ -933,88 +933,73 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  // TODO: replace with calculateSlashingAmount()
-  // describe("getSlashingFactor", () => {
-  //   const testGroupSize = 8
+  describe("getSlashingFactor", () => {
+    const testGroupSize = 64
 
-  //   before(async () => {
-  //     await relayStub.setCurrentRequestStartBlock()
-  //   })
+    before(async () => {
+      await relayStub.setCurrentRequestStartBlock()
+    })
 
-  //   beforeEach(async () => {
-  //     await createSnapshot()
-  //   })
+    beforeEach(async () => {
+      await createSnapshot()
+    })
 
-  //   afterEach(async () => {
-  //     await restoreSnapshot()
-  //   })
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
 
-  //   context("when soft timeout has not been exceeded yet", () => {
-  //     it("should return a slashing factor equal to zero", async () => {
-  //       await mineBlocks(
-  //         testGroupSize * params.relayEntrySubmissionEligibilityDelay
-  //       )
+    context("when a soft timeout has been exceeded by one block", () => {
+      it("should return a correct slashing amount", async () => {
+        await mineBlocks(
+          testGroupSize * params.relayEntrySubmissionEligibilityDelay + 1
+        )
 
-  //       expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(0)
-  //     })
-  //   })
+        // We exceeded the soft timeout by `1`
+        // slashing amount: 1 * 1000e18 / 100 = 10e18
+        expect(
+          await relayStub.callStatic.calculateSlashingAmount()
+        ).to.be.equal(BigNumber.from("10000000000000000000"))
+      })
+    })
 
-  //   context("when soft timeout has been exceeded by one block", () => {
-  //     it("should return a correct slashing factor", async () => {
-  //       await mineBlocks(
-  //         testGroupSize * params.relayEntrySubmissionEligibilityDelay + 1
-  //       )
+    context(
+      "when soft timeout has been exceeded by the number of blocks equal to the hard timeout",
+      () => {
+        it("should return a correct slashing amount", async () => {
+          await mineBlocks(
+            testGroupSize * params.relayEntrySubmissionEligibilityDelay +
+              params.relayEntryHardTimeout
+          )
 
-  //       // We are exceeded the soft timeout by `1` block so this is the
-  //       // `submissionDelay` factor. If so we can calculate the slashing factor
-  //       // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-  //       // gives `1 * 1e18 / 100 = 10000000000000000` (1%).
-  //       expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
-  //         BigNumber.from("10000000000000000")
-  //       )
-  //     })
-  //   })
+          // We exceeded the soft timeout by `100`
+          // slashing amount: 100 * 1000e18 / 100 = 1000e18
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
+        })
+      }
+    )
 
-  //   context(
-  //     "when soft timeout has been exceeded by the number of blocks equal to the hard timeout",
-  //     () => {
-  //       it("should return a correct slashing factor", async () => {
-  //         await mineBlocks(
-  //           testGroupSize * params.relayEntrySubmissionEligibilityDelay +
-  //             params.relayEntryHardTimeout
-  //         )
+    context(
+      "when soft timeout has been exceeded by the number of blocks bigger than the hard timeout",
+      () => {
+        it("should return a correct slashing factor", async () => {
+          await mineBlocks(
+            testGroupSize * params.relayEntrySubmissionEligibilityDelay +
+              params.relayEntryHardTimeout +
+              1
+          )
 
-  //         // We are exceeded the soft timeout by `100` blocks so this is the
-  //         // `submissionDelay` factor. If so we can calculate the slashing
-  //         // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-  //         // gives `100 * 1e18 / 100 = 1000000000000000000` (100%).
-  //         expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
-  //           BigNumber.from("1000000000000000000")
-  //         )
-  //       })
-  //     }
-  //   )
-
-  //   context(
-  //     "when soft timeout has been exceeded by the number of blocks bigger than the hard timeout",
-  //     () => {
-  //       it("should return a correct slashing factor", async () => {
-  //         await mineBlocks(
-  //           testGroupSize * params.relayEntrySubmissionEligibilityDelay +
-  //             params.relayEntryHardTimeout +
-  //             1
-  //         )
-
-  //         // We are exceeded the soft timeout by a value bigger than the
-  //         // hard timeout. In that case the maximum value (100%) of the slashing
-  //         // factor should be returned.
-  //         expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
-  //           BigNumber.from("1000000000000000000")
-  //         )
-  //       })
-  //     }
-  //   )
-  // })
+          // We are exceeded the soft timeout by a value bigger than the
+          // hard timeout. In that case the maximum value (100%) of the slashing
+          // amount should be returned.
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
+        })
+      }
+    )
+  })
 
   describe("fundHeartbeatNotifierRewardsPool", () => {
     const amount = to1e18(1000)
