@@ -1,0 +1,9 @@
+{
+  "name": "@keep-network/ecdsa",
+  "version": "2.0.0-dev",
+  "description": "Keep ECDSA Wallet",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 14.0.0"
+  }
+}
