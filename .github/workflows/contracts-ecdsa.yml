@@ -1,0 +1,203 @@
+name: Solidity ECDSA
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - "solidity/ecdsa/**"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment for workflow execution"
+        required: false
+        default: "dev"
+      upstream_builds:
+        description: "Upstream builds"
+        required: false
+      upstream_ref:
+        description: "Git reference to checkout (e.g. branch name)"
+        required: false
+        default: "main"
+
+jobs:
+  contracts-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request'
+
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/ecdsa/**'
+
+  contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/ecdsa
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/ecdsa/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --network-concurrency 1
+
+      - name: Build
+        run: yarn build
+
+      - name: Lint
+        run: yarn lint
+
+  contracts-slither:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/ecdsa
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/ecdsa/yarn.lock
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8.5
+
+      - name: Install Solidity
+        env:
+          SOLC_VERSION: 0.8.6 # according to solidity.version in hardhat.config.js
+        run: |
+          pip3 install solc-select
+          solc-select install $SOLC_VERSION
+          solc-select use $SOLC_VERSION
+
+      - name: Install Slither
+        env:
+          SLITHER_VERSION: 0.8.0
+        run: pip3 install slither-analyzer==$SLITHER_VERSION
+
+      - name: Install dependencies
+        run: yarn install --network-concurrency 1
+
+      - name: Run Slither
+        run: slither .
+
+  contracts-build-and-test:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/ecdsa
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/ecdsa/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --network-concurrency 1
+
+      - name: Build solidity contracts
+        run: yarn build
+
+      - name: Run tests
+        run: yarn test
+
+  contracts-deployment-dry-run:
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/ecdsa
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/ecdsa/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --network-concurrency 1 --frozen-lockfile
+
+      - name: Deploy contracts
+        run: yarn deploy
+
+  contracts-deployment-testnet:
+    needs: [contracts-detect-changes, contracts-build-and-test]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/ecdsa
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/ecdsa/yarn.lock
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: yarn install --network-concurrency 1 --frozen-lockfile
+
+      # TODO: Configure tenderly
+
+      - name: Deploy contracts
+        env:
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME_HTTP }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: yarn deploy --network ${{ github.event.inputs.environment }}
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: solidity/ecdsa
+          environment: ${{ github.event.inputs.environment }}
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
+
+      # TODO: Notify CI about completion of the workflow
