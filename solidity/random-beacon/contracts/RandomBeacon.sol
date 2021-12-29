@@ -26,6 +26,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "hardhat/console.sol";
 
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -716,48 +717,21 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Creates a new relay entry.
+    /// @dev This function can be called only before the soft timeout. This is a
+    ///      happy scenario without slashing.
     /// @param entry Group BLS signature over the previous entry.
-    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
-    function submitRelayEntry(
-        bytes calldata entry,
-        uint32[] calldata groupMembers
-    ) external {
-        uint256 currentRequestId = relay.currentRequestID;
+    function submitRelayEntry(bytes calldata entry) external {
+        require(relay.isRequestInProgress(), "No relay request in progress");
+        require(
+            !relay.hasRequestSoftTimedOut(),
+            "Relay submission passed a soft timeout"
+        );
 
         Groups.Group storage group = groups.getGroup(
             relay.currentRequestGroupID
         );
 
-        require(
-            group.membersHash == keccak256(abi.encode(groupMembers)),
-            "Invalid group members"
-        );
-
-        uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
-
-        if (slashingAmount > 0) {
-            address[] memory activeOperators = sortitionPool.getIDOperators(
-                groupMembers
-            );
-
-            try staking.slash(slashingAmount, activeOperators) {
-                // slither-disable-next-line reentrancy-events
-                emit RelayEntryDelaySlashed(
-                    currentRequestId,
-                    slashingAmount,
-                    activeOperators
-                );
-            } catch {
-                // Should never happen but we want to ensure a non-critical path
-                // failure from an external contract does not stop group members
-                // from submitting a valid relay entry.
-                emit RelayEntryDelaySlashingFailed(
-                    currentRequestId,
-                    slashingAmount,
-                    activeOperators
-                );
-            }
-        }
+        relay.submitEntry(entry, group.groupPubKey);
 
         // If DKG is awaiting a seed, that means the we should start the actual
         // group creation process.
@@ -765,6 +739,63 @@ contract RandomBeacon is Ownable {
             dkg.start(uint256(keccak256(entry)));
         }
 
+        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+    }
+
+    /// @notice Creates a new relay entry.
+    /// @dev It should be called only after a soft timeout. Group members will be
+    ///      slashed. Function reverts if a hard timeout is hit.
+    /// @param entry Group BLS signature over the previous entry.
+    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
+    function submitRelayEntry(
+        bytes calldata entry,
+        uint32[] calldata groupMembers
+    ) external {
+        require(relay.isRequestInProgress(), "No relay request in progress");
+        require(
+            relay.hasRequestSoftTimedOut(),
+            "Relay did not pass a soft timeout"
+        );
+        require(!relay.hasRequestHardTimedOut(), "Relay request timed out");
+
+        Groups.Group storage group = groups.getGroup(
+            relay.currentRequestGroupID
+        );
+        require(
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
+        );
+
+        uint256 slashingAmount = relay.calculateSlashingAmount();
+        uint256 currentRequestId = relay.currentRequestID;
+        relay.submitEntry(entry, group.groupPubKey);
+
+        address[] memory operators = sortitionPool.getIDOperators(groupMembers);
+
+        // Slashing is involved after a soft timeout.
+        try staking.slash(slashingAmount, operators) {
+            // slither-disable-next-line reentrancy-events
+            emit RelayEntryDelaySlashed(
+                currentRequestId,
+                slashingAmount,
+                operators
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop group members
+            // from submitting a valid relay entry.
+            emit RelayEntryDelaySlashingFailed(
+                currentRequestId,
+                slashingAmount,
+                operators
+            );
+        }
+
+        // If DKG is awaiting a seed, that means we should start the actual
+        // group creation process.
+        if (dkg.currentState() == DKG.State.AWAITING_SEED) {
+            dkg.start(uint256(keccak256(entry)));
+        }
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
     }
 
@@ -780,21 +811,19 @@ contract RandomBeacon is Ownable {
         );
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
-        address[] memory activeOperators = sortitionPool.getIDOperators(
-            groupMembers
-        );
+        address[] memory operators = sortitionPool.getIDOperators(groupMembers);
 
         emit RelayEntryTimeoutSlashed(
             relay.currentRequestID,
             slashingAmount,
-            activeOperators
+            operators
         );
 
         staking.seize(
             slashingAmount,
             relayEntryTimeoutNotificationRewardMultiplier,
             msg.sender,
-            activeOperators
+            operators
         );
 
         groups.terminateGroup(groupId);
