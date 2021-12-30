@@ -366,7 +366,7 @@ library Groups {
             );
             uint256 k = 0; // misbehaved members counter
             uint256 j = 0; // group members counter
-            // group member indices start from 1, so we need to -1 on misbehaved
+            // misbehaved member indices start from 1, so we need to -1 on misbehaved
             uint8 misbehavedMemberArrayPosition = misbehavedMembersIndices[k] -
                 1;
             for (uint256 i = 0; i < members.length; i++) {

@@ -736,16 +736,16 @@ contract RandomBeacon is Ownable {
         uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
-            address[] memory activeOperators = sortitionPool.getIDOperators(
+            address[] memory groupMembersIds = sortitionPool.getIDOperators(
                 groupMembers
             );
 
-            try staking.slash(slashingAmount, activeOperators) {
+            try staking.slash(slashingAmount, groupMembersIds) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
                     slashingAmount,
-                    activeOperators
+                    groupMembersIds
                 );
             } catch {
                 // Should never happen but we want to ensure a non-critical path
@@ -754,7 +754,7 @@ contract RandomBeacon is Ownable {
                 emit RelayEntryDelaySlashingFailed(
                     currentRequestId,
                     slashingAmount,
-                    activeOperators
+                    groupMembersIds
                 );
             }
         }
@@ -780,21 +780,21 @@ contract RandomBeacon is Ownable {
         );
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
-        address[] memory activeOperators = sortitionPool.getIDOperators(
+        address[] memory groupMembersIds = sortitionPool.getIDOperators(
             groupMembers
         );
 
         emit RelayEntryTimeoutSlashed(
             relay.currentRequestID,
             slashingAmount,
-            activeOperators
+            groupMembersIds
         );
 
         staking.seize(
             slashingAmount,
             relayEntryTimeoutNotificationRewardMultiplier,
             msg.sender,
-            activeOperators
+            groupMembersIds
         );
 
         groups.terminateGroup(groupId);
@@ -852,21 +852,21 @@ contract RandomBeacon is Ownable {
 
         groups.terminateGroup(groupId);
 
-        address[] memory activeOperators = sortitionPool.getIDOperators(
+        address[] memory groupMembersIds = sortitionPool.getIDOperators(
             groupMembers
         );
 
         emit UnauthorizedSigningSlashed(
             groupId,
             unauthorizedSigningSlashingAmount,
-            activeOperators
+            groupMembersIds
         );
 
         staking.seize(
             unauthorizedSigningSlashingAmount,
             unauthorizedSigningNotificationRewardMultiplier,
             msg.sender,
-            activeOperators
+            groupMembersIds
         );
     }
 
