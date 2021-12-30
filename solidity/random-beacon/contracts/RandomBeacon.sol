@@ -26,7 +26,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "hardhat/console.sol";
 
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -770,15 +769,17 @@ contract RandomBeacon is Ownable {
         uint256 currentRequestId = relay.currentRequestID;
         relay.submitEntry(entry, group.groupPubKey);
 
-        address[] memory groupMembersIds = sortitionPool.getIDOperators(groupMembers);
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
+            groupMembers
+        );
 
         // Slashing is involved after a soft timeout.
-        try staking.slash(slashingAmount, groupMembersIds) {
+        try staking.slash(slashingAmount, groupMembersAddresses) {
             // slither-disable-next-line reentrancy-events
             emit RelayEntryDelaySlashed(
                 currentRequestId,
                 slashingAmount,
-                groupMembersIds
+                groupMembersAddresses
             );
         } catch {
             // Should never happen but we want to ensure a non-critical path
@@ -787,7 +788,7 @@ contract RandomBeacon is Ownable {
             emit RelayEntryDelaySlashingFailed(
                 currentRequestId,
                 slashingAmount,
-                groupMembersIds
+                groupMembersAddresses
             );
         }
 
@@ -811,21 +812,21 @@ contract RandomBeacon is Ownable {
         );
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
-        address[] memory groupMembersIds = sortitionPool.getIDOperators(
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             groupMembers
         );
 
         emit RelayEntryTimeoutSlashed(
             relay.currentRequestID,
             slashingAmount,
-            groupMembersIds
+            groupMembersAddresses
         );
 
         staking.seize(
             slashingAmount,
             relayEntryTimeoutNotificationRewardMultiplier,
             msg.sender,
-            groupMembersIds
+            groupMembersAddresses
         );
 
         groups.terminateGroup(groupId);
@@ -883,21 +884,21 @@ contract RandomBeacon is Ownable {
 
         groups.terminateGroup(groupId);
 
-        address[] memory groupMembersIds = sortitionPool.getIDOperators(
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             groupMembers
         );
 
         emit UnauthorizedSigningSlashed(
             groupId,
             unauthorizedSigningSlashingAmount,
-            groupMembersIds
+            groupMembersAddresses
         );
 
         staking.seize(
             unauthorizedSigningSlashingAmount,
             unauthorizedSigningNotificationRewardMultiplier,
             msg.sender,
-            groupMembersIds
+            groupMembersAddresses
         );
     }
 
