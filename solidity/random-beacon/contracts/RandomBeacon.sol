@@ -720,7 +720,6 @@ contract RandomBeacon is Ownable {
     ///      happy scenario without slashing.
     /// @param entry Group BLS signature over the previous entry.
     function submitRelayEntry(bytes calldata entry) external {
-        require(relay.isRequestInProgress(), "No relay request in progress");
         require(
             !relay.hasRequestSoftTimedOut(),
             "Relay submission passed a soft timeout"
@@ -750,7 +749,6 @@ contract RandomBeacon is Ownable {
         bytes calldata entry,
         uint32[] calldata groupMembers
     ) external {
-        require(relay.isRequestInProgress(), "No relay request in progress");
         require(
             relay.hasRequestSoftTimedOut(),
             "Relay did not pass a soft timeout"
@@ -765,6 +763,7 @@ contract RandomBeacon is Ownable {
             "Invalid group members"
         );
 
+        // Slashing is involved after a soft timeout.
         uint256 slashingAmount = relay.calculateSlashingAmount();
         uint256 currentRequestId = relay.currentRequestID;
         relay.submitEntry(entry, group.groupPubKey);
@@ -773,7 +772,6 @@ contract RandomBeacon is Ownable {
             groupMembers
         );
 
-        // Slashing is involved after a soft timeout.
         try staking.slash(slashingAmount, groupMembersAddresses) {
             // slither-disable-next-line reentrancy-events
             emit RelayEntryDelaySlashed(
