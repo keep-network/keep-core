@@ -23,12 +23,12 @@ import {
   signAndSubmitUnrecoverableDkgResult,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
-import { selectGroup } from "./utils/groups"
+import { selectGroup, hashUint32Array } from "./utils/groups"
 import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
-const { keccak256, defaultAbiCoder } = ethers.utils
+const { keccak256 } = ethers.utils
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const fixture = async () => {
@@ -776,9 +776,7 @@ describe("RandomBeacon - Group Creation", () => {
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.membersHash).to.be.equal(
-                keccak256(
-                  defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
-                )
+                hashUint32Array(dkgResult.members)
               )
             })
           })
@@ -806,9 +804,7 @@ describe("RandomBeacon - Group Creation", () => {
             expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.membersHash).to.be.equal(
-              keccak256(
-                defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
-              )
+              hashUint32Array(dkgResult.members)
             )
 
             await restoreSnapshot()
@@ -1085,9 +1081,7 @@ describe("RandomBeacon - Group Creation", () => {
               expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
               expect(storedGroup.activationBlockNumber).to.be.equal(0)
               expect(storedGroup.membersHash).to.be.equal(
-                keccak256(
-                  defaultAbiCoder.encode(["uint32[]"], [dkgResult.members])
-                )
+                hashUint32Array(dkgResult.members)
               )
 
               await restoreSnapshot()

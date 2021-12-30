@@ -19,7 +19,7 @@ import {
   randomBeaconDeployment,
   blsDeployment,
 } from "./fixtures"
-import { createGroup, selectGroup } from "./utils/groups"
+import { createGroup, hashUint32Array } from "./utils/groups"
 import { signHeartbeatFailureClaim } from "./utils/heartbeat"
 import type {
   RandomBeacon,
@@ -32,7 +32,6 @@ import type {
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
-const { keccak256, defaultAbiCoder } = ethers.utils
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
@@ -491,7 +490,7 @@ describe("RandomBeacon - Relay", () => {
 
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [membersIDs]))
+              hashUint32Array(membersIDs)
             )
 
             tx = await randomBeacon
@@ -560,7 +559,7 @@ describe("RandomBeacon - Relay", () => {
             // made to ensure it is not selected for signing the original request.
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [membersIDs]))
+              hashUint32Array(membersIDs)
             )
 
             await mineBlocks(
