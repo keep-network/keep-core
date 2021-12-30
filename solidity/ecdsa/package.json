@@ -51,7 +51,8 @@
   },
   "dependencies": {
     "@keep-network/sortition-pools": "^1.2.0-dev.25",
-    "@openzeppelin/contracts": "^4.4.1"
+    "@openzeppelin/contracts": "^4.4.1",
+    "@threshold-network/solidity-contracts": ">0.0.2-dev <0.0.2-ropsten"
   },
   "engines": {
     "node": ">= 14.0.0"
