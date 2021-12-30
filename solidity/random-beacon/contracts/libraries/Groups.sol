@@ -89,7 +89,7 @@ library Groups {
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
 
-        setGroupMembersHash(group, members, misbehavedMembersIndices);
+        group.membersHash = hashGroupMembers(members, misbehavedMembersIndices);
 
         self.groupsRegistry.push(groupPubKeyHash);
 
@@ -344,21 +344,20 @@ library Groups {
         return shiftedIndex;
     }
 
-    /// @notice Sets a hash of group members that participated in a group signing
+    /// @notice Hash group members that actively participated in a group signing
     ///         key generation. This function filters out IA/DQ members before
     ///         hashing.
-    /// @param group The group storage.
     /// @param members Group member addresses as outputted by the group selection
     ///        protocol.
     /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
     ///        inactive) group members. Indices reflect positions
     ///        of members in the group as outputted by the group selection
     ///        protocol. Indices must be in ascending order.
-    function setGroupMembersHash(
-        Group storage group,
+    /// @return Group members hash.
+    function hashGroupMembers(
         uint32[] calldata members,
         uint8[] calldata misbehavedMembersIndices
-    ) private {
+    ) private pure returns (bytes32) {
         if (misbehavedMembersIndices.length > 0) {
             // members that generated a group signing key
             uint32[] memory groupMembers = new uint32[](
@@ -366,24 +365,19 @@ library Groups {
             );
             uint256 k = 0; // misbehaved members counter
             uint256 j = 0; // group members counter
-            // misbehaved member indices start from 1, so we need to -1 on misbehaved
-            uint8 misbehavedMemberArrayPosition = misbehavedMembersIndices[k] -
-                1;
             for (uint256 i = 0; i < members.length; i++) {
-                if (i != misbehavedMemberArrayPosition) {
+                // misbehaved member indices start from 1, so we need to -1 on misbehaved
+                if (i != misbehavedMembersIndices[k] - 1) {
                     groupMembers[j] = members[i];
                     j++;
                 } else if (k < misbehavedMembersIndices.length - 1) {
                     k++;
-                    misbehavedMemberArrayPosition =
-                        misbehavedMembersIndices[k] -
-                        1;
                 }
             }
 
-            group.membersHash = keccak256(abi.encode(groupMembers));
-        } else {
-            group.membersHash = keccak256(abi.encode(members));
+            return keccak256(abi.encode(groupMembers));
         }
+
+        return keccak256(abi.encode(members));
     }
 }
