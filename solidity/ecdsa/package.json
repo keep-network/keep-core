@@ -16,14 +16,14 @@
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'",
     "clean": "hardhat clean",
     "build": "hardhat compile",
-    "test": "hardhat test",
+    "test": "hardhat test --deploy-fixture",
     "deploy": "hardhat deploy --export export.json",
     "prepack": "tsc -p tsconfig.json && hardhat export-artifacts export/artifacts"
   },
   "devDependencies": {
     "@keep-network/hardhat-helpers": "^0.4.1-pre.2",
     "@keep-network/hardhat-local-networks-config": "^0.1.0-pre.4",
-    "@nomiclabs/hardhat-ethers": "^2.0.3",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@tenderly/hardhat-tenderly": "^1.0.13",
     "@thesis-co/eslint-config": "github:thesis/eslint-config",
