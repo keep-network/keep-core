@@ -19,7 +19,7 @@ import {
   randomBeaconDeployment,
   blsDeployment,
 } from "./fixtures"
-import { createGroup, selectGroup } from "./utils/groups"
+import { createGroup, hashUint32Array } from "./utils/groups"
 import { signHeartbeatFailureClaim } from "./utils/heartbeat"
 import type {
   RandomBeacon,
@@ -32,7 +32,6 @@ import type {
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
-const { keccak256, defaultAbiCoder } = ethers.utils
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
@@ -381,7 +380,7 @@ describe("RandomBeacon - Relay", () => {
           })
         })
 
-        context("when entry is not valid", () => {
+        context("when entry is invalid", () => {
           it("should revert", async () => {
             await expect(
               randomBeacon
@@ -529,7 +528,7 @@ describe("RandomBeacon - Relay", () => {
           })
         })
 
-        context("when members are not valid", () => {
+        context("when group members are invalid", () => {
           it("should revert", async () => {
             const invalidMembersId = [0, 1, 42]
             await expect(
@@ -607,7 +606,7 @@ describe("RandomBeacon - Relay", () => {
 
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [membersIDs]))
+              hashUint32Array(membersIDs)
             )
 
             tx = await randomBeacon
@@ -676,7 +675,7 @@ describe("RandomBeacon - Relay", () => {
             // made to ensure it is not selected for signing the original request.
             await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
               "0x01",
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [membersIDs]))
+              hashUint32Array(membersIDs)
             )
 
             await mineBlocks(
@@ -809,7 +808,7 @@ describe("RandomBeacon - Relay", () => {
       })
     })
 
-    context("when active members are invalid", () => {
+    context("when group members are invalid", () => {
       it("should revert", async () => {
         const invalidMembersId = [0, 1, 42]
         await expect(
@@ -908,7 +907,7 @@ describe("RandomBeacon - Relay", () => {
       })
     })
 
-    context("when provided signature is not valid", () => {
+    context("when provided signature is invalid", () => {
       it("should revert", async () => {
         // the valid key is 123 instead of 42
         const notifierSignature = await bls.sign(notifier.address, 42)
@@ -920,7 +919,7 @@ describe("RandomBeacon - Relay", () => {
       })
     })
 
-    context("when active members are not valid", () => {
+    context("when group members are invalid", () => {
       it("should revert", async () => {
         const notifierSignature = await bls.sign(notifier.address, 42)
         const invalidMembersId = [0, 1, 42]
@@ -1848,7 +1847,7 @@ describe("RandomBeacon - Relay", () => {
       })
     })
 
-    context("when active members are invalid", () => {
+    context("when group members are invalid", () => {
       it("should revert", async () => {
         const invalidMembersId = [0, 1, 42]
         await expect(

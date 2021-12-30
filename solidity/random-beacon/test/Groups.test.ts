@@ -7,8 +7,9 @@ import blsData from "./data/bls"
 import { constants } from "./fixtures"
 import type { GroupsStub } from "../typechain"
 import { noMisbehaved } from "./utils/dkg"
+import { hashUint32Array } from "./utils/groups"
 
-const { keccak256, defaultAbiCoder } = ethers.utils
+const { keccak256 } = ethers.utils
 
 const fixture = async () => {
   const GroupsStub = await ethers.getContractFactory("GroupsStub")
@@ -62,9 +63,7 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.membersHash).to.be.equal(
-            keccak256(defaultAbiCoder.encode(["uint32[]"], [members]))
-          )
+          expect(storedGroup.membersHash).to.be.equal(hashUint32Array(members))
         })
       })
 
@@ -84,9 +83,7 @@ describe("Groups", () => {
 
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
-            )
+            ).to.be.equal(hashUint32Array(expectedMembers))
           })
         })
 
@@ -103,9 +100,7 @@ describe("Groups", () => {
 
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
-            )
+            ).to.be.equal(hashUint32Array(expectedMembers))
           })
         })
 
@@ -123,9 +118,7 @@ describe("Groups", () => {
 
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
-            )
+            ).to.be.equal(hashUint32Array(expectedMembers))
           })
         })
 
@@ -145,9 +138,7 @@ describe("Groups", () => {
 
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [expectedMembers]))
-            )
+            ).to.be.equal(hashUint32Array(expectedMembers))
           })
         })
 
@@ -244,7 +235,7 @@ describe("Groups", () => {
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.membersHash).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
+              hashUint32Array(newGroupMembers)
             )
           })
 
@@ -291,7 +282,7 @@ describe("Groups", () => {
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.membersHash).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
+              hashUint32Array(newGroupMembers)
             )
           })
 
@@ -307,9 +298,7 @@ describe("Groups", () => {
             expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.membersHash).to.be.equal(
-              keccak256(
-                defaultAbiCoder.encode(["uint32[]"], [existingGroupMembers])
-              )
+              hashUint32Array(existingGroupMembers)
             )
           })
         })
@@ -374,7 +363,7 @@ describe("Groups", () => {
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
             expect(storedGroup.membersHash).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
+              hashUint32Array(newGroupMembers)
             )
           })
 
@@ -392,9 +381,7 @@ describe("Groups", () => {
               existingGroup.activationBlockNumber
             )
             expect(storedGroup.membersHash).to.be.equal(
-              keccak256(
-                defaultAbiCoder.encode(["uint32[]"], [existingGroupMembers])
-              )
+              hashUint32Array(existingGroupMembers)
             )
           })
         })
@@ -452,7 +439,7 @@ describe("Groups", () => {
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
           expect(storedGroup.membersHash).to.be.equal(
-            keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
+            hashUint32Array(newGroupMembers)
           )
         })
       })
@@ -489,7 +476,7 @@ describe("Groups", () => {
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
           expect(storedGroup.membersHash).to.be.equal(
-            keccak256(defaultAbiCoder.encode(["uint32[]"], [newGroupMembers]))
+            hashUint32Array(newGroupMembers)
           )
         })
 
@@ -499,9 +486,7 @@ describe("Groups", () => {
           expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
           expect(storedGroup.membersHash).to.be.equal(
-            keccak256(
-              defaultAbiCoder.encode(["uint32[]"], [existingGroupMembers])
-            )
+            hashUint32Array(existingGroupMembers)
           )
         })
       })
@@ -755,9 +740,7 @@ describe("Groups", () => {
           const storedGroup = await groups.getGroup(groupPublicKey)
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.membersHash).to.be.equal(
-            keccak256(defaultAbiCoder.encode(["uint32[]"], [members]))
-          )
+          expect(storedGroup.membersHash).to.be.equal(hashUint32Array(members))
         })
       })
 
@@ -832,7 +815,7 @@ describe("Groups", () => {
               activationBlockNumber1
             )
             expect(storedGroup1.membersHash).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [members1]))
+              hashUint32Array(members1)
             )
 
             const storedGroup2 = await groups.getGroup(groupPublicKey2)
@@ -840,7 +823,7 @@ describe("Groups", () => {
             expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
             expect(storedGroup2.activationBlockNumber).to.be.equal(0)
             expect(storedGroup2.membersHash).to.be.equal(
-              keccak256(defaultAbiCoder.encode(["uint32[]"], [members2]))
+              hashUint32Array(members2)
             )
           })
         })

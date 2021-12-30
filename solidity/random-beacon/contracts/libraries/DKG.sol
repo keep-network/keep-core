@@ -270,8 +270,8 @@ library DKG {
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
 
-        // To recreate the members that took part in dkg, the result.members array
-        // should be filtered from result.misbehavedMembersIndices
+        // To recreate the members that actively took part in dkg, the members array
+        // should be filtered out from misbehavedMembersIndices.
         emit DkgResultSubmitted(
             self.submittedResultHash,
             self.seed,

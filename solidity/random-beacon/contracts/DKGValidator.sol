@@ -217,7 +217,7 @@ contract DKGValidator {
             signingMemberIds[i] = result.members[signingMembersIndices[i] - 1];
         }
 
-        address[] memory selectedOperators = sortitionPool.getIDOperators(
+        address[] memory signingMemberAddresses = sortitionPool.getIDOperators(
             signingMemberIds
         );
 
@@ -231,7 +231,7 @@ contract DKGValidator {
             );
             address recoveredAddress = hash.recover(current);
 
-            if (selectedOperators[i] != recoveredAddress) {
+            if (signingMemberAddresses[i] != recoveredAddress) {
                 return false;
             }
         }
