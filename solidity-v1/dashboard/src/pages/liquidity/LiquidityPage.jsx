@@ -5,7 +5,6 @@ import {
   useWeb3Context,
 } from "../../components/WithWeb3Context"
 import PageWrapper from "../../components/PageWrapper"
-import LiquidityRewardCard from "../../components/LiquidityRewardCard"
 import {
   LINK,
   LIQUIDITY_REWARD_PAIRS,
@@ -21,6 +20,10 @@ import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
 import MasonryFlexContainer from "../../components/MasonryFlexContainer"
 import KeepOnlyPoolCard from "../../components/liquidity/KeepOnlyPoolCard"
+import ActiveLiquidityRewardCard from "../../components/ActiveLiquidityRewardCard"
+import { LPTokenBalance } from "../../components/liquidity"
+import InactiveLiquidityRewardCard from "../../components/InactiveLiquidityRewardCard"
+import ExternalPoolLiquidityRewardCard from "../../components/ExternalPoolLiquidityRewardCard"
 
 const cards = [
   {
@@ -207,12 +210,9 @@ const LiquidityPage = ({ headerTitle }) => {
         {cards.map(({ id, ...data }) => {
           if (data.pool === POOL_TYPE.MSTABLE) {
             return (
-              <LiquidityRewardCard
+              <ExternalPoolLiquidityRewardCard
                 key={id}
-                poolId={id}
                 {...data}
-                displaySubtitle
-                displayGoToPoolButton
                 userInfoBannerProps={{
                   description:
                     "Deposit your TBTC into the mStable pool to earn with low impermanent loss risk.",
@@ -232,28 +232,87 @@ const LiquidityPage = ({ headerTitle }) => {
               />
             )
           }
-          return (
-            <LiquidityRewardCard
-              key={id}
-              poolId={id}
-              {...data}
-              apy={liquidityPools[id].apy}
-              percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
-              rewardBalance={liquidityPools[id].reward}
-              wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
-              lpBalance={liquidityPools[id].lpBalance}
-              lpTokenBalance={liquidityPools[id].lpTokenBalance}
-              rewardMultiplier={liquidityPools[id].rewardMultiplier}
-              isFetching={liquidityPools[id].isFetching}
-              addLpTokens={addLpTokens}
-              withdrawLiquidityRewards={withdrawLiquidityRewards}
-              isAPYFetching={liquidityPools[id].isAPYFetching}
-              displaySubtitle
-              displayMetrics={!data.incentivesRemoved}
-              displayLPTokenBalance
-              displayRewards
-            />
-          )
+          if (!data.incentivesRemoved) {
+            return (
+              <ActiveLiquidityRewardCard
+                key={id}
+                poolId={id}
+                {...data}
+                apy={liquidityPools[id].apy}
+                percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
+                rewardBalance={liquidityPools[id].reward}
+                wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
+                lpBalance={liquidityPools[id].lpBalance}
+                lpTokenBalance={liquidityPools[id].lpTokenBalance}
+                rewardMultiplier={liquidityPools[id].rewardMultiplier}
+                isFetching={liquidityPools[id].isFetching}
+                addLpTokens={addLpTokens}
+                withdrawLiquidityRewards={withdrawLiquidityRewards}
+                isAPYFetching={liquidityPools[id].isAPYFetching}
+                displaySubtitle
+                displayMetrics={!data.incentivesRemoved}
+                displayLPTokenBalance
+                displayRewards
+              >
+                <LPTokenBalance
+                  lpTokens={data.lpTokens}
+                  lpTokenBalance={liquidityPools[id].lpTokenBalance}
+                />
+              </ActiveLiquidityRewardCard>
+            )
+          }
+          if (data.incentivesRemoved) {
+            return (
+              <InactiveLiquidityRewardCard
+                key={id}
+                poolId={id}
+                {...data}
+                apy={liquidityPools[id].apy}
+                percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
+                rewardBalance={liquidityPools[id].reward}
+                wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
+                lpBalance={liquidityPools[id].lpBalance}
+                lpTokenBalance={liquidityPools[id].lpTokenBalance}
+                rewardMultiplier={liquidityPools[id].rewardMultiplier}
+                isFetching={liquidityPools[id].isFetching}
+                addLpTokens={addLpTokens}
+                withdrawLiquidityRewards={withdrawLiquidityRewards}
+                isAPYFetching={liquidityPools[id].isAPYFetching}
+                displaySubtitle
+                displayMetrics={!data.incentivesRemoved}
+                displayLPTokenBalance
+                displayRewards
+              >
+                <LPTokenBalance
+                  lpTokens={data.lpTokens}
+                  lpTokenBalance={liquidityPools[id].lpTokenBalance}
+                />
+              </InactiveLiquidityRewardCard>
+            )
+          }
+          return <></>
+          // return (
+          //   <LiquidityRewardCard2
+          //     key={id}
+          //     poolId={id}
+          //     {...data}
+          //     apy={liquidityPools[id].apy}
+          //     percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
+          //     rewardBalance={liquidityPools[id].reward}
+          //     wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
+          //     lpBalance={liquidityPools[id].lpBalance}
+          //     lpTokenBalance={liquidityPools[id].lpTokenBalance}
+          //     rewardMultiplier={liquidityPools[id].rewardMultiplier}
+          //     isFetching={liquidityPools[id].isFetching}
+          //     addLpTokens={addLpTokens}
+          //     withdrawLiquidityRewards={withdrawLiquidityRewards}
+          //     isAPYFetching={liquidityPools[id].isAPYFetching}
+          //     displaySubtitle
+          //     displayMetrics={!data.incentivesRemoved}
+          //     displayLPTokenBalance
+          //     displayRewards
+          //   />
+          // )
         })}
       </MasonryFlexContainer>
     </PageWrapper>
