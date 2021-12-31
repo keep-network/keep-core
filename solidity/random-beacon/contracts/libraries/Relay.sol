@@ -118,6 +118,7 @@ library Relay {
         bytes calldata entry,
         bytes storage groupPubKey
     ) internal {
+        require(isRequestInProgress(self), "No relay request in progress");
         require(
             BLS._verify(
                 AltBn128.g2Unmarshal(groupPubKey),

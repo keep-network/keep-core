@@ -41,10 +41,14 @@ async function fixture() {
   const deployment = await randomBeaconDeployment()
 
   // Additional contracts needed by this test suite.
-  const relayStub = (await (
-    await ethers.getContractFactory("RelayStub")
-  ).deploy()) as RelayStub
   const bls = (await blsDeployment()).bls as BLS
+  const relayStub = (await (
+    await ethers.getContractFactory("RelayStub", {
+      libraries: {
+        BLS: (await blsDeployment()).bls.address,
+      },
+    })
+  ).deploy()) as RelayStub
 
   // Register operators in the sortition pool to make group creation
   // possible.
@@ -391,21 +395,6 @@ describe("RandomBeacon - Relay", () => {
         })
       })
     })
-
-    context("when relay request is not in progress", () => {
-      it("should revert", async () => {
-        const currentBlock = await ethers.provider.getBlock("latest")
-        await mineBlocks(
-          constants.groupSize * params.relayEntrySubmissionEligibilityDelay + 1
-        )
-
-        await expect(
-          randomBeacon
-            .connect(submitter)
-            ["submitRelayEntry(bytes)"](blsData.nextGroupSignature)
-        ).to.be.revertedWith("No relay request in progress")
-      })
-    })
   })
 
   describe("submitRelayEntry after the soft timeout", () => {
@@ -561,16 +550,16 @@ describe("RandomBeacon - Relay", () => {
         })
       })
     })
+  })
 
+  describe("submitEntry", () => {
     context("when relay request is not in progress", () => {
       it("should revert", async () => {
         await expect(
-          randomBeacon
-            .connect(submitter)
-            ["submitRelayEntry(bytes,uint32[])"](
-              blsData.groupSignature,
-              membersIDs
-            )
+          relayStub.callStatic.submitEntry(
+            blsData.groupSignature,
+            blsData.groupPubKey
+          )
         ).to.be.revertedWith("No relay request in progress")
       })
     })
@@ -932,7 +921,7 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("getSlashingFactor", () => {
+  describe("calculateSlashingAmount", () => {
     const testGroupSize = 64
 
     before(async () => {

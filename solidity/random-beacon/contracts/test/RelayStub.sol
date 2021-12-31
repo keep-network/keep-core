@@ -9,6 +9,8 @@ contract RelayStub {
 
     Relay.Data internal relay;
 
+    bytes public groupPubKey;
+
     constructor() {
         relay.setRelayEntrySubmissionEligibilityDelay(10);
         relay.setRelayEntryHardTimeout(100);
@@ -21,5 +23,12 @@ contract RelayStub {
 
     function calculateSlashingAmount() external returns (uint256) {
         return relay.calculateSlashingAmount();
+    }
+
+    function submitEntry(bytes calldata entry, bytes calldata _groupPubKey)
+        external
+    {
+        groupPubKey = _groupPubKey;
+        relay.submitEntry(entry, groupPubKey);
     }
 }
