@@ -14,6 +14,9 @@
 
 // Initial version copied from Keep Network Random Beacon:
 // https://github.com/keep-network/keep-core/blob/c0a290e4989ce166fb9a024cc2e75035b33b8b2f/solidity/random-beacon/contracts/DKGValidator.sol
+//
+// With a difference in expected group public key length, which assumes uncompressed
+// ECDSA public key of 64 bytes.
 
 pragma solidity ^0.8.9;
 
@@ -50,6 +53,11 @@ contract DKGValidator {
     ///      inactive after DKG so that the group can still produce a relay
     ///      entry.
     uint256 public constant activeThreshold = 58; // 90% of groupSize// TODO: Confirm value
+
+    /// @dev Size in bytes of a public key produced by group members during the
+    /// the DKG. The length assumes compressed ECDSA public key.
+    // TODO: Investigate if we could use compressed public keys of 33 bytes length.
+    uint256 public constant publicKeyByteSize = 64;
 
     /// @dev Size in bytes of a single signature produced by operator supporting
     ///      DKG result.
@@ -98,8 +106,7 @@ contract DKGValidator {
         view
         returns (bool isValid, string memory errorMsg)
     {
-        // Group public key needs to be 128 bytes long.
-        if (result.groupPubKey.length != 128) {
+        if (result.groupPubKey.length != publicKeyByteSize) {
             return (false, "Malformed group public key");
         }
 
