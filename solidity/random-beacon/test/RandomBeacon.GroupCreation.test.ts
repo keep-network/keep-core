@@ -1260,41 +1260,92 @@ describe("RandomBeacon - Group Creation", () => {
             let dkgResult: DkgResult
             let dkgResultHash: string
 
-            const misbehavedIndices = [2, 9, 11, 30, 60, 64]
+            context(
+              "when misbehaved members are in ascending order",
+              async () => {
+                const misbehavedIndices = [2, 9, 11, 30, 60, 64]
 
-            before(async () => {
-              await createSnapshot()
-              ;({
-                transaction: tx,
-                dkgResult,
-                dkgResultHash,
-              } = await signAndSubmitCorrectDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                genesisSeed,
-                startBlock,
-                misbehavedIndices
-              ))
-            })
+                before(async () => {
+                  await createSnapshot()
+                  ;({
+                    transaction: tx,
+                    dkgResult,
+                    dkgResultHash,
+                  } = await signAndSubmitCorrectDkgResult(
+                    randomBeacon,
+                    groupPublicKey,
+                    genesisSeed,
+                    startBlock,
+                    misbehavedIndices
+                  ))
+                })
 
-            after(async () => {
-              await restoreSnapshot()
-            })
+                after(async () => {
+                  await restoreSnapshot()
+                })
 
-            it("should succeed with misbehaved members", async () => {
-              await expect(tx)
-                .to.emit(randomBeacon, "DkgResultSubmitted")
-                .withArgs(
-                  dkgResultHash,
-                  genesisSeed,
-                  dkgResult.submitterMemberIndex,
-                  dkgResult.groupPubKey,
-                  dkgResult.misbehavedMembersIndices,
-                  dkgResult.signatures,
-                  dkgResult.signingMembersIndices,
-                  dkgResult.members
-                )
-            })
+                it("should succeed with misbehaved members", async () => {
+                  await expect(tx)
+                    .to.emit(randomBeacon, "DkgResultSubmitted")
+                    .withArgs(
+                      dkgResultHash,
+                      genesisSeed,
+                      dkgResult.submitterMemberIndex,
+                      dkgResult.groupPubKey,
+                      dkgResult.misbehavedMembersIndices,
+                      dkgResult.signatures,
+                      dkgResult.signingMembersIndices,
+                      dkgResult.members
+                    )
+                })
+
+                it("should correctly set a group members hash", async () => {
+                  const storedGroup = await randomBeacon["getGroup(bytes)"](
+                    groupPublicKey
+                  )
+
+                  const expectedMembers = [...dkgResult.members]
+                  expectedMembers.splice(1, 1) // index -1
+                  expectedMembers.splice(7, 1) // index -2 (cause expectedMembers already shrinked)
+                  expectedMembers.splice(8, 1) // index -3
+                  expectedMembers.splice(26, 1) // index -4
+                  expectedMembers.splice(55, 1) // index -5
+                  expectedMembers.splice(58, 1) // index -6
+                  expect(storedGroup.membersHash).to.be.equal(
+                    hashUint32Array(expectedMembers)
+                  )
+                })
+              }
+            )
+
+            context(
+              "when misbehaved members are not in ascending order",
+              async () => {
+                const misbehavedIndices = [2, 9, 30, 11, 60, 64]
+
+                before(async () => {
+                  await createSnapshot()
+                })
+
+                after(async () => {
+                  await restoreSnapshot()
+                })
+
+                it("should revert", async () => {
+                  await expect(
+                    signAndSubmitCorrectDkgResult(
+                      randomBeacon,
+                      groupPublicKey,
+                      genesisSeed,
+                      startBlock,
+                      misbehavedIndices
+                    )
+                  ).to.be.revertedWith(
+                    "Array accessed at an out-of-bounds or negative index"
+                  )
+                })
+              }
+            )
           })
         })
       })
