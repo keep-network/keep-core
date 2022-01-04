@@ -80,10 +80,11 @@ describe("Groups", () => {
 
             const expectedMembers = [...members]
             expectedMembers.splice(0, 1)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(hashUint32Array(expectedMembers))
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
@@ -97,10 +98,11 @@ describe("Groups", () => {
             )
             const expectedMembers = [...members]
             expectedMembers.pop()
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(hashUint32Array(expectedMembers))
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
@@ -115,10 +117,11 @@ describe("Groups", () => {
 
             const expectedMembers = [...members]
             expectedMembers.splice(23, 1)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(hashUint32Array(expectedMembers))
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
@@ -136,9 +139,11 @@ describe("Groups", () => {
             expectedMembers.splice(32, 1) // index -3
             expectedMembers.splice(constants.groupSize - 4, 1) // index -4
 
+            const expectedMembersHash = hashUint32Array(expectedMembers)
+
             expect(
               (await groups.getGroup(groupPublicKey)).membersHash
-            ).to.be.equal(hashUint32Array(expectedMembers))
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
@@ -831,16 +836,3 @@ describe("Groups", () => {
     })
   })
 })
-
-function filterMisbehaved(
-  members: number[],
-  misbehavedIndices: number[]
-): number[] {
-  const expectedMembers = [...members]
-  misbehavedIndices.reverse().forEach((value) => {
-    expectedMembers[value - 1] = expectedMembers[expectedMembers.length - 1]
-    expectedMembers.pop()
-  })
-
-  return expectedMembers
-}
