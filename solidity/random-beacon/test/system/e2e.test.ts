@@ -98,7 +98,7 @@ describe("System -- e2e", () => {
 
   context("when testing a happy path with 15 relay requests", () => {
     let groupPubKeyCounter = 0
-    const activeGroupMembers = []
+    const groupMembers = []
 
     it("should create 3 new groups", async () => {
       expect(await randomBeacon.getGroupCreationState()).to.be.equal(
@@ -125,7 +125,7 @@ describe("System -- e2e", () => {
         genesisTx.blockNumber,
         noMisbehaved
       )
-      activeGroupMembers.push(dkgResult.members)
+      groupMembers.push(dkgResult.members)
 
       await mineBlocks(params.dkgResultChallengePeriodLength)
 
@@ -147,7 +147,7 @@ describe("System -- e2e", () => {
           .connect(dkgResult.submitter)
           .submitRelayEntry(
             blsData.groupSignatures[i - 1],
-            activeGroupMembers[signingGroupIds[i - 1]]
+            groupMembers[signingGroupIds[i - 1]]
           )
 
         // every 5th relay request triggers a new dkg
@@ -174,7 +174,7 @@ describe("System -- e2e", () => {
             txSubmitRelayEntry.blockNumber,
             noMisbehaved
           )
-          activeGroupMembers.push(dkgResult.members)
+          groupMembers.push(dkgResult.members)
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
