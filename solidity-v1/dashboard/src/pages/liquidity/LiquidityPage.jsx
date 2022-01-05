@@ -5,11 +5,7 @@ import {
   useWeb3Context,
 } from "../../components/WithWeb3Context"
 import PageWrapper from "../../components/PageWrapper"
-import {
-  LINK,
-  LIQUIDITY_REWARD_PAIRS,
-  POOL_TYPE,
-} from "../../constants/constants"
+import { LINK, LIQUIDITY_REWARD_PAIRS } from "../../constants/constants"
 import * as Icons from "../../components/Icons"
 import {
   addMoreLpTokens,
@@ -24,10 +20,12 @@ import ActiveLiquidityRewardCard from "../../components/ActiveLiquidityRewardCar
 import { LPTokenBalance } from "../../components/liquidity"
 import InactiveLiquidityRewardCard from "../../components/InactiveLiquidityRewardCard"
 import ExternalPoolLiquidityRewardCard from "../../components/ExternalPoolLiquidityRewardCard"
+import OnlyIf from "../../components/OnlyIf"
 
 const cards = [
   {
     id: "TBTCV2_SADDLE",
+    CardComponent: ActiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.label,
     liquidityPairContractName:
       LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.contractName,
@@ -40,6 +38,7 @@ const cards = [
   },
   {
     id: "TBTC_ETH",
+    CardComponent: InactiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label,
     liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.contractName,
     MainIcon: Icons.TBTC,
@@ -52,9 +51,11 @@ const cards = [
     incentivesRemovedBannerProps: {
       link: LINK.proposals.removeIncentivesForTBTCETHpool,
     },
+    displayLPTokenBalance: true,
   },
   {
     id: "KEEP_ETH",
+    CardComponent: ActiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label,
     liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName,
     MainIcon: Icons.KeepBlackGreen,
@@ -63,9 +64,11 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens,
     wrapperClassName: "keep-eth",
+    displayLPTokenBalance: true,
   },
   {
     id: "TBTC_SADDLE",
+    CardComponent: InactiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label,
     liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.contractName,
     MainIcon: Icons.TBTC,
@@ -81,6 +84,7 @@ const cards = [
   },
   {
     id: "KEEP_ONLY",
+    CardComponent: KeepOnlyPoolCard,
     title: LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.label,
     pool: LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool,
     MainIcon: Icons.KeepBlackGreen,
@@ -89,6 +93,7 @@ const cards = [
   },
   {
     id: "TBTCV2_MBTC",
+    CardComponent: ExternalPoolLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.label,
     MainIcon: Icons.TBTC_V2,
     SecondaryIcon: Icons.MBTC,
@@ -96,9 +101,15 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_MBTC.lpTokens,
     wrapperClassName: "tbtc-v2-saddle",
+    userInfoBannerProps: {
+      description:
+        "Deposit your TBTC into the mStable pool to earn with low impermanent loss risk.",
+      linkText: "",
+    },
   },
   {
     id: "KEEP_TBTC",
+    CardComponent: InactiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label,
     liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.contractName,
     MainIcon: Icons.KeepBlackGreen,
@@ -111,6 +122,7 @@ const cards = [
     incentivesRemovedBannerProps: {
       link: LINK.proposals.removeIncentivesForKEEPTBTCpool,
     },
+    displayLPTokenBalance: true,
   },
 ]
 
@@ -120,9 +132,7 @@ const LiquidityPage = ({ headerTitle }) => {
   const dispatch = useDispatch()
   const address = useWeb3Address()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
-  const { KEEP_ONLY, ...liquidityPools } = useSelector(
-    (state) => state.liquidityRewards
-  )
+  const { ...liquidityPools } = useSelector((state) => state.liquidityRewards)
 
   useEffect(() => {
     if (isConnected) {
@@ -207,112 +217,32 @@ const LiquidityPage = ({ headerTitle }) => {
         </Banner>
       )}
       <MasonryFlexContainer maxHeight={"2300px"}>
-        {cards.map(({ id, ...data }) => {
-          if (data.pool === POOL_TYPE.MSTABLE) {
-            return (
-              <ExternalPoolLiquidityRewardCard
-                key={id}
-                {...data}
-                userInfoBannerProps={{
-                  description:
-                    "Deposit your TBTC into the mStable pool to earn with low impermanent loss risk.",
-                  linkText: "",
-                }}
-              />
-            )
-          }
-          if (data.pool === POOL_TYPE.TOKEN_GEYSER) {
-            return (
-              <KeepOnlyPoolCard
-                key={id}
-                poolId={id}
-                {...data}
-                lpBalance={KEEP_ONLY.lpBalance}
-                rewardBalance={KEEP_ONLY.reward}
-              />
-            )
-          }
-          if (!data.incentivesRemoved) {
-            return (
-              <ActiveLiquidityRewardCard
-                key={id}
-                poolId={id}
-                {...data}
-                apy={liquidityPools[id].apy}
-                percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
-                rewardBalance={liquidityPools[id].reward}
-                wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
-                lpBalance={liquidityPools[id].lpBalance}
-                lpTokenBalance={liquidityPools[id].lpTokenBalance}
-                rewardMultiplier={liquidityPools[id].rewardMultiplier}
-                isFetching={liquidityPools[id].isFetching}
-                addLpTokens={addLpTokens}
-                withdrawLiquidityRewards={withdrawLiquidityRewards}
-                isAPYFetching={liquidityPools[id].isAPYFetching}
-                displaySubtitle
-                displayMetrics={!data.incentivesRemoved}
-                displayLPTokenBalance
-                displayRewards
-              >
+        {cards.map(({ id, CardComponent, ...data }) => {
+          return (
+            <CardComponent
+              key={id}
+              poolId={id}
+              {...data}
+              apy={liquidityPools[id]?.apy}
+              percentageOfTotalPool={liquidityPools[id]?.shareOfPoolInPercent}
+              rewardBalance={liquidityPools[id]?.reward}
+              wrappedTokenBalance={liquidityPools[id]?.wrappedTokenBalance}
+              lpBalance={liquidityPools[id]?.lpBalance}
+              lpTokenBalance={liquidityPools[id]?.lpTokenBalance}
+              rewardMultiplier={liquidityPools[id]?.rewardMultiplier}
+              isFetching={liquidityPools[id]?.isFetching}
+              addLpTokens={addLpTokens}
+              withdrawLiquidityRewards={withdrawLiquidityRewards}
+              isAPYFetching={liquidityPools[id]?.isAPYFetching}
+            >
+              <OnlyIf condition={data.displayLPTokenBalance}>
                 <LPTokenBalance
                   lpTokens={data.lpTokens}
-                  lpTokenBalance={liquidityPools[id].lpTokenBalance}
+                  lpTokenBalance={liquidityPools[id]?.lpTokenBalance}
                 />
-              </ActiveLiquidityRewardCard>
-            )
-          }
-          if (data.incentivesRemoved) {
-            return (
-              <InactiveLiquidityRewardCard
-                key={id}
-                poolId={id}
-                {...data}
-                apy={liquidityPools[id].apy}
-                percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
-                rewardBalance={liquidityPools[id].reward}
-                wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
-                lpBalance={liquidityPools[id].lpBalance}
-                lpTokenBalance={liquidityPools[id].lpTokenBalance}
-                rewardMultiplier={liquidityPools[id].rewardMultiplier}
-                isFetching={liquidityPools[id].isFetching}
-                addLpTokens={addLpTokens}
-                withdrawLiquidityRewards={withdrawLiquidityRewards}
-                isAPYFetching={liquidityPools[id].isAPYFetching}
-                displaySubtitle
-                displayMetrics={!data.incentivesRemoved}
-                displayLPTokenBalance
-                displayRewards
-              >
-                <LPTokenBalance
-                  lpTokens={data.lpTokens}
-                  lpTokenBalance={liquidityPools[id].lpTokenBalance}
-                />
-              </InactiveLiquidityRewardCard>
-            )
-          }
-          return <></>
-          // return (
-          //   <LiquidityRewardCard2
-          //     key={id}
-          //     poolId={id}
-          //     {...data}
-          //     apy={liquidityPools[id].apy}
-          //     percentageOfTotalPool={liquidityPools[id].shareOfPoolInPercent}
-          //     rewardBalance={liquidityPools[id].reward}
-          //     wrappedTokenBalance={liquidityPools[id].wrappedTokenBalance}
-          //     lpBalance={liquidityPools[id].lpBalance}
-          //     lpTokenBalance={liquidityPools[id].lpTokenBalance}
-          //     rewardMultiplier={liquidityPools[id].rewardMultiplier}
-          //     isFetching={liquidityPools[id].isFetching}
-          //     addLpTokens={addLpTokens}
-          //     withdrawLiquidityRewards={withdrawLiquidityRewards}
-          //     isAPYFetching={liquidityPools[id].isAPYFetching}
-          //     displaySubtitle
-          //     displayMetrics={!data.incentivesRemoved}
-          //     displayLPTokenBalance
-          //     displayRewards
-          //   />
-          // )
+              </OnlyIf>
+            </CardComponent>
+          )
         })}
       </MasonryFlexContainer>
     </PageWrapper>

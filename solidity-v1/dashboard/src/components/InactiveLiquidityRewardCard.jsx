@@ -32,7 +32,7 @@ const InactiveLiquidityRewardCard = ({
       {children}
       <LiquidityRewardCard.Rewards
         isFetching={isFetching}
-        lpBalance={lpBalance}
+        rewardBalance={rewardBalance}
       />
       <LiquidityRewardCard.ActionButtons
         poolId={poolId}
