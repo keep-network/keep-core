@@ -206,7 +206,7 @@ const LiquidityPage = ({ headerTitle }) => {
           <Banner.CloseIcon onClick={hideBanner} />
         </Banner>
       )}
-      <MasonryFlexContainer maxHeight={"2060px"}>
+      <MasonryFlexContainer maxHeight={"2300px"}>
         {cards.map(({ id, ...data }) => {
           if (data.pool === POOL_TYPE.MSTABLE) {
             return (
