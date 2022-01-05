@@ -64,7 +64,7 @@ library Groups {
     /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
     ///        inactive) group members indices; Indices reflect positions of
     ///        members in the group, as outputted by the group selection
-    ///        protocol.
+    ///        protocol. Misbehaved members indices should be in ascending order.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
