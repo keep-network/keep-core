@@ -225,7 +225,7 @@ contract RandomBeacon is Ownable {
         uint8[] misbehavedMembersIndices,
         bytes signatures,
         uint256[] signingMembersIndices,
-        uint32[] members
+        uint32[] selectedMembers
     );
 
     event DkgTimedOut();
