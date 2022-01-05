@@ -30,31 +30,25 @@ const ActiveLiquidityRewardCard = ({
       MainIcon={MainIcon}
       SecondaryIcon={SecondaryIcon}
       wrapperClassName={wrapperClassName}
+      isFetching={isFetching}
+      isAPYFetching={isAPYFetching}
+      apy={apy}
+      percentageOfTotalPool={percentageOfTotalPool}
+      lpBalance={lpBalance}
+      wrappedTokenBalance={wrappedTokenBalance}
+      rewardBalance={rewardBalance}
     >
       <LiquidityRewardCard.Subtitle pool={pool} viewPoolLink={viewPoolLink} />
-      <LiquidityRewardCard.Metrics
-        apy={apy}
-        isFetching={isFetching}
-        isAPYFetching={isAPYFetching}
-        lpBalance={lpBalance}
-        percentageOfTotalPool={percentageOfTotalPool}
-      />
+      <LiquidityRewardCard.Metrics />
       <LiquidityRewardCard.ActivePoolBanner
         pool={pool}
         viewPoolLink={viewPoolLink}
-        lpBalance={lpBalance}
       />
       {children}
-      <LiquidityRewardCard.Rewards
-        isFetching={isFetching}
-        rewardBalance={rewardBalance}
-      />
+      <LiquidityRewardCard.Rewards />
       <LiquidityRewardCard.ActionButtons
         poolId={poolId}
         incentivesRemoved={false}
-        wrappedTokenBalance={wrappedTokenBalance}
-        lpBalance={lpBalance}
-        rewardBalance={rewardBalance}
         addLpTokens={addLpTokens}
         withdrawLiquidityRewards={withdrawLiquidityRewards}
       />

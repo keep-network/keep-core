@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useContext, useMemo } from "react"
 import DoubleIcon from "./DoubleIcon"
 import OnlyIf from "./OnlyIf"
 import Tooltip from "./Tooltip"
@@ -14,29 +14,68 @@ import Card from "./Card"
 import { POOL_TYPE } from "../constants/constants"
 import Banner from "./Banner"
 
+const LiquidityRewardCardContext = React.createContext({
+  apy: "0",
+  percentageOfTotalPool: "0",
+  lpBalance: "0",
+  wrappedTokenBalance: "0",
+  rewardBalance: "0",
+  isFetching: false,
+  isAPYFetching: false,
+})
+
+const useLiquidityRewardCardContext = () => {
+  const context = useContext(LiquidityRewardCardContext)
+  if (!context) {
+    throw new Error(
+      "LiquidityRewardCardContext used outside of LiquidityRewardCard component"
+    )
+  }
+  return context
+}
+
 const LiquidityRewardCard = ({
   title,
   MainIcon,
   SecondaryIcon,
   wrapperClassName,
+  isFetching = false,
+  isAPYFetching = false,
+  apy = "0",
+  percentageOfTotalPool = "0",
+  lpBalance = "0",
+  wrappedTokenBalance = "0",
+  rewardBalance = "0",
   children,
 }) => {
   return (
-    <Card className={`liquidity__card tile ${wrapperClassName}`}>
-      <div className={"liquidity__card-title"}>
-        {!!SecondaryIcon ? (
-          <DoubleIcon
-            MainIcon={MainIcon}
-            SecondaryIcon={SecondaryIcon}
-            className={`liquidity__double-icon-container`}
-          />
-        ) : (
-          <MainIcon width={24} height={24} className={"mr-1"} />
-        )}
-        <h2 className={"h2--alt text-grey-70"}>{title}</h2>
-      </div>
-      {children}
-    </Card>
+    <LiquidityRewardCardContext.Provider
+      value={{
+        isFetching,
+        isAPYFetching,
+        apy,
+        percentageOfTotalPool,
+        lpBalance,
+        wrappedTokenBalance,
+        rewardBalance,
+      }}
+    >
+      <Card className={`liquidity__card tile ${wrapperClassName}`}>
+        <div className={"liquidity__card-title"}>
+          {!!SecondaryIcon ? (
+            <DoubleIcon
+              MainIcon={MainIcon}
+              SecondaryIcon={SecondaryIcon}
+              className={`liquidity__double-icon-container`}
+            />
+          ) : (
+            <MainIcon width={24} height={24} className={"mr-1"} />
+          )}
+          <h2 className={"h2--alt text-grey-70"}>{title}</h2>
+        </div>
+        {children}
+      </Card>
+    </LiquidityRewardCardContext.Provider>
   )
 }
 
@@ -83,15 +122,9 @@ const Subtitle = ({ pool, viewPoolLink, className = "" }) => {
 
 LiquidityRewardCard.Subtitle = Subtitle
 
-LiquidityRewardCard.Metrics = ({
-  apy,
-  isFetching,
-  isAPYFetching,
-  // Balance of wrapped token deposited in the `LPRewards` contract.
-  lpBalance = "0",
-  // Percentage of the deposited liquidity tokens in the `LPRewards` pool.
-  percentageOfTotalPool,
-}) => {
+const Metrics = () => {
+  const { isFetching, isAPYFetching, apy, lpBalance, percentageOfTotalPool } =
+    useLiquidityRewardCardContext()
   return (
     <div
       className={`liquidity__info${gt(lpBalance, 0) ? "" : "--locked"} mb-2`}
@@ -119,6 +152,8 @@ LiquidityRewardCard.Metrics = ({
   )
 }
 
+LiquidityRewardCard.Metrics = Metrics
+
 LiquidityRewardCard.InactivePoolBanner = ({
   icon = Icons.Bell,
   title = "Incentives removed",
@@ -142,8 +177,8 @@ const ActivePoolBanner = ({
   pool,
   viewPoolLink,
   userInfoBannerProps = null,
-  lpBalance = "0",
 }) => {
+  const { lpBalance } = useLiquidityRewardCardContext()
   const hasDepositedWrappedTokens = useMemo(() => gt(lpBalance, 0), [lpBalance])
 
   const bannerProps = {
@@ -217,7 +252,8 @@ const UserInfoBanner = ({
   )
 }
 
-LiquidityRewardCard.Rewards = ({ isFetching, rewardBalance = "0" }) => {
+const Rewards = () => {
+  const { isFetching, rewardBalance } = useLiquidityRewardCardContext()
   return (
     <div className={"liquidity__reward-balance"}>
       <h4 className={"liquidity__reward-balance__title text-grey-70"}>
@@ -247,15 +283,16 @@ LiquidityRewardCard.Rewards = ({ isFetching, rewardBalance = "0" }) => {
   )
 }
 
-LiquidityRewardCard.ActionButtons = ({
+LiquidityRewardCard.Rewards = Rewards
+
+const ActionButtons = ({
   poolId,
   incentivesRemoved,
-  wrappedTokenBalance,
-  lpBalance,
-  rewardBalance,
   addLpTokens,
   withdrawLiquidityRewards,
 }) => {
+  const { wrappedTokenBalance, lpBalance, rewardBalance } =
+    useLiquidityRewardCardContext()
   return (
     <>
       <OnlyIf condition={!incentivesRemoved}>
@@ -286,6 +323,8 @@ LiquidityRewardCard.ActionButtons = ({
     </>
   )
 }
+
+LiquidityRewardCard.ActionButtons = ActionButtons
 
 LiquidityRewardCard.GoToPoolButton = ({ viewPoolLink }) => {
   return (

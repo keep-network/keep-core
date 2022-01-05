@@ -53,7 +53,12 @@ const KeepOnlyPoolCard = ({
   )
 
   return (
-    <LiquidityRewardCard title={title} MainIcon={MainIcon}>
+    <LiquidityRewardCard
+      title={title}
+      MainIcon={MainIcon}
+      lpBalance={lpBalance}
+      rewardBalance={rewardBalance}
+    >
       <LiquidityRewardCard.InactivePoolBanner
         description={
           "The incentives for this pool have been removed and you can no longer deposit KEEP tokens. You can still withdraw deposited KEEP tokens and rewards that you already earned"
