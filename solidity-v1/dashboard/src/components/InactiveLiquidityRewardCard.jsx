@@ -16,6 +16,7 @@ const InactiveLiquidityRewardCard = ({
   isFetching,
   wrapperClassName = "",
   addLpTokens,
+  withdrawLiquidityRewards,
   pool,
   children,
 }) => {
@@ -40,6 +41,7 @@ const InactiveLiquidityRewardCard = ({
         lpBalance={lpBalance}
         rewardBalance={rewardBalance}
         addLpTokens={addLpTokens}
+        withdrawLiquidityRewards={withdrawLiquidityRewards}
       />
     </LiquidityRewardCard>
   )
