@@ -1304,6 +1304,7 @@ describe("RandomBeacon - Group Creation", () => {
                     groupPublicKey
                   )
 
+                  // misbehavedIndices: [2, 9, 11, 30, 60, 64]
                   const expectedMembers = [...dkgResult.members]
                   expectedMembers.splice(1, 1) // index -1
                   expectedMembers.splice(7, 1) // index -2 (cause expectedMembers already shrinked)
