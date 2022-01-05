@@ -717,7 +717,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Creates a new relay entry.
     /// @param entry Group BLS signature over the previous entry.
-    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
+    /// @param groupMembers Identifiers of group members.
     function submitRelayEntry(
         bytes calldata entry,
         uint32[] calldata groupMembers
@@ -769,7 +769,7 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Reports a relay entry timeout.
-    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
+    /// @param groupMembers Identifiers of group members.
     function reportRelayEntryTimeout(uint32[] calldata groupMembers) external {
         uint64 groupId = relay.currentRequestGroupID;
         Groups.Group storage group = groups.getGroup(groupId);
@@ -826,7 +826,7 @@ contract RandomBeacon is Ownable {
     ///         function reverts.
     /// @param signedMsgSender Signature of the sender's address as a message.
     /// @param groupId Group that is being reported for leaking a private key.
-    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
+    /// @param groupMembers Identifiers of group members.
     function reportUnauthorizedSigning(
         bytes memory signedMsgSender,
         uint64 groupId,
@@ -885,7 +885,7 @@ contract RandomBeacon is Ownable {
     /// @param claim Failure claim.
     /// @param nonce Current failed heartbeat nonce for given group. Must
     ///        be the same as the stored one.
-    /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
+    /// @param groupMembers Identifiers of group members.
     function notifyFailedHeartbeat(
         Heartbeat.FailureClaim calldata claim,
         uint256 nonce,

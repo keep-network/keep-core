@@ -63,7 +63,7 @@ library Heartbeat {
     /// @param claim Failure claim.
     /// @param group Group raising the claim.
     /// @param nonce Current nonce for group used in the claim.
-    /// @param members Group member ids that participated in dkg (excluding IA/DQ).
+    /// @param members Identifiers of group members.
     /// @return failedMembers Identifiers of members who failed the heartbeat.
     function verifyFailureClaim(
         SortitionPool sortitionPool,
