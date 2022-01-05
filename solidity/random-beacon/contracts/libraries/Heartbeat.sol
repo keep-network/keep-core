@@ -109,7 +109,7 @@ library Heartbeat {
             )
         ).toEthSignedMessageHash();
 
-        address[] memory selectedOperators = sortitionPool.getIDOperators(
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             members
         );
 
@@ -127,7 +127,7 @@ library Heartbeat {
             );
 
             require(
-                selectedOperators[memberIndex - 1] == recoveredAddress,
+                groupMembersAddresses[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
 
