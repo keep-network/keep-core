@@ -1,5 +1,3 @@
-/* eslint-disable no-await-in-loop */
-
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"

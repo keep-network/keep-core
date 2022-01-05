@@ -22,7 +22,7 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationBlockNumber;
-        // Hash of group members identifiers array (excluding IA/DQ members).
+        // Keccak256 hash of group members identifiers array (excluding IA/DQ members).
         bytes32 membersHash;
         // When selected group does not create a relay entry on-time it should
         // be marked as terminated.
@@ -352,7 +352,8 @@ library Groups {
     /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
     ///        inactive) group members. Indices reflect positions
     ///        of members in the group as outputted by the group selection
-    ///        protocol. Indices must be in ascending order.
+    ///        protocol. Indices must be in ascending order. The order can be verified
+    ///        during the DKG challege phase in DKGValidator contract.
     /// @return Group members hash.
     function hashGroupMembers(
         uint32[] calldata members,

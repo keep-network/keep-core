@@ -778,6 +778,7 @@ contract RandomBeacon is Ownable {
             group.membersHash == keccak256(abi.encode(groupMembers)),
             "Invalid group members"
         );
+
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembersIds = sortitionPool.getIDOperators(
