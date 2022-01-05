@@ -309,7 +309,7 @@ describe("RandomBeacon - Relay", () => {
 
               tx = await randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.groupSignature, membersIDs)
+                .submitRelayEntry2(blsData.groupSignature)
             })
 
             after(async () => {
@@ -837,7 +837,7 @@ describe("RandomBeacon - Relay", () => {
           testGroupSize * params.relayEntrySubmissionEligibilityDelay
         )
 
-        expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(0)
+        expect(await relayStub.getSlashingFactor()).to.be.equal(0)
       })
     })
 
@@ -851,7 +851,7 @@ describe("RandomBeacon - Relay", () => {
         // `submissionDelay` factor. If so we can calculate the slashing factor
         // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
         // gives `1 * 1e18 / 100 = 10000000000000000` (1%).
-        expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
+        expect(await relayStub.getSlashingFactor()).to.be.equal(
           BigNumber.from("10000000000000000")
         )
       })
@@ -870,7 +870,7 @@ describe("RandomBeacon - Relay", () => {
           // `submissionDelay` factor. If so we can calculate the slashing
           // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
           // gives `100 * 1e18 / 100 = 1000000000000000000` (100%).
-          expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
+          expect(await relayStub.getSlashingFactor()).to.be.equal(
             BigNumber.from("1000000000000000000")
           )
         })
@@ -890,7 +890,7 @@ describe("RandomBeacon - Relay", () => {
           // We are exceeded the soft timeout by a value bigger than the
           // hard timeout. In that case the maximum value (100%) of the slashing
           // factor should be returned.
-          expect(await relayStub.getSlashingFactor(testGroupSize)).to.be.equal(
+          expect(await relayStub.getSlashingFactor()).to.be.equal(
             BigNumber.from("1000000000000000000")
           )
         })

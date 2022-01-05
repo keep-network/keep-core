@@ -110,7 +110,27 @@ library Relay {
         );
     }
 
-    /// @notice Creates a new relay entry.
+
+    /// @notice Creates a new relay entry. Gas-optimized version that can be
+    ///         called only before the soft timeout. This should be the majority
+    ///         of cases.
+    /// @param entry Group BLS signature over the previous entry.
+    /// @param groupPubKey Public key of the group which signed the relay entry.
+    function submitEntryBeforeSoftTimeout(
+        Data storage self,
+        bytes calldata entry,
+        bytes storage groupPubKey
+    ) internal {
+        require(
+            block.number < softTimeoutBlock(self),
+            "Relay entry soft timeout passed"
+        );
+        _submitEntry(self, entry, groupPubKey);
+    }
+
+    /// @notice Creates a new relay entry. Can be called at any time.
+    ///         In case the soft timeout has not been exceeded, it is more
+    ///         gas-efficient to call the second variation of `submitEntry`.
     /// @param entry Group BLS signature over the previous entry.
     /// @param groupPubKey Public key of the group which signed the relay entry.
     /// @return slashingAmount Amount by which group members should be slashed
@@ -121,6 +141,25 @@ library Relay {
         bytes calldata entry,
         bytes storage groupPubKey
     ) internal returns (uint256 slashingAmount) {
+        // If the soft timeout has been exceeded apply stake slashing for
+        // all group members. Note that `getSlashingFactor` returns the
+        // factor multiplied by 1e18 to avoid precision loss. In that case
+        // the final result needs to be divided by 1e18.
+        slashingAmount =
+            (getSlashingFactor(self) *
+                self.relayEntrySubmissionFailureSlashingAmount) /
+            1e18;
+
+        _submitEntry(self, entry, groupPubKey);
+
+        return slashingAmount;
+    }
+
+    function _submitEntry(
+        Data storage self,
+        bytes calldata entry,
+        bytes storage groupPubKey
+    ) internal {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
@@ -133,23 +172,12 @@ library Relay {
             "Invalid entry"
         );
 
-        // If the soft timeout has been exceeded apply stake slashing for
-        // all group members. Note that `getSlashingFactor` returns the
-        // factor multiplied by 1e18 to avoid precision loss. In that case
-        // the final result needs to be divided by 1e18.
-        slashingAmount =
-            (getSlashingFactor(self, dkgGroupSize) *
-                self.relayEntrySubmissionFailureSlashingAmount) /
-            1e18;
-
         emit RelayEntrySubmitted(self.currentRequestID, msg.sender, entry);
 
         self.previousEntry = AltBn128.g1Unmarshal(entry);
         self.currentRequestID = 0;
         self.currentRequestGroupID = 0;
         self.currentRequestStartBlock = 0;
-
-        return slashingAmount;
     }
 
     /// @notice Set relayRequestFee parameter.
@@ -264,28 +292,38 @@ library Relay {
             block.number > self.currentRequestStartBlock + _relayEntryTimeout;
     }
 
+    /// @notice Calculates soft timeout block for the pending relay request.
+    /// @return The soft timeout block
+    function softTimeoutBlock(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return
+            self.currentRequestStartBlock +
+            (dkgGroupSize * self.relayEntrySubmissionEligibilityDelay);
+    }
+
     /// @notice Computes the slashing factor which should be used during
     ///         slashing of the group which exceeded the soft timeout.
     /// @dev This function doesn't use the constant `groupSize` directly and
     ///      use a `_groupSize` parameter instead to facilitate testing.
     ///      Big group sizes in tests make readability worse and dramatically
     ///      increase the time of execution.
-    /// @param _groupSize _groupSize Group size.
     /// @return A slashing factor represented as a fraction multiplied by 1e18
     ///         to avoid precision loss. When using this factor during slashing
     ///         amount computations, the final result should be divided by
     ///         1e18 to obtain a proper result. The slashing factor is
     ///         always in range <0, 1e18>.
-    function getSlashingFactor(Data storage self, uint256 _groupSize)
+    function getSlashingFactor(Data storage self)
         internal
         view
         returns (uint256)
     {
-        uint256 softTimeoutBlock = self.currentRequestStartBlock +
-            (_groupSize * self.relayEntrySubmissionEligibilityDelay);
+        uint256 _softTimeoutBlock = softTimeoutBlock(self);
 
-        if (block.number > softTimeoutBlock) {
-            uint256 submissionDelay = block.number - softTimeoutBlock;
+        if (block.number > _softTimeoutBlock) {
+            uint256 submissionDelay = block.number - _softTimeoutBlock;
             uint256 slashingFactor = (submissionDelay * 1e18) /
                 self.relayEntryHardTimeout;
             return slashingFactor > 1e18 ? 1e18 : slashingFactor;
