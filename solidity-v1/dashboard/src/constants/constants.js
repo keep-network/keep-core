@@ -1,6 +1,7 @@
 import {
   createSaddleSwapContract,
   createSaddleTBTCMetaPool,
+  createSaddleTBTCMetaPoolV2,
 } from "../contracts"
 
 export const KEEP_TOKEN_CONTRACT_NAME = "token"
@@ -24,6 +25,8 @@ export const LP_REWARDS_KEEP_ETH_CONTRACT_NAME = "LPRewardsKEEPETHContract"
 export const LP_REWARDS_TBTC_ETH_CONTRACT_NAME = "LPRewardsTBTCETHContract"
 export const LP_REWARDS_KEEP_TBTC_CONTRACT_NAME = "LPRewardsKEEPTBTCContract"
 export const LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME = "LPRewardsTBTCv2Saddle"
+export const LP_REWARDS_TBTCV2_SADDLEV2_CONTRACT_NAME =
+  "LPRewardsTBTCv2SaddleV2"
 
 export const KEEP_TOKEN_GEYSER_CONTRACT_NAME = "keepTokenGeyserContract"
 export const ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME =
@@ -47,13 +50,16 @@ export const LINK = {
   },
   pools: {
     saddle: {
-      tbtcV2: "https://saddle.exchange/#/pools/tbtc/deposit",
+      tbtc: "https://saddle.exchange/#/pools/tbtc/deposit",
+      tbtcV2: "https://saddle.exchange/#/pools/tbtcv2/deposit",
     },
     uniswap: {
       tbtcETH: `https://app.uniswap.org/#/add/v2/0x8daebade922df735c38c80c7ebd708af50815faa/ETH`,
     },
   },
   proposals: {
+    shiftingIncentivesToV2Metapool:
+      "https://forum.keep.network/t/move-saddle-tbtc-liquidity-incentives-to-v2-metapool/380",
     shiftingIncentivesToCoveragePools:
       "https://forum.keep.network/t/shifting-incentives-towards-tbtc-v2-and-coverage-pool-version-2/322",
     removeIncentivesForKEEPTBTCpool:
@@ -97,10 +103,24 @@ export const POOL_TYPE = {
 }
 
 export const LIQUIDITY_REWARD_PAIRS = {
+  TBTCV2_SADDLE_META_V2: {
+    contractName: LP_REWARDS_TBTCV2_SADDLEV2_CONTRACT_NAME,
+    label: "TBTC V2 + SADDLE Meta V2",
+    viewPoolLink: LINK.pools.saddle.tbtcV2,
+    pool: POOL_TYPE.SADDLE,
+    lpTokens: [],
+    options: {
+      createSwapContract: createSaddleTBTCMetaPoolV2,
+      poolTokens: [
+        { name: "TBTC-V2", decimals: 18 },
+        { name: "saddleBTC-V2", decimals: 18 },
+      ],
+    },
+  },
   TBTCV2_SADDLE: {
     contractName: LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME,
     label: "TBTC V2 + SADDLE",
-    viewPoolLink: LINK.pools.saddle.tbtcV2,
+    viewPoolLink: LINK.pools.saddle.tbtc,
     pool: POOL_TYPE.SADDLE,
     lpTokens: [],
     options: {

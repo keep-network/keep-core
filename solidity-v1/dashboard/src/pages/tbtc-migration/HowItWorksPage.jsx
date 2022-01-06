@@ -10,7 +10,7 @@ const tbtcPools = [
     id: TBTC_TOKEN_VERSION.v2,
     icon: Icons.SaddleWhite,
     type: "Saddle",
-    link: LINK.pools.saddle.tbtcV2,
+    link: LINK.pools.saddle.tbtc,
   },
   {
     id: TBTC_TOKEN_VERSION.v1,

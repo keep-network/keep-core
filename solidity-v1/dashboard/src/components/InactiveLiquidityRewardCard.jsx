@@ -18,6 +18,7 @@ const InactiveLiquidityRewardCard = ({
   addLpTokens,
   withdrawLiquidityRewards,
   pool,
+  inactivePoolBannerProps = {},
   children,
 }) => {
   return (
@@ -32,7 +33,9 @@ const InactiveLiquidityRewardCard = ({
       rewardBalance={rewardBalance}
     >
       <LiquidityRewardCard.Subtitle pool={pool} viewPoolLink={viewPoolLink} />
-      <LiquidityRewardCard.InactivePoolBanner link={viewPoolLink} />
+      <LiquidityRewardCard.InactivePoolBanner
+        inactivePoolBannerProps={inactivePoolBannerProps}
+      />
       {children}
       <LiquidityRewardCard.Rewards />
       <LiquidityRewardCard.ActionButtons

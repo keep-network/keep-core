@@ -24,8 +24,21 @@ import OnlyIf from "../../components/OnlyIf"
 
 const cards = [
   {
-    id: "TBTCV2_SADDLE",
+    id: "TBTCV2_SADDLE_META_V2",
     CardComponent: ActiveLiquidityRewardCard,
+    title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.label,
+    liquidityPairContractName:
+      LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.contractName,
+    MainIcon: Icons.TBTC_V2,
+    SecondaryIcon: Icons.Saddle,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.lpTokens,
+    wrapperClassName: "tbtc-v2-saddle",
+  },
+  {
+    id: "TBTCV2_SADDLE",
+    CardComponent: InactiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.label,
     liquidityPairContractName:
       LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.contractName,
@@ -35,6 +48,9 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.lpTokens,
     wrapperClassName: "tbtc-v2-saddle",
+    inactivePoolBannerProps: {
+      link: LINK.proposals.shiftingIncentivesToV2Metapool,
+    },
   },
   {
     id: "TBTC_ETH",
@@ -47,8 +63,7 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.lpTokens,
     wrapperClassName: "tbtc-eth",
-    incentivesRemoved: true,
-    incentivesRemovedBannerProps: {
+    inactivePoolBannerProps: {
       link: LINK.proposals.removeIncentivesForTBTCETHpool,
     },
     displayLPTokenBalance: true,
@@ -77,8 +92,7 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.lpTokens,
     wrapperClassName: "tbtc-saddle",
-    incentivesRemoved: true,
-    incentivesRemovedBannerProps: {
+    inactivePoolBannerProps: {
       link: LINK.proposals.shiftingIncentivesToCoveragePools,
     },
   },
@@ -89,7 +103,6 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool,
     MainIcon: Icons.KeepBlackGreen,
     SecondaryIcon: Icons.Saddle,
-    incentivesRemoved: true,
   },
   {
     id: "TBTCV2_MBTC",
@@ -118,8 +131,7 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.lpTokens,
     wrapperClassName: "keep-tbtc",
-    incentivesRemoved: true,
-    incentivesRemovedBannerProps: {
+    inactivePoolBannerProps: {
       link: LINK.proposals.removeIncentivesForKEEPTBTCpool,
     },
     displayLPTokenBalance: true,
