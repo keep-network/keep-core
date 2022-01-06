@@ -40,7 +40,8 @@
   }
 
   .liquidity__card-subtitle {
-    margin: 0.3rem 0;
+    margin-left: 0.3rem;
+    margin-right: 0.3rem;
 
     .liquidity__card-subtitle__tooltip {
       .tooltip__content-wrapper {
@@ -237,7 +238,7 @@
   padding: 0.7rem 0.5rem;
 
   &--warning {
-    background-color: @color-grey-20;
+    background-color: @color-yellow-30;
     padding-right: 0.8rem;
   }
 
@@ -253,7 +254,7 @@
 
     &--warning {
       path {
-        fill: @color-grey-60;
+        fill: @color-yellow-100;
       }
     }
   }
@@ -261,6 +262,10 @@
   .liquidity-info-banner__content {
     margin-left: 0.5rem;
     font-weight: 500;
+
+    .liquidity-info-banner__content__title {
+      font-weight: 500;
+    }
 
     .liquidity-info-banner__content__description {
       font-weight: 400;

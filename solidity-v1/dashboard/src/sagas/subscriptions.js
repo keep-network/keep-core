@@ -989,21 +989,23 @@ function* updateLPTokenBalance(
 
 export function* subscribeToLiquidityRewardsEvents() {
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
-    yield fork(
-      function* (liquidityRewardPair) {
-        yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
-        yield take(
-          `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`
-        )
-        yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
-        yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
-        yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
-      },
-      {
-        name: pairName,
-        ...value,
-      }
-    )
+    if (value.contractName) {
+      yield fork(
+        function* (liquidityRewardPair) {
+          yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
+          yield take(
+            `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`
+          )
+          yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
+          yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
+          yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
+        },
+        {
+          name: pairName,
+          ...value,
+        }
+      )
+    }
   }
 }
 

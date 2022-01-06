@@ -73,6 +73,9 @@ export { ReactComponent as CovPoolsHowItWorksDiagram } from "../static/svg/cov-p
 export { ReactComponent as TTokenSymbol } from "../static/svg/t-token-symbol.svg"
 export { ReactComponent as KeepTUpgrade } from "../static/svg/keep-t-upgrade-logo.svg"
 export { ReactComponent as Star } from "../static/svg/star.svg"
+export { ReactComponent as Bell } from "../static/svg/bell.svg"
+export { ReactComponent as MBTC } from "../static/svg/mBTC.svg"
+export { ReactComponent as TBTC_V2 } from "../static/svg/tbtc_v2.svg"
 
 const Badge = ({ height, width }) => (
   <svg
