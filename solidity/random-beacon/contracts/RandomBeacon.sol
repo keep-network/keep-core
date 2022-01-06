@@ -719,9 +719,7 @@ contract RandomBeacon is Ownable {
     ///         called only before the soft timeout. This should be the majority
     ///         of cases.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry2(bytes calldata entry) external {
-        // TODO: rename to just `submitRelayEntry`; it's a temporary workaround
-        // to avoid problems with overloaded functions in unit tests
+    function submitRelayEntry(bytes calldata entry) external {
         Groups.Group storage group = groups.getGroup(
             relay.currentRequestGroupID
         );

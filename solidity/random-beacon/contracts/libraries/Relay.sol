@@ -110,7 +110,6 @@ library Relay {
         );
     }
 
-
     /// @notice Creates a new relay entry. Gas-optimized version that can be
     ///         called only before the soft timeout. This should be the majority
     ///         of cases.
