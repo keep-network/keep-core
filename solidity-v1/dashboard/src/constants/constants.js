@@ -58,6 +58,8 @@ export const LINK = {
     },
   },
   proposals: {
+    shiftingIncentivesToV2Metapool:
+      "https://forum.keep.network/t/move-saddle-tbtc-liquidity-incentives-to-v2-metapool/380",
     shiftingIncentivesToCoveragePools:
       "https://forum.keep.network/t/shifting-incentives-towards-tbtc-v2-and-coverage-pool-version-2/322",
     removeIncentivesForKEEPTBTCpool:

@@ -154,23 +154,17 @@ const Metrics = () => {
 
 LiquidityRewardCard.Metrics = Metrics
 
-LiquidityRewardCard.InactivePoolBanner = ({
-  icon = Icons.Bell,
-  title = "Incentives removed",
-  description = "The incentives for this pool has been removed and you can no longer deposit the lp tokens. You can still withdraw rewards that you already earned.",
-  link = null,
-  linkText = "More info",
-}) => {
-  return (
-    <UserInfoBanner
-      incentivesRemoved={true}
-      icon={icon}
-      title={title}
-      description={description}
-      link={link}
-      linkText={linkText}
-    />
-  )
+LiquidityRewardCard.InactivePoolBanner = ({ inactivePoolBannerProps = {} }) => {
+  const bannerProps = {
+    icon: Icons.Bell,
+    title: "Incentives removed",
+    description:
+      "The incentives for this pool has been removed and you can no longer deposit the lp tokens. You can still withdraw rewards that you already earned.",
+    link: null,
+    linkText: "More info",
+    ...inactivePoolBannerProps,
+  }
+  return <UserInfoBanner incentivesRemoved={true} {...bannerProps} />
 }
 
 const ActivePoolBanner = ({

@@ -48,6 +48,9 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.lpTokens,
     wrapperClassName: "tbtc-v2-saddle",
+    inactivePoolBannerProps: {
+      link: LINK.proposals.shiftingIncentivesToV2Metapool,
+    },
   },
   {
     id: "TBTC_ETH",
@@ -61,7 +64,7 @@ const cards = [
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTC_ETH.lpTokens,
     wrapperClassName: "tbtc-eth",
     incentivesRemoved: true,
-    incentivesRemovedBannerProps: {
+    inactivePoolBannerProps: {
       link: LINK.proposals.removeIncentivesForTBTCETHpool,
     },
     displayLPTokenBalance: true,
@@ -91,7 +94,7 @@ const cards = [
     lpTokens: LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.lpTokens,
     wrapperClassName: "tbtc-saddle",
     incentivesRemoved: true,
-    incentivesRemovedBannerProps: {
+    inactivePoolBannerProps: {
       link: LINK.proposals.shiftingIncentivesToCoveragePools,
     },
   },
@@ -132,7 +135,7 @@ const cards = [
     lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.lpTokens,
     wrapperClassName: "keep-tbtc",
     incentivesRemoved: true,
-    incentivesRemovedBannerProps: {
+    inactivePoolBannerProps: {
       link: LINK.proposals.removeIncentivesForKEEPTBTCpool,
     },
     displayLPTokenBalance: true,
