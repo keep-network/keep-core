@@ -421,6 +421,40 @@ describe("RandomBeacon - Relay", () => {
       })
 
       context("when the input params are valid", () => {
+        context("when result is submitted before the soft timeout", () => {
+          let tx: ContractTransaction
+
+          before(async () => {
+            await createSnapshot()
+            tx = await randomBeacon
+              .connect(submitter)
+              ["submitRelayEntry(bytes,uint32[])"](
+                blsData.groupSignature,
+                membersIDs
+              )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should not slash members ", async () => {
+            await expect(tx).to.not.emit(staking, "Slashed")
+
+            await expect(tx).to.not.emit(randomBeacon, "RelayEntryDelaySlashed")
+          })
+
+          it("should emit RelayEntrySubmitted event", async () => {
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntrySubmitted")
+              .withArgs(1, submitter.address, blsData.groupSignature)
+          })
+
+          it("should terminate the relay request", async () => {
+            expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          })
+        })
+
         context("when result is submitted after the soft timeout", () => {
           let tx: ContractTransaction
 
@@ -474,19 +508,6 @@ describe("RandomBeacon - Relay", () => {
 
           it("should terminate the relay request", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
-          })
-        })
-
-        context("when result is submitted before the soft timeout", () => {
-          it("should revert", async () => {
-            await expect(
-              randomBeacon
-                .connect(submitter)
-                ["submitRelayEntry(bytes,uint32[])"](
-                  blsData.nextGroupSignature,
-                  membersIDs
-                )
-            ).to.be.revertedWith("Relay did not pass a soft timeout")
           })
         })
       })

@@ -147,17 +147,22 @@ library Relay {
         uint256 softTimeoutBlock = self.currentRequestStartBlock +
             (dkgGroupSize * self.relayEntrySubmissionEligibilityDelay);
 
-        uint256 submissionDelay = block.number - softTimeoutBlock;
-        // The slashing amount is a result of a calculated portion of the submission
-        // delay blocks. The max delay can be set up to relayEntryHardTimeout, which
-        // in consequence sets the max slashing amount.
-        if (submissionDelay > self.relayEntryHardTimeout) {
-            submissionDelay = self.relayEntryHardTimeout;
+        if (block.number > softTimeoutBlock) {
+            uint256 submissionDelay = block.number - softTimeoutBlock;
+            // The slashing amount is a result of a calculated portion of the submission
+            // delay blocks. The max delay can be set up to relayEntryHardTimeout, which
+            // in consequence sets the max slashing amount.
+            if (submissionDelay > self.relayEntryHardTimeout) {
+                submissionDelay = self.relayEntryHardTimeout;
+            }
+
+            return
+                (submissionDelay *
+                    self.relayEntrySubmissionFailureSlashingAmount) /
+                self.relayEntryHardTimeout;
         }
 
-        return
-            (submissionDelay * self.relayEntrySubmissionFailureSlashingAmount) /
-            self.relayEntryHardTimeout;
+        return 0;
     }
 
     /// @notice Set relayRequestFee parameter.

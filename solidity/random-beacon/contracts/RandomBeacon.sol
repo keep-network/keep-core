@@ -749,10 +749,6 @@ contract RandomBeacon is Ownable {
         bytes calldata entry,
         uint32[] calldata groupMembers
     ) external {
-        require(
-            relay.hasRequestSoftTimedOut(),
-            "Relay did not pass a soft timeout"
-        );
         require(!relay.hasRequestHardTimedOut(), "Relay request timed out");
 
         Groups.Group storage group = groups.getGroup(
@@ -768,26 +764,27 @@ contract RandomBeacon is Ownable {
         uint256 currentRequestId = relay.currentRequestID;
         relay.submitEntry(entry, group.groupPubKey);
 
-        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
-            groupMembers
-        );
+        if (slashingAmount > 0) {
+            address[] memory groupMembersAddresses = sortitionPool
+                .getIDOperators(groupMembers);
 
-        try staking.slash(slashingAmount, groupMembersAddresses) {
-            // slither-disable-next-line reentrancy-events
-            emit RelayEntryDelaySlashed(
-                currentRequestId,
-                slashingAmount,
-                groupMembersAddresses
-            );
-        } catch {
-            // Should never happen but we want to ensure a non-critical path
-            // failure from an external contract does not stop group members
-            // from submitting a valid relay entry.
-            emit RelayEntryDelaySlashingFailed(
-                currentRequestId,
-                slashingAmount,
-                groupMembersAddresses
-            );
+            try staking.slash(slashingAmount, groupMembersAddresses) {
+                // slither-disable-next-line reentrancy-events
+                emit RelayEntryDelaySlashed(
+                    currentRequestId,
+                    slashingAmount,
+                    groupMembersAddresses
+                );
+            } catch {
+                // Should never happen but we want to ensure a non-critical path
+                // failure from an external contract does not stop group members
+                // from submitting a valid relay entry.
+                emit RelayEntryDelaySlashingFailed(
+                    currentRequestId,
+                    slashingAmount,
+                    groupMembersAddresses
+                );
+            }
         }
 
         // If DKG is awaiting a seed, that means we should start the actual
