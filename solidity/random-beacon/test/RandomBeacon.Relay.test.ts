@@ -277,7 +277,7 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("submitRelayEntry", () => {
+  describe("submitRelayEntry happy path", () => {
     before(async () => {
       await createSnapshot()
 
@@ -300,7 +300,7 @@ describe("RandomBeacon - Relay", () => {
         await restoreSnapshot()
       })
 
-      context("when relay entry is not timed out", () => {
+      context("when relay entry has not timed out", () => {
         context("when entry is valid", () => {
           context("when result is submitted before the soft timeout", () => {
             let tx: ContractTransaction
@@ -309,7 +309,7 @@ describe("RandomBeacon - Relay", () => {
 
               tx = await randomBeacon
                 .connect(submitter)
-                .submitRelayEntry2(blsData.groupSignature)
+                ["submitRelayEntry(bytes)"](blsData.groupSignature)
             })
 
             after(async () => {
@@ -332,56 +332,25 @@ describe("RandomBeacon - Relay", () => {
           })
 
           context("when result is submitted after the soft timeout", () => {
-            let tx: ContractTransaction
-
             before(async () => {
               await createSnapshot()
-
-              // Let's assume we want to submit the relay entry after 75%
-              // of the soft timeout period elapses. If so we need to
-              // mine the following number of blocks:
-              // `groupSize * relayEntrySubmissionEligibilityDelay +
-              // (0.75 * relayEntryHardTimeout)`. However, we need to
-              // subtract one block because the relay entry submission
-              // transaction will move the blockchain ahead by one block
-              // due to the Hardhat auto-mine feature.
-              await mineBlocks(
-                constants.groupSize *
-                  params.relayEntrySubmissionEligibilityDelay +
-                  0.75 * params.relayEntryHardTimeout -
-                  1
-              )
-
-              tx = await randomBeacon
-                .connect(submitter)
-                .submitRelayEntry(blsData.groupSignature, membersIDs)
             })
 
             after(async () => {
               await restoreSnapshot()
             })
 
-            it("should slash a correct portion of the slashing amount for all members ", async () => {
-              // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
-              // 75% of the soft timeout period elapsed so we expect
-              // `750e18` to be slashed.
-              await expect(tx)
-                .to.emit(staking, "Slashed")
-                .withArgs(to1e18(750), membersAddresses)
-
-              await expect(tx)
-                .to.emit(randomBeacon, "RelayEntryDelaySlashed")
-                .withArgs(1, to1e18(750), membersAddresses)
-            })
-
-            it("should emit RelayEntrySubmitted event", async () => {
-              await expect(tx)
-                .to.emit(randomBeacon, "RelayEntrySubmitted")
-                .withArgs(1, submitter.address, blsData.groupSignature)
-            })
-
-            it("should terminate the relay request", async () => {
-              expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+            it("should revert", async () => {
+              await mineBlocks(
+                constants.groupSize *
+                  params.relayEntrySubmissionEligibilityDelay +
+                  1
+              )
+              await expect(
+                randomBeacon
+                  .connect(submitter)
+                  ["submitRelayEntry(bytes)"](blsData.groupSignature)
+              ).to.be.revertedWith("Relay entry soft timeout passed")
             })
           })
 
@@ -396,7 +365,7 @@ describe("RandomBeacon - Relay", () => {
 
               tx = await randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.groupSignature, membersIDs)
+                ["submitRelayEntry(bytes)"](blsData.groupSignature)
             })
 
             after(async () => {
@@ -416,7 +385,151 @@ describe("RandomBeacon - Relay", () => {
             await expect(
               randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.nextGroupSignature, membersIDs)
+                ["submitRelayEntry(bytes)"](blsData.nextGroupSignature)
+            ).to.be.revertedWith("Invalid entry")
+          })
+        })
+      })
+    })
+  })
+
+  describe("submitRelayEntry after the soft timeout", () => {
+    before(async () => {
+      await createSnapshot()
+
+      await createGroup(randomBeacon as RandomBeaconStub, members)
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    context("when relay request is in progress", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await approveTestToken()
+        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("when the input params are valid", () => {
+        context("when result is submitted before the soft timeout", () => {
+          let tx: ContractTransaction
+
+          before(async () => {
+            await createSnapshot()
+            tx = await randomBeacon
+              .connect(submitter)
+              ["submitRelayEntry(bytes,uint32[])"](
+                blsData.groupSignature,
+                membersIDs
+              )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should not slash members ", async () => {
+            await expect(tx).to.not.emit(staking, "Slashed")
+
+            await expect(tx).to.not.emit(randomBeacon, "RelayEntryDelaySlashed")
+          })
+
+          it("should emit RelayEntrySubmitted event", async () => {
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntrySubmitted")
+              .withArgs(1, submitter.address, blsData.groupSignature)
+          })
+
+          it("should terminate the relay request", async () => {
+            expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          })
+        })
+
+        context("when result is submitted after the soft timeout", () => {
+          let tx: ContractTransaction
+
+          before(async () => {
+            await createSnapshot()
+
+            // Let's assume we want to submit the relay entry after 75%
+            // of the soft timeout period elapses. If so we need to
+            // mine the following number of blocks:
+            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // (0.75 * relayEntryHardTimeout)`. However, we need to
+            // subtract one block because the relay entry submission
+            // transaction will move the blockchain ahead by one block
+            // due to the Hardhat auto-mine feature.
+            await mineBlocks(
+              constants.groupSize *
+                params.relayEntrySubmissionEligibilityDelay +
+                0.75 * params.relayEntryHardTimeout -
+                1
+            )
+            tx = await randomBeacon
+              .connect(submitter)
+              ["submitRelayEntry(bytes,uint32[])"](
+                blsData.groupSignature,
+                membersIDs
+              )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should slash a correct portion of the slashing amount for all members ", async () => {
+            // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
+            // 75% of the soft timeout period elapsed so we expect
+            // `750e18` to be slashed.
+            await expect(tx)
+              .to.emit(staking, "Slashed")
+              .withArgs(to1e18(750), membersAddresses)
+
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntryDelaySlashed")
+              .withArgs(1, to1e18(750), membersAddresses)
+          })
+
+          it("should emit RelayEntrySubmitted event", async () => {
+            await expect(tx)
+              .to.emit(randomBeacon, "RelayEntrySubmitted")
+              .withArgs(1, submitter.address, blsData.groupSignature)
+          })
+
+          it("should terminate the relay request", async () => {
+            expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          })
+        })
+      })
+
+      context("when the input params are invalid", () => {
+        before(async () => {
+          await createSnapshot()
+          await mineBlocks(
+            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
+              1
+          )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when entry is not valid", () => {
+          it("should revert", async () => {
+            await expect(
+              randomBeacon
+                .connect(submitter)
+                ["submitRelayEntry(bytes,uint32[])"](
+                  blsData.nextGroupSignature,
+                  membersIDs
+                )
             ).to.be.revertedWith("Invalid entry")
           })
         })
@@ -427,13 +540,16 @@ describe("RandomBeacon - Relay", () => {
             await expect(
               randomBeacon
                 .connect(submitter)
-                .submitRelayEntry(blsData.nextGroupSignature, invalidMembersId)
+                ["submitRelayEntry(bytes,uint32[])"](
+                  blsData.nextGroupSignature,
+                  invalidMembersId
+                )
             ).to.be.revertedWith("Invalid group members")
           })
         })
       })
 
-      context("when relay entry is timed out", () => {
+      context("when a relay entry has timed out", () => {
         it("should revert", async () => {
           await mineBlocks(
             constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
@@ -443,19 +559,12 @@ describe("RandomBeacon - Relay", () => {
           await expect(
             randomBeacon
               .connect(submitter)
-              .submitRelayEntry(blsData.nextGroupSignature, membersIDs)
+              ["submitRelayEntry(bytes,uint32[])"](
+                blsData.nextGroupSignature,
+                membersIDs
+              )
           ).to.be.revertedWith("Relay request timed out")
         })
-      })
-    })
-
-    context("when relay request is not in progress", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeacon
-            .connect(submitter)
-            .submitRelayEntry(blsData.nextGroupSignature, membersIDs)
-        ).to.be.revertedWith("No relay request in progress")
       })
     })
   })
@@ -817,8 +926,6 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getSlashingFactor", () => {
-    const testGroupSize = 8
-
     before(async () => {
       await relayStub.setCurrentRequestStartBlock()
     })
@@ -834,7 +941,7 @@ describe("RandomBeacon - Relay", () => {
     context("when soft timeout has not been exceeded yet", () => {
       it("should return a slashing factor equal to zero", async () => {
         await mineBlocks(
-          testGroupSize * params.relayEntrySubmissionEligibilityDelay
+          constants.groupSize * params.relayEntrySubmissionEligibilityDelay
         )
 
         expect(await relayStub.getSlashingFactor()).to.be.equal(0)
@@ -844,7 +951,7 @@ describe("RandomBeacon - Relay", () => {
     context("when soft timeout has been exceeded by one block", () => {
       it("should return a correct slashing factor", async () => {
         await mineBlocks(
-          testGroupSize * params.relayEntrySubmissionEligibilityDelay + 1
+          constants.groupSize * params.relayEntrySubmissionEligibilityDelay + 1
         )
 
         // We are exceeded the soft timeout by `1` block so this is the
@@ -862,7 +969,7 @@ describe("RandomBeacon - Relay", () => {
       () => {
         it("should return a correct slashing factor", async () => {
           await mineBlocks(
-            testGroupSize * params.relayEntrySubmissionEligibilityDelay +
+            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
               params.relayEntryHardTimeout
           )
 
@@ -882,7 +989,7 @@ describe("RandomBeacon - Relay", () => {
       () => {
         it("should return a correct slashing factor", async () => {
           await mineBlocks(
-            testGroupSize * params.relayEntrySubmissionEligibilityDelay +
+            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
               params.relayEntryHardTimeout +
               1
           )
