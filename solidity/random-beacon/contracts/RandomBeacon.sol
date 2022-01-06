@@ -741,8 +741,11 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Creates a new relay entry.
-    /// @dev It should be called only after a soft timeout. Group members will be
-    ///      slashed. Function reverts if a hard timeout is hit.
+    /// @dev It should be called after a soft timeout is hit when the slashing is
+    ///      involved. It is allowed to call this function before a soft timeout,
+    ///      however it would use more gas compared to the other submitRelayEntry
+    ///      that doesn't take groupMembers param. Function reverts if a hard
+    ///      timeout is hit.
     /// @param entry Group BLS signature over the previous entry.
     /// @param groupMembers Group member ids that participated in dkg (excluding IA/DQ).
     function submitRelayEntry(
