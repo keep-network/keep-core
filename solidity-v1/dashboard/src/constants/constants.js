@@ -50,7 +50,8 @@ export const LINK = {
   },
   pools: {
     saddle: {
-      tbtcV2: "https://saddle.exchange/#/pools/tbtc/deposit",
+      tbtc: "https://saddle.exchange/#/pools/tbtc/deposit",
+      tbtcV2: "https://saddle.exchange/#/pools/tbtcv2/deposit",
     },
     uniswap: {
       tbtcETH: `https://app.uniswap.org/#/add/v2/0x8daebade922df735c38c80c7ebd708af50815faa/ETH`,
@@ -103,7 +104,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
   TBTCV2_SADDLE_META_V2: {
     contractName: LP_REWARDS_TBTCV2_SADDLEV2_CONTRACT_NAME,
     label: "TBTC V2 + SADDLE Meta V2",
-    viewPoolLink: LINK.pools.saddle.tbtcV2, // TODO
+    viewPoolLink: LINK.pools.saddle.tbtcV2,
     pool: POOL_TYPE.SADDLE,
     lpTokens: [],
     options: {
@@ -117,7 +118,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
   TBTCV2_SADDLE: {
     contractName: LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME,
     label: "TBTC V2 + SADDLE",
-    viewPoolLink: LINK.pools.saddle.tbtcV2,
+    viewPoolLink: LINK.pools.saddle.tbtc,
     pool: POOL_TYPE.SADDLE,
     lpTokens: [],
     options: {
