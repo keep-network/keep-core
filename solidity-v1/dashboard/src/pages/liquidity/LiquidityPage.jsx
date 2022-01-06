@@ -24,8 +24,21 @@ import OnlyIf from "../../components/OnlyIf"
 
 const cards = [
   {
-    id: "TBTCV2_SADDLE",
+    id: "TBTCV2_SADDLE_META_V2",
     CardComponent: ActiveLiquidityRewardCard,
+    title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.label,
+    liquidityPairContractName:
+      LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.contractName,
+    MainIcon: Icons.TBTC_V2,
+    SecondaryIcon: Icons.Saddle,
+    viewPoolLink: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.viewPoolLink,
+    pool: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.pool,
+    lpTokens: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.lpTokens,
+    wrapperClassName: "tbtc-v2-saddle",
+  },
+  {
+    id: "TBTCV2_SADDLE",
+    CardComponent: InactiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.label,
     liquidityPairContractName:
       LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE.contractName,

@@ -1,6 +1,7 @@
 import {
   createSaddleSwapContract,
   createSaddleTBTCMetaPool,
+  createSaddleTBTCMetaPoolV2,
 } from "../contracts"
 
 export const KEEP_TOKEN_CONTRACT_NAME = "token"
@@ -24,6 +25,8 @@ export const LP_REWARDS_KEEP_ETH_CONTRACT_NAME = "LPRewardsKEEPETHContract"
 export const LP_REWARDS_TBTC_ETH_CONTRACT_NAME = "LPRewardsTBTCETHContract"
 export const LP_REWARDS_KEEP_TBTC_CONTRACT_NAME = "LPRewardsKEEPTBTCContract"
 export const LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME = "LPRewardsTBTCv2Saddle"
+export const LP_REWARDS_TBTCV2_SADDLEV2_CONTRACT_NAME =
+  "LPRewardsTBTCv2SaddleV2"
 
 export const KEEP_TOKEN_GEYSER_CONTRACT_NAME = "keepTokenGeyserContract"
 export const ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME =
@@ -97,6 +100,20 @@ export const POOL_TYPE = {
 }
 
 export const LIQUIDITY_REWARD_PAIRS = {
+  TBTCV2_SADDLE_META_V2: {
+    contractName: LP_REWARDS_TBTCV2_SADDLEV2_CONTRACT_NAME,
+    label: "TBTC V2 + SADDLE Meta V2",
+    viewPoolLink: LINK.pools.saddle.tbtcV2, // TODO
+    pool: POOL_TYPE.SADDLE,
+    lpTokens: [],
+    options: {
+      createSwapContract: createSaddleTBTCMetaPoolV2,
+      poolTokens: [
+        { name: "TBTC-V2", decimals: 18 },
+        { name: "saddleBTC-V2", decimals: 18 },
+      ],
+    },
+  },
   TBTCV2_SADDLE: {
     contractName: LP_REWARDS_TBTCV2_SADDLE_CONTRACT_NAME,
     label: "TBTC V2 + SADDLE",
