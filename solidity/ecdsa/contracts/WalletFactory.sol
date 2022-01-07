@@ -18,14 +18,19 @@ import "./libraries/DKG.sol";
 import "./Wallet.sol";
 import "./DKGValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@thesis/solidity-contracts/contracts/clone/CloneFactory.sol";
 
-contract WalletFactory {
+contract WalletFactory is CloneFactory {
     using DKG for DKG.Data;
 
     // Libraries data storages
     DKG.Data internal dkg;
 
     Wallet[] public wallets;
+
+    // Holds the address of the wallet contract
+    // which will be used as a master contract for cloning.
+    address public immutable masterWallet;
 
     uint256 public relayEntry = 12345; // TODO: get value from Random Beacon
 
@@ -61,8 +66,9 @@ contract WalletFactory {
 
     event WalletCreated(address walletAddress);
 
-    constructor(SortitionPool _sortitionPool, DKGValidator _dkgValidator) {
+    constructor(SortitionPool _sortitionPool, DKGValidator _dkgValidator, address _masterWallet) {
         dkg.init(_sortitionPool, _dkgValidator);
+        masterWallet = _masterWallet;
     }
 
     // TODO: Revisit to implement mechanism for a fresh wallet creation.
@@ -82,7 +88,10 @@ contract WalletFactory {
         // See https://github.com/keep-network/keep-core/pull/2768
         uint32[] memory walletMembers = dkgResult.members;
 
-        Wallet wallet = new Wallet(walletMembers);
+        address clonedWalletAddress = createClone(masterWallet);
+        require(clonedWalletAddress != address(0), "Cloned wallet address is 0");
+
+        Wallet wallet = Wallet(clonedWalletAddress);
 
         wallets.push(wallet);
 
