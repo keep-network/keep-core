@@ -168,7 +168,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
   TBTCV2_MBTC: {
     label: "TBTCv2 + mBTC",
     viewPoolLink:
-      "https://app.mstable.org/#/mbtc/pools/0xb61a6f928b3f069a68469ddb670f20eeeb4921e0",
+      "https://mstable.app/#/mbtc/pools/0xc3280306b6218031e61752d060b091278d45c329",
     pool: POOL_TYPE.MSTABLE,
   },
   KEEP_TBTC: {
