@@ -248,6 +248,8 @@ export const COV_POOL_TIMELINE_STEPS = {
   CLAIM_TOKENS: 4,
 }
 
+export const COV_POOLS_FORMS_MAX_DECIMAL_PLACES = 6
+
 /**
  * Enum defines cov pools withdrawal status
  * @readonly

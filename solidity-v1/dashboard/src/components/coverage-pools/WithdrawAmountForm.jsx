@@ -14,7 +14,7 @@ import MaxAmountAddon from "../MaxAmountAddon"
 import Button from "../Button"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { covKEEP } from "../../utils/token.utils"
-import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../pages/coverage-pools/CoveragePoolPage"
+import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../constants/constants"
 
 const WithdrawAmountForm = ({
   onCancel,

@@ -26,8 +26,6 @@ import { Keep } from "../../contracts"
 import { MODAL_TYPES } from "../../constants/constants"
 import { CoveragePoolV1ExchangeRate } from "../../components/coverage-pools/ExchangeRate"
 
-export const COV_POOLS_FORMS_MAX_DECIMAL_PLACES = 6
-
 const CoveragePoolPage = () => {
   const { openConfirmationModal, openModal } = useModal()
   const dispatch = useDispatch()

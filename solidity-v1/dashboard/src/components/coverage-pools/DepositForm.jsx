@@ -21,8 +21,10 @@ import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
-import { LINK } from "../../constants/constants"
-import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../pages/coverage-pools/CoveragePoolPage"
+import {
+  COV_POOLS_FORMS_MAX_DECIMAL_PLACES,
+  LINK,
+} from "../../constants/constants"
 
 const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
   const onAddonClick = useSetMaxAmountToken(
