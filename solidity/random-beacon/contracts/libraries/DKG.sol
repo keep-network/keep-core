@@ -124,7 +124,7 @@ library DKG {
         uint8[] misbehavedMembersIndices,
         bytes signatures,
         uint256[] signingMembersIndices,
-        uint32[] selectedMembers
+        uint32[] selectedMembersIds
     );
 
     event DkgTimedOut();
