@@ -1,5 +1,5 @@
 import React from "react"
-import * as moment from "moment"
+import moment from "moment"
 import { CompoundDropdown as Dropdown } from "./Dropdown"
 import * as Icons from "./Icons"
 import { ADD_TO_CALENDAR_OPTIONS } from "../constants/constants"
