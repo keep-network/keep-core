@@ -2,7 +2,7 @@ name: Solidity Random Beacon
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   push:
     branches:
       - main
@@ -12,16 +12,16 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment for workflow execution'
+        description: "Environment for workflow execution"
         required: false
-        default: 'dev'
+        default: "dev"
       upstream_builds:
-        description: 'Upstream builds'
+        description: "Upstream builds"
         required: false
       upstream_ref:
-        description: 'Git reference to checkout (e.g. branch name)'
+        description: "Git reference to checkout (e.g. branch name)"
         required: false
-        default: 'main'
+        default: "main"
 
 jobs:
   contracts-detect-changes:
@@ -66,7 +66,7 @@ jobs:
 
       - name: Lint
         run: yarn lint
-  
+
   contracts-slither:
     needs: contracts-detect-changes
     if: |
@@ -107,7 +107,7 @@ jobs:
 
       - name: Run Slither
         run: slither .
-  
+
   contracts-build-and-test:
     needs: contracts-detect-changes
     if: |
@@ -125,7 +125,7 @@ jobs:
           node-version: "14.x"
           cache: "yarn"
           cache-dependency-path: solidity/random-beacon/yarn.lock
-            
+
       - name: Install dependencies
         run: yarn install --network-concurrency 1
 
