@@ -59,7 +59,7 @@ jobs:
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
       - name: Install dependencies
-        run: yarn install --network-concurrency 1
+        run: yarn install
 
       - name: Build
         run: yarn build
@@ -103,7 +103,7 @@ jobs:
         run: pip3 install slither-analyzer==$SLITHER_VERSION
 
       - name: Install dependencies
-        run: yarn install --network-concurrency 1
+        run: yarn install
 
       - name: Run Slither
         run: slither .
@@ -127,7 +127,7 @@ jobs:
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
       - name: Install dependencies
-        run: yarn install --network-concurrency 1
+        run: yarn install
 
       - name: Build solidity contracts
         run: yarn build
@@ -153,7 +153,7 @@ jobs:
           cache-dependency-path: solidity/ecdsa/yarn.lock
 
       - name: Install dependencies
-        run: yarn install --network-concurrency 1 --frozen-lockfile
+        run: yarn install --frozen-lockfile
 
       - name: Deploy contracts
         run: yarn deploy
@@ -176,7 +176,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        run: yarn install --network-concurrency 1 --frozen-lockfile
+        run: yarn install --frozen-lockfile
 
       # TODO: Configure tenderly
 
