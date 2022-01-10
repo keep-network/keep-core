@@ -6,6 +6,7 @@ monthly_files = [
     'data/21_09.json',
     'data/21_10.json',
     'data/21_11.json',
+    'data/21_12.json',
     'data/bf.json'
 ]
 
