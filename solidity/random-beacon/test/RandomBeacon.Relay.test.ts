@@ -277,7 +277,7 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("submitRelayEntry happy path", () => {
+  describe("submitRelayEntry before the soft timeout - happy path", () => {
     before(async () => {
       await createSnapshot()
 
@@ -393,7 +393,7 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("submitRelayEntry after the soft timeout", () => {
+  describe("submitRelayEntry before and after the soft timeout", () => {
     before(async () => {
       await createSnapshot()
 
