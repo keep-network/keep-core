@@ -22,7 +22,9 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationBlockNumber;
-        // Keccak256 hash of group members identifiers array (excluding IA/DQ members).
+        // Keccak256 hash of group members identifiers array. Group members do not
+        // include operators selected by the sortition pool that misbehaved during DKG.
+        // See how `misbehavedMembersIndices` are used in `hashGroupMembers` function.
         bytes32 membersHash;
         // When selected group does not create a relay entry on-time it should
         // be marked as terminated.
