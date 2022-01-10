@@ -52,14 +52,16 @@ const makeICSCalendarUrl = (event) => {
   return encodeURI(`data:text/calendar;charset=utf8,${components.join("\n")}`)
 }
 
-const options = [
+const calendars = [
   {
     label: "Google Calendar",
     value: ADD_TO_CALENDAR_OPTIONS.GOOGLE_CALENDER,
+    calendarEventBuilder: makeGoogleCalendarUrl,
   },
   {
     label: "Apple Calendar",
     value: ADD_TO_CALENDAR_OPTIONS.APPLE_CALENDAR,
+    calendarEventBuilder: makeICSCalendarUrl,
   },
 ]
 
@@ -78,25 +80,13 @@ const AddToCalendar = ({
   }
 
   const onCalendarSelect = (selectedCalendar) => {
-    switch (selectedCalendar) {
-      case ADD_TO_CALENDAR_OPTIONS.GOOGLE_CALENDER: {
-        const win = window.open(makeGoogleCalendarUrl(event))
-        win.focus()
-        break
-      }
-      case ADD_TO_CALENDAR_OPTIONS.APPLE_CALENDAR: {
-        const win = window.open(makeICSCalendarUrl(event))
-        win.focus()
-        break
-      }
-      default:
-        return
-    }
+    const win = window.open(selectedCalendar.calendarEventBuilder(event))
+    win.focus()
   }
 
   return (
     <Dropdown
-      selectedItem={options[0]}
+      selectedItem={{}}
       onSelect={onCalendarSelect}
       comparePropertyName="label"
       className={`add-to-calendar-dropdown ${className}`}
@@ -114,13 +104,13 @@ const AddToCalendar = ({
         </div>
       </Dropdown.Trigger>
       <Dropdown.Options className="add-to-calendar-dropdown__options">
-        {options.map((option) => {
+        {calendars.map((calendar) => {
           return (
             <Dropdown.Option
-              key={`dropdown-${option.value}`}
-              value={option.value}
+              key={`dropdown-${calendar.value}`}
+              value={calendar}
             >
-              {option.label}
+              {calendar.label}
             </Dropdown.Option>
           )
         })}
