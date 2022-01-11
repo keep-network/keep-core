@@ -58,9 +58,8 @@ contract RandomBeaconStub is RandomBeacon {
 
     function isGroupTerminated(uint64 groupId) external view returns (bool) {
         bytes32 groupPubKeyHash = groups.groupsRegistry[groupId];
-        Groups.Group memory group = groups.groupsData[groupPubKeyHash];
 
-        return group.terminated;
+        return groups.groupsData[groupPubKeyHash].terminated;
     }
 
     function publicDkgLockState() external {

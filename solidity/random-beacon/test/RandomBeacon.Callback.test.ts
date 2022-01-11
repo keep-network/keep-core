@@ -51,7 +51,6 @@ describe("RandomBeacon - Callback", () => {
   let testToken: TestToken
   let callbackContract: CallbackContractStub
   let callbackContract1: CallbackContractStub
-  let membersIDs: OperatorID[]
 
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
@@ -65,7 +64,6 @@ describe("RandomBeacon - Callback", () => {
     testToken = contracts.testToken as TestToken
     callbackContract = contracts.callbackContractStub as CallbackContractStub
     callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
-    membersIDs = signers.map((member) => member.id)
   })
 
   describe("requestRelayEntry", () => {
@@ -105,7 +103,7 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(blsData.groupSignature, membersIDs)
+          ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
         await approveTestToken()
 
@@ -126,7 +124,7 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(blsData.groupSignature, membersIDs)
+          ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
         await approveTestToken()
 
@@ -166,7 +164,7 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(blsData.groupSignature, membersIDs)
+            ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
           const lastEntry = await callbackContract.lastEntry()
           await expect(lastEntry).to.equal(blsData.groupSignatureUint256)
@@ -196,7 +194,7 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(blsData.groupSignature, membersIDs)
+            ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
@@ -216,7 +214,7 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(blsData.groupSignature, membersIDs)
+            ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")

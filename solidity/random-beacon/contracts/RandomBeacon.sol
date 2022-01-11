@@ -715,6 +715,26 @@ contract RandomBeacon is Ownable {
         }
     }
 
+    /// @notice Creates a new relay entry. Gas-optimized version that can be
+    ///         called only before the soft timeout. This should be the majority
+    ///         of cases.
+    /// @param entry Group BLS signature over the previous entry.
+    function submitRelayEntry(bytes calldata entry) external {
+        Groups.Group storage group = groups.getGroup(
+            relay.currentRequestGroupID
+        );
+
+        relay.submitEntryBeforeSoftTimeout(entry, group.groupPubKey);
+
+        // If DKG is awaiting a seed, that means the we should start the actual
+        // group creation process.
+        if (dkg.currentState() == DKG.State.AWAITING_SEED) {
+            dkg.start(uint256(keccak256(entry)));
+        }
+
+        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+    }
+
     /// @notice Creates a new relay entry.
     /// @param entry Group BLS signature over the previous entry.
     /// @param groupMembers Identifiers of group members.

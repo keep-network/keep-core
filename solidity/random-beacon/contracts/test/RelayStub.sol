@@ -18,11 +18,7 @@ contract RelayStub {
         relay.currentRequestStartBlock = uint64(block.number);
     }
 
-    function getSlashingFactor(uint256 groupSize)
-        external
-        view
-        returns (uint256)
-    {
-        return relay.getSlashingFactor(groupSize);
+    function getSlashingFactor() external view returns (uint256) {
+        return relay.getSlashingFactor();
     }
 }
