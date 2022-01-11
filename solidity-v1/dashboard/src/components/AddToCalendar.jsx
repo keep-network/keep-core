@@ -4,6 +4,7 @@ import { CompoundDropdown as Dropdown } from "./Dropdown"
 import * as Icons from "./Icons"
 import { ADD_TO_CALENDAR_OPTIONS } from "../constants/constants"
 import { useWeb3Context } from "./WithWeb3Context"
+import { renderDynamicConstant } from "../utils/constants.utils"
 
 const makeTime = (time) => {
   return moment(time)
@@ -79,7 +80,7 @@ const AddToCalendar = ({
 
   const locationWithInsertedAddress = useMemo(() => {
     if (!yourAddress) return location
-    return location.replace("${address}", yourAddress)
+    return renderDynamicConstant(location, yourAddress)
   }, [yourAddress, location])
 
   const { formattedStartsAt, formattedEndsAt } = useMemo(() => {
