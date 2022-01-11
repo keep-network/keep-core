@@ -114,6 +114,8 @@ library DKG {
 
     event DkgStarted(uint256 indexed seed);
 
+    // To recreate the members that actively took part in dkg, the selected members
+    // array should be filtered out from misbehavedMembersIndices.
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
@@ -122,7 +124,7 @@ library DKG {
         uint8[] misbehavedMembersIndices,
         bytes signatures,
         uint256[] signingMembersIndices,
-        uint32[] members
+        uint32[] selectedMembersIds
     );
 
     event DkgTimedOut();

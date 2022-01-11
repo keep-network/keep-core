@@ -56,24 +56,26 @@ library Heartbeat {
     /// @notice Verifies the failure claim according to rules mentioned in
     ///         `FailureClaim` struct documentation. Reverts if verification
     ///         fails.
+    /// @dev Group members hash is validated upstream in
+    ///      RandomBeacon.notifyFailedHeartbeat()
     /// @param sortitionPool Sortition pool used by the application performing
     ///        claim verification.
     /// @param claim Failure claim.
     /// @param group Group raising the claim.
     /// @param nonce Current nonce for group used in the claim.
+    /// @param groupMembers Identifiers of group members.
     /// @return failedMembers Identifiers of members who failed the heartbeat.
     function verifyFailureClaim(
         SortitionPool sortitionPool,
         FailureClaim calldata claim,
         Groups.Group storage group,
-        uint256 nonce
+        uint256 nonce,
+        uint32[] calldata groupMembers
     ) external view returns (uint32[] memory failedMembers) {
-        uint256 groupSize = group.members.length;
-
         // Validate failed members indices. Maximum indices count is equal to
         // the group size and is not limited deliberately to leave a theoretical
         // possibility to accuse more members than `groupSize - groupThreshold`.
-        validateMembersIndices(claim.failedMembersIndices, groupSize);
+        validateMembersIndices(claim.failedMembersIndices, groupMembers.length);
 
         // Validate signatures array is properly formed and number of
         // signatures and signers is correct.
@@ -88,12 +90,15 @@ library Heartbeat {
             "Unexpected signatures count"
         );
         require(signaturesCount >= groupThreshold, "Too few signatures");
-        require(signaturesCount <= groupSize, "Too many signatures");
+        require(signaturesCount <= groupMembers.length, "Too many signatures");
 
         // Validate signing members indices. Note that `signingMembersIndices`
         // were already partially validated during `signatures` parameter
         // validation.
-        validateMembersIndices(claim.signingMembersIndices, groupSize);
+        validateMembersIndices(
+            claim.signingMembersIndices,
+            groupMembers.length
+        );
 
         // Each signing member needs to sign the hash of packed `groupPubKey`
         // and `failedMembersIndices` parameters. Usage of group public key
@@ -107,8 +112,8 @@ library Heartbeat {
             )
         ).toEthSignedMessageHash();
 
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            group.members
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
+            groupMembers
         );
 
         // Verify each signature.
@@ -125,7 +130,7 @@ library Heartbeat {
             );
 
             require(
-                groupMembers[memberIndex - 1] == recoveredAddress,
+                groupMembersAddresses[memberIndex - 1] == recoveredAddress,
                 "Invalid signature"
             );
 
@@ -139,7 +144,7 @@ library Heartbeat {
         failedMembers = new uint32[](claim.failedMembersIndices.length);
         for (uint256 i = 0; i < claim.failedMembersIndices.length; i++) {
             uint256 memberIndex = claim.failedMembersIndices[i];
-            failedMembers[i] = group.members[memberIndex - 1];
+            failedMembers[i] = groupMembers[memberIndex - 1];
         }
 
         return failedMembers;

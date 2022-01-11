@@ -136,7 +136,13 @@ export async function signAndSubmitArbitraryDkgResult(
     .connect(submitter)
     .submitDkgResult(dkgResult)
 
-  return { transaction, dkgResult, dkgResultHash, members, submitter }
+  return {
+    transaction,
+    dkgResult,
+    dkgResultHash,
+    members,
+    submitter,
+  }
 }
 
 // Signs and submits a DKG result containing signatures with random bytes.

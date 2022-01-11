@@ -4,9 +4,10 @@ import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import type { ContractTransaction } from "ethers"
 import blsData from "./data/bls"
-import { noMisbehaved } from "./utils/dkg"
 import { constants } from "./fixtures"
 import type { GroupsStub } from "../typechain"
+import { noMisbehaved } from "./utils/dkg"
+import { hashUint32Array } from "./utils/groups"
 
 const { keccak256 } = ethers.utils
 
@@ -62,91 +63,87 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(members)
+          expect(storedGroup.membersHash).to.be.equal(hashUint32Array(members))
         })
       })
 
       context("with misbehaved members", async () => {
         context("with first member misbehaved", async () => {
-          const misbehavedIndices: number[] = [1]
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [1]
 
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
 
-          it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
-            expectedMembers[0] = expectedMembers.pop()
+            expectedMembers.splice(0, 1)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
         context("with last member misbehaved", async () => {
-          const misbehavedIndices: number[] = [constants.groupSize]
-
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [constants.groupSize]
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
-
-          it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
             expectedMembers.pop()
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
         context("with middle member misbehaved", async () => {
-          const misbehavedIndices: number[] = [24]
-
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [24]
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
 
-          it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
-            expectedMembers[24 - 1] = expectedMembers.pop()
+            expectedMembers.splice(23, 1)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
         context("with multiple members misbehaved", async () => {
-          const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
-
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
+            const expectedMembers = [...members]
+            expectedMembers.splice(0, 1) // index -1
+            expectedMembers.splice(14, 1) // index -2 (cause expectedMembers already shrinked)
+            expectedMembers.splice(32, 1) // index -3
+            expectedMembers.splice(constants.groupSize - 4, 1) // index -4
 
-          it("should filter out misbehaved members", async () => {
-            const expectedMembers = filterMisbehaved(members, misbehavedIndices)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
@@ -242,7 +239,9 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(newGroupMembers)
+            )
           })
 
           it("should not update existing group entry", async () => {
@@ -287,7 +286,9 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(newGroupMembers)
+            )
           })
 
           it("should not update existing group", async () => {
@@ -301,7 +302,9 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(existingGroupMembers)
+            )
           })
         })
       })
@@ -364,7 +367,9 @@ describe("Groups", () => {
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
             expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(newGroupMembers)
+            )
           })
 
           it("should not update existing group", async () => {
@@ -380,7 +385,9 @@ describe("Groups", () => {
             expect(storedGroup.activationBlockNumber).to.be.equal(
               existingGroup.activationBlockNumber
             )
-            expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(existingGroupMembers)
+            )
           })
         })
       })
@@ -436,7 +443,9 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+          expect(storedGroup.membersHash).to.be.equal(
+            hashUint32Array(newGroupMembers)
+          )
         })
       })
 
@@ -471,7 +480,9 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+          expect(storedGroup.membersHash).to.be.equal(
+            hashUint32Array(newGroupMembers)
+          )
         })
 
         it("should not update existing group", async () => {
@@ -479,7 +490,9 @@ describe("Groups", () => {
 
           expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
+          expect(storedGroup.membersHash).to.be.equal(
+            hashUint32Array(existingGroupMembers)
+          )
         })
       })
     })
@@ -732,7 +745,7 @@ describe("Groups", () => {
           const storedGroup = await groups.getGroup(groupPublicKey)
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
           expect(storedGroup.activationBlockNumber).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(members)
+          expect(storedGroup.membersHash).to.be.equal(hashUint32Array(members))
         })
       })
 
@@ -806,29 +819,20 @@ describe("Groups", () => {
             expect(storedGroup1.activationBlockNumber).to.be.equal(
               activationBlockNumber1
             )
-            expect(storedGroup1.members).to.be.deep.equal(members1)
+            expect(storedGroup1.membersHash).to.be.equal(
+              hashUint32Array(members1)
+            )
 
             const storedGroup2 = await groups.getGroup(groupPublicKey2)
 
             expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
             expect(storedGroup2.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup2.members).to.be.deep.equal(members2)
+            expect(storedGroup2.membersHash).to.be.equal(
+              hashUint32Array(members2)
+            )
           })
         })
       })
     })
   })
 })
-
-function filterMisbehaved(
-  members: number[],
-  misbehavedIndices: number[]
-): number[] {
-  const expectedMembers = [...members]
-  misbehavedIndices.reverse().forEach((value) => {
-    expectedMembers[value - 1] = expectedMembers[expectedMembers.length - 1]
-    expectedMembers.pop()
-  })
-
-  return expectedMembers
-}

@@ -98,6 +98,7 @@ describe("System -- e2e", () => {
 
   context("when testing a happy path with 15 relay requests", () => {
     let groupPubKeyCounter = 0
+    const groupMembers = []
 
     it("should create 3 new groups", async () => {
       expect(await randomBeacon.getGroupCreationState()).to.be.equal(
@@ -117,13 +118,14 @@ describe("System -- e2e", () => {
         dkgState.AWAITING_RESULT
       )
 
-      const genesisDkgResult = await signAndSubmitCorrectDkgResult(
+      let dkgResult = await signAndSubmitCorrectDkgResult(
         randomBeacon,
         groupPubKeys[groupPubKeyCounter],
         genesisSeed,
         genesisTx.blockNumber,
         noMisbehaved
       )
+      groupMembers.push(dkgResult.members)
 
       await mineBlocks(params.dkgResultChallengePeriodLength)
 
@@ -132,16 +134,21 @@ describe("System -- e2e", () => {
       )
 
       await randomBeacon
-        .connect(genesisDkgResult.submitter)
-        .approveDkgResult(genesisDkgResult.dkgResult)
+        .connect(dkgResult.submitter)
+        .approveDkgResult(dkgResult.dkgResult)
 
+      // Ids of groups that sign a given request in order
+      const signingGroupIds = [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 2, 1, 2, 2, 0, 1]
       for (let i = 1; i <= 14; i++) {
         await approveTestToken(requester)
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
         const txSubmitRelayEntry = await randomBeacon
-          .connect(genesisDkgResult.submitter)
-          .submitRelayEntry(blsData.groupSignatures[i - 1])
+          .connect(dkgResult.submitter)
+          .submitRelayEntry(
+            blsData.groupSignatures[i - 1],
+            groupMembers[signingGroupIds[i - 1]]
+          )
 
         // every 5th relay request triggers a new dkg
         if (i % groupCreationFrequency === 0) {
@@ -158,7 +165,7 @@ describe("System -- e2e", () => {
             dkgState.AWAITING_RESULT
           )
 
-          const dkgResult = await signAndSubmitCorrectDkgResult(
+          dkgResult = await signAndSubmitCorrectDkgResult(
             randomBeacon,
             groupPubKeys[groupPubKeyCounter],
             ethers.BigNumber.from(
@@ -167,6 +174,7 @@ describe("System -- e2e", () => {
             txSubmitRelayEntry.blockNumber,
             noMisbehaved
           )
+          groupMembers.push(dkgResult.members)
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 

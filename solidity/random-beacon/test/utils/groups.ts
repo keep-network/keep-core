@@ -7,6 +7,7 @@ import blsData from "../data/bls"
 import type { Operator } from "./operators"
 import type { RandomBeacon, SortitionPool } from "../../typechain"
 
+const { keccak256, defaultAbiCoder } = ethers.utils
 const { mineBlocks } = helpers.time
 
 export async function createGroup(
@@ -44,4 +45,8 @@ export async function selectGroup(
     id: identifier,
     address: addresses[i],
   }))
+}
+
+export function hashUint32Array(arrayToHash: number[]) {
+  return keccak256(defaultAbiCoder.encode(["uint32[]"], [arrayToHash]))
 }

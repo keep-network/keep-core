@@ -22,7 +22,10 @@ library Groups {
     struct Group {
         bytes groupPubKey;
         uint256 activationBlockNumber;
-        uint32[] members;
+        // Keccak256 hash of group members identifiers array. Group members do not
+        // include operators selected by the sortition pool that misbehaved during DKG.
+        // See how `misbehavedMembersIndices` are used in `hashGroupMembers` function.
+        bytes32 membersHash;
         // When selected group does not create a relay entry on-time it should
         // be marked as terminated.
         bool terminated;
@@ -63,7 +66,7 @@ library Groups {
     /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
     ///        inactive) group members indices; Indices reflect positions of
     ///        members in the group, as outputted by the group selection
-    ///        protocol.
+    ///        protocol. Misbehaved members indices should be in ascending order.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
@@ -88,7 +91,7 @@ library Groups {
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
 
-        setGroupMembers(group, members, misbehavedMembersIndices);
+        group.membersHash = hashGroupMembers(members, misbehavedMembersIndices);
 
         self.groupsRegistry.push(groupPubKeyHash);
 
@@ -343,40 +346,41 @@ library Groups {
         return shiftedIndex;
     }
 
-    /// @notice Sets addresses of members for the group eliminating members at
-    ///         positions pointed by the misbehavedMembersIndices array.
-    ///
-    ///         NOTE THAT THIS FUNCTION CHANGES ORDER OF MEMBERS IN THE GROUP
-    ///         IF THERE IS AT LEAST ONE MISBEHAVED MEMBER
-    ///
-    ///         The final group members indexes should be obtained post-DKG
-    ///         and they may differ from the ones outputted by the group
-    ///         selection protocol.
-    /// @param group The group storage.
+    /// @notice Hash group members that actively participated in a group signing
+    ///         key generation. This function filters out IA/DQ members before
+    ///         hashing.
     /// @param members Group member addresses as outputted by the group selection
     ///        protocol.
     /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
     ///        inactive) group members. Indices reflect positions
     ///        of members in the group as outputted by the group selection
-    ///        protocol.
-    function setGroupMembers(
-        Group storage group,
+    ///        protocol. Indices must be in ascending order. The order can be verified
+    ///        during the DKG challege phase in DKGValidator contract.
+    /// @return Group members hash.
+    function hashGroupMembers(
         uint32[] calldata members,
         uint8[] calldata misbehavedMembersIndices
-    ) private {
-        group.members = members;
+    ) private pure returns (bytes32) {
+        if (misbehavedMembersIndices.length > 0) {
+            // members that generated a group signing key
+            uint32[] memory groupMembers = new uint32[](
+                members.length - misbehavedMembersIndices.length
+            );
+            uint256 k = 0; // misbehaved members counter
+            uint256 j = 0; // group members counter
+            for (uint256 i = 0; i < members.length; i++) {
+                // misbehaved member indices start from 1, so we need to -1 on misbehaved
+                if (i != misbehavedMembersIndices[k] - 1) {
+                    groupMembers[j] = members[i];
+                    j++;
+                } else if (k < misbehavedMembersIndices.length - 1) {
+                    k++;
+                }
+            }
 
-        // Iterate misbehaved array backwards, replace misbehaved
-        // member with the last element and reduce array length
-        uint256 i = misbehavedMembersIndices.length;
-        while (i > 0) {
-            // group member indices start from 1, so we need to -1 on misbehaved
-            uint8 memberArrayPosition = misbehavedMembersIndices[i - 1] - 1;
-            group.members[memberArrayPosition] = group.members[
-                group.members.length - 1
-            ];
-            group.members.pop();
-            i--;
+            return keccak256(abi.encode(groupMembers));
         }
+
+        return keccak256(abi.encode(members));
     }
 }
