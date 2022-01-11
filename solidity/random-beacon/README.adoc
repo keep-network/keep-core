@@ -1,1 +1,323 @@
-= Keep Random Beacon
+:toc: macro
+:icons: font
+
+= Keep Random Beacon v2
+
+The Keep Network requires a trusted source of randomness for the process of
+trustless group selection. While the network requires that randomness to function
+correctly, the source of randomness is itself broadly applicable. This trusted
+source of randomness takes the form of a BLS Threshold Relay.
+
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
+toc::[]
+
+== Overview
+
+The threshold relay is a way of generating verifiable randomness that is
+resistant to bad actors both in the relay network and on the anchoring Ethereum
+blockchain. The basic functioning of the relay is:
+
+- Some number of groups exist in the relay.
+- An arbitrary seed value `v_s` counts as the first entry in the relay.
+- A request `r_i` is dispatched to the chain for a new entry.
+- The previous entry `v_s` is used to choose a group to produce the response to
+  the request.
+- `v_s` is signed by at least a subset of the chosen group members, and the
+  resulting signature is the entry generated in response to the request. It is
+  published to the anchoring blockchain as the entry `v_i`.
+- The new entry `v_i` may trigger the formation of a new group from the set of
+  all members in the relay.
+- A group expires after a certain amount of time.
+
+== Prior Work
+
+Smart contracts for the first version of the random beacon are available in
+link:https://github.com/keep-network/keep-core/tree/main/solidity-v1[`solidity-v1` directory].
+The new version uses the same approach for BLS signatures as v1 but replaces
+ticket-based group selection with an optimistic sortition pool call. It also
+redesigns staker rewards and offers a more operator-friendly approach for
+relay entry timeouts. Last but not least, most parameters for the relay are
+now governable. 
+
+== The Mechanism
+
+=== Group Creation
+
+New groups are created with a fixed, governable frequency of relay requests.
+Instead of a v1 ticket-based approach for group selection, we use a sortition
+pool. Group creation start transaction is embedded into relay request
+transaction and locks a sortition pool. From this moment, no operator can enter
+or leave the pool. Once a new relay entry appears on the chain, all off-chain
+clients perform group selection optimistically calling
+`RandomBeacon.selectGroup(seed)` view function for free. Seed is available in
+`DkgStarted` event emitted when the group creation starts. After determining
+group members, clients should perform off-chain distributed key generation (DKG).
+ <<dkg-submit-eligibility,Eligible group member>> submits the result to the chain
+ calling `RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)` function.
+ Once the result is submitted, a challenge period starts.
+
+During the challenge period, anyone can notify that the submitted DKG result is
+malicious calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult)`
+function. A malicious DKG result may contain corrupted data, group members not
+selected by the pool, or incorrect supporting signatures. If such malicious
+result is submitted and challenged, the result submitter gets slashed and the
+malicious result is immediately discarded. The length of the challenge period
+and slashing amount are governable parameters.
+
+Once the challenge period passes, and no challenges are reported,
+the DKG result submitter should unlock the sortition pool and mark the DKG result as
+accepted calling
+`RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)` to receive a
+reward. In case the submitter does not call the approve function within a
+specific governable number of blocks, anyone can do that and receive the
+submitter's reward as described in <<fees-and-rewards,Fees and Rewards>> section.
+
+There is a timeout before which a DKG result should be submitted. The timeout
+equals the group size multiplied by the number of blocks for a member to become
+eligible to submit a DKG result. The timer starts at the moment when the first
+member becomes eligible.
+
+In case the DKG result was not submitted before a timeout, anyone can notify DKG
+timed out calling `RandomBeacon.notifyDkgTimeout()` and receive a reward, as
+described in <<fees-and-rewards,Fees and Rewards>> section. DKG timeout includes
+the situation when no new relay entry was produced and sortition could not be
+performed.
+
+The sortition pool weights operators by their authorized stake amount and allows
+selecting the same operator multiple times. Off-chain DKG protocol executes in
+the same way as for v1 and inactive/disqualified members during the off-chain
+protocol are marked as ineligible for rewards for a certain, governable, period
+of time when the DKG result is approved.
+
+Each group created in the system remains active for a certain, governable period
+of time. A group that expired is no longer selected for any new work. Group
+expiration is performed in the relay request transaction.
+
+=== Relay Request and Relay Entry
+
+Anyone can request a new relay entry (random number) by calling
+`RandomBeacon.requestRelayEntry(IRandomBeaconConsumer callbackContract)`
+function and providing an optional callback parameter. The requester needs to
+approve enough tokens for a fee, as described in
+<<fees-and-rewards,Fees and Rewards>> section.
+
+In `requestRelayEntry` transaction, groups that reached their maximum lifetime
+are getting expired and one of the remaining active groups is tasked with
+producing a new relay entry. The off-chain clients are expected to monitor the
+`RelayEntryRequested` event. If a client is a part of a picked group they should
+start the off-chain protocol to sign the previous relay entry producing a new one.
+
+Off-chain clients are expected to follow the order when submitting relay entry
+to minimize and distribute costs evenly, as described in
+<<fees-and-rewards,Fees and Rewards>> section but no ordering is enforced
+on-chain. New relay entry should be submitted using 
+`RandomBeacon.submitRelayEntry(bytes calldata entry)`
+function.
+
+=== Callbacks
+
+Random Beacon supports simple, low gas budget callbacks from a relay entry
+submit a transaction with a gas limit being a governable parameter.
+
+When requesting a relay entry, it is possible to pass an optional address
+parameter - this is the address of a contract implementing
+`IRandomBeaconConsumer` interface that should be called when a new relay entry
+is submitted to the chain.
+
+Smart contract consuming new relay entry needs to implement `IRandomBeaconConsumer`
+interface. The gas limit for `__beaconCallback` is initially set to 50k gas
+which is enough to `SSTORE` new relay entry, block height in which the entry was
+submitted, and to emit an event. Callback gas limit is a governable value.
+Failure in the callback function does not revert the relay entry transaction.
+
+```solidity
+interface IRandomBeaconConsumer {
+    /// @notice Receives relay entry produced by Keep Random Beacon. This function
+    /// should be called only by Keep Random Beacon.
+    ///
+    /// @param relayEntry Relay entry (random number) produced by Keep Random
+    ///                   Beacon.
+    /// @param blockNumber Block number at which the relay entry was submitted
+    ///                    to the chain.
+    function __beaconCallback(uint256 relayEntry, uint256 blockNumber) external;
+}
+```
+
+=== Timeouts
+
+There are two timeouts for a relay entry to be provided by a group: soft timeout
+and hard timeout.
+
+==== Soft Relay Entry Timeout
+
+The soft timeout is the group size multiplied by the number of blocks for a
+member to become eligible to submit a relay entry. Eligibility is not enforced
+on-chain but off-chain clients are expected to agree and follow it.
+
+If no entry was provided within the soft timeout, all operators in the group
+start bleeding and losing their stake. The bleeding increases linearly from 0 to
+the governable slashing amount per operator over time, until the hard timeout is
+reached or until a relay entry is submitted by the group.
+
+The time for a single group member to become eligible to submit a result and the
+hard relay entry timeout are governable parameters. This gives a chance to start
+with more forgiving penalties and increase them over time. In general, the
+slashing penalty should be proportional to rewards and the frequency of relay
+requests and associated risk.
+
+==== Hard Relay Entry Timeout
+
+When the hard timeout is reached, anyone can notify about this fact by calling
+`RandomBeacon.reportRelayEntryTimeout()` function and receive a notifier
+reward. The group which failed to submit a relay entry is terminated, group
+members are slashed, and if there are still active groups in the beacon, another
+group is selected and tasked with producing relay entry for the given relay
+request. 
+
+==== DKG Timeout
+
+There is a governable timeout for DKG to complete and for the result to be
+submitted. DKG timeout includes the time it takes to execute off-chain protocol
+to generate a key, and the time it takes for all group members to become
+eligible to submit the result. Note that unlike in the case of relay entry, 
+`RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)`
+function enforces the eligibility of submitters on-chain. When DKG timeout is
+hit, anyone can call `RandomBeacon.notifyDkgTimeout()` function and receive the
+notifier's reward. The function unlocks the sortition pool and clears up DKG
+data but no slashing for DKG timeout is executed and no one is losing any
+rewards.
+
+[[fees-and-rewards]]
+=== Fees and Rewards
+
+Relay requester should provide a fee in T. The value of the fee is a governable
+parameter. The entire fee is deposited in the DKG rewards pool that is used to
+reimburse for different actions related to DKG.
+
+There is a fixed, governable reward for submitting and approving a DKG result
+paid from the DKG rewards pool. The reward is paid
+to the DKG result submitter in the transaction approving the DKG result. If the
+DKG result submitter failed to approve the result after the challenge period,
+anyone can do that and receive the submitter's reward.
+
+The logic triggering new group selection is embedded in relay request
+transaction and is as cheap as possible, so no additional reward is paid for
+triggering DKG.
+
+In case the DKG result has not been submitted on time, anyone can unlock the
+pool and receive a fixed, governable reward for reporting DKG timeout. The
+reward is paid from the DKG reward pool. 
+
+[[dkg-submit-eligibility]]
+The order in which operators are supposed to submit a DKG result is enforced
+on-chain. The first member eligible to submit the DKG result is a member with
+index `keccak256(new_group_pubkey) % group_size`. Then after a governable
+submission eligibility delays, members with subsequent indices are becoming
+eligible one after another.
+
+[NOTE]
+For example, if `hash(new_group_pubkey) % group_size = 62`, `group_size = 64`,
+group members are becoming eligible in the following order:
+`62, 63, 64, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..., 61`. 
+
+Governance needs to ensure that both the frequency of relay requests with which
+a new DKG starts and the fee for a single request make DKG result submitter reward
+attractive enough so that no one wants to bail out from submitting the result.
+
+The transaction submitting relay entry is not reimbursable and implementation
+ensures the gas cost of this transaction is as low as possible, below 200k gas
+when no callback is executed.
+
+Everyone is eligible to submit relay entry at any time but off-chain clients are
+expected to agree and follow the following order to minimize the gas cost and
+distribute costs: the first group member eligible to submit the result is
+`new_entry % group_size`; then, if the selected member does not provide an entry
+within the governable eligibility period, `(new_entry % group_size) + 1` and
+so on.
+
+If some group members are notoriously ignoring their duty, the group can vote on
+failed <<heartbeats,heartbeat>> notification for these operators.
+
+T rewards will be distributed continuously to all operators registered in the beacon
+sortition pool, excluding operators who were marked as ineligible for rewards
+due to failing the heartbeat.
+
+[[heartbeats]]
+=== Heartbeats
+
+Off-chain clients are free to execute any heartbeat protocol they want to ensure
+group members are alive and nodes are operating properly.
+
+[TIP]
+One example of a heartbeat protocol is signing some piece of information every
+nth blocks and first making sure the information cannot be used for
+`RandomBeacon.reportUnauthorizedSigning()`, that is, the signed information can
+not become `msg.sender` for `reportUnauthorizedSigning` call.
+
+Group members can agree upon members that failed the heartbeat and issue a
+heartbeat failure claim. If the required threshold of group members signed
+the heartbeat failure claim, they can submit it to
+`RandomBeacon.notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim, uint256 nonce)`
+function and have the group members who failed the heartbeat excluded from
+the sortition pool rewards for a governable time period.
+
+The submitter of the failed heartbeat claim receives a reward from a separate
+notifier reward pool, funded by DAO for heartbeat failure claims specifically.
+This pool is expected to be funded by DAO with tokens saved from sortition pool
+rewards as a result of having operators marked as ineligible for rewards due to
+failing a heartbeat.
+
+This approach is theoretically susceptible to group members colluding together
+but because a reasonably high number of operators is needed to sign a claim and
+operators signing the claim other than the submitter receive nothing in return,
+we consider this approach safe and good enough. An important advantage of this
+approach is that honest players can decide off-chain when it makes sense to
+submit a heartbeat fail report and mark someone as ineligible for rewards. For
+example, marking an operator ineligible for rewards for the next two weeks have
+a higher impact than prolonging reward ineligibility for 10 minutes for an
+operator that was already marked as ineligible for rewards. This approach does
+not increase the gas cost of a happy path and leaves some freedom to group
+members. They may mark as ineligible operators who turned off their nodes,
+operators whose nodes never participate in signing because they are
+misconfigured, or operators who notoriously miss their turn in submitting relay
+entry.
+
+== Build
+
+Random beacon contracts use https://hardhat.org/[*Hardhat*] development
+environment. To build and deploy these contracts, please follow the instructions
+presented below.
+
+=== Prerequisites
+
+Please make sure you have the following prerequisites installed on your machine:
+
+- https://nodejs.org[Node.js] >=14.18.2
+- https://yarnpkg.com[Yarn] >=1.22.17
+
+=== Build contracts
+
+To build the smart contracts, install node packages first:
+```sh
+yarn install
+```
+Once packages are installed, you can build the smart contracts using:
+```sh
+yarn build
+```
+Compiled contracts will land in the `build/` directory.
+
+=== Test contracts
+
+There are multiple test scenarios living in the `test` directory.
+You can run them by doing:
+```sh
+yarn test
+```

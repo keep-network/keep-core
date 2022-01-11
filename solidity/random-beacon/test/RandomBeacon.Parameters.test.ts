@@ -3,13 +3,12 @@ import { expect } from "chai"
 
 import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
-
-import type { RandomBeacon } from "../typechain"
+import type { RandomBeaconStub } from "../typechain"
 
 describe("RandomBeacon - Parameters", () => {
   let governance: Signer
   let thirdParty: Signer
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconStub
 
   // prettier-ignore
   before(async () => {
@@ -18,7 +17,7 @@ describe("RandomBeacon - Parameters", () => {
 
   beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
-    randomBeacon = contracts.randomBeacon as RandomBeacon
+    randomBeacon = contracts.randomBeacon as RandomBeaconStub
   })
 
   describe("updateRelayEntryParameters", () => {
@@ -238,8 +237,10 @@ describe("RandomBeacon - Parameters", () => {
   describe("updateRewardParameters", () => {
     const dkgResultSubmissionReward = 100
     const sortitionPoolUnlockingReward = 200
-    const sortitionPoolRewardsBanDuration = 300
+    const ineligibleOperatorNotifierReward = 300
+    const sortitionPoolRewardsBanDuration = 400
     const relayEntryTimeoutNotificationRewardMultiplier = 10
+    const unauthorizedSigningNotificationRewardMultiplier = 10
     const dkgMaliciousResultNotificationRewardMultiplier = 20
 
     context("when the caller is not the owner", () => {
@@ -250,8 +251,10 @@ describe("RandomBeacon - Parameters", () => {
             .updateRewardParameters(
               dkgResultSubmissionReward,
               sortitionPoolUnlockingReward,
+              ineligibleOperatorNotifierReward,
               sortitionPoolRewardsBanDuration,
               relayEntryTimeoutNotificationRewardMultiplier,
+              unauthorizedSigningNotificationRewardMultiplier,
               dkgMaliciousResultNotificationRewardMultiplier
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
@@ -266,8 +269,10 @@ describe("RandomBeacon - Parameters", () => {
           .updateRewardParameters(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
           )
       })
@@ -282,6 +287,12 @@ describe("RandomBeacon - Parameters", () => {
         expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
           sortitionPoolUnlockingReward
         )
+      })
+
+      it("should update the ineligible operator notifier reward", async () => {
+        expect(
+          await randomBeacon.ineligibleOperatorNotifierReward()
+        ).to.be.equal(ineligibleOperatorNotifierReward)
       })
 
       it("should update the sortition pool rewards ban duration", async () => {
@@ -308,8 +319,10 @@ describe("RandomBeacon - Parameters", () => {
           .withArgs(
             dkgResultSubmissionReward,
             sortitionPoolUnlockingReward,
+            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
           )
       })
@@ -319,6 +332,7 @@ describe("RandomBeacon - Parameters", () => {
   describe("updateSlashingParameters", () => {
     const relayEntrySubmissionFailureSlashingAmount = 100
     const maliciousDkgResultSlashingAmount = 200
+    const unauthorizedSigningSlashingAmount = 150
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -327,7 +341,8 @@ describe("RandomBeacon - Parameters", () => {
             .connect(thirdParty)
             .updateSlashingParameters(
               relayEntrySubmissionFailureSlashingAmount,
-              maliciousDkgResultSlashingAmount
+              maliciousDkgResultSlashingAmount,
+              unauthorizedSigningSlashingAmount
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -340,7 +355,8 @@ describe("RandomBeacon - Parameters", () => {
           .connect(governance)
           .updateSlashingParameters(
             relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount
+            maliciousDkgResultSlashingAmount,
+            unauthorizedSigningSlashingAmount
           )
       })
 
@@ -356,12 +372,19 @@ describe("RandomBeacon - Parameters", () => {
         ).to.be.equal(maliciousDkgResultSlashingAmount)
       })
 
+      it("should update the unauthorized signing slashing amount", async () => {
+        expect(
+          await randomBeacon.unauthorizedSigningSlashingAmount()
+        ).to.be.equal(unauthorizedSigningSlashingAmount)
+      })
+
       it("should emit the SlashingParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "SlashingParametersUpdated")
           .withArgs(
             relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount
+            maliciousDkgResultSlashingAmount,
+            unauthorizedSigningSlashingAmount
           )
       })
     })

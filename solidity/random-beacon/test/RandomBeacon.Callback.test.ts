@@ -1,8 +1,9 @@
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { BigNumber } from "ethers"
 import blsData from "./data/bls"
-import { constants, randomBeaconDeployment } from "./fixtures"
+import { constants, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
 import type { DeployedContracts } from "./fixtures"
 import type {
@@ -10,11 +11,10 @@ import type {
   TestToken,
   CallbackContractStub,
 } from "../typechain"
-import { registerOperators, Operator } from "./utils/operators"
+import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
-
-const { to1e18 } = helpers.number
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const fixture = async () => {
   const deployment = await randomBeaconDeployment()
@@ -43,18 +43,6 @@ const fixture = async () => {
 }
 
 describe("RandomBeacon - Callback", () => {
-  const relayRequestFee = to1e18(100)
-  const relayEntryHardTimeout = 5760
-  const relayEntrySubmissionEligibilityDelay = 10
-
-  // When determining the eligibility queue, the `(blsData.groupSignature % 64) + 1`
-  // equation points member`16` as the first eligible one. This is why we use that
-  // index as `submitRelayEntry` parameter. The `submitter` signer represents that
-  // member too.
-  const submitterMemberIndex = 16
-
-  let callbackGasLimit = 50000
-
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
   let signers: Operator[]
@@ -66,9 +54,8 @@ describe("RandomBeacon - Callback", () => {
 
   before(async () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-  })
+    submitter = await ethers.getSigner((await getUnnamedAccounts())[2])
 
-  beforeEach("load test fixture", async () => {
     let contracts
       // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({ contracts, signers } = await waffle.loadFixture(fixture))
@@ -77,26 +64,23 @@ describe("RandomBeacon - Callback", () => {
     testToken = contracts.testToken as TestToken
     callbackContract = contracts.callbackContractStub as CallbackContractStub
     callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
-
-    await randomBeacon.updateRelayEntryParameters(
-      to1e18(100),
-      relayEntrySubmissionEligibilityDelay,
-      relayEntryHardTimeout,
-      callbackGasLimit
-    )
-
-    submitter = await ethers.getSigner(
-      signers[submitterMemberIndex - 1].address
-    )
   })
 
   describe("requestRelayEntry", () => {
-    beforeEach(async () => {
+    before(async () => {
+      await createSnapshot()
+
       await approveTestToken()
+    })
+
+    after(async () => {
+      await restoreSnapshot()
     })
 
     context("when passed non-zero and zero callback addresses", () => {
       it("should be set to a non-zero callback contract address", async () => {
+        await createSnapshot()
+
         await randomBeacon
           .connect(requester)
           .requestRelayEntry(callbackContract.address)
@@ -106,16 +90,20 @@ describe("RandomBeacon - Callback", () => {
         await expect(callbackData.callbackContract).to.equal(
           callbackContract.address
         )
+
+        await restoreSnapshot()
       })
 
-      it("should be reset to zero callback address", async () => {
+      it("should reset to zero callback address", async () => {
+        await createSnapshot()
+
         await randomBeacon
           .connect(requester)
           .requestRelayEntry(callbackContract.address)
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(16, blsData.groupSignature)
+          ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
         await approveTestToken()
 
@@ -123,16 +111,20 @@ describe("RandomBeacon - Callback", () => {
 
         const callbackData = await randomBeacon.getCallbackData()
         await expect(callbackData.callbackContract).to.equal(ZERO_ADDRESS)
+
+        await restoreSnapshot()
       })
 
       it("should be set to the latest non-zero callback address", async () => {
+        await createSnapshot()
+
         await randomBeacon
           .connect(requester)
           .requestRelayEntry(callbackContract.address)
 
         await randomBeacon
           .connect(submitter)
-          .submitRelayEntry(16, blsData.groupSignature)
+          ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
         await approveTestToken()
 
@@ -144,24 +136,35 @@ describe("RandomBeacon - Callback", () => {
         await expect(callbackData.callbackContract).to.equal(
           callbackContract1.address
         )
+
+        await restoreSnapshot()
       })
     })
   })
 
   describe("submitRelayEntry", () => {
-    beforeEach(async () => {
+    before(async () => {
+      await createSnapshot()
+
       await approveTestToken()
     })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
     context("when the callback is set", () => {
       context("when the callback was executed", () => {
         it("should set callback contract params", async () => {
+          await createSnapshot()
+
           await randomBeacon
             .connect(requester)
             .requestRelayEntry(callbackContract.address)
 
           await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
           const lastEntry = await callbackContract.lastEntry()
           await expect(lastEntry).to.equal(blsData.groupSignatureUint256)
@@ -170,17 +173,20 @@ describe("RandomBeacon - Callback", () => {
           const latestBlock = await ethers.provider.getBlock("latest")
 
           await expect(blockNumber).to.equal(latestBlock.number)
+
+          await restoreSnapshot()
         })
       })
 
       context("when the callback failed", () => {
         it("should emit a callback failed event because of the gas limit", async () => {
-          callbackGasLimit = 40000
+          await createSnapshot()
+
           await randomBeacon.updateRelayEntryParameters(
-            to1e18(100),
-            relayEntrySubmissionEligibilityDelay,
-            relayEntryHardTimeout,
-            callbackGasLimit
+            params.relayRequestFee,
+            params.relayEntrySubmissionEligibilityDelay,
+            params.relayEntryHardTimeout,
+            40000
           )
           await randomBeacon
             .connect(requester)
@@ -188,14 +194,18 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
             .withArgs(blsData.groupSignatureUint256, tx.blockNumber)
+
+          await restoreSnapshot()
         })
 
         it("should emit a callback failed event because of the internal error", async () => {
+          await createSnapshot()
+
           await randomBeacon
             .connect(requester)
             .requestRelayEntry(callbackContract.address)
@@ -204,20 +214,22 @@ describe("RandomBeacon - Callback", () => {
 
           const tx = await randomBeacon
             .connect(submitter)
-            .submitRelayEntry(16, blsData.groupSignature)
+            ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
           await expect(tx)
             .to.emit(randomBeacon, "CallbackFailed")
             .withArgs(blsData.groupSignatureUint256, tx.blockNumber)
+
+          await restoreSnapshot()
         })
       })
     })
   })
 
   async function approveTestToken() {
-    await testToken.mint(requester.address, relayRequestFee)
+    await testToken.mint(requester.address, params.relayRequestFee)
     await testToken
       .connect(requester)
-      .approve(randomBeacon.address, relayRequestFee)
+      .approve(randomBeacon.address, params.relayRequestFee)
   }
 })

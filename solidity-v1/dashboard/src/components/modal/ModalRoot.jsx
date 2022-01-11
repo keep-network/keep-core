@@ -6,6 +6,7 @@ import { MODAL_TYPES } from "../../constants/constants"
 import { WithdrawETHModal, AddETHModal } from "./bonding"
 import {
   MetaMaskModal,
+  TallyModal,
   LedgerModal,
   TrezorModal,
   ExplorerModeModal,
@@ -47,6 +48,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.BondingAddETH]: AddETHModal,
   [MODAL_TYPES.BondingWithdrawETH]: WithdrawETHModal,
   [MODAL_TYPES.MetaMask]: MetaMaskModal,
+  [MODAL_TYPES.Tally]: TallyModal,
   [MODAL_TYPES.Ledger]: LedgerModal,
   [MODAL_TYPES.Trezor]: TrezorModal,
   [MODAL_TYPES.ExplorerMode]: ExplorerModeModal,

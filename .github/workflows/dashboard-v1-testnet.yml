@@ -63,18 +63,8 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "14.x"
-
-      - name: Cache Global NPM Cache
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-global-npm-cache
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          cache: "npm"
+          cache-dependency-path: solidity-v1/dashboard/package-lock.json
 
       - name: Resolve latest contracts
         if: github.event_name != 'workflow_dispatch'

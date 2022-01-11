@@ -1,10 +1,13 @@
+/* eslint-disable no-await-in-loop */
+
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import type { ContractTransaction } from "ethers"
 import blsData from "./data/bls"
-import { noMisbehaved } from "./utils/dkg"
 import { constants } from "./fixtures"
 import type { GroupsStub } from "../typechain"
+import { noMisbehaved } from "./utils/dkg"
+import { hashUint32Array } from "./utils/groups"
 
 const { keccak256 } = ethers.utils
 
@@ -59,92 +62,88 @@ describe("Groups", () => {
           const storedGroup = await groups.getGroup(groupPublicKey)
 
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-          expect(storedGroup.activationTimestamp).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(members)
+          expect(storedGroup.activationBlockNumber).to.be.equal(0)
+          expect(storedGroup.membersHash).to.be.equal(hashUint32Array(members))
         })
       })
 
       context("with misbehaved members", async () => {
         context("with first member misbehaved", async () => {
-          const misbehavedIndices: number[] = [1]
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [1]
 
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
 
-          it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
-            expectedMembers[0] = expectedMembers.pop()
+            expectedMembers.splice(0, 1)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
         context("with last member misbehaved", async () => {
-          const misbehavedIndices: number[] = [constants.groupSize]
-
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [constants.groupSize]
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
-
-          it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
             expectedMembers.pop()
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
         context("with middle member misbehaved", async () => {
-          const misbehavedIndices: number[] = [24]
-
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [24]
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
 
-          it("should filter out misbehaved members", async () => {
             const expectedMembers = [...members]
-            expectedMembers[24 - 1] = expectedMembers.pop()
+            expectedMembers.splice(23, 1)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
         context("with multiple members misbehaved", async () => {
-          const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
-
-          beforeEach(async () => {
-            tx = await groups.addCandidateGroup(
+          it("should filter out misbehaved members", async () => {
+            const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
+            await groups.addCandidateGroup(
               groupPublicKey,
               members,
               misbehavedIndices
             )
-          })
+            const expectedMembers = [...members]
+            expectedMembers.splice(0, 1) // index -1
+            expectedMembers.splice(14, 1) // index -2 (cause expectedMembers already shrinked)
+            expectedMembers.splice(32, 1) // index -3
+            expectedMembers.splice(constants.groupSize - 4, 1) // index -4
 
-          it("should filter out misbehaved members", async () => {
-            const expectedMembers = filterMisbehaved(members, misbehavedIndices)
+            const expectedMembersHash = hashUint32Array(expectedMembers)
 
             expect(
-              (await groups.getGroup(groupPublicKey)).members
-            ).to.be.deep.equal(expectedMembers)
+              (await groups.getGroup(groupPublicKey)).membersHash
+            ).to.be.equal(expectedMembersHash)
           })
         })
 
@@ -239,8 +238,10 @@ describe("Groups", () => {
             const storedGroup = await groups.getGroup(newGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
-            expect(storedGroup.activationTimestamp).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+            expect(storedGroup.activationBlockNumber).to.be.equal(0)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(newGroupMembers)
+            )
           })
 
           it("should not update existing group entry", async () => {
@@ -284,8 +285,10 @@ describe("Groups", () => {
             const storedGroup = await groups.getGroup(newGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
-            expect(storedGroup.activationTimestamp).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+            expect(storedGroup.activationBlockNumber).to.be.equal(0)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(newGroupMembers)
+            )
           })
 
           it("should not update existing group", async () => {
@@ -298,8 +301,10 @@ describe("Groups", () => {
             const storedGroup = await groups.getGroup(existingGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
-            expect(storedGroup.activationTimestamp).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
+            expect(storedGroup.activationBlockNumber).to.be.equal(0)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(existingGroupMembers)
+            )
           })
         })
       })
@@ -316,7 +321,7 @@ describe("Groups", () => {
         context("with the same group public key", async () => {
           const newGroupPublicKey = existingGroupPublicKey
 
-          it("should revert with 'group with this public key was already activated' error", async () => {
+          it("should revert with 'Group with this public key was already activated' error", async () => {
             await expect(
               groups.addCandidateGroup(
                 newGroupPublicKey,
@@ -324,7 +329,7 @@ describe("Groups", () => {
                 noMisbehaved
               )
             ).to.be.revertedWith(
-              "group with this public key was already activated"
+              "Group with this public key was already activated"
             )
           })
         })
@@ -361,8 +366,10 @@ describe("Groups", () => {
             const storedGroup = await groups.getGroup(newGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
-            expect(storedGroup.activationTimestamp).to.be.equal(0)
-            expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+            expect(storedGroup.activationBlockNumber).to.be.equal(0)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(newGroupMembers)
+            )
           })
 
           it("should not update existing group", async () => {
@@ -375,10 +382,12 @@ describe("Groups", () => {
             const storedGroup = await groups.getGroup(existingGroupPublicKey)
 
             expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
-            expect(storedGroup.activationTimestamp).to.be.equal(
-              existingGroup.activationTimestamp
+            expect(storedGroup.activationBlockNumber).to.be.equal(
+              existingGroup.activationBlockNumber
             )
-            expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
+            expect(storedGroup.membersHash).to.be.equal(
+              hashUint32Array(existingGroupMembers)
+            )
           })
         })
       })
@@ -433,8 +442,10 @@ describe("Groups", () => {
           const storedGroup = await groups.getGroup(newGroupPublicKey)
 
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
-          expect(storedGroup.activationTimestamp).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+          expect(storedGroup.activationBlockNumber).to.be.equal(0)
+          expect(storedGroup.membersHash).to.be.equal(
+            hashUint32Array(newGroupMembers)
+          )
         })
       })
 
@@ -468,16 +479,20 @@ describe("Groups", () => {
           const storedGroup = await groups.getGroup(newGroupPublicKey)
 
           expect(storedGroup.groupPubKey).to.be.equal(newGroupPublicKey)
-          expect(storedGroup.activationTimestamp).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(newGroupMembers)
+          expect(storedGroup.activationBlockNumber).to.be.equal(0)
+          expect(storedGroup.membersHash).to.be.equal(
+            hashUint32Array(newGroupMembers)
+          )
         })
 
         it("should not update existing group", async () => {
           const storedGroup = await groups.getGroup(existingGroupPublicKey)
 
           expect(storedGroup.groupPubKey).to.be.equal(existingGroupPublicKey)
-          expect(storedGroup.activationTimestamp).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(existingGroupMembers)
+          expect(storedGroup.activationBlockNumber).to.be.equal(0)
+          expect(storedGroup.membersHash).to.be.equal(
+            hashUint32Array(existingGroupMembers)
+          )
         })
       })
     })
@@ -510,15 +525,10 @@ describe("Groups", () => {
             .withArgs(0, groupPublicKey)
         })
 
-        it("should set activation timestamp for the group", async () => {
-          // FIXME: Unclear why `tx.timestamp` is undefined
-          const expectedActivationTimestamp = (
-            await ethers.provider.getBlock(tx.blockHash)
-          ).timestamp
-
+        it("should set activation block number for the group", async () => {
           expect(
-            (await groups.getGroup(groupPublicKey)).activationTimestamp
-          ).to.be.equal(expectedActivationTimestamp)
+            (await groups.getGroup(groupPublicKey)).activationBlockNumber
+          ).to.be.equal(tx.blockNumber)
         })
 
         it("should increase number of active groups", async () => {
@@ -531,9 +541,9 @@ describe("Groups", () => {
           await groups.activateCandidateGroup()
         })
 
-        it("should revert with 'the latest registered group was already activated' error", async () => {
+        it("should revert with 'The latest registered group was already activated' error", async () => {
           await expect(groups.activateCandidateGroup()).to.be.revertedWith(
-            "the latest registered group was already activated"
+            "The latest registered group was already activated"
           )
         })
       })
@@ -552,7 +562,7 @@ describe("Groups", () => {
         const groupPublicKey1 = "0x0001"
         const groupPublicKey2 = "0x0002"
 
-        context("when both groups are candidate", async () => {
+        context("when candidate group added after activation", async () => {
           let tx: ContractTransaction
 
           beforeEach(async () => {
@@ -561,36 +571,32 @@ describe("Groups", () => {
               members1,
               noMisbehaved
             )
+
+            tx = await groups.activateCandidateGroup()
+
             await groups.addCandidateGroup(
               groupPublicKey2,
               members2,
               noMisbehaved
             )
-
-            tx = await groups.activateCandidateGroup()
           })
 
           it("should emit GroupActivated event", async () => {
             await expect(tx)
               .to.emit(groups, "GroupActivated")
-              .withArgs(1, groupPublicKey2)
+              .withArgs(0, groupPublicKey1)
           })
 
-          it("should not set activation timestamp for the other group", async () => {
+          it("should set activation block number for the activated group", async () => {
             expect(
-              (await groups.getGroup(groupPublicKey1)).activationTimestamp
+              (await groups.getGroup(groupPublicKey1)).activationBlockNumber
+            ).to.be.equal(tx.blockNumber)
+          })
+
+          it("should not set activation block number for the other group", async () => {
+            expect(
+              (await groups.getGroup(groupPublicKey2)).activationBlockNumber
             ).to.be.equal(0)
-          })
-
-          it("should set activation timestamp for the activated group", async () => {
-            // FIXME: Unclear why `tx.timestamp` is undefined
-            const expectedActivationTimestamp = (
-              await ethers.provider.getBlock(tx.blockHash)
-            ).timestamp
-
-            expect(
-              (await groups.getGroup(groupPublicKey2)).activationTimestamp
-            ).to.be.equal(expectedActivationTimestamp)
           })
 
           it("should increase number of active groups", async () => {
@@ -599,8 +605,9 @@ describe("Groups", () => {
         })
 
         context("when the other group is active", async () => {
-          let activationTimestamp1: number
-          let tx: ContractTransaction
+          let activationBlockNumber1: number
+          let tx1: ContractTransaction
+          let tx2: ContractTransaction
 
           // TODO: Update as the latest group got activated
           beforeEach(async () => {
@@ -609,10 +616,11 @@ describe("Groups", () => {
               members1,
               noMisbehaved
             )
-            const tx1 = await groups.activateCandidateGroup()
-            activationTimestamp1 = (
+
+            tx1 = await groups.activateCandidateGroup()
+            activationBlockNumber1 = (
               await ethers.provider.getBlock(tx1.blockHash)
-            ).timestamp
+            ).number
 
             await groups.addCandidateGroup(
               groupPublicKey2,
@@ -620,30 +628,31 @@ describe("Groups", () => {
               noMisbehaved
             )
 
-            tx = await groups.activateCandidateGroup()
+            tx2 = await groups.activateCandidateGroup()
           })
 
-          it("should emit GroupActivated event", async () => {
-            await expect(tx)
+          it("should emit GroupActivated event for the first group", async () => {
+            await expect(tx1)
+              .to.emit(groups, "GroupActivated")
+              .withArgs(0, groupPublicKey1)
+          })
+
+          it("should emit GroupActivated event for the second group", async () => {
+            await expect(tx2)
               .to.emit(groups, "GroupActivated")
               .withArgs(1, groupPublicKey2)
           })
 
-          it("should not update activation timestamp for the other group", async () => {
+          it("should not update activation block number for the other group", async () => {
             expect(
-              (await groups.getGroup(groupPublicKey1)).activationTimestamp
-            ).to.be.equal(activationTimestamp1)
+              (await groups.getGroup(groupPublicKey1)).activationBlockNumber
+            ).to.be.equal(activationBlockNumber1)
           })
 
-          it("should set activation timestamp for the activated group", async () => {
-            // FIXME: Unclear why `tx.timestamp` is undefined
-            const expectedActivationTimestamp = (
-              await ethers.provider.getBlock(tx.blockHash)
-            ).timestamp
-
+          it("should set activation block number for the activated group", async () => {
             expect(
-              (await groups.getGroup(groupPublicKey2)).activationTimestamp
-            ).to.be.equal(expectedActivationTimestamp)
+              (await groups.getGroup(groupPublicKey2)).activationBlockNumber
+            ).to.be.equal(tx2.blockNumber)
           })
 
           it("should increase number of active groups", async () => {
@@ -656,45 +665,46 @@ describe("Groups", () => {
         const groupPublicKey1 = groupPublicKey
         const groupPublicKey2 = groupPublicKey
 
-        context("when both groups are candidate", async () => {
-          let tx: ContractTransaction
+        context(
+          "when the first group was challenged and replaced",
+          async () => {
+            let tx: ContractTransaction
 
-          beforeEach(async () => {
-            await groups.addCandidateGroup(
-              groupPublicKey1,
-              members1,
-              noMisbehaved
-            )
-            await groups.addCandidateGroup(
-              groupPublicKey2,
-              members2,
-              noMisbehaved
-            )
+            beforeEach(async () => {
+              await groups.addCandidateGroup(
+                groupPublicKey1,
+                members1,
+                noMisbehaved
+              )
 
-            tx = await groups.activateCandidateGroup()
-          })
+              await groups.popCandidateGroup()
 
-          it("should emit GroupActivated event", async () => {
-            await expect(tx)
-              .to.emit(groups, "GroupActivated")
-              .withArgs(1, groupPublicKey2)
-          })
+              await groups.addCandidateGroup(
+                groupPublicKey2,
+                members2,
+                noMisbehaved
+              )
 
-          it("should set activation timestamp for the group", async () => {
-            // FIXME: Unclear why `tx.timestamp` is undefined
-            const expectedActivationTimestamp = (
-              await ethers.provider.getBlock(tx.blockHash)
-            ).timestamp
+              tx = await groups.activateCandidateGroup()
+            })
 
-            expect(
-              (await groups.getGroup(groupPublicKey2)).activationTimestamp
-            ).to.be.equal(expectedActivationTimestamp)
-          })
+            it("should emit GroupActivated event", async () => {
+              await expect(tx)
+                .to.emit(groups, "GroupActivated")
+                .withArgs(0, groupPublicKey2)
+            })
 
-          it("should increase number of active groups", async () => {
-            expect(await groups.numberOfActiveGroups()).to.be.equal(1)
-          })
-        })
+            it("should set activation block number for the group", async () => {
+              expect(
+                (await groups.getGroup(groupPublicKey2)).activationBlockNumber
+              ).to.be.equal(tx.blockNumber)
+            })
+
+            it("should increase number of active groups", async () => {
+              expect(await groups.numberOfActiveGroups()).to.be.equal(1)
+            })
+          }
+        )
       })
     })
   })
@@ -728,16 +738,14 @@ describe("Groups", () => {
 
         it("should remove registered group", async () => {
           const groupsRegistry = await groups.getGroupsRegistry()
-
           expect(groupsRegistry).to.be.lengthOf(0)
         })
 
         it("should not update stored group data", async () => {
           const storedGroup = await groups.getGroup(groupPublicKey)
-
           expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-          expect(storedGroup.activationTimestamp).to.be.equal(0)
-          expect(storedGroup.members).to.be.deep.equal(members)
+          expect(storedGroup.activationBlockNumber).to.be.equal(0)
+          expect(storedGroup.membersHash).to.be.equal(hashUint32Array(members))
         })
       })
 
@@ -746,9 +754,9 @@ describe("Groups", () => {
           await groups.activateCandidateGroup()
         })
 
-        it("should revert with 'the latest registered group was already activated' error", async () => {
+        it("should revert with 'The latest registered group was already activated' error", async () => {
           await expect(groups.activateCandidateGroup()).to.be.revertedWith(
-            "the latest registered group was already activated"
+            "The latest registered group was already activated"
           )
         })
       })
@@ -767,57 +775,10 @@ describe("Groups", () => {
         const groupPublicKey1 = "0x0001"
         const groupPublicKey2 = "0x0002"
 
-        context("when both groups are candidate", async () => {
-          let tx: ContractTransaction
-
-          beforeEach(async () => {
-            await groups.addCandidateGroup(
-              groupPublicKey1,
-              members1,
-              noMisbehaved
-            )
-            await groups.addCandidateGroup(
-              groupPublicKey2,
-              members2,
-              noMisbehaved
-            )
-
-            tx = await groups.popCandidateGroup()
-          })
-
-          it("should emit CandidateGroupRemoved event", async () => {
-            await expect(tx)
-              .to.emit(groups, "CandidateGroupRemoved")
-              .withArgs(groupPublicKey2)
-          })
-
-          it("should remove registered group", async () => {
-            const groupsRegistry = await groups.getGroupsRegistry()
-
-            expect(groupsRegistry).to.be.lengthOf(1)
-            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey1))
-          })
-
-          it("should not update stored group data", async () => {
-            const storedGroup1 = await groups.getGroup(groupPublicKey1)
-
-            expect(storedGroup1.groupPubKey).to.be.equal(groupPublicKey1)
-            expect(storedGroup1.activationTimestamp).to.be.equal(0)
-            expect(storedGroup1.members).to.be.deep.equal(members1)
-
-            const storedGroup2 = await groups.getGroup(groupPublicKey2)
-
-            expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
-            expect(storedGroup2.activationTimestamp).to.be.equal(0)
-            expect(storedGroup2.members).to.be.deep.equal(members2)
-          })
-        })
-
         context("when the other group is active", async () => {
-          let activationTimestamp1: number
+          let activationBlockNumber1: number
           let tx: ContractTransaction
 
-          // TODO: Update as the latest group got activated
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,
@@ -825,9 +786,9 @@ describe("Groups", () => {
               noMisbehaved
             )
             const tx1 = await groups.activateCandidateGroup()
-            activationTimestamp1 = (
+            activationBlockNumber1 = (
               await ethers.provider.getBlock(tx1.blockHash)
-            ).timestamp
+            ).number
 
             await groups.addCandidateGroup(
               groupPublicKey2,
@@ -855,83 +816,23 @@ describe("Groups", () => {
             const storedGroup1 = await groups.getGroup(groupPublicKey1)
 
             expect(storedGroup1.groupPubKey).to.be.equal(groupPublicKey1)
-            expect(storedGroup1.activationTimestamp).to.be.equal(
-              activationTimestamp1
+            expect(storedGroup1.activationBlockNumber).to.be.equal(
+              activationBlockNumber1
             )
-            expect(storedGroup1.members).to.be.deep.equal(members1)
+            expect(storedGroup1.membersHash).to.be.equal(
+              hashUint32Array(members1)
+            )
 
             const storedGroup2 = await groups.getGroup(groupPublicKey2)
 
             expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
-            expect(storedGroup2.activationTimestamp).to.be.equal(0)
-            expect(storedGroup2.members).to.be.deep.equal(members2)
-          })
-        })
-      })
-
-      context("with the same group public key", async () => {
-        const groupPublicKey1 = groupPublicKey
-        const groupPublicKey2 = groupPublicKey
-
-        context("when both groups are candidate", async () => {
-          let tx: ContractTransaction
-
-          beforeEach(async () => {
-            await groups.addCandidateGroup(
-              groupPublicKey1,
-              members1,
-              noMisbehaved
+            expect(storedGroup2.activationBlockNumber).to.be.equal(0)
+            expect(storedGroup2.membersHash).to.be.equal(
+              hashUint32Array(members2)
             )
-            await groups.addCandidateGroup(
-              groupPublicKey2,
-              members2,
-              noMisbehaved
-            )
-
-            tx = await groups.popCandidateGroup()
-          })
-
-          it("should emit CandidateGroupRemoved event", async () => {
-            await expect(tx)
-              .to.emit(groups, "CandidateGroupRemoved")
-              .withArgs(groupPublicKey2)
-          })
-
-          it("should remove registered group", async () => {
-            const groupsRegistry = await groups.getGroupsRegistry()
-
-            expect(groupsRegistry).to.be.lengthOf(1)
-            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey1))
-          })
-
-          it("should not update stored group data", async () => {
-            const storedGroup1 = await groups.getGroup(groupPublicKey1)
-
-            expect(storedGroup1.groupPubKey).to.be.equal(groupPublicKey1)
-            expect(storedGroup1.activationTimestamp).to.be.equal(0)
-            expect(storedGroup1.members).to.be.deep.equal(members2)
-
-            const storedGroup2 = await groups.getGroup(groupPublicKey2)
-
-            expect(storedGroup2.groupPubKey).to.be.equal(groupPublicKey2)
-            expect(storedGroup2.activationTimestamp).to.be.equal(0)
-            expect(storedGroup2.members).to.be.deep.equal(members2)
           })
         })
       })
     })
   })
 })
-
-function filterMisbehaved(
-  members: number[],
-  misbehavedIndices: number[]
-): number[] {
-  const expectedMembers = [...members]
-  misbehavedIndices.reverse().forEach((value) => {
-    expectedMembers[value - 1] = expectedMembers[expectedMembers.length - 1]
-    expectedMembers.pop()
-  })
-
-  return expectedMembers
-}

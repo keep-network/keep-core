@@ -4,6 +4,7 @@ pragma solidity ^0.8.6;
 
 import "../RandomBeacon.sol";
 
+// TODO: get rid of this contract; use T staking contract for tests
 // Stub contract used in tests
 contract StakingStub is IRandomBeaconStaking {
     mapping(address => uint256) public stakedTokens;
@@ -37,10 +38,22 @@ contract StakingStub is IRandomBeaconStaking {
         }
     }
 
+    function rolesOf(address operator)
+        external
+        view
+        returns (
+            address owner,
+            address beneficiary,
+            address authorizer
+        )
+    {
+        return (operator, operator, operator);
+    }
+
     function eligibleStake(
         address operator,
         address // operatorContract
-    ) external view returns (uint256) {
+    ) external view override returns (uint256) {
         return stakedTokens[operator];
     }
 

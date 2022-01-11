@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+//
 // ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
 // ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 //   ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
@@ -8,11 +10,9 @@
 // ▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
 // ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
 //
-//                           Trust math, not hardware.
+//
 
-// SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "./RandomBeacon.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -52,17 +52,27 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newSortitionPoolUnlockingReward;
     uint256 public sortitionPoolUnlockingRewardChangeInitiated;
 
+    uint256 public newIneligibleOperatorNotifierReward;
+    uint256 public ineligibleOperatorNotifierRewardChangeInitiated;
+
     uint256 public newRelayEntrySubmissionFailureSlashingAmount;
     uint256 public relayEntrySubmissionFailureSlashingAmountChangeInitiated;
 
     uint256 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
+    uint256 public newUnauthorizedSigningSlashingAmount;
+    uint256 public unauthorizedSigningSlashingAmountChangeInitiated;
+
     uint256 public newSortitionPoolRewardsBanDuration;
     uint256 public sortitionPoolRewardsBanDurationChangeInitiated;
 
     uint256 public newRelayEntryTimeoutNotificationRewardMultiplier;
     uint256 public relayEntryTimeoutNotificationRewardMultiplierChangeInitiated;
+
+    uint256 public newUnauthorizedSigningNotificationRewardMultiplier;
+    uint256
+        public unauthorizedSigningNotificationRewardMultiplierChangeInitiated;
 
     uint96 public newMinimumAuthorization;
     uint256 public minimumAuthorizationChangeInitiated;
@@ -103,6 +113,7 @@ contract RandomBeaconGovernance is Ownable {
     // - sortition pool rewards ban duration
     // - malicious DKG result slashing amount
     // - sortition pool unlocking reward
+    // - ineligible operator notifier reward
     // - relay entry timeout notification reward multiplier
     // - DKG malicious result notification reward multiplier
     uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
@@ -172,6 +183,14 @@ contract RandomBeaconGovernance is Ownable {
         uint256 sortitionPoolUnlockingReward
     );
 
+    event IneligibleOperatorNotifierRewardUpdateStarted(
+        uint256 ineligibleOperatorNotifierReward,
+        uint256 timestamp
+    );
+    event IneligibleOperatorNotifierRewardUpdated(
+        uint256 ineligibleOperatorNotifierReward
+    );
+
     event RelayEntrySubmissionFailureSlashingAmountUpdateStarted(
         uint256 relayEntrySubmissionFailureSlashingAmount,
         uint256 timestamp
@@ -188,6 +207,14 @@ contract RandomBeaconGovernance is Ownable {
         uint256 maliciousDkgResultSlashingAmount
     );
 
+    event UnauthorizedSigningSlashingAmountUpdateStarted(
+        uint256 unauthorizedSigningSlashingAmount,
+        uint256 timestamp
+    );
+    event UnauthorizedSigningSlashingAmountUpdated(
+        uint256 unauthorizedSigningSlashingAmount
+    );
+
     event SortitionPoolRewardsBanDurationUpdateStarted(
         uint256 sortitionPoolRewardsBanDuration,
         uint256 timestamp
@@ -202,6 +229,14 @@ contract RandomBeaconGovernance is Ownable {
     );
     event RelayEntryTimeoutNotificationRewardMultiplierUpdated(
         uint256 relayEntryTimeoutNotificationRewardMultiplier
+    );
+
+    event UnauthorizedSigningNotificationRewardMultiplierUpdateStarted(
+        uint256 unauthorizedSigningTimeoutNotificationRewardMultiplier,
+        uint256 timestamp
+    );
+    event UnauthorizedSigningNotificationRewardMultiplierUpdated(
+        uint256 unauthorizedSigningTimeoutNotificationRewardMultiplier
     );
 
     event MinimumAuthorizationUpdateStarted(
@@ -458,7 +493,7 @@ contract RandomBeaconGovernance is Ownable {
 
     /// @notice Begins the group lifetime update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newGroupLifetime New group lifetime in seconds
+    /// @param _newGroupLifetime New group lifetime in blocks
     function beginGroupLifetimeUpdate(uint256 _newGroupLifetime)
         external
         onlyOwner
@@ -617,8 +652,10 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             newDkgResultSubmissionReward,
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         dkgResultSubmissionRewardChangeInitiated = 0;
@@ -659,12 +696,59 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             newSortitionPoolUnlockingReward,
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         sortitionPoolUnlockingRewardChangeInitiated = 0;
         newSortitionPoolUnlockingReward = 0;
+    }
+
+    /// @notice Begins the ineligible operator notifier reward update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newIneligibleOperatorNotifierReward New ineligible operator
+    ///        notifier reward.
+    function beginIneligibleOperatorNotifierRewardUpdate(
+        uint256 _newIneligibleOperatorNotifierReward
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newIneligibleOperatorNotifierReward = _newIneligibleOperatorNotifierReward;
+        ineligibleOperatorNotifierRewardChangeInitiated = block.timestamp;
+        emit IneligibleOperatorNotifierRewardUpdateStarted(
+            _newIneligibleOperatorNotifierReward,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the ineligible operator notifier reward update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeIneligibleOperatorNotifierRewardUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            ineligibleOperatorNotifierRewardChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit IneligibleOperatorNotifierRewardUpdated(
+            newIneligibleOperatorNotifierReward
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateRewardParameters(
+            randomBeacon.dkgResultSubmissionReward(),
+            randomBeacon.sortitionPoolUnlockingReward(),
+            newIneligibleOperatorNotifierReward,
+            randomBeacon.sortitionPoolRewardsBanDuration(),
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
+            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+        );
+        ineligibleOperatorNotifierRewardChangeInitiated = 0;
+        newIneligibleOperatorNotifierReward = 0;
     }
 
     /// @notice Begins the sortition pool rewards ban duration update process.
@@ -702,8 +786,10 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             newSortitionPoolRewardsBanDuration,
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         sortitionPoolRewardsBanDurationChangeInitiated = 0;
@@ -734,6 +820,59 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-enable not-rely-on-time */
     }
 
+    /// @notice Begins the unauthorized signing notification reward multiplier
+    ///         update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newUnauthorizedSigningNotificationRewardMultiplier New unauthorized
+    ///         signing notification reward multiplier.
+    function beginUnauthorizedSigningNotificationRewardMultiplierUpdate(
+        uint256 _newUnauthorizedSigningNotificationRewardMultiplier
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newUnauthorizedSigningNotificationRewardMultiplier <= 100,
+            "Maximum value is 100"
+        );
+
+        newUnauthorizedSigningNotificationRewardMultiplier = _newUnauthorizedSigningNotificationRewardMultiplier;
+        unauthorizedSigningNotificationRewardMultiplierChangeInitiated = block
+            .timestamp;
+        emit UnauthorizedSigningNotificationRewardMultiplierUpdateStarted(
+            _newUnauthorizedSigningNotificationRewardMultiplier,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the unauthorized signing notification reward
+    ///         multiplier update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            unauthorizedSigningNotificationRewardMultiplierChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit UnauthorizedSigningNotificationRewardMultiplierUpdated(
+            newUnauthorizedSigningNotificationRewardMultiplier
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateRewardParameters(
+            randomBeacon.dkgResultSubmissionReward(),
+            randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
+            randomBeacon.sortitionPoolRewardsBanDuration(),
+            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            newUnauthorizedSigningNotificationRewardMultiplier,
+            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+        );
+        unauthorizedSigningNotificationRewardMultiplierChangeInitiated = 0;
+        newUnauthorizedSigningNotificationRewardMultiplier = 0;
+    }
+
     /// @notice Finalizes the relay entry timeout notification reward
     ///         multiplier update process.
     /// @dev Can be called only by the contract owner, after the governance
@@ -753,8 +892,10 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             newRelayEntryTimeoutNotificationRewardMultiplier,
+            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
         relayEntryTimeoutNotificationRewardMultiplierChangeInitiated = 0;
@@ -804,8 +945,10 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
+            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             newDkgMaliciousResultNotificationRewardMultiplier
         );
         dkgMaliciousResultNotificationRewardMultiplierChangeInitiated = 0;
@@ -849,7 +992,8 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
             newRelayEntrySubmissionFailureSlashingAmount,
-            randomBeacon.maliciousDkgResultSlashingAmount()
+            randomBeacon.maliciousDkgResultSlashingAmount(),
+            randomBeacon.unauthorizedSigningSlashingAmount()
         );
         relayEntrySubmissionFailureSlashingAmountChangeInitiated = 0;
         newRelayEntrySubmissionFailureSlashingAmount = 0;
@@ -890,10 +1034,53 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
             randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
-            newMaliciousDkgResultSlashingAmount
+            newMaliciousDkgResultSlashingAmount,
+            randomBeacon.unauthorizedSigningSlashingAmount()
         );
         maliciousDkgResultSlashingAmountChangeInitiated = 0;
         newMaliciousDkgResultSlashingAmount = 0;
+    }
+
+    /// @notice Begins the unauthorized signing slashing amount update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newUnauthorizedSigningSlashingAmount New unauthorized signing
+    ///        slashing amount
+    function beginUnauthorizedSigningSlashingAmountUpdate(
+        uint256 _newUnauthorizedSigningSlashingAmount
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newUnauthorizedSigningSlashingAmount = _newUnauthorizedSigningSlashingAmount;
+        unauthorizedSigningSlashingAmountChangeInitiated = block.timestamp;
+        emit UnauthorizedSigningSlashingAmountUpdateStarted(
+            _newUnauthorizedSigningSlashingAmount,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the unauthorized signing slashing amount update
+    ///         process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeUnauthorizedSigningSlashingAmountUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            unauthorizedSigningSlashingAmountChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit UnauthorizedSigningSlashingAmountUpdated(
+            newUnauthorizedSigningSlashingAmount
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateSlashingParameters(
+            randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
+            randomBeacon.maliciousDkgResultSlashingAmount(),
+            newUnauthorizedSigningSlashingAmount
+        );
+        unauthorizedSigningSlashingAmountChangeInitiated = 0;
+        newUnauthorizedSigningSlashingAmount = 0;
     }
 
     /// @notice Begins the minimum authorization amount update process.
@@ -969,6 +1156,14 @@ contract RandomBeaconGovernance is Ownable {
         );
         authorizationDecreaseDelayChangeInitiated = 0;
         newAuthorizationDecreaseDelay = 0;
+    }
+
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        randomBeacon.withdrawIneligibleRewards(recipient);
     }
 
     /// @notice Get the time remaining until the relay request fee can be
@@ -1120,6 +1315,21 @@ contract RandomBeaconGovernance is Ownable {
             );
     }
 
+    /// @notice Get the time remaining until the ineligible operator notifier
+    ///         reward can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingIneligibleOperatorNotifierRewardUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                ineligibleOperatorNotifierRewardChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
     /// @notice Get the time remaining until the relay entry submission failure
     ///         slashing amount can be updated.
     /// @return Remaining time in seconds.
@@ -1146,6 +1356,21 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultSlashingAmountChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the unauthorized signing
+    ///         slashing amount can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingUnauthorizedSigningSlashingAmountUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                unauthorizedSigningSlashingAmountChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
@@ -1203,6 +1428,21 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 relayEntryTimeoutNotificationRewardMultiplierChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the unauthorized signing
+    ///         notification reward multiplier duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingUnauthorizedSigningNotificationRewardMultiplierUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                unauthorizedSigningNotificationRewardMultiplierChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }

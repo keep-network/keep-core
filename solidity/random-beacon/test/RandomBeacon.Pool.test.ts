@@ -37,10 +37,6 @@ describe("RandomBeacon - Pool", () => {
         await randomBeacon.connect(operator).registerOperator()
       })
 
-      it("should deposit gas", async () => {
-        expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.true
-      })
-
       it("should register the operator", async () => {
         expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
           .true
@@ -62,7 +58,7 @@ describe("RandomBeacon - Pool", () => {
 
   describe("updateOperatorStatus", () => {
     beforeEach(async () => {
-      // Operator is registered and gas deposit is made.
+      // Operator is registered.
       await stakingStub.setStake(operator.address, constants.minimumStake)
       await randomBeacon.connect(operator).registerOperator()
 
@@ -77,40 +73,6 @@ describe("RandomBeacon - Pool", () => {
         expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
           .false
       })
-
-      it("should release the gas deposit if operator was removed from pool during the update", async () => {
-        expect(await randomBeacon.hasGasDeposit(operator.address)).to.be.false
-      })
     })
-  })
-
-  describe("isOperatorEligible", () => {
-    context("when the operator is eligible to join the sortition pool", () => {
-      beforeEach(async () => {
-        await stakingStub.setStake(operator.address, constants.minimumStake)
-      })
-
-      it("should return true", async () => {
-        await expect(await randomBeacon.isOperatorEligible(operator.address)).to
-          .be.true
-      })
-    })
-
-    context(
-      "when the operator is not eligible to join the sortition pool",
-      () => {
-        beforeEach(async () => {
-          await stakingStub.setStake(
-            operator.address,
-            constants.minimumStake.sub(1)
-          )
-        })
-
-        it("should return false", async () => {
-          await expect(await randomBeacon.isOperatorEligible(operator.address))
-            .to.be.false
-        })
-      }
-    )
   })
 })

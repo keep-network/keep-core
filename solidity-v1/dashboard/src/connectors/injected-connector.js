@@ -4,9 +4,13 @@ import BigNumber from "bignumber.js"
 import { UserRejectedConnectionRequestError } from "./utils"
 
 class InjectedConnector extends AbstractConnector {
-  constructor() {
-    super(WALLETS.METAMASK.name)
-    this.provider = window.ethereum
+  constructor(walletName, providerPropertyNameOnWindow) {
+    super(walletName)
+    this.providerPropertyNameOnWindow = providerPropertyNameOnWindow
+  }
+
+  get provider() {
+    return window[this.providerPropertyNameOnWindow]
   }
 
   _onAccountChanged = ([address]) => {
@@ -23,15 +27,25 @@ class InjectedConnector extends AbstractConnector {
 
   enable = async () => {
     if (!this.provider) {
-      throw new Error("window.ethereum provider not found")
+      if (window[this.providerPropertyNameOnWindow]) {
+        this.provider = window[this.providerPropertyNameOnWindow]
+      } else {
+        throw new Error(
+          `The window provider for ${this.name} wallet can not be found!`
+        )
+      }
     }
 
     try {
       const accounts = await this.provider.request({
         method: "eth_requestAccounts",
       })
-      // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
-      this.provider.autoRefreshOnNetworkChange = false
+
+      if (this.name === WALLETS.METAMASK.name) {
+        // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
+        this.provider.autoRefreshOnNetworkChange = false
+      }
+
       if (this.provider && this.provider.on) {
         this.provider.on("accountsChanged", this._onAccountChanged)
         this.provider.on("disconnect", this._onDisconnect)
@@ -50,8 +64,8 @@ class InjectedConnector extends AbstractConnector {
   }
 
   disconnect = async () => {
-    // window.ethereum injected by MetaMask does not provide a method to
-    // disconnect a wallet.
+    //  window.ethereum injected by MetaMask and window.tally injected by Tally
+    // does not provide a method to disconnect a wallet.
     this._onDisconnect()
     this.provider.removeListener("accountsChanged", this._onAccountChanged)
     this.provider.removeListener("disconnect", this._onDisconnect)
