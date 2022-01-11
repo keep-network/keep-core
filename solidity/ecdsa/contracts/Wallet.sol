@@ -31,7 +31,7 @@ contract Wallet is IWallet {
 
     // TODO: Add onlyOwner(onlyFactory) modifier
     function activate() public {
-        require(!isMasterContract(), "Activation of this master wallet is not allowed");
+        require(!isMasterContract(), "activation of master wallet is not allowed");
 
         require(activationBlockNumber == 0, "wallet was already activated");
 
