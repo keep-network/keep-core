@@ -63,12 +63,15 @@ contract DKGValidator {
     ///         and signatures of operators supporting the result.
     /// @param seed seed used to start the DKG and select group members
     /// @param startBlock DKG start block
+    /// @param groupMembersHash Challenged group members hash. Hash must be created
+    ///        by filtering out misbehaved members.
     /// @return isValid true if the result is valid, false otherwise
     /// @return errorMsg validation error message; empty for a valid result
     function validate(
         DKG.Result calldata result,
         uint256 seed,
-        uint256 startBlock
+        uint256 startBlock,
+        bytes32 groupMembersHash
     ) external view returns (bool isValid, string memory errorMsg) {
         (bool hasValidFields, string memory error) = validateFields(result);
         if (!hasValidFields) {
@@ -81,6 +84,11 @@ contract DKGValidator {
 
         if (!validateGroupMembers(result, seed)) {
             return (false, "Invalid group members");
+        }
+
+        // At this point all group members and mishbehaved members were verified
+        if (!validateMembersHash(result, groupMembersHash)) {
+            return (false, "Invalid members hash");
         }
 
         return (true, "");
@@ -237,5 +245,39 @@ contract DKGValidator {
         }
 
         return true;
+    }
+
+    /// @notice Performs validation of hashed group members that actively took
+    ///         part in DKG.
+    /// @param result DKG result
+    /// @param actualMembersHash Hashed group members that actively took part in
+    ///        dkg
+    /// @return true if result's group members hash matches with the one that is
+    ///         challenged.
+    function validateMembersHash(
+        DKG.Result calldata result,
+        bytes32 actualMembersHash
+    ) public view returns (bool) {
+        if (result.misbehavedMembersIndices.length > 0) {
+            // members that generated a group signing key
+            uint32[] memory groupMembers = new uint32[](
+                result.members.length - result.misbehavedMembersIndices.length
+            );
+            uint256 k = 0; // misbehaved members counter
+            uint256 j = 0; // group members counter
+            for (uint256 i = 0; i < result.members.length; i++) {
+                // misbehaved member indices start from 1, so we need to -1 on misbehaved
+                if (i != result.misbehavedMembersIndices[k] - 1) {
+                    groupMembers[j] = result.members[i];
+                    j++;
+                } else if (k < result.misbehavedMembersIndices.length - 1) {
+                    k++;
+                }
+            }
+
+            return keccak256(abi.encode(groupMembers)) == actualMembersHash;
+        }
+
+        return keccak256(abi.encode(result.members)) == actualMembersHash;
     }
 }

@@ -14,16 +14,10 @@ contract GroupsStub {
 
     event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
 
-    function addCandidateGroup(
-        bytes calldata groupPubKey,
-        uint32[] calldata members,
-        uint8[] calldata misbehavedMembersIndices
-    ) external {
-        groups.addCandidateGroup(
-            groupPubKey,
-            members,
-            misbehavedMembersIndices
-        );
+    function addCandidateGroup(bytes calldata groupPubKey, bytes32 membersHash)
+        external
+    {
+        groups.addCandidateGroup(groupPubKey, membersHash);
     }
 
     function popCandidateGroup() external {

@@ -7,12 +7,18 @@ import { expect } from "chai"
 import blsData from "./data/bls"
 
 import { constants } from "./fixtures"
-import { selectGroup } from "./utils/groups"
-import { signDkgResult, DkgResult, noMisbehaved } from "./utils/dkg"
+import { selectGroup, hashUint32Array } from "./utils/groups"
+import {
+  signDkgResult,
+  DkgResult,
+  noMisbehaved,
+  hashDKGMembers,
+} from "./utils/dkg"
 import { Operator } from "./utils/operators"
 
 import type { SortitionPool, DKGValidator } from "../typechain"
 
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
 
 const fixture = async () => {
@@ -93,6 +99,10 @@ describe("DKGValidator", () => {
         signatures: signaturesBytes,
         signingMembersIndices,
         members: _groupMembers.map((m) => m.id),
+        membersHash: hashDKGMembers(
+          _groupMembers.map((m) => m.id),
+          _misbehaved
+        ),
       }
 
       return dkgResult
@@ -100,16 +110,27 @@ describe("DKGValidator", () => {
   })
 
   describe("validate", () => {
-    const testValidate = async (_groupMembers, _signers, _groupPublicKey) => {
+    const testValidate = async (
+      _groupMembers,
+      _signers,
+      _groupPublicKey,
+      _misbehaved,
+      _membersHash
+    ) => {
       const dkgResult = await prepareDkgResult(
         _groupMembers,
         _signers,
         _groupPublicKey,
-        noMisbehaved,
+        _misbehaved,
         dkgStartBlock
       )
 
-      const result = await validator.validate(dkgResult, dkgSeed, dkgStartBlock)
+      const result = await validator.validate(
+        dkgResult,
+        dkgSeed,
+        dkgStartBlock,
+        _membersHash
+      )
 
       return {
         isValid: result[0],
@@ -117,12 +138,106 @@ describe("DKGValidator", () => {
       }
     }
 
+    context("when DKG result contains misbehaved group members", () => {
+      let groupMemberIds: number[]
+
+      before(async () => {
+        await createSnapshot()
+        groupMemberIds = selectedOperators.map((m) => m.id)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("when hashed group members is correct", () => {
+        context("when misbehaved index is present at the beginning", () => {
+          it("should pass", async () => {
+            const misbehavedMemberIds = [1]
+            const expectedMembersIds = [...groupMemberIds]
+            expectedMembersIds.splice(0, 1) // index -1
+
+            const result = await testValidate(
+              selectedOperators,
+              selectedOperators,
+              groupPublicKey,
+              misbehavedMemberIds,
+              hashUint32Array(expectedMembersIds)
+            )
+
+            expect(result.isValid).to.be.true
+            expect(result.errorMsg).to.equal("")
+          })
+        })
+        context("when misbehaved indices present in the middle", () => {
+          it("should pass", async () => {
+            const misbehavedMemberIds = [22, 28, 46]
+            const expectedMembersIds = [...groupMemberIds]
+            expectedMembersIds.splice(21, 1) // index -1
+            expectedMembersIds.splice(26, 1) // index -2 (cause expectedMembers already shrinked)
+            expectedMembersIds.splice(43, 1) // index -3
+
+            const result = await testValidate(
+              selectedOperators,
+              selectedOperators,
+              groupPublicKey,
+              misbehavedMemberIds,
+              hashUint32Array(expectedMembersIds)
+            )
+
+            expect(result.isValid).to.be.true
+            expect(result.errorMsg).to.equal("")
+          })
+        })
+
+        context("when misbehaved index is present at the end", () => {
+          it("should pass", async () => {
+            const misbehavedMemberIds = [64]
+            const expectedMembersIds = [...groupMemberIds]
+            expectedMembersIds.splice(63, 1) // index -1
+
+            const result = await testValidate(
+              selectedOperators,
+              selectedOperators,
+              groupPublicKey,
+              misbehavedMemberIds,
+              hashUint32Array(expectedMembersIds)
+            )
+
+            expect(result.isValid).to.be.true
+            expect(result.errorMsg).to.equal("")
+          })
+        })
+      })
+
+      context("when hashed group members is incorrect", () => {
+        it("should not pass", async () => {
+          const misbehavedMemberIds = [42]
+          const expectedMembersIds = [...groupMemberIds]
+          expectedMembersIds.splice(21, 1) // index -1
+
+          const result = await testValidate(
+            selectedOperators,
+            selectedOperators,
+            groupPublicKey,
+            misbehavedMemberIds,
+            hashUint32Array(expectedMembersIds)
+          )
+
+          expect(result.isValid).to.be.false
+          expect(result.errorMsg).to.equal("Invalid members hash")
+        })
+      })
+    })
+
     context("when DKG result is valid", () => {
       it("should pass", async () => {
         const result = await testValidate(
           selectedOperators,
           selectedOperators,
-          groupPublicKey
+          groupPublicKey,
+          noMisbehaved,
+          hashUint32Array(selectedOperators.map((m) => m.id))
         )
 
         expect(result.isValid).to.be.true
@@ -140,7 +255,9 @@ describe("DKGValidator", () => {
         const result = await testValidate(
           shuffledOperators,
           shuffledOperators,
-          groupPublicKey
+          groupPublicKey,
+          noMisbehaved,
+          hashUint32Array(selectedOperators.map((m) => m.id))
         )
 
         expect(result.isValid).to.be.false
@@ -158,7 +275,9 @@ describe("DKGValidator", () => {
         const result = await testValidate(
           selectedOperators,
           shuffledOperators,
-          groupPublicKey
+          groupPublicKey,
+          noMisbehaved,
+          hashUint32Array(selectedOperators.map((m) => m.id))
         )
 
         expect(result.isValid).to.be.false

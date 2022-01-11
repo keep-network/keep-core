@@ -21,6 +21,7 @@ import {
   DkgResult,
   noMisbehaved,
   signAndSubmitUnrecoverableDkgResult,
+  hashDKGMembers,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
 import { selectGroup, hashUint32Array } from "./utils/groups"
@@ -1318,35 +1319,6 @@ describe("RandomBeacon - Group Creation", () => {
                 })
               }
             )
-
-            context(
-              "when misbehaved members are not in ascending order",
-              async () => {
-                const misbehavedIndices = [2, 9, 30, 11, 60, 64]
-
-                before(async () => {
-                  await createSnapshot()
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should revert", async () => {
-                  await expect(
-                    signAndSubmitCorrectDkgResult(
-                      randomBeacon,
-                      groupPublicKey,
-                      genesisSeed,
-                      startBlock,
-                      misbehavedIndices
-                    )
-                  ).to.be.revertedWith(
-                    "Array accessed at an out-of-bounds or negative index"
-                  )
-                })
-              }
-            )
           })
         })
       })
@@ -1450,6 +1422,7 @@ describe("RandomBeacon - Group Creation", () => {
       signatures: "0x01020304",
       signingMembersIndices: [1, 2, 3, 4],
       submitterMemberIndex: 1,
+      membersHash: hashDKGMembers([1, 2, 3, 4], []),
     }
 
     context("with initial contract state", async () => {
@@ -2164,6 +2137,7 @@ describe("RandomBeacon - Group Creation", () => {
       signatures: "0x01020304",
       signingMembersIndices: [1, 2, 3, 4],
       submitterMemberIndex: 1,
+      membersHash: hashDKGMembers([1, 2, 3, 4], []),
     }
 
     context("with initial contract state", async () => {

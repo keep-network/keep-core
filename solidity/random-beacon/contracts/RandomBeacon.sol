@@ -575,11 +575,7 @@ contract RandomBeacon is Ownable {
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
 
-        groups.addCandidateGroup(
-            dkgResult.groupPubKey,
-            dkgResult.members,
-            dkgResult.misbehavedMembersIndices
-        );
+        groups.addCandidateGroup(dkgResult.groupPubKey, dkgResult.membersHash);
     }
 
     /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
@@ -626,8 +622,12 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
+        bytes32 membersHash = groups
+            .getGroup(dkgResult.groupPubKey)
+            .membersHash;
+
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
-            .challengeResult(dkgResult);
+            .challengeResult(dkgResult, membersHash);
 
         uint256 slashingAmount = maliciousDkgResultSlashingAmount;
         address maliciousSubmitterAddresses = sortitionPool.getIDOperator(
