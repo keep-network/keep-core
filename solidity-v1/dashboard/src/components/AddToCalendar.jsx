@@ -71,22 +71,35 @@ const AddToCalendar = ({
   name = "New Event",
   details = "Event details",
   location = "http://localhost:3000/overview",
-  startsAt = moment().format("YYYY-MM-DD HH:mm:ss"), // date in YYY-MM-DD HH:mm:ss format
-  endsAt = moment().add(2, "hours").format("YYYY-MM-DD HH:mm:ss"), // date in YYY-MM-DD HH:mm:ss format
+  startsAt = moment().unix(), // unix timestamp
+  endsAt = moment().add(2, "hours").unix(), // unix timestamp
   className = "",
 }) => {
   const { yourAddress } = useWeb3Context()
+
   const locationWithInsertedAddress = useMemo(() => {
     if (!yourAddress) return location
     return location.replace("${address}", yourAddress)
   }, [yourAddress, location])
 
+  const { formattedStartsAt, formattedEndsAt } = useMemo(() => {
+    const formattedStartsAt = moment
+      .unix(startsAt)
+      .format("YYYY-MM-DD HH:mm:ss")
+    const formattedEndsAt = moment.unix(endsAt).format("YYYY-MM-DD HH:mm:ss")
+
+    return {
+      formattedStartsAt,
+      formattedEndsAt,
+    }
+  }, [startsAt, endsAt])
+
   const event = {
     name,
     details,
     location: locationWithInsertedAddress,
-    startsAt,
-    endsAt,
+    startsAt: formattedStartsAt,
+    endsAt: formattedEndsAt,
   }
 
   const onCalendarSelect = (selectedCalendar) => {

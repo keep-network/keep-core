@@ -69,12 +69,12 @@ const InitiateWithdrawComponent = ({
             startsAt={moment
               .unix(timestamp)
               .add(withdrawalDelay, "seconds")
-              .format("YYYY-MM-DD HH:mm:ss")}
+              .unix()}
             endsAt={moment
               .unix(timestamp)
               .add(withdrawalDelay, "seconds")
               .add(withdrawalTimeout, "seconds")
-              .format("YYYY-MM-DD HH:mm:ss")}
+              .unix()}
           />
         </OnlyIf>
         <List className="mt-2">

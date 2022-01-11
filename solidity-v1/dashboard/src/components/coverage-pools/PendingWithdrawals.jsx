@@ -109,6 +109,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
     const endOfWithdrawalDelayDate = moment
       .unix(timestamp)
       .add(withdrawalDelay, "seconds")
+
     const days = endOfWithdrawalDelayDate.diff(currentDate, "days")
     const hours = moment
       .duration(endOfWithdrawalDelayDate.diff(currentDate))
@@ -143,10 +144,10 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
           </div>
           <AddToCalendar
             {...COVERAGE_POOL_CLAIM_TOKENS_CALENDAR_EVENT}
-            startsAt={endOfWithdrawalDelayDate.format("YYYY-MM-DD HH:mm:ss")}
+            startsAt={endOfWithdrawalDelayDate.unix()}
             endsAt={endOfWithdrawalDelayDate
               .add(withdrawalTimeout, "seconds")
-              .format("YYYY-MM-DD HH:mm:ss")}
+              .unix()}
             className="pending-withdrawal__add-to-calendar-dropdown"
           />
         </>
