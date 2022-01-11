@@ -109,7 +109,7 @@ library DKG {
     }
 
     /// @dev Size of a group in the threshold relay.
-    uint256 public constant groupSize = 64; // TODO: Confirm value
+    uint256 public constant groupSize = 100;
 
     /// @notice Time in blocks after which DKG result is complete and ready to be
     //          published by clients.
