@@ -30,7 +30,7 @@ contract WalletFactory is CloneFactory {
 
     // Holds the address of the wallet contract
     // which will be used as a master contract for cloning.
-    address public immutable masterWallet;
+    Wallet public immutable masterWallet;
 
     uint256 public relayEntry = 12345; // TODO: get value from Random Beacon
 
@@ -66,7 +66,7 @@ contract WalletFactory is CloneFactory {
 
     event WalletCreated(address walletAddress);
 
-    constructor(SortitionPool _sortitionPool, DKGValidator _dkgValidator, address _masterWallet) {
+    constructor(SortitionPool _sortitionPool, DKGValidator _dkgValidator, Wallet _masterWallet) {
         dkg.init(_sortitionPool, _dkgValidator);
         masterWallet = _masterWallet;
     }
@@ -88,7 +88,7 @@ contract WalletFactory is CloneFactory {
         // See https://github.com/keep-network/keep-core/pull/2768
         uint32[] memory walletMembers = dkgResult.members;
 
-        address clonedWalletAddress = createClone(masterWallet);
+        address clonedWalletAddress = createClone(address(masterWallet));
         require(clonedWalletAddress != address(0), "Cloned wallet address is 0");
 
         Wallet wallet = Wallet(clonedWalletAddress);
