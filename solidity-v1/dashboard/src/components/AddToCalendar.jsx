@@ -1,8 +1,9 @@
-import React from "react"
+import React, { useMemo } from "react"
 import moment from "moment"
 import { CompoundDropdown as Dropdown } from "./Dropdown"
 import * as Icons from "./Icons"
 import { ADD_TO_CALENDAR_OPTIONS } from "../constants/constants"
+import { useWeb3Context } from "./WithWeb3Context"
 
 const makeTime = (time) => {
   return moment(time)
@@ -45,6 +46,7 @@ const makeICSCalendarUrl = (event) => {
     `DTEND:${makeTime(event.endsAt)}`,
     `SUMMARY:${event.name}`,
     `DESCRIPTION:${event.details}`,
+    `LOCATION:${event.details}`,
     "END:VEVENT",
     "END:VCALENDAR"
   )
@@ -68,13 +70,21 @@ const calendars = [
 const AddToCalendar = ({
   name = "New Event",
   details = "Event details",
+  location = "http://localhost:3000/overview",
   startsAt = moment().format("YYYY-MM-DD HH:mm:ss"), // date in YYY-MM-DD HH:mm:ss format
   endsAt = moment().add(2, "hours").format("YYYY-MM-DD HH:mm:ss"), // date in YYY-MM-DD HH:mm:ss format
   className = "",
 }) => {
+  const { yourAddress } = useWeb3Context()
+  const locationWithInsertedAddress = useMemo(() => {
+    if (!yourAddress) return location
+    return location.replace("${address}", yourAddress)
+  }, [yourAddress, location])
+
   const event = {
     name,
     details,
+    location: locationWithInsertedAddress,
     startsAt,
     endsAt,
   }
