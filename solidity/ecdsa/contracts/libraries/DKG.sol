@@ -61,12 +61,12 @@ library DKG {
     /// @notice DKG result.
     struct Result {
         // Claimed submitter candidate group member index.
-        // Must be in range [1, 64].
+        // Must be in range [1, groupSize].
         uint256 submitterMemberIndex;
         // Generated candidate group public key
         bytes groupPubKey;
         // Array of misbehaved members indices (disqualified or inactive).
-        // Indices must be in range [1, 64], unique, and sorted in ascending
+        // Indices must be in range [1, groupSize], unique, and sorted in ascending
         // order.
         uint8[] misbehavedMembersIndices;
         // Concatenation of signatures from members supporting the result.
@@ -80,7 +80,7 @@ library DKG {
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
-        // be in range [1, 64], unique, and sorted in ascending order.
+        // be in range [1, groupSize], unique, and sorted in ascending order.
         uint256[] signingMembersIndices;
         // Identifiers of candidate group members as outputted by the group
         // selection protocol.
@@ -356,7 +356,7 @@ library DKG {
         );
 
         // Extract submitter member address. Submitter member index is in
-        // range [1, 64] so we need to -1 when fetching identifier from members
+        // range [1, groupSize] so we need to -1 when fetching identifier from members
         // array.
         address submitterMember = self.sortitionPool.getIDOperator(
             result.members[result.submitterMemberIndex - 1]
@@ -371,7 +371,7 @@ library DKG {
         );
 
         // Extract misbehaved members identifiers. Misbehaved members indices
-        // are in range [1, 64], so we need to -1 when fetching identifiers from
+        // are in range [1, groupSize], so we need to -1 when fetching identifiers from
         // members array.
         misbehavedMembers = new uint32[](
             result.misbehavedMembersIndices.length
