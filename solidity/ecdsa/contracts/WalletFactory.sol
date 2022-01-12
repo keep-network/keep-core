@@ -164,7 +164,7 @@ contract WalletFactory is CloneFactory {
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
         require(
             wallets[wallets.length - 1].activationBlockNumber() == 0,
-            "the latest registered wallet was already activated"
+            "The latest registered wallet was already activated"
         );
 
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg

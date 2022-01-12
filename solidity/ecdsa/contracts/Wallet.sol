@@ -31,7 +31,7 @@ contract Wallet is IWallet {
     function init(uint32[] memory _membersIds) public {
         require(
             !isMasterContract(),
-            "initialization of master wallet is not allowed"
+            "Initialization of master wallet is not allowed"
         );
 
         membersIds = _membersIds;
@@ -39,7 +39,7 @@ contract Wallet is IWallet {
 
     // TODO: Add onlyOwner(onlyFactory) modifier
     function activate() public {
-        require(activationBlockNumber == 0, "wallet was already activated");
+        require(activationBlockNumber == 0, "Wallet was already activated");
 
         activationBlockNumber = block.number;
     }
