@@ -95,6 +95,8 @@ contract WalletFactory is CloneFactory {
 
         wallets.push(wallet);
 
+        wallet.init(walletMembers);
+
         emit WalletCreated(address(wallet));
     }
 

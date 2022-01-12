@@ -24,15 +24,21 @@ contract Wallet is IWallet {
 
     address public immutable masterWallet;
 
-    constructor(uint32[] memory _membersIds) {
-        membersIds = _membersIds;
+    constructor() {
         masterWallet = address(this);
+    }
+
+    function init(uint32[] memory _membersIds) public {
+        require(
+            !isMasterContract(),
+            "initialization of master wallet is not allowed"
+        );
+
+        membersIds = _membersIds;
     }
 
     // TODO: Add onlyOwner(onlyFactory) modifier
     function activate() public {
-        require(!isMasterContract(), "activation of master wallet is not allowed");
-
         require(activationBlockNumber == 0, "wallet was already activated");
 
         activationBlockNumber = block.number;
