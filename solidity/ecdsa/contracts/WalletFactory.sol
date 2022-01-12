@@ -158,6 +158,7 @@ contract WalletFactory is CloneFactory {
         Wallet latestWallet = wallets[wallets.length - 1];
 
         latestWallet.activate();
+        dkg.complete();
     }
 
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
