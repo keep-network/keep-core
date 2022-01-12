@@ -76,6 +76,9 @@ contract WalletFactory is CloneFactory {
         masterWallet = _masterWallet;
 
         dkg.init(_sortitionPool, _dkgValidator);
+        // TODO: Implement governance for the parameters
+        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
+        dkg.setResultSubmissionEligibilityDelay(20);
     }
 
     // TODO: Revisit to implement mechanism for a fresh wallet creation.
