@@ -6,16 +6,34 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await getNamedAccounts()
 
   const SortitionPool = await deployments.get("SortitionPool")
+  const T = await deployments.get("T")
+  let TokenStaking = await deployments.get("TokenStaking")
   const DKGValidator = await deployments.get("DKGValidator")
+  const MasterWallet = await deployments.get("MasterWallet")
 
   const DKG = await deployments.deploy("DKG", {
     from: deployer,
     log: true,
   })
 
+  // TODO: StakingStub contract should be replaced by actual implementation of
+  // TokenStaking contract, as soon as integration is implemented.
+  if (deployments.getNetworkName() === "hardhat") {
+    console.log("deploying StakingStub contract instead of TokenStaking")
+    TokenStaking = await deployments.deploy("StakingStub", {
+      from: deployer,
+    })
+  }
+
   const WalletFactory = await deployments.deploy("WalletFactory", {
     from: deployer,
-    args: [SortitionPool.address, DKGValidator.address],
+    args: [
+      SortitionPool.address,
+      T.address,
+      TokenStaking.address,
+      DKGValidator.address,
+      MasterWallet.address,
+    ],
     libraries: { DKG: DKG.address },
     log: true,
   })
@@ -37,4 +55,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 
 func.tags = ["WalletFactory"]
-func.dependencies = ["SortitionPool", "DKGValidator"]
+func.dependencies = [
+  "SortitionPool",
+  "T",
+  "TokenStaking",
+  "DKGValidator",
+  "MasterWallet",
+]
