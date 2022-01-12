@@ -45,7 +45,7 @@ contract DKGValidator {
     ///      the protocol to produce a relay entry. The adversary can not learn
     ///      anything about the key as long as it does not break into
     ///      groupThreshold+1 of members.
-    uint256 public constant groupThreshold = 50;
+    uint256 public constant groupThreshold = 51;
 
     /// @dev The minimum number of active and properly behaving group members
     ///      during the DKG needed to accept the result. This number is higher
