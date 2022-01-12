@@ -49,6 +49,7 @@ export async function signAndSubmitCorrectDkgResult(
   startBlock: number,
   misbehavedIndices: number[],
   submitterIndex?: number,
+  membersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
@@ -77,6 +78,7 @@ export async function signAndSubmitCorrectDkgResult(
     startBlock,
     misbehavedIndices,
     submitterIndex,
+    membersHash,
     numberOfSignatures
   )
 }
@@ -91,6 +93,7 @@ export async function signAndSubmitArbitraryDkgResult(
   startBlock: number,
   misbehavedIndices: number[],
   submitterIndex?: number,
+  groupMembersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
@@ -113,7 +116,12 @@ export async function signAndSubmitArbitraryDkgResult(
     submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
   }
 
-  const membersHash = hashDKGMembers(members, misbehavedIndices)
+  let membersHash: string
+  if (!groupMembersHash) {
+    membersHash = hashDKGMembers(members, misbehavedIndices)
+  } else {
+    membersHash = groupMembersHash
+  }
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,

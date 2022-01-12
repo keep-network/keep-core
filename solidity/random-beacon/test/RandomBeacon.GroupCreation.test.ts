@@ -741,6 +741,7 @@ describe("RandomBeacon - Group Creation", () => {
                 startBlock,
                 noMisbehaved,
                 firstEligibleSubmitterIndex,
+                undefined,
                 constants.groupThreshold
               ))
             })
@@ -2187,6 +2188,91 @@ describe("RandomBeacon - Group Creation", () => {
             await expect(
               randomBeacon.challengeDkgResult(stubDkgResult)
             ).to.be.revertedWith("Current state is not CHALLENGE")
+          })
+        })
+
+        context("with invalid members hash submitted", async () => {
+          let dkgResultHash: string
+          let dkgResult: DkgResult
+          let members: Operator[]
+          let membersIds: number[]
+
+          before(async () => {
+            await createSnapshot()
+
+            members = await selectGroup(sortitionPool, genesisSeed)
+            membersIds = members.map((m) => m.id)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          context("when misbehaved members are present", async () => {
+            it("should emit DkgResultChallenged event", async () => {
+              const actualMisbehavedIndices = [1, 7, 14, 42]
+              const invalidMisbehavedIndices = [3, 8, 15, 41]
+              const invalidMembersHash = hashDKGMembers(
+                membersIds,
+                invalidMisbehavedIndices
+              )
+
+              ;({ dkgResult, dkgResultHash } =
+                await signAndSubmitArbitraryDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
+                  members,
+                  startBlock,
+                  actualMisbehavedIndices,
+                  undefined,
+                  invalidMembersHash
+                ))
+
+              const tx = await randomBeacon
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultChallenged")
+                .withArgs(
+                  dkgResultHash,
+                  await thirdParty.getAddress(),
+                  "Invalid members hash"
+                )
+            })
+          })
+
+          context("when misbehaved members are not present", async () => {
+            it("should emit DkgResultChallenged event", async () => {
+              const invalidMisbehavedIndices = [3]
+              const invalidMembersHash = hashDKGMembers(
+                membersIds,
+                invalidMisbehavedIndices
+              )
+
+              ;({ dkgResult, dkgResultHash } =
+                await signAndSubmitArbitraryDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
+                  members,
+                  startBlock,
+                  noMisbehaved,
+                  undefined,
+                  invalidMembersHash
+                ))
+
+              const tx = await randomBeacon
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgResultChallenged")
+                .withArgs(
+                  dkgResultHash,
+                  await thirdParty.getAddress(),
+                  "Invalid members hash"
+                )
+            })
           })
         })
 
