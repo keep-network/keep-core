@@ -28,10 +28,6 @@ contract WalletFactory is CloneFactory {
 
     Wallet[] public wallets;
 
-    // Holds the address of the wallet contract
-    // which will be used as a master contract for cloning.
-    Wallet public immutable masterWallet;
-
     uint256 public relayEntry = 12345; // TODO: get value from Random Beacon
 
     event DkgStarted(uint256 indexed seed);
@@ -66,9 +62,20 @@ contract WalletFactory is CloneFactory {
 
     event WalletCreated(address walletAddress);
 
-    constructor(SortitionPool _sortitionPool, DKGValidator _dkgValidator, Wallet _masterWallet) {
-        dkg.init(_sortitionPool, _dkgValidator);
+    // External dependencies
+
+    // Holds the address of the wallet contract which will be used as a master
+    // contract for cloning.
+    Wallet public immutable masterWallet;
+
+    constructor(
+        SortitionPool _sortitionPool,
+        DKGValidator _dkgValidator,
+        Wallet _masterWallet
+    ) {
         masterWallet = _masterWallet;
+
+        dkg.init(_sortitionPool, _dkgValidator);
     }
 
     // TODO: Revisit to implement mechanism for a fresh wallet creation.
