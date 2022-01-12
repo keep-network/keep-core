@@ -171,11 +171,12 @@ describe("DKGValidator", () => {
         })
         context("when misbehaved indices present in the middle", () => {
           it("should pass", async () => {
-            const misbehavedMemberIds = [22, 28, 46]
+            const misbehavedMemberIds = [22, 28, 46, 53]
             const expectedMembersIds = [...groupMemberIds]
             expectedMembersIds.splice(21, 1) // index -1
             expectedMembersIds.splice(26, 1) // index -2 (cause expectedMembers already shrinked)
             expectedMembersIds.splice(43, 1) // index -3
+            expectedMembersIds.splice(49, 1) // index -4
 
             const result = await testValidate(
               selectedOperators,
