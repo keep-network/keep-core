@@ -20,6 +20,15 @@ import "./DKGValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@thesis/solidity-contracts/contracts/clone/CloneFactory.sol";
 
+/// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
+/// IStaking interface from there.
+interface IWalletStaking {
+    function eligibleStake(address operator, address operatorContract)
+        external
+        view
+        returns (uint256);
+}
+
 contract WalletFactory is CloneFactory {
     using DKG for DKG.Data;
 
@@ -64,21 +73,54 @@ contract WalletFactory is CloneFactory {
 
     // External dependencies
 
+    SortitionPool public sortitionPool;
+    IERC20 public tToken;
+    /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
+    /// IStaking interface from there.
+    IWalletStaking public staking;
     // Holds the address of the wallet contract which will be used as a master
     // contract for cloning.
     Wallet public immutable masterWallet;
 
     constructor(
         SortitionPool _sortitionPool,
+        IERC20 _tToken,
+        IWalletStaking _staking,
         DKGValidator _dkgValidator,
         Wallet _masterWallet
     ) {
+        sortitionPool = _sortitionPool;
+        tToken = _tToken;
+        staking = _staking;
         masterWallet = _masterWallet;
 
         dkg.init(_sortitionPool, _dkgValidator);
         // TODO: Implement governance for the parameters
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionEligibilityDelay(20);
+    }
+
+    /// @notice Registers the caller in the sortition pool.
+    function registerOperator() external {
+        address operator = msg.sender;
+
+        require(
+            !sortitionPool.isOperatorInPool(operator),
+            "Operator is already registered"
+        );
+
+        sortitionPool.insertOperator(
+            operator,
+            staking.eligibleStake(operator, address(this))
+        );
+    }
+
+    /// @notice Updates the sortition pool status of the caller.
+    function updateOperatorStatus() external {
+        sortitionPool.updateOperatorStatus(
+            msg.sender,
+            staking.eligibleStake(msg.sender, address(this))
+        );
     }
 
     // TODO: Revisit to implement mechanism for a fresh wallet creation.
