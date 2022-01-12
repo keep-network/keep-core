@@ -21,7 +21,7 @@ import {
 import { registerOperators } from "./utils/operators"
 import type { Operator } from "./utils/operators"
 
-const { mineBlocks, mineBlocksTo } = helpers.time
+const { mineBlocks } = helpers.time
 
 const fixture = async () => {
   await deployments.fixture(["WalletFactory"])
@@ -51,6 +51,7 @@ describe("WalletFactory", () => {
   let signers: Operator[]
 
   beforeEach("load test fixture", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({ walletFactory, sortitionPool, deployer, signers } =
       await waffle.loadFixture(fixture))
   })

@@ -3,8 +3,8 @@ import type { DeployFunction } from "hardhat-deploy/types"
 import { writeFileSync } from "fs"
 import path from "path"
 
-const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { getNamedAccounts, deployments, helpers } = hre
+const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
+  const { getNamedAccounts, deployments } = hre
   const { deployer } = await getNamedAccounts()
 
   const MasterWallet = await deployments.deploy("MasterWallet", {
@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   })
 
-  if (deployments.getNetworkName() != "hardhat") {
+  if (deployments.getNetworkName() !== "hardhat") {
     // Store plain Wallet artifact in the deployments directory for usage in other projects.
     writeFileSync(
       path.join(

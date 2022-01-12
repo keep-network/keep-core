@@ -1,11 +1,10 @@
-import { helpers, ethers } from "hardhat"
+/* eslint-disable import/prefer-default-export */
+
 import type { BigNumber } from "ethers"
 
 import { constants } from "../fixtures"
 import type { Operator } from "./operators"
 import type { SortitionPool } from "../../typechain"
-
-const { mineBlocks } = helpers.time
 
 export async function selectGroup(
   sortitionPool: SortitionPool,

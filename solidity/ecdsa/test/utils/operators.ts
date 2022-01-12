@@ -33,7 +33,7 @@ export async function registerOperators(
 
   for (let i = 0; i < addresses.length; i++) {
     const operator: string = addresses[i]
-    const beneficiary: string = operator
+    // const beneficiary: string = operator
     const authorizer: string = operator
 
     await tToken.connect(deployer).mint(operator, stakeAmount)

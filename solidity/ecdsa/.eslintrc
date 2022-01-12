@@ -4,7 +4,16 @@
   "rules": {
     "import/no-extraneous-dependencies": [
       "error",
-      { "devDependencies": ["test/**/*.ts", "hardhat.config.ts"] }
-    ]
-  }
+      { "devDependencies": ["./test/**/*.ts", "hardhat.config.ts"] }
+    ],
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }]
+  },
+  "overrides": [
+    {
+      "files": ["./deploy/**"],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
 }

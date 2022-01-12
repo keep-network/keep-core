@@ -141,7 +141,10 @@ contract WalletFactory is CloneFactory {
         uint32[] memory walletMembers = dkgResult.members;
 
         address clonedWalletAddress = createClone(address(masterWallet));
-        require(clonedWalletAddress != address(0), "Cloned wallet address is 0");
+        require(
+            clonedWalletAddress != address(0),
+            "Cloned wallet address is 0"
+        );
 
         Wallet wallet = Wallet(clonedWalletAddress);
 
@@ -154,6 +157,9 @@ contract WalletFactory is CloneFactory {
 
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
+
+        // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
+        misbehavedMembers;
 
         Wallet latestWallet = wallets[wallets.length - 1];
 
@@ -170,9 +176,11 @@ contract WalletFactory is CloneFactory {
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
 
-        // TODO: Implement slashing.
-
         wallets.pop();
+
+        // TODO: Implement slashing.
+        maliciousResultHash;
+        maliciousSubmitter;
     }
 
     // TODO: Add timeouts

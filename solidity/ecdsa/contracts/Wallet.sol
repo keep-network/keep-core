@@ -45,6 +45,7 @@ contract Wallet is IWallet {
     }
 
     function sign(bytes32 digest) external {
+        digest;
         revert("FIXME: not implemented");
     }
 
