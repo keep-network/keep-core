@@ -19,6 +19,7 @@ import "./Wallet.sol";
 import "./DKGValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@thesis/solidity-contracts/contracts/clone/CloneFactory.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 /// IStaking interface from there.
@@ -29,7 +30,7 @@ interface IWalletStaking {
         returns (uint256);
 }
 
-contract WalletFactory is CloneFactory {
+contract WalletFactory is CloneFactory, Ownable {
     using DKG for DKG.Data;
 
     // Libraries data storages
@@ -124,8 +125,7 @@ contract WalletFactory is CloneFactory {
     }
 
     // TODO: Revisit to implement mechanism for a fresh wallet creation.
-    // Consider who the caller will be: anyone or onlyOwner?
-    function createNewWallet() external {
+    function createNewWallet() external onlyOwner {
         dkg.lockState();
         dkg.start(
             uint256(keccak256(abi.encodePacked(relayEntry, block.number)))
