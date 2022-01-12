@@ -161,9 +161,8 @@ contract WalletFactory is CloneFactory, Ownable {
         // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
         misbehavedMembers;
 
-        Wallet latestWallet = wallets[wallets.length - 1];
+        wallets[wallets.length - 1].activate();
 
-        latestWallet.activate();
         dkg.complete();
     }
 
