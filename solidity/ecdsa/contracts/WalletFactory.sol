@@ -133,7 +133,7 @@ contract WalletFactory is CloneFactory, Ownable {
     }
 
     // TODO: Revisit to implement mechanism for a fresh wallet creation.
-    function createNewWallet() external onlyOwner {
+    function requestNewWallet() external onlyOwner {
         dkg.lockState();
         dkg.start(
             uint256(keccak256(abi.encodePacked(relayEntry, block.number)))
