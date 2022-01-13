@@ -135,11 +135,6 @@ contract WalletFactory is CloneFactory, Ownable {
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
 
-        // FIXME: We use all members now. We should filter out DQ/IA members and
-        // have just the active members that will be part of the wallet.
-        // See https://github.com/keep-network/keep-core/pull/2768
-        uint32[] memory walletMembers = dkgResult.members;
-
         address clonedWalletAddress = createClone(address(masterWallet));
         require(
             clonedWalletAddress != address(0),
@@ -150,7 +145,14 @@ contract WalletFactory is CloneFactory, Ownable {
 
         wallets.push(wallet);
 
-        wallet.init(address(this), walletMembers);
+        wallet.init(
+            address(this),
+            hashGroupMembers(
+                dkgResult.members,
+                dkgResult.misbehavedMembersIndices
+            ),
+            keccak256(dkgResult.groupPubKey)
+        );
 
         emit WalletCreated(address(wallet));
     }
@@ -185,4 +187,42 @@ contract WalletFactory is CloneFactory, Ownable {
     }
 
     // TODO: Add timeouts
+
+    /// @notice Hash group members that actively participated in a group signing
+    ///         key generation. This function filters out IA/DQ members before
+    ///         hashing.
+    /// @param members Group member addresses as outputted by the group selection
+    ///        protocol.
+    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
+    ///        inactive) group members. Indices reflect positions
+    ///        of members in the group as outputted by the group selection
+    ///        protocol. Indices must be in ascending order. The order can be verified
+    ///        during the DKG challege phase in DKGValidator contract.
+    /// @return Group members hash.
+    function hashGroupMembers(
+        uint32[] calldata members,
+        uint8[] calldata misbehavedMembersIndices
+    ) private pure returns (bytes32) {
+        if (misbehavedMembersIndices.length > 0) {
+            // members that generated a group signing key
+            uint32[] memory groupMembers = new uint32[](
+                members.length - misbehavedMembersIndices.length
+            );
+            uint256 k = 0; // misbehaved members counter
+            uint256 j = 0; // group members counter
+            for (uint256 i = 0; i < members.length; i++) {
+                // misbehaved member indices start from 1, so we need to -1 on misbehaved
+                if (i != misbehavedMembersIndices[k] - 1) {
+                    groupMembers[j] = members[i];
+                    j++;
+                } else if (k < misbehavedMembersIndices.length - 1) {
+                    k++;
+                }
+            }
+
+            return keccak256(abi.encode(groupMembers));
+        }
+
+        return keccak256(abi.encode(members));
+    }
 }
