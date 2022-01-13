@@ -20,5 +20,5 @@ export const dkgState = {
 
 export const params = {
   dkgResultChallengePeriodLength: 11520,
-  dkgResultSubmissionEligibilityDelay: 10,
+  dkgResultSubmissionEligibilityDelay: 20,
 }
