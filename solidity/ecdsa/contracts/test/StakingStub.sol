@@ -18,9 +18,7 @@ contract StakingStub is IWalletStaking {
         address[] operators
     );
 
-    function slash(uint256 amount, address[] memory operators)
-        external
-    {
+    function slash(uint256 amount, address[] memory operators) external {
         if (amount > 0 && operators.length > 0) {
             emit Slashed(amount, operators);
         }
@@ -31,7 +29,7 @@ contract StakingStub is IWalletStaking {
         uint256 rewardMultiplier,
         address notifier,
         address[] memory operators
-    ) external  {
+    ) external {
         if (amount > 0 && operators.length > 0) {
             emit Seized(amount, rewardMultiplier, notifier, operators);
         }

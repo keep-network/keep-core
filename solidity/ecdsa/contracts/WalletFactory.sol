@@ -74,11 +74,10 @@ contract WalletFactory is CloneFactory, Ownable {
         address indexed walletAddress,
         bytes32 indexed dkgResultHash
     );
-    
+
     event WalletRemoved(address indexed walletAddress);
 
     event WalletActivated(address indexed walletAddress);
-
 
     // External dependencies
 
@@ -170,7 +169,7 @@ contract WalletFactory is CloneFactory, Ownable {
 
         Wallet latestWallet = wallets[wallets.length - 1];
         latestWallet.activate();
-    
+
         // TODO: Transfer Wallet's ownership to WalletManager
 
         // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.

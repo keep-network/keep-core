@@ -31,7 +31,11 @@ contract Wallet is IWallet, Ownable {
         masterWallet = address(this);
     }
 
-    function init(address _owner, bytes32 _membersIdsHash, bytes32 _publicKeyHash) public {
+    function init(
+        address _owner,
+        bytes32 _membersIdsHash,
+        bytes32 _publicKeyHash
+    ) public {
         require(
             !isMasterContract(),
             "Initialization of master wallet is not allowed"
