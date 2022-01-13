@@ -27,8 +27,6 @@ contract Wallet is IWallet, Ownable {
 
     address public immutable masterWallet;
 
-    event WalletActivated();
-
     constructor() {
         masterWallet = address(this);
     }
@@ -49,8 +47,6 @@ contract Wallet is IWallet, Ownable {
         require(activationBlockNumber == 0, "Wallet was already activated");
 
         activationBlockNumber = block.number;
-
-        emit WalletActivated();
     }
 
     function sign(bytes32 digest) external onlyOwner {

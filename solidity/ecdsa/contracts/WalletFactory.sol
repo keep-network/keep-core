@@ -70,7 +70,15 @@ contract WalletFactory is CloneFactory, Ownable {
 
     event DkgSeedTimedOut();
 
-    event WalletCreated(address walletAddress);
+    event WalletCreated(
+        address indexed walletAddress,
+        bytes32 indexed dkgResultHash
+    );
+    
+    event WalletRemoved(address indexed walletAddress);
+
+    event WalletActivated(address indexed walletAddress);
+
 
     // External dependencies
 
@@ -154,25 +162,29 @@ contract WalletFactory is CloneFactory, Ownable {
             keccak256(dkgResult.groupPubKey)
         );
 
-        emit WalletCreated(address(wallet));
+        emit WalletCreated(address(wallet), keccak256(abi.encode(dkgResult)));
     }
 
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
+        Wallet latestWallet = wallets[wallets.length - 1];
+        latestWallet.activate();
+    
         // TODO: Transfer Wallet's ownership to WalletManager
 
         // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
         misbehavedMembers;
 
-        wallets[wallets.length - 1].activate();
+        emit WalletActivated(address(latestWallet));
 
         dkg.complete();
     }
 
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
+        Wallet latestWallet = wallets[wallets.length - 1];
         require(
-            wallets[wallets.length - 1].activationBlockNumber() == 0,
+            latestWallet.activationBlockNumber() == 0,
             "The latest registered wallet was already activated"
         );
 
@@ -180,6 +192,7 @@ contract WalletFactory is CloneFactory, Ownable {
             .challengeResult(dkgResult);
 
         wallets.pop();
+        emit WalletRemoved(address(latestWallet));
 
         // TODO: Implement slashing.
         maliciousResultHash;
