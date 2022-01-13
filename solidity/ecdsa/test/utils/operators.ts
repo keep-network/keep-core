@@ -3,9 +3,9 @@
 import { ethers } from "hardhat"
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber } from "ethers"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { constants } from "../fixtures"
 import type { WalletFactory } from "../../typechain"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 export type OperatorID = number
 export type Operator = { id: OperatorID; address: Address }
