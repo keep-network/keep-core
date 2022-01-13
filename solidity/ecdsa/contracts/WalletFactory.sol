@@ -164,6 +164,17 @@ contract WalletFactory is CloneFactory, Ownable {
         emit WalletCreated(address(wallet), keccak256(abi.encode(dkgResult)));
     }
 
+    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
+    ///         reward to the notifier.
+    function notifyDkgTimeout() external {
+        dkg.notifyTimeout();
+
+        // TODO: Implement transferDkgRewards
+        // transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
+
+        dkg.complete();
+    }
+
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
