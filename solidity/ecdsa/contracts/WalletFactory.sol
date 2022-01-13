@@ -150,13 +150,15 @@ contract WalletFactory is CloneFactory, Ownable {
 
         wallets.push(wallet);
 
-        wallet.init(walletMembers);
+        wallet.init(address(this), walletMembers);
 
         emit WalletCreated(address(wallet));
     }
 
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
+
+        // TODO: Transfer Wallet's ownership to WalletManager
 
         // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
         misbehavedMembers;

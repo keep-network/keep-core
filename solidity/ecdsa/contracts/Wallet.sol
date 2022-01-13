@@ -14,11 +14,13 @@
 
 pragma solidity ^0.8.9;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 interface IWallet {
     function sign(bytes32 digest) external;
 }
 
-contract Wallet is IWallet {
+contract Wallet is IWallet, Ownable {
     uint32[] public membersIds;
     uint256 public activationBlockNumber;
 
@@ -30,17 +32,18 @@ contract Wallet is IWallet {
         masterWallet = address(this);
     }
 
-    function init(uint32[] memory _membersIds) public {
+    function init(address _owner, uint32[] memory _membersIds) public {
         require(
             !isMasterContract(),
             "Initialization of master wallet is not allowed"
         );
 
         membersIds = _membersIds;
+
+        _transferOwnership(_owner);
     }
 
-    // TODO: Add onlyOwner(onlyFactory) modifier
-    function activate() public {
+    function activate() public onlyOwner {
         require(activationBlockNumber == 0, "Wallet was already activated");
 
         activationBlockNumber = block.number;
@@ -48,7 +51,7 @@ contract Wallet is IWallet {
         emit WalletActivated();
     }
 
-    function sign(bytes32 digest) external {
+    function sign(bytes32 digest) external onlyOwner {
         digest;
         revert("FIXME: not implemented");
     }
