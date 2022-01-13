@@ -6,6 +6,7 @@
       "error",
       { "devDependencies": ["./test/**/*.ts", "hardhat.config.ts"] }
     ],
+    "@typescript-eslint/no-use-before-define": "off",
     "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }]
   },
   "overrides": [
