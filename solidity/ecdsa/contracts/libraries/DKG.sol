@@ -13,7 +13,9 @@
 //
 
 // Initial version copied from Keep Network Random Beacon:
-// https://github.com/keep-network/keep-core/blob/c0a290e4989ce166fb9a024cc2e75035b33b8b2f/solidity/random-beacon/contracts/libraries/DKG.sol
+// https://github.com/keep-network/keep-core/blob/af4213eb43396253bf6f2599d89fe38eaf278bf0/solidity/random-beacon/contracts/libraries/DKG.sol
+//
+// With a difference in group size which was set to 100.
 
 pragma solidity ^0.8.9;
 
@@ -117,6 +119,8 @@ library DKG {
 
     event DkgStarted(uint256 indexed seed);
 
+    // To recreate the members that actively took part in dkg, the selected members
+    // array should be filtered out from misbehavedMembersIndices.
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
@@ -125,7 +129,7 @@ library DKG {
         uint8[] misbehavedMembersIndices,
         bytes signatures,
         uint256[] signingMembersIndices,
-        uint32[] members
+        uint32[] selectedMembersIds
     );
 
     event DkgTimedOut();

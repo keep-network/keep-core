@@ -13,7 +13,7 @@
 //                           Trust math, not hardware.
 
 // Initial version copied from Keep Network Random Beacon:
-// https://github.com/keep-network/keep-core/blob/c0a290e4989ce166fb9a024cc2e75035b33b8b2f/solidity/random-beacon/contracts/DKGValidator.sol
+// https://github.com/keep-network/keep-core/blob/af4213eb43396253bf6f2599d89fe38eaf278bf0/solidity/random-beacon/contracts/DKGValidator.sol
 //
 // With a difference in expected group public key length, which assumes uncompressed
 // ECDSA public key of 64 bytes.
