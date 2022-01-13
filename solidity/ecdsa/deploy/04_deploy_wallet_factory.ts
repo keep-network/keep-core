@@ -26,6 +26,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   }
 
   const WalletFactory = await deployments.deploy("WalletFactory", {
+    contract:
+      deployments.getNetworkName() === "hardhat"
+        ? "WalletFactoryStub"
+        : undefined,
     from: deployer,
     args: [
       SortitionPool.address,
