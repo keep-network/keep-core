@@ -199,6 +199,25 @@ contract WalletFactory is CloneFactory, Ownable {
         maliciousSubmitter;
     }
 
+    /// @notice Check current wallet creation state.
+    function getWalletCreationState() external view returns (DKG.State) {
+        return dkg.currentState();
+    }
+
+    /// @notice Checks if DKG timed out. The DKG timeout period includes time required
+    ///         for off-chain protocol execution and time for the result publication
+    ///         for all group members. After this time result cannot be submitted
+    ///         and DKG can be notified about the timeout.
+    /// @return True if DKG timed out, false otherwise.
+    function hasDkgTimedOut() external view returns (bool) {
+        return dkg.hasDkgTimedOut();
+    }
+
+    /// @notice Returns registered wallets.
+    function getWallets() external view returns (Wallet[] memory) {
+        return wallets;
+    }
+
     // TODO: Add timeouts
 
     /// @notice Hash group members that actively participated in a group signing
