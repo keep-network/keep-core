@@ -27,6 +27,8 @@ contract Wallet is IWallet, Ownable {
 
     address public immutable masterWallet;
 
+    event SignatureRequested(bytes32 digest);
+
     constructor() {
         masterWallet = address(this);
     }
@@ -54,8 +56,9 @@ contract Wallet is IWallet, Ownable {
     }
 
     function sign(bytes32 digest) external onlyOwner {
-        digest;
-        revert("FIXME: not implemented");
+        // TODO: implement
+
+        emit SignatureRequested(digest);
     }
 
     function isMasterContract() internal view returns (bool) {
