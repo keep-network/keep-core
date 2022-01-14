@@ -70,7 +70,7 @@ describe("Wallet", () => {
     })
 
     describe("init", async () => {
-      context("called by a deployer", async () => {
+      context("called by the deployer", async () => {
         it("should revert", async () => {
           await expect(
             wallet
@@ -80,7 +80,7 @@ describe("Wallet", () => {
         })
       })
 
-      context("called by an owner", async () => {
+      context("called by the owner", async () => {
         it("should revert", async () => {
           await expect(
             wallet
@@ -149,7 +149,7 @@ describe("Wallet", () => {
         await restoreSnapshot()
       })
 
-      context("called by a deployer", async () => {
+      context("called by the deployer", async () => {
         it("should succeed", async () => {
           await expect(
             wallet
@@ -159,7 +159,7 @@ describe("Wallet", () => {
         })
       })
 
-      context("called by an owner", async () => {
+      context("called by the owner", async () => {
         it("should succeed", async () => {
           await expect(
             wallet

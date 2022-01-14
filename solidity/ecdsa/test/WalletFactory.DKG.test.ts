@@ -97,7 +97,7 @@ describe("WalletFactory", () => {
   })
 
   describe("requestNewWallet", async () => {
-    context("when called by a deployer", async () => {
+    context("when called by the deployer", async () => {
       it("should revert", async () => {
         await expect(
           walletFactory.connect(deployer).requestNewWallet()
