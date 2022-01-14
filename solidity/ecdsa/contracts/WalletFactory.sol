@@ -131,7 +131,9 @@ contract WalletFactory is CloneFactory, Ownable {
         );
     }
 
-    // TODO: Revisit to implement mechanism for a fresh wallet creation.
+    /// @notice Requests a new wallet creation.
+    /// @dev Can be called only by the owner of the Wallet Factory.
+    ///      It starts a new DKG process.
     function requestNewWallet() external onlyOwner {
         dkg.lockState();
         dkg.start(
@@ -139,6 +141,25 @@ contract WalletFactory is CloneFactory, Ownable {
         );
     }
 
+    /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
+    ///         the protocol. The DKG result consists of result submitting member
+    ///         index, calculated group public key, bytes array of misbehaved
+    ///         members, concatenation of signatures from group members,
+    ///         indices of members corresponding to each signature and
+    ///         the list of group members.
+    ///         When the result is verified successfully it gets registered and
+    ///         waits for an approval. A result can be challenged to verify the
+    ///         members list corresponds to the expected set of members determined
+    ///         by the sortition pool.
+    ///         A candidate wallet is registered based on the submitted DKG result
+    ///         details.
+    /// @dev The message to be signed by each member is keccak256 hash of the
+    ///      calculated group public key, misbehaved members indices and DKG
+    ///      start block. The calculated hash should be prefixed with prefixed with
+    ///      `\x19Ethereum signed message:\n` before signing, so the message to
+    ///      sign is:
+    ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
+    /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
 
@@ -175,6 +196,17 @@ contract WalletFactory is CloneFactory, Ownable {
         dkg.complete();
     }
 
+    /// @notice Approves DKG result. Can be called when the challenge period for
+    ///         the submitted result is finished. Considers the submitted result
+    ///         as valid, pays reward to the approver, bans misbehaved group
+    ///         members from the sortition pool rewards, and completes the group
+    ///         creation by activating the candidate group. For the first
+    ///         `resultSubmissionEligibilityDelay` blocks after the end of the
+    ///         challenge period can be called only by the DKG result submitter.
+    ///         After that time, can be called by anyone.
+    /// @dev It transfers Wallet's ownership to the Wallet Factory owner.
+    /// @param dkgResult Result to approve. Must match the submitted result
+    ///        stored during `submitDkgResult`.
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
@@ -191,6 +223,12 @@ contract WalletFactory is CloneFactory, Ownable {
         dkg.complete();
     }
 
+    /// @notice Challenges DKG result. If the submitted result is proved to be
+    ///         invalid it reverts the DKG back to the result submission phase.
+    ///         It removes a candidate group that was previously registered with
+    ///         the DKG result submission.
+    /// @param dkgResult Result to challenge. Must match the submitted result
+    ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
         Wallet latestWallet = wallets[wallets.length - 1];
         require(
@@ -227,8 +265,6 @@ contract WalletFactory is CloneFactory, Ownable {
     function getWallets() external view returns (Wallet[] memory) {
         return wallets;
     }
-
-    // TODO: Add timeouts
 
     /// @notice Hash group members that actively participated in a group signing
     ///         key generation. This function filters out IA/DQ members before
