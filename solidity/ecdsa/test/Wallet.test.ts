@@ -41,9 +41,9 @@ const fixture = async () => {
 }
 
 describe("Wallet", () => {
-  const membersIdsHash = keccak256(ethers.utils.toUtf8Bytes("MEMBERS IDS"))
-  const publicKeyHash = keccak256(ecdsaData.groupPubKey)
-  const digest = keccak256(ethers.utils.toUtf8Bytes("MESSAGE TO SIGN"))
+  const membersIdsHash = hashUint32Array([101, 102, 103])
+  const publicKeyHash = keccak256(ecdsaData.publicKey)
+  const { digest1: digest } = ecdsaData
 
   let masterWallet: Wallet
   let cloneFactory: CloneFactoryStub

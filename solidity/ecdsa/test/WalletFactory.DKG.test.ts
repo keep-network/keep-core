@@ -1544,7 +1544,7 @@ describe("WalletFactory", () => {
   describe("approveDkgResult", async () => {
     // Just to make `approveDkgResult` call possible.
     const stubDkgResult: DkgResult = {
-      groupPubKey: ecdsaData.groupPubKey,
+      groupPubKey: ecdsaData.publicKey,
       members: [1, 2, 3, 4],
       misbehavedMembersIndices: [],
       signatures: "0x01020304",
@@ -2134,7 +2134,7 @@ describe("WalletFactory", () => {
   describe("challengeDkgResult", async () => {
     // Just to make `challengeDkgResult` call possible.
     const stubDkgResult: DkgResult = {
-      groupPubKey: ecdsaData.groupPubKey,
+      groupPubKey: ecdsaData.publicKey,
       members: [1, 2, 3, 4],
       misbehavedMembersIndices: [],
       signatures: "0x01020304",
