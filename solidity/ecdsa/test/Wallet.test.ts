@@ -6,11 +6,14 @@ import {
   getUnnamedAccounts,
 } from "hardhat"
 import { expect } from "chai"
+import { keccak256 } from "ethers/lib/utils"
+
+import { hashUint32Array } from "./utils/groups"
+import ecdsaData from "./data/ecdsa"
+
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractFactory, ContractTransaction } from "ethers"
-import { keccak256 } from "ethers/lib/utils"
 import type { Wallet, CloneFactoryStub } from "../typechain"
-import ecdsaData from "./data/ecdsa"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 

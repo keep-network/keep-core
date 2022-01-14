@@ -1,7 +1,8 @@
-import type { HardhatRuntimeEnvironment } from "hardhat/types"
-import type { DeployFunction } from "hardhat-deploy/types"
 import { writeFileSync } from "fs"
 import path from "path"
+
+import type { HardhatRuntimeEnvironment } from "hardhat/types"
+import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments } = hre

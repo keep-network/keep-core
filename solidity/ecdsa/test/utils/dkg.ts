@@ -2,14 +2,15 @@
 
 import { ethers } from "hardhat"
 
-import type { BigNumber, BigNumberish, ContractTransaction } from "ethers"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { SortitionPool, WalletFactory } from "../../typechain"
-import { Operator } from "./operators"
-// eslint-disable-next-line import/no-cycle
+import { constants } from "../fixtures"
+
 import { selectGroup } from "./groups"
 import { firstEligibleIndex } from "./submission"
-import { constants } from "../fixtures"
+
+import type { BigNumber, BigNumberish, ContractTransaction } from "ethers"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { SortitionPool, WalletFactory } from "../../typechain"
+import type { Operator } from "./operators"
 
 export interface DkgResult {
   submitterMemberIndex: number

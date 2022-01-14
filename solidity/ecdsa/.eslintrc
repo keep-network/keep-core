@@ -7,7 +7,15 @@
       { "devDependencies": ["./test/**/*.ts", "hardhat.config.ts"] }
     ],
     "@typescript-eslint/no-use-before-define": "off",
-    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }]
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    "@typescript-eslint/consistent-type-imports": "warn",
+    "import/order": [
+      "warn",
+      {
+        "groups": ["builtin", "external", "parent", "sibling", "index", "type"],
+        "newlines-between": "always"
+      }
+    ]
   },
   "overrides": [
     {

@@ -1,9 +1,10 @@
 /* eslint-disable import/prefer-default-export */
 
 import { ethers } from "hardhat"
-import type { BigNumber } from "ethers"
 
 import { constants } from "../fixtures"
+
+import type { BigNumber } from "ethers"
 import type { Operator } from "./operators"
 import type { SortitionPool } from "../../typechain"
 

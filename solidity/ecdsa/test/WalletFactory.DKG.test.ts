@@ -7,6 +7,19 @@ import {
 } from "hardhat"
 import { expect } from "chai"
 
+import { constants, dkgState, params } from "./fixtures"
+import ecdsaData from "./data/ecdsa"
+import {
+  calculateDkgSeed,
+  noMisbehaved,
+  signAndSubmitArbitraryDkgResult,
+  signAndSubmitCorrectDkgResult,
+  signAndSubmitUnrecoverableDkgResult,
+} from "./utils/dkg"
+import { registerOperators } from "./utils/operators"
+import { selectGroup, hashUint32Array } from "./utils/groups"
+import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
+
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
@@ -15,20 +28,8 @@ import type {
   WalletFactory,
   WalletFactoryStub,
 } from "../typechain"
-import { constants, dkgState, params } from "./fixtures"
-import ecdsaData from "./data/ecdsa"
-import {
-  calculateDkgSeed,
-  DkgResult,
-  noMisbehaved,
-  signAndSubmitArbitraryDkgResult,
-  signAndSubmitCorrectDkgResult,
-  signAndSubmitUnrecoverableDkgResult,
-} from "./utils/dkg"
-import { registerOperators } from "./utils/operators"
+import type { DkgResult } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
-import { selectGroup, hashUint32Array } from "./utils/groups"
-import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -70,10 +71,10 @@ describe("WalletFactory", () => {
   const dkgTimeout: number =
     constants.offchainDkgTime +
     constants.groupSize * params.dkgResultSubmissionEligibilityDelay
-  const groupPublicKey: string = ethers.utils.hexValue(ecdsaData.groupPubKey)
+  const groupPublicKey: string = ethers.utils.hexValue(ecdsaData.publicKey)
   const groupPublicKeyHash: string = ethers.utils.keccak256(groupPublicKey)
   const firstEligibleSubmitterIndex: number = firstEligibleIndex(
-    keccak256(ecdsaData.groupPubKey)
+    keccak256(ecdsaData.publicKey)
   )
 
   let walletFactory: WalletFactoryStub & WalletFactory
@@ -113,7 +114,7 @@ describe("WalletFactory", () => {
       })
     })
 
-    context("when called by a wallet manager", async () => {
+    context("when called by the wallet manager", async () => {
       context("with initial contract state", async () => {
         let tx: ContractTransaction
         let dkgSeed: BigNumber
