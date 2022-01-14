@@ -566,11 +566,11 @@ contract RandomBeacon is Ownable {
     ///         A candidate group is registered based on the submitted DKG result
     ///         details.
     /// @dev The message to be signed by each member is keccak256 hash of the
-    ///      calculated group public key, misbehaved members as bytes and DKG
+    ///      calculated group public key, misbehaved members indices and DKG
     ///      start block. The calculated hash should be prefixed with prefixed with
     ///      `\x19Ethereum signed message:\n` before signing, so the message to
     ///      sign is:
-    ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
+    ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
