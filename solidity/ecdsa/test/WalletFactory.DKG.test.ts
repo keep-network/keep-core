@@ -8,7 +8,7 @@ import {
 import { expect } from "chai"
 
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/operators"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   SortitionPool,
   Wallet,
@@ -2259,7 +2259,7 @@ describe("WalletFactory", () => {
               })
 
               it("should not unlock the sortition pool", async () => {
-                expect(await sortitionPool.isLocked()).to.be.true
+                await expect(await sortitionPool.isLocked()).to.be.true
               })
 
               // it("should emit DkgMaliciousResultSlashed event", async () => {
@@ -2329,7 +2329,7 @@ describe("WalletFactory", () => {
               })
 
               it("should not unlock the sortition pool", async () => {
-                expect(await sortitionPool.isLocked()).to.be.true
+                await expect(await sortitionPool.isLocked()).to.be.true
               })
 
               // it("should emit DkgMaliciousResultSlashed event", async () => {
@@ -2419,7 +2419,7 @@ describe("WalletFactory", () => {
             })
 
             it("should not unlock the sortition pool", async () => {
-              expect(await sortitionPool.isLocked()).to.be.true
+              await expect(await sortitionPool.isLocked()).to.be.true
             })
 
             // it("should emit DkgMaliciousResultSlashed event", async () => {
