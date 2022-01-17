@@ -10,7 +10,6 @@ import { expect } from "chai"
 import { constants, dkgState, params } from "./fixtures"
 import ecdsaData from "./data/ecdsa"
 import {
-  calculateDkgSeed,
   noMisbehaved,
   signAndSubmitArbitraryDkgResult,
   signAndSubmitCorrectDkgResult,
@@ -19,6 +18,7 @@ import {
 import { registerOperators } from "./utils/operators"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
+import { createNewWallet, requestNewWallet } from "./utils/wallets"
 
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -1765,8 +1765,8 @@ describe("WalletFactory", () => {
 
               context("when the third party is eligible", async () => {
                 let tx: ContractTransaction
-                let initialDkgRewardsPoolBalance: BigNumber
-                let initApproverBalance: BigNumber
+                // let initialDkgRewardsPoolBalance: BigNumber
+                // let initApproverBalance: BigNumber
 
                 before(async () => {
                   await createSnapshot()
@@ -2143,245 +2143,299 @@ describe("WalletFactory", () => {
       submitterMemberIndex: 1,
     }
 
-    context("with initial contract state", async () => {
-      it("should revert with 'Current state is not CHALLENGE' error", async () => {
+    context("with no wallets registered", async () => {
+      it("should revert with 'Arithmetic operation underflowed or overflowed outside of an unchecked block' error", async () => {
         await expect(
           walletFactory.challengeDkgResult(stubDkgResult)
-        ).to.be.revertedWith("Current state is not CHALLENGE")
-      })
-    })
-
-    context("with group creation in progress", async () => {
-      let startBlock: number
-      let dkgSeed: BigNumber
-
-      before("start new wallet creation", async () => {
-        await createSnapshot()
-        ;({ startBlock, dkgSeed } = await requestNewWallet(
-          walletFactory,
-          walletManager
-        ))
+        ).to.be.revertedWith(
+          "Arithmetic operation underflowed or overflowed outside of an unchecked block"
+        )
       })
 
-      after(async () => {
-        await restoreSnapshot()
-      })
-
-      it("should revert with 'Current state is not CHALLENGE' error", async () => {
-        await expect(
-          walletFactory.challengeDkgResult(stubDkgResult)
-        ).to.be.revertedWith("Current state is not CHALLENGE")
-      })
-
-      context("with off-chain dkg time passed", async () => {
-        before(async () => {
+      context("with group creation in progress", async () => {
+        before("start new wallet creation", async () => {
           await createSnapshot()
 
-          await mineBlocksTo(startBlock + constants.offchainDkgTime)
+          await requestNewWallet(walletFactory, walletManager)
         })
 
         after(async () => {
           await restoreSnapshot()
         })
 
-        context("with dkg result not submitted", async () => {
-          it("should revert with 'Current state is not CHALLENGE' error", async () => {
-            await expect(
-              walletFactory.challengeDkgResult(stubDkgResult)
-            ).to.be.revertedWith("Current state is not CHALLENGE")
-          })
+        it("should revert with 'Arithmetic operation underflowed or overflowed outside of an unchecked block' error", async () => {
+          await expect(
+            walletFactory.challengeDkgResult(stubDkgResult)
+          ).to.be.revertedWith(
+            "Arithmetic operation underflowed or overflowed outside of an unchecked block"
+          )
+        })
+      })
+    })
+
+    context("with wallet registered", async () => {
+      before("create a wallet", async () => {
+        await createSnapshot()
+
+        await createNewWallet(walletFactory, walletManager)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert with 'The latest registered wallet was already activated", async () => {
+        await expect(
+          walletFactory.challengeDkgResult(stubDkgResult)
+        ).to.be.revertedWith(
+          "The latest registered wallet was already activated"
+        )
+      })
+
+      context("with group creation in progress", async () => {
+        let startBlock: number
+        let dkgSeed: BigNumber
+
+        before("start new wallet creation", async () => {
+          await createSnapshot()
+          ;({ startBlock, dkgSeed } = await requestNewWallet(
+            walletFactory,
+            walletManager
+          ))
         })
 
-        context("with malicious dkg result submitted", async () => {
-          let resultSubmissionBlock: number
-          let dkgResultHash: string
-          let dkgResult: DkgResult
-          let submitter: SignerWithAddress
+        after(async () => {
+          await restoreSnapshot()
+        })
 
+        it("should revert with 'The latest registered wallet was already activated", async () => {
+          await expect(
+            walletFactory.challengeDkgResult(stubDkgResult)
+          ).to.be.revertedWith(
+            "The latest registered wallet was already activated"
+          )
+        })
+
+        context("with off-chain dkg time passed", async () => {
           before(async () => {
             await createSnapshot()
 
-            let tx: ContractTransaction
-            ;({
-              transaction: tx,
-              dkgResult,
-              dkgResultHash,
-              submitter,
-            } = await signAndSubmitArbitraryDkgResult(
-              walletFactory,
-              groupPublicKey,
-              // Mix operators to make the result malicious.
-              mixOperators(await selectGroup(sortitionPool, dkgSeed)),
-              startBlock,
-              noMisbehaved
-            ))
-
-            resultSubmissionBlock = tx.blockNumber
+            await mineBlocksTo(startBlock + constants.offchainDkgTime)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          context("at the beginning of challenge period", async () => {
-            context("called by a third party", async () => {
-              let tx: ContractTransaction
-              before(async () => {
-                await createSnapshot()
-
-                tx = await walletFactory
-                  .connect(thirdParty)
-                  .challengeDkgResult(dkgResult)
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should emit DkgResultChallenged event", async () => {
-                await expect(tx)
-                  .to.emit(walletFactory, "DkgResultChallenged")
-                  .withArgs(
-                    dkgResultHash,
-                    await thirdParty.getAddress(),
-                    "Invalid group members"
-                  )
-              })
-
-              it("should remove a candidate wallet", async () => {
-                const wallets = await walletFactory.getWallets()
-                expect(wallets).to.be.lengthOf(0)
-              })
-
-              it("should emit CandidateGroupRemoved event", async () => {
-                await expect(tx)
-                  .to.emit(walletFactory, "CandidateGroupRemoved")
-                  .withArgs(groupPublicKey)
-              })
-
-              it("should not unlock the sortition pool", async () => {
-                await expect(await sortitionPool.isLocked()).to.be.true
-              })
-
-              // it("should emit DkgMaliciousResultSlashed event", async () => {
-              //   await expect(tx)
-              //     .to.emit(walletFactory, "DkgMaliciousResultSlashed")
-              //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-              // })
-
-              // it("should slash malicious result submitter", async () => {
-              //   await expect(tx)
-              //     .to.emit(staking, "Seized")
-              //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-              //       submitter.address,
-              //     ])
-              // })
-            })
-          })
-
-          context("at the end of challenge period", async () => {
-            before(async () => {
-              await createSnapshot()
-
-              await mineBlocksTo(
-                resultSubmissionBlock +
-                  params.dkgResultChallengePeriodLength -
-                  1
-              )
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            context("called by a third party", async () => {
-              let tx: ContractTransaction
-              before(async () => {
-                await createSnapshot()
-
-                tx = await walletFactory
-                  .connect(thirdParty)
-                  .challengeDkgResult(dkgResult)
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should emit DkgResultChallenged event", async () => {
-                await expect(tx)
-                  .to.emit(walletFactory, "DkgResultChallenged")
-                  .withArgs(
-                    dkgResultHash,
-                    await thirdParty.getAddress(),
-                    "Invalid group members"
-                  )
-              })
-
-              it("should remove a candidate wallet", async () => {
-                const wallets = await walletFactory.getWallets()
-                expect(wallets).to.be.lengthOf(0)
-              })
-
-              it("should emit CandidateGroupRemoved event", async () => {
-                await expect(tx)
-                  .to.emit(walletFactory, "CandidateGroupRemoved")
-                  .withArgs(groupPublicKey)
-              })
-
-              it("should not unlock the sortition pool", async () => {
-                await expect(await sortitionPool.isLocked()).to.be.true
-              })
-
-              // it("should emit DkgMaliciousResultSlashed event", async () => {
-              //   await expect(tx)
-              //     .to.emit(walletFactory, "DkgMaliciousResultSlashed")
-              //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-              // })
-
-              // it("should slash malicious result submitter", async () => {
-              //   await expect(tx)
-              //     .to.emit(staking, "Seized")
-              //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-              //       submitter.address,
-              //     ])
-              // })
-            })
-          })
-
-          context("with challenge period passed", async () => {
-            before(async () => {
-              await createSnapshot()
-
-              await mineBlocksTo(
-                resultSubmissionBlock + params.dkgResultChallengePeriodLength
-              )
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            it("should revert with 'Challenge period has already passed' error", async () => {
+          context("with dkg result not submitted", async () => {
+            it("should revert with 'The latest registered wallet was already activated'", async () => {
               await expect(
-                walletFactory.challengeDkgResult(dkgResult)
-              ).to.be.revertedWith("Challenge period has already passed")
+                walletFactory.challengeDkgResult(stubDkgResult)
+              ).to.be.revertedWith(
+                "The latest registered wallet was already activated"
+              )
             })
           })
-        })
 
-        context(
-          "with dkg result submitted with unrecoverable signatures",
-          async () => {
+          context("with malicious dkg result submitted", async () => {
+            let resultSubmissionBlock: number
             let dkgResultHash: string
             let dkgResult: DkgResult
-            let submitter: SignerWithAddress
-            let tx: ContractTransaction
+            let walletAddress: string
 
             before(async () => {
               await createSnapshot()
-              ;({ dkgResult, dkgResultHash, submitter } =
-                await signAndSubmitUnrecoverableDkgResult(
+
+              let tx: ContractTransaction
+              ;({
+                transaction: tx,
+                dkgResult,
+                dkgResultHash,
+              } = await signAndSubmitArbitraryDkgResult(
+                walletFactory,
+                groupPublicKey,
+                // Mix operators to make the result malicious.
+                mixOperators(await selectGroup(sortitionPool, dkgSeed)),
+                startBlock,
+                noMisbehaved
+              ))
+
+              resultSubmissionBlock = tx.blockNumber
+
+              const event = (await tx.wait()).events.find(
+                (e) => e.event === "WalletCreated"
+              )
+              walletAddress = event.args.walletAddress
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            context("at the beginning of challenge period", async () => {
+              context("called by a third party", async () => {
+                let tx: ContractTransaction
+                before(async () => {
+                  await createSnapshot()
+
+                  tx = await walletFactory
+                    .connect(thirdParty)
+                    .challengeDkgResult(dkgResult)
+                })
+
+                after(async () => {
+                  await restoreSnapshot()
+                })
+
+                it("should emit DkgResultChallenged event", async () => {
+                  await expect(tx)
+                    .to.emit(walletFactory, "DkgResultChallenged")
+                    .withArgs(
+                      dkgResultHash,
+                      await thirdParty.getAddress(),
+                      "Invalid group members"
+                    )
+                })
+
+                it("should remove a candidate wallet", async () => {
+                  const wallets = await walletFactory.getWallets()
+                  expect(wallets).to.be.lengthOf(1)
+                })
+
+                it("should emit WalletRemoved event", async () => {
+                  await expect(tx)
+                    .to.emit(walletFactory, "WalletRemoved")
+                    .withArgs(walletAddress)
+                })
+
+                it("should not unlock the sortition pool", async () => {
+                  await expect(await sortitionPool.isLocked()).to.be.true
+                })
+
+                // it("should emit DkgMaliciousResultSlashed event", async () => {
+                //   await expect(tx)
+                //     .to.emit(walletFactory, "DkgMaliciousResultSlashed")
+                //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                // })
+
+                // it("should slash malicious result submitter", async () => {
+                //   await expect(tx)
+                //     .to.emit(staking, "Seized")
+                //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                //       submitter.address,
+                //     ])
+                // })
+              })
+            })
+
+            context("at the end of challenge period", async () => {
+              before(async () => {
+                await createSnapshot()
+
+                await mineBlocksTo(
+                  resultSubmissionBlock +
+                    params.dkgResultChallengePeriodLength -
+                    1
+                )
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              context("called by a third party", async () => {
+                let tx: ContractTransaction
+                before(async () => {
+                  await createSnapshot()
+
+                  tx = await walletFactory
+                    .connect(thirdParty)
+                    .challengeDkgResult(dkgResult)
+                })
+
+                after(async () => {
+                  await restoreSnapshot()
+                })
+
+                it("should emit DkgResultChallenged event", async () => {
+                  await expect(tx)
+                    .to.emit(walletFactory, "DkgResultChallenged")
+                    .withArgs(
+                      dkgResultHash,
+                      await thirdParty.getAddress(),
+                      "Invalid group members"
+                    )
+                })
+
+                it("should remove a candidate wallet", async () => {
+                  const wallets = await walletFactory.getWallets()
+                  expect(wallets).to.be.lengthOf(1)
+                })
+
+                it("should emit WalletRemoved event", async () => {
+                  await expect(tx)
+                    .to.emit(walletFactory, "WalletRemoved")
+                    .withArgs(walletAddress)
+                })
+
+                it("should not unlock the sortition pool", async () => {
+                  await expect(await sortitionPool.isLocked()).to.be.true
+                })
+
+                // it("should emit DkgMaliciousResultSlashed event", async () => {
+                //   await expect(tx)
+                //     .to.emit(walletFactory, "DkgMaliciousResultSlashed")
+                //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                // })
+
+                // it("should slash malicious result submitter", async () => {
+                //   await expect(tx)
+                //     .to.emit(staking, "Seized")
+                //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                //       submitter.address,
+                //     ])
+                // })
+              })
+            })
+
+            context("with challenge period passed", async () => {
+              before(async () => {
+                await createSnapshot()
+
+                await mineBlocksTo(
+                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
+                )
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should revert with 'Challenge period has already passed' error", async () => {
+                await expect(
+                  walletFactory.challengeDkgResult(dkgResult)
+                ).to.be.revertedWith("Challenge period has already passed")
+              })
+            })
+          })
+
+          context(
+            "with dkg result submitted with unrecoverable signatures",
+            async () => {
+              let dkgResultHash: string
+              let dkgResult: DkgResult
+              let walletAddress: string
+
+              let tx: ContractTransaction
+
+              before(async () => {
+                await createSnapshot()
+                let dkgTx: ContractTransaction
+                ;({
+                  transaction: dkgTx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitUnrecoverableDkgResult(
                   walletFactory,
                   groupPublicKey,
                   await selectGroup(sortitionPool, dkgSeed),
@@ -2389,78 +2443,84 @@ describe("WalletFactory", () => {
                   noMisbehaved
                 ))
 
-              tx = await walletFactory
-                .connect(thirdParty)
-                .challengeDkgResult(dkgResult)
+                const event = (await dkgTx.wait()).events.find(
+                  (e) => e.event === "WalletCreated"
+                )
+                walletAddress = event.args.walletAddress
+
+                tx = await walletFactory
+                  .connect(thirdParty)
+                  .challengeDkgResult(dkgResult)
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should emit DkgResultChallenged event", async () => {
+                await expect(tx)
+                  .to.emit(walletFactory, "DkgResultChallenged")
+                  .withArgs(
+                    dkgResultHash,
+                    await thirdParty.getAddress(),
+                    "validation reverted"
+                  )
+              })
+
+              it("should remove a candidate group", async () => {
+                const wallets = await walletFactory.getWallets()
+                expect(wallets).to.be.lengthOf(1)
+              })
+
+              it("should emit WalletRemoved event", async () => {
+                await expect(tx)
+                  .to.emit(walletFactory, "WalletRemoved")
+                  .withArgs(walletAddress)
+              })
+
+              it("should not unlock the sortition pool", async () => {
+                await expect(await sortitionPool.isLocked()).to.be.true
+              })
+
+              // it("should emit DkgMaliciousResultSlashed event", async () => {
+              //   await expect(tx)
+              //     .to.emit(walletFactory, "DkgMaliciousResultSlashed")
+              //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+              // })
+
+              // it("should slash malicious result submitter", async () => {
+              //   await expect(tx)
+              //     .to.emit(staking, "Seized")
+              //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+              //       submitter.address,
+              //     ])
+              // })
+            }
+          )
+
+          context("with correct dkg result submitted", async () => {
+            let dkgResult: DkgResult
+
+            before(async () => {
+              await createSnapshot()
+              ;({ dkgResult } = await signAndSubmitCorrectDkgResult(
+                walletFactory,
+                groupPublicKey,
+                dkgSeed,
+                startBlock,
+                noMisbehaved
+              ))
             })
 
             after(async () => {
               await restoreSnapshot()
             })
 
-            it("should emit DkgResultChallenged event", async () => {
-              await expect(tx)
-                .to.emit(walletFactory, "DkgResultChallenged")
-                .withArgs(
-                  dkgResultHash,
-                  await thirdParty.getAddress(),
-                  "validation reverted"
-                )
+            it("should revert with 'unjustified challenge' error", async () => {
+              await expect(
+                walletFactory.challengeDkgResult(dkgResult)
+              ).to.be.revertedWith("unjustified challenge")
             })
-
-            it("should remove a candidate group", async () => {
-              const wallets = await walletFactory.getWallets()
-              expect(wallets).to.be.lengthOf(0)
-            })
-
-            it("should emit CandidateGroupRemoved event", async () => {
-              await expect(tx)
-                .to.emit(walletFactory, "CandidateGroupRemoved")
-                .withArgs(groupPublicKey)
-            })
-
-            it("should not unlock the sortition pool", async () => {
-              await expect(await sortitionPool.isLocked()).to.be.true
-            })
-
-            // it("should emit DkgMaliciousResultSlashed event", async () => {
-            //   await expect(tx)
-            //     .to.emit(walletFactory, "DkgMaliciousResultSlashed")
-            //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-            // })
-
-            // it("should slash malicious result submitter", async () => {
-            //   await expect(tx)
-            //     .to.emit(staking, "Seized")
-            //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-            //       submitter.address,
-            //     ])
-            // })
-          }
-        )
-
-        context("with correct dkg result submitted", async () => {
-          let dkgResult: DkgResult
-
-          before(async () => {
-            await createSnapshot()
-            ;({ dkgResult } = await signAndSubmitCorrectDkgResult(
-              walletFactory,
-              groupPublicKey,
-              dkgSeed,
-              startBlock,
-              noMisbehaved
-            ))
-          })
-
-          after(async () => {
-            await restoreSnapshot()
-          })
-
-          it("should revert with 'unjustified challenge' error", async () => {
-            await expect(
-              walletFactory.challengeDkgResult(dkgResult)
-            ).to.be.revertedWith("unjustified challenge")
           })
         })
       })
@@ -2647,22 +2707,4 @@ function mixOperators(operators: Operator[]): Operator[] {
     .map((v) => ({ v, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ v }) => v)
-}
-
-async function requestNewWallet(
-  walletFactory: WalletFactory,
-  walletManager: SignerWithAddress
-) {
-  const tx: ContractTransaction = await walletFactory
-    .connect(walletManager)
-    .requestNewWallet()
-
-  const startBlock: number = tx.blockNumber
-
-  const dkgSeed: BigNumber = calculateDkgSeed(
-    await walletFactory.relayEntry(),
-    startBlock
-  )
-
-  return { tx, startBlock, dkgSeed }
 }

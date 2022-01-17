@@ -18,6 +18,7 @@ export async function selectGroup(
     constants.groupSize,
     seed.toHexString()
   )
+
   const addresses = await sortitionPool.getIDOperators(identifiers)
 
   return identifiers.map((identifier, i) => ({
@@ -26,6 +27,6 @@ export async function selectGroup(
   }))
 }
 
-export function hashUint32Array(arrayToHash: number[]) {
+export function hashUint32Array(arrayToHash: number[]): string {
   return keccak256(defaultAbiCoder.encode(["uint32[]"], [arrayToHash]))
 }

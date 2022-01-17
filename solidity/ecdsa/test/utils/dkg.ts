@@ -49,6 +49,7 @@ export async function signAndSubmitCorrectDkgResult(
   submitterIndex?: number,
   numberOfSignatures = 50
 ): Promise<{
+  signers: Operator[]
   transaction: ContractTransaction
   dkgResult: DkgResult
   dkgResultHash: string
@@ -68,15 +69,20 @@ export async function signAndSubmitCorrectDkgResult(
     await walletFactory.sortitionPool()
   )) as SortitionPool
 
-  return signAndSubmitArbitraryDkgResult(
-    walletFactory,
-    groupPublicKey,
-    await selectGroup(sortitionPool, seed),
-    startBlock,
-    misbehavedIndices,
-    submitterIndex,
-    numberOfSignatures
-  )
+  const signers = await selectGroup(sortitionPool, seed)
+
+  return {
+    signers,
+    ...(await signAndSubmitArbitraryDkgResult(
+      walletFactory,
+      groupPublicKey,
+      signers,
+      startBlock,
+      misbehavedIndices,
+      submitterIndex,
+      numberOfSignatures
+    )),
+  }
 }
 
 // Sign and submit an arbitrary DKG result using given signers. Signers don't
