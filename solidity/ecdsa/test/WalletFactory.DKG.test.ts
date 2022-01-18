@@ -2417,6 +2417,23 @@ describe("WalletFactory", () => {
                 ).to.be.revertedWith("Challenge period has already passed")
               })
             })
+
+            context(
+              "with challenged result not matching the submitted one",
+              async () => {
+                it("should revert with 'Result under challenge is different than the submitted one'", async () => {
+                  const modifiedDkgResult: DkgResult = { ...dkgResult }
+                  modifiedDkgResult.submitterMemberIndex =
+                    dkgResult.submitterMemberIndex + 1
+
+                  await expect(
+                    walletFactory.challengeDkgResult(modifiedDkgResult)
+                  ).to.be.revertedWith(
+                    "Result under challenge is different than the submitted one"
+                  )
+                })
+              }
+            )
           })
 
           context(
