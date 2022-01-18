@@ -16,7 +16,6 @@ export const InfoList = ({ undelegationPeriod, undelegatedAt }) => {
         <List.Item>
           Tokens will be available in {undelegationPeriodInRelativeTime}, on{" "}
           {undelegationCompletedAt.format("D MMM YYYY")}.
-          {/* TODO: Add `add to calendar` button */}
           <AddToCalendar
             {...UNDELEGATE_STAKE_CALENDAR_EVENT}
             startsAt={undelegationCompletedAt.unix()}
