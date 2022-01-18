@@ -2,10 +2,11 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getNamedAccounts, deployments } = hre
+  const { getNamedAccounts, deployments, helpers } = hre
   const { deployer } = await getNamedAccounts()
+  const { to1e18 } = helpers.number
 
-  const POOL_WEIGHT_DIVISOR = 1 // TODO: Update value
+  const POOL_WEIGHT_DIVISOR = to1e18(1) // TODO: Update value
 
   const TokenStaking = await deployments.get("TokenStaking")
   const T = await deployments.get("T")
