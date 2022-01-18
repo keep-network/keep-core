@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react"
 import { isEmptyObj } from "../utils/general.utils"
 import * as Icons from "./Icons"
 import { useContext } from "react"
+import OnlyIf from "./OnlyIf"
 
 const Dropdown = ({
   label,
@@ -206,9 +207,10 @@ const DropdownOptions = ({
   selectedIcon = (
     <Icons.Success className="success-icon--black" width={12} height={12} />
   ),
+  className = "",
 }) => {
   return (
-    <ul className="dropdown__options">
+    <ul className={`dropdown__options ${className}`}>
       {children.map((child) => React.cloneElement(child, { selectedIcon }))}
     </ul>
   )
@@ -243,12 +245,21 @@ const DropdownOption = ({ value, selectedIcon, children }) => {
   )
 }
 
-const DropdownTrigger = ({ children }) => {
+const DropdownTrigger = ({
+  children,
+  className = "",
+  withTriggerArrow = true,
+}) => {
   const { onTriggerDropdown } = useDropdownContext()
   return (
-    <div className="dropdown__trigger" onClick={onTriggerDropdown}>
+    <div
+      className={`dropdown__trigger ${className}`}
+      onClick={onTriggerDropdown}
+    >
       <div className="dropdown__trigger__content">{children}</div>
-      <div className="dropdown__trigger__arrow" />
+      <OnlyIf condition={withTriggerArrow}>
+        <div className="dropdown__trigger__arrow" />
+      </OnlyIf>
     </div>
   )
 }

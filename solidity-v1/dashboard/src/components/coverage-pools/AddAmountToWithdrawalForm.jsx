@@ -9,6 +9,7 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import TokenAmount from "../TokenAmount"
 import { useSetMaxAmountToken } from "../../hooks/useSetMaxAmountToken"
 import { Keep } from "../../contracts"
+import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../constants/constants"
 
 const AddAmountToWithdrawalForm = ({
   tokenAmount,
@@ -55,8 +56,18 @@ const AddAmountToWithdrawalForm = ({
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={normalizeFloatingAmount}
-          format={formatFloatingAmount}
+          normalize={(value) => {
+            return normalizeFloatingAmount(
+              value,
+              COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+            )
+          }}
+          format={(value) => {
+            return formatFloatingAmount(
+              value,
+              COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+            )
+          }}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Amount" />
           }

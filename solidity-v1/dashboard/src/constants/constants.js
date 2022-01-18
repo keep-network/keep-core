@@ -277,6 +277,8 @@ export const COV_POOL_TIMELINE_STEPS = {
   CLAIM_TOKENS: 4,
 }
 
+export const COV_POOLS_FORMS_MAX_DECIMAL_PLACES = 6
+
 /**
  * Enum defines cov pools withdrawal status
  * @readonly
@@ -288,4 +290,24 @@ export const PENDING_WITHDRAWAL_STATUS = {
   COMPLETED: "completed",
   EXPIRED: "expired",
   NEW: "new",
+}
+
+export const ADD_TO_CALENDAR_OPTIONS = {
+  GOOGLE_CALENDER: "google-calendar",
+  APPLE_CALENDAR: "apple-calendar",
+}
+
+export const COVERAGE_POOL_CLAIM_TOKENS_CALENDAR_EVENT = {
+  name: "Coverage Pools - Tokens Ready To Claim",
+  details: "You have 48 hours to claim your tokens!",
+  // eslint-disable-next-line no-template-curly-in-string
+  location: "https://dashboard.keep.network/${address}/coverage-pools/deposit",
+}
+
+export const UNDELEGATE_STAKE_CALENDAR_EVENT = {
+  name: "Stake Undelegation - Tokens Ready To Claim",
+  details:
+    "The stake has been undelegated! The tokens are ready to be claimed!",
+  // eslint-disable-next-line no-template-curly-in-string
+  location: "https://dashboard.keep.network/${address}/overview",
 }
