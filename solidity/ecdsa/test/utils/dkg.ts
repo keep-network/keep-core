@@ -47,7 +47,7 @@ export async function signAndSubmitCorrectDkgResult(
   startBlock: number,
   misbehavedIndices: number[],
   submitterIndex?: number,
-  numberOfSignatures = 50
+  numberOfSignatures = 51
 ): Promise<{
   signers: Operator[]
   transaction: ContractTransaction
@@ -95,7 +95,7 @@ export async function signAndSubmitArbitraryDkgResult(
   startBlock: number,
   misbehavedIndices: number[],
   submitterIndex?: number,
-  numberOfSignatures = 33
+  numberOfSignatures = 51
 ): Promise<{
   transaction: ContractTransaction
   dkgResult: DkgResult
@@ -154,7 +154,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
   startBlock: number,
   misbehavedIndices: number[],
   submitterIndex?: number,
-  numberOfSignatures = 33
+  numberOfSignatures = 51
 ): Promise<{
   transaction: ContractTransaction
   dkgResult: DkgResult
