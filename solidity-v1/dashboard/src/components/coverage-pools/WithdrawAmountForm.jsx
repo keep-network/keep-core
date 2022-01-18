@@ -82,7 +82,7 @@ const WithdrawAmountFormWithFormik = withFormik({
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,
         props.withdrawAmount,
-        1000000000000,
+        covKEEP.fromTokenUnit(0.000001).toNumber(),
         covKEEP,
         COV_POOLS_FORMS_MAX_DECIMAL_PLACES
       )
