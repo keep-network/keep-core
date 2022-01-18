@@ -269,7 +269,7 @@ export async function signDkgResult(
 export function hashDKGMembers(
   members: number[],
   misbehavedMembersIndices: number[]
-) {
+): string {
   if (misbehavedMembersIndices.length > 0) {
     const activeDkgMembers = [...members]
     for (let i = 0; i < misbehavedMembersIndices.length; i++) {
