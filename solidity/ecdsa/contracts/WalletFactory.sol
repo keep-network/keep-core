@@ -171,8 +171,6 @@ contract WalletFactory is CloneFactory, Ownable {
 
         Wallet wallet = Wallet(clonedWalletAddress);
 
-        wallets.push(wallet);
-
         wallet.init(
             address(this),
             hashGroupMembers(
@@ -181,6 +179,8 @@ contract WalletFactory is CloneFactory, Ownable {
             ),
             keccak256(dkgResult.groupPubKey)
         );
+
+        wallets.push(wallet);
 
         emit WalletCreated(address(wallet), keccak256(abi.encode(dkgResult)));
     }
