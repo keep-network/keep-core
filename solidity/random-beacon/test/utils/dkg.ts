@@ -115,12 +115,9 @@ export async function signAndSubmitArbitraryDkgResult(
     // eslint-disable-next-line no-param-reassign
     submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
   }
-
-  let membersHash: string
-  if (!groupMembersHash) {
+  let membersHash = groupMembersHash
+  if (!membersHash) {
     membersHash = hashDKGMembers(members, misbehavedIndices)
-  } else {
-    membersHash = groupMembersHash
   }
 
   const dkgResult: DkgResult = {
