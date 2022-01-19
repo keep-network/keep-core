@@ -50,11 +50,12 @@ export async function signAndSubmitCorrectDkgResult(
   numberOfSignatures = 51
 ): Promise<{
   signers: Operator[]
-  transaction: ContractTransaction
   dkgResult: DkgResult
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
+  transaction: ContractTransaction
+  walletAddress: string
 }> {
   if (!submitterIndex) {
     // eslint-disable-next-line no-param-reassign
@@ -97,11 +98,12 @@ export async function signAndSubmitArbitraryDkgResult(
   submitterIndex?: number,
   numberOfSignatures = 51
 ): Promise<{
-  transaction: ContractTransaction
   dkgResult: DkgResult
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
+  transaction: ContractTransaction
+  walletAddress: string
 }> {
   const { members, signingMembersIndices, signaturesBytes } =
     await signDkgResult(
@@ -137,11 +139,13 @@ export async function signAndSubmitArbitraryDkgResult(
 
   const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
 
-  const transaction = await walletFactory
-    .connect(submitter)
-    .submitDkgResult(dkgResult)
-
-  return { transaction, dkgResult, dkgResultHash, members, submitter }
+  return {
+    dkgResult,
+    dkgResultHash,
+    members,
+    submitter,
+    ...(await submitDkgResult(walletFactory, dkgResult, submitter)),
+  }
 }
 
 // Signs and submits a DKG result containing signatures with random bytes.
@@ -156,11 +160,12 @@ export async function signAndSubmitUnrecoverableDkgResult(
   submitterIndex?: number,
   numberOfSignatures = 51
 ): Promise<{
-  transaction: ContractTransaction
   dkgResult: DkgResult
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
+  transaction: ContractTransaction
+  walletAddress: string
 }> {
   const { members, signingMembersIndices } = await signDkgResult(
     signers,
@@ -200,11 +205,13 @@ export async function signAndSubmitUnrecoverableDkgResult(
 
   const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
 
-  const transaction = await walletFactory
-    .connect(submitter)
-    .submitDkgResult(dkgResult)
-
-  return { transaction, dkgResult, dkgResultHash, members, submitter }
+  return {
+    dkgResult,
+    dkgResultHash,
+    members,
+    submitter,
+    ...(await submitDkgResult(walletFactory, dkgResult, submitter)),
+  }
 }
 
 export async function signDkgResult(
@@ -250,4 +257,23 @@ export async function signDkgResult(
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
   return { members, signingMembersIndices, signaturesBytes }
+}
+
+export async function submitDkgResult(
+  walletFactory: WalletFactory,
+  dkgResult: DkgResult,
+  submitter: SignerWithAddress
+): Promise<{
+  transaction: ContractTransaction
+  walletAddress: string
+}> {
+  const transaction = await walletFactory
+    .connect(submitter)
+    .submitDkgResult(dkgResult)
+
+  const { walletAddress } = (await transaction.wait()).events.find(
+    (e) => e.event === "WalletCreated"
+  ).args
+
+  return { transaction, walletAddress }
 }
