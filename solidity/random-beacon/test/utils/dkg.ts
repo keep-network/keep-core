@@ -273,7 +273,9 @@ export function hashDKGMembers(
   if (misbehavedMembersIndices.length > 0) {
     const activeDkgMembers = [...members]
     for (let i = 0; i < misbehavedMembersIndices.length; i++) {
-      activeDkgMembers.splice(misbehavedMembersIndices[i] - i - 1, 1)
+      if (misbehavedMembersIndices[i] !== 0) {
+        activeDkgMembers.splice(misbehavedMembersIndices[i] - i - 1, 1)
+      }
     }
 
     return ethers.utils.keccak256(
