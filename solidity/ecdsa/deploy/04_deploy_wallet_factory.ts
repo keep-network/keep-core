@@ -22,6 +22,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     console.log("deploying StakingStub contract instead of TokenStaking")
     TokenStaking = await deployments.deploy("StakingStub", {
       from: deployer,
+      log: true,
     })
   }
 
