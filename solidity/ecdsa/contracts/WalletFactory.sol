@@ -36,7 +36,10 @@ contract WalletFactory is CloneFactory, Ownable {
     // Libraries data storages
     DKG.Data internal dkg;
 
-    Wallet[] public wallets;
+    // Reference to a wallet contract that is under creation. Once wallet creation
+    // completes the value is reset. The reference is set on DKG result submission
+    // and is kept until the current wallet creation process completion.
+    Wallet public wallet;
 
     uint256 public relayEntry = 12345; // TODO: get value from Random Beacon
 
@@ -169,7 +172,11 @@ contract WalletFactory is CloneFactory, Ownable {
             "Cloned wallet address is 0"
         );
 
-        Wallet wallet = Wallet(clonedWalletAddress);
+        // We expect `dkg.submitResult` function verifies the current state of
+        // the wallet creation process. It is expected that at this point the
+        // wallet reference is not set, hence we won't be overwriting any previous
+        // value.
+        wallet = Wallet(clonedWalletAddress);
 
         wallet.init(
             address(this),
@@ -179,8 +186,6 @@ contract WalletFactory is CloneFactory, Ownable {
             ),
             keccak256(dkgResult.groupPubKey)
         );
-
-        wallets.push(wallet);
 
         emit WalletCreated(address(wallet), keccak256(abi.encode(dkgResult)));
     }
@@ -194,6 +199,7 @@ contract WalletFactory is CloneFactory, Ownable {
         // transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
 
         dkg.complete();
+        delete wallet;
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
@@ -210,17 +216,19 @@ contract WalletFactory is CloneFactory, Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        Wallet latestWallet = wallets[wallets.length - 1];
-        latestWallet.activate();
+        wallet.activate();
 
         // TODO: Transfer Wallet's ownership to WalletManager
 
         // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
         misbehavedMembers;
 
-        emit WalletActivated(address(latestWallet));
+        // TODO: Let the Wallet Manager know that a new wallet was created successfully.
+
+        emit WalletActivated(address(wallet));
 
         dkg.complete();
+        delete wallet;
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -230,21 +238,16 @@ contract WalletFactory is CloneFactory, Ownable {
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
-        Wallet latestWallet = wallets[wallets.length - 1];
-        require(
-            latestWallet.activationBlockNumber() == 0,
-            "The latest registered wallet was already activated"
-        );
-
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
 
-        wallets.pop();
-        emit WalletRemoved(address(latestWallet));
+        emit WalletRemoved(address(wallet));
 
         // TODO: Implement slashing.
         maliciousResultHash;
         maliciousSubmitter;
+
+        delete wallet;
     }
 
     /// @notice Check current wallet creation state.
@@ -259,11 +262,6 @@ contract WalletFactory is CloneFactory, Ownable {
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut() external view returns (bool) {
         return dkg.hasDkgTimedOut();
-    }
-
-    /// @notice Returns registered wallets.
-    function getWallets() external view returns (Wallet[] memory) {
-        return wallets;
     }
 
     /// @notice Hash group members that actively participated in a group signing
