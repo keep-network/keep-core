@@ -228,13 +228,13 @@ contract WalletFactory is CloneFactory, Ownable {
         //slither-disable-next-line reentrancy-no-eth
         wallet.activate();
 
-        // TODO: Transfer Wallet's ownership to WalletManager
+        // TODO: Transfer Wallet's ownership to WalletRegistry
 
         // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
         //slither-disable-next-line redundant-statements
         misbehavedMembers;
 
-        // TODO: Let the Wallet Manager know that a new wallet was created successfully.
+        // TODO: Let the Wallet Registry know that a new wallet was created successfully.
 
         dkg.complete();
         delete wallet;

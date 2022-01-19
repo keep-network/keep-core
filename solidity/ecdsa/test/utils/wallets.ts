@@ -18,14 +18,14 @@ const { mineBlocks } = helpers.time
 
 export async function requestNewWallet(
   walletFactory: WalletFactory,
-  walletManager: SignerWithAddress
+  walletRegistry: SignerWithAddress
 ): Promise<{
   tx: ContractTransaction
   startBlock: number
   dkgSeed: BigNumber
 }> {
   const tx: ContractTransaction = await walletFactory
-    .connect(walletManager)
+    .connect(walletRegistry)
     .requestNewWallet()
 
   const startBlock: number = tx.blockNumber
@@ -40,11 +40,11 @@ export async function requestNewWallet(
 
 export async function createNewWallet(
   walletFactory: WalletFactory,
-  walletManager: SignerWithAddress
+  walletRegistry: SignerWithAddress
 ): Promise<{ members: Operator[] }> {
   const { dkgSeed, startBlock } = await requestNewWallet(
     walletFactory,
-    walletManager
+    walletRegistry
   )
 
   await mineBlocks(constants.offchainDkgTime)

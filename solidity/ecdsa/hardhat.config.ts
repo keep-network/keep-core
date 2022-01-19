@@ -60,7 +60,7 @@ const config: HardhatUserConfig = {
       default: 0, // take the first account as deployer
     },
     // Owner of the WalletFactory that can create new wallets
-    walletManager: {
+    walletRegistry: {
       default: 1,
     },
   },

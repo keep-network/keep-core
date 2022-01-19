@@ -46,8 +46,8 @@ const fixture = async () => {
   const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
 
   const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
-  const walletManager: SignerWithAddress = await ethers.getNamedSigner(
-    "walletManager"
+  const walletRegistry: SignerWithAddress = await ethers.getNamedSigner(
+    "walletRegistry"
   )
 
   const thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
@@ -63,7 +63,7 @@ const fixture = async () => {
     walletFactory,
     sortitionPool,
     deployer,
-    walletManager,
+    walletRegistry,
     thirdParty,
     operators,
   }
@@ -85,7 +85,7 @@ describe("WalletFactory", () => {
   let sortitionPool: SortitionPool
 
   let deployer: SignerWithAddress
-  let walletManager: SignerWithAddress
+  let walletRegistry: SignerWithAddress
   let thirdParty: SignerWithAddress
   let operators: Operator[]
 
@@ -95,7 +95,7 @@ describe("WalletFactory", () => {
       walletFactory,
       sortitionPool,
       deployer,
-      walletManager,
+      walletRegistry,
       thirdParty,
       operators,
     } = await waffle.loadFixture(fixture))
@@ -118,7 +118,7 @@ describe("WalletFactory", () => {
       })
     })
 
-    context("when called by the wallet manager", async () => {
+    context("when called by the wallet registry", async () => {
       context("with initial contract state", async () => {
         let tx: ContractTransaction
         let dkgSeed: BigNumber
@@ -127,7 +127,7 @@ describe("WalletFactory", () => {
           await createSnapshot()
           ;({ tx, dkgSeed } = await requestNewWallet(
             walletFactory,
-            walletManager
+            walletRegistry
           ))
         })
 
@@ -158,7 +158,7 @@ describe("WalletFactory", () => {
           await createSnapshot()
           ;({ startBlock, dkgSeed } = await requestNewWallet(
             walletFactory,
-            walletManager
+            walletRegistry
           ))
         })
 
@@ -169,7 +169,7 @@ describe("WalletFactory", () => {
         context("with dkg result not submitted", async () => {
           it("should revert", async () => {
             await expect(
-              walletFactory.connect(walletManager).requestNewWallet()
+              walletFactory.connect(walletRegistry).requestNewWallet()
             ).to.be.revertedWith("Current state is not IDLE")
           })
         })
@@ -198,7 +198,7 @@ describe("WalletFactory", () => {
           context("with dkg result not approved", async () => {
             it("should revert with 'current state is not IDLE' error", async () => {
               await expect(
-                walletFactory.connect(walletManager).requestNewWallet()
+                walletFactory.connect(walletRegistry).requestNewWallet()
               ).to.be.revertedWith("Current state is not IDLE")
             })
           })
@@ -218,7 +218,7 @@ describe("WalletFactory", () => {
 
             it("should succeed", async () => {
               await expect(
-                walletFactory.connect(walletManager).requestNewWallet()
+                walletFactory.connect(walletRegistry).requestNewWallet()
               ).to.not.be.reverted
             })
           })
@@ -249,7 +249,7 @@ describe("WalletFactory", () => {
 
             it("should revert", async () => {
               await expect(
-                walletFactory.connect(walletManager).requestNewWallet()
+                walletFactory.connect(walletRegistry).requestNewWallet()
               ).to.be.revertedWith("Current state is not IDLE")
             })
           })
@@ -280,7 +280,7 @@ describe("WalletFactory", () => {
         await createSnapshot()
         ;({ startBlock, dkgSeed } = await requestNewWallet(
           walletFactory,
-          walletManager
+          walletRegistry
         ))
       })
 
@@ -454,7 +454,7 @@ describe("WalletFactory", () => {
         await createSnapshot()
         ;({ startBlock, dkgSeed } = await requestNewWallet(
           walletFactory,
-          walletManager
+          walletRegistry
         ))
       })
 
@@ -740,7 +740,7 @@ describe("WalletFactory", () => {
         await createSnapshot()
         ;({ startBlock, dkgSeed } = await requestNewWallet(
           walletFactory,
-          walletManager
+          walletRegistry
         ))
       })
 
@@ -1622,7 +1622,7 @@ describe("WalletFactory", () => {
         await createSnapshot()
         ;({ startBlock, dkgSeed } = await requestNewWallet(
           walletFactory,
-          walletManager
+          walletRegistry
         ))
       })
 
@@ -1789,7 +1789,7 @@ describe("WalletFactory", () => {
                 await expect(await sortitionPool.isLocked()).to.be.false
               })
 
-              it("should transfer wallet ownership to wallet manager")
+              it("should transfer wallet ownership to wallet registry")
             })
 
             context("when called by a third party", async () => {
@@ -1863,7 +1863,7 @@ describe("WalletFactory", () => {
                 //   ).to.be.equal(params.dkgResultSubmissionReward)
                 // })
 
-                it("should transfer wallet ownership to wallet manager")
+                it("should transfer wallet ownership to wallet registry")
               })
             })
           })
@@ -2024,7 +2024,7 @@ describe("WalletFactory", () => {
               await expect(await sortitionPool.isLocked()).to.be.false
             })
 
-            it("should transfer wallet ownership to wallet manager")
+            it("should transfer wallet ownership to wallet registry")
           })
         })
       })
@@ -2209,7 +2209,7 @@ describe("WalletFactory", () => {
         before("start new wallet creation", async () => {
           await createSnapshot()
 
-          await requestNewWallet(walletFactory, walletManager)
+          await requestNewWallet(walletFactory, walletRegistry)
         })
 
         after(async () => {
@@ -2228,7 +2228,7 @@ describe("WalletFactory", () => {
       before("create a wallet", async () => {
         await createSnapshot()
 
-        await createNewWallet(walletFactory, walletManager)
+        await createNewWallet(walletFactory, walletRegistry)
       })
 
       after(async () => {
@@ -2249,7 +2249,7 @@ describe("WalletFactory", () => {
           await createSnapshot()
           ;({ startBlock, dkgSeed } = await requestNewWallet(
             walletFactory,
-            walletManager
+            walletRegistry
           ))
         })
 
@@ -2595,7 +2595,7 @@ describe("WalletFactory", () => {
 
       const { startBlock } = await requestNewWallet(
         walletFactory,
-        walletManager
+        walletRegistry
       )
 
       await mineBlocks(constants.offchainDkgTime)
