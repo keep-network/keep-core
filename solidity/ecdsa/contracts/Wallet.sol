@@ -37,7 +37,7 @@ contract Wallet is IWallet, Ownable {
         address _owner,
         bytes32 _membersIdsHash,
         bytes32 _publicKeyHash
-    ) public {
+    ) external {
         require(
             !isMasterContract(),
             "Initialization of master wallet is not allowed"
@@ -49,7 +49,7 @@ contract Wallet is IWallet, Ownable {
         _transferOwnership(_owner);
     }
 
-    function activate() public onlyOwner {
+    function activate() external onlyOwner {
         require(activationBlockNumber == 0, "Wallet was already activated");
 
         activationBlockNumber = block.number;

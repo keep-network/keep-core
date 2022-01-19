@@ -43,6 +43,19 @@ contract WalletFactory is CloneFactory, Ownable {
 
     uint256 public relayEntry = 12345; // TODO: get value from Random Beacon
 
+    // External dependencies
+
+    SortitionPool public sortitionPool;
+    IERC20 public tToken;
+    /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
+    /// IStaking interface from there.
+    IWalletStaking public staking;
+    // Holds the address of the wallet contract which will be used as a master
+    // contract for cloning.
+    Wallet public immutable masterWallet;
+
+    // Events
+
     event DkgStarted(uint256 indexed seed);
 
     event DkgResultSubmitted(
@@ -81,17 +94,6 @@ contract WalletFactory is CloneFactory, Ownable {
     event WalletRemoved(address indexed walletAddress);
 
     event WalletActivated(address indexed walletAddress);
-
-    // External dependencies
-
-    SortitionPool public sortitionPool;
-    IERC20 public tToken;
-    /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
-    /// IStaking interface from there.
-    IWalletStaking public staking;
-    // Holds the address of the wallet contract which will be used as a master
-    // contract for cloning.
-    Wallet public immutable masterWallet;
 
     constructor(
         SortitionPool _sortitionPool,
