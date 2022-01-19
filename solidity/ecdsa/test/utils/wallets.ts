@@ -55,7 +55,7 @@ export async function createNewWallet(
     signers: members,
   } = await signAndSubmitCorrectDkgResult(
     walletFactory,
-    ecdsaData.publicKey,
+    ecdsaData.group1.publicKey,
     dkgSeed,
     startBlock,
     noMisbehaved

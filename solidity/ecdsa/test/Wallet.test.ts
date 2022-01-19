@@ -45,8 +45,8 @@ const fixture = async () => {
 
 describe("Wallet", () => {
   const membersIdsHash = hashUint32Array([101, 102, 103])
-  const publicKeyHash = keccak256(ecdsaData.publicKey)
-  const { digest1: digest } = ecdsaData
+  const publicKeyHash = keccak256(ecdsaData.group1.publicKey)
+  const { digest1: digest } = ecdsaData.group1
 
   let masterWallet: Wallet
   let cloneFactory: CloneFactoryStub
