@@ -316,6 +316,8 @@ library DKG {
 
     /// @notice Notifies about the seed was not delivered and restores the
     ///         initial DKG state (IDLE).
+    // TODO: Implement usage of this function.
+    //slither-disable-next-line dead-code
     function notifySeedTimedOut(Data storage self) internal {
         require(
             currentState(self) == State.AWAITING_SEED,

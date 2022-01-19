@@ -41,7 +41,7 @@ contract WalletFactory is CloneFactory, Ownable {
     // and is kept until the current wallet creation process completion.
     Wallet public wallet;
 
-    uint256 public relayEntry = 12345; // TODO: get value from Random Beacon
+    uint256 public constant relayEntry = 12345; // TODO: get value from Random Beacon
 
     // External dependencies
 
@@ -174,6 +174,11 @@ contract WalletFactory is CloneFactory, Ownable {
             "Cloned wallet address is 0"
         );
 
+        emit WalletCreated(
+            clonedWalletAddress,
+            keccak256(abi.encode(dkgResult))
+        );
+
         // We expect `dkg.submitResult` function verifies the current state of
         // the wallet creation process. It is expected that at this point the
         // wallet reference is not set, hence we won't be overwriting any previous
@@ -188,8 +193,6 @@ contract WalletFactory is CloneFactory, Ownable {
             ),
             keccak256(dkgResult.groupPubKey)
         );
-
-        emit WalletCreated(address(wallet), keccak256(abi.encode(dkgResult)));
     }
 
     /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
@@ -200,7 +203,9 @@ contract WalletFactory is CloneFactory, Ownable {
         // TODO: Implement transferDkgRewards
         // transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
 
+        //slither-disable-next-line reentrancy-benign
         dkg.complete();
+
         delete wallet;
     }
 
@@ -218,16 +223,18 @@ contract WalletFactory is CloneFactory, Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
+        emit WalletActivated(address(wallet));
+
+        //slither-disable-next-line reentrancy-no-eth
         wallet.activate();
 
         // TODO: Transfer Wallet's ownership to WalletManager
 
         // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
+        //slither-disable-next-line redundant-statements
         misbehavedMembers;
 
         // TODO: Let the Wallet Manager know that a new wallet was created successfully.
-
-        emit WalletActivated(address(wallet));
 
         dkg.complete();
         delete wallet;
@@ -246,7 +253,9 @@ contract WalletFactory is CloneFactory, Ownable {
         emit WalletRemoved(address(wallet));
 
         // TODO: Implement slashing.
+        //slither-disable-next-line redundant-statements
         maliciousResultHash;
+        //slither-disable-next-line redundant-statements
         maliciousSubmitter;
 
         delete wallet;
