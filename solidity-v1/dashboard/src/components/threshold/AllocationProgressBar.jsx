@@ -39,7 +39,7 @@ const AllocationProgressBar = ({
         return ">99%"
       } else if (
         percentageValue === 0 &&
-        !actualProgressBarValueBN.isEqualTo(totalValueBN)
+        !actualProgressBarValueBN.isEqualTo("0")
       ) {
         return "<1%"
       } else {
