@@ -294,6 +294,8 @@ contract WalletFactory is CloneFactory, Ownable {
             maliciousDkgResultSubmitterAddress
         );
 
+        delete wallet;
+
         address[] memory operatorWrapper = new address[](1);
         operatorWrapper[0] = maliciousDkgResultSubmitterAddress;
 
@@ -303,8 +305,6 @@ contract WalletFactory is CloneFactory, Ownable {
             msg.sender,
             operatorWrapper
         );
-
-        delete wallet;
     }
 
     /// @notice Check current wallet creation state.
