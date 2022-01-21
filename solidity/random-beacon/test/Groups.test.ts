@@ -6,7 +6,7 @@ import type { ContractTransaction } from "ethers"
 import blsData from "./data/bls"
 import { constants } from "./fixtures"
 import type { GroupsStub } from "../typechain"
-import { noMisbehaved } from "./utils/dkg"
+import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import { hashUint32Array } from "./utils/groups"
 
 const { keccak256 } = ethers.utils
@@ -40,8 +40,7 @@ describe("Groups", () => {
         beforeEach(async () => {
           tx = await groups.addCandidateGroup(
             groupPublicKey,
-            members,
-            noMisbehaved
+            hashDKGMembers(members, noMisbehaved)
           )
         })
 
@@ -74,8 +73,7 @@ describe("Groups", () => {
 
             await groups.addCandidateGroup(
               groupPublicKey,
-              members,
-              misbehavedIndices
+              hashDKGMembers(members, misbehavedIndices)
             )
 
             const expectedMembers = [...members]
@@ -93,8 +91,7 @@ describe("Groups", () => {
             const misbehavedIndices: number[] = [constants.groupSize]
             await groups.addCandidateGroup(
               groupPublicKey,
-              members,
-              misbehavedIndices
+              hashDKGMembers(members, misbehavedIndices)
             )
             const expectedMembers = [...members]
             expectedMembers.pop()
@@ -111,8 +108,7 @@ describe("Groups", () => {
             const misbehavedIndices: number[] = [24]
             await groups.addCandidateGroup(
               groupPublicKey,
-              members,
-              misbehavedIndices
+              hashDKGMembers(members, misbehavedIndices)
             )
 
             const expectedMembers = [...members]
@@ -130,8 +126,7 @@ describe("Groups", () => {
             const misbehavedIndices: number[] = [1, 16, 35, constants.groupSize]
             await groups.addCandidateGroup(
               groupPublicKey,
-              members,
-              misbehavedIndices
+              hashDKGMembers(members, misbehavedIndices)
             )
             const expectedMembers = [...members]
             expectedMembers.splice(0, 1) // index -1
@@ -146,41 +141,6 @@ describe("Groups", () => {
             ).to.be.equal(expectedMembersHash)
           })
         })
-
-        context("with misbehaved member index 0", async () => {
-          const misbehavedIndices: number[] = [0]
-
-          it("should panic", async () => {
-            await expect(
-              groups.addCandidateGroup(
-                groupPublicKey,
-                members,
-                misbehavedIndices
-              )
-            ).to.be.revertedWith(
-              "reverted with panic code 0x11 (Arithmetic operation underflowed or overflowed outside of an unchecked block)"
-            )
-          })
-        })
-
-        context(
-          "with misbehaved member index greater than group size",
-          async () => {
-            const misbehavedIndices: number[] = [constants.groupSize + 1]
-
-            it("should panic", async () => {
-              await expect(
-                groups.addCandidateGroup(
-                  groupPublicKey,
-                  members,
-                  misbehavedIndices
-                )
-              ).to.be.revertedWith(
-                "reverted with panic code 0x32 (Array accessed at an out-of-bounds or negative index)"
-              )
-            })
-          }
-        )
       })
     })
 
@@ -196,8 +156,7 @@ describe("Groups", () => {
 
         await groups.addCandidateGroup(
           existingGroupPublicKey,
-          existingGroupMembers,
-          noMisbehaved
+          hashDKGMembers(existingGroupMembers, noMisbehaved)
         )
       })
 
@@ -214,8 +173,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             tx = await groups.addCandidateGroup(
               newGroupPublicKey,
-              newGroupMembers,
-              noMisbehaved
+              hashDKGMembers(newGroupMembers, noMisbehaved)
             )
           })
 
@@ -261,8 +219,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             tx = await groups.addCandidateGroup(
               newGroupPublicKey,
-              newGroupMembers,
-              noMisbehaved
+              hashDKGMembers(newGroupMembers, noMisbehaved)
             )
           })
 
@@ -325,8 +282,7 @@ describe("Groups", () => {
             await expect(
               groups.addCandidateGroup(
                 newGroupPublicKey,
-                newGroupMembers,
-                noMisbehaved
+                hashDKGMembers(newGroupMembers, noMisbehaved)
               )
             ).to.be.revertedWith(
               "Group with this public key was already activated"
@@ -342,8 +298,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             tx = await groups.addCandidateGroup(
               newGroupPublicKey,
-              newGroupMembers,
-              noMisbehaved
+              hashDKGMembers(newGroupMembers, noMisbehaved)
             )
           })
 
@@ -405,8 +360,7 @@ describe("Groups", () => {
 
         await groups.addCandidateGroup(
           existingGroupPublicKey,
-          existingGroupMembers,
-          noMisbehaved
+          hashDKGMembers(existingGroupMembers, noMisbehaved)
         )
 
         await groups.popCandidateGroup()
@@ -420,8 +374,7 @@ describe("Groups", () => {
         beforeEach(async () => {
           tx = await groups.addCandidateGroup(
             newGroupPublicKey,
-            newGroupMembers,
-            noMisbehaved
+            hashDKGMembers(newGroupMembers, noMisbehaved)
           )
         })
 
@@ -457,8 +410,7 @@ describe("Groups", () => {
         beforeEach(async () => {
           tx = await groups.addCandidateGroup(
             newGroupPublicKey,
-            newGroupMembers,
-            noMisbehaved
+            hashDKGMembers(newGroupMembers, noMisbehaved)
           )
         })
 
@@ -509,7 +461,10 @@ describe("Groups", () => {
 
     context("when one group is registered", async () => {
       beforeEach(async () => {
-        await groups.addCandidateGroup(groupPublicKey, members, noMisbehaved)
+        await groups.addCandidateGroup(
+          groupPublicKey,
+          hashDKGMembers(members, noMisbehaved)
+        )
       })
 
       context("when the group is candidate", async () => {
@@ -568,16 +523,14 @@ describe("Groups", () => {
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,
-              members1,
-              noMisbehaved
+              hashDKGMembers(members1, noMisbehaved)
             )
 
             tx = await groups.activateCandidateGroup()
 
             await groups.addCandidateGroup(
               groupPublicKey2,
-              members2,
-              noMisbehaved
+              hashDKGMembers(members2, noMisbehaved)
             )
           })
 
@@ -613,8 +566,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,
-              members1,
-              noMisbehaved
+              hashDKGMembers(members1, noMisbehaved)
             )
 
             tx1 = await groups.activateCandidateGroup()
@@ -624,8 +576,7 @@ describe("Groups", () => {
 
             await groups.addCandidateGroup(
               groupPublicKey2,
-              members2,
-              noMisbehaved
+              hashDKGMembers(members2, noMisbehaved)
             )
 
             tx2 = await groups.activateCandidateGroup()
@@ -673,16 +624,14 @@ describe("Groups", () => {
             beforeEach(async () => {
               await groups.addCandidateGroup(
                 groupPublicKey1,
-                members1,
-                noMisbehaved
+                hashDKGMembers(members1, noMisbehaved)
               )
 
               await groups.popCandidateGroup()
 
               await groups.addCandidateGroup(
                 groupPublicKey2,
-                members2,
-                noMisbehaved
+                hashDKGMembers(members2, noMisbehaved)
               )
 
               tx = await groups.activateCandidateGroup()
@@ -720,7 +669,10 @@ describe("Groups", () => {
 
     context("when one group is registered", async () => {
       beforeEach(async () => {
-        await groups.addCandidateGroup(groupPublicKey, members, noMisbehaved)
+        await groups.addCandidateGroup(
+          groupPublicKey,
+          hashDKGMembers(members, noMisbehaved)
+        )
       })
 
       context("when the group is candidate", async () => {
@@ -782,8 +734,7 @@ describe("Groups", () => {
           beforeEach(async () => {
             await groups.addCandidateGroup(
               groupPublicKey1,
-              members1,
-              noMisbehaved
+              hashDKGMembers(members1, noMisbehaved)
             )
             const tx1 = await groups.activateCandidateGroup()
             activationBlockNumber1 = (
@@ -792,8 +743,7 @@ describe("Groups", () => {
 
             await groups.addCandidateGroup(
               groupPublicKey2,
-              members2,
-              noMisbehaved
+              hashDKGMembers(members2, noMisbehaved)
             )
 
             tx = await groups.popCandidateGroup()

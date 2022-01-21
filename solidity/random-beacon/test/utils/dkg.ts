@@ -17,6 +17,7 @@ export interface DkgResult {
   signatures: string
   signingMembersIndices: number[]
   members: number[]
+  membersHash: string
 }
 
 export const noMisbehaved = []
@@ -48,6 +49,7 @@ export async function signAndSubmitCorrectDkgResult(
   startBlock: number,
   misbehavedIndices: number[],
   submitterIndex?: number,
+  membersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
@@ -76,6 +78,7 @@ export async function signAndSubmitCorrectDkgResult(
     startBlock,
     misbehavedIndices,
     submitterIndex,
+    membersHash,
     numberOfSignatures
   )
 }
@@ -90,6 +93,7 @@ export async function signAndSubmitArbitraryDkgResult(
   startBlock: number,
   misbehavedIndices: number[],
   submitterIndex?: number,
+  groupMembersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
@@ -111,6 +115,10 @@ export async function signAndSubmitArbitraryDkgResult(
     // eslint-disable-next-line no-param-reassign
     submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
   }
+  let membersHash = groupMembersHash
+  if (!membersHash) {
+    membersHash = hashDKGMembers(members, misbehavedIndices)
+  }
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
@@ -119,12 +127,13 @@ export async function signAndSubmitArbitraryDkgResult(
     signatures: signaturesBytes,
     signingMembersIndices,
     members,
+    membersHash,
   }
 
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members)",
+        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members, bytes32 membersHash)",
       ],
       [dkgResult]
     )
@@ -181,6 +190,8 @@ export async function signAndSubmitUnrecoverableDkgResult(
     signatureHexStrLength * numberOfSignatures
   )}`
 
+  const membersHash = hashDKGMembers(members, misbehavedIndices)
+
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
     groupPubKey: groupPublicKey,
@@ -188,12 +199,13 @@ export async function signAndSubmitUnrecoverableDkgResult(
     signatures: unrecoverableSignatures,
     signingMembersIndices,
     members,
+    membersHash,
   }
 
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       [
-        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members)",
+        "(uint256 submitterMemberIndex, bytes groupPubKey, uint8[] misbehavedMembersIndices, bytes signatures, uint256[] signingMembersIndices, uint32[] members, bytes32 membersHash)",
       ],
       [dkgResult]
     )
@@ -251,4 +263,27 @@ export async function signDkgResult(
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
   return { members, signingMembersIndices, signaturesBytes }
+}
+
+// Creates a members hash that actively participated in dkg
+export function hashDKGMembers(
+  members: number[],
+  misbehavedMembersIndices: number[]
+): string {
+  if (misbehavedMembersIndices.length > 0) {
+    const activeDkgMembers = [...members]
+    for (let i = 0; i < misbehavedMembersIndices.length; i++) {
+      if (misbehavedMembersIndices[i] !== 0) {
+        activeDkgMembers.splice(misbehavedMembersIndices[i] - i - 1, 1)
+      }
+    }
+
+    return ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(["uint32[]"], [activeDkgMembers])
+    )
+  }
+
+  return ethers.utils.keccak256(
+    ethers.utils.defaultAbiCoder.encode(["uint32[]"], [members])
+  )
 }

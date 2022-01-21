@@ -82,6 +82,9 @@ library DKG {
         // Identifiers of candidate group members as outputted by the group
         // selection protocol.
         uint32[] members;
+        // Keccak256 hash of group members identifiers that actively took part
+        // in DKG (excluding IA/DQ members).
+        bytes32 membersHash;
     }
 
     /// @notice States for phases of group creation. The states doesn't include
@@ -391,9 +394,14 @@ library DKG {
     /// @dev Can be called during a challenge period for the submitted result.
     /// @param result Result to challenge. Must match the submitted result
     ///        stored during `submitResult`.
+    /// @param groupMembersHash Challenged group members hash.
     /// @return maliciousResultHash Hash of the malicious result.
     /// @return maliciousSubmitter Identifier of the malicious submitter.
-    function challengeResult(Data storage self, Result calldata result)
+    function challengeResult(
+        Data storage self,
+        Result calldata result,
+        bytes32 groupMembersHash
+    )
         external
         returns (bytes32 maliciousResultHash, uint32 maliciousSubmitter)
     {
@@ -417,7 +425,12 @@ library DKG {
         // https://github.com/crytic/slither/issues/982
         // slither-disable-next-line unused-return
         try
-            self.dkgValidator.validate(result, self.seed, self.startBlock)
+            self.dkgValidator.validate(
+                result,
+                self.seed,
+                self.startBlock,
+                groupMembersHash
+            )
         returns (
             // slither-disable-next-line uninitialized-local,variable-scope
             bool isValid,
