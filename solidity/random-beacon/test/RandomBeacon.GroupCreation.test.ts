@@ -2454,6 +2454,25 @@ describe("RandomBeacon - Group Creation", () => {
               ).to.be.revertedWith("Challenge period has already passed")
             })
           })
+
+          context(
+            "with challenged result not matching the submitted one",
+            async () => {
+              it("should revert with 'Result under challenge is different than the submitted one'", async () => {
+                const modifiedDkgResult: DkgResult = { ...dkgResult }
+                const modifiedMembersHash = hashUint32Array(
+                  dkgResult.members.splice(42, 1)
+                )
+                modifiedDkgResult.membersHash = modifiedMembersHash
+
+                await expect(
+                  randomBeacon.challengeDkgResult(modifiedDkgResult)
+                ).to.be.revertedWith(
+                  "Result under challenge is different than the submitted one"
+                )
+              })
+            }
+          )
         })
 
         context(

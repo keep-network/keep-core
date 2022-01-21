@@ -115,7 +115,7 @@ describe("DKGValidator", () => {
       _signers,
       _groupPublicKey,
       _misbehaved,
-      _membersHash
+      _membersHash?: string
     ) => {
       const dkgResult = await prepareDkgResult(
         _groupMembers,
@@ -125,12 +125,11 @@ describe("DKGValidator", () => {
         dkgStartBlock
       )
 
-      const result = await validator.validate(
-        dkgResult,
-        dkgSeed,
-        dkgStartBlock,
-        _membersHash
-      )
+      if (_membersHash) {
+        dkgResult.membersHash = _membersHash
+      }
+
+      const result = await validator.validate(dkgResult, dkgSeed, dkgStartBlock)
 
       return {
         isValid: result[0],
@@ -161,8 +160,7 @@ describe("DKGValidator", () => {
               selectedOperators,
               selectedOperators,
               groupPublicKey,
-              misbehavedMemberIds,
-              hashUint32Array(expectedMembersIds)
+              misbehavedMemberIds
             )
 
             expect(result.isValid).to.be.true
@@ -182,8 +180,7 @@ describe("DKGValidator", () => {
               selectedOperators,
               selectedOperators,
               groupPublicKey,
-              misbehavedMemberIds,
-              hashUint32Array(expectedMembersIds)
+              misbehavedMemberIds
             )
 
             expect(result.isValid).to.be.true
@@ -201,8 +198,7 @@ describe("DKGValidator", () => {
               selectedOperators,
               selectedOperators,
               groupPublicKey,
-              misbehavedMemberIds,
-              hashUint32Array(expectedMembersIds)
+              misbehavedMemberIds
             )
 
             expect(result.isValid).to.be.true
@@ -237,8 +233,7 @@ describe("DKGValidator", () => {
           selectedOperators,
           selectedOperators,
           groupPublicKey,
-          noMisbehaved,
-          hashUint32Array(selectedOperators.map((m) => m.id))
+          noMisbehaved
         )
 
         expect(result.isValid).to.be.true
@@ -257,8 +252,7 @@ describe("DKGValidator", () => {
           shuffledOperators,
           shuffledOperators,
           groupPublicKey,
-          noMisbehaved,
-          hashUint32Array(selectedOperators.map((m) => m.id))
+          noMisbehaved
         )
 
         expect(result.isValid).to.be.false
@@ -277,8 +271,7 @@ describe("DKGValidator", () => {
           selectedOperators,
           shuffledOperators,
           groupPublicKey,
-          noMisbehaved,
-          hashUint32Array(selectedOperators.map((m) => m.id))
+          noMisbehaved
         )
 
         expect(result.isValid).to.be.false
