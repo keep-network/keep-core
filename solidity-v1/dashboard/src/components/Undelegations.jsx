@@ -8,8 +8,11 @@ import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import resourceTooltipProps from "../constants/tooltips"
+import useUpdatePendingUndelegations from "../hooks/useUpdatePendingUndelegations"
 
 const Undelegations = ({ undelegations, title }) => {
+  useUpdatePendingUndelegations(undelegations)
+
   return (
     <Tile>
       <DataTable

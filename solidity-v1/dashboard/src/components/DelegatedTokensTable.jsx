@@ -10,6 +10,7 @@ import Tile from "./Tile"
 import { SubmitButton } from "./Button"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
+import useUpdateInitializedDelegations from "../hooks/useUpdateInitializedDelegations"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
@@ -19,6 +20,7 @@ const DelegatedTokensTable = ({
   addKeep,
   undelegationPeriod,
 }) => {
+  useUpdateInitializedDelegations(delegatedTokens)
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
       const grant = grants.find(({ id }) => id === grantId)

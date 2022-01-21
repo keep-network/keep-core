@@ -18,6 +18,8 @@ import { useModal } from "../../hooks/useModal"
 import { LINK, MODAL_TYPES } from "../../constants/constants"
 import TokenAmountSkeleton from "../../components/skeletons/TokenAmountSkeleton"
 import ResourceTooltip from "../../components/ResourceTooltip"
+import useUpdatePendingUndelegations from "../../hooks/useUpdatePendingUndelegations"
+import useUpdateInitializedDelegations from "../../hooks/useUpdateInitializedDelegations"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
@@ -41,6 +43,9 @@ const ThresholdUpgradePage = () => {
   const { delegations, undelegations, isDelegationDataFetching } = useSelector(
     (state) => state.staking
   )
+
+  useUpdateInitializedDelegations(delegations)
+  useUpdatePendingUndelegations(undelegations)
 
   const { grants, isFetching: isGrantDataFetching } = useSelector(
     (state) => state.tokenGrants
