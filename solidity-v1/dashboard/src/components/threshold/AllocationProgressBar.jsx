@@ -3,6 +3,7 @@ import ProgressBar, { ProgressBarLegendContext } from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import OnlyIf from "../OnlyIf"
 import { add, gt } from "../../utils/arithmetics.utils"
+import BigNumber from "bignumber.js"
 
 const AllocationProgressBar = ({
   title,
@@ -21,8 +22,17 @@ const AllocationProgressBar = ({
     }
 
     if (gt(totalValue, 0)) {
+      const currentValueBN = new BigNumber(currentValue)
+      const secondaryValueBN = secondaryValue
+        ? new BigNumber(secondaryValue)
+        : 0
+      const totalValueBN = new BigNumber(totalValue)
       return Math.round(
-        (add(currentValue, secondaryValue | 0) / totalValue) * 100
+        currentValueBN
+          .plus(secondaryValueBN)
+          .div(totalValueBN)
+          .multipliedBy(100)
+          .toNumber()
       )
     } else {
       return 0
