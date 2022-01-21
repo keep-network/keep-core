@@ -11,6 +11,7 @@ import { SubmitButton } from "./Button"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
 import useUpdateInitializedDelegations from "../hooks/useUpdateInitializedDelegations"
+import Chip from "./Chip"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
@@ -60,13 +61,30 @@ const DelegatedTokensTable = ({
         data={delegatedTokens}
         itemFieldId="operatorAddress"
         noDataMessage="No delegated tokens."
+        centered
       >
         <Column
           header="amount"
           field="amount"
-          renderContent={({ amount }) =>
-            `${KEEP.displayAmountWithSymbol(amount)}`
-          }
+          renderContent={({ amount, isFromGrant }) => {
+            return (
+              <>
+                <div>{KEEP.displayAmountWithSymbol(amount)}</div>
+                <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
+                  {isFromGrant ? "Grant Tokens" : "Wallet Tokens"}
+                  <Chip
+                    text={"BONDED"}
+                    size="tiny"
+                    color="primary"
+                    style={{
+                      marginLeft: "0.6rem",
+                      padding: "0.3rem 0.4rem",
+                    }}
+                  />
+                </div>
+              </>
+            )
+          }}
         />
         <Column
           header="status"
@@ -83,12 +101,17 @@ const DelegatedTokensTable = ({
                 : formatDate(delegation.initializationOverAt)
 
             return (
-              <StatusBadge
-                status={BADGE_STATUS[delegationStatus]}
-                className="self-start"
-                text={statusBadgeText}
-                onlyIcon={delegationStatus === COMPLETE_STATUS}
-              />
+              <>
+                <StatusBadge
+                  status={BADGE_STATUS[delegationStatus]}
+                  className="self-start"
+                  text={statusBadgeText}
+                  onlyIcon={delegationStatus === COMPLETE_STATUS}
+                />
+                <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
+                  {delegation.initializationOverAt.format("HH:mm:ss")}
+                </div>
+              </>
             )
           }}
         />

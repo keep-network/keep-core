@@ -9,6 +9,7 @@ import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import resourceTooltipProps from "../constants/tooltips"
 import useUpdatePendingUndelegations from "../hooks/useUpdatePendingUndelegations"
+import Chip from "./Chip"
 
 const Undelegations = ({ undelegations, title }) => {
   useUpdatePendingUndelegations(undelegations)
@@ -22,13 +23,30 @@ const Undelegations = ({ undelegations, title }) => {
         withTooltip={true}
         tooltipProps={resourceTooltipProps.claimTokensFromUndelegation}
         noDataMessage="No undelegated tokens."
+        centered
       >
         <Column
           header="amount"
           field="amount"
-          renderContent={({ amount }) =>
-            `${KEEP.displayAmountWithSymbol(amount)}`
-          }
+          renderContent={({ amount, isFromGrant }) => {
+            return (
+              <>
+                <div>{KEEP.displayAmountWithSymbol(amount)}</div>
+                <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
+                  {isFromGrant ? "Grant Tokens" : "Wallet Tokens"}
+                  <Chip
+                    text={"BONDED"}
+                    size="tiny"
+                    color="primary"
+                    style={{
+                      marginLeft: "0.6rem",
+                      padding: "0.3rem 0.4rem",
+                    }}
+                  />
+                </div>
+              </>
+            )
+          }}
         />
         <Column
           header="status"
@@ -45,12 +63,17 @@ const Undelegations = ({ undelegations, title }) => {
                 : formatDate(undelegation.undelegationCompleteAt)
 
             return (
-              <StatusBadge
-                status={BADGE_STATUS[undelegationStatus]}
-                className="self-start"
-                text={statusBadgeText}
-                onlyIcon={undelegationStatus === COMPLETE_STATUS}
-              />
+              <>
+                <StatusBadge
+                  status={BADGE_STATUS[undelegationStatus]}
+                  className="self-start"
+                  text={statusBadgeText}
+                  onlyIcon={undelegationStatus === COMPLETE_STATUS}
+                />
+                <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
+                  {undelegation.undelegationCompleteAt.format("HH:mm:ss")}
+                </div>
+              </>
             )
           }}
         />
