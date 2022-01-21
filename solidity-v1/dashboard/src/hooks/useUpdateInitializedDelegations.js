@@ -16,7 +16,6 @@ const useUpdateInitializedDelegations = (delegations) => {
 
     for (const initializedDelegation of initializedDelegations) {
       if (currentDate.isAfter(initializedDelegation.initializationOverAt)) {
-        console.log("update bro")
         dispatch({
           type: "staking/update_delegation",
           payload: {
