@@ -399,14 +399,9 @@ library DKG {
     /// @dev Can be called during a challenge period for the submitted result.
     /// @param result Result to challenge. Must match the submitted result
     ///        stored during `submitResult`.
-    /// @param groupMembersHash Challenged group members hash.
     /// @return maliciousResultHash Hash of the malicious result.
     /// @return maliciousSubmitter Identifier of the malicious submitter.
-    function challengeResult(
-        Data storage self,
-        Result calldata result,
-        bytes32 groupMembersHash
-    )
+    function challengeResult(Data storage self, Result calldata result)
         external
         returns (bytes32 maliciousResultHash, uint32 maliciousSubmitter)
     {
@@ -430,12 +425,7 @@ library DKG {
         // https://github.com/crytic/slither/issues/982
         // slither-disable-next-line unused-return
         try
-            self.dkgValidator.validate(
-                result,
-                self.seed,
-                self.startBlock,
-                groupMembersHash
-            )
+            self.dkgValidator.validate(result, self.seed, self.startBlock)
         returns (
             // slither-disable-next-line uninitialized-local,variable-scope
             bool isValid,
