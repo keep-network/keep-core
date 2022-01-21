@@ -8,15 +8,15 @@ import { withBaseModal } from "../withBaseModal"
 
 export const ConfirmRecovering = withBaseModal(
   ({ tokenStakingEscrowAddress, onConfirm, onClose }) => {
-    const formik = useTypeTextToConfirmFormik("RECOVER", onConfirm)
+    const formik = useTypeTextToConfirmFormik("CLAIM", onConfirm)
 
     return (
       <>
         <ModalHeader>Are you sure?</ModalHeader>
         <ModalBody>
-          <h3>You’re about to recover tokens.</h3>
+          <h3>You’re about to claim tokens.</h3>
           <div className="text-grey-60 mt-1">
-            <span>Recovering will deposit delegated tokens in the</span>
+            <span>Claiming will deposit delegated tokens in the</span>
             &nbsp;
             <span>
               <ViewAddressInBlockExplorer
@@ -32,7 +32,7 @@ export const ConfirmRecovering = withBaseModal(
               type="text"
               onChange={formik.handleChange}
               value={formik.values.confirmationText}
-              label={"Type RECOVER to confirm."}
+              label={"Type CLAIM to confirm."}
               placeholder=""
               hasError={formik.errors.confirmationText}
               errorMsg={formik.errors.confirmationText}
@@ -45,7 +45,7 @@ export const ConfirmRecovering = withBaseModal(
             type="submit"
             onClick={formik.handleSubmit}
           >
-            recover
+            claim
           </Button>
           <Button className="btn btn-unstyled" onClick={onClose}>
             Cancel

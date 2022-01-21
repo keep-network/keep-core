@@ -20,7 +20,7 @@ const Undelegations = ({ undelegations, title }) => {
         itemFieldId="operatorAddress"
         title="Undelegations"
         withTooltip={true}
-        tooltipProps={resourceTooltipProps.recoverTokens}
+        tooltipProps={resourceTooltipProps.claimTokensFromUndelegation}
         noDataMessage="No undelegated tokens."
       >
         <Column
