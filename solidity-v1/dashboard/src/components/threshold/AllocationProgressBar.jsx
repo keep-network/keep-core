@@ -16,7 +16,7 @@ const AllocationProgressBar = ({
   secondaryValueLegendLabel = "",
   isDataFetching = false,
 }) => {
-  const percentageValue = useMemo(() => {
+  const displayPercentageValue = useMemo(() => {
     if (isDataFetching) {
       return "--"
     }
@@ -26,16 +26,27 @@ const AllocationProgressBar = ({
       const secondaryValueBN = secondaryValue
         ? new BigNumber(secondaryValue)
         : 0
+      const actualProgressBarValueBN = currentValueBN.plus(secondaryValueBN)
       const totalValueBN = new BigNumber(totalValue)
-      return Math.round(
-        currentValueBN
-          .plus(secondaryValueBN)
-          .div(totalValueBN)
-          .multipliedBy(100)
-          .toNumber()
+      const percentageValue = Math.round(
+        actualProgressBarValueBN.div(totalValueBN).multipliedBy(100).toNumber()
       )
+
+      if (
+        percentageValue === 100 &&
+        !actualProgressBarValueBN.isEqualTo(totalValueBN)
+      ) {
+        return ">99%"
+      } else if (
+        percentageValue === 0 &&
+        !actualProgressBarValueBN.isEqualTo(totalValueBN)
+      ) {
+        return "<1%"
+      } else {
+        return `${percentageValue}%`
+      }
     } else {
-      return 0
+      return "0%"
     }
   }, [currentValue, secondaryValue, totalValue, isDataFetching])
 
@@ -91,10 +102,7 @@ const AllocationProgressBar = ({
             </OnlyIf>
           </ProgressBar>
           <span className="text-grey-70 ml-1 allocation-progress-bar__percentage-value">
-            {/** TODO: 2 decimal places, maybe even print it as >99 % and <1%
-              // when there is small difference betweent currentValue and total
-              // Value */}
-            {percentageValue}%
+            {displayPercentageValue}
           </span>
         </div>
       </div>
