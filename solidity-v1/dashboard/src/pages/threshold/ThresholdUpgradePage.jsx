@@ -219,24 +219,24 @@ const ThresholdUpgradePage = () => {
       <section className="tile staked">
         <div className="staked__title-container">
           <h3 className="staked__title">Staked</h3>
-          <div className="staked__additional-info">
-            <span className="staked__additional-info-row mr-2">
-              <Icons.Success
-                width={16}
-                height={16}
-                className="staked__additional-info-icon staked__additional-info-icon--color-green"
-              />{" "}
-              ECDSA
-            </span>
-            <span className="staked__additional-info-row">
-              <Icons.Success
-                width={16}
-                height={16}
-                className="staked__additional-info-icon staked__additional-info-icon--color-green"
-              />{" "}
-              Random Beacon
-            </span>
-          </div>
+          {/* <div className="staked__additional-info">*/}
+          {/*  <span className="staked__additional-info-row mr-2">*/}
+          {/*    <Icons.Success*/}
+          {/*      width={16}*/}
+          {/*      height={16}*/}
+          {/*      className="staked__additional-info-icon staked__additional-info-icon--color-green"*/}
+          {/*    />{" "}*/}
+          {/*    ECDSA*/}
+          {/*  </span>*/}
+          {/*  <span className="staked__additional-info-row">*/}
+          {/*    <Icons.Success*/}
+          {/*      width={16}*/}
+          {/*      height={16}*/}
+          {/*      className="staked__additional-info-icon staked__additional-info-icon--color-green"*/}
+          {/*    />{" "}*/}
+          {/*    Random Beacon*/}
+          {/*  </span>*/}
+          {/* </div>*/}
         </div>
         {isDataFetching ? (
           <TokenAmountSkeleton
