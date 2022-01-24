@@ -305,6 +305,10 @@ library DKG {
 
     /// @notice Notifies about the seed was not delivered and restores the
     ///         initial DKG state (IDLE).
+    // TODO: Verify if this function is needed to be used in a similar manner
+    // as in Random Beacon V2 or can be removed completely, also AWAITING_SEED
+    // state could be removed depending on how DKG will be used.
+    // slither-disable-next-line dead-code
     function notifySeedTimedOut(Data storage self) internal {
         require(
             currentState(self) == State.AWAITING_SEED,
