@@ -49,6 +49,10 @@
     "typechain": "^6.1.0",
     "typescript": "^4.5.4"
   },
+  "dependencies": {
+    "@keep-network/sortition-pools": "^2.0.0-dev.0",
+    "@openzeppelin/contracts": "^4.4.1"
+  },
   "engines": {
     "node": ">= 14.0.0"
   }
