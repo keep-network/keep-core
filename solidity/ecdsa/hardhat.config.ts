@@ -57,10 +57,24 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: {
-      default: 0, // take the first account as deployer
+      default: 1, // take the second account
+    },
+    governance: {
+      default: 2,
+    },
+    walletOwner: {
+      default: 3,
     },
   },
   external: {
+    contracts: [
+      {
+        artifacts:
+          "node_modules/@threshold-network/solidity-contracts/export/artifacts",
+        deploy:
+          "node_modules/@threshold-network/solidity-contracts/export/deploy",
+      },
+    ],
     // deployments: {
     //   // For hardhat environment we can fork the mainnet, so we need to point it
     //   // to the contract artifacts.

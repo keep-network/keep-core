@@ -23,22 +23,22 @@
   "devDependencies": {
     "@keep-network/hardhat-helpers": "^0.4.1-pre.2",
     "@keep-network/hardhat-local-networks-config": "^0.1.0-pre.4",
-    "@nomiclabs/hardhat-ethers": "^2.0.3",
-    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
+    "@nomiclabs/hardhat-waffle": "^2.0.2",
     "@tenderly/hardhat-tenderly": "^1.0.13",
     "@thesis-co/eslint-config": "github:thesis/eslint-config",
     "@typechain/ethers-v5": "^8.0.5",
     "@typechain/hardhat": "^3.1.0",
     "@types/chai": "^4.3.0",
-    "@types/mocha": "^9.0.0",
-    "@types/node": "^17.0.5",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "^17.0.10",
     "chai": "^4.3.4",
     "eslint": "^7.32.0",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.5.2",
+    "ethers": "^5.5.3",
     "hardhat": "^2.8.0",
     "hardhat-contract-sizer": "^2.3.0",
-    "hardhat-deploy": "^0.9.22",
+    "hardhat-deploy": "^0.9.27",
     "hardhat-gas-reporter": "^1.0.6",
     "prettier": "^2.5.1",
     "prettier-plugin-sh": "^0.8.1",
@@ -51,7 +51,8 @@
   },
   "dependencies": {
     "@keep-network/sortition-pools": "^2.0.0-dev.0",
-    "@openzeppelin/contracts": "^4.4.1"
+    "@openzeppelin/contracts": "^4.4.1",
+    "@threshold-network/solidity-contracts": ">0.0.2-dev <0.0.2-ropsten"
   },
   "engines": {
     "node": ">= 14.0.0"
