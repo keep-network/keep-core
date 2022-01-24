@@ -16,7 +16,7 @@
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'",
     "clean": "hardhat clean",
     "build": "hardhat compile",
-    "test": "hardhat test",
+    "test": "hardhat test --deploy-fixture",
     "deploy": "hardhat deploy --export export.json",
     "prepack": "tsc -p tsconfig.json && hardhat export-artifacts export/artifacts"
   },
