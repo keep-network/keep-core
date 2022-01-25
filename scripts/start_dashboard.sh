@@ -5,6 +5,7 @@ LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
 KEEP_CORE_PATH=$PWD
+KEEP_CORE_SOL_PATH="$PWD/solidity-v1"
 DASHBOARD_DIR_PATH="$KEEP_CORE_PATH/solidity-v1/dashboard"
 KEEP_CORE_ARTIFACTS_PATH="$KEEP_CORE_PATH/solidity-v1/artifacts"
 
@@ -20,9 +21,15 @@ TBTC_SOL_ARTIFACTS_PATH="$TBTC_PATH/solidity/artifacts"
 
 COV_POOLS_PATH="$PWD/../coverage-pools"
 
+THRESHOLD_CONTRACTS_PATH="$PWD/../solidity-contracts"
+
 printf "${LOG_START}Migrating contracts for keep-core...${LOG_END}"
 cd "$KEEP_CORE_PATH"
 ./scripts/install.sh --network local --contracts-only
+cd "$KEEP_CORE_SOL_PATH"
+# Link keep-core contracts via `yarn`- the threshold solidity contracts repo
+# uses the `yarn` so we need to link keep-core package with `yarn` as well.
+yarn link
 
 printf "${LOG_START}Migrating contracts for keep-ecdsa...${LOG_END}"
 cd "$KEEP_ECDSA_PATH"
@@ -60,6 +67,16 @@ printf "${LOG_START}Creating links for cvovrage pools...${LOG_END}"
 # the `keep-network/coverage-pool` package manually via npm.
 npm link
 
+cd "$THRESHOLD_CONTRACTS_PATH"
+printf "${LOG_START}Installing Threshold network solidity contracts dependencies...${LOG_START}"
+yarn
+yarn link @keep-network/keep-core
+./scripts/prepare-dependencies.sh
+printf "${LOG_START}Deploying contracts for threshold solidity contracts...${LOG_START}"
+yarn deploy --network development --reset
+./scripts/prepare-artifacts.sh --network development
+npm link
+
 printf "${LOG_START}Installing Keep Token Dashboard...${LOG_END}"
 
 cd $DASHBOARD_DIR_PATH
@@ -74,25 +91,26 @@ cd $DASHBOARD_DIR_PATH
 npm link @keep-network/keep-core \
     @keep-network/keep-ecdsa \
     @keep-network/tbtc \
-    @keep-network/coverage-pools
+    @keep-network/coverage-pools \
+    @threshold-network/solidity-contracts
 
 # Make sure files below exists in keep-ecdsa repository. Otherwise comment out.
-printf "${LOG_START}Generating mock input data for ecdsa merkle distributor${LOG_END}"
-cd $KEEP_ECDSA_SOL_PATH
-truffle exec ./scripts/generate-staker-rewards-input.js --network local
+# printf "${LOG_START}Generating mock input data for ecdsa merkle distributor${LOG_END}"
+# cd $KEEP_ECDSA_SOL_PATH
+# truffle exec ./scripts/generate-staker-rewards-input.js --network local
 
-printf "${LOG_START}Generating mock merkle objects${LOG_END}"
-cd $KEEP_ECDSA_DISTRIBUTOR_PATH
-npm i
-npm run generate-merkle-root -- --input="$MERKLE_DISTRIBUTOR_INPUT_PATH"
+# printf "${LOG_START}Generating mock merkle objects${LOG_END}"
+# cd $KEEP_ECDSA_DISTRIBUTOR_PATH
+# npm i
+# npm run generate-merkle-root -- --input="$MERKLE_DISTRIBUTOR_INPUT_PATH"
 
-printf "${LOG_START}Copying the mock merkle objects to dashboard${LOG_END}"
-cp $MERKLE_DISTRIBUTOR_OUTPUT_PATH "$DASHBOARD_DIR_PATH/src/rewards-allocation/rewards.json"
+# printf "${LOG_START}Copying the mock merkle objects to dashboard${LOG_END}"
+# cp $MERKLE_DISTRIBUTOR_OUTPUT_PATH "$DASHBOARD_DIR_PATH/src/rewards-allocation/rewards.json"
 
-printf "${LOG_START}Initializing ECDSARewardsDistributor contract${LOG_END}"
-cd $KEEP_ECDSA_SOL_PATH
-truffle exec ./scripts/initialize-ecdsa-rewards-distributor.js --network local
+# printf "${LOG_START}Initializing ECDSARewardsDistributor contract${LOG_END}"
+# cd $KEEP_ECDSA_SOL_PATH
+# truffle exec ./scripts/initialize-ecdsa-rewards-distributor.js --network local
 
-printf "${LOG_START}Starting dashboard...${LOG_END}"
-cd $DASHBOARD_DIR_PATH
-npm start
+# printf "${LOG_START}Starting dashboard...${LOG_END}"
+# cd $DASHBOARD_DIR_PATH
+# npm start
