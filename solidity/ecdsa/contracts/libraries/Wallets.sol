@@ -24,7 +24,6 @@ library Wallets {
         bytes32 publicKeyHash;
         // Keccak256 hash of group members identifiers array. Group members do not
         // include operators selected by the sortition pool that misbehaved during DKG.
-        // See how `misbehavedMembersIndices` are used in `hashGroupMembers` function.
         bytes32 membersIdsHash;
         bytes32 digestToSign;
     }
