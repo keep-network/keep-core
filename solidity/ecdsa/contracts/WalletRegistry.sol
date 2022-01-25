@@ -79,14 +79,14 @@ contract WalletRegistry is Ownable {
     event DkgSeedTimedOut();
 
     event WalletCreated(
-        uint256 indexed walletID,
+        bytes32 indexed walletID,
         bytes32 indexed dkgResultHash
     );
 
-    event SignatureRequested(uint256 indexed walletID, bytes32 indexed digest);
+    event SignatureRequested(bytes32 indexed walletID, bytes32 indexed digest);
 
     event SignatureSubmitted(
-        uint256 indexed walletID,
+        bytes32 indexed walletID,
         bytes32 indexed digest,
         Wallets.Signature signature
     );
@@ -203,7 +203,7 @@ contract WalletRegistry is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        uint256 walletID = wallets.addWallet(
+        bytes32 walletID = wallets.addWallet(
             dkgResult.membersHash,
             keccak256(dkgResult.groupPubKey)
         );
@@ -249,36 +249,32 @@ contract WalletRegistry is Ownable {
     }
 
     /// @notice Requests a new signature.
-    /// @param walletID ID of a wallet that should calculate a signature.
+    /// @param publicKeyHash ID of a wallet that should calculate a signature.
     /// @param digest Digest to sign.
-    function requestSignature(uint256 walletID, bytes32 digest) external {
+    function requestSignature(bytes32 publicKeyHash, bytes32 digest) external {
         require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
 
-        wallets.requestSignature(walletID, digest);
+        wallets.requestSignature(publicKeyHash, digest);
     }
 
     /// @notice Submits a calculated signature for the digest that is currently
     ///         under signing.
-    /// @param walletID ID of a wallet that should calculate a signature.
+    /// @param publicKeyHash ID of a wallet that should calculate a signature.
     /// @param publicKey Group public key.
     /// @param signature Calculated signature.
     function submitSignature(
-        uint256 walletID,
+        bytes32 publicKeyHash,
         bytes calldata publicKey,
         Wallets.Signature calldata signature
     ) external {
-        wallets.submitSignature(walletID, publicKey, signature);
+        wallets.submitSignature(publicKeyHash, publicKey, signature);
     }
 
-    function getWallet(uint256 walletID)
+    function getWallet(bytes32 publicKeyHash)
         external
         view
         returns (Wallets.Wallet memory)
     {
-        return wallets.registry[walletID];
-    }
-
-    function getWalletCounter() external view returns (uint256) {
-        return wallets.walletCounter;
+        return wallets.registry[publicKeyHash];
     }
 }

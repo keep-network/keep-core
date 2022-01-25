@@ -1,13 +1,13 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { BigNumber } from "ethers"
+import { keccak256 } from "ethers/lib/utils"
 
 import ecdsaData from "./data/ecdsa"
 import { createNewWallet } from "./utils/wallets"
 import { walletRegistryFixture } from "./fixtures"
 
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction } from "ethers"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -32,9 +32,9 @@ describe("WalletRegistry - Wallets", async () => {
     const digest = ecdsaData.group1.digest1
 
     context("when wallets are registered", async () => {
-      let walletID1: BigNumber
-      let walletID2: BigNumber
-      const notExistingWalletID = BigNumber.from(3)
+      let walletID1: string
+      let walletID2: string
+      const notExistingWalletID: string = keccak256("0x01234567")
 
       before("create wallets", async () => {
         await createSnapshot()
@@ -100,21 +100,15 @@ describe("WalletRegistry - Wallets", async () => {
         })
       })
 
-      context("with wallet ID equal 0", async () => {
-        it("should revert", async () => {
-          await expect(
-            walletRegistry.connect(walletOwner).requestSignature(0, digest)
-          ).to.be.revertedWith("Wallet with given ID doesn't exist")
-        })
-      })
-
       context("with not existing wallet ID", async () => {
         it("should revert", async () => {
           await expect(
             walletRegistry
               .connect(walletOwner)
               .requestSignature(notExistingWalletID, digest)
-          ).to.be.revertedWith("Wallet with given ID doesn't exist")
+          ).to.be.revertedWith(
+            "Wallet with given public key hash doesn't exist"
+          )
         })
       })
     })
@@ -122,7 +116,7 @@ describe("WalletRegistry - Wallets", async () => {
 
   describe("submitSignature", async () => {
     context("when wallets are registered", async () => {
-      let walletID1: BigNumber
+      let walletID1: string
 
       before("create wallets", async () => {
         await createSnapshot()

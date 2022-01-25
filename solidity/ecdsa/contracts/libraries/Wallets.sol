@@ -21,7 +21,8 @@ library Wallets {
     using ECDSA for bytes32;
 
     struct Wallet {
-        bytes32 publicKeyHash;
+        // TODO: Verify if we want to store the whole public key or having
+        // just the public key hash is enough.
         // Keccak256 hash of group members identifiers array. Group members do not
         // include operators selected by the sortition pool that misbehaved during DKG.
         bytes32 membersIdsHash;
@@ -36,15 +37,14 @@ library Wallets {
 
     struct Data {
         // Mapping of keccak256 hashes of wallet public keys to wallet details.
-        mapping(uint256 => Wallet) registry;
-        // Holds keccak256 hashes of group public keys in the order of registration.
-        uint256 walletCounter;
+        // Hash of public key is considered an unique wallet identifier (walletID).
+        mapping(bytes32 => Wallet) registry;
     }
 
-    event SignatureRequested(uint256 indexed walletID, bytes32 indexed digest);
+    event SignatureRequested(bytes32 indexed walletID, bytes32 indexed digest);
 
     event SignatureSubmitted(
-        uint256 indexed walletID,
+        bytes32 indexed walletID,
         bytes32 indexed digest,
         Signature signature
     );
@@ -57,10 +57,16 @@ library Wallets {
         Data storage self,
         bytes32 _membersIdsHash,
         bytes32 _publicKeyHash
-    ) internal returns (uint256 walletID) {
-        walletID = ++self.walletCounter;
+    ) internal returns (bytes32 walletID) {
+        walletID = _publicKeyHash;
 
-        self.registry[walletID].publicKeyHash = _publicKeyHash;
+        // TODO: If we decide to store the group public key we should switch this
+        // check to use the public key.
+        require(
+            self.registry[walletID].membersIdsHash == bytes32(0),
+            "Wallet with given public key hash already exists"
+        );
+
         self.registry[walletID].membersIdsHash = _membersIdsHash;
     }
 
@@ -69,14 +75,14 @@ library Wallets {
     /// @param digest Digest to sign.
     function requestSignature(
         Data storage self,
-        uint256 walletID,
+        bytes32 walletID,
         bytes32 digest
     ) internal {
         // TODO: When we decide to introduce wallet termination it would be enough
-        // to check if wallet is active instead checking if public key is set.
+        // to check if wallet is active instead checking if value is set.
         require(
-            self.registry[walletID].publicKeyHash != bytes32(0),
-            "Wallet with given ID doesn't exist"
+            self.registry[walletID].membersIdsHash != bytes32(0),
+            "Wallet with given public key hash doesn't exist"
         );
 
         // TODO: Implement; Compare with AbstractBondedECDSAKeep from V1.
@@ -94,21 +100,26 @@ library Wallets {
     /// @param signature Calculated signature.
     function submitSignature(
         Data storage self,
-        uint256 walletID,
+        bytes32 walletID,
         bytes calldata publicKey,
         Signature calldata signature
     ) external {
         // TODO: Check if wallet is available
         Wallet storage wallet = self.registry[walletID];
         require(
-            wallet.publicKeyHash == keccak256(publicKey),
-            "Invalid public key"
+            walletID == keccak256(publicKey),
+            "Invalid public key for the given wallet"
+        );
+
+        require(
+            wallet.digestToSign != bytes32(0),
+            "Signature was not requested"
         );
 
         // TODO: Implement; Compare with AbstractBondedECDSAKeep from V1.
 
         require(
-            address(uint160(uint256(wallet.publicKeyHash))) ==
+            address(uint160(uint256(walletID))) ==
                 wallet.digestToSign.recover(
                     signature.v,
                     signature.r,

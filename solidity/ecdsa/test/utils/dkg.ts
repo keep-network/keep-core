@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
 
 import { ethers } from "hardhat"
-import { BigNumber } from "ethers"
 import { expect } from "chai"
+import { BigNumber } from "ethers"
 
 import { constants } from "../fixtures"
 

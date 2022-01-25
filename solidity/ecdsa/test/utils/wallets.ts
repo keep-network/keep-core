@@ -44,7 +44,7 @@ export async function createNewWallet(
   publicKey?: string
 ): Promise<{
   members: Operator[]
-  walletID: BigNumber
+  walletID: string
 }> {
   const { dkgSeed, startBlock } = await requestNewWallet(
     walletRegistry,
@@ -71,14 +71,14 @@ export async function createNewWallet(
     .connect(submitter)
     .approveDkgResult(dkgResult)
 
-  const walletID: BigNumber = await getWalletID(approveDkgResultTx)
+  const walletID: string = await getWalletID(approveDkgResultTx)
 
   return { members, walletID }
 }
 
 export async function getWalletID(
   approveDkgResultTx: ContractTransaction
-): Promise<BigNumber> {
+): Promise<string> {
   const { walletID } = (await approveDkgResultTx.wait()).events.find(
     (e) => e.event === "WalletCreated"
   ).args
