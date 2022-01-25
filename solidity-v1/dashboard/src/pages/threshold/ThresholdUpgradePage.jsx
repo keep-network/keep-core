@@ -159,6 +159,7 @@ const ThresholdUpgradePage = () => {
         <AllocationProgressBar
           title={"wallet"}
           currentValue={keepBalance}
+          currentValueLabel={"unstaked wallet balance"}
           totalValue={notStakedTotalAmount}
           className={"mb-1"}
           isDataFetching={isDataFetching}
@@ -166,6 +167,7 @@ const ThresholdUpgradePage = () => {
         <AllocationProgressBar
           title={"available grant allocation"}
           currentValue={totalGrantedReadyToReleaseTokens}
+          currentValueLabel={"unstaked grant balance"}
           totalValue={notStakedTotalAmount}
           className={"mb-2"}
           isDataFetching={isDataFetching}
@@ -263,13 +265,14 @@ const ThresholdUpgradePage = () => {
           className={"mb-1"}
           secondaryValue={totalStakedPendingKeep}
           withLegend
-          currentValueLegendLabel={"Staked"}
-          secondaryValueLegendLabel={"Pending Undelegation"}
+          currentValueLabel={"Staked"}
+          secondaryValueLabel={"Pending Undelegation"}
           isDataFetching={isDataFetching}
         />
         <AllocationProgressBar
           title={"undelegated"}
           currentValue={totalUndelegatedAvailableKeep}
+          currentValueLabel={"Undelegated"}
           totalValue={stakedTotalAmount}
           className={"mb-3"}
           isDataFetching={isDataFetching}

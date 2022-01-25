@@ -4,6 +4,7 @@ import { colors } from "../../constants/colors"
 import OnlyIf from "../OnlyIf"
 import { add, gt } from "../../utils/arithmetics.utils"
 import BigNumber from "bignumber.js"
+import TokenAmount from "../TokenAmount"
 
 const AllocationProgressBar = ({
   title,
@@ -12,8 +13,8 @@ const AllocationProgressBar = ({
   className = "",
   secondaryValue = null,
   withLegend = false,
-  currentValueLegendLabel = "",
-  secondaryValueLegendLabel = "",
+  currentValueLabel = "",
+  secondaryValueLabel = "",
   isDataFetching = false,
 }) => {
   const displayPercentageValue = useMemo(() => {
@@ -50,6 +51,16 @@ const AllocationProgressBar = ({
     }
   }, [currentValue, secondaryValue, totalValue, isDataFetching])
 
+  const renderProgressBarTooltipTooltip = (value) => {
+    return (
+      <TokenAmount
+        amount={value}
+        symbolClassName="upgrade-token-tile-row__token-amount-symbol"
+        amountClassName="upgrade-token-tile-row__token-amount-amount"
+      />
+    )
+  }
+
   return (
     <div className={`allocation-progress-bar ${className}`}>
       <div>
@@ -64,15 +75,23 @@ const AllocationProgressBar = ({
               height={20}
             >
               <ProgressBar.InlineItem
+                label={currentValueLabel}
                 value={
                   isDataFetching ? 0 : add(currentValue, secondaryValue || 0)
                 }
                 color={colors.secondary}
+                withTooltip
+                renderTooltip={renderProgressBarTooltipTooltip(currentValue)}
               />
               <OnlyIf condition={!!secondaryValue}>
                 <ProgressBar.InlineItem
+                  label={secondaryValueLabel}
                   value={isDataFetching ? 0 : secondaryValue}
                   color={colors.yellowSecondary}
+                  withTooltip
+                  renderTooltip={renderProgressBarTooltipTooltip(
+                    secondaryValue
+                  )}
                 />
               </OnlyIf>
             </ProgressBar.Inline>
@@ -83,7 +102,7 @@ const AllocationProgressBar = ({
                 >
                   <ProgressBar.LegendItem
                     value={secondaryValue?.toString()}
-                    label={secondaryValueLegendLabel}
+                    label={secondaryValueLabel}
                     color={colors.yellowSecondary}
                     className={
                       "allocation-progress-bar__progress-bar-legend-item"
@@ -91,7 +110,7 @@ const AllocationProgressBar = ({
                   />
                   <ProgressBar.LegendItem
                     value={currentValue?.toString()}
-                    label={currentValueLegendLabel}
+                    label={currentValueLabel}
                     color={colors.secondary}
                     className={
                       "allocation-progress-bar__progress-bar-legend-item"
