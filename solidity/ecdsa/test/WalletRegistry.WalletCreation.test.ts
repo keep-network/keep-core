@@ -2007,6 +2007,38 @@ describe("WalletRegistry - Wallet Creation", async () => {
           })
         }
       )
+
+      context("when misbehaved members contains duplicates", async () => {
+        const misbehavedIndices = [2, 9, 9, 10]
+
+        let dkgResult: DkgResult
+        let submitter: SignerWithAddress
+
+        before(async () => {
+          await createSnapshot()
+
+          await mineBlocksTo(startBlock + constants.offchainDkgTime)
+          ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            dkgSeed,
+            startBlock,
+            misbehavedIndices
+          ))
+
+          await mineBlocks(params.dkgResultChallengePeriodLength)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should succeed", async () => {
+          await expect(
+            walletRegistry.connect(submitter).approveDkgResult(dkgResult)
+          ).to.not.be.reverted
+        })
+      })
     })
 
     // context(
@@ -2537,6 +2569,48 @@ describe("WalletRegistry - Wallet Creation", async () => {
               })
             }
           )
+
+          context("when misbehaved members contains duplicates", async () => {
+            const misbehavedIndices = [2, 9, 30, 30, 60, 64]
+
+            let tx: ContractTransaction
+            let dkgResult: DkgResult
+            let dkgResultHash: string
+
+            before(async () => {
+              await createSnapshot()
+              ;({ dkgResult, dkgResultHash } =
+                await signAndSubmitCorrectDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  dkgSeed,
+                  startBlock,
+                  misbehavedIndices
+                ))
+
+              tx = await walletRegistry
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should emit DkgResultChallenged event", async () => {
+              await expect(tx)
+                .to.emit(walletRegistry, "DkgResultChallenged")
+                .withArgs(
+                  dkgResultHash,
+                  await thirdParty.getAddress(),
+                  "Corrupted misbehaved members indices"
+                )
+            })
+
+            it("should not unlock the sortition pool", async () => {
+              await expect(await sortitionPool.isLocked()).to.be.true
+            })
+          })
 
           context("with correct dkg result submitted", async () => {
             let dkgResult: DkgResult
