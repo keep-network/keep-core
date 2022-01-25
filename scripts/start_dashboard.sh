@@ -50,15 +50,11 @@ printf "${LOG_START}TBTCSystem contract address is: ${TBTC_SYSTEM_CONTRACT_ADDRE
 cd $KEEP_ECDSA_PATH
 ./scripts/initialize.sh --contracts-only --network local --application-address $TBTC_SYSTEM_CONTRACT_ADDRESS
 
-# Extract KEEP token contract address.
-KEEP_TOKEN_CONTRACT="${KEEP_CORE_ARTIFACTS_PATH}/KeepToken.json"
-KEEP_TOKEN_CONTRACT_ADDRESS=$(cat ${KEEP_TOKEN_CONTRACT} | jq "${GET_NETWORK_JSON_QUERY}" | tr -d '"')
-
 printf "${LOG_START}KEEP token contract address is: ${KEEP_TOKEN_CONTRACT_ADDRESS}${LOG_END}"
 
 cd $COV_POOLS_PATH
 printf "${LOG_START}Creating links for cvovrage pools...${LOG_END}"
-KEEP_TOKEN_ADDRESS=$KEEP_TOKEN_CONTRACT_ADDRESS ./scripts/install.sh
+./scripts/install.sh
 
 # In the Keep Token Dashboard we use `npm` instead of `yarn` so we need to link
 # the `keep-network/coverage-pool` package manually via npm.
@@ -78,7 +74,7 @@ cd $DASHBOARD_DIR_PATH
 npm link @keep-network/keep-core \
     @keep-network/keep-ecdsa \
     @keep-network/tbtc \
-    @keep-network/coverage-pool
+    @keep-network/coverage-pools
 
 # Make sure files below exists in keep-ecdsa repository. Otherwise comment out.
 printf "${LOG_START}Generating mock input data for ecdsa merkle distributor${LOG_END}"
