@@ -22,7 +22,7 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "./libraries/BytesLib.sol";
+import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
 import "./libraries/DKG.sol";
 
 /// @title DKG result validator

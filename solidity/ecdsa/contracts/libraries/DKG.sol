@@ -21,8 +21,8 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
-import "./BytesLib.sol";
-import "./Submission.sol";
+import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
+import "@keep-network/random-beacon/contracts/libraries/Submission.sol";
 import "../DKGValidator.sol";
 
 library DKG {

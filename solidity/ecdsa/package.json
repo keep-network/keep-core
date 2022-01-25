@@ -50,6 +50,7 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
+    "@keep-network/random-beacon": "../random-beacon",
     "@keep-network/sortition-pools": "^2.0.0-dev.0",
     "@openzeppelin/contracts": "^4.4.1",
     "@threshold-network/solidity-contracts": ">0.0.2-dev <0.0.2-ropsten"
