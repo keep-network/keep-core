@@ -61,7 +61,7 @@ const InitiateWithdrawComponent = ({
         <p className="mt-1 text-grey-70">
           {transactionHash
             ? "After the 21 day cooldown you can claim your tokens in the dashboard."
-            : "The withrawal initiation requires two transactions – an approval and a confirmation."}
+            : "The withdrawal initiation requires two transactions – an approval and a confirmation."}
         </p>
         <OnlyIf condition={transactionHash && timestamp}>
           <AddToCalendar
