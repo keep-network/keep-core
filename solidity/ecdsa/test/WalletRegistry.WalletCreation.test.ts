@@ -2325,14 +2325,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.true
                 })
 
-                it("should emit DkgMaliciousResultProved event", async () => {
+                it("should emit DkgMaliciousResultSlashed event", async () => {
                   await expect(tx)
-                    .to.emit(walletRegistry, "DkgMaliciousResultProved")
-                    .withArgs(
-                      dkgResultHash,
-                      to1e18(50000),
-                      submitter.address
-                    )
+                    .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                    .withArgs(dkgResultHash, to1e18(50000), submitter.address)
                 })
 
                 it("should slash malicious result submitter", async () => {
@@ -2391,14 +2387,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.true
                 })
 
-                it("should emit DkgMaliciousResultProved event", async () => {
+                it("should emit DkgMaliciousResultSlashed event", async () => {
                   await expect(tx)
-                    .to.emit(walletRegistry, "DkgMaliciousResultProved")
-                    .withArgs(
-                      dkgResultHash,
-                      to1e18(50000),
-                      submitter.address
-                    )
+                    .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                    .withArgs(dkgResultHash, to1e18(50000), submitter.address)
                 })
 
                 it("should slash malicious result submitter", async () => {
@@ -2494,14 +2486,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await expect(await sortitionPool.isLocked()).to.be.true
               })
 
-              it("should emit DkgMaliciousResultProved event", async () => {
+              it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(tx)
-                  .to.emit(walletRegistry, "DkgMaliciousResultProved")
-                  .withArgs(
-                    dkgResultHash,
-                    to1e18(50000),
-                    submitter.address
-                  )
+                  .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
               })
 
               it("should slash malicious result submitter", async () => {

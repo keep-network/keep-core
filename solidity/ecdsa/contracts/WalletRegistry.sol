@@ -115,7 +115,7 @@ contract WalletRegistry is Ownable {
         Wallets.Signature signature
     );
 
-    event DkgMaliciousResultProved(
+    event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
         address maliciousSubmitter
@@ -265,7 +265,7 @@ contract WalletRegistry is Ownable {
         address maliciousDkgResultSubmitterAddress = sortitionPool
             .getIDOperator(maliciousDkgResultSubmitterId);
 
-        emit DkgMaliciousResultProved(
+        emit DkgMaliciousResultSlashed(
             maliciousDkgResultHash,
             maliciousDkgResultSlashingAmount,
             maliciousDkgResultSubmitterAddress
