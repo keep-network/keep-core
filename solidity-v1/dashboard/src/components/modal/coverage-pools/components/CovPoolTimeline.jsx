@@ -82,6 +82,7 @@ export const CovPoolTimeline = ({ step, withDescription = false }) => {
             </Timeline.ElementDefaultCard>
           </Timeline.Content>
         </Timeline.Element>
+
         <Timeline.Element>
           <Timeline.Breakpoint>
             <Timeline.BreakpointDot

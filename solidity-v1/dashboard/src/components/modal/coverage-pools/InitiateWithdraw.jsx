@@ -8,7 +8,7 @@ import { FormCheckboxBase } from "../../FormCheckbox"
 import { SubmitButton } from "../../Button"
 import List from "../../List"
 import { CoveragePoolV1ExchangeRate } from "../../coverage-pools/ExchangeRate"
-import { withTimeline } from "./withTimeline"
+import { withTimeline } from "../withTimeline"
 import { useAcceptTermToConfirmFormik } from "../../../hooks/useAcceptTermToConfirmFormik"
 import { withdrawAssetPool } from "../../../actions/coverage-pool"
 import { covKEEP, KEEP } from "../../../utils/token.utils"
@@ -148,11 +148,15 @@ const InitiateWithdrawComponent = ({
 
 export const InitiateWithdraw = withTimeline({
   title: "Withdraw",
-  step: COV_POOL_TIMELINE_STEPS.WITHDRAW_DEPOSIT,
-  withDescription: true,
+  timelineProps: {
+    step: COV_POOL_TIMELINE_STEPS.WITHDRAW_DEPOSIT,
+    withDescription: true,
+  },
 })(InitiateWithdrawComponent)
 
 export const WithdrawInitialized = withTimeline({
   title: "Withdraw",
-  step: COV_POOL_TIMELINE_STEPS.COOLDOWN,
+  timelineProps: {
+    step: COV_POOL_TIMELINE_STEPS.COOLDOWN,
+  },
 })(InitiateWithdrawComponent)

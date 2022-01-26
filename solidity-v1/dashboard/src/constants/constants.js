@@ -268,6 +268,7 @@ export const MODAL_TYPES = {
   ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
   IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
   WithdrawGrantedTokens: "WithdrawGrantedTokens",
+  StakeOnThreshold: "StakeOnThreshold",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {
@@ -275,6 +276,13 @@ export const COV_POOL_TIMELINE_STEPS = {
   WITHDRAW_DEPOSIT: 2,
   COOLDOWN: 3,
   CLAIM_TOKENS: 4,
+}
+
+export const STAKE_ON_THRESHOLD_TIMELINE_STEPS = {
+  NONE: 0,
+  AUTHORIZE_CONTRACT: 1,
+  CONFIRM_STAKE: 2,
+  SET_UP_PRE: 3,
 }
 
 export const COV_POOLS_FORMS_MAX_DECIMAL_PLACES = 6
