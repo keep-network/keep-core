@@ -116,7 +116,6 @@ contract WalletRegistry is Ownable {
     );
 
     event DkgMaliciousResultProved(
-        bytes32 indexed walletID,
         bytes32 indexed resultHash,
         uint256 slashingAmount,
         address maliciousSubmitter
@@ -264,7 +263,6 @@ contract WalletRegistry is Ownable {
             .getIDOperator(maliciousDkgResultSubmitterId);
 
         emit DkgMaliciousResultProved(
-            keccak256(dkgResult.groupPubKey),
             maliciousDkgResultHash,
             maliciousDkgResultSlashingAmount,
             maliciousDkgResultSubmitterAddress

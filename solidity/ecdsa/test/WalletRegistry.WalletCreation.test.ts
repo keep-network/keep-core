@@ -2329,7 +2329,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await expect(tx)
                     .to.emit(walletRegistry, "DkgMaliciousResultProved")
                     .withArgs(
-                      keccak256(dkgResult.groupPubKey),
                       dkgResultHash,
                       to1e18(50000),
                       submitter.address
@@ -2396,7 +2395,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await expect(tx)
                     .to.emit(walletRegistry, "DkgMaliciousResultProved")
                     .withArgs(
-                      keccak256(dkgResult.groupPubKey),
                       dkgResultHash,
                       to1e18(50000),
                       submitter.address
@@ -2500,7 +2498,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await expect(tx)
                   .to.emit(walletRegistry, "DkgMaliciousResultProved")
                   .withArgs(
-                    keccak256(dkgResult.groupPubKey),
                     dkgResultHash,
                     to1e18(50000),
                     submitter.address
