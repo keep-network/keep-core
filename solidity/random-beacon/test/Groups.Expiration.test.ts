@@ -3,7 +3,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import type { GroupsStub } from "../typechain"
-import { noMisbehaved } from "./utils/dkg"
+import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
 
 const fixture = async () => {
   const GroupsStub = await ethers.getContractFactory("GroupsStub")
@@ -152,8 +152,7 @@ describe("Groups", () => {
 
         await groups.addCandidateGroup(
           ethers.utils.hexlify(6),
-          members,
-          noMisbehaved
+          hashDKGMembers(members, noMisbehaved)
         )
         await groups.activateCandidateGroup()
 
@@ -292,8 +291,7 @@ describe("Groups", () => {
     for (let i = firstGroup; i < firstGroup + numberOfGroups; i++) {
       await groups.addCandidateGroup(
         ethers.utils.hexlify(i),
-        members,
-        noMisbehaved
+        hashDKGMembers(members, noMisbehaved)
       )
       await groups.activateCandidateGroup()
     }

@@ -61,17 +61,11 @@ library Groups {
     ///      The code calling this function should ensure that the number of
     ///      candidate (not activated) groups is never more than one.
     /// @param groupPubKey Generated candidate group public key
-    /// @param members Addresses of candidate group members as outputted by the
-    ///        group selection protocol.
-    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members indices; Indices reflect positions of
-    ///        members in the group, as outputted by the group selection
-    ///        protocol. Misbehaved members indices should be in ascending order.
+    /// @param membersHash Keccak256 hash of members that actively took part in DKG.
     function addCandidateGroup(
         Data storage self,
         bytes calldata groupPubKey,
-        uint32[] calldata members,
-        uint8[] calldata misbehavedMembersIndices
+        bytes32 membersHash
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
@@ -90,8 +84,7 @@ library Groups {
         // candidate group was already registered before and popped.
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
-
-        group.membersHash = hashGroupMembers(members, misbehavedMembersIndices);
+        group.membersHash = membersHash;
 
         self.groupsRegistry.push(groupPubKeyHash);
 
@@ -344,43 +337,5 @@ library Groups {
         }
 
         return shiftedIndex;
-    }
-
-    /// @notice Hash group members that actively participated in a group signing
-    ///         key generation. This function filters out IA/DQ members before
-    ///         hashing.
-    /// @param members Group member addresses as outputted by the group selection
-    ///        protocol.
-    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members. Indices reflect positions
-    ///        of members in the group as outputted by the group selection
-    ///        protocol. Indices must be in ascending order. The order can be verified
-    ///        during the DKG challege phase in DKGValidator contract.
-    /// @return Group members hash.
-    function hashGroupMembers(
-        uint32[] calldata members,
-        uint8[] calldata misbehavedMembersIndices
-    ) private pure returns (bytes32) {
-        if (misbehavedMembersIndices.length > 0) {
-            // members that generated a group signing key
-            uint32[] memory groupMembers = new uint32[](
-                members.length - misbehavedMembersIndices.length
-            );
-            uint256 k = 0; // misbehaved members counter
-            uint256 j = 0; // group members counter
-            for (uint256 i = 0; i < members.length; i++) {
-                // misbehaved member indices start from 1, so we need to -1 on misbehaved
-                if (i != misbehavedMembersIndices[k] - 1) {
-                    groupMembers[j] = members[i];
-                    j++;
-                } else if (k < misbehavedMembersIndices.length - 1) {
-                    k++;
-                }
-            }
-
-            return keccak256(abi.encode(groupMembers));
-        }
-
-        return keccak256(abi.encode(members));
     }
 }
