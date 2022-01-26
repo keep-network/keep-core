@@ -319,3 +319,5 @@ export const UNDELEGATE_STAKE_CALENDAR_EVENT = {
   // eslint-disable-next-line no-template-curly-in-string
   location: "https://dashboard.keep.network/${address}/overview",
 }
+
+export const KEEP_TO_T_EXCHANGE_RATE = 4.5
