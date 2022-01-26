@@ -203,6 +203,9 @@ contract WalletRegistry is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
+        // TODO: Revisit at the end of ECDSA Wallets implementation to see if
+        // usage was clarified and we can simplify it, as walletID is assumed to
+        // be the same as groupPubKeyHash.
         bytes32 walletID = wallets.addWallet(
             dkgResult.membersHash,
             keccak256(dkgResult.groupPubKey)
