@@ -9,6 +9,7 @@ import type {
   SortitionPool,
   WalletRegistry,
   WalletRegistryStub,
+  StakingStub,
 } from "../../typechain"
 
 const { to1e18 } = helpers.number
@@ -41,12 +42,14 @@ export async function walletRegistryFixture(): Promise<{
   deployer: SignerWithAddress
   thirdParty: SignerWithAddress
   operators: Operator[]
+  staking: StakingStub
 }> {
   await deployments.fixture(["WalletRegistry"])
 
   const walletRegistry: WalletRegistryStub & WalletRegistry =
     await ethers.getContract("WalletRegistry")
   const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
+  const staking: StakingStub = await ethers.getContract("StakingStub")
 
   const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
   const walletOwner: SignerWithAddress = await ethers.getNamedSigner(
@@ -74,5 +77,6 @@ export async function walletRegistryFixture(): Promise<{
     deployer,
     thirdParty,
     operators,
+    staking,
   }
 }
