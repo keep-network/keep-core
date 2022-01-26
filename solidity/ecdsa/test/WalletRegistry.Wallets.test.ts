@@ -150,11 +150,7 @@ describe("WalletRegistry - Wallets", async () => {
 
             tx = await walletRegistry
               .connect(thirdParty)
-              .submitSignature(
-                walletID1,
-                ecdsaData.group1.publicKey,
-                ecdsaData.group1.signature1
-              )
+              .submitSignature(walletID1, ecdsaData.group1.signature1)
           })
 
           after(async () => {

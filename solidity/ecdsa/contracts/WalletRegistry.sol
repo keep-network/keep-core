@@ -262,22 +262,20 @@ contract WalletRegistry is Ownable {
 
     /// @notice Submits a calculated signature for the digest that is currently
     ///         under signing.
-    /// @param publicKeyHash ID of a wallet that should calculate a signature.
-    /// @param publicKey Group public key.
+    /// @param walletID ID of a wallet that should calculate a signature.
     /// @param signature Calculated signature.
     function submitSignature(
-        bytes32 publicKeyHash,
-        bytes calldata publicKey,
+        bytes32 walletID,
         Wallets.Signature calldata signature
     ) external {
-        wallets.submitSignature(publicKeyHash, publicKey, signature);
+        wallets.submitSignature(walletID, signature);
     }
 
-    function getWallet(bytes32 publicKeyHash)
+    function getWallet(bytes32 walletID)
         external
         view
         returns (Wallets.Wallet memory)
     {
-        return wallets.registry[publicKeyHash];
+        return wallets.registry[walletID];
     }
 }

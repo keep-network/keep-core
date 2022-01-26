@@ -95,21 +95,16 @@ library Wallets {
     // TODO: Compare gas usage if we store the whole public key not just the hash
     /// @notice Submits a calculated signature for the digest that is currently
     ///         under signing.
+    /// @dev Implementation assumes the walletID is a public key hash of the wallet.
     /// @param walletID ID of a wallet that should calculate a signature.
-    /// @param publicKey Group public key.
     /// @param signature Calculated signature.
     function submitSignature(
         Data storage self,
         bytes32 walletID,
-        bytes calldata publicKey,
         Signature calldata signature
     ) external {
         // TODO: Check if wallet is available
         Wallet storage wallet = self.registry[walletID];
-        require(
-            walletID == keccak256(publicKey),
-            "Invalid public key for the given wallet"
-        );
 
         require(
             wallet.digestToSign != bytes32(0),
@@ -118,6 +113,8 @@ library Wallets {
 
         // TODO: Implement; Compare with AbstractBondedECDSAKeep from V1.
 
+        // Calculate address from the walletID as it is the same as the wallet's
+        // public key hash.
         require(
             address(uint160(uint256(walletID))) ==
                 wallet.digestToSign.recover(
