@@ -1,5 +1,5 @@
 import React from "react"
-import Timeline from "../../../Timeline"
+import Timeline, { TIMELINE_ELEMENT_STATUS } from "../../../Timeline"
 import Banner from "../../../Banner"
 import { STAKE_ON_THRESHOLD_TIMELINE_STEPS } from "../../../../constants/constants"
 
@@ -28,20 +28,30 @@ export const StakeOnThresholdTimeline = ({ step }) => {
         <Timeline.Element>
           <Timeline.Breakpoint>
             <Timeline.BreakpointDot
-              active={step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.NONE}
+              status={
+                step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.NONE
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             >
               1
             </Timeline.BreakpointDot>
             <Timeline.BreakpointLine
-              active={
+              status={
                 step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.AUTHORIZE_CONTRACT
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
               }
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
             <Timeline.ElementDefaultCard
               style={styles.defaultCard.wrapper}
-              active={step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.NONE}
+              status={
+                step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.NONE
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             >
               <h4 style={styles.defaultCard.title}>Authorize Contract</h4>
             </Timeline.ElementDefaultCard>
@@ -51,20 +61,28 @@ export const StakeOnThresholdTimeline = ({ step }) => {
         <Timeline.Element>
           <Timeline.Breakpoint>
             <Timeline.BreakpointDot
-              active={
+              status={
                 step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.AUTHORIZE_CONTRACT
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
               }
             >
               2
             </Timeline.BreakpointDot>
             <Timeline.BreakpointLine
-              active={step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.CONFIRM_STAKE}
+              status={
+                step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.CONFIRM_STAKE
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
             <Timeline.ElementDefaultCard
-              active={
+              status={
                 step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.AUTHORIZE_CONTRACT
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
               }
               style={styles.defaultCard.wrapper}
             >
@@ -76,17 +94,29 @@ export const StakeOnThresholdTimeline = ({ step }) => {
         <Timeline.Element>
           <Timeline.Breakpoint>
             <Timeline.BreakpointDot
-              active={step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.CONFIRM_STAKE}
+              status={
+                step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.CONFIRM_STAKE
+                  ? TIMELINE_ELEMENT_STATUS.SEMI_ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             >
-              2
+              3
             </Timeline.BreakpointDot>
             <Timeline.BreakpointLine
-              active={step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.SET_UP_PRE}
+              status={
+                step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.SET_UP_PRE
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
             <Timeline.ElementDefaultCard
-              active={step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.CONFIRM_STAKE}
+              status={
+                step > STAKE_ON_THRESHOLD_TIMELINE_STEPS.CONFIRM_STAKE
+                  ? TIMELINE_ELEMENT_STATUS.SEMI_ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
               style={styles.defaultCard.wrapper}
             >
               <h4 style={styles.defaultCard.title}>Set up PRE</h4>

@@ -1,5 +1,5 @@
 import React from "react"
-import Timeline from "../../../Timeline"
+import Timeline, { TIMELINE_ELEMENT_STATUS } from "../../../Timeline"
 import { colors } from "../../../../constants/colors"
 import Chip from "../../../Chip"
 import OnlyIf from "../../../OnlyIf"
@@ -32,7 +32,11 @@ export const CovPoolTimeline = ({ step, withDescription = false }) => {
           <Timeline.Breakpoint>
             <Timeline.BreakpointDot>1</Timeline.BreakpointDot>
             <Timeline.BreakpointLine
-              active={step > COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
@@ -55,17 +59,29 @@ export const CovPoolTimeline = ({ step, withDescription = false }) => {
         <Timeline.Element>
           <Timeline.Breakpoint>
             <Timeline.BreakpointDot
-              active={step > COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             >
               2
             </Timeline.BreakpointDot>
             <Timeline.BreakpointLine
-              active={step > COV_POOL_TIMELINE_STEPS.WITHDRAW_DEPOSIT}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.WITHDRAW_DEPOSIT
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
             <Timeline.ElementDefaultCard
-              active={step > COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
               style={styles.defaultCard.wrapper}
             >
               <h4 style={styles.defaultCard.title}>Withdraw deposit</h4>
@@ -95,7 +111,11 @@ export const CovPoolTimeline = ({ step, withDescription = false }) => {
               style={{ backgroundColor: colors.brandViolet10 }}
             />
             <Timeline.BreakpointLine
-              active={step > COV_POOL_TIMELINE_STEPS.COOLDOWN}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.COOLDOWN
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
@@ -114,17 +134,29 @@ export const CovPoolTimeline = ({ step, withDescription = false }) => {
         <Timeline.Element>
           <Timeline.Breakpoint>
             <Timeline.BreakpointDot
-              active={step > COV_POOL_TIMELINE_STEPS.COOLDOWN}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.COOLDOWN
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             >
               3
             </Timeline.BreakpointDot>
             <Timeline.BreakpointLine
-              active={step > COV_POOL_TIMELINE_STEPS.CLAIM_TOKENS}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.CLAIM_TOKENS
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
             />
           </Timeline.Breakpoint>
           <Timeline.Content>
             <Timeline.ElementDefaultCard
-              active={step > COV_POOL_TIMELINE_STEPS.COOLDOWN}
+              status={
+                step > COV_POOL_TIMELINE_STEPS.COOLDOWN
+                  ? TIMELINE_ELEMENT_STATUS.ACTIVE
+                  : TIMELINE_ELEMENT_STATUS.INACTIVE
+              }
               style={styles.defaultCard.wrapper}
             >
               <h4 style={styles.defaultCard.title}>Claim tokens</h4>
