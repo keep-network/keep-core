@@ -165,8 +165,6 @@ contract WalletRegistry is Ownable {
     ///         waits for an approval. A result can be challenged to verify the
     ///         members list corresponds to the expected set of members determined
     ///         by the sortition pool.
-    ///         A candidate wallet is registered based on the submitted DKG result
-    ///         details.
     /// @dev The message to be signed by each member is keccak256 hash of the
     ///      calculated group public key, misbehaved members indices and DKG
     ///      start block. The calculated hash should be prefixed with prefixed with
@@ -197,7 +195,7 @@ contract WalletRegistry is Ownable {
     ///         `resultSubmissionEligibilityDelay` blocks after the end of the
     ///         challenge period can be called only by the DKG result submitter.
     ///         After that time, can be called by anyone.
-    /// @dev It transfers Wallet's ownership to the Wallet Factory owner.
+    ///         A new wallet based on the DKG result details.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(DKG.Result calldata dkgResult) external {
