@@ -320,4 +320,5 @@ export const UNDELEGATE_STAKE_CALENDAR_EVENT = {
   location: "https://dashboard.keep.network/${address}/overview",
 }
 
-export const KEEP_TO_T_EXCHANGE_RATE = 4.5
+// You can check the ratio here: https://etherscan.io/address/0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0#readContract
+export const KEEP_TO_T_EXCHANGE_RATE_IN_WEI = 4783188631255016
