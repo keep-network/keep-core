@@ -133,10 +133,13 @@ contract WalletRegistry is Ownable {
         staking = _staking;
         walletOwner = _walletOwner;
 
-        dkg.init(_sortitionPool, _dkgValidator);
         // TODO: Implement governance for the parameters
+        // TODO: revisit all initial values
+
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
+
+        dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionEligibilityDelay(20);
     }
