@@ -17,7 +17,8 @@
 //
 // With following differences:
 // - group public key length,
-// - group size and related thresholds.
+// - group size and related thresholds,
+// - documentation.
 
 pragma solidity ^0.8.9;
 
@@ -39,11 +40,11 @@ contract DKGValidator {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
-    /// @dev Size of a group in the threshold relay.
+    /// @dev Size of a group in DKG.
     uint256 public constant groupSize = 100;
 
     /// @dev The minimum number of group members needed to interact according to
-    ///      the protocol to produce a relay entry. The adversary can not learn
+    ///      the protocol to produce a signature. The adversary can not learn
     ///      anything about the key as long as it does not break into
     ///      groupThreshold+1 of members.
     uint256 public constant groupThreshold = 51;
@@ -51,8 +52,7 @@ contract DKGValidator {
     /// @dev The minimum number of active and properly behaving group members
     ///      during the DKG needed to accept the result. This number is higher
     ///      than `groupThreshold` to keep a safety margin for members becoming
-    ///      inactive after DKG so that the group can still produce a relay
-    ///      entry.
+    ///      inactive after DKG so that the group can still produce signature.
     uint256 public constant activeThreshold = 90; // 90% of groupSize
 
     /// @dev Size in bytes of a public key produced by group members during the
