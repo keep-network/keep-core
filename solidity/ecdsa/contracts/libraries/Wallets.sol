@@ -17,6 +17,9 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+// TODO: This contract is just a Stub implementation that was used for gas
+// comparisons for Wallets creation. It should be implemented according to the
+// Wallets' actual use case.
 library Wallets {
     using ECDSA for bytes32;
 
