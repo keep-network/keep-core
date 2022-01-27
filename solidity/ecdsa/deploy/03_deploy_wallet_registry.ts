@@ -9,7 +9,17 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   let TokenStaking = await deployments.get("TokenStaking")
   const DKGValidator = await deployments.get("DKGValidator")
 
+  // TODO: RandomBeaconStub contract should be replaced by actual implementation of
+  // RandomBeacon contract, once @keep-network/random-beacon hardhat deployments
+  // scripts are implemented.
+  console.log("deploying RandomBeaconStub contract instead of RandomBeacon")
+  const RandomBeacon = await deployments.deploy("RandomBeaconStub", {
+    from: deployer,
+    log: true,
+  })
+
   const DKG = await deployments.deploy("DKG", {
+    contract: "contracts/libraries/DKG.sol:DKG",
     from: deployer,
     log: true,
   })
@@ -39,6 +49,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       SortitionPool.address,
       TokenStaking.address,
       DKGValidator.address,
+      RandomBeacon.address,
       walletOwner,
     ],
     libraries: { DKG: DKG.address, Wallets: Wallets.address },

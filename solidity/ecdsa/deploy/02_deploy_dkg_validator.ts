@@ -8,6 +8,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const SortitionPool = await deployments.get("SortitionPool")
 
   const DKGValidator = await deployments.deploy("DKGValidator", {
+    contract: "contracts/DKGValidator.sol:DKGValidator",
     from: deployer,
     args: [SortitionPool.address],
     log: true,
