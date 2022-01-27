@@ -31,7 +31,9 @@ const fixture = async () => {
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const DKGValidator = await ethers.getContractFactory("DKGValidator")
+  const DKGValidator = await ethers.getContractFactory(
+    "contracts/DKGValidator.sol:DKGValidator"
+  )
   const dkgValidator = (await DKGValidator.deploy(
     sortitionPool.address
   )) as DKGValidator
