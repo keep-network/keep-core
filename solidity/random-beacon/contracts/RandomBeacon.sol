@@ -50,6 +50,15 @@ interface IRandomBeaconStaking {
         returns (uint256);
 }
 
+/// @title Random Beacon interface
+interface IRandomBeacon {
+    /// @notice Creates a request to generate a new relay entry, which will
+    ///         include a random number (by signing the previous entry's
+    ///         random number). Requires a request fee denominated in T token.
+    /// @param callbackContract Beacon consumer callback contract.
+    function requestRelayEntry(IRandomBeaconConsumer callbackContract) external;
+}
+
 /// @title Keep Random Beacon
 /// @notice Keep Random Beacon contract. It lets anyone request a new
 ///         relay entry and validates the new relay entry provided by the
@@ -57,7 +66,7 @@ interface IRandomBeaconStaking {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable {
+contract RandomBeacon is IRandomBeacon, Ownable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
     using DKG for DKG.Data;
