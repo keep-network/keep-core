@@ -27,6 +27,13 @@ interface IWalletStaking {
         external
         view
         returns (uint256);
+
+    function seize(
+        uint256 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        address[] memory operators
+    ) external;
 }
 
 contract WalletRegistry is Ownable {
@@ -42,6 +49,23 @@ contract WalletRegistry is Ownable {
     address public walletOwner;
 
     uint256 public constant relayEntry = 12345; // TODO: get value from Random Beacon
+
+    /// @notice Slashing amount for supporting malicious DKG result. Every
+    ///         DKG result submitted can be challenged for the time of
+    ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
+    ///         is challenged and proven to be malicious, each operator who
+    ///         signed the malicious result is slashed for
+    ///         `maliciousDkgResultSlashingAmount`.
+    uint256 public maliciousDkgResultSlashingAmount;
+
+    /// @notice Percentage of the staking contract malicious behavior
+    ///         notification reward which will be transferred to the notifier
+    ///         reporting about a malicious DKG result. Notifiers are rewarded
+    ///         from a notifiers treasury pool. For example, if
+    ///         notification reward is 1000 and the value of the multiplier is
+    ///         5, the notifier will receive: 5% of 1000 = 50 per each
+    ///         operator affected.
+    uint256 public maliciousDkgResultNotificationRewardMultiplier;
 
     // External dependencies
 
@@ -91,6 +115,12 @@ contract WalletRegistry is Ownable {
         Wallets.Signature signature
     );
 
+    event DkgMaliciousResultSlashed(
+        bytes32 indexed resultHash,
+        uint256 slashingAmount,
+        address maliciousSubmitter
+    );
+
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
@@ -103,8 +133,13 @@ contract WalletRegistry is Ownable {
         staking = _staking;
         walletOwner = _walletOwner;
 
-        dkg.init(_sortitionPool, _dkgValidator);
         // TODO: Implement governance for the parameters
+        // TODO: revisit all initial values
+
+        maliciousDkgResultSlashingAmount = 50000e18;
+        maliciousDkgResultNotificationRewardMultiplier = 100;
+
+        dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionEligibilityDelay(20);
     }
@@ -220,19 +255,32 @@ contract WalletRegistry is Ownable {
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
     ///         invalid it reverts the DKG back to the result submission phase.
-    ///         It removes a candidate group that was previously registered with
-    ///         the DKG result submission.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
-        (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
-            .challengeResult(dkgResult);
+        (
+            bytes32 maliciousDkgResultHash,
+            uint32 maliciousDkgResultSubmitterId
+        ) = dkg.challengeResult(dkgResult);
 
-        // TODO: Implement slashing.
-        //slither-disable-next-line redundant-statements
-        maliciousResultHash;
-        //slither-disable-next-line redundant-statements
-        maliciousSubmitter;
+        address maliciousDkgResultSubmitterAddress = sortitionPool
+            .getIDOperator(maliciousDkgResultSubmitterId);
+
+        emit DkgMaliciousResultSlashed(
+            maliciousDkgResultHash,
+            maliciousDkgResultSlashingAmount,
+            maliciousDkgResultSubmitterAddress
+        );
+
+        address[] memory operatorWrapper = new address[](1);
+        operatorWrapper[0] = maliciousDkgResultSubmitterAddress;
+
+        staking.seize(
+            maliciousDkgResultSlashingAmount,
+            maliciousDkgResultNotificationRewardMultiplier,
+            msg.sender,
+            operatorWrapper
+        );
     }
 
     /// @notice Check current wallet creation state.

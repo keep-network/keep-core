@@ -21,10 +21,12 @@ import type {
   SortitionPool,
   WalletRegistry,
   WalletRegistryStub,
+  StakingStub,
 } from "../typechain"
 import type { DkgResult } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
 
+const { to1e18 } = helpers.number
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
@@ -54,6 +56,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let sortitionPool: SortitionPool
+  let staking: StakingStub
 
   let deployer: SignerWithAddress
   let walletOwner: SignerWithAddress
@@ -70,6 +73,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       deployer,
       thirdParty,
       operators,
+      staking,
     } = await waffle.loadFixture(walletRegistryFixture))
   })
 
@@ -2265,6 +2269,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             let resultSubmissionBlock: number
             let dkgResultHash: string
             let dkgResult: DkgResult
+            let submitter: SignerWithAddress
 
             before(async () => {
               await createSnapshot()
@@ -2274,6 +2279,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 transaction: tx,
                 dkgResult,
                 dkgResultHash,
+                submitter,
               } = await signAndSubmitArbitraryDkgResult(
                 walletRegistry,
                 groupPublicKey,
@@ -2319,19 +2325,22 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.true
                 })
 
-                // it("should emit DkgMaliciousResultSlashed event", async () => {
-                //   await expect(tx)
-                //     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-                // })
+                it("should emit DkgMaliciousResultSlashed event", async () => {
+                  await expect(tx)
+                    .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                    .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                })
 
-                // it("should slash malicious result submitter", async () => {
-                //   await expect(tx)
-                //     .to.emit(staking, "Seized")
-                //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-                //       submitter.address,
-                //     ])
-                // })
+                it("should slash malicious result submitter", async () => {
+                  await expect(tx)
+                    .to.emit(staking, "Seized")
+                    .withArgs(
+                      to1e18(50000),
+                      100,
+                      await thirdParty.getAddress(),
+                      [submitter.address]
+                    )
+                })
               })
             })
 
@@ -2378,19 +2387,22 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.true
                 })
 
-                // it("should emit DkgMaliciousResultSlashed event", async () => {
-                //   await expect(tx)
-                //     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-                // })
+                it("should emit DkgMaliciousResultSlashed event", async () => {
+                  await expect(tx)
+                    .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                    .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                })
 
-                // it("should slash malicious result submitter", async () => {
-                //   await expect(tx)
-                //     .to.emit(staking, "Seized")
-                //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-                //       submitter.address,
-                //     ])
-                // })
+                it("should slash malicious result submitter", async () => {
+                  await expect(tx)
+                    .to.emit(staking, "Seized")
+                    .withArgs(
+                      to1e18(50000),
+                      100,
+                      await thirdParty.getAddress(),
+                      [submitter.address]
+                    )
+                })
               })
             })
 
@@ -2437,12 +2449,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
             async () => {
               let dkgResultHash: string
               let dkgResult: DkgResult
-
+              let submitter: SignerWithAddress
               let tx: ContractTransaction
 
               before(async () => {
                 await createSnapshot()
-                ;({ dkgResult, dkgResultHash } =
+                ;({ dkgResult, dkgResultHash, submitter } =
                   await signAndSubmitUnrecoverableDkgResult(
                     walletRegistry,
                     groupPublicKey,
@@ -2474,19 +2486,19 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await expect(await sortitionPool.isLocked()).to.be.true
               })
 
-              // it("should emit DkgMaliciousResultSlashed event", async () => {
-              //   await expect(tx)
-              //     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-              //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-              // })
+              it("should emit DkgMaliciousResultSlashed event", async () => {
+                await expect(tx)
+                  .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+              })
 
-              // it("should slash malicious result submitter", async () => {
-              //   await expect(tx)
-              //     .to.emit(staking, "Seized")
-              //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-              //       submitter.address,
-              //     ])
-              // })
+              it("should slash malicious result submitter", async () => {
+                await expect(tx)
+                  .to.emit(staking, "Seized")
+                  .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                    submitter.address,
+                  ])
+              })
             }
           )
 

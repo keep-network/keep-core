@@ -9,6 +9,13 @@ import {IWalletStaking} from "../WalletRegistry.sol";
 contract StakingStub is IWalletStaking {
     mapping(address => uint256) public stakedTokens;
 
+    event Seized(
+        uint256 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        address[] operators
+    );
+
     function eligibleStake(
         address operator,
         address // operatorContract
@@ -22,5 +29,16 @@ contract StakingStub is IWalletStaking {
         uint96 amount
     ) public {
         stakedTokens[operator] += amount;
+    }
+
+    function seize(
+        uint256 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        address[] memory operators
+    ) external {
+        if (amount > 0 && operators.length > 0) {
+            emit Seized(amount, rewardMultiplier, notifier, operators);
+        }
     }
 }
