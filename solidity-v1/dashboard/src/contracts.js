@@ -28,6 +28,7 @@ import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 import SaddleSwap from "./contracts-artifacts/SaddleSwap.json"
 import SaddleTBTCMetaPool from "./contracts-artifacts/SaddleTBTCMetaPool.json"
 import SaddleTBTCMetaPoolV2 from "./contracts-artifacts/SaddleTBTCMetaPoolV2.json"
+import { default as ThresholdTokenStaking } from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json"
 
 import Web3 from "web3"
 
@@ -329,6 +330,10 @@ export function getBondedECDSAKeepFactoryAddress() {
 
 export function getTBTCSystemAddress() {
   return getContractAddress(TBTCSystem)
+}
+
+export const getThresholdTokenStakingAddress = () => {
+  return ThresholdTokenStaking.address
 }
 
 const getOldTokenStakingArtifact = async () => {

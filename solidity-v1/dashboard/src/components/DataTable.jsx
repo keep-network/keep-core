@@ -27,7 +27,7 @@ export class DataTable extends React.Component {
   }
 
   renderItemRow = (item, index) => {
-    const { itemFieldId } = this.props
+    const { itemFieldId, centered } = this.props
     return (
       <tr key={`${item[itemFieldId]}-${index}`}>
         {React.Children.map(this.props.children, (column, index) => {
@@ -36,7 +36,14 @@ export class DataTable extends React.Component {
           } = column
           const cellKey = `${item[itemFieldId]}-${field}-${item[field]}-${index}`
           return (
-            <td key={cellKey} className={column.props.tdClassName}>
+            <td
+              key={cellKey}
+              className={column.props.tdClassName}
+              style={{
+                verticalAlign: centered ? "middle" : "baseline",
+                ...column.props.tdStyles,
+              }}
+            >
               <span className="responsive-header">{column.props.header}</span>
               {this.renderColumnContent(column, item)}
             </td>

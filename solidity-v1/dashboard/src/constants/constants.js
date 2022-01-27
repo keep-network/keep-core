@@ -218,6 +218,7 @@ export const AUTH_CONTRACTS_LABEL = {
   TBTC_SYSTEM: "TBTCSystem",
   BONDED_ECDSA_KEEP_FACTORY: "BondedECDSAKeepFactory",
   RANDOM_BEACON: "Keep Random Beacon Operator Contract",
+  THRESHOLD_TOKEN_STAKING: "Threshold Staking",
 }
 
 export const TBTC_TOKEN_VERSION = {

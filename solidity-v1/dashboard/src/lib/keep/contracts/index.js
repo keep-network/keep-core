@@ -24,12 +24,13 @@ import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBT
 import KeepOnlyPool from "@keep-network/keep-core/artifacts/KeepVault.json"
 // import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 import SaddleSwap from "../../../contracts-artifacts/SaddleSwap.json"
-import AssetPool from "@keep-network/coverage-pools/artifacts/AssetPool.json"
+import { default as AssetPool } from "@keep-network/coverage-pools/artifacts/KeepAssetPool.json"
 import UnderwriterToken from "@keep-network/coverage-pools/artifacts/UnderwriterToken.json"
 import RewardsPool from "@keep-network/coverage-pools/artifacts/RewardsPool.json"
 import TBTCV2Token from "@keep-network/tbtc-v2/artifacts/TBTC.json"
 import TBTCV2VendingMachine from "@keep-network/tbtc-v2/artifacts/VendingMachine.json"
 import RiskManagerV1 from "@keep-network/coverage-pools/artifacts/RiskManagerV1.json"
+import { default as ThresholdTokenStaking } from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json"
 
 export const KEEP_TOKEN_CONTRACT_NAME = "keepTokenContract"
 export const TOKEN_STAKING_CONTRACT_NAME = "stakingContract"
@@ -68,6 +69,8 @@ export const RewardsPoolArtifact = RewardsPool
 
 export const TBTCV2_TOKEN_CONTRACT_NAME = "tbtcV2Contract"
 export const TBTCV2_VENDING_MACHINE_CONTRACT_NAME = "vendingMachineContract"
+
+export const THRESHOLD_STAKING_CONTRACT_NAME = "thresholdStakingContract"
 
 const contracts = {
   [KEEP_TOKEN_CONTRACT_NAME]: { artifact: KeepToken },
@@ -140,6 +143,9 @@ const contracts = {
   },
   [REWARDS_POOL_CONTRACT_NAME]: {
     artifact: RewardsPool,
+  },
+  [THRESHOLD_STAKING_CONTRACT_NAME]: {
+    artifact: ThresholdTokenStaking,
   },
 }
 
