@@ -19,6 +19,8 @@ import "./libraries/Wallets.sol";
 import "./DKGValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {IRandomBeacon} from "@keep-network/random-beacon/contracts/RandomBeacon.sol";
+import {IRandomBeaconConsumer} from "@keep-network/random-beacon/contracts/libraries/Callback.sol";
 
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 /// IStaking interface from there.
@@ -36,7 +38,7 @@ interface IWalletStaking {
     ) external;
 }
 
-contract WalletRegistry is Ownable {
+contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     using DKG for DKG.Data;
     using Wallets for Wallets.Data;
 
@@ -48,7 +50,8 @@ contract WalletRegistry is Ownable {
     // new wallets creation and manage their state.
     address public walletOwner;
 
-    uint256 public constant relayEntry = 12345; // TODO: get value from Random Beacon
+    // An entry produced by the Random Beacon that will be used as a seed for DKG.
+    uint256 public randomRelayEntry;
 
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of DKG's
@@ -73,8 +76,10 @@ contract WalletRegistry is Ownable {
     /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
     /// IStaking interface from there.
     IWalletStaking public immutable staking;
+    IRandomBeacon public randomBeacon;
 
     // Events
+    event RelayEntryRequestFailed();
 
     event DkgStarted(uint256 indexed seed);
 
@@ -122,10 +127,12 @@ contract WalletRegistry is Ownable {
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
+        IRandomBeacon _randomBeacon,
         address _walletOwner
     ) {
         sortitionPool = _sortitionPool;
         staking = _staking;
+        randomBeacon = _randomBeacon;
         walletOwner = _walletOwner;
 
         // TODO: Implement governance for the parameters
@@ -138,6 +145,11 @@ contract WalletRegistry is Ownable {
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+    }
+
+    // TODO: Update to governable params
+    function updateRandomBeacon(IRandomBeacon _newRandomBeacon) external {
+        randomBeacon = _newRandomBeacon;
     }
 
     // TODO: Update to governable params
@@ -179,6 +191,14 @@ contract WalletRegistry is Ownable {
         );
     }
 
+    function __beaconCallback(uint256 _randomRelayEntry, uint256 blockNumber)
+        external
+    {
+        require(msg.sender == address(randomBeacon));
+
+        randomRelayEntry = _randomRelayEntry;
+    }
+
     /// @notice Requests a new wallet creation.
     /// @dev Can be called only by the owner of wallets.
     ///      It starts a new DKG process.
@@ -190,8 +210,15 @@ contract WalletRegistry is Ownable {
         // callback function. We need each DKG to be started with a unique
         // and fresh relay entry.
         dkg.start(
-            uint256(keccak256(abi.encodePacked(relayEntry, block.number)))
+            uint256(keccak256(abi.encodePacked(randomRelayEntry, block.number)))
         );
+
+        // FIXME: What if relay entry is currently under creation and this request
+        // will fail? What if it will fail constantly due to a bad timing, do we
+        // want to pull a relay entry requested by someone else?
+        try randomBeacon.requestRelayEntry(this) {} catch {
+            emit RelayEntryRequestFailed();
+        }
     }
 
     /// @notice Submits result of DKG protocol.
