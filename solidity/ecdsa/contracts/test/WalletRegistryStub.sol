@@ -12,8 +12,17 @@ contract WalletRegistryStub is WalletRegistry {
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
+        IRandomBeacon _randomBeacon,
         address _walletOwner
-    ) WalletRegistry(_sortitionPool, _staking, _dkgValidator, _walletOwner) {}
+    )
+        WalletRegistry(
+            _sortitionPool,
+            _staking,
+            _dkgValidator,
+            _randomBeacon,
+            _walletOwner
+        )
+    {}
 
     function getDkgData() external view returns (DKG.Data memory) {
         return dkg;

@@ -32,7 +32,7 @@ export async function requestNewWallet(
   const startBlock: number = tx.blockNumber
 
   const dkgSeed: BigNumber = calculateDkgSeed(
-    await walletRegistry.relayEntry(),
+    await walletRegistry.randomRelayEntry(),
     startBlock
   )
 
