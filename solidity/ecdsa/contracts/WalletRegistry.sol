@@ -121,6 +121,12 @@ contract WalletRegistry is Ownable {
         address maliciousSubmitter
     );
 
+    event RewardParametersUpdated(
+        uint256 maliciousDkgResultNotificationRewardMultiplier
+    );
+
+    event SlashingParametersUpdated(uint256 maliciousDkgResultSlashingAmount);
+
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
@@ -153,6 +159,25 @@ contract WalletRegistry is Ownable {
         dkg.setResultSubmissionEligibilityDelay(
             newResultSubmissionEligibilityDelay
         );
+    }
+
+    // TODO: Add desc
+    function updateRewardParameters(
+        uint256 _maliciousDkgResultNotificationRewardMultiplier
+    ) external onlyOwner {
+        maliciousDkgResultNotificationRewardMultiplier = _maliciousDkgResultNotificationRewardMultiplier;
+        emit RewardParametersUpdated(
+            maliciousDkgResultNotificationRewardMultiplier
+        );
+    }
+
+    // TODO: Add desc
+    function updateSlashingParameters(uint256 _maliciousDkgResultSlashingAmount)
+        external
+        onlyOwner
+    {
+        maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
+        emit SlashingParametersUpdated(maliciousDkgResultSlashingAmount);
     }
 
     /// @notice Registers the caller in the sortition pool.
