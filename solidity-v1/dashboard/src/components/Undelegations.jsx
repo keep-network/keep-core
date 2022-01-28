@@ -9,7 +9,6 @@ import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import resourceTooltipProps from "../constants/tooltips"
 import useUpdatePendingUndelegations from "../hooks/useUpdatePendingUndelegations"
-import Chip from "./Chip"
 
 const Undelegations = ({ undelegations, title }) => {
   useUpdatePendingUndelegations(undelegations)
@@ -34,15 +33,6 @@ const Undelegations = ({ undelegations, title }) => {
                 <div>{KEEP.displayAmountWithSymbol(amount)}</div>
                 <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
                   {isFromGrant ? "Grant Tokens" : "Wallet Tokens"}
-                  <Chip
-                    text={"BONDED"}
-                    size="tiny"
-                    color="primary"
-                    style={{
-                      marginLeft: "0.6rem",
-                      padding: "0.3rem 0.4rem",
-                    }}
-                  />
                 </div>
               </>
             )

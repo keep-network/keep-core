@@ -11,7 +11,6 @@ import { SubmitButton } from "./Button"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
 import useUpdateInitializedDelegations from "../hooks/useUpdateInitializedDelegations"
-import Chip from "./Chip"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
@@ -72,15 +71,6 @@ const DelegatedTokensTable = ({
                 <div>{KEEP.displayAmountWithSymbol(amount)}</div>
                 <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
                   {isFromGrant ? "Grant Tokens" : "Wallet Tokens"}
-                  <Chip
-                    text={"BONDED"}
-                    size="tiny"
-                    color="primary"
-                    style={{
-                      marginLeft: "0.6rem",
-                      padding: "0.3rem 0.4rem",
-                    }}
-                  />
                 </div>
               </>
             )
