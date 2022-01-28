@@ -127,6 +127,11 @@ contract WalletRegistry is Ownable {
 
     event SlashingParametersUpdated(uint256 maliciousDkgResultSlashingAmount);
 
+    event DkgParametersUpdated(
+        uint256 dkgResultChallengePeriodLength,
+        uint256 dkgResultSubmissionEligibilityDelay
+    );
+
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
@@ -150,18 +155,35 @@ contract WalletRegistry is Ownable {
         dkg.setResultSubmissionEligibilityDelay(20);
     }
 
-    // TODO: Update to governable params
-    function updateDkgParams(
-        uint256 newResultChallengePeriodLength,
-        uint256 newResultSubmissionEligibilityDelay
+    /// @notice Updates the values of DKG parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _resultChallengePeriodLength New DKG result challenge period
+    ///        length
+    /// @param _resultSubmissionEligibilityDelay New DKG result submission
+    ///        eligibility delay
+    function updateDkgParameters(
+        uint256 _resultChallengePeriodLength,
+        uint256 _resultSubmissionEligibilityDelay
     ) external {
-        dkg.setResultChallengePeriodLength(newResultChallengePeriodLength);
+        dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
         dkg.setResultSubmissionEligibilityDelay(
-            newResultSubmissionEligibilityDelay
+            _resultSubmissionEligibilityDelay
+        );
+
+        emit DkgParametersUpdated(
+            _resultChallengePeriodLength,
+            _resultSubmissionEligibilityDelay
         );
     }
 
-    // TODO: Add desc
+    /// @notice Updates the values of reward parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _maliciousDkgResultNotificationRewardMultiplier New value of the
+    ///        DKG malicious result notification reward multiplier.
     function updateRewardParameters(
         uint256 _maliciousDkgResultNotificationRewardMultiplier
     ) external onlyOwner {
@@ -171,7 +193,12 @@ contract WalletRegistry is Ownable {
         );
     }
 
-    // TODO: Add desc
+    /// @notice Updates the values of slashing parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
+    ///        slashing amount
     function updateSlashingParameters(uint256 _maliciousDkgResultSlashingAmount)
         external
         onlyOwner
@@ -348,5 +375,9 @@ contract WalletRegistry is Ownable {
         returns (Wallets.Wallet memory)
     {
         return wallets.registry[walletID];
+    }
+
+    function dkgResultParameters() public view returns (DKG.Parameters memory) {
+        return dkg.parameters;
     }
 }

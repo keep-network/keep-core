@@ -40,6 +40,7 @@ export async function walletRegistryFixture(): Promise<{
   sortitionPool: SortitionPool
   walletOwner: SignerWithAddress
   deployer: SignerWithAddress
+  governance: SignerWithAddress
   thirdParty: SignerWithAddress
   operators: Operator[]
   staking: StakingStub
@@ -52,6 +53,9 @@ export async function walletRegistryFixture(): Promise<{
   const staking: StakingStub = await ethers.getContract("StakingStub")
 
   const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+  const governance: SignerWithAddress = await ethers.getNamedSigner(
+    "governance"
+  )
   const walletOwner: SignerWithAddress = await ethers.getNamedSigner(
     "walletOwner"
   )
@@ -75,6 +79,7 @@ export async function walletRegistryFixture(): Promise<{
     sortitionPool,
     walletOwner,
     deployer,
+    governance,
     thirdParty,
     operators,
     staking,

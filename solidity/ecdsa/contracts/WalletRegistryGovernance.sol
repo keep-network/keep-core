@@ -29,6 +29,12 @@ contract WalletRegistryGovernance is Ownable {
     uint256
         public maliciousDkgResultNotificationRewardMultiplierChangeInitiated;
 
+    uint256 public newDkgResultChallengePeriodLength;
+    uint256 public dkgResultChallengePeriodLengthChangeInitiated;
+
+    uint256 public newDkgResultSubmissionEligibilityDelay;
+    uint256 public dkgResultSubmissionEligibilityDelayChangeInitiated;
+
     WalletRegistry public walletRegistry;
 
     // Long governance delay used for critical parameters giving a chance for
@@ -62,6 +68,22 @@ contract WalletRegistryGovernance is Ownable {
     );
     event MaliciousDkgResultNotificationRewardMultiplierUpdated(
         uint256 maliciousDkgResultNotificationRewardMultiplier
+    );
+
+    event DkgResultChallengePeriodLengthUpdateStarted(
+        uint256 dkgResultChallengePeriodLength,
+        uint256 timestamp
+    );
+    event DkgResultChallengePeriodLengthUpdated(
+        uint256 dkgResultChallengePeriodLength
+    );
+
+    event DkgResultSubmissionEligibilityDelayUpdateStarted(
+        uint256 dkgResultSubmissionEligibilityDelay,
+        uint256 timestamp
+    );
+    event DkgResultSubmissionEligibilityDelayUpdated(
+        uint256 dkgResultSubmissionEligibilityDelay
     );
 
     /// @notice Reverts if called before the governance delay elapses.
@@ -172,6 +194,100 @@ contract WalletRegistryGovernance is Ownable {
         newMaliciousDkgResultNotificationRewardMultiplier = 0;
     }
 
+    /// @notice Begins the DKG result challenge period length update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultChallengePeriodLength New DKG result challenge
+    ///        period length in blocks
+    function beginDkgResultChallengePeriodLengthUpdate(
+        uint256 _newDkgResultChallengePeriodLength
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgResultChallengePeriodLength >= 10,
+            "DKG result challenge period length must be >= 10"
+        );
+        newDkgResultChallengePeriodLength = _newDkgResultChallengePeriodLength;
+        dkgResultChallengePeriodLengthChangeInitiated = block.timestamp;
+        emit DkgResultChallengePeriodLengthUpdateStarted(
+            _newDkgResultChallengePeriodLength,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG result challenge period length update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultChallengePeriodLengthUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgResultChallengePeriodLengthChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit DkgResultChallengePeriodLengthUpdated(
+            newDkgResultChallengePeriodLength
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgParameters(
+            newDkgResultChallengePeriodLength,
+            walletRegistry
+                .dkgResultParameters()
+                .resultSubmissionEligibilityDelay
+        );
+        dkgResultChallengePeriodLengthChangeInitiated = 0;
+        newDkgResultChallengePeriodLength = 0;
+    }
+
+    /// @notice Begins the DKG result submission eligibility delay update
+    ///         process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultSubmissionEligibilityDelay New DKG result submission
+    ///        eligibility delay in blocks
+    function beginDkgResultSubmissionEligibilityDelayUpdate(
+        uint256 _newDkgResultSubmissionEligibilityDelay
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgResultSubmissionEligibilityDelay > 0,
+            "DKG result submission eligibility delay must be > 0"
+        );
+        newDkgResultSubmissionEligibilityDelay = _newDkgResultSubmissionEligibilityDelay;
+        dkgResultSubmissionEligibilityDelayChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionEligibilityDelayUpdateStarted(
+            _newDkgResultSubmissionEligibilityDelay,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG result submission eligibility delay update
+    ///         process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultSubmissionEligibilityDelayUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgResultSubmissionEligibilityDelayChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit DkgResultSubmissionEligibilityDelayUpdated(
+            newDkgResultSubmissionEligibilityDelay
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgParameters(
+            walletRegistry
+                .dkgResultParameters()
+                .resultSubmissionEligibilityDelay,
+            newDkgResultSubmissionEligibilityDelay
+        );
+        dkgResultSubmissionEligibilityDelayChangeInitiated = 0;
+        newDkgResultSubmissionEligibilityDelay = 0;
+    }
+
     /// @notice Get the time remaining until the malicious DKG result
     ///         slashing amount can be updated.
     /// @return Remaining time in seconds.
@@ -198,6 +314,36 @@ contract WalletRegistryGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultNotificationRewardMultiplierChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG result challenge period
+    ///         length can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultChallengePeriodLengthUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                dkgResultChallengePeriodLengthChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG result submission
+    ///         eligibility delay can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                dkgResultSubmissionEligibilityDelayChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
