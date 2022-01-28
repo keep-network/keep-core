@@ -15,6 +15,7 @@ import * as operator from "./operartor"
 import * as authorization from "./authorization"
 import * as coveragePool from "./coverage-pool"
 import * as tbtcV2Migration from "./tbtc-migration"
+import * as keepToTStaking from "./keep-to-t-staking"
 
 const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
   liquidityRewards
@@ -38,6 +39,7 @@ const sagas = [
   ...Object.values(messagesSaga),
   watchFetchLiquidityRewardsAPY,
   ...Object.values(coveragePool),
+  ...Object.values(keepToTStaking),
 ]
 
 export default function* rootSaga() {

@@ -11,9 +11,13 @@ import { LoadingOverlay } from "../../components/Loadable"
 import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
 import AuthorizeThresholdContracts from "../../components/threshold/AuthorizeThresholdContracts"
 import ThresholdAuthorizationHistory from "../../components/threshold/ThresholdStakingAuthorizationHistory"
+import { stakeKeepToT } from "../../actions/keep-to-t-staking"
 
 const initialData = []
-const ThresholdApplicationPage = ({ authorizeOperatorContract }) => {
+const ThresholdApplicationPage = ({
+  authorizeOperatorContract,
+  stakeKeepToT,
+}) => {
   const [selectedOperator, setOperator] = useState({})
   const address = useWeb3Address()
 
@@ -35,8 +39,6 @@ const ThresholdApplicationPage = ({ authorizeOperatorContract }) => {
     async (data, awaitingPromise) => {
       const { operatorAddress } = data
       const operatorContractAddress = getThresholdTokenStakingAddress()
-      console.log("operatorAddress", operatorAddress)
-      console.log("operatorContractAddress", operatorContractAddress)
       authorizeOperatorContract(
         { operatorAddress, operatorContractAddress },
         awaitingPromise
@@ -45,18 +47,24 @@ const ThresholdApplicationPage = ({ authorizeOperatorContract }) => {
     [authorizeOperatorContract]
   )
 
-  const stakeToT = () => console.log(updateThresholdAuthData)
+  const stakeToT = useCallback(
+    async (data, awaitingPromise) => {
+      const { operatorAddress } = data
+      stakeKeepToT(operatorAddress, awaitingPromise)
+    },
+    [stakeKeepToT]
+  )
 
-  // const stakeToT = useCallback(
-  //   async (data, awaitingPromise) => {},
-  //   [authorizeOperatorContract]
-  // )
+  const onSuccessCallback = () => console.log(updateThresholdAuthData)
 
   const thresholdAuthData = useMemo(() => {
+    const thresholdData = thresholdAuthState.data.filter((dataObj) => {
+      return !dataObj.isStakedToT || !dataObj.contracts[0].isAuthorized
+    })
     if (!selectedOperator.operatorAddress) {
-      return thresholdAuthState.data
+      return thresholdData
     }
-    return thresholdAuthState.data.filter((data) =>
+    return thresholdData.filter((data) =>
       isSameEthAddress(data.operatorAddress, selectedOperator.operatorAddress)
     )
   }, [selectedOperator.operatorAddress, thresholdAuthState.data])
@@ -75,7 +83,6 @@ const ThresholdApplicationPage = ({ authorizeOperatorContract }) => {
       .map(toAuthHistoryData)
   }, [thresholdAuthState.data, selectedOperator.operatorAddress])
 
-  console.log("auth history data", authorizationHistoryData)
   return (
     <>
       <LoadingOverlay
@@ -91,7 +98,7 @@ const ThresholdApplicationPage = ({ authorizeOperatorContract }) => {
           data={thresholdAuthData}
           onAuthorizeBtn={authorizeContract}
           onStakeBtn={stakeToT}
-          // onSuccessCallback={onSuccessCallback}
+          onSuccessCallback={onSuccessCallback}
         />
       </LoadingOverlay>
       <LoadingOverlay
@@ -111,6 +118,7 @@ const toAuthHistoryData = (authData) => ({
 
 const mapDispatchToProps = {
   authorizeOperatorContract,
+  stakeKeepToT,
 }
 
 const ConnectedThresholdApplicationPage = connect(

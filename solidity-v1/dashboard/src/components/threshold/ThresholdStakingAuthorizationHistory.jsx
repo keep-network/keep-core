@@ -5,6 +5,7 @@ import { DataTable, Column } from "../DataTable"
 import Tile from "./../Tile"
 import { KEEP } from "../../utils/token.utils"
 import { SubmitButton } from "../Button"
+import OnlyIf from "../OnlyIf"
 
 const ThresholdAuthorizationHistory = ({ contracts }) => {
   return (
@@ -33,18 +34,22 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
         <Column
           header="status"
           field="status"
-          renderContent={({ status }) => (
+          renderContent={({ isStakedToT, isAuthorized }) => (
             <div className={"flex column center"}>
-              <StatusBadge
-                className="self-start mb-1"
-                status={BADGE_STATUS.COMPLETE}
-                text="confirmed"
-              />
-              <StatusBadge
-                className="self-start"
-                status={BADGE_STATUS.COMPLETE}
-                text="authorized"
-              />
+              <OnlyIf condition={isStakedToT}>
+                <StatusBadge
+                  className="self-start mb-1"
+                  status={BADGE_STATUS.COMPLETE}
+                  text="confirmed"
+                />
+              </OnlyIf>
+              <OnlyIf condition={isAuthorized}>
+                <StatusBadge
+                  className="self-start"
+                  status={BADGE_STATUS.COMPLETE}
+                  text="authorized"
+                />
+              </OnlyIf>
             </div>
           )}
         />

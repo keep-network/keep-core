@@ -1,6 +1,8 @@
 import { ContractsLoaded, getThresholdTokenStakingAddress } from "../contracts"
 import { getOperatorsOfAuthorizer } from "./token-staking.service"
 import { AUTH_CONTRACTS_LABEL } from "../constants/constants"
+import { Keep } from "../contracts"
+import { isSameEthAddress } from "../utils/general.utils"
 
 const fetchThresholdAuthorizationData = async (address) => {
   if (!address) {
@@ -10,6 +12,15 @@ const fetchThresholdAuthorizationData = async (address) => {
   const { stakingContract } = await ContractsLoaded
   const authorizerOperators = await getOperatorsOfAuthorizer(address)
   const authorizationData = []
+
+  const keepToTStakedEvents = await Keep.keepToTStaking.getStakesByOperator(
+    address
+  )
+
+  const operatorsStaked = keepToTStakedEvents.map(
+    (event) => event.returnValues.stakingProvider
+  )
+
   // Fetch all authorizer operators
   for (let i = 0; i < authorizerOperators.length; i++) {
     const operatorAddress = authorizerOperators[i]
@@ -36,6 +47,9 @@ const fetchThresholdAuthorizationData = async (address) => {
           isAuthorized: isThresholdTokenStakingContractAuthorized,
         },
       ],
+      isStakedToT: operatorsStaked.some((operatorStaked) =>
+        isSameEthAddress(operatorStaked, operatorAddress)
+      ),
     }
 
     authorizationData.push(authorizerOperator)

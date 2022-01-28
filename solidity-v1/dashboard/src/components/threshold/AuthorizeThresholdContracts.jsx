@@ -76,10 +76,11 @@ const AuthorizeThresholdContracts = ({
           header="actions"
           tdStyles={{ textAlign: "right" }}
           field=""
-          renderContent={({ contracts, operatorAddress }) => (
+          renderContent={({ contracts, operatorAddress, isStakedToT }) => (
             <AuthorizeActions
               key={contracts[0].contractName}
               {...contracts[0]}
+              isStakedToT={isStakedToT}
               operatorAddress={operatorAddress}
               onAuthorizeBtn={onAuthorizeBtn}
               onStakeBtn={onStakeBtn}
@@ -138,10 +139,10 @@ const AuthorizeActions = ({
 
   return isAuthorized ? (
     <SubmitButton
-      onSubmitAction={onAuthorize}
+      onSubmitAction={onStake}
       className="btn btn-secondary btn-sm"
       style={{ marginLeft: "auto" }}
-      successCallback={onStake}
+      successCallback={onSuccess}
     >
       stake
     </SubmitButton>
