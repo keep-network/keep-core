@@ -377,7 +377,11 @@ contract WalletRegistry is Ownable {
         return wallets.registry[walletID];
     }
 
-    function dkgResultParameters() public view returns (DKG.Parameters memory) {
+    function dkgResultParameters()
+        external
+        view
+        returns (DKG.Parameters memory)
+    {
         return dkg.parameters;
     }
 }
