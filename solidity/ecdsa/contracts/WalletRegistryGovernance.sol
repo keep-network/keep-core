@@ -37,21 +37,14 @@ contract WalletRegistryGovernance is Ownable {
 
     WalletRegistry public walletRegistry;
 
-    // Long governance delay used for critical parameters giving a chance for
-    // stakers to opt out before the change is finalized in case they do not
-    // agree with that change. The maximum group lifetime must not be longer
-    // than this delay.
-    //
-    // The full list of parameters protected by this delay:
-    // - tbd
-    uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
-
     // Short governance delay for non-critical parameters. Honest stakers should
     // not be severely affected by any change of these parameters.
     //
     // The full list of parameters protected by this delay:
     // - malicious DKG result notification reward multiplier
     // - malicious DKG result slashing amount
+    // - DKG result challenge period length
+    // - DKG result submission eligibility delay
     uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
