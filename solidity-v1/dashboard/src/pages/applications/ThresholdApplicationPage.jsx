@@ -24,6 +24,7 @@ const ThresholdApplicationPage = ({
   const [
     thresholdAuthState,
     updateThresholdAuthData,
+    ,
     setThresholdAuthDataArgs,
   ] = useFetchData(
     thresholdAuthorizationService.fetchThresholdAuthorizationData,
