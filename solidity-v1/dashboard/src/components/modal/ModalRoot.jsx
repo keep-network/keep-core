@@ -42,7 +42,10 @@ import {
 } from "./coverage-pools"
 import { WithdrawGrantedTokens } from "./threshold/WithdrawGrantedTokens"
 import { GrantTokensWithdrawn } from "./threshold/GrantTokensWithdrawn"
-import StakeOnThreshold from "./threshold/StakeOnThreshold"
+import {
+  StakeOnThreshold,
+  StakeOnThresholdConfirmed,
+} from "./threshold/StakeOnThreshold"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -84,6 +87,7 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.IncreaseCovPoolWithdrawal]: IncreaseWithdrawal,
   [MODAL_TYPES.WithdrawGrantedTokens]: WithdrawGrantedTokens,
   [MODAL_TYPES.StakeOnThreshold]: StakeOnThreshold,
+  [MODAL_TYPES.StakeOnThresholdConfirmed]: StakeOnThresholdConfirmed,
 }
 
 const modalRoot = document.getElementById("modal-root")

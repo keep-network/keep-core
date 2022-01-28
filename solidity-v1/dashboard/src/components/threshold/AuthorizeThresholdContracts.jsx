@@ -1,11 +1,13 @@
 import React, { useCallback } from "react"
 import AddressShortcut from "./../AddressShortcut"
-import { SubmitButton } from "../Button"
+import Button from "../Button"
 import { DataTable, Column } from "../DataTable"
 import { ViewAddressInBlockExplorer } from "../ViewInBlockExplorer"
 import { KEEP } from "../../utils/token.utils"
 import { shortenAddress } from "../../utils/general.utils"
 import resourceTooltipProps from "../../constants/tooltips"
+import Tooltip, { TOOLTIP_DIRECTION } from "../Tooltip"
+import * as Icons from "../Icons"
 
 const AuthorizeThresholdContracts = ({
   data,
@@ -76,12 +78,22 @@ const AuthorizeThresholdContracts = ({
           header="actions"
           tdStyles={{ textAlign: "right" }}
           field=""
-          renderContent={({ contracts, operatorAddress, isStakedToT }) => (
+          renderContent={({
+            contracts,
+            operatorAddress,
+            authorizerAddress,
+            beneficiaryAddress,
+            isStakedToT,
+            stakeAmount,
+          }) => (
             <AuthorizeActions
               key={contracts[0].contractName}
               {...contracts[0]}
               isStakedToT={isStakedToT}
               operatorAddress={operatorAddress}
+              authorizerAddress={authorizerAddress}
+              beneficiaryAddress={beneficiaryAddress}
+              stakeAmount={stakeAmount}
               onAuthorizeBtn={onAuthorizeBtn}
               onStakeBtn={onStakeBtn}
               onSuccessCallback={onSuccessCallback}
@@ -111,6 +123,9 @@ const AuthorizeContractItem = ({ contractName, operatorContractAddress }) => {
 const AuthorizeActions = ({
   contractName,
   operatorAddress,
+  authorizerAddress,
+  beneficiaryAddress,
+  stakeAmount,
   isAuthorized,
   onAuthorizeBtn,
   onStakeBtn,
@@ -118,7 +133,16 @@ const AuthorizeActions = ({
 }) => {
   const onAuthorize = useCallback(
     async (awaitingPromise) => {
-      await onAuthorizeBtn({ operatorAddress, contractName }, awaitingPromise)
+      await onAuthorizeBtn(
+        {
+          operatorAddress,
+          authorizerAddress,
+          beneficiaryAddress,
+          stakeAmount,
+          contractName,
+        },
+        awaitingPromise
+      )
     },
     [contractName, operatorAddress, onAuthorizeBtn]
   )
@@ -130,31 +154,39 @@ const AuthorizeActions = ({
     [contractName, operatorAddress, onStakeBtn]
   )
 
-  const onSuccess = useCallback(
-    (isAuthorized = true) => {
-      onSuccessCallback(contractName, operatorAddress, isAuthorized)
-    },
-    [onSuccessCallback, contractName, operatorAddress]
-  )
-
   return isAuthorized ? (
-    <SubmitButton
-      onSubmitAction={onStake}
-      className="btn btn-secondary btn-semi-sm"
-      style={{ marginLeft: "auto" }}
-      successCallback={onSuccess}
+    <Tooltip
+      simple
+      delay={0}
+      direction={TOOLTIP_DIRECTION.TOP}
+      contentWrapperStyles={{ textAlign: "left" }}
+      triggerComponent={() => {
+        return (
+          <Button
+            onClick={onStake}
+            className="btn btn-secondary btn-semi-sm"
+            style={{ marginLeft: "auto" }}
+          >
+            <Icons.MoreInfo className={"tooltip--button-corner"} />
+            stake
+          </Button>
+        )
+      }}
     >
-      stake
-    </SubmitButton>
+      <span>
+        The stake amount is not yet confirmed. Click “Stake” to confirm the
+        stake amount. This stake is not staked on Threshold until it is
+        confirmed.
+      </span>
+    </Tooltip>
   ) : (
-    <SubmitButton
-      onSubmitAction={onAuthorize}
+    <Button
+      onClick={onAuthorize}
       className="btn btn-secondary btn-semi-sm"
       style={{ marginLeft: "auto" }}
-      successCallback={onSuccess}
     >
       authorize and stake
-    </SubmitButton>
+    </Button>
   )
 }
 

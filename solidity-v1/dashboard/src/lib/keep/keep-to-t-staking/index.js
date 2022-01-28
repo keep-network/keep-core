@@ -8,7 +8,7 @@ class KeepToTStaking {
     this.web3 = _web3
   }
 
-  getStakesByOperator = async (operatorAddress) => {
+  getStakedEventsByOperator = async (operatorAddress) => {
     return await this.thresholdStakingContract.getPastEvents("Staked", {
       operator: operatorAddress,
     })

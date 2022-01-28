@@ -11,11 +11,12 @@ import OnlyIf from "../../OnlyIf"
 import List from "../../List"
 import Button, { SubmitButton } from "../../Button"
 import { shortenAddress } from "../../../utils/general.utils"
-// import { useDispatch } from "react-redux"
 import { ViewInBlockExplorer } from "../../ViewInBlockExplorer"
 import * as Icons from "./../../Icons"
 import { KEEP, ThresholdToken } from "../../../utils/token.utils"
 import BigNumber from "bignumber.js"
+import { stakeKeepToT } from "../../../actions/keep-to-t-staking"
+import { useDispatch } from "react-redux"
 
 const StakeOnThresholdComponent = ({
   bodyTitle,
@@ -26,7 +27,7 @@ const StakeOnThresholdComponent = ({
   transactionHash = false,
   onClose,
 }) => {
-  // const dispatch = useDispatch()
+  const dispatch = useDispatch()
 
   const thresholdTokenAmount = (amount) => {
     const floatingPointDivisor = new BigNumber(10).pow(15)
@@ -128,7 +129,21 @@ const StakeOnThresholdComponent = ({
       </ModalBody>
       <ModalFooter>
         <OnlyIf condition={!transactionHash}>
-          <SubmitButton className="btn btn-primary btn-lg mr-2" type="submit">
+          <SubmitButton
+            className="btn btn-primary btn-lg mr-2"
+            type="submit"
+            onSubmitAction={(awaitingPromise) => {
+              dispatch(
+                stakeKeepToT(
+                  {
+                    operatorAddress: operator,
+                    isAuthorized: false,
+                  },
+                  awaitingPromise
+                )
+              )
+            }}
+          >
             stake on t
           </SubmitButton>
         </OnlyIf>
@@ -145,7 +160,7 @@ const StakeOnThresholdComponent = ({
   )
 }
 
-const StakeOnThreshold = withTimeline({
+export const StakeOnThreshold = withTimeline({
   title: "Stake on Threshold",
   timelineComponent: StakeOnThresholdTimeline,
   timelineProps: {
@@ -153,4 +168,10 @@ const StakeOnThreshold = withTimeline({
   },
 })(StakeOnThresholdComponent)
 
-export default StakeOnThreshold
+export const StakeOnThresholdConfirmed = withTimeline({
+  title: "Almost there...",
+  timelineComponent: StakeOnThresholdTimeline,
+  timelineProps: {
+    step: STAKE_ON_THRESHOLD_TIMELINE_STEPS.SET_UP_PRE,
+  },
+})(StakeOnThresholdComponent)

@@ -32,6 +32,7 @@ import { keepBalanceActions } from "../actions"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
 import { showModal } from "../actions/modal"
+import { thresholdStakeKeepEventEmitted } from "../actions/keep-to-t-staking"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
@@ -1156,5 +1157,19 @@ export function* observeAuctionClosedEvent() {
     "AuctionClosed",
     riskManagerAuctionClosedEventEmitted,
     "RiskManagerV1.AuctionClosed"
+  )
+}
+
+export function* observeThresholdStakeKeepEvent() {
+  console.log("STAKE KEEP EVENT EMITTED!!!!")
+  const thresholdStakingContract =
+    Keep.keepToTStaking.thresholdStakingContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    thresholdStakingContract,
+    "Staked",
+    thresholdStakeKeepEventEmitted,
+    `TokenStaking.StakeKeep`
   )
 }

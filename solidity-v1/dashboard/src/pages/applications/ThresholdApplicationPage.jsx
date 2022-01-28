@@ -4,7 +4,6 @@ import { connect } from "react-redux"
 import EmptyStatePage from "./EmptyStatePage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import { useFetchData } from "../../hooks/useFetchData"
-import { getThresholdTokenStakingAddress } from "../../contracts"
 import { thresholdAuthorizationService } from "../../services/threshold-authorization.service"
 import { isSameEthAddress } from "../../utils/general.utils"
 import { LoadingOverlay } from "../../components/Loadable"
@@ -12,6 +11,8 @@ import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
 import AuthorizeThresholdContracts from "../../components/threshold/AuthorizeThresholdContracts"
 import ThresholdAuthorizationHistory from "../../components/threshold/ThresholdStakingAuthorizationHistory"
 import { stakeKeepToT } from "../../actions/keep-to-t-staking"
+import { MODAL_TYPES } from "../../constants/constants"
+import { useModal } from "../../hooks/useModal"
 
 const initialData = []
 const ThresholdApplicationPage = ({
@@ -20,6 +21,7 @@ const ThresholdApplicationPage = ({
 }) => {
   const [selectedOperator, setOperator] = useState({})
   const address = useWeb3Address()
+  const { openModal } = useModal()
 
   const [
     thresholdAuthState,
@@ -38,12 +40,18 @@ const ThresholdApplicationPage = ({
 
   const authorizeContract = useCallback(
     async (data, awaitingPromise) => {
-      const { operatorAddress } = data
-      const operatorContractAddress = getThresholdTokenStakingAddress()
-      authorizeOperatorContract(
-        { operatorAddress, operatorContractAddress },
-        awaitingPromise
-      )
+      const {
+        operatorAddress,
+        authorizerAddress,
+        beneficiaryAddress,
+        stakeAmount,
+      } = data
+      openModal(MODAL_TYPES.StakeOnThreshold, {
+        keepAmount: stakeAmount,
+        operator: operatorAddress,
+        beneficiary: beneficiaryAddress,
+        authorizer: authorizerAddress,
+      })
     },
     [authorizeOperatorContract]
   )

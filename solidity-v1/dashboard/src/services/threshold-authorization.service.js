@@ -1,6 +1,13 @@
-import { ContractsLoaded, getThresholdTokenStakingAddress } from "../contracts"
+import {
+  ContractsLoaded,
+  getContractDeploymentBlockNumber,
+  getThresholdTokenStakingAddress,
+} from "../contracts"
 import { getOperatorsOfAuthorizer } from "./token-staking.service"
-import { AUTH_CONTRACTS_LABEL } from "../constants/constants"
+import {
+  AUTH_CONTRACTS_LABEL,
+  TOKEN_STAKING_CONTRACT_NAME,
+} from "../constants/constants"
 import { Keep } from "../contracts"
 import { isSameEthAddress } from "../utils/general.utils"
 
@@ -13,17 +20,35 @@ const fetchThresholdAuthorizationData = async (address) => {
   const authorizerOperators = await getOperatorsOfAuthorizer(address)
   const authorizationData = []
 
-  const keepToTStakedEvents = await Keep.keepToTStaking.getStakesByOperator(
-    address
-  )
+  const keepToTStakedEvents =
+    await Keep.keepToTStaking.getStakedEventsByOperator(address)
 
   const operatorsStaked = keepToTStakedEvents.map(
     (event) => event.returnValues.stakingProvider
   )
 
+  const stakesParticipants = (
+    await stakingContract.getPastEvents("OperatorStaked", {
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
+      filter: { operator: authorizerOperators },
+    })
+  ).map((event) => {
+    return {
+      authorizer: event.returnValues.authorizer,
+      operator: event.returnValues.operator,
+      beneficiary: event.returnValues.beneficiary,
+    }
+  })
+
   // Fetch all authorizer operators
   for (let i = 0; i < authorizerOperators.length; i++) {
     const operatorAddress = authorizerOperators[i]
+
+    const stakeParticipant = stakesParticipants.find((participants) => {
+      return isSameEthAddress(participants.authorizer, address)
+    })
 
     const delegatedTokens = await stakingContract.methods
       .getDelegationInfo(operatorAddress)
@@ -38,7 +63,9 @@ const fetchThresholdAuthorizationData = async (address) => {
         .call()
 
     const authorizerOperator = {
+      authorizerAddress: stakeParticipant.authorizer,
       operatorAddress: operatorAddress,
+      beneficiaryAddress: stakeParticipant.beneficiary,
       stakeAmount: delegatedTokens.amount,
       contracts: [
         {
