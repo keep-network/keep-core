@@ -30,7 +30,7 @@ export const dkgState = {
   CHALLENGE: 4,
 }
 
-export const params = {
+export const dkgParams = {
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionEligibilityDelay: 5,
 }
@@ -65,9 +65,9 @@ export async function walletRegistryFixture(): Promise<{
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await walletRegistry.updateDkgParams(
-    params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionEligibilityDelay
+  await walletRegistry.updateDkgParameters(
+    dkgParams.dkgResultChallengePeriodLength,
+    dkgParams.dkgResultSubmissionEligibilityDelay
   )
 
   return {
