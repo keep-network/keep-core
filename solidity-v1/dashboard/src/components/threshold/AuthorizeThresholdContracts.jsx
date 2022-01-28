@@ -140,7 +140,7 @@ const AuthorizeActions = ({
   return isAuthorized ? (
     <SubmitButton
       onSubmitAction={onStake}
-      className="btn btn-secondary btn-sm"
+      className="btn btn-secondary btn-semi-sm"
       style={{ marginLeft: "auto" }}
       successCallback={onSuccess}
     >
@@ -149,7 +149,7 @@ const AuthorizeActions = ({
   ) : (
     <SubmitButton
       onSubmitAction={onAuthorize}
-      className="btn btn-secondary btn-sm"
+      className="btn btn-secondary btn-semi-sm"
       style={{ marginLeft: "auto" }}
       successCallback={onSuccess}
     >

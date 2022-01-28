@@ -19,6 +19,10 @@ export const BADGE_STATUS = {
     bgClassName: "bg-success-light",
     icon: <Icons.OKBadge />,
   },
+  ERROR: {
+    textClassName: "text-black",
+    bgClassName: "bg-error",
+  },
 }
 
 const badgeStyle = { padding: "0.1rem 0.5rem", borderRadius: "100px" }

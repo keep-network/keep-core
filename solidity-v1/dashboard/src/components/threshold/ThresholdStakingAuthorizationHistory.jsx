@@ -36,13 +36,19 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
           field="status"
           renderContent={({ isStakedToT, isAuthorized }) => (
             <div className={"flex column center"}>
-              <OnlyIf condition={isStakedToT}>
+              {isStakedToT ? (
                 <StatusBadge
                   className="self-start mb-1"
                   status={BADGE_STATUS.COMPLETE}
                   text="confirmed"
                 />
-              </OnlyIf>
+              ) : (
+                <StatusBadge
+                  className="self-start mb-1"
+                  status={BADGE_STATUS.ERROR}
+                  text="missing stake confirmation"
+                />
+              )}
               <OnlyIf condition={isAuthorized}>
                 <StatusBadge
                   className="self-start"
@@ -68,7 +74,7 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
 const AuthorizationHistoryActions = () => {
   return (
     <SubmitButton
-      className="btn btn-secondary btn-sm"
+      className="btn btn-secondary btn-semi-sm"
       style={{ marginLeft: "auto" }}
     >
       set up pre
