@@ -352,7 +352,7 @@ function* observeRecoveredStakeEvent() {
         yield put({ type: "staking/remove_undelegation", payload: operator })
 
         yield put({
-          type: "staking/update_owned_undelegations_token_balance",
+          type: "staking/update_owned_undelegations_tokens_balance",
           payload: { operation: sub, value: recoveredUndelegation.amount },
         })
       }

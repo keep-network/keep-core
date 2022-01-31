@@ -18,6 +18,8 @@ import { useModal } from "../../hooks/useModal"
 import { LINK, MODAL_TYPES } from "../../constants/constants"
 import TokenAmountSkeleton from "../../components/skeletons/TokenAmountSkeleton"
 import ResourceTooltip from "../../components/ResourceTooltip"
+import useUpdatePendingUndelegations from "../../hooks/useUpdatePendingUndelegations"
+import useUpdateInitializedDelegations from "../../hooks/useUpdateInitializedDelegations"
 
 const ThresholdUpgradePage = () => {
   const { isConnected } = useWeb3Context()
@@ -41,6 +43,9 @@ const ThresholdUpgradePage = () => {
   const { delegations, undelegations, isDelegationDataFetching } = useSelector(
     (state) => state.staking
   )
+
+  useUpdateInitializedDelegations(delegations)
+  useUpdatePendingUndelegations(undelegations)
 
   const { grants, isFetching: isGrantDataFetching } = useSelector(
     (state) => state.tokenGrants
@@ -154,6 +159,7 @@ const ThresholdUpgradePage = () => {
         <AllocationProgressBar
           title={"wallet"}
           currentValue={keepBalance}
+          currentValueLabel={"unstaked wallet balance"}
           totalValue={notStakedTotalAmount}
           className={"mb-1"}
           isDataFetching={isDataFetching}
@@ -161,6 +167,7 @@ const ThresholdUpgradePage = () => {
         <AllocationProgressBar
           title={"available grant allocation"}
           currentValue={totalGrantedReadyToReleaseTokens}
+          currentValueLabel={"unstaked grant balance"}
           totalValue={notStakedTotalAmount}
           className={"mb-2"}
           isDataFetching={isDataFetching}
@@ -214,24 +221,24 @@ const ThresholdUpgradePage = () => {
       <section className="tile staked">
         <div className="staked__title-container">
           <h3 className="staked__title">Staked</h3>
-          <div className="staked__additional-info">
-            <span className="staked__additional-info-row mr-2">
-              <Icons.Success
-                width={16}
-                height={16}
-                className="staked__additional-info-icon staked__additional-info-icon--color-green"
-              />{" "}
-              ECDSA
-            </span>
-            <span className="staked__additional-info-row">
-              <Icons.Success
-                width={16}
-                height={16}
-                className="staked__additional-info-icon staked__additional-info-icon--color-green"
-              />{" "}
-              Random Beacon
-            </span>
-          </div>
+          {/* <div className="staked__additional-info">*/}
+          {/*  <span className="staked__additional-info-row mr-2">*/}
+          {/*    <Icons.Success*/}
+          {/*      width={16}*/}
+          {/*      height={16}*/}
+          {/*      className="staked__additional-info-icon staked__additional-info-icon--color-green"*/}
+          {/*    />{" "}*/}
+          {/*    ECDSA*/}
+          {/*  </span>*/}
+          {/*  <span className="staked__additional-info-row">*/}
+          {/*    <Icons.Success*/}
+          {/*      width={16}*/}
+          {/*      height={16}*/}
+          {/*      className="staked__additional-info-icon staked__additional-info-icon--color-green"*/}
+          {/*    />{" "}*/}
+          {/*    Random Beacon*/}
+          {/*  </span>*/}
+          {/* </div>*/}
         </div>
         {isDataFetching ? (
           <TokenAmountSkeleton
@@ -258,13 +265,14 @@ const ThresholdUpgradePage = () => {
           className={"mb-1"}
           secondaryValue={totalStakedPendingKeep}
           withLegend
-          currentValueLegendLabel={"Staked"}
-          secondaryValueLegendLabel={"Pending Undelegation"}
+          currentValueLabel={"Staked"}
+          secondaryValueLabel={"Pending Undelegation"}
           isDataFetching={isDataFetching}
         />
         <AllocationProgressBar
           title={"undelegated"}
           currentValue={totalUndelegatedAvailableKeep}
+          currentValueLabel={"Undelegated"}
           totalValue={stakedTotalAmount}
           className={"mb-3"}
           isDataFetching={isDataFetching}

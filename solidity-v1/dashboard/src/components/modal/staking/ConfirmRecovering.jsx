@@ -8,15 +8,18 @@ import { withBaseModal } from "../withBaseModal"
 
 export const ConfirmRecovering = withBaseModal(
   ({ tokenStakingEscrowAddress, onConfirm, onClose }) => {
-    const formik = useTypeTextToConfirmFormik("RECOVER", onConfirm)
+    const formik = useTypeTextToConfirmFormik("CLAIM", onConfirm)
 
     return (
       <>
-        <ModalHeader>Are you sure?</ModalHeader>
+        <ModalHeader>Claiming tokens</ModalHeader>
         <ModalBody>
-          <h3>You’re about to recover tokens.</h3>
+          <h3>You’re about to claim your undelegated tokens.</h3>
           <div className="text-grey-60 mt-1">
-            <span>Recovering will deposit delegated tokens in the</span>
+            <span>
+              Because these are tokens from your grant, claiming will deposit
+              the undelegated tokens in the
+            </span>
             &nbsp;
             <span>
               <ViewAddressInBlockExplorer
@@ -24,7 +27,7 @@ export const ConfirmRecovering = withBaseModal(
                 text="TokenStakingEscrow contract."
               />
             </span>
-            <p>You can withdraw them via Release tokens.</p>
+            <p>Withdraw them afterwards, via Release tokens</p>
           </div>
           <form onSubmit={formik.handleSubmit} className="mt-2">
             <FormInputBase
@@ -32,7 +35,7 @@ export const ConfirmRecovering = withBaseModal(
               type="text"
               onChange={formik.handleChange}
               value={formik.values.confirmationText}
-              label={"Type RECOVER to confirm."}
+              label={"Type CLAIM to confirm."}
               placeholder=""
               hasError={formik.errors.confirmationText}
               errorMsg={formik.errors.confirmationText}
@@ -45,7 +48,7 @@ export const ConfirmRecovering = withBaseModal(
             type="submit"
             onClick={formik.handleSubmit}
           >
-            recover
+            claim
           </Button>
           <Button className="btn btn-unstyled" onClick={onClose}>
             Cancel
