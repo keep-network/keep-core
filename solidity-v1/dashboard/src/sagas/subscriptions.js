@@ -1161,7 +1161,6 @@ export function* observeAuctionClosedEvent() {
 }
 
 export function* observeThresholdStakeKeepEvent() {
-  console.log("STAKE KEEP EVENT EMITTED!!!!")
   const thresholdStakingContract =
     Keep.keepToTStaking.thresholdStakingContract.instance
 
