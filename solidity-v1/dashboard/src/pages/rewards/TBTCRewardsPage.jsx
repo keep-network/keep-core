@@ -8,7 +8,7 @@ import { SubmitButton } from "../../components/Button"
 // import ProgressBar from "../../components/ProgressBar"
 import Timer from "../../components/Timer"
 import TBTCRewardsDataTable from "../../components/TBTCRewardsDataTable"
-import { ECDSARewardsHelper } from "../../utils/rewardsHelper"
+import { ExtendedECDSARewardsHelper } from "../../utils/rewardsHelper"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import {
   TokenAmountSkeleton,
@@ -22,9 +22,9 @@ import EmptyStatePage from "./EmptyStatePage"
 const TBTCRewardsPage = () => {
   const dispatch = useDispatch()
   const yourAddress = useWeb3Address()
-  const currentIntervalEndOf = ECDSARewardsHelper.intervalEndOf(
-    ECDSARewardsHelper.currentInterval
-  ).unix()
+  const currentIntervalEndOf = ExtendedECDSARewardsHelper.intervalEndOf(
+    ExtendedECDSARewardsHelper.currentInterval
+  )
 
   const {
     ecdsaAvailableRewardsFetching,
@@ -78,7 +78,8 @@ const TBTCRewardsPage = () => {
 
 const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
   const remainingPeriods =
-    ECDSARewardsHelper.intervals - ECDSARewardsHelper.currentInterval
+    ExtendedECDSARewardsHelper.intervals -
+    ExtendedECDSARewardsHelper.currentInterval
 
   return (
     <section className="tile rewards__overview--tbtc">
@@ -93,7 +94,9 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
       <div className="rewards__overview__period">
         <h5 className="text-grey-70">current rewards period</h5>
         <span className="rewards-period__date">
-          {ECDSARewardsHelper.periodOf(ECDSARewardsHelper.currentInterval)}
+          {ExtendedECDSARewardsHelper.periodOf(
+            ExtendedECDSARewardsHelper.currentInterval
+          )}
         </span>
         <div className="rewards-period__remaining-periods">
           <Icons.Time width="16" height="16" className="time-icon--grey-30" />
