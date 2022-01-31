@@ -88,7 +88,7 @@ const TokenGrantOverview = React.memo(({ tokenGrant }) => {
       <div className="staked-details">
         <TokenGrantStakedDetails
           selectedGrant={tokenGrant}
-          stakedAmount={tokenGrant.stakedAmount}
+          stakedAmount={tokenGrant.staked}
         />
       </div>
     </section>
@@ -104,8 +104,8 @@ export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
           items={[
             {
               value: stakedAmount,
-              color: colors.grey70,
-              backgroundStroke: colors.grey10,
+              color: colors.primary,
+              backgroundStroke: colors.bgSuccess,
               label: "Staked",
             },
           ]}
@@ -122,8 +122,8 @@ export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
       </div>
       <div className="ml-2 mt-1 self-start flex-1">
         <h5 className="text-grey-70">staked</h5>
-        <h4 className="text-grey-70">{KEEP.displayAmount(stakedAmount)}</h4>
-        <div className="flex wrap text-smaller text-grey-40">
+        <h3 className="text-grey-70">{KEEP.displayAmount(stakedAmount)}</h3>
+        <div className="flex wrap text-smaller text-grey-60">
           of&nbsp;
           <TokenAmount
             amount={selectedGrant.amount}
@@ -157,8 +157,8 @@ const TokenGrantUnlockingdDetails = ({
           items={[
             {
               value: selectedGrant.unlocked,
-              backgroundStroke: colors.bgSuccess,
-              color: colors.primary,
+              backgroundStroke: colors.grey10,
+              color: colors.grey70,
               label: "Unlocked",
             },
             {
@@ -186,10 +186,10 @@ const TokenGrantUnlockingdDetails = ({
         }`}
       >
         <h5 className="text-grey-70">unlocked</h5>
-        <h4 className="text-grey-70">
+        <h3 className="text-grey-70">
           {KEEP.displayAmount(selectedGrant.unlocked)}
-        </h4>
-        <div className="flex wrap text-smaller text-grey-40">
+        </h3>
+        <div className="flex wrap text-smaller text-grey-60">
           of&nbsp;
           <TokenAmount
             amount={selectedGrant.amount}
@@ -218,7 +218,7 @@ const TokenGrantUnlockingdDetails = ({
                 onSubmitAction={onReleaseTokens}
                 withMessageActionIsPending={false}
               >
-                release tokens
+                withdraw
               </SubmitButton>
             )}
           </div>
