@@ -144,18 +144,36 @@ const AuthorizeActions = ({
     [
       contractName,
       operatorAddress,
-      onAuthorizeBtn,
       authorizerAddress,
       beneficiaryAddress,
       stakeAmount,
+      onAuthorizeBtn,
     ]
   )
 
   const onStake = useCallback(
     async (awaitingPromise) => {
-      await onStakeBtn({ operatorAddress, contractName }, awaitingPromise)
+      await onStakeBtn(
+        {
+          operatorAddress,
+          authorizerAddress,
+          beneficiaryAddress,
+          stakeAmount,
+          contractName,
+          isAuthorized,
+        },
+        awaitingPromise
+      )
     },
-    [contractName, operatorAddress, onStakeBtn]
+    [
+      contractName,
+      operatorAddress,
+      authorizerAddress,
+      beneficiaryAddress,
+      stakeAmount,
+      isAuthorized,
+      onStakeBtn,
+    ]
   )
 
   return isAuthorized ? (

@@ -24,6 +24,7 @@ const StakeOnThresholdComponent = ({
   operator,
   beneficiary,
   authorizer,
+  isAuthorized,
   transactionHash = false,
   onClose,
 }) => {
@@ -94,6 +95,8 @@ const StakeOnThresholdComponent = ({
               />
               .
             </>
+          ) : isAuthorized ? (
+            "The contract for this stake is already authorized so only one transaction is needed - a confirmation"
           ) : (
             "This requires two transactions – an authorization and a confirmation."
           )}
@@ -137,7 +140,7 @@ const StakeOnThresholdComponent = ({
                 stakeKeepToT(
                   {
                     operatorAddress: operator,
-                    isAuthorized: false,
+                    isAuthorized: isAuthorized,
                   },
                   awaitingPromise
                 )
@@ -160,11 +163,19 @@ const StakeOnThresholdComponent = ({
   )
 }
 
-export const StakeOnThreshold = withTimeline({
+export const AuthorizeAndStakeOnThreshold = withTimeline({
   title: "Stake on Threshold",
   timelineComponent: StakeOnThresholdTimeline,
   timelineProps: {
     step: STAKE_ON_THRESHOLD_TIMELINE_STEPS.NONE,
+  },
+})(StakeOnThresholdComponent)
+
+export const StakeOnThresholdWithoutAuthorization = withTimeline({
+  title: "Stake on Threshold",
+  timelineComponent: StakeOnThresholdTimeline,
+  timelineProps: {
+    step: STAKE_ON_THRESHOLD_TIMELINE_STEPS.AUTHORIZE_CONTRACT,
   },
 })(StakeOnThresholdComponent)
 

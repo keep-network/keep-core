@@ -270,6 +270,8 @@ export const MODAL_TYPES = {
   IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
   WithdrawGrantedTokens: "WithdrawGrantedTokens",
   StakeOnThreshold: "StakeOnThreshold",
+  AuthorizeAndStakeOnThreshold: "AuthorizeAndStakeOnThreshold",
+  StakeOnThresholdWithoutAuthorization: "StakeOnThresholdWithoutAuthorization",
   StakeOnThresholdConfirmed: "StakeOnThresholdConfirmed",
 }
 

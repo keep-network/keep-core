@@ -43,8 +43,9 @@ import {
 import { WithdrawGrantedTokens } from "./threshold/WithdrawGrantedTokens"
 import { GrantTokensWithdrawn } from "./threshold/GrantTokensWithdrawn"
 import {
-  StakeOnThreshold,
+  AuthorizeAndStakeOnThreshold,
   StakeOnThresholdConfirmed,
+  StakeOnThresholdWithoutAuthorization,
 } from "./threshold/StakeOnThreshold"
 
 const MODAL_TYPE_TO_COMPONENT = {
@@ -86,7 +87,9 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ConfirmCovPoolIncreaseWithdrawal]: ConfirmIncreaseWithdrawal,
   [MODAL_TYPES.IncreaseCovPoolWithdrawal]: IncreaseWithdrawal,
   [MODAL_TYPES.WithdrawGrantedTokens]: WithdrawGrantedTokens,
-  [MODAL_TYPES.StakeOnThreshold]: StakeOnThreshold,
+  [MODAL_TYPES.AuthorizeAndStakeOnThreshold]: AuthorizeAndStakeOnThreshold,
+  [MODAL_TYPES.StakeOnThresholdWithoutAuthorization]:
+    StakeOnThresholdWithoutAuthorization,
   [MODAL_TYPES.StakeOnThresholdConfirmed]: StakeOnThresholdConfirmed,
 }
 

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
-import { authorizeOperatorContract } from "../../actions/web3"
-import { connect, useDispatch, useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import EmptyStatePage from "./EmptyStatePage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import { isSameEthAddress } from "../../utils/general.utils"
@@ -8,15 +7,11 @@ import { LoadingOverlay } from "../../components/Loadable"
 import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
 import AuthorizeThresholdContracts from "../../components/threshold/AuthorizeThresholdContracts"
 import ThresholdAuthorizationHistory from "../../components/threshold/ThresholdStakingAuthorizationHistory"
-import { stakeKeepToT } from "../../actions/keep-to-t-staking"
 import { MODAL_TYPES } from "../../constants/constants"
 import { useModal } from "../../hooks/useModal"
 import { FETCH_THRESHOLD_AUTH_DATA_REQUEST } from "../../actions"
 
-const ThresholdApplicationPage = ({
-  authorizeOperatorContract,
-  stakeKeepToT,
-}) => {
+const ThresholdApplicationPage = () => {
   const [selectedOperator, setOperator] = useState({})
   const address = useWeb3Address()
   const { openModal } = useModal()
@@ -40,11 +35,12 @@ const ThresholdApplicationPage = ({
         beneficiaryAddress,
         stakeAmount,
       } = data
-      openModal(MODAL_TYPES.StakeOnThreshold, {
+      openModal(MODAL_TYPES.AuthorizeAndStakeOnThreshold, {
         keepAmount: stakeAmount,
         operator: operatorAddress,
         beneficiary: beneficiaryAddress,
         authorizer: authorizerAddress,
+        isAuthorized: false,
       })
     },
     [openModal]
@@ -52,10 +48,21 @@ const ThresholdApplicationPage = ({
 
   const stakeToT = useCallback(
     async (data, awaitingPromise) => {
-      const { operatorAddress } = data
-      stakeKeepToT(operatorAddress, awaitingPromise)
+      const {
+        operatorAddress,
+        authorizerAddress,
+        beneficiaryAddress,
+        stakeAmount,
+      } = data
+      openModal(MODAL_TYPES.StakeOnThresholdWithoutAuthorization, {
+        keepAmount: stakeAmount,
+        operator: operatorAddress,
+        beneficiary: beneficiaryAddress,
+        authorizer: authorizerAddress,
+        isAuthorized: true,
+      })
     },
-    [stakeKeepToT]
+    [openModal]
   )
 
   const thresholdAuthData = useMemo(() => {
@@ -116,17 +123,7 @@ const toAuthHistoryData = (authData) => ({
   ...authData.contracts[0],
 })
 
-const mapDispatchToProps = {
-  authorizeOperatorContract,
-  stakeKeepToT,
-}
-
-const ConnectedThresholdApplicationPage = connect(
-  null,
-  mapDispatchToProps
-)(ThresholdApplicationPage)
-
-ConnectedThresholdApplicationPage.route = {
+ThresholdApplicationPage.route = {
   title: "Threshold",
   path: "/applications/threshold",
   exact: true,
@@ -134,4 +131,4 @@ ConnectedThresholdApplicationPage.route = {
   emptyStateComponent: EmptyStatePage,
 }
 
-export default ConnectedThresholdApplicationPage
+export default ThresholdApplicationPage
