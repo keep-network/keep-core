@@ -16,7 +16,6 @@ const AuthorizeThresholdContracts = ({
   onSelectOperator,
   selectedOperator,
   filterDropdownOptions,
-  onSuccessCallback,
 }) => {
   return (
     <section className="tile">
@@ -96,7 +95,6 @@ const AuthorizeThresholdContracts = ({
               stakeAmount={stakeAmount}
               onAuthorizeBtn={onAuthorizeBtn}
               onStakeBtn={onStakeBtn}
-              onSuccessCallback={onSuccessCallback}
             />
           )}
         />
@@ -129,7 +127,6 @@ const AuthorizeActions = ({
   isAuthorized,
   onAuthorizeBtn,
   onStakeBtn,
-  onSuccessCallback,
 }) => {
   const onAuthorize = useCallback(
     async (awaitingPromise) => {
@@ -144,7 +141,14 @@ const AuthorizeActions = ({
         awaitingPromise
       )
     },
-    [contractName, operatorAddress, onAuthorizeBtn]
+    [
+      contractName,
+      operatorAddress,
+      onAuthorizeBtn,
+      authorizerAddress,
+      beneficiaryAddress,
+      stakeAmount,
+    ]
   )
 
   const onStake = useCallback(

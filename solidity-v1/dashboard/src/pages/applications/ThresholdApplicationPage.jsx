@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { authorizeOperatorContract } from "../../actions/web3"
-import { connect } from "react-redux"
+import { connect, useDispatch, useSelector } from "react-redux"
 import EmptyStatePage from "./EmptyStatePage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
-import { useFetchData } from "../../hooks/useFetchData"
-import { thresholdAuthorizationService } from "../../services/threshold-authorization.service"
 import { isSameEthAddress } from "../../utils/general.utils"
 import { LoadingOverlay } from "../../components/Loadable"
 import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
@@ -13,8 +11,8 @@ import ThresholdAuthorizationHistory from "../../components/threshold/ThresholdS
 import { stakeKeepToT } from "../../actions/keep-to-t-staking"
 import { MODAL_TYPES } from "../../constants/constants"
 import { useModal } from "../../hooks/useModal"
+import { FETCH_THRESHOLD_AUTH_DATA_REQUEST } from "../../actions"
 
-const initialData = []
 const ThresholdApplicationPage = ({
   authorizeOperatorContract,
   stakeKeepToT,
@@ -22,21 +20,17 @@ const ThresholdApplicationPage = ({
   const [selectedOperator, setOperator] = useState({})
   const address = useWeb3Address()
   const { openModal } = useModal()
-
-  const [
-    thresholdAuthState,
-    updateThresholdAuthData,
-    ,
-    setThresholdAuthDataArgs,
-  ] = useFetchData(
-    thresholdAuthorizationService.fetchThresholdAuthorizationData,
-    initialData,
-    address
+  const dispatch = useDispatch()
+  const thresholdAuthState = useSelector(
+    (state) => state.thresholdAuthorization
   )
 
   useEffect(() => {
-    setThresholdAuthDataArgs([address])
-  }, [setThresholdAuthDataArgs, address])
+    dispatch({
+      type: FETCH_THRESHOLD_AUTH_DATA_REQUEST,
+      payload: { address },
+    })
+  }, [dispatch, address])
 
   const authorizeContract = useCallback(
     async (data, awaitingPromise) => {
@@ -53,7 +47,7 @@ const ThresholdApplicationPage = ({
         authorizer: authorizerAddress,
       })
     },
-    [authorizeOperatorContract]
+    [openModal]
   )
 
   const stakeToT = useCallback(
@@ -64,10 +58,8 @@ const ThresholdApplicationPage = ({
     [stakeKeepToT]
   )
 
-  const onSuccessCallback = () => console.log(updateThresholdAuthData)
-
   const thresholdAuthData = useMemo(() => {
-    const thresholdData = thresholdAuthState.data.filter((dataObj) => {
+    const thresholdData = thresholdAuthState.authData.filter((dataObj) => {
       return !dataObj.isStakedToT || !dataObj.contracts[0].isAuthorized
     })
     if (!selectedOperator.operatorAddress) {
@@ -76,21 +68,21 @@ const ThresholdApplicationPage = ({
     return thresholdData.filter((data) =>
       isSameEthAddress(data.operatorAddress, selectedOperator.operatorAddress)
     )
-  }, [selectedOperator.operatorAddress, thresholdAuthState.data])
+  }, [selectedOperator.operatorAddress, thresholdAuthState.authData])
 
   const authorizationHistoryData = useMemo(() => {
     if (!selectedOperator.operatorAddress)
-      return thresholdAuthState.data
+      return thresholdAuthState.authData
         .filter((authData) => authData.contracts[0].isAuthorized)
         .map(toAuthHistoryData)
-    return thresholdAuthState.data
+    return thresholdAuthState.authData
       .filter(
         ({ operatorAddress, contracts }) =>
           contracts[0].isAuthorized &&
           isSameEthAddress(operatorAddress, selectedOperator.operatorAddress)
       )
       .map(toAuthHistoryData)
-  }, [thresholdAuthState.data, selectedOperator.operatorAddress])
+  }, [thresholdAuthState.authData, selectedOperator.operatorAddress])
 
   return (
     <>
@@ -101,13 +93,12 @@ const ThresholdApplicationPage = ({
         }
       >
         <AuthorizeThresholdContracts
-          filterDropdownOptions={thresholdAuthState.data}
+          filterDropdownOptions={thresholdAuthState.authData}
           onSelectOperator={setOperator}
           selectedOperator={selectedOperator}
           data={thresholdAuthData}
           onAuthorizeBtn={authorizeContract}
           onStakeBtn={stakeToT}
-          onSuccessCallback={onSuccessCallback}
         />
       </LoadingOverlay>
       <LoadingOverlay

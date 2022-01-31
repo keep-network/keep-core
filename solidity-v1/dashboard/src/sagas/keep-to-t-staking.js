@@ -1,15 +1,30 @@
 import { getThresholdTokenStakingAddress, Keep } from "../contracts"
 import { actionChannel, call, put, take, takeEvery } from "redux-saga/effects"
 import { sendTransaction } from "./web3"
-import { getContractsContext, submitButtonHelper } from "./utils"
+import {
+  getContractsContext,
+  identifyTaskByAddress,
+  logErrorAndThrow,
+  submitButtonHelper,
+} from "./utils"
 import {
   STAKE_KEEP_TO_T,
+  stakedToT,
   THRESHOLD_STAKE_KEEP_EVENT_EMITTED,
+  thresholdContractAuthorized,
 } from "../actions/keep-to-t-staking"
 import { showModal } from "../actions/modal"
 import { MODAL_TYPES } from "../constants/constants"
+import {
+  FETCH_THRESHOLD_AUTH_DATA_FAILURE,
+  FETCH_THRESHOLD_AUTH_DATA_REQUEST,
+  FETCH_THRESHOLD_AUTH_DATA_START,
+  FETCH_THRESHOLD_AUTH_DATA_SUCCESS,
+} from "../actions"
+import { thresholdAuthorizationService } from "../services/threshold-authorization.service"
+import { takeOnlyOnce } from "./effects"
 
-export function* subscribeToStekKeepEvent() {
+export function* subscribeToStakeKeepEvent() {
   const requestChan = yield actionChannel(THRESHOLD_STAKE_KEEP_EVENT_EMITTED)
 
   while (true) {
@@ -91,6 +106,8 @@ function* authorizeAndStakeKeepToT(action) {
         args: [operator, operatorContractAddress],
       },
     })
+
+    yield put(thresholdContractAuthorized(operator))
   }
 
   yield call(sendTransaction, {
@@ -100,6 +117,8 @@ function* authorizeAndStakeKeepToT(action) {
       args: [operator],
     },
   })
+
+  yield put(stakedToT(operator))
 }
 
 function* authorizeAndStakeKeepToTWorker(action) {
@@ -108,4 +127,31 @@ function* authorizeAndStakeKeepToTWorker(action) {
 
 export function* watchAuthorizeAndStakeKeepToT() {
   yield takeEvery(STAKE_KEEP_TO_T, authorizeAndStakeKeepToTWorker)
+}
+
+function* fetchThresholdAuthData(action) {
+  try {
+    const {
+      payload: { address },
+    } = action
+    yield put({ type: FETCH_THRESHOLD_AUTH_DATA_START })
+    const data = yield call(
+      thresholdAuthorizationService.fetchThresholdAuthorizationData,
+      address
+    )
+    yield put({
+      type: FETCH_THRESHOLD_AUTH_DATA_SUCCESS,
+      payload: data,
+    })
+  } catch (error) {
+    yield* logErrorAndThrow(FETCH_THRESHOLD_AUTH_DATA_FAILURE, error)
+  }
+}
+
+export function* watchFetchThresholdAuthData() {
+  yield takeOnlyOnce(
+    FETCH_THRESHOLD_AUTH_DATA_REQUEST,
+    identifyTaskByAddress,
+    fetchThresholdAuthData
+  )
 }
