@@ -7,6 +7,9 @@
 # production
 /build
 
+# generated
+/external
+
 # misc
 .DS_Store
 
