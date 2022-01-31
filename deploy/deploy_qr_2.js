@@ -1,3 +1,4 @@
+// const { assert } = require('chai');
 const hre = require('hardhat');
 const { getChainId } = hre;
 
@@ -8,14 +9,13 @@ module.exports = async ({ deployments, getNamedAccounts }) => {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const args = ['0x111111111117dC0aa78b770fA6A738034120C302', '0x8d75e829b65729ab44ed5117daec9c21', 10];
+    const args = ['0x111111111117dC0aa78b770fA6A738034120C302', '0xc59eab91b492a7dfb3a2e5f3d5c5cddc', 10];
 
-    const merkleDrop128 = await deploy('MerkleDrop128', {
+    const merkleDrop128 = await deploy('MerkleDrop128-2', {
+        contract: 'SignatureMerkleDrop128',
         from: deployer,
         args: args,
     });
-
-    console.log('MerkleDrop128 deployed to:', merkleDrop128.address);
 
     if (await getChainId() !== '31337') {
         await hre.run('verify:verify', {
