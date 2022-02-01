@@ -81,6 +81,15 @@ function* authorizeAndStakeKeepToT(action) {
           contract: stakingContract,
           methodName: "authorizeOperatorContract",
           args: [operator, operatorContractAddress],
+          options: {
+            onTransactionHashAction: (txHash) =>
+              showModal({
+                modalType: MODAL_TYPES.ThresholdAuthorizationLoadingModal,
+                modalProps: {
+                  txHash,
+                },
+              }),
+          },
         },
       })
     } catch (err) {
@@ -106,6 +115,15 @@ function* authorizeAndStakeKeepToT(action) {
         contract: Keep.keepToTStaking.thresholdStakingContract.instance,
         methodName: "stakeKeep",
         args: [operator],
+        options: {
+          onTransactionHashAction: (txHash) =>
+            showModal({
+              modalType: MODAL_TYPES.ThresholdStakeConfirmationLoadingModal,
+              modalProps: {
+                txHash,
+              },
+            }),
+        },
       },
     })
   } catch (err) {

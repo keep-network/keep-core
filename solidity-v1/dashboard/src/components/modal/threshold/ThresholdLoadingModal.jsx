@@ -4,13 +4,22 @@ import { StakeOnThresholdTimeline } from "./components"
 import { STAKE_ON_THRESHOLD_TIMELINE_STEPS } from "../../../constants/constants"
 import { KeepLoadingIndicator } from "../../Loadable"
 import { withTimeline } from "../withTimeline"
+import { ViewInBlockExplorer } from "../../ViewInBlockExplorer"
+import OnlyIf from "../../OnlyIf"
 
-const ThresholdLoadingModal = ({ text }) => {
+const ThresholdLoadingModal = ({ text, txHash = null }) => {
   return (
     <>
       <ModalBody className={"threshold-loading-modal-body"}>
         <KeepLoadingIndicator />
-        <p>{text}</p>
+        <p>{txHash ? "Pending..." : text}</p>
+        <OnlyIf condition={txHash}>
+          <ViewInBlockExplorer
+            type="tx"
+            id={txHash}
+            text="View transaction on Etherscan"
+          />
+        </OnlyIf>
       </ModalBody>
     </>
   )
