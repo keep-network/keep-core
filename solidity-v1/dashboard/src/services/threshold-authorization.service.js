@@ -6,6 +6,7 @@ import {
 import { getOperatorsOfAuthorizer } from "./token-staking.service"
 import {
   AUTH_CONTRACTS_LABEL,
+  TOKEN_GRANT_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
 } from "../constants/constants"
 import { Keep } from "../contracts"
@@ -16,7 +17,7 @@ const fetchThresholdAuthorizationData = async (address) => {
     return []
   }
   const thresholdTokenStakingContractAddress = getThresholdTokenStakingAddress()
-  const { stakingContract } = await ContractsLoaded
+  const { stakingContract, grantContract } = await ContractsLoaded
   const authorizerOperators = await getOperatorsOfAuthorizer(address)
   const authorizationData = []
 
@@ -39,6 +40,19 @@ const fetchThresholdAuthorizationData = async (address) => {
       authorizer: event.returnValues.authorizer,
       operator: event.returnValues.operator,
       beneficiary: event.returnValues.beneficiary,
+    }
+  })
+
+  const tokenGrantStakingEvents = (
+    await grantContract.getPastEvents("TokenGrantStaked", {
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_GRANT_CONTRACT_NAME
+      ),
+      filter: { operator: authorizerOperators },
+    })
+  ).map((event) => {
+    return {
+      operator: event.returnValues.operator,
     }
   })
 
@@ -76,6 +90,9 @@ const fetchThresholdAuthorizationData = async (address) => {
       ],
       isStakedToT: operatorsStaked.some((operatorStaked) =>
         isSameEthAddress(operatorStaked, operatorAddress)
+      ),
+      isFromGrant: tokenGrantStakingEvents.some((tokenGrantStakingEvent) =>
+        isSameEthAddress(tokenGrantStakingEvent.operator, operatorAddress)
       ),
     }
 

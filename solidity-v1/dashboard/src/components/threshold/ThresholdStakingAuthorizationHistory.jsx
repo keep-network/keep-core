@@ -29,9 +29,16 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
         <Column
           header="stake"
           field="stakeAmount"
-          renderContent={({ stakeAmount }) =>
-            `${KEEP.displayAmountWithSymbol(stakeAmount)}`
-          }
+          renderContent={({ stakeAmount, isFromGrant }) => {
+            return (
+              <>
+                <div>{KEEP.displayAmountWithSymbol(stakeAmount)}</div>
+                <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
+                  {isFromGrant ? "Grant Tokens" : "Wallet Tokens"}
+                </div>
+              </>
+            )
+          }}
         />
         <Column
           header="status"
