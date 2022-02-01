@@ -69,6 +69,8 @@ export const LINK = {
   },
   tbtcDapp: "https://dapp.tbtc.network",
   thresholdDapp: "https://dashboard.test.threshold.network/",
+  // TODO: Set proper link for set up pre
+  setUpPRE: "https://dashboard.test.threshold.network/",
 }
 
 export const WALLETS = {

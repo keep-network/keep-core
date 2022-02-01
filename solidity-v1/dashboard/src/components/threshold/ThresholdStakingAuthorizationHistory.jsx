@@ -4,8 +4,10 @@ import StatusBadge, { BADGE_STATUS } from "./../StatusBadge"
 import { DataTable, Column } from "../DataTable"
 import Tile from "./../Tile"
 import { KEEP } from "../../utils/token.utils"
-import { SubmitButton } from "../Button"
 import OnlyIf from "../OnlyIf"
+import { LINK } from "../../constants/constants"
+import * as Icons from "../Icons"
+import ReactTooltip from "react-tooltip"
 
 const ThresholdAuthorizationHistory = ({ contracts }) => {
   return (
@@ -64,21 +66,47 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
           header="actions"
           tdStyles={{ textAlign: "right" }}
           field=""
-          renderContent={() => <AuthorizationHistoryActions />}
+          renderContent={({ operatorAddress }) => (
+            <AuthorizationHistoryActions operatorAddress={operatorAddress} />
+          )}
         />
       </DataTable>
     </Tile>
   )
 }
 
-const AuthorizationHistoryActions = () => {
+const AuthorizationHistoryActions = ({ operatorAddress }) => {
   return (
-    <SubmitButton
-      className="btn btn-secondary btn-semi-sm"
-      style={{ marginLeft: "auto" }}
+    <a
+      href={LINK.setUpPRE}
+      rel="noopener noreferrer"
+      target="_blank"
+      className={`btn btn-secondary btn-semi-sm`}
+      style={{
+        marginLeft: "auto",
+        fontFamily: `"Work-Sans", sans-serif`,
+      }}
     >
-      set up pre
-    </SubmitButton>
+      <Icons.QuestionFill
+        data-tip
+        data-for={`set up pre-for-operator-${operatorAddress}`}
+        className={"tooltip--button-corner"}
+      />
+      <ReactTooltip
+        id={`set up pre-for-operator-${operatorAddress}`}
+        place="top"
+        type="dark"
+        effect={"solid"}
+        className={"react-tooltip-base react-tooltip-base--arrow-right"}
+        offset={{ left: "100%!important" }}
+      >
+        <span>
+          To be eligible to earn monthly rewards you will need to set up and run
+          a PRE node.
+        </span>
+      </ReactTooltip>
+      set up pre <Icons.ArrowTopRight />
+    </a>
   )
 }
 

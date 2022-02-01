@@ -79,6 +79,8 @@ export { ReactComponent as TBTC_V2 } from "../static/svg/tbtc_v2.svg"
 export { ReactComponent as ArrowsRight } from "../static/svg/arrows-right.svg"
 export { ReactComponent as TLogo } from "../static/svg/t-logo.svg"
 export { ReactComponent as AlertFill } from "../static/svg/alert-fill.svg"
+export { ReactComponent as ArrowTopRight } from "../static/svg/arrow-top-right.svg"
+export { ReactComponent as QuestionFill } from "../static/svg/question-fill.svg"
 
 const Badge = ({ height, width }) => (
   <svg
