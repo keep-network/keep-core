@@ -1,9 +1,6 @@
 import React from "react"
 import { withTimeline } from "../withTimeline"
-import {
-  KEEP_TO_T_EXCHANGE_RATE_IN_WEI,
-  STAKE_ON_THRESHOLD_TIMELINE_STEPS,
-} from "../../../constants/constants"
+import { STAKE_ON_THRESHOLD_TIMELINE_STEPS } from "../../../constants/constants"
 import { StakeOnThresholdTimeline } from "./components"
 import { ModalBody, ModalFooter } from "../Modal"
 import TokenAmount from "../../TokenAmount"
@@ -17,6 +14,7 @@ import { KEEP, ThresholdToken } from "../../../utils/token.utils"
 import BigNumber from "bignumber.js"
 import { stakeKeepToT } from "../../../actions/keep-to-t-staking"
 import { useDispatch } from "react-redux"
+import { toThresholdTokenAmount } from "../../../utils/stake-to-t.utils"
 
 const StakeOnThresholdComponent = ({
   bodyTitle,
@@ -29,18 +27,6 @@ const StakeOnThresholdComponent = ({
   onClose,
 }) => {
   const dispatch = useDispatch()
-
-  const thresholdTokenAmount = (amount) => {
-    const floatingPointDivisor = new BigNumber(10).pow(15)
-    const amountInBN = new BigNumber(amount)
-    const wrappedRemainder = amountInBN.modulo(floatingPointDivisor)
-    const convertibleAmount = amountInBN.minus(wrappedRemainder)
-
-    return convertibleAmount
-      .multipliedBy(KEEP_TO_T_EXCHANGE_RATE_IN_WEI)
-      .dividedBy(floatingPointDivisor)
-      .toString()
-  }
 
   return (
     <>
@@ -74,7 +60,7 @@ const StakeOnThresholdComponent = ({
           <Icons.ArrowsRight className={"ml-1 mr-1"} />
           <TokenAmount
             token={ThresholdToken}
-            amount={thresholdTokenAmount(keepAmount)}
+            amount={toThresholdTokenAmount(keepAmount)}
             amountClassName="h3 text-black"
             symbolClassName="h3 text-black"
             withIcon
@@ -120,7 +106,7 @@ const StakeOnThresholdComponent = ({
               <span>
                 1 KEEP ={" "}
                 {ThresholdToken.displayAmountWithSymbol(
-                  thresholdTokenAmount(KEEP.fromTokenUnit(1)),
+                  toThresholdTokenAmount(KEEP.fromTokenUnit(1)),
                   3,
                   (amount) =>
                     new BigNumber(amount).toFormat(3, BigNumber.ROUND_DOWN)
