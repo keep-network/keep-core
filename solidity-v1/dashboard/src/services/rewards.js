@@ -1,6 +1,6 @@
 import web3Utils from "web3-utils"
 import { ContractsLoaded, getContractDeploymentBlockNumber } from "../contracts"
-import { ECDSARewardsHelper } from "../utils/rewardsHelper"
+import { ECDSAPeriodOfResolver } from "../utils/rewardsHelper"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import rewardsData from "../rewards-allocation/rewards.json"
@@ -85,7 +85,7 @@ export const fetchECDSAAvailableRewards = async (operators) => {
           merkleRoot,
           interval,
           amount: web3Utils.toBN(operatorClaim.amount).toString(),
-          rewardsPeriod: ECDSARewardsHelper.periodOf(interval),
+          rewardsPeriod: ECDSAPeriodOfResolver.resolve(interval, merkleRoot),
         })
       }
     }
@@ -108,11 +108,12 @@ export const fetchECDSAClaimedRewards = async (operators) => {
       filter: { operator: operators },
     })
   ).map((event) => {
-    const intervalOf = merkleRoots.indexOf(event.returnValues.merkleRoot)
+    const merkleRoot = event.returnValues.merkleRoot
+    const intervalOf = merkleRoots.indexOf(merkleRoot)
 
     return {
       ...event.returnValues,
-      rewardsPeriod: ECDSARewardsHelper.periodOf(intervalOf),
+      rewardsPeriod: ECDSAPeriodOfResolver.resolve(intervalOf, merkleRoot),
     }
   })
 }
