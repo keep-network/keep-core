@@ -226,7 +226,7 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgParameters(
             newDkgResultChallengePeriodLength,
             walletRegistry
-                .dkgResultParameters()
+                .dkgParameters()
                 .resultSubmissionEligibilityDelay
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
@@ -273,7 +273,7 @@ contract WalletRegistryGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
             walletRegistry
-                .dkgResultParameters()
+                .dkgParameters()
                 .resultSubmissionEligibilityDelay,
             newDkgResultSubmissionEligibilityDelay
         );

@@ -379,7 +379,7 @@ describe("WalletRegistryGovernance", async () => {
 
       it("should not update the DKG result challenge period length", async () => {
         expect(
-          (await walletRegistry.dkgResultParameters())
+          (await walletRegistry.dkgParameters())
             .resultChallengePeriodLength
         ).to.be.equal(params.dkgResultChallengePeriodLength)
       })
@@ -469,7 +469,7 @@ describe("WalletRegistryGovernance", async () => {
 
         it("should update the DKG result challenge period length", async () => {
           expect(
-            (await walletRegistry.dkgResultParameters())
+            (await walletRegistry.dkgParameters())
               .resultChallengePeriodLength
           ).to.be.equal(11)
         })
@@ -549,7 +549,7 @@ describe("WalletRegistryGovernance", async () => {
 
       it("should not update the DKG result submission eligibility delay", async () => {
         expect(
-          (await walletRegistry.dkgResultParameters())
+          (await walletRegistry.dkgParameters())
             .resultSubmissionEligibilityDelay
         ).to.be.equal(params.dkgResultSubmissionEligibilityDelay)
       })
@@ -639,7 +639,7 @@ describe("WalletRegistryGovernance", async () => {
 
         it("should update the DKG result submission eligibility delay", async () => {
           expect(
-            (await walletRegistry.dkgResultParameters())
+            (await walletRegistry.dkgParameters())
               .resultSubmissionEligibilityDelay
           ).to.be.equal(1)
         })
