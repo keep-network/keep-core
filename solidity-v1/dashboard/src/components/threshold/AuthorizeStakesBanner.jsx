@@ -3,8 +3,9 @@ import * as Icons from "../Icons"
 import React from "react"
 import Chip from "../Chip"
 import { LINK } from "../../constants/constants"
+import OnlyIf from "../OnlyIf"
 
-const AuthorizeStakesBanner = () => {
+const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
   return (
     <Banner className="banner authorize-stakes-banner">
       <div className="banner__content-wrapper">
@@ -12,7 +13,15 @@ const AuthorizeStakesBanner = () => {
         <div className="authorize-stakes-banner__content">
           <Banner.Title className="h3 text-white banner__title--font-weight-600">
             <p className="mb-1">
-              Authorize your 4 stakes below to get started staking on Threshold.
+              Authorize your{" "}
+              <OnlyIf condition={numberOfStakesToAuthorize > 0}>
+                {numberOfStakesToAuthorize}
+              </OnlyIf>{" "}
+              stake
+              <OnlyIf condition={numberOfStakesToAuthorize !== 1}>
+                {"s"}
+              </OnlyIf>{" "}
+              below to get started staking on Threshold.
             </p>
           </Banner.Title>
           <Banner.Description>
