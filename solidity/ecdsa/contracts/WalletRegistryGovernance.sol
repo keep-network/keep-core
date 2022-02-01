@@ -82,6 +82,7 @@ contract WalletRegistryGovernance is Ownable {
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
     ///        of the change.
+    /// @param delay Governance delay
     modifier onlyAfterGovernanceDelay(
         uint256 changeInitiatedTimestamp,
         uint256 delay
