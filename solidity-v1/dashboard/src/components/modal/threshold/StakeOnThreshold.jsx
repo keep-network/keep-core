@@ -1,6 +1,9 @@
 import React from "react"
 import { withTimeline } from "../withTimeline"
-import { STAKE_ON_THRESHOLD_TIMELINE_STEPS } from "../../../constants/constants"
+import {
+  LINK,
+  STAKE_ON_THRESHOLD_TIMELINE_STEPS,
+} from "../../../constants/constants"
 import { StakeOnThresholdTimeline } from "./components"
 import { ModalBody, ModalFooter } from "../Modal"
 import TokenAmount from "../../TokenAmount"
@@ -40,7 +43,7 @@ const StakeOnThresholdComponent = ({
         </h3>
         <OnlyIf condition={transactionHash}>
           <a
-            href={"https://google.com"}
+            href={LINK.setUpPRE}
             rel="noopener noreferrer"
             target="_blank"
             className={`btn btn-primary btn-semi-md mb-1`}
