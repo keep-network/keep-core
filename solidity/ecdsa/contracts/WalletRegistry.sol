@@ -166,7 +166,7 @@ contract WalletRegistry is Ownable {
     function updateDkgParameters(
         uint256 _resultChallengePeriodLength,
         uint256 _resultSubmissionEligibilityDelay
-    ) external {
+    ) external onlyOwner {
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
         dkg.setResultSubmissionEligibilityDelay(
             _resultSubmissionEligibilityDelay

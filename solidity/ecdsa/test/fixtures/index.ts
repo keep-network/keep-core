@@ -69,7 +69,7 @@ export async function walletRegistryFixture(): Promise<{
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await walletRegistry.updateDkgParameters(
+  await walletRegistry.connect(governance).updateDkgParameters(
     params.dkgResultChallengePeriodLength,
     params.dkgResultSubmissionEligibilityDelay
   )
