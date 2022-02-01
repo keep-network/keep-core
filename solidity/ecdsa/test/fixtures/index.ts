@@ -10,6 +10,7 @@ import type {
   WalletRegistry,
   WalletRegistryStub,
   StakingStub,
+  WalletRegistryGovernance,
 } from "../../typechain"
 
 const { to1e18 } = helpers.number
@@ -33,10 +34,12 @@ export const dkgState = {
 export const params = {
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionEligibilityDelay: 5,
+  governanceDelay: 43200, // 12 hours
 }
 
 export async function walletRegistryFixture(): Promise<{
   walletRegistry: WalletRegistryStub & WalletRegistry
+  walletRegistryGovernance: WalletRegistryGovernance
   sortitionPool: SortitionPool
   walletOwner: SignerWithAddress
   deployer: SignerWithAddress
@@ -49,6 +52,8 @@ export async function walletRegistryFixture(): Promise<{
 
   const walletRegistry: WalletRegistryStub & WalletRegistry =
     await ethers.getContract("WalletRegistry")
+  const walletRegistryGovernance: WalletRegistryGovernance =
+    await ethers.getContract("WalletRegistryGovernance")
   const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
   const staking: StakingStub = await ethers.getContract("StakingStub")
 
@@ -69,10 +74,26 @@ export async function walletRegistryFixture(): Promise<{
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await walletRegistry.connect(governance).updateDkgParameters(
-    params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionEligibilityDelay
-  )
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgResultChallengePeriodLengthUpdate(
+      params.dkgResultChallengePeriodLength
+    )
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgResultSubmissionEligibilityDelayUpdate(
+      params.dkgResultSubmissionEligibilityDelay
+    )
+
+  await helpers.time.increaseTime(params.governanceDelay)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgResultChallengePeriodLengthUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgResultSubmissionEligibilityDelayUpdate()
 
   return {
     walletRegistry,
@@ -83,5 +104,6 @@ export async function walletRegistryFixture(): Promise<{
     thirdParty,
     operators,
     staking,
+    walletRegistryGovernance,
   }
 }

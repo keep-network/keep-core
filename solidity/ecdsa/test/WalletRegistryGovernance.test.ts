@@ -20,20 +20,8 @@ describe("WalletRegistryGovernance", async () => {
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, governance, thirdParty } = await waffle.loadFixture(
-      walletRegistryFixture
-    ))
-
-    const WalletRegistryGovernance = await ethers.getContractFactory(
-      "WalletRegistryGovernance"
-    )
-    walletRegistryGovernance = (await WalletRegistryGovernance.connect(
-      governance
-    ).deploy(walletRegistry.address)) as WalletRegistryGovernance
-    await walletRegistryGovernance.deployed()
-    await walletRegistry
-      .connect(governance)
-      .transferOwnership(walletRegistryGovernance.address)
+    ;({ walletRegistry, walletRegistryGovernance, governance, thirdParty } =
+      await waffle.loadFixture(walletRegistryFixture))
   })
 
   describe("beginMaliciousDkgResultSlashingAmountUpdate", () => {
@@ -379,8 +367,7 @@ describe("WalletRegistryGovernance", async () => {
 
       it("should not update the DKG result challenge period length", async () => {
         expect(
-          (await walletRegistry.dkgParameters())
-            .resultChallengePeriodLength
+          (await walletRegistry.dkgParameters()).resultChallengePeriodLength
         ).to.be.equal(params.dkgResultChallengePeriodLength)
       })
 
@@ -469,8 +456,7 @@ describe("WalletRegistryGovernance", async () => {
 
         it("should update the DKG result challenge period length", async () => {
           expect(
-            (await walletRegistry.dkgParameters())
-              .resultChallengePeriodLength
+            (await walletRegistry.dkgParameters()).resultChallengePeriodLength
           ).to.be.equal(11)
         })
 

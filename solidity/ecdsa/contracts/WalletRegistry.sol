@@ -378,11 +378,7 @@ contract WalletRegistry is Ownable {
     }
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters()
-        external
-        view
-        returns (DKG.Parameters memory)
-    {
+    function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
     }
 }

@@ -226,9 +226,7 @@ contract WalletRegistryGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
             newDkgResultChallengePeriodLength,
-            walletRegistry
-                .dkgParameters()
-                .resultSubmissionEligibilityDelay
+            walletRegistry.dkgParameters().resultSubmissionEligibilityDelay
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
         newDkgResultChallengePeriodLength = 0;
@@ -273,9 +271,7 @@ contract WalletRegistryGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
-            walletRegistry
-                .dkgParameters()
-                .resultChallengePeriodLength,
+            walletRegistry.dkgParameters().resultChallengePeriodLength,
             newDkgResultSubmissionEligibilityDelay
         );
         dkgResultSubmissionEligibilityDelayChangeInitiated = 0;
