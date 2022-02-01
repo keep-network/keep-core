@@ -6,8 +6,8 @@ import { ViewAddressInBlockExplorer } from "../ViewInBlockExplorer"
 import { KEEP } from "../../utils/token.utils"
 import { shortenAddress } from "../../utils/general.utils"
 import resourceTooltipProps from "../../constants/tooltips"
-import Tooltip, { TOOLTIP_DIRECTION } from "../Tooltip"
 import * as Icons from "../Icons"
+import ReactTooltip from "react-tooltip"
 
 const AuthorizeThresholdContracts = ({
   data,
@@ -177,30 +177,32 @@ const AuthorizeActions = ({
   )
 
   return isAuthorized ? (
-    <Tooltip
-      simple
-      delay={0}
-      direction={TOOLTIP_DIRECTION.TOP}
-      contentWrapperStyles={{ textAlign: "left" }}
-      triggerComponent={() => {
-        return (
-          <Button
-            onClick={onStake}
-            className="btn btn-secondary btn-semi-sm"
-            style={{ marginLeft: "auto" }}
-          >
-            <Icons.MoreInfo className={"tooltip--button-corner"} />
-            stake
-          </Button>
-        )
-      }}
+    <Button
+      onClick={onStake}
+      className="btn btn-secondary btn-semi-sm"
+      style={{ marginLeft: "auto" }}
     >
-      <span>
-        The stake amount is not yet confirmed. Click “Stake” to confirm the
-        stake amount. This stake is not staked on Threshold until it is
-        confirmed.
-      </span>
-    </Tooltip>
+      <Icons.AlertFill
+        data-tip
+        data-for={`stake-tooltip-for-operator-${operatorAddress}`}
+        className={"tooltip--button-corner"}
+      />
+      <ReactTooltip
+        id={`stake-tooltip-for-operator-${operatorAddress}`}
+        place="top"
+        type="dark"
+        effect={"solid"}
+        className={"react-tooltip-base react-tooltip-base--arrow-right"}
+        offset={{ left: "100%!important" }}
+      >
+        <span>
+          The stake amount is not yet confirmed. Click “Stake” to confirm the
+          stake amount. This stake is not staked on Threshold until it is
+          confirmed.
+        </span>
+      </ReactTooltip>
+      stake
+    </Button>
   ) : (
     <Button
       onClick={onAuthorize}

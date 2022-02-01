@@ -78,6 +78,7 @@ export { ReactComponent as MBTC } from "../static/svg/mBTC.svg"
 export { ReactComponent as TBTC_V2 } from "../static/svg/tbtc_v2.svg"
 export { ReactComponent as ArrowsRight } from "../static/svg/arrows-right.svg"
 export { ReactComponent as TLogo } from "../static/svg/t-logo.svg"
+export { ReactComponent as AlertFill } from "../static/svg/alert-fill.svg"
 
 const Badge = ({ height, width }) => (
   <svg

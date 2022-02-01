@@ -137,6 +137,24 @@
 
 .tooltip--button-corner {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -7px;
+  right: -8px;
+}
+
+.react-tooltip-base {
+  white-space: normal;
+  width: 260px;
+  font-family: "Work Sans", sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  text-align: left;
+  font-size: 14px !important;
+  background-color: black !important;
+  font-variant: none;
+
+  &--arrow-right {
+    &::after {
+      left: 89% !important;
+    }
+  }
 }
