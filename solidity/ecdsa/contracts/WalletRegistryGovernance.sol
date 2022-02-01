@@ -275,7 +275,7 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgParameters(
             walletRegistry
                 .dkgParameters()
-                .resultSubmissionEligibilityDelay,
+                .resultChallengePeriodLength,
             newDkgResultSubmissionEligibilityDelay
         );
         dkgResultSubmissionEligibilityDelayChangeInitiated = 0;
