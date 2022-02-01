@@ -129,6 +129,7 @@ ThresholdApplicationPage.route = {
   exact: true,
   withConnectWalletGuard: true,
   emptyStateComponent: EmptyStatePage,
+  withNewLabel: true,
 }
 
 export default ThresholdApplicationPage
