@@ -1,12 +1,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import {
-  constants,
-  dkgState,
-  dkgParams,
-  walletRegistryFixture,
-} from "./fixtures"
+import { constants, dkgState, params, walletRegistryFixture } from "./fixtures"
 import ecdsaData from "./data/ecdsa"
 import {
   hashDKGMembers,
@@ -40,7 +35,7 @@ const { keccak256 } = ethers.utils
 describe("WalletRegistry - Wallet Creation", async () => {
   const dkgTimeout: number =
     constants.offchainDkgTime +
-    constants.groupSize * dkgParams.dkgResultSubmissionEligibilityDelay
+    constants.groupSize * params.dkgResultSubmissionEligibilityDelay
   const groupPublicKey: string = ethers.utils.hexValue(
     ecdsaData.group1.publicKey
   )
@@ -192,7 +187,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             before("approve dkg result", async () => {
               await createSnapshot()
 
-              await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+              await mineBlocks(params.dkgResultChallengePeriodLength)
 
               await walletRegistry
                 .connect(submitter)
@@ -382,7 +377,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             before("approve dkg result", async () => {
               await createSnapshot()
 
-              await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+              await mineBlocks(params.dkgResultChallengePeriodLength)
 
               await walletRegistry
                 .connect(submitter)
@@ -585,8 +580,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
-                  resultSubmissionBlock +
-                    dkgParams.dkgResultChallengePeriodLength
+                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
                 )
               })
 
@@ -605,7 +599,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 await mineBlocksTo(
                   resultSubmissionBlock +
-                    dkgParams.dkgResultChallengePeriodLength +
+                    params.dkgResultChallengePeriodLength +
                     1
                 )
               })
@@ -625,7 +619,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await createSnapshot()
 
               await mineBlocksTo(
-                resultSubmissionBlock + dkgParams.dkgResultChallengePeriodLength
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
               )
 
               await walletRegistry
@@ -683,7 +677,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await mineBlocksTo(
                   challengeBlockNumber +
                     constants.groupSize *
-                      dkgParams.dkgResultSubmissionEligibilityDelay
+                      params.dkgResultSubmissionEligibilityDelay
                 )
               })
 
@@ -703,7 +697,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await mineBlocksTo(
                   challengeBlockNumber +
                     constants.groupSize *
-                      dkgParams.dkgResultSubmissionEligibilityDelay +
+                      params.dkgResultSubmissionEligibilityDelay +
                     1
                 )
               })
@@ -889,7 +883,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                     await mineBlocksTo(
                       submissionStartBlockNumber +
-                        dkgParams.dkgResultSubmissionEligibilityDelay -
+                        params.dkgResultSubmissionEligibilityDelay -
                         2
                     )
                   })
@@ -920,7 +914,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                     await mineBlocksTo(
                       submissionStartBlockNumber +
-                        dkgParams.dkgResultSubmissionEligibilityDelay -
+                        params.dkgResultSubmissionEligibilityDelay -
                         1
                     )
                   })
@@ -956,7 +950,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     await mineBlocksTo(
                       submissionStartBlockNumber +
                         constants.groupSize *
-                          dkgParams.dkgResultSubmissionEligibilityDelay -
+                          params.dkgResultSubmissionEligibilityDelay -
                         1
                     )
                   })
@@ -984,7 +978,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     await mineBlocksTo(
                       submissionStartBlockNumber +
                         constants.groupSize *
-                          dkgParams.dkgResultSubmissionEligibilityDelay
+                          params.dkgResultSubmissionEligibilityDelay
                     )
                   })
 
@@ -1057,8 +1051,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
-                  resultSubmissionBlock +
-                    dkgParams.dkgResultChallengePeriodLength
+                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
                 )
 
                 await walletRegistry
@@ -1179,7 +1172,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                         await mineBlocksTo(
                           submissionStartBlockNumber +
-                            dkgParams.dkgResultSubmissionEligibilityDelay -
+                            params.dkgResultSubmissionEligibilityDelay -
                             2
                         )
                       })
@@ -1210,7 +1203,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                         await mineBlocksTo(
                           submissionStartBlockNumber +
-                            dkgParams.dkgResultSubmissionEligibilityDelay -
+                            params.dkgResultSubmissionEligibilityDelay -
                             1
                         )
                       })
@@ -1246,7 +1239,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                         await mineBlocksTo(
                           submissionStartBlockNumber +
                             constants.groupSize *
-                              dkgParams.dkgResultSubmissionEligibilityDelay -
+                              params.dkgResultSubmissionEligibilityDelay -
                             1
                         )
                       })
@@ -1274,7 +1267,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                         await mineBlocksTo(
                           submissionStartBlockNumber +
                             constants.groupSize *
-                              dkgParams.dkgResultSubmissionEligibilityDelay
+                              params.dkgResultSubmissionEligibilityDelay
                         )
                       })
 
@@ -1516,7 +1509,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               await mineBlocksTo(
                 resultSubmissionBlock +
-                  dkgParams.dkgResultChallengePeriodLength -
+                  params.dkgResultChallengePeriodLength -
                   1
               )
             })
@@ -1537,7 +1530,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await createSnapshot()
 
               await mineBlocksTo(
-                resultSubmissionBlock + dkgParams.dkgResultChallengePeriodLength
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
               )
             })
 
@@ -1620,7 +1613,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await createSnapshot()
 
                   await mineBlocks(
-                    dkgParams.dkgResultSubmissionEligibilityDelay - 1
+                    params.dkgResultSubmissionEligibilityDelay - 1
                   )
                 })
 
@@ -1647,9 +1640,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 before(async () => {
                   await createSnapshot()
 
-                  await mineBlocks(
-                    dkgParams.dkgResultSubmissionEligibilityDelay
-                  )
+                  await mineBlocks(params.dkgResultSubmissionEligibilityDelay)
                   // initialDkgRewardsPoolBalance =
                   //   await walletRegistry.dkgRewardsPool()
                   // initApproverBalance = await testToken.balanceOf(
@@ -1711,8 +1702,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             await createSnapshot()
 
             await mineBlocks(
-              dkgParams.dkgResultSubmissionEligibilityDelay *
-                submitterIndexShift
+              params.dkgResultSubmissionEligibilityDelay * submitterIndexShift
             )
 
             const { dkgResult: maliciousDkgResult } =
@@ -1729,8 +1719,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             await walletRegistry.challengeDkgResult(maliciousDkgResult)
 
             await mineBlocks(
-              dkgParams.dkgResultSubmissionEligibilityDelay *
-                anotherSubmitterIndex
+              params.dkgResultSubmissionEligibilityDelay * anotherSubmitterIndex
             )
 
             let tx: ContractTransaction
@@ -1761,7 +1750,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               await mineBlocksTo(
                 resultSubmissionBlock +
-                  dkgParams.dkgResultChallengePeriodLength -
+                  params.dkgResultChallengePeriodLength -
                   1
               )
             })
@@ -1789,7 +1778,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await createSnapshot()
 
               await mineBlocksTo(
-                resultSubmissionBlock + dkgParams.dkgResultChallengePeriodLength
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
               )
 
               // initialDkgRewardsPoolBalance =
@@ -1873,7 +1862,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               noMisbehaved
             ))
 
-          await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+          await mineBlocks(params.dkgResultChallengePeriodLength)
 
           tx = await walletRegistry
             .connect(submitter)
@@ -1917,7 +1906,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             misbehavedIndices
           ))
 
-          await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+          await mineBlocks(params.dkgResultChallengePeriodLength)
           tx = await walletRegistry
             .connect(submitter)
             .approveDkgResult(dkgResult)
@@ -1982,7 +1971,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               misbehavedIndices
             ))
 
-            await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+            await mineBlocks(params.dkgResultChallengePeriodLength)
           })
 
           after(async () => {
@@ -2015,7 +2004,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             misbehavedIndices
           ))
 
-          await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+          await mineBlocks(params.dkgResultChallengePeriodLength)
         })
 
         after(async () => {
@@ -2168,7 +2157,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 newResultSubmitterIndex
               ))
 
-            await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+            await mineBlocks(params.dkgResultChallengePeriodLength)
           })
 
           after(async () => {
@@ -2361,7 +2350,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 await mineBlocksTo(
                   resultSubmissionBlock +
-                    dkgParams.dkgResultChallengePeriodLength -
+                    params.dkgResultChallengePeriodLength -
                     1
                 )
               })
@@ -2422,8 +2411,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
-                  resultSubmissionBlock +
-                    dkgParams.dkgResultChallengePeriodLength
+                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
                 )
               })
 
@@ -2767,7 +2755,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 await mineBlocksTo(
                   resultSubmissionBlock +
-                    dkgParams.dkgResultChallengePeriodLength -
+                    params.dkgResultChallengePeriodLength -
                     1
                 )
               })
@@ -2825,8 +2813,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
-                  resultSubmissionBlock +
-                    dkgParams.dkgResultChallengePeriodLength
+                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
                 )
               })
 
@@ -2988,8 +2975,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       // Submit result 2 in the middle of the submission period
       let blocksToMine =
-        (constants.groupSize * dkgParams.dkgResultSubmissionEligibilityDelay) /
-        2
+        (constants.groupSize * params.dkgResultSubmissionEligibilityDelay) / 2
       await mineBlocks(blocksToMine)
       ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
         walletRegistry,
@@ -3010,8 +2996,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
       expectedSubmissionOffset += blocksToMine
 
       // Challenge result 2 in the middle of the challenge period
-      await mineBlocks(dkgParams.dkgResultChallengePeriodLength / 2)
-      expectedSubmissionOffset += dkgParams.dkgResultChallengePeriodLength / 2
+      await mineBlocks(params.dkgResultChallengePeriodLength / 2)
+      expectedSubmissionOffset += params.dkgResultChallengePeriodLength / 2
       await walletRegistry.challengeDkgResult(dkgResult)
       expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
 
@@ -3024,7 +3010,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       // Submit result 3 at the end of the submission period
       blocksToMine =
-        constants.groupSize * dkgParams.dkgResultSubmissionEligibilityDelay - 1
+        constants.groupSize * params.dkgResultSubmissionEligibilityDelay - 1
       await mineBlocks(blocksToMine)
       ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
         walletRegistry,
@@ -3045,7 +3031,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       expectedSubmissionOffset += blocksToMine
 
       // Challenge result 3 at the end of the challenge period
-      blocksToMine = dkgParams.dkgResultChallengePeriodLength - 1
+      blocksToMine = params.dkgResultChallengePeriodLength - 1
       await mineBlocks(blocksToMine)
       expectedSubmissionOffset += blocksToMine
 
@@ -3065,7 +3051,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       // Submit result 4 after the submission period
       blocksToMine =
-        constants.groupSize * dkgParams.dkgResultSubmissionEligibilityDelay
+        constants.groupSize * params.dkgResultSubmissionEligibilityDelay
       await mineBlocks(blocksToMine)
       await expect(
         signAndSubmitArbitraryDkgResult(
@@ -3233,12 +3219,12 @@ async function assertDkgResultCleanData(walletRegistry: WalletRegistryStub) {
   expect(
     dkgData.parameters.resultChallengePeriodLength,
     "unexpected resultChallengePeriodLength"
-  ).to.eq(dkgParams.dkgResultChallengePeriodLength)
+  ).to.eq(params.dkgResultChallengePeriodLength)
 
   expect(
     dkgData.parameters.resultSubmissionEligibilityDelay,
     "unexpected resultSubmissionEligibilityDelay"
-  ).to.eq(dkgParams.dkgResultSubmissionEligibilityDelay)
+  ).to.eq(params.dkgResultSubmissionEligibilityDelay)
 
   expect(dkgData.startBlock, "unexpected startBlock").to.eq(0)
 

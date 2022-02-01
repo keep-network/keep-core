@@ -1,6 +1,6 @@
 import { helpers } from "hardhat"
 
-import { constants, dkgParams } from "../fixtures"
+import { constants, params } from "../fixtures"
 import ecdsaData from "../data/ecdsa"
 
 import {
@@ -65,7 +65,7 @@ export async function createNewWallet(
     noMisbehaved
   )
 
-  await mineBlocks(dkgParams.dkgResultChallengePeriodLength)
+  await mineBlocks(params.dkgResultChallengePeriodLength)
 
   const approveDkgResultTx = await walletRegistry
     .connect(submitter)

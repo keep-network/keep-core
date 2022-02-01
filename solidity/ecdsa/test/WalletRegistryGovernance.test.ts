@@ -1,7 +1,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { walletRegistryFixture, dkgParams } from "./fixtures"
+import { walletRegistryFixture, params } from "./fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, WalletRegistryGovernance } from "../typechain"
@@ -381,7 +381,7 @@ describe("WalletRegistryGovernance", async () => {
         expect(
           (await walletRegistry.dkgResultParameters())
             .resultChallengePeriodLength
-        ).to.be.equal(dkgParams.dkgResultChallengePeriodLength)
+        ).to.be.equal(params.dkgResultChallengePeriodLength)
       })
 
       it("should start the governance delay timer", async () => {
@@ -551,7 +551,7 @@ describe("WalletRegistryGovernance", async () => {
         expect(
           (await walletRegistry.dkgResultParameters())
             .resultSubmissionEligibilityDelay
-        ).to.be.equal(dkgParams.dkgResultSubmissionEligibilityDelay)
+        ).to.be.equal(params.dkgResultSubmissionEligibilityDelay)
       })
 
       it("should start the governance delay timer", async () => {
