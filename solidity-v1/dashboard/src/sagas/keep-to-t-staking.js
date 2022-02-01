@@ -23,6 +23,7 @@ import {
 } from "../actions"
 import { thresholdAuthorizationService } from "../services/threshold-authorization.service"
 import { takeOnlyOnce } from "./effects"
+import { fromThresholdTokenAmount } from "../utils/stake-to-t.utils"
 
 export function* subscribeToStakeKeepEvent() {
   const requestChan = yield actionChannel(THRESHOLD_STAKE_KEEP_EVENT_EMITTED)
@@ -51,6 +52,7 @@ export function* subscribeToStakeKeepEvent() {
           authorizer,
           beneficiary,
           operator,
+          keepAmount: fromThresholdTokenAmount(tAmount),
         },
       })
     )
