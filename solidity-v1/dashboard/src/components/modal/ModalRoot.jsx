@@ -47,6 +47,10 @@ import {
   StakeOnThresholdConfirmed,
   StakeOnThresholdWithoutAuthorization,
 } from "./threshold/StakeOnThreshold"
+import {
+  ThresholdAuthorizationLoadingModal,
+  ThresholdStakeConfirmationLoadingModal,
+} from "./threshold/ThresholdLoadingModal"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -91,6 +95,10 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.StakeOnThresholdWithoutAuthorization]:
     StakeOnThresholdWithoutAuthorization,
   [MODAL_TYPES.StakeOnThresholdConfirmed]: StakeOnThresholdConfirmed,
+  [MODAL_TYPES.ThresholdAuthorizationLoadingModal]:
+    ThresholdAuthorizationLoadingModal,
+  [MODAL_TYPES.ThresholdStakeConfirmationLoadingModal]:
+    ThresholdStakeConfirmationLoadingModal,
 }
 
 const modalRoot = document.getElementById("modal-root")

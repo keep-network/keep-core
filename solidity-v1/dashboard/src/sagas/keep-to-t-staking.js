@@ -13,7 +13,7 @@ import {
   THRESHOLD_STAKE_KEEP_EVENT_EMITTED,
   thresholdContractAuthorized,
 } from "../actions/keep-to-t-staking"
-import { showModal } from "../actions/modal"
+import { hideModal, showModal } from "../actions/modal"
 import { MODAL_TYPES } from "../constants/constants"
 import {
   FETCH_THRESHOLD_AUTH_DATA_FAILURE,
@@ -54,41 +54,6 @@ export function* subscribeToStakeKeepEvent() {
         },
       })
     )
-
-    // const address = yield select(selectors.getUserAddress)
-    // const {
-    //   covBalance,
-    //   totalValueLocked,
-    //   covTotalSupply,
-    //   withdrawalDelay,
-    //   withdrawalTimeout,
-    // } = yield select(selectors.getCoveragePool)
-    //
-    // if (!isSameEthAddress(address, underwriter)) {
-    //   continue
-    // }
-    // // TODO: display modal with `WithdrawalOverview` component if a user
-    // // increased existing withdrawal.
-    // yield put(
-    //   showModal({
-    //     modalType: MODAL_TYPES.StakeOnThreshold,
-    //     modalProps: {
-    //       // amount: covAmount,
-    //       transactionHash: event.transactionHash,
-    //       authorizer,
-    //       beneficiary,
-    //       operator,
-    //     },
-    //   })
-    // )
-    //
-    // yield put(
-    //   covTokenUpdated({
-    //     pendingWithdrawal: covAmount,
-    //     withdrawalInitiatedTimestamp: timestamp,
-    //     covTokensAvailableToWithdraw: sub(covBalance, covAmount).toString(),
-    //   })
-    // )
   }
 }
 
@@ -99,24 +64,52 @@ function* authorizeAndStakeKeepToT(action) {
   const operatorContractAddress = getThresholdTokenStakingAddress()
 
   if (!isAuthorized) {
-    yield call(sendTransaction, {
-      payload: {
-        contract: stakingContract,
-        methodName: "authorizeOperatorContract",
-        args: [operator, operatorContractAddress],
-      },
-    })
+    yield put(
+      showModal({
+        modalType: MODAL_TYPES.ThresholdAuthorizationLoadingModal,
+        modalProps: {
+          text: "Please, authorize in your wallet",
+        },
+      })
+    )
+
+    try {
+      yield call(sendTransaction, {
+        payload: {
+          contract: stakingContract,
+          methodName: "authorizeOperatorContract",
+          args: [operator, operatorContractAddress],
+        },
+      })
+    } catch (err) {
+      yield put(hideModal())
+      return
+    }
 
     yield put(thresholdContractAuthorized(operator))
   }
 
-  yield call(sendTransaction, {
-    payload: {
-      contract: Keep.keepToTStaking.thresholdStakingContract.instance,
-      methodName: "stakeKeep",
-      args: [operator],
-    },
-  })
+  yield put(
+    showModal({
+      modalType: MODAL_TYPES.ThresholdStakeConfirmationLoadingModal,
+      modalProps: {
+        text: "Please, confirm in your wallet",
+      },
+    })
+  )
+
+  try {
+    yield call(sendTransaction, {
+      payload: {
+        contract: Keep.keepToTStaking.thresholdStakingContract.instance,
+        methodName: "stakeKeep",
+        args: [operator],
+      },
+    })
+  } catch (err) {
+    yield put(hideModal())
+    return
+  }
 
   yield put(stakedToT(operator))
 }

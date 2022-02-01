@@ -275,6 +275,9 @@ export const MODAL_TYPES = {
   AuthorizeAndStakeOnThreshold: "AuthorizeAndStakeOnThreshold",
   StakeOnThresholdWithoutAuthorization: "StakeOnThresholdWithoutAuthorization",
   StakeOnThresholdConfirmed: "StakeOnThresholdConfirmed",
+  ThresholdAuthorizationLoadingModal: "ThresholdAuthorizationLoadingModal",
+  ThresholdStakeConfirmationLoadingModal:
+    "ThresholdStakeConfirmationLoadingModal",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {
