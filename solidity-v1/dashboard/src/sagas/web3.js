@@ -19,12 +19,12 @@ function createTransactionEventChannel(
   contract,
   method,
   args = [],
-  options = {},
-  displayWalletMessage = true
+  sendOptions = {},
+  options = { displayWalletMessage: true }
 ) {
-  const emitter = contract.methods[method](...args).send(options)
+  const emitter = contract.methods[method](...args).send(sendOptions)
 
-  return createEventChannelFromEmitter(emitter, displayWalletMessage)
+  return createEventChannelFromEmitter(emitter, options)
 }
 
 function createRawTransactionEventChannel(transactionObject, web3) {
@@ -33,7 +33,9 @@ function createRawTransactionEventChannel(transactionObject, web3) {
   return createEventChannelFromEmitter(emitter)
 }
 
-function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
+function createEventChannelFromEmitter(emitter, options) {
+  const { displayWalletMessage, onTransactionHashAction } = options
+
   let txHashCache
 
   let showPendingActionMessage
@@ -63,6 +65,11 @@ function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
           },
         })
         emit(showPendingActionMessage)
+        if (
+          onTransactionHashAction &&
+          typeof onTransactionHashAction === "function"
+        )
+          emit(onTransactionHashAction(txHash))
       })
       .once("receipt", (receipt) => {
         let id
@@ -142,7 +149,7 @@ export function createSubcribeToContractEventChannel(
 }
 
 export function* sendTransaction(action) {
-  const { contract, methodName, args, options } = action.payload
+  const { contract, methodName, args, options, sendOptions } = action.payload
   const web3 = yield getWeb3Context()
   const displayWalletMessage = !web3.currentProvider?._providers?.some(
     (provider) => provider instanceof ExplorerModeSubprovider
@@ -152,8 +159,8 @@ export function* sendTransaction(action) {
     contract,
     methodName,
     args,
-    options,
-    displayWalletMessage
+    sendOptions,
+    { displayWalletMessage, ...options }
   )
 
   try {
@@ -190,13 +197,15 @@ export function* sendRawTransaction(action) {
 
 export function* watchSendTransactionRequest() {
   yield takeEvery("web3/send_transaction", function* (action) {
-    const { contractName, methodName, args, options } = action.payload
+    const { contractName, methodName, args, sendOptions, options } =
+      action.payload
     const contracts = yield getContractsContext()
 
     const sendTransactionPayload = {
       contract: contracts[contractName],
       methodName,
       args,
+      sendOptions,
       options,
     }
 
