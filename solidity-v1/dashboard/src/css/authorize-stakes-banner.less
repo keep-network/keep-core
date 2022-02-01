@@ -1,0 +1,92 @@
+.authorize-stakes-banner {
+  width: 100%;
+  max-width: none;
+  background-color: @color-brand-violet-80;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1.5rem 4.5rem;
+
+  .banner__content-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+
+    .banner__title {
+      &:extend(.h3);
+      margin-bottom: 2rem;
+
+      &--font-weight-600 {
+        font-weight: 600;
+      }
+    }
+
+    .banner__icon {
+      flex-shrink: 0;
+      width: auto;
+      height: auto;
+      margin-bottom: 2rem;
+    }
+
+    @media screen and (min-width: 750px) {
+      .banner__title {
+        &:extend(.h3);
+        margin-bottom: 0;
+        margin-left: 5rem;
+        margin-right: auto;
+      }
+
+      .banner__icon {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .authorize-stakes-banner {
+    &__content {
+      color: white;
+      flex-grow: 1;
+
+      .banner__title {
+      }
+
+      .banner__description {
+        color: white;
+        margin-left: 5rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    &__base-info-icon {
+      margin-right: 0.4rem;
+      width: 12px;
+      height: 12px;
+      path {
+        fill: white;
+      }
+    }
+
+    &__base-info {
+      ul {
+        li {
+          display: flex;
+          align-items: center;
+        }
+      }
+    }
+
+    &__pre-node-info {
+      align-items: baseline;
+    }
+
+    &__pre-node-info-chip {
+      margin-right: 0.4rem;
+      background-color: #faad14 !important;
+    }
+
+    &__pre-node-info-link {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+  }
+}

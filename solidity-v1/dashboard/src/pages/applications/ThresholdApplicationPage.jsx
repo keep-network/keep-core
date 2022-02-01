@@ -10,6 +10,7 @@ import ThresholdAuthorizationHistory from "../../components/threshold/ThresholdS
 import { MODAL_TYPES } from "../../constants/constants"
 import { useModal } from "../../hooks/useModal"
 import { FETCH_THRESHOLD_AUTH_DATA_REQUEST } from "../../actions"
+import AuthorizeStakesBanner from "../../components/threshold/AuthorizeStakesBanner"
 
 const ThresholdApplicationPage = () => {
   const [selectedOperator, setOperator] = useState({})
@@ -99,6 +100,7 @@ const ThresholdApplicationPage = () => {
           <DataTableSkeleton columns={4} subtitleWidth="40%" />
         }
       >
+        <AuthorizeStakesBanner />
         <AuthorizeThresholdContracts
           filterDropdownOptions={thresholdAuthState.authData}
           onSelectOperator={setOperator}
