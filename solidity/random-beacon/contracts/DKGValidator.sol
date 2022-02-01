@@ -63,15 +63,12 @@ contract DKGValidator {
     ///         and signatures of operators supporting the result.
     /// @param seed seed used to start the DKG and select group members
     /// @param startBlock DKG start block
-    /// @param groupMembersHash Challenged group members hash. Hash must be created
-    ///        by filtering out misbehaved members.
     /// @return isValid true if the result is valid, false otherwise
     /// @return errorMsg validation error message; empty for a valid result
     function validate(
         DKG.Result calldata result,
         uint256 seed,
-        uint256 startBlock,
-        bytes32 groupMembersHash
+        uint256 startBlock
     ) external view returns (bool isValid, string memory errorMsg) {
         (bool hasValidFields, string memory error) = validateFields(result);
         if (!hasValidFields) {
@@ -87,7 +84,7 @@ contract DKGValidator {
         }
 
         // At this point all group members and mishbehaved members were verified
-        if (!validateMembersHash(result, groupMembersHash)) {
+        if (!validateMembersHash(result)) {
             return (false, "Invalid members hash");
         }
 
@@ -252,14 +249,13 @@ contract DKGValidator {
     /// @notice Performs validation of hashed group members that actively took
     ///         part in DKG.
     /// @param result DKG result
-    /// @param actualMembersHash Hashed group members that actively took part in
-    ///        dkg
     /// @return true if result's group members hash matches with the one that is
     ///         challenged.
-    function validateMembersHash(
-        DKG.Result calldata result,
-        bytes32 actualMembersHash
-    ) public view returns (bool) {
+    function validateMembersHash(DKG.Result calldata result)
+        public
+        view
+        returns (bool)
+    {
         if (result.misbehavedMembersIndices.length > 0) {
             // members that generated a group signing key
             uint32[] memory groupMembers = new uint32[](
@@ -277,9 +273,9 @@ contract DKGValidator {
                 }
             }
 
-            return keccak256(abi.encode(groupMembers)) == actualMembersHash;
+            return keccak256(abi.encode(groupMembers)) == result.membersHash;
         }
 
-        return keccak256(abi.encode(result.members)) == actualMembersHash;
+        return keccak256(abi.encode(result.members)) == result.membersHash;
     }
 }

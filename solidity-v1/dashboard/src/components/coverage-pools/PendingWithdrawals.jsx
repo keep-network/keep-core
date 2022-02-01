@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { reinitiateWithdraw } from "../../actions/coverage-pool"
 import { useDispatch, useSelector } from "react-redux"
 import { useModal } from "../../hooks/useModal"
@@ -21,6 +21,7 @@ import {
   MODAL_TYPES,
 } from "../../constants/constants"
 import AddToCalendar from "../AddToCalendar"
+import useCurrentDate from "../../hooks/useCurrentDate"
 
 const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
   const dispatch = useDispatch()
@@ -35,16 +36,7 @@ const PendingWithdrawals = ({ covTokensAvailableToWithdraw }) => {
     pendingWithdrawal,
     withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
-  const [currentDateInUnix, setCurrentDateInUnix] = useState(moment().unix())
-
-  useEffect(() => {
-    const myInterval = setInterval(() => {
-      setCurrentDateInUnix(moment().unix())
-    }, 1000)
-    return () => {
-      clearInterval(myInterval)
-    }
-  })
+  const currentDateInUnix = useCurrentDate()
 
   const onClaimTokensSubmitButtonClick = (covAmount) => {
     openModal(MODAL_TYPES.CovPoolClaimTokens, {

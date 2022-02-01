@@ -2,6 +2,7 @@ import React, { useMemo } from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
 import NavLink from "../NavLink"
+import UpgradeToTButton from "../UpgradeToTButton"
 
 const UpgradeTokensTile = ({
   title,
@@ -65,14 +66,9 @@ UpgradeTokensTile.Button = ({
 
 UpgradeTokensTile.Link = ({ linkText, to = "", className = "" }) => {
   return (
-    <a
-      href={to}
-      rel="noopener noreferrer"
-      target="_blank"
-      className={`btn btn-primary btn-md upgrade-tokens-tile__button ${className}`}
-    >
-      {linkText} ↗
-    </a>
+    <UpgradeToTButton
+      className={"btn-primary btn-md upgrade-tokens-tile__button"}
+    />
   )
 }
 
