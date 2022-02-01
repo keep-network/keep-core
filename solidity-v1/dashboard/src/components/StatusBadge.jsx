@@ -1,6 +1,8 @@
 import React from "react"
 import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import * as Icons from "./Icons"
+import ReactTooltip from "react-tooltip"
+import OnlyIf from "./OnlyIf"
 
 export const BADGE_STATUS = {
   [PENDING_STATUS]: {
@@ -27,7 +29,16 @@ export const BADGE_STATUS = {
 
 const badgeStyle = { padding: "0.1rem 0.5rem", borderRadius: "100px" }
 
-const StatusBadge = ({ status, text, className, onlyIcon, bgClassName }) => {
+const StatusBadge = ({
+  status,
+  text,
+  className,
+  onlyIcon,
+  bgClassName,
+  withTooltip = false,
+  tooltipId,
+  tooltipProps = {},
+}) => {
   return onlyIcon ? (
     <span className="flex row center">
       {status.icon}
@@ -39,8 +50,19 @@ const StatusBadge = ({ status, text, className, onlyIcon, bgClassName }) => {
         bgClassName || status.bgClassName
       } text-label text-normal ${className}`}
       style={badgeStyle}
+      data-tip
+      data-for={tooltipId}
     >
       {text}
+      <OnlyIf condition={withTooltip}>
+        <ReactTooltip id={tooltipId} {...tooltipProps}>
+          <span>
+            The stake amount is not yet confirmed. Click “Stake” to confirm the
+            stake amount. This stake is not staked on Threshold until it is
+            confirmed.
+          </span>
+        </ReactTooltip>
+      </OnlyIf>
     </span>
   )
 }

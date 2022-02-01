@@ -36,7 +36,7 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
         <Column
           header="status"
           field="status"
-          renderContent={({ isStakedToT, isAuthorized }) => (
+          renderContent={({ isStakedToT, isAuthorized, operatorAddress }) => (
             <div className={"flex column center"}>
               {isStakedToT ? (
                 <StatusBadge
@@ -45,11 +45,21 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
                   text="confirmed"
                 />
               ) : (
-                <StatusBadge
-                  className="self-start mb-1"
-                  status={BADGE_STATUS.ERROR}
-                  text="missing stake confirmation"
-                />
+                <>
+                  <StatusBadge
+                    className="self-start mb-1"
+                    status={BADGE_STATUS.ERROR}
+                    text="missing stake confirmation"
+                    withTooltip
+                    tooltipId={`missing-stake-confirmation-for-operator-${operatorAddress}`}
+                    tooltipProps={{
+                      place: "top",
+                      type: "dark",
+                      effect: "solid",
+                      className: "react-tooltip-base",
+                    }}
+                  />
+                </>
               )}
               <OnlyIf condition={isAuthorized}>
                 <StatusBadge
