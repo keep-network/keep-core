@@ -3,6 +3,7 @@ import { actionChannel, call, put, take, takeEvery } from "redux-saga/effects"
 import { sendTransaction } from "./web3"
 import {
   getContractsContext,
+  getWeb3Context,
   identifyTaskByAddress,
   logErrorAndThrow,
   submitButtonHelper,
@@ -24,6 +25,8 @@ import {
 import { thresholdAuthorizationService } from "../services/threshold-authorization.service"
 import { takeOnlyOnce } from "./effects"
 import { fromThresholdTokenAmount } from "../utils/stake-to-t.utils"
+import { messageType } from "../components/Message"
+import { showMessage } from "../actions/messages"
 
 export function* subscribeToStakeKeepEvent() {
   const requestChan = yield actionChannel(THRESHOLD_STAKE_KEEP_EVENT_EMITTED)
@@ -165,4 +168,43 @@ export function* watchFetchThresholdAuthData() {
     identifyTaskByAddress,
     fetchThresholdAuthData
   )
+}
+
+export function* watchFetchThresholdAuthDataSuccess() {
+  yield takeEvery(
+    FETCH_THRESHOLD_AUTH_DATA_SUCCESS,
+    processThresholdAuthorizationNotification
+  )
+}
+
+function* processThresholdAuthorizationNotification(action) {
+  const stakesAvailableToStakeOnThreshold = action.payload.filter(
+    (stake) => !stake.isStakedToT
+  ).length
+
+  const inflectionOfAStakeWord =
+    stakesAvailableToStakeOnThreshold === 1 ? "stake" : "stakes"
+
+  if (stakesAvailableToStakeOnThreshold > 0) {
+    yield put(
+      showMessage({
+        messageType: messageType.STAKE_READY_TO_BE_STAKED_TO_T,
+        messageProps: {
+          sticky: true,
+          title: `You have ${stakesAvailableToStakeOnThreshold} ${inflectionOfAStakeWord} to stake on Threshold and earn rewards`,
+        },
+      })
+    )
+  }
+}
+
+export function* fetchThresholdAuthDataRequest() {
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  yield put({
+    type: FETCH_THRESHOLD_AUTH_DATA_REQUEST,
+    payload: { address: defaultAccount },
+  })
 }

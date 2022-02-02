@@ -12,6 +12,7 @@ import SuccessMessage from "./messages/SuccessMessage"
 import ErrorMessage from "./messages/ErrorMessage"
 import DelegationAlreadyCopiedMessage from "./messages/DelegationAlreadyCopiedMessage"
 import TopUpReadyToBeCommittedMessage from "./messages/TopUpReadyToBeCommittedMessage"
+import StakeReadyToBeStakedToT from "./messages/StakeReadyToBeStakedToT"
 
 export const MessagesContext = React.createContext({})
 
@@ -25,6 +26,7 @@ export const messageType = {
   LIQUIDITY_REWARDS_EARNED: LiquidityRewardsEarnedMessage,
   DELEGATION_ALREADY_COPIED: DelegationAlreadyCopiedMessage,
   TOP_UP_READY_TO_BE_COMMITTED: TopUpReadyToBeCommittedMessage,
+  STAKE_READY_TO_BE_STAKED_TO_T: StakeReadyToBeStakedToT,
 }
 
 const messageTransitionTimeoutInMs = 500

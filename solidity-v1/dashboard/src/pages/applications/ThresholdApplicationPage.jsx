@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
+import React, { useCallback, useMemo, useState } from "react"
+import { useSelector } from "react-redux"
 import EmptyStatePage from "./EmptyStatePage"
-import { useWeb3Address } from "../../components/WithWeb3Context"
 import { isSameEthAddress } from "../../utils/general.utils"
 import { LoadingOverlay } from "../../components/Loadable"
 import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
@@ -9,24 +8,14 @@ import AuthorizeThresholdContracts from "../../components/threshold/AuthorizeThr
 import ThresholdAuthorizationHistory from "../../components/threshold/ThresholdStakingAuthorizationHistory"
 import { MODAL_TYPES } from "../../constants/constants"
 import { useModal } from "../../hooks/useModal"
-import { FETCH_THRESHOLD_AUTH_DATA_REQUEST } from "../../actions"
 import AuthorizeStakesBanner from "../../components/threshold/AuthorizeStakesBanner"
 
 const ThresholdApplicationPage = () => {
   const [selectedOperator, setOperator] = useState({})
-  const address = useWeb3Address()
   const { openModal } = useModal()
-  const dispatch = useDispatch()
   const thresholdAuthState = useSelector(
     (state) => state.thresholdAuthorization
   )
-
-  useEffect(() => {
-    dispatch({
-      type: FETCH_THRESHOLD_AUTH_DATA_REQUEST,
-      payload: { address },
-    })
-  }, [dispatch, address])
 
   const authorizeContract = useCallback(
     async (data, awaitingPromise) => {
