@@ -59,13 +59,8 @@ contract WalletRegistryGovernance is Ownable {
     // - DKG result submission eligibility delay
     uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
 
-    event WalletOwnerUpdateStarted(
-        address walletOwner,
-        uint256 timestamp
-    );
-    event WalletOwnerUpdated(
-        address walletOwner
-    );
+    event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
+    event WalletOwnerUpdated(address walletOwner);
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
         uint256 maliciousDkgResultSlashingAmount,
@@ -124,16 +119,14 @@ contract WalletRegistryGovernance is Ownable {
     /// @notice Begins the wallet owner update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newWalletOwner New wallet owner address
-    function beginWalletOwnerUpdate(
-        address _newWalletOwner
-    ) external onlyOwner {
+    function beginWalletOwnerUpdate(address _newWalletOwner)
+        external
+        onlyOwner
+    {
         /* solhint-disable not-rely-on-time */
         newWalletOwner = _newWalletOwner;
         walletOwnerChangeInitiated = block.timestamp;
-        emit WalletOwnerUpdateStarted(
-            _newWalletOwner,
-            block.timestamp
-        );
+        emit WalletOwnerUpdateStarted(_newWalletOwner, block.timestamp);
         /* solhint-enable not-rely-on-time */
     }
 
@@ -148,13 +141,9 @@ contract WalletRegistryGovernance is Ownable {
             CRITICAL_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        emit WalletOwnerUpdated(
-            newWalletOwner
-        );
+        emit WalletOwnerUpdated(newWalletOwner);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateWalletParameters(
-            newWalletOwner
-        );
+        walletRegistry.updateWalletParameters(newWalletOwner);
         walletOwnerChangeInitiated = 0;
         newWalletOwner = address(0);
     }
