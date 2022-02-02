@@ -110,10 +110,6 @@ const AuthorizeThresholdContracts = ({
   )
 }
 
-// const styles = {
-//   tooltipContentWrapper: { textAlign: "left", minWidth: "15rem" },
-// }
-
 const AuthorizeContractItem = ({ contractName, operatorContractAddress }) => {
   return (
     <div className="flex row wrap space-between center">
