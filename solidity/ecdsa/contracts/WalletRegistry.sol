@@ -70,7 +70,6 @@ contract WalletRegistry is Ownable {
     // External dependencies
 
     SortitionPool public immutable sortitionPool;
-    IERC20 public immutable tToken;
     /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
     /// IStaking interface from there.
     IWalletStaking public immutable staking;
@@ -123,13 +122,11 @@ contract WalletRegistry is Ownable {
 
     constructor(
         SortitionPool _sortitionPool,
-        IERC20 _tToken,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
         address _walletOwner
     ) {
         sortitionPool = _sortitionPool;
-        tToken = _tToken;
         staking = _staking;
         walletOwner = _walletOwner;
 

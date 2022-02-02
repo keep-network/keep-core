@@ -10,6 +10,7 @@ import type {
   WalletRegistry,
   WalletRegistryStub,
   StakingStub,
+  T,
 } from "../../typechain"
 
 const { to1e18 } = helpers.number
@@ -49,6 +50,7 @@ export async function walletRegistryFixture(): Promise<{
   const walletRegistry: WalletRegistryStub & WalletRegistry =
     await ethers.getContract("WalletRegistry")
   const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
+  const tToken: T = await ethers.getContract("T")
   const staking: StakingStub = await ethers.getContract("StakingStub")
 
   const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
@@ -62,6 +64,7 @@ export async function walletRegistryFixture(): Promise<{
   // of unnamed accounts that were already used.
   const operators = await registerOperators(
     walletRegistry,
+    tToken,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 

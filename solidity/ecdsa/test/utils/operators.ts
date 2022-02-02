@@ -8,13 +8,14 @@ import { constants } from "../fixtures"
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { WalletRegistry } from "../../typechain"
+import type { WalletRegistry, T } from "../../typechain"
 
 export type OperatorID = number
 export type Operator = { id: OperatorID; address: Address }
 
 export async function registerOperators(
   walletRegistry: WalletRegistry,
+  tToken: T,
   addresses: Address[],
   stakeAmount: BigNumber = constants.minimumStake
 ): Promise<Operator[]> {
@@ -26,8 +27,6 @@ export async function registerOperators(
     "SortitionPool",
     await walletRegistry.sortitionPool()
   )
-
-  const tToken = await ethers.getContractAt("T", await walletRegistry.tToken())
 
   const staking = await ethers.getContractAt(
     "TokenStaking",
