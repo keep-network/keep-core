@@ -22,7 +22,7 @@ const fetchThresholdAuthorizationData = async (address) => {
   const authorizationData = []
 
   const keepToTStakedEvents =
-    await Keep.keepToTStaking.getStakedEventsByOperator(address)
+    await Keep.keepToTStaking.getStakedEventsByOperator(authorizerOperators)
 
   const operatorsStaked = keepToTStakedEvents.map(
     (event) => event.returnValues.stakingProvider
