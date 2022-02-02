@@ -33,13 +33,13 @@ const loginRequiredSagas = [
   ...Object.values(operator),
   ...Object.values(authorization),
   ...Object.values(tbtcV2Migration),
+  ...Object.values(keepToTStaking),
 ]
 
 const sagas = [
   ...Object.values(messagesSaga),
   watchFetchLiquidityRewardsAPY,
   ...Object.values(coveragePool),
-  ...Object.values(keepToTStaking),
 ]
 
 export default function* rootSaga() {
