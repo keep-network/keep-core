@@ -32,7 +32,7 @@ contract StakingStub is IWalletStaking {
     }
 
     function seize(
-        uint256 amount,
+        uint96 amount,
         uint256 rewardMultiplier,
         address notifier,
         address[] memory stakingProviders

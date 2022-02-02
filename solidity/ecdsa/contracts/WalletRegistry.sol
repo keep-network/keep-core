@@ -56,7 +56,7 @@ contract WalletRegistry is Ownable {
     ///         is challenged and proven to be malicious, each operator who
     ///         signed the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
-    uint256 public maliciousDkgResultSlashingAmount;
+    uint96 public maliciousDkgResultSlashingAmount;
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
