@@ -14,14 +14,153 @@ describe("WalletRegistryGovernance", async () => {
   let walletRegistry: WalletRegistry
   let walletRegistryGovernance: WalletRegistryGovernance
   let thirdParty: SignerWithAddress
+  let walletOwner: SignerWithAddress
 
   const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletRegistryGovernance, governance, thirdParty } =
-      await waffle.loadFixture(walletRegistryFixture))
+    ;({
+      walletRegistry,
+      walletRegistryGovernance,
+      governance,
+      thirdParty,
+      walletOwner,
+    } = await waffle.loadFixture(walletRegistryFixture))
+  })
+
+  describe("beginWalletOwnerUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginWalletOwnerUpdate(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginWalletOwnerUpdate(thirdParty.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the wallet owner", async () => {
+        expect(await walletRegistry.walletOwner()).to.be.equal(
+          walletOwner.address
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingWalletOwnerUpdateTime()
+        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+      })
+
+      it("should emit the WalletOwnerUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(walletRegistryGovernance, "WalletOwnerUpdateStarted")
+          .withArgs(thirdParty.address, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeWalletOwnerUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeWalletOwnerUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeWalletOwnerUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginWalletOwnerUpdate(thirdParty.address)
+
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeWalletOwnerUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginWalletOwnerUpdate(thirdParty.address)
+
+          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeWalletOwnerUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the wallet owner", async () => {
+          expect(await walletRegistry.walletOwner()).to.be.equal(
+            thirdParty.address
+          )
+        })
+
+        it("should emit WalletOwnerUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "WalletOwnerUpdated")
+            .withArgs(thirdParty.address)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingWalletOwnerUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginMaliciousDkgResultSlashingAmountUpdate", () => {
