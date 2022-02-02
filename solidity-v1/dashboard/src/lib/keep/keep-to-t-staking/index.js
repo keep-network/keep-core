@@ -10,7 +10,7 @@ class KeepToTStaking {
 
   getStakedEventsByOperator = async (operatorAddress) => {
     return await this.thresholdStakingContract.getPastEvents("Staked", {
-      operator: operatorAddress,
+      stakingProvider: operatorAddress,
     })
   }
 }
