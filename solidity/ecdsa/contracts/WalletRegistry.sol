@@ -132,6 +132,8 @@ contract WalletRegistry is Ownable {
         uint256 dkgResultSubmissionEligibilityDelay
     );
 
+    event WalletOwnerUpdated(address walletOwner);
+
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
@@ -205,6 +207,16 @@ contract WalletRegistry is Ownable {
     {
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
         emit SlashingParametersUpdated(maliciousDkgResultSlashingAmount);
+    }
+
+    /// @notice Updates the values of the wallet parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _walletOwner New wallet owner address.
+    function updateWalletParameters(address _walletOwner) external onlyOwner {
+        walletOwner = _walletOwner;
+        emit WalletOwnerUpdated(walletOwner);
     }
 
     /// @notice Registers the caller in the sortition pool.

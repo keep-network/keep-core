@@ -22,6 +22,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 ///         governable parameters in respect to governance delay individual
 ///         for each parameter.
 contract WalletRegistryGovernance is Ownable {
+    address public newWalletOwner;
+    uint256 public walletOwnerChangeInitiated;
+
     uint256 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
@@ -37,6 +40,15 @@ contract WalletRegistryGovernance is Ownable {
 
     WalletRegistry public walletRegistry;
 
+    // Long governance delay used for critical parameters giving a chance for
+    // stakers to opt out before the change is finalized in case they do not
+    // agree with that change. The maximum group lifetime must not be longer
+    // than this delay.
+    //
+    // The full list of parameters protected by this delay:
+    // - wallet owner
+    uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
+
     // Short governance delay for non-critical parameters. Honest stakers should
     // not be severely affected by any change of these parameters.
     //
@@ -46,6 +58,14 @@ contract WalletRegistryGovernance is Ownable {
     // - DKG result challenge period length
     // - DKG result submission eligibility delay
     uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
+
+    event WalletOwnerUpdateStarted(
+        address walletOwner,
+        uint256 timestamp
+    );
+    event WalletOwnerUpdated(
+        address walletOwner
+    );
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
         uint256 maliciousDkgResultSlashingAmount,
@@ -99,6 +119,44 @@ contract WalletRegistryGovernance is Ownable {
 
     constructor(WalletRegistry _walletRegistry) {
         walletRegistry = _walletRegistry;
+    }
+
+    /// @notice Begins the wallet owner update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newWalletOwner New wallet owner address
+    function beginWalletOwnerUpdate(
+        address _newWalletOwner
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newWalletOwner = _newWalletOwner;
+        walletOwnerChangeInitiated = block.timestamp;
+        emit WalletOwnerUpdateStarted(
+            _newWalletOwner,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the wallet owner update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeWalletOwnerUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            walletOwnerChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit WalletOwnerUpdated(
+            newWalletOwner
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateWalletParameters(
+            newWalletOwner
+        );
+        walletOwnerChangeInitiated = 0;
+        newWalletOwner = address(0);
     }
 
     /// @notice Begins the malicious DKG result slashing amount update process.
@@ -335,6 +393,20 @@ contract WalletRegistryGovernance is Ownable {
             getRemainingChangeTime(
                 dkgResultSubmissionEligibilityDelayChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the wallet owner can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingWalletOwnerUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                walletOwnerChangeInitiated,
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
