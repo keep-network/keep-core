@@ -194,7 +194,10 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     function __beaconCallback(uint256 _randomRelayEntry, uint256 blockNumber)
         external
     {
-        require(msg.sender == address(randomBeacon));
+        require(
+            msg.sender == address(randomBeacon),
+            "Caller is not the Random Beacon"
+        );
 
         randomRelayEntry = _randomRelayEntry;
     }
