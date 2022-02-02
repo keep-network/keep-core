@@ -42,8 +42,6 @@ export function* subscribeToStakeKeepEvent() {
       },
     } = event
 
-    console.log("tAmount", tAmount)
-
     yield put(
       showModal({
         modalType: MODAL_TYPES.StakeOnThresholdConfirmed,
