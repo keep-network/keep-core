@@ -191,9 +191,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         );
     }
 
-    function __beaconCallback(uint256 _randomRelayEntry, uint256 blockNumber)
-        external
-    {
+    function __beaconCallback(uint256 _randomRelayEntry, uint256) external {
         require(
             msg.sender == address(randomBeacon),
             "Caller is not the Random Beacon"
@@ -220,6 +218,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         // will fail? What if it will fail constantly due to a bad timing, do we
         // want to pull a relay entry requested by someone else?
         try randomBeacon.requestRelayEntry(this) {} catch {
+            // slither-disable-next-line reentrancy-events
             emit RelayEntryRequestFailed();
         }
     }
