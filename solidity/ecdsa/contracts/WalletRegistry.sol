@@ -23,16 +23,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 /// IStaking interface from there.
 interface IWalletStaking {
-    function eligibleStake(address operator, address operatorContract)
+    function authorizedStake(address stakingProvider, address application)
         external
         view
         returns (uint256);
 
     function seize(
-        uint256 amount,
+        uint96 amount,
         uint256 rewardMultiplier,
         address notifier,
-        address[] memory operators
+        address[] memory stakingProviders
     ) external;
 }
 
@@ -166,7 +166,7 @@ contract WalletRegistry is Ownable {
 
         sortitionPool.insertOperator(
             operator,
-            staking.eligibleStake(operator, address(this))
+            staking.authorizedStake(operator, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `operator`
         );
     }
 
@@ -174,7 +174,7 @@ contract WalletRegistry is Ownable {
     function updateOperatorStatus() external {
         sortitionPool.updateOperatorStatus(
             msg.sender,
-            staking.eligibleStake(msg.sender, address(this))
+            staking.authorizedStake(msg.sender, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `msg.sender`
         );
     }
 

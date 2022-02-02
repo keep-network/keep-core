@@ -13,32 +13,32 @@ contract StakingStub is IWalletStaking {
         uint256 amount,
         uint256 rewardMultiplier,
         address notifier,
-        address[] operators
+        address[] stakingProviders
     );
 
-    function eligibleStake(
-        address operator,
-        address // operatorContract
+    function authorizedStake(
+        address stakingProvider,
+        address // application
     ) external view override returns (uint256) {
-        return stakedTokens[operator];
+        return stakedTokens[stakingProvider];
     }
 
     function increaseAuthorization(
-        address operator,
+        address stakingProvider,
         address, // application
         uint96 amount
     ) public {
-        stakedTokens[operator] += amount;
+        stakedTokens[stakingProvider] += amount;
     }
 
     function seize(
         uint256 amount,
         uint256 rewardMultiplier,
         address notifier,
-        address[] memory operators
+        address[] memory stakingProviders
     ) external {
-        if (amount > 0 && operators.length > 0) {
-            emit Seized(amount, rewardMultiplier, notifier, operators);
+        if (amount > 0 && stakingProviders.length > 0) {
+            emit Seized(amount, rewardMultiplier, notifier, stakingProviders);
         }
     }
 }
