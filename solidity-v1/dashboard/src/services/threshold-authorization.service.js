@@ -3,11 +3,10 @@ import {
   getContractDeploymentBlockNumber,
   getThresholdTokenStakingAddress,
 } from "../contracts"
-import { getOperatorsOfAuthorizer } from "./token-staking.service"
+import { getAllOperatorStakedEventsByAuthorizer } from "./token-staking.service"
 import {
   AUTH_CONTRACTS_LABEL,
   TOKEN_GRANT_CONTRACT_NAME,
-  TOKEN_STAKING_CONTRACT_NAME,
 } from "../constants/constants"
 import { Keep } from "../contracts"
 import { isSameEthAddress } from "../utils/general.utils"
@@ -18,30 +17,20 @@ const fetchThresholdAuthorizationData = async (address) => {
   }
   const thresholdTokenStakingContractAddress = getThresholdTokenStakingAddress()
   const { stakingContract, grantContract } = await ContractsLoaded
-  const authorizerOperators = await getOperatorsOfAuthorizer(address)
+  const keepOperatorStakedEvents = await getAllOperatorStakedEventsByAuthorizer(
+    address
+  )
+  const authorizerOperators = keepOperatorStakedEvents.map(
+    (_) => _.returnValues.operator
+  )
   const authorizationData = []
 
   const keepToTStakedEvents =
     await Keep.keepToTStaking.getStakedEventsByOperator(authorizerOperators)
 
-  const operatorsStaked = keepToTStakedEvents.map(
+  const operatorsStakedToT = keepToTStakedEvents.map(
     (event) => event.returnValues.stakingProvider
   )
-
-  const stakesParticipants = (
-    await stakingContract.getPastEvents("OperatorStaked", {
-      fromBlock: await getContractDeploymentBlockNumber(
-        TOKEN_STAKING_CONTRACT_NAME
-      ),
-      filter: { operator: authorizerOperators },
-    })
-  ).map((event) => {
-    return {
-      authorizer: event.returnValues.authorizer,
-      operator: event.returnValues.operator,
-      beneficiary: event.returnValues.beneficiary,
-    }
-  })
 
   const tokenGrantStakingEvents = (
     await grantContract.getPastEvents("TokenGrantStaked", {
@@ -60,8 +49,8 @@ const fetchThresholdAuthorizationData = async (address) => {
   for (let i = 0; i < authorizerOperators.length; i++) {
     const operatorAddress = authorizerOperators[i]
 
-    const stakeParticipant = stakesParticipants.find((participants) => {
-      return isSameEthAddress(participants.authorizer, address)
+    const stakeParticipant = keepOperatorStakedEvents.find((event) => {
+      return isSameEthAddress(operatorAddress, event.returnValues.operator)
     })
 
     const delegatedTokens = await stakingContract.methods
@@ -77,9 +66,9 @@ const fetchThresholdAuthorizationData = async (address) => {
         .call()
 
     const authorizerOperator = {
-      authorizerAddress: stakeParticipant.authorizer,
+      authorizerAddress: stakeParticipant.returnValues.authorizer,
       operatorAddress: operatorAddress,
-      beneficiaryAddress: stakeParticipant.beneficiary,
+      beneficiaryAddress: stakeParticipant.returnValues.beneficiary,
       stakeAmount: delegatedTokens.amount,
       contracts: [
         {
@@ -88,7 +77,7 @@ const fetchThresholdAuthorizationData = async (address) => {
           isAuthorized: isThresholdTokenStakingContractAuthorized,
         },
       ],
-      isStakedToT: operatorsStaked.some((operatorStaked) =>
+      isStakedToT: operatorsStakedToT.some((operatorStaked) =>
         isSameEthAddress(operatorStaked, operatorAddress)
       ),
       isFromGrant: tokenGrantStakingEvents.some((tokenGrantStakingEvent) =>
