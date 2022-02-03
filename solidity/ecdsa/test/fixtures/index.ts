@@ -33,7 +33,8 @@ export const dkgState = {
 
 export const params = {
   dkgResultChallengePeriodLength: 10,
-  dkgResultSubmissionEligibilityDelay: 5,
+  dkgResultSubmissionPeriodLength: 30,
+  dkgSubmitterPrecedencePeriodLength: 5,
 }
 
 export async function walletRegistryFixture(): Promise<{
@@ -70,7 +71,8 @@ export async function walletRegistryFixture(): Promise<{
 
   await walletRegistry.updateDkgParams(
     params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionEligibilityDelay
+    params.dkgResultSubmissionPeriodLength,
+    params.dkgSubmitterPrecedencePeriodLength
   )
 
   return {

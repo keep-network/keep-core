@@ -22,7 +22,6 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
-import "@keep-network/random-beacon/contracts/libraries/Submission.sol";
 import "../DKGValidator.sol";
 
 library DKG {
@@ -32,9 +31,12 @@ library DKG {
     struct Parameters {
         // Time in blocks during which a submitted result can be challenged.
         uint256 resultChallengePeriodLength;
-        // Time in blocks after which the next group member is eligible
-        // to submit DKG result.
-        uint256 resultSubmissionEligibilityDelay;
+        // Time in blocks during which a result is expected to be submitted.
+        uint256 resultSubmissionPeriodLength;
+        // Time in blocks during which only the result submitter is allowed to
+        // approve it. Once this period ends and the submitter have not approved
+        // the result, anyone can do it.
+        uint256 submitterPrecedencePeriodLength;
     }
 
     struct Data {
@@ -233,29 +235,6 @@ library DKG {
         );
         require(!hasDkgTimedOut(self), "DKG timeout already passed");
 
-        // Check submitter's eligibility to call this function
-        uint256 T_init = self.startBlock +
-            offchainDkgTime +
-            self.resultSubmissionStartBlockOffset;
-
-        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
-            .getEligibilityRange(
-                uint256(keccak256(result.groupPubKey)),
-                block.number,
-                T_init,
-                self.parameters.resultSubmissionEligibilityDelay,
-                groupSize
-            );
-
-        require(
-            Submission.isEligible(
-                result.submitterMemberIndex,
-                firstEligibleIndex,
-                lastEligibleIndex
-            ),
-            "Submitter is not eligible"
-        );
-
         SortitionPool sortitionPool = self.sortitionPool;
 
         // Submitter must be an operator in the sortition pool.
@@ -292,8 +271,7 @@ library DKG {
             (self.startBlock +
                 offchainDkgTime +
                 self.resultSubmissionStartBlockOffset +
-                groupSize *
-                self.parameters.resultSubmissionEligibilityDelay);
+                self.parameters.resultSubmissionPeriodLength);
     }
 
     /// @notice Notifies about DKG timeout.
@@ -322,7 +300,7 @@ library DKG {
 
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
-    ///         as valid. For the first `resultSubmissionEligibilityDelay`
+    ///         as valid. For the first `submitterPrecedencePeriodLength`
     ///         blocks after the end of the challenge period can be called only
     ///         by the DKG result submitter. After that time, can be called by
     ///         anyone.
@@ -363,7 +341,7 @@ library DKG {
             msg.sender == submitterMember ||
                 block.number >
                 challengePeriodEnd +
-                    self.parameters.resultSubmissionEligibilityDelay,
+                    self.parameters.submitterPrecedencePeriodLength,
             "Only the DKG result submitter can approve the result at this moment"
         );
 
@@ -473,21 +451,39 @@ library DKG {
             .resultChallengePeriodLength = newResultChallengePeriodLength;
     }
 
-    /// @notice Set resultSubmissionEligibilityDelay parameter.
-    function setResultSubmissionEligibilityDelay(
+    /// @notice Set resultSubmissionPeriodLength parameter.
+    function setResultSubmissionPeriodLength(
         Data storage self,
-        uint256 newResultSubmissionEligibilityDelay
+        uint256 newResultSubmissionPeriodLength
     ) internal {
         require(currentState(self) == State.IDLE, "Current state is not IDLE");
 
         require(
-            newResultSubmissionEligibilityDelay > 0,
+            newResultSubmissionPeriodLength > 0,
             "New value should be greater than zero"
         );
 
         self
             .parameters
-            .resultSubmissionEligibilityDelay = newResultSubmissionEligibilityDelay;
+            .resultSubmissionPeriodLength = newResultSubmissionPeriodLength;
+    }
+
+    /// @notice Set submitterPrecedencePeriodLength parameter.
+    function setSubmitterPrecedencePeriodLength(
+        Data storage self,
+        uint256 newSubmitterPrecedencePeriodLength
+    ) internal {
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
+
+        require(
+            newSubmitterPrecedencePeriodLength <
+                self.parameters.resultSubmissionPeriodLength,
+            "New value should be less than result submission period length"
+        );
+
+        self
+            .parameters
+            .submitterPrecedencePeriodLength = newSubmitterPrecedencePeriodLength;
     }
 
     /// @notice Completes DKG by cleaning up state.

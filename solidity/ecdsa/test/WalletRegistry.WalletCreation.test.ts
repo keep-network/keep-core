@@ -12,7 +12,6 @@ import {
   expectDkgResultSubmittedEvent,
 } from "./utils/dkg"
 import { selectGroup, hashUint32Array } from "./utils/groups"
-import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 import { createNewWallet, getWalletID, requestNewWallet } from "./utils/wallets"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -34,15 +33,11 @@ const { keccak256 } = ethers.utils
 
 describe("WalletRegistry - Wallet Creation", async () => {
   const dkgTimeout: number =
-    constants.offchainDkgTime +
-    constants.groupSize * params.dkgResultSubmissionEligibilityDelay
+    constants.offchainDkgTime + params.dkgResultSubmissionPeriodLength
   const groupPublicKey: string = ethers.utils.hexValue(
     ecdsaData.group1.publicKey
   )
   const groupPublicKeyHash: string = ethers.utils.keccak256(groupPublicKey)
-  const firstEligibleSubmitterIndex: number = firstEligibleIndex(
-    keccak256(ecdsaData.group1.publicKey)
-  )
 
   const stubDkgResult: DkgResult = {
     submitterMemberIndex: 1,
@@ -675,9 +670,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
-                  challengeBlockNumber +
-                    constants.groupSize *
-                      params.dkgResultSubmissionEligibilityDelay
+                  challengeBlockNumber + params.dkgResultSubmissionPeriodLength
                 )
               })
 
@@ -696,8 +689,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 await mineBlocksTo(
                   challengeBlockNumber +
-                    constants.groupSize *
-                      params.dkgResultSubmissionEligibilityDelay +
+                    params.dkgResultSubmissionPeriodLength +
                     1
                 )
               })
@@ -801,7 +793,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   operators,
                   startBlock,
                   noMisbehaved,
-                  firstEligibleSubmitterIndex,
+                  1,
                   constants.groupThreshold
                 ))
               })
@@ -838,7 +830,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     operators,
                     startBlock,
                     noMisbehaved,
-                    firstEligibleSubmitterIndex,
+                    1,
                     constants.groupThreshold - 1
                   )
                 ).to.not.be.reverted
@@ -847,7 +839,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               })
             })
 
-            describe("submission eligibility verification", async () => {
+            context("with the submission period started", async () => {
               let submissionStartBlockNumber: number
 
               before(async () => {
@@ -855,152 +847,82 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 submissionStartBlockNumber =
                   startBlock + constants.offchainDkgTime
+
+                await mineBlocksTo(submissionStartBlockNumber)
               })
 
               after(async () => {
                 await restoreSnapshot()
               })
 
-              context("at the beginning of submission period", async () => {
-                it("should succeed for the first submitter", async () => {
-                  await assertSubmissionSucceeds(firstSubmitterIndex)
+              context("at the beginning of the submission period", async () => {
+                it("should succeed for the first member", async () => {
+                  await assertSubmissionSucceeds(1)
                 })
 
-                it("should revert for the second submitter", async () => {
-                  await assertSubmissionReverts(secondSubmitterIndex)
+                it("should succeed for the second member", async () => {
+                  await assertSubmissionSucceeds(2)
                 })
 
-                it("should revert for the last submitter", async () => {
-                  await assertSubmissionReverts(lastSubmitterIndex)
+                it("should succeed for the last member", async () => {
+                  await assertSubmissionSucceeds(constants.groupSize - 1)
                 })
               })
 
-              context(
-                "with first submitter eligibility delay period almost ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
+              context("at the end of the submission period", async () => {
+                before(async () => {
+                  await createSnapshot()
 
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        params.dkgResultSubmissionEligibilityDelay -
-                        2
-                    )
-                  })
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      params.dkgResultSubmissionPeriodLength -
+                      1
+                  )
+                })
 
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
+                after(async () => {
+                  await restoreSnapshot()
+                })
 
-                  it("should succeed for the first submitter", async () => {
-                    await assertSubmissionSucceeds(firstSubmitterIndex)
-                  })
+                it("should succeed for the first member", async () => {
+                  await assertSubmissionSucceeds(1)
+                })
 
-                  it("should revert for the second submitter", async () => {
-                    await assertSubmissionReverts(secondSubmitterIndex)
-                  })
+                it("should succeed for the second member", async () => {
+                  await assertSubmissionSucceeds(2)
+                })
 
-                  it("should revert for the last submitter", async () => {
-                    await assertSubmissionReverts(lastSubmitterIndex)
-                  })
-                }
-              )
+                it("should succeed for the last member", async () => {
+                  await assertSubmissionSucceeds(constants.groupSize - 1)
+                })
+              })
 
-              context(
-                "with first submitter eligibility delay period ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
+              context("after the submission period", async () => {
+                before(async () => {
+                  await createSnapshot()
 
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        params.dkgResultSubmissionEligibilityDelay -
-                        1
-                    )
-                  })
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      params.dkgResultSubmissionPeriodLength
+                  )
+                })
 
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
+                after(async () => {
+                  await restoreSnapshot()
+                })
 
-                  it("should succeed for the first submitter", async () => {
-                    await assertSubmissionSucceeds(firstSubmitterIndex)
-                  })
+                it("should succeed for the first member", async () => {
+                  await assertSubmissionReverts(1)
+                })
 
-                  it("should succeed for the second submitter", async () => {
-                    await assertSubmissionSucceeds(secondSubmitterIndex)
-                  })
+                it("should succeed for the second member", async () => {
+                  await assertSubmissionReverts(2)
+                })
 
-                  it("should revert for the third submitter", async () => {
-                    await assertSubmissionReverts(thirdSubmitterIndex)
-                  })
-
-                  it("should revert for the last submitter", async () => {
-                    await assertSubmissionReverts(lastSubmitterIndex)
-                  })
-                }
-              )
-
-              context(
-                "with the last submitter eligibility delay period almost ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        constants.groupSize *
-                          params.dkgResultSubmissionEligibilityDelay -
-                        1
-                    )
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  it("should succeed for the first submitter", async () => {
-                    await assertSubmissionSucceeds(firstSubmitterIndex)
-                  })
-
-                  it("should succeed for the last submitter", async () => {
-                    await assertSubmissionSucceeds(lastSubmitterIndex)
-                  })
-                }
-              )
-
-              context(
-                "with the last submitter eligibility delay period ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        constants.groupSize *
-                          params.dkgResultSubmissionEligibilityDelay
-                    )
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  it("should revert for the first submitter", async () => {
-                    await assertSubmissionReverts(
-                      firstSubmitterIndex,
-                      "DKG timeout already passed"
-                    )
-                  })
-
-                  it("should revert for the last submitter", async () => {
-                    await assertSubmissionReverts(
-                      lastSubmitterIndex,
-                      "DKG timeout already passed"
-                    )
-                  })
-                }
-              )
+                it("should succeed for the last member", async () => {
+                  await assertSubmissionReverts(constants.groupSize - 1)
+                })
+              })
             })
           })
 
@@ -1137,159 +1059,92 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await restoreSnapshot()
                 })
 
-                describe("submission eligibility verification", async () => {
+                context("with the submission period started", async () => {
                   let submissionStartBlockNumber: number
 
                   before(async () => {
                     await createSnapshot()
 
                     submissionStartBlockNumber = challengeBlockNumber
+
+                    await mineBlocksTo(submissionStartBlockNumber)
                   })
 
                   after(async () => {
                     await restoreSnapshot()
                   })
 
-                  context("at the beginning of submission period", async () => {
-                    it("should succeed for the first submitter", async () => {
-                      await assertSubmissionSucceeds(firstSubmitterIndex)
+                  context(
+                    "at the beginning of the submission period",
+                    async () => {
+                      it("should succeed for the first member", async () => {
+                        await assertSubmissionSucceeds(1)
+                      })
+
+                      it("should succeed for the second member", async () => {
+                        await assertSubmissionSucceeds(2)
+                      })
+
+                      it("should succeed for the last member", async () => {
+                        await assertSubmissionSucceeds(constants.groupSize - 1)
+                      })
+                    }
+                  )
+
+                  context("at the end of the submission period", async () => {
+                    before(async () => {
+                      await createSnapshot()
+
+                      await mineBlocksTo(
+                        submissionStartBlockNumber +
+                          params.dkgResultSubmissionPeriodLength -
+                          1
+                      )
                     })
 
-                    it("should revert for the second submitter", async () => {
-                      await assertSubmissionReverts(secondSubmitterIndex)
+                    after(async () => {
+                      await restoreSnapshot()
                     })
 
-                    it("should revert for the last submitter", async () => {
-                      await assertSubmissionReverts(lastSubmitterIndex)
+                    it("should succeed for the first member", async () => {
+                      await assertSubmissionSucceeds(1)
+                    })
+
+                    it("should succeed for the second member", async () => {
+                      await assertSubmissionSucceeds(2)
+                    })
+
+                    it("should succeed for the last member", async () => {
+                      await assertSubmissionSucceeds(constants.groupSize - 1)
                     })
                   })
 
-                  context(
-                    "with first submitter eligibility delay period almost ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
+                  context("after the submission period", async () => {
+                    before(async () => {
+                      await createSnapshot()
 
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            params.dkgResultSubmissionEligibilityDelay -
-                            2
-                        )
-                      })
+                      await mineBlocksTo(
+                        submissionStartBlockNumber +
+                          params.dkgResultSubmissionPeriodLength
+                      )
+                    })
 
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
+                    after(async () => {
+                      await restoreSnapshot()
+                    })
 
-                      it("should succeed for the first submitter", async () => {
-                        await assertSubmissionSucceeds(firstSubmitterIndex)
-                      })
+                    it("should succeed for the first member", async () => {
+                      await assertSubmissionReverts(1)
+                    })
 
-                      it("should revert for the second submitter", async () => {
-                        await assertSubmissionReverts(secondSubmitterIndex)
-                      })
+                    it("should succeed for the second member", async () => {
+                      await assertSubmissionReverts(2)
+                    })
 
-                      it("should revert for the last submitter", async () => {
-                        await assertSubmissionReverts(lastSubmitterIndex)
-                      })
-                    }
-                  )
-
-                  context(
-                    "with first submitter eligibility delay period ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
-
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            params.dkgResultSubmissionEligibilityDelay -
-                            1
-                        )
-                      })
-
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
-
-                      it("should succeed for the first submitter", async () => {
-                        await assertSubmissionSucceeds(firstSubmitterIndex)
-                      })
-
-                      it("should succeed for the second submitter", async () => {
-                        await assertSubmissionSucceeds(secondSubmitterIndex)
-                      })
-
-                      it("should revert for the third submitter", async () => {
-                        await assertSubmissionReverts(thirdSubmitterIndex)
-                      })
-
-                      it("should revert for the last submitter", async () => {
-                        await assertSubmissionReverts(lastSubmitterIndex)
-                      })
-                    }
-                  )
-
-                  context(
-                    "with the last submitter eligibility delay period almost ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
-
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            constants.groupSize *
-                              params.dkgResultSubmissionEligibilityDelay -
-                            1
-                        )
-                      })
-
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
-
-                      it("should succeed for the first submitter", async () => {
-                        await assertSubmissionSucceeds(firstSubmitterIndex)
-                      })
-
-                      it("should succeed for the last submitter", async () => {
-                        await assertSubmissionSucceeds(lastSubmitterIndex)
-                      })
-                    }
-                  )
-
-                  context(
-                    "with the last submitter eligibility delay period ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
-
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            constants.groupSize *
-                              params.dkgResultSubmissionEligibilityDelay
-                        )
-                      })
-
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
-
-                      it("should revert for the first submitter", async () => {
-                        await assertSubmissionReverts(
-                          firstSubmitterIndex,
-                          "DKG timeout already passed"
-                        )
-                      })
-
-                      it("should revert for the last submitter", async () => {
-                        await assertSubmissionReverts(
-                          lastSubmitterIndex,
-                          "DKG timeout already passed"
-                        )
-                      })
-                    }
-                  )
+                    it("should succeed for the last member", async () => {
+                      await assertSubmissionReverts(constants.groupSize - 1)
+                    })
+                  })
                 })
               })
             })
@@ -1365,15 +1220,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         })
       })
 
-      // Submission Eligibility Test Helpers
-      const firstSubmitterIndex = firstEligibleSubmitterIndex
-      const secondSubmitterIndex = shiftEligibleIndex(firstSubmitterIndex, 1)
-      const thirdSubmitterIndex = shiftEligibleIndex(firstSubmitterIndex, 2)
-      const lastSubmitterIndex = shiftEligibleIndex(
-        firstSubmitterIndex,
-        constants.groupSize - 1
-      )
-
+      // Submission Test Helpers
       async function assertSubmissionSucceeds(
         submitterIndex: number
       ): Promise<void> {
@@ -1403,7 +1250,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       async function assertSubmissionReverts(
         submitterIndex: number,
-        message = "Submitter is not eligible"
+        message = "DKG timeout already passed"
       ): Promise<void> {
         await expect(
           signAndSubmitCorrectDkgResult(
@@ -1476,7 +1323,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           let submitter: SignerWithAddress
           let walletID: string
 
-          const submitterIndex = firstEligibleSubmitterIndex
+          const submitterIndex = 1
 
           before(async () => {
             await createSnapshot()
@@ -1613,7 +1460,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await createSnapshot()
 
                   await mineBlocks(
-                    params.dkgResultSubmissionEligibilityDelay - 1
+                    params.dkgSubmitterPrecedencePeriodLength - 1
                   )
                 })
 
@@ -1640,7 +1487,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 before(async () => {
                   await createSnapshot()
 
-                  await mineBlocks(params.dkgResultSubmissionEligibilityDelay)
+                  await mineBlocks(params.dkgSubmitterPrecedencePeriodLength)
                   // initialDkgRewardsPoolBalance =
                   //   await walletRegistry.dkgRewardsPool()
                   // initApproverBalance = await testToken.balanceOf(
@@ -1688,22 +1535,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
           let dkgResult: DkgResult
 
           // First result is malicious and submitter is also malicious
-          const maliciousSubmitter = firstEligibleSubmitterIndex
+          const maliciousSubmitter = 1
 
           // Submit a second result by another submitter
-          const submitterIndexShift = 5
-          const anotherSubmitterIndex = shiftEligibleIndex(
-            maliciousSubmitter,
-            submitterIndexShift
-          )
+          const anotherSubmitterIndex = 6
           let anotherSubmitter: Signer
 
           before(async () => {
             await createSnapshot()
-
-            await mineBlocks(
-              params.dkgResultSubmissionEligibilityDelay * submitterIndexShift
-            )
 
             const { dkgResult: maliciousDkgResult } =
               await signAndSubmitArbitraryDkgResult(
@@ -1717,10 +1556,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
 
             await walletRegistry.challengeDkgResult(maliciousDkgResult)
-
-            await mineBlocks(
-              params.dkgResultSubmissionEligibilityDelay * anotherSubmitterIndex
-            )
 
             let tx: ContractTransaction
             ;({
@@ -2141,9 +1976,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           const newResultPublicKey = ecdsaData.group2.publicKey
           const newResultPublicKeyHash = keccak256(newResultPublicKey)
-          const newResultSubmitterIndex = firstEligibleIndex(
-            newResultPublicKeyHash
-          )
+          const newResultSubmitterIndex = 1
 
           before("submit dkg result", async () => {
             await createSnapshot()
@@ -2974,16 +2807,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
       ).to.equal(expectedSubmissionOffset)
 
       // Submit result 2 in the middle of the submission period
-      let blocksToMine =
-        (constants.groupSize * params.dkgResultSubmissionEligibilityDelay) / 2
+      let blocksToMine = params.dkgResultSubmissionPeriodLength / 2
       await mineBlocks(blocksToMine)
       ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
         walletRegistry,
         groupPublicKey,
         operators,
         startBlock,
-        noMisbehaved,
-        shiftEligibleIndex(firstEligibleSubmitterIndex, constants.groupSize / 2)
+        noMisbehaved
       ))
 
       await expect(
@@ -3009,16 +2840,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
       ).to.equal(expectedSubmissionOffset)
 
       // Submit result 3 at the end of the submission period
-      blocksToMine =
-        constants.groupSize * params.dkgResultSubmissionEligibilityDelay - 1
+      blocksToMine = params.dkgResultSubmissionPeriodLength - 1
       await mineBlocks(blocksToMine)
       ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
         walletRegistry,
         groupPublicKey,
         operators,
         startBlock,
-        noMisbehaved,
-        shiftEligibleIndex(firstEligibleSubmitterIndex, constants.groupSize - 1)
+        noMisbehaved
       ))
 
       await expect(
@@ -3050,8 +2879,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       ).to.equal(expectedSubmissionOffset)
 
       // Submit result 4 after the submission period
-      blocksToMine =
-        constants.groupSize * params.dkgResultSubmissionEligibilityDelay
+      blocksToMine = params.dkgResultSubmissionPeriodLength
       await mineBlocks(blocksToMine)
       await expect(
         signAndSubmitArbitraryDkgResult(
@@ -3059,11 +2887,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           groupPublicKey,
           operators,
           startBlock,
-          noMisbehaved,
-          shiftEligibleIndex(
-            firstEligibleSubmitterIndex,
-            constants.groupSize - 1
-          )
+          noMisbehaved
         )
       ).to.be.revertedWith("DKG timeout already passed")
 
@@ -3222,9 +3046,14 @@ async function assertDkgResultCleanData(walletRegistry: WalletRegistryStub) {
   ).to.eq(params.dkgResultChallengePeriodLength)
 
   expect(
-    dkgData.parameters.resultSubmissionEligibilityDelay,
+    dkgData.parameters.resultSubmissionPeriodLength,
     "unexpected resultSubmissionEligibilityDelay"
-  ).to.eq(params.dkgResultSubmissionEligibilityDelay)
+  ).to.eq(params.dkgResultSubmissionPeriodLength)
+
+  expect(
+    dkgData.parameters.submitterPrecedencePeriodLength,
+    "unexpected submitterPrecedencePeriodLength"
+  ).to.eq(params.dkgSubmitterPrecedencePeriodLength)
 
   expect(dkgData.startBlock, "unexpected startBlock").to.eq(0)
 
