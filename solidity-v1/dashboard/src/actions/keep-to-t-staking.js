@@ -25,13 +25,12 @@ export const stakedToT = (operatorAddress) => {
   }
 }
 
-export const stakeKeepToT = (data, meta) => {
+export const stakeKeepToT = (data) => {
   return {
     type: STAKE_KEEP_TO_T,
     payload: {
       operator: data.operatorAddress,
       isAuthorized: data.isAuthorized,
     },
-    meta,
   }
 }

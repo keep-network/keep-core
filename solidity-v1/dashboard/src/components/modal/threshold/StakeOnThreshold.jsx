@@ -9,7 +9,7 @@ import { ModalBody, ModalFooter } from "../Modal"
 import TokenAmount from "../../TokenAmount"
 import OnlyIf from "../../OnlyIf"
 import List from "../../List"
-import Button, { SubmitButton } from "../../Button"
+import Button from "../../Button"
 import { shortenAddress } from "../../../utils/general.utils"
 import { ViewInBlockExplorer } from "../../ViewInBlockExplorer"
 import * as Icons from "./../../Icons"
@@ -121,23 +121,20 @@ const StakeOnThresholdComponent = ({
       </ModalBody>
       <ModalFooter>
         <OnlyIf condition={!transactionHash}>
-          <SubmitButton
+          <Button
             className="btn btn-primary btn-lg mr-2"
             type="submit"
-            onSubmitAction={(awaitingPromise) => {
+            onClick={() => {
               dispatch(
-                stakeKeepToT(
-                  {
-                    operatorAddress: operator,
-                    isAuthorized: isAuthorized,
-                  },
-                  awaitingPromise
-                )
+                stakeKeepToT({
+                  operatorAddress: operator,
+                  isAuthorized: isAuthorized,
+                })
               )
             }}
           >
             stake on t
-          </SubmitButton>
+          </Button>
         </OnlyIf>
         <Button
           className={`btn btn-${

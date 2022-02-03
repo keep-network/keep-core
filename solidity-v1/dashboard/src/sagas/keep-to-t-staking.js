@@ -6,7 +6,6 @@ import {
   getWeb3Context,
   identifyTaskByAddress,
   logErrorAndThrow,
-  submitButtonHelper,
 } from "./utils"
 import {
   STAKE_KEEP_TO_T,
@@ -139,12 +138,8 @@ function* authorizeAndStakeKeepToT(action) {
   yield put(stakedToT(operator))
 }
 
-function* authorizeAndStakeKeepToTWorker(action) {
-  yield call(submitButtonHelper, authorizeAndStakeKeepToT, action)
-}
-
 export function* watchAuthorizeAndStakeKeepToT() {
-  yield takeEvery(STAKE_KEEP_TO_T, authorizeAndStakeKeepToTWorker)
+  yield takeEvery(STAKE_KEEP_TO_T, authorizeAndStakeKeepToT)
 }
 
 function* fetchThresholdAuthData(action) {
