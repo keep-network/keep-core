@@ -51,6 +51,7 @@ import {
   ThresholdAuthorizationLoadingModal,
   ThresholdStakeConfirmationLoadingModal,
 } from "./threshold/ThresholdLoadingModal"
+import { AuthorizedButNotStakedToTWarning } from "./threshold/AuthorizedButNotStakedToTWarning"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -99,6 +100,8 @@ const MODAL_TYPE_TO_COMPONENT = {
     ThresholdAuthorizationLoadingModal,
   [MODAL_TYPES.ThresholdStakeConfirmationLoadingModal]:
     ThresholdStakeConfirmationLoadingModal,
+  [MODAL_TYPES.AuthorizedButNotStakedToTWarningModal]:
+    AuthorizedButNotStakedToTWarning,
 }
 
 const modalRoot = document.getElementById("modal-root")

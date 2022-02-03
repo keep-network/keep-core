@@ -271,13 +271,14 @@ export const MODAL_TYPES = {
   ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
   IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
   WithdrawGrantedTokens: "WithdrawGrantedTokens",
-  StakeOnThreshold: "StakeOnThreshold",
   AuthorizeAndStakeOnThreshold: "AuthorizeAndStakeOnThreshold",
   StakeOnThresholdWithoutAuthorization: "StakeOnThresholdWithoutAuthorization",
   StakeOnThresholdConfirmed: "StakeOnThresholdConfirmed",
   ThresholdAuthorizationLoadingModal: "ThresholdAuthorizationLoadingModal",
   ThresholdStakeConfirmationLoadingModal:
     "ThresholdStakeConfirmationLoadingModal",
+  AuthorizedButNotStakedToTWarningModal:
+    "AuthorizedButNotStakedToTWarningModal",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {

@@ -128,7 +128,11 @@ function* authorizeAndStakeKeepToT(action) {
       },
     })
   } catch (err) {
-    yield put(hideModal())
+    yield put(
+      showModal({
+        modalType: MODAL_TYPES.AuthorizedButNotStakedToTWarningModal,
+      })
+    )
     return
   }
 
