@@ -10,6 +10,7 @@ import {
 } from "../constants/constants"
 import { Keep } from "../contracts"
 import { isSameEthAddress } from "../utils/general.utils"
+import { gt } from "../utils/arithmetics.utils"
 
 const fetchThresholdAuthorizationData = async (address) => {
   if (!address) {
@@ -53,9 +54,13 @@ const fetchThresholdAuthorizationData = async (address) => {
       return isSameEthAddress(operatorAddress, event.returnValues.operator)
     })
 
-    const delegatedTokens = await stakingContract.methods
+    const { amount: stakeAmount, undelegatedAt } = await stakingContract.methods
       .getDelegationInfo(operatorAddress)
       .call()
+
+    // If stake is undelegated we won't display it, because undelegated stakes
+    // can't be staked to Threshold
+    if (undelegatedAt !== "0" && gt(stakeAmount, 0)) continue
 
     const isThresholdTokenStakingContractAuthorized =
       await stakingContract.methods
@@ -69,7 +74,7 @@ const fetchThresholdAuthorizationData = async (address) => {
       authorizerAddress: stakeParticipant.returnValues.authorizer,
       operatorAddress: operatorAddress,
       beneficiaryAddress: stakeParticipant.returnValues.beneficiary,
-      stakeAmount: delegatedTokens.amount,
+      stakeAmount: stakeAmount,
       contracts: [
         {
           contractName: AUTH_CONTRACTS_LABEL.THRESHOLD_TOKEN_STAKING,
