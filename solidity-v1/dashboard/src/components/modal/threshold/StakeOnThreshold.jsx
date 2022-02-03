@@ -17,7 +17,7 @@ import { KEEP, ThresholdToken } from "../../../utils/token.utils"
 import BigNumber from "bignumber.js"
 import { stakeKeepToT } from "../../../actions/keep-to-t-staking"
 import { useDispatch } from "react-redux"
-import { toThresholdTokenAmount } from "../../../utils/stake-to-t.utils"
+import { Keep } from "../../../contracts"
 
 const StakeOnThresholdComponent = ({
   bodyTitle,
@@ -63,7 +63,7 @@ const StakeOnThresholdComponent = ({
           <Icons.ArrowsRight className={"ml-1 mr-1"} />
           <TokenAmount
             token={ThresholdToken}
-            amount={toThresholdTokenAmount(keepAmount)}
+            amount={Keep.keepToTStaking.toThresholdTokenAmount(keepAmount)}
             amountClassName="h3 text-black"
             symbolClassName="h3 text-black"
             withIcon
@@ -109,7 +109,9 @@ const StakeOnThresholdComponent = ({
               <span>
                 1 KEEP ={" "}
                 {ThresholdToken.displayAmountWithSymbol(
-                  toThresholdTokenAmount(KEEP.fromTokenUnit(1)),
+                  Keep.keepToTStaking.toThresholdTokenAmount(
+                    KEEP.fromTokenUnit(1)
+                  ),
                   3,
                   (amount) =>
                     new BigNumber(amount).toFormat(3, BigNumber.ROUND_DOWN)

@@ -6,7 +6,7 @@ import { LINK } from "../../constants/constants"
 import OnlyIf from "../OnlyIf"
 import { KEEP, ThresholdToken } from "../../utils/token.utils"
 import BigNumber from "bignumber.js"
-import { toThresholdTokenAmount } from "../../utils/stake-to-t.utils"
+import { Keep } from "../../contracts"
 
 const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
   return (
@@ -43,7 +43,9 @@ const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
                     />{" "}
                     Exchange rate is 1 KEEP ={" "}
                     {ThresholdToken.displayAmountWithSymbol(
-                      toThresholdTokenAmount(KEEP.fromTokenUnit(1)),
+                      Keep.keepToTStaking.toThresholdTokenAmount(
+                        KEEP.fromTokenUnit(1)
+                      ),
                       3,
                       (amount) =>
                         new BigNumber(amount).toFormat(3, BigNumber.ROUND_DOWN)

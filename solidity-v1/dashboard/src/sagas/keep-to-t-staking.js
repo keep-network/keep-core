@@ -23,7 +23,6 @@ import {
 } from "../actions"
 import { thresholdAuthorizationService } from "../services/threshold-authorization.service"
 import { takeOnlyOnce } from "./effects"
-import { fromThresholdTokenAmount } from "../utils/stake-to-t.utils"
 import { messageType } from "../components/Message"
 import { showMessage } from "../actions/messages"
 
@@ -52,7 +51,7 @@ export function* subscribeToStakeKeepEvent() {
           authorizer,
           beneficiary,
           operator,
-          keepAmount: fromThresholdTokenAmount(tAmount),
+          keepAmount: Keep.keepToTStaking.fromThresholdTokenAmount(tAmount),
         },
       })
     )
