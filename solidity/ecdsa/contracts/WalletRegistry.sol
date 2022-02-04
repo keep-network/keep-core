@@ -190,15 +190,15 @@ contract WalletRegistry is Ownable {
         );
     }
 
-    /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
-    ///         the protocol. The DKG result consists of result submitting member
-    ///         index, calculated group public key, bytes array of misbehaved
-    ///         members, concatenation of signatures from group members,
-    ///         indices of members corresponding to each signature and
-    ///         the list of group members.
-    ///         When the result is verified successfully it gets registered and
-    ///         waits for an approval. A result can be challenged to verify the
-    ///         members list corresponds to the expected set of members determined
+    /// @notice Submits result of DKG protocol.
+    ///         The DKG result consists of result submitting member index,
+    ///         calculated group public key, bytes array of misbehaved members,
+    ///         concatenation of signatures from group members, indices of members
+    ///         corresponding to each signature and the list of group members.
+    ///         The result is registered optimistically and waits for an approval.
+    ///         The result can be challenged when it is believed to be incorrect.
+    ///         The challenge verifies the registered result i.a. it checks if members
+    ///         list corresponds to the expected set of members determined
     ///         by the sortition pool.
     /// @dev The message to be signed by each member is keccak256 hash of the
     ///      calculated group public key, misbehaved members indices and DKG
@@ -236,9 +236,6 @@ contract WalletRegistry is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        // TODO: Revisit at the end of ECDSA Wallets implementation to see if
-        // usage was clarified and we can simplify it, as walletID is assumed to
-        // be the same as groupPubKeyHash.
         bytes32 walletID = wallets.addWallet(
             dkgResult.membersHash,
             keccak256(dkgResult.groupPubKey)

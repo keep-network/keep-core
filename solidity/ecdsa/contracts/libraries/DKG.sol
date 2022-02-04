@@ -120,6 +120,9 @@ library DKG {
 
     /// @notice Time in blocks after which DKG result is complete and ready to be
     //          published by clients.
+    // TODO: In the ECDSA implementation a fixed length of offchain DKG time
+    // won't be used. Rework the solution to await a DKG result submission
+    // once a key generation started.
     uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
 
     event DkgStarted(uint256 indexed seed);
