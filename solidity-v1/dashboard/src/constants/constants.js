@@ -68,9 +68,8 @@ export const LINK = {
       "https://forum.keep.network/t/proposal-to-remove-incentives-for-tbtc-eth-pool/341",
   },
   tbtcDapp: "https://dapp.tbtc.network",
-  thresholdDapp: "https://dashboard.test.threshold.network/",
-  // TODO: Set proper link for set up pre
-  setUpPRE: "https://dashboard.test.threshold.network/",
+  thresholdDapp: "https://dashboard.threshold.network/",
+  setUpPRE: "https://interim-pre-application-docs.readthedocs.io/en/latest/",
 }
 
 export const WALLETS = {
