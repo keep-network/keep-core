@@ -297,26 +297,6 @@ contract WalletRegistry is Ownable {
         return dkg.hasDkgTimedOut();
     }
 
-    /// @notice Requests a new signature.
-    /// @param publicKeyHash ID of a wallet that should calculate a signature.
-    /// @param digest Digest to sign.
-    function requestSignature(bytes32 publicKeyHash, bytes32 digest) external {
-        require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
-
-        wallets.requestSignature(publicKeyHash, digest);
-    }
-
-    /// @notice Submits a calculated signature for the digest that is currently
-    ///         under signing.
-    /// @param walletID ID of a wallet that should calculate a signature.
-    /// @param signature Calculated signature.
-    function submitSignature(
-        bytes32 walletID,
-        Wallets.Signature calldata signature
-    ) external {
-        wallets.submitSignature(walletID, signature);
-    }
-
     function getWallet(bytes32 walletID)
         external
         view
