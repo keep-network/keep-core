@@ -130,7 +130,7 @@ export const StakeOnThresholdTimeline = ({ step }) => {
           className="text-black"
         >
           You will need to set up a PRE node in order to be eligible to earn
-          rewards..
+          rewards...
         </Banner.Description>
       </Banner>
     </div>
