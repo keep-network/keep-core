@@ -321,4 +321,11 @@ contract WalletRegistry is Ownable {
     {
         return wallets.registry[walletID];
     }
+
+    /// @notice Checks if a wallet with given ID was registered.
+    /// @param walletID Wallet's ID.
+    /// @return True if wallet was registered, false otherwise.
+    function isWalletRegistered(bytes32 walletID) external view returns (bool) {
+        return wallets.isWalletRegistered(walletID);
+    }
 }

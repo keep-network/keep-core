@@ -72,4 +72,15 @@ library Wallets {
 
         self.registry[walletID].membersIdsHash = _membersIdsHash;
     }
+
+    /// @notice Checks if a wallet with given ID was registered.
+    /// @param walletID Wallet's ID.
+    /// @return True if wallet was registered, false otherwise.
+    function isWalletRegistered(Data storage self, bytes32 walletID)
+        external
+        view
+        returns (bool)
+    {
+        return self.registry[walletID].membersIdsHash != bytes32(0);
+    }
 }
