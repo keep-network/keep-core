@@ -31,6 +31,10 @@ contract StakingStub is IWalletStaking {
         stakedTokens[stakingProvider] += amount;
     }
 
+    function requestAuthorizationDecrease(address stakingProvider) external {
+        stakedTokens[stakingProvider] = 0;
+    }
+
     function seize(
         uint96 amount,
         uint256 rewardMultiplier,
