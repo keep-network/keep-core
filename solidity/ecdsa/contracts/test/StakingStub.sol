@@ -42,6 +42,9 @@ contract StakingStub is IWalletStaking {
         address[] memory stakingProviders
     ) external {
         if (amount > 0 && stakingProviders.length > 0) {
+            for (uint256 i = 0; i < stakingProviders.length; i++) {
+                stakedTokens[stakingProviders[i]] -= amount;
+            }
             emit Seized(amount, rewardMultiplier, notifier, stakingProviders);
         }
     }

@@ -120,6 +120,12 @@ contract WalletRegistry is Ownable {
         address maliciousSubmitter
     );
 
+    event DkgMaliciousResultSlashingFailed(
+        bytes32 indexed resultHash,
+        uint256 slashingAmount,
+        address maliciousSubmitter
+    );
+
     constructor(
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
@@ -266,21 +272,32 @@ contract WalletRegistry is Ownable {
         address maliciousDkgResultSubmitterAddress = sortitionPool
             .getIDOperator(maliciousDkgResultSubmitterId);
 
-        emit DkgMaliciousResultSlashed(
-            maliciousDkgResultHash,
-            maliciousDkgResultSlashingAmount,
-            maliciousDkgResultSubmitterAddress
-        );
-
         address[] memory operatorWrapper = new address[](1);
         operatorWrapper[0] = maliciousDkgResultSubmitterAddress;
 
-        staking.seize(
-            maliciousDkgResultSlashingAmount,
-            maliciousDkgResultNotificationRewardMultiplier,
-            msg.sender,
-            operatorWrapper
-        );
+        try
+            staking.seize(
+                maliciousDkgResultSlashingAmount,
+                maliciousDkgResultNotificationRewardMultiplier,
+                msg.sender,
+                operatorWrapper
+            )
+        {
+            emit DkgMaliciousResultSlashed(
+                maliciousDkgResultHash,
+                maliciousDkgResultSlashingAmount,
+                maliciousDkgResultSubmitterAddress
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit DkgMaliciousResultSlashingFailed(
+                maliciousDkgResultHash,
+                maliciousDkgResultSlashingAmount,
+                maliciousDkgResultSubmitterAddress
+            );
+        }
     }
 
     /// @notice Check current wallet creation state.

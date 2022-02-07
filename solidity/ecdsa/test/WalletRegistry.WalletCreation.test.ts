@@ -2275,6 +2275,38 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 })
               }
             )
+
+            context("with token staking seize call failure", async () => {
+              const slashingAmount = constants.minimumStake.add(1)
+
+              let tx: Promise<ContractTransaction>
+
+              before(async () => {
+                await createSnapshot()
+
+                await walletRegistry.setMaliciousDkgResultSlashingAmount(
+                  slashingAmount
+                )
+
+                tx = walletRegistry
+                  .connect(thirdParty)
+                  .challengeDkgResult(dkgResult)
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should succeed", async () => {
+                await expect(tx).to.not.be.reverted
+              })
+
+              it("should emit DkgMaliciousResultSlashingFailed", async () => {
+                await expect(tx)
+                  .to.emit(walletRegistry, "DkgMaliciousResultSlashingFailed")
+                  .withArgs(dkgResultHash, slashingAmount, submitter.address)
+              })
+            })
           })
 
           context(

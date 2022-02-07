@@ -18,4 +18,11 @@ contract WalletRegistryStub is WalletRegistry {
     function getDkgData() external view returns (DKG.Data memory) {
         return dkg;
     }
+
+    // TODO: Use governance update function once it's implemented
+    function setMaliciousDkgResultSlashingAmount(
+        uint96 newMaliciousDkgResultSlashingAmount
+    ) external {
+        maliciousDkgResultSlashingAmount = newMaliciousDkgResultSlashingAmount;
+    }
 }
