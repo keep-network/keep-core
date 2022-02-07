@@ -51,6 +51,8 @@ jobs:
         working-directory: ./solidity-v1/dashboard
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: legacy-keep-to-t-staking
 
       - name: Load environment variables
         uses: keep-network/ci/actions/load-env-variables@v1
@@ -89,7 +91,6 @@ jobs:
             tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
             tbtc-v2-contracts-version = github.com/keep-network/tbtc-v2/solidity#version
             coverage-pools-version = github.com/keep-network/coverage-pools#version
-            threshold-contracts-version = github.com/threshold-network/solidity-contracts#version
 
       - name: Resolve latest contracts
         if: github.event_name == 'workflow_dispatch'
@@ -100,7 +101,7 @@ jobs:
               @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
               @keep-network/tbtc-v2@${{ steps.upstream-builds-query.outputs.tbtc-v2-contracts-version }} \
               @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }} \
-              @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.threshold-contracts-version }}
+              @threshold-network/solidity-contracts@1.1.0-ropsten.0
 
       - name: NPM build
         run: npm run build
