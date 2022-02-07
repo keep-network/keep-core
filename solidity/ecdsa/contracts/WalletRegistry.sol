@@ -156,6 +156,7 @@ contract WalletRegistry is Ownable {
     }
 
     /// @notice Registers the caller in the sortition pool.
+    // TODO: Revisit on integration with Token Staking contract.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -171,9 +172,11 @@ contract WalletRegistry is Ownable {
     }
 
     /// @notice Updates the sortition pool status of the caller.
-    function updateOperatorStatus() external {
+    /// @param operator Operator's address.
+    // TODO: Revisit on integration with Token Staking contract.
+    function updateOperatorStatus(address operator) external {
         sortitionPool.updateOperatorStatus(
-            msg.sender,
+            operator,
             staking.authorizedStake(msg.sender, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `msg.sender`
         );
     }
