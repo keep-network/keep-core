@@ -2768,132 +2768,141 @@ describe("WalletRegistry - Wallet Creation", async () => {
     // This test checks that dkg timeout is adjusted in case of result challenges
     // to include the offset blocks that were mined until the invalid result
     // was challenged.
-    it("should enforce submission start offset", async () => {
-      await createSnapshot()
+    describe("submission start offset", async () => {
+      before(async () => {
+        await createSnapshot()
+      })
 
-      let dkgResult: DkgResult
+      after(async () => {
+        await restoreSnapshot()
+      })
 
-      const { startBlock } = await requestNewWallet(walletRegistry, walletOwner)
+      it("should enforce submission start offset", async () => {
+        let dkgResult: DkgResult
 
-      await mineBlocks(constants.offchainDkgTime)
+        const { startBlock } = await requestNewWallet(
+          walletRegistry,
+          walletOwner
+        )
 
-      // Submit result 1 at the beginning of the submission period
-      ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-        walletRegistry,
-        groupPublicKey,
-        operators,
-        startBlock,
-        noMisbehaved
-      ))
+        await mineBlocks(constants.offchainDkgTime)
 
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 1 after submission"
-      ).to.equal(0)
-
-      // Challenge result 1 at the beginning of the challenge period
-      await walletRegistry.challengeDkgResult(dkgResult)
-      // 1 block for dkg result submission tx +
-      // 1 block for challenge tx
-      let expectedSubmissionOffset = 2
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 1 after challenge"
-      ).to.equal(expectedSubmissionOffset)
-
-      // Submit result 2 in the middle of the submission period
-      let blocksToMine = params.dkgResultSubmissionPeriodLength / 2
-      await mineBlocks(blocksToMine)
-      ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-        walletRegistry,
-        groupPublicKey,
-        operators,
-        startBlock,
-        noMisbehaved
-      ))
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 2 after submission"
-      ).to.equal(expectedSubmissionOffset) // same as before
-
-      expectedSubmissionOffset += blocksToMine
-
-      // Challenge result 2 in the middle of the challenge period
-      await mineBlocks(params.dkgResultChallengePeriodLength / 2)
-      expectedSubmissionOffset += params.dkgResultChallengePeriodLength / 2
-      await walletRegistry.challengeDkgResult(dkgResult)
-      expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 2 after challenge"
-      ).to.equal(expectedSubmissionOffset)
-
-      // Submit result 3 at the end of the submission period
-      blocksToMine = params.dkgResultSubmissionPeriodLength - 1
-      await mineBlocks(blocksToMine)
-      ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-        walletRegistry,
-        groupPublicKey,
-        operators,
-        startBlock,
-        noMisbehaved
-      ))
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 3 after submission"
-      ).to.equal(expectedSubmissionOffset) // same as before
-
-      expectedSubmissionOffset += blocksToMine
-
-      // Challenge result 3 at the end of the challenge period
-      blocksToMine = params.dkgResultChallengePeriodLength - 1
-      await mineBlocks(blocksToMine)
-      expectedSubmissionOffset += blocksToMine
-
-      await expect(
-        walletRegistry.callStatic.notifyDkgTimeout()
-      ).to.be.revertedWith("DKG has not timed out")
-
-      await walletRegistry.challengeDkgResult(dkgResult)
-      expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 3 after challenge"
-      ).to.equal(expectedSubmissionOffset)
-
-      // Submit result 4 after the submission period
-      blocksToMine = params.dkgResultSubmissionPeriodLength
-      await mineBlocks(blocksToMine)
-      await expect(
-        signAndSubmitArbitraryDkgResult(
+        // Submit result 1 at the beginning of the submission period
+        ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
           walletRegistry,
           groupPublicKey,
           operators,
           startBlock,
           noMisbehaved
-        )
-      ).to.be.revertedWith("DKG timeout already passed")
+        ))
 
-      await walletRegistry.notifyDkgTimeout()
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 1 after submission"
+        ).to.equal(0)
 
-      await restoreSnapshot()
+        // Challenge result 1 at the beginning of the challenge period
+        await walletRegistry.challengeDkgResult(dkgResult)
+        // 1 block for dkg result submission tx +
+        // 1 block for challenge tx
+        let expectedSubmissionOffset = 2
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 1 after challenge"
+        ).to.equal(expectedSubmissionOffset)
+
+        // Submit result 2 in the middle of the submission period
+        let blocksToMine = params.dkgResultSubmissionPeriodLength / 2
+        await mineBlocks(blocksToMine)
+        ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+          walletRegistry,
+          groupPublicKey,
+          operators,
+          startBlock,
+          noMisbehaved
+        ))
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 2 after submission"
+        ).to.equal(expectedSubmissionOffset) // same as before
+
+        expectedSubmissionOffset += blocksToMine
+
+        // Challenge result 2 in the middle of the challenge period
+        await mineBlocks(params.dkgResultChallengePeriodLength / 2)
+        expectedSubmissionOffset += params.dkgResultChallengePeriodLength / 2
+        await walletRegistry.challengeDkgResult(dkgResult)
+        expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 2 after challenge"
+        ).to.equal(expectedSubmissionOffset)
+
+        // Submit result 3 at the end of the submission period
+        blocksToMine = params.dkgResultSubmissionPeriodLength - 1
+        await mineBlocks(blocksToMine)
+        ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+          walletRegistry,
+          groupPublicKey,
+          operators,
+          startBlock,
+          noMisbehaved
+        ))
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 3 after submission"
+        ).to.equal(expectedSubmissionOffset) // same as before
+
+        expectedSubmissionOffset += blocksToMine
+
+        // Challenge result 3 at the end of the challenge period
+        blocksToMine = params.dkgResultChallengePeriodLength - 1
+        await mineBlocks(blocksToMine)
+        expectedSubmissionOffset += blocksToMine
+
+        await expect(
+          walletRegistry.callStatic.notifyDkgTimeout()
+        ).to.be.revertedWith("DKG has not timed out")
+
+        await walletRegistry.challengeDkgResult(dkgResult)
+        expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 3 after challenge"
+        ).to.equal(expectedSubmissionOffset)
+
+        // Submit result 4 after the submission period
+        blocksToMine = params.dkgResultSubmissionPeriodLength
+        await mineBlocks(blocksToMine)
+        await expect(
+          signAndSubmitArbitraryDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            operators,
+            startBlock,
+            noMisbehaved
+          )
+        ).to.be.revertedWith("DKG timeout already passed")
+
+        await walletRegistry.notifyDkgTimeout()
+      })
     })
   })
 
