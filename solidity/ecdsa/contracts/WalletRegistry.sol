@@ -274,6 +274,7 @@ contract WalletRegistry is Ownable {
                 operatorWrapper
             )
         {
+            // slither-disable-next-line reentrancy-events
             emit DkgMaliciousResultSlashed(
                 maliciousDkgResultHash,
                 maliciousDkgResultSlashingAmount,
