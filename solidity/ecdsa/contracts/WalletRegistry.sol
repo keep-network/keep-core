@@ -223,13 +223,9 @@ contract WalletRegistry is Ownable {
         dkg.submitResult(dkgResult);
     }
 
-    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
-    ///         reward to the notifier.
+    /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-
-        // TODO: Implement transferDkgRewards
-        // transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
 
         dkg.complete();
     }
@@ -255,7 +251,7 @@ contract WalletRegistry is Ownable {
 
         emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
 
-        // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
+        // TODO: Disable rewards for misbehavedMembers.
         //slither-disable-next-line redundant-statements
         misbehavedMembers;
 
