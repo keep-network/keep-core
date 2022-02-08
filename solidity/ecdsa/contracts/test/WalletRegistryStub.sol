@@ -10,21 +10,19 @@ import "../libraries/Wallets.sol";
 contract WalletRegistryStub is WalletRegistry {
     constructor(
         SortitionPool _sortitionPool,
-        IERC20 _tToken,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
         address _walletOwner
-    )
-        WalletRegistry(
-            _sortitionPool,
-            _tToken,
-            _staking,
-            _dkgValidator,
-            _walletOwner
-        )
-    {}
+    ) WalletRegistry(_sortitionPool, _staking, _dkgValidator, _walletOwner) {}
 
     function getDkgData() external view returns (DKG.Data memory) {
         return dkg;
+    }
+
+    // TODO: Use governance update function once it's implemented
+    function setMaliciousDkgResultSlashingAmount(
+        uint96 newMaliciousDkgResultSlashingAmount
+    ) external {
+        maliciousDkgResultSlashingAmount = newMaliciousDkgResultSlashingAmount;
     }
 }

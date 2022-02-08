@@ -15,7 +15,7 @@
 // Initial version copied from Keep Network Random Beacon:
 // https://github.com/keep-network/keep-core/blob/5138c7628868dbeed3ae2164f76fccc6c1fbb9e8/solidity/random-beacon/contracts/DKGValidator.sol
 //
-// With following differences:
+// With the following differences:
 // - group public key length,
 // - group size and related thresholds,
 // - documentation.

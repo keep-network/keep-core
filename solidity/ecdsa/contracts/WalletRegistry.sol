@@ -23,16 +23,16 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 /// IStaking interface from there.
 interface IWalletStaking {
-    function eligibleStake(address operator, address operatorContract)
+    function authorizedStake(address stakingProvider, address application)
         external
         view
         returns (uint256);
 
     function seize(
-        uint256 amount,
+        uint96 amount,
         uint256 rewardMultiplier,
         address notifier,
-        address[] memory operators
+        address[] memory stakingProviders
     ) external;
 }
 
@@ -56,7 +56,7 @@ contract WalletRegistry is Ownable {
     ///         is challenged and proven to be malicious, each operator who
     ///         signed the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
-    uint256 public maliciousDkgResultSlashingAmount;
+    uint96 public maliciousDkgResultSlashingAmount;
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
@@ -70,7 +70,6 @@ contract WalletRegistry is Ownable {
     // External dependencies
 
     SortitionPool public immutable sortitionPool;
-    IERC20 public immutable tToken;
     /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
     /// IStaking interface from there.
     IWalletStaking public immutable staking;
@@ -107,15 +106,13 @@ contract WalletRegistry is Ownable {
         bytes32 indexed dkgResultHash
     );
 
-    event SignatureRequested(bytes32 indexed walletID, bytes32 indexed digest);
-
-    event SignatureSubmitted(
-        bytes32 indexed walletID,
-        bytes32 indexed digest,
-        Wallets.Signature signature
+    event DkgMaliciousResultSlashed(
+        bytes32 indexed resultHash,
+        uint256 slashingAmount,
+        address maliciousSubmitter
     );
 
-    event DkgMaliciousResultSlashed(
+    event DkgMaliciousResultSlashingFailed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
         address maliciousSubmitter
@@ -136,13 +133,11 @@ contract WalletRegistry is Ownable {
 
     constructor(
         SortitionPool _sortitionPool,
-        IERC20 _tToken,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
         address _walletOwner
     ) {
         sortitionPool = _sortitionPool;
-        tToken = _tToken;
         staking = _staking;
         walletOwner = _walletOwner;
 
@@ -154,7 +149,8 @@ contract WalletRegistry is Ownable {
 
         dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(20);
+        dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
+        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
     }
 
     /// @notice Updates the values of DKG parameters.
@@ -177,6 +173,19 @@ contract WalletRegistry is Ownable {
         emit DkgParametersUpdated(
             _resultChallengePeriodLength,
             _resultSubmissionEligibilityDelay
+        );
+    }
+
+    // TODO: FIX and Update to governable params
+    function updateDkgParams(
+        uint256 newResultChallengePeriodLength,
+        uint256 newResultSubmissionTimeout,
+        uint256 newSubmitterPrecedencePeriodLength
+    ) external {
+        dkg.setResultChallengePeriodLength(newResultChallengePeriodLength);
+        dkg.setResultSubmissionTimeout(newResultSubmissionTimeout);
+        dkg.setSubmitterPrecedencePeriodLength(
+            newSubmitterPrecedencePeriodLength
         );
     }
 
@@ -220,6 +229,7 @@ contract WalletRegistry is Ownable {
     }
 
     /// @notice Registers the caller in the sortition pool.
+    // TODO: Revisit on integration with Token Staking contract.
     function registerOperator() external {
         address operator = msg.sender;
 
@@ -230,15 +240,17 @@ contract WalletRegistry is Ownable {
 
         sortitionPool.insertOperator(
             operator,
-            staking.eligibleStake(operator, address(this))
+            staking.authorizedStake(operator, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `operator`
         );
     }
 
     /// @notice Updates the sortition pool status of the caller.
-    function updateOperatorStatus() external {
+    /// @param operator Operator's address.
+    // TODO: Revisit on integration with Token Staking contract.
+    function updateOperatorStatus(address operator) external {
         sortitionPool.updateOperatorStatus(
-            msg.sender,
-            staking.eligibleStake(msg.sender, address(this))
+            operator,
+            staking.authorizedStake(msg.sender, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `msg.sender`
         );
     }
 
@@ -249,20 +261,23 @@ contract WalletRegistry is Ownable {
         require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
 
         dkg.lockState();
+        // TODO: When integrating with the Random Beacon move `dkg.start` to a
+        // callback function. We need each DKG to be started with a unique
+        // and fresh relay entry.
         dkg.start(
             uint256(keccak256(abi.encodePacked(relayEntry, block.number)))
         );
     }
 
-    /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
-    ///         the protocol. The DKG result consists of result submitting member
-    ///         index, calculated group public key, bytes array of misbehaved
-    ///         members, concatenation of signatures from group members,
-    ///         indices of members corresponding to each signature and
-    ///         the list of group members.
-    ///         When the result is verified successfully it gets registered and
-    ///         waits for an approval. A result can be challenged to verify the
-    ///         members list corresponds to the expected set of members determined
+    /// @notice Submits result of DKG protocol.
+    ///         The DKG result consists of result submitting member index,
+    ///         calculated group public key, bytes array of misbehaved members,
+    ///         concatenation of signatures from group members, indices of members
+    ///         corresponding to each signature and the list of group members.
+    ///         The result is registered optimistically and waits for an approval.
+    ///         The result can be challenged when it is believed to be incorrect.
+    ///         The challenge verifies the registered result i.a. it checks if members
+    ///         list corresponds to the expected set of members determined
     ///         by the sortition pool.
     /// @dev The message to be signed by each member is keccak256 hash of the
     ///      calculated group public key, misbehaved members indices and DKG
@@ -275,13 +290,9 @@ contract WalletRegistry is Ownable {
         dkg.submitResult(dkgResult);
     }
 
-    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
-    ///         reward to the notifier.
+    /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external {
         dkg.notifyTimeout();
-
-        // TODO: Implement transferDkgRewards
-        // transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
 
         dkg.complete();
     }
@@ -300,9 +311,6 @@ contract WalletRegistry is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        // TODO: Revisit at the end of ECDSA Wallets implementation to see if
-        // usage was clarified and we can simplify it, as walletID is assumed to
-        // be the same as groupPubKeyHash.
         bytes32 walletID = wallets.addWallet(
             dkgResult.membersHash,
             keccak256(dkgResult.groupPubKey)
@@ -310,7 +318,7 @@ contract WalletRegistry is Ownable {
 
         emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
 
-        // TODO: Transfer DKG rewards and disable rewards for misbehavedMembers.
+        // TODO: Disable rewards for misbehavedMembers.
         //slither-disable-next-line redundant-statements
         misbehavedMembers;
 
@@ -330,21 +338,32 @@ contract WalletRegistry is Ownable {
         address maliciousDkgResultSubmitterAddress = sortitionPool
             .getIDOperator(maliciousDkgResultSubmitterId);
 
-        emit DkgMaliciousResultSlashed(
-            maliciousDkgResultHash,
-            maliciousDkgResultSlashingAmount,
-            maliciousDkgResultSubmitterAddress
-        );
-
         address[] memory operatorWrapper = new address[](1);
         operatorWrapper[0] = maliciousDkgResultSubmitterAddress;
 
-        staking.seize(
-            maliciousDkgResultSlashingAmount,
-            maliciousDkgResultNotificationRewardMultiplier,
-            msg.sender,
-            operatorWrapper
-        );
+        try
+            staking.seize(
+                maliciousDkgResultSlashingAmount,
+                maliciousDkgResultNotificationRewardMultiplier,
+                msg.sender,
+                operatorWrapper
+            )
+        {
+            emit DkgMaliciousResultSlashed(
+                maliciousDkgResultHash,
+                maliciousDkgResultSlashingAmount,
+                maliciousDkgResultSubmitterAddress
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit DkgMaliciousResultSlashingFailed(
+                maliciousDkgResultHash,
+                maliciousDkgResultSlashingAmount,
+                maliciousDkgResultSubmitterAddress
+            );
+        }
     }
 
     /// @notice Check current wallet creation state.
@@ -361,26 +380,6 @@ contract WalletRegistry is Ownable {
         return dkg.hasDkgTimedOut();
     }
 
-    /// @notice Requests a new signature.
-    /// @param publicKeyHash ID of a wallet that should calculate a signature.
-    /// @param digest Digest to sign.
-    function requestSignature(bytes32 publicKeyHash, bytes32 digest) external {
-        require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
-
-        wallets.requestSignature(publicKeyHash, digest);
-    }
-
-    /// @notice Submits a calculated signature for the digest that is currently
-    ///         under signing.
-    /// @param walletID ID of a wallet that should calculate a signature.
-    /// @param signature Calculated signature.
-    function submitSignature(
-        bytes32 walletID,
-        Wallets.Signature calldata signature
-    ) external {
-        wallets.submitSignature(walletID, signature);
-    }
-
     function getWallet(bytes32 walletID)
         external
         view
@@ -392,5 +391,12 @@ contract WalletRegistry is Ownable {
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
+    }
+    
+    /// @notice Checks if a wallet with given ID was registered.
+    /// @param walletID Wallet's ID.
+    /// @return True if wallet was registered, false otherwise.
+    function isWalletRegistered(bytes32 walletID) external view returns (bool) {
+        return wallets.isWalletRegistered(walletID);
     }
 }

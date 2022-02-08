@@ -8,6 +8,7 @@ import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
+import "hardhat-dependency-compiler"
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -85,6 +86,10 @@ const config: HardhatUserConfig = {
     //   ropsten: ["node_modules/@keep-network/keep-core/artifacts"],
     //   mainnet: ["./external/mainnet"],
     // },
+  },
+  dependencyCompiler: {
+    paths: ["@threshold-network/solidity-contracts/contracts/token/T.sol"],
+    keep: false,
   },
   contractSizer: {
     alphaSort: true,

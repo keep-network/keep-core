@@ -8,13 +8,14 @@ import { constants } from "../fixtures"
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { WalletRegistry } from "../../typechain"
+import type { WalletRegistry, T } from "../../typechain"
 
 export type OperatorID = number
 export type Operator = { id: OperatorID; address: Address }
 
 export async function registerOperators(
   walletRegistry: WalletRegistry,
+  tToken: T,
   addresses: Address[],
   stakeAmount: BigNumber = constants.minimumStake
 ): Promise<Operator[]> {
@@ -27,40 +28,44 @@ export async function registerOperators(
     await walletRegistry.sortitionPool()
   )
 
-  const tToken = await ethers.getContractAt("T", await walletRegistry.tToken())
-
   const staking = await ethers.getContractAt(
     "TokenStaking",
     await walletRegistry.staking()
   )
 
   for (let i = 0; i < addresses.length; i++) {
-    const operator: string = addresses[i]
+    const stakingProvider: SignerWithAddress = await ethers.getSigner(
+      addresses[i]
+    )
+
+    // TODO: Use unique addresses for each role.
+    // const owner: SignerWithAddress = stakingProvider
+    const operator: SignerWithAddress = stakingProvider
     // const beneficiary: string = operator
-    const authorizer: string = operator
+    const authorizer: SignerWithAddress = stakingProvider
 
-    await tToken.connect(deployer).mint(operator, stakeAmount)
+    await tToken.connect(deployer).mint(operator.address, stakeAmount)
 
-    await tToken
-      .connect(await ethers.getSigner(operator))
-      .approve(staking.address, stakeAmount)
+    await tToken.connect(stakingProvider).approve(staking.address, stakeAmount)
 
     // TODO: Uncomment when integrating with the real TokenStaking contract.
     // await staking
-    //   .connect(await ethers.getSigner(operator))
-    //   .stake(operator, beneficiary, authorizer, stakeAmount)
+    //   .connect(owner)
+    //   .stake(stakingProvider, beneficiary, authorizer, stakeAmount)
 
     await staking
-      .connect(await ethers.getSigner(authorizer))
-      .increaseAuthorization(operator, walletRegistry.address, stakeAmount)
+      .connect(authorizer)
+      .increaseAuthorization(
+        stakingProvider.address,
+        walletRegistry.address,
+        stakeAmount
+      )
 
-    await walletRegistry
-      .connect(await ethers.getSigner(operator))
-      .registerOperator()
+    await walletRegistry.connect(operator).registerOperator()
 
-    const id = await sortitionPool.getOperatorID(operator)
+    const id = await sortitionPool.getOperatorID(operator.address)
 
-    operators.push({ id, address: operator })
+    operators.push({ id, address: operator.address })
   }
 
   return operators

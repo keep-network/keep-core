@@ -4,10 +4,7 @@ import { ethers } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
-import { constants } from "../fixtures"
-
 import { selectGroup } from "./groups"
-import { firstEligibleIndex } from "./submission"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { BigNumberish, ContractTransaction } from "ethers"
@@ -50,7 +47,7 @@ export async function signAndSubmitCorrectDkgResult(
   seed: BigNumber,
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   numberOfSignatures = 51
 ): Promise<{
   signers: Operator[]
@@ -60,14 +57,6 @@ export async function signAndSubmitCorrectDkgResult(
   submitter: SignerWithAddress
   transaction: ContractTransaction
 }> {
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(
-      ethers.utils.keccak256(groupPublicKey),
-      constants.groupSize
-    )
-  }
-
   const sortitionPool = (await ethers.getContractAt(
     "SortitionPool",
     await walletRegistry.sortitionPool()
@@ -101,7 +90,7 @@ export async function signAndSubmitArbitraryDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   numberOfSignatures = 51
 ): Promise<{
   dkgResult: DkgResult
@@ -118,11 +107,6 @@ export async function signAndSubmitArbitraryDkgResult(
       startBlock,
       numberOfSignatures
     )
-
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
-  }
 
   const dkgResult: DkgResult = {
     submitterMemberIndex: submitterIndex,
@@ -161,7 +145,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   numberOfSignatures = 51
 ): Promise<{
   dkgResult: DkgResult
@@ -177,11 +161,6 @@ export async function signAndSubmitUnrecoverableDkgResult(
     startBlock,
     numberOfSignatures
   )
-
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
-  }
 
   const signatureHexStrLength = 2 * 65
   const unrecoverableSignatures = `0x${"a".repeat(

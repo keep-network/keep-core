@@ -6,7 +6,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer, walletOwner } = await getNamedAccounts()
 
   const SortitionPool = await deployments.get("SortitionPool")
-  const T = await deployments.get("T")
   let TokenStaking = await deployments.get("TokenStaking")
   const DKGValidator = await deployments.get("DKGValidator")
 
@@ -38,7 +37,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     args: [
       SortitionPool.address,
-      T.address,
       TokenStaking.address,
       DKGValidator.address,
       walletOwner,
@@ -64,4 +62,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["WalletRegistry"]
-func.dependencies = ["SortitionPool", "T", "TokenStaking", "DKGValidator"]
+func.dependencies = ["SortitionPool", "TokenStaking", "DKGValidator"]

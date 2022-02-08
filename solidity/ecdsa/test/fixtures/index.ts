@@ -11,6 +11,7 @@ import type {
   WalletRegistryStub,
   StakingStub,
   WalletRegistryGovernance,
+  T,
 } from "../../typechain"
 
 const { to1e18 } = helpers.number
@@ -18,7 +19,6 @@ const { to1e18 } = helpers.number
 export const constants = {
   groupSize: 100,
   groupThreshold: 51,
-  offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
   minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
 }
@@ -26,15 +26,15 @@ export const constants = {
 export const dkgState = {
   IDLE: 0,
   AWAITING_SEED: 1,
-  KEY_GENERATION: 2,
-  AWAITING_RESULT: 3,
-  CHALLENGE: 4,
+  AWAITING_RESULT: 2,
+  CHALLENGE: 3,
 }
 
 export const params = {
   dkgResultChallengePeriodLength: 10,
-  dkgResultSubmissionEligibilityDelay: 5,
   governanceDelay: 43200, // 12 hours
+  dkgResultSubmissionTimeout: 30,
+  dkgSubmitterPrecedencePeriodLength: 5,
 }
 
 export async function walletRegistryFixture(): Promise<{
@@ -55,6 +55,7 @@ export async function walletRegistryFixture(): Promise<{
   const walletRegistryGovernance: WalletRegistryGovernance =
     await ethers.getContract("WalletRegistryGovernance")
   const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
+  const tToken: T = await ethers.getContract("T")
   const staking: StakingStub = await ethers.getContract("StakingStub")
 
   const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
@@ -71,6 +72,7 @@ export async function walletRegistryFixture(): Promise<{
   // of unnamed accounts that were already used.
   const operators = await registerOperators(
     walletRegistry,
+    tToken,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
@@ -94,6 +96,13 @@ export async function walletRegistryFixture(): Promise<{
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+
+  // TODO: remove and replace by the above
+  await walletRegistry.updateDkgParams(
+    params.dkgResultChallengePeriodLength,
+    params.dkgResultSubmissionTimeout,
+    params.dkgSubmitterPrecedencePeriodLength
+  )
 
   return {
     walletRegistry,

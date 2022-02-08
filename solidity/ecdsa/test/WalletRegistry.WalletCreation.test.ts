@@ -12,7 +12,6 @@ import {
   expectDkgResultSubmittedEvent,
 } from "./utils/dkg"
 import { selectGroup, hashUint32Array } from "./utils/groups"
-import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
 import { createNewWallet, getWalletID, requestNewWallet } from "./utils/wallets"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -33,16 +32,11 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { keccak256 } = ethers.utils
 
 describe("WalletRegistry - Wallet Creation", async () => {
-  const dkgTimeout: number =
-    constants.offchainDkgTime +
-    constants.groupSize * params.dkgResultSubmissionEligibilityDelay
+  const dkgTimeout: number = params.dkgResultSubmissionTimeout
   const groupPublicKey: string = ethers.utils.hexValue(
     ecdsaData.group1.publicKey
   )
   const groupPublicKeyHash: string = ethers.utils.keccak256(groupPublicKey)
-  const firstEligibleSubmitterIndex: number = firstEligibleIndex(
-    keccak256(ecdsaData.group1.publicKey)
-  )
 
   const stubDkgResult: DkgResult = {
     submitterMemberIndex: 1,
@@ -160,8 +154,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before("submit dkg result", async () => {
             await createSnapshot()
-
-            await mineBlocks(constants.offchainDkgTime)
             ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
               walletRegistry,
               groupPublicKey,
@@ -211,7 +203,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             before("submit and challenge dkg result", async () => {
               await createSnapshot()
-              await mineBlocks(constants.offchainDkgTime)
               ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
                 walletRegistry,
                 groupPublicKey,
@@ -283,153 +274,113 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("at the start of off-chain dkg period", async () => {
-        it("should return KEY_GENERATION state", async () => {
+      context("when dkg result was not submitted", async () => {
+        it("should return AWAITING_RESULT state", async () => {
           expect(await walletRegistry.getWalletCreationState()).to.be.equal(
-            dkgState.KEY_GENERATION
+            dkgState.AWAITING_RESULT
           )
         })
-      })
 
-      context("at the end of off-chain dkg period", async () => {
-        before(async () => {
-          await createSnapshot()
+        context("after the dkg timeout period", async () => {
+          before(async () => {
+            await createSnapshot()
 
-          await mineBlocksTo(startBlock + constants.offchainDkgTime)
-        })
+            await mineBlocksTo(startBlock + dkgTimeout + 1)
+          })
 
-        after(async () => {
-          await restoreSnapshot()
-        })
+          after(async () => {
+            await restoreSnapshot()
+          })
 
-        it("should return KEY_GENERATION state", async () => {
-          expect(await walletRegistry.getWalletCreationState()).to.be.equal(
-            dkgState.KEY_GENERATION
-          )
-        })
-      })
-
-      context("after off-chain dkg period", async () => {
-        before(async () => {
-          await createSnapshot()
-
-          await mineBlocksTo(startBlock + constants.offchainDkgTime + 1)
-        })
-
-        after(async () => {
-          await restoreSnapshot()
-        })
-
-        context("when dkg result was not submitted", async () => {
           it("should return AWAITING_RESULT state", async () => {
             expect(await walletRegistry.getWalletCreationState()).to.be.equal(
               dkgState.AWAITING_RESULT
             )
           })
+        })
+      })
 
-          context("after the dkg timeout period", async () => {
-            before(async () => {
-              await createSnapshot()
+      context("when dkg result was submitted", async () => {
+        let dkgResult: DkgResult
+        let submitter: SignerWithAddress
 
-              await mineBlocksTo(startBlock + dkgTimeout + 1)
-            })
+        before("submit dkg result", async () => {
+          await createSnapshot()
+          ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            dkgSeed,
+            startBlock,
+            noMisbehaved
+          ))
+        })
 
-            after(async () => {
-              await restoreSnapshot()
-            })
+        after(async () => {
+          await restoreSnapshot()
+        })
 
-            it("should return AWAITING_RESULT state", async () => {
-              expect(await walletRegistry.getWalletCreationState()).to.be.equal(
-                dkgState.AWAITING_RESULT
-              )
-            })
+        context("when dkg result was not approved", async () => {
+          it("should return CHALLENGE state", async () => {
+            expect(await walletRegistry.getWalletCreationState()).to.be.equal(
+              dkgState.CHALLENGE
+            )
           })
         })
 
-        context("when dkg result was submitted", async () => {
-          let dkgResult: DkgResult
-          let submitter: SignerWithAddress
-
-          before("submit dkg result", async () => {
+        context("when dkg result was approved", async () => {
+          before("approve dkg result", async () => {
             await createSnapshot()
-            ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
-              walletRegistry,
-              groupPublicKey,
-              dkgSeed,
-              startBlock,
-              noMisbehaved
-            ))
+
+            await mineBlocks(params.dkgResultChallengePeriodLength)
+
+            await walletRegistry.connect(submitter).approveDkgResult(dkgResult)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          context("when dkg result was not approved", async () => {
-            it("should return CHALLENGE state", async () => {
-              expect(await walletRegistry.getWalletCreationState()).to.be.equal(
-                dkgState.CHALLENGE
-              )
-            })
-          })
-
-          context("when dkg result was approved", async () => {
-            before("approve dkg result", async () => {
-              await createSnapshot()
-
-              await mineBlocks(params.dkgResultChallengePeriodLength)
-
-              await walletRegistry
-                .connect(submitter)
-                .approveDkgResult(dkgResult)
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            it("should return IDLE state", async () => {
-              expect(await walletRegistry.getWalletCreationState()).to.be.equal(
-                dkgState.IDLE
-              )
-            })
+          it("should return IDLE state", async () => {
+            expect(await walletRegistry.getWalletCreationState()).to.be.equal(
+              dkgState.IDLE
+            )
           })
         })
+      })
 
-        context("when malicious dkg result was submitted", async () => {
-          let dkgResult: DkgResult
+      context("when malicious dkg result was submitted", async () => {
+        let dkgResult: DkgResult
 
-          before("submit malicious dkg result", async () => {
+        before("submit malicious dkg result", async () => {
+          await createSnapshot()
+          ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            // Mix operators to make the result malicious
+            mixOperators(await selectGroup(sortitionPool, dkgSeed)),
+            startBlock,
+            noMisbehaved
+          ))
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when dkg result was challenged", async () => {
+          before("challenge dkg result", async () => {
             await createSnapshot()
-            ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-              walletRegistry,
-              groupPublicKey,
-              // Mix operators to make the result malicious
-              mixOperators(await selectGroup(sortitionPool, dkgSeed)),
-              startBlock,
-              noMisbehaved
-            ))
+            await walletRegistry.challengeDkgResult(dkgResult)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          context("when dkg result was challenged", async () => {
-            before("challenge dkg result", async () => {
-              await createSnapshot()
-              await walletRegistry.challengeDkgResult(dkgResult)
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            it("should return AWAITING_RESULT state", async () => {
-              expect(await walletRegistry.getWalletCreationState()).to.be.equal(
-                dkgState.AWAITING_RESULT
-              )
-            })
+          it("should return AWAITING_RESULT state", async () => {
+            expect(await walletRegistry.getWalletCreationState()).to.be.equal(
+              dkgState.AWAITING_RESULT
+            )
           })
         })
       })
@@ -459,28 +410,73 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("within off-chain dkg period", async () => {
+      context("when dkg result was not submitted", async () => {
         it("should return false", async () => {
           await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
         })
+
+        context("at the end of the dkg timeout period", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await mineBlocksTo(startBlock + dkgTimeout)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should return false", async () => {
+            await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
+          })
+        })
+
+        context("after the dkg timeout period", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await mineBlocksTo(startBlock + dkgTimeout + 1)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should return true", async () => {
+            await expect(await walletRegistry.hasDkgTimedOut()).to.be.true
+          })
+        })
       })
 
-      context("after off-chain dkg period", async () => {
+      context("when dkg result was submitted", async () => {
+        let resultSubmissionBlock: number
+        let dkgResult: DkgResult
+        let submitter: SignerWithAddress
+
         before(async () => {
           await createSnapshot()
 
-          await mineBlocksTo(startBlock + constants.offchainDkgTime + 1)
+          let tx: ContractTransaction
+          ;({
+            transaction: tx,
+            dkgResult,
+            submitter,
+          } = await signAndSubmitCorrectDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            dkgSeed,
+            startBlock,
+            noMisbehaved
+          ))
+
+          resultSubmissionBlock = tx.blockNumber
         })
 
         after(async () => {
           await restoreSnapshot()
         })
 
-        context("when dkg result was not submitted", async () => {
-          it("should return false", async () => {
-            await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
-          })
-
+        context("when dkg result was not approved", async () => {
           context("at the end of the dkg timeout period", async () => {
             before(async () => {
               await createSnapshot()
@@ -508,123 +504,38 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await restoreSnapshot()
             })
 
-            it("should return true", async () => {
-              await expect(await walletRegistry.hasDkgTimedOut()).to.be.true
-            })
-          })
-        })
-
-        context("when dkg result was submitted", async () => {
-          let resultSubmissionBlock: number
-          let dkgResult: DkgResult
-          let submitter: SignerWithAddress
-
-          before(async () => {
-            await createSnapshot()
-
-            let tx: ContractTransaction
-            ;({
-              transaction: tx,
-              dkgResult,
-              submitter,
-            } = await signAndSubmitCorrectDkgResult(
-              walletRegistry,
-              groupPublicKey,
-              dkgSeed,
-              startBlock,
-              noMisbehaved
-            ))
-
-            resultSubmissionBlock = tx.blockNumber
-          })
-
-          after(async () => {
-            await restoreSnapshot()
-          })
-
-          context("when dkg result was not approved", async () => {
-            context("at the end of the dkg timeout period", async () => {
-              before(async () => {
-                await createSnapshot()
-
-                await mineBlocksTo(startBlock + dkgTimeout)
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should return false", async () => {
-                await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
-              })
-            })
-
-            context("after the dkg timeout period", async () => {
-              before(async () => {
-                await createSnapshot()
-
-                await mineBlocksTo(startBlock + dkgTimeout + 1)
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should return false", async () => {
-                await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
-              })
-            })
-
-            context("at the end of the challenge period", async () => {
-              before(async () => {
-                await createSnapshot()
-
-                await mineBlocksTo(
-                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
-                )
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should return false", async () => {
-                await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
-              })
-            })
-
-            context("after the challenge period", async () => {
-              before(async () => {
-                await createSnapshot()
-
-                await mineBlocksTo(
-                  resultSubmissionBlock +
-                    params.dkgResultChallengePeriodLength +
-                    1
-                )
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should return false", async () => {
-                await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
-              })
+            it("should return false", async () => {
+              await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
             })
           })
 
-          context("when dkg result was approved", async () => {
+          context("at the end of the challenge period", async () => {
             before(async () => {
               await createSnapshot()
 
               await mineBlocksTo(
                 resultSubmissionBlock + params.dkgResultChallengePeriodLength
               )
+            })
 
-              await walletRegistry
-                .connect(submitter)
-                .approveDkgResult(dkgResult)
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should return false", async () => {
+              await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
+            })
+          })
+
+          context("after the challenge period", async () => {
+            before(async () => {
+              await createSnapshot()
+
+              await mineBlocksTo(
+                resultSubmissionBlock +
+                  params.dkgResultChallengePeriodLength +
+                  1
+              )
             })
 
             after(async () => {
@@ -637,78 +548,93 @@ describe("WalletRegistry - Wallet Creation", async () => {
           })
         })
 
-        context("when malicious dkg result was submitted", async () => {
-          let dkgResult: DkgResult
-
+        context("when dkg result was approved", async () => {
           before(async () => {
             await createSnapshot()
-            ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-              walletRegistry,
-              groupPublicKey,
-              // Mix operators to make the result malicious.
-              mixOperators(await selectGroup(sortitionPool, dkgSeed)),
-              startBlock,
-              noMisbehaved
-            ))
+
+            await mineBlocksTo(
+              resultSubmissionBlock + params.dkgResultChallengePeriodLength
+            )
+
+            await walletRegistry.connect(submitter).approveDkgResult(dkgResult)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          context("when dkg result was challenged", async () => {
-            let challengeBlockNumber: number
+          it("should return false", async () => {
+            await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
+          })
+        })
+      })
 
+      context("when malicious dkg result was submitted", async () => {
+        let dkgResult: DkgResult
+
+        before(async () => {
+          await createSnapshot()
+          ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            // Mix operators to make the result malicious.
+            mixOperators(await selectGroup(sortitionPool, dkgSeed)),
+            startBlock,
+            noMisbehaved
+          ))
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when dkg result was challenged", async () => {
+          let challengeBlockNumber: number
+
+          before(async () => {
+            await createSnapshot()
+
+            const tx = await walletRegistry.challengeDkgResult(dkgResult)
+            challengeBlockNumber = tx.blockNumber
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          context("at the end of dkg result submission period", async () => {
             before(async () => {
               await createSnapshot()
 
-              const tx = await walletRegistry.challengeDkgResult(dkgResult)
-              challengeBlockNumber = tx.blockNumber
+              await mineBlocksTo(
+                challengeBlockNumber + params.dkgResultSubmissionTimeout
+              )
             })
 
             after(async () => {
               await restoreSnapshot()
             })
 
-            context("at the end of dkg result submission period", async () => {
-              before(async () => {
-                await createSnapshot()
+            it("should return false", async () => {
+              await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
+            })
+          })
 
-                await mineBlocksTo(
-                  challengeBlockNumber +
-                    constants.groupSize *
-                      params.dkgResultSubmissionEligibilityDelay
-                )
-              })
+          context("after dkg result submission period", async () => {
+            before(async () => {
+              await createSnapshot()
 
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should return false", async () => {
-                await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
-              })
+              await mineBlocksTo(
+                challengeBlockNumber + params.dkgResultSubmissionTimeout + 1
+              )
             })
 
-            context("after dkg result submission period", async () => {
-              before(async () => {
-                await createSnapshot()
+            after(async () => {
+              await restoreSnapshot()
+            })
 
-                await mineBlocksTo(
-                  challengeBlockNumber +
-                    constants.groupSize *
-                      params.dkgResultSubmissionEligibilityDelay +
-                    1
-                )
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should return true", async () => {
-                await expect(await walletRegistry.hasDkgTimedOut()).to.be.true
-              })
+            it("should return true", async () => {
+              await expect(await walletRegistry.hasDkgTimedOut()).to.be.true
             })
           })
         })
@@ -748,18 +674,176 @@ describe("WalletRegistry - Wallet Creation", async () => {
       })
 
       context("with wallet creation not timed out", async () => {
-        context("with off-chain dkg time not passed", async () => {
+        context("with dkg result not submitted", async () => {
+          context("with enough signatures on the result", async () => {
+            let tx: ContractTransaction
+            let dkgResult: DkgResult
+            let dkgResultHash: string
+
+            before(async () => {
+              await createSnapshot()
+              ;({
+                transaction: tx,
+                dkgResult,
+                dkgResultHash,
+              } = await signAndSubmitArbitraryDkgResult(
+                walletRegistry,
+                groupPublicKey,
+                operators,
+                startBlock,
+                noMisbehaved,
+                1,
+                constants.groupThreshold
+              ))
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should emit DkgResultSubmitted event", async () => {
+              await expectDkgResultSubmittedEvent(tx, {
+                resultHash: dkgResultHash,
+                seed: dkgSeed,
+                result: dkgResult,
+              })
+            })
+
+            it("should not register a new wallet", async () => {
+              await expect(tx).not.to.emit(walletRegistry, "WalletCreated")
+            })
+
+            it("should not unlock the sortition pool", async () => {
+              await expect(await sortitionPool.isLocked()).to.be.true
+            })
+          })
+
+          context("with not enough signatures on the result", async () => {
+            it("should succeed", async () => {
+              await createSnapshot()
+
+              await expect(
+                signAndSubmitArbitraryDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  operators,
+                  startBlock,
+                  noMisbehaved,
+                  1,
+                  constants.groupThreshold - 1
+                )
+              ).to.not.be.reverted
+
+              await restoreSnapshot()
+            })
+          })
+
+          context("with the submission period started", async () => {
+            before(async () => {
+              await createSnapshot()
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            context("at the beginning of the submission period", async () => {
+              it("should succeed for the first member", async () => {
+                await assertSubmissionSucceeds(1)
+              })
+
+              it("should succeed for the second member", async () => {
+                await assertSubmissionSucceeds(2)
+              })
+
+              it("should succeed for the last member", async () => {
+                await assertSubmissionSucceeds(constants.groupSize - 1)
+              })
+            })
+
+            context("at the end of the submission period", async () => {
+              before(async () => {
+                await createSnapshot()
+
+                await mineBlocksTo(
+                  startBlock + params.dkgResultSubmissionTimeout - 1
+                )
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should succeed for the first member", async () => {
+                await assertSubmissionSucceeds(1)
+              })
+
+              it("should succeed for the second member", async () => {
+                await assertSubmissionSucceeds(2)
+              })
+
+              it("should succeed for the last member", async () => {
+                await assertSubmissionSucceeds(constants.groupSize - 1)
+              })
+            })
+
+            context("after the submission period", async () => {
+              before(async () => {
+                await createSnapshot()
+
+                await mineBlocksTo(
+                  startBlock + params.dkgResultSubmissionTimeout
+                )
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should succeed for the first member", async () => {
+                await assertSubmissionReverts(1)
+              })
+
+              it("should succeed for the second member", async () => {
+                await assertSubmissionReverts(2)
+              })
+
+              it("should succeed for the last member", async () => {
+                await assertSubmissionReverts(constants.groupSize - 1)
+              })
+            })
+          })
+        })
+
+        context("with dkg result submitted", async () => {
+          let dkgResult: DkgResult
+          let submitter: SignerWithAddress
+          let resultSubmissionBlock: number
+
           before(async () => {
             await createSnapshot()
 
-            await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
+            let tx: ContractTransaction
+            ;({
+              transaction: tx,
+              dkgResult,
+              submitter,
+            } = await signAndSubmitCorrectDkgResult(
+              walletRegistry,
+              groupPublicKey,
+              dkgSeed,
+              startBlock,
+              noMisbehaved
+            ))
+
+            resultSubmissionBlock = tx.blockNumber
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          it("should revert with 'Current state is not AWAITING_RESULT' error", async () => {
+          it("should revert 'Current state is not AWAITING_RESULT' error", async () => {
             await expect(
               signAndSubmitCorrectDkgResult(
                 walletRegistry,
@@ -770,271 +854,25 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
             ).to.be.revertedWith("Current state is not AWAITING_RESULT")
           })
-        })
 
-        context("with off-chain dkg time passed", async () => {
-          context("with dkg result not submitted", async () => {
+          context("with dkg result approved", async () => {
             before(async () => {
               await createSnapshot()
 
-              await mineBlocksTo(startBlock + constants.offchainDkgTime)
+              await mineBlocksTo(
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
+              )
+
+              await walletRegistry
+                .connect(submitter)
+                .approveDkgResult(dkgResult)
             })
 
             after(async () => {
               await restoreSnapshot()
             })
 
-            context("with enough signatures on the result", async () => {
-              let tx: ContractTransaction
-              let dkgResult: DkgResult
-              let dkgResultHash: string
-
-              before(async () => {
-                await createSnapshot()
-                ;({
-                  transaction: tx,
-                  dkgResult,
-                  dkgResultHash,
-                } = await signAndSubmitArbitraryDkgResult(
-                  walletRegistry,
-                  groupPublicKey,
-                  operators,
-                  startBlock,
-                  noMisbehaved,
-                  firstEligibleSubmitterIndex,
-                  constants.groupThreshold
-                ))
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should emit DkgResultSubmitted event", async () => {
-                await expectDkgResultSubmittedEvent(tx, {
-                  resultHash: dkgResultHash,
-                  seed: dkgSeed,
-                  result: dkgResult,
-                })
-              })
-
-              it("should not register a new wallet", async () => {
-                await expect(tx).not.to.emit(walletRegistry, "WalletCreated")
-              })
-
-              it("should not unlock the sortition pool", async () => {
-                await expect(await sortitionPool.isLocked()).to.be.true
-              })
-            })
-
-            context("with not enough signatures on the result", async () => {
-              it("should succeed", async () => {
-                await createSnapshot()
-
-                await expect(
-                  signAndSubmitArbitraryDkgResult(
-                    walletRegistry,
-                    groupPublicKey,
-                    operators,
-                    startBlock,
-                    noMisbehaved,
-                    firstEligibleSubmitterIndex,
-                    constants.groupThreshold - 1
-                  )
-                ).to.not.be.reverted
-
-                await restoreSnapshot()
-              })
-            })
-
-            describe("submission eligibility verification", async () => {
-              let submissionStartBlockNumber: number
-
-              before(async () => {
-                await createSnapshot()
-
-                submissionStartBlockNumber =
-                  startBlock + constants.offchainDkgTime
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              context("at the beginning of submission period", async () => {
-                it("should succeed for the first submitter", async () => {
-                  await assertSubmissionSucceeds(firstSubmitterIndex)
-                })
-
-                it("should revert for the second submitter", async () => {
-                  await assertSubmissionReverts(secondSubmitterIndex)
-                })
-
-                it("should revert for the last submitter", async () => {
-                  await assertSubmissionReverts(lastSubmitterIndex)
-                })
-              })
-
-              context(
-                "with first submitter eligibility delay period almost ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        params.dkgResultSubmissionEligibilityDelay -
-                        2
-                    )
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  it("should succeed for the first submitter", async () => {
-                    await assertSubmissionSucceeds(firstSubmitterIndex)
-                  })
-
-                  it("should revert for the second submitter", async () => {
-                    await assertSubmissionReverts(secondSubmitterIndex)
-                  })
-
-                  it("should revert for the last submitter", async () => {
-                    await assertSubmissionReverts(lastSubmitterIndex)
-                  })
-                }
-              )
-
-              context(
-                "with first submitter eligibility delay period ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        params.dkgResultSubmissionEligibilityDelay -
-                        1
-                    )
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  it("should succeed for the first submitter", async () => {
-                    await assertSubmissionSucceeds(firstSubmitterIndex)
-                  })
-
-                  it("should succeed for the second submitter", async () => {
-                    await assertSubmissionSucceeds(secondSubmitterIndex)
-                  })
-
-                  it("should revert for the third submitter", async () => {
-                    await assertSubmissionReverts(thirdSubmitterIndex)
-                  })
-
-                  it("should revert for the last submitter", async () => {
-                    await assertSubmissionReverts(lastSubmitterIndex)
-                  })
-                }
-              )
-
-              context(
-                "with the last submitter eligibility delay period almost ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        constants.groupSize *
-                          params.dkgResultSubmissionEligibilityDelay -
-                        1
-                    )
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  it("should succeed for the first submitter", async () => {
-                    await assertSubmissionSucceeds(firstSubmitterIndex)
-                  })
-
-                  it("should succeed for the last submitter", async () => {
-                    await assertSubmissionSucceeds(lastSubmitterIndex)
-                  })
-                }
-              )
-
-              context(
-                "with the last submitter eligibility delay period ended",
-                async () => {
-                  before(async () => {
-                    await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        constants.groupSize *
-                          params.dkgResultSubmissionEligibilityDelay
-                    )
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  it("should revert for the first submitter", async () => {
-                    await assertSubmissionReverts(
-                      firstSubmitterIndex,
-                      "DKG timeout already passed"
-                    )
-                  })
-
-                  it("should revert for the last submitter", async () => {
-                    await assertSubmissionReverts(
-                      lastSubmitterIndex,
-                      "DKG timeout already passed"
-                    )
-                  })
-                }
-              )
-            })
-          })
-
-          context("with dkg result submitted", async () => {
-            let dkgResult: DkgResult
-            let submitter: SignerWithAddress
-            let resultSubmissionBlock: number
-
-            before(async () => {
-              await createSnapshot()
-
-              await mineBlocksTo(startBlock + constants.offchainDkgTime)
-
-              let tx: ContractTransaction
-              ;({
-                transaction: tx,
-                dkgResult,
-                submitter,
-              } = await signAndSubmitCorrectDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                dkgSeed,
-                startBlock,
-                noMisbehaved
-              ))
-
-              resultSubmissionBlock = tx.blockNumber
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            it("should revert 'Current state is not AWAITING_RESULT' error", async () => {
+            it("should revert", async () => {
               await expect(
                 signAndSubmitCorrectDkgResult(
                   walletRegistry,
@@ -1043,299 +881,198 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   startBlock,
                   noMisbehaved
                 )
-              ).to.be.revertedWith("Current state is not AWAITING_RESULT")
-            })
-
-            context("with dkg result approved", async () => {
-              before(async () => {
-                await createSnapshot()
-
-                await mineBlocksTo(
-                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
-                )
-
-                await walletRegistry
-                  .connect(submitter)
-                  .approveDkgResult(dkgResult)
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should revert", async () => {
-                await expect(
-                  signAndSubmitCorrectDkgResult(
-                    walletRegistry,
-                    groupPublicKey,
-                    dkgSeed,
-                    startBlock,
-                    noMisbehaved
-                  )
-                ).to.be.revertedWith("Sortition pool unlocked")
-              })
+              ).to.be.revertedWith("Sortition pool unlocked")
             })
           })
+        })
 
-          context("with malicious dkg result submitted", async () => {
-            let dkgResult: DkgResult
+        context("with malicious dkg result submitted", async () => {
+          let dkgResult: DkgResult
+
+          before(async () => {
+            await createSnapshot()
+            ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+              walletRegistry,
+              groupPublicKey,
+              // Mix operators to make the result malicious.
+              mixOperators(await selectGroup(sortitionPool, dkgSeed)),
+              startBlock,
+              noMisbehaved
+            ))
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          context("with dkg result challenged", async () => {
+            let challengeBlockNumber: number
 
             before(async () => {
               await createSnapshot()
 
-              await mineBlocksTo(startBlock + constants.offchainDkgTime)
-              ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                // Mix operators to make the result malicious.
-                mixOperators(await selectGroup(sortitionPool, dkgSeed)),
-                startBlock,
-                noMisbehaved
-              ))
+              const tx = await walletRegistry.challengeDkgResult(dkgResult)
+              challengeBlockNumber = tx.blockNumber
             })
 
             after(async () => {
               await restoreSnapshot()
             })
 
-            context("with dkg result challenged", async () => {
-              let challengeBlockNumber: number
-
-              before(async () => {
+            context("with a fresh dkg result", async () => {
+              it("should emit DkgResultSubmitted event", async () => {
                 await createSnapshot()
 
-                const tx = await walletRegistry.challengeDkgResult(dkgResult)
-                challengeBlockNumber = tx.blockNumber
-              })
+                const {
+                  transaction: tx,
+                  dkgResultHash: newDkgResultHash,
+                  dkgResult: newDkgResult,
+                } = await signAndSubmitCorrectDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  dkgSeed,
+                  startBlock,
+                  noMisbehaved
+                )
 
-              after(async () => {
+                await expectDkgResultSubmittedEvent(tx, {
+                  resultHash: newDkgResultHash,
+                  seed: dkgSeed,
+                  result: newDkgResult,
+                })
+
                 await restoreSnapshot()
               })
 
-              context("with a fresh dkg result", async () => {
-                it("should emit DkgResultSubmitted event", async () => {
-                  await createSnapshot()
-
-                  const {
-                    transaction: tx,
-                    dkgResultHash: newDkgResultHash,
-                    dkgResult: newDkgResult,
-                  } = await signAndSubmitCorrectDkgResult(
-                    walletRegistry,
-                    groupPublicKey,
-                    dkgSeed,
-                    startBlock,
-                    noMisbehaved
-                  )
-
-                  await expectDkgResultSubmittedEvent(tx, {
-                    resultHash: newDkgResultHash,
-                    seed: dkgSeed,
-                    result: newDkgResult,
-                  })
-
-                  await restoreSnapshot()
-                })
-
-                describe("submission eligibility verification", async () => {
-                  let submissionStartBlockNumber: number
-
-                  before(async () => {
-                    await createSnapshot()
-
-                    submissionStartBlockNumber = challengeBlockNumber
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  context("at the beginning of submission period", async () => {
-                    it("should succeed for the first submitter", async () => {
-                      await assertSubmissionSucceeds(firstSubmitterIndex)
-                    })
-
-                    it("should revert for the second submitter", async () => {
-                      await assertSubmissionReverts(secondSubmitterIndex)
-                    })
-
-                    it("should revert for the last submitter", async () => {
-                      await assertSubmissionReverts(lastSubmitterIndex)
-                    })
-                  })
-
-                  context(
-                    "with first submitter eligibility delay period almost ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
-
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            params.dkgResultSubmissionEligibilityDelay -
-                            2
-                        )
-                      })
-
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
-
-                      it("should succeed for the first submitter", async () => {
-                        await assertSubmissionSucceeds(firstSubmitterIndex)
-                      })
-
-                      it("should revert for the second submitter", async () => {
-                        await assertSubmissionReverts(secondSubmitterIndex)
-                      })
-
-                      it("should revert for the last submitter", async () => {
-                        await assertSubmissionReverts(lastSubmitterIndex)
-                      })
-                    }
-                  )
-
-                  context(
-                    "with first submitter eligibility delay period ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
-
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            params.dkgResultSubmissionEligibilityDelay -
-                            1
-                        )
-                      })
-
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
-
-                      it("should succeed for the first submitter", async () => {
-                        await assertSubmissionSucceeds(firstSubmitterIndex)
-                      })
-
-                      it("should succeed for the second submitter", async () => {
-                        await assertSubmissionSucceeds(secondSubmitterIndex)
-                      })
-
-                      it("should revert for the third submitter", async () => {
-                        await assertSubmissionReverts(thirdSubmitterIndex)
-                      })
-
-                      it("should revert for the last submitter", async () => {
-                        await assertSubmissionReverts(lastSubmitterIndex)
-                      })
-                    }
-                  )
-
-                  context(
-                    "with the last submitter eligibility delay period almost ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
-
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            constants.groupSize *
-                              params.dkgResultSubmissionEligibilityDelay -
-                            1
-                        )
-                      })
-
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
-
-                      it("should succeed for the first submitter", async () => {
-                        await assertSubmissionSucceeds(firstSubmitterIndex)
-                      })
-
-                      it("should succeed for the last submitter", async () => {
-                        await assertSubmissionSucceeds(lastSubmitterIndex)
-                      })
-                    }
-                  )
-
-                  context(
-                    "with the last submitter eligibility delay period ended",
-                    async () => {
-                      before(async () => {
-                        await createSnapshot()
-
-                        await mineBlocksTo(
-                          submissionStartBlockNumber +
-                            constants.groupSize *
-                              params.dkgResultSubmissionEligibilityDelay
-                        )
-                      })
-
-                      after(async () => {
-                        await restoreSnapshot()
-                      })
-
-                      it("should revert for the first submitter", async () => {
-                        await assertSubmissionReverts(
-                          firstSubmitterIndex,
-                          "DKG timeout already passed"
-                        )
-                      })
-
-                      it("should revert for the last submitter", async () => {
-                        await assertSubmissionReverts(
-                          lastSubmitterIndex,
-                          "DKG timeout already passed"
-                        )
-                      })
-                    }
-                  )
-                })
-              })
-            })
-          })
-
-          context("with misbehaved members", async () => {
-            let tx: ContractTransaction
-            let dkgResult: DkgResult
-            let dkgResultHash: string
-
-            context(
-              "when misbehaved members are in ascending order",
-              async () => {
-                const misbehavedIndices = [2, 9, 11, 30, 60, 64]
+              context("with the submission period started", async () => {
+                let submissionStartBlockNumber: number
 
                 before(async () => {
                   await createSnapshot()
 
-                  await mineBlocksTo(startBlock + constants.offchainDkgTime)
-                  ;({
-                    transaction: tx,
-                    dkgResult,
-                    dkgResultHash,
-                  } = await signAndSubmitCorrectDkgResult(
-                    walletRegistry,
-                    groupPublicKey,
-                    dkgSeed,
-                    startBlock,
-                    misbehavedIndices
-                  ))
+                  submissionStartBlockNumber = challengeBlockNumber
+
+                  await mineBlocksTo(submissionStartBlockNumber)
                 })
 
                 after(async () => {
                   await restoreSnapshot()
                 })
 
-                it("should emit DkgResultSubmitted", async () => {
-                  await expectDkgResultSubmittedEvent(tx, {
-                    resultHash: dkgResultHash,
-                    seed: dkgSeed,
-                    result: dkgResult,
+                context(
+                  "at the beginning of the submission period",
+                  async () => {
+                    it("should succeed for the first member", async () => {
+                      await assertSubmissionSucceeds(1)
+                    })
+
+                    it("should succeed for the second member", async () => {
+                      await assertSubmissionSucceeds(2)
+                    })
+
+                    it("should succeed for the last member", async () => {
+                      await assertSubmissionSucceeds(constants.groupSize - 1)
+                    })
+                  }
+                )
+
+                context("at the end of the submission period", async () => {
+                  before(async () => {
+                    await createSnapshot()
+
+                    await mineBlocksTo(
+                      submissionStartBlockNumber +
+                        params.dkgResultSubmissionTimeout -
+                        1
+                    )
+                  })
+
+                  after(async () => {
+                    await restoreSnapshot()
+                  })
+
+                  it("should succeed for the first member", async () => {
+                    await assertSubmissionSucceeds(1)
+                  })
+
+                  it("should succeed for the second member", async () => {
+                    await assertSubmissionSucceeds(2)
+                  })
+
+                  it("should succeed for the last member", async () => {
+                    await assertSubmissionSucceeds(constants.groupSize - 1)
                   })
                 })
-              }
-            )
+
+                context("after the submission period", async () => {
+                  before(async () => {
+                    await createSnapshot()
+
+                    await mineBlocksTo(
+                      submissionStartBlockNumber +
+                        params.dkgResultSubmissionTimeout
+                    )
+                  })
+
+                  after(async () => {
+                    await restoreSnapshot()
+                  })
+
+                  it("should succeed for the first member", async () => {
+                    await assertSubmissionReverts(1)
+                  })
+
+                  it("should succeed for the second member", async () => {
+                    await assertSubmissionReverts(2)
+                  })
+
+                  it("should succeed for the last member", async () => {
+                    await assertSubmissionReverts(constants.groupSize - 1)
+                  })
+                })
+              })
+            })
           })
+        })
+
+        context("with misbehaved members", async () => {
+          let tx: ContractTransaction
+          let dkgResult: DkgResult
+          let dkgResultHash: string
+
+          context(
+            "when misbehaved members are in ascending order",
+            async () => {
+              const misbehavedIndices = [2, 9, 11, 30, 60, 64]
+
+              before(async () => {
+                await createSnapshot()
+                ;({
+                  transaction: tx,
+                  dkgResult,
+                  dkgResultHash,
+                } = await signAndSubmitCorrectDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  dkgSeed,
+                  startBlock,
+                  misbehavedIndices
+                ))
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should emit DkgResultSubmitted", async () => {
+                await expectDkgResultSubmittedEvent(tx, {
+                  resultHash: dkgResultHash,
+                  seed: dkgSeed,
+                  result: dkgResult,
+                })
+              })
+            }
+          )
         })
       })
 
@@ -1365,15 +1102,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         })
       })
 
-      // Submission Eligibility Test Helpers
-      const firstSubmitterIndex = firstEligibleSubmitterIndex
-      const secondSubmitterIndex = shiftEligibleIndex(firstSubmitterIndex, 1)
-      const thirdSubmitterIndex = shiftEligibleIndex(firstSubmitterIndex, 2)
-      const lastSubmitterIndex = shiftEligibleIndex(
-        firstSubmitterIndex,
-        constants.groupSize - 1
-      )
-
+      // Submission Test Helpers
       async function assertSubmissionSucceeds(
         submitterIndex: number
       ): Promise<void> {
@@ -1403,7 +1132,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       async function assertSubmissionReverts(
         submitterIndex: number,
-        message = "Submitter is not eligible"
+        message = "DKG timeout already passed"
       ): Promise<void> {
         await expect(
           signAndSubmitCorrectDkgResult(
@@ -1450,346 +1179,96 @@ describe("WalletRegistry - Wallet Creation", async () => {
         ).to.be.revertedWith("Current state is not CHALLENGE")
       })
 
-      context("with off-chain dkg time passed", async () => {
+      context("with dkg result not submitted", async () => {
+        it("should revert with 'Current state is not CHALLENGE' error", async () => {
+          await expect(
+            walletRegistry.approveDkgResult(stubDkgResult)
+          ).to.be.revertedWith("Current state is not CHALLENGE")
+        })
+      })
+
+      context("with dkg result submitted", async () => {
+        let resultSubmissionBlock: number
+        let dkgResultHash: string
+        let dkgResult: DkgResult
+        let submitter: SignerWithAddress
+        let walletID: string
+
+        const submitterIndex = 1
+
         before(async () => {
           await createSnapshot()
 
-          await mineBlocksTo(startBlock + constants.offchainDkgTime)
+          let tx: ContractTransaction
+          ;({
+            transaction: tx,
+            dkgResult,
+            dkgResultHash,
+            submitter,
+          } = await signAndSubmitCorrectDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            dkgSeed,
+            startBlock,
+            noMisbehaved,
+            submitterIndex
+          ))
+
+          resultSubmissionBlock = tx.blockNumber
         })
 
         after(async () => {
           await restoreSnapshot()
         })
 
-        context("with dkg result not submitted", async () => {
-          it("should revert with 'Current state is not CHALLENGE' error", async () => {
+        context("with challenge period not passed", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await mineBlocksTo(
+              resultSubmissionBlock + params.dkgResultChallengePeriodLength - 1
+            )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should revert with 'Challenge period has not passed yet' error", async () => {
             await expect(
-              walletRegistry.approveDkgResult(stubDkgResult)
-            ).to.be.revertedWith("Current state is not CHALLENGE")
+              walletRegistry.connect(submitter).approveDkgResult(dkgResult)
+            ).to.be.revertedWith("Challenge period has not passed yet")
           })
         })
 
-        context("with dkg result submitted", async () => {
-          let resultSubmissionBlock: number
-          let dkgResultHash: string
-          let dkgResult: DkgResult
-          let submitter: SignerWithAddress
-          let walletID: string
-
-          const submitterIndex = firstEligibleSubmitterIndex
-
+        context("with challenge period passed", async () => {
           before(async () => {
             await createSnapshot()
 
-            let tx: ContractTransaction
-            ;({
-              transaction: tx,
-              dkgResult,
-              dkgResultHash,
-              submitter,
-            } = await signAndSubmitCorrectDkgResult(
-              walletRegistry,
-              groupPublicKey,
-              dkgSeed,
-              startBlock,
-              noMisbehaved,
-              submitterIndex
-            ))
-
-            resultSubmissionBlock = tx.blockNumber
+            await mineBlocksTo(
+              resultSubmissionBlock + params.dkgResultChallengePeriodLength
+            )
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          context("with challenge period not passed", async () => {
-            before(async () => {
-              await createSnapshot()
-
-              await mineBlocksTo(
-                resultSubmissionBlock +
-                  params.dkgResultChallengePeriodLength -
-                  1
-              )
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            it("should revert with 'Challenge period has not passed yet' error", async () => {
-              await expect(
-                walletRegistry.connect(submitter).approveDkgResult(dkgResult)
-              ).to.be.revertedWith("Challenge period has not passed yet")
-            })
-          })
-
-          context("with challenge period passed", async () => {
-            before(async () => {
-              await createSnapshot()
-
-              await mineBlocksTo(
-                resultSubmissionBlock + params.dkgResultChallengePeriodLength
-              )
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            context("when called by a DKG result submitter", async () => {
-              let tx: ContractTransaction
-              // let initialDkgRewardsPoolBalance: BigNumber
-              // let initialSubmitterBalance: BigNumber
-
-              before(async () => {
-                await createSnapshot()
-
-                // initialDkgRewardsPoolBalance =
-                //   await walletRegistry.dkgRewardsPool()
-                // initialSubmitterBalance = await testToken.balanceOf(
-                //   await submitter.getAddress()
-                // )
-                tx = await walletRegistry
-                  .connect(submitter)
-                  .approveDkgResult(dkgResult)
-
-                walletID = await getWalletID(tx)
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should emit DkgResultApproved event", async () => {
-                await expect(tx)
-                  .to.emit(walletRegistry, "DkgResultApproved")
-                  .withArgs(dkgResultHash, await submitter.getAddress())
-              })
-
-              it("should clean dkg data", async () => {
-                await assertDkgResultCleanData(walletRegistry)
-              })
-
-              it("should register a new wallet", async () => {
-                await expect(walletID).to.be.equal(groupPublicKeyHash)
-
-                const wallet = await walletRegistry.getWallet(walletID)
-
-                await expect(wallet.membersIdsHash).to.be.equal(
-                  hashUint32Array(dkgResult.members)
-                )
-              })
-
-              // it("should reward the submitter with tokens from DKG rewards pool", async () => {
-              //   const currentDkgRewardsPoolBalance =
-              //     await walletRegistry.dkgRewardsPool()
-              //   expect(
-              //     initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
-              //   ).to.be.equal(params.dkgResultSubmissionReward)
-
-              //   const currentSubmitterBalance: BigNumber =
-              //     await testToken.balanceOf(await submitter.getAddress())
-              //   expect(
-              //     currentSubmitterBalance.sub(initialSubmitterBalance)
-              //   ).to.be.equal(params.dkgResultSubmissionReward)
-              // })
-
-              it("should emit WalletCreated event", async () => {
-                await expect(tx)
-                  .to.emit(walletRegistry, "WalletCreated")
-                  .withArgs(walletID, dkgResultHash)
-              })
-
-              it("should unlock the sortition pool", async () => {
-                await expect(await sortitionPool.isLocked()).to.be.false
-              })
-            })
-
-            context("when called by a third party", async () => {
-              context("when the third party is not yet eligible", async () => {
-                before(async () => {
-                  await createSnapshot()
-
-                  await mineBlocks(
-                    params.dkgResultSubmissionEligibilityDelay - 1
-                  )
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should revert", async () => {
-                  await expect(
-                    walletRegistry
-                      .connect(thirdParty)
-                      .approveDkgResult(dkgResult)
-                  ).to.be.revertedWith(
-                    "Only the DKG result submitter can approve the result at this moment"
-                  )
-                })
-              })
-
-              context("when the third party is eligible", async () => {
-                let tx: ContractTransaction
-                // let initialDkgRewardsPoolBalance: BigNumber
-                // let initApproverBalance: BigNumber
-
-                before(async () => {
-                  await createSnapshot()
-
-                  await mineBlocks(params.dkgResultSubmissionEligibilityDelay)
-                  // initialDkgRewardsPoolBalance =
-                  //   await walletRegistry.dkgRewardsPool()
-                  // initApproverBalance = await testToken.balanceOf(
-                  //   await thirdParty.getAddress()
-                  // )
-                  tx = await walletRegistry
-                    .connect(thirdParty)
-                    .approveDkgResult(dkgResult)
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should emit DkgResultApproved event", async () => {
-                  await expect(tx)
-                    .to.emit(walletRegistry, "DkgResultApproved")
-                    .withArgs(dkgResultHash, thirdParty.address)
-                })
-
-                // it("should pay the reward to the third party", async () => {
-                //   const currentDkgRewardsPoolBalance =
-                //     await walletRegistry.dkgRewardsPool()
-                //   expect(
-                //     initialDkgRewardsPoolBalance.sub(
-                //       currentDkgRewardsPoolBalance
-                //     )
-                //   ).to.be.equal(params.dkgResultSubmissionReward)
-
-                //   const currentApproverBalance = await testToken.balanceOf(
-                //     await thirdParty.getAddress()
-                //   )
-                //   expect(
-                //     currentApproverBalance.sub(initApproverBalance)
-                //   ).to.be.equal(params.dkgResultSubmissionReward)
-                // })
-              })
-            })
-          })
-        })
-
-        context("when there was a challenged result before", async () => {
-          let resultSubmissionBlock: number
-          let dkgResultHash: string
-          let dkgResult: DkgResult
-
-          // First result is malicious and submitter is also malicious
-          const maliciousSubmitter = firstEligibleSubmitterIndex
-
-          // Submit a second result by another submitter
-          const submitterIndexShift = 5
-          const anotherSubmitterIndex = shiftEligibleIndex(
-            maliciousSubmitter,
-            submitterIndexShift
-          )
-          let anotherSubmitter: Signer
-
-          before(async () => {
-            await createSnapshot()
-
-            await mineBlocks(
-              params.dkgResultSubmissionEligibilityDelay * submitterIndexShift
-            )
-
-            const { dkgResult: maliciousDkgResult } =
-              await signAndSubmitArbitraryDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                // Mix operators to make the result malicious.
-                mixOperators(await selectGroup(sortitionPool, dkgSeed)),
-                startBlock,
-                noMisbehaved,
-                maliciousSubmitter
-              )
-
-            await walletRegistry.challengeDkgResult(maliciousDkgResult)
-
-            await mineBlocks(
-              params.dkgResultSubmissionEligibilityDelay * anotherSubmitterIndex
-            )
-
+          context("when called by a DKG result submitter", async () => {
             let tx: ContractTransaction
-            ;({
-              transaction: tx,
-              dkgResult,
-              dkgResultHash,
-              submitter: anotherSubmitter,
-            } = await signAndSubmitCorrectDkgResult(
-              walletRegistry,
-              groupPublicKey,
-              dkgSeed,
-              startBlock,
-              noMisbehaved,
-              anotherSubmitterIndex
-            ))
-
-            resultSubmissionBlock = tx.blockNumber
-          })
-
-          after(async () => {
-            await restoreSnapshot()
-          })
-
-          context("with challenge period not passed", async () => {
-            before(async () => {
-              await createSnapshot()
-
-              await mineBlocksTo(
-                resultSubmissionBlock +
-                  params.dkgResultChallengePeriodLength -
-                  1
-              )
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            it("should revert with 'Challenge period has not passed yet' error", async () => {
-              await expect(
-                walletRegistry
-                  .connect(anotherSubmitter)
-                  .approveDkgResult(dkgResult)
-              ).to.be.revertedWith("Challenge period has not passed yet")
-            })
-          })
-
-          context("with challenge period passed", async () => {
-            let tx: ContractTransaction
-            let walletID: string
-            let initialDkgRewardsPoolBalance: BigNumber
-            let initialSubmitterBalance: BigNumber
+            // let initialDkgRewardsPoolBalance: BigNumber
+            // let initialSubmitterBalance: BigNumber
 
             before(async () => {
               await createSnapshot()
-
-              await mineBlocksTo(
-                resultSubmissionBlock + params.dkgResultChallengePeriodLength
-              )
 
               // initialDkgRewardsPoolBalance =
               //   await walletRegistry.dkgRewardsPool()
-
               // initialSubmitterBalance = await testToken.balanceOf(
-              //   await anotherSubmitter.getAddress()
+              //   await submitter.getAddress()
               // )
-
               tx = await walletRegistry
-                .connect(anotherSubmitter)
+                .connect(submitter)
                 .approveDkgResult(dkgResult)
 
               walletID = await getWalletID(tx)
@@ -1802,7 +1281,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
             it("should emit DkgResultApproved event", async () => {
               await expect(tx)
                 .to.emit(walletRegistry, "DkgResultApproved")
-                .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
+                .withArgs(dkgResultHash, await submitter.getAddress())
+            })
+
+            it("should clean dkg data", async () => {
+              await assertDkgResultCleanData(walletRegistry)
             })
 
             it("should register a new wallet", async () => {
@@ -1823,7 +1306,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             //   ).to.be.equal(params.dkgResultSubmissionReward)
 
             //   const currentSubmitterBalance: BigNumber =
-            //     await testToken.balanceOf(await anotherSubmitter.getAddress())
+            //     await testToken.balanceOf(await submitter.getAddress())
             //   expect(
             //     currentSubmitterBalance.sub(initialSubmitterBalance)
             //   ).to.be.equal(params.dkgResultSubmissionReward)
@@ -1838,6 +1321,220 @@ describe("WalletRegistry - Wallet Creation", async () => {
             it("should unlock the sortition pool", async () => {
               await expect(await sortitionPool.isLocked()).to.be.false
             })
+          })
+
+          context("when called by a third party", async () => {
+            context("when the third party is not yet eligible", async () => {
+              before(async () => {
+                await createSnapshot()
+
+                await mineBlocks(params.dkgSubmitterPrecedencePeriodLength - 1)
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should revert", async () => {
+                await expect(
+                  walletRegistry.connect(thirdParty).approveDkgResult(dkgResult)
+                ).to.be.revertedWith(
+                  "Only the DKG result submitter can approve the result at this moment"
+                )
+              })
+            })
+
+            context("when the third party is eligible", async () => {
+              let tx: ContractTransaction
+              // let initialDkgRewardsPoolBalance: BigNumber
+              // let initApproverBalance: BigNumber
+
+              before(async () => {
+                await createSnapshot()
+
+                await mineBlocks(params.dkgSubmitterPrecedencePeriodLength)
+                // initialDkgRewardsPoolBalance =
+                //   await walletRegistry.dkgRewardsPool()
+                // initApproverBalance = await testToken.balanceOf(
+                //   await thirdParty.getAddress()
+                // )
+                tx = await walletRegistry
+                  .connect(thirdParty)
+                  .approveDkgResult(dkgResult)
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should emit DkgResultApproved event", async () => {
+                await expect(tx)
+                  .to.emit(walletRegistry, "DkgResultApproved")
+                  .withArgs(dkgResultHash, thirdParty.address)
+              })
+
+              // it("should pay the reward to the third party", async () => {
+              //   const currentDkgRewardsPoolBalance =
+              //     await walletRegistry.dkgRewardsPool()
+              //   expect(
+              //     initialDkgRewardsPoolBalance.sub(
+              //       currentDkgRewardsPoolBalance
+              //     )
+              //   ).to.be.equal(params.dkgResultSubmissionReward)
+
+              //   const currentApproverBalance = await testToken.balanceOf(
+              //     await thirdParty.getAddress()
+              //   )
+              //   expect(
+              //     currentApproverBalance.sub(initApproverBalance)
+              //   ).to.be.equal(params.dkgResultSubmissionReward)
+              // })
+            })
+          })
+        })
+      })
+
+      context("when there was a challenged result before", async () => {
+        let resultSubmissionBlock: number
+        let dkgResultHash: string
+        let dkgResult: DkgResult
+
+        // First result is malicious and submitter is also malicious
+        const maliciousSubmitter = 1
+
+        // Submit a second result by another submitter
+        const anotherSubmitterIndex = 6
+        let anotherSubmitter: Signer
+
+        before(async () => {
+          await createSnapshot()
+
+          const { dkgResult: maliciousDkgResult } =
+            await signAndSubmitArbitraryDkgResult(
+              walletRegistry,
+              groupPublicKey,
+              // Mix operators to make the result malicious.
+              mixOperators(await selectGroup(sortitionPool, dkgSeed)),
+              startBlock,
+              noMisbehaved,
+              maliciousSubmitter
+            )
+
+          await walletRegistry.challengeDkgResult(maliciousDkgResult)
+
+          let tx: ContractTransaction
+          ;({
+            transaction: tx,
+            dkgResult,
+            dkgResultHash,
+            submitter: anotherSubmitter,
+          } = await signAndSubmitCorrectDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            dkgSeed,
+            startBlock,
+            noMisbehaved,
+            anotherSubmitterIndex
+          ))
+
+          resultSubmissionBlock = tx.blockNumber
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("with challenge period not passed", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await mineBlocksTo(
+              resultSubmissionBlock + params.dkgResultChallengePeriodLength - 1
+            )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should revert with 'Challenge period has not passed yet' error", async () => {
+            await expect(
+              walletRegistry
+                .connect(anotherSubmitter)
+                .approveDkgResult(dkgResult)
+            ).to.be.revertedWith("Challenge period has not passed yet")
+          })
+        })
+
+        context("with challenge period passed", async () => {
+          let tx: ContractTransaction
+          let walletID: string
+          let initialDkgRewardsPoolBalance: BigNumber
+          let initialSubmitterBalance: BigNumber
+
+          before(async () => {
+            await createSnapshot()
+
+            await mineBlocksTo(
+              resultSubmissionBlock + params.dkgResultChallengePeriodLength
+            )
+
+            // initialDkgRewardsPoolBalance =
+            //   await walletRegistry.dkgRewardsPool()
+
+            // initialSubmitterBalance = await testToken.balanceOf(
+            //   await anotherSubmitter.getAddress()
+            // )
+
+            tx = await walletRegistry
+              .connect(anotherSubmitter)
+              .approveDkgResult(dkgResult)
+
+            walletID = await getWalletID(tx)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should emit DkgResultApproved event", async () => {
+            await expect(tx)
+              .to.emit(walletRegistry, "DkgResultApproved")
+              .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
+          })
+
+          it("should register a new wallet", async () => {
+            await expect(walletID).to.be.equal(groupPublicKeyHash)
+
+            const wallet = await walletRegistry.getWallet(walletID)
+
+            await expect(wallet.membersIdsHash).to.be.equal(
+              hashUint32Array(dkgResult.members)
+            )
+          })
+
+          // it("should reward the submitter with tokens from DKG rewards pool", async () => {
+          //   const currentDkgRewardsPoolBalance =
+          //     await walletRegistry.dkgRewardsPool()
+          //   expect(
+          //     initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
+          //   ).to.be.equal(params.dkgResultSubmissionReward)
+
+          //   const currentSubmitterBalance: BigNumber =
+          //     await testToken.balanceOf(await anotherSubmitter.getAddress())
+          //   expect(
+          //     currentSubmitterBalance.sub(initialSubmitterBalance)
+          //   ).to.be.equal(params.dkgResultSubmissionReward)
+          // })
+
+          it("should emit WalletCreated event", async () => {
+            await expect(tx)
+              .to.emit(walletRegistry, "WalletCreated")
+              .withArgs(walletID, dkgResultHash)
+          })
+
+          it("should unlock the sortition pool", async () => {
+            await expect(await sortitionPool.isLocked()).to.be.false
           })
         })
       })
@@ -1961,8 +1658,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before(async () => {
             await createSnapshot()
-
-            await mineBlocksTo(startBlock + constants.offchainDkgTime)
             ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
               walletRegistry,
               groupPublicKey,
@@ -1994,8 +1689,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
         before(async () => {
           await createSnapshot()
-
-          await mineBlocksTo(startBlock + constants.offchainDkgTime)
           ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
             walletRegistry,
             groupPublicKey,
@@ -2117,8 +1810,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
             walletRegistry,
             walletOwner
           ))
-
-          await mineBlocks(constants.offchainDkgTime)
         })
 
         after(async () => {
@@ -2141,9 +1832,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           const newResultPublicKey = ecdsaData.group2.publicKey
           const newResultPublicKeyHash = keccak256(newResultPublicKey)
-          const newResultSubmitterIndex = firstEligibleIndex(
-            newResultPublicKeyHash
-          )
+          const newResultSubmitterIndex = 1
 
           before("submit dkg result", async () => {
             await createSnapshot()
@@ -2246,222 +1935,50 @@ describe("WalletRegistry - Wallet Creation", async () => {
           ).to.be.revertedWith("Current state is not CHALLENGE")
         })
 
-        context("with off-chain dkg time passed", async () => {
+        context("with dkg result not submitted", async () => {
+          it("should revert with 'Current state is not CHALLENGE'", async () => {
+            await expect(
+              walletRegistry.challengeDkgResult(stubDkgResult)
+            ).to.be.revertedWith("Current state is not CHALLENGE")
+          })
+        })
+
+        context("with malicious dkg result submitted", async () => {
+          let resultSubmissionBlock: number
+          let dkgResultHash: string
+          let dkgResult: DkgResult
+          let submitter: SignerWithAddress
+
           before(async () => {
             await createSnapshot()
 
-            await mineBlocksTo(startBlock + constants.offchainDkgTime)
+            let tx: ContractTransaction
+            ;({
+              transaction: tx,
+              dkgResult,
+              dkgResultHash,
+              submitter,
+            } = await signAndSubmitArbitraryDkgResult(
+              walletRegistry,
+              groupPublicKey,
+              // Mix operators to make the result malicious.
+              mixOperators(await selectGroup(sortitionPool, dkgSeed)),
+              startBlock,
+              noMisbehaved
+            ))
+
+            resultSubmissionBlock = tx.blockNumber
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          context("with dkg result not submitted", async () => {
-            it("should revert with 'Current state is not CHALLENGE'", async () => {
-              await expect(
-                walletRegistry.challengeDkgResult(stubDkgResult)
-              ).to.be.revertedWith("Current state is not CHALLENGE")
-            })
-          })
-
-          context("with malicious dkg result submitted", async () => {
-            let resultSubmissionBlock: number
-            let dkgResultHash: string
-            let dkgResult: DkgResult
-            let submitter: SignerWithAddress
-
-            before(async () => {
-              await createSnapshot()
-
+          context("at the beginning of challenge period", async () => {
+            context("called by a third party", async () => {
               let tx: ContractTransaction
-              ;({
-                transaction: tx,
-                dkgResult,
-                dkgResultHash,
-                submitter,
-              } = await signAndSubmitArbitraryDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                // Mix operators to make the result malicious.
-                mixOperators(await selectGroup(sortitionPool, dkgSeed)),
-                startBlock,
-                noMisbehaved
-              ))
-
-              resultSubmissionBlock = tx.blockNumber
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            context("at the beginning of challenge period", async () => {
-              context("called by a third party", async () => {
-                let tx: ContractTransaction
-                before(async () => {
-                  await createSnapshot()
-
-                  tx = await walletRegistry
-                    .connect(thirdParty)
-                    .challengeDkgResult(dkgResult)
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should emit DkgResultChallenged event", async () => {
-                  await expect(tx)
-                    .to.emit(walletRegistry, "DkgResultChallenged")
-                    .withArgs(
-                      dkgResultHash,
-                      await thirdParty.getAddress(),
-                      "Invalid group members"
-                    )
-                })
-
-                it("should not unlock the sortition pool", async () => {
-                  await expect(await sortitionPool.isLocked()).to.be.true
-                })
-
-                it("should emit DkgMaliciousResultSlashed event", async () => {
-                  await expect(tx)
-                    .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                    .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-                })
-
-                it("should slash malicious result submitter", async () => {
-                  await expect(tx)
-                    .to.emit(staking, "Seized")
-                    .withArgs(
-                      to1e18(50000),
-                      100,
-                      await thirdParty.getAddress(),
-                      [submitter.address]
-                    )
-                })
-              })
-            })
-
-            context("at the end of challenge period", async () => {
               before(async () => {
                 await createSnapshot()
-
-                await mineBlocksTo(
-                  resultSubmissionBlock +
-                    params.dkgResultChallengePeriodLength -
-                    1
-                )
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              context("called by a third party", async () => {
-                let tx: ContractTransaction
-                before(async () => {
-                  await createSnapshot()
-
-                  tx = await walletRegistry
-                    .connect(thirdParty)
-                    .challengeDkgResult(dkgResult)
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should emit DkgResultChallenged event", async () => {
-                  await expect(tx)
-                    .to.emit(walletRegistry, "DkgResultChallenged")
-                    .withArgs(
-                      dkgResultHash,
-                      await thirdParty.getAddress(),
-                      "Invalid group members"
-                    )
-                })
-
-                it("should not unlock the sortition pool", async () => {
-                  await expect(await sortitionPool.isLocked()).to.be.true
-                })
-
-                it("should emit DkgMaliciousResultSlashed event", async () => {
-                  await expect(tx)
-                    .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                    .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-                })
-
-                it("should slash malicious result submitter", async () => {
-                  await expect(tx)
-                    .to.emit(staking, "Seized")
-                    .withArgs(
-                      to1e18(50000),
-                      100,
-                      await thirdParty.getAddress(),
-                      [submitter.address]
-                    )
-                })
-              })
-            })
-
-            context("with challenge period passed", async () => {
-              before(async () => {
-                await createSnapshot()
-
-                await mineBlocksTo(
-                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
-                )
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should revert with 'Challenge period has already passed' error", async () => {
-                await expect(
-                  walletRegistry.challengeDkgResult(dkgResult)
-                ).to.be.revertedWith("Challenge period has already passed")
-              })
-            })
-
-            context(
-              "with challenged result not matching the submitted one",
-              async () => {
-                it("should revert with 'Result under challenge is different than the submitted one'", async () => {
-                  const modifiedDkgResult: DkgResult = { ...dkgResult }
-                  modifiedDkgResult.submitterMemberIndex =
-                    dkgResult.submitterMemberIndex + 1
-
-                  await expect(
-                    walletRegistry.challengeDkgResult(modifiedDkgResult)
-                  ).to.be.revertedWith(
-                    "Result under challenge is different than the submitted one"
-                  )
-                })
-              }
-            )
-          })
-
-          context(
-            "with dkg result submitted with unrecoverable signatures",
-            async () => {
-              let dkgResultHash: string
-              let dkgResult: DkgResult
-              let submitter: SignerWithAddress
-              let tx: ContractTransaction
-
-              before(async () => {
-                await createSnapshot()
-                ;({ dkgResult, dkgResultHash, submitter } =
-                  await signAndSubmitUnrecoverableDkgResult(
-                    walletRegistry,
-                    groupPublicKey,
-                    await selectGroup(sortitionPool, dkgSeed),
-                    startBlock,
-                    noMisbehaved
-                  ))
 
                 tx = await walletRegistry
                   .connect(thirdParty)
@@ -2478,7 +1995,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   .withArgs(
                     dkgResultHash,
                     await thirdParty.getAddress(),
-                    "validation reverted"
+                    "Invalid group members"
                   )
               })
 
@@ -2499,28 +2016,28 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     submitter.address,
                   ])
               })
-            }
-          )
+            })
+          })
 
-          context(
-            "when misbehaved operators are not in ascending order",
-            async () => {
-              const misbehavedIndices = [2, 9, 30, 11, 60, 64]
+          context("at the end of challenge period", async () => {
+            before(async () => {
+              await createSnapshot()
 
+              await mineBlocksTo(
+                resultSubmissionBlock +
+                  params.dkgResultChallengePeriodLength -
+                  1
+              )
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            context("called by a third party", async () => {
               let tx: ContractTransaction
-              let dkgResult: DkgResult
-              let dkgResultHash: string
-
               before(async () => {
                 await createSnapshot()
-                ;({ dkgResult, dkgResultHash } =
-                  await signAndSubmitCorrectDkgResult(
-                    walletRegistry,
-                    groupPublicKey,
-                    dkgSeed,
-                    startBlock,
-                    misbehavedIndices
-                  ))
 
                 tx = await walletRegistry
                   .connect(thirdParty)
@@ -2537,18 +2054,162 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   .withArgs(
                     dkgResultHash,
                     await thirdParty.getAddress(),
-                    "Corrupted misbehaved members indices"
+                    "Invalid group members"
                   )
               })
 
               it("should not unlock the sortition pool", async () => {
                 await expect(await sortitionPool.isLocked()).to.be.true
               })
+
+              it("should emit DkgMaliciousResultSlashed event", async () => {
+                await expect(tx)
+                  .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+              })
+
+              it("should slash malicious result submitter", async () => {
+                await expect(tx)
+                  .to.emit(staking, "Seized")
+                  .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                    submitter.address,
+                  ])
+              })
+            })
+          })
+
+          context("with challenge period passed", async () => {
+            before(async () => {
+              await createSnapshot()
+
+              await mineBlocksTo(
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
+              )
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should revert with 'Challenge period has already passed' error", async () => {
+              await expect(
+                walletRegistry.challengeDkgResult(dkgResult)
+              ).to.be.revertedWith("Challenge period has already passed")
+            })
+          })
+
+          context(
+            "with challenged result not matching the submitted one",
+            async () => {
+              it("should revert with 'Result under challenge is different than the submitted one'", async () => {
+                const modifiedDkgResult: DkgResult = { ...dkgResult }
+                modifiedDkgResult.submitterMemberIndex =
+                  dkgResult.submitterMemberIndex + 1
+
+                await expect(
+                  walletRegistry.challengeDkgResult(modifiedDkgResult)
+                ).to.be.revertedWith(
+                  "Result under challenge is different than the submitted one"
+                )
+              })
             }
           )
 
-          context("when misbehaved members contains duplicates", async () => {
-            const misbehavedIndices = [2, 9, 30, 30, 60, 64]
+          context("with token staking seize call failure", async () => {
+            const slashingAmount = constants.minimumStake.add(1)
+
+            let tx: Promise<ContractTransaction>
+
+            before(async () => {
+              await createSnapshot()
+
+              await walletRegistry.setMaliciousDkgResultSlashingAmount(
+                slashingAmount
+              )
+
+              tx = walletRegistry
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should succeed", async () => {
+              await expect(tx).to.not.be.reverted
+            })
+
+            it("should emit DkgMaliciousResultSlashingFailed", async () => {
+              await expect(tx)
+                .to.emit(walletRegistry, "DkgMaliciousResultSlashingFailed")
+                .withArgs(dkgResultHash, slashingAmount, submitter.address)
+            })
+          })
+        })
+
+        context(
+          "with dkg result submitted with unrecoverable signatures",
+          async () => {
+            let dkgResultHash: string
+            let dkgResult: DkgResult
+            let submitter: SignerWithAddress
+            let tx: ContractTransaction
+
+            before(async () => {
+              await createSnapshot()
+              ;({ dkgResult, dkgResultHash, submitter } =
+                await signAndSubmitUnrecoverableDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  await selectGroup(sortitionPool, dkgSeed),
+                  startBlock,
+                  noMisbehaved
+                ))
+
+              tx = await walletRegistry
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should emit DkgResultChallenged event", async () => {
+              await expect(tx)
+                .to.emit(walletRegistry, "DkgResultChallenged")
+                .withArgs(
+                  dkgResultHash,
+                  await thirdParty.getAddress(),
+                  "validation reverted"
+                )
+            })
+
+            it("should not unlock the sortition pool", async () => {
+              await expect(await sortitionPool.isLocked()).to.be.true
+            })
+
+            it("should emit DkgMaliciousResultSlashed event", async () => {
+              await expect(tx)
+                .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+                .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+            })
+
+            it("should slash malicious result submitter", async () => {
+              await expect(tx)
+                .to.emit(staking, "Seized")
+                .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+                  submitter.address,
+                ])
+            })
+          }
+        )
+
+        context(
+          "when misbehaved operators are not in ascending order",
+          async () => {
+            const misbehavedIndices = [2, 9, 30, 11, 60, 64]
 
             let tx: ContractTransaction
             let dkgResult: DkgResult
@@ -2587,31 +2248,73 @@ describe("WalletRegistry - Wallet Creation", async () => {
             it("should not unlock the sortition pool", async () => {
               await expect(await sortitionPool.isLocked()).to.be.true
             })
-          })
+          }
+        )
 
-          context("with correct dkg result submitted", async () => {
-            let dkgResult: DkgResult
+        context("when misbehaved members contains duplicates", async () => {
+          const misbehavedIndices = [2, 9, 30, 30, 60, 64]
 
-            before(async () => {
-              await createSnapshot()
-              ;({ dkgResult } = await signAndSubmitCorrectDkgResult(
+          let tx: ContractTransaction
+          let dkgResult: DkgResult
+          let dkgResultHash: string
+
+          before(async () => {
+            await createSnapshot()
+            ;({ dkgResult, dkgResultHash } =
+              await signAndSubmitCorrectDkgResult(
                 walletRegistry,
                 groupPublicKey,
                 dkgSeed,
                 startBlock,
-                noMisbehaved
+                misbehavedIndices
               ))
-            })
 
-            after(async () => {
-              await restoreSnapshot()
-            })
+            tx = await walletRegistry
+              .connect(thirdParty)
+              .challengeDkgResult(dkgResult)
+          })
 
-            it("should revert with 'unjustified challenge' error", async () => {
-              await expect(
-                walletRegistry.challengeDkgResult(dkgResult)
-              ).to.be.revertedWith("unjustified challenge")
-            })
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should emit DkgResultChallenged event", async () => {
+            await expect(tx)
+              .to.emit(walletRegistry, "DkgResultChallenged")
+              .withArgs(
+                dkgResultHash,
+                await thirdParty.getAddress(),
+                "Corrupted misbehaved members indices"
+              )
+          })
+
+          it("should not unlock the sortition pool", async () => {
+            await expect(await sortitionPool.isLocked()).to.be.true
+          })
+        })
+
+        context("with correct dkg result submitted", async () => {
+          let dkgResult: DkgResult
+
+          before(async () => {
+            await createSnapshot()
+            ;({ dkgResult } = await signAndSubmitCorrectDkgResult(
+              walletRegistry,
+              groupPublicKey,
+              dkgSeed,
+              startBlock,
+              noMisbehaved
+            ))
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should revert with 'unjustified challenge' error", async () => {
+            await expect(
+              walletRegistry.challengeDkgResult(dkgResult)
+            ).to.be.revertedWith("unjustified challenge")
           })
         })
       })
@@ -2656,214 +2359,48 @@ describe("WalletRegistry - Wallet Creation", async () => {
           ).to.be.revertedWith("Current state is not CHALLENGE")
         })
 
-        context("with off-chain dkg time passed", async () => {
+        context("with dkg result not submitted", async () => {
+          it("should revert with 'Current state is not CHALLENGE'", async () => {
+            await expect(
+              walletRegistry.challengeDkgResult(stubDkgResult)
+            ).to.be.revertedWith("Current state is not CHALLENGE")
+          })
+        })
+
+        context("with malicious dkg result submitted", async () => {
+          let resultSubmissionBlock: number
+          let dkgResultHash: string
+          let dkgResult: DkgResult
+
           before(async () => {
             await createSnapshot()
 
-            await mineBlocksTo(startBlock + constants.offchainDkgTime)
+            let tx: ContractTransaction
+            ;({
+              transaction: tx,
+              dkgResult,
+              dkgResultHash,
+            } = await signAndSubmitArbitraryDkgResult(
+              walletRegistry,
+              groupPublicKey,
+              // Mix operators to make the result malicious.
+              mixOperators(await selectGroup(sortitionPool, dkgSeed)),
+              startBlock,
+              noMisbehaved
+            ))
+
+            resultSubmissionBlock = tx.blockNumber
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          context("with dkg result not submitted", async () => {
-            it("should revert with 'Current state is not CHALLENGE'", async () => {
-              await expect(
-                walletRegistry.challengeDkgResult(stubDkgResult)
-              ).to.be.revertedWith("Current state is not CHALLENGE")
-            })
-          })
-
-          context("with malicious dkg result submitted", async () => {
-            let resultSubmissionBlock: number
-            let dkgResultHash: string
-            let dkgResult: DkgResult
-
-            before(async () => {
-              await createSnapshot()
-
+          context("at the beginning of challenge period", async () => {
+            context("called by a third party", async () => {
               let tx: ContractTransaction
-              ;({
-                transaction: tx,
-                dkgResult,
-                dkgResultHash,
-              } = await signAndSubmitArbitraryDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                // Mix operators to make the result malicious.
-                mixOperators(await selectGroup(sortitionPool, dkgSeed)),
-                startBlock,
-                noMisbehaved
-              ))
-
-              resultSubmissionBlock = tx.blockNumber
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            context("at the beginning of challenge period", async () => {
-              context("called by a third party", async () => {
-                let tx: ContractTransaction
-                before(async () => {
-                  await createSnapshot()
-
-                  tx = await walletRegistry
-                    .connect(thirdParty)
-                    .challengeDkgResult(dkgResult)
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should emit DkgResultChallenged event", async () => {
-                  await expect(tx)
-                    .to.emit(walletRegistry, "DkgResultChallenged")
-                    .withArgs(
-                      dkgResultHash,
-                      await thirdParty.getAddress(),
-                      "Invalid group members"
-                    )
-                })
-
-                it("should not unlock the sortition pool", async () => {
-                  await expect(await sortitionPool.isLocked()).to.be.true
-                })
-
-                // it("should emit DkgMaliciousResultSlashed event", async () => {
-                //   await expect(tx)
-                //     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-                // })
-
-                // it("should slash malicious result submitter", async () => {
-                //   await expect(tx)
-                //     .to.emit(staking, "Seized")
-                //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-                //       submitter.address,
-                //     ])
-                // })
-              })
-            })
-
-            context("at the end of challenge period", async () => {
               before(async () => {
                 await createSnapshot()
-
-                await mineBlocksTo(
-                  resultSubmissionBlock +
-                    params.dkgResultChallengePeriodLength -
-                    1
-                )
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              context("called by a third party", async () => {
-                let tx: ContractTransaction
-                before(async () => {
-                  await createSnapshot()
-
-                  tx = await walletRegistry
-                    .connect(thirdParty)
-                    .challengeDkgResult(dkgResult)
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should emit DkgResultChallenged event", async () => {
-                  await expect(tx)
-                    .to.emit(walletRegistry, "DkgResultChallenged")
-                    .withArgs(
-                      dkgResultHash,
-                      await thirdParty.getAddress(),
-                      "Invalid group members"
-                    )
-                })
-
-                it("should not unlock the sortition pool", async () => {
-                  await expect(await sortitionPool.isLocked()).to.be.true
-                })
-
-                // it("should emit DkgMaliciousResultSlashed event", async () => {
-                //   await expect(tx)
-                //     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
-                // })
-
-                // it("should slash malicious result submitter", async () => {
-                //   await expect(tx)
-                //     .to.emit(staking, "Seized")
-                //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-                //       submitter.address,
-                //     ])
-                // })
-              })
-            })
-
-            context("with challenge period passed", async () => {
-              before(async () => {
-                await createSnapshot()
-
-                await mineBlocksTo(
-                  resultSubmissionBlock + params.dkgResultChallengePeriodLength
-                )
-              })
-
-              after(async () => {
-                await restoreSnapshot()
-              })
-
-              it("should revert with 'Challenge period has already passed' error", async () => {
-                await expect(
-                  walletRegistry.challengeDkgResult(dkgResult)
-                ).to.be.revertedWith("Challenge period has already passed")
-              })
-            })
-
-            context(
-              "with challenged result not matching the submitted one",
-              async () => {
-                it("should revert with 'Result under challenge is different than the submitted one'", async () => {
-                  const modifiedDkgResult: DkgResult = { ...dkgResult }
-                  modifiedDkgResult.submitterMemberIndex =
-                    dkgResult.submitterMemberIndex + 1
-
-                  await expect(
-                    walletRegistry.challengeDkgResult(modifiedDkgResult)
-                  ).to.be.revertedWith(
-                    "Result under challenge is different than the submitted one"
-                  )
-                })
-              }
-            )
-          })
-
-          context(
-            "with dkg result submitted with unrecoverable signatures",
-            async () => {
-              let dkgResultHash: string
-              let dkgResult: DkgResult
-
-              let tx: ContractTransaction
-
-              before(async () => {
-                await createSnapshot()
-                ;({ dkgResult, dkgResultHash } =
-                  await signAndSubmitUnrecoverableDkgResult(
-                    walletRegistry,
-                    groupPublicKey,
-                    await selectGroup(sortitionPool, dkgSeed),
-                    startBlock,
-                    noMisbehaved
-                  ))
 
                 tx = await walletRegistry
                   .connect(thirdParty)
@@ -2880,7 +2417,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   .withArgs(
                     dkgResultHash,
                     await thirdParty.getAddress(),
-                    "validation reverted"
+                    "Invalid group members"
                   )
               })
 
@@ -2901,32 +2438,186 @@ describe("WalletRegistry - Wallet Creation", async () => {
               //       submitter.address,
               //     ])
               // })
-            }
-          )
+            })
+          })
 
-          context("with correct dkg result submitted", async () => {
-            let dkgResult: DkgResult
-
+          context("at the end of challenge period", async () => {
             before(async () => {
               await createSnapshot()
-              ;({ dkgResult } = await signAndSubmitCorrectDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                dkgSeed,
-                startBlock,
-                noMisbehaved
-              ))
+
+              await mineBlocksTo(
+                resultSubmissionBlock +
+                  params.dkgResultChallengePeriodLength -
+                  1
+              )
             })
 
             after(async () => {
               await restoreSnapshot()
             })
 
-            it("should revert with 'unjustified challenge' error", async () => {
+            context("called by a third party", async () => {
+              let tx: ContractTransaction
+              before(async () => {
+                await createSnapshot()
+
+                tx = await walletRegistry
+                  .connect(thirdParty)
+                  .challengeDkgResult(dkgResult)
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should emit DkgResultChallenged event", async () => {
+                await expect(tx)
+                  .to.emit(walletRegistry, "DkgResultChallenged")
+                  .withArgs(
+                    dkgResultHash,
+                    await thirdParty.getAddress(),
+                    "Invalid group members"
+                  )
+              })
+
+              it("should not unlock the sortition pool", async () => {
+                await expect(await sortitionPool.isLocked()).to.be.true
+              })
+
+              // it("should emit DkgMaliciousResultSlashed event", async () => {
+              //   await expect(tx)
+              //     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+              //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+              // })
+
+              // it("should slash malicious result submitter", async () => {
+              //   await expect(tx)
+              //     .to.emit(staking, "Seized")
+              //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+              //       submitter.address,
+              //     ])
+              // })
+            })
+          })
+
+          context("with challenge period passed", async () => {
+            before(async () => {
+              await createSnapshot()
+
+              await mineBlocksTo(
+                resultSubmissionBlock + params.dkgResultChallengePeriodLength
+              )
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should revert with 'Challenge period has already passed' error", async () => {
               await expect(
                 walletRegistry.challengeDkgResult(dkgResult)
-              ).to.be.revertedWith("unjustified challenge")
+              ).to.be.revertedWith("Challenge period has already passed")
             })
+          })
+
+          context(
+            "with challenged result not matching the submitted one",
+            async () => {
+              it("should revert with 'Result under challenge is different than the submitted one'", async () => {
+                const modifiedDkgResult: DkgResult = { ...dkgResult }
+                modifiedDkgResult.submitterMemberIndex =
+                  dkgResult.submitterMemberIndex + 1
+
+                await expect(
+                  walletRegistry.challengeDkgResult(modifiedDkgResult)
+                ).to.be.revertedWith(
+                  "Result under challenge is different than the submitted one"
+                )
+              })
+            }
+          )
+        })
+
+        context(
+          "with dkg result submitted with unrecoverable signatures",
+          async () => {
+            let dkgResultHash: string
+            let dkgResult: DkgResult
+
+            let tx: ContractTransaction
+
+            before(async () => {
+              await createSnapshot()
+              ;({ dkgResult, dkgResultHash } =
+                await signAndSubmitUnrecoverableDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  await selectGroup(sortitionPool, dkgSeed),
+                  startBlock,
+                  noMisbehaved
+                ))
+
+              tx = await walletRegistry
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should emit DkgResultChallenged event", async () => {
+              await expect(tx)
+                .to.emit(walletRegistry, "DkgResultChallenged")
+                .withArgs(
+                  dkgResultHash,
+                  await thirdParty.getAddress(),
+                  "validation reverted"
+                )
+            })
+
+            it("should not unlock the sortition pool", async () => {
+              await expect(await sortitionPool.isLocked()).to.be.true
+            })
+
+            // it("should emit DkgMaliciousResultSlashed event", async () => {
+            //   await expect(tx)
+            //     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
+            //     .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+            // })
+
+            // it("should slash malicious result submitter", async () => {
+            //   await expect(tx)
+            //     .to.emit(staking, "Seized")
+            //     .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
+            //       submitter.address,
+            //     ])
+            // })
+          }
+        )
+
+        context("with correct dkg result submitted", async () => {
+          let dkgResult: DkgResult
+
+          before(async () => {
+            await createSnapshot()
+            ;({ dkgResult } = await signAndSubmitCorrectDkgResult(
+              walletRegistry,
+              groupPublicKey,
+              dkgSeed,
+              startBlock,
+              noMisbehaved
+            ))
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should revert with 'unjustified challenge' error", async () => {
+            await expect(
+              walletRegistry.challengeDkgResult(dkgResult)
+            ).to.be.revertedWith("unjustified challenge")
           })
         })
       })
@@ -2935,141 +2626,139 @@ describe("WalletRegistry - Wallet Creation", async () => {
     // This test checks that dkg timeout is adjusted in case of result challenges
     // to include the offset blocks that were mined until the invalid result
     // was challenged.
-    it("should enforce submission start offset", async () => {
-      await createSnapshot()
+    describe("submission start offset", async () => {
+      before(async () => {
+        await createSnapshot()
+      })
 
-      let dkgResult: DkgResult
+      after(async () => {
+        await restoreSnapshot()
+      })
 
-      const { startBlock } = await requestNewWallet(walletRegistry, walletOwner)
+      it("should enforce submission start offset", async () => {
+        let dkgResult: DkgResult
 
-      await mineBlocks(constants.offchainDkgTime)
+        const { startBlock } = await requestNewWallet(
+          walletRegistry,
+          walletOwner
+        )
 
-      // Submit result 1 at the beginning of the submission period
-      ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-        walletRegistry,
-        groupPublicKey,
-        operators,
-        startBlock,
-        noMisbehaved
-      ))
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 1 after submission"
-      ).to.equal(0)
-
-      // Challenge result 1 at the beginning of the challenge period
-      await walletRegistry.challengeDkgResult(dkgResult)
-      // 1 block for dkg result submission tx +
-      // 1 block for challenge tx
-      let expectedSubmissionOffset = 2
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 1 after challenge"
-      ).to.equal(expectedSubmissionOffset)
-
-      // Submit result 2 in the middle of the submission period
-      let blocksToMine =
-        (constants.groupSize * params.dkgResultSubmissionEligibilityDelay) / 2
-      await mineBlocks(blocksToMine)
-      ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-        walletRegistry,
-        groupPublicKey,
-        operators,
-        startBlock,
-        noMisbehaved,
-        shiftEligibleIndex(firstEligibleSubmitterIndex, constants.groupSize / 2)
-      ))
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 2 after submission"
-      ).to.equal(expectedSubmissionOffset) // same as before
-
-      expectedSubmissionOffset += blocksToMine
-
-      // Challenge result 2 in the middle of the challenge period
-      await mineBlocks(params.dkgResultChallengePeriodLength / 2)
-      expectedSubmissionOffset += params.dkgResultChallengePeriodLength / 2
-      await walletRegistry.challengeDkgResult(dkgResult)
-      expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 2 after challenge"
-      ).to.equal(expectedSubmissionOffset)
-
-      // Submit result 3 at the end of the submission period
-      blocksToMine =
-        constants.groupSize * params.dkgResultSubmissionEligibilityDelay - 1
-      await mineBlocks(blocksToMine)
-      ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
-        walletRegistry,
-        groupPublicKey,
-        operators,
-        startBlock,
-        noMisbehaved,
-        shiftEligibleIndex(firstEligibleSubmitterIndex, constants.groupSize - 1)
-      ))
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 3 after submission"
-      ).to.equal(expectedSubmissionOffset) // same as before
-
-      expectedSubmissionOffset += blocksToMine
-
-      // Challenge result 3 at the end of the challenge period
-      blocksToMine = params.dkgResultChallengePeriodLength - 1
-      await mineBlocks(blocksToMine)
-      expectedSubmissionOffset += blocksToMine
-
-      await expect(
-        walletRegistry.callStatic.notifyDkgTimeout()
-      ).to.be.revertedWith("DKG has not timed out")
-
-      await walletRegistry.challengeDkgResult(dkgResult)
-      expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
-
-      await expect(
-        (
-          await walletRegistry.getDkgData()
-        ).resultSubmissionStartBlockOffset,
-        "invalid resultSubmissionStartBlockOffset for result 3 after challenge"
-      ).to.equal(expectedSubmissionOffset)
-
-      // Submit result 4 after the submission period
-      blocksToMine =
-        constants.groupSize * params.dkgResultSubmissionEligibilityDelay
-      await mineBlocks(blocksToMine)
-      await expect(
-        signAndSubmitArbitraryDkgResult(
+        // Submit result 1 at the beginning of the submission period
+        ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
           walletRegistry,
           groupPublicKey,
           operators,
           startBlock,
-          noMisbehaved,
-          shiftEligibleIndex(
-            firstEligibleSubmitterIndex,
-            constants.groupSize - 1
+          noMisbehaved
+        ))
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 1 after submission"
+        ).to.equal(0)
+
+        // Challenge result 1 at the beginning of the challenge period
+        await walletRegistry.challengeDkgResult(dkgResult)
+        // 1 block for dkg result submission tx +
+        // 1 block for challenge tx
+        let expectedSubmissionOffset = 2
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 1 after challenge"
+        ).to.equal(expectedSubmissionOffset)
+
+        // Submit result 2 in the middle of the submission period
+        let blocksToMine = params.dkgResultSubmissionTimeout / 2
+        await mineBlocks(blocksToMine)
+        ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+          walletRegistry,
+          groupPublicKey,
+          operators,
+          startBlock,
+          noMisbehaved
+        ))
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 2 after submission"
+        ).to.equal(expectedSubmissionOffset) // same as before
+
+        expectedSubmissionOffset += blocksToMine
+
+        // Challenge result 2 in the middle of the challenge period
+        await mineBlocks(params.dkgResultChallengePeriodLength / 2)
+        expectedSubmissionOffset += params.dkgResultChallengePeriodLength / 2
+        await walletRegistry.challengeDkgResult(dkgResult)
+        expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 2 after challenge"
+        ).to.equal(expectedSubmissionOffset)
+
+        // Submit result 3 at the end of the submission period
+        blocksToMine = params.dkgResultSubmissionTimeout - 1
+        await mineBlocks(blocksToMine)
+        ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+          walletRegistry,
+          groupPublicKey,
+          operators,
+          startBlock,
+          noMisbehaved
+        ))
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 3 after submission"
+        ).to.equal(expectedSubmissionOffset) // same as before
+
+        expectedSubmissionOffset += blocksToMine
+
+        // Challenge result 3 at the end of the challenge period
+        blocksToMine = params.dkgResultChallengePeriodLength - 1
+        await mineBlocks(blocksToMine)
+        expectedSubmissionOffset += blocksToMine
+
+        await expect(
+          walletRegistry.callStatic.notifyDkgTimeout()
+        ).to.be.revertedWith("DKG has not timed out")
+
+        await walletRegistry.challengeDkgResult(dkgResult)
+        expectedSubmissionOffset += 2 // 1 block for dkg result submission tx + 1 block for challenge tx
+
+        await expect(
+          (
+            await walletRegistry.getDkgData()
+          ).resultSubmissionStartBlockOffset,
+          "invalid resultSubmissionStartBlockOffset for result 3 after challenge"
+        ).to.equal(expectedSubmissionOffset)
+
+        // Submit result 4 after the submission period
+        blocksToMine = params.dkgResultSubmissionTimeout
+        await mineBlocks(blocksToMine)
+        await expect(
+          signAndSubmitArbitraryDkgResult(
+            walletRegistry,
+            groupPublicKey,
+            operators,
+            startBlock,
+            noMisbehaved
           )
-        )
-      ).to.be.revertedWith("DKG timeout already passed")
+        ).to.be.revertedWith("DKG timeout already passed")
 
-      await walletRegistry.notifyDkgTimeout()
-
-      await restoreSnapshot()
+        await walletRegistry.notifyDkgTimeout()
+      })
     })
   })
 
@@ -3095,42 +2784,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
       })
 
       context("with dkg not timed out", async () => {
-        context("with off-chain dkg time not passed", async () => {
-          before(async () => {
-            await createSnapshot()
-
-            await mineBlocksTo(startBlock + constants.offchainDkgTime - 1)
-          })
-
-          after(async () => {
-            await restoreSnapshot()
-          })
-
-          it("should revert with 'DKG has not timed out' error", async () => {
-            await expect(walletRegistry.notifyDkgTimeout()).to.be.revertedWith(
-              "DKG has not timed out"
-            )
-          })
-        })
-
-        context("with off-chain dkg time passed", async () => {
-          before(async () => {
-            await createSnapshot()
-
-            await mineBlocksTo(startBlock + constants.offchainDkgTime)
-          })
-
-          after(async () => {
-            await restoreSnapshot()
-          })
-
-          it("should revert with 'DKG has not timed out' error", async () => {
-            await expect(walletRegistry.notifyDkgTimeout()).to.be.revertedWith(
-              "DKG has not timed out"
-            )
-          })
-        })
-
         context("with result submission period almost ended", async () => {
           before(async () => {
             await createSnapshot()
@@ -3298,9 +2951,14 @@ async function assertDkgResultCleanData(walletRegistry: WalletRegistryStub) {
   ).to.eq(params.dkgResultChallengePeriodLength)
 
   expect(
-    dkgData.parameters.resultSubmissionEligibilityDelay,
+    dkgData.parameters.resultSubmissionTimeout,
     "unexpected resultSubmissionEligibilityDelay"
-  ).to.eq(params.dkgResultSubmissionEligibilityDelay)
+  ).to.eq(params.dkgResultSubmissionTimeout)
+
+  expect(
+    dkgData.parameters.submitterPrecedencePeriodLength,
+    "unexpected submitterPrecedencePeriodLength"
+  ).to.eq(params.dkgSubmitterPrecedencePeriodLength)
 
   expect(dkgData.startBlock, "unexpected startBlock").to.eq(0)
 
