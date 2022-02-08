@@ -89,7 +89,7 @@ const config: HardhatUserConfig = {
   },
   dependencyCompiler: {
     paths: ["@threshold-network/solidity-contracts/contracts/token/T.sol"],
-    keep: false,
+    keep: true,
   },
   contractSizer: {
     alphaSort: true,
