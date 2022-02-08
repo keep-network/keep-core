@@ -32,25 +32,11 @@ library Wallets {
         bytes32 digestToSign;
     }
 
-    struct Signature {
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-    }
-
     struct Data {
         // Mapping of keccak256 hashes of wallet public keys to wallet details.
         // Hash of public key is considered an unique wallet identifier (walletID).
         mapping(bytes32 => Wallet) registry;
     }
-
-    event SignatureRequested(bytes32 indexed walletID, bytes32 indexed digest);
-
-    event SignatureSubmitted(
-        bytes32 indexed walletID,
-        bytes32 indexed digest,
-        Signature signature
-    );
 
     /// @notice Registers a new wallet.
     /// @param _membersIdsHash Keccak256 hash of group members identifiers array.
