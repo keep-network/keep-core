@@ -50,9 +50,6 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     // new wallets creation and manage their state.
     address public walletOwner;
 
-    // An entry produced by the Random Beacon that will be used as a seed for DKG.
-    uint256 public randomRelayEntry;
-
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of DKG's
     ///         `resultChallengePeriodLength` parameter. If the DKG result submitted
@@ -191,36 +188,30 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         );
     }
 
-    function __beaconCallback(uint256 _randomRelayEntry, uint256) external {
+    /// @notice Requests a new wallet creation.
+    /// @dev Can be called only by the owner of wallets.
+    ///      It locks the DKG and request a new random relay entry. It expects
+    ///      that the DKG process will be started once a new random relay entry
+    ///      gets generated.
+    function requestNewWallet() external {
+        require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
+
+        dkg.lockState();
+
+        randomBeacon.requestRelayEntry(this);
+    }
+
+    /// @notice A callback that is executed once a new random relay entry gets
+    ///         generated. It starts the DKG process.
+    /// @dev Can be called only by the random beacon contract.
+    /// @param randomRelayEntry Random relay entry.
+    function __beaconCallback(uint256 randomRelayEntry, uint256) external {
         require(
             msg.sender == address(randomBeacon),
             "Caller is not the Random Beacon"
         );
 
-        randomRelayEntry = _randomRelayEntry;
-    }
-
-    /// @notice Requests a new wallet creation.
-    /// @dev Can be called only by the owner of wallets.
-    ///      It starts a new DKG process.
-    function requestNewWallet() external {
-        require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
-
-        dkg.lockState();
-        // TODO: When integrating with the Random Beacon move `dkg.start` to a
-        // callback function. We need each DKG to be started with a unique
-        // and fresh relay entry.
-        dkg.start(
-            uint256(keccak256(abi.encodePacked(randomRelayEntry, block.number)))
-        );
-
-        // FIXME: What if relay entry is currently under creation and this request
-        // will fail? What if it will fail constantly due to a bad timing, do we
-        // want to pull a relay entry requested by someone else?
-        try randomBeacon.requestRelayEntry(this) {} catch {
-            // slither-disable-next-line reentrancy-events
-            emit RelayEntryRequestFailed();
-        }
+        dkg.start(randomRelayEntry);
     }
 
     /// @notice Submits result of DKG protocol.
