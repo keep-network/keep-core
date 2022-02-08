@@ -106,14 +106,6 @@ contract WalletRegistry is Ownable {
         bytes32 indexed dkgResultHash
     );
 
-    event SignatureRequested(bytes32 indexed walletID, bytes32 indexed digest);
-
-    event SignatureSubmitted(
-        bytes32 indexed walletID,
-        bytes32 indexed digest,
-        Wallets.Signature signature
-    );
-
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
