@@ -194,6 +194,9 @@ contract WalletRegistry is Ownable {
         require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
 
         dkg.lockState();
+        // TODO: When integrating with the Random Beacon move `dkg.start` to a
+        // callback function. We need each DKG to be started with a unique
+        // and fresh relay entry.
         dkg.start(
             uint256(keccak256(abi.encodePacked(relayEntry, block.number)))
         );
