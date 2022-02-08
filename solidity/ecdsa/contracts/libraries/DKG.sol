@@ -117,9 +117,6 @@ library DKG {
         CHALLENGE
     }
 
-    /// @dev Size of a group in the threshold relay.
-    uint256 public constant groupSize = 100;
-
     event DkgStarted(uint256 indexed seed);
 
     // To recreate the members that actively took part in dkg, the selected members
@@ -183,13 +180,13 @@ library DKG {
         if (self.sortitionPool.isLocked()) {
             state = State.AWAITING_SEED;
 
-        if (self.startBlock > 0) {
-            state = State.AWAITING_RESULT;
+            if (self.startBlock > 0) {
+                state = State.AWAITING_RESULT;
 
-            if (self.submittedResultBlock > 0) {
-                state = State.CHALLENGE;
+                if (self.submittedResultBlock > 0) {
+                    state = State.CHALLENGE;
+                }
             }
-        }
         }
     }
 
