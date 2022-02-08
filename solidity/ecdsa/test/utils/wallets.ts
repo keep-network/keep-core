@@ -1,6 +1,7 @@
 import { helpers } from "hardhat"
+import { keccak256 } from "ethers/lib/utils"
 
-import { constants, params } from "../fixtures"
+import { params } from "../fixtures"
 import ecdsaData from "../data/ecdsa"
 
 import {
@@ -41,10 +42,10 @@ export async function requestNewWallet(
 export async function createNewWallet(
   walletRegistry: WalletRegistry,
   walletOwner: SignerWithAddress,
-  publicKey?: string
+  publicKey = ecdsaData.group1.publicKey
 ): Promise<{
   members: Operator[]
-  walletID: string
+  publicKeyHash: string
 }> {
   const { dkgSeed, startBlock } = await requestNewWallet(
     walletRegistry,
@@ -57,7 +58,7 @@ export async function createNewWallet(
     signers: members,
   } = await signAndSubmitCorrectDkgResult(
     walletRegistry,
-    publicKey || ecdsaData.group1.publicKey,
+    publicKey,
     dkgSeed,
     startBlock,
     noMisbehaved
@@ -65,21 +66,7 @@ export async function createNewWallet(
 
   await mineBlocks(params.dkgResultChallengePeriodLength)
 
-  const approveDkgResultTx = await walletRegistry
-    .connect(submitter)
-    .approveDkgResult(dkgResult)
+  await walletRegistry.connect(submitter).approveDkgResult(dkgResult)
 
-  const walletID: string = await getWalletID(approveDkgResultTx)
-
-  return { members, walletID }
-}
-
-export async function getWalletID(
-  approveDkgResultTx: ContractTransaction
-): Promise<string> {
-  const { walletID } = (await approveDkgResultTx.wait()).events.find(
-    (e) => e.event === "WalletCreated"
-  ).args
-
-  return walletID
+  return { members, publicKeyHash: keccak256(publicKey) }
 }

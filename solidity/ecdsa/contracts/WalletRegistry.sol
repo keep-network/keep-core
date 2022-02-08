@@ -102,7 +102,7 @@ contract WalletRegistry is Ownable {
     event DkgSeedTimedOut();
 
     event WalletCreated(
-        bytes32 indexed walletID,
+        bytes32 indexed publicKeyHash,
         bytes32 indexed dkgResultHash
     );
 
@@ -236,12 +236,11 @@ contract WalletRegistry is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        bytes32 walletID = wallets.addWallet(
-            dkgResult.membersHash,
-            keccak256(dkgResult.groupPubKey)
-        );
+        bytes32 publicKeyHash = keccak256(dkgResult.groupPubKey);
 
-        emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
+        wallets.addWallet(dkgResult.membersHash, publicKeyHash);
+
+        emit WalletCreated(publicKeyHash, keccak256(abi.encode(dkgResult)));
 
         // TODO: Disable rewards for misbehavedMembers.
         //slither-disable-next-line redundant-statements
@@ -306,18 +305,22 @@ contract WalletRegistry is Ownable {
         return dkg.hasDkgTimedOut();
     }
 
-    function getWallet(bytes32 walletID)
+    function getWallet(bytes32 publicKeyHash)
         external
         view
         returns (Wallets.Wallet memory)
     {
-        return wallets.registry[walletID];
+        return wallets.registry[publicKeyHash];
     }
 
-    /// @notice Checks if a wallet with given ID was registered.
-    /// @param walletID Wallet's ID.
-    /// @return True if wallet was registered, false otherwise.
-    function isWalletRegistered(bytes32 walletID) external view returns (bool) {
-        return wallets.isWalletRegistered(walletID);
+    /// @notice Checks if a wallet with the given public key hash is registered.
+    /// @param publicKeyHash Wallet's public key hash.
+    /// @return True if wallet is registered, false otherwise.
+    function isWalletRegistered(bytes32 publicKeyHash)
+        external
+        view
+        returns (bool)
+    {
+        return wallets.isWalletRegistered(publicKeyHash);
     }
 }

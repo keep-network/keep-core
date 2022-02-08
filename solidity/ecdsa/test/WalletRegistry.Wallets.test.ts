@@ -21,9 +21,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
     ))
   })
 
-  describe("getWallet", async () => {
+  describe("isWalletRegistered", async () => {
     context("with wallet not registered", async () => {
-      it("should revert", async () => {
+      it("should return false", async () => {
         await expect(
           await walletRegistry.isWalletRegistered(
             formatBytes32String("NON EXISTING")
@@ -33,20 +33,23 @@ describe("WalletRegistry - Wallet Creation", async () => {
     })
 
     context("with wallet registered", async () => {
-      let walletID: string
+      let publicKeyHash: string
 
       before("create a wallet", async () => {
         await createSnapshot()
-        ;({ walletID } = await createNewWallet(walletRegistry, walletOwner))
+        ;({ publicKeyHash } = await createNewWallet(
+          walletRegistry,
+          walletOwner
+        ))
       })
 
       after(async () => {
         await restoreSnapshot()
       })
 
-      it("should revert", async () => {
-        await expect(await walletRegistry.isWalletRegistered(walletID)).to.be
-          .true
+      it("should return true", async () => {
+        await expect(await walletRegistry.isWalletRegistered(publicKeyHash)).to
+          .be.true
       })
     })
   })
