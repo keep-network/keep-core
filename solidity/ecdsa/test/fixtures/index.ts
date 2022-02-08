@@ -18,7 +18,6 @@ const { to1e18 } = helpers.number
 export const constants = {
   groupSize: 100,
   groupThreshold: 51,
-  offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
   minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
 }
@@ -26,14 +25,13 @@ export const constants = {
 export const dkgState = {
   IDLE: 0,
   AWAITING_SEED: 1,
-  KEY_GENERATION: 2,
-  AWAITING_RESULT: 3,
-  CHALLENGE: 4,
+  AWAITING_RESULT: 2,
+  CHALLENGE: 3,
 }
 
 export const params = {
   dkgResultChallengePeriodLength: 10,
-  dkgResultSubmissionPeriodLength: 30,
+  dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
 }
 
@@ -71,7 +69,7 @@ export async function walletRegistryFixture(): Promise<{
 
   await walletRegistry.updateDkgParams(
     params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionPeriodLength,
+    params.dkgResultSubmissionTimeout,
     params.dkgSubmitterPrecedencePeriodLength
   )
 

@@ -51,8 +51,6 @@ export async function createNewWallet(
     walletOwner
   )
 
-  await mineBlocks(constants.offchainDkgTime)
-
   const {
     dkgResult,
     submitter,

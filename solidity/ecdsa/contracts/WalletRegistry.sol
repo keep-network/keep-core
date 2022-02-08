@@ -144,18 +144,18 @@ contract WalletRegistry is Ownable {
 
         dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionPeriodLength(100 * 20); // TODO: Verify value
+        dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
     }
 
     // TODO: Update to governable params
     function updateDkgParams(
         uint256 newResultChallengePeriodLength,
-        uint256 newResultSubmissionPeriodLength,
+        uint256 newResultSubmissionTimeout,
         uint256 newSubmitterPrecedencePeriodLength
     ) external {
         dkg.setResultChallengePeriodLength(newResultChallengePeriodLength);
-        dkg.setResultSubmissionPeriodLength(newResultSubmissionPeriodLength);
+        dkg.setResultSubmissionTimeout(newResultSubmissionTimeout);
         dkg.setSubmitterPrecedencePeriodLength(
             newSubmitterPrecedencePeriodLength
         );
