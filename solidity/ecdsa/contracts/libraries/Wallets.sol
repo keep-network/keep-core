@@ -53,16 +53,16 @@ library Wallets {
         // check to use the public key.
         require(
             self.registry[walletID].membersIdsHash == bytes32(0),
-            "Wallet with given public key hash already exists"
+            "Wallet with the given public key hash already exists"
         );
 
         self.registry[walletID].membersIdsHash = _membersIdsHash;
     }
 
-    /// @notice Checks if a wallet with given ID was registered.
+    /// @notice Checks if a wallet with the given ID is registered.
     /// @param walletID Wallet's ID.
-    /// @return True if wallet was registered, false otherwise.
-    function isWalletRegistered(Data storage self, bytes32 walletID)
+    /// @return True if a wallet is registered, false otherwise.
+    function isWalletRegistered(Data storage self, bytes32 publicKeyHash)
         external
         view
         returns (bool)

@@ -45,14 +45,14 @@ contract WalletRegistry is Ownable {
     Wallets.Data internal wallets;
 
     // Address that is set as owner of all wallets. Only this address can request
-    // new wallets creation, manage their state or request signatures from wallets.
+    // new wallets creation and manage their state.
     address public walletOwner;
 
     uint256 public constant relayEntry = 12345; // TODO: get value from Random Beacon
 
     /// @notice Slashing amount for supporting malicious DKG result. Every
-    ///         DKG result submitted can be challenged for the time of
-    ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
+    ///         DKG result submitted can be challenged for the time of DKG's
+    ///         `resultChallengePeriodLength` parameter. If the DKG result submitted
     ///         is challenged and proven to be malicious, each operator who
     ///         signed the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
