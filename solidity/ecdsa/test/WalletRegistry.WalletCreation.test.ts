@@ -10,10 +10,12 @@ import {
   signAndSubmitCorrectDkgResult,
   signAndSubmitUnrecoverableDkgResult,
   expectDkgResultSubmittedEvent,
+  signDkgResult,
 } from "./utils/dkg"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { createNewWallet, requestNewWallet } from "./utils/wallets"
 
+import type { Result } from "ethers/lib/utils"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type {
@@ -2741,6 +2743,77 @@ describe("WalletRegistry - Wallet Creation", async () => {
         ).to.be.revertedWith("DKG timeout already passed")
 
         await walletRegistry.notifyDkgTimeout()
+      })
+    })
+  })
+
+  describe("isDkgResultValid", async () => {
+    context("with group creation not in progress", async () => {
+      it("should revert with 'DKG has not been started'", async () => {
+        await expect(
+          walletRegistry.isDkgResultValid(stubDkgResult)
+        ).to.be.revertedWith("DKG has not been started")
+      })
+    })
+
+    context("with group creation in progress", async () => {
+      let startBlock: number
+      let dkgSeed: BigNumber
+
+      before("start new wallet creation", async () => {
+        await createSnapshot()
+        ;({ startBlock, dkgSeed } = await requestNewWallet(
+          walletRegistry,
+          walletOwner
+        ))
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("with invalid result", async () => {
+        it("should return false and an error message", async () => {
+          const expectedValidationResult = [false, "Malformed signatures array"]
+
+          const validationResult = await walletRegistry.isDkgResultValid(
+            stubDkgResult
+          )
+
+          await expect(validationResult).to.be.deep.equal(
+            expectedValidationResult
+          )
+        })
+      })
+
+      context("with valid result", async () => {
+        let dkgResult: DkgResult
+
+        before("start new wallet creation", async () => {
+          await createSnapshot()
+          ;({ dkgResult } = await signDkgResult(
+            await selectGroup(sortitionPool, dkgSeed),
+            groupPublicKey,
+            noMisbehaved,
+            startBlock
+          ))
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should return true", async () => {
+          const expectedValidationResult = [true, ""]
+
+          const validationResult = await walletRegistry.isDkgResultValid(
+            dkgResult
+          )
+
+          await expect(validationResult).to.be.deep.equal(
+            expectedValidationResult
+          )
+        })
       })
     })
   })

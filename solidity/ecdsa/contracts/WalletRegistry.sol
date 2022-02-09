@@ -291,6 +291,18 @@ contract WalletRegistry is Ownable {
         }
     }
 
+    /// @notice Checks if DKG result is valid for the current DKG.
+    /// @param result DKG result.
+    /// @return True if the result is valid. If the result is invalid it returns
+    ///         false and an error message.
+    function isDkgResultValid(DKG.Result calldata result)
+        external
+        view
+        returns (bool, string memory)
+    {
+        return dkg.isResultValid(result);
+    }
+
     /// @notice Check current wallet creation state.
     function getWalletCreationState() external view returns (DKG.State) {
         return dkg.currentState();
