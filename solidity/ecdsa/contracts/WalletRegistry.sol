@@ -126,7 +126,8 @@ contract WalletRegistry is Ownable {
 
     event DkgParametersUpdated(
         uint256 dkgResultChallengePeriodLength,
-        uint256 dkgResultSubmissionEligibilityDelay
+        uint256 dkgResultSubmissionTimeout,
+        uint256 dkgResultSubmitterPrecedencePeriodLength
     );
 
     event WalletOwnerUpdated(address walletOwner);
@@ -159,33 +160,24 @@ contract WalletRegistry is Ownable {
     ///      validating parameters.
     /// @param _resultChallengePeriodLength New DKG result challenge period
     ///        length
-    /// @param _resultSubmissionEligibilityDelay New DKG result submission
-    ///        eligibility delay
+    /// @param _resultSubmissionTimeout New DKG result submission timeout
+    /// @param _submitterPrecedencePeriodLength New submitter precedence period
+    ///        length
     function updateDkgParameters(
         uint256 _resultChallengePeriodLength,
-        uint256 _resultSubmissionEligibilityDelay
+        uint256 _resultSubmissionTimeout,
+        uint256 _submitterPrecedencePeriodLength
     ) external onlyOwner {
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
-        dkg.setResultSubmissionEligibilityDelay(
-            _resultSubmissionEligibilityDelay
+        dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
+        dkg.setSubmitterPrecedencePeriodLength(
+            _submitterPrecedencePeriodLength
         );
 
         emit DkgParametersUpdated(
             _resultChallengePeriodLength,
-            _resultSubmissionEligibilityDelay
-        );
-    }
-
-    // TODO: FIX and Update to governable params
-    function updateDkgParams(
-        uint256 newResultChallengePeriodLength,
-        uint256 newResultSubmissionTimeout,
-        uint256 newSubmitterPrecedencePeriodLength
-    ) external {
-        dkg.setResultChallengePeriodLength(newResultChallengePeriodLength);
-        dkg.setResultSubmissionTimeout(newResultSubmissionTimeout);
-        dkg.setSubmitterPrecedencePeriodLength(
-            newSubmitterPrecedencePeriodLength
+            _resultSubmissionTimeout,
+            _submitterPrecedencePeriodLength
         );
     }
 
@@ -210,7 +202,7 @@ contract WalletRegistry is Ownable {
     ///      validating parameters.
     /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
-    function updateSlashingParameters(uint256 _maliciousDkgResultSlashingAmount)
+    function updateSlashingParameters(uint96 _maliciousDkgResultSlashingAmount)
         external
         onlyOwner
     {
@@ -302,7 +294,7 @@ contract WalletRegistry is Ownable {
     ///         as valid, pays reward to the approver, bans misbehaved group
     ///         members from the sortition pool rewards, and completes the group
     ///         creation by activating the candidate group. For the first
-    ///         `resultSubmissionEligibilityDelay` blocks after the end of the
+    ///         `resultSubmissionTimeout` blocks after the end of the
     ///         challenge period can be called only by the DKG result submitter.
     ///         After that time, can be called by anyone.
     ///         A new wallet based on the DKG result details.
@@ -409,5 +401,10 @@ contract WalletRegistry is Ownable {
         returns (bool)
     {
         return wallets.isWalletRegistered(publicKeyHash);
+    }
+
+    /// @notice Retrieves dkg parameters that were set in DKG library.
+    function dkgParameters() external view returns (DKG.Parameters memory) {
+        return dkg.parameters;
     }
 }

@@ -617,13 +617,13 @@ describe("WalletRegistryGovernance", async () => {
     )
   })
 
-  describe("beginDkgResultSubmissionEligibilityDelayUpdate", () => {
+  describe("beginDkgResultSubmissionTimeoutUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           walletRegistryGovernance
             .connect(thirdParty)
-            .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+            .beginDkgResultSubmissionTimeoutUpdate(1)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -633,7 +633,7 @@ describe("WalletRegistryGovernance", async () => {
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .beginDkgResultSubmissionEligibilityDelayUpdate(0)
+            .beginDkgResultSubmissionTimeoutUpdate(0)
         ).to.be.revertedWith(
           "DKG result submission eligibility delay must be > 0"
         )
@@ -646,10 +646,10 @@ describe("WalletRegistryGovernance", async () => {
 
         await walletRegistryGovernance
           .connect(governance)
-          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+          .beginDkgResultSubmissionTimeoutUpdate(1)
         await walletRegistryGovernance
           .connect(governance)
-          .beginDkgResultSubmissionEligibilityDelayUpdate(2)
+          .beginDkgResultSubmissionTimeoutUpdate(2)
 
         // works, did not revert
 
@@ -665,7 +665,7 @@ describe("WalletRegistryGovernance", async () => {
 
         tx = await walletRegistryGovernance
           .connect(governance)
-          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+          .beginDkgResultSubmissionTimeoutUpdate(1)
       })
 
       after(async () => {
@@ -674,37 +674,36 @@ describe("WalletRegistryGovernance", async () => {
 
       it("should not update the DKG result submission eligibility delay", async () => {
         expect(
-          (await walletRegistry.dkgParameters())
-            .resultSubmissionEligibilityDelay
-        ).to.be.equal(params.dkgResultSubmissionEligibilityDelay)
+          (await walletRegistry.dkgParameters()).resultSubmissionTimeout
+        ).to.be.equal(params.dkgResultSubmissionTimeout)
       })
 
       it("should start the governance delay timer", async () => {
         expect(
-          await walletRegistryGovernance.getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
+          await walletRegistryGovernance.getRemainingDkgResultSubmissionTimeoutUpdateTime()
         ).to.be.equal(12 * 60 * 60) // 12 hours
       })
 
-      it("should emit the DkgResultSubmissionEligibilityDelayUpdateStarted event", async () => {
+      it("should emit the DkgResultSubmissionTimeoutUpdateStarted event", async () => {
         const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
           .timestamp
         await expect(tx)
           .to.emit(
             walletRegistryGovernance,
-            "DkgResultSubmissionEligibilityDelayUpdateStarted"
+            "DkgResultSubmissionTimeoutUpdateStarted"
           )
           .withArgs(1, blockTimestamp)
       })
     })
   })
 
-  describe("finalizeDkgResultSubmissionEligibilityDelayUpdate", () => {
+  describe("finalizeDkgResultSubmissionTimeoutUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           walletRegistryGovernance
             .connect(thirdParty)
-            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+            .finalizeDkgResultSubmissionTimeoutUpdate()
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -714,7 +713,7 @@ describe("WalletRegistryGovernance", async () => {
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+            .finalizeDkgResultSubmissionTimeoutUpdate()
         ).to.be.revertedWith("Change not initiated")
       })
     })
@@ -725,14 +724,14 @@ describe("WalletRegistryGovernance", async () => {
 
         await walletRegistryGovernance
           .connect(governance)
-          .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+          .beginDkgResultSubmissionTimeoutUpdate(1)
 
         await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
 
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+            .finalizeDkgResultSubmissionTimeoutUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
 
         await restoreSnapshot()
@@ -749,13 +748,13 @@ describe("WalletRegistryGovernance", async () => {
 
           await walletRegistryGovernance
             .connect(governance)
-            .beginDkgResultSubmissionEligibilityDelayUpdate(1)
+            .beginDkgResultSubmissionTimeoutUpdate(10)
 
           await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
 
           tx = await walletRegistryGovernance
             .connect(governance)
-            .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+            .finalizeDkgResultSubmissionTimeoutUpdate()
         })
 
         after(async () => {
@@ -764,23 +763,22 @@ describe("WalletRegistryGovernance", async () => {
 
         it("should update the DKG result submission eligibility delay", async () => {
           expect(
-            (await walletRegistry.dkgParameters())
-              .resultSubmissionEligibilityDelay
-          ).to.be.equal(1)
+            (await walletRegistry.dkgParameters()).resultSubmissionTimeout
+          ).to.be.equal(10)
         })
 
-        it("should emit DkgResultSubmissionEligibilityDelayUpdated event", async () => {
+        it("should emit DkgResultSubmissionTimeoutUpdated event", async () => {
           await expect(tx)
             .to.emit(
               walletRegistryGovernance,
-              "DkgResultSubmissionEligibilityDelayUpdated"
+              "DkgResultSubmissionTimeoutUpdated"
             )
-            .withArgs(1)
+            .withArgs(10)
         })
 
         it("should reset the governance delay timer", async () => {
           await expect(
-            walletRegistryGovernance.getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
+            walletRegistryGovernance.getRemainingDkgResultSubmissionTimeoutUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

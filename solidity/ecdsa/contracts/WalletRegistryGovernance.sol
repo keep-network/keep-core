@@ -25,7 +25,7 @@ contract WalletRegistryGovernance is Ownable {
     address public newWalletOwner;
     uint256 public walletOwnerChangeInitiated;
 
-    uint256 public newMaliciousDkgResultSlashingAmount;
+    uint96 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
     uint256 public newMaliciousDkgResultNotificationRewardMultiplier;
@@ -35,8 +35,11 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newDkgResultChallengePeriodLength;
     uint256 public dkgResultChallengePeriodLengthChangeInitiated;
 
-    uint256 public newDkgResultSubmissionEligibilityDelay;
-    uint256 public dkgResultSubmissionEligibilityDelayChangeInitiated;
+    uint256 public newDkgResultSubmissionTimeout;
+    uint256 public dkgResultSubmissionTimeoutChangeInitiated;
+
+    uint256 public newSubmitterPrecedencePeriodLength;
+    uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
 
     WalletRegistry public walletRegistry;
 
@@ -86,12 +89,18 @@ contract WalletRegistryGovernance is Ownable {
         uint256 dkgResultChallengePeriodLength
     );
 
-    event DkgResultSubmissionEligibilityDelayUpdateStarted(
-        uint256 dkgResultSubmissionEligibilityDelay,
+    event DkgResultSubmissionTimeoutUpdateStarted(
+        uint256 dkgResultSubmissionTimeout,
         uint256 timestamp
     );
-    event DkgResultSubmissionEligibilityDelayUpdated(
-        uint256 dkgResultSubmissionEligibilityDelay
+    event DkgResultSubmissionTimeoutUpdated(uint256 dkgResultSubmissionTimeout);
+
+    event DkgSubmitterPrecedencePeriodLengthUpdateStarted(
+        uint256 submitterPrecedencePeriodLength,
+        uint256 timestamp
+    );
+    event DkgSubmitterPrecedencePeriodLengthUpdated(
+        uint256 submitterPrecedencePeriodLength
     );
 
     /// @notice Reverts if called before the governance delay elapses.
@@ -153,7 +162,7 @@ contract WalletRegistryGovernance is Ownable {
     /// @param _newMaliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
     function beginMaliciousDkgResultSlashingAmountUpdate(
-        uint256 _newMaliciousDkgResultSlashingAmount
+        uint96 _newMaliciousDkgResultSlashingAmount
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         newMaliciousDkgResultSlashingAmount = _newMaliciousDkgResultSlashingAmount;
@@ -273,7 +282,8 @@ contract WalletRegistryGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
             newDkgResultChallengePeriodLength,
-            walletRegistry.dkgParameters().resultSubmissionEligibilityDelay
+            walletRegistry.dkgParameters().resultSubmissionTimeout,
+            walletRegistry.dkgParameters().submitterPrecedencePeriodLength
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
         newDkgResultChallengePeriodLength = 0;
@@ -282,20 +292,20 @@ contract WalletRegistryGovernance is Ownable {
     /// @notice Begins the DKG result submission eligibility delay update
     ///         process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgResultSubmissionEligibilityDelay New DKG result submission
+    /// @param _newDkgResultSubmissionTimeout New DKG result submission
     ///        eligibility delay in blocks
-    function beginDkgResultSubmissionEligibilityDelayUpdate(
-        uint256 _newDkgResultSubmissionEligibilityDelay
+    function beginDkgResultSubmissionTimeoutUpdate(
+        uint256 _newDkgResultSubmissionTimeout
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         require(
-            _newDkgResultSubmissionEligibilityDelay > 0,
+            _newDkgResultSubmissionTimeout > 0,
             "DKG result submission eligibility delay must be > 0"
         );
-        newDkgResultSubmissionEligibilityDelay = _newDkgResultSubmissionEligibilityDelay;
-        dkgResultSubmissionEligibilityDelayChangeInitiated = block.timestamp;
-        emit DkgResultSubmissionEligibilityDelayUpdateStarted(
-            _newDkgResultSubmissionEligibilityDelay,
+        newDkgResultSubmissionTimeout = _newDkgResultSubmissionTimeout;
+        dkgResultSubmissionTimeoutChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionTimeoutUpdateStarted(
+            _newDkgResultSubmissionTimeout,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
@@ -305,24 +315,68 @@ contract WalletRegistryGovernance is Ownable {
     ///         process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgResultSubmissionEligibilityDelayUpdate()
+    function finalizeDkgResultSubmissionTimeoutUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            dkgResultSubmissionEligibilityDelayChangeInitiated,
+            dkgResultSubmissionTimeoutChangeInitiated,
             STANDARD_PARAMETER_GOVERNANCE_DELAY
         )
     {
-        emit DkgResultSubmissionEligibilityDelayUpdated(
-            newDkgResultSubmissionEligibilityDelay
+        emit DkgResultSubmissionTimeoutUpdated(newDkgResultSubmissionTimeout);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgParameters(
+            walletRegistry.dkgParameters().resultChallengePeriodLength,
+            newDkgResultSubmissionTimeout,
+            walletRegistry.dkgParameters().submitterPrecedencePeriodLength
+        );
+        dkgResultSubmissionTimeoutChangeInitiated = 0;
+        newDkgResultSubmissionTimeout = 0;
+    }
+
+    /// @notice Begins the DKG submitter precedence period length.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newSubmitterPrecedencePeriodLength New DKG submitter precedence
+    ///        period length in blocks
+    function beginDkgSubmitterPrecedencePeriodLengthUpdate(
+        uint256 _newSubmitterPrecedencePeriodLength
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newSubmitterPrecedencePeriodLength > 0,
+            "DKG submitter precedence period length must be > 0"
+        );
+        newSubmitterPrecedencePeriodLength = _newSubmitterPrecedencePeriodLength;
+        dkgSubmitterPrecedencePeriodLengthChangeInitiated = block.timestamp;
+        emit DkgSubmitterPrecedencePeriodLengthUpdateStarted(
+            _newSubmitterPrecedencePeriodLength,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG submitter precedence period length.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgSubmitterPrecedencePeriodLengthChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit DkgSubmitterPrecedencePeriodLengthUpdated(
+            newSubmitterPrecedencePeriodLength
         );
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
             walletRegistry.dkgParameters().resultChallengePeriodLength,
-            newDkgResultSubmissionEligibilityDelay
+            walletRegistry.dkgParameters().resultSubmissionTimeout,
+            newSubmitterPrecedencePeriodLength
         );
-        dkgResultSubmissionEligibilityDelayChangeInitiated = 0;
-        newDkgResultSubmissionEligibilityDelay = 0;
+        dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;
+        newSubmitterPrecedencePeriodLength = 0;
     }
 
     /// @notice Get the time remaining until the malicious DKG result
@@ -373,14 +427,14 @@ contract WalletRegistryGovernance is Ownable {
     /// @notice Get the time remaining until the DKG result submission
     ///         eligibility delay can be updated.
     /// @return Remaining time in seconds.
-    function getRemainingDkgResultSubmissionEligibilityDelayUpdateTime()
+    function getRemainingDkgResultSubmissionTimeoutUpdateTime()
         external
         view
         returns (uint256)
     {
         return
             getRemainingChangeTime(
-                dkgResultSubmissionEligibilityDelayChangeInitiated,
+                dkgResultSubmissionTimeoutChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
@@ -396,6 +450,20 @@ contract WalletRegistryGovernance is Ownable {
             getRemainingChangeTime(
                 walletOwnerChangeInitiated,
                 CRITICAL_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the wallet owner can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingSubmitterPrecedencePeriodLengthUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                dkgSubmitterPrecedencePeriodLengthChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }
 
