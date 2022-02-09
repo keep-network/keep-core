@@ -8,6 +8,7 @@ on:
       - 'solidity-v1/contracts/**'
       - 'solidity-v1/package.json'
       - 'solidity-v1/package-lock.json'
+      - '.github/workflows/npm-v1.yml'
   workflow_dispatch:
 
 jobs:
@@ -49,4 +50,4 @@ jobs:
       - name: Publish package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: npm publish --access=public --tag=development

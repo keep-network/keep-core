@@ -622,12 +622,8 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function challengeDkgResult(DKG.Result calldata dkgResult) external {
-        bytes32 membersHash = groups
-            .getGroup(dkgResult.groupPubKey)
-            .membersHash;
-
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
-            .challengeResult(dkgResult, membersHash);
+            .challengeResult(dkgResult);
 
         uint256 slashingAmount = maliciousDkgResultSlashingAmount;
         address maliciousSubmitterAddresses = sortitionPool.getIDOperator(

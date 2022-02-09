@@ -3,6 +3,8 @@ import ProgressBar, { ProgressBarLegendContext } from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import OnlyIf from "../OnlyIf"
 import { add, gt } from "../../utils/arithmetics.utils"
+import BigNumber from "bignumber.js"
+import TokenAmount from "../TokenAmount"
 
 const AllocationProgressBar = ({
   title,
@@ -11,23 +13,53 @@ const AllocationProgressBar = ({
   className = "",
   secondaryValue = null,
   withLegend = false,
-  currentValueLegendLabel = "",
-  secondaryValueLegendLabel = "",
+  currentValueLabel = "",
+  secondaryValueLabel = "",
   isDataFetching = false,
 }) => {
-  const percentageValue = useMemo(() => {
+  const displayPercentageValue = useMemo(() => {
     if (isDataFetching) {
       return "--"
     }
 
     if (gt(totalValue, 0)) {
-      return Math.round(
-        (add(currentValue, secondaryValue | 0) / totalValue) * 100
+      const currentValueBN = new BigNumber(currentValue)
+      const secondaryValueBN = secondaryValue
+        ? new BigNumber(secondaryValue)
+        : 0
+      const actualProgressBarValueBN = currentValueBN.plus(secondaryValueBN)
+      const totalValueBN = new BigNumber(totalValue)
+      const percentageValue = Math.round(
+        actualProgressBarValueBN.div(totalValueBN).multipliedBy(100).toNumber()
       )
+
+      if (
+        percentageValue === 100 &&
+        !actualProgressBarValueBN.isEqualTo(totalValueBN)
+      ) {
+        return ">99%"
+      } else if (
+        percentageValue === 0 &&
+        !actualProgressBarValueBN.isEqualTo("0")
+      ) {
+        return "<1%"
+      } else {
+        return `${percentageValue}%`
+      }
     } else {
-      return 0
+      return "0%"
     }
   }, [currentValue, secondaryValue, totalValue, isDataFetching])
+
+  const renderProgressBarTooltipTooltip = (value) => {
+    return (
+      <TokenAmount
+        amount={value}
+        symbolClassName="upgrade-token-tile-row__token-amount-symbol"
+        amountClassName="upgrade-token-tile-row__token-amount-amount"
+      />
+    )
+  }
 
   return (
     <div className={`allocation-progress-bar ${className}`}>
@@ -43,15 +75,23 @@ const AllocationProgressBar = ({
               height={20}
             >
               <ProgressBar.InlineItem
+                label={currentValueLabel}
                 value={
                   isDataFetching ? 0 : add(currentValue, secondaryValue || 0)
                 }
                 color={colors.secondary}
+                withTooltip
+                renderTooltip={renderProgressBarTooltipTooltip(currentValue)}
               />
               <OnlyIf condition={!!secondaryValue}>
                 <ProgressBar.InlineItem
+                  label={secondaryValueLabel}
                   value={isDataFetching ? 0 : secondaryValue}
                   color={colors.yellowSecondary}
+                  withTooltip
+                  renderTooltip={renderProgressBarTooltipTooltip(
+                    secondaryValue
+                  )}
                 />
               </OnlyIf>
             </ProgressBar.Inline>
@@ -62,7 +102,7 @@ const AllocationProgressBar = ({
                 >
                   <ProgressBar.LegendItem
                     value={secondaryValue?.toString()}
-                    label={secondaryValueLegendLabel}
+                    label={secondaryValueLabel}
                     color={colors.yellowSecondary}
                     className={
                       "allocation-progress-bar__progress-bar-legend-item"
@@ -70,7 +110,7 @@ const AllocationProgressBar = ({
                   />
                   <ProgressBar.LegendItem
                     value={currentValue?.toString()}
-                    label={currentValueLegendLabel}
+                    label={currentValueLabel}
                     color={colors.secondary}
                     className={
                       "allocation-progress-bar__progress-bar-legend-item"
@@ -81,10 +121,7 @@ const AllocationProgressBar = ({
             </OnlyIf>
           </ProgressBar>
           <span className="text-grey-70 ml-1 allocation-progress-bar__percentage-value">
-            {/** TODO: 2 decimal places, maybe even print it as >99 % and <1%
-              // when there is small difference betweent currentValue and total
-              // Value */}
-            {percentageValue}%
+            {displayPercentageValue}
           </span>
         </div>
       </div>

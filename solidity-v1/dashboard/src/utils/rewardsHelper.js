@@ -2,35 +2,54 @@ import moment from "moment"
 import BigNumber from "bignumber.js"
 import { formatDate } from "../utils/general.utils"
 
-class RewardsHelper {
+class RewardsInterface {
+  intervalStartOf = (interval) => {
+    throw Error("Implement first")
+  }
+
+  intervalEndOf = (interval) => {
+    throw Error("Implement first")
+  }
+
+  get currentInterval() {
+    throw Error("Implement first")
+  }
+
+  periodOf = (interval) => {
+    const startDate = formatDate(moment.unix(this.intervalStartOf(interval)))
+    const endDate = formatDate(moment.unix(this.intervalEndOf(interval)))
+
+    return `${startDate} - ${endDate}`
+  }
+}
+
+class RewardsHelper extends RewardsInterface {
   firstIntervalStart = 0
   termLength = 0
   minimumKeepsPerInterval = 0
 
   constructor(_firstIntervalStart, _termLength, _minimumKeepsPerInterval) {
+    super()
     this.firstIntervalStart = _firstIntervalStart
     this.termLength = _termLength
     this.minimumKeepsPerInterval = _minimumKeepsPerInterval
-    this.currentInterval = Math.floor(
-      (moment().unix() - this.firstIntervalStart) / this.termLength
-    )
   }
 
   intervalStartOf = (interval) => {
     return moment
       .unix(this.firstIntervalStart)
       .add(interval * this.termLength, "seconds")
+      .unix()
   }
 
   intervalEndOf = (interval) => {
     return this.intervalStartOf(interval + 1)
   }
 
-  periodOf = (interval) => {
-    const startDate = formatDate(this.intervalStartOf(interval))
-    const endDate = formatDate(this.intervalEndOf(interval))
-
-    return `${startDate} - ${endDate}`
+  get currentInterval() {
+    return Math.floor(
+      (moment().unix() - this.firstIntervalStart) / this.termLength
+    )
   }
 }
 
@@ -104,9 +123,81 @@ class ECDSARewards extends RewardsHelper {
   }
 }
 
+class ExtendedECDSARewards extends RewardsInterface {
+  // https://forum.keep.network/t/proposal-to-extend-stakedrop-rewards-for-an-additional-4-months/351
+  intervalsDates = [
+    // 2021-12-03 -> 2021-12-21
+    {
+      start: 1638489600,
+      end: 1640044800,
+      merkleRoot:
+        "0x83f51475c210aff536867981fcc803ace41787a6b0b256fced9802ec37127dd7",
+    },
+    // 2021-12-21 -> 2022-01-22
+    {
+      start: 1640044800,
+      end: 1642809600,
+      merkleRoot:
+        "0xdc8026bc52c1d200477e8aa8d374e934e57c79d1d0c9fa65d121a8f6607987b0",
+    },
+    // 2021-01-22 -> 2022-02-22
+    { start: 1642809600, end: 1645488000, merkleRoot: "" },
+    // 2021-02-22 -> 2022-03-22
+    { start: 1645488000, end: 1647907200, merkleRoot: "" },
+  ]
+
+  get currentInterval() {
+    const currentTimestamp = moment().unix()
+    const index = this.intervalsDates.findIndex(
+      (_) => _.start <= currentTimestamp && _.end >= currentTimestamp
+    )
+    if (index < 0) return this.intervals
+
+    return index + 1
+  }
+
+  get intervals() {
+    return this.intervalsDates.length
+  }
+
+  intervalStartOf = (interval) => {
+    const _interval = interval - 1
+
+    if (_interval < 0) return this.intervalsDates[0].start
+    else if (_interval > this.intervalsDates.length)
+      return this.intervalsDates[this.intervalsDates.length - 1].start
+
+    return this.intervalsDates[_interval].start
+  }
+
+  intervalEndOf = (interval) => {
+    const _interval = interval - 1
+
+    if (_interval < 0) return this.intervalsDates[0].end
+    if (_interval > this.intervalsDates.length)
+      return this.intervalsDates[this.intervalsDates.length - 1].end
+
+    return this.intervalsDates[_interval].end
+  }
+}
+
 const BeaconRewardsHelper = new BeaconRewards()
 const ECDSARewardsHelper = new ECDSARewards()
+const ExtendedECDSARewardsHelper = new ExtendedECDSARewards()
+
+export class ECDSAPeriodOfResolver {
+  static resolve(interval, merkleRoot) {
+    const index = ExtendedECDSARewardsHelper.intervalsDates.findIndex(
+      (_) => _.merkleRoot === merkleRoot
+    )
+    if (index >= 0) {
+      return ExtendedECDSARewardsHelper.periodOf(index + 1)
+    }
+
+    return ECDSARewardsHelper.periodOf(interval)
+  }
+}
 
 export default BeaconRewardsHelper
 
-export { ECDSARewardsHelper }
+export { ECDSARewardsHelper, ExtendedECDSARewardsHelper }

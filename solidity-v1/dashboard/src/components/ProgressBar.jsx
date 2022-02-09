@@ -4,6 +4,7 @@ import CircularProgressBar from "./CircularProgressBar"
 import { percentageOf, sub, lt } from "../utils/arithmetics.utils"
 import { formatValue } from "../utils/general.utils"
 import { colors } from "../constants/colors"
+import ReactTooltip from "react-tooltip"
 
 const defaultValue = 0
 const totalDefaultValue = 1
@@ -57,12 +58,38 @@ const ProgressBarInline = ({
   )
 }
 
-const ProgressBarInlineItem = ({ value = "0", color = colors.secondary }) => {
+const ProgressBarInlineItem = ({
+  value = "0",
+  color = colors.secondary,
+  label = "progress-bar-inline-item",
+  withTooltip = false,
+  renderTooltip = null,
+}) => {
   const { total } = useProgressBarContext()
 
   const barWidth = useMemo(() => calculateWidth(value, total), [value, total])
 
-  return (
+  const tooltipId = useMemo(
+    () => label.replace(/\s+/g, "-").toLowerCase(),
+    [label]
+  )
+
+  return withTooltip ? (
+    <>
+      <div
+        className={"progress-bar"}
+        style={{
+          width: `${barWidth}%`,
+          backgroundColor: color,
+        }}
+        data-tip
+        data-for={tooltipId}
+      />
+      <ReactTooltip id={tooltipId} effect="solid">
+        {renderTooltip ? renderTooltip : value}
+      </ReactTooltip>
+    </>
+  ) : (
     <div
       className={"progress-bar"}
       style={{
