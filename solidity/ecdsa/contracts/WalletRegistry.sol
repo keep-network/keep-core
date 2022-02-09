@@ -45,14 +45,14 @@ contract WalletRegistry is Ownable {
     Wallets.Data internal wallets;
 
     // Address that is set as owner of all wallets. Only this address can request
-    // new wallets creation, manage their state or request signatures from wallets.
+    // new wallets creation and manage their state.
     address public walletOwner;
 
     uint256 public constant relayEntry = 12345; // TODO: get value from Random Beacon
 
     /// @notice Slashing amount for supporting malicious DKG result. Every
-    ///         DKG result submitted can be challenged for the time of
-    ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
+    ///         DKG result submitted can be challenged for the time of DKG's
+    ///         `resultChallengePeriodLength` parameter. If the DKG result submitted
     ///         is challenged and proven to be malicious, each operator who
     ///         signed the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
@@ -102,7 +102,7 @@ contract WalletRegistry is Ownable {
     event DkgSeedTimedOut();
 
     event WalletCreated(
-        bytes32 indexed walletID,
+        bytes32 indexed publicKeyHash,
         bytes32 indexed dkgResultHash
     );
 
@@ -311,12 +311,11 @@ contract WalletRegistry is Ownable {
     function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        bytes32 walletID = wallets.addWallet(
-            dkgResult.membersHash,
-            keccak256(dkgResult.groupPubKey)
-        );
+        bytes32 publicKeyHash = keccak256(dkgResult.groupPubKey);
 
-        emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
+        wallets.addWallet(dkgResult.membersHash, publicKeyHash);
+
+        emit WalletCreated(publicKeyHash, keccak256(abi.encode(dkgResult)));
 
         // TODO: Disable rewards for misbehavedMembers.
         //slither-disable-next-line redundant-statements
@@ -349,6 +348,7 @@ contract WalletRegistry is Ownable {
                 operatorWrapper
             )
         {
+            // slither-disable-next-line reentrancy-events
             emit DkgMaliciousResultSlashed(
                 maliciousDkgResultHash,
                 maliciousDkgResultSlashingAmount,
@@ -366,6 +366,18 @@ contract WalletRegistry is Ownable {
         }
     }
 
+    /// @notice Checks if DKG result is valid for the current DKG.
+    /// @param result DKG result.
+    /// @return True if the result is valid. If the result is invalid it returns
+    ///         false and an error message.
+    function isDkgResultValid(DKG.Result calldata result)
+        external
+        view
+        returns (bool, string memory)
+    {
+        return dkg.isResultValid(result);
+    }
+
     /// @notice Check current wallet creation state.
     function getWalletCreationState() external view returns (DKG.State) {
         return dkg.currentState();
@@ -380,23 +392,22 @@ contract WalletRegistry is Ownable {
         return dkg.hasDkgTimedOut();
     }
 
-    function getWallet(bytes32 walletID)
+    function getWallet(bytes32 publicKeyHash)
         external
         view
         returns (Wallets.Wallet memory)
     {
-        return wallets.registry[walletID];
+        return wallets.registry[publicKeyHash];
     }
 
-    /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters() external view returns (DKG.Parameters memory) {
-        return dkg.parameters;
-    }
-    
-    /// @notice Checks if a wallet with given ID was registered.
-    /// @param walletID Wallet's ID.
-    /// @return True if wallet was registered, false otherwise.
-    function isWalletRegistered(bytes32 walletID) external view returns (bool) {
-        return wallets.isWalletRegistered(walletID);
+    /// @notice Checks if a wallet with the given public key hash is registered.
+    /// @param publicKeyHash Wallet's public key hash.
+    /// @return True if wallet is registered, false otherwise.
+    function isWalletRegistered(bytes32 publicKeyHash)
+        external
+        view
+        returns (bool)
+    {
+        return wallets.isWalletRegistered(publicKeyHash);
     }
 }

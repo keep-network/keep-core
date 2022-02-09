@@ -423,6 +423,20 @@ library DKG {
         return (maliciousResultHash, maliciousSubmitter);
     }
 
+    /// @notice Checks if DKG result is valid for the current DKG.
+    /// @param result DKG result.
+    /// @return True if the result is valid. If the result is invalid it returns
+    ///         false and an error message.
+    function isResultValid(Data storage self, Result calldata result)
+        external
+        view
+        returns (bool, string memory)
+    {
+        require(self.startBlock > 0, "DKG has not been started");
+
+        return self.dkgValidator.validate(result, self.seed, self.startBlock);
+    }
+
     /// @notice Set resultChallengePeriodLength parameter.
     function setResultChallengePeriodLength(
         Data storage self,

@@ -97,6 +97,7 @@ describe("DKGValidator", () => {
         _groupPublicKey,
         _misbehaved,
         _startBlock,
+        _submitterIndex,
         _numberOfSignatures
       )
 

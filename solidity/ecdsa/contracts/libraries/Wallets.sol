@@ -34,39 +34,37 @@ library Wallets {
 
     struct Data {
         // Mapping of keccak256 hashes of wallet public keys to wallet details.
-        // Hash of public key is considered an unique wallet identifier (walletID).
+        // Hash of public key is considered an unique wallet identifier.
         mapping(bytes32 => Wallet) registry;
     }
 
     /// @notice Registers a new wallet.
-    /// @param _membersIdsHash Keccak256 hash of group members identifiers array.
-    /// @param _publicKeyHash Keccak256 hash of group public key.
-    /// @return walletID ID of the newly registered wallet.
+    /// @dev Uses a public key hash as a unique identifier of a wallet.
+    /// @param membersIdsHash Keccak256 hash of group members identifiers array.
+    /// @param publicKeyHash Keccak256 hash of group public key.
     function addWallet(
         Data storage self,
-        bytes32 _membersIdsHash,
-        bytes32 _publicKeyHash
-    ) internal returns (bytes32 walletID) {
-        walletID = _publicKeyHash;
-
+        bytes32 membersIdsHash,
+        bytes32 publicKeyHash
+    ) internal {
         // TODO: If we decide to store the group public key we should switch this
         // check to use the public key.
         require(
-            self.registry[walletID].membersIdsHash == bytes32(0),
-            "Wallet with given public key hash already exists"
+            self.registry[publicKeyHash].membersIdsHash == bytes32(0),
+            "Wallet with the given public key hash already exists"
         );
 
-        self.registry[walletID].membersIdsHash = _membersIdsHash;
+        self.registry[publicKeyHash].membersIdsHash = membersIdsHash;
     }
 
-    /// @notice Checks if a wallet with given ID was registered.
-    /// @param walletID Wallet's ID.
-    /// @return True if wallet was registered, false otherwise.
-    function isWalletRegistered(Data storage self, bytes32 walletID)
+    /// @notice Checks if a wallet with the given public key hash is registered.
+    /// @param publicKeyHash Wallet's public key hash.
+    /// @return True if a wallet is registered, false otherwise.
+    function isWalletRegistered(Data storage self, bytes32 publicKeyHash)
         external
         view
         returns (bool)
     {
-        return self.registry[walletID].membersIdsHash != bytes32(0);
+        return self.registry[publicKeyHash].membersIdsHash != bytes32(0);
     }
 }

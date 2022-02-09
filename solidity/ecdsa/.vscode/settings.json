@@ -1,3 +1,5 @@
 {
-  "mochaExplorer.envPath": ".mocha.env"
+  "mochaExplorer.envPath": ".mocha.env",
+  "mochaExplorer.require": ["ts-node/register/files"],
+  "mochaExplorer.mochaPath": "node_modules/mocha"
 }

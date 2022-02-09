@@ -53,7 +53,6 @@ export async function signAndSubmitCorrectDkgResult(
   signers: Operator[]
   dkgResult: DkgResult
   dkgResultHash: string
-  members: number[]
   submitter: SignerWithAddress
   transaction: ContractTransaction
 }> {
@@ -95,28 +94,17 @@ export async function signAndSubmitArbitraryDkgResult(
 ): Promise<{
   dkgResult: DkgResult
   dkgResultHash: string
-  members: number[]
   submitter: SignerWithAddress
   transaction: ContractTransaction
 }> {
-  const { members, signingMembersIndices, signaturesBytes } =
-    await signDkgResult(
-      signers,
-      groupPublicKey,
-      misbehavedIndices,
-      startBlock,
-      numberOfSignatures
-    )
-
-  const dkgResult: DkgResult = {
-    submitterMemberIndex: submitterIndex,
-    groupPubKey: groupPublicKey,
-    misbehavedMembersIndices: misbehavedIndices,
-    signatures: signaturesBytes,
-    signingMembersIndices,
-    members,
-    membersHash: hashDKGMembers(members, misbehavedIndices),
-  }
+  const { dkgResult } = await signDkgResult(
+    signers,
+    groupPublicKey,
+    misbehavedIndices,
+    startBlock,
+    submitterIndex,
+    numberOfSignatures
+  )
 
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
@@ -130,7 +118,6 @@ export async function signAndSubmitArbitraryDkgResult(
   return {
     dkgResult,
     dkgResultHash,
-    members,
     submitter,
     ...(await submitDkgResult(walletRegistry, dkgResult, submitter)),
   }
@@ -150,32 +137,24 @@ export async function signAndSubmitUnrecoverableDkgResult(
 ): Promise<{
   dkgResult: DkgResult
   dkgResultHash: string
-  members: number[]
   submitter: SignerWithAddress
   transaction: ContractTransaction
 }> {
-  const { members, signingMembersIndices } = await signDkgResult(
+  const { dkgResult } = await signDkgResult(
     signers,
     groupPublicKey,
     misbehavedIndices,
     startBlock,
+    submitterIndex,
     numberOfSignatures
   )
 
+  // Break the result
   const signatureHexStrLength = 2 * 65
   const unrecoverableSignatures = `0x${"a".repeat(
     signatureHexStrLength * numberOfSignatures
   )}`
-
-  const dkgResult: DkgResult = {
-    submitterMemberIndex: submitterIndex,
-    groupPubKey: groupPublicKey,
-    misbehavedMembersIndices: misbehavedIndices,
-    signatures: unrecoverableSignatures,
-    signingMembersIndices,
-    members,
-    membersHash: hashDKGMembers(members, misbehavedIndices),
-  }
+  dkgResult.signatures = unrecoverableSignatures
 
   const dkgResultHash = ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
@@ -189,7 +168,6 @@ export async function signAndSubmitUnrecoverableDkgResult(
   return {
     dkgResult,
     dkgResultHash,
-    members,
     submitter,
     ...(await submitDkgResult(walletRegistry, dkgResult, submitter)),
   }
@@ -200,9 +178,10 @@ export async function signDkgResult(
   groupPublicKey: string,
   misbehavedMembersIndices: number[],
   startBlock: number,
-  numberOfSignatures: number
+  submitterIndex = 1,
+  numberOfSignatures = 51
 ): Promise<{
-  members: number[]
+  dkgResult: DkgResult
   signingMembersIndices: number[]
   signaturesBytes: string
 }> {
@@ -237,7 +216,17 @@ export async function signDkgResult(
 
   const signaturesBytes: string = ethers.utils.hexConcat(signatures)
 
-  return { members, signingMembersIndices, signaturesBytes }
+  const dkgResult: DkgResult = {
+    submitterMemberIndex: submitterIndex,
+    groupPubKey: groupPublicKey,
+    misbehavedMembersIndices,
+    signatures: signaturesBytes,
+    signingMembersIndices,
+    members,
+    membersHash: hashDKGMembers(members, misbehavedMembersIndices),
+  }
+
+  return { dkgResult, signingMembersIndices, signaturesBytes }
 }
 
 export async function submitDkgResult(
