@@ -83,8 +83,11 @@ export async function walletRegistryFixture(): Promise<{
     )
   await walletRegistryGovernance
     .connect(governance)
-    .beginDkgResultSubmissionEligibilityDelayUpdate(
-      params.dkgResultSubmissionEligibilityDelay
+    .beginDkgResultSubmissionTimeoutUpdate(params.dkgResultSubmissionTimeout)
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgSubmitterPrecedencePeriodLengthUpdate(
+      params.dkgSubmitterPrecedencePeriodLength
     )
 
   await helpers.time.increaseTime(params.governanceDelay)
@@ -95,14 +98,11 @@ export async function walletRegistryFixture(): Promise<{
 
   await walletRegistryGovernance
     .connect(governance)
-    .finalizeDkgResultSubmissionEligibilityDelayUpdate()
+    .finalizeDkgResultSubmissionTimeoutUpdate()
 
-  // TODO: remove and replace by the above
-  await walletRegistry.updateDkgParams(
-    params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionTimeout,
-    params.dkgSubmitterPrecedencePeriodLength
-  )
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
 
   return {
     walletRegistry,
