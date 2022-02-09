@@ -1,6 +1,6 @@
 {
   "files": ["./hardhat.config.ts"],
-  "include": ["./deploy"],
+  "include": ["./deploy", "./test", "./typechain"],
   "compilerOptions": {
     "downlevelIteration": true,
     "esModuleInterop": true,
