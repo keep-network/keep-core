@@ -133,7 +133,7 @@ describe("WalletRegistry - Random Beacon", async () => {
           await restoreSnapshot()
         })
 
-        it("should transition wallet creations state to `AWAITING_RESULT`", async () => {
+        it("should transition wallet creation state to `AWAITING_RESULT`", async () => {
           await expect(
             await walletRegistry.getWalletCreationState()
           ).to.be.equal(dkgState.AWAITING_RESULT)
