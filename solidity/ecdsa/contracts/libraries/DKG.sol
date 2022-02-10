@@ -19,7 +19,8 @@
 // - the group size was set to 100,
 // - offchainDkgTimeout was removed,
 // - submission eligibility verification is not performed on-chain,
-// - submission eligibility delay was replaced with a submission timeout.
+// - submission eligibility delay was replaced with a submission timeout,
+// - seed timeout notification requires seedTimeout period to pass.
 
 pragma solidity ^0.8.9;
 
@@ -33,6 +34,8 @@ library DKG {
     using ECDSA for bytes32;
 
     struct Parameters {
+        // Time in blocks during which a seed is expected to be delivered.
+        uint256 seedTimeout;
         // Time in blocks during which a submitted result can be challenged.
         uint256 resultChallengePeriodLength;
         // Time in blocks during which a result is expected to be submitted.
@@ -52,6 +55,8 @@ library DKG {
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
         Parameters parameters;
+        // Time in block at which DKG state was locked.
+        uint256 stateLockBlock;
         // Time in blocks at which DKG started.
         uint256 startBlock;
         // Seed used to start DKG.
@@ -198,6 +203,8 @@ library DKG {
         emit DkgStateLocked();
 
         self.sortitionPool.lock();
+
+        self.stateLockBlock = block.number;
     }
 
     function start(Data storage self, uint256 seed) internal {
@@ -206,11 +213,10 @@ library DKG {
             "Current state is not AWAITING_SEED"
         );
 
+        emit DkgStarted(seed);
+
         self.startBlock = block.number;
         self.seed = seed;
-
-        // slither-disable-next-line reentrancy-events
-        emit DkgStarted(seed);
     }
 
     /// @notice Allows to submit a DKG result. The submitted result does not go
@@ -248,6 +254,14 @@ library DKG {
         emit DkgResultSubmitted(self.submittedResultHash, self.seed, result);
     }
 
+    /// @notice Checks if seed awaiting timed out.
+    /// @return True if seed awaiting timed out, false otherwise.
+    function hasSeedTimedOut(Data storage self) internal view returns (bool) {
+        return
+            currentState(self) == State.AWAITING_SEED &&
+            block.number > (self.stateLockBlock + self.parameters.seedTimeout);
+    }
+
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
     ///         for off-chain protocol execution and time for the result publication.
     ///         After this time a result cannot be submitted and DKG can be notified
@@ -264,30 +278,21 @@ library DKG {
                 self.parameters.resultSubmissionTimeout);
     }
 
-    /// @notice Notifies about DKG timeout.
-    function notifyTimeout(Data storage self) internal {
-        require(hasDkgTimedOut(self), "DKG has not timed out");
-
-        emit DkgTimedOut();
-    }
-
     /// @notice Notifies about the seed was not delivered and restores the
     ///         initial DKG state (IDLE).
-    // TODO: Revisit this function when integrating with the Random Beacon. We need
-    // to track the timeout for a seed generation by the Random Beacon and let
-    // the timeout to be notified to unlock the DKG.
-    // slither-disable-next-line dead-code
-    function notifySeedTimedOut(Data storage self) internal {
-        require(
-            currentState(self) == State.AWAITING_SEED,
-            "Current state is not AWAITING_SEED"
-        );
-
-        // TODO: Verify if enough time passed.
+    function notifySeedTimeout(Data storage self) internal {
+        require(hasSeedTimedOut(self), "seed awaiting has not timed out");
 
         emit DkgSeedTimedOut();
 
         self.sortitionPool.unlock();
+    }
+
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout(Data storage self) internal {
+        require(hasDkgTimedOut(self), "DKG has not timed out");
+
+        emit DkgTimedOut();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
@@ -435,6 +440,17 @@ library DKG {
         require(self.startBlock > 0, "DKG has not been started");
 
         return self.dkgValidator.validate(result, self.seed, self.startBlock);
+    }
+
+    /// @notice Set setSeedTimeout parameter.
+    function setSeedTimeout(Data storage self, uint256 newSeedTimeout)
+        internal
+    {
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
+
+        require(newSeedTimeout > 0, "New value should be greater than zero");
+
+        self.parameters.seedTimeout = newSeedTimeout;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.

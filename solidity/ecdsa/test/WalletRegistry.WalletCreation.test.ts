@@ -3121,6 +3121,109 @@ describe("WalletRegistry - Wallet Creation", async () => {
     })
   })
 
+  describe("notifySeedTimeout", async () => {
+    context("with initial contract state", async () => {
+      it("should revert with 'DKG has not timed out' error", async () => {
+        await expect(walletRegistry.notifySeedTimeout()).to.be.revertedWith(
+          "seed awaiting has not timed out"
+        )
+      })
+    })
+
+    context("with new wallet requested", async () => {
+      let requestNewWalletStartBlock: number
+
+      before(async () => {
+        await createSnapshot()
+        const tx = await walletRegistry.connect(walletOwner).requestNewWallet()
+
+        requestNewWalletStartBlock = tx.blockNumber
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("with random relay entry not submitted", async () => {
+        context("with seed timeout period not passed", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await mineBlocksTo(
+              requestNewWalletStartBlock + params.dkgSeedTimeout - 1
+            )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should revert with 'seed awaiting has not timed out' error", async () => {
+            await expect(walletRegistry.notifySeedTimeout()).to.be.revertedWith(
+              "seed awaiting has not timed out"
+            )
+          })
+        })
+        context("with seed timeout period passed", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await mineBlocksTo(
+              requestNewWalletStartBlock + params.dkgSeedTimeout
+            )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          context("called by a third party", async () => {
+            let tx: ContractTransaction
+
+            before(async () => {
+              await createSnapshot()
+
+              tx = await walletRegistry.connect(thirdParty).notifySeedTimeout()
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should emit DkgSeedTimedOut event", async () => {
+              await expect(tx).to.emit(walletRegistry, "DkgSeedTimedOut")
+            })
+
+            it("should clean dkg data", async () => {
+              await assertDkgResultCleanData(walletRegistry)
+            })
+
+            it("should unlock the sortition pool", async () => {
+              await expect(await sortitionPool.isLocked()).to.be.false
+            })
+          })
+        })
+
+        context("with random relay entry submitted", async () => {
+          before(async () => {
+            await createSnapshot()
+            await submitRelayEntry(walletRegistry, randomBeacon)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should revert with 'seed awaiting has not timed out' error", async () => {
+            await expect(walletRegistry.notifySeedTimeout()).to.be.revertedWith(
+              "seed awaiting has not timed out"
+            )
+          })
+        })
+      })
+    })
+  })
+
   describe("notifyDkgTimeout", async () => {
     context("with initial contract state", async () => {
       it("should revert with 'DKG has not timed out' error", async () => {

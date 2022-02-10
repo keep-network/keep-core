@@ -137,6 +137,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
         dkg.init(_sortitionPool, _dkgValidator);
+        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time // TODO: Verify value
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
@@ -149,10 +150,12 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
 
     // TODO: Update to governable params
     function updateDkgParams(
+        uint256 newSeedTimeout,
         uint256 newResultChallengePeriodLength,
         uint256 newResultSubmissionTimeout,
         uint256 newSubmitterPrecedencePeriodLength
     ) external {
+        dkg.setSeedTimeout(newSeedTimeout);
         dkg.setResultChallengePeriodLength(newResultChallengePeriodLength);
         dkg.setResultSubmissionTimeout(newResultSubmissionTimeout);
         dkg.setSubmitterPrecedencePeriodLength(
@@ -233,10 +236,17 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         dkg.submitResult(dkgResult);
     }
 
+    /// @notice Notifies about seed for DKG delivery timeout. It is expected
+    ///         that a seed is delivered by the Random Beacon as a relay entry in a
+    ///         callback function.
+    function notifySeedTimeout() external {
+        dkg.notifySeedTimeout();
+        dkg.complete();
+    }
+
     /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external {
-        dkg.notifyTimeout();
-
+        dkg.notifyDkgTimeout();
         dkg.complete();
     }
 
@@ -324,6 +334,12 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     /// @notice Check current wallet creation state.
     function getWalletCreationState() external view returns (DKG.State) {
         return dkg.currentState();
+    }
+
+    /// @notice Checks if seed awaiting timed out.
+    /// @return True if seed awaiting timed out, false otherwise.
+    function hasSeedTimedOut() external view returns (bool) {
+        return dkg.hasSeedTimedOut();
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
