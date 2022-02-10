@@ -95,7 +95,10 @@ const config: HardhatUserConfig = {
     // },
   },
   dependencyCompiler: {
-    paths: ["@threshold-network/solidity-contracts/contracts/token/T.sol"],
+    paths: [
+      "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@keep-network/random-beacon/contracts/RandomBeacon.sol",
+    ],
     keep: true,
   },
   contractSizer: {
