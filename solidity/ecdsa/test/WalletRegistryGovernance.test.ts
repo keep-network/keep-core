@@ -794,4 +794,173 @@ describe("WalletRegistryGovernance", async () => {
       }
     )
   })
+
+  describe("beginDkgSubmitterPrecedencePeriodLengthUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is zero", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSubmitterPrecedencePeriodLengthUpdate(0)
+        ).to.be.revertedWith(
+          "DKG submitter precedence period length must be > 0"
+        )
+      })
+    })
+
+    context("when the update value is at least one", () => {
+      it("should accept the value", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgSubmitterPrecedencePeriodLengthUpdate(2)
+
+        // works, did not revert
+
+        await restoreSnapshot()
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the DKG submitter precedence period length", async () => {
+        expect(
+          (await walletRegistry.dkgParameters()).submitterPrecedencePeriodLength
+        ).to.be.equal(params.dkgSubmitterPrecedencePeriodLength)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingSubmitterPrecedencePeriodLengthUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the DkgSubmitterPrecedencePeriodLengthUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "DkgSubmitterPrecedencePeriodLengthUpdateStarted"
+          )
+          .withArgs(1, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgSubmitterPrecedencePeriodLengthUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSubmitterPrecedencePeriodLengthUpdate(10)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the DKG submitter precedence period length", async () => {
+          expect(
+            (await walletRegistry.dkgParameters())
+              .submitterPrecedencePeriodLength
+          ).to.be.equal(10)
+        })
+
+        it("should emit DkgSubmitterPrecedencePeriodLengthUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              walletRegistryGovernance,
+              "DkgSubmitterPrecedencePeriodLengthUpdated"
+            )
+            .withArgs(10)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingSubmitterPrecedencePeriodLengthUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
 })
