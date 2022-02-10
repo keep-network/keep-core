@@ -70,6 +70,8 @@ describe("DKGValidator", () => {
   let validator: DKGValidator
 
   before("load test fixture", async () => {
+    await createSnapshot()
+
     const contracts = await waffle.loadFixture(fixture)
 
     const { sortitionPool } = contracts
@@ -120,6 +122,10 @@ describe("DKGValidator", () => {
 
       return dkgResult
     }
+  })
+
+  after(async () => {
+    await restoreSnapshot()
   })
 
   describe("validate", () => {

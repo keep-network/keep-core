@@ -10,15 +10,21 @@ import type { WalletRegistry, WalletRegistryStub } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
-describe("WalletRegistry - Wallet Creation", async () => {
+describe("WalletRegistry - Wallets", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let walletOwner: SignerWithAddress
 
   before("load test fixture", async () => {
+    await createSnapshot()
+
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({ walletRegistry, walletOwner } = await waffle.loadFixture(
       walletRegistryFixture
     ))
+  })
+
+  after(async () => {
+    await restoreSnapshot()
   })
 
   describe("isWalletRegistered", async () => {

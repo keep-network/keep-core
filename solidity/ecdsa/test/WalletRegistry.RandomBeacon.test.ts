@@ -23,11 +23,12 @@ describe("WalletRegistry - Random Beacon", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let randomBeacon: MockContract
 
-  let deployer: SignerWithAddress
   let walletOwner: SignerWithAddress
   let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
+    await createSnapshot()
+
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({ walletRegistry, walletOwner, deployer, thirdParty } =
       await waffle.loadFixture(walletRegistryFixture))
@@ -41,7 +42,8 @@ describe("WalletRegistry - Random Beacon", async () => {
 
     await walletRegistry.updateRandomBeacon(randomBeaconMock.address)
 
-    randomBeacon = randomBeaconMock
+  after(async () => {
+    await restoreSnapshot()
   })
 
   describe("requestNewWallet", async () => {

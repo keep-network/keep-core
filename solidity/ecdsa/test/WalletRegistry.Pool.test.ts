@@ -9,7 +9,6 @@ import { expect } from "chai"
 
 import { constants } from "./fixtures"
 
-import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, SortitionPool, StakingStub } from "../typechain"
 
@@ -58,6 +57,8 @@ describe("WalletRegistry - Pool", () => {
   let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
+    await createSnapshot()
+
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({
       walletRegistry,
@@ -70,6 +71,10 @@ describe("WalletRegistry - Pool", () => {
 
     // FIXME: Remove this assignment once Token Staking integration is implemented.
     stakingProvider = operator
+  })
+
+  after(async () => {
+    await restoreSnapshot()
   })
 
   describe("registerOperator", () => {

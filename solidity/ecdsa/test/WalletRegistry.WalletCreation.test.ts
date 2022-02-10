@@ -61,6 +61,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let operators: Operator[]
 
   before("load test fixture", async () => {
+    await createSnapshot()
+
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({
       walletRegistry,
@@ -71,6 +73,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
       operators,
       staking,
     } = await waffle.loadFixture(walletRegistryFixture))
+  })
+
+  after(async () => {
+    await restoreSnapshot()
   })
 
   describe("requestNewWallet", async () => {
