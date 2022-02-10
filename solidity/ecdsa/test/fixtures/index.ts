@@ -61,10 +61,13 @@ export async function walletRegistryFixture(): Promise<{
 
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
+  const unnamedAccountsOffset = 1
   const operators = await registerOperators(
     walletRegistry,
     tToken,
-    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+    (
+      await getUnnamedAccounts()
+    ).slice(unnamedAccountsOffset, unnamedAccountsOffset + constants.groupSize)
   )
 
   await walletRegistry.updateDkgParams(
