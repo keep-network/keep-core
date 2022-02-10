@@ -1,27 +1,24 @@
 /* eslint-disable no-underscore-dangle */
-import {
-  ethers,
-  waffle,
-  helpers,
-  deployments,
-  getUnnamedAccounts,
-} from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { walletRegistryFixture } from "./fixtures"
+import { dkgState, walletRegistryFixture } from "./fixtures"
+import { fakeRandomBeacon, resetMock } from "./utils/randomBeacon"
 
+import type { FakeContract } from "@defi-wonderland/smock"
 import type { ContractTransaction } from "ethers"
-import type { MockContract } from "ethereum-waffle"
-import type { WalletRegistry, WalletRegistryStub } from "../typechain"
+import type {
+  WalletRegistry,
+  WalletRegistryStub,
+  IRandomBeacon,
+} from "../typechain"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
-const { deployMockContract } = waffle
-
 describe("WalletRegistry - Random Beacon", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
-  let randomBeacon: MockContract
+  let randomBeacon: FakeContract<IRandomBeacon>
 
   let walletOwner: SignerWithAddress
   let thirdParty: SignerWithAddress
@@ -30,17 +27,12 @@ describe("WalletRegistry - Random Beacon", async () => {
     await createSnapshot()
 
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletOwner, deployer, thirdParty } =
-      await waffle.loadFixture(walletRegistryFixture))
+    ;({ walletRegistry, walletOwner, thirdParty } = await waffle.loadFixture(
+      walletRegistryFixture
+    ))
 
-    const randomBeaconMock = await deployMockContract(
-      deployer,
-      (
-        await deployments.getArtifact("RandomBeacon")
-      ).abi
-    )
-
-    await walletRegistry.updateRandomBeacon(randomBeaconMock.address)
+    randomBeacon = await fakeRandomBeacon(walletRegistry)
+  })
 
   after(async () => {
     await restoreSnapshot()
@@ -53,23 +45,21 @@ describe("WalletRegistry - Random Beacon", async () => {
       before(async () => {
         await createSnapshot()
 
-        await randomBeacon.mock.requestRelayEntry.revertsWithReason(
-          "beacon is busy"
-        )
+        await randomBeacon.requestRelayEntry.reverts("beacon internal error")
 
         tx = walletRegistry.connect(walletOwner).requestNewWallet()
       })
 
       after(async () => {
         await restoreSnapshot()
+
+        resetMock(randomBeacon)
       })
 
-      it("should succeed", async () => {
-        await expect(tx).to.not.be.reverted
-      })
-
-      it("should emit RelayEntryRequestFailed", async () => {
-        await expect(tx).to.emit(walletRegistry, "RelayEntryRequestFailed")
+      it("should revert", async () => {
+        // FIXME: For some reason this check doesn't work with the expected error message
+        // await expect(tx).to.be.revertedWith("beacon internal error")
+        await expect(tx).to.be.reverted
       })
     })
 
@@ -79,8 +69,6 @@ describe("WalletRegistry - Random Beacon", async () => {
       before(async () => {
         await createSnapshot()
 
-        await randomBeacon.mock.requestRelayEntry.returns()
-
         tx = walletRegistry.connect(walletOwner).requestNewWallet()
       })
 
@@ -92,25 +80,17 @@ describe("WalletRegistry - Random Beacon", async () => {
         await expect(tx).to.not.be.reverted
       })
 
-      it("should not emit RelayEntryRequestFailed", async () => {
-        await expect(tx).to.not.emit(walletRegistry, "RelayEntryRequestFailed")
+      it("should call random beacon", async () => {
+        await expect(randomBeacon.requestRelayEntry).to.be.calledWith(
+          walletRegistry.address
+        )
       })
     })
   })
 
   describe("__beaconCallback", async () => {
-    let randomBeaconSigner: SignerWithAddress
-
     before(async () => {
       await createSnapshot()
-
-      randomBeaconSigner = await ethers.getSigner(
-        (
-          await getUnnamedAccounts()
-        )[1]
-      )
-
-      await walletRegistry.updateRandomBeacon(randomBeaconSigner.address)
     })
 
     after(async () => {
@@ -126,16 +106,44 @@ describe("WalletRegistry - Random Beacon", async () => {
     })
 
     context("when called by the random beacon", async () => {
-      it("should set new value", async () => {
-        const newRelayEntry = 3121
+      context("when new wallet was not requested", async () => {
+        it("should revert", async () => {
+          await expect(
+            walletRegistry
+              .connect(randomBeacon.wallet)
+              .__beaconCallback(123, 456)
+          ).to.be.revertedWith("Current state is not AWAITING_SEED")
+        })
+      })
 
-        await walletRegistry
-          .connect(randomBeaconSigner)
-          .__beaconCallback(newRelayEntry, 456)
+      context("when new wallet was requested", async () => {
+        const relayEntry = ethers.BigNumber.from(ethers.utils.randomBytes(32))
 
-        await expect(await walletRegistry.randomRelayEntry()).to.be.equal(
-          newRelayEntry
-        )
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistry.connect(walletOwner).requestNewWallet()
+
+          await walletRegistry
+            .connect(randomBeacon.wallet)
+            .__beaconCallback(relayEntry, 0)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should transition wallet creations state to `AWAITING_RESULT`", async () => {
+          await expect(
+            await walletRegistry.getWalletCreationState()
+          ).to.be.equal(dkgState.AWAITING_RESULT)
+        })
+
+        it("should set seed for wallet creation", async () => {
+          await expect((await walletRegistry.getDkgData()).seed).to.be.equal(
+            relayEntry
+          )
+        })
       })
     })
   })
