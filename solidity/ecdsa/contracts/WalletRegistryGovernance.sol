@@ -133,7 +133,10 @@ contract WalletRegistryGovernance is Ownable {
         external
         onlyOwner
     {
-        require(_newWalletOwner != address(0), "New wallet owner address cannot be zero");
+        require(
+            _newWalletOwner != address(0),
+            "New wallet owner address cannot be zero"
+        );
         /* solhint-disable not-rely-on-time */
         newWalletOwner = _newWalletOwner;
         walletOwnerChangeInitiated = block.timestamp;
