@@ -21,10 +21,14 @@ export async function selectGroup(
 
   const addresses = await sortitionPool.getIDOperators(identifiers)
 
-  return identifiers.map((identifier, i) => ({
-    id: identifier,
-    address: addresses[i],
-  }))
+  return Promise.all(
+    identifiers.map(
+      async (identifier, i): Promise<Operator> => ({
+        id: identifier,
+        signer: await ethers.getSigner(addresses[i]),
+      })
+    )
+  )
 }
 
 export function hashUint32Array(arrayToHash: BigNumberish[]): string {

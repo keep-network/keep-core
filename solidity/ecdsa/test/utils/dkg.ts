@@ -113,7 +113,7 @@ export async function signAndSubmitArbitraryDkgResult(
     )
   )
 
-  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+  const submitter = signers[submitterIndex - 1].signer
 
   return {
     dkgResult,
@@ -163,7 +163,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
     )
   )
 
-  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+  const submitter = signers[submitterIndex - 1].signer
 
   return {
     dkgResult,
@@ -194,7 +194,7 @@ export async function signDkgResult(
   const signingMembersIndices: number[] = []
   const signatures: string[] = []
   for (let i = 0; i < signers.length; i++) {
-    const { id, address } = signers[i]
+    const { id, signer: ethersSigner } = signers[i]
     members.push(id)
 
     if (signatures.length === numberOfSignatures) {
@@ -206,7 +206,6 @@ export async function signDkgResult(
 
     signingMembersIndices.push(signerIndex)
 
-    const ethersSigner = await ethers.getSigner(address)
     const signature = await ethersSigner.signMessage(
       ethers.utils.arrayify(resultHash)
     )
@@ -266,7 +265,7 @@ export function hashDKGMembers(
   )
 }
 
-interface DkgResultSubmittedEventArgs {
+export interface DkgResultSubmittedEventArgs {
   resultHash: string
   seed: BigNumber
   result: ResultStruct

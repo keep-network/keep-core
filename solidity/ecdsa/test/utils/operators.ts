@@ -11,7 +11,10 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, T } from "../../typechain"
 
 export type OperatorID = number
-export type Operator = { id: OperatorID; address: Address }
+export type Operator = {
+  id: OperatorID
+  signer: SignerWithAddress
+}
 
 export async function registerOperators(
   walletRegistry: WalletRegistry,
@@ -65,7 +68,7 @@ export async function registerOperators(
 
     const id = await sortitionPool.getOperatorID(operator.address)
 
-    operators.push({ id, address: operator.address })
+    operators.push({ id, signer: operator })
   }
 
   return operators

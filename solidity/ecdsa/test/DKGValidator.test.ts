@@ -727,8 +727,7 @@ describe("DKGValidator", () => {
         )
         const signatures = []
         for (let i = 0; i < signingOperators.length; i++) {
-          const { address } = signingOperators[i]
-          const ethersSigner = await ethers.getSigner(address)
+          const { signer: ethersSigner } = signingOperators[i]
           const signature = await ethersSigner.signMessage(
             ethers.utils.arrayify(wrongResultHash)
           )
