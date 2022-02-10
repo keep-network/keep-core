@@ -76,8 +76,6 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     IRandomBeacon public randomBeacon;
 
     // Events
-    event RelayEntryRequestFailed();
-
     event DkgStarted(uint256 indexed seed);
 
     event DkgResultSubmitted(
