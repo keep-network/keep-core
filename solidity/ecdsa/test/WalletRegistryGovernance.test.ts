@@ -56,6 +56,16 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
+      it("should not update when a new owner is zero address", async () => {
+        it("should revert", async () => {
+          await expect(
+            walletRegistryGovernance
+              .connect(governance)
+              .beginWalletOwnerUpdate(ethers.constants.AddressZero)
+          ).to.be.revertedWith("New wallet owner address cannot be zero")
+        })
+      })
+
       it("should not update the wallet owner", async () => {
         expect(await walletRegistry.walletOwner()).to.be.equal(
           walletOwner.address

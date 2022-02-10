@@ -216,6 +216,8 @@ contract WalletRegistry is Ownable {
     ///      validating parameters.
     /// @param _walletOwner New wallet owner address.
     function updateWalletParameters(address _walletOwner) external onlyOwner {
+        require(_walletOwner != address(0), "Wallet owner address cannot be zero");
+        
         walletOwner = _walletOwner;
         emit WalletOwnerUpdated(walletOwner);
     }

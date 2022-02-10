@@ -60,6 +60,7 @@ contract WalletRegistryGovernance is Ownable {
     // - malicious DKG result slashing amount
     // - DKG result challenge period length
     // - DKG result submission eligibility delay
+    // - DKG submitter precedence period length
     uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
@@ -132,6 +133,7 @@ contract WalletRegistryGovernance is Ownable {
         external
         onlyOwner
     {
+        require(_newWalletOwner != address(0), "New wallet owner address cannot be zero");
         /* solhint-disable not-rely-on-time */
         newWalletOwner = _newWalletOwner;
         walletOwnerChangeInitiated = block.timestamp;
