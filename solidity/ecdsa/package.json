@@ -23,6 +23,7 @@
     "prepack": "tsc -p tsconfig.json && hardhat export-artifacts export/artifacts"
   },
   "devDependencies": {
+    "@defi-wonderland/smock": "^2.0.7",
     "@keep-network/hardhat-helpers": "^0.4.1-pre.2",
     "@keep-network/hardhat-local-networks-config": "^0.1.0-pre.4",
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",

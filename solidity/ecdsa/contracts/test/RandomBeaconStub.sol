@@ -8,18 +8,10 @@ import {IRandomBeaconConsumer} from "@keep-network/random-beacon/contracts/libra
 // TODO: get rid of this contract; use RandomBeacon implementation instead.
 contract RandomBeaconStub is IRandomBeacon {
     IRandomBeaconConsumer public callbackContract;
-    uint256 public callbackGasLimit = 50000;
 
     function requestRelayEntry(IRandomBeaconConsumer _callbackContract)
         external
     {
         callbackContract = _callbackContract;
-    }
-
-    function submitRelayEntry(bytes calldata entry) external {
-        callbackContract.__beaconCallback(
-            uint256(keccak256(entry)),
-            block.number
-        );
     }
 }

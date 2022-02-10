@@ -22,6 +22,13 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["storageLayout"],
+        },
+      },
+    },
   },
   paths: {
     artifacts: "./build",
