@@ -157,7 +157,7 @@ contract WalletRegistryGovernance is Ownable {
     {
         emit WalletOwnerUpdated(newWalletOwner);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateWalletParameters(newWalletOwner);
+        walletRegistry.updateWalletOwner(newWalletOwner);
         walletOwnerChangeInitiated = 0;
         newWalletOwner = address(0);
     }
