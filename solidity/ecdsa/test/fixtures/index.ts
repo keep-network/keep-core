@@ -38,17 +38,7 @@ export const params = {
   dkgSubmitterPrecedencePeriodLength: 5,
 }
 
-export async function walletRegistryFixture(): Promise<{
-  walletRegistry: WalletRegistryStub & WalletRegistry
-  walletRegistryGovernance: WalletRegistryGovernance
-  sortitionPool: SortitionPool
-  walletOwner: SignerWithAddress
-  deployer: SignerWithAddress
-  governance: SignerWithAddress
-  thirdParty: SignerWithAddress
-  operators: Operator[]
-  staking: StakingStub
-}> {
+export const walletRegistryFixture = deployments.createFixture(async () => {
   await deployments.fixture(["WalletRegistry"])
 
   const walletRegistry: WalletRegistryStub & WalletRegistry =
@@ -67,18 +57,24 @@ export async function walletRegistryFixture(): Promise<{
     "walletOwner"
   )
 
-  const thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
+  const thirdParty: SignerWithAddress = await ethers.getSigner(
+    (
+      await getUnnamedAccounts()
+    )[0]
+  )
 
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
   const unnamedAccountsOffset = 1
-  const operators = await registerOperators(
+  const operators: Operator[] = await registerOperators(
     walletRegistry,
     tToken,
     (
       await getUnnamedAccounts()
     ).slice(unnamedAccountsOffset, unnamedAccountsOffset + constants.groupSize)
   )
+
+  // Set parameters with tweaked values to reduce test execution time.
 
   await walletRegistryGovernance
     .connect(governance)
@@ -129,4 +125,4 @@ export async function walletRegistryFixture(): Promise<{
     staking,
     walletRegistryGovernance,
   }
-}
+})

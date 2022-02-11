@@ -1,4 +1,4 @@
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { constants, dkgState, params, walletRegistryFixture } from "./fixtures"
@@ -64,8 +64,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let operators: Operator[]
 
   before("load test fixture", async () => {
-    await createSnapshot()
-
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({
       walletRegistry,
@@ -75,13 +73,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
       thirdParty,
       operators,
       staking,
-    } = await waffle.loadFixture(walletRegistryFixture))
+    } = await walletRegistryFixture())
 
     randomBeacon = await fakeRandomBeacon(walletRegistry)
-  })
-
-  after(async () => {
-    await restoreSnapshot()
   })
 
   describe("requestNewWallet", async () => {

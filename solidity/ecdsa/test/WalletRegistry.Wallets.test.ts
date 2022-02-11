@@ -15,16 +15,8 @@ describe("WalletRegistry - Wallets", async () => {
   let walletOwner: SignerWithAddress
 
   before("load test fixture", async () => {
-    await createSnapshot()
-
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletOwner } = await waffle.loadFixture(
-      walletRegistryFixture
-    ))
-  })
-
-  after(async () => {
-    await restoreSnapshot()
+    ;({ walletRegistry, walletOwner } = await walletRegistryFixture())
   })
 
   describe("isWalletRegistered", async () => {

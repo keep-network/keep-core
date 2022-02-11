@@ -1,12 +1,9 @@
-import { waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { walletRegistryFixture } from "./fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, WalletRegistryStub } from "../typechain"
-
-const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("WalletRegistry - Parameters", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
@@ -16,15 +13,9 @@ describe("WalletRegistry - Parameters", async () => {
   let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
-    await createSnapshot()
-
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
     ;({ walletRegistry, walletOwner, deployer, thirdParty } =
-      await waffle.loadFixture(walletRegistryFixture))
-  })
-
-  after(async () => {
-    await restoreSnapshot()
+      await walletRegistryFixture())
   })
 
   describe("updateDkgParameters", async () => {

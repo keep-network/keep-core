@@ -28,7 +28,7 @@ describe("WalletRegistryGovernance", async () => {
       governance,
       thirdParty,
       walletOwner,
-    } = await waffle.loadFixture(walletRegistryFixture))
+    } = await walletRegistryFixture())
 
     randomBeaconAddress = await walletRegistry.callStatic.randomBeacon()
   })

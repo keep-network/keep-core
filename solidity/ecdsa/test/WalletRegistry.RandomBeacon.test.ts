@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { dkgState, walletRegistryFixture } from "./fixtures"
@@ -24,18 +24,11 @@ describe("WalletRegistry - Random Beacon", async () => {
   let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
-    await createSnapshot()
-
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletOwner, thirdParty } = await waffle.loadFixture(
-      walletRegistryFixture
-    ))
+    ;({ walletRegistry, walletOwner, thirdParty } =
+      await walletRegistryFixture())
 
     randomBeacon = await fakeRandomBeacon(walletRegistry)
-  })
-
-  after(async () => {
-    await restoreSnapshot()
   })
 
   describe("requestNewWallet", async () => {
