@@ -80,8 +80,9 @@ export async function walletRegistryFixture(): Promise<{
     ).slice(unnamedAccountsOffset, unnamedAccountsOffset + constants.groupSize)
   )
 
-  // TODO: Update params.dkgSeedTimeout through governance
-
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgSeedTimeoutUpdate(params.dkgSeedTimeout)
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgResultChallengePeriodLengthUpdate(
@@ -98,6 +99,9 @@ export async function walletRegistryFixture(): Promise<{
 
   await helpers.time.increaseTime(params.governanceDelay)
 
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgSeedTimeoutUpdate()
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgResultChallengePeriodLengthUpdate()

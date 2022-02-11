@@ -32,6 +32,9 @@ contract WalletRegistryGovernance is Ownable {
     uint256
         public maliciousDkgResultNotificationRewardMultiplierChangeInitiated;
 
+    uint256 public newDkgSeedTimeout;
+    uint256 public dkgSeedTimeoutChangeInitiated;
+
     uint256 public newDkgResultChallengePeriodLength;
     uint256 public dkgResultChallengePeriodLengthChangeInitiated;
 
@@ -58,6 +61,7 @@ contract WalletRegistryGovernance is Ownable {
     // The full list of parameters protected by this delay:
     // - malicious DKG result notification reward multiplier
     // - malicious DKG result slashing amount
+    // - DKG seed timeout
     // - DKG result challenge period length
     // - DKG result submission eligibility delay
     // - DKG submitter precedence period length
@@ -81,6 +85,12 @@ contract WalletRegistryGovernance is Ownable {
     event MaliciousDkgResultNotificationRewardMultiplierUpdated(
         uint256 maliciousDkgResultNotificationRewardMultiplier
     );
+
+    event DkgSeedTimeoutUpdateStarted(
+        uint256 dkgSeedTimeout,
+        uint256 timestamp
+    );
+    event DkgSeedTimeoutUpdated(uint256 dkgSeedTimeout);
 
     event DkgResultChallengePeriodLengthUpdateStarted(
         uint256 dkgResultChallengePeriodLength,
@@ -249,6 +259,44 @@ contract WalletRegistryGovernance is Ownable {
         newMaliciousDkgResultNotificationRewardMultiplier = 0;
     }
 
+    /// @notice Begins the DKG seed timeout update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgSeedTimeout New DKG seed timeout in blocks
+    function beginDkgSeedTimeoutUpdate(uint256 _newDkgSeedTimeout)
+        external
+        onlyOwner
+    {
+        /* solhint-disable not-rely-on-time */
+        require(_newDkgSeedTimeout > 0, "DKG seed timeout must be > 0");
+        newDkgSeedTimeout = _newDkgSeedTimeout;
+        dkgSeedTimeoutChangeInitiated = block.timestamp;
+        emit DkgSeedTimeoutUpdateStarted(_newDkgSeedTimeout, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG seed timeout update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgSeedTimeoutUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgSeedTimeoutChangeInitiated,
+            STANDARD_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit DkgSeedTimeoutUpdated(newDkgSeedTimeout);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgParameters(
+            newDkgSeedTimeout,
+            walletRegistry.dkgParameters().resultChallengePeriodLength,
+            walletRegistry.dkgParameters().resultSubmissionTimeout,
+            walletRegistry.dkgParameters().submitterPrecedencePeriodLength
+        );
+        dkgSeedTimeoutChangeInitiated = 0;
+        newDkgSeedTimeout = 0;
+    }
+
     /// @notice Begins the DKG result challenge period length update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newDkgResultChallengePeriodLength New DKG result challenge
@@ -286,6 +334,7 @@ contract WalletRegistryGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
+            walletRegistry.dkgParameters().seedTimeout,
             newDkgResultChallengePeriodLength,
             walletRegistry.dkgParameters().resultSubmissionTimeout,
             walletRegistry.dkgParameters().submitterPrecedencePeriodLength
@@ -331,6 +380,7 @@ contract WalletRegistryGovernance is Ownable {
         emit DkgResultSubmissionTimeoutUpdated(newDkgResultSubmissionTimeout);
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
+            walletRegistry.dkgParameters().seedTimeout,
             walletRegistry.dkgParameters().resultChallengePeriodLength,
             newDkgResultSubmissionTimeout,
             walletRegistry.dkgParameters().submitterPrecedencePeriodLength
@@ -376,6 +426,7 @@ contract WalletRegistryGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateDkgParameters(
+            walletRegistry.dkgParameters().seedTimeout,
             walletRegistry.dkgParameters().resultChallengePeriodLength,
             walletRegistry.dkgParameters().resultSubmissionTimeout,
             newSubmitterPrecedencePeriodLength
@@ -410,6 +461,20 @@ contract WalletRegistryGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultNotificationRewardMultiplierChangeInitiated,
+                STANDARD_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG seed timeout can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgSeedTimeoutUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                dkgSeedTimeoutChangeInitiated,
                 STANDARD_PARAMETER_GOVERNANCE_DELAY
             );
     }

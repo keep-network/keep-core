@@ -125,9 +125,10 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     event SlashingParametersUpdated(uint256 maliciousDkgResultSlashingAmount);
 
     event DkgParametersUpdated(
-        uint256 dkgResultChallengePeriodLength,
-        uint256 dkgResultSubmissionTimeout,
-        uint256 dkgResultSubmitterPrecedencePeriodLength
+        uint256 seedTimeout,
+        uint256 resultChallengePeriodLength,
+        uint256 resultSubmissionTimeout,
+        uint256 resultSubmitterPrecedencePeriodLength
     );
 
     event WalletOwnerUpdated(address walletOwner);
@@ -186,6 +187,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         );
 
         emit DkgParametersUpdated(
+            _seedTimeout,
             _resultChallengePeriodLength,
             _resultSubmissionTimeout,
             _submitterPrecedencePeriodLength
