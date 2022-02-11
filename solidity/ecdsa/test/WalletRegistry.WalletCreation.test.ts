@@ -2920,6 +2920,82 @@ describe("WalletRegistry - Wallet Creation", async () => {
       })
     })
   })
+
+  describe("updateDkgParameters", async () => {
+    context("when called by the deployer", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(deployer).updateDkgParameters(1, 2, 3)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by a third party", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(thirdParty).updateDkgParameters(1, 2, 3)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+  })
+
+  describe("updateRewardParameters", async () => {
+    context("when called by the deployer", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(deployer).updateRewardParameters(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by a third party", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(thirdParty).updateRewardParameters(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+  })
+
+  describe("updateSlashingParameters", async () => {
+    context("when called by the deployer", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(deployer).updateSlashingParameters(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by a third party", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(thirdParty).updateSlashingParameters(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+  })
+
+  describe("updateWalletParameters", async () => {
+    context("when called by the deployer", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(deployer)
+            .updateWalletParameters(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by a third party", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(thirdParty)
+            .updateWalletParameters(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+  })
 })
 
 async function assertDkgResultCleanData(walletRegistry: WalletRegistryStub) {
@@ -2932,7 +3008,7 @@ async function assertDkgResultCleanData(walletRegistry: WalletRegistryStub) {
 
   expect(
     dkgData.parameters.resultSubmissionTimeout,
-    "unexpected resultSubmissionEligibilityDelay"
+    "unexpected resultSubmissionTimeout"
   ).to.eq(params.dkgResultSubmissionTimeout)
 
   expect(

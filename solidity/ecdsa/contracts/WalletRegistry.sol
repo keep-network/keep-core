@@ -118,6 +118,20 @@ contract WalletRegistry is Ownable {
         address maliciousSubmitter
     );
 
+    event RewardParametersUpdated(
+        uint256 maliciousDkgResultNotificationRewardMultiplier
+    );
+
+    event SlashingParametersUpdated(uint256 maliciousDkgResultSlashingAmount);
+
+    event DkgParametersUpdated(
+        uint256 dkgResultChallengePeriodLength,
+        uint256 dkgResultSubmissionTimeout,
+        uint256 dkgResultSubmitterPrecedencePeriodLength
+    );
+
+    event WalletOwnerUpdated(address walletOwner);
+
     constructor(
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
@@ -140,17 +154,75 @@ contract WalletRegistry is Ownable {
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
     }
 
-    // TODO: Update to governable params
-    function updateDkgParams(
-        uint256 newResultChallengePeriodLength,
-        uint256 newResultSubmissionTimeout,
-        uint256 newSubmitterPrecedencePeriodLength
-    ) external {
-        dkg.setResultChallengePeriodLength(newResultChallengePeriodLength);
-        dkg.setResultSubmissionTimeout(newResultSubmissionTimeout);
+    /// @notice Updates the values of DKG parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _resultChallengePeriodLength New DKG result challenge period
+    ///        length
+    /// @param _resultSubmissionTimeout New DKG result submission timeout
+    /// @param _submitterPrecedencePeriodLength New submitter precedence period
+    ///        length
+    function updateDkgParameters(
+        uint256 _resultChallengePeriodLength,
+        uint256 _resultSubmissionTimeout,
+        uint256 _submitterPrecedencePeriodLength
+    ) external onlyOwner {
+        dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
+        dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
         dkg.setSubmitterPrecedencePeriodLength(
-            newSubmitterPrecedencePeriodLength
+            _submitterPrecedencePeriodLength
         );
+
+        emit DkgParametersUpdated(
+            _resultChallengePeriodLength,
+            _resultSubmissionTimeout,
+            _submitterPrecedencePeriodLength
+        );
+    }
+
+    /// @notice Updates the values of reward parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _maliciousDkgResultNotificationRewardMultiplier New value of the
+    ///        DKG malicious result notification reward multiplier.
+    function updateRewardParameters(
+        uint256 _maliciousDkgResultNotificationRewardMultiplier
+    ) external onlyOwner {
+        maliciousDkgResultNotificationRewardMultiplier = _maliciousDkgResultNotificationRewardMultiplier;
+        emit RewardParametersUpdated(
+            maliciousDkgResultNotificationRewardMultiplier
+        );
+    }
+
+    /// @notice Updates the values of slashing parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
+    ///        slashing amount
+    function updateSlashingParameters(uint96 _maliciousDkgResultSlashingAmount)
+        external
+        onlyOwner
+    {
+        maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
+        emit SlashingParametersUpdated(maliciousDkgResultSlashingAmount);
+    }
+
+    /// @notice Updates the values of the wallet parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _walletOwner New wallet owner address.
+    function updateWalletParameters(address _walletOwner) external onlyOwner {
+        require(
+            _walletOwner != address(0),
+            "Wallet owner address cannot be zero"
+        );
+
+        walletOwner = _walletOwner;
+        emit WalletOwnerUpdated(walletOwner);
     }
 
     /// @notice Registers the caller in the sortition pool.
@@ -227,7 +299,7 @@ contract WalletRegistry is Ownable {
     ///         as valid, pays reward to the approver, bans misbehaved group
     ///         members from the sortition pool rewards, and completes the group
     ///         creation by activating the candidate group. For the first
-    ///         `resultSubmissionEligibilityDelay` blocks after the end of the
+    ///         `resultSubmissionTimeout` blocks after the end of the
     ///         challenge period can be called only by the DKG result submitter.
     ///         After that time, can be called by anyone.
     ///         A new wallet based on the DKG result details.
@@ -334,5 +406,10 @@ contract WalletRegistry is Ownable {
         returns (bool)
     {
         return wallets.isWalletRegistered(publicKeyHash);
+    }
+
+    /// @notice Retrieves dkg parameters that were set in DKG library.
+    function dkgParameters() external view returns (DKG.Parameters memory) {
+        return dkg.parameters;
     }
 }

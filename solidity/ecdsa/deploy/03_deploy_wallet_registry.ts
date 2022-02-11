@@ -10,6 +10,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const DKGValidator = await deployments.get("DKGValidator")
 
   const DKG = await deployments.deploy("DKG", {
+    contract: "contracts/libraries/DKG.sol:DKG",
     from: deployer,
     log: true,
   })
