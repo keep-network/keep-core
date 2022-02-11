@@ -21,6 +21,7 @@ export const constants = {
   groupThreshold: 51,
   minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
+  governanceDelay: 43200, // 12 hours
 }
 
 export const dkgState = {
@@ -33,7 +34,6 @@ export const dkgState = {
 export const params = {
   dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
-  governanceDelay: 43200, // 12 hours
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
 }
@@ -83,25 +83,29 @@ export async function walletRegistryFixture(): Promise<{
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgSeedTimeoutUpdate(params.dkgSeedTimeout)
+
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgResultChallengePeriodLengthUpdate(
       params.dkgResultChallengePeriodLength
     )
+
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgResultSubmissionTimeoutUpdate(params.dkgResultSubmissionTimeout)
+
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgSubmitterPrecedencePeriodLengthUpdate(
       params.dkgSubmitterPrecedencePeriodLength
     )
 
-  await helpers.time.increaseTime(params.governanceDelay)
+  await helpers.time.increaseTime(constants.governanceDelay)
 
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgSeedTimeoutUpdate()
+
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgResultChallengePeriodLengthUpdate()
