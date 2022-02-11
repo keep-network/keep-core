@@ -26,6 +26,5 @@ export default func
 
 func.tags = [
   "WalletRegistryTransferOwnership",
-  "WalletRegistryGovernanceTransferOwnership",
 ]
 func.dependencies = ["WalletRegistryGovernance"]
