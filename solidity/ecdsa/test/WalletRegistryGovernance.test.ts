@@ -13,6 +13,7 @@ describe("WalletRegistryGovernance", async () => {
   let governance: SignerWithAddress
   let walletRegistry: WalletRegistry
   let walletRegistryGovernance: WalletRegistryGovernance
+  let randomBeaconAddress: string
   let thirdParty: SignerWithAddress
   let walletOwner: SignerWithAddress
 
@@ -28,6 +29,8 @@ describe("WalletRegistryGovernance", async () => {
       thirdParty,
       walletOwner,
     } = await waffle.loadFixture(walletRegistryFixture))
+
+    randomBeaconAddress = await walletRegistry.callStatic.randomBeacon()
   })
 
   describe("beginWalletOwnerUpdate", () => {
@@ -167,6 +170,149 @@ describe("WalletRegistryGovernance", async () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             walletRegistryGovernance.getRemainingWalletOwnerUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginRandomBeaconUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginRandomBeaconUpdate(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginRandomBeaconUpdate(thirdParty.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update when a new random beacon address is zero", async () => {
+        it("should revert", async () => {
+          await expect(
+            walletRegistryGovernance
+              .connect(governance)
+              .beginRandomBeaconUpdate(ethers.constants.AddressZero)
+          ).to.be.revertedWith("New random beacon address cannot be zero")
+        })
+      })
+
+      it("should not update the random beacon", async () => {
+        expect(await walletRegistry.randomBeacon()).to.be.equal(
+          randomBeaconAddress
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingRandomBeaconUpdateTime()
+        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+      })
+
+      it("should emit the RandomBeaconUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(walletRegistryGovernance, "RandomBeaconUpdateStarted")
+          .withArgs(thirdParty.address, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeRandomBeaconUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeRandomBeaconUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeRandomBeaconUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginRandomBeaconUpdate(thirdParty.address)
+
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeRandomBeaconUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginRandomBeaconUpdate(thirdParty.address)
+
+          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeRandomBeaconUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the random beacon", async () => {
+          expect(await walletRegistry.randomBeacon()).to.be.equal(
+            thirdParty.address
+          )
+        })
+
+        it("should emit RandomBeaconUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "RandomBeaconUpdated")
+            .withArgs(thirdParty.address)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingRandomBeaconUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

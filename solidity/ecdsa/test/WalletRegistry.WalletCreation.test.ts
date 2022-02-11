@@ -3551,6 +3551,38 @@ describe("WalletRegistry - Wallet Creation", async () => {
       })
     })
   })
+
+  describe("updateRandomBeacon", async () => {
+    context("when called by the deployer", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(deployer)
+            .updateRandomBeacon(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by the wallet owner", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(walletOwner)
+            .updateRandomBeacon(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by a third party", async () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(thirdParty)
+            .updateRandomBeacon(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+  })
 })
 
 async function assertDkgResultCleanData(walletRegistry: WalletRegistryStub) {

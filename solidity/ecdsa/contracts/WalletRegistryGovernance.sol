@@ -25,6 +25,9 @@ contract WalletRegistryGovernance is Ownable {
     address public newWalletOwner;
     uint256 public walletOwnerChangeInitiated;
 
+    address public newRandomBeacon;
+    uint256 public randomBeaconChangeInitiated;
+
     uint96 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
@@ -69,6 +72,9 @@ contract WalletRegistryGovernance is Ownable {
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
     event WalletOwnerUpdated(address walletOwner);
+
+    event RandomBeaconUpdateStarted(address randomBeacon, uint256 timestamp);
+    event RandomBeaconUpdated(address randomBeacon);
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
         uint256 maliciousDkgResultSlashingAmount,
@@ -170,6 +176,42 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateWalletParameters(newWalletOwner);
         walletOwnerChangeInitiated = 0;
         newWalletOwner = address(0);
+    }
+
+    /// @notice Begins the random beacon update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newRandomBeacon New random beacon address
+    function beginRandomBeaconUpdate(address _newRandomBeacon)
+        external
+        onlyOwner
+    {
+        require(
+            _newRandomBeacon != address(0),
+            "New random beacon address cannot be zero"
+        );
+        /* solhint-disable not-rely-on-time */
+        newRandomBeacon = _newRandomBeacon;
+        randomBeaconChangeInitiated = block.timestamp;
+        emit RandomBeaconUpdateStarted(_newRandomBeacon, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the random beacon update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRandomBeaconUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            randomBeaconChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit RandomBeaconUpdated(newRandomBeacon);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateRandomBeacon(newRandomBeacon);
+        randomBeaconChangeInitiated = 0;
+        newRandomBeacon = address(0);
     }
 
     /// @notice Begins the malicious DKG result slashing amount update process.
@@ -519,6 +561,20 @@ contract WalletRegistryGovernance is Ownable {
         return
             getRemainingChangeTime(
                 walletOwnerChangeInitiated,
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the random beacon can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingRandomBeaconUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                randomBeaconChangeInitiated,
                 CRITICAL_PARAMETER_GOVERNANCE_DELAY
             );
     }

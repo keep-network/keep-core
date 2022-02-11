@@ -131,6 +131,8 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         uint256 resultSubmitterPrecedencePeriodLength
     );
 
+    event RandomBeaconUpdated(address randomBeacon);
+
     event WalletOwnerUpdated(address walletOwner);
 
     constructor(
@@ -158,9 +160,19 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
     }
 
-    // TODO: Update to governable params
-    function updateRandomBeacon(IRandomBeacon _newRandomBeacon) external {
-        randomBeacon = _newRandomBeacon;
+    /// @notice Updates address of the Random Beacon.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _randomBeacon Random Beacon address.
+    function updateRandomBeacon(address _randomBeacon) external onlyOwner {
+        require(
+            _randomBeacon != address(0),
+            "Random Beacon address cannot be zero"
+        );
+
+        randomBeacon = IRandomBeacon(_randomBeacon);
+        emit RandomBeaconUpdated(_randomBeacon);
     }
 
     /// @notice Updates the values of DKG parameters.
