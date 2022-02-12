@@ -486,14 +486,17 @@ describe("WalletRegistryGovernance", async () => {
       it("should accept the value", async () => {
         await createSnapshot()
 
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(10)
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(11)
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultChallengePeriodLengthUpdate(10)
+        ).to.not.be.reverted
 
-        // works, did not revert
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultChallengePeriodLengthUpdate(11)
+        ).to.not.be.reverted
 
         await restoreSnapshot()
       })
@@ -654,14 +657,16 @@ describe("WalletRegistryGovernance", async () => {
       it("should accept the value", async () => {
         await createSnapshot()
 
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultSubmissionTimeoutUpdate(1)
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultSubmissionTimeoutUpdate(2)
-
-        // works, did not revert
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionTimeoutUpdate(1)
+        ).to.not.be.reverted
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionTimeoutUpdate(2)
+        ).to.not.be.reverted
 
         await restoreSnapshot()
       })
@@ -822,14 +827,16 @@ describe("WalletRegistryGovernance", async () => {
       it("should accept the value", async () => {
         await createSnapshot()
 
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgSubmitterPrecedencePeriodLengthUpdate(2)
-
-        // works, did not revert
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
+        ).to.not.be.reverted
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSubmitterPrecedencePeriodLengthUpdate(2)
+        ).to.not.be.reverted
 
         await restoreSnapshot()
       })
