@@ -19,7 +19,7 @@ export async function fakeRandomBeacon(
     await ethers.getSigners()
   )[0].sendTransaction({
     to: randomBeacon.address,
-    value: ethers.utils.parseEther("10"),
+    value: ethers.utils.parseEther("1"),
   })
 
   return randomBeacon
@@ -41,14 +41,14 @@ export async function submitRelayEntry(
     randomBeacon = await fakeRandomBeacon(walletRegistry)
   }
 
-  const randomRelayEntry: BigNumber = ethers.BigNumber.from(
+  const relayEntry: BigNumber = ethers.BigNumber.from(
     ethers.utils.randomBytes(32)
   )
 
   // eslint-disable-next-line no-underscore-dangle
   const tx = await walletRegistry
     .connect(randomBeacon.wallet)
-    .__beaconCallback(randomRelayEntry, 0)
+    .__beaconCallback(relayEntry, 0)
 
-  return { startBlock: tx.blockNumber, dkgSeed: randomRelayEntry }
+  return { startBlock: tx.blockNumber, dkgSeed: relayEntry }
 }

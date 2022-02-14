@@ -1,24 +1,28 @@
 /* eslint-disable no-underscore-dangle */
-import { ethers, helpers } from "hardhat"
+import { ethers, getUnnamedAccounts, helpers } from "hardhat"
 import { expect } from "chai"
+import { smock } from "@defi-wonderland/smock"
 
 import { dkgState, walletRegistryFixture } from "./fixtures"
 import { fakeRandomBeacon, resetMock } from "./utils/randomBeacon"
+import { updateRandomBeacon } from "./utils/governance"
 
-import type { FakeContract } from "@defi-wonderland/smock"
-import type { ContractTransaction } from "ethers"
+import type { MockContract, FakeContract } from "@defi-wonderland/smock"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
+  IRandomBeacon,
+  RandomBeaconStub,
+  RandomBeaconStub__factory,
   WalletRegistry,
   WalletRegistryStub,
-  IRandomBeacon,
 } from "../typechain"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { BigNumber, ContractTransaction } from "ethers"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("WalletRegistry - Random Beacon", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
-  let randomBeacon: FakeContract<IRandomBeacon>
+  let randomBeaconFake: FakeContract<IRandomBeacon>
 
   let walletOwner: SignerWithAddress
   let thirdParty: SignerWithAddress
@@ -28,7 +32,7 @@ describe("WalletRegistry - Random Beacon", async () => {
     ;({ walletRegistry, walletOwner, thirdParty } =
       await walletRegistryFixture())
 
-    randomBeacon = await fakeRandomBeacon(walletRegistry)
+    randomBeaconFake = await fakeRandomBeacon(walletRegistry)
   })
 
   describe("requestNewWallet", async () => {
@@ -38,7 +42,9 @@ describe("WalletRegistry - Random Beacon", async () => {
       before(async () => {
         await createSnapshot()
 
-        await randomBeacon.requestRelayEntry.reverts("beacon internal error")
+        await randomBeaconFake.requestRelayEntry.reverts(
+          "beacon internal error"
+        )
 
         tx = walletRegistry.connect(walletOwner).requestNewWallet()
       })
@@ -46,7 +52,7 @@ describe("WalletRegistry - Random Beacon", async () => {
       after(async () => {
         await restoreSnapshot()
 
-        resetMock(randomBeacon)
+        resetMock(randomBeaconFake)
       })
 
       it("should revert", async () => {
@@ -74,7 +80,7 @@ describe("WalletRegistry - Random Beacon", async () => {
       })
 
       it("should call random beacon", async () => {
-        await expect(randomBeacon.requestRelayEntry).to.be.calledWith(
+        await expect(randomBeaconFake.requestRelayEntry).to.be.calledWith(
           walletRegistry.address
         )
       })
@@ -103,7 +109,7 @@ describe("WalletRegistry - Random Beacon", async () => {
         it("should revert", async () => {
           await expect(
             walletRegistry
-              .connect(randomBeacon.wallet)
+              .connect(randomBeaconFake.wallet)
               .__beaconCallback(123, 456)
           ).to.be.revertedWith("Current state is not AWAITING_SEED")
         })
@@ -111,14 +117,15 @@ describe("WalletRegistry - Random Beacon", async () => {
 
       context("when new wallet was requested", async () => {
         const relayEntry = ethers.BigNumber.from(ethers.utils.randomBytes(32))
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
 
           await walletRegistry.connect(walletOwner).requestNewWallet()
 
-          await walletRegistry
-            .connect(randomBeacon.wallet)
+          tx = await walletRegistry
+            .connect(randomBeaconFake.wallet)
             .__beaconCallback(relayEntry, 0)
         })
 
@@ -137,7 +144,96 @@ describe("WalletRegistry - Random Beacon", async () => {
             relayEntry
           )
         })
+
+        it("should set start block for wallet creation", async () => {
+          await expect(
+            (
+              await walletRegistry.getDkgData()
+            ).startBlock
+          ).to.be.equal(tx.blockNumber)
+        })
+
+        it("should not emit DkgStateLocked event", async () => {
+          await expect(tx).not.to.emit(walletRegistry, "DkgStateLocked")
+        })
+
+        it("should emit DkgStarted event", async () => {
+          await expect(tx).to.emit(walletRegistry, "DkgStarted")
+        })
+      })
+
+      describe("gas estimation", async () => {
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistry.connect(walletOwner).requestNewWallet()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        // The exact value was noted from a test execution and is used as a reference
+        // for all future executions.
+        it("should not exceed 77308", async () => {
+          const expectedGasEstimate = 77308
+
+          const gasEstimate = await walletRegistry
+            .connect(randomBeaconFake.wallet)
+            .estimateGas.__beaconCallback(
+              ethers.BigNumber.from(ethers.utils.randomBytes(32)),
+              0
+            )
+
+          await expect(gasEstimate).to.be.lte(expectedGasEstimate)
+        })
+      })
+
+      // It's easier and cleaner to test with a Fake Contract of IRandomBeacon
+      // interface, hence we use that approach in other tests. Here we want to
+      // simulate a real-world use case as much as possible so we switch to
+      // mocking the actual contract that uses a Callback library with a set fixed
+      // gas limit.
+      context("when called as a callback from random beacon", async () => {
+        let randomBeaconMock: MockContract<RandomBeaconStub>
+
+        before(async () => {
+          await createSnapshot()
+
+          randomBeaconMock = await mockRandomBeacon(walletRegistry)
+
+          await walletRegistry.connect(walletOwner).requestNewWallet()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should succeed", async () => {
+          const entry: BigNumber = ethers.BigNumber.from(
+            ethers.utils.randomBytes(32)
+          )
+
+          const tx = await randomBeaconMock.submitRelayEntry(entry)
+
+          await expect(tx).not.to.emit(randomBeaconMock, "CallbackFailed")
+        })
       })
     })
   })
 })
+
+async function mockRandomBeacon(
+  walletRegistry: WalletRegistry
+): Promise<MockContract<RandomBeaconStub>> {
+  const randomBeaconFactory = await smock.mock<RandomBeaconStub__factory>(
+    "RandomBeaconStub"
+  )
+
+  const randomBeacon: MockContract<RandomBeaconStub> =
+    await randomBeaconFactory.deploy()
+
+  await updateRandomBeacon(walletRegistry, randomBeacon.address)
+
+  return randomBeacon
+}

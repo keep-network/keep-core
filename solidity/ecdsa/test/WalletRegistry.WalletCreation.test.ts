@@ -14,7 +14,7 @@ import {
 } from "./utils/dkg"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { createNewWallet } from "./utils/wallets"
-import { fakeRandomBeacon, submitRelayEntry } from "./utils/randomBeacon"
+import { submitRelayEntry } from "./utils/randomBeacon"
 
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -23,11 +23,9 @@ import type {
   WalletRegistry,
   WalletRegistryStub,
   StakingStub,
-  IRandomBeacon,
 } from "../typechain"
 import type { DkgResult, DkgResultSubmittedEventArgs } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
-import type { FakeContract } from "@defi-wonderland/smock"
 
 const { to1e18 } = helpers.number
 const { mineBlocks, mineBlocksTo } = helpers.time
@@ -55,7 +53,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let sortitionPool: SortitionPool
   let staking: StakingStub
-  let randomBeacon: FakeContract<IRandomBeacon>
 
   let deployer: SignerWithAddress
   let walletOwner: SignerWithAddress
@@ -74,8 +71,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
       operators,
       staking,
     } = await walletRegistryFixture())
-
-    randomBeacon = await fakeRandomBeacon(walletRegistry)
   })
 
   describe("requestNewWallet", async () => {
@@ -162,8 +157,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             before("submit random relay entry", async () => {
               await createSnapshot()
               ;({ startBlock, dkgSeed } = await submitRelayEntry(
-                walletRegistry,
-                randomBeacon
+                walletRegistry
               ))
             })
 
@@ -327,10 +321,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before(async () => {
             await createSnapshot()
-            ;({ startBlock, dkgSeed } = await submitRelayEntry(
-              walletRegistry,
-              randomBeacon
-            ))
+            ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           })
 
           after(async () => {
@@ -539,10 +530,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before(async () => {
             await createSnapshot()
-            ;({ startBlock, dkgSeed } = await submitRelayEntry(
-              walletRegistry,
-              randomBeacon
-            ))
+            ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           })
 
           after(async () => {
@@ -843,10 +831,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before(async () => {
             await createSnapshot()
-            ;({ startBlock, dkgSeed } = await submitRelayEntry(
-              walletRegistry,
-              randomBeacon
-            ))
+            ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           })
 
           after(async () => {
@@ -1410,10 +1395,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before("submit random relay entry", async () => {
             await createSnapshot()
-            ;({ startBlock, dkgSeed } = await submitRelayEntry(
-              walletRegistry,
-              randomBeacon
-            ))
+            ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           })
 
           after(async () => {
@@ -2061,10 +2043,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           async () => {
             await createSnapshot()
             await walletRegistry.connect(walletOwner).requestNewWallet()
-            ;({ startBlock, dkgSeed } = await submitRelayEntry(
-              walletRegistry,
-              randomBeacon
-            ))
+            ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           }
         )
 
@@ -2190,8 +2169,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             before("submit random relay entry", async () => {
               await createSnapshot()
               ;({ startBlock, dkgSeed } = await submitRelayEntry(
-                walletRegistry,
-                randomBeacon
+                walletRegistry
               ))
             })
 
@@ -2624,10 +2602,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           async () => {
             await createSnapshot()
             await walletRegistry.connect(walletOwner).requestNewWallet()
-            ;({ startBlock, dkgSeed } = await submitRelayEntry(
-              walletRegistry,
-              randomBeacon
-            ))
+            ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           }
         )
 
@@ -2921,10 +2896,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         let dkgResult: DkgResult
 
         await walletRegistry.connect(walletOwner).requestNewWallet()
-        const { startBlock } = await submitRelayEntry(
-          walletRegistry,
-          randomBeacon
-        )
+        const { startBlock } = await submitRelayEntry(walletRegistry)
 
         // Submit result 1 at the beginning of the submission period
         ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
@@ -3061,10 +3033,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       before("request new wallet creation and submit relay entry", async () => {
         await createSnapshot()
         await walletRegistry.connect(walletOwner).requestNewWallet()
-        ;({ startBlock, dkgSeed } = await submitRelayEntry(
-          walletRegistry,
-          randomBeacon
-        ))
+        ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
       })
 
       after(async () => {
@@ -3160,7 +3129,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         context("with random relay entry submitted", async () => {
           before(async () => {
             await createSnapshot()
-            await submitRelayEntry(walletRegistry, randomBeacon)
+            await submitRelayEntry(walletRegistry)
           })
 
           after(async () => {
@@ -3192,7 +3161,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           context("with random relay entry submitted", async () => {
             before(async () => {
               await createSnapshot()
-              await submitRelayEntry(walletRegistry, randomBeacon)
+              await submitRelayEntry(walletRegistry)
             })
 
             after(async () => {
@@ -3254,7 +3223,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           context("with random relay entry submitted", async () => {
             before(async () => {
               await createSnapshot()
-              await submitRelayEntry(walletRegistry, randomBeacon)
+              await submitRelayEntry(walletRegistry)
             })
 
             after(async () => {
@@ -3311,7 +3280,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           context("with random relay entry submitted", async () => {
             before(async () => {
               await createSnapshot()
-              await submitRelayEntry(walletRegistry, randomBeacon)
+              await submitRelayEntry(walletRegistry)
             })
 
             after(async () => {
@@ -3376,10 +3345,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before(async () => {
             await createSnapshot()
-            ;({ startBlock } = await submitRelayEntry(
-              walletRegistry,
-              randomBeacon
-            ))
+            ;({ startBlock } = await submitRelayEntry(walletRegistry))
           })
 
           after(async () => {

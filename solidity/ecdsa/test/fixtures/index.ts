@@ -21,7 +21,8 @@ export const constants = {
   groupThreshold: 51,
   minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
-  governanceDelay: 43200, // 12 hours
+  governanceDelayStandard: 43200, // 12 hours
+  governanceDelayCritical: 1210000, // 2 weeks
 }
 
 export const dkgState = {
@@ -96,7 +97,7 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
       params.dkgSubmitterPrecedencePeriodLength
     )
 
-  await helpers.time.increaseTime(constants.governanceDelay)
+  await helpers.time.increaseTime(constants.governanceDelayStandard)
 
   await walletRegistryGovernance
     .connect(governance)
