@@ -423,8 +423,8 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         return dkg.currentState();
     }
 
-    /// @notice Checks if seed awaiting timed out.
-    /// @return True if seed awaiting timed out, false otherwise.
+    /// @notice Checks if awaiting seed timed out.
+    /// @return True if awaiting seed timed out, false otherwise.
     function hasSeedTimedOut() external view returns (bool) {
         return dkg.hasSeedTimedOut();
     }

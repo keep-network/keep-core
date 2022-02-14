@@ -254,8 +254,8 @@ library DKG {
         emit DkgResultSubmitted(self.submittedResultHash, self.seed, result);
     }
 
-    /// @notice Checks if seed awaiting timed out.
-    /// @return True if seed awaiting timed out, false otherwise.
+    /// @notice Checks if awaiting seed timed out.
+    /// @return True if awaiting seed timed out, false otherwise.
     function hasSeedTimedOut(Data storage self) internal view returns (bool) {
         return
             currentState(self) == State.AWAITING_SEED &&
@@ -281,7 +281,7 @@ library DKG {
     /// @notice Notifies about the seed was not delivered and restores the
     ///         initial DKG state (IDLE).
     function notifySeedTimeout(Data storage self) internal {
-        require(hasSeedTimedOut(self), "seed awaiting has not timed out");
+        require(hasSeedTimedOut(self), "Awaiting seed has not timed out");
 
         emit DkgSeedTimedOut();
 

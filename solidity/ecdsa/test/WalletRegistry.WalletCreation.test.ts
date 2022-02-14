@@ -3181,7 +3181,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
     context("with initial contract state", async () => {
       it("should revert with 'DKG has not timed out' error", async () => {
         await expect(walletRegistry.notifySeedTimeout()).to.be.revertedWith(
-          "seed awaiting has not timed out"
+          "Awaiting seed has not timed out"
         )
       })
     })
@@ -3214,9 +3214,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
             await restoreSnapshot()
           })
 
-          it("should revert with 'seed awaiting has not timed out' error", async () => {
+          it("should revert with 'Awaiting seed has not timed out' error", async () => {
             await expect(walletRegistry.notifySeedTimeout()).to.be.revertedWith(
-              "seed awaiting has not timed out"
+              "Awaiting seed has not timed out"
             )
           })
 
@@ -3230,10 +3230,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await restoreSnapshot()
             })
 
-            it("should revert with 'seed awaiting has not timed out' error", async () => {
+            it("should revert with 'Awaiting seed has not timed out' error", async () => {
               await expect(
                 walletRegistry.notifySeedTimeout()
-              ).to.be.revertedWith("seed awaiting has not timed out")
+              ).to.be.revertedWith("Awaiting seed has not timed out")
             })
           })
         })
@@ -3287,10 +3287,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await restoreSnapshot()
             })
 
-            it("should revert with 'seed awaiting has not timed out' error", async () => {
+            it("should revert with 'Awaiting seed has not timed out' error", async () => {
               await expect(
                 walletRegistry.notifySeedTimeout()
-              ).to.be.revertedWith("seed awaiting has not timed out")
+              ).to.be.revertedWith("Awaiting seed has not timed out")
             })
           })
         })
