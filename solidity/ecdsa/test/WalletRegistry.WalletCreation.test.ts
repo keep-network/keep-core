@@ -143,18 +143,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
           await restoreSnapshot()
         })
 
-        context("with random relay entry not submitted", async () => {
+        context("with relay entry not submitted", async () => {
           it("should revert with 'Current state is not IDLE' error", async () => {
             await expect(
               walletRegistry.connect(walletOwner).requestNewWallet()
             ).to.be.revertedWith("Current state is not IDLE")
           })
 
-          context("with random relay entry submitted", async () => {
+          context("with relay entry submitted", async () => {
             let startBlock: number
             let dkgSeed: BigNumber
 
-            before("submit random relay entry", async () => {
+            before("submit relay entry", async () => {
               await createSnapshot()
               ;({ startBlock, dkgSeed } = await submitRelayEntry(
                 walletRegistry
@@ -308,14 +308,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("with random relay entry not submitted", async () => {
+      context("with relay entry not submitted", async () => {
         it("should return AWAITING_SEED state", async () => {
           expect(await walletRegistry.getWalletCreationState()).to.be.equal(
             dkgState.AWAITING_SEED
           )
         })
 
-        context("with random relay entry submitted", async () => {
+        context("with relay entry submitted", async () => {
           let startBlock: number
           let dkgSeed: BigNumber
 
@@ -487,7 +487,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("with random relay entry not submitted", async () => {
+      context("with relay entry not submitted", async () => {
         it("should return false", async () => {
           await expect(await walletRegistry.hasDkgTimedOut()).to.be.false
         })
@@ -524,7 +524,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           })
         })
 
-        context("with random relay entry submitted", async () => {
+        context("with relay entry submitted", async () => {
           let startBlock: number
           let dkgSeed: BigNumber
 
@@ -812,7 +812,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("with random relay entry not submitted", async () => {
+      context("with relay entry not submitted", async () => {
         it("should revert with 'Current state is not AWAITING_RESULT' error", async () => {
           await expect(
             signAndSubmitArbitraryDkgResult(
@@ -825,7 +825,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           ).to.be.revertedWith("Current state is not AWAITING_RESULT")
         })
 
-        context("with random relay entry submitted", async () => {
+        context("with relay entry submitted", async () => {
           let startBlock: number
           let dkgSeed: BigNumber
 
@@ -1382,18 +1382,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("with random relay entry not submitted", async () => {
+      context("with relay entry not submitted", async () => {
         it("should revert with 'Current state is not CHALLENGE' error", async () => {
           await expect(
             walletRegistry.approveDkgResult(stubDkgResult)
           ).to.be.revertedWith("Current state is not CHALLENGE")
         })
 
-        context("with random relay entry submitted", async () => {
+        context("with relay entry submitted", async () => {
           let startBlock: number
           let dkgSeed: BigNumber
 
-          before("submit random relay entry", async () => {
+          before("submit relay entry", async () => {
             await createSnapshot()
             ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           })
@@ -2155,18 +2155,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
           await restoreSnapshot()
         })
 
-        context("with random relay entry not submitted", async () => {
+        context("with relay entry not submitted", async () => {
           it("should revert with 'Current state is not CHALLENGE'", async () => {
             await expect(
               walletRegistry.challengeDkgResult(stubDkgResult)
             ).to.be.revertedWith("Current state is not CHALLENGE")
           })
 
-          context("with random relay entry submitted", async () => {
+          context("with relay entry submitted", async () => {
             let startBlock: number
             let dkgSeed: BigNumber
 
-            before("submit random relay entry", async () => {
+            before("submit relay entry", async () => {
               await createSnapshot()
               ;({ startBlock, dkgSeed } = await submitRelayEntry(
                 walletRegistry
@@ -3107,7 +3107,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("with random relay entry not submitted", async () => {
+      context("with relay entry not submitted", async () => {
         context("with seed timeout period not passed", async () => {
           before(async () => {
             await createSnapshot()
@@ -3126,7 +3126,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           })
         })
 
-        context("with random relay entry submitted", async () => {
+        context("with relay entry submitted", async () => {
           before(async () => {
             await createSnapshot()
             await submitRelayEntry(walletRegistry)
@@ -3158,7 +3158,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             await expect(await walletRegistry.hasSeedTimedOut()).to.be.true
           })
 
-          context("with random relay entry submitted", async () => {
+          context("with relay entry submitted", async () => {
             before(async () => {
               await createSnapshot()
               await submitRelayEntry(walletRegistry)
@@ -3200,7 +3200,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("with random relay entry not submitted", async () => {
+      context("with relay entry not submitted", async () => {
         context("with seed timeout period not passed", async () => {
           before(async () => {
             await createSnapshot()
@@ -3220,7 +3220,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             )
           })
 
-          context("with random relay entry submitted", async () => {
+          context("with relay entry submitted", async () => {
             before(async () => {
               await createSnapshot()
               await submitRelayEntry(walletRegistry)
@@ -3277,7 +3277,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
           })
 
-          context("with random relay entry submitted", async () => {
+          context("with relay entry submitted", async () => {
             before(async () => {
               await createSnapshot()
               await submitRelayEntry(walletRegistry)
@@ -3321,7 +3321,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         await restoreSnapshot()
       })
 
-      context("with random relay entry not submitted", async () => {
+      context("with relay entry not submitted", async () => {
         context("with dkg timeout period passed", async () => {
           before(async () => {
             await createSnapshot()
@@ -3340,7 +3340,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           })
         })
 
-        context("with random relay entry submitted", async () => {
+        context("with relay entry submitted", async () => {
           let startBlock: number
 
           before(async () => {

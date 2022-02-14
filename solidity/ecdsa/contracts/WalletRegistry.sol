@@ -278,8 +278,8 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
 
     /// @notice Requests a new wallet creation.
     /// @dev Can be called only by the owner of wallets.
-    ///      It locks the DKG and request a new random relay entry. It expects
-    ///      that the DKG process will be started once a new random relay entry
+    ///      It locks the DKG and request a new relay entry. It expects
+    ///      that the DKG process will be started once a new relay entry
     ///      gets generated.
     function requestNewWallet() external {
         require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
@@ -289,17 +289,17 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         randomBeacon.requestRelayEntry(this);
     }
 
-    /// @notice A callback that is executed once a new random relay entry gets
+    /// @notice A callback that is executed once a new relay entry gets
     ///         generated. It starts the DKG process.
     /// @dev Can be called only by the random beacon contract.
-    /// @param randomRelayEntry Random relay entry.
-    function __beaconCallback(uint256 randomRelayEntry, uint256) external {
+    /// @param relayEntry Relay entry.
+    function __beaconCallback(uint256 relayEntry, uint256) external {
         require(
             msg.sender == address(randomBeacon),
             "Caller is not the Random Beacon"
         );
 
-        dkg.start(randomRelayEntry);
+        dkg.start(relayEntry);
     }
 
     /// @notice Submits result of DKG protocol.
