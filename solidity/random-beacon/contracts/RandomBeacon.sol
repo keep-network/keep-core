@@ -326,7 +326,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         staking = _staking;
 
         // TODO: revisit all initial values
-        callbackGasLimit = 50000;
+        callbackGasLimit = 56000;
         groupCreationFrequency = 5;
 
         dkgResultSubmissionReward = 1000e18;

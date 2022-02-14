@@ -3,15 +3,27 @@
 pragma solidity ^0.8.6;
 
 import {IRandomBeacon} from "@keep-network/random-beacon/contracts/RandomBeacon.sol";
-import {IRandomBeaconConsumer} from "@keep-network/random-beacon/contracts/libraries/Callback.sol";
+import "@keep-network/random-beacon/contracts/libraries/Callback.sol";
 
 // TODO: get rid of this contract; use RandomBeacon implementation instead.
+//  This implementation is used to test callback's gas limit only. In most tests
+// we use smock's FakeContract of IRandomBeacon.
 contract RandomBeaconStub is IRandomBeacon {
-    IRandomBeaconConsumer public callbackContract;
+    using Callback for Callback.Data;
+    Callback.Data internal callback;
+
+    // This value has to reflect the one set in the Random Beacon contract!
+    uint256 public callbackGasLimit = 56000;
+
+    event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     function requestRelayEntry(IRandomBeaconConsumer _callbackContract)
         external
     {
-        callbackContract = _callbackContract;
+        callback.setCallbackContract(_callbackContract);
+    }
+
+    function submitRelayEntry(bytes calldata entry) external {
+        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
     }
 }
