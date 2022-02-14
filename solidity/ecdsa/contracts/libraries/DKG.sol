@@ -35,6 +35,8 @@ library DKG {
 
     struct Parameters {
         // Time in blocks during which a seed is expected to be delivered.
+        // DKG starts only after a seed is delivered. The time the contract
+        // awaits for a seed is not included in the DKG timeout.
         uint256 seedTimeout;
         // Time in blocks during which a submitted result can be challenged.
         uint256 resultChallengePeriodLength;
