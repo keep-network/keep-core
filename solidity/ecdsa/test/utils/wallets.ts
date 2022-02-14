@@ -8,7 +8,6 @@ import { fakeRandomBeacon } from "./randomBeacon"
 
 import type { WalletRegistry } from "../../typechain"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { BigNumber } from "ethers"
 import type { Operator } from "./operators"
 
 const { mineBlocks } = helpers.time
@@ -27,10 +26,9 @@ export async function createNewWallet(
 
   const randomBeacon = await fakeRandomBeacon(walletRegistry)
 
-  const relayEntry: BigNumber = ethers.BigNumber.from(
-    ethers.utils.randomBytes(32)
-  )
-  const dkgSeed = ethers.BigNumber.from(keccak256(relayEntry.toHexString()))
+  const relayEntry = ethers.utils.randomBytes(32)
+
+  const dkgSeed = ethers.BigNumber.from(keccak256(relayEntry))
 
   // eslint-disable-next-line no-underscore-dangle
   await walletRegistry
