@@ -1,11 +1,11 @@
 /* eslint-disable no-underscore-dangle */
-import { ethers, getUnnamedAccounts, helpers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
 import { smock } from "@defi-wonderland/smock"
 
 import { dkgState, walletRegistryFixture } from "./fixtures"
 import { fakeRandomBeacon, resetMock } from "./utils/randomBeacon"
-import { updateRandomBeacon } from "./utils/governance"
+import { upgradeRandomBeacon } from "./utils/governance"
 
 import type { MockContract, FakeContract } from "@defi-wonderland/smock"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -233,7 +233,7 @@ async function mockRandomBeacon(
   const randomBeacon: MockContract<RandomBeaconStub> =
     await randomBeaconFactory.deploy()
 
-  await updateRandomBeacon(walletRegistry, randomBeacon.address)
+  await upgradeRandomBeacon(walletRegistry, randomBeacon.address)
 
   return randomBeacon
 }

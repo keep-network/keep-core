@@ -1,11 +1,9 @@
-import { ethers, helpers } from "hardhat"
-
-import { constants } from "../fixtures"
+import { ethers } from "hardhat"
 
 import type { WalletRegistry, WalletRegistryGovernance } from "../../typechain"
 
 // eslint-disable-next-line import/prefer-default-export
-export async function updateRandomBeacon(
+export async function upgradeRandomBeacon(
   walletRegistry: WalletRegistry,
   newRandomBeaconAddress: string
 ): Promise<void> {
@@ -19,11 +17,5 @@ export async function updateRandomBeacon(
 
   await walletRegistryGovernance
     .connect(governance)
-    .beginRandomBeaconUpdate(newRandomBeaconAddress)
-
-  await helpers.time.increaseTime(constants.governanceDelayCritical)
-
-  await walletRegistryGovernance
-    .connect(governance)
-    .finalizeRandomBeaconUpdate()
+    .upgradeRandomBeacon(newRandomBeaconAddress)
 }
