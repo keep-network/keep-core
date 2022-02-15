@@ -31,8 +31,8 @@ export const dkgState = {
 }
 
 export const params = {
-  dkgResultChallengePeriodLength: 10,
   governanceDelay: 43200, // 12 hours
+  dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
 }
@@ -76,6 +76,25 @@ export async function walletRegistryFixture(): Promise<{
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
+  await updateWalletDkgRegistryParams(walletRegistryGovernance, governance)
+
+  return {
+    walletRegistry,
+    sortitionPool,
+    walletOwner,
+    deployer,
+    governance,
+    thirdParty,
+    operators,
+    staking,
+    walletRegistryGovernance,
+  }
+}
+
+async function updateWalletDkgRegistryParams(
+  walletRegistryGovernance: WalletRegistryGovernance,
+  governance: SignerWithAddress
+) {
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgResultChallengePeriodLengthUpdate(
@@ -103,16 +122,4 @@ export async function walletRegistryFixture(): Promise<{
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
-
-  return {
-    walletRegistry,
-    sortitionPool,
-    walletOwner,
-    deployer,
-    governance,
-    thirdParty,
-    operators,
-    staking,
-    walletRegistryGovernance,
-  }
 }
