@@ -18,9 +18,9 @@ import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
 import "./EcdsaDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
+import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import {IRandomBeacon} from "@keep-network/random-beacon/contracts/RandomBeacon.sol";
-import {IRandomBeaconConsumer} from "@keep-network/random-beacon/contracts/libraries/Callback.sol";
 
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 /// IStaking interface from there.
