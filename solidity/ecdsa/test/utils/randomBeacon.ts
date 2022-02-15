@@ -50,5 +50,8 @@ export async function submitRelayEntry(
     .connect(randomBeacon.wallet)
     .__beaconCallback(relayEntry, 0)
 
-  return { startBlock: tx.blockNumber, dkgSeed: relayEntry }
+  return {
+    startBlock: tx.blockNumber,
+    dkgSeed: relayEntry,
+  }
 }
