@@ -76,7 +76,25 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
   )
 
   // Set parameters with tweaked values to reduce test execution time.
+  await updateWalletDkgRegistryParams(walletRegistryGovernance, governance)
 
+  return {
+    walletRegistry,
+    sortitionPool,
+    walletOwner,
+    deployer,
+    governance,
+    thirdParty,
+    operators,
+    staking,
+    walletRegistryGovernance,
+  }
+})
+
+async function updateWalletDkgRegistryParams(
+  walletRegistryGovernance: WalletRegistryGovernance,
+  governance: SignerWithAddress
+) {
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgSeedTimeoutUpdate(params.dkgSeedTimeout)
@@ -114,16 +132,4 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
-
-  return {
-    walletRegistry,
-    sortitionPool,
-    walletOwner,
-    deployer,
-    governance,
-    thirdParty,
-    operators,
-    staking,
-    walletRegistryGovernance,
-  }
-})
+}

@@ -96,13 +96,11 @@ describe("WalletRegistry - Parameters", async () => {
     })
   })
 
-  describe("updateWalletParameters", async () => {
+  describe("updateWalletOwner", async () => {
     context("when called by the deployer", async () => {
       it("should revert", async () => {
         await expect(
-          walletRegistry
-            .connect(deployer)
-            .updateWalletParameters(thirdParty.address)
+          walletRegistry.connect(deployer).updateWalletOwner(thirdParty.address)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -112,7 +110,7 @@ describe("WalletRegistry - Parameters", async () => {
         await expect(
           walletRegistry
             .connect(walletOwner)
-            .updateWalletParameters(thirdParty.address)
+            .updateWalletOwner(thirdParty.address)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -122,7 +120,7 @@ describe("WalletRegistry - Parameters", async () => {
         await expect(
           walletRegistry
             .connect(thirdParty)
-            .updateWalletParameters(thirdParty.address)
+            .updateWalletOwner(thirdParty.address)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
