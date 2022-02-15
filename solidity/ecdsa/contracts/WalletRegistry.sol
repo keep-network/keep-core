@@ -193,6 +193,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
             _submitterPrecedencePeriodLength
         );
 
+        // slither-disable-next-line reentrancy-events
         emit DkgParametersUpdated(
             _seedTimeout,
             _resultChallengePeriodLength,
