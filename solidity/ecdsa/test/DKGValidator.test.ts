@@ -10,7 +10,7 @@ import ecdsaData from "./data/ecdsa"
 
 import type { DkgResult } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
-import type { SortitionPool, DKGValidator } from "../typechain"
+import type { SortitionPool, EcdsaDkgValidator } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
@@ -31,12 +31,10 @@ const fixture = async () => {
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const DKGValidator = await ethers.getContractFactory(
-    "contracts/DKGValidator.sol:DKGValidator"
-  )
-  const dkgValidator = (await DKGValidator.deploy(
+  const EcdsaDkgValidator = await ethers.getContractFactory("EcdsaDkgValidator")
+  const dkgValidator = (await EcdsaDkgValidator.deploy(
     sortitionPool.address
-  )) as DKGValidator
+  )) as EcdsaDkgValidator
   await dkgValidator.deployed()
 
   return {
@@ -45,7 +43,7 @@ const fixture = async () => {
   }
 }
 
-describe("DKGValidator", () => {
+describe("EcdsaDkgValidator", () => {
   const dkgSeed: BigNumber = BigNumber.from(
     "31415926535897932384626433832795028841971693993751058209749445923078164062862"
   )
@@ -67,7 +65,7 @@ describe("DKGValidator", () => {
     _membersHash?: string
   ) => Promise<DkgResult>
 
-  let validator: DKGValidator
+  let validator: EcdsaDkgValidator
 
   before("load test fixture", async () => {
     await createSnapshot()

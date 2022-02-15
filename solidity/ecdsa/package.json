@@ -16,8 +16,6 @@
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'",
     "clean": "hardhat clean",
     "build": "hardhat compile",
-    "postbuild": "npx typechain --out-dir typechain --target ethers-v5 --glob './build/{contracts,@keep-network/random-beacon/contracts/RandomBeacon.sol,@keep-network/sortition-pools,@threshold-network}/**/+([a-zA-Z0-9_]).json'",
-    "pretest": "npm run postbuild",
     "test": "hardhat test --deploy-fixture",
     "deploy": "hardhat deploy --export export.json",
     "prepack": "tsc -p tsconfig.json && hardhat export-artifacts export/artifacts"

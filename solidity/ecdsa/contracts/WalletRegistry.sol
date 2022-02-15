@@ -14,9 +14,9 @@
 
 pragma solidity ^0.8.9;
 
-import "./libraries/DKG.sol";
+import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
-import "./DKGValidator.sol";
+import "./EcdsaDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IRandomBeacon} from "@keep-network/random-beacon/contracts/RandomBeacon.sol";
@@ -39,11 +39,11 @@ interface IWalletStaking {
 }
 
 contract WalletRegistry is IRandomBeaconConsumer, Ownable {
-    using DKG for DKG.Data;
+    using EcdsaDkg for EcdsaDkg.Data;
     using Wallets for Wallets.Data;
 
     // Libraries data storages
-    DKG.Data internal dkg;
+    EcdsaDkg.Data internal dkg;
     Wallets.Data internal wallets;
 
     // Address that is set as owner of all wallets. Only this address can request
@@ -81,7 +81,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        DKG.Result result
+        EcdsaDkg.Result result
     );
 
     event DkgTimedOut();
@@ -138,7 +138,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     constructor(
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
-        DKGValidator _dkgValidator,
+        EcdsaDkgValidator _EcdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         address _walletOwner
     ) {
@@ -153,7 +153,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
-        dkg.init(_sortitionPool, _dkgValidator);
+        dkg.init(_sortitionPool, _EcdsaDkgValidator);
         dkg.setSeedTimeout(1440); // ~6h assuming 15s block time // TODO: Verify value
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
@@ -315,7 +315,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     ///      sign is:
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
-    function submitDkgResult(DKG.Result calldata dkgResult) external {
+    function submitDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
     }
 
@@ -344,7 +344,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     ///         A new wallet based on the DKG result details.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function approveDkgResult(DKG.Result calldata dkgResult) external {
+    function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         bytes32 publicKeyHash = keccak256(dkgResult.groupPubKey);
@@ -364,7 +364,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function challengeDkgResult(DKG.Result calldata dkgResult) external {
+    function challengeDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         (
             bytes32 maliciousDkgResultHash,
             uint32 maliciousDkgResultSubmitterId
@@ -406,7 +406,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     /// @param result DKG result.
     /// @return True if the result is valid. If the result is invalid it returns
     ///         false and an error message.
-    function isDkgResultValid(DKG.Result calldata result)
+    function isDkgResultValid(EcdsaDkg.Result calldata result)
         external
         view
         returns (bool, string memory)
@@ -415,7 +415,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     }
 
     /// @notice Check current wallet creation state.
-    function getWalletCreationState() external view returns (DKG.State) {
+    function getWalletCreationState() external view returns (EcdsaDkg.State) {
         return dkg.currentState();
     }
 
@@ -454,7 +454,11 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     }
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters() external view returns (DKG.Parameters memory) {
+    function dkgParameters()
+        external
+        view
+        returns (EcdsaDkg.Parameters memory)
+    {
         return dkg.parameters;
     }
 }

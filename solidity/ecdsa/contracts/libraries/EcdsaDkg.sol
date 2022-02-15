@@ -27,9 +27,9 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
-import "../DKGValidator.sol";
+import "../EcdsaDkgValidator.sol";
 
-library DKG {
+library EcdsaDkg {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
@@ -51,8 +51,8 @@ library DKG {
     struct Data {
         // Address of the Sortition Pool contract.
         SortitionPool sortitionPool;
-        // Address of the DKGValidator contract.
-        DKGValidator dkgValidator;
+        // Address of the EcdsaDkgValidator contract.
+        EcdsaDkgValidator dkgValidator;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
@@ -151,14 +151,14 @@ library DKG {
 
     event DkgSeedTimedOut();
 
-    /// @notice Initializes SortitionPool and DKGValidator addresses.
+    /// @notice Initializes SortitionPool and EcdsaDkgValidator addresses.
     ///        Can be performed only once.
     /// @param _sortitionPool Sortition Pool reference
-    /// @param _dkgValidator DKGValidator reference
+    /// @param _dkgValidator EcdsaDkgValidator reference
     function init(
         Data storage self,
         SortitionPool _sortitionPool,
-        DKGValidator _dkgValidator
+        EcdsaDkgValidator _dkgValidator
     ) internal {
         require(
             address(self.sortitionPool) == address(0),

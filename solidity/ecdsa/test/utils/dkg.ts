@@ -10,7 +10,10 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { BigNumberish, ContractTransaction } from "ethers"
 import type { SortitionPool, WalletRegistry } from "../../typechain"
 import type { Operator } from "./operators"
-import type { DkgResultSubmittedEvent, ResultStruct } from "../../typechain/DKG"
+import type {
+  DkgResultSubmittedEvent,
+  ResultStruct,
+} from "../../typechain/EcdsaDkg"
 
 export interface DkgResult {
   submitterMemberIndex: number

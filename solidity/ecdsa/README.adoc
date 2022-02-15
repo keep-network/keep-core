@@ -50,14 +50,6 @@ Compiled contracts will land in the `build/` directory.
 
 Typings are generated for the contracts in `typechain/` directory.
 
-// FIXME: This project duplicates contracts names with contracts defined in
-// @keep-network/random-beacon project (e.g. `DKGValidator`). There is a bug
-// https://github.com/dethcrypto/TypeChain/issues/545
-// that doesn't handle this case well. As a workaround, we declared a `postbuild`
-// where we filter only the artifacts for which we want the typings to be generated.
-// We should switch back to default `@typechain/hardhat` behavior once the bug
-// is fixed.
-
 === Test contracts
 
 There are multiple test scenarios living in the `test` directory.
