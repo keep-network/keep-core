@@ -4,6 +4,7 @@ import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import { FakeContract } from "@defi-wonderland/smock"
 import blsData from "./data/bls"
 import { constants, dkgState, params, testDeployment } from "./fixtures"
 import type {
@@ -13,6 +14,7 @@ import type {
   TestToken,
   SortitionPool,
   StakingStub,
+  IRandomBeaconStaking,
 } from "../typechain"
 import type { DKG } from "../typechain/RandomBeaconStub"
 
@@ -28,6 +30,7 @@ import {
 import { registerOperators, Operator } from "./utils/operators"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { firstEligibleIndex, shiftEligibleIndex } from "./utils/submission"
+import { fakeTokenStaking } from "./mocks/staking"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
@@ -2445,13 +2448,49 @@ describe("RandomBeacon - Group Creation", () => {
             })
           })
 
+          context("with token staking seize call failure", async () => {
+            let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+            let tx: Promise<ContractTransaction>
+
+            before(async () => {
+              await createSnapshot()
+
+              tokenStakingFake = await fakeTokenStaking(randomBeacon)
+              tokenStakingFake.seize.reverts()
+
+              tx = randomBeacon
+                .connect(thirdParty)
+                .challengeDkgResult(dkgResult)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+
+              tokenStakingFake.seize.reset()
+            })
+
+            it("should succeed", async () => {
+              await expect(tx).to.not.be.reverted
+            })
+
+            it("should emit DkgMaliciousResultSlashingFailed", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "DkgMaliciousResultSlashingFailed")
+                .withArgs(
+                  dkgResultHash,
+                  params.maliciousDkgResultSlashingAmount,
+                  submitter.address
+                )
+            })
+          })
+
           context(
             "with challenged result not matching the submitted one",
             async () => {
               it("should revert with 'Result under challenge is different than the submitted one'", async () => {
                 const modifiedDkgResult: DKG.ResultStruct = { ...dkgResult }
                 const modifiedMembersHash = hashUint32Array(
-                  dkgResult.members.splice(42, 1)
+                  modifiedDkgResult.members.splice(42, 1)
                 )
                 modifiedDkgResult.membersHash = modifiedMembersHash
 

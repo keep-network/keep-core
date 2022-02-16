@@ -11,6 +11,7 @@ import { expect } from "chai"
 import { BigNumber, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
+import { FakeContract } from "@defi-wonderland/smock"
 import blsData from "./data/bls"
 import {
   constants,
@@ -29,8 +30,11 @@ import type {
   SortitionPool,
   StakingStub,
   BLS,
+  RandomBeaconGovernance,
+  IRandomBeaconStaking,
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
+import { fakeTokenStaking } from "./mocks/staking"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
@@ -55,6 +59,8 @@ async function fixture() {
 
   return {
     randomBeacon: deployment.randomBeacon as RandomBeacon,
+    randomBeaconGovernance:
+      deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
     testToken: deployment.testToken as TestToken,
     staking: deployment.stakingStub as StakingStub,
@@ -585,6 +591,19 @@ describe("RandomBeacon - Relay", () => {
     })
 
     context("when relay entry timed out", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await mineBlocks(
+          constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
+            params.relayEntryHardTimeout
+        )
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
       context(
         "when other active groups exist after timeout is reported",
         () => {
@@ -592,12 +611,6 @@ describe("RandomBeacon - Relay", () => {
 
           before(async () => {
             await createSnapshot()
-
-            await mineBlocks(
-              constants.groupSize *
-                params.relayEntrySubmissionEligibilityDelay +
-                params.relayEntryHardTimeout
-            )
 
             await (randomBeacon as unknown as RandomBeaconStub).roughlyAddGroup(
               "0x01",
@@ -673,12 +686,6 @@ describe("RandomBeacon - Relay", () => {
               hashUint32Array(membersIDs)
             )
 
-            await mineBlocks(
-              constants.groupSize *
-                params.relayEntrySubmissionEligibilityDelay +
-                params.relayEntryHardTimeout
-            )
-
             const registry = await randomBeacon.getGroupsRegistry()
             const secondGroupLifetime = await (
               randomBeacon as unknown as RandomBeaconStub
@@ -706,11 +713,6 @@ describe("RandomBeacon - Relay", () => {
 
         before(async () => {
           await createSnapshot()
-
-          await mineBlocks(
-            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
-              params.relayEntryHardTimeout
-          )
 
           tx = await randomBeacon
             .connect(notifier)
@@ -763,12 +765,6 @@ describe("RandomBeacon - Relay", () => {
           before(async () => {
             await createSnapshot()
 
-            await mineBlocks(
-              constants.groupSize *
-                params.relayEntrySubmissionEligibilityDelay +
-                params.relayEntryHardTimeout
-            )
-
             // Simulate DKG is awaiting a seed.
             await (
               randomBeacon as unknown as RandomBeaconStub
@@ -795,6 +791,40 @@ describe("RandomBeacon - Relay", () => {
           })
         }
       )
+
+      context("when token staking seize call fails", async () => {
+        let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+        let tx: Promise<ContractTransaction>
+
+        before(async () => {
+          await createSnapshot()
+
+          tokenStakingFake = await fakeTokenStaking(randomBeacon)
+          tokenStakingFake.seize.reverts()
+
+          tx = randomBeacon.reportRelayEntryTimeout(membersIDs)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+
+          // tokenStakingFake.seize.reset()
+        })
+
+        it("should succeed", async () => {
+          await expect(tx).to.not.be.reverted
+        })
+
+        it("should emit RelayEntryTimeoutSlashingFailed", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "RelayEntryTimeoutSlashingFailed")
+            .withArgs(
+              1,
+              params.relayEntrySubmissionFailureSlashingAmount,
+              membersAddresses
+            )
+        })
+      })
     })
 
     context("when relay entry did not time out", () => {

@@ -243,6 +243,12 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         address maliciousSubmitter
     );
 
+    event DkgMaliciousResultSlashingFailed(
+        bytes32 indexed resultHash,
+        uint256 slashingAmount,
+        address maliciousSubmitter
+    );
+
     event DkgStateLocked();
 
     event DkgSeedTimedOut();
@@ -283,6 +289,12 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     );
 
     event RelayEntryTimeoutSlashed(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
+    event RelayEntryTimeoutSlashingFailed(
         uint256 indexed requestId,
         uint256 slashingAmount,
         address[] groupMembers
@@ -628,20 +640,31 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
         groups.popCandidateGroup();
 
-        emit DkgMaliciousResultSlashed(
-            maliciousResultHash,
-            slashingAmount,
-            maliciousSubmitterAddresses
-        );
-
         address[] memory operatorWrapper = new address[](1);
         operatorWrapper[0] = maliciousSubmitterAddresses;
-        staking.seize(
-            slashingAmount,
-            dkgMaliciousResultNotificationRewardMultiplier,
-            msg.sender,
-            operatorWrapper
-        );
+        try
+            staking.seize(
+                slashingAmount,
+                dkgMaliciousResultNotificationRewardMultiplier,
+                msg.sender,
+                operatorWrapper
+            )
+        {
+            emit DkgMaliciousResultSlashed(
+                maliciousResultHash,
+                slashingAmount,
+                maliciousSubmitterAddresses
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit DkgMaliciousResultSlashingFailed(
+                maliciousResultHash,
+                slashingAmount,
+                maliciousSubmitterAddresses
+            );
+        }
     }
 
     /// @notice Check current group creation state.
@@ -796,18 +819,29 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             groupMembers
         );
 
-        emit RelayEntryTimeoutSlashed(
-            relay.currentRequestID,
-            slashingAmount,
-            groupMembersAddresses
-        );
-
-        staking.seize(
-            slashingAmount,
-            relayEntryTimeoutNotificationRewardMultiplier,
-            msg.sender,
-            groupMembersAddresses
-        );
+        try
+            staking.seize(
+                slashingAmount,
+                relayEntryTimeoutNotificationRewardMultiplier,
+                msg.sender,
+                groupMembersAddresses
+            )
+        {
+            emit RelayEntryTimeoutSlashed(
+                relay.currentRequestID,
+                slashingAmount,
+                groupMembersAddresses
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit RelayEntryTimeoutSlashingFailed(
+                relay.currentRequestID,
+                slashingAmount,
+                groupMembersAddresses
+            );
+        }
 
         groups.terminateGroup(groupId);
         groups.expireOldGroups();
