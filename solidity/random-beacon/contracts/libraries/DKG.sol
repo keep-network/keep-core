@@ -122,12 +122,7 @@ library DKG {
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        uint256 submitterMemberIndex,
-        bytes indexed groupPubKey,
-        uint8[] misbehavedMembersIndices,
-        bytes signatures,
-        uint256[] signingMembersIndices,
-        uint32[] selectedMembersIds
+        Result result
     );
 
     event DkgTimedOut();
@@ -275,16 +270,7 @@ library DKG {
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
 
-        emit DkgResultSubmitted(
-            self.submittedResultHash,
-            self.seed,
-            result.submitterMemberIndex,
-            result.groupPubKey,
-            result.misbehavedMembersIndices,
-            result.signatures,
-            result.signingMembersIndices,
-            result.members
-        );
+        emit DkgResultSubmitted(self.submittedResultHash, self.seed, result);
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required

@@ -221,12 +221,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        uint256 submitterMemberIndex,
-        bytes indexed groupPubKey,
-        uint8[] misbehavedMembersIndices,
-        bytes signatures,
-        uint256[] signingMembersIndices,
-        uint32[] selectedMembers
+        DKG.Result result
     );
 
     event DkgTimedOut();
