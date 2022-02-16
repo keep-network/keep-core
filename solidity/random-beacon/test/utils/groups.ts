@@ -1,5 +1,5 @@
 import { helpers, ethers } from "hardhat"
-import type { BigNumber } from "ethers"
+import type { BigNumber, BigNumberish } from "ethers"
 // eslint-disable-next-line import/no-cycle
 import { noMisbehaved, signAndSubmitArbitraryDkgResult } from "./dkg"
 import { constants, params } from "../fixtures"
@@ -47,6 +47,6 @@ export async function selectGroup(
   }))
 }
 
-export function hashUint32Array(arrayToHash: number[]) {
+export function hashUint32Array(arrayToHash: BigNumberish[]) {
   return keccak256(defaultAbiCoder.encode(["uint32[]"], [arrayToHash]))
 }

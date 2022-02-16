@@ -8,15 +8,10 @@ import blsData from "./data/bls"
 
 import { constants } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
-import {
-  signDkgResult,
-  DkgResult,
-  noMisbehaved,
-  hashDKGMembers,
-} from "./utils/dkg"
+import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import { Operator } from "./utils/operators"
 
-import type { SortitionPool, DKGValidator } from "../typechain"
+import type { SortitionPool, DKGValidator, DKG } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
@@ -92,7 +87,7 @@ describe("DKGValidator", () => {
         _numberOfSignatures
       )
 
-      const dkgResult: DkgResult = {
+      const dkgResult: DKG.ResultStruct = {
         submitterMemberIndex: _submitterIndex,
         groupPubKey: _groupPublicKey,
         misbehavedMembersIndices: _misbehaved,

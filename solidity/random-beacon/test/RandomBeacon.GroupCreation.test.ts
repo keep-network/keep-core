@@ -14,14 +14,16 @@ import type {
   SortitionPool,
   StakingStub,
 } from "../typechain"
+import type { DKG } from "../typechain/RandomBeaconStub"
+
 import {
   genesis,
   signAndSubmitCorrectDkgResult,
   signAndSubmitArbitraryDkgResult,
-  DkgResult,
   noMisbehaved,
   signAndSubmitUnrecoverableDkgResult,
   hashDKGMembers,
+  expectDkgResultSubmittedEvent,
 } from "./utils/dkg"
 import { registerOperators, Operator } from "./utils/operators"
 import { selectGroup, hashUint32Array } from "./utils/groups"
@@ -286,7 +288,7 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         context("when dkg result was submitted", async () => {
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
           let submitter: SignerWithAddress
 
           before(async () => {
@@ -334,7 +336,7 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         context("when malicious dkg result was submitted", async () => {
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
 
           before(async () => {
             await createSnapshot()
@@ -454,7 +456,7 @@ describe("RandomBeacon - Group Creation", () => {
 
         context("when dkg result was submitted", async () => {
           let resultSubmissionBlock: number
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
           let submitter: SignerWithAddress
 
           before(async () => {
@@ -574,7 +576,7 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         context("when malicious dkg result was submitted", async () => {
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
 
           before(async () => {
             await createSnapshot()
@@ -725,7 +727,7 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("with enough signatures on the result", async () => {
             let tx: ContractTransaction
-            let dkgResult: DkgResult
+            let dkgResult: DKG.ResultStruct
             let dkgResultHash: string
 
             before(async () => {
@@ -751,18 +753,11 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             it("should succeed", async () => {
-              await expect(tx)
-                .to.emit(randomBeacon, "DkgResultSubmitted")
-                .withArgs(
-                  dkgResultHash,
-                  genesisSeed,
-                  dkgResult.submitterMemberIndex,
-                  dkgResult.groupPubKey,
-                  dkgResult.misbehavedMembersIndices,
-                  dkgResult.signatures,
-                  dkgResult.signingMembersIndices,
-                  dkgResult.members
-                )
+              await expectDkgResultSubmittedEvent(tx, {
+                resultHash: dkgResultHash,
+                seed: genesisSeed,
+                result: dkgResult,
+              })
             })
 
             it("should register a candidate group", async () => {
@@ -1259,7 +1254,7 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("with misbehaved members", async () => {
             let tx: ContractTransaction
-            let dkgResult: DkgResult
+            let dkgResult: DKG.ResultStruct
             let dkgResultHash: string
 
             context(
@@ -1287,18 +1282,11 @@ describe("RandomBeacon - Group Creation", () => {
                 })
 
                 it("should succeed with misbehaved members", async () => {
-                  await expect(tx)
-                    .to.emit(randomBeacon, "DkgResultSubmitted")
-                    .withArgs(
-                      dkgResultHash,
-                      genesisSeed,
-                      dkgResult.submitterMemberIndex,
-                      dkgResult.groupPubKey,
-                      dkgResult.misbehavedMembersIndices,
-                      dkgResult.signatures,
-                      dkgResult.signingMembersIndices,
-                      dkgResult.members
-                    )
+                  await expectDkgResultSubmittedEvent(tx, {
+                    resultHash: dkgResultHash,
+                    seed: genesisSeed,
+                    result: dkgResult,
+                  })
                 })
 
                 it("should correctly set a group members hash", async () => {
@@ -1380,18 +1368,11 @@ describe("RandomBeacon - Group Creation", () => {
           submitterIndex
         )
 
-        await expect(tx)
-          .to.emit(randomBeacon, "DkgResultSubmitted")
-          .withArgs(
-            dkgResultHash,
-            genesisSeed,
-            dkgResult.submitterMemberIndex,
-            dkgResult.groupPubKey,
-            dkgResult.misbehavedMembersIndices,
-            dkgResult.signatures,
-            dkgResult.signingMembersIndices,
-            dkgResult.members
-          )
+        await expectDkgResultSubmittedEvent(tx, {
+          resultHash: dkgResultHash,
+          seed: genesisSeed,
+          result: dkgResult,
+        })
 
         await restoreSnapshot()
       }
@@ -1416,7 +1397,7 @@ describe("RandomBeacon - Group Creation", () => {
 
   describe("approveDkgResult", async () => {
     // Just to make `approveDkgResult` call possible.
-    const stubDkgResult: DkgResult = {
+    const stubDkgResult: DKG.ResultStruct = {
       groupPubKey: blsData.groupPubKey,
       members: [1, 2, 3, 4],
       misbehavedMembersIndices: [],
@@ -1479,7 +1460,7 @@ describe("RandomBeacon - Group Creation", () => {
         context("with dkg result submitted", async () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
           let submitter: SignerWithAddress
           const submitterIndex = firstEligibleSubmitterIndex
 
@@ -1686,7 +1667,7 @@ describe("RandomBeacon - Group Creation", () => {
         context("when there was a challenged result before", async () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
 
           // First result is malicious and submitter is also malicious
           const maliciousSubmitter = firstEligibleSubmitterIndex
@@ -1946,7 +1927,7 @@ describe("RandomBeacon - Group Creation", () => {
           const startBlock: number = genesisTx.blockNumber
           await mineBlocksTo(startBlock + dkgTimeout - 1)
 
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
           ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
             randomBeacon,
             groupPublicKey,
@@ -2131,7 +2112,7 @@ describe("RandomBeacon - Group Creation", () => {
 
   describe("challengeDkgResult", async () => {
     // Just to make `challengeDkgResult` call possible.
-    const stubDkgResult: DkgResult = {
+    const stubDkgResult: DKG.ResultStruct = {
       groupPubKey: blsData.groupPubKey,
       members: [1, 2, 3, 4],
       misbehavedMembersIndices: [],
@@ -2193,7 +2174,7 @@ describe("RandomBeacon - Group Creation", () => {
 
         context("with invalid members hash submitted", async () => {
           let dkgResultHash: string
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
           let members: Operator[]
           let membersIds: number[]
 
@@ -2279,7 +2260,7 @@ describe("RandomBeacon - Group Creation", () => {
         context("with malicious dkg result submitted", async () => {
           let resultSubmissionBlock: number
           let dkgResultHash: string
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
           let submitter: SignerWithAddress
 
           before(async () => {
@@ -2459,7 +2440,7 @@ describe("RandomBeacon - Group Creation", () => {
             "with challenged result not matching the submitted one",
             async () => {
               it("should revert with 'Result under challenge is different than the submitted one'", async () => {
-                const modifiedDkgResult: DkgResult = { ...dkgResult }
+                const modifiedDkgResult: DKG.ResultStruct = { ...dkgResult }
                 const modifiedMembersHash = hashUint32Array(
                   dkgResult.members.splice(42, 1)
                 )
@@ -2479,7 +2460,7 @@ describe("RandomBeacon - Group Creation", () => {
           "with dkg result submitted with unrecoverable signatures",
           async () => {
             let dkgResultHash: string
-            let dkgResult: DkgResult
+            let dkgResult: DKG.ResultStruct
             let submitter: SignerWithAddress
             let tx: ContractTransaction
 
@@ -2546,7 +2527,7 @@ describe("RandomBeacon - Group Creation", () => {
         )
 
         context("with correct dkg result submitted", async () => {
-          let dkgResult: DkgResult
+          let dkgResult: DKG.ResultStruct
 
           before(async () => {
             await createSnapshot()
@@ -2578,7 +2559,7 @@ describe("RandomBeacon - Group Creation", () => {
     it("should enforce submission start offset", async () => {
       await createSnapshot()
 
-      let dkgResult: DkgResult
+      let dkgResult: DKG.ResultStruct
 
       const [genesisTx] = await genesis(randomBeacon)
       const startBlock = genesisTx.blockNumber
@@ -2771,8 +2752,10 @@ describe("RandomBeacon - Group Creation", () => {
   }
 })
 
-async function assertDkgResultCleanData(randomBeacon: RandomBeaconStub) {
-  const dkgData = await randomBeacon.getDkgData()
+async function assertDkgResultCleanData(randomBeacon: {
+  getDkgData: () => Promise<DKG.DataStructOutput>
+}) {
+  const dkgData: DKG.DataStructOutput = await randomBeacon.getDkgData()
 
   expect(
     dkgData.parameters.resultChallengePeriodLength,
