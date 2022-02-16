@@ -66,6 +66,8 @@ export const LINK = {
       "https://forum.keep.network/t/proposal-remove-incentives-for-the-keep-tbtc-pool/56",
     removeIncentivesForTBTCETHpool:
       "https://forum.keep.network/t/proposal-to-remove-incentives-for-tbtc-eth-pool/341",
+    repurposingKEEPETHLiquidityIncentives:
+      "https://forum.keep.network/t/repurposing-keep-eth-liquidity-incentives/387",
   },
   tbtcDapp: "https://dapp.tbtc.network",
   thresholdDapp: "https://dashboard.test.threshold.network/",
