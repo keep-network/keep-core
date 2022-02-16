@@ -10,6 +10,7 @@ import type {
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
+  RandomBeacon,
 } from "../typechain"
 import { registerOperators, Operator, OperatorID } from "./utils/operators"
 
@@ -33,11 +34,11 @@ const fixture = async () => {
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
-    deployment.randomBeacon as RandomBeaconStub,
+    contracts.randomBeacon as RandomBeacon,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await createGroup(contracts.randomBeacon as RandomBeaconStub, signers)
+  await createGroup(contracts.randomBeacon as RandomBeacon, signers)
 
   return { contracts, signers }
 }

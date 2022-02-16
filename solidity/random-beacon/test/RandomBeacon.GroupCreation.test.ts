@@ -34,6 +34,12 @@ const { to1e18 } = helpers.number
 const { keccak256 } = ethers.utils
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
+// FIXME: As a workaround for a bug https://github.com/dethcrypto/TypeChain/issues/601
+// we declare a new type instead of using `RandomBeaconStub & RandomBeacon` intersection.
+type RandomBeaconTest = RandomBeacon & {
+  getDkgData: () => Promise<DKG.DataStructOutput>
+}
+
 const fixture = async () => {
   const contracts = await testDeployment()
 
@@ -46,7 +52,7 @@ const fixture = async () => {
 
   const randomBeaconGovernance =
     contracts.randomBeaconGovernance as RandomBeaconGovernance
-  const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
+  const randomBeacon = contracts.randomBeacon as RandomBeaconTest
   const sortitionPool = contracts.sortitionPool as SortitionPool
   const staking = contracts.stakingStub as StakingStub
   const testToken = contracts.testToken as TestToken
@@ -76,21 +82,24 @@ describe("RandomBeacon - Group Creation", () => {
   let signers: Operator[]
 
   let randomBeaconGovernance: RandomBeaconGovernance
-  let randomBeacon: RandomBeaconStub & RandomBeacon
+  let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
   let staking: StakingStub
   let testToken: TestToken
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
+    let randomBeaconStub
     ;({
       randomBeaconGovernance,
-      randomBeacon,
+      randomBeacon: randomBeaconStub,
       sortitionPool,
       staking,
       testToken,
       signers,
     } = await waffle.loadFixture(fixture))
+
+    randomBeacon = randomBeaconStub as RandomBeaconTest
 
     // Fund DKG rewards pool to make testing of rewards possible.
     await fundDkgRewardsPool(to1e18(100))

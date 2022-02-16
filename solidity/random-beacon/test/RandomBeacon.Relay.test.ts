@@ -104,7 +104,7 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await createGroup(randomBeacon as RandomBeaconStub, members)
+        await createGroup(randomBeacon, members)
       })
 
       after(async () => {
@@ -281,7 +281,7 @@ describe("RandomBeacon - Relay", () => {
     before(async () => {
       await createSnapshot()
 
-      await createGroup(randomBeacon as RandomBeaconStub, members)
+      await createGroup(randomBeacon, members)
     })
 
     after(async () => {
@@ -361,7 +361,9 @@ describe("RandomBeacon - Relay", () => {
               await createSnapshot()
 
               // Simulate DKG is awaiting a seed.
-              await (randomBeacon as RandomBeaconStub).publicDkgLockState()
+              await (
+                randomBeacon as unknown as RandomBeaconStub
+              ).publicDkgLockState()
 
               tx = await randomBeacon
                 .connect(submitter)
@@ -397,7 +399,7 @@ describe("RandomBeacon - Relay", () => {
     before(async () => {
       await createSnapshot()
 
-      await createGroup(randomBeacon as RandomBeaconStub, members)
+      await createGroup(randomBeacon, members)
     })
 
     after(async () => {
@@ -597,7 +599,7 @@ describe("RandomBeacon - Relay", () => {
                 params.relayEntryHardTimeout
             )
 
-            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
+            await (randomBeacon as unknown as RandomBeaconStub).roughlyAddGroup(
               "0x01",
               hashUint32Array(membersIDs)
             )
@@ -628,7 +630,7 @@ describe("RandomBeacon - Relay", () => {
 
           it("should terminate the group", async () => {
             const isGroupTeminated = await (
-              randomBeacon as RandomBeaconStub
+              randomBeacon as unknown as RandomBeaconStub
             ).isGroupTerminated(0)
             expect(isGroupTeminated).to.be.equal(true)
           })
@@ -666,7 +668,7 @@ describe("RandomBeacon - Relay", () => {
             // perform any signing so their public key can be arbitrary bytes.
             // Also, that group is created just after the relay request is
             // made to ensure it is not selected for signing the original request.
-            await (randomBeacon as RandomBeaconStub).roughlyAddGroup(
+            await (randomBeacon as unknown as RandomBeaconStub).roughlyAddGroup(
               "0x01",
               hashUint32Array(membersIDs)
             )
@@ -679,7 +681,7 @@ describe("RandomBeacon - Relay", () => {
 
             const registry = await randomBeacon.getGroupsRegistry()
             const secondGroupLifetime = await (
-              randomBeacon as RandomBeaconStub
+              randomBeacon as unknown as RandomBeaconStub
             ).groupLifetimeOf(registry[1])
 
             // Expire second group
@@ -736,7 +738,7 @@ describe("RandomBeacon - Relay", () => {
 
         it("should terminate the group", async () => {
           const isGroupTeminated = await (
-            randomBeacon as RandomBeaconStub
+            randomBeacon as unknown as RandomBeaconStub
           ).isGroupTerminated(0)
           expect(isGroupTeminated).to.be.equal(true)
         })
@@ -768,7 +770,9 @@ describe("RandomBeacon - Relay", () => {
             )
 
             // Simulate DKG is awaiting a seed.
-            await (randomBeacon as RandomBeaconStub).publicDkgLockState()
+            await (
+              randomBeacon as unknown as RandomBeaconStub
+            ).publicDkgLockState()
 
             tx = await randomBeacon
               .connect(notifier)
@@ -815,7 +819,7 @@ describe("RandomBeacon - Relay", () => {
     before(async () => {
       await createSnapshot()
 
-      await createGroup(randomBeacon as RandomBeaconStub, members)
+      await createGroup(randomBeacon, members)
       await approveTestToken()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
@@ -846,7 +850,7 @@ describe("RandomBeacon - Relay", () => {
 
         it("should terminate the group", async () => {
           const isGroupTeminated = await (
-            randomBeacon as RandomBeaconStub
+            randomBeacon as unknown as RandomBeaconStub
           ).isGroupTerminated(0)
           expect(isGroupTeminated).to.be.equal(true)
         })
@@ -879,7 +883,9 @@ describe("RandomBeacon - Relay", () => {
             params.relayEntryHardTimeout
         )
 
-        await (randomBeacon as RandomBeaconStub).roughlyTerminateGroup(0)
+        await (
+          randomBeacon as unknown as RandomBeaconStub
+        ).roughlyTerminateGroup(0)
       })
 
       after(async () => {
@@ -1073,7 +1079,7 @@ describe("RandomBeacon - Relay", () => {
     before(async () => {
       await createSnapshot()
 
-      await createGroup(randomBeacon as RandomBeaconStub, members)
+      await createGroup(randomBeacon, members)
       group = await randomBeacon["getGroup(uint64)"](groupId)
     })
 
@@ -1774,9 +1780,9 @@ describe("RandomBeacon - Relay", () => {
           await createSnapshot()
 
           // Simulate group was terminated.
-          await (randomBeacon as RandomBeaconStub).roughlyTerminateGroup(
-            groupId
-          )
+          await (
+            randomBeacon as unknown as RandomBeaconStub
+          ).roughlyTerminateGroup(groupId)
         })
 
         after(async () => {

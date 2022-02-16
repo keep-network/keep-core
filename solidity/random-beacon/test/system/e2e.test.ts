@@ -69,7 +69,7 @@ describe("System -- e2e", () => {
     blsData.groupPubKey3,
   ]
 
-  let randomBeacon: RandomBeaconStub & RandomBeacon
+  let randomBeacon: RandomBeacon
   let testToken: TestToken
   let requester: SignerWithAddress
   let owner: SignerWithAddress
