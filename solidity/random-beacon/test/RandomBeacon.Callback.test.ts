@@ -185,7 +185,7 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon.updateRelayEntryParameters(
             params.relayRequestFee,
-            params.relayEntrySubmissionEligibilityDelay,
+            params.relayEntrySoftTimeout,
             params.relayEntryHardTimeout,
             40000
           )

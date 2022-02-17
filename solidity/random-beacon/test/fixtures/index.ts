@@ -28,13 +28,14 @@ export const dkgState = {
 
 export const params = {
   relayRequestFee: to1e18(100),
-  relayEntrySubmissionEligibilityDelay: 10,
+  relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
   groupCreationFrequency: 10,
   groupLifeTime: 1000,
   dkgResultChallengePeriodLength: 100,
-  dkgResultSubmissionEligibilityDelay: 10,
+  dkgResultSubmissionTimeout: 30,
+  dkgSubmitterPrecedencePeriodLength: 5,
   dkgResultSubmissionReward: to1e18(5),
   sortitionPoolUnlockingReward: to1e18(10),
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
@@ -157,7 +158,7 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
 
   await randomBeacon.updateRelayEntryParameters(
     params.relayRequestFee,
-    params.relayEntrySubmissionEligibilityDelay,
+    params.relayEntrySoftTimeout,
     params.relayEntryHardTimeout,
     params.callbackGasLimit
   )
@@ -179,7 +180,8 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
 
   await randomBeacon.updateDkgParameters(
     params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionEligibilityDelay
+    params.dkgResultSubmissionTimeout,
+    params.dkgSubmitterPrecedencePeriodLength
   )
 
   await randomBeacon.updateSlashingParameters(

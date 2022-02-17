@@ -185,14 +185,15 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
-        uint256 relayEntrySubmissionEligibilityDelay,
+        uint256 relayEntrySoftTimeout,
         uint256 relayEntryHardTimeout,
         uint256 callbackGasLimit
     );
 
     event DkgParametersUpdated(
         uint256 dkgResultChallengePeriodLength,
-        uint256 dkgResultSubmissionEligibilityDelay
+        uint256 dkgResultSubmissionTimeout,
+        uint256 dkgResultSubmitterPrecedencePeriodLength
     );
 
     event GroupCreationParametersUpdated(
@@ -342,11 +343,12 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
         dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(20);
+        dkg.setResultSubmissionTimeout(64 * 20); // TODO: Verify value
+        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
 
         relay.initSeedEntry();
         relay.setRelayRequestFee(200e18);
-        relay.setRelayEntrySubmissionEligibilityDelay(20);
+        relay.setRelayEntrySoftTimeout(64 * 20);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
@@ -380,27 +382,25 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _relayRequestFee New relay request fee
-    /// @param _relayEntrySubmissionEligibilityDelay New relay entry submission
+    /// @param _relayEntrySoftTimeout New relay entry submission
     ///        eligibility delay
     /// @param _relayEntryHardTimeout New relay entry hard timeout
     /// @param _callbackGasLimit New callback gas limit
     function updateRelayEntryParameters(
         uint256 _relayRequestFee,
-        uint256 _relayEntrySubmissionEligibilityDelay,
+        uint256 _relayEntrySoftTimeout,
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
         callbackGasLimit = _callbackGasLimit;
 
         relay.setRelayRequestFee(_relayRequestFee);
-        relay.setRelayEntrySubmissionEligibilityDelay(
-            _relayEntrySubmissionEligibilityDelay
-        );
+        relay.setRelayEntrySoftTimeout(_relayEntrySoftTimeout);
         relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
             _relayRequestFee,
-            _relayEntrySubmissionEligibilityDelay,
+            _relayEntrySoftTimeout,
             _relayEntryHardTimeout,
             callbackGasLimit
         );
@@ -428,24 +428,28 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     /// @notice Updates the values of DKG parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract. The caller is responsible for
+    ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultChallengePeriodLength New DKG result challenge period
+    /// @param _resultChallengePeriodLength New DKG result challenge period
     ///        length
-    /// @param _dkgResultSubmissionEligibilityDelay New DKG result submission
-    ///        eligibility delay
+    /// @param _resultSubmissionTimeout New DKG result submission timeout
+    /// @param _submitterPrecedencePeriodLength New submitter precedence period
+    ///        length
     function updateDkgParameters(
-        uint256 _dkgResultChallengePeriodLength,
-        uint256 _dkgResultSubmissionEligibilityDelay
+        uint256 _resultChallengePeriodLength,
+        uint256 _resultSubmissionTimeout,
+        uint256 _submitterPrecedencePeriodLength
     ) external onlyOwner {
-        dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
-        dkg.setResultSubmissionEligibilityDelay(
-            _dkgResultSubmissionEligibilityDelay
+        dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
+        dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
+        dkg.setSubmitterPrecedencePeriodLength(
+            _submitterPrecedencePeriodLength
         );
 
         emit DkgParametersUpdated(
-            dkgResultChallengePeriodLength(),
-            dkgResultSubmissionEligibilityDelay()
+            _resultChallengePeriodLength,
+            _resultSubmissionTimeout,
+            _submitterPrecedencePeriodLength
         );
     }
 
@@ -601,7 +605,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         as valid, pays reward to the approver, bans misbehaved group
     ///         members from the sortition pool rewards, and completes the group
     ///         creation by activating the candidate group. For the first
-    ///         `resultSubmissionEligibilityDelay` blocks after the end of the
+    ///         `submitterPrecedencePeriodLength` blocks after the end of the
     ///         challenge period can be called only by the DKG result submitter.
     ///         After that time, can be called by anyone.
     /// @param dkgResult Result to approve. Must match the submitted result
@@ -1052,35 +1056,18 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         return relay.relayRequestFee;
     }
 
-    /// @return The number of blocks it takes for a group member to become
-    ///         eligible to submit the relay entry. At first, there is only one
-    ///         member in the group eligible to submit the relay entry. Then,
-    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the relay entry at that moment. After
-    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible so that there are three group
-    ///         members eligible to submit the relay entry at that moment. This
-    ///         continues until all group members are eligible to submit the
-    ///         relay entry or until the relay entry is submitted. If all
-    ///         members became eligible to submit the relay entry and one more
-    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
-    ///         entry submitted, the group reaches soft timeout for submitting
-    ///         the relay entry and the slashing starts.
-    function relayEntrySubmissionEligibilityDelay()
-        external
-        view
-        returns (uint256)
-    {
-        return relay.relayEntrySubmissionEligibilityDelay;
+    /// @return Soft timeout in blocks for a group to submit the relay entry.
+    ///         All group members are eligible to submit the relay entry. If
+    ///         soft timeout is reached for submitting the relay entry
+    ///         the slashing starts.
+    function relayEntrySoftTimeout() external view returns (uint256) {
+        return relay.relayEntrySoftTimeout;
     }
 
     /// @return Hard timeout in blocks for a group to submit the relay entry.
-    ///         After all group members became eligible to submit the relay
-    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
-    ///         passed without relay entry submitted, all group members start
-    ///         getting slashed. The slashing amount increases linearly until
-    ///         the group submits the relay entry or until
+    ///         After the soft timeout passes without relay entry submitted,
+    ///         all group members start getting slashed. The slashing amount
+    ///         increases linearly until the group submits the relay entry or until
     ///         `relayEntryHardTimeout` is reached. When the hard timeout is
     ///         reached, each group member will get slashed for
     ///         `relayEntrySubmissionFailureSlashingAmount`.
@@ -1093,7 +1080,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         submitted, each group member gets slashed for
     ///         `relayEntrySubmissionFailureSlashingAmount`. If the relay entry
     ///         gets submitted after the soft timeout (see
-    ///         `relayEntrySubmissionEligibilityDelay` documentation), but
+    ///         `relayEntrySoftTimeout` documentation), but
     ///         before the hard timeout, each group member gets slashed
     ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
     ///         and the time passed since the soft deadline.
@@ -1124,28 +1111,24 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         return dkg.parameters.resultChallengePeriodLength;
     }
 
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the DKG result. At first, there is only one
-    ///         member in the group eligible to submit the DKG result. Then,
-    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the DKG result at that moment. After
-    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible to submit the DKG result so that
-    ///         there are three group members eligible to submit the DKG result
-    ///         at that moment. This continues until all group members are
-    ///         eligible to submit the DKG result or until the DKG result is
-    ///         submitted. If all members became eligible to submit the DKG
-    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
-    ///         without the DKG result submitted, DKG is considered as timed out
-    ///         and no DKG result for this group creation can be submitted
-    ///         anymore.
-    function dkgResultSubmissionEligibilityDelay()
+    /// @notice Timeout in blocks for a group to submit the DKG result.
+    ///         All members are eligible to submit the DKG result.
+    ///         If `dkgResultSubmissionTimeout` passes without the DKG result
+    ///         submitted, DKG is considered as timed out and no DKG result for
+    ///         this group creation can be submitted anymore.
+    function dkgResultSubmissionTimeout() public view returns (uint256) {
+        return dkg.parameters.resultSubmissionTimeout;
+    }
+
+    /// @notice Time during the DKG result approval stage when the submitter
+    ///         of the DKG result takes the precedence to approve the DKG result.
+    ///         After this time passes anyone can approve the DKG result.
+    function dkgSubmitterPrecedencePeriodLength()
         public
         view
         returns (uint256)
     {
-        return dkg.parameters.resultSubmissionEligibilityDelay;
+        return dkg.parameters.submitterPrecedencePeriodLength;
     }
 
     /// @notice Selects a new group of operators based on the provided seed.

@@ -59,7 +59,7 @@ describe("System -- e2e", () => {
   // same as in RandomBeacon constructor
   const relayRequestFee = to1e18(200)
   const relayEntryHardTimeout = 5760
-  const relayEntrySubmissionEligibilityDelay = 20
+  const relayEntrySoftTimeout = 20
   const callbackGasLimit = 56000
   const groupCreationFrequency = 5
   const groupLifetime = 403200
@@ -86,7 +86,7 @@ describe("System -- e2e", () => {
       .connect(owner)
       .updateRelayEntryParameters(
         relayRequestFee,
-        relayEntrySubmissionEligibilityDelay,
+        relayEntrySoftTimeout,
         relayEntryHardTimeout,
         callbackGasLimit
       )

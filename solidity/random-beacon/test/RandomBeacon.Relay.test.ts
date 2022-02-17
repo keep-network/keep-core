@@ -347,11 +347,7 @@ describe("RandomBeacon - Relay", () => {
             })
 
             it("should revert", async () => {
-              await mineBlocks(
-                constants.groupSize *
-                  params.relayEntrySubmissionEligibilityDelay +
-                  1
-              )
+              await mineBlocks(params.relayEntrySoftTimeout + 1)
               await expect(
                 randomBeacon
                   .connect(submitter)
@@ -468,14 +464,13 @@ describe("RandomBeacon - Relay", () => {
             // Let's assume we want to submit the relay entry after 75%
             // of the soft timeout period elapses. If so we need to
             // mine the following number of blocks:
-            // `groupSize * relayEntrySubmissionEligibilityDelay +
+            // `relayEntrySoftTimeout +
             // (0.75 * relayEntryHardTimeout)`. However, we need to
             // subtract one block because the relay entry submission
             // transaction will move the blockchain ahead by one block
             // due to the Hardhat auto-mine feature.
             await mineBlocks(
-              constants.groupSize *
-                params.relayEntrySubmissionEligibilityDelay +
+              params.relayEntrySoftTimeout +
                 0.75 * params.relayEntryHardTimeout -
                 1
             )
@@ -519,10 +514,7 @@ describe("RandomBeacon - Relay", () => {
       context("when the input params are invalid", () => {
         before(async () => {
           await createSnapshot()
-          await mineBlocks(
-            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
-              1
-          )
+          await mineBlocks(params.relayEntrySoftTimeout + 1)
         })
 
         after(async () => {
@@ -560,8 +552,7 @@ describe("RandomBeacon - Relay", () => {
       context("when a relay entry has timed out", () => {
         it("should revert", async () => {
           await mineBlocks(
-            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
-              params.relayEntryHardTimeout
+            params.relayEntrySoftTimeout + params.relayEntryHardTimeout
           )
 
           await expect(
@@ -595,8 +586,7 @@ describe("RandomBeacon - Relay", () => {
         await createSnapshot()
 
         await mineBlocks(
-          constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
-            params.relayEntryHardTimeout
+          params.relayEntrySoftTimeout + params.relayEntryHardTimeout
         )
       })
 
@@ -808,7 +798,7 @@ describe("RandomBeacon - Relay", () => {
         after(async () => {
           await restoreSnapshot()
 
-          // tokenStakingFake.seize.reset()
+          tokenStakingFake.seize.reset()
         })
 
         it("should succeed", async () => {
@@ -879,10 +869,10 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTeminated = await (
+          const isGroupTerminated = await (
             randomBeacon as unknown as RandomBeaconStub
           ).isGroupTerminated(0)
-          expect(isGroupTeminated).to.be.equal(true)
+          expect(isGroupTerminated).to.be.equal(true)
         })
 
         it("should call staking contract to seize the min stake", async () => {
@@ -909,8 +899,7 @@ describe("RandomBeacon - Relay", () => {
         await createSnapshot()
 
         await mineBlocks(
-          constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
-            params.relayEntryHardTimeout
+          params.relayEntrySoftTimeout + params.relayEntryHardTimeout
         )
 
         await (
@@ -962,7 +951,11 @@ describe("RandomBeacon - Relay", () => {
   })
 
   describe("getSlashingFactor", () => {
+    const submissionTimeout = 640
+    const hardTimeout = 100
+
     before(async () => {
+      await relayStub.setTimeouts(submissionTimeout, hardTimeout)
       await relayStub.setCurrentRequestStartBlock()
     })
 
@@ -976,9 +969,7 @@ describe("RandomBeacon - Relay", () => {
 
     context("when soft timeout has not been exceeded yet", () => {
       it("should return a slashing factor equal to zero", async () => {
-        await mineBlocks(
-          constants.groupSize * params.relayEntrySubmissionEligibilityDelay
-        )
+        await mineBlocks(submissionTimeout)
 
         expect(await relayStub.getSlashingFactor()).to.be.equal(0)
       })
@@ -986,15 +977,13 @@ describe("RandomBeacon - Relay", () => {
 
     context("when soft timeout has been exceeded by one block", () => {
       it("should return a correct slashing factor", async () => {
-        await mineBlocks(
-          constants.groupSize * params.relayEntrySubmissionEligibilityDelay + 1
-        )
+        await mineBlocks(submissionTimeout + 1)
 
         // We are exceeded the soft timeout by `1` block so this is the
         // `submissionDelay` factor. If so we can calculate the slashing factor
         // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
         // gives `1 * 1e18 / 100 = 10000000000000000` (1%).
-        expect(await relayStub.getSlashingFactor()).to.be.equal(
+        await expect(await relayStub.getSlashingFactor()).to.be.equal(
           BigNumber.from("10000000000000000")
         )
       })
@@ -1004,16 +993,13 @@ describe("RandomBeacon - Relay", () => {
       "when soft timeout has been exceeded by the number of blocks equal to the hard timeout",
       () => {
         it("should return a correct slashing factor", async () => {
-          await mineBlocks(
-            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
-              params.relayEntryHardTimeout
-          )
+          await mineBlocks(submissionTimeout + hardTimeout)
 
           // We are exceeded the soft timeout by `100` blocks so this is the
           // `submissionDelay` factor. If so we can calculate the slashing
           // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
           // gives `100 * 1e18 / 100 = 1000000000000000000` (100%).
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
+          await expect(await relayStub.getSlashingFactor()).to.be.equal(
             BigNumber.from("1000000000000000000")
           )
         })
@@ -1024,11 +1010,7 @@ describe("RandomBeacon - Relay", () => {
       "when soft timeout has been exceeded by the number of blocks bigger than the hard timeout",
       () => {
         it("should return a correct slashing factor", async () => {
-          await mineBlocks(
-            constants.groupSize * params.relayEntrySubmissionEligibilityDelay +
-              params.relayEntryHardTimeout +
-              1
-          )
+          await mineBlocks(submissionTimeout + hardTimeout + 1)
 
           // We are exceeded the soft timeout by a value bigger than the
           // hard timeout. In that case the maximum value (100%) of the slashing

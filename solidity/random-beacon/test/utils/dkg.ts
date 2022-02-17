@@ -41,7 +41,7 @@ export async function signAndSubmitCorrectDkgResult(
   seed: BigNumber,
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   membersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
@@ -51,14 +51,6 @@ export async function signAndSubmitCorrectDkgResult(
   members: number[]
   submitter: SignerWithAddress
 }> {
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(
-      ethers.utils.keccak256(groupPublicKey),
-      constants.groupSize
-    )
-  }
-
   const sortitionPool = (await ethers.getContractAt(
     "SortitionPool",
     await randomBeacon.sortitionPool()
@@ -85,7 +77,7 @@ export async function signAndSubmitArbitraryDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   groupMembersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
@@ -104,10 +96,6 @@ export async function signAndSubmitArbitraryDkgResult(
       numberOfSignatures
     )
 
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
-  }
   let membersHash = groupMembersHash
   if (!membersHash) {
     membersHash = hashDKGMembers(members, misbehavedIndices)
@@ -156,7 +144,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
@@ -172,11 +160,6 @@ export async function signAndSubmitUnrecoverableDkgResult(
     startBlock,
     numberOfSignatures
   )
-
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
-  }
 
   const signatureHexStrLength = 2 * 65
   const unrecoverableSignatures = `0x${"a".repeat(
