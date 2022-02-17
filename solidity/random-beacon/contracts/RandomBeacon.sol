@@ -254,11 +254,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     event DkgSeedTimedOut();
 
-    event CandidateGroupRegistered(bytes indexed groupPubKey);
-
-    event CandidateGroupRemoved(bytes indexed groupPubKey);
-
-    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
+    event GroupRegistered(uint64 indexed groupId, bytes indexed groupPubKey);
 
     event RelayEntryRequested(
         uint256 indexed requestId,
@@ -586,8 +582,6 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
-
-        groups.addCandidateGroup(dkgResult.groupPubKey, dkgResult.membersHash);
     }
 
     /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
@@ -623,7 +617,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             );
         }
 
-        groups.activateCandidateGroup();
+        groups.addGroup(dkgResult.groupPubKey, dkgResult.membersHash);
         dkg.complete();
     }
 
@@ -641,8 +635,6 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         address maliciousSubmitterAddresses = sortitionPool.getIDOperator(
             maliciousSubmitter
         );
-
-        groups.popCandidateGroup();
 
         address[] memory operatorWrapper = new address[](1);
         operatorWrapper[0] = maliciousSubmitterAddresses;

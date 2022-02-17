@@ -240,11 +240,10 @@ describe("Groups", () => {
 
     async function addGroups(start, numberOfGroups) {
       for (let i = start; i <= numberOfGroups; i++) {
-        await groups.addCandidateGroup(
+        await groups.addGroup(
           ethers.utils.hexlify(i),
           hashDKGMembers(members, noMisbehaved)
         )
-        await groups.activateCandidateGroup()
       }
     }
 

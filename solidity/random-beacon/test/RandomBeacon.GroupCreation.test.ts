@@ -267,7 +267,7 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         it("should succeed", async () => {
-          await expect(randomBeacon.genesis()).not.to.be.reverted
+          await expect(randomBeacon.genesis()).to.not.be.reverted
         })
       })
     })
@@ -826,106 +826,69 @@ describe("RandomBeacon - Group Creation", () => {
               })
             })
 
-            it("should register a candidate group", async () => {
+            it("should not register a group", async () => {
               const groupsRegistry = await randomBeacon.getGroupsRegistry()
 
-              expect(groupsRegistry).to.be.lengthOf(1)
-              expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+              expect(groupsRegistry).to.be.lengthOf(0)
+            })
 
-              const storedGroup = await randomBeacon["getGroup(bytes)"](
-                groupPublicKey
-              )
+            it("should not emit GroupRegistered event", async () => {
+              await expect(tx).not.to.emit(randomBeacon, "GroupRegistered")
+            })
 
-              expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-              expect(storedGroup.activationBlockNumber).to.be.equal(0)
-              expect(storedGroup.membersHash).to.be.equal(
-                hashUint32Array(dkgResult.members)
-              )
+            it("should not unlock the sortition pool", async () => {
+              expect(await sortitionPool.isLocked()).to.be.true
             })
           })
 
           context("with not enough signatures on the result", async () => {
-            it("should succeed", async () => {
+            let tx: ContractTransaction
+            let dkgResult: DKG.ResultStruct
+            let dkgResultHash: string
+
+            before(async () => {
               await createSnapshot()
+              ;({
+                transaction: tx,
+                dkgResult,
+                dkgResultHash,
+              } = await signAndSubmitArbitraryDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                signers,
+                startBlock,
+                noMisbehaved,
+                1,
+                undefined,
+                constants.groupThreshold - 1
+              ))
+            })
 
-              await expect(
-                signAndSubmitArbitraryDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  signers,
-                  startBlock,
-                  noMisbehaved,
-                  1,
-                  undefined,
-                  constants.groupThreshold - 1
-                )
-              ).to.not.be.reverted
-
+            after(async () => {
               await restoreSnapshot()
             })
-          })
 
-          it("should register a candidate group", async () => {
-            await createSnapshot()
+            it("should emit DkgResultSubmitted event", async () => {
+              await expectDkgResultSubmittedEvent(tx, {
+                resultHash: dkgResultHash,
+                seed: genesisSeed,
+                result: dkgResult,
+              })
+            })
 
-            const { dkgResult } = await signAndSubmitCorrectDkgResult(
-              randomBeacon,
-              groupPublicKey,
-              genesisSeed,
-              startBlock,
-              noMisbehaved
-            )
+            it("should not register a group", async () => {
+              const groupsRegistry = await randomBeacon.getGroupsRegistry()
 
-            const groupsRegistry = await randomBeacon.getGroupsRegistry()
+              expect(groupsRegistry).to.be.lengthOf(0)
+            })
 
-            expect(groupsRegistry).to.be.lengthOf(1)
-            expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+            it("should not emit GroupRegistered event", async () => {
+              await expect(tx).not.to.emit(randomBeacon, "GroupRegistered")
+            })
 
-            const storedGroup = await randomBeacon["getGroup(bytes)"](
-              groupPublicKey
-            )
-
-            expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-            expect(storedGroup.activationBlockNumber).to.be.equal(0)
-            expect(storedGroup.membersHash).to.be.equal(
-              hashUint32Array(dkgResult.members)
-            )
-
-            await restoreSnapshot()
-          })
-
-          it("should emit CandidateGroupRegistered event", async () => {
-            await createSnapshot()
-
-            const { transaction: tx } = await signAndSubmitCorrectDkgResult(
-              randomBeacon,
-              groupPublicKey,
-              genesisSeed,
-              startBlock,
-              noMisbehaved
-            )
-
-            await expect(tx)
-              .to.emit(randomBeacon, "CandidateGroupRegistered")
-              .withArgs(groupPublicKey)
-
-            await restoreSnapshot()
-          })
-
-          it("should not unlock the sortition pool", async () => {
-            await createSnapshot()
-
-            await signAndSubmitCorrectDkgResult(
-              randomBeacon,
-              groupPublicKey,
-              genesisSeed,
-              startBlock,
-              noMisbehaved
-            )
-
-            expect(await sortitionPool.isLocked()).to.be.true
-
-            await restoreSnapshot()
+            it("should not unlock the sortition pool", async () => {
+              expect(await sortitionPool.isLocked()).to.be.true
+            })
           })
 
           describe("submission eligibility verification", async () => {
@@ -1116,65 +1079,45 @@ describe("RandomBeacon - Group Creation", () => {
                 await restoreSnapshot()
               })
 
-              it("should register a candidate group", async () => {
-                await createSnapshot()
+              describe("group registration", async () => {
+                let tx: ContractTransaction
 
-                const { dkgResult } = await signAndSubmitCorrectDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  genesisSeed,
-                  startBlock,
-                  noMisbehaved
-                )
+                before(async () => {
+                  await createSnapshot()
+                  ;({ transaction: tx } = await signAndSubmitCorrectDkgResult(
+                    randomBeacon,
+                    groupPublicKey,
+                    genesisSeed,
+                    startBlock,
+                    noMisbehaved
+                  ))
+                })
 
-                const groupsRegistry = await randomBeacon.getGroupsRegistry()
+                after(async () => {
+                  await restoreSnapshot()
+                })
 
-                expect(groupsRegistry).to.be.lengthOf(1)
-                expect(groupsRegistry[0]).to.deep.equal(
-                  keccak256(groupPublicKey)
-                )
+                it("should not register a group", async () => {
+                  const groupsRegistry = await randomBeacon.getGroupsRegistry()
 
-                const storedGroup = await randomBeacon["getGroup(bytes)"](
-                  groupPublicKey
-                )
+                  expect(groupsRegistry).to.be.lengthOf(0)
+                })
 
-                expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
-                expect(storedGroup.activationBlockNumber).to.be.equal(0)
-                expect(storedGroup.membersHash).to.be.equal(
-                  hashUint32Array(dkgResult.members)
-                )
-
-                await restoreSnapshot()
-              })
-
-              it("should emit CandidateGroupRegistered event", async () => {
-                await createSnapshot()
-
-                const { transaction: tx } = await signAndSubmitCorrectDkgResult(
-                  randomBeacon,
-                  groupPublicKey,
-                  genesisSeed,
-                  startBlock,
-                  noMisbehaved
-                )
-
-                await expect(tx)
-                  .to.emit(randomBeacon, "CandidateGroupRegistered")
-                  .withArgs(groupPublicKey)
-
-                await restoreSnapshot()
+                it("should not emit GroupRegistered event", async () => {
+                  await expect(tx).not.to.emit(randomBeacon, "GroupRegistered")
+                })
               })
 
               describe("submission eligibility verification", async () => {
                 let submissionStartBlockNumber: number
 
-                before(async () => {
+                beforeEach(async () => {
                   await createSnapshot()
 
                   submissionStartBlockNumber = challengeBlockNumber
                 })
 
-                after(async () => {
+                afterEach(async () => {
                   await restoreSnapshot()
                 })
 
@@ -1250,65 +1193,47 @@ describe("RandomBeacon - Group Creation", () => {
                   })
                 })
               })
+
+              context("with misbehaved members", async () => {
+                let tx: ContractTransaction
+                let dkgResult: DKG.ResultStruct
+                let dkgResultHash: string
+
+                context(
+                  "when misbehaved members are in ascending order",
+                  async () => {
+                    const misbehavedIndices = [2, 9, 11, 30, 60, 64]
+
+                    before(async () => {
+                      await createSnapshot()
+                      ;({
+                        transaction: tx,
+                        dkgResult,
+                        dkgResultHash,
+                      } = await signAndSubmitCorrectDkgResult(
+                        randomBeacon,
+                        groupPublicKey,
+                        genesisSeed,
+                        startBlock,
+                        misbehavedIndices
+                      ))
+                    })
+
+                    after(async () => {
+                      await restoreSnapshot()
+                    })
+
+                    it("should emit DkgResultSubmitted", async () => {
+                      await expectDkgResultSubmittedEvent(tx, {
+                        resultHash: dkgResultHash,
+                        seed: genesisSeed,
+                        result: dkgResult,
+                      })
+                    })
+                  }
+                )
+              })
             })
-          })
-
-          context("with misbehaved members", async () => {
-            let tx: ContractTransaction
-            let dkgResult: DKG.ResultStruct
-            let dkgResultHash: string
-
-            context(
-              "when misbehaved members are in ascending order",
-              async () => {
-                const misbehavedIndices = [2, 9, 11, 30, 60, 64]
-
-                before(async () => {
-                  await createSnapshot()
-                  ;({
-                    transaction: tx,
-                    dkgResult,
-                    dkgResultHash,
-                  } = await signAndSubmitCorrectDkgResult(
-                    randomBeacon,
-                    groupPublicKey,
-                    genesisSeed,
-                    startBlock,
-                    misbehavedIndices
-                  ))
-                })
-
-                after(async () => {
-                  await restoreSnapshot()
-                })
-
-                it("should emit DkgResultSubmitted", async () => {
-                  await expectDkgResultSubmittedEvent(tx, {
-                    resultHash: dkgResultHash,
-                    seed: genesisSeed,
-                    result: dkgResult,
-                  })
-                })
-
-                it("should correctly set a group members hash", async () => {
-                  const storedGroup = await randomBeacon["getGroup(bytes)"](
-                    groupPublicKey
-                  )
-
-                  // misbehavedIndices: [2, 9, 11, 30, 60, 64]
-                  const expectedMembers = [...dkgResult.members]
-                  expectedMembers.splice(1, 1) // index -1
-                  expectedMembers.splice(7, 1) // index -2 (cause expectedMembers already shrinked)
-                  expectedMembers.splice(8, 1) // index -3
-                  expectedMembers.splice(26, 1) // index -4
-                  expectedMembers.splice(55, 1) // index -5
-                  expectedMembers.splice(58, 1) // index -6
-                  expect(storedGroup.membersHash).to.be.equal(
-                    hashUint32Array(expectedMembers)
-                  )
-                })
-              }
-            )
           })
         })
       })
@@ -1547,14 +1472,31 @@ describe("RandomBeacon - Group Creation", () => {
                 await assertDkgResultCleanData(randomBeacon)
               })
 
-              it("should activate a candidate group", async () => {
+              it("should register a group", async () => {
+                const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+                expect(groupsRegistry).to.be.lengthOf(1)
+                expect(groupsRegistry[0]).to.deep.equal(
+                  keccak256(groupPublicKey)
+                )
+
                 const storedGroup = await randomBeacon["getGroup(bytes)"](
                   groupPublicKey
                 )
 
-                expect(storedGroup.activationBlockNumber).to.be.equal(
+                expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+                expect(storedGroup.registrationBlockNumber).to.be.equal(
                   tx.blockNumber
                 )
+                expect(storedGroup.membersHash).to.be.equal(
+                  hashUint32Array(dkgResult.members)
+                )
+              })
+
+              it("should emit GroupRegistered event", async () => {
+                await expect(tx)
+                  .to.emit(randomBeacon, "GroupRegistered")
+                  .withArgs(0, groupPublicKey)
               })
 
               it("should reward the submitter with tokens from DKG rewards pool", async () => {
@@ -1569,12 +1511,6 @@ describe("RandomBeacon - Group Creation", () => {
                 expect(
                   currentSubmitterBalance.sub(initialSubmitterBalance)
                 ).to.be.equal(params.dkgResultSubmissionReward)
-              })
-
-              it("should emit GroupActivated event", async () => {
-                await expect(tx)
-                  .to.emit(randomBeacon, "GroupActivated")
-                  .withArgs(0, groupPublicKey)
               })
 
               it("should unlock the sortition pool", async () => {
@@ -1606,7 +1542,7 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               context("when the third party is eligible", async () => {
-                let tx: ContractTransaction
+                let tx: Promise<ContractTransaction>
                 let initialDkgRewardsPoolBalance: BigNumber
                 let initApproverBalance: BigNumber
 
@@ -1619,7 +1555,7 @@ describe("RandomBeacon - Group Creation", () => {
                   initApproverBalance = await testToken.balanceOf(
                     await thirdParty.getAddress()
                   )
-                  tx = await randomBeacon
+                  tx = randomBeacon
                     .connect(thirdParty)
                     .approveDkgResult(dkgResult)
                 })
@@ -1629,9 +1565,7 @@ describe("RandomBeacon - Group Creation", () => {
                 })
 
                 it("should succeed", async () => {
-                  await expect(tx)
-                    .to.emit(randomBeacon, "GroupActivated")
-                    .withArgs(0, groupPublicKey)
+                  await expect(tx).to.not.be.reverted
                 })
 
                 it("should pay the reward to the third party", async () => {
@@ -1762,14 +1696,29 @@ describe("RandomBeacon - Group Creation", () => {
                 .withArgs(dkgResultHash, await anotherSubmitter.getAddress())
             })
 
-            it("should activate a candidate group", async () => {
+            it("should register a group", async () => {
+              const groupsRegistry = await randomBeacon.getGroupsRegistry()
+
+              expect(groupsRegistry).to.be.lengthOf(1)
+              expect(groupsRegistry[0]).to.deep.equal(keccak256(groupPublicKey))
+
               const storedGroup = await randomBeacon["getGroup(bytes)"](
                 groupPublicKey
               )
 
-              expect(storedGroup.activationBlockNumber).to.be.equal(
+              expect(storedGroup.groupPubKey).to.be.equal(groupPublicKey)
+              expect(storedGroup.registrationBlockNumber).to.be.equal(
                 tx.blockNumber
               )
+              expect(storedGroup.membersHash).to.be.equal(
+                hashUint32Array(dkgResult.members)
+              )
+            })
+
+            it("should emit GroupRegistered event", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "GroupRegistered")
+                .withArgs(0, groupPublicKey)
             })
 
             it("should reward the submitter with tokens from DKG rewards pool", async () => {
@@ -1786,12 +1735,6 @@ describe("RandomBeacon - Group Creation", () => {
               ).to.be.equal(params.dkgResultSubmissionReward)
             })
 
-            it("should emit GroupActivated event", async () => {
-              await expect(tx)
-                .to.emit(randomBeacon, "GroupActivated")
-                .withArgs(0, groupPublicKey)
-            })
-
             it("should unlock the sortition pool", async () => {
               expect(await sortitionPool.isLocked()).to.be.false
             })
@@ -1800,7 +1743,7 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       context("with max periods duration", async () => {
-        let tx: ContractTransaction
+        let tx: Promise<ContractTransaction>
 
         before(async () => {
           await createSnapshot()
@@ -1817,7 +1760,7 @@ describe("RandomBeacon - Group Creation", () => {
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
 
-          tx = await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
+          tx = randomBeacon.connect(submitter).approveDkgResult(dkgResult)
         })
 
         after(async () => {
@@ -1826,10 +1769,8 @@ describe("RandomBeacon - Group Creation", () => {
 
         // Just an explicit assertion to make sure transaction passes correctly
         // for max periods duration.
-        it("should emit DkgResultApproved event", async () => {
-          await expect(tx)
-            .to.emit(randomBeacon, "GroupActivated")
-            .withArgs(0, groupPublicKey)
+        it("should succeed", async () => {
+          await expect(tx).to.not.be.reverted
         })
 
         it("should unlock the sortition pool", async () => {
@@ -1973,7 +1914,7 @@ describe("RandomBeacon - Group Creation", () => {
       "when the balance of DKG rewards pool is smaller than the DKG submission reward",
       async () => {
         let dkgRewardsPoolBalance: BigNumber
-        let tx: ContractTransaction
+        let tx: Promise<ContractTransaction>
         let initApproverBalance: BigNumber
         let submitter: SignerWithAddress
 
@@ -2008,7 +1949,7 @@ describe("RandomBeacon - Group Creation", () => {
           )
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
-          tx = await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
+          tx = randomBeacon.connect(submitter).approveDkgResult(dkgResult)
         })
 
         after(async () => {
@@ -2016,9 +1957,7 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         it("should succeed", async () => {
-          await expect(tx)
-            .to.emit(randomBeacon, "GroupActivated")
-            .withArgs(0, groupPublicKey)
+          await expect(tx).to.not.be.reverted
         })
 
         it("should pay the approver the whole DKG rewards pool balance", async () => {
@@ -2380,18 +2319,6 @@ describe("RandomBeacon - Group Creation", () => {
                   )
               })
 
-              it("should remove a candidate group", async () => {
-                const groupsRegistry = await randomBeacon.getGroupsRegistry()
-
-                expect(groupsRegistry).to.be.lengthOf(0)
-              })
-
-              it("should emit CandidateGroupRemoved event", async () => {
-                await expect(tx)
-                  .to.emit(randomBeacon, "CandidateGroupRemoved")
-                  .withArgs(groupPublicKey)
-              })
-
               it("should not unlock the sortition pool", async () => {
                 expect(await sortitionPool.isLocked()).to.be.true
               })
@@ -2449,18 +2376,6 @@ describe("RandomBeacon - Group Creation", () => {
                     await thirdParty.getAddress(),
                     "Invalid group members"
                   )
-              })
-
-              it("should remove a candidate group", async () => {
-                const groupsRegistry = await randomBeacon.getGroupsRegistry()
-
-                expect(groupsRegistry).to.be.lengthOf(0)
-              })
-
-              it("should emit CandidateGroupRemoved event", async () => {
-                await expect(tx)
-                  .to.emit(randomBeacon, "CandidateGroupRemoved")
-                  .withArgs(groupPublicKey)
               })
 
               it("should not unlock the sortition pool", async () => {
@@ -2595,18 +2510,6 @@ describe("RandomBeacon - Group Creation", () => {
                   await thirdParty.getAddress(),
                   "validation reverted"
                 )
-            })
-
-            it("should remove a candidate group", async () => {
-              const groupsRegistry = await randomBeacon.getGroupsRegistry()
-
-              expect(groupsRegistry).to.be.lengthOf(0)
-            })
-
-            it("should emit CandidateGroupRemoved event", async () => {
-              await expect(tx)
-                .to.emit(randomBeacon, "CandidateGroupRemoved")
-                .withArgs(groupPublicKey)
             })
 
             it("should not unlock the sortition pool", async () => {
