@@ -138,7 +138,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     constructor(
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
-        EcdsaDkgValidator _EcdsaDkgValidator,
+        EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         address _walletOwner
     ) {
@@ -153,7 +153,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
-        dkg.init(_sortitionPool, _EcdsaDkgValidator);
+        dkg.init(_sortitionPool, _ecdsaDkgValidator);
         dkg.setSeedTimeout(1440); // ~6h assuming 15s block time // TODO: Verify value
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
