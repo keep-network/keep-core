@@ -22,7 +22,6 @@ export const constants = {
   minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
   governanceDelayStandard: 43200, // 12 hours
-  governanceDelayCritical: 1210000, // 2 weeks
 }
 
 export const dkgState = {
