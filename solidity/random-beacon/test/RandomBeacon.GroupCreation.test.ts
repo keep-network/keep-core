@@ -2,21 +2,9 @@
 
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
-import type { BigNumber, ContractTransaction, Signer } from "ethers"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { FakeContract } from "@defi-wonderland/smock"
+
 import blsData from "./data/bls"
 import { constants, dkgState, params, testDeployment } from "./fixtures"
-import type {
-  RandomBeacon,
-  RandomBeaconGovernance,
-  TestToken,
-  SortitionPool,
-  StakingStub,
-  IRandomBeaconStaking,
-} from "../typechain"
-import type { BeaconDkg as DKG } from "../typechain/RandomBeaconStub"
-
 import {
   genesis,
   signAndSubmitCorrectDkgResult,
@@ -26,9 +14,23 @@ import {
   hashDKGMembers,
   expectDkgResultSubmittedEvent,
 } from "./utils/dkg"
-import { registerOperators, Operator } from "./utils/operators"
+import { registerOperators } from "./utils/operators"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { fakeTokenStaking } from "./mocks/staking"
+
+import type { Operator } from "./utils/operators"
+import type { BeaconDkg as DKG } from "../typechain/RandomBeaconStub"
+import type { FakeContract } from "@defi-wonderland/smock"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type {
+  RandomBeacon,
+  RandomBeaconGovernance,
+  TestToken,
+  SortitionPool,
+  StakingStub,
+  IRandomBeaconStaking,
+} from "../typechain"
+import type { BigNumber, ContractTransaction, Signer } from "ethers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number

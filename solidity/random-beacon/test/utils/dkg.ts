@@ -3,12 +3,14 @@
 import { ethers } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
-import type { ContractTransaction } from "ethers"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { RandomBeacon, SortitionPool } from "../../typechain"
-import { Operator } from "./operators"
+
 // eslint-disable-next-line import/no-cycle
 import { selectGroup } from "./groups"
+
+import type { Operator } from "./operators"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { RandomBeacon, SortitionPool } from "../../typechain"
+import type { ContractTransaction } from "ethers"
 import type {
   BeaconDkg as DKG,
   DkgResultSubmittedEvent,

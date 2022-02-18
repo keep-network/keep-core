@@ -2,13 +2,15 @@
 
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
-import type { ContractTransaction } from "ethers"
+
 import blsData from "./data/bls"
 import { constants } from "./fixtures"
-import type { GroupsStub } from "../typechain"
 import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import { hashUint32Array } from "./utils/groups"
-import { Groups } from "../typechain/GroupsStub"
+
+import type { GroupsStub } from "../typechain"
+import type { ContractTransaction } from "ethers"
+import type { Groups } from "../typechain/GroupsStub"
 
 const { keccak256 } = ethers.utils
 

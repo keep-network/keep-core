@@ -8,10 +8,8 @@ import {
   getNamedAccounts,
 } from "hardhat"
 import { expect } from "chai"
-import { BigNumber, ContractTransaction } from "ethers"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { Address } from "hardhat-deploy/types"
-import { FakeContract } from "@defi-wonderland/smock"
+import { BigNumber } from "ethers"
+
 import blsData from "./data/bls"
 import {
   constants,
@@ -22,6 +20,11 @@ import {
 } from "./fixtures"
 import { createGroup, hashUint32Array } from "./utils/groups"
 import { signHeartbeatFailureClaim } from "./utils/heartbeat"
+import { registerOperators } from "./utils/operators"
+import { fakeTokenStaking } from "./mocks/staking"
+
+import type { Operator, OperatorID } from "./utils/operators"
+import type { FakeContract } from "@defi-wonderland/smock"
 import type {
   RandomBeacon,
   RandomBeaconStub,
@@ -33,8 +36,9 @@ import type {
   RandomBeaconGovernance,
   IRandomBeaconStaking,
 } from "../typechain"
-import { registerOperators, Operator, OperatorID } from "./utils/operators"
-import { fakeTokenStaking } from "./mocks/staking"
+import type { Address } from "hardhat-deploy/types"
+import type { ContractTransaction } from "ethers"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
@@ -1299,7 +1303,7 @@ describe("RandomBeacon - Relay", () => {
                         // arbitrary signatures.
                         64,
                         modifySignatures,
-                        (_) => newSigningMembersIndices
+                        () => newSigningMembersIndices
                       )
                     }
                   )

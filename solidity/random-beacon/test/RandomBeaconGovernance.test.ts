@@ -1,8 +1,9 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import type { Signer } from "ethers"
+
 import { randomBeaconDeployment } from "./fixtures"
 
+import type { Signer } from "ethers"
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot

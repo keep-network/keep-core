@@ -1,4 +1,5 @@
 import { smock } from "@defi-wonderland/smock"
+
 import type { FakeContract } from "@defi-wonderland/smock"
 import type { IRandomBeaconStaking, RandomBeacon } from "../../typechain"
 

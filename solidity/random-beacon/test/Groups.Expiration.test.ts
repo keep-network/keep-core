@@ -2,8 +2,10 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import type { GroupsStub } from "../typechain"
+
 import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
+
+import type { GroupsStub } from "../typechain"
 
 const fixture = async () => {
   const GroupsStub = await ethers.getContractFactory("GroupsStub")

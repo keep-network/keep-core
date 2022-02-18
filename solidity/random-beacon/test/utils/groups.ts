@@ -1,9 +1,12 @@
 import { helpers, ethers } from "hardhat"
-import type { BigNumber, BigNumberish } from "ethers"
-// eslint-disable-next-line import/no-cycle
-import { noMisbehaved, signAndSubmitArbitraryDkgResult } from "./dkg"
+
 import { constants, params } from "../fixtures"
 import blsData from "../data/bls"
+
+// eslint-disable-next-line import/no-cycle
+import { noMisbehaved, signAndSubmitArbitraryDkgResult } from "./dkg"
+
+import type { BigNumber, BigNumberish } from "ethers"
 import type { Operator } from "./operators"
 import type { RandomBeacon, SortitionPool } from "../../typechain"
 
@@ -47,6 +50,6 @@ export async function selectGroup(
   }))
 }
 
-export function hashUint32Array(arrayToHash: BigNumberish[]) {
+export function hashUint32Array(arrayToHash: BigNumberish[]): string {
   return keccak256(defaultAbiCoder.encode(["uint32[]"], [arrayToHash]))
 }

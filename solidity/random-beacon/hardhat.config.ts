@@ -1,4 +1,4 @@
-import { HardhatUserConfig } from "hardhat/config"
+import type { HardhatUserConfig } from "hardhat/config"
 
 import "@keep-network/hardhat-local-networks-config"
 import "@keep-network/hardhat-helpers"

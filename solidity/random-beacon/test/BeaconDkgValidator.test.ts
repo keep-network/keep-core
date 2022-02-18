@@ -5,12 +5,11 @@ import { ethers, helpers, getUnnamedAccounts, waffle } from "hardhat"
 import { expect } from "chai"
 
 import blsData from "./data/bls"
-
 import { constants } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
-import { Operator } from "./utils/operators"
 
+import type { Operator } from "./utils/operators"
 import type {
   SortitionPool,
   BeaconDkgValidator as DKGValidator,

@@ -1,5 +1,6 @@
-import { Contract } from "ethers"
 import { ethers, helpers, getNamedAccounts } from "hardhat"
+
+import type { Contract } from "ethers"
 import type {
   SortitionPool,
   BeaconDkgValidator as DKGValidator,
