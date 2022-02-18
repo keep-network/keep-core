@@ -75,6 +75,19 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
+  const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
+  const reimbursementPool = await ReimbursementPool.deploy()
+  await reimbursementPool.deployed()
+
+  const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+  console.log("deployer.address", deployer.address)
+
+  const contracts: DeployedContracts = { reimbursementPool }
+
+  return contracts
+}
+
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
 
