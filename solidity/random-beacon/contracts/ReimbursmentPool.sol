@@ -21,8 +21,8 @@ contract ReimbursementPool is Ownable {
     ///         Authorization can be granted and removed by the governance.
     mapping(address => bool) public isAuthorized;
 
-    /// @notice Static gas cost of submitting a transaction.
-    uint256 public staticGasCost;
+    /// @notice Static gas of submitting a transaction.
+    uint256 public staticGas;
 
     /// @notice Max gas price used to reimburse a transaction submitter. Protects
     ///         against malicious operator-miners.
@@ -44,7 +44,8 @@ contract ReimbursementPool is Ownable {
         uint256 gasPrice = tx.gasprice < maxGasPrice
             ? tx.gasprice
             : maxGasPrice;
-        uint256 refundAmount = (gasSpent + staticGasCost) * gasPrice;
+
+        uint256 refundAmount = (gasSpent + staticGas) * gasPrice;
 
         // solhint-disable-next-line avoid-low-level-calls
         (bool sent, ) = spender.call{value: refundAmount}("");
@@ -68,9 +69,9 @@ contract ReimbursementPool is Ownable {
 
     /// @notice Setting a static gas cost for executing a transaction. Can be set
     ///         by the governance only.
-    /// @param _staticGasCost Static gas cost.
-    function setStaticGasCost(uint256 _staticGasCost) external onlyOwner {
-        staticGasCost = _staticGasCost;
+    /// @param _staticGas Static gas cost.
+    function setStaticGas(uint256 _staticGas) external onlyOwner {
+        staticGas = _staticGas;
     }
 
     /// @notice Setting a max gas price for transactions. Can be set by the
