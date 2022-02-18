@@ -1045,194 +1045,179 @@ describe("RandomBeacon - Group Creation", () => {
             })
           })
 
-          context("with malicious dkg result submitted", async () => {
-            let dkgResult: DKG.ResultStruct
+          context("with dkg result challenged", async () => {
+            let challengeBlockNumber: number
 
             before(async () => {
               await createSnapshot()
               await mineBlocksTo(startBlock + constants.offchainDkgTime)
-              ;({ dkgResult } = await signAndSubmitArbitraryDkgResult(
+              const { dkgResult } = await signAndSubmitArbitraryDkgResult(
                 randomBeacon,
                 groupPublicKey,
                 // Mix signers to make the result malicious.
                 mixSigners(await selectGroup(sortitionPool, genesisSeed)),
                 startBlock,
                 noMisbehaved
-              ))
+              )
+
+              const tx = await randomBeacon.challengeDkgResult(dkgResult)
+              challengeBlockNumber = tx.blockNumber
             })
 
             after(async () => {
               await restoreSnapshot()
             })
 
-            context("with dkg result challenged", async () => {
-              let challengeBlockNumber: number
+            describe("group registration", async () => {
+              let tx: ContractTransaction
 
               before(async () => {
                 await createSnapshot()
-
-                const tx = await randomBeacon.challengeDkgResult(dkgResult)
-                challengeBlockNumber = tx.blockNumber
+                ;({ transaction: tx } = await signAndSubmitCorrectDkgResult(
+                  randomBeacon,
+                  groupPublicKey,
+                  genesisSeed,
+                  startBlock,
+                  noMisbehaved
+                ))
               })
 
               after(async () => {
                 await restoreSnapshot()
               })
 
-              describe("group registration", async () => {
-                let tx: ContractTransaction
+              it("should not register a group", async () => {
+                const groupsRegistry = await randomBeacon.getGroupsRegistry()
 
+                expect(groupsRegistry).to.be.lengthOf(0)
+              })
+
+              it("should not emit GroupRegistered event", async () => {
+                await expect(tx).not.to.emit(randomBeacon, "GroupRegistered")
+              })
+            })
+
+            describe("submission eligibility verification", async () => {
+              let submissionStartBlockNumber: number
+
+              beforeEach(async () => {
+                await createSnapshot()
+
+                submissionStartBlockNumber = challengeBlockNumber
+              })
+
+              afterEach(async () => {
+                await restoreSnapshot()
+              })
+
+              context("at the beginning of the submission period", async () => {
+                it("should succeed for the first member", async () => {
+                  await assertSubmissionSucceeds(1)
+                })
+
+                it("should succeed for the second member", async () => {
+                  await assertSubmissionSucceeds(2)
+                })
+
+                it("should succeed for the last member", async () => {
+                  await assertSubmissionSucceeds(constants.groupSize - 1)
+                })
+              })
+
+              context("at the end of the submission period", async () => {
                 before(async () => {
                   await createSnapshot()
-                  ;({ transaction: tx } = await signAndSubmitCorrectDkgResult(
-                    randomBeacon,
-                    groupPublicKey,
-                    genesisSeed,
-                    startBlock,
-                    noMisbehaved
-                  ))
+
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      params.dkgResultSubmissionTimeout -
+                      1
+                  )
                 })
 
                 after(async () => {
                   await restoreSnapshot()
                 })
 
-                it("should not register a group", async () => {
-                  const groupsRegistry = await randomBeacon.getGroupsRegistry()
-
-                  expect(groupsRegistry).to.be.lengthOf(0)
+                it("should succeed for the first member", async () => {
+                  await assertSubmissionSucceeds(1)
                 })
 
-                it("should not emit GroupRegistered event", async () => {
-                  await expect(tx).not.to.emit(randomBeacon, "GroupRegistered")
+                it("should succeed for the second member", async () => {
+                  await assertSubmissionSucceeds(2)
+                })
+
+                it("should succeed for the last member", async () => {
+                  await assertSubmissionSucceeds(constants.groupSize - 1)
                 })
               })
 
-              describe("submission eligibility verification", async () => {
-                let submissionStartBlockNumber: number
-
-                beforeEach(async () => {
+              context("after the submission period", async () => {
+                before(async () => {
                   await createSnapshot()
 
-                  submissionStartBlockNumber = challengeBlockNumber
+                  await mineBlocksTo(
+                    submissionStartBlockNumber +
+                      params.dkgResultSubmissionTimeout
+                  )
                 })
 
-                afterEach(async () => {
+                after(async () => {
                   await restoreSnapshot()
                 })
 
-                context(
-                  "at the beginning of the submission period",
-                  async () => {
-                    it("should succeed for the first member", async () => {
-                      await assertSubmissionSucceeds(1)
-                    })
+                it("should revert for the first member", async () => {
+                  await assertSubmissionReverts(1)
+                })
 
-                    it("should succeed for the second member", async () => {
-                      await assertSubmissionSucceeds(2)
-                    })
+                it("should revert for the second member", async () => {
+                  await assertSubmissionReverts(2)
+                })
 
-                    it("should succeed for the last member", async () => {
-                      await assertSubmissionSucceeds(constants.groupSize - 1)
-                    })
-                  }
-                )
+                it("should revert for the last member", async () => {
+                  await assertSubmissionReverts(constants.groupSize - 1)
+                })
+              })
+            })
 
-                context("at the end of the submission period", async () => {
+            context("with misbehaved members", async () => {
+              let tx: ContractTransaction
+              let dkgResult: DKG.ResultStruct
+              let dkgResultHash: string
+
+              context(
+                "when misbehaved members are in ascending order",
+                async () => {
+                  const misbehavedIndices = [2, 9, 11, 30, 60, 64]
+
                   before(async () => {
                     await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        params.dkgResultSubmissionTimeout -
-                        1
-                    )
+                    ;({
+                      transaction: tx,
+                      dkgResult,
+                      dkgResultHash,
+                    } = await signAndSubmitCorrectDkgResult(
+                      randomBeacon,
+                      groupPublicKey,
+                      genesisSeed,
+                      startBlock,
+                      misbehavedIndices
+                    ))
                   })
 
                   after(async () => {
                     await restoreSnapshot()
                   })
 
-                  it("should succeed for the first member", async () => {
-                    await assertSubmissionSucceeds(1)
-                  })
-
-                  it("should succeed for the second member", async () => {
-                    await assertSubmissionSucceeds(2)
-                  })
-
-                  it("should succeed for the last member", async () => {
-                    await assertSubmissionSucceeds(constants.groupSize - 1)
-                  })
-                })
-
-                context("after the submission period", async () => {
-                  before(async () => {
-                    await createSnapshot()
-
-                    await mineBlocksTo(
-                      submissionStartBlockNumber +
-                        params.dkgResultSubmissionTimeout
-                    )
-                  })
-
-                  after(async () => {
-                    await restoreSnapshot()
-                  })
-
-                  it("should revert for the first member", async () => {
-                    await assertSubmissionReverts(1)
-                  })
-
-                  it("should revert for the second member", async () => {
-                    await assertSubmissionReverts(2)
-                  })
-
-                  it("should revert for the last member", async () => {
-                    await assertSubmissionReverts(constants.groupSize - 1)
-                  })
-                })
-              })
-
-              context("with misbehaved members", async () => {
-                let tx: ContractTransaction
-                let dkgResult: DKG.ResultStruct
-                let dkgResultHash: string
-
-                context(
-                  "when misbehaved members are in ascending order",
-                  async () => {
-                    const misbehavedIndices = [2, 9, 11, 30, 60, 64]
-
-                    before(async () => {
-                      await createSnapshot()
-                      ;({
-                        transaction: tx,
-                        dkgResult,
-                        dkgResultHash,
-                      } = await signAndSubmitCorrectDkgResult(
-                        randomBeacon,
-                        groupPublicKey,
-                        genesisSeed,
-                        startBlock,
-                        misbehavedIndices
-                      ))
+                  it("should emit DkgResultSubmitted", async () => {
+                    await expectDkgResultSubmittedEvent(tx, {
+                      resultHash: dkgResultHash,
+                      seed: genesisSeed,
+                      result: dkgResult,
                     })
-
-                    after(async () => {
-                      await restoreSnapshot()
-                    })
-
-                    it("should emit DkgResultSubmitted", async () => {
-                      await expectDkgResultSubmittedEvent(tx, {
-                        resultHash: dkgResultHash,
-                        seed: genesisSeed,
-                        result: dkgResult,
-                      })
-                    })
-                  }
-                )
-              })
+                  })
+                }
+              )
             })
           })
         })
