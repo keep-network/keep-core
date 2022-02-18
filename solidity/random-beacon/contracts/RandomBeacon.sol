@@ -16,12 +16,13 @@ pragma solidity ^0.8.9;
 
 import "./api/IRandomBeacon.sol";
 import "./libraries/Authorization.sol";
-import "./libraries/DKG.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "./libraries/Heartbeat.sol";
+import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
+import {BeaconDkgValidator as DKGValidator} from "./BeaconDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";

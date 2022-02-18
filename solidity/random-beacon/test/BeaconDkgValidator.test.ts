@@ -11,7 +11,11 @@ import { selectGroup, hashUint32Array } from "./utils/groups"
 import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import { Operator } from "./utils/operators"
 
-import type { SortitionPool, DKGValidator, DKG } from "../typechain"
+import type {
+  SortitionPool,
+  BeaconDkgValidator as DKGValidator,
+  BeaconDkg as DKG,
+} from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
@@ -32,7 +36,7 @@ const fixture = async () => {
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const DKGValidator = await ethers.getContractFactory("DKGValidator")
+  const DKGValidator = await ethers.getContractFactory("BeaconDkgValidator")
   const dkgValidator = (await DKGValidator.deploy(
     sortitionPool.address
   )) as DKGValidator
@@ -44,7 +48,7 @@ const fixture = async () => {
   }
 }
 
-describe("DKGValidator", () => {
+describe("BeaconDkgValidator", () => {
   const dkgSeed: BigNumber = BigNumber.from(
     "31415926535897932384626433832795028841971693993751058209749445923078164062862"
   )

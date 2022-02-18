@@ -9,9 +9,10 @@ import type { RandomBeacon, SortitionPool } from "../../typechain"
 import { Operator } from "./operators"
 // eslint-disable-next-line import/no-cycle
 import { selectGroup } from "./groups"
-import { firstEligibleIndex } from "./submission"
-import { constants } from "../fixtures"
-import type { DKG, DkgResultSubmittedEvent } from "../../typechain/DKG"
+import type {
+  BeaconDkg as DKG,
+  DkgResultSubmittedEvent,
+} from "../../typechain/BeaconDkg"
 
 export const noMisbehaved = []
 

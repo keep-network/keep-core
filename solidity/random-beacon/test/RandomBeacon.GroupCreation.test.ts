@@ -15,7 +15,7 @@ import type {
   StakingStub,
   IRandomBeaconStaking,
 } from "../typechain"
-import type { DKG } from "../typechain/RandomBeaconStub"
+import type { BeaconDkg as DKG } from "../typechain/RandomBeaconStub"
 
 import {
   genesis,

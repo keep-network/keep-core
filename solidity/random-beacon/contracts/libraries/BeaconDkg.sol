@@ -17,9 +17,9 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "./BytesLib.sol";
-import "../DKGValidator.sol";
+import {BeaconDkgValidator as DKGValidator} from "../BeaconDkgValidator.sol";
 
-library DKG {
+library BeaconDkg {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
