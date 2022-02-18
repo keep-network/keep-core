@@ -7,8 +7,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const SortitionPool = await deployments.get("SortitionPool")
 
-  const DKGValidator = await deployments.deploy("DKGValidator", {
-    contract: "contracts/DKGValidator.sol:DKGValidator",
+  const EcdsaDkgValidator = await deployments.deploy("EcdsaDkgValidator", {
     from: deployer,
     args: [SortitionPool.address],
     log: true,
@@ -16,13 +15,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
-      name: "DKGValidator",
-      address: DKGValidator.address,
+      name: "EcdsaDkgValidator",
+      address: EcdsaDkgValidator.address,
     })
   }
 }
 
 export default func
 
-func.tags = ["DKGValidator"]
+func.tags = ["EcdsaDkgValidator"]
 func.dependencies = ["SortitionPool"]

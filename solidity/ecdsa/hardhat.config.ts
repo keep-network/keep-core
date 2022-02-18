@@ -22,6 +22,13 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["storageLayout"],
+        },
+      },
+    },
   },
   paths: {
     artifacts: "./build",
@@ -88,7 +95,10 @@ const config: HardhatUserConfig = {
     // },
   },
   dependencyCompiler: {
-    paths: ["@threshold-network/solidity-contracts/contracts/token/T.sol"],
+    paths: [
+      "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
+    ],
     keep: true,
   },
   contractSizer: {

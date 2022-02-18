@@ -24,10 +24,11 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
-import "./libraries/DKG.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "./libraries/EcdsaDkg.sol";
 
 /// @title DKG result validator
-/// @notice DKGValidator allows performing a full validation of DKG result,
+/// @notice EcdsaDkgValidator allows performing a full validation of DKG result,
 ///         including checking the format of fields in the result, declared
 ///         selected group members, and signatures of operators supporting the
 ///         result. The operator submitting the result should perform the
@@ -36,7 +37,7 @@ import "./libraries/DKG.sol";
 ///         network operators should perform validation of the submitted result
 ///         using a free contract call and challenge the result if the
 ///         validation fails.
-contract DKGValidator {
+contract EcdsaDkgValidator {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
@@ -78,7 +79,7 @@ contract DKGValidator {
     /// @return isValid true if the result is valid, false otherwise
     /// @return errorMsg validation error message; empty for a valid result
     function validate(
-        DKG.Result calldata result,
+        EcdsaDkg.Result calldata result,
         uint256 seed,
         uint256 startBlock
     ) external view returns (bool isValid, string memory errorMsg) {
@@ -107,7 +108,7 @@ contract DKGValidator {
     ///         ranges, and order of arrays.
     /// @return isValid true if the result is valid, false otherwise
     /// @return errorMsg validation error message; empty for a valid result
-    function validateFields(DKG.Result calldata result)
+    function validateFields(EcdsaDkg.Result calldata result)
         public
         view
         returns (bool isValid, string memory errorMsg)
@@ -186,7 +187,7 @@ contract DKGValidator {
     ///         result against group members selected by the sortition pool.
     /// @param seed seed used to start the DKG and select group members
     /// @return true if group members matches; false otherwise
-    function validateGroupMembers(DKG.Result calldata result, uint256 seed)
+    function validateGroupMembers(EcdsaDkg.Result calldata result, uint256 seed)
         public
         view
         returns (bool)
@@ -214,11 +215,10 @@ contract DKGValidator {
     ///         together with `validateGroupMembers`.
     /// @param startBlock DKG start block
     /// @return true if group members matches; false otherwise
-    function validateSignatures(DKG.Result calldata result, uint256 startBlock)
-        public
-        view
-        returns (bool)
-    {
+    function validateSignatures(
+        EcdsaDkg.Result calldata result,
+        uint256 startBlock
+    ) public view returns (bool) {
         bytes32 hash = keccak256(
             abi.encodePacked(
                 result.groupPubKey,
@@ -262,7 +262,7 @@ contract DKGValidator {
     /// @param result DKG result
     /// @return true if calculated result's group members hash matches with the
     /// one that is challenged.
-    function validateMembersHash(DKG.Result calldata result)
+    function validateMembersHash(EcdsaDkg.Result calldata result)
         public
         view
         returns (bool)
