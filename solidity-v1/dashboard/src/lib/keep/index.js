@@ -130,7 +130,7 @@ class Keep {
   /** @type {BaseContract} */
   [REWARDS_POOL_CONTRACT_NAME];
 
-  // /** @type {BaseContract} */
+  /** @type {BaseContract} */
   [THRESHOLD_STAKING_CONTRACT_NAME]
 
   initializeContracts = () => {
