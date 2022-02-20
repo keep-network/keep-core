@@ -12,10 +12,6 @@ const TokenAmount = ({
   symbolClassName = "h3 text-mint-100",
   symbolStyles = {},
   icon = null,
-  iconMeasurements = {
-    width: 32,
-    height: 32,
-  },
   iconProps = { className: "keep-outline keep-outline--mint-80" },
   withIcon = false,
   withMetricSuffix = false,
@@ -51,8 +47,6 @@ const TokenAmount = ({
   return (
     <div className={`token-amount ${wrapperClassName}`}>
       <CurrencyIcon
-        width={iconMeasurements.width}
-        height={iconMeasurements.height}
         {...iconProps}
         className={`token-amount__icon ${iconProps.className}`}
       />

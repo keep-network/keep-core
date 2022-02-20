@@ -57,7 +57,11 @@ const StakeOnThresholdComponent = ({
             amountClassName="h3 text-mint-100"
             symbolClassName="h3 text-mint-100"
             withIcon
-            iconMeasurements={{ width: 20, height: 20 }}
+            iconProps={{
+              className: "keep-outline keep-outline--mint-80",
+              width: 20,
+              height: 20,
+            }}
             withMetricSuffix
           />
           <Icons.ArrowsRight className={"ml-1 mr-1"} />
@@ -67,8 +71,11 @@ const StakeOnThresholdComponent = ({
             amountClassName="h3 text-black"
             symbolClassName="h3 text-black"
             withIcon
-            iconMeasurements={{ width: 20, height: 20 }}
-            iconProps={{ className: "" }}
+            iconProps={{
+              className: "",
+              width: 20,
+              height: 20,
+            }}
             withMetricSuffix
           />
         </div>
