@@ -30,7 +30,7 @@ import RewardsPool from "@keep-network/coverage-pools/artifacts/RewardsPool.json
 import TBTCV2Token from "@keep-network/tbtc-v2/artifacts/TBTC.json"
 import TBTCV2VendingMachine from "@keep-network/tbtc-v2/artifacts/VendingMachine.json"
 import RiskManagerV1 from "@keep-network/coverage-pools/artifacts/RiskManagerV1.json"
-import { default as ThresholdTokenStaking } from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json"
+import ThresholdTokenStaking from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json"
 
 export const KEEP_TOKEN_CONTRACT_NAME = "keepTokenContract"
 export const TOKEN_STAKING_CONTRACT_NAME = "stakingContract"
