@@ -1169,6 +1169,6 @@ export function* observeThresholdStakeKeepEvent() {
     thresholdStakingContract,
     "Staked",
     thresholdStakeKeepEventEmitted,
-    `TokenStaking.StakeKeep`
+    `ThresholdTokenStaking.StakeKeep`
   )
 }
