@@ -9,6 +9,8 @@ import ThresholdAuthorizationHistory from "../../components/threshold/ThresholdS
 import { MODAL_TYPES } from "../../constants/constants"
 import { useModal } from "../../hooks/useModal"
 import AuthorizeStakesBanner from "../../components/threshold/AuthorizeStakesBanner"
+import Tile from "../../components/Tile"
+import OnlyIf from "../../components/OnlyIf"
 
 const ThresholdApplicationPage = () => {
   const [selectedOperator, setOperator] = useState({})
@@ -16,6 +18,7 @@ const ThresholdApplicationPage = () => {
   const thresholdAuthState = useSelector(
     (state) => state.thresholdAuthorization
   )
+  console.log("thresholdAuthState", thresholdAuthState)
 
   const authorizeContract = useCallback(
     async (data) => {
@@ -105,7 +108,22 @@ const ThresholdApplicationPage = () => {
         isFetching={thresholdAuthState.isFetching}
         skeletonComponent={<DataTableSkeleton columns={4} subtitleWidth="0" />}
       >
-        <ThresholdAuthorizationHistory contracts={authorizationHistoryData} />
+        <OnlyIf condition={thresholdAuthState.authData.length > 0}>
+          <ThresholdAuthorizationHistory contracts={authorizationHistoryData} />
+        </OnlyIf>
+        <OnlyIf condition={thresholdAuthState.authData.length === 0}>
+          <Tile className={"tile threshold-staking__no-data-tile"}>
+            <div className={"text-center"}>
+              <h3 className={"threshold-staking__title text-grey-60 mb-1"}>
+                Threshold Staking
+              </h3>
+              <span className={"text-grey-60"}>
+                Authorize the staking contract{<br />}above to stake and earn
+                rewards.
+              </span>
+            </div>
+          </Tile>
+        </OnlyIf>
       </LoadingOverlay>
     </>
   )
