@@ -5,13 +5,16 @@ import NavLink from "../NavLink"
 
 const StakeReadyToBeStakedToT = ({
   sticky,
-  title = "",
+  numberOfStakes = 0,
   linkText = "Go to Applications →",
   messageId,
   onMessageClose,
 }) => {
   const icon = Icons.TTokenSymbol
   const content = <NavLink to={"/applications/threshold"}>{linkText}</NavLink>
+
+  const inflectionOfAStakeWord = numberOfStakes === 1 ? "stake" : "stakes"
+  const title = `You have ${numberOfStakes} ${inflectionOfAStakeWord} to stake on Threshold and earn rewards`
 
   return (
     <Message

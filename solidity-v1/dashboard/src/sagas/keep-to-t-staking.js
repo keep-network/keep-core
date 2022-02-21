@@ -180,16 +180,13 @@ function* processThresholdAuthorizationNotification(action) {
     (stake) => !stake.isStakedToT
   ).length
 
-  const inflectionOfAStakeWord =
-    stakesAvailableToStakeOnThreshold === 1 ? "stake" : "stakes"
-
   if (stakesAvailableToStakeOnThreshold > 0) {
     yield put(
       showMessage({
         messageType: messageType.STAKE_READY_TO_BE_STAKED_TO_T,
         messageProps: {
           sticky: true,
-          title: `You have ${stakesAvailableToStakeOnThreshold} ${inflectionOfAStakeWord} to stake on Threshold and earn rewards`,
+          numberOfStakes: stakesAvailableToStakeOnThreshold,
         },
       })
     )
