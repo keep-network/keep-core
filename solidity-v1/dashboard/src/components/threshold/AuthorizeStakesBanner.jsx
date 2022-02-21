@@ -7,8 +7,34 @@ import OnlyIf from "../OnlyIf"
 import { KEEP, ThresholdToken } from "../../utils/token.utils"
 import BigNumber from "bignumber.js"
 import { Keep } from "../../contracts"
+import List from "../List"
 
 const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
+  const listItems = [
+    {
+      icon: Icons.Rewards,
+      iconProps: {
+        className: "authorize-stakes-banner__base-info-icon",
+      },
+      label: "Earn rewards on your KEEP stake with Threshold.",
+      className: "mb-1",
+    },
+    {
+      icon: Icons.Money,
+      iconProps: { className: "authorize-stakes-banner__base-info-icon" },
+      label: `Exchange rate is 1 KEEP =
+                    ${ThresholdToken.displayAmountWithSymbol(
+                      Keep.keepToTStaking.toThresholdTokenAmount(
+                        KEEP.fromTokenUnit(1)
+                      ),
+                      3,
+                      (amount) =>
+                        new BigNumber(amount).toFormat(3, BigNumber.ROUND_DOWN)
+                    )}
+                    .`,
+    },
+  ]
+
   return (
     <Banner className="banner authorize-stakes-banner">
       <div className="banner__content-wrapper">
@@ -30,29 +56,9 @@ const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
           <Banner.Description>
             <div className={"flex row space-between"}>
               <div className={"authorize-stakes-banner__base-info"}>
-                <ul>
-                  <li className={"mb-1"}>
-                    <Icons.Rewards
-                      className={"authorize-stakes-banner__base-info-icon"}
-                    />{" "}
-                    Earn rewards on your KEEP stake with Threshold.
-                  </li>
-                  <li>
-                    <Icons.Money
-                      className={"authorize-stakes-banner__base-info-icon"}
-                    />{" "}
-                    Exchange rate is 1 KEEP ={" "}
-                    {ThresholdToken.displayAmountWithSymbol(
-                      Keep.keepToTStaking.toThresholdTokenAmount(
-                        KEEP.fromTokenUnit(1)
-                      ),
-                      3,
-                      (amount) =>
-                        new BigNumber(amount).toFormat(3, BigNumber.ROUND_DOWN)
-                    )}
-                    .
-                  </li>
-                </ul>
+                <List items={listItems}>
+                  <List.Content />
+                </List>
               </div>
               <div
                 className={"flex row authorize-stakes-banner__pre-node-info"}
