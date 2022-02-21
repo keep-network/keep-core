@@ -55,14 +55,14 @@ const ThresholdApplicationPage = () => {
     [openModal]
   )
 
-  const thresholdAuthData = useMemo(() => {
-    const thresholdData = thresholdAuthState.authData.filter((dataObj) => {
+  const stakesToAuthOrMoveToT = useMemo(() => {
+    const unauthorizedStakes = thresholdAuthState.authData.filter((dataObj) => {
       return !dataObj.isStakedToT || !dataObj.contracts[0].isAuthorized
     })
     if (!selectedOperator.operatorAddress) {
-      return thresholdData
+      return unauthorizedStakes
     }
-    return thresholdData.filter((data) =>
+    return unauthorizedStakes.filter((data) =>
       isSameEthAddress(data.operatorAddress, selectedOperator.operatorAddress)
     )
   }, [selectedOperator.operatorAddress, thresholdAuthState.authData])
@@ -90,13 +90,13 @@ const ThresholdApplicationPage = () => {
         }
       >
         <AuthorizeStakesBanner
-          numberOfStakesToAuthorize={thresholdAuthData.length}
+          numberOfStakesToAuthorize={stakesToAuthOrMoveToT.length}
         />
         <AuthorizeThresholdContracts
           filterDropdownOptions={thresholdAuthState.authData}
           onSelectOperator={setOperator}
           selectedOperator={selectedOperator}
-          data={thresholdAuthData}
+          data={stakesToAuthOrMoveToT}
           onAuthorizeBtn={authorizeContract}
           onStakeBtn={stakeToT}
         />
