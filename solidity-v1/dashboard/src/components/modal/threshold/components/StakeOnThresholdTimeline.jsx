@@ -8,6 +8,7 @@ const styles = {
     wrapper: { padding: "1rem" },
     title: {
       margin: "0",
+      fontSize: "1.125rem",
     },
     desc: {
       marginTop: "0.4rem",
@@ -130,7 +131,7 @@ export const StakeOnThresholdTimeline = ({ step }) => {
           className="text-black"
         >
           You will need to set up a PRE node in order to be eligible to earn
-          rewards...
+          rewards.
         </Banner.Description>
       </Banner>
     </div>

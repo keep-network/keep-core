@@ -14,7 +14,7 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
     <Tile>
       <DataTable
         data={contracts || []}
-        title="Threshold staking"
+        title="Threshold Staking"
         itemFieldId="contractAddress"
         noDataMessage="No authorization history."
         centered
@@ -98,7 +98,7 @@ const AuthorizationHistoryActions = ({ operatorAddress }) => {
       href={LINK.setUpPRE}
       rel="noopener noreferrer"
       target="_blank"
-      className={`btn btn-secondary btn-semi-sm`}
+      className={`btn btn-secondary btn-semi-sm mb-3`}
       style={{
         marginLeft: "auto",
         fontFamily: `"Work-Sans", sans-serif`,

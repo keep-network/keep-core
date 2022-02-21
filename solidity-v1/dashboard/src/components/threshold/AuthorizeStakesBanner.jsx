@@ -41,7 +41,7 @@ const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
         <Banner.Icon icon={Icons.EarnThresholdTokens} />
         <div className="authorize-stakes-banner__content">
           <Banner.Title className="h3 text-white banner__title--font-weight-600">
-            <p className="mb-1">
+            <h4 className="mb-1">
               Authorize your{" "}
               <OnlyIf condition={numberOfStakesToAuthorize > 0}>
                 {numberOfStakesToAuthorize}
@@ -51,11 +51,11 @@ const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
                 {"s"}
               </OnlyIf>{" "}
               below to get started staking on Threshold.
-            </p>
+            </h4>
           </Banner.Title>
           <Banner.Description>
             <div className={"flex row space-between"}>
-              <div className={"authorize-stakes-banner__base-info"}>
+              <div className={"authorize-stakes-banner__base-info mr-1"}>
                 <List items={listItems}>
                   <List.Content />
                 </List>

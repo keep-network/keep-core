@@ -18,7 +18,6 @@ const ThresholdApplicationPage = () => {
   const thresholdAuthState = useSelector(
     (state) => state.thresholdAuthorization
   )
-  console.log("thresholdAuthState", thresholdAuthState)
 
   const authorizeContract = useCallback(
     async (data) => {

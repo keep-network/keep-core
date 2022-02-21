@@ -34,12 +34,12 @@ const StakeOnThresholdComponent = ({
   return (
     <>
       <ModalBody>
-        <h3 className="mb-1">
+        <h3 className="stake-on-threshold-modal__body-title mb-1">
           {bodyTitle
             ? bodyTitle
             : transactionHash
             ? "Set up a PRE node now to be eligible for earning monthly rewards."
-            : "You are about to stake on threshold:"}
+            : "You're about to stake on Threshold:"}
         </h3>
         <OnlyIf condition={transactionHash}>
           <a
@@ -100,20 +100,24 @@ const StakeOnThresholdComponent = ({
         <List className="mt-2">
           <List.Content className="text-grey-50">
             <List.Item className="flex row center">
-              <span className="mr-a">Operator</span>
-              <span>{shortenAddress(operator)}</span>
+              <span className="mr-a text-grey-50">Operator</span>
+              <span className={"text-grey-70"}>{shortenAddress(operator)}</span>
             </List.Item>
             <List.Item className="flex row center">
-              <span className="mr-a">Beneficiary</span>
-              <span>{shortenAddress(beneficiary)}</span>
+              <span className="mr-a text-grey-50">Beneficiary</span>
+              <span className={"text-grey-70"}>
+                {shortenAddress(beneficiary)}
+              </span>
             </List.Item>
             <List.Item className="flex row center">
-              <span className="mr-a">Authorizer</span>
-              <span>{shortenAddress(authorizer)}</span>
+              <span className="mr-a text-grey-50">Authorizer</span>
+              <span className={"text-grey-70"}>
+                {shortenAddress(authorizer)}
+              </span>
             </List.Item>
             <List.Item className="flex row center">
-              <span className="mr-a">Exchange Rate</span>
-              <span>
+              <span className="mr-a text-grey-50">Exchange Rate</span>
+              <span className={"text-grey-70"}>
                 1 KEEP ={" "}
                 {ThresholdToken.displayAmountWithSymbol(
                   Keep.keepToTStaking.toThresholdTokenAmount(
@@ -151,7 +155,7 @@ const StakeOnThresholdComponent = ({
           }`}
           onClick={onClose}
         >
-          {transactionHash ? "Close" : "Cancel"}
+          {transactionHash ? "close" : "cancel"}
         </Button>
       </ModalFooter>
     </>

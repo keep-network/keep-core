@@ -4,11 +4,10 @@
   background-color: @color-brand-violet-80;
   border-radius: 0.5rem;
   margin-bottom: 1rem;
-  padding: 1.5rem 4.5rem;
+  padding: 0.5rem 3rem;
 
   .banner__content-wrapper {
     display: flex;
-    flex-wrap: wrap;
     justify-content: flex-start;
     align-items: center;
 
@@ -32,7 +31,7 @@
       .banner__title {
         &:extend(.h3);
         margin-bottom: 0;
-        margin-left: 5rem;
+        margin-left: 2rem;
         margin-right: auto;
       }
 
@@ -46,10 +45,11 @@
     &__content {
       color: @white;
       flex-grow: 1;
+      padding: 0.5rem;
 
       .banner__description {
         color: @white;
-        margin-left: 5rem;
+        margin-left: 2rem;
         font-size: 0.9rem;
       }
     }
@@ -84,6 +84,26 @@
     &__pre-node-info-link {
       color: @white;
       text-decoration: underline;
+    }
+  }
+
+  @media screen and (min-width: 1440px) {
+    padding: 1.5rem 4.5rem;
+    .banner__content-wrapper {
+      .banner__title {
+        &:extend(.h3);
+        margin-bottom: 0;
+        margin-left: 5rem;
+        margin-right: auto;
+      }
+    }
+
+    .authorize-stakes-banner {
+      &__content {
+        .banner__description {
+          margin-left: 5rem;
+        }
+      }
     }
   }
 }
