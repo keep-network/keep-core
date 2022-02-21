@@ -1,8 +1,4 @@
-import {
-  ContractsLoaded,
-  getContractDeploymentBlockNumber,
-  getThresholdTokenStakingAddress,
-} from "../contracts"
+import { ContractsLoaded, getContractDeploymentBlockNumber } from "../contracts"
 import { getAllOperatorStakedEventsByAuthorizer } from "./token-staking.service"
 import {
   AUTH_CONTRACTS_LABEL,
@@ -16,7 +12,8 @@ const fetchThresholdAuthorizationData = async (address) => {
   if (!address) {
     return []
   }
-  const thresholdTokenStakingContractAddress = getThresholdTokenStakingAddress()
+  const thresholdTokenStakingContractAddress =
+    Keep.thresholdStakingContract.address
   const { stakingContract, grantContract } = await ContractsLoaded
   const keepOperatorStakedEvents = await getAllOperatorStakedEventsByAuthorizer(
     address

@@ -1,4 +1,4 @@
-import { getThresholdTokenStakingAddress, Keep } from "../contracts"
+import { Keep } from "../contracts"
 import { actionChannel, call, put, take, takeEvery } from "redux-saga/effects"
 import { sendTransaction } from "./web3"
 import {
@@ -62,7 +62,8 @@ function* authorizeAndStakeKeepToT(action) {
   const { payload } = action
   const { operator, isAuthorized } = payload
   const { stakingContract } = yield getContractsContext()
-  const operatorContractAddress = getThresholdTokenStakingAddress()
+  const operatorContractAddress = Keep.thresholdStakingContract.address
+  console.log("adres byku 2", operatorContractAddress)
 
   if (!isAuthorized) {
     yield put(
