@@ -91,9 +91,7 @@ const ThresholdApplicationPage = () => {
           <DataTableSkeleton columns={4} subtitleWidth="40%" />
         }
       >
-        <AuthorizeStakesBanner
-          numberOfStakesToAuthorize={stakesToAuthOrMoveToT.length}
-        />
+        <AuthorizeStakesBanner stakesToAuthOrMoveToT={stakesToAuthOrMoveToT} />
         <AuthorizeThresholdContracts
           filterDropdownOptions={thresholdAuthState.authData}
           onSelectOperator={setOperator}

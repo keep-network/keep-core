@@ -9,7 +9,11 @@ import BigNumber from "bignumber.js"
 import { Keep } from "../../contracts"
 import List from "../List"
 
-const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
+const AuthorizeStakesBanner = ({ stakesToAuthOrMoveToT = [] }) => {
+  const numberOfStakesToAuthorize = stakesToAuthOrMoveToT.filter((stake) => {
+    return !stake.contracts[0].isAuthorized
+  })
+
   const listItems = [
     {
       icon: Icons.Rewards,
@@ -40,18 +44,25 @@ const AuthorizeStakesBanner = ({ numberOfStakesToAuthorize = 0 }) => {
       <div className="banner__content-wrapper">
         <Banner.Icon icon={Icons.EarnThresholdTokens} />
         <div className="authorize-stakes-banner__content">
-          <Banner.Title className="h3 text-white banner__title--font-weight-600">
-            <h4 className="mb-1">
-              Authorize your{" "}
-              <OnlyIf condition={numberOfStakesToAuthorize > 0}>
-                {numberOfStakesToAuthorize}
-              </OnlyIf>{" "}
-              stake
-              <OnlyIf condition={numberOfStakesToAuthorize !== 1}>
-                {"s"}
-              </OnlyIf>{" "}
-              below to get started staking on Threshold.
-            </h4>
+          <Banner.Title className="text-white banner__title--font-weight-600">
+            {numberOfStakesToAuthorize.length > 0 ? (
+              <h4 className="mb-1">
+                Authorize your{" "}
+                <OnlyIf condition={stakesToAuthOrMoveToT.length > 0}>
+                  {stakesToAuthOrMoveToT.length}
+                </OnlyIf>{" "}
+                stake
+                <OnlyIf condition={stakesToAuthOrMoveToT.length !== 1}>
+                  {"s"}
+                </OnlyIf>{" "}
+                below to get started staking on Threshold.
+              </h4>
+            ) : (
+              <h4 className="mb-1">
+                Manage your Threshold stake in the Threshold Staking table
+                below.
+              </h4>
+            )}
           </Banner.Title>
           <Banner.Description>
             <div className={"flex row space-between"}>
