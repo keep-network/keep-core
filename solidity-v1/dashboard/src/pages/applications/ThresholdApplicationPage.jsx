@@ -18,7 +18,7 @@ const ThresholdApplicationPage = () => {
   )
 
   const authorizeContract = useCallback(
-    async (data, awaitingPromise) => {
+    async (data) => {
       const {
         operatorAddress,
         authorizerAddress,
@@ -37,7 +37,7 @@ const ThresholdApplicationPage = () => {
   )
 
   const stakeToT = useCallback(
-    async (data, awaitingPromise) => {
+    async (data) => {
       const {
         operatorAddress,
         authorizerAddress,
