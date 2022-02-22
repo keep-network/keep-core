@@ -36,6 +36,7 @@ export function* subscribeToStakeKeepEvent() {
 
     const {
       returnValues: {
+        owner,
         authorizer,
         beneficiary,
         stakingProvider: operator,
@@ -48,6 +49,7 @@ export function* subscribeToStakeKeepEvent() {
         modalType: MODAL_TYPES.StakeOnThresholdConfirmed,
         modalProps: {
           transactionHash: event.transactionHash,
+          owner,
           authorizer,
           beneficiary,
           operator,

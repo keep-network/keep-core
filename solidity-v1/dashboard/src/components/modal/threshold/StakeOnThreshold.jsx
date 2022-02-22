@@ -47,7 +47,7 @@ const StakeOnThresholdComponent = ({
             href={LINK.setUpPRE}
             rel="noopener noreferrer"
             target="_blank"
-            className={`btn btn-primary btn-semi-md mb-1`}
+            className={`btn btn-primary btn-semi-md mb-3`}
           >
             {"set up PRE"} ↗
           </a>
