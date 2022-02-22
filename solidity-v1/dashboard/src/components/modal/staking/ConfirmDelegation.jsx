@@ -50,7 +50,7 @@ export const ConfirmDelegation = withBaseModal(
             delegate
           </Button>
           <Button className="btn btn-unstyled" onClick={onClose}>
-            cancel
+            Cancel
           </Button>
         </ModalFooter>
       </>

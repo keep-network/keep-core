@@ -139,7 +139,7 @@ const InitiateWithdrawComponent = ({
           }`}
           onClick={onClose}
         >
-          {transactionHash ? "close" : "cancel"}
+          {transactionHash ? "close" : "Cancel"}
         </Button>
       </ModalFooter>
     </>

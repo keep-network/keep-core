@@ -160,7 +160,7 @@ const StakeOnThresholdComponent = ({
           }`}
           onClick={onClose}
         >
-          {transactionHash ? "close" : "cancel"}
+          {transactionHash ? "close" : "Cancel"}
         </Button>
       </ModalFooter>
     </>
