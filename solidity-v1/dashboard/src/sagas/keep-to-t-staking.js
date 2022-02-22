@@ -25,6 +25,9 @@ import { thresholdAuthorizationService } from "../services/threshold-authorizati
 import { takeOnlyOnce } from "./effects"
 import { messageType } from "../components/Message"
 import { showMessage } from "../actions/messages"
+import { select } from "redux-saga-test-plan/matchers"
+import selectors from "./selectors"
+import { isSameEthAddress } from "../utils/general.utils"
 
 export function* subscribeToStakeKeepEvent() {
   const requestChan = yield actionChannel(THRESHOLD_STAKE_KEEP_EVENT_EMITTED)
@@ -43,6 +46,11 @@ export function* subscribeToStakeKeepEvent() {
         amount: tAmount,
       },
     } = event
+
+    const address = yield select(selectors.getUserAddress)
+    const isAddressedToCurrentAddress = isSameEthAddress(address, authorizer)
+
+    if (!isAddressedToCurrentAddress) return
 
     yield put(
       showModal({
