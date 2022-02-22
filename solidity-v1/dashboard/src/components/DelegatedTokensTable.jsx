@@ -139,7 +139,7 @@ const DelegatedTokensTable = ({
               />
             ) : (
               <div className="flex row center space-evenly">
-                <div>
+                <div className={"ml-a"}>
                   <UndelegateStakeButton
                     isInInitializationPeriod={
                       delegation.isInInitializationPeriod
@@ -158,7 +158,7 @@ const DelegatedTokensTable = ({
                     }
                   />
                 </div>
-                <div>
+                <div className={"ml-a"}>
                   <SubmitButton
                     className="btn btn-secondary btn-sm"
                     onSubmitAction={(awaitingPromise) =>

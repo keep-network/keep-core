@@ -5,11 +5,15 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalCloseButton,
-} from "../Modal"
-import { CovPoolTimeline } from "./components"
+} from "./Modal"
+import { CovPoolTimeline } from "./coverage-pools/components"
 
 export const withTimeline =
-  ({ title, step, withDescription }) =>
+  ({
+    title,
+    timelineComponent: TimelineComponent = CovPoolTimeline,
+    timelineProps = {},
+  }) =>
   (WrappedModalContent) => {
     return (props) => {
       return (
@@ -19,7 +23,7 @@ export const withTimeline =
             <ModalHeader>{title}</ModalHeader>
             <ModalCloseButton />
             <div className="modal-with-timeline__content-wrapper">
-              <CovPoolTimeline step={step} withDescription={withDescription} />
+              <TimelineComponent {...timelineProps} />
               <WrappedModalContent {...props} />
             </div>
           </ModalContent>

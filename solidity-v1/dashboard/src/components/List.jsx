@@ -52,12 +52,17 @@ const ListContent = ({ children, className = "" }) => {
 
 List.Content = ListContent
 
-List.DefaultItem = ({ className = "", icon: IconComponent, label }) => {
+List.DefaultItem = ({
+  className = "",
+  icon: IconComponent,
+  iconProps = {},
+  label,
+}) => {
   return (
     <List.Item className={className}>
       {IconComponent && (
         <>
-          <IconComponent />
+          <IconComponent {...iconProps} />
           &nbsp;
         </>
       )}

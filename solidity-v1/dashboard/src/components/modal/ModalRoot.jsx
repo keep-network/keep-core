@@ -42,6 +42,17 @@ import {
 } from "./coverage-pools"
 import { WithdrawGrantedTokens } from "./threshold/WithdrawGrantedTokens"
 import { GrantTokensWithdrawn } from "./threshold/GrantTokensWithdrawn"
+import {
+  AuthorizeAndStakeOnThreshold,
+  StakeOnThresholdConfirmed,
+  StakeOnThresholdWithoutAuthorization,
+} from "./threshold/StakeOnThreshold"
+import {
+  ThresholdAuthorizationLoadingModal,
+  ThresholdStakeConfirmationLoadingModal,
+} from "./threshold/ThresholdLoadingModal"
+import { AuthorizedButNotStakedToTWarning } from "./threshold/AuthorizedButNotStakedToTWarning"
+import { ContactYourGrantManagerWarning } from "./threshold/ContactYourGrantManagerWarning"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -82,6 +93,17 @@ const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.ConfirmCovPoolIncreaseWithdrawal]: ConfirmIncreaseWithdrawal,
   [MODAL_TYPES.IncreaseCovPoolWithdrawal]: IncreaseWithdrawal,
   [MODAL_TYPES.WithdrawGrantedTokens]: WithdrawGrantedTokens,
+  [MODAL_TYPES.AuthorizeAndStakeOnThreshold]: AuthorizeAndStakeOnThreshold,
+  [MODAL_TYPES.StakeOnThresholdWithoutAuthorization]:
+    StakeOnThresholdWithoutAuthorization,
+  [MODAL_TYPES.StakeOnThresholdConfirmed]: StakeOnThresholdConfirmed,
+  [MODAL_TYPES.ThresholdAuthorizationLoadingModal]:
+    ThresholdAuthorizationLoadingModal,
+  [MODAL_TYPES.ThresholdStakeConfirmationLoadingModal]:
+    ThresholdStakeConfirmationLoadingModal,
+  [MODAL_TYPES.AuthorizedButNotStakedToTWarningModal]:
+    AuthorizedButNotStakedToTWarning,
+  [MODAL_TYPES.ContactYourGrantManagerWarning]: ContactYourGrantManagerWarning,
 }
 
 const modalRoot = document.getElementById("modal-root")
