@@ -47,9 +47,8 @@ library BeaconDkg {
         uint256 startBlock;
         // Seed used to start DKG.
         uint256 seed;
-        // Time in blocks that should be added to result submission eligibility
-        // delay calculation. It is used in case of a challenge to adjust
-        // DKG timeout calculation.
+        // Time in blocks that should be added to result submission period calculation.
+        // It is used in case of a challenge to adjust DKG timeout calculation.
         uint256 resultSubmissionStartBlockOffset;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;

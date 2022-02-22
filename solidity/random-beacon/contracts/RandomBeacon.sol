@@ -385,8 +385,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _relayRequestFee New relay request fee
-    /// @param _relayEntrySoftTimeout New relay entry submission
-    ///        eligibility delay
+    /// @param _relayEntrySoftTimeout New relay entry submission soft timeout.
     /// @param _relayEntryHardTimeout New relay entry hard timeout
     /// @param _callbackGasLimit New callback gas limit
     function updateRelayEntryParameters(

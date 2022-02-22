@@ -583,7 +583,7 @@ contract RandomBeaconGovernance is Ownable {
     ///         process.
     /// @dev Can be called only by the contract owner.
     /// @param _newDkgResultSubmissionTimeout New DKG result submission
-    ///        eligibility delay in blocks
+    ///        timeout in blocks
     function beginDkgResultSubmissionTimeoutUpdate(
         uint256 _newDkgResultSubmissionTimeout
     ) external onlyOwner {
@@ -1230,8 +1230,8 @@ contract RandomBeaconGovernance is Ownable {
             );
     }
 
-    /// @notice Get the time remaining until the relay entry submission
-    ///         eligibility delay can be updated.
+    /// @notice Get the time remaining until the relay entry submission soft
+    ///         timeout can be updated.
     /// @return Remaining time in seconds.
     function getRemainingRelayEntrySoftTimeoutUpdateTime()
         external
@@ -1319,8 +1319,8 @@ contract RandomBeaconGovernance is Ownable {
             );
     }
 
-    /// @notice Get the time remaining until the DKG result submission
-    ///         eligibility delay can be updated.
+    /// @notice Get the time remaining until the DKG result submission timeout
+    ///         can be updated.
     /// @return Remaining time in seconds.
     function getRemainingDkgResultSubmissionTimeoutUpdateTime()
         external
