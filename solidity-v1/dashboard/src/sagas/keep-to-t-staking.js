@@ -63,7 +63,6 @@ function* authorizeAndStakeKeepToT(action) {
   const { operator, isAuthorized } = payload
   const { stakingContract } = yield getContractsContext()
   const operatorContractAddress = Keep.thresholdStakingContract.address
-  console.log("adres byku 2", operatorContractAddress)
 
   if (!isAuthorized) {
     yield put(

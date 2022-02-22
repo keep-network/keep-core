@@ -25,6 +25,7 @@ import {
   MODAL_TYPES,
   TOKEN_STAKING_ESCROW_CONTRACT_NAME,
 } from "../constants/constants"
+import { showModal } from "../actions/modal"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -99,6 +100,15 @@ function* resolveStake(action) {
     operatorAddress,
     authorizerAddress,
   } = action.payload
+
+  yield put(
+    showModal({
+      modalType: MODAL_TYPES.ContactYourGrantManagerWarning,
+      modalProps: {
+        bodyTitle: "Please, authorize in your wallet",
+      },
+    })
+  )
 
   const tokenAmount = KEEP.fromTokenUnit(amount).toString()
   const stakingContractAddress = stakingContract.options.address

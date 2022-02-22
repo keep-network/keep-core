@@ -1,4 +1,9 @@
-import { ContractsLoaded, getContractDeploymentBlockNumber } from "../contracts"
+import {
+  ContractsLoaded,
+  getContractDeploymentBlockNumber,
+  isCodeValid,
+  Web3Loaded,
+} from "../contracts"
 import { getAllOperatorStakedEventsByAuthorizer } from "./token-staking.service"
 import {
   AUTH_CONTRACTS_LABEL,
@@ -12,6 +17,9 @@ const fetchThresholdAuthorizationData = async (address) => {
   if (!address) {
     return []
   }
+
+  const web3 = await Web3Loaded
+  const { eth } = web3
   const thresholdTokenStakingContractAddress =
     Keep.thresholdStakingContract.address
   const { stakingContract, grantContract } = await ContractsLoaded
@@ -26,10 +34,9 @@ const fetchThresholdAuthorizationData = async (address) => {
   const keepToTStakedEvents =
     await Keep.keepToTStaking.getStakedEventsByOperator(authorizerOperators)
 
-  const operatorsStakedToT = keepToTStakedEvents.reduce((map, _) => {
-    map[_.returnValues.stakingProvider] = { ..._.returnValues }
-    return map
-  }, {})
+  const operatorsStakedToT = keepToTStakedEvents.map(
+    (event) => event.returnValues.stakingProvider
+  )
 
   const tokenGrantStakingEvents = (
     await grantContract.getPastEvents("TokenGrantStaked", {
@@ -38,10 +45,11 @@ const fetchThresholdAuthorizationData = async (address) => {
       ),
       filter: { operator: authorizerOperators },
     })
-  ).reduce((map, _) => {
-    map[_.returnValues.operator] = { ..._.returnValues }
-    return map
-  }, {})
+  ).map((event) => {
+    return {
+      operator: event.returnValues.operator,
+    }
+  })
 
   // Fetch all authorizer operators
   for (let i = 0; i < authorizerOperators.length; i++) {
@@ -67,6 +75,23 @@ const fetchThresholdAuthorizationData = async (address) => {
         )
         .call()
 
+    const isFromGrant = tokenGrantStakingEvents.some((tokenGrantStakingEvent) =>
+      isSameEthAddress(tokenGrantStakingEvent.operator, operatorAddress)
+    )
+
+    let isGranteeSet = false
+
+    if (isFromGrant) {
+      const grantOwnerAddress = await Keep.keepToTStaking.resolveOwner(
+        operatorAddress
+      )
+      // check if grantee is a contract
+      const code = await eth.getCode(grantOwnerAddress)
+      if (!isCodeValid(code)) {
+        isGranteeSet = true
+      }
+    }
+
     const authorizerOperator = {
       authorizerAddress: stakeParticipant.returnValues.authorizer,
       operatorAddress: operatorAddress,
@@ -79,10 +104,11 @@ const fetchThresholdAuthorizationData = async (address) => {
           isAuthorized: isThresholdTokenStakingContractAuthorized,
         },
       ],
-      isStakedToT: operatorsStakedToT.hasOwnProperty(operatorAddress),
-      isFromGrant: tokenGrantStakingEvents.hasOwnProperty(
-        tokenGrantStakingEvents.operator
+      isStakedToT: operatorsStakedToT.some((operatorStaked) =>
+        isSameEthAddress(operatorStaked, operatorAddress)
       ),
+      isFromGrant: isFromGrant,
+      isGranteeSet: isGranteeSet,
     }
 
     authorizationData.push(authorizerOperator)

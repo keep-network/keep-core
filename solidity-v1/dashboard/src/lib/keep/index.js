@@ -26,6 +26,7 @@ import contracts, {
   TBTCV2_TOKEN_CONTRACT_NAME,
   REWARDS_POOL_CONTRACT_NAME,
   THRESHOLD_STAKING_CONTRACT_NAME,
+  THRESHOLD_KEEP_STAKE_CONTRACT_NAME,
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
@@ -131,7 +132,10 @@ class Keep {
   [REWARDS_POOL_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [THRESHOLD_STAKING_CONTRACT_NAME]
+  [THRESHOLD_STAKING_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [THRESHOLD_KEEP_STAKE_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
@@ -191,6 +195,7 @@ class Keep {
     )
     this.keepToTStaking = new KeepToTStaking(
       this.thresholdStakingContract,
+      this.thresholdKeepStakeContract,
       this.web3
     )
   }

@@ -52,6 +52,7 @@ import {
   ThresholdStakeConfirmationLoadingModal,
 } from "./threshold/ThresholdLoadingModal"
 import { AuthorizedButNotStakedToTWarning } from "./threshold/AuthorizedButNotStakedToTWarning"
+import { ContactYourGrantManagerWarning } from "./threshold/ContactYourGrantManagerWarning"
 
 const MODAL_TYPE_TO_COMPONENT = {
   [MODAL_TYPES.MobileUsers]: MobileUsersModal,
@@ -102,6 +103,7 @@ const MODAL_TYPE_TO_COMPONENT = {
     ThresholdStakeConfirmationLoadingModal,
   [MODAL_TYPES.AuthorizedButNotStakedToTWarningModal]:
     AuthorizedButNotStakedToTWarning,
+  [MODAL_TYPES.ContactYourGrantManagerWarning]: ContactYourGrantManagerWarning,
 }
 
 const modalRoot = document.getElementById("modal-root")

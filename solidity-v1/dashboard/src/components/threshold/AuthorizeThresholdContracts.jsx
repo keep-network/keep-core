@@ -91,6 +91,8 @@ const AuthorizeThresholdContracts = ({
             beneficiaryAddress,
             isStakedToT,
             stakeAmount,
+            isFromGrant,
+            isGranteeSet,
           }) => (
             <AuthorizeActions
               key={contracts[0].contractName}
@@ -100,6 +102,8 @@ const AuthorizeThresholdContracts = ({
               authorizerAddress={authorizerAddress}
               beneficiaryAddress={beneficiaryAddress}
               stakeAmount={stakeAmount}
+              isFromGrant={isFromGrant}
+              isGranteeSet={isGranteeSet}
               onAuthorizeBtn={onAuthorizeBtn}
               onStakeBtn={onStakeBtn}
             />
@@ -128,6 +132,8 @@ const AuthorizeActions = ({
   beneficiaryAddress,
   stakeAmount,
   isAuthorized,
+  isFromGrant,
+  isGranteeSet,
   onAuthorizeBtn,
   onStakeBtn,
 }) => {
@@ -140,6 +146,8 @@ const AuthorizeActions = ({
           beneficiaryAddress,
           stakeAmount,
           contractName,
+          isFromGrant,
+          isGranteeSet,
         },
         awaitingPromise
       )
@@ -151,6 +159,8 @@ const AuthorizeActions = ({
       beneficiaryAddress,
       stakeAmount,
       onAuthorizeBtn,
+      isFromGrant,
+      isGranteeSet,
     ]
   )
 
@@ -164,6 +174,8 @@ const AuthorizeActions = ({
           stakeAmount,
           contractName,
           isAuthorized,
+          isFromGrant,
+          isGranteeSet,
         },
         awaitingPromise
       )
@@ -176,6 +188,8 @@ const AuthorizeActions = ({
       stakeAmount,
       isAuthorized,
       onStakeBtn,
+      isFromGrant,
+      isGranteeSet,
     ]
   )
 

@@ -31,6 +31,7 @@ import TBTCV2Token from "@keep-network/tbtc-v2/artifacts/TBTC.json"
 import TBTCV2VendingMachine from "@keep-network/tbtc-v2/artifacts/VendingMachine.json"
 import RiskManagerV1 from "@keep-network/coverage-pools/artifacts/RiskManagerV1.json"
 import ThresholdTokenStaking from "@threshold-network/solidity-contracts/artifacts/TokenStaking.json"
+import KeepStake from "@threshold-network/solidity-contracts/artifacts/KeepStake.json"
 
 export const KEEP_TOKEN_CONTRACT_NAME = "keepTokenContract"
 export const TOKEN_STAKING_CONTRACT_NAME = "stakingContract"
@@ -71,6 +72,7 @@ export const TBTCV2_TOKEN_CONTRACT_NAME = "tbtcV2Contract"
 export const TBTCV2_VENDING_MACHINE_CONTRACT_NAME = "vendingMachineContract"
 
 export const THRESHOLD_STAKING_CONTRACT_NAME = "thresholdStakingContract"
+export const THRESHOLD_KEEP_STAKE_CONTRACT_NAME = "thresholdKeepStakeContract"
 
 const contracts = {
   [KEEP_TOKEN_CONTRACT_NAME]: { artifact: KeepToken },
@@ -146,6 +148,9 @@ const contracts = {
   },
   [THRESHOLD_STAKING_CONTRACT_NAME]: {
     artifact: ThresholdTokenStaking,
+  },
+  [THRESHOLD_KEEP_STAKE_CONTRACT_NAME]: {
+    artifact: KeepStake,
   },
 }
 

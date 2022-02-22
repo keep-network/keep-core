@@ -26,14 +26,21 @@ const ThresholdApplicationPage = () => {
         authorizerAddress,
         beneficiaryAddress,
         stakeAmount,
+        isFromGrant,
+        isGranteeSet,
       } = data
-      openModal(MODAL_TYPES.AuthorizeAndStakeOnThreshold, {
-        keepAmount: stakeAmount,
-        operator: operatorAddress,
-        beneficiary: beneficiaryAddress,
-        authorizer: authorizerAddress,
-        isAuthorized: false,
-      })
+
+      if (isFromGrant && !isGranteeSet) {
+        openModal(MODAL_TYPES.ContactYourGrantManagerWarning)
+      } else {
+        openModal(MODAL_TYPES.AuthorizeAndStakeOnThreshold, {
+          keepAmount: stakeAmount,
+          operator: operatorAddress,
+          beneficiary: beneficiaryAddress,
+          authorizer: authorizerAddress,
+          isAuthorized: false,
+        })
+      }
     },
     [openModal]
   )
@@ -45,14 +52,21 @@ const ThresholdApplicationPage = () => {
         authorizerAddress,
         beneficiaryAddress,
         stakeAmount,
+        isFromGrant,
+        isGranteeSet,
       } = data
-      openModal(MODAL_TYPES.StakeOnThresholdWithoutAuthorization, {
-        keepAmount: stakeAmount,
-        operator: operatorAddress,
-        beneficiary: beneficiaryAddress,
-        authorizer: authorizerAddress,
-        isAuthorized: true,
-      })
+
+      if (isFromGrant && !isGranteeSet) {
+        openModal(MODAL_TYPES.ContactYourGrantManagerWarning)
+      } else {
+        openModal(MODAL_TYPES.StakeOnThresholdWithoutAuthorization, {
+          keepAmount: stakeAmount,
+          operator: operatorAddress,
+          beneficiary: beneficiaryAddress,
+          authorizer: authorizerAddress,
+          isAuthorized: true,
+        })
+      }
     },
     [openModal]
   )

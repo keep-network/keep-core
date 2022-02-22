@@ -278,6 +278,7 @@ export const MODAL_TYPES = {
     "ThresholdStakeConfirmationLoadingModal",
   AuthorizedButNotStakedToTWarningModal:
     "AuthorizedButNotStakedToTWarningModal",
+  ContactYourGrantManagerWarning: "ContactYourGrantManagerWarning",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {
