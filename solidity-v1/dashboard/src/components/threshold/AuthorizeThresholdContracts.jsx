@@ -71,10 +71,10 @@ const AuthorizeThresholdContracts = ({
         <Column
           header="contract"
           field=""
-          renderContent={({ contracts, operatorAddress }) => (
+          renderContent={({ contract, operatorAddress }) => (
             <AuthorizeContractItem
-              key={contracts[0].contractName}
-              {...contracts[0]}
+              key={contract.contractName}
+              {...contract}
               operatorAddress={operatorAddress}
             />
           )}
@@ -85,7 +85,7 @@ const AuthorizeThresholdContracts = ({
           tdStyles={{ textAlign: "right" }}
           field=""
           renderContent={({
-            contracts,
+            contract,
             operatorAddress,
             authorizerAddress,
             beneficiaryAddress,
@@ -95,8 +95,8 @@ const AuthorizeThresholdContracts = ({
             isGranteeSet,
           }) => (
             <AuthorizeActions
-              key={contracts[0].contractName}
-              {...contracts[0]}
+              key={contract.contractName}
+              {...contract}
               isStakedToT={isStakedToT}
               operatorAddress={operatorAddress}
               authorizerAddress={authorizerAddress}

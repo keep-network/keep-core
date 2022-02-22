@@ -73,7 +73,7 @@ const ThresholdApplicationPage = () => {
 
   const stakesToAuthOrMoveToT = useMemo(() => {
     const unauthorizedStakes = thresholdAuthState.authData.filter((dataObj) => {
-      return !dataObj.isStakedToT || !dataObj.contracts[0].isAuthorized
+      return !dataObj.isStakedToT || !dataObj.contract.isAuthorized
     })
     if (!selectedOperator.operatorAddress) {
       return unauthorizedStakes
@@ -86,12 +86,12 @@ const ThresholdApplicationPage = () => {
   const authorizationHistoryData = useMemo(() => {
     if (!selectedOperator.operatorAddress)
       return thresholdAuthState.authData
-        .filter((authData) => authData.contracts[0].isAuthorized)
+        .filter((authData) => authData.contract.isAuthorized)
         .map(toAuthHistoryData)
     return thresholdAuthState.authData
       .filter(
-        ({ operatorAddress, contracts }) =>
-          contracts[0].isAuthorized &&
+        ({ operatorAddress, contract }) =>
+          contract.isAuthorized &&
           isSameEthAddress(operatorAddress, selectedOperator.operatorAddress)
       )
       .map(toAuthHistoryData)
@@ -142,7 +142,7 @@ const ThresholdApplicationPage = () => {
 
 const toAuthHistoryData = (authData) => ({
   ...authData,
-  ...authData.contracts[0],
+  ...authData.contract,
 })
 
 ThresholdApplicationPage.route = {

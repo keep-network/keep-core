@@ -94,13 +94,11 @@ const fetchThresholdAuthorizationData = async (address) => {
       operatorAddress: operatorAddress,
       beneficiaryAddress: stakeParticipant.returnValues.beneficiary,
       stakeAmount: stakeAmount,
-      contracts: [
-        {
-          contractName: AUTH_CONTRACTS_LABEL.THRESHOLD_TOKEN_STAKING,
-          operatorContractAddress: thresholdTokenStakingContractAddress,
-          isAuthorized: isThresholdTokenStakingContractAuthorized,
-        },
-      ],
+      contract: {
+        contractName: AUTH_CONTRACTS_LABEL.THRESHOLD_TOKEN_STAKING,
+        operatorContractAddress: thresholdTokenStakingContractAddress,
+        isAuthorized: isThresholdTokenStakingContractAuthorized,
+      },
       isStakedToT: operatorsStakedToT.hasOwnProperty(operatorAddress),
       isFromGrant: isFromGrant,
       isGranteeSet: isGranteeSet,

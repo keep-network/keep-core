@@ -6,7 +6,6 @@ import {
   THRESHOLD_STAKED_TO_T,
 } from "../actions"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
-import { AUTH_CONTRACTS_LABEL } from "../constants/constants"
 
 const initialState = {
   authData: [],
@@ -65,22 +64,14 @@ const authorizeThresholdContract = (authData, { operatorAddress }) => {
     return authData
   }
 
-  const { indexInArray: contractIndexInArray, obj: obsoleteContract } =
-    findIndexAndObject(
-      "contractName",
-      AUTH_CONTRACTS_LABEL.THRESHOLD_TOKEN_STAKING,
-      obsoleteOperator.contracts
-    )
-
-  const updatedContracts = [...obsoleteOperator.contracts]
-  updatedContracts[contractIndexInArray] = {
-    ...obsoleteContract,
+  const updatedContracts = {
+    ...obsoleteOperator.contract,
     isAuthorized: true,
   }
   const updatedOperators = [...authData]
   updatedOperators[operatorIndexInArray] = {
     ...obsoleteOperator,
-    contracts: updatedContracts,
+    contract: updatedContracts,
   }
 
   return updatedOperators

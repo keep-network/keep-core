@@ -11,7 +11,7 @@ import List from "../List"
 
 const AuthorizeStakesBanner = ({ stakesToAuthOrMoveToT = [] }) => {
   const numberOfStakesToAuthorize = stakesToAuthOrMoveToT.filter((stake) => {
-    return !stake.contracts[0].isAuthorized
+    return !stake.contract.isAuthorized
   })
 
   const listItems = [
