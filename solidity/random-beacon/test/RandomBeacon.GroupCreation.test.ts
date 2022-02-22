@@ -2748,7 +2748,7 @@ async function assertDkgResultCleanData(randomBeacon: {
 
   expect(
     dkgData.parameters.resultSubmissionTimeout,
-    "unexpected resultSubmissionEligibilityDelay"
+    "unexpected resultSubmissionTimeout"
   ).to.eq(params.dkgResultSubmissionTimeout)
 
   expect(
