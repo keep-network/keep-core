@@ -896,6 +896,42 @@ describe("RandomBeacon - Relay", () => {
             .withArgs(0, to1e18(100000), membersAddresses)
         })
       })
+
+      context("when token staking seize call fails", async () => {
+        let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+        let tx: Promise<ContractTransaction>
+
+        before(async () => {
+          await createSnapshot()
+
+          tokenStakingFake = await fakeTokenStaking(randomBeacon)
+          tokenStakingFake.seize.reverts()
+
+          const notifierSignature = await bls.sign(
+            notifier.address,
+            blsData.secretKey
+          )
+          tx = randomBeacon
+            .connect(notifier)
+            .reportUnauthorizedSigning(notifierSignature, 0, membersIDs)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+
+          tokenStakingFake.seize.reset()
+        })
+
+        it("should succeed", async () => {
+          await expect(tx).to.not.be.reverted
+        })
+
+        it("should emit UnauthorizedSigningSlashingFailed", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "UnauthorizedSigningSlashingFailed")
+            .withArgs(0, to1e18(100000), membersAddresses)
+        })
+      })
     })
 
     context("when group is terminated", () => {

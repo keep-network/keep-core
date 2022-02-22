@@ -304,6 +304,12 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         address[] groupMembers
     );
 
+    event UnauthorizedSigningSlashingFailed(
+        uint64 indexed groupId,
+        uint256 unauthorizedSigningSlashingAmount,
+        address[] groupMembers
+    );
+
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
@@ -899,18 +905,29 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             groupMembers
         );
 
-        emit UnauthorizedSigningSlashed(
-            groupId,
-            unauthorizedSigningSlashingAmount,
-            groupMembersAddresses
-        );
-
-        staking.seize(
-            unauthorizedSigningSlashingAmount,
-            unauthorizedSigningNotificationRewardMultiplier,
-            msg.sender,
-            groupMembersAddresses
-        );
+        try
+            staking.seize(
+                unauthorizedSigningSlashingAmount,
+                unauthorizedSigningNotificationRewardMultiplier,
+                msg.sender,
+                groupMembersAddresses
+            )
+        {
+            emit UnauthorizedSigningSlashed(
+                groupId,
+                unauthorizedSigningSlashingAmount,
+                groupMembersAddresses
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit UnauthorizedSigningSlashingFailed(
+                groupId,
+                unauthorizedSigningSlashingAmount,
+                groupMembersAddresses
+            );
+        }
     }
 
     /// @notice Notifies about a failed group heartbeat. Using this function,
