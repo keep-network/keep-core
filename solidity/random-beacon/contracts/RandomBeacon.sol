@@ -652,6 +652,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
                 operatorWrapper
             )
         {
+            // slither-disable-next-line reentrancy-events
             emit DkgMaliciousResultSlashed(
                 maliciousResultHash,
                 slashingAmount,
@@ -829,6 +830,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
                 groupMembersAddresses
             )
         {
+            // slither-disable-next-line reentrancy-events
             emit RelayEntryTimeoutSlashed(
                 relay.currentRequestID,
                 slashingAmount,
@@ -912,6 +914,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
                 groupMembersAddresses
             )
         {
+            // slither-disable-next-line reentrancy-events
             emit UnauthorizedSigningSlashed(
                 groupId,
                 unauthorizedSigningSlashingAmount,
@@ -1116,7 +1119,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         operators who signed the malicious result get slashed for
     ///         `maliciousDkgResultSlashingAmount` and the notifier gets
     ///         rewarded.
-    function dkgResultChallengePeriodLength() public view returns (uint256) {
+    function dkgResultChallengePeriodLength() external view returns (uint256) {
         return dkg.parameters.resultChallengePeriodLength;
     }
 
@@ -1125,7 +1128,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         If `dkgResultSubmissionTimeout` passes without the DKG result
     ///         submitted, DKG is considered as timed out and no DKG result for
     ///         this group creation can be submitted anymore.
-    function dkgResultSubmissionTimeout() public view returns (uint256) {
+    function dkgResultSubmissionTimeout() external view returns (uint256) {
         return dkg.parameters.resultSubmissionTimeout;
     }
 
@@ -1133,7 +1136,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         of the DKG result takes the precedence to approve the DKG result.
     ///         After this time passes anyone can approve the DKG result.
     function dkgSubmitterPrecedencePeriodLength()
-        public
+        external
         view
         returns (uint256)
     {
