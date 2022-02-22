@@ -58,6 +58,7 @@ const DelegationPageWrapperComponent = ({
         }
         await openConfirmationModal(MODAL_TYPES.ConfirmDelegation, {
           initializationPeriod,
+          isFromGrant: !!values.grantData,
         })
         const grantData = values.grantData
           ? { ...values.grantData, grantId: values.grantData.id }

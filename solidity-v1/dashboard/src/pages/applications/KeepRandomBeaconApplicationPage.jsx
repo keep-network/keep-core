@@ -118,7 +118,7 @@ const KeepRandomBeaconApplicationPage = () => {
 
 const toAuthHistoryData = (authData) => ({
   ...authData,
-  ...authData.contracts[0],
+  ...authData.contract,
 })
 
 KeepRandomBeaconApplicationPage.route = {
