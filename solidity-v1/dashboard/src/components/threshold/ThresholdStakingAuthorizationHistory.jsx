@@ -98,7 +98,7 @@ const AuthorizationHistoryActions = ({ operatorAddress }) => {
       href={LINK.setUpPRE}
       rel="noopener noreferrer"
       target="_blank"
-      className={`btn btn-secondary btn-semi-sm mb-3`}
+      className={`btn btn-secondary btn-semi-sm`}
       style={{
         marginLeft: "auto",
         fontFamily: `"Work-Sans", sans-serif`,
