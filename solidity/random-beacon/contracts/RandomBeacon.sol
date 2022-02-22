@@ -29,6 +29,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
+// FIXME: As a workaround for a slither [bug] we need to import the library without
+// an alias.
+// bug: https://github.com/crytic/slither/issues/1067
+import {BeaconDkg} from "./libraries/BeaconDkg.sol";
+
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
 ///         Staking contract, which is available at
@@ -62,7 +67,7 @@ interface IRandomBeaconStaking {
 contract RandomBeacon is IRandomBeacon, Ownable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
-    using DKG for DKG.Data;
+    using BeaconDkg for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
