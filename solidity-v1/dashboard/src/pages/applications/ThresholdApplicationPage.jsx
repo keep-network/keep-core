@@ -22,19 +22,21 @@ const ThresholdApplicationPage = () => {
   const authorizeContract = useCallback(
     async (data) => {
       const {
+        owner,
         operatorAddress,
         authorizerAddress,
         beneficiaryAddress,
         stakeAmount,
         isFromGrant,
-        isGranteeSet,
+        canBeMovedToT,
       } = data
 
-      if (isFromGrant && !isGranteeSet) {
+      if (isFromGrant && !canBeMovedToT) {
         openModal(MODAL_TYPES.ContactYourGrantManagerWarning)
       } else {
         openModal(MODAL_TYPES.AuthorizeAndStakeOnThreshold, {
           keepAmount: stakeAmount,
+          owner: owner,
           operator: operatorAddress,
           beneficiary: beneficiaryAddress,
           authorizer: authorizerAddress,
@@ -48,19 +50,21 @@ const ThresholdApplicationPage = () => {
   const stakeToT = useCallback(
     async (data) => {
       const {
+        owner,
         operatorAddress,
         authorizerAddress,
         beneficiaryAddress,
         stakeAmount,
         isFromGrant,
-        isGranteeSet,
+        canBeMovedToT,
       } = data
 
-      if (isFromGrant && !isGranteeSet) {
+      if (isFromGrant && !canBeMovedToT) {
         openModal(MODAL_TYPES.ContactYourGrantManagerWarning)
       } else {
         openModal(MODAL_TYPES.StakeOnThresholdWithoutAuthorization, {
           keepAmount: stakeAmount,
+          owner: owner,
           operator: operatorAddress,
           beneficiary: beneficiaryAddress,
           authorizer: authorizerAddress,

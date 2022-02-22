@@ -10,7 +10,6 @@ import {
   TOKEN_GRANT_CONTRACT_NAME,
 } from "../constants/constants"
 import { Keep } from "../contracts"
-import { isSameEthAddress } from "../utils/general.utils"
 import { gt } from "../utils/arithmetics.utils"
 
 const fetchThresholdAuthorizationData = async (address) => {
@@ -52,14 +51,12 @@ const fetchThresholdAuthorizationData = async (address) => {
   }, {})
 
   // Fetch all authorizer operators
-  for (let i = 0; i < authorizerOperators.length; i++) {
-    const operatorAddress = authorizerOperators[i]
-    const stakeParticipant = keepOperatorStakedEvents.find((event) => {
-      return isSameEthAddress(operatorAddress, event.returnValues.operator)
-    })
+  for (let i = 0; i < keepOperatorStakedEvents.length; i++) {
+    const { operator, beneficiary, authorizer } =
+      keepOperatorStakedEvents[i].returnValues
 
     const { amount: stakeAmount, undelegatedAt } = await stakingContract.methods
-      .getDelegationInfo(operatorAddress)
+      .getDelegationInfo(operator)
       .call()
 
     // If stake is undelegated we won't display it, because undelegated stakes
@@ -68,40 +65,32 @@ const fetchThresholdAuthorizationData = async (address) => {
 
     const isThresholdTokenStakingContractAuthorized =
       await stakingContract.methods
-        .isAuthorizedForOperator(
-          operatorAddress,
-          thresholdTokenStakingContractAddress
-        )
+        .isAuthorizedForOperator(operator, thresholdTokenStakingContractAddress)
         .call()
 
-    const isFromGrant = tokenGrantStakingEvents.hasOwnProperty(operatorAddress)
+    let canBeMovedToT = false
 
-    let isGranteeSet = false
-
-    if (isFromGrant) {
-      const grantOwnerAddress = await Keep.keepToTStaking.resolveOwner(
-        operatorAddress
-      )
-      // check if grantee is a contract
-      const code = await eth.getCode(grantOwnerAddress)
-      if (!isCodeValid(code)) {
-        isGranteeSet = true
-      }
+    const owner = await Keep.keepToTStaking.resolveOwner(operator)
+    // check if grantee is a contract
+    const code = await eth.getCode(owner)
+    if (!isCodeValid(code)) {
+      canBeMovedToT = true
     }
 
     const authorizerOperator = {
-      authorizerAddress: stakeParticipant.returnValues.authorizer,
-      operatorAddress: operatorAddress,
-      beneficiaryAddress: stakeParticipant.returnValues.beneficiary,
+      owner: owner,
+      authorizerAddress: authorizer,
+      operatorAddress: operator,
+      beneficiaryAddress: beneficiary,
       stakeAmount: stakeAmount,
       contract: {
         contractName: AUTH_CONTRACTS_LABEL.THRESHOLD_TOKEN_STAKING,
         operatorContractAddress: thresholdTokenStakingContractAddress,
         isAuthorized: isThresholdTokenStakingContractAuthorized,
       },
-      isStakedToT: operatorsStakedToT.hasOwnProperty(operatorAddress),
-      isFromGrant: isFromGrant,
-      isGranteeSet: isGranteeSet,
+      isStakedToT: operatorsStakedToT.hasOwnProperty(operator),
+      isFromGrant: tokenGrantStakingEvents.hasOwnProperty(operator),
+      canBeMovedToT: canBeMovedToT,
     }
 
     authorizationData.push(authorizerOperator)

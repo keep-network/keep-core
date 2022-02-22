@@ -22,6 +22,7 @@ import { Keep } from "../../../contracts"
 const StakeOnThresholdComponent = ({
   bodyTitle,
   keepAmount,
+  owner,
   operator,
   beneficiary,
   authorizer,
@@ -99,6 +100,10 @@ const StakeOnThresholdComponent = ({
         </p>
         <List className="mt-2">
           <List.Content className="text-grey-50">
+            <List.Item className="flex row center">
+              <span className="mr-a text-grey-50">Owner</span>
+              <span className={"text-grey-70"}>{shortenAddress(owner)}</span>
+            </List.Item>
             <List.Item className="flex row center">
               <span className="mr-a text-grey-50">Operator</span>
               <span className={"text-grey-70"}>{shortenAddress(operator)}</span>

@@ -86,24 +86,26 @@ const AuthorizeThresholdContracts = ({
           field=""
           renderContent={({
             contract,
+            owner,
             operatorAddress,
             authorizerAddress,
             beneficiaryAddress,
             isStakedToT,
             stakeAmount,
             isFromGrant,
-            isGranteeSet,
+            canBeMovedToT,
           }) => (
             <AuthorizeActions
               key={contract.contractName}
               {...contract}
               isStakedToT={isStakedToT}
+              owner={owner}
               operatorAddress={operatorAddress}
               authorizerAddress={authorizerAddress}
               beneficiaryAddress={beneficiaryAddress}
               stakeAmount={stakeAmount}
               isFromGrant={isFromGrant}
-              isGranteeSet={isGranteeSet}
+              canBeMovedToT={canBeMovedToT}
               onAuthorizeBtn={onAuthorizeBtn}
               onStakeBtn={onStakeBtn}
             />
@@ -127,13 +129,14 @@ const AuthorizeContractItem = ({ contractName, operatorContractAddress }) => {
 
 const AuthorizeActions = ({
   contractName,
+  owner,
   operatorAddress,
   authorizerAddress,
   beneficiaryAddress,
   stakeAmount,
   isAuthorized,
   isFromGrant,
-  isGranteeSet,
+  canBeMovedToT,
   onAuthorizeBtn,
   onStakeBtn,
 }) => {
@@ -141,26 +144,28 @@ const AuthorizeActions = ({
     async (awaitingPromise) => {
       await onAuthorizeBtn(
         {
+          owner,
           operatorAddress,
           authorizerAddress,
           beneficiaryAddress,
           stakeAmount,
           contractName,
           isFromGrant,
-          isGranteeSet,
+          canBeMovedToT,
         },
         awaitingPromise
       )
     },
     [
       contractName,
+      owner,
       operatorAddress,
       authorizerAddress,
       beneficiaryAddress,
       stakeAmount,
       onAuthorizeBtn,
       isFromGrant,
-      isGranteeSet,
+      canBeMovedToT,
     ]
   )
 
@@ -168,6 +173,7 @@ const AuthorizeActions = ({
     async (awaitingPromise) => {
       await onStakeBtn(
         {
+          owner,
           operatorAddress,
           authorizerAddress,
           beneficiaryAddress,
@@ -175,13 +181,14 @@ const AuthorizeActions = ({
           contractName,
           isAuthorized,
           isFromGrant,
-          isGranteeSet,
+          canBeMovedToT,
         },
         awaitingPromise
       )
     },
     [
       contractName,
+      owner,
       operatorAddress,
       authorizerAddress,
       beneficiaryAddress,
@@ -189,7 +196,7 @@ const AuthorizeActions = ({
       isAuthorized,
       onStakeBtn,
       isFromGrant,
-      isGranteeSet,
+      canBeMovedToT,
     ]
   )
 
