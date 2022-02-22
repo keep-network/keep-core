@@ -68,14 +68,8 @@ const fetchThresholdAuthorizationData = async (address) => {
         .isAuthorizedForOperator(operator, thresholdTokenStakingContractAddress)
         .call()
 
-    let canBeMovedToT = false
-
     const owner = await Keep.keepToTStaking.resolveOwner(operator)
-    // check if grantee is a contract
     const code = await eth.getCode(owner)
-    if (!isCodeValid(code)) {
-      canBeMovedToT = true
-    }
 
     const authorizerOperator = {
       owner: owner,
@@ -90,7 +84,9 @@ const fetchThresholdAuthorizationData = async (address) => {
       },
       isStakedToT: operatorsStakedToT.hasOwnProperty(operator),
       isFromGrant: tokenGrantStakingEvents.hasOwnProperty(operator),
-      canBeMovedToT: canBeMovedToT,
+      // Check if grantee is a contract. If it is then the stake from grant
+      // can't be moved to T
+      canBeMovedToT: !isCodeValid(code),
     }
 
     authorizationData.push(authorizerOperator)
