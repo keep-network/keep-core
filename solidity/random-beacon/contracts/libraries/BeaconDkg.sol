@@ -210,11 +210,10 @@ library BeaconDkg {
             "Current state is not AWAITING_SEED"
         );
 
+        emit DkgStarted(seed);
+
         self.startBlock = block.number;
         self.seed = seed;
-
-        // slither-disable-next-line reentrancy-events
-        emit DkgStarted(seed);
     }
 
     /// @notice Allows to submit a DKG result. The submitted result does not go
