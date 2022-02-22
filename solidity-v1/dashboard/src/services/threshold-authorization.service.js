@@ -34,9 +34,10 @@ const fetchThresholdAuthorizationData = async (address) => {
   const keepToTStakedEvents =
     await Keep.keepToTStaking.getStakedEventsByOperator(authorizerOperators)
 
-  const operatorsStakedToT = keepToTStakedEvents.map(
-    (event) => event.returnValues.stakingProvider
-  )
+  const operatorsStakedToT = keepToTStakedEvents.reduce((map, _) => {
+    map[_.returnValues.stakingProvider] = { ..._.returnValues }
+    return map
+  }, {})
 
   const tokenGrantStakingEvents = (
     await grantContract.getPastEvents("TokenGrantStaked", {
@@ -45,16 +46,14 @@ const fetchThresholdAuthorizationData = async (address) => {
       ),
       filter: { operator: authorizerOperators },
     })
-  ).map((event) => {
-    return {
-      operator: event.returnValues.operator,
-    }
-  })
+  ).reduce((map, _) => {
+    map[_.returnValues.operator] = { ..._.returnValues }
+    return map
+  }, {})
 
   // Fetch all authorizer operators
   for (let i = 0; i < authorizerOperators.length; i++) {
     const operatorAddress = authorizerOperators[i]
-
     const stakeParticipant = keepOperatorStakedEvents.find((event) => {
       return isSameEthAddress(operatorAddress, event.returnValues.operator)
     })
@@ -75,9 +74,7 @@ const fetchThresholdAuthorizationData = async (address) => {
         )
         .call()
 
-    const isFromGrant = tokenGrantStakingEvents.some((tokenGrantStakingEvent) =>
-      isSameEthAddress(tokenGrantStakingEvent.operator, operatorAddress)
-    )
+    const isFromGrant = tokenGrantStakingEvents.hasOwnProperty(operatorAddress)
 
     let isGranteeSet = false
 
@@ -104,9 +101,7 @@ const fetchThresholdAuthorizationData = async (address) => {
           isAuthorized: isThresholdTokenStakingContractAuthorized,
         },
       ],
-      isStakedToT: operatorsStakedToT.some((operatorStaked) =>
-        isSameEthAddress(operatorStaked, operatorAddress)
-      ),
+      isStakedToT: operatorsStakedToT.hasOwnProperty(operatorAddress),
       isFromGrant: isFromGrant,
       isGranteeSet: isGranteeSet,
     }
