@@ -131,6 +131,7 @@ export const Message = ({
               <ViewInBlockExplorer
                 type="tx"
                 className="arrow-link"
+                text={"View transaction on Etherscan"}
                 id={txHash}
               />
             </Banner.Action>

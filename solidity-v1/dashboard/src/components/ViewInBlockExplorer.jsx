@@ -19,7 +19,7 @@ export const ViewInBlockExplorer = React.memo(
 )
 
 ViewInBlockExplorer.defaultProps = {
-  text: "View transaction on Etherscan",
+  text: "View in Block Explorer",
   type: "address",
   hashParam: "",
 }
