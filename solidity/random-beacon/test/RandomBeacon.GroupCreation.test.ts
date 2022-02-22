@@ -88,7 +88,7 @@ describe("RandomBeacon - Group Creation", () => {
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
-    let randomBeaconStub
+    let randomBeaconStub: RandomBeaconTest
     ;({
       randomBeaconGovernance,
       randomBeacon: randomBeaconStub,
@@ -98,7 +98,7 @@ describe("RandomBeacon - Group Creation", () => {
       signers,
     } = await waffle.loadFixture(fixture))
 
-    randomBeacon = randomBeaconStub as RandomBeaconTest
+    randomBeacon = randomBeaconStub
 
     // Fund DKG rewards pool to make testing of rewards possible.
     await fundDkgRewardsPool(to1e18(100))
@@ -137,7 +137,7 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       it("should lock the sortition pool", async () => {
-        await expect(await sortitionPool.isLocked()).to.be.true
+        expect(await sortitionPool.isLocked()).to.be.true
       })
 
       it("should emit DkgStateLocked event", async () => {
