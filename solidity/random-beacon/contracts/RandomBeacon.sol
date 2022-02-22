@@ -340,12 +340,12 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
         dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionTimeout(64 * 20); // TODO: Verify value
+        dkg.setResultSubmissionTimeout(1280); // 64 members * 20 blocks = 1280 blocks // TODO: Verify value
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
 
         relay.initSeedEntry();
         relay.setRelayRequestFee(200e18);
-        relay.setRelayEntrySoftTimeout(64 * 20);
+        relay.setRelayEntrySoftTimeout(1280); // 64 members * 20 blocks = 1280 blocks
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
