@@ -174,10 +174,10 @@ library Relay {
         internal
         returns (uint256)
     {
-        uint256 softTimeoutBlock = softTimeoutBlock(self);
+        uint256 softTimeout = softTimeoutBlock(self);
 
-        if (block.number > softTimeoutBlock) {
-            uint256 submissionDelay = block.number - softTimeoutBlock;
+        if (block.number > softTimeout) {
+            uint256 submissionDelay = block.number - softTimeout;
             // The slashing amount is a result of a calculated portion of the submission
             // delay blocks. The max delay can be set up to relayEntryHardTimeout, which
             // in consequence sets the max slashing amount.
