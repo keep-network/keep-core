@@ -1,24 +1,20 @@
 /* eslint-disable no-await-in-loop */
 
 import { ethers } from "hardhat"
-import type { BigNumber, ContractTransaction } from "ethers"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { RandomBeacon, SortitionPool } from "../../typechain"
-import { Operator } from "./operators"
+import { expect } from "chai"
+import { BigNumber } from "ethers"
+
 // eslint-disable-next-line import/no-cycle
 import { selectGroup } from "./groups"
-import { firstEligibleIndex } from "./submission"
-import { constants } from "../fixtures"
 
-export interface DkgResult {
-  submitterMemberIndex: number
-  groupPubKey: string
-  misbehavedMembersIndices: number[]
-  signatures: string
-  signingMembersIndices: number[]
-  members: number[]
-  membersHash: string
-}
+import type { Operator } from "./operators"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { RandomBeacon, SortitionPool } from "../../typechain"
+import type { ContractTransaction } from "ethers"
+import type {
+  BeaconDkg as DKG,
+  DkgResultSubmittedEvent,
+} from "../../typechain/BeaconDkg"
 
 export const noMisbehaved = []
 
@@ -48,24 +44,16 @@ export async function signAndSubmitCorrectDkgResult(
   seed: BigNumber,
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   membersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
-  dkgResult: DkgResult
+  dkgResult: DKG.ResultStruct
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
 }> {
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(
-      ethers.utils.keccak256(groupPublicKey),
-      constants.groupSize
-    )
-  }
-
   const sortitionPool = (await ethers.getContractAt(
     "SortitionPool",
     await randomBeacon.sortitionPool()
@@ -92,12 +80,12 @@ export async function signAndSubmitArbitraryDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   groupMembersHash?: string,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
-  dkgResult: DkgResult
+  dkgResult: DKG.ResultStruct
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
@@ -111,16 +99,12 @@ export async function signAndSubmitArbitraryDkgResult(
       numberOfSignatures
     )
 
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
-  }
   let membersHash = groupMembersHash
   if (!membersHash) {
     membersHash = hashDKGMembers(members, misbehavedIndices)
   }
 
-  const dkgResult: DkgResult = {
+  const dkgResult: DKG.ResultStruct = {
     submitterMemberIndex: submitterIndex,
     groupPubKey: groupPublicKey,
     misbehavedMembersIndices: misbehavedIndices,
@@ -163,11 +147,11 @@ export async function signAndSubmitUnrecoverableDkgResult(
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
-  submitterIndex?: number,
+  submitterIndex = 1,
   numberOfSignatures = 33
 ): Promise<{
   transaction: ContractTransaction
-  dkgResult: DkgResult
+  dkgResult: DKG.ResultStruct
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
@@ -180,11 +164,6 @@ export async function signAndSubmitUnrecoverableDkgResult(
     numberOfSignatures
   )
 
-  if (!submitterIndex) {
-    // eslint-disable-next-line no-param-reassign
-    submitterIndex = firstEligibleIndex(ethers.utils.keccak256(groupPublicKey))
-  }
-
   const signatureHexStrLength = 2 * 65
   const unrecoverableSignatures = `0x${"a".repeat(
     signatureHexStrLength * numberOfSignatures
@@ -192,7 +171,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
 
   const membersHash = hashDKGMembers(members, misbehavedIndices)
 
-  const dkgResult: DkgResult = {
+  const dkgResult: DKG.ResultStruct = {
     submitterMemberIndex: submitterIndex,
     groupPubKey: groupPublicKey,
     misbehavedMembersIndices: misbehavedIndices,
@@ -286,4 +265,78 @@ export function hashDKGMembers(
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(["uint32[]"], [members])
   )
+}
+
+export interface DkgResultSubmittedEventArgs {
+  resultHash: string
+  seed: BigNumber
+  result: DKG.ResultStruct
+}
+
+// This is a workaround for a bug in ethereum-waffle library that doesn't let
+// verify events that have an array nested in a struct.
+// See: https://github.com/EthWorks/Waffle/issues/245
+export async function expectDkgResultSubmittedEvent(
+  tx: ContractTransaction,
+  expectedArgs: DkgResultSubmittedEventArgs
+): Promise<void> {
+  const eventName = "DkgResultSubmitted"
+
+  const event: DkgResultSubmittedEvent = (await tx.wait()).events.find(
+    (e) => e.event === eventName
+  ) as unknown as DkgResultSubmittedEvent
+
+  await expect(event, `Event ${eventName} not emitted`).to.be.not.null
+
+  const actualArgs = event.args
+
+  await expect(actualArgs.length, "invalid event args length").to.be.equal(
+    Object.keys(expectedArgs).length
+  )
+
+  await expect(
+    actualArgs.result.length,
+    "invalid result args length"
+  ).to.be.equal(Object.keys(expectedArgs.result).length)
+
+  await expect(actualArgs.resultHash, "invalid resultHash").to.be.equal(
+    expectedArgs.resultHash
+  )
+
+  await expect(actualArgs.seed, "invalid seed").to.be.equal(expectedArgs.seed)
+
+  await expect(
+    actualArgs.result.submitterMemberIndex,
+    "invalid submitterMemberIndex"
+  ).to.be.equal(expectedArgs.result.submitterMemberIndex)
+
+  await expect(
+    actualArgs.result.groupPubKey,
+    "invalid groupPubKey"
+  ).to.be.equal(expectedArgs.result.groupPubKey)
+
+  await expect(
+    actualArgs.result.misbehavedMembersIndices,
+    "invalid misbehavedMembersIndices"
+  ).to.be.deep.equal(expectedArgs.result.misbehavedMembersIndices)
+
+  await expect(actualArgs.result.signatures, "invalid signatures").to.be.equal(
+    expectedArgs.result.signatures
+  )
+
+  await expect(
+    actualArgs.result.signingMembersIndices,
+    "invalid signingMembersIndices"
+  ).to.be.deep.equal(
+    expectedArgs.result.signingMembersIndices.map(BigNumber.from)
+  )
+
+  await expect(actualArgs.result.members, "invalid members").to.be.deep.equal(
+    expectedArgs.result.members
+  )
+
+  await expect(
+    actualArgs.result.membersHash,
+    "invalid membersHash"
+  ).to.be.equal(expectedArgs.result.membersHash)
 }

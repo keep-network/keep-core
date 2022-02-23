@@ -9,9 +9,12 @@ contract RelayStub {
 
     Relay.Data internal relay;
 
-    constructor() {
-        relay.setRelayEntrySubmissionEligibilityDelay(10);
-        relay.setRelayEntryHardTimeout(100);
+    function setTimeouts(
+        uint256 relayEntrySoftTimeout,
+        uint256 relayEntryHardTimeout
+    ) public {
+        relay.setRelayEntrySoftTimeout(relayEntrySoftTimeout);
+        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
     }
 
     function setCurrentRequestStartBlock() external {
