@@ -153,7 +153,10 @@ class Keep {
         // Otherwise, it means an artifact was built by Hardhat.
         address = artifact.address
         deploymentTxnHash = artifact.transactionHash
-        deployedAtBlock = artifact.receipt.blockNumber
+        deployedAtBlock =
+          artifact.receipt && artifact.receipt.blockNumber
+            ? artifact.receipt.blockNumber
+            : 1
       }
       return { address, deploymentTxnHash, deployedAtBlock }
     }
