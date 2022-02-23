@@ -350,7 +350,11 @@ describe("ReimbursementPool - Pool", () => {
       it("should set the static gas cost", async () => {
         expect(await reimbursementPool.staticGas()).to.be.equal(0)
 
-        await reimbursementPool.connect(owner).setStaticGas(42)
+        const tx = await reimbursementPool.connect(owner).setStaticGas(42)
+
+        await expect(tx)
+          .to.emit(reimbursementPool, "StaticGasUpdated")
+          .withArgs(42)
 
         expect(await reimbursementPool.staticGas()).to.be.equal(42)
       })
@@ -370,7 +374,11 @@ describe("ReimbursementPool - Pool", () => {
       it("should set the max gas price", async () => {
         expect(await reimbursementPool.maxGasPrice()).to.be.equal(0)
 
-        await reimbursementPool.connect(owner).setMaxGasPrice(42)
+        const tx = await reimbursementPool.connect(owner).setMaxGasPrice(42)
+
+        await expect(tx)
+          .to.emit(reimbursementPool, "MaxGasPriceUpdated")
+          .withArgs(42)
 
         expect(await reimbursementPool.maxGasPrice()).to.be.equal(42)
       })
