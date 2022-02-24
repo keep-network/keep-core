@@ -15,7 +15,7 @@ COPY package-lock.json /app/package-lock.json
 COPY .env* /app/
 
 # Install from lockfile.
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 COPY src /app/src
 COPY public /app/public
