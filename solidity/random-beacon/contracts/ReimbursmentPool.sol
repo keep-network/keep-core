@@ -31,9 +31,9 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     ///         against malicious operator-miners.
     uint256 public maxGasPrice;
 
-    event StaticGasUpdated(uint256 staticGas);
+    event StaticGasUpdated(uint256 newStaticGas);
 
-    event MaxGasPriceUpdated(uint256 maxGasPrice);
+    event MaxGasPriceUpdated(uint256 newMaxGasPrice);
 
     constructor(uint256 _staticGas, uint256 _maxGasPrice) {
         staticGas = _staticGas;
