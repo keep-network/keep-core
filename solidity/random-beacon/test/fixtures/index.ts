@@ -85,9 +85,6 @@ export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   )
   await reimbursementPool.deployed()
 
-  const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
-  console.log("deployer.address", deployer.address)
-
   const contracts: DeployedContracts = { reimbursementPool }
 
   return contracts
