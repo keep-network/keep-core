@@ -17,8 +17,8 @@ describe("WalletRegistryGovernance", async () => {
   let thirdParty: SignerWithAddress
   let walletOwner: SignerWithAddress
 
-  const initialMinimumAuthorization = to1e18(100000)
-  const initialAuthorizationDecreaseDelay = 5260000 // 2 months
+  const initialMinimumAuthorization = to1e18(400000)
+  const initialAuthorizationDecreaseDelay = 5184000 // 60 days
   const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
 
