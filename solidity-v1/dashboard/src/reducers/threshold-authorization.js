@@ -4,8 +4,10 @@ import {
   FETCH_THRESHOLD_AUTH_DATA_FAILURE,
   THRESHOLD_AUTHORIZED,
   THRESHOLD_STAKED_TO_T,
+  REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA,
 } from "../actions"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
+import { isSameEthAddress } from "../utils/general.utils"
 
 const initialState = {
   authData: [],
@@ -45,6 +47,11 @@ const thresholdAuthorizationReducer = (state = initialState, action) => {
         authData: updateThresholdAuthData([...state.authData], {
           ...action.payload,
         }),
+      }
+    case REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA:
+      return {
+        ...state,
+        authData: removeStakeFromAuthData([...state.authData], action.payload),
       }
     default:
       return state
@@ -96,6 +103,12 @@ const updateThresholdAuthData = (authData, { operatorAddress }) => {
   }
 
   return updatedOperators
+}
+
+const removeStakeFromAuthData = (authData, operatorAddress) => {
+  return authData.filter((stake) => {
+    return !isSameEthAddress(stake.operatorAddress, operatorAddress)
+  })
 }
 
 export default thresholdAuthorizationReducer

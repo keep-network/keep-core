@@ -1,4 +1,8 @@
-import { THRESHOLD_AUTHORIZED, THRESHOLD_STAKED_TO_T } from "./index"
+import {
+  REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA,
+  THRESHOLD_AUTHORIZED,
+  THRESHOLD_STAKED_TO_T,
+} from "./index"
 
 export const THRESHOLD_STAKE_KEEP_EVENT_EMITTED =
   "threshold/stake_keep_event_emitted"
@@ -32,5 +36,12 @@ export const stakeKeepToT = (data) => {
       operator: data.operatorAddress,
       isAuthorized: data.isAuthorized,
     },
+  }
+}
+
+export const removeStakeFromThresholdAuthData = (operatorAddress) => {
+  return {
+    type: REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA,
+    payload: { operatorAddress },
   }
 }
