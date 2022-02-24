@@ -40,6 +40,9 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
         maxGasPrice = _maxGasPrice;
     }
 
+    /// @notice Receive ETH
+    receive() external payable {}
+
     /// @notice Refunds ETH to a spender for executing specific transactions.
     /// @dev Ignoring the result of sending ETH to a receiver is made on purpose.
     ///      For EOA receiving ETH should always work. If a receiver is a smart
@@ -102,11 +105,18 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
         emit MaxGasPriceUpdated(_maxGasPrice);
     }
 
+    /// @notice Withdraws all ETH from this pool which are sent to a given
+    ///         address. Can be set by the owner only.
+    /// @param receiver An address where ETH is sent.
+    function withdrawAll(address receiver) external onlyOwner {
+        withdraw(address(this).balance, receiver);
+    }
+
     /// @notice Withdraws ETH amount from this pool which are sent to a given
     ///         address. Can be set by the owner only.
     /// @param amount Amount to withdraw from the pool.
     /// @param receiver An address where ETH is sent.
-    function withdraw(uint256 amount, address receiver) external onlyOwner {
+    function withdraw(uint256 amount, address receiver) public onlyOwner {
         require(
             address(this).balance >= amount,
             "Insufficient contract balance"
@@ -114,26 +124,9 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
         require(receiver != address(0), "Receiver's address cannot be zero");
 
         /* solhint-disable avoid-low-level-calls */
-        // slither-disable-next-line low-level-calls
+        // slither-disable-next-line low-level-calls,arbitrary-send
         (bool sent, ) = receiver.call{value: amount}("");
         /* solhint-enable avoid-low-level-calls */
         require(sent, "Failed to send Ether");
     }
-
-    /// @notice Withdraws all ETH from this pool which are sent to a given
-    ///         address. Can be set by the owner only.
-    /// @param receiver An address where ETH is sent.
-    function withdrawAll(address receiver) external onlyOwner {
-        require(address(this).balance > 0, "Nothing to withdraw");
-        require(receiver != address(0), "Receiver's address cannot be zero");
-
-        /* solhint-disable avoid-low-level-calls */
-        // slither-disable-next-line low-level-calls
-        (bool sent, ) = receiver.call{value: address(this).balance}("");
-        /* solhint-enable avoid-low-level-calls */
-        require(sent, "Failed to send Ether");
-    }
-
-    /// @notice Receive ETH
-    receive() external payable {}
 }
