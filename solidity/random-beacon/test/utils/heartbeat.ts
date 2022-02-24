@@ -1,5 +1,6 @@
 import { ethers } from "hardhat"
-import { Operator } from "./operators"
+
+import type { Operator } from "./operators"
 
 // eslint-disable-next-line import/prefer-default-export
 export async function signHeartbeatFailureClaim(

@@ -31,7 +31,13 @@ function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
 
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
-    yield fork(fetchLiquidityRewardsData, { name: pairName, ...value }, address)
+    if (value.contractName) {
+      yield fork(
+        fetchLiquidityRewardsData,
+        { name: pairName, ...value },
+        address
+      )
+    }
   }
 }
 
@@ -156,6 +162,7 @@ function* processLiquidityRewardEarnedNotification(
 
   /** @type LiquidityRewards */
   const LiquidityRewards = yield getLPRewardsWrapper(liquidityRewardPair)
+  if (!LiquidityRewards) return null
   const { liquidityRewards } = yield select()
   const lastNotificationRewardAmount = new BigNumber(
     liquidityRewards[liquidityRewardPairName].lastNotificationRewardAmount
@@ -261,12 +268,17 @@ export function* watchStakeTokens() {
 
 function* fetchAllLiquidityRewardsAPY(action) {
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
-    yield fork(fetchLiquidityRewardsAPY, { name: pairName, ...value })
+    if (value.contractName) {
+      yield fork(fetchLiquidityRewardsAPY, { name: pairName, ...value })
+    }
   }
 }
 
 function* fetchLiquidityRewardsAPY(liquidityRewardPair) {
   try {
+    if (!liquidityRewardPair.contractName) {
+      return
+    }
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_apy_start`,
       payload: { liquidityRewardPairName: liquidityRewardPair.name },

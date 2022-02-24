@@ -32,6 +32,7 @@ import { keepBalanceActions } from "../actions"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
 import { showModal } from "../actions/modal"
+import { thresholdStakeKeepEventEmitted } from "../actions/keep-to-t-staking"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
@@ -352,7 +353,7 @@ function* observeRecoveredStakeEvent() {
         yield put({ type: "staking/remove_undelegation", payload: operator })
 
         yield put({
-          type: "staking/update_owned_undelegations_token_balance",
+          type: "staking/update_owned_undelegations_tokens_balance",
           payload: { operation: sub, value: recoveredUndelegation.amount },
         })
       }
@@ -989,21 +990,23 @@ function* updateLPTokenBalance(
 
 export function* subscribeToLiquidityRewardsEvents() {
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
-    yield fork(
-      function* (liquidityRewardPair) {
-        yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
-        yield take(
-          `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`
-        )
-        yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
-        yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
-        yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
-      },
-      {
-        name: pairName,
-        ...value,
-      }
-    )
+    if (value.contractName) {
+      yield fork(
+        function* (liquidityRewardPair) {
+          yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
+          yield take(
+            `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`
+          )
+          yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
+          yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
+          yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
+        },
+        {
+          name: pairName,
+          ...value,
+        }
+      )
+    }
   }
 }
 
@@ -1154,5 +1157,18 @@ export function* observeAuctionClosedEvent() {
     "AuctionClosed",
     riskManagerAuctionClosedEventEmitted,
     "RiskManagerV1.AuctionClosed"
+  )
+}
+
+export function* observeThresholdStakeKeepEvent() {
+  const thresholdStakingContract =
+    Keep.keepToTStaking.thresholdStakingContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    thresholdStakingContract,
+    "Staked",
+    thresholdStakeKeepEventEmitted,
+    `ThresholdTokenStaking.StakeKeep`
   )
 }

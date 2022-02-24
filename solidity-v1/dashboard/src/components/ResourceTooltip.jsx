@@ -38,12 +38,7 @@ const ResourceTooltip = ({
   return (
     <Tooltip
       className={tooltipClassName}
-      triggerComponent={() => (
-        <Icons.Tooltip
-          color={iconColor}
-          backgroundColor={iconBackgroundColor}
-        />
-      )}
+      triggerComponent={() => <Icons.MoreInfo className={"resource-tooltip"} />}
     >
       <ResourceTooltipContent {...restProps} />
     </Tooltip>

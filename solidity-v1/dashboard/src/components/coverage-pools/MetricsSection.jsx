@@ -22,8 +22,8 @@ const MetricsSection = ({
   return (
     <section className={`tile coverage-pool__metrics ${classes.root || ""}`}>
       <section className={`metrics__tvl ${classes.tvl || ""}`}>
-        <h2 className="h2--alt text-grey-70 mb-1">
-          Total Value Locked
+        <div className="mb-1 flex row center">
+          <h2 className={"h2--alt text-grey-70"}>Total Value Locked</h2>
           <ResourceTooltip
             tooltipClassName="ml-1"
             title="Total Value Locked"
@@ -31,7 +31,7 @@ const MetricsSection = ({
             redirectLink="/coverage-pools/how-it-works"
             linkText="How it Works"
           />
-        </h2>
+        </div>
         <TokenAmount
           amount={tvl}
           amountClassName="h1 text-mint-100"

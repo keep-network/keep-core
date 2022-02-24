@@ -14,6 +14,7 @@ import MaxAmountAddon from "../MaxAmountAddon"
 import Button from "../Button"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { covKEEP } from "../../utils/token.utils"
+import { COV_POOLS_FORMS_MAX_DECIMAL_PLACES } from "../../constants/constants"
 
 const WithdrawAmountForm = ({
   onCancel,
@@ -39,8 +40,15 @@ const WithdrawAmountForm = ({
         type="text"
         label="Withdraw Amount"
         placeholder="0"
-        normalize={normalizeFloatingAmount}
-        format={formatFloatingAmount}
+        normalize={(value) => {
+          return normalizeFloatingAmount(
+            value,
+            COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+          )
+        }}
+        format={(value) => {
+          return formatFloatingAmount(value, COV_POOLS_FORMS_MAX_DECIMAL_PLACES)
+        }}
         inputAddon={<MaxAmountAddon onClick={onAddonClick} text="Max Amount" />}
         leftIconComponent={
           <span className={"form-input__left-icon__cov-keep-amount"}>
@@ -51,7 +59,6 @@ const WithdrawAmountForm = ({
       <Button
         className="btn btn-lg btn-primary w-100"
         onClick={formikProps.handleSubmit}
-        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         {submitBtnText}
       </Button>
@@ -70,13 +77,14 @@ const WithdrawAmountFormWithFormik = withFormik({
     const errors = {}
 
     if (lte(props.withdrawAmount || 0, 0)) {
-      errors.withdrawAmount = "The value should be greater than zero"
+      errors.withdrawAmount = "Insufficient funds"
     } else {
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,
         props.withdrawAmount,
-        1,
-        covKEEP
+        covKEEP.fromTokenUnit(0.000001).toNumber(),
+        covKEEP,
+        COV_POOLS_FORMS_MAX_DECIMAL_PLACES
       )
     }
 

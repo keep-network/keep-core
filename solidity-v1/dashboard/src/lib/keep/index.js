@@ -25,10 +25,13 @@ import contracts, {
   TBTCV2_VENDING_MACHINE_CONTRACT_NAME,
   TBTCV2_TOKEN_CONTRACT_NAME,
   REWARDS_POOL_CONTRACT_NAME,
+  THRESHOLD_STAKING_CONTRACT_NAME,
+  THRESHOLD_KEEP_STAKE_CONTRACT_NAME,
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
 import TBTCV2Migration from "./tbtc-migration"
+import KeepToTStaking from "./keep-to-t-staking"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
 /** @typedef { import("../web3").BaseContract} BaseContract */
@@ -126,7 +129,13 @@ class Keep {
   [RISK_MANAGER_V1_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [REWARDS_POOL_CONTRACT_NAME]
+  [REWARDS_POOL_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [THRESHOLD_STAKING_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [THRESHOLD_KEEP_STAKE_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
@@ -144,7 +153,10 @@ class Keep {
         // Otherwise, it means an artifact was built by Hardhat.
         address = artifact.address
         deploymentTxnHash = artifact.transactionHash
-        deployedAtBlock = artifact.receipt.blockNumber
+        deployedAtBlock =
+          artifact.receipt && artifact.receipt.blockNumber
+            ? artifact.receipt.blockNumber
+            : 1
       }
       return { address, deploymentTxnHash, deployedAtBlock }
     }
@@ -182,6 +194,11 @@ class Keep {
       this.tbtcTokenContract,
       this.tbtcV2Contract,
       this.vendingMachineContract,
+      this.web3
+    )
+    this.keepToTStaking = new KeepToTStaking(
+      this.thresholdStakingContract,
+      this.thresholdKeepStakeContract,
       this.web3
     )
   }

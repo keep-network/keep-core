@@ -1,8 +1,9 @@
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 
-import type { Signer } from "ethers"
 import { randomBeaconDeployment } from "./fixtures"
+
+import type { Signer } from "ethers"
 import type { RandomBeaconStub } from "../typechain"
 
 describe("RandomBeacon - Parameters", () => {
@@ -22,7 +23,7 @@ describe("RandomBeacon - Parameters", () => {
 
   describe("updateRelayEntryParameters", () => {
     const relayRequestFee = 100
-    const relayEntrySubmissionEligibilityDelay = 200
+    const relayEntrySoftTimeout = 200
     const relayEntryHardTimeout = 300
     const callbackGasLimit = 400
 
@@ -33,7 +34,7 @@ describe("RandomBeacon - Parameters", () => {
             .connect(thirdParty)
             .updateRelayEntryParameters(
               relayRequestFee,
-              relayEntrySubmissionEligibilityDelay,
+              relayEntrySoftTimeout,
               relayEntryHardTimeout,
               callbackGasLimit
             )
@@ -48,7 +49,7 @@ describe("RandomBeacon - Parameters", () => {
           .connect(governance)
           .updateRelayEntryParameters(
             relayRequestFee,
-            relayEntrySubmissionEligibilityDelay,
+            relayEntrySoftTimeout,
             relayEntryHardTimeout,
             callbackGasLimit
           )
@@ -60,10 +61,10 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
-      it("should update the relay entry submission eligibility delay", async () => {
-        expect(
-          await randomBeacon.relayEntrySubmissionEligibilityDelay()
-        ).to.be.equal(relayEntrySubmissionEligibilityDelay)
+      it("should update the relay entry soft timeout", async () => {
+        expect(await randomBeacon.relayEntrySoftTimeout()).to.be.equal(
+          relayEntrySoftTimeout
+        )
       })
 
       it("should update the relay entry hard timeout", async () => {
@@ -83,7 +84,7 @@ describe("RandomBeacon - Parameters", () => {
           .to.emit(randomBeacon, "RelayEntryParametersUpdated")
           .withArgs(
             relayRequestFee,
-            relayEntrySubmissionEligibilityDelay,
+            relayEntrySoftTimeout,
             relayEntryHardTimeout,
             callbackGasLimit
           )
@@ -185,7 +186,8 @@ describe("RandomBeacon - Parameters", () => {
 
   describe("updateDkgParameters", () => {
     const dkgResultChallengePeriodLength = 300
-    const dkgResultSubmissionEligibilityDelay = 400
+    const dkgResultSubmissionTimeout = 400
+    const dkgSubmitterPrecedencePeriodLength = 200
 
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -194,42 +196,99 @@ describe("RandomBeacon - Parameters", () => {
             .connect(thirdParty)
             .updateDkgParameters(
               dkgResultChallengePeriodLength,
-              dkgResultSubmissionEligibilityDelay
+              dkgResultSubmissionTimeout,
+              dkgSubmitterPrecedencePeriodLength
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
 
     context("when the caller is the owner", () => {
-      let tx
-      beforeEach(async () => {
-        tx = await randomBeacon
-          .connect(governance)
-          .updateDkgParameters(
-            dkgResultChallengePeriodLength,
-            dkgResultSubmissionEligibilityDelay
+      context("when values are valid", () => {
+        let tx
+        beforeEach(async () => {
+          tx = await randomBeacon
+            .connect(governance)
+            .updateDkgParameters(
+              dkgResultChallengePeriodLength,
+              dkgResultSubmissionTimeout,
+              dkgSubmitterPrecedencePeriodLength
+            )
+        })
+
+        it("should update the DKG result challenge period length", async () => {
+          expect(
+            await randomBeacon.dkgResultChallengePeriodLength()
+          ).to.be.equal(dkgResultChallengePeriodLength)
+        })
+
+        it("should update the DKG result submission timeout", async () => {
+          expect(await randomBeacon.dkgResultSubmissionTimeout()).to.be.equal(
+            dkgResultSubmissionTimeout
           )
+        })
+
+        it("should update the DKG submitter precedence period", async () => {
+          expect(
+            await randomBeacon.dkgSubmitterPrecedencePeriodLength()
+          ).to.be.equal(dkgSubmitterPrecedencePeriodLength)
+        })
+
+        it("should emit the DkgParametersUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "DkgParametersUpdated")
+            .withArgs(
+              dkgResultChallengePeriodLength,
+              dkgResultSubmissionTimeout,
+              dkgSubmitterPrecedencePeriodLength
+            )
+        })
       })
 
-      it("should update the DKG result challenge period length", async () => {
-        expect(await randomBeacon.dkgResultChallengePeriodLength()).to.be.equal(
-          dkgResultChallengePeriodLength
+      context("when values are invalid", () => {
+        context(
+          "when precedence period length is equal submission timeout",
+          () => {
+            it("should revert", async () => {
+              const invalidDkgSubmitterPrecedencePeriodLength =
+                dkgResultSubmissionTimeout
+
+              await expect(
+                randomBeacon
+                  .connect(governance)
+                  .updateDkgParameters(
+                    dkgResultChallengePeriodLength,
+                    dkgResultSubmissionTimeout,
+                    invalidDkgSubmitterPrecedencePeriodLength
+                  )
+              ).to.be.revertedWith(
+                "New value should be less than result submission timeout"
+              )
+            })
+          }
         )
-      })
 
-      it("should update the DKG result submission eligibility delay", async () => {
-        expect(
-          await randomBeacon.dkgResultSubmissionEligibilityDelay()
-        ).to.be.equal(dkgResultSubmissionEligibilityDelay)
-      })
+        context(
+          "when precedence period length is greater than submission timeout",
+          () => {
+            it("should revert", async () => {
+              const invalidDkgSubmitterPrecedencePeriodLength =
+                dkgResultSubmissionTimeout + 1
 
-      it("should emit the DkgParametersUpdated event", async () => {
-        await expect(tx)
-          .to.emit(randomBeacon, "DkgParametersUpdated")
-          .withArgs(
-            dkgResultChallengePeriodLength,
-            dkgResultSubmissionEligibilityDelay
-          )
+              await expect(
+                randomBeacon
+                  .connect(governance)
+                  .updateDkgParameters(
+                    dkgResultChallengePeriodLength,
+                    dkgResultSubmissionTimeout,
+                    invalidDkgSubmitterPrecedencePeriodLength
+                  )
+              ).to.be.revertedWith(
+                "New value should be less than result submission timeout"
+              )
+            })
+          }
+        )
       })
     })
   })

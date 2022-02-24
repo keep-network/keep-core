@@ -99,7 +99,6 @@ function* resolveStake(action) {
     operatorAddress,
     authorizerAddress,
   } = action.payload
-
   const tokenAmount = KEEP.fromTokenUnit(amount).toString()
   const stakingContractAddress = stakingContract.options.address
   const delegationData =

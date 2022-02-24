@@ -3,6 +3,7 @@ import { isEmptyArray } from "../utils/array.utils"
 import { Web3Status } from "./Web3Status"
 import Chip from "./Chip"
 import NavLink from "./NavLink"
+import OnlyIf from "./OnlyIf"
 
 const Header = ({ title, subLinks, className = "", newPage = false }) => {
   return (
@@ -23,7 +24,7 @@ const Header = ({ title, subLinks, className = "", newPage = false }) => {
   )
 }
 
-const SubNavItem = ({ title, path }) => {
+const SubNavItem = ({ title, path, withNewLabel }) => {
   return (
     <li className="sub-nav__item-wrapper">
       <NavLink
@@ -32,7 +33,18 @@ const SubNavItem = ({ title, path }) => {
         activeClassName="sub-nav__item--active"
         exact={true}
       >
-        {title}
+        {title}{" "}
+        <OnlyIf condition={withNewLabel}>
+          <span
+            style={{
+              height: "10px",
+              width: "10px",
+              backgroundColor: "#48DBB4",
+              borderRadius: "50%",
+              display: "inline-block",
+            }}
+          />
+        </OnlyIf>
       </NavLink>
     </li>
   )

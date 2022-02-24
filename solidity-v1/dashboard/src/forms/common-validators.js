@@ -30,7 +30,8 @@ export const validateAmountInRange = (
   maxValue,
   minValue = 0,
   /** @type {import("../utils/token.utils").Token} */
-  token = KEEP
+  token = KEEP,
+  decimalsToDisplayInValidationText = token.decimalsToDisplay
 ) => {
   /** @type {import("bignumber.js").BigNumber} */
   const formattedValue = token.fromTokenUnit(value)
@@ -47,11 +48,13 @@ export const validateAmountInRange = (
 
   if (validateValueInBN.gt(maxValueInBN)) {
     return `The value should be less than or equal ${token.displayAmount(
-      maxValueInBN.toString()
+      maxValueInBN.toString(),
+      decimalsToDisplayInValidationText
     )}`
   } else if (validateValueInBN.lt(minValueInBN)) {
     return `The value should be greater than or equal ${token.displayAmount(
-      minValueInBN.toString()
+      minValueInBN.toString(),
+      decimalsToDisplayInValidationText
     )}`
   }
 }

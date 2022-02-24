@@ -10,6 +10,7 @@ import Tile from "./Tile"
 import { SubmitButton } from "./Button"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
+import useUpdateInitializedDelegations from "../hooks/useUpdateInitializedDelegations"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
@@ -19,6 +20,7 @@ const DelegatedTokensTable = ({
   addKeep,
   undelegationPeriod,
 }) => {
+  useUpdateInitializedDelegations(delegatedTokens)
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
       const grant = grants.find(({ id }) => id === grantId)
@@ -58,13 +60,21 @@ const DelegatedTokensTable = ({
         data={delegatedTokens}
         itemFieldId="operatorAddress"
         noDataMessage="No delegated tokens."
+        centered
       >
         <Column
           header="amount"
           field="amount"
-          renderContent={({ amount }) =>
-            `${KEEP.displayAmountWithSymbol(amount)}`
-          }
+          renderContent={({ amount, isFromGrant }) => {
+            return (
+              <>
+                <div>{KEEP.displayAmountWithSymbol(amount)}</div>
+                <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
+                  {isFromGrant ? "Grant Tokens" : "Wallet Tokens"}
+                </div>
+              </>
+            )
+          }}
         />
         <Column
           header="status"
@@ -81,12 +91,17 @@ const DelegatedTokensTable = ({
                 : formatDate(delegation.initializationOverAt)
 
             return (
-              <StatusBadge
-                status={BADGE_STATUS[delegationStatus]}
-                className="self-start"
-                text={statusBadgeText}
-                onlyIcon={delegationStatus === COMPLETE_STATUS}
-              />
+              <>
+                <StatusBadge
+                  status={BADGE_STATUS[delegationStatus]}
+                  className="self-start"
+                  text={statusBadgeText}
+                  onlyIcon={delegationStatus === COMPLETE_STATUS}
+                />
+                <div className={"text-grey-50"} style={{ fontSize: "14px" }}>
+                  {delegation.initializationOverAt.format("HH:mm:ss")}
+                </div>
+              </>
             )
           }}
         />
@@ -124,7 +139,7 @@ const DelegatedTokensTable = ({
               />
             ) : (
               <div className="flex row center space-evenly">
-                <div>
+                <div className={"ml-a"}>
                   <UndelegateStakeButton
                     isInInitializationPeriod={
                       delegation.isInInitializationPeriod
@@ -143,7 +158,7 @@ const DelegatedTokensTable = ({
                     }
                   />
                 </div>
-                <div>
+                <div className={"ml-a"}>
                   <SubmitButton
                     className="btn btn-secondary btn-sm"
                     onSubmitAction={(awaitingPromise) =>

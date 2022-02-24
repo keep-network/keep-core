@@ -1,2 +1,2 @@
 export * from "./WithdrawalOverview"
-export * from "./Timeline"
+export * from "./CovPoolTimeline"

@@ -3,10 +3,10 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "../RandomBeacon.sol";
-import "../DKGValidator.sol";
-import "../libraries/DKG.sol";
 import "../libraries/Callback.sol";
 import "../libraries/Groups.sol";
+import {BeaconDkg as DKG} from "../libraries/BeaconDkg.sol";
+import {BeaconDkgValidator as DKGValidator} from "../BeaconDkgValidator.sol";
 
 contract RandomBeaconStub is RandomBeacon {
     constructor(
@@ -26,15 +26,15 @@ contract RandomBeaconStub is RandomBeacon {
 
     function roughlyAddGroup(
         bytes calldata groupPubKey,
-        uint32[] calldata members
+        bytes32 groupMembersHash
     ) external {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
         Groups.Group memory group;
         group.groupPubKey = groupPubKey;
-        group.members = members;
+        group.membersHash = groupMembersHash;
         /* solhint-disable-next-line not-rely-on-time */
-        group.activationBlockNumber = block.number;
+        group.registrationBlockNumber = block.number;
 
         groups.groupsData[groupPubKeyHash] = group;
         groups.groupsRegistry.push(groupPubKeyHash);
@@ -46,7 +46,7 @@ contract RandomBeaconStub is RandomBeacon {
         returns (uint256)
     {
         return
-            groups.groupsData[groupPubKeyHash].activationBlockNumber +
+            groups.groupsData[groupPubKeyHash].registrationBlockNumber +
             groups.groupLifetime;
     }
 
@@ -58,9 +58,8 @@ contract RandomBeaconStub is RandomBeacon {
 
     function isGroupTerminated(uint64 groupId) external view returns (bool) {
         bytes32 groupPubKeyHash = groups.groupsRegistry[groupId];
-        Groups.Group memory group = groups.groupsData[groupPubKeyHash];
 
-        return group.terminated;
+        return groups.groupsData[groupPubKeyHash].terminated;
     }
 
     function publicDkgLockState() external {

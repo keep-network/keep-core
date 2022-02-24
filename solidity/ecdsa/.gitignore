@@ -1,0 +1,6 @@
+# Hardhat
+build/
+cache/
+export/
+hardhat-dependency-compiler/
+export.json

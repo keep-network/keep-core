@@ -96,7 +96,7 @@ const grantStaked = (grantToUpdate, { value }) => {
   grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
     ? grantToUpdate.readyToRelease
     : "0"
-  if (lt(value, grantToUpdate.availableToStake)) {
+  if (gt(value, grantToUpdate.availableToStake)) {
     grantToUpdate.availableToStake = "0"
   } else {
     grantToUpdate.availableToStake = sub(
@@ -112,7 +112,7 @@ const grantWithdrawn = (
   grantToUpdate,
   { amount, availableToStake, operator }
 ) => {
-  if (lt(amount, grantToUpdate.readyToRelease)) {
+  if (gt(amount, grantToUpdate.readyToRelease)) {
     grantToUpdate.readyToRelease = "0"
   } else {
     grantToUpdate.readyToRelease = sub(
