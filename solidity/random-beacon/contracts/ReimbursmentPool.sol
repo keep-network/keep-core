@@ -41,6 +41,12 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     }
 
     /// @notice Refunds ETH to a spender for executing specific transactions.
+    /// @dev Ignoring the result of sending ETH to a receiver is made on purpose.
+    ///      For EOA receiving ETH should always work. If a receiver is a smart
+    ///      contract, then we do not want to fail a transaction, because in some
+    ///      cases the refund is done at the very end of multiple calls where all
+    ///      the previous calls were already paid off. It is a receiver's smart
+    ///      contract resposibility to make sure it can receive ETH.
     /// @dev Only authorized contracts are allowed calling this function.
     /// @param gasSpent Gas spent on a transaction that needs to be reimbursed.
     /// @param receiver Address where the reimbursment is sent.
@@ -58,10 +64,9 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
         uint256 refundAmount = (gasSpent + staticGas) * gasPrice;
 
         /* solhint-disable avoid-low-level-calls */
-        // slither-disable-next-line low-level-calls
-        (bool sent, ) = receiver.call{value: refundAmount}("");
+        // slither-disable-next-line low-level-calls,unchecked-lowlevel
+        receiver.call{value: refundAmount}("");
         /* solhint-enable avoid-low-level-calls */
-        require(sent, "Failed to refund Ether");
     }
 
     /// @notice Authorize a contract that can interact with this reimbursment pool.
