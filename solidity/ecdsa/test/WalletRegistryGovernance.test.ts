@@ -870,9 +870,7 @@ describe("WalletRegistryGovernance", async () => {
           walletRegistryGovernance
             .connect(governance)
             .beginDkgResultSubmissionTimeoutUpdate(0)
-        ).to.be.revertedWith(
-          "DKG result submission eligibility delay must be > 0"
-        )
+        ).to.be.revertedWith("DKG result submission timeout must be > 0")
       })
     })
 
@@ -910,7 +908,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      it("should not update the DKG result submission eligibility delay", async () => {
+      it("should not update the DKG result submission timeout", async () => {
         expect(
           (await walletRegistry.dkgParameters()).resultSubmissionTimeout
         ).to.be.equal(params.dkgResultSubmissionTimeout)
@@ -999,7 +997,7 @@ describe("WalletRegistryGovernance", async () => {
           await restoreSnapshot()
         })
 
-        it("should update the DKG result submission eligibility delay", async () => {
+        it("should update the DKG result submission timeout", async () => {
           expect(
             (await walletRegistry.dkgParameters()).resultSubmissionTimeout
           ).to.be.equal(10)

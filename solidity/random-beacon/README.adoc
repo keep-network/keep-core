@@ -320,29 +320,41 @@ _5 * (1 + 5) + 2 * (1 + 10) + 20_
 |resultChallengePeriodLength
 |Time in blocks during which a submitted result can be challenged
 |Yes
-d|`1440 blocks` +
-_~6h assuming 15s block time_
+d|`11520 blocks` +
+_~48h assuming 15s block time_
 
-|resultSubmissionEligibilityDelay
-|Time in blocks after which the next group member is eligible to submit DKG result
+|resultSubmissionTimeout
+|Time in blocks during which a result is expected to be submitted
 |Yes
-|10 blocks
+d|`1280 blocks` +
+_64 members * 20 blocks = 1280 blocks_
+
+|submitterPrecedencePeriodLength
+|Time in blocks during which only the result submitter is allowed to approve it
+|Yes
+|`20 blocks`
 
 4+s|Groups
+
+|relayRequestFee
+|Fee paid by the relay requester
+|Yes
+d|`200e18` +
+`200 T`
 
 |groupLifetime
 |Group lifetime in blocks
 |Yes
-d|`80640 blocks` +
-_~2 weeks assuming 15s block time_
+d|`403200 blocks` +
+_~10 weeks assuming 15s block time_
 
 4+s|Relay Entry
 
-|relayEntrySubmissionEligibilityDelay
-|The number of blocks it takes for a group member to become eligible to submit the
-relay entry
+|relayEntrySoftTimeout
+|Time in blocks during which a result is expected to be submitted
 |Yes
-|10 blocks
+d|`1280 blocks` +
+_64 members * 20 blocks = 1280 blocks_
 
 |relayEntryHardTimeout
 |Hard timeout in blocks for a group to submit the relay entry
@@ -361,61 +373,80 @@ _1 000 T_
 |callbackGasLimit
 |Relay entry callback gas limit
 |Yes
-|
+d|`56000`
 
 |groupCreationFrequency
 |The frequency of new group creation
 |Yes
-|
+|5
 
 |dkgResultSubmissionReward
 |Reward in T for submitting DKG result
 |Yes
-|
+d|`1000e18` +
+_1 000 T_
 
 |sortitionPoolUnlockingReward
 |Reward in T for unlocking the sortition pool if DKG timed out
 |Yes
-|
+d|`1000e18` +
+_1 000 T_
 
 |ineligibleOperatorNotifierReward
 |Reward in T for notifying the operator is ineligible
 |Yes
-|
+|0
 
 |maliciousDkgResultSlashingAmount
-|Slashing amount for supporting malicious DKG result
+|Slashing amount for submitting malicious DKG result
 |Yes
-|
+d|`50000e18` +
+_50 000 T_
 
 |unauthorizedSigningSlashingAmount
 |Slashing amount when an unauthorized signing has been proved
 |Yes
-|
+d|`100e3 * 1e18` +
+_100 000 T_
+
 
 |sortitionPoolRewardsBanDuration
-|Duration of the sortition pool rewards ban imposed on operators who missed their
-turn for relay entry or DKG result submission
+|Duration of the sortition pool rewards ban imposed on operators who misbehaved or failed heartbeat.
 |Yes
-|
+|`2 weeks`
 
 |relayEntryTimeoutNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about relay entry timeout
 |Yes
-|
+|`40`
 
 |unauthorizedSigningNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about unauthorized signing
 |Yes
-|
+|`50`
 
 |dkgMaliciousResultNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about a malicious DKG result
 |Yes
-|
+|`100`
+
+4+s|Authorization
+
+|minimumAuthorization
+|The minimum authorization amount required so that operator can participate in
+the random beacon
+|Yes
+d|`100000 * 1e18` +
+_100 000 T_
+
+|authorizationDecreaseDelay
+|Delay in seconds that needs to pass between the time authorization decrease is
+requested and the time that request gets approved
+|Yes
+|`0`
 
 |===
 

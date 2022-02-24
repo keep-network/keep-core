@@ -105,11 +105,11 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     /// @notice Reward in T for notifying the operator is ineligible.
     uint256 public ineligibleOperatorNotifierReward;
 
-    /// @notice Slashing amount for supporting malicious DKG result. Every
+    /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
     ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
-    ///         is challenged and proven to be malicious, each operator who
-    ///         signed the malicious result is slashed for
+    ///         is challenged and proven to be malicious, the operator who
+    ///         submitted the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
     uint256 public maliciousDkgResultSlashingAmount;
 
@@ -119,7 +119,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     uint256 public unauthorizedSigningSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
-    ///         who missed their turn for relay entry or DKG result submission.
+    ///         who misbehaved or failed heartbeat.
     uint256 public sortitionPoolRewardsBanDuration;
 
     /// @notice Percentage of the staking contract malicious behavior

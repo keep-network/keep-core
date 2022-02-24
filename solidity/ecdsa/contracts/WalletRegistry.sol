@@ -50,11 +50,11 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     // new wallets creation and manage their state.
     address public walletOwner;
 
-    /// @notice Slashing amount for supporting malicious DKG result. Every
-    ///         DKG result submitted can be challenged for the time of DKG's
-    ///         `resultChallengePeriodLength` parameter. If the DKG result submitted
-    ///         is challenged and proven to be malicious, each operator who
-    ///         signed the malicious result is slashed for
+    /// @notice Slashing amount for submitting a malicious DKG result. Every
+    ///         DKG result submitted can be challenged for the time of
+    ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
+    ///         is challenged and proven to be malicious, the operator who
+    ///         submitted the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
     uint96 public maliciousDkgResultSlashingAmount;
 
