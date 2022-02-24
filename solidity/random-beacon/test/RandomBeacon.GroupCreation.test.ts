@@ -151,7 +151,7 @@ describe("RandomBeacon - Group Creation", () => {
       })
     })
 
-    context("with no active groups", async () => {
+    context("with no registered groups", async () => {
       context("with genesis in progress", async () => {
         let startBlock: number
         let genesisSeed: BigNumber
