@@ -10,7 +10,6 @@ import {
   TOKEN_GRANT_CONTRACT_NAME,
 } from "../constants/constants"
 import { Keep } from "../contracts"
-import { gt } from "../utils/arithmetics.utils"
 
 const fetchThresholdAuthorizationData = async (address) => {
   if (!address) {
@@ -61,7 +60,7 @@ const fetchThresholdAuthorizationData = async (address) => {
 
     // If stake is undelegated we won't display it, because undelegated stakes
     // can't be staked to Threshold
-    if (undelegatedAt !== "0" && gt(stakeAmount, 0)) continue
+    if (undelegatedAt !== "0") continue
 
     const isThresholdTokenStakingContractAuthorized =
       await stakingContract.methods
