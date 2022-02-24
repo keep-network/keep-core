@@ -2,7 +2,9 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { noMisbehaved } from "./utils/dkg"
+
+import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
+
 import type { GroupsStub } from "../typechain"
 
 const fixture = async () => {
@@ -240,12 +242,10 @@ describe("Groups", () => {
 
     async function addGroups(start, numberOfGroups) {
       for (let i = start; i <= numberOfGroups; i++) {
-        await groups.addCandidateGroup(
+        await groups.addGroup(
           ethers.utils.hexlify(i),
-          members,
-          noMisbehaved
+          hashDKGMembers(members, noMisbehaved)
         )
-        await groups.activateCandidateGroup()
       }
     }
 

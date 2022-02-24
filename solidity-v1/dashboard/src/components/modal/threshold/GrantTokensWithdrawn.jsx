@@ -1,6 +1,7 @@
 import React from "react"
 import { withBaseModal } from "../withBaseModal"
 import ViewTransactionSuccessModal from "../staking/ViewTransactionSuccessModal"
+import UpgradeToTButton from "../../UpgradeToTButton"
 
 const GrantTokensWithdrawnComponent = ({ txHash, onClose }) => {
   return (
@@ -9,6 +10,9 @@ const GrantTokensWithdrawnComponent = ({ txHash, onClose }) => {
       furtherDescription={"Go to the Threshold dapp to coplete upgrade"}
       txHash={txHash}
       onClose={onClose}
+      renderAdditionalButtons={
+        <UpgradeToTButton className={"btn-primary btn-lg mr-1"} />
+      }
     />
   )
 }

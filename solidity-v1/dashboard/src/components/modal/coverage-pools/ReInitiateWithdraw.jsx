@@ -67,9 +67,9 @@ const ReInitiateWithdrawComponent = ({
           covTotalSupply={covTotalSupply}
           inputProps={{
             name: "amount",
-            onChange: (event, formatedValue) => {
+            onChange: (event, formattedValue) => {
               formik.handleChange(event)
-              formik.setFieldValue("amount", formatedValue)
+              formik.setFieldValue("amount", formattedValue)
             },
             value: formik.values.amount,
             hasError: formik.errors.amount,

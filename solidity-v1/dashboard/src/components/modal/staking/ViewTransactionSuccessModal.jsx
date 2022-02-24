@@ -4,12 +4,14 @@ import * as Icons from "../../Icons"
 import { colors } from "../../../constants/colors"
 import { ViewInBlockExplorer } from "../../ViewInBlockExplorer"
 import Button from "../../Button"
+import OnlyIf from "../../OnlyIf"
 
 const ViewTransactionSuccessModal = ({
   modalHeader,
   furtherDescription = "",
   txHash,
   onClose,
+  renderAdditionalButtons = null,
 }) => {
   return (
     <>
@@ -31,6 +33,9 @@ const ViewTransactionSuccessModal = ({
         </h4>
       </ModalBody>
       <ModalFooter>
+        <OnlyIf condition={renderAdditionalButtons}>
+          {renderAdditionalButtons}
+        </OnlyIf>
         <Button className="btn btn-secondary btn-lg" onClick={onClose}>
           close
         </Button>

@@ -66,6 +66,27 @@ const stakingReducer = (state = initialState, action) => {
         ...state,
         delegations: [action.payload, ...state.delegations],
       }
+    case "staking/update_delegation":
+      if (state.delegations.length === 0) return state
+
+      return {
+        ...state,
+        delegations: state.delegations.map((delegation) => {
+          if (
+            isSameEthAddress(
+              delegation.operatorAddress,
+              action.payload.operatorAddress
+            )
+          ) {
+            return {
+              ...delegation,
+              ...action.payload.values,
+            }
+          }
+
+          return delegation
+        }),
+      }
     case "staking/remove_delegation":
       return {
         ...state,
@@ -102,6 +123,27 @@ const stakingReducer = (state = initialState, action) => {
           [...state.undelegations],
           action.payload
         ),
+      }
+    case "staking/update_undelegation":
+      if (state.undelegations.length === 0) return state
+
+      return {
+        ...state,
+        undelegations: state.undelegations.map((undelegation) => {
+          if (
+            isSameEthAddress(
+              undelegation.operatorAddress,
+              action.payload.operatorAddress
+            )
+          ) {
+            return {
+              ...undelegation,
+              ...action.payload.values,
+            }
+          }
+
+          return undelegation
+        }),
       }
     case "staking/top_up_initiated":
       return {

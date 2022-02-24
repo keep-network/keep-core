@@ -1,0 +1,9 @@
+{
+  "files": ["./hardhat.config.ts"],
+  "include": ["./deploy", "./test", "./typechain"],
+  "compilerOptions": {
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "outDir": "export"
+  }
+}

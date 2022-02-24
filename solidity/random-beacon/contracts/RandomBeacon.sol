@@ -14,18 +14,25 @@
 
 pragma solidity ^0.8.9;
 
+import "./api/IRandomBeacon.sol";
 import "./libraries/Authorization.sol";
-import "./libraries/DKG.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "./libraries/Heartbeat.sol";
+import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
+import {BeaconDkgValidator as DKGValidator} from "./BeaconDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+
+// FIXME: As a workaround for a slither [bug] we need to import the library without
+// an alias.
+// bug: https://github.com/crytic/slither/issues/1067
+import {BeaconDkg} from "./libraries/BeaconDkg.sol";
 
 /// @title Staking contract interface
 /// @notice This is an interface with just a few function signatures of the
@@ -57,10 +64,10 @@ interface IRandomBeaconStaking {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable {
+contract RandomBeacon is IRandomBeacon, Ownable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
-    using DKG for DKG.Data;
+    using BeaconDkg for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
@@ -184,14 +191,15 @@ contract RandomBeacon is Ownable {
 
     event RelayEntryParametersUpdated(
         uint256 relayRequestFee,
-        uint256 relayEntrySubmissionEligibilityDelay,
+        uint256 relayEntrySoftTimeout,
         uint256 relayEntryHardTimeout,
         uint256 callbackGasLimit
     );
 
     event DkgParametersUpdated(
         uint256 dkgResultChallengePeriodLength,
-        uint256 dkgResultSubmissionEligibilityDelay
+        uint256 dkgResultSubmissionTimeout,
+        uint256 dkgResultSubmitterPrecedencePeriodLength
     );
 
     event GroupCreationParametersUpdated(
@@ -220,12 +228,7 @@ contract RandomBeacon is Ownable {
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        uint256 submitterMemberIndex,
-        bytes indexed groupPubKey,
-        uint8[] misbehavedMembersIndices,
-        bytes signatures,
-        uint256[] signingMembersIndices,
-        uint32[] members
+        DKG.Result result
     );
 
     event DkgTimedOut();
@@ -247,15 +250,17 @@ contract RandomBeacon is Ownable {
         address maliciousSubmitter
     );
 
+    event DkgMaliciousResultSlashingFailed(
+        bytes32 indexed resultHash,
+        uint256 slashingAmount,
+        address maliciousSubmitter
+    );
+
     event DkgStateLocked();
 
     event DkgSeedTimedOut();
 
-    event CandidateGroupRegistered(bytes indexed groupPubKey);
-
-    event CandidateGroupRemoved(bytes indexed groupPubKey);
-
-    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
+    event GroupRegistered(uint64 indexed groupId, bytes indexed groupPubKey);
 
     event RelayEntryRequested(
         uint256 indexed requestId,
@@ -292,7 +297,19 @@ contract RandomBeacon is Ownable {
         address[] groupMembers
     );
 
+    event RelayEntryTimeoutSlashingFailed(
+        uint256 indexed requestId,
+        uint256 slashingAmount,
+        address[] groupMembers
+    );
+
     event UnauthorizedSigningSlashed(
+        uint64 indexed groupId,
+        uint256 unauthorizedSigningSlashingAmount,
+        address[] groupMembers
+    );
+
+    event UnauthorizedSigningSlashingFailed(
         uint64 indexed groupId,
         uint256 unauthorizedSigningSlashingAmount,
         address[] groupMembers
@@ -317,31 +334,33 @@ contract RandomBeacon is Ownable {
         staking = _staking;
 
         // TODO: revisit all initial values
-        callbackGasLimit = 200e3;
-        groupCreationFrequency = 10;
+        callbackGasLimit = 56000;
+        groupCreationFrequency = 5;
 
-        dkgResultSubmissionReward = 0;
-        sortitionPoolUnlockingReward = 0;
+        dkgResultSubmissionReward = 1000e18;
+        sortitionPoolUnlockingReward = 100e18;
         ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
-        relayEntryTimeoutNotificationRewardMultiplier = 5;
-        unauthorizedSigningNotificationRewardMultiplier = 5;
+        relayEntryTimeoutNotificationRewardMultiplier = 40;
+        unauthorizedSigningNotificationRewardMultiplier = 50;
         dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000 * 1e18);
 
         dkg.init(_sortitionPool, _dkgValidator);
-        dkg.setResultChallengePeriodLength(1440); // ~6h assuming 15s block time
-        dkg.setResultSubmissionEligibilityDelay(10);
+        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
+        dkg.setResultSubmissionTimeout(1280); // 64 members * 20 blocks = 1280 blocks // TODO: Verify value
+        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
 
         relay.initSeedEntry();
-        relay.setRelayEntrySubmissionEligibilityDelay(10);
+        relay.setRelayRequestFee(200e18);
+        relay.setRelayEntrySoftTimeout(1280); // 64 members * 20 blocks = 1280 blocks
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
-        groups.setGroupLifetime(80640); // ~2weeks assuming 15s block time
+        groups.setGroupLifetime(403200); // ~10 weeks assuming 15s block time
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -371,27 +390,24 @@ contract RandomBeacon is Ownable {
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _relayRequestFee New relay request fee
-    /// @param _relayEntrySubmissionEligibilityDelay New relay entry submission
-    ///        eligibility delay
+    /// @param _relayEntrySoftTimeout New relay entry submission soft timeout.
     /// @param _relayEntryHardTimeout New relay entry hard timeout
     /// @param _callbackGasLimit New callback gas limit
     function updateRelayEntryParameters(
         uint256 _relayRequestFee,
-        uint256 _relayEntrySubmissionEligibilityDelay,
+        uint256 _relayEntrySoftTimeout,
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
         callbackGasLimit = _callbackGasLimit;
 
         relay.setRelayRequestFee(_relayRequestFee);
-        relay.setRelayEntrySubmissionEligibilityDelay(
-            _relayEntrySubmissionEligibilityDelay
-        );
+        relay.setRelayEntrySoftTimeout(_relayEntrySoftTimeout);
         relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
             _relayRequestFee,
-            _relayEntrySubmissionEligibilityDelay,
+            _relayEntrySoftTimeout,
             _relayEntryHardTimeout,
             callbackGasLimit
         );
@@ -419,24 +435,28 @@ contract RandomBeacon is Ownable {
 
     /// @notice Updates the values of DKG parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract. The caller is responsible for
+    ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultChallengePeriodLength New DKG result challenge period
+    /// @param _resultChallengePeriodLength New DKG result challenge period
     ///        length
-    /// @param _dkgResultSubmissionEligibilityDelay New DKG result submission
-    ///        eligibility delay
+    /// @param _resultSubmissionTimeout New DKG result submission timeout
+    /// @param _submitterPrecedencePeriodLength New submitter precedence period
+    ///        length
     function updateDkgParameters(
-        uint256 _dkgResultChallengePeriodLength,
-        uint256 _dkgResultSubmissionEligibilityDelay
+        uint256 _resultChallengePeriodLength,
+        uint256 _resultSubmissionTimeout,
+        uint256 _submitterPrecedencePeriodLength
     ) external onlyOwner {
-        dkg.setResultChallengePeriodLength(_dkgResultChallengePeriodLength);
-        dkg.setResultSubmissionEligibilityDelay(
-            _dkgResultSubmissionEligibilityDelay
+        dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
+        dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
+        dkg.setSubmitterPrecedencePeriodLength(
+            _submitterPrecedencePeriodLength
         );
 
         emit DkgParametersUpdated(
-            dkgResultChallengePeriodLength(),
-            dkgResultSubmissionEligibilityDelay()
+            _resultChallengePeriodLength,
+            _resultSubmissionTimeout,
+            _submitterPrecedencePeriodLength
         );
     }
 
@@ -481,41 +501,6 @@ contract RandomBeacon is Ownable {
             unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
         );
-    }
-
-    /// @notice The number of blocks for which a DKG result can be challenged.
-    ///         Anyone can challenge DKG result for a certain number of blocks
-    ///         before the result is fully accepted and the group registered in
-    ///         the pool of active groups. If the challenge gets accepted, all
-    ///         operators who signed the malicious result get slashed for
-    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
-    ///         rewarded.
-    function dkgResultChallengePeriodLength() public view returns (uint256) {
-        return dkg.parameters.resultChallengePeriodLength;
-    }
-
-    /// @notice The number of blocks it takes for a group member to become
-    ///         eligible to submit the DKG result. At first, there is only one
-    ///         member in the group eligible to submit the DKG result. Then,
-    ///         after `dkgResultSubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the DKG result at that moment. After
-    ///         another `dkgResultSubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible to submit the DKG result so that
-    ///         there are three group members eligible to submit the DKG result
-    ///         at that moment. This continues until all group members are
-    ///         eligible to submit the DKG result or until the DKG result is
-    ///         submitted. If all members became eligible to submit the DKG
-    ///         result and one more `dkgResultSubmissionEligibilityDelay` passed
-    ///         without the DKG result submitted, DKG is considered as timed out
-    ///         and no DKG result for this group creation can be submitted
-    ///         anymore.
-    function dkgResultSubmissionEligibilityDelay()
-        public
-        view
-        returns (uint256)
-    {
-        return dkg.parameters.resultSubmissionEligibilityDelay;
     }
 
     /// @notice Updates the values of slashing parameters.
@@ -579,7 +564,7 @@ contract RandomBeacon is Ownable {
 
     /// @notice Triggers group selection if there are no active groups.
     function genesis() external {
-        require(groups.numberOfActiveGroups() == 0, "not awaiting genesis");
+        require(groups.numberOfActiveGroups() == 0, "Not awaiting genesis");
 
         dkg.lockState();
         dkg.start(
@@ -608,12 +593,6 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
-
-        groups.addCandidateGroup(
-            dkgResult.groupPubKey,
-            dkgResult.members,
-            dkgResult.misbehavedMembersIndices
-        );
     }
 
     /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
@@ -631,7 +610,7 @@ contract RandomBeacon is Ownable {
     ///         as valid, pays reward to the approver, bans misbehaved group
     ///         members from the sortition pool rewards, and completes the group
     ///         creation by activating the candidate group. For the first
-    ///         `resultSubmissionEligibilityDelay` blocks after the end of the
+    ///         `submitterPrecedencePeriodLength` blocks after the end of the
     ///         challenge period can be called only by the DKG result submitter.
     ///         After that time, can be called by anyone.
     /// @param dkgResult Result to approve. Must match the submitted result
@@ -649,10 +628,8 @@ contract RandomBeacon is Ownable {
             );
         }
 
-        groups.activateCandidateGroup();
+        groups.addGroup(dkgResult.groupPubKey, dkgResult.membersHash);
         dkg.complete();
-        // TODO: Check if this function is cheap enough and it will be
-        //       profitable for the DKG result submitter to call it.
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -670,22 +647,32 @@ contract RandomBeacon is Ownable {
             maliciousSubmitter
         );
 
-        groups.popCandidateGroup();
-
-        emit DkgMaliciousResultSlashed(
-            maliciousResultHash,
-            slashingAmount,
-            maliciousSubmitterAddresses
-        );
-
         address[] memory operatorWrapper = new address[](1);
         operatorWrapper[0] = maliciousSubmitterAddresses;
-        staking.seize(
-            slashingAmount,
-            dkgMaliciousResultNotificationRewardMultiplier,
-            msg.sender,
-            operatorWrapper
-        );
+        try
+            staking.seize(
+                slashingAmount,
+                dkgMaliciousResultNotificationRewardMultiplier,
+                msg.sender,
+                operatorWrapper
+            )
+        {
+            // slither-disable-next-line reentrancy-events
+            emit DkgMaliciousResultSlashed(
+                maliciousResultHash,
+                slashingAmount,
+                maliciousSubmitterAddresses
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit DkgMaliciousResultSlashingFailed(
+                maliciousResultHash,
+                slashingAmount,
+                maliciousSubmitterAddresses
+            );
+        }
     }
 
     /// @notice Check current group creation state.
@@ -730,7 +717,7 @@ contract RandomBeacon is Ownable {
         external
     {
         uint64 groupId = groups.selectGroup(
-            uint256(keccak256(relay.previousEntry))
+            uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
         );
 
         relay.requestEntry(groupId);
@@ -751,28 +738,56 @@ contract RandomBeacon is Ownable {
         }
     }
 
-    /// @notice Creates a new relay entry.
+    /// @notice Creates a new relay entry. Gas-optimized version that can be
+    ///         called only before the soft timeout. This should be the majority
+    ///         of cases.
     /// @param entry Group BLS signature over the previous entry.
     function submitRelayEntry(bytes calldata entry) external {
-        uint256 currentRequestId = relay.currentRequest.id;
+        Groups.Group storage group = groups.getGroup(
+            relay.currentRequestGroupID
+        );
+
+        relay.submitEntryBeforeSoftTimeout(entry, group.groupPubKey);
+
+        // If DKG is awaiting a seed, that means the we should start the actual
+        // group creation process.
+        if (dkg.currentState() == DKG.State.AWAITING_SEED) {
+            dkg.start(uint256(keccak256(entry)));
+        }
+
+        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+    }
+
+    /// @notice Creates a new relay entry.
+    /// @param entry Group BLS signature over the previous entry.
+    /// @param groupMembers Identifiers of group members.
+    function submitRelayEntry(
+        bytes calldata entry,
+        uint32[] calldata groupMembers
+    ) external {
+        uint256 currentRequestId = relay.currentRequestID;
 
         Groups.Group storage group = groups.getGroup(
-            relay.currentRequest.groupId
+            relay.currentRequestGroupID
+        );
+
+        require(
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
         );
 
         uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
-            address[] memory groupMembers = sortitionPool.getIDOperators(
-                group.members
-            );
+            address[] memory groupMembersAddresses = sortitionPool
+                .getIDOperators(groupMembers);
 
-            try staking.slash(slashingAmount, groupMembers) {
+            try staking.slash(slashingAmount, groupMembersAddresses) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembers
+                    groupMembersAddresses
                 );
             } catch {
                 // Should never happen but we want to ensure a non-critical path
@@ -781,7 +796,7 @@ contract RandomBeacon is Ownable {
                 emit RelayEntryDelaySlashingFailed(
                     currentRequestId,
                     slashingAmount,
-                    groupMembers
+                    groupMembersAddresses
                 );
             }
         }
@@ -796,33 +811,53 @@ contract RandomBeacon is Ownable {
     }
 
     /// @notice Reports a relay entry timeout.
-    function reportRelayEntryTimeout() external {
-        uint64 groupId = relay.currentRequest.groupId;
+    /// @param groupMembers Identifiers of group members.
+    function reportRelayEntryTimeout(uint32[] calldata groupMembers) external {
+        uint64 groupId = relay.currentRequestGroupID;
+        Groups.Group storage group = groups.getGroup(groupId);
+
+        require(
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
+        );
+
         uint256 slashingAmount = relay
             .relayEntrySubmissionFailureSlashingAmount;
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            groups.getGroup(groupId).members
-        );
-
-        emit RelayEntryTimeoutSlashed(
-            relay.currentRequest.id,
-            slashingAmount,
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             groupMembers
         );
 
-        staking.seize(
-            slashingAmount,
-            relayEntryTimeoutNotificationRewardMultiplier,
-            msg.sender,
-            groupMembers
-        );
+        try
+            staking.seize(
+                slashingAmount,
+                relayEntryTimeoutNotificationRewardMultiplier,
+                msg.sender,
+                groupMembersAddresses
+            )
+        {
+            // slither-disable-next-line reentrancy-events
+            emit RelayEntryTimeoutSlashed(
+                relay.currentRequestID,
+                slashingAmount,
+                groupMembersAddresses
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit RelayEntryTimeoutSlashingFailed(
+                relay.currentRequestID,
+                slashingAmount,
+                groupMembersAddresses
+            );
+        }
 
         groups.terminateGroup(groupId);
         groups.expireOldGroups();
 
         if (groups.numberOfActiveGroups() > 0) {
             groupId = groups.selectGroup(
-                uint256(keccak256(relay.previousEntry))
+                uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
             );
             relay.retryOnEntryTimeout(groupId);
         } else {
@@ -846,11 +881,18 @@ contract RandomBeacon is Ownable {
     ///         function reverts.
     /// @param signedMsgSender Signature of the sender's address as a message.
     /// @param groupId Group that is being reported for leaking a private key.
+    /// @param groupMembers Identifiers of group members.
     function reportUnauthorizedSigning(
         bytes memory signedMsgSender,
-        uint64 groupId
+        uint64 groupId,
+        uint32[] calldata groupMembers
     ) external {
         Groups.Group memory group = groups.getGroup(groupId);
+
+        require(
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
+        );
 
         require(!group.terminated, "Group cannot be terminated");
 
@@ -865,22 +907,34 @@ contract RandomBeacon is Ownable {
 
         groups.terminateGroup(groupId);
 
-        address[] memory groupMembers = sortitionPool.getIDOperators(
-            groups.getGroup(groupId).members
-        );
-
-        emit UnauthorizedSigningSlashed(
-            groupId,
-            unauthorizedSigningSlashingAmount,
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             groupMembers
         );
 
-        staking.seize(
-            unauthorizedSigningSlashingAmount,
-            unauthorizedSigningNotificationRewardMultiplier,
-            msg.sender,
-            groupMembers
-        );
+        try
+            staking.seize(
+                unauthorizedSigningSlashingAmount,
+                unauthorizedSigningNotificationRewardMultiplier,
+                msg.sender,
+                groupMembersAddresses
+            )
+        {
+            // slither-disable-next-line reentrancy-events
+            emit UnauthorizedSigningSlashed(
+                groupId,
+                unauthorizedSigningSlashingAmount,
+                groupMembersAddresses
+            );
+        } catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the challenge
+            // to complete.
+            emit UnauthorizedSigningSlashingFailed(
+                groupId,
+                unauthorizedSigningSlashingAmount,
+                groupMembersAddresses
+            );
+        }
     }
 
     /// @notice Notifies about a failed group heartbeat. Using this function,
@@ -898,9 +952,11 @@ contract RandomBeacon is Ownable {
     /// @param claim Failure claim.
     /// @param nonce Current failed heartbeat nonce for given group. Must
     ///        be the same as the stored one.
+    /// @param groupMembers Identifiers of group members.
     function notifyFailedHeartbeat(
         Heartbeat.FailureClaim calldata claim,
-        uint256 nonce
+        uint256 nonce,
+        uint32[] calldata groupMembers
     ) external {
         uint64 groupId = claim.groupId;
 
@@ -913,11 +969,17 @@ contract RandomBeacon is Ownable {
 
         Groups.Group storage group = groups.getGroup(groupId);
 
+        require(
+            group.membersHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
+        );
+
         uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
             sortitionPool,
             claim,
             group,
-            nonce
+            nonce,
+            groupMembers
         );
 
         failedHeartbeatNonce[groupId]++;
@@ -1011,35 +1073,18 @@ contract RandomBeacon is Ownable {
         return relay.relayRequestFee;
     }
 
-    /// @return The number of blocks it takes for a group member to become
-    ///         eligible to submit the relay entry. At first, there is only one
-    ///         member in the group eligible to submit the relay entry. Then,
-    ///         after `relayEntrySubmissionEligibilityDelay` blocks, another
-    ///         group member becomes eligible so that there are two group
-    ///         members eligible to submit the relay entry at that moment. After
-    ///         another `relayEntrySubmissionEligibilityDelay` blocks, yet one
-    ///         group member becomes eligible so that there are three group
-    ///         members eligible to submit the relay entry at that moment. This
-    ///         continues until all group members are eligible to submit the
-    ///         relay entry or until the relay entry is submitted. If all
-    ///         members became eligible to submit the relay entry and one more
-    ///         `relayEntrySubmissionEligibilityDelay` passed without the relay
-    ///         entry submitted, the group reaches soft timeout for submitting
-    ///         the relay entry and the slashing starts.
-    function relayEntrySubmissionEligibilityDelay()
-        external
-        view
-        returns (uint256)
-    {
-        return relay.relayEntrySubmissionEligibilityDelay;
+    /// @return Soft timeout in blocks for a group to submit the relay entry.
+    ///         All group members are eligible to submit the relay entry. If
+    ///         soft timeout is reached for submitting the relay entry
+    ///         the slashing starts.
+    function relayEntrySoftTimeout() external view returns (uint256) {
+        return relay.relayEntrySoftTimeout;
     }
 
     /// @return Hard timeout in blocks for a group to submit the relay entry.
-    ///         After all group members became eligible to submit the relay
-    ///         entry and one more `relayEntrySubmissionEligibilityDelay` blocks
-    ///         passed without relay entry submitted, all group members start
-    ///         getting slashed. The slashing amount increases linearly until
-    ///         the group submits the relay entry or until
+    ///         After the soft timeout passes without relay entry submitted,
+    ///         all group members start getting slashed. The slashing amount
+    ///         increases linearly until the group submits the relay entry or until
     ///         `relayEntryHardTimeout` is reached. When the hard timeout is
     ///         reached, each group member will get slashed for
     ///         `relayEntrySubmissionFailureSlashingAmount`.
@@ -1052,7 +1097,7 @@ contract RandomBeacon is Ownable {
     ///         submitted, each group member gets slashed for
     ///         `relayEntrySubmissionFailureSlashingAmount`. If the relay entry
     ///         gets submitted after the soft timeout (see
-    ///         `relayEntrySubmissionEligibilityDelay` documentation), but
+    ///         `relayEntrySoftTimeout` documentation), but
     ///         before the hard timeout, each group member gets slashed
     ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
     ///         and the time passed since the soft deadline.
@@ -1070,6 +1115,37 @@ contract RandomBeacon is Ownable {
     ///         to that group is still pending.
     function groupLifetime() external view returns (uint256) {
         return groups.groupLifetime;
+    }
+
+    /// @notice The number of blocks for which a DKG result can be challenged.
+    ///         Anyone can challenge DKG result for a certain number of blocks
+    ///         before the result is fully accepted and the group registered in
+    ///         the pool of active groups. If the challenge gets accepted, all
+    ///         operators who signed the malicious result get slashed for
+    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
+    ///         rewarded.
+    function dkgResultChallengePeriodLength() external view returns (uint256) {
+        return dkg.parameters.resultChallengePeriodLength;
+    }
+
+    /// @notice Timeout in blocks for a group to submit the DKG result.
+    ///         All members are eligible to submit the DKG result.
+    ///         If `dkgResultSubmissionTimeout` passes without the DKG result
+    ///         submitted, DKG is considered as timed out and no DKG result for
+    ///         this group creation can be submitted anymore.
+    function dkgResultSubmissionTimeout() external view returns (uint256) {
+        return dkg.parameters.resultSubmissionTimeout;
+    }
+
+    /// @notice Time during the DKG result approval stage when the submitter
+    ///         of the DKG result takes the precedence to approve the DKG result.
+    ///         After this time passes anyone can approve the DKG result.
+    function dkgSubmitterPrecedencePeriodLength()
+        external
+        view
+        returns (uint256)
+    {
+        return dkg.parameters.submitterPrecedencePeriodLength;
     }
 
     /// @notice Selects a new group of operators based on the provided seed.

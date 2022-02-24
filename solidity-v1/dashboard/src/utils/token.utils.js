@@ -234,3 +234,12 @@ export const LPToken = new Token(
   18,
   null
 )
+export const ThresholdToken = new Token(
+  "Threshold Token",
+  18,
+  "T",
+  "T",
+  18,
+  Icons.TLogo,
+  0
+)

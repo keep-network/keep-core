@@ -9,20 +9,19 @@ contract RelayStub {
 
     Relay.Data internal relay;
 
-    constructor() {
-        relay.setRelayEntrySubmissionEligibilityDelay(10);
-        relay.setRelayEntryHardTimeout(5760);
+    function setTimeouts(
+        uint256 relayEntrySoftTimeout,
+        uint256 relayEntryHardTimeout
+    ) public {
+        relay.setRelayEntrySoftTimeout(relayEntrySoftTimeout);
+        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
     }
 
     function setCurrentRequestStartBlock() external {
-        relay.currentRequest.startBlock = uint128(block.number);
+        relay.currentRequestStartBlock = uint64(block.number);
     }
 
-    function getSlashingFactor(uint256 groupSize)
-        external
-        view
-        returns (uint256)
-    {
-        return relay.getSlashingFactor(groupSize);
+    function getSlashingFactor() external view returns (uint256) {
+        return relay.getSlashingFactor();
     }
 }

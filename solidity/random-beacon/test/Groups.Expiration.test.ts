@@ -2,7 +2,9 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { noMisbehaved } from "./utils/dkg"
+
+import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
+
 import type { GroupsStub } from "../typechain"
 
 const fixture = async () => {
@@ -150,12 +152,10 @@ describe("Groups", () => {
         const currentBlock = await ethers.provider.getBlock("latest")
         await mineBlocksTo(currentBlock.number + groupLifetime)
 
-        await groups.addCandidateGroup(
+        await groups.addGroup(
           ethers.utils.hexlify(6),
-          members,
-          noMisbehaved
+          hashDKGMembers(members, noMisbehaved)
         )
-        await groups.activateCandidateGroup()
 
         const selected = await groups.callStatic.selectGroup(0)
         await groups.selectGroup(0)
@@ -290,24 +290,22 @@ describe("Groups", () => {
 
   async function addGroups(firstGroup, numberOfGroups) {
     for (let i = firstGroup; i < firstGroup + numberOfGroups; i++) {
-      await groups.addCandidateGroup(
+      await groups.addGroup(
         ethers.utils.hexlify(i),
-        members,
-        noMisbehaved
+        hashDKGMembers(members, noMisbehaved)
       )
-      await groups.activateCandidateGroup()
     }
   }
 
   async function expireGroup(groupId) {
     const group = await groups.getGroupById(groupId)
-    const activationBlock = group.activationBlockNumber
+    const registrationBlock = group.registrationBlockNumber
     const currentBlock = await ethers.provider.getBlock("latest")
 
-    if (currentBlock.number - activationBlock.toNumber() <= groupLifetime) {
+    if (currentBlock.number - registrationBlock.toNumber() <= groupLifetime) {
       const minedBlocksToExpireGroup =
         currentBlock.number +
-        (groupLifetime - (currentBlock.number - activationBlock.toNumber())) +
+        (groupLifetime - (currentBlock.number - registrationBlock.toNumber())) +
         1
       await mineBlocksTo(minedBlocksToExpireGroup)
     }

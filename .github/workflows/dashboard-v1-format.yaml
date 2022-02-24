@@ -42,7 +42,8 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "12.x"
-          cache: 'npm'
+          cache: "npm"
+          cache-dependency-path: solidity-v1/dashboard/package-lock.json
 
       - name: Install dependencies
         run: npm ci

@@ -8,10 +8,10 @@ const resourceTooltipProps = {
     title: "Cliff",
     content: "A cliff is a set period of time before vesting begins.",
   },
-  recoverTokens: {
-    title: "Recover Tokens",
+  claimTokensFromUndelegation: {
+    title: "Claim Tokens",
     content:
-      "Click recover tokens to return the undelegated tokens to your token balance.",
+      "Click claim to return the undelegated tokens to your token balance.",
   },
   beaconEarnings: {
     title: "Beacon Earnings",

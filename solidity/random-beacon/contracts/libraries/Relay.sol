@@ -16,46 +16,34 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "./AltBn128.sol";
 import "./BLS.sol";
 import "./Groups.sol";
-import "./Submission.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
 
-    struct Request {
-        // Request identifier.
-        uint64 id;
-        // Identifier of group responsible for signing.
-        uint64 groupId;
-        // Request start block.
-        uint128 startBlock;
-    }
-
     struct Data {
         // Total count of all requests.
         uint64 requestCount;
-        // Previous entry value.
-        bytes previousEntry;
         // Data of current request.
-        Request currentRequest;
+        // Request identifier.
+        uint64 currentRequestID;
+        // Identifier of group responsible for signing.
+        uint64 currentRequestGroupID;
+        // Request start block.
+        uint64 currentRequestStartBlock;
+        // Previous entry value.
+        AltBn128.G1Point previousEntry;
         // Fee paid by the relay requester.
-        uint256 relayRequestFee;
-        // The number of blocks it takes for a group member to become
-        // eligible to submit the relay entry.
-        uint256 relayEntrySubmissionEligibilityDelay;
+        uint96 relayRequestFee;
+        // Time in blocks during which a result is expected to be submitted.
+        uint32 relayEntrySoftTimeout;
         // Hard timeout in blocks for a group to submit the relay entry.
-        uint256 relayEntryHardTimeout;
+        uint32 relayEntryHardTimeout;
         // Slashing amount for not submitting relay entry
-        uint256 relayEntrySubmissionFailureSlashingAmount;
+        uint96 relayEntrySubmissionFailureSlashingAmount;
     }
-
-    /// @notice Target DKG group size in the threshold relay. A group has
-    ///         the target size if all their members behaved properly during
-    ///         group formation. Actual group size can be lower in groups
-    ///         with proven misbehaved members.
-    uint256 public constant dkgGroupSize = 64;
 
     /// @notice Seed used as the first relay entry value.
     /// It's a G1 point G * PI =
@@ -85,10 +73,10 @@ library Relay {
     ///         `relaySeed` value. Can be performed only once.
     function initSeedEntry(Data storage self) internal {
         require(
-            self.previousEntry.length == 0,
+            self.previousEntry.x == 0 && self.previousEntry.y == 0,
             "Seed entry already initialized"
         );
-        self.previousEntry = relaySeed;
+        self.previousEntry = AltBn128.g1Unmarshal(relaySeed);
     }
 
     /// @notice Creates a request to generate a new relay entry, which will
@@ -103,16 +91,37 @@ library Relay {
 
         uint64 currentRequestId = ++self.requestCount;
 
-        self.currentRequest = Request(
+        self.currentRequestID = currentRequestId;
+        self.currentRequestGroupID = groupId;
+        self.currentRequestStartBlock = uint64(block.number);
+
+        emit RelayEntryRequested(
             currentRequestId,
             groupId,
-            uint128(block.number)
+            AltBn128.g1Marshal(self.previousEntry)
         );
-
-        emit RelayEntryRequested(currentRequestId, groupId, self.previousEntry);
     }
 
-    /// @notice Creates a new relay entry.
+    /// @notice Creates a new relay entry. Gas-optimized version that can be
+    ///         called only before the soft timeout. This should be the majority
+    ///         of cases.
+    /// @param entry Group BLS signature over the previous entry.
+    /// @param groupPubKey Public key of the group which signed the relay entry.
+    function submitEntryBeforeSoftTimeout(
+        Data storage self,
+        bytes calldata entry,
+        bytes storage groupPubKey
+    ) internal {
+        require(
+            block.number < softTimeoutBlock(self),
+            "Relay entry soft timeout passed"
+        );
+        _submitEntry(self, entry, groupPubKey);
+    }
+
+    /// @notice Creates a new relay entry. Can be called at any time.
+    ///         In case the soft timeout has not been exceeded, it is more
+    ///         gas-efficient to call the second variation of `submitEntry`.
     /// @param entry Group BLS signature over the previous entry.
     /// @param groupPubKey Public key of the group which signed the relay entry.
     /// @return slashingAmount Amount by which group members should be slashed
@@ -123,29 +132,43 @@ library Relay {
         bytes calldata entry,
         bytes storage groupPubKey
     ) internal returns (uint256 slashingAmount) {
-        require(isRequestInProgress(self), "No relay request in progress");
-        require(!hasRequestTimedOut(self), "Relay request timed out");
-
-        require(
-            BLS.verify(groupPubKey, self.previousEntry, entry),
-            "Invalid entry"
-        );
-
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
         // factor multiplied by 1e18 to avoid precision loss. In that case
         // the final result needs to be divided by 1e18.
         slashingAmount =
-            (getSlashingFactor(self, dkgGroupSize) *
+            (getSlashingFactor(self) *
                 self.relayEntrySubmissionFailureSlashingAmount) /
             1e18;
 
-        emit RelayEntrySubmitted(self.currentRequest.id, msg.sender, entry);
-
-        self.previousEntry = entry;
-        delete self.currentRequest;
+        _submitEntry(self, entry, groupPubKey);
 
         return slashingAmount;
+    }
+
+    function _submitEntry(
+        Data storage self,
+        bytes calldata entry,
+        bytes storage groupPubKey
+    ) internal {
+        require(isRequestInProgress(self), "No relay request in progress");
+        require(!hasRequestTimedOut(self), "Relay request timed out");
+
+        require(
+            BLS._verify(
+                AltBn128.g2Unmarshal(groupPubKey),
+                self.previousEntry,
+                AltBn128.g1Unmarshal(entry)
+            ),
+            "Invalid entry"
+        );
+
+        emit RelayEntrySubmitted(self.currentRequestID, msg.sender, entry);
+
+        self.previousEntry = AltBn128.g1Unmarshal(entry);
+        self.currentRequestID = 0;
+        self.currentRequestGroupID = 0;
+        self.currentRequestStartBlock = 0;
     }
 
     /// @notice Set relayRequestFee parameter.
@@ -155,19 +178,18 @@ library Relay {
     {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayRequestFee = newRelayRequestFee;
+        self.relayRequestFee = uint96(newRelayRequestFee);
     }
 
-    /// @notice Set relayEntrySubmissionEligibilityDelay parameter.
-    /// @param newRelayEntrySubmissionEligibilityDelay New value of the parameter.
-    function setRelayEntrySubmissionEligibilityDelay(
+    /// @notice Set relayEntrySoftTimeout parameter.
+    /// @param newRelayEntrySoftTimeout New value of the parameter.
+    function setRelayEntrySoftTimeout(
         Data storage self,
-        uint256 newRelayEntrySubmissionEligibilityDelay
+        uint256 newRelayEntrySoftTimeout
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self
-            .relayEntrySubmissionEligibilityDelay = newRelayEntrySubmissionEligibilityDelay;
+        self.relayEntrySoftTimeout = uint32(newRelayEntrySoftTimeout);
     }
 
     /// @notice Set relayEntryHardTimeout parameter.
@@ -178,7 +200,7 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntryHardTimeout = newRelayEntryHardTimeout;
+        self.relayEntryHardTimeout = uint32(newRelayEntryHardTimeout);
     }
 
     /// @notice Set relayEntrySubmissionFailureSlashingAmount parameter.
@@ -190,8 +212,9 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self
-            .relayEntrySubmissionFailureSlashingAmount = newRelayEntrySubmissionFailureSlashingAmount;
+        self.relayEntrySubmissionFailureSlashingAmount = uint96(
+            newRelayEntrySubmissionFailureSlashingAmount
+        );
     }
 
     /// @notice Retries the current relay request in case a relay entry
@@ -202,21 +225,18 @@ library Relay {
     {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
-        Request memory currentRequest = self.currentRequest;
-        uint64 previousGroupId = currentRequest.groupId;
+        uint64 currentRequestId = self.currentRequestID;
+        uint64 previousGroupId = self.currentRequestGroupID;
 
-        emit RelayEntryTimedOut(currentRequest.id, previousGroupId);
+        emit RelayEntryTimedOut(currentRequestId, previousGroupId);
 
-        self.currentRequest = Request(
-            currentRequest.id,
-            newGroupId,
-            uint128(block.number)
-        );
+        self.currentRequestGroupID = newGroupId;
+        self.currentRequestStartBlock = uint64(block.number);
 
         emit RelayEntryRequested(
-            currentRequest.id,
+            currentRequestId,
             newGroupId,
-            self.previousEntry
+            AltBn128.g1Marshal(self.previousEntry)
         );
     }
 
@@ -226,11 +246,13 @@ library Relay {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
         emit RelayEntryTimedOut(
-            self.currentRequest.id,
-            self.currentRequest.groupId
+            self.currentRequestID,
+            self.currentRequestGroupID
         );
 
-        delete self.currentRequest;
+        self.currentRequestID = 0;
+        self.currentRequestGroupID = 0;
+        self.currentRequestStartBlock = 0;
     }
 
     /// @notice Returns whether a relay entry request is currently in progress.
@@ -240,7 +262,7 @@ library Relay {
         view
         returns (bool)
     {
-        return self.currentRequest.id != 0;
+        return self.currentRequestID != 0;
     }
 
     /// @notice Returns whether the current relay request has timed out.
@@ -250,13 +272,22 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 _relayEntryTimeout = (dkgGroupSize *
-            self.relayEntrySubmissionEligibilityDelay) +
+        uint256 _relayEntryTimeout = self.relayEntrySoftTimeout +
             self.relayEntryHardTimeout;
 
         return
             isRequestInProgress(self) &&
-            block.number > self.currentRequest.startBlock + _relayEntryTimeout;
+            block.number > self.currentRequestStartBlock + _relayEntryTimeout;
+    }
+
+    /// @notice Calculates soft timeout block for the pending relay request.
+    /// @return The soft timeout block
+    function softTimeoutBlock(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.currentRequestStartBlock + self.relayEntrySoftTimeout;
     }
 
     /// @notice Computes the slashing factor which should be used during
@@ -265,22 +296,20 @@ library Relay {
     ///      use a `_groupSize` parameter instead to facilitate testing.
     ///      Big group sizes in tests make readability worse and dramatically
     ///      increase the time of execution.
-    /// @param _groupSize _groupSize Group size.
     /// @return A slashing factor represented as a fraction multiplied by 1e18
     ///         to avoid precision loss. When using this factor during slashing
     ///         amount computations, the final result should be divided by
     ///         1e18 to obtain a proper result. The slashing factor is
     ///         always in range <0, 1e18>.
-    function getSlashingFactor(Data storage self, uint256 _groupSize)
+    function getSlashingFactor(Data storage self)
         internal
         view
         returns (uint256)
     {
-        uint256 softTimeoutBlock = self.currentRequest.startBlock +
-            (_groupSize * self.relayEntrySubmissionEligibilityDelay);
+        uint256 _softTimeoutBlock = softTimeoutBlock(self);
 
-        if (block.number > softTimeoutBlock) {
-            uint256 submissionDelay = block.number - softTimeoutBlock;
+        if (block.number > _softTimeoutBlock) {
+            uint256 submissionDelay = block.number - _softTimeoutBlock;
             uint256 slashingFactor = (submissionDelay * 1e18) /
                 self.relayEntryHardTimeout;
             return slashingFactor > 1e18 ? 1e18 : slashingFactor;

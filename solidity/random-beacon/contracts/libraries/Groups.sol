@@ -1,4 +1,17 @@
 // SPDX-License-Identifier: MIT
+//
+// ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+// ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//   ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+//   ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+//   ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//   ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+//   ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+// ▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+// ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+//
+//
+
 pragma solidity ^0.8.9;
 
 /// @notice This library is used as a registry of created groups.
@@ -8,8 +21,11 @@ pragma solidity ^0.8.9;
 library Groups {
     struct Group {
         bytes groupPubKey;
-        uint256 activationBlockNumber;
-        uint32[] members;
+        uint256 registrationBlockNumber;
+        // Keccak256 hash of group members identifiers array. Group members do not
+        // include operators selected by the sortition pool that misbehaved during DKG.
+        // See how `misbehavedMembersIndices` are used in `hashGroupMembers` function.
+        bytes32 membersHash;
         // When selected group does not create a relay entry on-time it should
         // be marked as terminated.
         bool terminated;
@@ -33,11 +49,7 @@ library Groups {
         uint256 groupLifetime;
     }
 
-    event CandidateGroupRegistered(bytes indexed groupPubKey);
-
-    event CandidateGroupRemoved(bytes indexed groupPubKey);
-
-    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
+    event GroupRegistered(uint64 indexed groupId, bytes indexed groupPubKey);
 
     /// @notice Adds a new candidate group. The group is stored with group public
     ///         key and group members, but is not yet activated.
@@ -45,28 +57,22 @@ library Groups {
     ///      The code calling this function should ensure that the number of
     ///      candidate (not activated) groups is never more than one.
     /// @param groupPubKey Generated candidate group public key
-    /// @param members Addresses of candidate group members as outputted by the
-    ///        group selection protocol.
-    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members indices; Indices reflect positions of
-    ///        members in the group, as outputted by the group selection
-    ///        protocol.
-    function addCandidateGroup(
+    /// @param membersHash Keccak256 hash of members that actively took part in DKG.
+    function addGroup(
         Data storage self,
         bytes calldata groupPubKey,
-        uint32[] calldata members,
-        uint8[] calldata misbehavedMembersIndices
+        bytes32 membersHash
     ) internal {
         bytes32 groupPubKeyHash = keccak256(groupPubKey);
 
         require(
-            self.groupsData[groupPubKeyHash].activationBlockNumber == 0,
-            "group with this public key was already activated"
+            self.groupsData[groupPubKeyHash].registrationBlockNumber == 0,
+            "Group with this public key was already registered"
         );
 
         require(
             self.groupsRegistry.length <= type(uint64).max,
-            "max number of registered groups reached"
+            "Max number of registered groups reached"
         );
 
         // We use group from storage that is assumed to be a struct set to the
@@ -74,52 +80,14 @@ library Groups {
         // candidate group was already registered before and popped.
         Group storage group = self.groupsData[groupPubKeyHash];
         group.groupPubKey = groupPubKey;
-
-        setGroupMembers(group, members, misbehavedMembersIndices);
+        group.membersHash = membersHash;
+        group.registrationBlockNumber = block.number;
 
         self.groupsRegistry.push(groupPubKeyHash);
 
-        emit CandidateGroupRegistered(groupPubKey);
-    }
-
-    /// @notice Removes the latest candidate group.
-    /// @dev To optimize gas usage it doesn't delete group details from the
-    ///      `groupsData` mapping. The data will be overwritten in case a new
-    ///      candidate group gets registered.
-    function popCandidateGroup(Data storage self) internal {
-        bytes32 groupPubKeyHash = self.groupsRegistry[
-            self.groupsRegistry.length - 1
-        ];
-
-        require(
-            self.groupsData[groupPubKeyHash].activationBlockNumber == 0,
-            "the latest registered group was already activated"
-        );
-
-        self.groupsRegistry.pop();
-
-        emit CandidateGroupRemoved(
-            self.groupsData[groupPubKeyHash].groupPubKey
-        );
-    }
-
-    /// @notice Activates the latest candidate group.
-    function activateCandidateGroup(Data storage self) internal {
-        Group storage group = self.groupsData[
-            self.groupsRegistry[self.groupsRegistry.length - 1]
-        ];
-
-        require(
-            group.activationBlockNumber == 0,
-            "the latest registered group was already activated"
-        );
-
-        // solhint-disable-next-line not-rely-on-time
-        group.activationBlockNumber = block.number;
-
-        emit GroupActivated(
+        emit GroupRegistered(
             uint64(self.groupsRegistry.length - 1),
-            group.groupPubKey
+            groupPubKey
         );
     }
 
@@ -246,7 +214,7 @@ library Groups {
         returns (uint256)
     {
         return
-            self.groupsData[groupPubKeyHash].activationBlockNumber +
+            self.groupsData[groupPubKeyHash].registrationBlockNumber +
             self.groupLifetime;
     }
 
@@ -278,7 +246,7 @@ library Groups {
         return self.groupsData[keccak256(groupPubKey)];
     }
 
-    /// @notice Gets the number of active groups. Candidate, expired and terminated
+    /// @notice Gets the number of active groups. Expired and terminated
     ///         groups are not counted as active.
     function numberOfActiveGroups(Data storage self)
         internal
@@ -289,16 +257,9 @@ library Groups {
             return 0;
         }
 
-        bytes32 pubKeyHashLastGroup = self.groupsRegistry[
-            self.groupsRegistry.length - 1
-        ];
         uint256 activeGroups = self.groupsRegistry.length -
             self.expiredGroupOffset -
             self.activeTerminatedGroups.length;
-        // checks if the last group was activated
-        if (self.groupsData[pubKeyHashLastGroup].activationBlockNumber == 0) {
-            activeGroups--;
-        }
 
         return uint64(activeGroups);
     }
@@ -328,42 +289,5 @@ library Groups {
         }
 
         return shiftedIndex;
-    }
-
-    /// @notice Sets addresses of members for the group eliminating members at
-    ///         positions pointed by the misbehavedMembersIndices array.
-    ///
-    ///         NOTE THAT THIS FUNCTION CHANGES ORDER OF MEMBERS IN THE GROUP
-    ///         IF THERE IS AT LEAST ONE MISBEHAVED MEMBER
-    ///
-    ///         The final group members indexes should be obtained post-DKG
-    ///         and they may differ from the ones outputted by the group
-    ///         selection protocol.
-    /// @param group The group storage.
-    /// @param members Group member addresses as outputted by the group selection
-    ///        protocol.
-    /// @param misbehavedMembersIndices Array of misbehaved (disqualified or
-    ///        inactive) group members. Indices reflect positions
-    ///        of members in the group as outputted by the group selection
-    ///        protocol.
-    function setGroupMembers(
-        Group storage group,
-        uint32[] calldata members,
-        uint8[] calldata misbehavedMembersIndices
-    ) private {
-        group.members = members;
-
-        // Iterate misbehaved array backwards, replace misbehaved
-        // member with the last element and reduce array length
-        uint256 i = misbehavedMembersIndices.length;
-        while (i > 0) {
-            // group member indices start from 1, so we need to -1 on misbehaved
-            uint8 memberArrayPosition = misbehavedMembersIndices[i - 1] - 1;
-            group.members[memberArrayPosition] = group.members[
-                group.members.length - 1
-            ];
-            group.members.pop();
-            i--;
-        }
     }
 }

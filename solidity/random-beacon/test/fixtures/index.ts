@@ -1,8 +1,9 @@
-import { Contract } from "ethers"
 import { ethers, helpers, getNamedAccounts } from "hardhat"
+
+import type { Contract } from "ethers"
 import type {
   SortitionPool,
-  DKGValidator,
+  BeaconDkgValidator as DKGValidator,
   RandomBeaconStub,
   RandomBeaconGovernance,
   StakingStub,
@@ -27,23 +28,27 @@ export const dkgState = {
 }
 
 export const params = {
-  relayRequestFee: 0,
-  relayEntrySubmissionEligibilityDelay: 10,
-  relayEntryHardTimeout: 5760,
+  relayRequestFee: to1e18(100),
+  relayEntrySoftTimeout: 35,
+  relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
   groupCreationFrequency: 10,
-  groupLifeTime: 60 * 60 * 24 * 14, // 2 weeks
-  dkgResultChallengePeriodLength: 1440,
-  dkgResultSubmissionEligibilityDelay: 10,
-  dkgResultSubmissionReward: 0,
-  sortitionPoolUnlockingReward: 0,
+  groupLifeTime: 1000,
+  dkgResultChallengePeriodLength: 100,
+  dkgResultSubmissionTimeout: 30,
+  dkgSubmitterPrecedencePeriodLength: 5,
+  dkgResultSubmissionReward: to1e18(5),
+  sortitionPoolUnlockingReward: to1e18(10),
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
-  relayEntrySubmissionFailureSlashingAmount: ethers.BigNumber.from(10)
-    .pow(18)
-    .mul(1000),
-  maliciousDkgResultSlashingAmount: ethers.BigNumber.from(10)
-    .pow(18)
-    .mul(50000),
+  relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
+  maliciousDkgResultSlashingAmount: to1e18(50000),
+  relayEntryTimeoutNotificationRewardMultiplier: 40,
+  unauthorizedSigningNotificationRewardMultiplier: 50,
+  dkgMaliciousResultNotificationRewardMultiplier: 100,
+  ineligibleOperatorNotifierReward: to1e18(200),
+  unauthorizedSigningSlashingAmount: to1e18(100000),
+  minimumAuthorization: to1e18(100000),
+  authorizationDecreaseDelay: 0,
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -87,16 +92,18 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const DKG = await ethers.getContractFactory("DKG")
-  const dkg = await DKG.deploy()
+  const BeaconDkg = await ethers.getContractFactory("BeaconDkg")
+  const dkg = await BeaconDkg.deploy()
   await dkg.deployed()
 
   const Heartbeat = await ethers.getContractFactory("Heartbeat")
   const heartbeat = await Heartbeat.deploy()
   await heartbeat.deployed()
 
-  const DKGValidator = await ethers.getContractFactory("DKGValidator")
-  const dkgValidator = (await DKGValidator.deploy(
+  const BeaconDkgValidator = await ethers.getContractFactory(
+    "BeaconDkgValidator"
+  )
+  const dkgValidator = (await BeaconDkgValidator.deploy(
     sortitionPool.address
   )) as DKGValidator
   await dkgValidator.deployed()
@@ -104,7 +111,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
-      DKG: dkg.address,
+      BeaconDkg: dkg.address,
       Heartbeat: heartbeat.address,
     },
   })
@@ -117,6 +124,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   await randomBeacon.deployed()
 
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
+
+  await setFixtureParameters(randomBeacon)
 
   const contracts: DeployedContracts = {
     sortitionPool,
@@ -142,4 +151,45 @@ export async function testDeployment(): Promise<DeployedContracts> {
   const newContracts = { randomBeaconGovernance }
 
   return { ...contracts, ...newContracts }
+}
+
+async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
+  await randomBeacon.updateAuthorizationParameters(
+    params.minimumAuthorization,
+    params.authorizationDecreaseDelay
+  )
+
+  await randomBeacon.updateRelayEntryParameters(
+    params.relayRequestFee,
+    params.relayEntrySoftTimeout,
+    params.relayEntryHardTimeout,
+    params.callbackGasLimit
+  )
+
+  await randomBeacon.updateRewardParameters(
+    params.dkgResultSubmissionReward,
+    params.sortitionPoolUnlockingReward,
+    params.ineligibleOperatorNotifierReward,
+    params.sortitionPoolRewardsBanDuration,
+    params.relayEntryTimeoutNotificationRewardMultiplier,
+    params.unauthorizedSigningNotificationRewardMultiplier,
+    params.dkgMaliciousResultNotificationRewardMultiplier
+  )
+
+  await randomBeacon.updateGroupCreationParameters(
+    params.groupCreationFrequency,
+    params.groupLifeTime
+  )
+
+  await randomBeacon.updateDkgParameters(
+    params.dkgResultChallengePeriodLength,
+    params.dkgResultSubmissionTimeout,
+    params.dkgSubmitterPrecedencePeriodLength
+  )
+
+  await randomBeacon.updateSlashingParameters(
+    params.relayEntrySubmissionFailureSlashingAmount,
+    params.maliciousDkgResultSlashingAmount,
+    params.unauthorizedSigningSlashingAmount
+  )
 }

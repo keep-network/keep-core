@@ -214,20 +214,15 @@ pool and receive a fixed reward for reporting DKG timeout. The
 reward is paid from the DKG reward pool. 
 
 [[dkg-submit-eligibility]]
-The order in which operators are supposed to submit a DKG result is enforced
+The order in which operators are supposed to submit a DKG result is not enforced
 on-chain. The first member eligible to submit the DKG result is a member with
-index `keccak256(new_group_pubkey) % group_size`. Then after a
-submission eligibility delays, members with subsequent indices are becoming
-eligible one after another.
+index `keccak256(new_group_pubkey) % group_size`. Members with subsequent indices
+are becoming eligible one after another, during the result submission period.
 
 [NOTE]
 For example, if `hash(new_group_pubkey) % group_size = 62`, `group_size = 64`,
 group members are becoming eligible in the following order:
 `62, 63, 64, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..., 61`. 
-
-Governance needs to ensure that both the frequency of relay requests with which
-a new DKG starts and the fee for a single request make DKG result submitter reward
-attractive enough so that no one wants to bail out from submitting the result.
 
 The transaction submitting relay entry is not reimbursable and implementation
 ensures the gas cost of this transaction is as low as possible, below 200k gas

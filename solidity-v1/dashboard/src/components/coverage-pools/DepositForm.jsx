@@ -21,7 +21,10 @@ import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 import { displayPercentageValue } from "../../utils/general.utils"
 import OnlyIf from "../OnlyIf"
-import { LINK } from "../../constants/constants"
+import {
+  COV_POOLS_FORMS_MAX_DECIMAL_PLACES,
+  LINK,
+} from "../../constants/constants"
 
 const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
   const onAddonClick = useSetMaxAmountToken(
@@ -52,8 +55,18 @@ const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
           type="text"
           label="Amount"
           placeholder="0"
-          normalize={normalizeFloatingAmount}
-          format={formatFloatingAmount}
+          normalize={(value) => {
+            return normalizeFloatingAmount(
+              value,
+              COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+            )
+          }}
+          format={(value) => {
+            return formatFloatingAmount(
+              value,
+              COV_POOLS_FORMS_MAX_DECIMAL_PLACES
+            )
+          }}
           leftIconComponent={
             <Icons.KeepOutline
               className="keep-outline--grey-60"
@@ -93,7 +106,6 @@ const DepositForm = ({ tokenAmount, apy, ...formikProps }) => {
         className="btn btn-lg btn-primary w-100"
         type="submit"
         onClick={formikProps.handleSubmit}
-        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         deposit
       </Button>

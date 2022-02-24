@@ -122,7 +122,7 @@ export const MigrationCompleted = withBaseModal(
             <a
               href={
                 to === TBTC_TOKEN_VERSION.v2
-                  ? LINK.pools.saddle.tbtcV2
+                  ? LINK.pools.saddle.tbtc
                   : LINK.pools.uniswap.tbtcETH
               }
               rel="noopener noreferrer"
@@ -135,7 +135,7 @@ export const MigrationCompleted = withBaseModal(
         </ModalBody>
         <ModalFooter>
           <Button className="btn btn-secondary btn-lg" onClick={onClose}>
-            Close
+            close
           </Button>
         </ModalFooter>
       </>
