@@ -14,6 +14,7 @@
 
 pragma solidity ^0.8.9;
 
+import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
 import "./EcdsaDkgValidator.sol";
@@ -39,10 +40,12 @@ interface IWalletStaking {
 }
 
 contract WalletRegistry is IRandomBeaconConsumer, Ownable {
+    using EcdsaAuthorization for EcdsaAuthorization.Data;
     using EcdsaDkg for EcdsaDkg.Data;
     using Wallets for Wallets.Data;
 
     // Libraries data storages
+    EcdsaAuthorization.Data internal authorization;
     EcdsaDkg.Data internal dkg;
     Wallets.Data internal wallets;
 
@@ -118,6 +121,11 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         address maliciousSubmitter
     );
 
+    event AuthorizationParametersUpdated(
+        uint96 minimumAuthorization,
+        uint64 authorizationDecreaseDelay
+    );
+
     event RewardParametersUpdated(
         uint256 maliciousDkgResultNotificationRewardMultiplier
     );
@@ -168,6 +176,28 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     function upgradeRandomBeacon(address _randomBeacon) external onlyOwner {
         randomBeacon = IRandomBeacon(_randomBeacon);
         emit RandomBeaconUpgraded(_randomBeacon);
+    }
+
+    /// @notice Updates the values of authorization parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _minimumAuthorization New minimum authorization amount
+    /// @param _authorizationDecreaseDelay New authorization decrease delay in
+    ///        seconds
+    function updateAuthorizationParameters(
+        uint96 _minimumAuthorization,
+        uint64 _authorizationDecreaseDelay
+    ) external onlyOwner {
+        authorization.setMinimumAuthorization(_minimumAuthorization);
+        authorization.setAuthorizationDecreaseDelay(
+            _authorizationDecreaseDelay
+        );
+
+        emit AuthorizationParametersUpdated(
+            _minimumAuthorization,
+            _authorizationDecreaseDelay
+        );
     }
 
     /// @notice Updates the values of DKG parameters.
@@ -460,5 +490,18 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         returns (EcdsaDkg.Parameters memory)
     {
         return dkg.parameters;
+    }
+
+    /// @notice The minimum authorization amount required so that operator can
+    ///         participate in ECDSA Wallet operations.
+    function minimumAuthorization() external view returns (uint96) {
+        return authorization.minimumAuthorization;
+    }
+
+    /// @notice Delay in seconds that needs to pass between the time
+    ///         authorization decrease is requested and the time that request
+    ///         can get approved.
+    function authorizationDecreaseDelay() external view returns (uint64) {
+        return authorization.authorizationDecreaseDelay;
     }
 }

@@ -19,9 +19,8 @@ const { to1e18 } = helpers.number
 export const constants = {
   groupSize: 100,
   groupThreshold: 51,
-  minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
-  governanceDelayStandard: 43200, // 12 hours
+  governanceDelayCritical: 1209600, // 2 weeks
 }
 
 export const dkgState = {
@@ -32,6 +31,8 @@ export const dkgState = {
 }
 
 export const params = {
+  minimumAuthorization: to1e18(100000),
+  authorizationDecreaseDelay: 5260000,
   dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
@@ -75,7 +76,7 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
   )
 
   // Set parameters with tweaked values to reduce test execution time.
-  await updateWalletDkgRegistryParams(walletRegistryGovernance, governance)
+  await updateWalletRegistryParams(walletRegistryGovernance, governance)
 
   return {
     walletRegistry,
@@ -90,10 +91,18 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
   }
 })
 
-async function updateWalletDkgRegistryParams(
+async function updateWalletRegistryParams(
   walletRegistryGovernance: WalletRegistryGovernance,
   governance: SignerWithAddress
 ) {
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginMinimumAuthorizationUpdate(params.minimumAuthorization)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginAuthorizationDecreaseDelayUpdate(params.authorizationDecreaseDelay)
+
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgSeedTimeoutUpdate(params.dkgSeedTimeout)
@@ -114,7 +123,15 @@ async function updateWalletDkgRegistryParams(
       params.dkgSubmitterPrecedencePeriodLength
     )
 
-  await helpers.time.increaseTime(constants.governanceDelayStandard)
+  await helpers.time.increaseTime(constants.governanceDelayCritical)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeMinimumAuthorizationUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeAuthorizationDecreaseDelayUpdate()
 
   await walletRegistryGovernance
     .connect(governance)

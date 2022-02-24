@@ -3,7 +3,7 @@
 import { ethers } from "hardhat"
 
 // eslint-disable-next-line import/no-cycle
-import { constants } from "../fixtures"
+import { params } from "../fixtures"
 
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber } from "ethers"
@@ -20,7 +20,7 @@ export async function registerOperators(
   walletRegistry: WalletRegistry,
   tToken: T,
   addresses: Address[],
-  stakeAmount: BigNumber = constants.minimumStake
+  stakeAmount: BigNumber = params.minimumAuthorization
 ): Promise<Operator[]> {
   const operators: Operator[] = []
 

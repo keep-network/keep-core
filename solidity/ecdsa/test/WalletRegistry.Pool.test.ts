@@ -1,7 +1,7 @@
 import { deployments, ethers, getUnnamedAccounts, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { constants } from "./fixtures"
+import { params } from "./fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, SortitionPool, StakingStub } from "../typechain"
@@ -39,7 +39,7 @@ describe("WalletRegistry - Pool", () => {
         await staking.increaseAuthorization(
           stakingProvider.address,
           walletRegistry.address,
-          constants.minimumStake
+          params.minimumAuthorization
         )
       })
 
@@ -102,7 +102,7 @@ describe("WalletRegistry - Pool", () => {
         await staking.increaseAuthorization(
           stakingProvider.address,
           ethers.constants.AddressZero,
-          constants.minimumStake
+          params.minimumAuthorization
         )
         await walletRegistry.connect(operator).registerOperator()
       })

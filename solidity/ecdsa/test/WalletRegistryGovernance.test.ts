@@ -17,6 +17,8 @@ describe("WalletRegistryGovernance", async () => {
   let thirdParty: SignerWithAddress
   let walletOwner: SignerWithAddress
 
+  const initialMinimumAuthorization = to1e18(100000)
+  const initialAuthorizationDecreaseDelay = 5260000 // 2 months
   const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
 
@@ -220,6 +222,277 @@ describe("WalletRegistryGovernance", async () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             walletRegistryGovernance.getRemainingWalletOwnerUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginMinimumAuthorizationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginMinimumAuthorizationUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginMinimumAuthorizationUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the minimum authorization amount", async () => {
+        expect(await walletRegistry.minimumAuthorization()).to.be.equal(
+          initialMinimumAuthorization
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingMimimumAuthorizationUpdateTime()
+        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+      })
+
+      it("should emit the MinimumAuthorizationUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "MinimumAuthorizationUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeMinimumAuthorizationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeMinimumAuthorizationUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeMinimumAuthorizationUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginMinimumAuthorizationUpdate(123)
+
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeMinimumAuthorizationUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginMinimumAuthorizationUpdate(123)
+
+          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeMinimumAuthorizationUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the minimum authorization amount", async () => {
+          expect(await walletRegistry.minimumAuthorization()).to.be.equal(123)
+        })
+
+        it("should emit MinimumAuthorizationUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "MinimumAuthorizationUpdated")
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingMimimumAuthorizationUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginAuthorizationDecreaseDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginAuthorizationDecreaseDelayUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseDelayUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the authorization decrease delay", async () => {
+        expect(await walletRegistry.authorizationDecreaseDelay()).to.be.equal(
+          initialAuthorizationDecreaseDelay
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
+        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+      })
+
+      it("should emit the AuthorizationDecreaseDelayUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "AuthorizationDecreaseDelayUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeAuthorizationDecreaseDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseDelayUpdate(123)
+        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginAuthorizationDecreaseDelayUpdate(123)
+
+          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseDelayUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the authorization decrease delay", async () => {
+          expect(await walletRegistry.authorizationDecreaseDelay()).to.be.equal(
+            123
+          )
+        })
+
+        it("should emit AuthorizationDecreaseDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              walletRegistryGovernance,
+              "AuthorizationDecreaseDelayUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }
