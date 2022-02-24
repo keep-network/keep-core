@@ -19,7 +19,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract ReimbursementPool is Ownable, ReentrancyGuard {
     /// @notice Authorized contracts that can interact with the reimbursment pool.
-    ///         Authorization can be granted and removed by the governance.
+    ///         Authorization can be granted and removed by the owner.
     mapping(address => bool) public isAuthorized;
 
     /// @notice Static gas includes:
@@ -65,7 +65,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     }
 
     /// @notice Authorize a contract that can interact with this reimbursment pool.
-    ///         Can be authorized by the governance only.
+    ///         Can be authorized by the owner only.
     /// @param _contract Authorized contract.
     function authorize(address _contract) external onlyOwner {
         isAuthorized[_contract] = true;
@@ -73,14 +73,14 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
 
     /// @notice Unauthorize a contract that was previously authorized to interact
     ///         with this reimbursment pool. Can be unauthorized by the
-    ///         governance only.
+    ///         owner only.
     /// @param _contract Authorized contract.
     function unauthorize(address _contract) external onlyOwner {
         delete isAuthorized[_contract];
     }
 
     /// @notice Setting a static gas cost for executing a transaction. Can be set
-    ///         by the governance only.
+    ///         by the owner only.
     /// @param _staticGas Static gas cost.
     function setStaticGas(uint256 _staticGas) external onlyOwner {
         staticGas = _staticGas;
@@ -89,7 +89,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     }
 
     /// @notice Setting a max gas price for transactions. Can be set by the
-    ///         governance only.
+    ///         owner only.
     /// @param _maxGasPrice Max gas price used to reimburse tx submitters.
     function setMaxGasPrice(uint256 _maxGasPrice) external onlyOwner {
         maxGasPrice = _maxGasPrice;
@@ -98,7 +98,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     }
 
     /// @notice Withdraws ETH amount from this pool which are sent to a given
-    ///         address. Can be set by the governance only.
+    ///         address. Can be set by the owner only.
     /// @param amount Amount to withdraw from the pool.
     /// @param receiver An address where ETH is sent.
     function withdraw(uint256 amount, address receiver) external onlyOwner {
@@ -116,7 +116,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     }
 
     /// @notice Withdraws all ETH from this pool which are sent to a given
-    ///         address. Can be set by the governance only.
+    ///         address. Can be set by the owner only.
     /// @param receiver An address where ETH is sent.
     function withdrawAll(address receiver) external onlyOwner {
         require(address(this).balance > 0, "Nothing to withdraw");
