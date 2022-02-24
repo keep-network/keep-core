@@ -3,7 +3,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { reimbursmentPoolDeployment } from "./fixtures"
+import { reimbursmentPoolDeployment, params } from "./fixtures"
 import type { ReimbursementPool } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -204,8 +204,6 @@ describe("ReimbursementPool - Pool", () => {
         to: reimbursementPool.address,
         value: ethers.utils.parseEther("10.0"), // Send 10.0 ETH
       })
-
-      await reimbursementPool.connect(owner).setStaticGas(23000)
     })
 
     afterEach(async () => {
@@ -228,10 +226,6 @@ describe("ReimbursementPool - Pool", () => {
           await reimbursementPool
             .connect(owner)
             .authorize(contractToAuthorize.address)
-
-          await reimbursementPool
-            .connect(owner)
-            .setMaxGasPrice(ethers.utils.parseUnits("100.0", "gwei"))
 
           const refundeeBalanceBefore = await provider.getBalance(
             refundee.address
@@ -281,8 +275,9 @@ describe("ReimbursementPool - Pool", () => {
           const refundeeBalanceDiff = refundeeBalanceAfter.sub(
             refundeeBalanceBefore
           )
+          // gas spent + static gas => 50k + 37.5k
           expect(refundeeBalanceDiff).to.be.eq(
-            ethers.utils.parseUnits("73000", "gwei")
+            ethers.utils.parseUnits("87500", "gwei")
           )
         })
       })
@@ -348,15 +343,17 @@ describe("ReimbursementPool - Pool", () => {
 
     context("when the caller is the owner", () => {
       it("should set the static gas cost", async () => {
-        expect(await reimbursementPool.staticGas()).to.be.equal(0)
+        expect(await reimbursementPool.staticGas()).to.be.equal(
+          params.reimbursmentPoolStaticGas
+        )
 
-        const tx = await reimbursementPool.connect(owner).setStaticGas(42)
+        const tx = await reimbursementPool.connect(owner).setStaticGas(42000)
 
         await expect(tx)
           .to.emit(reimbursementPool, "StaticGasUpdated")
-          .withArgs(42)
+          .withArgs(42000)
 
-        expect(await reimbursementPool.staticGas()).to.be.equal(42)
+        expect(await reimbursementPool.staticGas()).to.be.equal(42000)
       })
     })
   })
@@ -372,15 +369,22 @@ describe("ReimbursementPool - Pool", () => {
 
     context("when the caller is the owner", () => {
       it("should set the max gas price", async () => {
-        expect(await reimbursementPool.maxGasPrice()).to.be.equal(0)
+        expect(await reimbursementPool.maxGasPrice()).to.be.equal(
+          params.reimbursmentPoolMaxGasPrice
+        )
+        const newMaxGasPrice = ethers.utils.parseUnits("21", "gwei")
 
-        const tx = await reimbursementPool.connect(owner).setMaxGasPrice(42)
+        const tx = await reimbursementPool
+          .connect(owner)
+          .setMaxGasPrice(newMaxGasPrice)
 
         await expect(tx)
           .to.emit(reimbursementPool, "MaxGasPriceUpdated")
-          .withArgs(42)
+          .withArgs(newMaxGasPrice)
 
-        expect(await reimbursementPool.maxGasPrice()).to.be.equal(42)
+        expect(await reimbursementPool.maxGasPrice()).to.be.equal(
+          newMaxGasPrice
+        )
       })
     })
   })

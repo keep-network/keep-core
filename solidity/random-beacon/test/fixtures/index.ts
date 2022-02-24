@@ -47,6 +47,8 @@ export const params = {
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(100000),
   authorizationDecreaseDelay: 0,
+  reimbursmentPoolStaticGas: 37500,
+  reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("20", "gwei"),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -77,7 +79,10 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
 
 export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
-  const reimbursementPool = await ReimbursementPool.deploy()
+  const reimbursementPool = await ReimbursementPool.deploy(
+    params.reimbursmentPoolStaticGas,
+    params.reimbursmentPoolMaxGasPrice
+  )
   await reimbursementPool.deployed()
 
   const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)

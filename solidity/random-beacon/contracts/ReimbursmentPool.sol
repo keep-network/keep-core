@@ -22,7 +22,9 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     ///         Authorization can be granted and removed by the governance.
     mapping(address => bool) public isAuthorized;
 
-    /// @notice Static gas of submitting a transaction.
+    /// @notice Static gas includes:
+    ///         - cost of the refund function
+    ///         - base transaction cost
     uint256 public staticGas;
 
     /// @notice Max gas price used to reimburse a transaction submitter. Protects
@@ -32,6 +34,11 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     event StaticGasUpdated(uint256 staticGas);
 
     event MaxGasPriceUpdated(uint256 maxGasPrice);
+
+    constructor(uint256 _staticGas, uint256 _maxGasPrice) {
+        staticGas = _staticGas;
+        maxGasPrice = _maxGasPrice;
+    }
 
     /// @notice Refunds ETH to a spender for executing specific transactions.
     /// @dev Only authorized contracts are allowed calling this function.
