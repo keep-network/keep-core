@@ -172,6 +172,15 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
     }
 
+    /// @notice Reverts if called not by the Wallet Owner.
+    modifier onlyWalletOwner() {
+        require(
+            msg.sender == address(walletOwner),
+            "Caller is not the Wallet Owner"
+        );
+        _;
+    }
+
     /// @notice Updates address of the Random Beacon.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
@@ -311,9 +320,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     ///      It locks the DKG and request a new relay entry. It expects
     ///      that the DKG process will be started once a new relay entry
     ///      gets generated.
-    function requestNewWallet() external {
-        require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
-
+    function requestNewWallet() external onlyWalletOwner {
         dkg.lockState();
 
         randomBeacon.requestRelayEntry(this);
