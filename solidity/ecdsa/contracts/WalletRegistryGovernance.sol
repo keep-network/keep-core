@@ -168,6 +168,26 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.upgradeRandomBeacon(_newRandomBeacon);
     }
 
+    /// @notice Initializes the Wallet Owner's address.
+    /// @dev Can be called only by the contract owner. It can be called only if
+    ///      walletOwner has not been set before. It doesn't enforce a governance
+    ///      delay for the initial update. Any subsequent updates should be performed
+    ///      with beginWalletOwnerUpdate/finalizeWalletOwnerUpdate with respect
+    ///      of a governance delay.
+    /// @param _walletOwner The Wallet Owner's address
+    function initializeWalletOwner(address _walletOwner) external onlyOwner {
+        require(
+            address(walletRegistry.walletOwner()) == address(0),
+            "Wallet Owner already initialized"
+        );
+        require(
+            _walletOwner != address(0),
+            "Wallet Owner address cannot be zero"
+        );
+
+        walletRegistry.updateWalletOwner(_walletOwner);
+    }
+
     /// @notice Begins the wallet owner update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newWalletOwner New wallet owner address
@@ -176,7 +196,7 @@ contract WalletRegistryGovernance is Ownable {
         onlyOwner
     {
         require(
-            _newWalletOwner != address(0),
+            address(_newWalletOwner) != address(0),
             "New wallet owner address cannot be zero"
         );
         /* solhint-disable not-rely-on-time */
@@ -693,4 +713,6 @@ contract WalletRegistryGovernance is Ownable {
 
         return delay - elapsed;
     }
+
+    // TODO: Add function to transfer WalletRegistry ownership to another address.
 }

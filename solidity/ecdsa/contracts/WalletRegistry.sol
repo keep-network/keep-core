@@ -150,13 +150,11 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
-        IRandomBeacon _randomBeacon,
-        address _walletOwner
+        IRandomBeacon _randomBeacon
     ) {
         sortitionPool = _sortitionPool;
         staking = _staking;
         randomBeacon = _randomBeacon;
-        walletOwner = _walletOwner;
 
         // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
