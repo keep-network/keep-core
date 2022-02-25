@@ -134,3 +134,30 @@
     fill: @color-grey-70;
   }
 }
+
+.tooltip--button-corner {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 20px;
+  height: 20px;
+}
+
+.react-tooltip-base {
+  white-space: normal;
+  width: 260px;
+  font-family: "Work Sans", sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  text-align: left;
+  font-size: 0.875rem !important;
+  background-color: @color-black !important;
+  font-variant: none;
+  text-transform: none;
+
+  &--arrow-right {
+    &::after {
+      left: 89% !important;
+    }
+  }
+}

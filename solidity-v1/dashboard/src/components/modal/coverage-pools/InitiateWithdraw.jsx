@@ -8,7 +8,7 @@ import { FormCheckboxBase } from "../../FormCheckbox"
 import { SubmitButton } from "../../Button"
 import List from "../../List"
 import { CoveragePoolV1ExchangeRate } from "../../coverage-pools/ExchangeRate"
-import { withTimeline } from "./withTimeline"
+import { withTimeline } from "../withTimeline"
 import { useAcceptTermToConfirmFormik } from "../../../hooks/useAcceptTermToConfirmFormik"
 import { withdrawAssetPool } from "../../../actions/coverage-pool"
 import { covKEEP, KEEP } from "../../../utils/token.utils"
@@ -61,7 +61,7 @@ const InitiateWithdrawComponent = ({
         <p className="mt-1 text-grey-70">
           {transactionHash
             ? "After the 21 day cooldown you can claim your tokens in the dashboard."
-            : "The withrawal initiation requires two transactions – an approval and a confirmation."}
+            : "The withdrawal initiation requires two transactions – an approval and a confirmation."}
         </p>
         <OnlyIf condition={transactionHash && timestamp}>
           <AddToCalendar
@@ -139,7 +139,7 @@ const InitiateWithdrawComponent = ({
           }`}
           onClick={onClose}
         >
-          {transactionHash ? "Close" : "Cancel"}
+          {transactionHash ? "close" : "Cancel"}
         </Button>
       </ModalFooter>
     </>
@@ -148,11 +148,15 @@ const InitiateWithdrawComponent = ({
 
 export const InitiateWithdraw = withTimeline({
   title: "Withdraw",
-  step: COV_POOL_TIMELINE_STEPS.WITHDRAW_DEPOSIT,
-  withDescription: true,
+  timelineProps: {
+    step: COV_POOL_TIMELINE_STEPS.WITHDRAW_DEPOSIT,
+    withDescription: true,
+  },
 })(InitiateWithdrawComponent)
 
 export const WithdrawInitialized = withTimeline({
   title: "Withdraw",
-  step: COV_POOL_TIMELINE_STEPS.COOLDOWN,
+  timelineProps: {
+    step: COV_POOL_TIMELINE_STEPS.COOLDOWN,
+  },
 })(InitiateWithdrawComponent)

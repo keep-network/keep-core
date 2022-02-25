@@ -8,6 +8,7 @@ import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
+import "hardhat-dependency-compiler"
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -21,6 +22,13 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["storageLayout"],
+        },
+      },
+    },
   },
   paths: {
     artifacts: "./build",
@@ -57,10 +65,24 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: {
-      default: 0, // take the first account as deployer
+      default: 1, // take the second account
+    },
+    governance: {
+      default: 2,
+    },
+    walletOwner: {
+      default: 3,
     },
   },
   external: {
+    contracts: [
+      {
+        artifacts:
+          "node_modules/@threshold-network/solidity-contracts/export/artifacts",
+        deploy:
+          "node_modules/@threshold-network/solidity-contracts/export/deploy",
+      },
+    ],
     // deployments: {
     //   // For hardhat environment we can fork the mainnet, so we need to point it
     //   // to the contract artifacts.
@@ -71,6 +93,13 @@ const config: HardhatUserConfig = {
     //   ropsten: ["node_modules/@keep-network/keep-core/artifacts"],
     //   mainnet: ["./external/mainnet"],
     // },
+  },
+  dependencyCompiler: {
+    paths: [
+      "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
+    ],
+    keep: true,
   },
   contractSizer: {
     alphaSort: true,

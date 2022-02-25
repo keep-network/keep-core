@@ -1,30 +1,24 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop */
-
+/* eslint-disable no-await-in-loop */
 import { BigNumber } from "ethers"
 import { ethers, helpers, getUnnamedAccounts, waffle } from "hardhat"
 import { expect } from "chai"
 
-import blsData from "./data/bls"
-
 import { constants } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
-import {
-  signDkgResult,
-  DkgResult,
-  noMisbehaved,
-  hashDKGMembers,
-} from "./utils/dkg"
-import { Operator } from "./utils/operators"
+import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
+import ecdsaData from "./data/ecdsa"
 
-import type { SortitionPool, DKGValidator } from "../typechain"
+import type { DkgResult } from "./utils/dkg"
+import type { Operator } from "./utils/operators"
+import type { SortitionPool, EcdsaDkgValidator } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
 
 const fixture = async () => {
-  const TestToken = await ethers.getContractFactory("TestToken")
-  const testToken = await TestToken.deploy()
-  await testToken.deployed()
+  const T = await ethers.getContractFactory("T")
+  const t = await T.deploy()
+  await t.deployed()
 
   const StakingStub = await ethers.getContractFactory("StakingStub")
   const stakingStub = await StakingStub.deploy()
@@ -33,14 +27,14 @@ const fixture = async () => {
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
     stakingStub.address,
-    testToken.address,
+    t.address,
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const DKGValidator = await ethers.getContractFactory("DKGValidator")
-  const dkgValidator = (await DKGValidator.deploy(
+  const EcdsaDkgValidator = await ethers.getContractFactory("EcdsaDkgValidator")
+  const dkgValidator = (await EcdsaDkgValidator.deploy(
     sortitionPool.address
-  )) as DKGValidator
+  )) as EcdsaDkgValidator
   await dkgValidator.deployed()
 
   return {
@@ -49,20 +43,35 @@ const fixture = async () => {
   }
 }
 
-describe("DKGValidator", () => {
+describe("EcdsaDkgValidator", () => {
   const dkgSeed: BigNumber = BigNumber.from(
     "31415926535897932384626433832795028841971693993751058209749445923078164062862"
   )
   const dkgStartBlock = 1337
-  const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
+  const groupPublicKey: string = ethers.utils.hexValue(
+    ecdsaData.group1.publicKey
+  )
 
   let selectedOperators
 
-  let prepareDkgResult
-  let validator: DKGValidator
+  let prepareDkgResult: (
+    _groupMembers: Operator[],
+    _signers: Operator[],
+    _groupPublicKey: string,
+    _misbehaved: number[],
+    _startBlock: number,
+    _numberOfSignatures?: number,
+    _submitterIndex?: number,
+    _membersHash?: string
+  ) => Promise<DkgResult>
+
+  let validator: EcdsaDkgValidator
 
   before("load test fixture", async () => {
+    await createSnapshot()
+
     const contracts = await waffle.loadFixture(fixture)
+
     const { sortitionPool } = contracts
     validator = contracts.dkgValidator
 
@@ -81,14 +90,16 @@ describe("DKGValidator", () => {
       _groupPublicKey: string,
       _misbehaved: number[],
       _startBlock: number,
-      _numberOfSignatures = 33,
-      _submitterIndex = 1
-    ) => {
+      _numberOfSignatures = 51,
+      _submitterIndex = 1,
+      _membersHash?: string
+    ): Promise<DkgResult> => {
       const { signingMembersIndices, signaturesBytes } = await signDkgResult(
         _signers,
         _groupPublicKey,
         _misbehaved,
         _startBlock,
+        _submitterIndex,
         _numberOfSignatures
       )
 
@@ -99,35 +110,40 @@ describe("DKGValidator", () => {
         signatures: signaturesBytes,
         signingMembersIndices,
         members: _groupMembers.map((m) => m.id),
-        membersHash: hashDKGMembers(
-          _groupMembers.map((m) => m.id),
-          _misbehaved
-        ),
+        membersHash:
+          _membersHash ||
+          hashDKGMembers(
+            _groupMembers.map((m) => m.id),
+            _misbehaved
+          ),
       }
 
       return dkgResult
     }
   })
 
+  after(async () => {
+    await restoreSnapshot()
+  })
+
   describe("validate", () => {
     const testValidate = async (
-      _groupMembers,
-      _signers,
-      _groupPublicKey,
-      _misbehaved,
-      _membersHash?: string
+      _groupMembers: Operator[],
+      _signers: Operator[],
+      _groupPublicKey: string,
+      _misbehaved: number[],
+      _membersHash: string
     ) => {
       const dkgResult = await prepareDkgResult(
         _groupMembers,
         _signers,
         _groupPublicKey,
         _misbehaved,
-        dkgStartBlock
+        dkgStartBlock,
+        undefined,
+        undefined,
+        _membersHash
       )
-
-      if (_membersHash) {
-        dkgResult.membersHash = _membersHash
-      }
 
       const result = await validator.validate(dkgResult, dkgSeed, dkgStartBlock)
 
@@ -138,11 +154,11 @@ describe("DKGValidator", () => {
     }
 
     context("when DKG result contains misbehaved group members", () => {
-      let groupMemberIds: number[]
+      let selectedOperatorsIds: number[]
 
       before(async () => {
         await createSnapshot()
-        groupMemberIds = selectedOperators.map((m) => m.id)
+        selectedOperatorsIds = selectedOperators.map((m) => m.id)
       })
 
       after(async () => {
@@ -153,24 +169,25 @@ describe("DKGValidator", () => {
         context("when misbehaved index is present at the beginning", () => {
           it("should pass", async () => {
             const misbehavedMemberIds = [1]
-            const expectedMembersIds = [...groupMemberIds]
+            const expectedMembersIds = [...selectedOperatorsIds]
             expectedMembersIds.splice(0, 1) // index -1
 
             const result = await testValidate(
               selectedOperators,
               selectedOperators,
               groupPublicKey,
-              misbehavedMemberIds
+              misbehavedMemberIds,
+              hashUint32Array(expectedMembersIds)
             )
 
-            expect(result.isValid).to.be.true
-            expect(result.errorMsg).to.equal("")
+            await expect(result.isValid).to.be.true
+            await expect(result.errorMsg).to.equal("")
           })
         })
         context("when misbehaved indices present in the middle", () => {
           it("should pass", async () => {
             const misbehavedMemberIds = [22, 28, 46, 53]
-            const expectedMembersIds = [...groupMemberIds]
+            const expectedMembersIds = [...selectedOperatorsIds]
             expectedMembersIds.splice(21, 1) // index -1
             expectedMembersIds.splice(26, 1) // index -2 (cause expectedMembers already shrinked)
             expectedMembersIds.splice(43, 1) // index -3
@@ -180,49 +197,51 @@ describe("DKGValidator", () => {
               selectedOperators,
               selectedOperators,
               groupPublicKey,
-              misbehavedMemberIds
+              misbehavedMemberIds,
+              hashUint32Array(expectedMembersIds)
             )
 
-            expect(result.isValid).to.be.true
-            expect(result.errorMsg).to.equal("")
+            await expect(result.isValid).to.be.true
+            await expect(result.errorMsg).to.equal("")
           })
         })
 
         context("when misbehaved index is present at the end", () => {
           it("should pass", async () => {
-            const misbehavedMemberIds = [64]
-            const expectedMembersIds = [...groupMemberIds]
-            expectedMembersIds.splice(63, 1) // index -1
+            const misbehavedMemberIds = [constants.groupSize]
+            const expectedMembersIds = [...selectedOperatorsIds]
+            expectedMembersIds.splice(constants.groupSize - 1, 1) // index -1
 
             const result = await testValidate(
               selectedOperators,
               selectedOperators,
               groupPublicKey,
-              misbehavedMemberIds
+              misbehavedMemberIds,
+              hashUint32Array(expectedMembersIds)
             )
 
-            expect(result.isValid).to.be.true
-            expect(result.errorMsg).to.equal("")
+            await expect(result.isValid).to.be.true
+            await expect(result.errorMsg).to.equal("")
           })
         })
       })
 
       context("when hashed group members is incorrect", () => {
         it("should not pass", async () => {
-          const misbehavedMemberIds = [42]
-          const expectedMembersIds = [...groupMemberIds]
-          expectedMembersIds.splice(21, 1) // index -1
+          const misbehavedMemberIndices = [42]
+          const invalidMembersIndices = [...selectedOperatorsIds]
+          invalidMembersIndices.splice(21, 1) // index -1
 
           const result = await testValidate(
             selectedOperators,
             selectedOperators,
             groupPublicKey,
-            misbehavedMemberIds,
-            hashUint32Array(expectedMembersIds)
+            misbehavedMemberIndices,
+            hashUint32Array(invalidMembersIndices)
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Invalid members hash")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Invalid members hash")
         })
       })
     })
@@ -233,11 +252,12 @@ describe("DKGValidator", () => {
           selectedOperators,
           selectedOperators,
           groupPublicKey,
-          noMisbehaved
+          noMisbehaved,
+          hashUint32Array(selectedOperators.map((m) => m.id))
         )
 
-        expect(result.isValid).to.be.true
-        expect(result.errorMsg).to.equal("")
+        await expect(result.isValid).to.be.true
+        await expect(result.errorMsg).to.equal("")
       })
     })
 
@@ -252,11 +272,12 @@ describe("DKGValidator", () => {
           shuffledOperators,
           shuffledOperators,
           groupPublicKey,
-          noMisbehaved
+          noMisbehaved,
+          hashUint32Array(selectedOperators.map((m) => m.id))
         )
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Invalid group members")
+        await expect(result.isValid).to.be.false
+        await expect(result.errorMsg).to.equal("Invalid group members")
       })
     })
 
@@ -271,11 +292,12 @@ describe("DKGValidator", () => {
           selectedOperators,
           shuffledOperators,
           groupPublicKey,
-          noMisbehaved
+          noMisbehaved,
+          hashUint32Array(selectedOperators.map((m) => m.id))
         )
 
-        expect(result.isValid).to.be.false
-        expect(result.errorMsg).to.equal("Invalid signatures")
+        await expect(result.isValid).to.be.false
+        await expect(result.errorMsg).to.equal("Invalid signatures")
       })
     })
   })
@@ -285,7 +307,7 @@ describe("DKGValidator", () => {
       _groupMembers,
       _groupPublicKey,
       _misbehaved,
-      _numberOfSignatures = 33
+      _numberOfSignatures = 51
     ) => {
       const dkgResult = await prepareDkgResult(
         _groupMembers,
@@ -312,8 +334,8 @@ describe("DKGValidator", () => {
           noMisbehaved
         )
 
-        expect(result.isValid).to.be.true
-        expect(result.errorMsg).to.equal("")
+        await expect(result.isValid).to.be.true
+        await expect(result.errorMsg).to.equal("")
       })
     })
 
@@ -327,8 +349,8 @@ describe("DKGValidator", () => {
             noMisbehaved
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Malformed group public key")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Malformed group public key")
         })
       })
 
@@ -344,8 +366,8 @@ describe("DKGValidator", () => {
             noMisbehaved
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Malformed group public key")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Malformed group public key")
         })
       })
 
@@ -358,8 +380,8 @@ describe("DKGValidator", () => {
             noMisbehaved
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Malformed group public key")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Malformed group public key")
         })
       })
     })
@@ -374,8 +396,8 @@ describe("DKGValidator", () => {
             lessThanOne
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal(
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
             "Corrupted misbehaved members indices"
           )
         })
@@ -383,15 +405,15 @@ describe("DKGValidator", () => {
 
       context("when index is higher than group size", () => {
         it("should return validation error", async () => {
-          const higherThanGroupSize = [1, 2, 65]
+          const higherThanGroupSize = [1, 2, constants.groupSize + 1]
           const result = await testValidateFields(
             selectedOperators,
             groupPublicKey,
             higherThanGroupSize
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal(
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
             "Corrupted misbehaved members indices"
           )
         })
@@ -406,8 +428,24 @@ describe("DKGValidator", () => {
             unsorted
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal(
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
+            "Corrupted misbehaved members indices"
+          )
+        })
+      })
+
+      context("when indices are duplicated", () => {
+        it("should return validation error", async () => {
+          const duplicated = [1, 2, 3, 3]
+          const result = await testValidateFields(
+            selectedOperators,
+            groupPublicKey,
+            duplicated
+          )
+
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
             "Corrupted misbehaved members indices"
           )
         })
@@ -415,15 +453,15 @@ describe("DKGValidator", () => {
 
       context("when there are too many indices", () => {
         it("should return validation error", async () => {
-          const tooMany = [2, 4, 15, 17, 50, 53, 64]
+          const tooMany = [2, 4, 15, 17, 50, 53, 64, 72, 84, 86, 92]
           const result = await testValidateFields(
             selectedOperators,
             groupPublicKey,
             tooMany
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal(
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
             "Too many members misbehaving during DKG"
           )
         })
@@ -441,8 +479,8 @@ describe("DKGValidator", () => {
             noSignatures
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("No signatures provided")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("No signatures provided")
         })
       })
 
@@ -458,8 +496,8 @@ describe("DKGValidator", () => {
           dkgResult.signatures += "ff"
           const result = await validator.validateFields(dkgResult)
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Malformed signatures array")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Malformed signatures array")
         })
       })
 
@@ -476,8 +514,8 @@ describe("DKGValidator", () => {
           dkgResult.signatures += "f".repeat(signatureHexStrLength)
           const result = await validator.validateFields(dkgResult)
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Unexpected signatures count")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Unexpected signatures count")
         })
       })
 
@@ -491,15 +529,15 @@ describe("DKGValidator", () => {
             tooFewSignatures
           )
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Too few signatures")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Too few signatures")
         })
       })
 
       context("when there are too many signatures", () => {
         it("should return validation error", async () => {
           const signatureHexStrLength = 130
-          const maxSignatures = 64
+          const maxSignatures = constants.groupSize
           const dkgResult = await prepareDkgResult(
             selectedOperators,
             selectedOperators,
@@ -509,11 +547,11 @@ describe("DKGValidator", () => {
             maxSignatures
           )
           dkgResult.signatures += "f".repeat(signatureHexStrLength)
-          dkgResult.signingMembersIndices.push(65)
+          dkgResult.signingMembersIndices.push(maxSignatures + 1)
           const result = await validator.validateFields(dkgResult)
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Too many signatures")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal("Too many signatures")
         })
       })
     })
@@ -541,12 +579,16 @@ describe("DKGValidator", () => {
         it("should return validation error", async () => {
           const indicesStartWithZero = [
             0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 17, 18, 19,
-            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
           ]
+
           const result = await testSigningMembers(indicesStartWithZero)
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Corrupted signing member indices")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
+            "Corrupted signing member indices"
+          )
         })
       })
 
@@ -554,25 +596,31 @@ describe("DKGValidator", () => {
         it("should return validation error", async () => {
           const indicesEndWithTooBig = [
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 17, 18, 19,
-            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 65,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 101,
           ]
           const result = await testSigningMembers(indicesEndWithTooBig)
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Corrupted signing member indices")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
+            "Corrupted signing member indices"
+          )
         })
       })
 
       context("when indices are unsorted", () => {
         it("should return validation error", async () => {
           const indicesUnsorted = [
-            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 32, 31, 33,
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15, 17, 18, 19,
+            20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
+            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 49, 48, 50, 51,
           ]
           const result = await testSigningMembers(indicesUnsorted)
 
-          expect(result.isValid).to.be.false
-          expect(result.errorMsg).to.equal("Corrupted signing member indices")
+          await expect(result.isValid).to.be.false
+          await expect(result.errorMsg).to.equal(
+            "Corrupted signing member indices"
+          )
         })
       })
     })
@@ -594,7 +642,7 @@ describe("DKGValidator", () => {
     context("when DKG result is valid", () => {
       it("should pass", async () => {
         const isValid = await testValidateGroupMembers(selectedOperators)
-        expect(isValid).to.be.true
+        await expect(isValid).to.be.true
       })
     })
 
@@ -603,7 +651,7 @@ describe("DKGValidator", () => {
         const isValid = await testValidateGroupMembers(
           shuffle(selectedOperators)
         )
-        expect(isValid).to.be.false
+        await expect(isValid).to.be.false
       })
     })
   })
@@ -628,7 +676,7 @@ describe("DKGValidator", () => {
           selectedOperators
         )
 
-        expect(isValid).to.be.true
+        await expect(isValid).to.be.true
       })
     })
 
@@ -644,7 +692,7 @@ describe("DKGValidator", () => {
             maliciousSigners
           )
 
-          expect(isValid).to.be.false
+          await expect(isValid).to.be.false
         })
       }
     )
@@ -671,7 +719,7 @@ describe("DKGValidator", () => {
           dkgStartBlock
         )
 
-        expect(isValid).to.be.false
+        await expect(isValid).to.be.false
       })
     })
 
@@ -683,8 +731,7 @@ describe("DKGValidator", () => {
         )
         const signatures = []
         for (let i = 0; i < signingOperators.length; i++) {
-          const { address } = signingOperators[i]
-          const ethersSigner = await ethers.getSigner(address)
+          const { signer: ethersSigner } = signingOperators[i]
           const signature = await ethersSigner.signMessage(
             ethers.utils.arrayify(wrongResultHash)
           )
@@ -695,7 +742,7 @@ describe("DKGValidator", () => {
       }
 
       it("should fail the validation", async () => {
-        const numberOfSignatures = 33
+        const numberOfSignatures = constants.groupThreshold
         const dkgResult = await prepareDkgResult(
           selectedOperators,
           selectedOperators,
@@ -712,13 +759,13 @@ describe("DKGValidator", () => {
           dkgStartBlock
         )
 
-        expect(isValid).to.be.false
+        await expect(isValid).to.be.false
       })
     })
 
     context("when signatures consist of random bytes", () => {
       it("should revert", async () => {
-        const numberOfSignatures = 33
+        const numberOfSignatures = constants.groupThreshold
         const signatureHexStrLength = 2 * 65
         const dkgResult = await prepareDkgResult(
           selectedOperators,

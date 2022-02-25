@@ -48,6 +48,19 @@ export const FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_FAILURE =
 export const KEEP_RANDOM_BEACON_AUTHORIZED =
   "authorization_beacon/beacon_authorized"
 
+// AUTHORIZATION THRESHOLD
+export const FETCH_THRESHOLD_AUTH_DATA_REQUEST =
+  "threshold/fetch_auth_data_request"
+export const FETCH_THRESHOLD_AUTH_DATA_START = "threshold/fetch_auth_data_start"
+export const FETCH_THRESHOLD_AUTH_DATA_SUCCESS =
+  "threshold/fetch_auth_data_success"
+export const FETCH_THRESHOLD_AUTH_DATA_FAILURE =
+  "threshold/fetch_auth_data_failure"
+export const THRESHOLD_AUTHORIZED = "threshold/contract_authorized"
+export const THRESHOLD_STAKED_TO_T = "threshold/staked_to_t"
+export const REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA =
+  "threshold/remove_stake_from_threshold_auth_data"
+
 export const tbtcV2Migration = {
   ...TBTCV2MigrationActions,
 }

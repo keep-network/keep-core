@@ -38,6 +38,7 @@ export const TopUpsDataTable = ({ topUps, commitTopUp }) => {
       <Column
         header=""
         field="operatorAddress"
+        tdStyles={{ textAlign: "right" }}
         renderContent={({
           operatorAddress,
           readyToBeCommitted,

@@ -47,8 +47,6 @@ const TokenAmount = ({
   return (
     <div className={`token-amount ${wrapperClassName}`}>
       <CurrencyIcon
-        width={32}
-        height={32}
         {...iconProps}
         className={`token-amount__icon ${iconProps.className}`}
       />

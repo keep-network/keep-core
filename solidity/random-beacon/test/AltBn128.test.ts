@@ -1,5 +1,6 @@
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
+
 import type { TestAltBn128 } from "../typechain"
 
 describe("AltBn128", () => {

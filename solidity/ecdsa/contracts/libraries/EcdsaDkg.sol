@@ -12,42 +12,60 @@
 //
 //
 
+// Initial version copied from Keep Network Random Beacon:
+// https://github.com/keep-network/keep-core/blob/5138c7628868dbeed3ae2164f76fccc6c1fbb9e8/solidity/random-beacon/contracts/libraries/DKG.sol
+//
+// With the following differences:
+// - the group size was set to 100,
+// - offchainDkgTimeout was removed,
+// - submission eligibility verification is not performed on-chain,
+// - submission eligibility delay was replaced with a submission timeout,
+// - seed timeout notification requires seedTimeout period to pass.
+
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
-import "./BytesLib.sol";
-import "./Submission.sol";
-import "../DKGValidator.sol";
+import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
+import "../EcdsaDkgValidator.sol";
 
-library DKG {
+library EcdsaDkg {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
     struct Parameters {
+        // Time in blocks during which a seed is expected to be delivered.
+        // DKG starts only after a seed is delivered. The time the contract
+        // awaits for a seed is not included in the DKG timeout.
+        uint256 seedTimeout;
         // Time in blocks during which a submitted result can be challenged.
         uint256 resultChallengePeriodLength;
-        // Time in blocks after which the next group member is eligible
-        // to submit DKG result.
-        uint256 resultSubmissionEligibilityDelay;
+        // Time in blocks during which a result is expected to be submitted.
+        uint256 resultSubmissionTimeout;
+        // Time in blocks during which only the result submitter is allowed to
+        // approve it. Once this period ends and the submitter have not approved
+        // the result, anyone can do it.
+        uint256 submitterPrecedencePeriodLength;
     }
 
     struct Data {
         // Address of the Sortition Pool contract.
         SortitionPool sortitionPool;
-        // Address of the DKGValidator contract.
-        DKGValidator dkgValidator;
+        // Address of the EcdsaDkgValidator contract.
+        EcdsaDkgValidator dkgValidator;
         // DKG parameters. The parameters should persist between DKG executions.
         // They should be updated with dedicated set functions only when DKG is not
         // in progress.
         Parameters parameters;
+        // Time in block at which DKG state was locked.
+        uint256 stateLockBlock;
         // Time in blocks at which DKG started.
         uint256 startBlock;
         // Seed used to start DKG.
         uint256 seed;
         // Time in blocks that should be added to result submission eligibility
         // delay calculation. It is used in case of a challenge to adjust
-        // block calculation for members submission eligibility.
+        // DKG timeout calculation.
         uint256 resultSubmissionStartBlockOffset;
         // Hash of submitted DKG result.
         bytes32 submittedResultHash;
@@ -58,12 +76,12 @@ library DKG {
     /// @notice DKG result.
     struct Result {
         // Claimed submitter candidate group member index.
-        // Must be in range [1, 64].
+        // Must be in range [1, groupSize].
         uint256 submitterMemberIndex;
         // Generated candidate group public key
         bytes groupPubKey;
         // Array of misbehaved members indices (disqualified or inactive).
-        // Indices must be in range [1, 64], unique, and sorted in ascending
+        // Indices must be in range [1, groupSize], unique, and sorted in ascending
         // order.
         uint8[] misbehavedMembersIndices;
         // Concatenation of signatures from members supporting the result.
@@ -77,7 +95,7 @@ library DKG {
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
-        // be in range [1, 64], unique, and sorted in ascending order.
+        // be in range [1, groupSize], unique, and sorted in ascending order.
         uint256[] signingMembersIndices;
         // Identifiers of candidate group members as outputted by the group
         // selection protocol.
@@ -95,10 +113,8 @@ library DKG {
         IDLE,
         // Group creation is awaiting the seed and sortition pool is locked.
         AWAITING_SEED,
-        // Off-chain DKG protocol execution is in progress. A result is being calculated
-        // by the clients in this state. It's not yet possible to submit the result.
-        KEY_GENERATION,
-        // After off-chain DKG protocol execution the contract awaits result submission.
+        // DKG protocol execution is in progress. A result is being calculated
+        // by the clients in this state and the contract awaits a result submission.
         // This is a state to which group creation returns in case of a result
         // challenge notification.
         AWAITING_RESULT,
@@ -108,13 +124,6 @@ library DKG {
         CHALLENGE
     }
 
-    /// @dev Size of a group in the threshold relay.
-    uint256 public constant groupSize = 64;
-
-    /// @notice Time in blocks after which DKG result is complete and ready to be
-    //          published by clients.
-    uint256 public constant offchainDkgTime = 5 * (1 + 5) + 2 * (1 + 10) + 20;
-
     event DkgStarted(uint256 indexed seed);
 
     // To recreate the members that actively took part in dkg, the selected members
@@ -122,12 +131,7 @@ library DKG {
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        uint256 submitterMemberIndex,
-        bytes indexed groupPubKey,
-        uint8[] misbehavedMembersIndices,
-        bytes signatures,
-        uint256[] signingMembersIndices,
-        uint32[] selectedMembersIds
+        Result result
     );
 
     event DkgTimedOut();
@@ -147,14 +151,14 @@ library DKG {
 
     event DkgSeedTimedOut();
 
-    /// @notice Initializes SortitionPool and DKGValidator addresses.
+    /// @notice Initializes SortitionPool and EcdsaDkgValidator addresses.
     ///        Can be performed only once.
     /// @param _sortitionPool Sortition Pool reference
-    /// @param _dkgValidator DKGValidator reference
+    /// @param _dkgValidator EcdsaDkgValidator reference
     function init(
         Data storage self,
         SortitionPool _sortitionPool,
-        DKGValidator _dkgValidator
+        EcdsaDkgValidator _dkgValidator
     ) internal {
         require(
             address(self.sortitionPool) == address(0),
@@ -184,14 +188,10 @@ library DKG {
             state = State.AWAITING_SEED;
 
             if (self.startBlock > 0) {
-                state = State.KEY_GENERATION;
+                state = State.AWAITING_RESULT;
 
-                if (block.number > self.startBlock + offchainDkgTime) {
-                    state = State.AWAITING_RESULT;
-
-                    if (self.submittedResultBlock > 0) {
-                        state = State.CHALLENGE;
-                    }
+                if (self.submittedResultBlock > 0) {
+                    state = State.CHALLENGE;
                 }
             }
         }
@@ -205,6 +205,8 @@ library DKG {
         emit DkgStateLocked();
 
         self.sortitionPool.lock();
+
+        self.stateLockBlock = block.number;
     }
 
     function start(Data storage self, uint256 seed) internal {
@@ -213,14 +215,13 @@ library DKG {
             "Current state is not AWAITING_SEED"
         );
 
+        emit DkgStarted(seed);
+
         self.startBlock = block.number;
         self.seed = seed;
-
-        // slither-disable-next-line reentrancy-events
-        emit DkgStarted(seed);
     }
 
-    /// @notice Allows to submit DKG result. The submitted result does not go
+    /// @notice Allows to submit a DKG result. The submitted result does not go
     ///         through a validation and before it gets accepted, it needs to
     ///         wait through the challenge period during which everyone has
     ///         a chance to challenge the result as invalid one. Submitter of
@@ -232,29 +233,6 @@ library DKG {
             "Current state is not AWAITING_RESULT"
         );
         require(!hasDkgTimedOut(self), "DKG timeout already passed");
-
-        // Check submitter's eligibility to call this function
-        uint256 T_init = self.startBlock +
-            offchainDkgTime +
-            self.resultSubmissionStartBlockOffset;
-
-        (uint256 firstEligibleIndex, uint256 lastEligibleIndex) = Submission
-            .getEligibilityRange(
-                uint256(keccak256(result.groupPubKey)),
-                block.number,
-                T_init,
-                self.parameters.resultSubmissionEligibilityDelay,
-                groupSize
-            );
-
-        require(
-            Submission.isEligible(
-                result.submitterMemberIndex,
-                firstEligibleIndex,
-                lastEligibleIndex
-            ),
-            "Submitter is not eligible"
-        );
 
         SortitionPool sortitionPool = self.sortitionPool;
 
@@ -275,59 +253,53 @@ library DKG {
         self.submittedResultHash = keccak256(abi.encode(result));
         self.submittedResultBlock = block.number;
 
-        emit DkgResultSubmitted(
-            self.submittedResultHash,
-            self.seed,
-            result.submitterMemberIndex,
-            result.groupPubKey,
-            result.misbehavedMembersIndices,
-            result.signatures,
-            result.signingMembersIndices,
-            result.members
-        );
+        emit DkgResultSubmitted(self.submittedResultHash, self.seed, result);
+    }
+
+    /// @notice Checks if awaiting seed timed out.
+    /// @return True if awaiting seed timed out, false otherwise.
+    function hasSeedTimedOut(Data storage self) internal view returns (bool) {
+        return
+            currentState(self) == State.AWAITING_SEED &&
+            block.number > (self.stateLockBlock + self.parameters.seedTimeout);
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
-    ///         for off-chain protocol execution and time for the result publication
-    ///         for all group members. After this time result cannot be submitted
-    ///         and DKG can be notified about the timeout. DKG period is adjusted
-    ///         by result submission offset that include blocks that were mined
-    ///         while invalid result has been registered until it got challenged.
+    ///         for off-chain protocol execution and time for the result publication.
+    ///         After this time a result cannot be submitted and DKG can be notified
+    ///         about the timeout. DKG period is adjusted by result submission
+    ///         offset that include blocks that were mined while invalid result
+    ///         has been registered until it got challenged.
     /// @return True if DKG timed out, false otherwise.
     function hasDkgTimedOut(Data storage self) internal view returns (bool) {
         return
             currentState(self) == State.AWAITING_RESULT &&
             block.number >
             (self.startBlock +
-                offchainDkgTime +
                 self.resultSubmissionStartBlockOffset +
-                groupSize *
-                self.parameters.resultSubmissionEligibilityDelay);
-    }
-
-    /// @notice Notifies about DKG timeout.
-    function notifyTimeout(Data storage self) internal {
-        require(hasDkgTimedOut(self), "DKG has not timed out");
-
-        emit DkgTimedOut();
+                self.parameters.resultSubmissionTimeout);
     }
 
     /// @notice Notifies about the seed was not delivered and restores the
     ///         initial DKG state (IDLE).
-    function notifySeedTimedOut(Data storage self) internal {
-        require(
-            currentState(self) == State.AWAITING_SEED,
-            "Current state is not AWAITING_SEED"
-        );
+    function notifySeedTimeout(Data storage self) internal {
+        require(hasSeedTimedOut(self), "Awaiting seed has not timed out");
 
         emit DkgSeedTimedOut();
 
         self.sortitionPool.unlock();
     }
 
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout(Data storage self) internal {
+        require(hasDkgTimedOut(self), "DKG has not timed out");
+
+        emit DkgTimedOut();
+    }
+
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
-    ///         as valid. For the first `resultSubmissionEligibilityDelay`
+    ///         as valid. For the first `submitterPrecedencePeriodLength`
     ///         blocks after the end of the challenge period can be called only
     ///         by the DKG result submitter. After that time, can be called by
     ///         anyone.
@@ -358,7 +330,7 @@ library DKG {
         );
 
         // Extract submitter member address. Submitter member index is in
-        // range [1, 64] so we need to -1 when fetching identifier from members
+        // range [1, groupSize] so we need to -1 when fetching identifier from members
         // array.
         address submitterMember = self.sortitionPool.getIDOperator(
             result.members[result.submitterMemberIndex - 1]
@@ -368,12 +340,12 @@ library DKG {
             msg.sender == submitterMember ||
                 block.number >
                 challengePeriodEnd +
-                    self.parameters.resultSubmissionEligibilityDelay,
+                    self.parameters.submitterPrecedencePeriodLength,
             "Only the DKG result submitter can approve the result at this moment"
         );
 
         // Extract misbehaved members identifiers. Misbehaved members indices
-        // are in range [1, 64], so we need to -1 when fetching identifiers from
+        // are in range [1, groupSize], so we need to -1 when fetching identifiers from
         // members array.
         misbehavedMembers = new uint32[](
             result.misbehavedMembersIndices.length
@@ -449,16 +421,38 @@ library DKG {
         maliciousResultHash = self.submittedResultHash;
         maliciousSubmitter = result.members[result.submitterMemberIndex - 1];
 
-        // Adjust DKG result submission block start, so submission eligibility
-        // starts from the beginning.
-        self.resultSubmissionStartBlockOffset =
-            block.number -
-            self.startBlock -
-            offchainDkgTime;
+        // Adjust DKG result submission block start, so submission stage starts
+        // from the beginning.
+        self.resultSubmissionStartBlockOffset = block.number - self.startBlock;
 
         submittedResultCleanup(self);
 
         return (maliciousResultHash, maliciousSubmitter);
+    }
+
+    /// @notice Checks if DKG result is valid for the current DKG.
+    /// @param result DKG result.
+    /// @return True if the result is valid. If the result is invalid it returns
+    ///         false and an error message.
+    function isResultValid(Data storage self, Result calldata result)
+        external
+        view
+        returns (bool, string memory)
+    {
+        require(self.startBlock > 0, "DKG has not been started");
+
+        return self.dkgValidator.validate(result, self.seed, self.startBlock);
+    }
+
+    /// @notice Set setSeedTimeout parameter.
+    function setSeedTimeout(Data storage self, uint256 newSeedTimeout)
+        internal
+    {
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
+
+        require(newSeedTimeout > 0, "New value should be greater than zero");
+
+        self.parameters.seedTimeout = newSeedTimeout;
     }
 
     /// @notice Set resultChallengePeriodLength parameter.
@@ -478,21 +472,37 @@ library DKG {
             .resultChallengePeriodLength = newResultChallengePeriodLength;
     }
 
-    /// @notice Set resultSubmissionEligibilityDelay parameter.
-    function setResultSubmissionEligibilityDelay(
+    /// @notice Set resultSubmissionTimeout parameter.
+    function setResultSubmissionTimeout(
         Data storage self,
-        uint256 newResultSubmissionEligibilityDelay
+        uint256 newResultSubmissionTimeout
     ) internal {
         require(currentState(self) == State.IDLE, "Current state is not IDLE");
 
         require(
-            newResultSubmissionEligibilityDelay > 0,
+            newResultSubmissionTimeout > 0,
             "New value should be greater than zero"
+        );
+
+        self.parameters.resultSubmissionTimeout = newResultSubmissionTimeout;
+    }
+
+    /// @notice Set submitterPrecedencePeriodLength parameter.
+    function setSubmitterPrecedencePeriodLength(
+        Data storage self,
+        uint256 newSubmitterPrecedencePeriodLength
+    ) internal {
+        require(currentState(self) == State.IDLE, "Current state is not IDLE");
+
+        require(
+            newSubmitterPrecedencePeriodLength <
+                self.parameters.resultSubmissionTimeout,
+            "New value should be less than result submission period length"
         );
 
         self
             .parameters
-            .resultSubmissionEligibilityDelay = newResultSubmissionEligibilityDelay;
+            .submitterPrecedencePeriodLength = newSubmitterPrecedencePeriodLength;
     }
 
     /// @notice Completes DKG by cleaning up state.

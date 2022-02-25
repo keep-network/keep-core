@@ -5,7 +5,7 @@ import { MetricsSection } from "../../components/coverage-pools"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
 import List from "../../components/List"
-import Timeline from "../../components/Timeline"
+import Timeline, { TIMELINE_ELEMENT_STATUS } from "../../components/Timeline"
 import Chip from "../../components/Chip"
 import { colors } from "../../constants/colors"
 import {
@@ -104,7 +104,9 @@ const HowItWorksPage = () => {
             <Timeline.Element>
               <Timeline.Breakpoint>
                 <Timeline.BreakpointDot>1</Timeline.BreakpointDot>
-                <Timeline.BreakpointLine active />
+                <Timeline.BreakpointLine
+                  status={TIMELINE_ELEMENT_STATUS.ACTIVE}
+                />
               </Timeline.Breakpoint>
               <Timeline.Content>
                 <Timeline.ElementDefaultCard>
@@ -120,7 +122,9 @@ const HowItWorksPage = () => {
             <Timeline.Element>
               <Timeline.Breakpoint>
                 <Timeline.BreakpointDot>2</Timeline.BreakpointDot>
-                <Timeline.BreakpointLine active />
+                <Timeline.BreakpointLine
+                  status={TIMELINE_ELEMENT_STATUS.ACTIVE}
+                />
               </Timeline.Breakpoint>
               <Timeline.Content>
                 <Timeline.ElementDefaultCard>
@@ -142,7 +146,9 @@ const HowItWorksPage = () => {
                   lineBreakerColor="violet-80"
                   style={{ backgroundColor: colors.brandViolet10 }}
                 />
-                <Timeline.BreakpointLine active />
+                <Timeline.BreakpointLine
+                  status={TIMELINE_ELEMENT_STATUS.ACTIVE}
+                />
               </Timeline.Breakpoint>
               <Timeline.Content>
                 <Chip text="21 day cooldown" color="strong" size="big" />
@@ -152,7 +158,9 @@ const HowItWorksPage = () => {
             <Timeline.Element>
               <Timeline.Breakpoint>
                 <Timeline.BreakpointDot>3</Timeline.BreakpointDot>
-                <Timeline.BreakpointLine active />
+                <Timeline.BreakpointLine
+                  status={TIMELINE_ELEMENT_STATUS.ACTIVE}
+                />
               </Timeline.Breakpoint>
               <Timeline.Content>
                 <Timeline.ElementDefaultCard>
