@@ -58,3 +58,18 @@ You can run them by doing:
 ```sh
 yarn test
 ```
+
+=== Deploy contracts
+
+To deploy contract execute:
+
+```
+yarn deploy --network <NETWORK>
+```
+
+After the Bridge contract from tbtc-v2 is deployed it has to be set as the
+Wallet Owner in the `WalletRegistry`:
+
+```
+npx hardhat --network <NETWORK> initialize-wallet-owner --wallet-owner-address <BRIDGE_ADDRESS>
+```
