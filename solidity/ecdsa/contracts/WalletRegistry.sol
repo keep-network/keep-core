@@ -14,6 +14,7 @@
 
 pragma solidity ^0.8.9;
 
+import "./api/IWalletOwner.sol";
 import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
@@ -51,7 +52,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
 
     // Address that is set as owner of all wallets. Only this address can request
     // new wallets creation and manage their state.
-    address public walletOwner;
+    IWalletOwner public walletOwner;
 
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of DKG's
@@ -108,6 +109,8 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         bytes32 indexed publicKeyHash,
         bytes32 indexed dkgResultHash
     );
+
+    event WalletOwnerNotificationFailed(bytes32 indexed publicKeyHash);
 
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
@@ -275,8 +278,8 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
             "Wallet owner address cannot be zero"
         );
 
-        walletOwner = _walletOwner;
-        emit WalletOwnerUpdated(walletOwner);
+        walletOwner = IWalletOwner(_walletOwner);
+        emit WalletOwnerUpdated(_walletOwner);
     }
 
     /// @notice Registers the caller in the sortition pool.
@@ -389,6 +392,12 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         // TODO: Disable rewards for misbehavedMembers.
         //slither-disable-next-line redundant-statements
         misbehavedMembers;
+
+        try walletOwner.notifyWalletCreated(publicKeyHash) {} catch {
+            // Should never happen but we want to ensure a non-critical path
+            // failure from an external contract does not stop the DKG to complete.
+            emit WalletOwnerNotificationFailed(publicKeyHash);
+        }
 
         dkg.complete();
     }
