@@ -10,7 +10,7 @@ import "../libraries/Wallets.sol";
 contract WalletRegistryStub is WalletRegistry {
     constructor(
         SortitionPool _sortitionPool,
-        IWalletStaking _staking,
+        IStaking _staking,
         EcdsaDkgValidator _dkgValidator,
         IRandomBeacon _randomBeacon,
         address _walletOwner
