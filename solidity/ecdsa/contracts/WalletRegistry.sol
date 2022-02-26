@@ -21,25 +21,11 @@ import "./EcdsaDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-/// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
-/// IStaking interface from there.
-interface IWalletStaking {
-    function authorizedStake(address stakingProvider, address application)
-        external
-        view
-        returns (uint256);
-
-    function seize(
-        uint96 amount,
-        uint256 rewardMultiplier,
-        address notifier,
-        address[] memory stakingProviders
-    ) external;
-}
-
-contract WalletRegistry is IRandomBeaconConsumer, Ownable {
+contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
     using EcdsaAuthorization for EcdsaAuthorization.Data;
     using EcdsaDkg for EcdsaDkg.Data;
     using Wallets for Wallets.Data;
@@ -73,9 +59,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     // External dependencies
 
     SortitionPool public immutable sortitionPool;
-    /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
-    /// IStaking interface from there.
-    IWalletStaking public immutable staking;
+    IStaking public immutable staking;
     IRandomBeacon public randomBeacon;
 
     // Events
@@ -143,9 +127,22 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
 
     event WalletOwnerUpdated(address walletOwner);
 
+    event OperatorRegistered(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    modifier onlyTokenStaking() {
+        require(
+            msg.sender == address(staking),
+            "Caller is not the staking contract"
+        );
+        _;
+    }
+
     constructor(
         SortitionPool _sortitionPool,
-        IWalletStaking _staking,
+        IStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         address _walletOwner
@@ -169,6 +166,53 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+    }
+
+    function registerOperator(address operator) external {
+        authorization.registerOperator(operator);
+    }
+
+    function joinSortitionPool() external {
+        authorization.joinSortitionPool(IStaking(staking), sortitionPool);
+    }
+
+    /// @notice Used by T staking contract to inform the application that the
+    ///         authorized amount for the given operator increased. Can only be
+    ///         called when the sortition pool is not locked. Increases in-pool
+    ///         weight and rewards weight in the pool proportionally to the
+    ///         authorized stake amount immediatelly. Reverts if the sortition
+    ///         pool is locked or if the authorization amount is below the
+    ///         minimum. If the operator is not known (`registerOperator`) was
+    ///         not called, or if the operator is not in the sortition pool,
+    ///         function is not executing any updates.
+    /// @dev Can only be called by T staking contract.
+    function authorizationIncreased(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyTokenStaking {
+        authorization.authorizationIncreased(
+            sortitionPool,
+            stakingProvider,
+            fromAmount,
+            toAmount
+        );
+    }
+
+    function authorizationDecreaseRequested(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyTokenStaking {
+        // TODO: implement me
+    }
+
+    function involuntaryAuthorizationDecrease(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyTokenStaking {
+        // TODO: implement me
     }
 
     /// @notice Updates address of the Random Beacon.
@@ -279,32 +323,6 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         emit WalletOwnerUpdated(walletOwner);
     }
 
-    /// @notice Registers the caller in the sortition pool.
-    // TODO: Revisit on integration with Token Staking contract.
-    function registerOperator() external {
-        address operator = msg.sender;
-
-        require(
-            !sortitionPool.isOperatorInPool(operator),
-            "Operator is already registered"
-        );
-
-        sortitionPool.insertOperator(
-            operator,
-            staking.authorizedStake(operator, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `operator`
-        );
-    }
-
-    /// @notice Updates the sortition pool status of the caller.
-    /// @param operator Operator's address.
-    // TODO: Revisit on integration with Token Staking contract.
-    function updateOperatorStatus(address operator) external {
-        sortitionPool.updateOperatorStatus(
-            operator,
-            staking.authorizedStake(msg.sender, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `msg.sender`
-        );
-    }
-
     /// @notice Requests a new wallet creation.
     /// @dev Can be called only by the owner of wallets.
     ///      It locks the DKG and request a new relay entry. It expects
@@ -407,7 +425,9 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
             .getIDOperator(maliciousDkgResultSubmitterId);
 
         address[] memory operatorWrapper = new address[](1);
-        operatorWrapper[0] = maliciousDkgResultSubmitterAddress;
+        operatorWrapper[0] = operatorToStakingProvider(
+            maliciousDkgResultSubmitterAddress
+        );
 
         try
             staking.seize(
@@ -498,13 +518,31 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     /// @notice The minimum authorization amount required so that operator can
     ///         participate in ECDSA Wallet operations.
     function minimumAuthorization() external view returns (uint96) {
-        return authorization.minimumAuthorization;
+        return authorization.parameters.minimumAuthorization;
     }
 
     /// @notice Delay in seconds that needs to pass between the time
     ///         authorization decrease is requested and the time that request
     ///         can get approved.
     function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.authorizationDecreaseDelay;
+        return authorization.parameters.authorizationDecreaseDelay;
+    }
+
+    /// @notice Returns operator registered for the given staking provider.
+    function stakingProviderToOperator(address stakingProvider)
+        external
+        view
+        returns (address)
+    {
+        return authorization.stakingProviderToOperator[stakingProvider];
+    }
+
+    /// @notice Returns staking provider of the given operator.
+    function operatorToStakingProvider(address operator)
+        public
+        view
+        returns (address)
+    {
+        return authorization.operatorToStakingProvider[operator];
     }
 }
