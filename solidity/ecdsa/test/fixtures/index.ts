@@ -9,8 +9,8 @@ import type {
   SortitionPool,
   WalletRegistry,
   WalletRegistryStub,
-  StakingStub,
   WalletRegistryGovernance,
+  TokenStaking,
   T,
 } from "../../typechain"
 
@@ -21,6 +21,7 @@ export const constants = {
   groupThreshold: 51,
   poolWeightDivisor: to1e18(1),
   governanceDelayCritical: 1209600, // 2 weeks
+  tokenStakingNotificationReward: to1e18(10000), // 10k T
 }
 
 export const dkgState = {
@@ -48,7 +49,7 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
     await ethers.getContract("WalletRegistryGovernance")
   const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
   const tToken: T = await ethers.getContract("T")
-  const staking: StakingStub = await ethers.getContract("StakingStub")
+  const staking: TokenStaking = await ethers.getContract("TokenStaking")
 
   const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
   const governance: SignerWithAddress = await ethers.getNamedSigner(
@@ -75,6 +76,9 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
     ).slice(unnamedAccountsOffset, unnamedAccountsOffset + constants.groupSize)
   )
 
+  // Set up TokenStaking parameters
+  await updateTokenStakingParams(tToken, staking, deployer)
+
   // Set parameters with tweaked values to reduce test execution time.
   await updateWalletRegistryParams(walletRegistryGovernance, governance)
 
@@ -90,6 +94,23 @@ export const walletRegistryFixture = deployments.createFixture(async () => {
     walletRegistryGovernance,
   }
 })
+
+async function updateTokenStakingParams(
+  tToken: T,
+  staking: TokenStaking,
+  deployer: SignerWithAddress
+) {
+  const initialNotifierTreasury = to1e18(100000) // 100k T
+  await tToken
+    .connect(deployer)
+    .approve(staking.address, initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .pushNotificationReward(initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .setNotificationReward(constants.tokenStakingNotificationReward)
+}
 
 async function updateWalletRegistryParams(
   walletRegistryGovernance: WalletRegistryGovernance,
