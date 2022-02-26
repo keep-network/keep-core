@@ -9,7 +9,6 @@ import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import ecdsaData from "./data/ecdsa"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-
 import type { DkgResult } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
 import type {
