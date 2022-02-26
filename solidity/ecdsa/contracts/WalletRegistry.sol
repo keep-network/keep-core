@@ -528,6 +528,16 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         return authorization.parameters.authorizationDecreaseDelay;
     }
 
+    /// @notice Selects a new group of operators based on the provided seed.
+    ///         At least one operator has to be registered in the pool,
+    ///         otherwise the function fails reverting the transaction.
+    /// @param seed Number used to select operators to the group.
+    /// @return IDs of selected group members.
+    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
+        // TODO: Read seed from EcdsaDkg
+        return sortitionPool.selectGroup(EcdsaDkg.groupSize, seed);
+    }
+
     /// @notice Returns operator registered for the given staking provider.
     function stakingProviderToOperator(address stakingProvider)
         external
