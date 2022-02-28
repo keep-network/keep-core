@@ -20,6 +20,9 @@ import "./DKGValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "@keep-network/random-beacon/contracts/Reimbursable.sol";
+import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
+
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 /// IStaking interface from there.
 interface IWalletStaking {
@@ -36,7 +39,7 @@ interface IWalletStaking {
     ) external;
 }
 
-contract WalletRegistry is Ownable {
+contract WalletRegistry is Ownable, Reimbursable {
     using DKG for DKG.Data;
     using Wallets for Wallets.Data;
 
@@ -136,11 +139,13 @@ contract WalletRegistry is Ownable {
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
-        address _walletOwner
+        address _walletOwner,
+        ReimbursementPool _reimbursementPool
     ) {
         sortitionPool = _sortitionPool;
         staking = _staking;
         walletOwner = _walletOwner;
+        reimbursementPool = _reimbursementPool;
 
         // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
@@ -288,7 +293,7 @@ contract WalletRegistry is Ownable {
     }
 
     /// @notice Notifies about DKG timeout.
-    function notifyDkgTimeout() external {
+    function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyTimeout();
 
         dkg.complete();

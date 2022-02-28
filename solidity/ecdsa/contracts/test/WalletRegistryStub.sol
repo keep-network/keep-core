@@ -2,6 +2,7 @@ pragma solidity ^0.8.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 import "../WalletRegistry.sol";
 import "../DKGValidator.sol";
 import "../libraries/DKG.sol";
@@ -12,8 +13,9 @@ contract WalletRegistryStub is WalletRegistry {
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
-        address _walletOwner
-    ) WalletRegistry(_sortitionPool, _staking, _dkgValidator, _walletOwner) {}
+        address _walletOwner,
+        ReimbursementPool reimbursementPool
+    ) WalletRegistry(_sortitionPool, _staking, _dkgValidator, _walletOwner, reimbursementPool) {}
 
     function getDkgData() external view returns (DKG.Data memory) {
         return dkg;
