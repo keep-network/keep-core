@@ -230,12 +230,8 @@ function* observeStakedEvents() {
       yield put({
         type: ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
         payload: {
+          ...delegation,
           owner: yourAddress,
-          authorizerAddress: delegation.authorizerAddress,
-          beneficiaryAddress: delegation.authorizerAddress,
-          operatorAddress: delegation.authorizerAddress,
-          amount: delegation.amount,
-          isFromGrant: delegation.isFromGrant,
           operatorContractAddress: Keep.thresholdStakingContract.address,
         },
       })

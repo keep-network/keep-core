@@ -117,9 +117,9 @@ const addStakeToAuthData = (
   {
     owner,
     authorizerAddress,
-    beneficiaryAddress,
+    beneficiary: beneficiaryAddress,
     operatorAddress,
-    amount,
+    amount: stakeAmount,
     isFromGrant,
     operatorContractAddress,
   }
@@ -129,14 +129,14 @@ const addStakeToAuthData = (
     authorizerAddress,
     beneficiaryAddress,
     operatorAddress,
-    stakeAmount: amount,
+    stakeAmount,
     contract: {
       contractName: AUTH_CONTRACTS_LABEL.THRESHOLD_TOKEN_STAKING,
       operatorContractAddress: operatorContractAddress,
       isAuthorized: false,
     },
     isStakedToT: false,
-    isFromGrant: isFromGrant,
+    isFromGrant: isFromGrant ? isFromGrant : false,
     canBeMovedToT: false,
   }
 
