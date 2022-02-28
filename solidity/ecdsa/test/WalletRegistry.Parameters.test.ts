@@ -18,6 +18,34 @@ describe("WalletRegistry - Parameters", async () => {
       await walletRegistryFixture())
   })
 
+  describe("updateAuthorizationParameters", () => {
+    context("when called by the deployer", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(deployer).updateAuthorizationParameters(1, 2)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by the wallet owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(walletOwner)
+            .updateAuthorizationParameters(1, 2)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by a third party", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(thirdParty).updateAuthorizationParameters(1, 2)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+  })
+
   describe("updateDkgParameters", async () => {
     context("when called by the deployer", async () => {
       it("should revert", async () => {

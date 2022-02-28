@@ -10,16 +10,30 @@
 // ▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
 // ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
 //
-//                           Trust math, not hardware.
+//
 
 pragma solidity ^0.8.9;
 
-import "./IRandomBeaconConsumer.sol";
+import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol";
 
-/// @title Random Beacon interface
-interface IRandomBeacon {
-    /// @notice Creates a request to generate a new relay entry. Requires a
-    ///         request fee denominated in T token.
-    /// @param callbackContract Beacon consumer callback contract.
-    function requestRelayEntry(IRandomBeaconConsumer callbackContract) external;
+library EcdsaAuthorization {
+    struct Data {
+        uint96 minimumAuthorization;
+        uint64 authorizationDecreaseDelay;
+    }
+
+    function setMinimumAuthorization(
+        Data storage self,
+        uint96 _minimumAuthorization
+    ) internal {
+        self.minimumAuthorization = _minimumAuthorization;
+    }
+
+    function setAuthorizationDecreaseDelay(
+        Data storage self,
+        uint64 _authorizationDecreaseDelay
+    ) internal {
+        self.authorizationDecreaseDelay = _authorizationDecreaseDelay;
+    }
 }

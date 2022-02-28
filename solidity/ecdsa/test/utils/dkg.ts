@@ -304,10 +304,6 @@ export async function expectDkgResultSubmittedEvent(
     expectedArgs.resultHash
   )
 
-  await expect(actualArgs.resultHash, "invalid resultHash").to.be.equal(
-    expectedArgs.resultHash
-  )
-
   await expect(actualArgs.seed, "invalid seed").to.be.equal(expectedArgs.seed)
 
   await expect(

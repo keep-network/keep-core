@@ -8,24 +8,12 @@ contract GroupsStub {
 
     Groups.Data internal groups;
 
-    event CandidateGroupRegistered(bytes indexed groupPubKey);
+    event GroupRegistered(uint64 indexed groupId, bytes indexed groupPubKey);
 
-    event CandidateGroupRemoved(bytes indexed groupPubKey);
-
-    event GroupActivated(uint64 indexed groupId, bytes indexed groupPubKey);
-
-    function addCandidateGroup(bytes calldata groupPubKey, bytes32 membersHash)
+    function addGroup(bytes calldata groupPubKey, bytes32 membersHash)
         external
     {
-        groups.addCandidateGroup(groupPubKey, membersHash);
-    }
-
-    function popCandidateGroup() external {
-        groups.popCandidateGroup();
-    }
-
-    function activateCandidateGroup() external {
-        groups.activateCandidateGroup();
+        groups.addGroup(groupPubKey, membersHash);
     }
 
     function terminateGroup(uint64 groupId) external {
