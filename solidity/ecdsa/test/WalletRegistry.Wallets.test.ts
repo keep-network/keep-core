@@ -1,18 +1,19 @@
-import { waffle, helpers } from "hardhat"
+import { helpers } from "hardhat"
 import { expect } from "chai"
 import { formatBytes32String } from "ethers/lib/utils"
 
 import { walletRegistryFixture } from "./fixtures"
 import { createNewWallet } from "./utils/wallets"
 
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { WalletRegistry, WalletRegistryStub } from "../typechain"
+import type { FakeContract } from "@defi-wonderland/smock"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("WalletRegistry - Wallets", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
-  let walletOwner: SignerWithAddress
+  let walletOwner: FakeContract<IWalletOwner>
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
@@ -37,7 +38,7 @@ describe("WalletRegistry - Wallets", async () => {
         await createSnapshot()
         ;({ publicKeyHash } = await createNewWallet(
           walletRegistry,
-          walletOwner
+          walletOwner.wallet
         ))
       })
 

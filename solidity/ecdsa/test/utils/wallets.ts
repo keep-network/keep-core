@@ -7,8 +7,8 @@ import { noMisbehaved, signAndSubmitCorrectDkgResult } from "./dkg"
 import { fakeRandomBeacon } from "./randomBeacon"
 
 import type { WalletRegistry } from "../../typechain"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Operator } from "./operators"
+import type { Signer } from "ethers"
 
 const { mineBlocks } = helpers.time
 const { keccak256 } = ethers.utils
@@ -16,7 +16,7 @@ const { keccak256 } = ethers.utils
 // eslint-disable-next-line import/prefer-default-export
 export async function createNewWallet(
   walletRegistry: WalletRegistry,
-  walletOwner: SignerWithAddress,
+  walletOwner: Signer,
   publicKey = ecdsaData.group1.publicKey
 ): Promise<{
   members: Operator[]
