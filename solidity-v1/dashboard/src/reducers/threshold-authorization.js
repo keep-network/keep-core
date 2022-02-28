@@ -124,6 +124,8 @@ const addStakeToAuthData = (
     operatorContractAddress,
   }
 ) => {
+  const _isFromGrant = !!isFromGrant
+
   const newStake = {
     owner,
     authorizerAddress,
@@ -136,8 +138,8 @@ const addStakeToAuthData = (
       isAuthorized: false,
     },
     isStakedToT: false,
-    isFromGrant: isFromGrant ? isFromGrant : false,
-    canBeMovedToT: false,
+    isFromGrant: _isFromGrant,
+    canBeMovedToT: _isFromGrant,
   }
 
   const updatedAuthData = [...authData, newStake]
