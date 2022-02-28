@@ -20,6 +20,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     WalletRegistryGovernance.address,
     deployer
   )
+
+  await helpers.ownable.transferOwnership(
+    "ReimbursementPool",
+    WalletRegistryGovernance.address,
+    deployer
+  )
 }
 
 export default func
@@ -28,4 +34,4 @@ func.tags = [
   "WalletRegistryTransferOwnership",
   "WalletRegistryGovernanceTransferOwnership",
 ]
-func.dependencies = ["WalletRegistryGovernance"]
+func.dependencies = ["WalletRegistryGovernance", "ReimbursementPool"]

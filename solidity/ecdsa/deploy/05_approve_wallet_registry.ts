@@ -14,9 +14,16 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     "approveApplication",
     WalletRegistry.address
   )
+
+  await execute(
+    "ReimbursementPool",
+    { from: deployer },
+    "authorize",
+    WalletRegistry.address
+  )
 }
 
 export default func
 
 func.tags = ["WalletRegistryApprove"]
-func.dependencies = ["TokenStaking", "WalletRegistry"]
+func.dependencies = ["TokenStaking", "ReimbursementPool", "WalletRegistry"]
