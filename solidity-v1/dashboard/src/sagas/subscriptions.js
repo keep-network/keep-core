@@ -20,6 +20,7 @@ import {
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
   tbtcV2Migration,
   REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA,
+  ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
 } from "../actions"
 import {
   assetPoolDepositedEventEmitted,
@@ -226,6 +227,18 @@ function* observeStakedEvents() {
       }
 
       yield put({ type: "staking/add_delegation", payload: delegation })
+      yield put({
+        type: ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
+        payload: {
+          owner: yourAddress,
+          authorizerAddress: delegation.authorizerAddress,
+          beneficiaryAddress: delegation.authorizerAddress,
+          operatorAddress: delegation.authorizerAddress,
+          amount: delegation.amount,
+          isFromGrant: delegation.isFromGrant,
+          operatorContractAddress: Keep.thresholdStakingContract.address,
+        },
+      })
     } catch (error) {
       console.error(`Failed subscribing to StakeDelegated event`, error)
       contractEventCahnnel.close()
