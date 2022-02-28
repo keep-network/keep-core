@@ -8,10 +8,18 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const SortitionPool = await deployments.get("SortitionPool")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
   let TokenStaking = await deployments.get("TokenStaking")
-  const DKGValidator = await deployments.get("DKGValidator")
+  const EcdsaDkgValidator = await deployments.get("EcdsaDkgValidator")
 
-  const DKG = await deployments.deploy("DKG", {
-    contract: "contracts/libraries/DKG.sol:DKG",
+  // TODO: RandomBeaconStub contract should be replaced by actual implementation of
+  // RandomBeacon contract, once @keep-network/random-beacon hardhat deployments
+  // scripts are implemented.
+  console.log("deploying RandomBeaconStub contract instead of RandomBeacon")
+  const RandomBeacon = await deployments.deploy("RandomBeaconStub", {
+    from: deployer,
+    log: true,
+  })
+
+  const EcdsaDkg = await deployments.deploy("EcdsaDkg", {
     from: deployer,
     log: true,
   })
@@ -40,11 +48,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     args: [
       SortitionPool.address,
       TokenStaking.address,
-      DKGValidator.address,
+      EcdsaDkgValidator.address,
+      RandomBeacon.address,
       walletOwner,
       ReimbursementPool.address,
     ],
-    libraries: { DKG: DKG.address, Wallets: Wallets.address },
+    libraries: { EcdsaDkg: EcdsaDkg.address, Wallets: Wallets.address },
     log: true,
   })
 
@@ -65,4 +74,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["WalletRegistry"]
-func.dependencies = ["SortitionPool", "TokenStaking", "DKGValidator"]
+func.dependencies = ["SortitionPool", "TokenStaking", "EcdsaDkgValidator"]

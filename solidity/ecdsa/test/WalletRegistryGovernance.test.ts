@@ -1,8 +1,9 @@
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { walletRegistryFixture, params } from "./fixtures"
 
+import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, WalletRegistryGovernance } from "../typechain"
 
@@ -27,7 +28,59 @@ describe("WalletRegistryGovernance", async () => {
       governance,
       thirdParty,
       walletOwner,
-    } = await waffle.loadFixture(walletRegistryFixture))
+    } = await walletRegistryFixture())
+  })
+
+  describe("upgradeRandomBeacon", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .upgradeRandomBeacon(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      context("when new address is zero", () => {
+        it("should revert when a new random beacon address is zero", async () => {
+          await expect(
+            walletRegistryGovernance
+              .connect(governance)
+              .upgradeRandomBeacon(ethers.constants.AddressZero)
+          ).to.be.revertedWith("New random beacon address cannot be zero")
+        })
+      })
+
+      context("when new address is not zero", () => {
+        before(async () => {
+          await createSnapshot()
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .upgradeRandomBeacon(thirdParty.address)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the random beacon", async () => {
+          expect(await walletRegistry.randomBeacon()).to.be.equal(
+            thirdParty.address
+          )
+        })
+
+        it("should emit RandomBeaconUpgraded event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistry, "RandomBeaconUpgraded")
+            .withArgs(thirdParty.address)
+        })
+      })
+    })
   })
 
   describe("beginWalletOwnerUpdate", () => {
@@ -461,6 +514,176 @@ describe("WalletRegistryGovernance", async () => {
     )
   })
 
+  describe("beginDkgSeedTimeoutUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginDkgSeedTimeoutUpdate(11)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update value is equal 0", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSeedTimeoutUpdate(0)
+        ).to.be.revertedWith("DKG seed timeout must be > 0")
+      })
+    })
+
+    context("when the update value is at least 1", () => {
+      before(async () => {
+        await createSnapshot()
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should accept the value", async () => {
+        await createSnapshot()
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSeedTimeoutUpdate(1)
+        ).not.to.be.reverted
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSeedTimeoutUpdate(11)
+        ).not.to.be.reverted
+
+        await restoreSnapshot()
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgSeedTimeoutUpdate(11)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the DKG seed timeout", async () => {
+        expect((await walletRegistry.dkgParameters()).seedTimeout).to.be.equal(
+          params.dkgSeedTimeout
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingDkgSeedTimeoutUpdateTime()
+        ).to.be.equal(12 * 60 * 60) // 12 hours
+      })
+
+      it("should emit the DkgSeedTimeoutUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(walletRegistryGovernance, "DkgSeedTimeoutUpdateStarted")
+          .withArgs(11, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgSeedTimeoutUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeDkgSeedTimeoutUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgSeedTimeoutUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgSeedTimeoutUpdate(11)
+
+        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgSeedTimeoutUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSeedTimeoutUpdate(11)
+
+          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgSeedTimeoutUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the DKG seed timeout", async () => {
+          expect(
+            (await walletRegistry.dkgParameters()).seedTimeout
+          ).to.be.equal(11)
+        })
+
+        it("should emit DkgSeedTimeoutUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "DkgSeedTimeoutUpdated")
+            .withArgs(11)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingDkgSeedTimeoutUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
   describe("beginDkgResultChallengePeriodLengthUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -486,14 +709,17 @@ describe("WalletRegistryGovernance", async () => {
       it("should accept the value", async () => {
         await createSnapshot()
 
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(10)
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(11)
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultChallengePeriodLengthUpdate(10)
+        ).to.not.be.reverted
 
-        // works, did not revert
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultChallengePeriodLengthUpdate(11)
+        ).to.not.be.reverted
 
         await restoreSnapshot()
       })
@@ -654,14 +880,16 @@ describe("WalletRegistryGovernance", async () => {
       it("should accept the value", async () => {
         await createSnapshot()
 
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultSubmissionTimeoutUpdate(1)
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgResultSubmissionTimeoutUpdate(2)
-
-        // works, did not revert
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionTimeoutUpdate(1)
+        ).to.not.be.reverted
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionTimeoutUpdate(2)
+        ).to.not.be.reverted
 
         await restoreSnapshot()
       })
@@ -822,14 +1050,16 @@ describe("WalletRegistryGovernance", async () => {
       it("should accept the value", async () => {
         await createSnapshot()
 
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
-        await walletRegistryGovernance
-          .connect(governance)
-          .beginDkgSubmitterPrecedencePeriodLengthUpdate(2)
-
-        // works, did not revert
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
+        ).to.not.be.reverted
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgSubmitterPrecedencePeriodLengthUpdate(2)
+        ).to.not.be.reverted
 
         await restoreSnapshot()
       })

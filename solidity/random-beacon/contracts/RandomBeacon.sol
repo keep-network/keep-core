@@ -14,6 +14,7 @@
 
 pragma solidity ^0.8.9;
 
+import "./api/IRandomBeacon.sol";
 import "./libraries/Authorization.sol";
 import "./libraries/DKG.sol";
 import "./libraries/Groups.sol";
@@ -57,7 +58,7 @@ interface IRandomBeaconStaking {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable {
+contract RandomBeacon is IRandomBeacon, Ownable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
     using DKG for DKG.Data;
@@ -317,7 +318,7 @@ contract RandomBeacon is Ownable {
         staking = _staking;
 
         // TODO: revisit all initial values
-        callbackGasLimit = 50000;
+        callbackGasLimit = 56000;
         groupCreationFrequency = 5;
 
         dkgResultSubmissionReward = 1000e18;

@@ -14,10 +14,12 @@
 
 pragma solidity ^0.8.9;
 
-import "./libraries/DKG.sol";
+import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
-import "./DKGValidator.sol";
+import "./EcdsaDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
+import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "@keep-network/random-beacon/contracts/Reimbursable.sol";
@@ -39,19 +41,17 @@ interface IWalletStaking {
     ) external;
 }
 
-contract WalletRegistry is Ownable, Reimbursable {
-    using DKG for DKG.Data;
+contract WalletRegistry is IRandomBeaconConsumer, Ownable, Reimbursable {
+    using EcdsaDkg for EcdsaDkg.Data;
     using Wallets for Wallets.Data;
 
     // Libraries data storages
-    DKG.Data internal dkg;
+    EcdsaDkg.Data internal dkg;
     Wallets.Data internal wallets;
 
     // Address that is set as owner of all wallets. Only this address can request
     // new wallets creation and manage their state.
     address public walletOwner;
-
-    uint256 public constant relayEntry = 12345; // TODO: get value from Random Beacon
 
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of DKG's
@@ -76,15 +76,15 @@ contract WalletRegistry is Ownable, Reimbursable {
     /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
     /// IStaking interface from there.
     IWalletStaking public immutable staking;
+    IRandomBeacon public randomBeacon;
 
     // Events
-
     event DkgStarted(uint256 indexed seed);
 
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        DKG.Result result
+        EcdsaDkg.Result result
     );
 
     event DkgTimedOut();
@@ -128,10 +128,13 @@ contract WalletRegistry is Ownable, Reimbursable {
     event SlashingParametersUpdated(uint256 maliciousDkgResultSlashingAmount);
 
     event DkgParametersUpdated(
-        uint256 dkgResultChallengePeriodLength,
-        uint256 dkgResultSubmissionTimeout,
-        uint256 dkgResultSubmitterPrecedencePeriodLength
+        uint256 seedTimeout,
+        uint256 resultChallengePeriodLength,
+        uint256 resultSubmissionTimeout,
+        uint256 resultSubmitterPrecedencePeriodLength
     );
+
+    event RandomBeaconUpgraded(address randomBeacon);
 
     event WalletOwnerUpdated(address walletOwner);
 
@@ -139,11 +142,13 @@ contract WalletRegistry is Ownable, Reimbursable {
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
+        RandomBeacon _randomBeacon,
         address _walletOwner,
         ReimbursementPool _reimbursementPool
     ) {
         sortitionPool = _sortitionPool;
         staking = _staking;
+        randomBeacon = _randomBeacon;
         walletOwner = _walletOwner;
         reimbursementPool = _reimbursementPool;
 
@@ -153,33 +158,49 @@ contract WalletRegistry is Ownable, Reimbursable {
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
-        dkg.init(_sortitionPool, _dkgValidator);
+        dkg.init(_sortitionPool, _ecdsaDkgValidator);
+        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time // TODO: Verify value
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+    }
+
+    /// @notice Updates address of the Random Beacon.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _randomBeacon Random Beacon address.
+    function upgradeRandomBeacon(address _randomBeacon) external onlyOwner {
+        randomBeacon = IRandomBeacon(_randomBeacon);
+        emit RandomBeaconUpgraded(_randomBeacon);
     }
 
     /// @notice Updates the values of DKG parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
+    /// @param _seedTimeout New seed timeout.
     /// @param _resultChallengePeriodLength New DKG result challenge period
     ///        length
     /// @param _resultSubmissionTimeout New DKG result submission timeout
     /// @param _submitterPrecedencePeriodLength New submitter precedence period
     ///        length
     function updateDkgParameters(
+        uint256 _seedTimeout,
         uint256 _resultChallengePeriodLength,
         uint256 _resultSubmissionTimeout,
         uint256 _submitterPrecedencePeriodLength
     ) external onlyOwner {
+        dkg.setSeedTimeout(_seedTimeout);
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
         dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
         dkg.setSubmitterPrecedencePeriodLength(
             _submitterPrecedencePeriodLength
         );
 
+        // slither-disable-next-line reentrancy-events
         emit DkgParametersUpdated(
+            _seedTimeout,
             _resultChallengePeriodLength,
             _resultSubmissionTimeout,
             _submitterPrecedencePeriodLength
@@ -220,7 +241,7 @@ contract WalletRegistry is Ownable, Reimbursable {
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _walletOwner New wallet owner address.
-    function updateWalletParameters(address _walletOwner) external onlyOwner {
+    function updateWalletOwner(address _walletOwner) external onlyOwner {
         require(
             _walletOwner != address(0),
             "Wallet owner address cannot be zero"
@@ -258,17 +279,28 @@ contract WalletRegistry is Ownable, Reimbursable {
 
     /// @notice Requests a new wallet creation.
     /// @dev Can be called only by the owner of wallets.
-    ///      It starts a new DKG process.
+    ///      It locks the DKG and request a new relay entry. It expects
+    ///      that the DKG process will be started once a new relay entry
+    ///      gets generated.
     function requestNewWallet() external {
         require(msg.sender == walletOwner, "Caller is not the Wallet Owner");
 
         dkg.lockState();
-        // TODO: When integrating with the Random Beacon move `dkg.start` to a
-        // callback function. We need each DKG to be started with a unique
-        // and fresh relay entry.
-        dkg.start(
-            uint256(keccak256(abi.encodePacked(relayEntry, block.number)))
+
+        randomBeacon.requestRelayEntry(this);
+    }
+
+    /// @notice A callback that is executed once a new relay entry gets
+    ///         generated. It starts the DKG process.
+    /// @dev Can be called only by the random beacon contract.
+    /// @param relayEntry Relay entry.
+    function __beaconCallback(uint256 relayEntry, uint256) external {
+        require(
+            msg.sender == address(randomBeacon),
+            "Caller is not the Random Beacon"
         );
+
+        dkg.start(relayEntry);
     }
 
     /// @notice Submits result of DKG protocol.
@@ -288,14 +320,21 @@ contract WalletRegistry is Ownable, Reimbursable {
     ///      sign is:
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
-    function submitDkgResult(DKG.Result calldata dkgResult) external {
+    function submitDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
     }
 
-    /// @notice Notifies about DKG timeout.
-    function notifyDkgTimeout() external refundable(msg.sender) {
-        dkg.notifyTimeout();
+    /// @notice Notifies about seed for DKG delivery timeout. It is expected
+    ///         that a seed is delivered by the Random Beacon as a relay entry in a
+    ///         callback function.
+    function notifySeedTimeout() external {
+        dkg.notifySeedTimeout();
+        dkg.complete();
+    }
 
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout() external {
+        dkg.notifyDkgTimeout();
         dkg.complete();
     }
 
@@ -310,7 +349,7 @@ contract WalletRegistry is Ownable, Reimbursable {
     ///         A new wallet based on the DKG result details.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function approveDkgResult(DKG.Result calldata dkgResult) external {
+    function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         bytes32 publicKeyHash = keccak256(dkgResult.groupPubKey);
@@ -330,7 +369,7 @@ contract WalletRegistry is Ownable, Reimbursable {
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function challengeDkgResult(DKG.Result calldata dkgResult) external {
+    function challengeDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         (
             bytes32 maliciousDkgResultHash,
             uint32 maliciousDkgResultSubmitterId
@@ -372,7 +411,7 @@ contract WalletRegistry is Ownable, Reimbursable {
     /// @param result DKG result.
     /// @return True if the result is valid. If the result is invalid it returns
     ///         false and an error message.
-    function isDkgResultValid(DKG.Result calldata result)
+    function isDkgResultValid(EcdsaDkg.Result calldata result)
         external
         view
         returns (bool, string memory)
@@ -381,8 +420,14 @@ contract WalletRegistry is Ownable, Reimbursable {
     }
 
     /// @notice Check current wallet creation state.
-    function getWalletCreationState() external view returns (DKG.State) {
+    function getWalletCreationState() external view returns (EcdsaDkg.State) {
         return dkg.currentState();
+    }
+
+    /// @notice Checks if awaiting seed timed out.
+    /// @return True if awaiting seed timed out, false otherwise.
+    function hasSeedTimedOut() external view returns (bool) {
+        return dkg.hasSeedTimedOut();
     }
 
     /// @notice Checks if DKG timed out. The DKG timeout period includes time required
@@ -414,7 +459,11 @@ contract WalletRegistry is Ownable, Reimbursable {
     }
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters() external view returns (DKG.Parameters memory) {
+    function dkgParameters()
+        external
+        view
+        returns (EcdsaDkg.Parameters memory)
+    {
         return dkg.parameters;
     }
 }

@@ -4,8 +4,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 import "../WalletRegistry.sol";
-import "../DKGValidator.sol";
-import "../libraries/DKG.sol";
+import "../EcdsaDkgValidator.sol";
+import "../libraries/EcdsaDkg.sol";
 import "../libraries/Wallets.sol";
 
 contract WalletRegistryStub is WalletRegistry {
@@ -13,11 +13,21 @@ contract WalletRegistryStub is WalletRegistry {
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         DKGValidator _dkgValidator,
+        IRandomBeacon _randomBeacon,
         address _walletOwner,
-        ReimbursementPool reimbursementPool
-    ) WalletRegistry(_sortitionPool, _staking, _dkgValidator, _walletOwner, reimbursementPool) {}
+        ReimbursementPool _reimbursementPool
+    )
+        WalletRegistry(
+            _sortitionPool,
+            _staking,
+            _dkgValidator,
+            _randomBeacon,
+            _walletOwner,
+            _reimbursementPool
+        )
+    {}
 
-    function getDkgData() external view returns (DKG.Data memory) {
+    function getDkgData() external view returns (EcdsaDkg.Data memory) {
         return dkg;
     }
 

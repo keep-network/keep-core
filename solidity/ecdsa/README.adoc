@@ -46,6 +46,10 @@ yarn build
 
 Compiled contracts will land in the `build/` directory.
 
+==== TypeScript Typings
+
+Typings are generated for the contracts in `typechain/` directory.
+
 === Test contracts
 
 There are multiple test scenarios living in the `test` directory.

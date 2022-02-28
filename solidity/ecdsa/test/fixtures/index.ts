@@ -21,6 +21,7 @@ export const constants = {
   groupThreshold: 51,
   minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
+  governanceDelayStandard: 43200, // 12 hours
 }
 
 export const dkgState = {
@@ -31,23 +32,13 @@ export const dkgState = {
 }
 
 export const params = {
+  dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
-  governanceDelay: 43200, // 12 hours
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
 }
 
-export async function walletRegistryFixture(): Promise<{
-  walletRegistry: WalletRegistryStub & WalletRegistry
-  walletRegistryGovernance: WalletRegistryGovernance
-  sortitionPool: SortitionPool
-  walletOwner: SignerWithAddress
-  deployer: SignerWithAddress
-  governance: SignerWithAddress
-  thirdParty: SignerWithAddress
-  operators: Operator[]
-  staking: StakingStub
-}> {
+export const walletRegistryFixture = deployments.createFixture(async () => {
   await deployments.fixture(["WalletRegistry"])
 
   const walletRegistry: WalletRegistryStub & WalletRegistry =
@@ -66,43 +57,25 @@ export async function walletRegistryFixture(): Promise<{
     "walletOwner"
   )
 
-  const thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
+  const thirdParty: SignerWithAddress = await ethers.getSigner(
+    (
+      await getUnnamedAccounts()
+    )[0]
+  )
 
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
-  const operators = await registerOperators(
+  const unnamedAccountsOffset = 1
+  const operators: Operator[] = await registerOperators(
     walletRegistry,
     tToken,
-    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+    (
+      await getUnnamedAccounts()
+    ).slice(unnamedAccountsOffset, unnamedAccountsOffset + constants.groupSize)
   )
 
-  await walletRegistryGovernance
-    .connect(governance)
-    .beginDkgResultChallengePeriodLengthUpdate(
-      params.dkgResultChallengePeriodLength
-    )
-  await walletRegistryGovernance
-    .connect(governance)
-    .beginDkgResultSubmissionTimeoutUpdate(params.dkgResultSubmissionTimeout)
-  await walletRegistryGovernance
-    .connect(governance)
-    .beginDkgSubmitterPrecedencePeriodLengthUpdate(
-      params.dkgSubmitterPrecedencePeriodLength
-    )
-
-  await helpers.time.increaseTime(params.governanceDelay)
-
-  await walletRegistryGovernance
-    .connect(governance)
-    .finalizeDkgResultChallengePeriodLengthUpdate()
-
-  await walletRegistryGovernance
-    .connect(governance)
-    .finalizeDkgResultSubmissionTimeoutUpdate()
-
-  await walletRegistryGovernance
-    .connect(governance)
-    .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+  // Set parameters with tweaked values to reduce test execution time.
+  await updateWalletDkgRegistryParams(walletRegistryGovernance, governance)
 
   return {
     walletRegistry,
@@ -115,4 +88,47 @@ export async function walletRegistryFixture(): Promise<{
     staking,
     walletRegistryGovernance,
   }
+})
+
+async function updateWalletDkgRegistryParams(
+  walletRegistryGovernance: WalletRegistryGovernance,
+  governance: SignerWithAddress
+) {
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgSeedTimeoutUpdate(params.dkgSeedTimeout)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgResultChallengePeriodLengthUpdate(
+      params.dkgResultChallengePeriodLength
+    )
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgResultSubmissionTimeoutUpdate(params.dkgResultSubmissionTimeout)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginDkgSubmitterPrecedencePeriodLengthUpdate(
+      params.dkgSubmitterPrecedencePeriodLength
+    )
+
+  await helpers.time.increaseTime(constants.governanceDelayStandard)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgSeedTimeoutUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgResultChallengePeriodLengthUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgResultSubmissionTimeoutUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
 }
