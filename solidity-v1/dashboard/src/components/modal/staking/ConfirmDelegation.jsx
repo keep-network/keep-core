@@ -6,6 +6,21 @@ import { FormInputBase } from "../../FormInput"
 import { useTypeTextToConfirmFormik } from "../../../hooks/useTypeTextToConfirmFormik"
 import { withBaseModal } from "../withBaseModal"
 import OnlyIf from "../../OnlyIf"
+import { GRANT_MANAGER_EMAIL } from "../../../constants/constants"
+import { colors } from "../../../constants/colors"
+
+const styles = {
+  warning: {
+    padding: "1rem",
+    backgroundColor: colors.yellowPrimary,
+    color: colors.grey70,
+    border: `1px solid ${colors.yellowSecondary}`,
+    borderRadius: "0.5rem",
+  },
+  grantManager: {
+    color: colors.yellowSecondary,
+  },
+}
 
 export const ConfirmDelegation = withBaseModal(
   ({ initializationPeriod, onConfirm, isFromGrant = false, onClose }) => {
@@ -23,9 +38,15 @@ export const ConfirmDelegation = withBaseModal(
             that time, you can undelegate your stake.
           </p>
           <OnlyIf condition={isFromGrant}>
-            <p className="text-black mt-1 text-bold">
-              To use this stake in Threshold, you will first have to contact
-              your grant manager. Please do it immediately after you stake.
+            <p style={styles.warning}>
+              Please do not forget to contact your Grant Manager{" "}
+              <a
+                style={styles.grantManager}
+                href={`mailto:${GRANT_MANAGER_EMAIL}`}
+              >
+                ({GRANT_MANAGER_EMAIL})
+              </a>{" "}
+              immediately!
             </p>
           </OnlyIf>
           <form onSubmit={formik.handleSubmit} className="mt-2">
