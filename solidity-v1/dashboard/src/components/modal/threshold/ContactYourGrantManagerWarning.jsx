@@ -28,16 +28,15 @@ export const ContactYourGrantManagerWarning = withBaseModal(
           <p className="text-grerey-70 mt-2">
             To use this stake in Threshold, you will have to contact your grant
             manager&nbsp;
-            <a href={`mailto:${GRANT_MANAGER_EMAIL}`}>
-              ({GRANT_MANAGER_EMAIL})
-            </a>
-            .
+            <span className="text-secondary">(</span>
+            <a href={`mailto:${GRANT_MANAGER_EMAIL}`}>{GRANT_MANAGER_EMAIL}</a>
+            <span className="text-secondary">)</span>.
           </p>
           <p className="mt-2">Please do it immediately!</p>
         </ModalBody>
         <ModalFooter>
           <Button className="btn btn-unstyled text-link" onClick={onClose}>
-            Close
+            Cancel
           </Button>
         </ModalFooter>
       </>

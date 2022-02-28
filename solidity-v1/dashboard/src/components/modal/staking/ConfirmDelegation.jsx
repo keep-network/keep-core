@@ -40,13 +40,14 @@ export const ConfirmDelegation = withBaseModal(
           <OnlyIf condition={isFromGrant}>
             <p style={styles.warning}>
               Please do not forget to contact your Grant Manager{" "}
+              <span className="text-yellow-100">(</span>
               <a
                 style={styles.grantManager}
                 href={`mailto:${GRANT_MANAGER_EMAIL}`}
               >
-                ({GRANT_MANAGER_EMAIL})
-              </a>{" "}
-              immediately!
+                {GRANT_MANAGER_EMAIL}
+              </a>
+              <span className="text-yellow-100">)</span>&nbsp;immediately!
             </p>
           </OnlyIf>
           <form onSubmit={formik.handleSubmit} className="mt-2">
