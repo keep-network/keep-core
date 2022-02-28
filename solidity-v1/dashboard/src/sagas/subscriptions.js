@@ -227,14 +227,16 @@ function* observeStakedEvents() {
       }
 
       yield put({ type: "staking/add_delegation", payload: delegation })
-      yield put({
-        type: ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
-        payload: {
-          ...delegation,
-          owner: yourAddress,
-          operatorContractAddress: Keep.thresholdStakingContract.address,
-        },
-      })
+      if (isSameEthAddress(yourAddress, authorizer)) {
+        yield put({
+          type: ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
+          payload: {
+            ...delegation,
+            owner: yourAddress,
+            operatorContractAddress: Keep.thresholdStakingContract.address,
+          },
+        })
+      }
     } catch (error) {
       console.error(`Failed subscribing to StakeDelegated event`, error)
       contractEventCahnnel.close()
