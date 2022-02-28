@@ -557,6 +557,9 @@ contract WalletRegistryGovernance is Ownable {
             );
     }
 
+    /// @notice Get the time remaining until the authorization decrease delay
+    ///         can be updated.
+    /// @return Remaining time in seconds.
     function getRemainingAuthorizationDecreaseDelayUpdateTime()
         external
         view
