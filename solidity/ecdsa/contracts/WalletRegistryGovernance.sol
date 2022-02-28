@@ -25,6 +25,12 @@ contract WalletRegistryGovernance is Ownable {
     address public newWalletOwner;
     uint256 public walletOwnerChangeInitiated;
 
+    uint96 public newMinimumAuthorization;
+    uint256 public minimumAuthorizationChangeInitiated;
+
+    uint64 public newAuthorizationDecreaseDelay;
+    uint256 public authorizationDecreaseDelayChangeInitiated;
+
     uint96 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
@@ -53,6 +59,8 @@ contract WalletRegistryGovernance is Ownable {
     //
     // The full list of parameters protected by this delay:
     // - wallet owner
+    // - minimum authorization
+    // - authorization decrease delay
     uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
 
     // Short governance delay for non-critical parameters. Honest stakers should
@@ -69,6 +77,18 @@ contract WalletRegistryGovernance is Ownable {
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
     event WalletOwnerUpdated(address walletOwner);
+
+    event MinimumAuthorizationUpdateStarted(
+        uint96 minimumAuthorization,
+        uint256 timestamp
+    );
+    event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
+
+    event AuthorizationDecreaseDelayUpdateStarted(
+        uint64 authorizationDecreaseDelay,
+        uint256 timestamp
+    );
+    event AuthorizationDecreaseDelayUpdated(uint64 authorizationDecreaseDelay);
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
         uint256 maliciousDkgResultSlashingAmount,
@@ -182,6 +202,81 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateWalletOwner(newWalletOwner);
         walletOwnerChangeInitiated = 0;
         newWalletOwner = address(0);
+    }
+
+    /// @notice Begins the minimum authorization amount update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newMinimumAuthorization New minimum authorization amount.
+    function beginMinimumAuthorizationUpdate(uint96 _newMinimumAuthorization)
+        external
+        onlyOwner
+    {
+        /* solhint-disable not-rely-on-time */
+        newMinimumAuthorization = _newMinimumAuthorization;
+        minimumAuthorizationChangeInitiated = block.timestamp;
+        emit MinimumAuthorizationUpdateStarted(
+            _newMinimumAuthorization,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the minimum authorization amount update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeMinimumAuthorizationUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            minimumAuthorizationChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit MinimumAuthorizationUpdated(newMinimumAuthorization);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateAuthorizationParameters(
+            newMinimumAuthorization,
+            walletRegistry.authorizationDecreaseDelay()
+        );
+        minimumAuthorizationChangeInitiated = 0;
+        newMinimumAuthorization = 0;
+    }
+
+    /// @notice Begins the authorization decrease delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newAuthorizationDecreaseDelay New authorization decrease delay
+    function beginAuthorizationDecreaseDelayUpdate(
+        uint64 _newAuthorizationDecreaseDelay
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newAuthorizationDecreaseDelay = _newAuthorizationDecreaseDelay;
+        authorizationDecreaseDelayChangeInitiated = block.timestamp;
+        emit AuthorizationDecreaseDelayUpdateStarted(
+            _newAuthorizationDecreaseDelay,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the authorization decrease delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeAuthorizationDecreaseDelayUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            authorizationDecreaseDelayChangeInitiated,
+            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+        )
+    {
+        emit AuthorizationDecreaseDelayUpdated(newAuthorizationDecreaseDelay);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateAuthorizationParameters(
+            walletRegistry.minimumAuthorization(),
+            newAuthorizationDecreaseDelay
+        );
+        authorizationDecreaseDelayChangeInitiated = 0;
+        newAuthorizationDecreaseDelay = 0;
     }
 
     /// @notice Begins the malicious DKG result slashing amount update process.
@@ -445,6 +540,36 @@ contract WalletRegistryGovernance is Ownable {
         );
         dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;
         newSubmitterPrecedencePeriodLength = 0;
+    }
+
+    /// @notice Get the time remaining until the minimum authorization amount
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingMimimumAuthorizationUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                minimumAuthorizationChangeInitiated,
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
+            );
+    }
+
+    /// @notice Get the time remaining until the authorization decrease delay
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingAuthorizationDecreaseDelayUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                authorizationDecreaseDelayChangeInitiated,
+                CRITICAL_PARAMETER_GOVERNANCE_DELAY
+            );
     }
 
     /// @notice Get the time remaining until the malicious DKG result

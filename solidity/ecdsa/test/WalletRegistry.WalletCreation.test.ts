@@ -2367,7 +2367,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
 
               context("with token staking seize call failure", async () => {
-                const slashingAmount = constants.minimumStake.add(1)
+                const slashingAmount = params.minimumAuthorization.add(1)
 
                 let tx: Promise<ContractTransaction>
 
