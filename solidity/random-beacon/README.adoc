@@ -67,7 +67,7 @@ During the challenge period, anyone can notify that the submitted DKG result is
 malicious calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult)`
 function. A malicious DKG result may contain corrupted data, group members not
 selected by the pool, or incorrect supporting signatures. If such malicious
-result is submitted and challenged, the result submitter gets slashed and the
+result is submitted and successfully challenged, the result submitter gets slashed and the
 malicious result is immediately discarded.
 
 Once the challenge period passes, and no challenges are reported,
@@ -336,12 +336,6 @@ _64 members * 20 blocks = 1280 blocks_
 
 4+s|Groups
 
-|relayRequestFee
-|Fee paid by the relay requester
-|Yes
-d|`200e18` +
-`200 T`
-
 |groupLifetime
 |Group lifetime in blocks
 |Yes
@@ -349,6 +343,12 @@ d|`403200 blocks` +
 _~10 weeks assuming 15s block time_
 
 4+s|Relay Entry
+
+|relayRequestFee
+|Fee paid in T by the relay requester
+|Yes
+d|`200e18` +
+`200 T`
 
 |relayEntrySoftTimeout
 |Time in blocks during which a result is expected to be submitted
@@ -411,7 +411,8 @@ _100 000 T_
 
 
 |sortitionPoolRewardsBanDuration
-|Duration of the sortition pool rewards ban imposed on operators who misbehaved or failed heartbeat.
+|Duration of the sortition pool rewards ban imposed on operators who were inactive/disqualified
+during off-chain DKG or were voted by the group as notoriously failing heartbeats.
 |Yes
 |`2 weeks`
 
@@ -437,7 +438,7 @@ will be transferred to the notifier reporting about a malicious DKG result
 
 |minimumAuthorization
 |The minimum authorization amount required so that operator can participate in
-the random beacon
+the Random Beacon
 |Yes
 d|`100000 * 1e18` +
 _100 000 T_

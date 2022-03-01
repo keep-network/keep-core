@@ -119,7 +119,8 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     uint256 public unauthorizedSigningSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
-    ///         who misbehaved or failed heartbeat.
+    ///         who were inactive/disqualified during off-chain DKG or were voted
+    ///         by the group as notoriously failing heartbeats.
     uint256 public sortitionPoolRewardsBanDuration;
 
     /// @notice Percentage of the staking contract malicious behavior
