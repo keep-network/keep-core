@@ -77,6 +77,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
         (bool sent, ) = receiver.call{value: refundAmount}("");
         /* solhint-enable avoid-low-level-calls */
         if (!sent) {
+            // slither-disable-next-line reentrancy-events
             emit SendingEtherFailed(refundAmount, receiver);
         }
     }
