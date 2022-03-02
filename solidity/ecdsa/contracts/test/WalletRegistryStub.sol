@@ -12,7 +12,7 @@ contract WalletRegistryStub is WalletRegistry {
     constructor(
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
-        DKGValidator _dkgValidator,
+        EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         address _walletOwner,
         ReimbursementPool _reimbursementPool
@@ -20,7 +20,7 @@ contract WalletRegistryStub is WalletRegistry {
         WalletRegistry(
             _sortitionPool,
             _staking,
-            _dkgValidator,
+            _ecdsaDkgValidator,
             _randomBeacon,
             _walletOwner,
             _reimbursementPool

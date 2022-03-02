@@ -1,4 +1,4 @@
-import { ethers, helpers } from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { constants, dkgState, params, walletRegistryFixture } from "./fixtures"
@@ -23,6 +23,7 @@ import type {
   WalletRegistry,
   WalletRegistryStub,
   StakingStub,
+  ReimbursementPool,
 } from "../typechain"
 import type { DkgResult, DkgResultSubmittedEventArgs } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
@@ -32,6 +33,7 @@ const { mineBlocks, mineBlocksTo } = helpers.time
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const { keccak256 } = ethers.utils
+const { provider } = waffle
 
 describe("WalletRegistry - Wallet Creation", async () => {
   const dkgTimeout: number = params.dkgResultSubmissionTimeout
@@ -53,6 +55,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let sortitionPool: SortitionPool
   let staking: StakingStub
+  let reimbursementPool: ReimbursementPool
 
   let deployer: SignerWithAddress
   let walletOwner: SignerWithAddress
@@ -65,12 +68,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
     ;({
       walletRegistry,
       sortitionPool,
+      reimbursementPool,
       walletOwner,
       deployer,
       thirdParty,
       operators,
       staking,
     } = await walletRegistryFixture())
+
+    await thirdParty.sendTransaction({
+      to: reimbursementPool.address,
+      value: ethers.utils.parseEther("10.0"), // Send 1.0 ETH
+    })
   })
 
   describe("requestNewWallet", async () => {
@@ -3253,9 +3262,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           context("called by a third party", async () => {
             let tx: ContractTransaction
+            let preThirdPartyBalance: BigNumber
 
             before(async () => {
               await createSnapshot()
+
+              preThirdPartyBalance = await provider.getBalance(
+                thirdParty.address
+              )
 
               tx = await walletRegistry.connect(thirdParty).notifySeedTimeout()
             })
@@ -3274,6 +3288,16 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             it("should unlock the sortition pool", async () => {
               await expect(await sortitionPool.isLocked()).to.be.false
+            })
+
+            it("should refund ETH", async () => {
+              const postThirdPartyBalance = await provider.getBalance(
+                thirdParty.address
+              )
+              const diff = postThirdPartyBalance.sub(preThirdPartyBalance).abs()
+              expect(diff).to.be.lt(
+                ethers.utils.parseUnits("100000", "gwei") // 0,0001 ETH
+              )
             })
           })
 
@@ -3385,17 +3409,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             context("called by a third party", async () => {
               let tx: ContractTransaction
-              let initialDkgRewardsPoolBalance: BigNumber
-              let initialNotifierBalance: BigNumber
+              let preThirdPartyBalance: BigNumber
 
               before(async () => {
                 await createSnapshot()
 
-                // initialDkgRewardsPoolBalance = await walletRegistry.dkgRewardsPool()
-
-                // initialNotifierBalance = await testToken.balanceOf(
-                //   await thirdParty.getAddress()
-                // )
+                preThirdPartyBalance = await provider.getBalance(
+                  thirdParty.address
+                )
                 tx = await walletRegistry.connect(thirdParty).notifyDkgTimeout()
               })
 
@@ -3411,23 +3432,20 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await assertDkgResultCleanData(walletRegistry)
               })
 
-              // it("should reward the notifier with tokens from DKG rewards pool", async () => {
-              //   const currentDkgRewardsPoolBalance =
-              //     await walletRegistry.dkgRewardsPool()
-              //   expect(
-              //     initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
-              //   ).to.be.equal(params.sortitionPoolUnlockingReward)
-
-              //   const currentNotifierBalance: BigNumber = await testToken.balanceOf(
-              //     await thirdParty.getAddress()
-              //   )
-              //   expect(
-              //     currentNotifierBalance.sub(initialNotifierBalance)
-              //   ).to.be.equal(params.sortitionPoolUnlockingReward)
-              // })
-
               it("should unlock the sortition pool", async () => {
                 await expect(await sortitionPool.isLocked()).to.be.false
+              })
+
+              it("should refund ETH", async () => {
+                const postThirdPartyBalance = await provider.getBalance(
+                  thirdParty.address
+                )
+                const diff = postThirdPartyBalance
+                  .sub(preThirdPartyBalance)
+                  .abs()
+                expect(diff).to.be.lt(
+                  ethers.utils.parseUnits("100000", "gwei") // 0,0001 ETH
+                )
               })
             })
           })

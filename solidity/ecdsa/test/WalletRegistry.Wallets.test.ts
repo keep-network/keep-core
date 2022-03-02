@@ -1,4 +1,4 @@
-import { waffle, helpers } from "hardhat"
+import { helpers } from "hardhat"
 import { expect } from "chai"
 import { formatBytes32String } from "ethers/lib/utils"
 

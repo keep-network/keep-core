@@ -23,8 +23,7 @@ abstract contract Reimbursable is Ownable {
     modifier refundable(address receiver) {
         uint256 gasStart = gasleft();
         _;
-        uint256 gasEnd = gasleft();
-        reimbursementPool.refund(gasStart - gasEnd, receiver);
+        reimbursementPool.refund(gasStart - gasleft(), receiver);
     }
 
     function updatedReimbursementPool(ReimbursementPool _reimbursementPool)
