@@ -7,7 +7,8 @@ monthly_files = [
     'data/21_10.json',
     'data/21_11.json',
     'data/21_12.json',
-    'data/bf.json'
+    'data/bf.json',
+    'data/22_01.json',
 ]
 
 data_in = []
@@ -26,6 +27,14 @@ for e in data_in:
         'inch_refund': e['data']['inch_refund'],
         # 'eth_used': e['data']['eth_used'],
     })
+
+with open('data/defiracer.csv') as in_f:
+    for line in in_f:
+        addr, _, refund = line.split(',')
+        dataset.append({
+            'tx_from': addr,
+            'inch_refund': int(refund[:-1]),
+        })
 
 # with open('processed.json', 'w') as out_f:
 #     json.dump(dataset, out_f)
