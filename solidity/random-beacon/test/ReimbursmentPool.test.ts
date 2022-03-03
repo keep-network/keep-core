@@ -3,6 +3,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { ContractTransaction } from "ethers"
 import { reimbursmentPoolDeployment, params } from "./fixtures"
 import type { ReimbursementPool } from "../typechain"
 
@@ -15,12 +16,12 @@ describe("ReimbursementPool - Pool", () => {
   let owner: SignerWithAddress
   let thirdParty: SignerWithAddress
   let refundee: SignerWithAddress
-  let contractToAuthorize: SignerWithAddress
+  let thirdPartyContract: SignerWithAddress
   let reimbursementPool: ReimbursementPool
 
   // prettier-ignore
   before(async () => {
-    [owner, thirdParty, contractToAuthorize, refundee] =
+    [owner, thirdParty, thirdPartyContract, refundee] =
       await ethers.getSigners()
   })
 
@@ -95,7 +96,7 @@ describe("ReimbursementPool - Pool", () => {
         await expect(
           reimbursementPool
             .connect(thirdParty)
-            .withdrawAll(contractToAuthorize.address)
+            .withdrawAll(thirdPartyContract.address)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -131,12 +132,20 @@ describe("ReimbursementPool - Pool", () => {
         )
       })
 
-      context("when receiver is zero address", () => {
-        it("should revert", async () => {
-          await expect(
-            reimbursementPool.connect(owner).withdrawAll(ZERO_ADDRESS)
-          ).to.be.revertedWith("Receiver's address cannot be zero")
-        })
+      it("should emit WithdrawnFunds event", async () => {
+        await expect(
+          reimbursementPool.connect(owner).withdrawAll(thirdParty.address)
+        )
+          .to.emit(reimbursementPool, "WithdrawnFunds")
+          .withArgs(ethers.utils.parseEther("10.0"), thirdParty.address)
+      })
+    })
+
+    context("when receiver is zero address", () => {
+      it("should revert", async () => {
+        await expect(
+          reimbursementPool.connect(owner).withdrawAll(ZERO_ADDRESS)
+        ).to.be.revertedWith("Receiver's address cannot be zero")
       })
     })
   })
@@ -162,7 +171,7 @@ describe("ReimbursementPool - Pool", () => {
             .connect(thirdParty)
             .withdraw(
               ethers.utils.parseEther("2.0"),
-              contractToAuthorize.address
+              thirdPartyContract.address
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
@@ -203,22 +212,32 @@ describe("ReimbursementPool - Pool", () => {
         )
       })
 
-      context("when receiver is zero address", () => {
-        it("should revert", async () => {
-          await expect(
-            reimbursementPool.connect(owner).withdraw(42, ZERO_ADDRESS)
-          ).to.be.revertedWith("Receiver's address cannot be zero")
-        })
+      it("should emit WithdrawnFunds event", async () => {
+        await expect(
+          reimbursementPool
+            .connect(owner)
+            .withdraw(ethers.utils.parseEther("2.0"), thirdParty.address)
+        )
+          .to.emit(reimbursementPool, "WithdrawnFunds")
+          .withArgs(ethers.utils.parseEther("2.0"), thirdParty.address)
       })
+    })
 
-      context("when withdrawing more than the pool's balance", () => {
-        it("should revert", async () => {
-          await expect(
-            reimbursementPool
-              .connect(owner)
-              .withdraw(ethers.utils.parseEther("42.0"), ZERO_ADDRESS)
-          ).to.be.revertedWith("Insufficient contract balance")
-        })
+    context("when receiver is zero address", () => {
+      it("should revert", async () => {
+        await expect(
+          reimbursementPool.connect(owner).withdraw(42, ZERO_ADDRESS)
+        ).to.be.revertedWith("Receiver's address cannot be zero")
+      })
+    })
+
+    context("when withdrawing more than the pool's balance", () => {
+      it("should revert", async () => {
+        await expect(
+          reimbursementPool
+            .connect(owner)
+            .withdraw(ethers.utils.parseEther("42.0"), ZERO_ADDRESS)
+        ).to.be.revertedWith("Insufficient contract balance")
       })
     })
   })
@@ -253,7 +272,7 @@ describe("ReimbursementPool - Pool", () => {
 
         await reimbursementPool
           .connect(owner)
-          .authorize(contractToAuthorize.address)
+          .authorize(thirdPartyContract.address)
       })
 
       afterEach(async () => {
@@ -266,8 +285,8 @@ describe("ReimbursementPool - Pool", () => {
             refundee.address
           )
 
-          const tx = await reimbursementPool
-            .connect(contractToAuthorize)
+          await reimbursementPool
+            .connect(thirdPartyContract)
             .refund(50000, refundee.address)
 
           const refundeeBalanceAfter = await provider.getBalance(
@@ -283,8 +302,14 @@ describe("ReimbursementPool - Pool", () => {
           expect(refundeeBalanceDiff).to.be.lt(
             ethers.utils.parseUnits("146000", "gwei")
           )
+        })
 
-          await expect(tx).not.to.emit(reimbursementPool, "SendingEtherFailed")
+        it("should not emit SendingEtherFailed event", async () => {
+          await expect(
+            reimbursementPool
+              .connect(thirdPartyContract)
+              .refund(50000, refundee.address)
+          ).not.to.emit(reimbursementPool, "SendingEtherFailed")
         })
       })
 
@@ -292,7 +317,7 @@ describe("ReimbursementPool - Pool", () => {
         it("should refund based on max gas price", async () => {
           await reimbursementPool
             .connect(owner)
-            .authorize(contractToAuthorize.address)
+            .authorize(thirdPartyContract.address)
 
           await reimbursementPool
             .connect(owner)
@@ -303,7 +328,7 @@ describe("ReimbursementPool - Pool", () => {
           )
 
           await reimbursementPool
-            .connect(contractToAuthorize)
+            .connect(thirdPartyContract)
             .refund(50000, refundee.address)
 
           const refundeeBalanceAfter = await provider.getBalance(
@@ -323,24 +348,38 @@ describe("ReimbursementPool - Pool", () => {
         it("should revert", async () => {
           await expect(
             reimbursementPool
-              .connect(contractToAuthorize)
+              .connect(thirdPartyContract)
               .refund(50000, ZERO_ADDRESS)
           ).to.be.revertedWith("Receiver's address cannot be zero")
         })
       })
 
       context("when no funds available in the pool", () => {
-        it("should emit SendingEtherFailed event", async () => {
+        let tx: Promise<ContractTransaction>
+
+        beforeEach(async () => {
+          await createSnapshot()
+
           await reimbursementPool
             .connect(owner)
             .setMaxGasPrice(ethers.utils.parseUnits("1.0", "gwei"))
 
           await reimbursementPool.connect(owner).withdrawAll(thirdParty.address)
 
-          const tx = await reimbursementPool
-            .connect(contractToAuthorize)
+          tx = reimbursementPool
+            .connect(thirdPartyContract)
             .refund(50000, refundee.address)
+        })
 
+        afterEach(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should not revert", async () => {
+          await expect(tx).to.not.be.reverted
+        })
+
+        it("should emit SendingEtherFailed event", async () => {
           // gas spent + static gas => 50k + 37.5k
           await expect(tx)
             .to.emit(reimbursementPool, "SendingEtherFailed")
@@ -359,7 +398,7 @@ describe("ReimbursementPool - Pool", () => {
         await expect(
           reimbursementPool
             .connect(thirdParty)
-            .authorize(contractToAuthorize.address)
+            .authorize(thirdPartyContract.address)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -368,15 +407,14 @@ describe("ReimbursementPool - Pool", () => {
       it("should authorize a contract", async () => {
         const tx = await reimbursementPool
           .connect(owner)
-          .authorize(contractToAuthorize.address)
+          .authorize(thirdPartyContract.address)
 
-        expect(
-          await reimbursementPool.isAuthorized(contractToAuthorize.address)
-        ).to.be.true
+        expect(await reimbursementPool.isAuthorized(thirdPartyContract.address))
+          .to.be.true
 
         await expect(tx)
-          .to.emit(reimbursementPool, "AuthorizedContract")
-          .withArgs(contractToAuthorize.address)
+          .to.emit(reimbursementPool, "thirdPartyContract")
+          .withArgs(thirdPartyContract.address)
       })
     })
   })
@@ -387,7 +425,7 @@ describe("ReimbursementPool - Pool", () => {
         await expect(
           reimbursementPool
             .connect(thirdParty)
-            .unauthorize(contractToAuthorize.address)
+            .unauthorize(thirdPartyContract.address)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -396,15 +434,14 @@ describe("ReimbursementPool - Pool", () => {
       it("should unauthorize a contract", async () => {
         const tx = await reimbursementPool
           .connect(owner)
-          .unauthorize(contractToAuthorize.address)
+          .unauthorize(thirdPartyContract.address)
 
-        expect(
-          await reimbursementPool.isAuthorized(contractToAuthorize.address)
-        ).to.be.false
+        expect(await reimbursementPool.isAuthorized(thirdPartyContract.address))
+          .to.be.false
 
         await expect(tx)
-          .to.emit(reimbursementPool, "UnauthorizedContract")
-          .withArgs(contractToAuthorize.address)
+          .to.emit(reimbursementPool, "UnthirdPartyContract")
+          .withArgs(thirdPartyContract.address)
       })
     })
   })

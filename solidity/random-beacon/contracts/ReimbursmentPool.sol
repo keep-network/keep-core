@@ -37,9 +37,11 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
 
     event SendingEtherFailed(uint256 refundAmount, address receiver);
 
-    event AuthorizedContract(address authorizedContract);
+    event thirdPartyContract(address thirdPartyContract);
 
-    event UnauthorizedContract(address unauthorizedContract);
+    event UnthirdPartyContract(address unthirdPartyContract);
+
+    event WithdrawnFunds(uint256 withdrawnAmount, address receiver);
 
     constructor(uint256 _staticGas, uint256 _maxGasPrice) {
         staticGas = _staticGas;
@@ -88,7 +90,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     function authorize(address _contract) external onlyOwner {
         isAuthorized[_contract] = true;
 
-        emit AuthorizedContract(_contract);
+        emit thirdPartyContract(_contract);
     }
 
     /// @notice Unauthorize a contract that was previously authorized to interact
@@ -98,7 +100,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     function unauthorize(address _contract) external onlyOwner {
         delete isAuthorized[_contract];
 
-        emit UnauthorizedContract(_contract);
+        emit UnthirdPartyContract(_contract);
     }
 
     /// @notice Setting a static gas cost for executing a transaction. Can be set
@@ -136,6 +138,8 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
             "Insufficient contract balance"
         );
         require(receiver != address(0), "Receiver's address cannot be zero");
+
+        emit WithdrawnFunds(amount, receiver);
 
         /* solhint-disable avoid-low-level-calls */
         // slither-disable-next-line low-level-calls,arbitrary-send
