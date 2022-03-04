@@ -1024,6 +1024,13 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await restoreSnapshot()
               })
 
+              it("should track gas of the submission dkg result", async () => {
+                const submitDkgResultGas =
+                  await walletRegistry.submitDkgResultGas()
+
+                expect(submitDkgResultGas).to.be.gt(0)
+              })
+
               it("should revert 'Current state is not AWAITING_RESULT' error", async () => {
                 await expect(
                   signAndSubmitCorrectDkgResult(
@@ -2072,6 +2079,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           let dkgResultHash: string
           let dkgResult: DkgResult
           let submitter: SignerWithAddress
+          let submitterBalance: BigNumber
 
           const newResultPublicKey = ecdsaData.group2.publicKey
           const newResultPublicKeyHash = keccak256(newResultPublicKey)
@@ -2079,7 +2087,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before("submit dkg result", async () => {
             await createSnapshot()
-            ;({ dkgResult, dkgResultHash, submitter } =
+            ;({ dkgResult, dkgResultHash, submitter, submitterBalance } =
               await signAndSubmitCorrectDkgResult(
                 walletRegistry,
                 newResultPublicKey,
@@ -2139,6 +2147,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             it("should unlock the sortition pool", async () => {
               await expect(await sortitionPool.isLocked()).to.be.false
+            })
+
+            it("should refund ETH to a submitter", async () => {
+              const postDkgApprovalSubmitterBalance = await provider.getBalance(
+                await submitter.getAddress()
+              )
+              const diff = postDkgApprovalSubmitterBalance
+                .sub(submitterBalance)
+                .abs()
+              expect(diff).to.be.lt(
+                ethers.utils.parseUnits("200000", "gwei") // 0,0002 ETH
+              )
             })
           })
         })
@@ -3262,12 +3282,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           context("called by a third party", async () => {
             let tx: ContractTransaction
-            let preThirdPartyBalance: BigNumber
+            let initThirdPartyBalance: BigNumber
 
             before(async () => {
               await createSnapshot()
 
-              preThirdPartyBalance = await provider.getBalance(
+              initThirdPartyBalance = await provider.getBalance(
                 thirdParty.address
               )
 
@@ -3291,10 +3311,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
 
             it("should refund ETH", async () => {
-              const postThirdPartyBalance = await provider.getBalance(
+              const postNotifyThirdPartyBalance = await provider.getBalance(
                 thirdParty.address
               )
-              const diff = postThirdPartyBalance.sub(preThirdPartyBalance).abs()
+              const diff = postNotifyThirdPartyBalance
+                .sub(initThirdPartyBalance)
+                .abs()
               expect(diff).to.be.lt(
                 ethers.utils.parseUnits("100000", "gwei") // 0,0001 ETH
               )
@@ -3409,12 +3431,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             context("called by a third party", async () => {
               let tx: ContractTransaction
-              let preThirdPartyBalance: BigNumber
+              let initThirdPartyBalance: BigNumber
 
               before(async () => {
                 await createSnapshot()
 
-                preThirdPartyBalance = await provider.getBalance(
+                initThirdPartyBalance = await provider.getBalance(
                   thirdParty.address
                 )
                 tx = await walletRegistry.connect(thirdParty).notifyDkgTimeout()
@@ -3437,11 +3459,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
               })
 
               it("should refund ETH", async () => {
-                const postThirdPartyBalance = await provider.getBalance(
+                const postNotifyThirdPartyBalance = await provider.getBalance(
                   thirdParty.address
                 )
-                const diff = postThirdPartyBalance
-                  .sub(preThirdPartyBalance)
+                const diff = postNotifyThirdPartyBalance
+                  .sub(initThirdPartyBalance)
                   .abs()
                 expect(diff).to.be.lt(
                   ethers.utils.parseUnits("100000", "gwei") // 0,0001 ETH

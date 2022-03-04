@@ -359,9 +359,13 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable, Reimbursable {
 
         dkg.complete();
 
-        // refunds msg.sender's ETH for dkg result submission and approval
+        // Refunds msg.sender's ETH for:
+        // - dkg result submission processing
+        // - dkg result submission transaction call
+        // - dkg approval processing
+        // - dkg approval transaction call
         reimbursementPool.refund(
-            submitDkgResultGas + (gasStart - gasleft()),
+            submitDkgResultGas + transactionGas + (gasStart - gasleft()),
             msg.sender
         );
     }
