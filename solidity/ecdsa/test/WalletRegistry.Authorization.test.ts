@@ -826,10 +826,13 @@ describe("WalletRegistry - Pool", () => {
         })
 
         it("should let to approve immediately", async () => {
-          await walletRegistry.approveAuthorizationDecrease(
+          const tx = await walletRegistry.approveAuthorizationDecrease(
             stakingProvider.address
           )
           // ok, did not revert
+          await expect(tx)
+            .to.emit(walletRegistry, "AuthorizationDecreaseApproved")
+            .withArgs(stakingProvider.address)
         })
       })
     })
@@ -895,13 +898,15 @@ describe("WalletRegistry - Pool", () => {
       })
 
       context("when the pool was updated and the delay passed", () => {
+        let tx: ContractTransaction
+
         before(async () => {
           await createSnapshot()
 
           await walletRegistry.updateOperatorStatus(operator.address)
           await helpers.time.increaseTime(params.authorizationDecreaseDelay)
 
-          await walletRegistry.approveAuthorizationDecrease(
+          tx = await walletRegistry.approveAuthorizationDecrease(
             stakingProvider.address
           )
         })
@@ -914,6 +919,12 @@ describe("WalletRegistry - Pool", () => {
           expect(await sortitionPool.getPoolWeight(operator.address)).to.equal(
             0
           )
+        })
+
+        it("should emit AuthorizationDecreaseApproved event", async () => {
+          expect(tx)
+            .to.emit(walletRegistry, "AuthorizationDecreaseApproved")
+            .withArgs(stakingProvider.address)
         })
       })
     })

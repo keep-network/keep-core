@@ -59,7 +59,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
     // External dependencies
 
     SortitionPool public immutable sortitionPool;
-    IStaking public immutable staking; // TODO: rename to tokenStaking
+    IStaking public immutable staking;
     IRandomBeacon public randomBeacon;
 
     // Events
@@ -144,6 +144,8 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         uint96 decreasingBy,
         uint64 decreasingAt
     );
+
+    event AuthorizationDecreaseApproved(address indexed stakingProvider);
 
     modifier onlyTokenStaking() {
         require(

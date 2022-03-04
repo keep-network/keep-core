@@ -63,6 +63,8 @@ library EcdsaAuthorization {
         uint64 decreasingAt
     );
 
+    event AuthorizationDecreaseApproved(address indexed stakingProvider);
+
     /// @notice Sets the minimum authorization for ECDSA application. Without
     ///         at least the minimum authorization, staking provider is not
     ///         eligible to join and operate in the network.
@@ -257,7 +259,7 @@ library EcdsaAuthorization {
         tokenStaking.approveAuthorizationDecrease(stakingProvider);
         delete self.pendingDecreases[stakingProvider];
 
-        // TODO: event?
+        emit AuthorizationDecreaseApproved(stakingProvider);
     }
 
     /// @notice Lets the operator join the sortition pool. The operator address
@@ -363,5 +365,4 @@ library EcdsaAuthorization {
 
     // TODO: involuntaryAuthorizationDecrease
     // TODO: isOperatorUpToDate
-    // TODO: slashing
 }
