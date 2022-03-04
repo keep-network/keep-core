@@ -342,18 +342,18 @@ library EcdsaAuthorization {
             stakingProvider
         ];
 
-        uint96 eligibleStake = eligibleStake(
+        uint96 _eligibleStake = eligibleStake(
             tokenStaking,
             stakingProvider,
             decrease.decreasingBy
         );
 
         require(
-            eligibleStake >= self.parameters.minimumAuthorization,
+            _eligibleStake >= self.parameters.minimumAuthorization,
             "Authorization below the minimum"
         );
 
-        sortitionPool.insertOperator(operator, eligibleStake);
+        sortitionPool.insertOperator(operator, _eligibleStake);
 
         if (decrease.decreasingAt == type(uint64).max) {
             decrease.decreasingAt =
@@ -383,12 +383,12 @@ library EcdsaAuthorization {
         ];
 
         if (sortitionPool.isOperatorInPool(operator)) {
-            uint96 eligibleStake = eligibleStake(
+            uint96 _eligibleStake = eligibleStake(
                 tokenStaking,
                 stakingProvider,
                 decrease.decreasingBy
             );
-            sortitionPool.updateOperatorStatus(operator, eligibleStake);
+            sortitionPool.updateOperatorStatus(operator, _eligibleStake);
         }
 
         if (decrease.decreasingAt == type(uint64).max) {
@@ -418,16 +418,16 @@ library EcdsaAuthorization {
             stakingProvider
         ];
 
-        uint96 eligibleStake = eligibleStake(
+        uint96 _eligibleStake = eligibleStake(
             tokenStaking,
             stakingProvider,
             decrease.decreasingBy
         );
 
         if (!sortitionPool.isOperatorInPool(operator)) {
-            return eligibleStake == 0;
+            return _eligibleStake == 0;
         } else {
-            return sortitionPool.isOperatorUpToDate(operator, eligibleStake);
+            return sortitionPool.isOperatorUpToDate(operator, _eligibleStake);
         }
     }
 
