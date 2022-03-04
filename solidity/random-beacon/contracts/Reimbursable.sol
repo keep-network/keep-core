@@ -23,6 +23,10 @@ abstract contract Reimbursable is Ownable {
     /// @notice Base transaction gas cost.
     uint256 public transactionGas = 21000;
 
+    event ReimbursementPoolUpdated(address newReimbursementPool);
+
+    event TransactionGasUpdated(uint256 transactionGas);
+
     modifier refundable(address receiver) {
         uint256 gasStart = gasleft();
         _;
@@ -33,10 +37,14 @@ abstract contract Reimbursable is Ownable {
         external
         onlyOwner
     {
+        emit ReimbursementPoolUpdated(address(_reimbursementPool));
+
         reimbursementPool = _reimbursementPool;
     }
 
     function updateTransactionGas(uint256 _transactionGas) external onlyOwner {
+        emit TransactionGasUpdated(_transactionGas);
+
         transactionGas = _transactionGas;
     }
 }

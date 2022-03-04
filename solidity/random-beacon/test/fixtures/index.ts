@@ -77,6 +77,18 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function reimbursableDeployment(): Promise<DeployedContracts> {
+  const ReimbursableImplStub = await ethers.getContractFactory(
+    "ReimbursableImplStub"
+  )
+  const reimbursableImplStub = await ReimbursableImplStub.deploy()
+  await reimbursableImplStub.deployed()
+
+  const contracts: DeployedContracts = { reimbursableImplStub }
+
+  return contracts
+}
+
 export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
   const reimbursementPool = await ReimbursementPool.deploy(
