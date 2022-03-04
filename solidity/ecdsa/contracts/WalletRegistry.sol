@@ -158,7 +158,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         address indexed operator
     );
 
-    modifier onlyTokenStaking() {
+    modifier onlyStakingContract() {
         require(
             msg.sender == address(staking),
             "Caller is not the staking contract"
@@ -239,7 +239,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         address stakingProvider,
         uint96,
         uint96 toAmount
-    ) external onlyTokenStaking {
+    ) external onlyStakingContract {
         authorization.authorizationIncreased(stakingProvider, toAmount);
     }
 
@@ -270,7 +270,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         address stakingProvider,
         uint96 fromAmount,
         uint96 toAmount
-    ) external onlyTokenStaking {
+    ) external onlyStakingContract {
         authorization.authorizationDecreaseRequested(
             stakingProvider,
             fromAmount,
@@ -304,7 +304,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         address stakingProvider,
         uint96,
         uint96
-    ) external onlyTokenStaking {
+    ) external onlyStakingContract {
         authorization.involuntaryAuthorizationDecrease(
             staking,
             sortitionPool,
