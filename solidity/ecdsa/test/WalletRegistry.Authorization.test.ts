@@ -4,10 +4,10 @@ import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
-import { constants, params } from "./fixtures"
+import { constants, params, updateWalletRegistryParams } from "./fixtures"
 
 import type { FakeContract } from "@defi-wonderland/smock"
-import type { ContractTransaction } from "ethers"
+import type { ContractTransaction, Wallet } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   WalletRegistry,
@@ -15,7 +15,10 @@ import type {
   TokenStaking,
   T,
   IApplication,
+  WalletRegistryGovernance,
 } from "../typechain"
+
+const { mineBlocks } = helpers.time
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
@@ -60,6 +63,11 @@ describe("WalletRegistry - Pool", () => {
     authorizer = await ethers.getSigner(accounts[4])
     beneficiary = await ethers.getSigner(accounts[5])
     thirdParty = await ethers.getSigner(accounts[6])
+
+    const governanceContract: WalletRegistryGovernance =
+      await ethers.getContract("WalletRegistryGovernance")
+    const governance = await ethers.getNamedSigner("governance")
+    await updateWalletRegistryParams(governanceContract, governance)
 
     await t.connect(deployer).mint(owner.address, stakedAmount)
     await t.connect(owner).approve(staking.address, stakedAmount)
@@ -1717,6 +1725,10 @@ describe("WalletRegistry - Pool", () => {
             .connect(slasher.wallet)
             .slash(to1e18(100), [stakingProvider.address])
           await staking.connect(thirdParty).processSlashing(1)
+
+          // unlock the pool by stopping DKG
+          await mineBlocks(params.dkgSeedTimeout)
+          await walletRegistry.notifySeedTimeout()
         })
 
         after(async () => {

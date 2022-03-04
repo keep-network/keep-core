@@ -112,7 +112,7 @@ async function updateTokenStakingParams(
     .setNotificationReward(constants.tokenStakingNotificationReward)
 }
 
-async function updateWalletRegistryParams(
+export async function updateWalletRegistryParams(
   walletRegistryGovernance: WalletRegistryGovernance,
   governance: SignerWithAddress
 ) {
