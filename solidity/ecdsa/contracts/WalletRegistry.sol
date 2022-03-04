@@ -18,6 +18,7 @@ import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
 import "./EcdsaDkgValidator.sol";
+
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
@@ -146,6 +147,16 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
     );
 
     event AuthorizationDecreaseApproved(address indexed stakingProvider);
+
+    event OperatorJoinedSortitionPool(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    event OperatorStatusUpdated(
+        address indexed stakingProvider,
+        address indexed operator
+    );
 
     modifier onlyTokenStaking() {
         require(

@@ -1073,6 +1073,8 @@ describe("WalletRegistry - Pool", () => {
     })
 
     context("when the operator has the minimum stake authorized", () => {
+      let tx: ContractTransaction
+
       before(async () => {
         await createSnapshot()
 
@@ -1088,7 +1090,7 @@ describe("WalletRegistry - Pool", () => {
             minimumAuthorization
           )
 
-        await walletRegistry.connect(operator).joinSortitionPool()
+        tx = await walletRegistry.connect(operator).joinSortitionPool()
       })
 
       after(async () => {
@@ -1104,6 +1106,12 @@ describe("WalletRegistry - Pool", () => {
         expect(await sortitionPool.getPoolWeight(operator.address)).to.equal(
           minimumAuthorization.div(constants.poolWeightDivisor)
         )
+      })
+
+      it("should emit OperatorJoinedSortitionPool", async () => {
+        await expect(tx)
+          .to.emit(walletRegistry, "OperatorJoinedSortitionPool")
+          .withArgs(stakingProvider.address, operator.address)
       })
     })
 
@@ -1290,6 +1298,8 @@ describe("WalletRegistry - Pool", () => {
     })
 
     context("when operator is not in the sortition pool", () => {
+      let tx: ContractTransaction
+
       before(async () => {
         await createSnapshot()
 
@@ -1314,7 +1324,7 @@ describe("WalletRegistry - Pool", () => {
               minimumAuthorization
             )
 
-          await walletRegistry
+          tx = await walletRegistry
             .connect(thirdParty)
             .updateOperatorStatus(operator.address)
         })
@@ -1327,9 +1337,17 @@ describe("WalletRegistry - Pool", () => {
           expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
             .false
         })
+
+        it("should emit OperatorStatusUpdated", async () => {
+          await expect(tx)
+            .to.emit(walletRegistry, "OperatorStatusUpdated")
+            .withArgs(stakingProvider.address, operator.address)
+        })
       })
 
       context("when there was an authorization decrease request", () => {
+        let tx: ContractTransaction
+
         before(async () => {
           await createSnapshot()
 
@@ -1350,7 +1368,7 @@ describe("WalletRegistry - Pool", () => {
               deauthorizingBy
             )
 
-          await walletRegistry
+          tx = await walletRegistry
             .connect(thirdParty)
             .updateOperatorStatus(operator.address)
         })
@@ -1370,6 +1388,12 @@ describe("WalletRegistry - Pool", () => {
               stakingProvider.address
             )
           ).to.equal(params.authorizationDecreaseDelay)
+        })
+
+        it("should emit OperatorStatusUpdated", async () => {
+          await expect(tx)
+            .to.emit(walletRegistry, "OperatorStatusUpdated")
+            .withArgs(stakingProvider.address, operator.address)
         })
       })
     })
@@ -1398,6 +1422,7 @@ describe("WalletRegistry - Pool", () => {
       })
 
       context("when the authorization increased", () => {
+        let tx: ContractTransaction
         let expectedWeight
 
         before(async () => {
@@ -1420,7 +1445,7 @@ describe("WalletRegistry - Pool", () => {
             .add(topUp)
             .div(constants.poolWeightDivisor)
 
-          await walletRegistry
+          tx = await walletRegistry
             .connect(thirdParty)
             .updateOperatorStatus(operator.address)
         })
@@ -1434,9 +1459,16 @@ describe("WalletRegistry - Pool", () => {
             expectedWeight
           )
         })
+
+        it("should emit OperatorStatusUpdated", async () => {
+          await expect(tx)
+            .to.emit(walletRegistry, "OperatorStatusUpdated")
+            .withArgs(stakingProvider.address, operator.address)
+        })
       })
 
       context("when there was an authorization decrease request", () => {
+        let tx: ContractTransaction
         let expectedWeight
 
         before(async () => {
@@ -1458,7 +1490,7 @@ describe("WalletRegistry - Pool", () => {
               deauthorizingBy
             )
 
-          await walletRegistry
+          tx = await walletRegistry
             .connect(thirdParty)
             .updateOperatorStatus(operator.address)
         })
@@ -1480,11 +1512,18 @@ describe("WalletRegistry - Pool", () => {
             )
           ).to.equal(params.authorizationDecreaseDelay)
         })
+
+        it("should emit OperatorStatusUpdated", async () => {
+          await expect(tx)
+            .to.emit(walletRegistry, "OperatorStatusUpdated")
+            .withArgs(stakingProvider.address, operator.address)
+        })
       })
 
       context(
         "when operator is in the process of deauthorizing but also increased authorization in the meantime",
         () => {
+          let tx: ContractTransaction
           let expectedWeight
 
           before(async () => {
@@ -1517,7 +1556,7 @@ describe("WalletRegistry - Pool", () => {
                 increasingBy
               )
 
-            await walletRegistry
+            tx = await walletRegistry
               .connect(thirdParty)
               .updateOperatorStatus(operator.address)
           })
@@ -1538,6 +1577,12 @@ describe("WalletRegistry - Pool", () => {
                 stakingProvider.address
               )
             ).to.equal(params.authorizationDecreaseDelay)
+          })
+
+          it("should emit OperatorStatusUpdated", async () => {
+            await expect(tx)
+              .to.emit(walletRegistry, "OperatorStatusUpdated")
+              .withArgs(stakingProvider.address, operator.address)
           })
         }
       )

@@ -65,6 +65,16 @@ library EcdsaAuthorization {
 
     event AuthorizationDecreaseApproved(address indexed stakingProvider);
 
+    event OperatorJoinedSortitionPool(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    event OperatorStatusUpdated(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
     /// @notice Sets the minimum authorization for ECDSA application. Without
     ///         at least the minimum authorization, staking provider is not
     ///         eligible to join and operate in the network.
@@ -362,7 +372,7 @@ library EcdsaAuthorization {
                 self.parameters.authorizationDecreaseDelay;
         }
 
-        // TODO: event?
+        emit OperatorJoinedSortitionPool(stakingProvider, operator);
     }
 
     /// @notice Updates status of the operator in the sortition pool. If there
@@ -398,7 +408,7 @@ library EcdsaAuthorization {
                 self.parameters.authorizationDecreaseDelay;
         }
 
-        // TODO: event?
+        emit OperatorStatusUpdated(stakingProvider, operator);
     }
 
     /// @notice Checks if the operator's authorized stake is in sync with
