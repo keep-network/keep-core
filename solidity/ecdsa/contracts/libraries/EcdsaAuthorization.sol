@@ -256,10 +256,11 @@ library EcdsaAuthorization {
             "Authorization decrease delay not passsed"
         );
 
+        emit AuthorizationDecreaseApproved(stakingProvider);
+
+        // slither-disable-next-line unused-return
         tokenStaking.approveAuthorizationDecrease(stakingProvider);
         delete self.pendingDecreases[stakingProvider];
-
-        emit AuthorizationDecreaseApproved(stakingProvider);
     }
 
     /// @notice Lets the operator join the sortition pool. The operator address
@@ -280,16 +281,15 @@ library EcdsaAuthorization {
         address stakingProvider = self.operatorToStakingProvider[operator];
         require(stakingProvider != address(0), "Unknown operator");
 
-        uint96 authorizedStake = tokenStaking.authorizedStake(
-            stakingProvider,
-            address(this)
-        );
-
         AuthorizationDecrease storage decrease = self.pendingDecreases[
             stakingProvider
         ];
 
-        uint96 eligibleStake = authorizedStake - decrease.decreasingBy;
+        uint96 eligibleStake = eligibleStake(
+            tokenStaking,
+            stakingProvider,
+            decrease.decreasingBy
+        );
 
         require(
             eligibleStake >= self.parameters.minimumAuthorization,
@@ -319,17 +319,16 @@ library EcdsaAuthorization {
         address stakingProvider = self.operatorToStakingProvider[operator];
         require(stakingProvider != address(0), "Unknown operator");
 
-        uint96 authorizedStake = tokenStaking.authorizedStake(
-            stakingProvider,
-            address(this)
-        );
-
         AuthorizationDecrease storage decrease = self.pendingDecreases[
             stakingProvider
         ];
 
         if (sortitionPool.isOperatorInPool(operator)) {
-            uint96 eligibleStake = authorizedStake - decrease.decreasingBy;
+            uint96 eligibleStake = eligibleStake(
+                tokenStaking,
+                stakingProvider,
+                decrease.decreasingBy
+            );
             sortitionPool.updateOperatorStatus(operator, eligibleStake);
         }
 
@@ -339,6 +338,54 @@ library EcdsaAuthorization {
                 uint64(block.timestamp) +
                 self.parameters.authorizationDecreaseDelay;
         }
+    }
+
+    /// @notice Checks if the operator's authorized stake is in sync with
+    ///         operator's weight in the sortition pool.
+    ///         If the operator is not in the sortition pool and their
+    ///         authorized stake is non-zero, function returns false.
+    function isOperatorUpToDate(
+        Data storage self,
+        IStaking tokenStaking,
+        SortitionPool sortitionPool,
+        address operator
+    ) internal view returns (bool) {
+        address stakingProvider = self.operatorToStakingProvider[operator];
+        require(stakingProvider != address(0), "Unknown operator");
+
+        AuthorizationDecrease storage decrease = self.pendingDecreases[
+            stakingProvider
+        ];
+
+        uint96 eligibleStake = eligibleStake(
+            tokenStaking,
+            stakingProvider,
+            decrease.decreasingBy
+        );
+
+        if (!sortitionPool.isOperatorInPool(operator)) {
+            return eligibleStake == 0;
+        } else {
+            return sortitionPool.isOperatorUpToDate(operator, eligibleStake);
+        }
+    }
+
+    /// @notice Returns the current value of operator's eligible stake.
+    ///         Eligible stake is defined as the currently authorized stake
+    ///         minus the pending authorization decrease. Eligible stake is
+    ///         what is used for operator's weight in the pool.
+    function eligibleStake(
+        IStaking tokenStaking,
+        address stakingProvider,
+        uint96 decreasingBy
+    ) internal view returns (uint96) {
+        uint96 authorizedStake = tokenStaking.authorizedStake(
+            stakingProvider,
+            address(this)
+        );
+
+        return
+            authorizedStake > decreasingBy ? authorizedStake - decreasingBy : 0;
     }
 
     /// @notice Returns the remaining time in seconds that needs to pass before
@@ -364,5 +411,4 @@ library EcdsaAuthorization {
     }
 
     // TODO: involuntaryAuthorizationDecrease
-    // TODO: isOperatorUpToDate
 }

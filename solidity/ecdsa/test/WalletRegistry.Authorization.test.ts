@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { deployments, ethers, getUnnamedAccounts, helpers } from "hardhat"
+import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
 import { constants, params } from "./fixtures"
 
+import type { FakeContract } from "@defi-wonderland/smock"
 import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
@@ -12,6 +14,7 @@ import type {
   SortitionPool,
   TokenStaking,
   T,
+  IApplication,
 } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -33,6 +36,7 @@ describe("WalletRegistry - Pool", () => {
   let authorizer: SignerWithAddress
   let beneficiary: SignerWithAddress
   let thirdParty: SignerWithAddress
+  let slasher: FakeContract<IApplication>
 
   const stakedAmount = to1e18(1000000) // 1M T
   let minimumAuthorization
@@ -67,6 +71,26 @@ describe("WalletRegistry - Pool", () => {
       )
 
     minimumAuthorization = await walletRegistry.minimumAuthorization()
+
+    // Initialize slasher - fake application capable of slashing the
+    // staking provider.
+    slasher = await smock.fake<IApplication>("IApplication")
+    await staking.connect(deployer).approveApplication(slasher.address)
+    await staking
+      .connect(authorizer)
+      .increaseAuthorization(
+        stakingProvider.address,
+        slasher.address,
+        stakedAmount
+      )
+
+    // Fund slasher so that it can call T TokenStaking functions
+    await (
+      await ethers.getSigners()
+    )[0].sendTransaction({
+      to: slasher.address,
+      value: ethers.utils.parseEther("1"),
+    })
   })
 
   describe("registerOperator", () => {
@@ -1428,6 +1452,207 @@ describe("WalletRegistry - Pool", () => {
           })
         }
       )
+    })
+  })
+
+  describe("isOperatorUpToDate", () => {
+    context("when the operator is unknown", () => {
+      it("should revert", async () => {
+        it("should revert", async () => {
+          await expect(
+            walletRegistry.isOperatorUpToDate(thirdParty.address)
+          ).to.be.revertedWith("Unknown operator")
+        })
+      })
+    })
+
+    context("when the operator is not in the sortition pool", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await walletRegistry
+          .connect(stakingProvider)
+          .registerOperator(operator.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("when the operator has no authorized stake", () => {
+        it("should return true", async () => {
+          expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+            .be.true
+        })
+      })
+
+      context("when the operator has authorized stake", () => {
+        before(async () => {
+          await createSnapshot()
+
+          await staking
+            .connect(authorizer)
+            .increaseAuthorization(
+              stakingProvider.address,
+              walletRegistry.address,
+              minimumAuthorization
+            )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should return false", async () => {
+          expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+            .be.false
+        })
+      })
+    })
+
+    context("when the operator is in the sortition pool", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await walletRegistry
+          .connect(stakingProvider)
+          .registerOperator(operator.address)
+
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            minimumAuthorization.mul(2)
+          )
+
+        await walletRegistry.connect(operator).joinSortitionPool()
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("when the operator just joined the pool", () => {
+        it("should return true", async () => {
+          expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+            .be.true
+        })
+      })
+
+      context("when authorization was increased", () => {
+        before(async () => {
+          await createSnapshot()
+
+          await staking
+            .connect(authorizer)
+            .increaseAuthorization(
+              stakingProvider.address,
+              walletRegistry.address,
+              to1e18(1337)
+            )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when sortition pool was not yet updated", () => {
+          it("should return false", async () => {
+            expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+              .be.false
+          })
+        })
+
+        context("when the sortition pool was updated", () => {
+          it("should return true", async () => {
+            await walletRegistry.updateOperatorStatus(operator.address)
+            expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+              .be.true
+          })
+        })
+      })
+
+      context("when authorization decrease was requested", () => {
+        before(async () => {
+          await createSnapshot()
+
+          const deauthorizingBy = to1e18(1)
+          await staking
+            .connect(authorizer)
+            ["requestAuthorizationDecrease(address,address,uint96)"](
+              stakingProvider.address,
+              walletRegistry.address,
+              deauthorizingBy
+            )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when sortition pool was not yet updated", () => {
+          it("should return false", async () => {
+            expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+              .be.false
+          })
+        })
+
+        context("when the sortition pool was updated", () => {
+          it("should return true", async () => {
+            await walletRegistry.updateOperatorStatus(operator.address)
+            expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+              .be.true
+          })
+        })
+      })
+
+      context("when operator was slashed", () => {
+        before(async () => {
+          await createSnapshot()
+
+          // Increase authorization to the maximum possible value and update
+          // sortition pool. This way, any slashing from `slasher` application
+          // will affect authorized stake amount for WalletRegistry.
+          const authorized = await staking.authorizedStake(
+            stakingProvider.address,
+            walletRegistry.address
+          )
+          const increaseBy = stakedAmount.sub(authorized)
+          await staking
+            .connect(authorizer)
+            .increaseAuthorization(
+              stakingProvider.address,
+              walletRegistry.address,
+              increaseBy
+            )
+          await walletRegistry.updateOperatorStatus(operator.address)
+
+          await staking
+            .connect(slasher.wallet)
+            .slash(to1e18(100), [stakingProvider.address])
+          await staking.connect(thirdParty).processSlashing(1)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when sortition pool was not yet updated", () => {
+          it("should return false", async () => {
+            expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+              .be.false
+          })
+        })
+
+        context("when the sortition pool was updated", () => {
+          it("should return true", async () => {
+            await walletRegistry.updateOperatorStatus(operator.address)
+            expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+              .be.true
+          })
+        })
+      })
     })
   })
 })

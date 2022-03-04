@@ -628,6 +628,15 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         return authorization.operatorToStakingProvider[operator];
     }
 
+    /// @notice Checks if the operator's authorized stake is in sync with
+    ///         operator's weight in the sortition pool.
+    ///         If the operator is not in the sortition pool and their
+    ///         authorized stake is non-zero, function returns false.
+    function isOperatorUpToDate(address operator) external view returns (bool) {
+        return
+            authorization.isOperatorUpToDate(staking, sortitionPool, operator);
+    }
+
     /// @notice Selects a new group of operators based on the provided seed.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.
