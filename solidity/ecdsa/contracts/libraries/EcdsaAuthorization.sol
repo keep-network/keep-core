@@ -263,6 +263,63 @@ library EcdsaAuthorization {
         delete self.pendingDecreases[stakingProvider];
     }
 
+    /// @notice Used by T staking contract to inform the application the
+    ///         authorization has been decreased for the given staking provider
+    ///         involuntarily, as a result of slashing.
+    ///
+    ///         If the operator is not known (`registerOperator` was not called)
+    ///         the function does nothing. The operator was never in a sortition
+    ///         pool so there is nothing to update.
+    ///
+    ///         If the operator is known, sortition pool is unlocked, and the
+    ///         operator is in the sortition pool, the sortition pool state is
+    ///         updated. If the sortition pool is locked, update needs to be
+    ///         postponed. Every other staker is incentivized to call
+    ///         `updateOperatorStatus` for the problematic operator to increase
+    ///         their own rewards in the pool.
+    ///
+    /// @dev Should only be callable by T staking contract.
+    function involuntaryAuthorizationDecrease(
+        Data storage self,
+        IStaking tokenStaking,
+        SortitionPool sortitionPool,
+        address stakingProvider
+    ) internal {
+        address operator = self.stakingProviderToOperator[stakingProvider];
+
+        if (operator == address(0)) {
+            // Operator is not known. It means `registerOperator` was not
+            // called yet, and there is no chance the operator could
+            // call `joinSortitionPool`. We can just ignore this update because
+            // operator was never in the sortition pool.
+            return;
+        } else {
+            // Operator is known. It means that this operator is or was in the
+            // sortition pool and the sortition pool may need to be updated.
+            //
+            // If the sortition pool is not locked and the operator is in the
+            // sortition pool, we are updating it.
+            //
+            // If the sortition pool is locked, update needs to wait. Other
+            // sortition pool members are incentivized to call
+            // `updateOperatorStatus` for the problematic operator because they
+            // will increase their rewards this way.
+            if (
+                sortitionPool.isOperatorInPool(operator) &&
+                !sortitionPool.isLocked()
+            ) {
+                updateOperatorStatus(
+                    self,
+                    tokenStaking,
+                    sortitionPool,
+                    operator
+                );
+            }
+        }
+
+        // TODO: event?
+    }
+
     /// @notice Lets the operator join the sortition pool. The operator address
     ///         must be known - before calling this function, it has to be
     ///         appointed by the staking provider by calling `registerOperator`.
@@ -304,6 +361,8 @@ library EcdsaAuthorization {
                 uint64(block.timestamp) +
                 self.parameters.authorizationDecreaseDelay;
         }
+
+        // TODO: event?
     }
 
     /// @notice Updates status of the operator in the sortition pool. If there
@@ -338,6 +397,8 @@ library EcdsaAuthorization {
                 uint64(block.timestamp) +
                 self.parameters.authorizationDecreaseDelay;
         }
+
+        // TODO: event?
     }
 
     /// @notice Checks if the operator's authorized stake is in sync with
@@ -409,6 +470,4 @@ library EcdsaAuthorization {
         uint64 _now = uint64(block.timestamp);
         return _now > decrease.decreasingAt ? 0 : decrease.decreasingAt - _now;
     }
-
-    // TODO: involuntaryAuthorizationDecrease
 }

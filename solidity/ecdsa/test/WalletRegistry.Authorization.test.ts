@@ -36,6 +36,7 @@ describe("WalletRegistry - Pool", () => {
   let authorizer: SignerWithAddress
   let beneficiary: SignerWithAddress
   let thirdParty: SignerWithAddress
+  let walletOwner: SignerWithAddress
   let slasher: FakeContract<IApplication>
 
   const stakedAmount = to1e18(1000000) // 1M T
@@ -50,6 +51,7 @@ describe("WalletRegistry - Pool", () => {
     staking = await ethers.getContract("TokenStaking")
 
     deployer = await ethers.getNamedSigner("deployer")
+    walletOwner = await ethers.getNamedSigner("walletOwner")
 
     const accounts = await getUnnamedAccounts()
     owner = await ethers.getSigner(accounts[1])
@@ -954,6 +956,85 @@ describe("WalletRegistry - Pool", () => {
     })
   })
 
+  describe("involuntaryAuthorizationDecrease", () => {
+    before(async () => {
+      await createSnapshot()
+      await staking
+        .connect(authorizer)
+        .increaseAuthorization(
+          stakingProvider.address,
+          walletRegistry.address,
+          stakedAmount
+        )
+
+      await walletRegistry
+        .connect(stakingProvider)
+        .registerOperator(operator.address)
+      await walletRegistry.connect(operator).joinSortitionPool()
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    context("when called not by the staking contract", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(thirdParty)
+            .involuntaryAuthorizationDecrease(stakingProvider.address, 100, 99)
+        ).to.be.revertedWith("Caller is not the staking contract")
+      })
+    })
+
+    context("when the operator is in the sortition pool", () => {
+      context("when the sortition pool is locked", () => {
+        before(async () => {
+          await createSnapshot()
+
+          // lock the pool for DKG
+          await walletRegistry.connect(walletOwner).requestNewWallet()
+
+          // and slash!
+          await staking
+            .connect(slasher.wallet)
+            .slash(to1e18(100), [stakingProvider.address])
+          await staking.connect(thirdParty).processSlashing(1)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should ignore the update", async () => {
+          expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+            .be.false
+        })
+      })
+
+      context("when the sortition pool is not locked", () => {
+        before(async () => {
+          await createSnapshot()
+
+          // slash!
+          await staking
+            .connect(slasher.wallet)
+            .slash(to1e18(100), [stakingProvider.address])
+          await staking.connect(thirdParty).processSlashing(1)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update operator status", async () => {
+          expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
+            .be.true
+        })
+      })
+    })
+  })
+
   describe("joinSortitionPool", () => {
     context("when the operator is unknown", () => {
       it("should revert", async () => {
@@ -1607,7 +1688,7 @@ describe("WalletRegistry - Pool", () => {
         })
       })
 
-      context("when operator was slashed", () => {
+      context("when operator was slashed when the pool was locked", () => {
         before(async () => {
           await createSnapshot()
 
@@ -1628,6 +1709,10 @@ describe("WalletRegistry - Pool", () => {
             )
           await walletRegistry.updateOperatorStatus(operator.address)
 
+          // lock the pool for DKG
+          await walletRegistry.connect(walletOwner).requestNewWallet()
+
+          // and slash!
           await staking
             .connect(slasher.wallet)
             .slash(to1e18(100), [stakingProvider.address])

@@ -275,12 +275,30 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         authorization.approveAuthorizationDecrease(staking, stakingProvider);
     }
 
+    /// @notice Used by T staking contract to inform the application the
+    ///         authorization has been decreased for the given staking provider
+    ///         involuntarily, as a result of slashing.
+    ///
+    ///         If the operator is not known (`registerOperator` was not called)
+    ///         the function does nothing. The operator was never in a sortition
+    ///         pool so there is nothing to update.
+    ///
+    ///         If the operator is known, sortition pool is unlocked, and the
+    ///         operator is in the sortition pool, the sortition pool state is
+    ///         updated. If the sortition pool is locked, update needs to be
+    ///         postponed. Every other staker is incentivized to call
+    ///         `updateOperatorStatus` for the problematic operator to increase
+    ///         their own rewards in the pool.
     function involuntaryAuthorizationDecrease(
         address stakingProvider,
-        uint96 fromAmount,
-        uint96 toAmount
+        uint96,
+        uint96
     ) external onlyTokenStaking {
-        // TODO: implement me
+        authorization.involuntaryAuthorizationDecrease(
+            staking,
+            sortitionPool,
+            stakingProvider
+        );
     }
 
     /// @notice Updates address of the Random Beacon.
