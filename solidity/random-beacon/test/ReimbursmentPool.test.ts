@@ -132,11 +132,11 @@ describe("ReimbursementPool - Pool", () => {
         )
       })
 
-      it("should emit WithdrawnFunds event", async () => {
+      it("should emit FundsWithdrawn event", async () => {
         await expect(
           reimbursementPool.connect(owner).withdrawAll(thirdParty.address)
         )
-          .to.emit(reimbursementPool, "WithdrawnFunds")
+          .to.emit(reimbursementPool, "FundsWithdrawn")
           .withArgs(ethers.utils.parseEther("10.0"), thirdParty.address)
       })
     })
@@ -212,13 +212,13 @@ describe("ReimbursementPool - Pool", () => {
         )
       })
 
-      it("should emit WithdrawnFunds event", async () => {
+      it("should emit FundsWithdrawn event", async () => {
         await expect(
           reimbursementPool
             .connect(owner)
             .withdraw(ethers.utils.parseEther("2.0"), thirdParty.address)
         )
-          .to.emit(reimbursementPool, "WithdrawnFunds")
+          .to.emit(reimbursementPool, "FundsWithdrawn")
           .withArgs(ethers.utils.parseEther("2.0"), thirdParty.address)
       })
     })
@@ -420,6 +420,18 @@ describe("ReimbursementPool - Pool", () => {
   })
 
   describe("unuthorize", () => {
+    beforeEach(async () => {
+      await createSnapshot()
+
+      await reimbursementPool
+        .connect(owner)
+        .authorize(thirdPartyContract.address)
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
