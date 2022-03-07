@@ -42,7 +42,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
     before(async () => {
       await createSnapshot()
 
-      await walletOwner.notifyWalletCreated.reverts(
+      await walletOwner.notifyEcdsaWalletCreated.reverts(
         "wallet owner internal error"
       )
 
@@ -62,16 +62,16 @@ describe("WalletRegistry - Wallet Owner", async () => {
     after(async () => {
       await restoreSnapshot()
 
-      await walletOwner.notifyWalletCreated.reset()
+      await walletOwner.notifyEcdsaWalletCreated.reset()
     })
 
-    context("when notifyWalletCreated reverts", async () => {
+    context("when notifyEcdsaWalletCreated reverts", async () => {
       let tx: Promise<ContractTransaction>
 
       before(async () => {
         await createSnapshot()
 
-        await walletOwner.notifyWalletCreated.reverts(
+        await walletOwner.notifyEcdsaWalletCreated.reverts(
           "wallet owner internal error"
         )
 
@@ -81,7 +81,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       after(async () => {
         await restoreSnapshot()
 
-        await walletOwner.notifyWalletCreated.reset()
+        await walletOwner.notifyEcdsaWalletCreated.reset()
       })
 
       it("should succeed", async () => {
@@ -89,7 +89,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       })
 
       it("should call random beacon", async () => {
-        await expect(walletOwner.notifyWalletCreated).to.be.calledWith(
+        await expect(walletOwner.notifyEcdsaWalletCreated).to.be.calledWith(
           groupPublicKeyHash
         )
       })
@@ -101,7 +101,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       })
     })
 
-    context("when notifyWalletCreated succeeds", async () => {
+    context("when notifyEcdsaWalletCreated succeeds", async () => {
       let tx: Promise<ContractTransaction>
 
       before(async () => {
@@ -119,7 +119,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       })
 
       it("should call wallet owner", async () => {
-        await expect(walletOwner.notifyWalletCreated).to.be.calledWith(
+        await expect(walletOwner.notifyEcdsaWalletCreated).to.be.calledWith(
           groupPublicKeyHash
         )
       })

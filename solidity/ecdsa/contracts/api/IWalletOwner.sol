@@ -19,5 +19,5 @@ interface IWalletOwner {
     /// @dev Should be callable only by the Wallet Registry.
     /// @param publicKeyHash Keccak256 hash of the wallet's public key. It is
     ///        considered an unique wallet identifier.
-    function notifyWalletCreated(bytes32 publicKeyHash) external;
+    function notifyEcdsaWalletCreated(bytes32 publicKeyHash) external;
 }
