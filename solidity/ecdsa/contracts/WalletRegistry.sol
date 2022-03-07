@@ -401,6 +401,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         try walletOwner.notifyEcdsaWalletCreated(publicKeyHash) {} catch {
             // Should never happen but we want to ensure a non-critical path
             // failure from an external contract does not stop the DKG to complete.
+            // slither-disable-next-line reentrancy-events
             emit WalletOwnerNotificationFailed(publicKeyHash);
         }
 
