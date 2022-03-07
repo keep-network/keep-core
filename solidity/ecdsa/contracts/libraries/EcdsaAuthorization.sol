@@ -131,10 +131,10 @@ library EcdsaAuthorization {
             "There is a pending authorization decrease request"
         );
 
+        emit OperatorRegistered(stakingProvider, operator);
+
         self.stakingProviderToOperator[stakingProvider] = operator;
         self.operatorToStakingProvider[operator] = stakingProvider;
-
-        emit OperatorRegistered(stakingProvider, operator);
     }
 
     /// @notice Used by T staking contract to inform the application that the
@@ -363,6 +363,8 @@ library EcdsaAuthorization {
             "Authorization below the minimum"
         );
 
+        emit OperatorJoinedSortitionPool(stakingProvider, operator);
+
         sortitionPool.insertOperator(operator, _eligibleStake);
 
         if (decrease.decreasingAt == type(uint64).max) {
@@ -371,8 +373,6 @@ library EcdsaAuthorization {
                 uint64(block.timestamp) +
                 self.parameters.authorizationDecreaseDelay;
         }
-
-        emit OperatorJoinedSortitionPool(stakingProvider, operator);
     }
 
     /// @notice Updates status of the operator in the sortition pool. If there
@@ -392,6 +392,8 @@ library EcdsaAuthorization {
             stakingProvider
         ];
 
+        emit OperatorStatusUpdated(stakingProvider, operator);
+
         if (sortitionPool.isOperatorInPool(operator)) {
             uint96 _eligibleStake = eligibleStake(
                 tokenStaking,
@@ -407,8 +409,6 @@ library EcdsaAuthorization {
                 uint64(block.timestamp) +
                 self.parameters.authorizationDecreaseDelay;
         }
-
-        emit OperatorStatusUpdated(stakingProvider, operator);
     }
 
     /// @notice Checks if the operator's authorized stake is in sync with
