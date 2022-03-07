@@ -33,7 +33,7 @@ describe("WalletRegistry - Parameters", async () => {
       it("should revert", async () => {
         await expect(
           walletRegistry
-            .connect(walletOwner)
+            .connect(walletOwner.wallet)
             .updateAuthorizationParameters(1, 2)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })

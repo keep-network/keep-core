@@ -1,7 +1,7 @@
 import { deployments, ethers, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 
-import { params, updateWalletDkgRegistryParams } from "./fixtures"
+import { params, updateWalletRegistryParams } from "./fixtures"
 
 import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -32,7 +32,7 @@ const fixture = deployments.createFixture(async () => {
     )[0]
   )
 
-  await updateWalletDkgRegistryParams(walletRegistryGovernance, governance)
+  await updateWalletRegistryParams(walletRegistryGovernance, governance)
 
   return {
     walletRegistry,
