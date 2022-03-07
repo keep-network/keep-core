@@ -20,7 +20,7 @@ export async function createNewWallet(
   publicKey = ecdsaData.group1.publicKey
 ): Promise<{
   members: Operator[]
-  publicKeyHash: string
+  walletID: string
 }> {
   const tx = await walletRegistry.connect(walletOwner).requestNewWallet()
 
@@ -51,5 +51,5 @@ export async function createNewWallet(
 
   await walletRegistry.connect(submitter).approveDkgResult(dkgResult)
 
-  return { members, publicKeyHash: keccak256(publicKey) }
+  return { members, walletID: keccak256(publicKey) }
 }

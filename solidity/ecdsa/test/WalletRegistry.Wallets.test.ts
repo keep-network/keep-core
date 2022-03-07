@@ -32,11 +32,11 @@ describe("WalletRegistry - Wallets", async () => {
     })
 
     context("with wallet registered", async () => {
-      let publicKeyHash: string
+      let walletID: string
 
       before("create a wallet", async () => {
         await createSnapshot()
-        ;({ publicKeyHash } = await createNewWallet(
+        ;({ walletID } = await createNewWallet(
           walletRegistry,
           walletOwner.wallet
         ))
@@ -47,8 +47,8 @@ describe("WalletRegistry - Wallets", async () => {
       })
 
       it("should return true", async () => {
-        await expect(await walletRegistry.isWalletRegistered(publicKeyHash)).to
-          .be.true
+        await expect(await walletRegistry.isWalletRegistered(walletID)).to.be
+          .true
       })
     })
   })
