@@ -7,7 +7,7 @@ import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 import { constants, params, updateWalletRegistryParams } from "./fixtures"
 
 import type { FakeContract } from "@defi-wonderland/smock"
-import type { ContractTransaction, Wallet } from "ethers"
+import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   WalletRegistry,
@@ -716,7 +716,6 @@ describe("WalletRegistry - Pool", () => {
         })
 
         it("should emit AuthorizationDecreaseRequested event", async () => {
-          const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(walletRegistry, "AuthorizationDecreaseRequested")
             .withArgs(
@@ -801,7 +800,6 @@ describe("WalletRegistry - Pool", () => {
         })
 
         it("should emit AuthorizationDecreaseRequested event", async () => {
-          const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(walletRegistry, "AuthorizationDecreaseRequested")
             .withArgs(
@@ -1298,8 +1296,6 @@ describe("WalletRegistry - Pool", () => {
     })
 
     context("when operator is not in the sortition pool", () => {
-      let tx: ContractTransaction
-
       before(async () => {
         await createSnapshot()
 
@@ -1313,6 +1309,8 @@ describe("WalletRegistry - Pool", () => {
       })
 
       context("when the authorization increased", () => {
+        let tx: ContractTransaction
+
         before(async () => {
           await createSnapshot()
 
@@ -1346,7 +1344,7 @@ describe("WalletRegistry - Pool", () => {
       })
 
       context("when there was an authorization decrease request", () => {
-        let tx: ContractTransaction
+        let tx: ContractTransaction //
 
         before(async () => {
           await createSnapshot()
