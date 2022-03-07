@@ -14,6 +14,7 @@
 
 pragma solidity ^0.8.9;
 
+import "./api/IWalletRegistry.sol";
 import "./api/IWalletOwner.sol";
 import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
@@ -40,7 +41,7 @@ interface IWalletStaking {
     ) external;
 }
 
-contract WalletRegistry is IRandomBeaconConsumer, Ownable {
+contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     using EcdsaAuthorization for EcdsaAuthorization.Data;
     using EcdsaDkg for EcdsaDkg.Data;
     using Wallets for Wallets.Data;
