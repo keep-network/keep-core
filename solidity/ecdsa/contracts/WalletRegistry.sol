@@ -107,7 +107,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     event DkgSeedTimedOut();
 
     event WalletCreated(
-        bytes32 indexed publicKeyHash,
+        bytes32 indexed walletID,
         bytes32 indexed dkgResultHash
     );
 
@@ -391,18 +391,19 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        bytes32 publicKeyHash = keccak256(dkgResult.groupPubKey);
+        bytes32 walletID = wallets.addWallet(
+            dkgResult.membersHash,
+            dkgResult.groupPubKey
+        );
 
-        wallets.addWallet(dkgResult.membersHash, publicKeyHash);
-
-        emit WalletCreated(publicKeyHash, keccak256(abi.encode(dkgResult)));
+        emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
 
         // TODO: Disable rewards for misbehavedMembers.
         //slither-disable-next-line redundant-statements
         misbehavedMembers;
 
         walletOwner.__ecdsaWalletCreatedCallback(
-            publicKeyHash,
+            walletID,
             dkgResult.groupPubKey
         );
 
@@ -483,24 +484,36 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
         return dkg.hasDkgTimedOut();
     }
 
-    function getWallet(bytes32 publicKeyHash)
+    function getWallet(bytes32 walletID)
         external
         view
         returns (Wallets.Wallet memory)
     {
-        return wallets.registry[publicKeyHash];
+        return wallets.registry[walletID];
     }
 
-    /// @notice Checks if a wallet with the given public key hash is registered.
-    /// @param publicKeyHash Wallet's public key hash.
-    /// @return True if wallet is registered, false otherwise.
-    function isWalletRegistered(bytes32 publicKeyHash)
+    /// @notice Gets public key of a wallet with a given wallet ID.
+    ///         The public key is returned in an uncompressed format as a 64-byte
+    ///         concatenation of X and Y coordinates.
+    /// @param walletID ID of the wallet.
+    /// @return Uncompressed public key of the wallet.
+    function getWalletPublicKey(bytes32 walletID)
         external
         view
-        returns (bool)
+        returns (bytes memory)
     {
-        return wallets.isWalletRegistered(publicKeyHash);
+        return wallets.registry[walletID].publicKey;
     }
+
+    /// @notice Checks if a wallet with the given ID is registered.
+    /// @param walletID Wallet's ID.
+    /// @return True if wallet is registered, false otherwise.
+    function isWalletRegistered(bytes32 walletID) external view returns (bool) {
+        return wallets.isWalletRegistered(walletID);
+    }
+
+    // TODO: Add function to close the Wallet so the members are notified that
+    // they no longer need to track the wallet.
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters()

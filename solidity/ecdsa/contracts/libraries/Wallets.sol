@@ -21,12 +21,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 // Wallets' actual use case.
 library Wallets {
     struct Wallet {
-        // TODO: Verify if we want to store the whole public key or having
-        // just the public key hash is enough.
         // Keccak256 hash of group members identifiers array. Group members do not
         // include operators selected by the sortition pool that misbehaved during DKG.
         bytes32 membersIdsHash;
-        bytes32 digestToSign;
+        // Uncompressed ECDSA public key (64-byte long) as a concatenation of X
+        // and Y coordinates.
+        bytes publicKey;
     }
 
     struct Data {
@@ -38,30 +38,35 @@ library Wallets {
     /// @notice Registers a new wallet.
     /// @dev Uses a public key hash as a unique identifier of a wallet.
     /// @param membersIdsHash Keccak256 hash of group members identifiers array.
-    /// @param publicKeyHash Keccak256 hash of group public key.
+    /// @param publicKey Uncompressed public key.
+    /// @return Wallet's ID.
     function addWallet(
         Data storage self,
         bytes32 membersIdsHash,
-        bytes32 publicKeyHash
-    ) internal {
-        // TODO: If we decide to store the group public key we should switch this
-        // check to use the public key.
-        require(
-            self.registry[publicKeyHash].membersIdsHash == bytes32(0),
-            "Wallet with the given public key hash already exists"
-        );
+        bytes memory publicKey
+    ) internal returns (bytes32) {
+        bytes32 walletID = keccak256(publicKey);
 
-        self.registry[publicKeyHash].membersIdsHash = membersIdsHash;
+        require(
+            self.registry[walletID].publicKey.length == 0,
+            "Wallet with the given public key already exists"
+        );
+        require(publicKey.length == 64, "Invalid length of the public key");
+
+        self.registry[walletID].membersIdsHash = membersIdsHash;
+        self.registry[walletID].publicKey = publicKey;
+
+        return walletID;
     }
 
-    /// @notice Checks if a wallet with the given public key hash is registered.
-    /// @param publicKeyHash Wallet's public key hash.
+    /// @notice Checks if a wallet with the given ID is registered.
+    /// @param walletID Wallet's ID.
     /// @return True if a wallet is registered, false otherwise.
-    function isWalletRegistered(Data storage self, bytes32 publicKeyHash)
+    function isWalletRegistered(Data storage self, bytes32 walletID)
         external
         view
         returns (bool)
     {
-        return self.registry[publicKeyHash].membersIdsHash != bytes32(0);
+        return self.registry[walletID].publicKey.length > 0;
     }
 }
