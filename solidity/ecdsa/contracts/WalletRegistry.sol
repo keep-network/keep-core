@@ -502,7 +502,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
         view
         returns (bytes memory)
     {
-        return wallets.registry[walletID].publicKey;
+        return wallets.getWalletPublicKey(walletID);
     }
 
     /// @notice Checks if a wallet with the given ID is registered.

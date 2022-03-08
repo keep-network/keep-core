@@ -63,10 +63,28 @@ library Wallets {
     /// @param walletID Wallet's ID.
     /// @return True if a wallet is registered, false otherwise.
     function isWalletRegistered(Data storage self, bytes32 walletID)
-        external
+        public
         view
         returns (bool)
     {
         return self.registry[walletID].publicKey.length > 0;
+    }
+
+    /// @notice Gets public key of a wallet with a given wallet ID.
+    ///         The public key is returned in an uncompressed format as a 64-byte
+    ///         concatenation of X and Y coordinates.
+    /// @param walletID ID of the wallet.
+    /// @return Uncompressed public key of the wallet.
+    function getWalletPublicKey(Data storage self, bytes32 walletID)
+        external
+        view
+        returns (bytes memory)
+    {
+        require(
+            isWalletRegistered(self, walletID),
+            "Wallet with given ID has not been registered"
+        );
+
+        return self.registry[walletID].publicKey;
     }
 }
