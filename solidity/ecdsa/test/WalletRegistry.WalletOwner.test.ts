@@ -90,7 +90,8 @@ describe("WalletRegistry - Wallet Owner", async () => {
 
       it("should call random beacon", async () => {
         await expect(walletOwner.notifyEcdsaWalletCreated).to.be.calledWith(
-          groupPublicKeyHash
+          groupPublicKeyHash,
+          dkgResult.groupPubKey
         )
       })
 
@@ -120,7 +121,8 @@ describe("WalletRegistry - Wallet Owner", async () => {
 
       it("should call wallet owner", async () => {
         await expect(walletOwner.notifyEcdsaWalletCreated).to.be.calledWith(
-          groupPublicKeyHash
+          groupPublicKeyHash,
+          dkgResult.groupPubKey
         )
       })
     })
