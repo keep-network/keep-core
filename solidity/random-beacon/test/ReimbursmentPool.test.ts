@@ -413,7 +413,7 @@ describe("ReimbursementPool - Pool", () => {
           .to.be.true
 
         await expect(tx)
-          .to.emit(reimbursementPool, "thirdPartyContract")
+          .to.emit(reimbursementPool, "AuthorizeContract")
           .withArgs(thirdPartyContract.address)
       })
     })
@@ -440,7 +440,7 @@ describe("ReimbursementPool - Pool", () => {
           .to.be.false
 
         await expect(tx)
-          .to.emit(reimbursementPool, "UnthirdPartyContract")
+          .to.emit(reimbursementPool, "UnauthorizeContract")
           .withArgs(thirdPartyContract.address)
       })
     })
