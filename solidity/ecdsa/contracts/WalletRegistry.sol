@@ -110,8 +110,6 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         bytes32 indexed dkgResultHash
     );
 
-    event WalletOwnerNotificationFailed(bytes32 indexed publicKeyHash);
-
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
@@ -398,17 +396,10 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         //slither-disable-next-line redundant-statements
         misbehavedMembers;
 
-        try
-            walletOwner.__ecdsaWalletCreatedCallback(
-                publicKeyHash,
-                dkgResult.groupPubKey
-            )
-        {} catch {
-            // Should never happen but we want to ensure a non-critical path
-            // failure from an external contract does not stop the DKG to complete.
-            // slither-disable-next-line reentrancy-events
-            emit WalletOwnerNotificationFailed(publicKeyHash);
-        }
+        walletOwner.__ecdsaWalletCreatedCallback(
+            publicKeyHash,
+            dkgResult.groupPubKey
+        );
 
         dkg.complete();
     }
