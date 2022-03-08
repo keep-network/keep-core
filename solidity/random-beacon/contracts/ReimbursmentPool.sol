@@ -41,7 +41,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
 
     event UnauthorizeContract(address thirdPartyContract);
 
-    event WithdrawnFunds(uint256 withdrawnAmount, address receiver);
+    event FundsWithdrawn(uint256 withdrawnAmount, address receiver);
 
     constructor(uint256 _staticGas, uint256 _maxGasPrice) {
         staticGas = _staticGas;
@@ -139,7 +139,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
         );
         require(receiver != address(0), "Receiver's address cannot be zero");
 
-        emit WithdrawnFunds(amount, receiver);
+        emit FundsWithdrawn(amount, receiver);
 
         /* solhint-disable avoid-low-level-calls */
         // slither-disable-next-line low-level-calls,arbitrary-send
