@@ -21,6 +21,7 @@ import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "./libraries/Heartbeat.sol";
+import "./Reimbursable.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -57,7 +58,7 @@ interface IRandomBeaconStaking {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is Ownable {
+contract RandomBeacon is Ownable, Reimbursable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
     using DKG for DKG.Data;
@@ -141,6 +142,9 @@ contract RandomBeacon is Ownable {
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
     uint256 public dkgMaliciousResultNotificationRewardMultiplier;
+
+    /// @notice Calculated gas cost for submitting a dkg result.
+    uint256 public submitDkgResultGas;
 
     // Other parameters
 
@@ -310,11 +314,13 @@ contract RandomBeacon is Ownable {
         SortitionPool _sortitionPool,
         IERC20 _tToken,
         IRandomBeaconStaking _staking,
-        DKGValidator _dkgValidator
+        DKGValidator _dkgValidator,
+        ReimbursementPool _reimbursementPool
     ) {
         sortitionPool = _sortitionPool;
         tToken = _tToken;
         staking = _staking;
+        reimbursementPool = _reimbursementPool;
 
         // TODO: revisit all initial values
         callbackGasLimit = 50000;
@@ -573,19 +579,13 @@ contract RandomBeacon is Ownable {
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehaved,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(DKG.Result calldata dkgResult) external {
+        uint256 gasStart = gasleft();
+
         dkg.submitResult(dkgResult);
 
         groups.addCandidateGroup(dkgResult.groupPubKey, dkgResult.membersHash);
-    }
 
-    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
-    ///         reward to the notifier.
-    function notifyDkgTimeout() external {
-        dkg.notifyTimeout();
-
-        transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
-
-        dkg.complete();
+        submitDkgResultGas = gasStart - gasleft();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
@@ -599,6 +599,8 @@ contract RandomBeacon is Ownable {
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(DKG.Result calldata dkgResult) external {
+        uint256 gasStart = gasleft();
+
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         transferDkgRewards(msg.sender, dkgResultSubmissionReward);
@@ -612,6 +614,26 @@ contract RandomBeacon is Ownable {
         }
 
         groups.activateCandidateGroup();
+        dkg.complete();
+
+        // Refunds msg.sender's ETH for:
+        // - dkg result submission processing
+        // - dkg result submission transaction call
+        // - dkg approval processing
+        // - dkg approval transaction call
+        reimbursementPool.refund(
+            submitDkgResultGas + transactionGas + (gasStart - gasleft()),
+            msg.sender
+        );
+    }
+
+    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
+    ///         reward to the notifier.
+    function notifyDkgTimeout() external refundable(msg.sender) {
+        dkg.notifyTimeout();
+
+        transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
+
         dkg.complete();
     }
 
@@ -715,7 +737,10 @@ contract RandomBeacon is Ownable {
     ///         called only before the soft timeout. This should be the majority
     ///         of cases.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(bytes calldata entry) external {
+    function submitRelayEntry(bytes calldata entry)
+        external
+        refundable(msg.sender)
+    {
         Groups.Group storage group = groups.getGroup(
             relay.currentRequestGroupID
         );
@@ -737,7 +762,7 @@ contract RandomBeacon is Ownable {
     function submitRelayEntry(
         bytes calldata entry,
         uint32[] calldata groupMembers
-    ) external {
+    ) external refundable(msg.sender) {
         uint256 currentRequestId = relay.currentRequestID;
 
         Groups.Group storage group = groups.getGroup(
@@ -906,7 +931,7 @@ contract RandomBeacon is Ownable {
         Heartbeat.FailureClaim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
-    ) external {
+    ) external refundable(msg.sender) {
         uint64 groupId = claim.groupId;
 
         require(nonce == failedHeartbeatNonce[groupId], "Invalid nonce");

@@ -13,8 +13,17 @@ contract RandomBeaconStub is RandomBeacon {
         SortitionPool _sortitionPool,
         IERC20 _tToken,
         IRandomBeaconStaking _staking,
-        DKGValidator _dkgValidator
-    ) RandomBeacon(_sortitionPool, _tToken, _staking, _dkgValidator) {}
+        DKGValidator _dkgValidator,
+        ReimbursementPool _reimbursementPool
+    )
+        RandomBeacon(
+            _sortitionPool,
+            _tToken,
+            _staking,
+            _dkgValidator,
+            _reimbursementPool
+        )
+    {}
 
     function getDkgData() external view returns (DKG.Data memory) {
         return dkg;

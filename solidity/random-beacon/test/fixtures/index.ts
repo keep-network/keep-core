@@ -119,6 +119,13 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   )) as DKGValidator
   await dkgValidator.deployed()
 
+  const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
+  const reimbursementPool = await ReimbursementPool.deploy(
+    params.reimbursmentPoolStaticGas,
+    params.reimbursmentPoolMaxGasPrice
+  )
+  await reimbursementPool.deployed()
+
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
@@ -130,11 +137,13 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     sortitionPool.address,
     testToken.address,
     stakingStub.address,
-    dkgValidator.address
+    dkgValidator.address,
+    reimbursementPool.address
   )
   await randomBeacon.deployed()
 
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
+  await reimbursementPool.connect(deployer).authorize(randomBeacon.address)
 
   await setFixtureParameters(randomBeacon)
 
