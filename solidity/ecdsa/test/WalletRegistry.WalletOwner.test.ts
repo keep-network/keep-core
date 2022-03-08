@@ -85,13 +85,6 @@ describe("WalletRegistry - Wallet Owner", async () => {
         // await expect(tx).to.be.revertedWith("wallet owner internal error")
         await expect(tx).to.be.reverted
       })
-
-      it("should call random beacon", async () => {
-        await expect(walletOwner.__ecdsaWalletCreatedCallback).to.be.calledWith(
-          groupPublicKeyHash,
-          dkgResult.groupPubKey
-        )
-      })
     })
 
     context("when __ecdsaWalletCreatedCallback succeeds", async () => {
