@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
 
@@ -41,7 +42,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
     before(async () => {
       await createSnapshot()
 
-      await walletOwner.notifyEcdsaWalletCreated.reverts(
+      await walletOwner.__ecdsaWalletCreatedCallback.reverts(
         "wallet owner internal error"
       )
 
@@ -61,16 +62,16 @@ describe("WalletRegistry - Wallet Owner", async () => {
     after(async () => {
       await restoreSnapshot()
 
-      await walletOwner.notifyEcdsaWalletCreated.reset()
+      await walletOwner.__ecdsaWalletCreatedCallback.reset()
     })
 
-    context("when notifyEcdsaWalletCreated reverts", async () => {
+    context("when __ecdsaWalletCreatedCallback reverts", async () => {
       let tx: Promise<ContractTransaction>
 
       before(async () => {
         await createSnapshot()
 
-        await walletOwner.notifyEcdsaWalletCreated.reverts(
+        await walletOwner.__ecdsaWalletCreatedCallback.reverts(
           "wallet owner internal error"
         )
 
@@ -80,7 +81,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       after(async () => {
         await restoreSnapshot()
 
-        await walletOwner.notifyEcdsaWalletCreated.reset()
+        await walletOwner.__ecdsaWalletCreatedCallback.reset()
       })
 
       it("should succeed", async () => {
@@ -88,7 +89,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       })
 
       it("should call random beacon", async () => {
-        await expect(walletOwner.notifyEcdsaWalletCreated).to.be.calledWith(
+        await expect(walletOwner.__ecdsaWalletCreatedCallback).to.be.calledWith(
           groupPublicKeyHash,
           dkgResult.groupPubKey
         )
@@ -101,7 +102,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       })
     })
 
-    context("when notifyEcdsaWalletCreated succeeds", async () => {
+    context("when __ecdsaWalletCreatedCallback succeeds", async () => {
       let tx: Promise<ContractTransaction>
 
       before(async () => {
@@ -119,7 +120,7 @@ describe("WalletRegistry - Wallet Owner", async () => {
       })
 
       it("should call wallet owner", async () => {
-        await expect(walletOwner.notifyEcdsaWalletCreated).to.be.calledWith(
+        await expect(walletOwner.__ecdsaWalletCreatedCallback).to.be.calledWith(
           groupPublicKeyHash,
           dkgResult.groupPubKey
         )

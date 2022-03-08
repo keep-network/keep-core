@@ -20,7 +20,7 @@ interface IWalletOwner {
     /// @param walletID Wallet's unique identifier.
     /// @param uncompressedPublicKey Wallet's uncompressed public key (64-byte)
     ///        as a concatenation of X and Y coordinates.
-    function notifyEcdsaWalletCreated(
+    function __ecdsaWalletCreatedCallback(
         bytes32 walletID,
         bytes memory uncompressedPublicKey
     ) external;

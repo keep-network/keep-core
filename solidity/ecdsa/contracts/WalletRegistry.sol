@@ -399,7 +399,7 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
         misbehavedMembers;
 
         try
-            walletOwner.notifyEcdsaWalletCreated(
+            walletOwner.__ecdsaWalletCreatedCallback(
                 publicKeyHash,
                 dkgResult.groupPubKey
             )
