@@ -6,9 +6,10 @@ import ecdsaData from "../data/ecdsa"
 import { noMisbehaved, signAndSubmitCorrectDkgResult } from "./dkg"
 import { fakeRandomBeacon } from "./randomBeacon"
 
+import type { DkgResult } from "./dkg"
 import type { WalletRegistry } from "../../typechain"
 import type { Operator } from "./operators"
-import type { Signer } from "ethers"
+import type { BytesLike, ContractTransaction, Signer } from "ethers"
 
 const { mineBlocks } = helpers.time
 const { keccak256 } = ethers.utils
@@ -17,12 +18,16 @@ const { keccak256 } = ethers.utils
 export async function createNewWallet(
   walletRegistry: WalletRegistry,
   walletOwner: Signer,
-  publicKey = ecdsaData.group1.publicKey
+  publicKey: BytesLike = ecdsaData.group1.publicKey
 ): Promise<{
   members: Operator[]
+  dkgResult: DkgResult
   walletID: string
+  tx: ContractTransaction
 }> {
-  const tx = await walletRegistry.connect(walletOwner).requestNewWallet()
+  const requestNewWalletTx = await walletRegistry
+    .connect(walletOwner)
+    .requestNewWallet()
 
   const randomBeacon = await fakeRandomBeacon(walletRegistry)
 
@@ -43,13 +48,20 @@ export async function createNewWallet(
     walletRegistry,
     publicKey,
     dkgSeed,
-    tx.blockNumber,
+    requestNewWalletTx.blockNumber,
     noMisbehaved
   )
 
   await mineBlocks(params.dkgResultChallengePeriodLength)
 
-  await walletRegistry.connect(submitter).approveDkgResult(dkgResult)
+  const approveDkgResultTx = await walletRegistry
+    .connect(submitter)
+    .approveDkgResult(dkgResult)
 
-  return { members, walletID: keccak256(publicKey) }
+  return {
+    members,
+    dkgResult,
+    walletID: keccak256(publicKey),
+    tx: approveDkgResultTx,
+  }
 }
