@@ -1,6 +1,5 @@
 import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
-import { smock } from "@defi-wonderland/smock"
 
 import { params, walletRegistryFixture } from "./fixtures"
 import { submitRelayEntry } from "./utils/randomBeacon"
@@ -128,20 +127,3 @@ describe("WalletRegistry - Wallet Owner", async () => {
     })
   })
 })
-
-async function fakeWalletOwner(
-  walletRegistry: WalletRegistry
-): Promise<FakeContract<IWalletOwner>> {
-  const walletOwner = await smock.fake<IWalletOwner>("IWalletOwner", {
-    address: await walletRegistry.callStatic.walletOwner(),
-  })
-
-  await (
-    await ethers.getSigners()
-  )[0].sendTransaction({
-    to: walletOwner.address,
-    value: ethers.utils.parseEther("1"),
-  })
-
-  return walletOwner
-}
