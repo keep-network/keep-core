@@ -3,7 +3,7 @@ import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, helpers } = hre
-  const { deployer, walletOwner } = await getNamedAccounts()
+  const { deployer } = await getNamedAccounts()
 
   const SortitionPool = await deployments.get("SortitionPool")
   let TokenStaking = await deployments.get("TokenStaking")
@@ -49,7 +49,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       TokenStaking.address,
       EcdsaDkgValidator.address,
       RandomBeacon.address,
-      walletOwner,
     ],
     libraries: { EcdsaDkg: EcdsaDkg.address, Wallets: Wallets.address },
     log: true,

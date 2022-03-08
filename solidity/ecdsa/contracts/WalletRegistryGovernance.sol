@@ -17,6 +17,9 @@ pragma solidity ^0.8.9;
 import "./WalletRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import {IWalletOwner} from "./api/IWalletOwner.sol";
+import {IRandomBeacon} from "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
+
 /// @title Wallet Registry Governance
 /// @notice Owns the `WalletRegistry` contract and is responsible for updating its
 ///         governable parameters in respect to governance delay individual
@@ -165,7 +168,27 @@ contract WalletRegistryGovernance is Ownable {
             "New random beacon address cannot be zero"
         );
 
-        walletRegistry.upgradeRandomBeacon(_newRandomBeacon);
+        walletRegistry.upgradeRandomBeacon(IRandomBeacon(_newRandomBeacon));
+    }
+
+    /// @notice Initializes the Wallet Owner's address.
+    /// @dev Can be called only by the contract owner. It can be called only if
+    ///      walletOwner has not been set before. It doesn't enforce a governance
+    ///      delay for the initial update. Any subsequent updates should be performed
+    ///      with beginWalletOwnerUpdate/finalizeWalletOwnerUpdate with respect
+    ///      of a governance delay.
+    /// @param _walletOwner The Wallet Owner's address
+    function initializeWalletOwner(address _walletOwner) external onlyOwner {
+        require(
+            address(walletRegistry.walletOwner()) == address(0),
+            "Wallet Owner already initialized"
+        );
+        require(
+            _walletOwner != address(0),
+            "Wallet Owner address cannot be zero"
+        );
+
+        walletRegistry.updateWalletOwner(IWalletOwner(_walletOwner));
     }
 
     /// @notice Begins the wallet owner update process.
@@ -176,7 +199,7 @@ contract WalletRegistryGovernance is Ownable {
         onlyOwner
     {
         require(
-            _newWalletOwner != address(0),
+            address(_newWalletOwner) != address(0),
             "New wallet owner address cannot be zero"
         );
         /* solhint-disable not-rely-on-time */
@@ -199,7 +222,7 @@ contract WalletRegistryGovernance is Ownable {
     {
         emit WalletOwnerUpdated(newWalletOwner);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateWalletOwner(newWalletOwner);
+        walletRegistry.updateWalletOwner(IWalletOwner(newWalletOwner));
         walletOwnerChangeInitiated = 0;
         newWalletOwner = address(0);
     }
@@ -693,4 +716,6 @@ contract WalletRegistryGovernance is Ownable {
 
         return delay - elapsed;
     }
+
+    // TODO: Add function to transfer WalletRegistry ownership to another address.
 }

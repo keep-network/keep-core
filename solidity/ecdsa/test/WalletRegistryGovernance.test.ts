@@ -1,21 +1,52 @@
-import { ethers, helpers } from "hardhat"
+import { deployments, ethers, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 
-import { walletRegistryFixture, params } from "./fixtures"
+import { params, updateWalletRegistryParams } from "./fixtures"
 
 import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { WalletRegistry, WalletRegistryGovernance } from "../typechain"
+import type {
+  WalletRegistry,
+  WalletRegistryStub,
+  WalletRegistryGovernance,
+} from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
+
+const fixture = deployments.createFixture(async () => {
+  await deployments.fixture(["WalletRegistry"])
+
+  const walletRegistry: WalletRegistryStub & WalletRegistry =
+    await ethers.getContract("WalletRegistry")
+  const walletRegistryGovernance: WalletRegistryGovernance =
+    await ethers.getContract("WalletRegistryGovernance")
+
+  const governance: SignerWithAddress = await ethers.getNamedSigner(
+    "governance"
+  )
+
+  const thirdParty: SignerWithAddress = await ethers.getSigner(
+    (
+      await getUnnamedAccounts()
+    )[0]
+  )
+
+  await updateWalletRegistryParams(walletRegistryGovernance, governance)
+
+  return {
+    walletRegistry,
+    walletRegistryGovernance,
+    governance,
+    thirdParty,
+  }
+})
 
 describe("WalletRegistryGovernance", async () => {
   let governance: SignerWithAddress
   let walletRegistry: WalletRegistry
   let walletRegistryGovernance: WalletRegistryGovernance
   let thirdParty: SignerWithAddress
-  let walletOwner: SignerWithAddress
 
   const initialMinimumAuthorization = to1e18(400000)
   const initialAuthorizationDecreaseDelay = 5184000 // 60 days
@@ -24,13 +55,8 @@ describe("WalletRegistryGovernance", async () => {
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({
-      walletRegistry,
-      walletRegistryGovernance,
-      governance,
-      thirdParty,
-      walletOwner,
-    } = await walletRegistryFixture())
+    ;({ walletRegistry, walletRegistryGovernance, governance, thirdParty } =
+      await fixture())
   })
 
   describe("upgradeRandomBeacon", () => {
@@ -85,6 +111,66 @@ describe("WalletRegistryGovernance", async () => {
     })
   })
 
+  describe("initializeWalletOwner", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .initializeWalletOwner(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      context("when new address is zero", () => {
+        it("should revert when a new address is zero", async () => {
+          await expect(
+            walletRegistryGovernance
+              .connect(governance)
+              .initializeWalletOwner(ethers.constants.AddressZero)
+          ).to.be.revertedWith("Wallet Owner address cannot be zero")
+        })
+      })
+
+      context("when new address is not zero", () => {
+        before(async () => {
+          await createSnapshot()
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .initializeWalletOwner(thirdParty.address)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the wallet owner", async () => {
+          expect(await walletRegistry.walletOwner()).to.be.equal(
+            thirdParty.address
+          )
+        })
+
+        it("should emit WalletOwnerUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistry, "WalletOwnerUpdated")
+            .withArgs(thirdParty.address)
+        })
+
+        it("should revert when called for the second time", async () => {
+          await expect(
+            walletRegistryGovernance
+              .connect(governance)
+              .initializeWalletOwner(thirdParty.address)
+          ).to.be.revertedWith("Wallet Owner already initialized")
+        })
+      })
+    })
+  })
+
   describe("beginWalletOwnerUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -123,7 +209,7 @@ describe("WalletRegistryGovernance", async () => {
 
       it("should not update the wallet owner", async () => {
         expect(await walletRegistry.walletOwner()).to.be.equal(
-          walletOwner.address
+          ethers.constants.AddressZero
         )
       })
 

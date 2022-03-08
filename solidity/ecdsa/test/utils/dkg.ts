@@ -49,7 +49,7 @@ export async function signAndSubmitCorrectDkgResult(
   groupPublicKey: string,
   seed: BigNumber,
   startBlock: number,
-  misbehavedIndices: number[],
+  misbehavedIndices = noMisbehaved,
   submitterIndex = 1,
   numberOfSignatures = 51
 ): Promise<{
