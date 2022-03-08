@@ -42,10 +42,6 @@ describe("WalletRegistry - Wallet Owner", async () => {
     before(async () => {
       await createSnapshot()
 
-      await walletOwner.__ecdsaWalletCreatedCallback.reverts(
-        "wallet owner internal error"
-      )
-
       await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
       const { startBlock, dkgSeed } = await submitRelayEntry(walletRegistry)
 
