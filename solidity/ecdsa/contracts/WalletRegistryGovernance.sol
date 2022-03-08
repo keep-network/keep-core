@@ -17,6 +17,9 @@ pragma solidity ^0.8.9;
 import "./WalletRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import {IWalletOwner} from "./api/IWalletOwner.sol";
+import {IRandomBeacon} from "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
+
 /// @title Wallet Registry Governance
 /// @notice Owns the `WalletRegistry` contract and is responsible for updating its
 ///         governable parameters in respect to governance delay individual
@@ -165,7 +168,7 @@ contract WalletRegistryGovernance is Ownable {
             "New random beacon address cannot be zero"
         );
 
-        walletRegistry.upgradeRandomBeacon(_newRandomBeacon);
+        walletRegistry.upgradeRandomBeacon(IRandomBeacon(_newRandomBeacon));
     }
 
     /// @notice Initializes the Wallet Owner's address.
@@ -185,7 +188,7 @@ contract WalletRegistryGovernance is Ownable {
             "Wallet Owner address cannot be zero"
         );
 
-        walletRegistry.updateWalletOwner(_walletOwner);
+        walletRegistry.updateWalletOwner(IWalletOwner(_walletOwner));
     }
 
     /// @notice Begins the wallet owner update process.
@@ -219,7 +222,7 @@ contract WalletRegistryGovernance is Ownable {
     {
         emit WalletOwnerUpdated(newWalletOwner);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateWalletOwner(newWalletOwner);
+        walletRegistry.updateWalletOwner(IWalletOwner(newWalletOwner));
         walletOwnerChangeInitiated = 0;
         newWalletOwner = address(0);
     }

@@ -184,9 +184,12 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _randomBeacon Random Beacon address.
-    function upgradeRandomBeacon(address _randomBeacon) external onlyOwner {
-        randomBeacon = IRandomBeacon(_randomBeacon);
-        emit RandomBeaconUpgraded(_randomBeacon);
+    function upgradeRandomBeacon(IRandomBeacon _randomBeacon)
+        external
+        onlyOwner
+    {
+        randomBeacon = _randomBeacon;
+        emit RandomBeaconUpgraded(address(_randomBeacon));
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -275,16 +278,17 @@ contract WalletRegistry is IRandomBeaconConsumer, Ownable {
     /// @notice Updates the values of the wallet parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
-    ///      validating parameters.
+    ///      validating parameters. The wallet owner has to implement `IWalletOwner`
+    ///      interface.
     /// @param _walletOwner New wallet owner address.
-    function updateWalletOwner(address _walletOwner) external onlyOwner {
+    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
         require(
-            _walletOwner != address(0),
+            address(_walletOwner) != address(0),
             "Wallet owner address cannot be zero"
         );
 
-        walletOwner = IWalletOwner(_walletOwner);
-        emit WalletOwnerUpdated(_walletOwner);
+        walletOwner = _walletOwner;
+        emit WalletOwnerUpdated(address(_walletOwner));
     }
 
     /// @notice Registers the caller in the sortition pool.
