@@ -308,6 +308,174 @@ describe("WalletRegistryGovernance", async () => {
     )
   })
 
+  describe("beginWalletRegistryOwnershipTransfer", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginWalletRegistryOwnershipTransfer(
+              "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
+            )
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginWalletRegistryOwnershipTransfer(
+            "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
+          )
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      context("when new owner is the zero address", () => {
+        it("should revert", async () => {
+          await expect(
+            walletRegistryGovernance
+              .connect(governance)
+              .beginWalletRegistryOwnershipTransfer(
+                ethers.constants.AddressZero
+              )
+          ).to.be.revertedWith(
+            "New wallet registry owner address cannot be zero"
+          )
+        })
+      })
+
+      it("should not transfer the ownership", async () => {
+        expect(await walletRegistry.owner()).to.be.equal(
+          walletRegistryGovernance.address
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingWalletRegistryOwnershipTransferDelayTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit WalletRegistryOwnershipTransferStarted", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "WalletRegistryOwnershipTransferStarted"
+          )
+          .withArgs(
+            "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537",
+            blockTimestamp
+          )
+      })
+    })
+  })
+
+  describe("finalizeWalletRegistryOwnershipTransfer", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeWalletRegistryOwnershipTransfer()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeWalletRegistryOwnershipTransfer()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginWalletRegistryOwnershipTransfer(
+            "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
+          )
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeWalletRegistryOwnershipTransfer()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginWalletRegistryOwnershipTransfer(
+              "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
+            )
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeWalletRegistryOwnershipTransfer()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should transfer wallet registry ownership", async () => {
+          expect(await walletRegistry.owner()).to.be.equal(
+            "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
+          )
+        })
+
+        it("should emit WalletRegistryOwnershipTransferred event", async () => {
+          await expect(tx)
+            .to.emit(
+              walletRegistryGovernance,
+              "WalletRegistryOwnershipTransferred"
+            )
+            .withArgs("0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537")
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingWalletRegistryOwnershipTransferDelayTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
   describe("beginWalletOwnerUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
