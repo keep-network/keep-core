@@ -10,9 +10,8 @@ import type { ReimbursementPool } from "../typechain"
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { provider } = waffle
-const fixture = async () => reimbursmentPoolDeployment()
 
-describe("ReimbursementPool - Pool", () => {
+describe("ReimbursementPool", () => {
   let owner: SignerWithAddress
   let thirdParty: SignerWithAddress
   let refundee: SignerWithAddress
@@ -26,7 +25,7 @@ describe("ReimbursementPool - Pool", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    const contracts = await waffle.loadFixture(reimbursmentPoolDeployment)
 
     reimbursementPool = contracts.reimbursementPool as ReimbursementPool
   })
@@ -55,7 +54,7 @@ describe("ReimbursementPool - Pool", () => {
     })
 
     context("when the owner funds a reimbursment pool", () => {
-      it("should withdraw entire ETH balance", async () => {
+      it("should send ETH to the Reimbursment Pool", async () => {
         let reimbursementPoolBalance = await provider.getBalance(
           reimbursementPool.address
         )
@@ -79,16 +78,10 @@ describe("ReimbursementPool - Pool", () => {
 
   describe("withdrawAll", () => {
     beforeEach(async () => {
-      await createSnapshot()
-
       await thirdParty.sendTransaction({
         to: reimbursementPool.address,
         value: ethers.utils.parseEther("10.0"), // Send 10.0 ETH
       })
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     context("when withdrawing all the funds as a non owner", () => {
@@ -295,12 +288,13 @@ describe("ReimbursementPool - Pool", () => {
           const refundeeBalanceDiff = refundeeBalanceAfter.sub(
             refundeeBalanceBefore
           )
-          expect(refundeeBalanceDiff).to.be.gt(
-            ethers.utils.parseUnits("73000", "gwei")
-          )
+          expect(refundeeBalanceDiff).to.be.gt(0)
 
+          // consumed gas: 50k + 41 = 91k
+          // tx.gasPrice: ~1.6gwei
+          // refund: 91k * 1.6 =~ 145k gwei
           expect(refundeeBalanceDiff).to.be.lt(
-            ethers.utils.parseUnits("146000", "gwei")
+            ethers.utils.parseUnits("145000", "gwei")
           )
         })
 
@@ -337,9 +331,9 @@ describe("ReimbursementPool - Pool", () => {
           const refundeeBalanceDiff = refundeeBalanceAfter.sub(
             refundeeBalanceBefore
           )
-          // gas spent + static gas => 50k + 37.5k
+          // gas spent + static gas => 50k + 41k
           expect(refundeeBalanceDiff).to.be.eq(
-            ethers.utils.parseUnits("87500", "gwei")
+            ethers.utils.parseUnits("91000", "gwei")
           )
         })
       })
@@ -380,11 +374,11 @@ describe("ReimbursementPool - Pool", () => {
         })
 
         it("should emit SendingEtherFailed event", async () => {
-          // gas spent + static gas => 50k + 37.5k
+          // gas spent + static gas => 50k + 41k
           await expect(tx)
             .to.emit(reimbursementPool, "SendingEtherFailed")
             .withArgs(
-              ethers.utils.parseUnits("87500", "gwei"),
+              ethers.utils.parseUnits("91000", "gwei"),
               refundee.address
             )
         })
