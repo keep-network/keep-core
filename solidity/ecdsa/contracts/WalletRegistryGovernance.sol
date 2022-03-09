@@ -24,6 +24,9 @@ import {IRandomBeacon} from "@keep-network/random-beacon/contracts/api/IRandomBe
 /// @notice Owns the `WalletRegistry` contract and is responsible for updating
 ///         its governable parameters in respect to the governance delay.
 contract WalletRegistryGovernance is Ownable {
+    uint256 public newGovernanceDelay;
+    uint256 public governanceDelayChangeInitiated;
+
     address public newWalletOwner;
     uint256 public walletOwnerChangeInitiated;
 
@@ -55,6 +58,12 @@ contract WalletRegistryGovernance is Ownable {
     WalletRegistry public walletRegistry;
 
     uint256 public governanceDelay;
+
+    event GovernanceDelayUpdateStarted(
+        uint256 governanceDelay,
+        uint256 timestamp
+    );
+    event GovernanceDelayUpdated(uint256 governanceDelay);
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
     event WalletOwnerUpdated(address walletOwner);
@@ -164,6 +173,34 @@ contract WalletRegistryGovernance is Ownable {
         );
 
         walletRegistry.updateWalletOwner(IWalletOwner(_walletOwner));
+    }
+
+    /// @notice Begins the governance delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newGovernanceDelay New governance delay
+    function beginGovernanceDelayUpdate(uint256 _newGovernanceDelay)
+        external
+        onlyOwner
+    {
+        newGovernanceDelay = _newGovernanceDelay;
+        /* solhint-disable not-rely-on-time */
+        governanceDelayChangeInitiated = block.timestamp;
+        emit GovernanceDelayUpdateStarted(_newGovernanceDelay, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the governance delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeGovernanceDelayUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(governanceDelayChangeInitiated)
+    {
+        emit GovernanceDelayUpdated(newGovernanceDelay);
+        governanceDelay = newGovernanceDelay;
+        governanceDelayChangeInitiated = 0;
+        newGovernanceDelay = 0;
     }
 
     /// @notice Begins the wallet owner update process.
@@ -519,6 +556,16 @@ contract WalletRegistryGovernance is Ownable {
         newSubmitterPrecedencePeriodLength = 0;
     }
 
+    /// @notice Get the time remaining until the governance delay can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingGovernanceDelayUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(governanceDelayChangeInitiated);
+    }
+
     /// @notice Get the time remaining until the minimum authorization amount
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -649,6 +696,4 @@ contract WalletRegistryGovernance is Ownable {
     }
 
     // TODO: Add function to transfer WalletRegistry ownership to another address.
-
-    // TODO: Add function to update governance delay
 }

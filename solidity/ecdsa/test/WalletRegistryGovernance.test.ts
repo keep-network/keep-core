@@ -171,6 +171,143 @@ describe("WalletRegistryGovernance", async () => {
     })
   })
 
+  describe("beginGovernanceDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginGovernanceDelayUpdate(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginGovernanceDelayUpdate(1337)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the governance delay", async () => {
+        expect(await walletRegistryGovernance.governanceDelay()).to.be.equal(
+          constants.governanceDelay
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingGovernanceDelayUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit GovernanceDelayUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(walletRegistryGovernance, "GovernanceDelayUpdateStarted")
+          .withArgs(1337, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeGovernanceDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginGovernanceDelayUpdate(7331)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginGovernanceDelayUpdate(7331)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the governance delay", async () => {
+          expect(await walletRegistryGovernance.governanceDelay()).to.be.equal(
+            7331
+          )
+        })
+
+        it("should emit GovernanceDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "GovernanceDelayUpdated")
+            .withArgs(7331)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingGovernanceDelayUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
   describe("beginWalletOwnerUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -183,7 +320,7 @@ describe("WalletRegistryGovernance", async () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -197,7 +334,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      it("should not update when a new owner is zero address", async () => {
+      describe("when new wallet owner is zero address", async () => {
         it("should revert", async () => {
           await expect(
             walletRegistryGovernance
@@ -273,7 +410,7 @@ describe("WalletRegistryGovernance", async () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -945,7 +1082,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingDkgSeedTimeoutUpdateTime()
-        ).to.be.equal(constants.governanceDelay) 
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the DkgSeedTimeoutUpdateStarted event", async () => {
@@ -1177,7 +1314,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginDkgResultChallengePeriodLengthUpdate(11)
 
-          await helpers.time.increaseTime(constants.governanceDelay) 
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -1323,7 +1460,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginDkgResultSubmissionTimeoutUpdate(1)
 
-        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min 
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
