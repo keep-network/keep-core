@@ -16,6 +16,7 @@ pragma solidity ^0.8.9;
 
 interface IWalletRegistry {
     /// @notice Requests a new wallet creation.
+    /// @dev Only a Wallet Owner can call this function.
     function requestNewWallet() external;
 
     /// @notice Gets public key of a wallet with a given wallet ID.
