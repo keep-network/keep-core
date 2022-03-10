@@ -362,6 +362,7 @@ describe("WalletRegistry - Pool", () => {
             .withArgs(
               stakingProvider.address,
               ZERO_ADDRESS,
+              0,
               minimumAuthorization
             )
         })
@@ -390,7 +391,7 @@ describe("WalletRegistry - Pool", () => {
         it("should emit AuthorizationIncreaseRequested", async () => {
           await expect(tx)
             .to.emit(walletRegistry, "AuthorizationIncreaseRequested")
-            .withArgs(stakingProvider.address, ZERO_ADDRESS, stakedAmount)
+            .withArgs(stakingProvider.address, ZERO_ADDRESS, 0, stakedAmount)
         })
       })
     })
@@ -440,6 +441,7 @@ describe("WalletRegistry - Pool", () => {
             .withArgs(
               stakingProvider.address,
               operator.address,
+              0,
               minimumAuthorization
             )
         })
@@ -469,7 +471,12 @@ describe("WalletRegistry - Pool", () => {
         it("should emit AuthorizationIncreaseRequested", async () => {
           await expect(tx)
             .to.emit(walletRegistry, "AuthorizationIncreaseRequested")
-            .withArgs(stakingProvider.address, operator.address, stakedAmount)
+            .withArgs(
+              stakingProvider.address,
+              operator.address,
+              0,
+              stakedAmount
+            )
         })
       })
     })
@@ -532,13 +539,12 @@ describe("WalletRegistry - Pool", () => {
       // decrease request is valid and can be approved
       context("when decreasing to zero", () => {
         let tx: ContractTransaction
-        let decreasingBy
+        const decreasingTo = 0
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingTo = 0
-          decreasingBy = stakedAmount.sub(decreasingTo)
+          const decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -564,19 +570,25 @@ describe("WalletRegistry - Pool", () => {
           const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(walletRegistry, "AuthorizationDecreaseRequested")
-            .withArgs(stakingProvider.address, ZERO_ADDRESS, decreasingBy, now)
+            .withArgs(
+              stakingProvider.address,
+              ZERO_ADDRESS,
+              stakedAmount,
+              decreasingTo,
+              now
+            )
         })
       })
 
       context("when decreasing to the minimum", () => {
         let tx: ContractTransaction
-        let decreasingBy
+        let decreasingTo
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingTo = minimumAuthorization
-          decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingTo = minimumAuthorization
+          const decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -602,19 +614,25 @@ describe("WalletRegistry - Pool", () => {
           const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(walletRegistry, "AuthorizationDecreaseRequested")
-            .withArgs(stakingProvider.address, ZERO_ADDRESS, decreasingBy, now)
+            .withArgs(
+              stakingProvider.address,
+              ZERO_ADDRESS,
+              stakedAmount,
+              decreasingTo,
+              now
+            )
         })
       })
 
       context("when decreasing to a value above the minimum", () => {
         let tx: ContractTransaction
-        let decreasingBy
+        let decreasingTo
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingTo = minimumAuthorization.add(1)
-          decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingTo = minimumAuthorization.add(1)
+          const decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -640,7 +658,13 @@ describe("WalletRegistry - Pool", () => {
           const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(walletRegistry, "AuthorizationDecreaseRequested")
-            .withArgs(stakingProvider.address, ZERO_ADDRESS, decreasingBy, now)
+            .withArgs(
+              stakingProvider.address,
+              ZERO_ADDRESS,
+              stakedAmount,
+              decreasingTo,
+              now
+            )
         })
       })
     })
@@ -687,13 +711,12 @@ describe("WalletRegistry - Pool", () => {
 
       context("when decreasing to zero", () => {
         let tx: ContractTransaction
-        let decreasingBy
+        const decreasingTo = 0
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingTo = 0
-          decreasingBy = stakedAmount.sub(decreasingTo)
+          const decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -721,7 +744,8 @@ describe("WalletRegistry - Pool", () => {
             .withArgs(
               stakingProvider.address,
               operator.address,
-              decreasingBy,
+              stakedAmount,
+              decreasingTo,
               MAX_UINT64
             )
         })
@@ -729,13 +753,13 @@ describe("WalletRegistry - Pool", () => {
 
       context("when decreasing to the minimum", () => {
         let tx: ContractTransaction
-        let decreasingBy
+        let decreasingTo
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingTo = minimumAuthorization
-          decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingTo = minimumAuthorization
+          const decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -763,7 +787,8 @@ describe("WalletRegistry - Pool", () => {
             .withArgs(
               stakingProvider.address,
               operator.address,
-              decreasingBy,
+              stakedAmount,
+              decreasingTo,
               MAX_UINT64
             )
         })
@@ -771,13 +796,13 @@ describe("WalletRegistry - Pool", () => {
 
       context("when decreasing to a value above the minimum", () => {
         let tx: ContractTransaction
-        let decreasingBy
+        let decreasingTo
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingTo = minimumAuthorization.add(1)
-          decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingTo = minimumAuthorization.add(1)
+          const decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -805,7 +830,8 @@ describe("WalletRegistry - Pool", () => {
             .withArgs(
               stakingProvider.address,
               operator.address,
-              decreasingBy,
+              stakedAmount,
+              decreasingTo,
               MAX_UINT64
             )
         })

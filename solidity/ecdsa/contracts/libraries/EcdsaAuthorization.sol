@@ -53,13 +53,15 @@ library EcdsaAuthorization {
     event AuthorizationIncreaseRequested(
         address indexed stakingProvider,
         address indexed operator,
+        uint96 fromAmount,
         uint96 toAmount
     );
 
     event AuthorizationDecreaseRequested(
         address indexed stakingProvider,
         address indexed operator,
-        uint96 decreasingBy,
+        uint96 fromAmount,
+        uint96 toAmount,
         uint64 decreasingAt
     );
 
@@ -150,6 +152,7 @@ library EcdsaAuthorization {
     function authorizationIncreased(
         Data storage self,
         address stakingProvider,
+        uint96 fromAmount,
         uint96 toAmount
     ) internal {
         require(
@@ -161,6 +164,7 @@ library EcdsaAuthorization {
         emit AuthorizationIncreaseRequested(
             stakingProvider,
             operator,
+            fromAmount,
             toAmount
         );
     }
@@ -235,7 +239,8 @@ library EcdsaAuthorization {
         emit AuthorizationDecreaseRequested(
             stakingProvider,
             operator,
-            decreasingBy,
+            fromAmount,
+            toAmount,
             decreasingAt
         );
     }

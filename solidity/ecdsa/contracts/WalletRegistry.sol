@@ -136,13 +136,15 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
     event AuthorizationIncreaseRequested(
         address indexed stakingProvider,
         address indexed operator,
+        uint96 fromAmount,
         uint96 toAmount
     );
 
     event AuthorizationDecreaseRequested(
         address indexed stakingProvider,
         address indexed operator,
-        uint96 decreasingBy,
+        uint96 fromAmount,
+        uint96 toAmount,
         uint64 decreasingAt
     );
 
@@ -237,10 +239,14 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
     /// @dev Can only be called by T staking contract.
     function authorizationIncreased(
         address stakingProvider,
-        uint96,
+        uint96 fromAmount,
         uint96 toAmount
     ) external onlyStakingContract {
-        authorization.authorizationIncreased(stakingProvider, toAmount);
+        authorization.authorizationIncreased(
+            stakingProvider,
+            fromAmount,
+            toAmount
+        );
     }
 
     /// @notice Used by T staking contract to inform the application that the
