@@ -39,13 +39,22 @@ library Wallets {
     /// @dev Uses a public key hash as a unique identifier of a wallet.
     /// @param membersIdsHash Keccak256 hash of group members identifiers array.
     /// @param publicKey Uncompressed public key.
-    /// @return Wallet's ID.
+    /// @return walletID Wallet's ID.
+    /// @return publicKeyX Wallet's public key's X coordinate.
+    /// @return publicKeyY Wallet's public key's Y coordinate.
     function addWallet(
         Data storage self,
         bytes32 membersIdsHash,
         bytes calldata publicKey
-    ) internal returns (bytes32) {
-        bytes32 walletID = keccak256(publicKey);
+    )
+        internal
+        returns (
+            bytes32 walletID,
+            bytes32 publicKeyX,
+            bytes32 publicKeyY
+        )
+    {
+        walletID = keccak256(publicKey);
 
         require(
             self.registry[walletID].publicKeyX == bytes32(0),
@@ -53,11 +62,12 @@ library Wallets {
         );
         require(publicKey.length == 64, "Invalid length of the public key");
 
-        self.registry[walletID].membersIdsHash = membersIdsHash;
-        self.registry[walletID].publicKeyX = bytes32(publicKey[:32]);
-        self.registry[walletID].publicKeyY = bytes32(publicKey[32:]);
+        publicKeyX = bytes32(publicKey[:32]);
+        publicKeyY = bytes32(publicKey[32:]);
 
-        return walletID;
+        self.registry[walletID].membersIdsHash = membersIdsHash;
+        self.registry[walletID].publicKeyX = publicKeyX;
+        self.registry[walletID].publicKeyY = publicKeyY;
     }
 
     /// @notice Checks if a wallet with the given ID is registered.

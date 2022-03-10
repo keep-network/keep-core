@@ -391,10 +391,8 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
-        bytes32 walletID = wallets.addWallet(
-            dkgResult.membersHash,
-            dkgResult.groupPubKey
-        );
+        (bytes32 walletID, bytes32 publicKeyX, bytes32 publicKeyY) = wallets
+            .addWallet(dkgResult.membersHash, dkgResult.groupPubKey);
 
         emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
 
@@ -404,7 +402,8 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
 
         walletOwner.__ecdsaWalletCreatedCallback(
             walletID,
-            dkgResult.groupPubKey
+            publicKeyX,
+            publicKeyY
         );
 
         dkg.complete();

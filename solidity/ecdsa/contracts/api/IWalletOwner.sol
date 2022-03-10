@@ -18,10 +18,11 @@ interface IWalletOwner {
     /// @notice Callback function executed once a new wallet is created.
     /// @dev Should be callable only by the Wallet Registry.
     /// @param walletID Wallet's unique identifier.
-    /// @param uncompressedPublicKey Wallet's uncompressed public key (64-byte)
-    ///        as a concatenation of X and Y coordinates.
+    /// @param publicKeyY Wallet's public key's X coordinate.
+    /// @param publicKeyY Wallet's public key's Y coordinate.
     function __ecdsaWalletCreatedCallback(
         bytes32 walletID,
-        bytes memory uncompressedPublicKey
+        bytes32 publicKeyX,
+        bytes32 publicKeyY
     ) external;
 }
