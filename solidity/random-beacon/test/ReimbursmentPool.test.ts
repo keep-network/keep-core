@@ -292,11 +292,11 @@ describe("ReimbursementPool", () => {
           )
           expect(refundeeBalanceDiff).to.be.gt(0)
 
-          // consumed gas: 50k + 41 = 91k
+          // consumed gas: 50k + 41.9k = 91.9k
           // tx.gasPrice: ~1.6gwei
-          // refund: 91k * 1.6 =~ 145k gwei
+          // refund: 91.9k * 1.6 =~ 147k gwei
           expect(refundeeBalanceDiff).to.be.lt(
-            ethers.utils.parseUnits("145000", "gwei")
+            ethers.utils.parseUnits("147000", "gwei")
           )
         })
 
@@ -333,9 +333,9 @@ describe("ReimbursementPool", () => {
           const refundeeBalanceDiff = refundeeBalanceAfter.sub(
             refundeeBalanceBefore
           )
-          // gas spent + static gas => 50k + 41k
+          // gas spent + static gas => 50k + 41.9k
           expect(refundeeBalanceDiff).to.be.eq(
-            ethers.utils.parseUnits("91000", "gwei")
+            ethers.utils.parseUnits("91900", "gwei")
           )
         })
       })
@@ -376,11 +376,11 @@ describe("ReimbursementPool", () => {
         })
 
         it("should emit SendingEtherFailed event", async () => {
-          // gas spent + static gas => 50k + 41k
+          // gas spent + static gas => 50k + 41.9k
           await expect(tx)
             .to.emit(reimbursementPool, "SendingEtherFailed")
             .withArgs(
-              ethers.utils.parseUnits("91000", "gwei"),
+              ethers.utils.parseUnits("91900", "gwei"),
               refundee.address
             )
         })

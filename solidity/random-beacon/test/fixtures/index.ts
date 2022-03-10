@@ -49,7 +49,7 @@ export const params = {
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(100000),
   authorizationDecreaseDelay: 0,
-  reimbursmentPoolStaticGas: 41000,
+  reimbursmentPoolStaticGas: 41900,
   reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("20", "gwei"),
 }
 
