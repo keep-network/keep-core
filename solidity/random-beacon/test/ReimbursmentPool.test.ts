@@ -415,7 +415,7 @@ describe("ReimbursementPool", () => {
     })
   })
 
-  describe("unuthorize", () => {
+  describe("unauthorize", () => {
     beforeEach(async () => {
       await createSnapshot()
 
