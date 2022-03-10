@@ -27,6 +27,9 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newGovernanceDelay;
     uint256 public governanceDelayChangeInitiated;
 
+    address public newWalletRegistryOwner;
+    uint256 public walletRegistryOwnershipTransferInitiated;
+
     address public newWalletOwner;
     uint256 public walletOwnerChangeInitiated;
 
@@ -64,6 +67,12 @@ contract WalletRegistryGovernance is Ownable {
         uint256 timestamp
     );
     event GovernanceDelayUpdated(uint256 governanceDelay);
+
+    event WalletRegistryOwnershipTransferStarted(
+        address newWalletRegistryOwner,
+        uint256 timestamp
+    );
+    event WalletRegistryOwnershipTransferred(address newWalletRegistryOwner);
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
     event WalletOwnerUpdated(address walletOwner);
@@ -201,6 +210,40 @@ contract WalletRegistryGovernance is Ownable {
         governanceDelay = newGovernanceDelay;
         governanceDelayChangeInitiated = 0;
         newGovernanceDelay = 0;
+    }
+
+    /// @notice Begins the wallet registry ownership transfer process.
+    /// @dev Can be called only by the contract owner.
+    function beginWalletRegistryOwnershipTransfer(
+        address _newWalletRegistryOwner
+    ) external onlyOwner {
+        require(
+            address(_newWalletRegistryOwner) != address(0),
+            "New wallet registry owner address cannot be zero"
+        );
+        newWalletRegistryOwner = _newWalletRegistryOwner;
+        /* solhint-disable not-rely-on-time */
+        walletRegistryOwnershipTransferInitiated = block.timestamp;
+        emit WalletRegistryOwnershipTransferStarted(
+            _newWalletRegistryOwner,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the wallet registry ownership transfer process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeWalletRegistryOwnershipTransfer()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(walletRegistryOwnershipTransferInitiated)
+    {
+        emit WalletRegistryOwnershipTransferred(newWalletRegistryOwner);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.transferOwnership(newWalletRegistryOwner);
+        walletRegistryOwnershipTransferInitiated = 0;
+        newWalletRegistryOwner = address(0);
     }
 
     /// @notice Begins the wallet owner update process.
@@ -566,6 +609,17 @@ contract WalletRegistryGovernance is Ownable {
         return getRemainingChangeTime(governanceDelayChangeInitiated);
     }
 
+    /// @notice Get the time remaining until the wallet registry ownership can
+    ///         be transferred.
+    /// @return Remaining time in seconds.
+    function getRemainingWalletRegistryOwnershipTransferDelayTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(walletRegistryOwnershipTransferInitiated);
+    }
+
     /// @notice Get the time remaining until the minimum authorization amount
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -694,6 +748,4 @@ contract WalletRegistryGovernance is Ownable {
 
         return governanceDelay - elapsed;
     }
-
-    // TODO: Add function to transfer WalletRegistry ownership to another address.
 }
