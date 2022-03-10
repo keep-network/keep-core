@@ -36,8 +36,8 @@ library Relay {
         uint64 currentRequestStartBlock;
         // Previous entry value.
         AltBn128.G1Point previousEntry;
-        // Fee paid by the relay requester.
-        uint96 relayRequestFee;
+        // Fee paid by the relay requester denominated in ETH.
+        uint256 relayRequestFee;
         // The number of blocks it takes for a group member to become
         // eligible to submit the relay entry.
         uint32 relayEntrySubmissionEligibilityDelay;

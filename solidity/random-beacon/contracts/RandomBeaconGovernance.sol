@@ -1158,6 +1158,18 @@ contract RandomBeaconGovernance is Ownable {
         newAuthorizationDecreaseDelay = 0;
     }
 
+    /// @notice Authorize contract which can request a relay entry without
+    ///         paying fees.
+    function authorizeContract(address _contract) external onlyOwner {
+        randomBeacon.authorizeContract(_contract);
+    }
+
+    /// @notice Unauthorize contract which can request a relay entry without
+    ///         paying fees.
+    function unauthorizeContract(address _contract) external onlyOwner {
+        randomBeacon.unauthorizeContract(_contract);
+    }
+
     /// @notice Withdraws rewards belonging to operators marked as ineligible
     ///         for sortition pool rewards.
     /// @dev Can be called only by the contract owner.

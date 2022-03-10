@@ -153,23 +153,15 @@ contract RandomBeacon is Ownable, Reimbursable {
     ///         against claim replay.
     mapping(uint64 => uint256) public failedHeartbeatNonce; // groupId -> nonce
 
+    /// @notice Authorized contracts that can request a relay entry without
+    ///         sending any fees.
+    mapping(address => bool) public authorizedContracts;
+
     // External dependencies
 
     SortitionPool public sortitionPool;
     IERC20 public tToken;
     IRandomBeaconStaking public staking;
-
-    // Token bookkeeping
-
-    /// @notice Rewards pool for DKG actions. This pool is funded from relay
-    ///         request fees and external donates. Funds are used to cover
-    ///         rewards for actors approving DKG result or notifying about
-    ///         DKG timeout.
-    uint256 public dkgRewardsPool;
-    /// @notice Rewards pool for heartbeat notifiers. This pool is funded from
-    ///         external donates. Funds are used to cover rewards for actors
-    ///         notifying about failed heartbeats.
-    uint256 public heartbeatNotifierRewardsPool;
 
     // Libraries data storages
 
@@ -302,6 +294,10 @@ contract RandomBeacon is Ownable, Reimbursable {
         address[] groupMembers
     );
 
+    event AuthorizedContract(address contractToAuthorize);
+
+    event UnauthorizedContract(address contractToUnauthorize);
+
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
     event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
@@ -343,7 +339,11 @@ contract RandomBeacon is Ownable, Reimbursable {
         dkg.setResultSubmissionEligibilityDelay(20);
 
         relay.initSeedEntry();
-        relay.setRelayRequestFee(200e18);
+        // refer to: https://docs.google.com/spreadsheets/d/1JgRCj6srYCHANA8tmgR1XgvsE3eFrYzwSiaTRGkUI5M/edit#gid=0
+        // total gas of submit+approve ~780849. Assume gas price is 200gwei
+        // total dkg gas cos: 0.0000002 * 780849 = 0.1561698
+        // there need to be 5 requests to trigger dkg, so 0.156 / 5 = ~0.031 ETH need to be provided to break even.
+        relay.setRelayRequestFee(31e15); // TODO: revisit. Do we want to add a markup?
         relay.setRelayEntrySubmissionEligibilityDelay(20);
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
@@ -517,6 +517,22 @@ contract RandomBeacon is Ownable, Reimbursable {
         );
     }
 
+    /// @notice Authorize contract which can request a relay entry without
+    ///         paying fees. Authorization can be done by the owner only.
+    function authorizeContract(address _contract) external onlyOwner {
+        authorizedContracts[_contract] = true;
+
+        emit AuthorizedContract(_contract);
+    }
+
+    /// @notice Unauthorize contract which can request a relay entry without
+    ///         paying fees. Unauthorization can be done by the owner only.
+    function unauthorizeContract(address _contract) external onlyOwner {
+        delete authorizedContracts[_contract];
+
+        emit UnauthorizedContract(_contract);
+    }
+
     /// @notice Withdraws rewards belonging to operators marked as ineligible
     ///         for sortition pool rewards.
     /// @dev Can be called only by the contract owner, which should be the
@@ -590,7 +606,7 @@ contract RandomBeacon is Ownable, Reimbursable {
 
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
-    ///         as valid, pays reward to the approver, bans misbehaved group
+    ///         as valid, reimburses ETH to the approver, bans misbehaved group
     ///         members from the sortition pool rewards, and completes the group
     ///         creation by activating the candidate group. For the first
     ///         `resultSubmissionEligibilityDelay` blocks after the end of the
@@ -602,8 +618,6 @@ contract RandomBeacon is Ownable, Reimbursable {
         uint256 gasStart = gasleft();
 
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
-
-        transferDkgRewards(msg.sender, dkgResultSubmissionReward);
 
         if (misbehavedMembers.length > 0) {
             sortitionPool.setRewardIneligibility(
@@ -627,12 +641,10 @@ contract RandomBeacon is Ownable, Reimbursable {
         );
     }
 
-    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
-    ///         reward to the notifier.
+    /// @notice Notifies about DKG timeout. Refunds ETH to a notifier for making
+    ///         this call.
     function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyTimeout();
-
-        transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
 
         dkg.complete();
     }
@@ -706,18 +718,21 @@ contract RandomBeacon is Ownable, Reimbursable {
 
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
-    ///         random number). Requires a request fee denominated in T token.
+    ///         random number). Requires a request fee denominated in ETH.
     /// @param callbackContract Beacon consumer callback contract.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
-        external
+        payable external
     {
+        if (!authorizedContracts[msg.sender]) {
+            require(msg.value >= relay.relayRequestFee, "Fee is less than the required minimum");
+            address(reimbursementPool).call{value: msg.value}("");
+        }
+
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
         );
 
         relay.requestEntry(groupId);
-
-        fundDkgRewardsPool(msg.sender, relay.relayRequestFee);
 
         callback.setCallbackContract(callbackContract);
 
@@ -919,10 +934,8 @@ contract RandomBeacon is Ownable, Reimbursable {
     ///         banned for sortition pool rewards for duration specified by
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
     ///         the claim must be one of the claim signers. The sender is
-    ///         rewarded from `heartbeatNotifierRewardsPool`. Exact reward
-    ///         amount is multiplication of operators marked as ineligible
-    ///         and `ineligibleOperatorNotifierReward` factor. This function
-    ///         can be called only for active and non-terminated groups.
+    ///         refunded from the Reimbursement Pool. This function can be
+    ///         called only for active and non-terminated groups.
     /// @param claim Failure claim.
     /// @param nonce Current failed heartbeat nonce for given group. Must
     ///        be the same as the stored one.
@@ -965,51 +978,6 @@ contract RandomBeacon is Ownable, Reimbursable {
             // solhint-disable-next-line not-rely-on-time
             block.timestamp + sortitionPoolRewardsBanDuration
         );
-
-        transferHeartbeatNotifierRewards(
-            msg.sender,
-            ineligibleOperatorNotifierReward * ineligibleOperators.length
-        );
-    }
-
-    /// @notice Funds the DKG rewards pool.
-    /// @param from Address of the funder. The funder must give a sufficient
-    ///        allowance for this contract to make a successful call.
-    /// @param value Token value transferred by the funder.
-    function fundDkgRewardsPool(address from, uint256 value) public {
-        dkgRewardsPool += value;
-        tToken.safeTransferFrom(from, address(this), value);
-    }
-
-    /// @notice Funds the heartbeat notifier rewards pool.
-    /// @param from Address of the funder. The funder must give a sufficient
-    ///        allowance for this contract to make a successful call.
-    /// @param value Token value transferred by the funder.
-    function fundHeartbeatNotifierRewardsPool(address from, uint256 value)
-        external
-    {
-        heartbeatNotifierRewardsPool += value;
-        tToken.safeTransferFrom(from, address(this), value);
-    }
-
-    /// @notice Makes a transfer using DKG rewards pool.
-    /// @param to Address of the recipient.
-    /// @param value Token value transferred to the recipient.
-    function transferDkgRewards(address to, uint256 value) internal {
-        uint256 actualValue = Math.min(dkgRewardsPool, value);
-        dkgRewardsPool -= actualValue;
-        tToken.safeTransfer(to, actualValue);
-    }
-
-    /// @notice Makes a transfer using heartbeat notifier rewards pool.
-    /// @param to Address of the recipient.
-    /// @param value Token value transferred to the recipient.
-    function transferHeartbeatNotifierRewards(address to, uint256 value)
-        internal
-    {
-        uint256 actualValue = Math.min(heartbeatNotifierRewardsPool, value);
-        heartbeatNotifierRewardsPool -= actualValue;
-        tToken.safeTransfer(to, actualValue);
     }
 
     /// @notice Locks the state of group creation.
