@@ -25,7 +25,13 @@ describe("WalletRegistry - Wallet Owner", async () => {
   const groupPublicKey: string = ethers.utils.hexValue(
     ecdsaData.group1.publicKey
   )
-  const groupPublicKeyHash: string = ethers.utils.keccak256(groupPublicKey)
+  const groupPublicKeyX: string = ethers.utils.hexValue(
+    ecdsaData.group1.publicKeyX
+  )
+  const groupPublicKeyY: string = ethers.utils.hexValue(
+    ecdsaData.group1.publicKeyY
+  )
+  const walletID: string = ethers.utils.keccak256(groupPublicKey)
 
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let walletOwner: FakeContract<IWalletOwner>
@@ -105,9 +111,12 @@ describe("WalletRegistry - Wallet Owner", async () => {
       })
 
       it("should call wallet owner", async () => {
+        await tx
+
         await expect(walletOwner.__ecdsaWalletCreatedCallback).to.be.calledWith(
-          groupPublicKeyHash,
-          dkgResult.groupPubKey
+          walletID,
+          groupPublicKeyX,
+          groupPublicKeyY
         )
       })
     })

@@ -40,7 +40,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
   const groupPublicKey: string = ethers.utils.hexValue(
     ecdsaData.group1.publicKey
   )
-  const groupPublicKeyHash: string = ethers.utils.keccak256(groupPublicKey)
+  const walletID: string = ethers.utils.keccak256(groupPublicKey)
 
   const stubDkgResult: DkgResult = {
     submitterMemberIndex: 1,
@@ -1529,9 +1529,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 })
 
                 it("should register a new wallet", async () => {
-                  const wallet = await walletRegistry.getWallet(
-                    groupPublicKeyHash
-                  )
+                  const wallet = await walletRegistry.getWallet(walletID)
 
                   await expect(wallet.membersIdsHash).to.be.equal(
                     hashUint32Array(dkgResult.members)
@@ -1555,7 +1553,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should emit WalletCreated event", async () => {
                   await expect(tx)
                     .to.emit(walletRegistry, "WalletCreated")
-                    .withArgs(groupPublicKeyHash, dkgResultHash)
+                    .withArgs(walletID, dkgResultHash)
                 })
 
                 it("should unlock the sortition pool", async () => {
@@ -1750,9 +1748,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               })
 
               it("should register a new wallet", async () => {
-                const wallet = await walletRegistry.getWallet(
-                  groupPublicKeyHash
-                )
+                const wallet = await walletRegistry.getWallet(walletID)
 
                 await expect(wallet.membersIdsHash).to.be.equal(
                   hashUint32Array(dkgResult.members)
@@ -1776,7 +1772,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               it("should emit WalletCreated event", async () => {
                 await expect(tx)
                   .to.emit(walletRegistry, "WalletCreated")
-                  .withArgs(groupPublicKeyHash, dkgResultHash)
+                  .withArgs(walletID, dkgResultHash)
               })
 
               it("should unlock the sortition pool", async () => {
@@ -1869,8 +1865,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               expectedMembers.splice(58, 1) // index -6
 
               expect(
-                (await walletRegistry.getWallet(groupPublicKeyHash))
-                  .membersIdsHash
+                (await walletRegistry.getWallet(walletID)).membersIdsHash
               ).to.be.equal(hashUint32Array(expectedMembers))
             })
 
@@ -2026,20 +2021,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
     context("with wallet registered", async () => {
       const existingWalletPublicKey: string = ecdsaData.group1.publicKey
-      let existingWalletPublicKeyHash: string
+      let existingWalletID: string
 
       before("create a wallet", async () => {
         await createSnapshot()
-        ;({ publicKeyHash: existingWalletPublicKeyHash } =
-          await createNewWallet(
-            walletRegistry,
-            walletOwner.wallet,
-            existingWalletPublicKey
-          ))
+        ;({ walletID: existingWalletID } = await createNewWallet(
+          walletRegistry,
+          walletOwner.wallet,
+          existingWalletPublicKey
+        ))
 
-        await expect(
-          await walletRegistry.isWalletRegistered(existingWalletPublicKeyHash)
-        ).to.be.true
+        await expect(await walletRegistry.isWalletRegistered(existingWalletID))
+          .to.be.true
       })
 
       after(async () => {
@@ -2077,7 +2070,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           let submitter: SignerWithAddress
 
           const newResultPublicKey = ecdsaData.group2.publicKey
-          const newResultPublicKeyHash = keccak256(newResultPublicKey)
+          const newWalletID = keccak256(newResultPublicKey)
           const newResultSubmitterIndex = 1
 
           before("submit dkg result", async () => {
@@ -2125,9 +2118,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
 
             it("should register a new wallet", async () => {
-              const wallet = await walletRegistry.getWallet(
-                newResultPublicKeyHash
-              )
+              const wallet = await walletRegistry.getWallet(newWalletID)
 
               await expect(wallet.membersIdsHash).to.be.equal(
                 hashUint32Array(dkgResult.members)
@@ -2137,7 +2128,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             it("should emit WalletCreated event", async () => {
               await expect(tx)
                 .to.emit(walletRegistry, "WalletCreated")
-                .withArgs(newResultPublicKeyHash, dkgResultHash)
+                .withArgs(newWalletID, dkgResultHash)
             })
 
             it("should unlock the sortition pool", async () => {

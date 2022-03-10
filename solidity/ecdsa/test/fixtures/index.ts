@@ -117,7 +117,7 @@ export const walletRegistryFixture = deployments.createFixture(
 export async function updateWalletRegistryParams(
   walletRegistryGovernance: WalletRegistryGovernance,
   governance: SignerWithAddress
-) {
+): Promise<void> {
   await walletRegistryGovernance
     .connect(governance)
     .beginMinimumAuthorizationUpdate(params.minimumAuthorization)
