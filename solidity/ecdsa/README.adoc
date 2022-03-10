@@ -46,6 +46,10 @@ yarn build
 
 Compiled contracts will land in the `build/` directory.
 
+==== TypeScript Typings
+
+Typings are generated for the contracts in `typechain/` directory.
+
 === Test contracts
 
 There are multiple test scenarios living in the `test` directory.
@@ -53,4 +57,19 @@ You can run them by doing:
 
 ```sh
 yarn test
+```
+
+=== Deploy contracts
+
+To deploy contract execute:
+
+```
+yarn deploy --network <NETWORK>
+```
+
+After the Bridge contract from tbtc-v2 is deployed it has to be set as the
+Wallet Owner in the `WalletRegistry`:
+
+```
+npx hardhat --network <NETWORK> initialize-wallet-owner --wallet-owner-address <BRIDGE_ADDRESS>
 ```

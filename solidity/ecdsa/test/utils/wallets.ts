@@ -1,56 +1,44 @@
-import { helpers } from "hardhat"
-import { keccak256 } from "ethers/lib/utils"
+import { helpers, ethers } from "hardhat"
 
 import { params } from "../fixtures"
 import ecdsaData from "../data/ecdsa"
 
-import {
-  calculateDkgSeed,
-  noMisbehaved,
-  signAndSubmitCorrectDkgResult,
-} from "./dkg"
+import { noMisbehaved, signAndSubmitCorrectDkgResult } from "./dkg"
+import { fakeRandomBeacon } from "./randomBeacon"
 
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { BigNumber, ContractTransaction } from "ethers"
+import type { DkgResult } from "./dkg"
 import type { WalletRegistry } from "../../typechain"
 import type { Operator } from "./operators"
+import type { BytesLike, ContractTransaction, Signer } from "ethers"
 
 const { mineBlocks } = helpers.time
+const { keccak256 } = ethers.utils
 
-export async function requestNewWallet(
+// eslint-disable-next-line import/prefer-default-export
+export async function createNewWallet(
   walletRegistry: WalletRegistry,
-  walletOwner: SignerWithAddress
+  walletOwner: Signer,
+  publicKey: BytesLike = ecdsaData.group1.publicKey
 ): Promise<{
+  members: Operator[]
+  dkgResult: DkgResult
+  walletID: string
   tx: ContractTransaction
-  startBlock: number
-  dkgSeed: BigNumber
 }> {
-  const tx: ContractTransaction = await walletRegistry
+  const requestNewWalletTx = await walletRegistry
     .connect(walletOwner)
     .requestNewWallet()
 
-  const startBlock: number = tx.blockNumber
+  const randomBeacon = await fakeRandomBeacon(walletRegistry)
 
-  const dkgSeed: BigNumber = calculateDkgSeed(
-    await walletRegistry.relayEntry(),
-    startBlock
-  )
+  const relayEntry = ethers.utils.randomBytes(32)
 
-  return { tx, startBlock, dkgSeed }
-}
+  const dkgSeed = ethers.BigNumber.from(keccak256(relayEntry))
 
-export async function createNewWallet(
-  walletRegistry: WalletRegistry,
-  walletOwner: SignerWithAddress,
-  publicKey = ecdsaData.group1.publicKey
-): Promise<{
-  members: Operator[]
-  publicKeyHash: string
-}> {
-  const { dkgSeed, startBlock } = await requestNewWallet(
-    walletRegistry,
-    walletOwner
-  )
+  // eslint-disable-next-line no-underscore-dangle
+  await walletRegistry
+    .connect(randomBeacon.wallet)
+    .__beaconCallback(relayEntry, 0)
 
   const {
     dkgResult,
@@ -60,13 +48,20 @@ export async function createNewWallet(
     walletRegistry,
     publicKey,
     dkgSeed,
-    startBlock,
+    requestNewWalletTx.blockNumber,
     noMisbehaved
   )
 
   await mineBlocks(params.dkgResultChallengePeriodLength)
 
-  await walletRegistry.connect(submitter).approveDkgResult(dkgResult)
+  const approveDkgResultTx = await walletRegistry
+    .connect(submitter)
+    .approveDkgResult(dkgResult)
 
-  return { members, publicKeyHash: keccak256(publicKey) }
+  return {
+    members,
+    dkgResult,
+    walletID: keccak256(publicKey),
+    tx: approveDkgResultTx,
+  }
 }

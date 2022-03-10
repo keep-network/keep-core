@@ -1,9 +1,11 @@
 /* eslint-disable no-await-in-loop */
 
 import { ethers } from "hardhat"
+
+import { constants } from "../fixtures"
+
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber } from "ethers"
-import { constants } from "../fixtures"
 import type { RandomBeacon } from "../../typechain"
 
 export type OperatorID = number

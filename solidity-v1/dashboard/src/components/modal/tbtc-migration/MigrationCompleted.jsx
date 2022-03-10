@@ -135,7 +135,7 @@ export const MigrationCompleted = withBaseModal(
         </ModalBody>
         <ModalFooter>
           <Button className="btn btn-secondary btn-lg" onClick={onClose}>
-            Close
+            close
           </Button>
         </ModalFooter>
       </>

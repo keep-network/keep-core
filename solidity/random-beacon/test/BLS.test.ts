@@ -1,7 +1,9 @@
 import { waffle } from "hardhat"
 import { expect } from "chai"
+
 import blsData from "./data/bls"
 import { blsDeployment } from "./fixtures"
+
 import type { BLS } from "../typechain"
 
 describe("BLS", () => {

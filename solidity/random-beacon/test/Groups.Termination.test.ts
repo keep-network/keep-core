@@ -2,8 +2,10 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import type { GroupsStub } from "../typechain"
+
 import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
+
+import type { GroupsStub } from "../typechain"
 
 const fixture = async () => {
   const GroupsStub = await ethers.getContractFactory("GroupsStub")
@@ -240,11 +242,10 @@ describe("Groups", () => {
 
     async function addGroups(start, numberOfGroups) {
       for (let i = start; i <= numberOfGroups; i++) {
-        await groups.addCandidateGroup(
+        await groups.addGroup(
           ethers.utils.hexlify(i),
           hashDKGMembers(members, noMisbehaved)
         )
-        await groups.activateCandidateGroup()
       }
     }
 

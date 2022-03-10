@@ -39,7 +39,10 @@ export class DataTable extends React.Component {
             <td
               key={cellKey}
               className={column.props.tdClassName}
-              style={{ verticalAlign: centered ? "middle" : "baseline" }}
+              style={{
+                verticalAlign: centered ? "middle" : "baseline",
+                ...column.props.tdStyles,
+              }}
             >
               <span className="responsive-header">{column.props.header}</span>
               {this.renderColumnContent(column, item)}

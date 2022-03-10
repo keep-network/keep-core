@@ -1,5 +1,8 @@
-import { BigNumber, BigNumberish } from "ethers"
+import { BigNumber } from "ethers"
+
 import { constants } from "../fixtures"
+
+import type { BigNumberish } from "ethers"
 
 /* eslint-disable import/prefer-default-export */
 export function firstEligibleIndex(

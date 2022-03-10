@@ -76,6 +76,13 @@ export { ReactComponent as Star } from "../static/svg/star.svg"
 export { ReactComponent as Bell } from "../static/svg/bell.svg"
 export { ReactComponent as MBTC } from "../static/svg/mBTC.svg"
 export { ReactComponent as TBTC_V2 } from "../static/svg/tbtc_v2.svg"
+export { ReactComponent as ArrowsRight } from "../static/svg/arrows-right.svg"
+export { ReactComponent as TLogo } from "../static/svg/t-logo.svg"
+export { ReactComponent as AlertFill } from "../static/svg/alert-fill.svg"
+export { ReactComponent as ArrowTopRight } from "../static/svg/arrow-top-right.svg"
+export { ReactComponent as QuestionFill } from "../static/svg/question-fill.svg"
+export { ReactComponent as EarnThresholdTokens } from "../static/svg/earn-threshold-tokens.svg"
+export { ReactComponent as Money } from "../static/svg/money.svg"
 
 const Badge = ({ height, width }) => (
   <svg

@@ -16,15 +16,19 @@ export async function selectGroup(
 ): Promise<Operator[]> {
   const identifiers = await sortitionPool.selectGroup(
     constants.groupSize,
-    seed.toHexString()
+    ethers.utils.hexZeroPad(seed.toHexString(), 32)
   )
 
   const addresses = await sortitionPool.getIDOperators(identifiers)
 
-  return identifiers.map((identifier, i) => ({
-    id: identifier,
-    address: addresses[i],
-  }))
+  return Promise.all(
+    identifiers.map(
+      async (identifier, i): Promise<Operator> => ({
+        id: identifier,
+        signer: await ethers.getSigner(addresses[i]),
+      })
+    )
+  )
 }
 
 export function hashUint32Array(arrayToHash: BigNumberish[]): string {

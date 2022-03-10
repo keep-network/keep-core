@@ -66,9 +66,12 @@ export const LINK = {
       "https://forum.keep.network/t/proposal-remove-incentives-for-the-keep-tbtc-pool/56",
     removeIncentivesForTBTCETHpool:
       "https://forum.keep.network/t/proposal-to-remove-incentives-for-tbtc-eth-pool/341",
+    repurposingKEEPETHLiquidityIncentives:
+      "https://forum.keep.network/t/repurposing-keep-eth-liquidity-incentives/387",
   },
   tbtcDapp: "https://dapp.tbtc.network",
-  thresholdDapp: "https://dashboard.test.threshold.network/",
+  thresholdDapp: "https://dashboard.threshold.network/",
+  setUpPRE: "https://interim-pre-application-docs.readthedocs.io/en/latest/",
 }
 
 export const WALLETS = {
@@ -218,6 +221,7 @@ export const AUTH_CONTRACTS_LABEL = {
   TBTC_SYSTEM: "TBTCSystem",
   BONDED_ECDSA_KEEP_FACTORY: "BondedECDSAKeepFactory",
   RANDOM_BEACON: "Keep Random Beacon Operator Contract",
+  THRESHOLD_TOKEN_STAKING: "Threshold Staking",
 }
 
 export const TBTC_TOKEN_VERSION = {
@@ -268,6 +272,15 @@ export const MODAL_TYPES = {
   ConfirmCovPoolIncreaseWithdrawal: "ConfirmCovPoolIncreaseWithdrawal",
   IncreaseCovPoolWithdrawal: "IncreaseCovPoolWithdrawal",
   WithdrawGrantedTokens: "WithdrawGrantedTokens",
+  AuthorizeAndStakeOnThreshold: "AuthorizeAndStakeOnThreshold",
+  StakeOnThresholdWithoutAuthorization: "StakeOnThresholdWithoutAuthorization",
+  StakeOnThresholdConfirmed: "StakeOnThresholdConfirmed",
+  ThresholdAuthorizationLoadingModal: "ThresholdAuthorizationLoadingModal",
+  ThresholdStakeConfirmationLoadingModal:
+    "ThresholdStakeConfirmationLoadingModal",
+  AuthorizedButNotStakedToTWarningModal:
+    "AuthorizedButNotStakedToTWarningModal",
+  ContactYourGrantManagerWarning: "ContactYourGrantManagerWarning",
 }
 
 export const COV_POOL_TIMELINE_STEPS = {
@@ -275,6 +288,13 @@ export const COV_POOL_TIMELINE_STEPS = {
   WITHDRAW_DEPOSIT: 2,
   COOLDOWN: 3,
   CLAIM_TOKENS: 4,
+}
+
+export const STAKE_ON_THRESHOLD_TIMELINE_STEPS = {
+  NONE: 0,
+  AUTHORIZE_CONTRACT: 1,
+  CONFIRM_STAKE: 2,
+  SET_UP_PRE: 3,
 }
 
 export const COV_POOLS_FORMS_MAX_DECIMAL_PLACES = 6
@@ -311,3 +331,5 @@ export const UNDELEGATE_STAKE_CALENDAR_EVENT = {
   // eslint-disable-next-line no-template-curly-in-string
   location: "https://dashboard.keep.network/${address}/overview",
 }
+
+export const GRANT_MANAGER_EMAIL = "grantmanager@keep.network"

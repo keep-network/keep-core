@@ -7,14 +7,17 @@ import { BigNumber } from "ethers"
 import { selectGroup } from "./groups"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { BigNumberish, ContractTransaction } from "ethers"
+import type { BigNumberish, ContractTransaction, BytesLike } from "ethers"
 import type { SortitionPool, WalletRegistry } from "../../typechain"
 import type { Operator } from "./operators"
-import type { DkgResultSubmittedEvent, ResultStruct } from "../../typechain/DKG"
+import type {
+  DkgResultSubmittedEvent,
+  ResultStruct,
+} from "../../typechain/EcdsaDkg"
 
 export interface DkgResult {
   submitterMemberIndex: number
-  groupPubKey: string
+  groupPubKey: BytesLike
   misbehavedMembersIndices: number[]
   signatures: string
   signingMembersIndices: number[]
@@ -43,10 +46,10 @@ export function calculateDkgSeed(
 // seed.
 export async function signAndSubmitCorrectDkgResult(
   walletRegistry: WalletRegistry,
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   seed: BigNumber,
   startBlock: number,
-  misbehavedIndices: number[],
+  misbehavedIndices = noMisbehaved,
   submitterIndex = 1,
   numberOfSignatures = 51
 ): Promise<{
@@ -85,7 +88,7 @@ const DKG_RESULT_PARAMS_SIGNATURE =
 // for preparing invalid or malicious results for testing purposes.
 export async function signAndSubmitArbitraryDkgResult(
   walletRegistry: WalletRegistry,
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
@@ -113,7 +116,7 @@ export async function signAndSubmitArbitraryDkgResult(
     )
   )
 
-  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+  const submitter = signers[submitterIndex - 1].signer
 
   return {
     dkgResult,
@@ -163,7 +166,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
     )
   )
 
-  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+  const submitter = signers[submitterIndex - 1].signer
 
   return {
     dkgResult,
@@ -175,7 +178,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
 
 export async function signDkgResult(
   signers: Operator[],
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   misbehavedMembersIndices: number[],
   startBlock: number,
   submitterIndex = 1,
@@ -194,7 +197,7 @@ export async function signDkgResult(
   const signingMembersIndices: number[] = []
   const signatures: string[] = []
   for (let i = 0; i < signers.length; i++) {
-    const { id, address } = signers[i]
+    const { id, signer: ethersSigner } = signers[i]
     members.push(id)
 
     if (signatures.length === numberOfSignatures) {
@@ -206,7 +209,6 @@ export async function signDkgResult(
 
     signingMembersIndices.push(signerIndex)
 
-    const ethersSigner = await ethers.getSigner(address)
     const signature = await ethersSigner.signMessage(
       ethers.utils.arrayify(resultHash)
     )
@@ -266,7 +268,7 @@ export function hashDKGMembers(
   )
 }
 
-interface DkgResultSubmittedEventArgs {
+export interface DkgResultSubmittedEventArgs {
   resultHash: string
   seed: BigNumber
   result: ResultStruct
@@ -297,10 +299,6 @@ export async function expectDkgResultSubmittedEvent(
     actualArgs.result.length,
     "invalid result args length"
   ).to.be.equal(Object.keys(expectedArgs.result).length)
-
-  await expect(actualArgs.resultHash, "invalid resultHash").to.be.equal(
-    expectedArgs.resultHash
-  )
 
   await expect(actualArgs.resultHash, "invalid resultHash").to.be.equal(
     expectedArgs.resultHash

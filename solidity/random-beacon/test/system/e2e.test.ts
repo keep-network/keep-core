@@ -8,14 +8,13 @@ import {
   getNamedAccounts,
 } from "hardhat"
 import { expect } from "chai"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+
 import {
   constants,
   dkgState,
   params,
   randomBeaconDeployment,
 } from "../fixtures"
-import type { RandomBeacon, RandomBeaconStub, TestToken } from "../../typechain"
 import {
   genesis,
   signAndSubmitCorrectDkgResult,
@@ -23,6 +22,9 @@ import {
 } from "../utils/dkg"
 import blsData from "../data/bls"
 import { registerOperators } from "../utils/operators"
+
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { RandomBeacon, RandomBeaconStub, TestToken } from "../../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
@@ -59,8 +61,8 @@ describe("System -- e2e", () => {
   // same as in RandomBeacon constructor
   const relayRequestFee = to1e18(200)
   const relayEntryHardTimeout = 5760
-  const relayEntrySubmissionEligibilityDelay = 20
-  const callbackGasLimit = 50000
+  const relayEntrySoftTimeout = 20
+  const callbackGasLimit = 56000
   const groupCreationFrequency = 5
   const groupLifetime = 403200
   const groupPubKeys = [
@@ -69,7 +71,7 @@ describe("System -- e2e", () => {
     blsData.groupPubKey3,
   ]
 
-  let randomBeacon: RandomBeaconStub & RandomBeacon
+  let randomBeacon: RandomBeacon
   let testToken: TestToken
   let requester: SignerWithAddress
   let owner: SignerWithAddress
@@ -86,7 +88,7 @@ describe("System -- e2e", () => {
       .connect(owner)
       .updateRelayEntryParameters(
         relayRequestFee,
-        relayEntrySubmissionEligibilityDelay,
+        relayEntrySoftTimeout,
         relayEntryHardTimeout,
         callbackGasLimit
       )
@@ -137,8 +139,6 @@ describe("System -- e2e", () => {
         .connect(dkgResult.submitter)
         .approveDkgResult(dkgResult.dkgResult)
 
-      // Ids of groups that sign a given request in order
-      const signingGroupIds = [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 2, 1, 2, 2, 0, 1]
       for (let i = 1; i <= 14; i++) {
         await approveTestToken(requester)
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)

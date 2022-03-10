@@ -1,53 +1,12 @@
-import {
-  deployments,
-  ethers,
-  getUnnamedAccounts,
-  waffle,
-  helpers,
-} from "hardhat"
+import { deployments, ethers, getUnnamedAccounts, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { constants } from "./fixtures"
+import { params } from "./fixtures"
 
-import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, SortitionPool, StakingStub } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
-
-async function fixture(): Promise<{
-  walletRegistry: WalletRegistry
-  sortitionPool: SortitionPool
-  staking: StakingStub
-  stakingProvider: SignerWithAddress
-  operator: SignerWithAddress
-  thirdParty: SignerWithAddress
-}> {
-  await deployments.fixture(["WalletRegistry"])
-
-  const walletRegistry: WalletRegistry = await ethers.getContract(
-    "WalletRegistry"
-  )
-  const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
-  const staking: StakingStub = await ethers.getContract("StakingStub")
-
-  const stakingProvider = await ethers.getSigner(
-    (
-      await getUnnamedAccounts()
-    )[0]
-  )
-  const operator = await ethers.getSigner((await getUnnamedAccounts())[1])
-  const thirdParty = await ethers.getSigner((await getUnnamedAccounts())[2])
-
-  return {
-    walletRegistry,
-    sortitionPool,
-    staking,
-    stakingProvider,
-    operator,
-    thirdParty,
-  }
-}
 
 describe("WalletRegistry - Pool", () => {
   let walletRegistry: WalletRegistry
@@ -58,15 +17,15 @@ describe("WalletRegistry - Pool", () => {
   let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({
-      walletRegistry,
-      sortitionPool,
-      staking,
-      stakingProvider,
-      operator,
-      thirdParty,
-    } = await waffle.loadFixture(fixture))
+    await deployments.fixture(["WalletRegistry"])
+
+    walletRegistry = await ethers.getContract("WalletRegistry")
+    sortitionPool = await ethers.getContract("SortitionPool")
+    staking = await ethers.getContract("StakingStub")
+
+    stakingProvider = await ethers.getSigner((await getUnnamedAccounts())[0])
+    operator = await ethers.getSigner((await getUnnamedAccounts())[1])
+    thirdParty = await ethers.getSigner((await getUnnamedAccounts())[2])
 
     // FIXME: Remove this assignment once Token Staking integration is implemented.
     stakingProvider = operator
@@ -80,7 +39,7 @@ describe("WalletRegistry - Pool", () => {
         await staking.increaseAuthorization(
           stakingProvider.address,
           walletRegistry.address,
-          constants.minimumStake
+          params.minimumAuthorization
         )
       })
 
@@ -143,7 +102,7 @@ describe("WalletRegistry - Pool", () => {
         await staking.increaseAuthorization(
           stakingProvider.address,
           ethers.constants.AddressZero,
-          constants.minimumStake
+          params.minimumAuthorization
         )
         await walletRegistry.connect(operator).registerOperator()
       })
