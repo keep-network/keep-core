@@ -37,9 +37,9 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
 
     event SendingEtherFailed(uint256 refundAmount, address receiver);
 
-    event AuthorizeContract(address thirdPartyContract);
+    event AuthorizedContract(address thirdPartyContract);
 
-    event UnauthorizeContract(address thirdPartyContract);
+    event UnauthorizedContract(address thirdPartyContract);
 
     event FundsWithdrawn(uint256 withdrawnAmount, address receiver);
 
@@ -90,7 +90,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     function authorize(address _contract) external onlyOwner {
         isAuthorized[_contract] = true;
 
-        emit AuthorizeContract(_contract);
+        emit AuthorizedContract(_contract);
     }
 
     /// @notice Unauthorize a contract that was previously authorized to interact
@@ -100,7 +100,7 @@ contract ReimbursementPool is Ownable, ReentrancyGuard {
     function unauthorize(address _contract) external onlyOwner {
         delete isAuthorized[_contract];
 
-        emit UnauthorizeContract(_contract);
+        emit UnauthorizedContract(_contract);
     }
 
     /// @notice Setting a static gas cost for executing a transaction. Can be set
