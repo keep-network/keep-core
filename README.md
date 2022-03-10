@@ -1,3 +1,8 @@
+<div align="center">
+    <img src="https://github.com/1inch/farming/blob/master/.github/1inch_github_w.svg#gh-light-mode-only">
+    <img src="https://github.com/1inch/farming/blob/master/.github/1inch_github_b.svg#gh-dark-mode-only">
+</div>
+
 # Merkle Distribution
 [![Build Status](https://github.com/1inch/merkle-distribution/actions/workflows/test.yml/badge.svg)](https://github.com/1inch/merkle-distribution/actions)
 [![Coverage Status](https://coveralls.io/repos/github/1inch/merkle-distribution/badge.svg?branch=master)](https://coveralls.io/github/1inch/merkle-distribution?branch=master)
