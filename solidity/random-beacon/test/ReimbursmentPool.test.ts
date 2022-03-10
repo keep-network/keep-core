@@ -2,9 +2,11 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { ContractTransaction } from "ethers"
+
 import { reimbursmentPoolDeployment, params } from "./fixtures"
+
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { ContractTransaction } from "ethers"
 import type { ReimbursementPool } from "../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
