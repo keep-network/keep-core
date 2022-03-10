@@ -280,7 +280,7 @@ describe("ReimbursementPool", () => {
             refundee.address
           )
 
-          await reimbursementPool
+          const tx = await reimbursementPool
             .connect(thirdPartyContract)
             .refund(50000, refundee.address)
 
@@ -290,14 +290,10 @@ describe("ReimbursementPool", () => {
           const refundeeBalanceDiff = refundeeBalanceAfter.sub(
             refundeeBalanceBefore
           )
-          expect(refundeeBalanceDiff).to.be.gt(0)
-
           // consumed gas: 50k + 41.9k = 91.9k
-          // tx.gasPrice: ~1.6gwei
-          // refund: 91.9k * 1.6 =~ 147k gwei
-          expect(refundeeBalanceDiff).to.be.lt(
-            ethers.utils.parseUnits("147000", "gwei")
-          )
+          // refund: 91.9k * tx.gasPrice
+          const expectedRefund = ethers.BigNumber.from(91900).mul(tx.gasPrice)
+          expect(refundeeBalanceDiff).to.be.equal(expectedRefund)
         })
 
         it("should not emit SendingEtherFailed event", async () => {
