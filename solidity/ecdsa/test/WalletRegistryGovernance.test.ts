@@ -1,7 +1,7 @@
 import { deployments, ethers, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 
-import { params, updateWalletRegistryParams } from "./fixtures"
+import { constants, params, updateWalletRegistryParams } from "./fixtures"
 
 import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -171,6 +171,143 @@ describe("WalletRegistryGovernance", async () => {
     })
   })
 
+  describe("beginGovernanceDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginGovernanceDelayUpdate(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginGovernanceDelayUpdate(1337)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the governance delay", async () => {
+        expect(await walletRegistryGovernance.governanceDelay()).to.be.equal(
+          constants.governanceDelay
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingGovernanceDelayUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit GovernanceDelayUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(walletRegistryGovernance, "GovernanceDelayUpdateStarted")
+          .withArgs(1337, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeGovernanceDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginGovernanceDelayUpdate(7331)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginGovernanceDelayUpdate(7331)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the governance delay", async () => {
+          expect(await walletRegistryGovernance.governanceDelay()).to.be.equal(
+            7331
+          )
+        })
+
+        it("should emit GovernanceDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "GovernanceDelayUpdated")
+            .withArgs(7331)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingGovernanceDelayUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
   describe("beginWalletOwnerUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
@@ -183,7 +320,7 @@ describe("WalletRegistryGovernance", async () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -197,7 +334,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      it("should not update when a new owner is zero address", async () => {
+      describe("when new wallet owner is zero address", async () => {
         it("should revert", async () => {
           await expect(
             walletRegistryGovernance
@@ -216,7 +353,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingWalletOwnerUpdateTime()
-        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the WalletOwnerUpdateStarted event", async () => {
@@ -258,7 +395,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginWalletOwnerUpdate(thirdParty.address)
 
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -273,7 +410,7 @@ describe("WalletRegistryGovernance", async () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -282,7 +419,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginWalletOwnerUpdate(thirdParty.address)
 
-          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -349,7 +486,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingMimimumAuthorizationUpdateTime()
-        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the MinimumAuthorizationUpdateStarted event", async () => {
@@ -394,7 +531,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginMinimumAuthorizationUpdate(123)
 
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -418,7 +555,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginMinimumAuthorizationUpdate(123)
 
-          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -483,7 +620,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
-        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the AuthorizationDecreaseDelayUpdateStarted event", async () => {
@@ -527,7 +664,7 @@ describe("WalletRegistryGovernance", async () => {
         await walletRegistryGovernance
           .connect(governance)
           .beginAuthorizationDecreaseDelayUpdate(123)
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
         await expect(
           walletRegistryGovernance
             .connect(governance)
@@ -550,7 +687,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginAuthorizationDecreaseDelayUpdate(123)
 
-          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -620,7 +757,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingMaliciousDkgResultSlashingAmountUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the MaliciousDkgResultSlashingAmountUpdateStarted event", async () => {
@@ -665,7 +802,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -689,7 +826,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -769,7 +906,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingMaliciousDkgResultNotificationRewardMultiplierUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the MaliciousDkgResultNotificationRewardMultiplierUpdateStarted event", async () => {
@@ -814,7 +951,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginMaliciousDkgResultNotificationRewardMultiplierUpdate(100)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -838,7 +975,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginMaliciousDkgResultNotificationRewardMultiplierUpdate(100)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -945,7 +1082,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingDkgSeedTimeoutUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the DkgSeedTimeoutUpdateStarted event", async () => {
@@ -987,7 +1124,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginDkgSeedTimeoutUpdate(11)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -1011,7 +1148,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginDkgSeedTimeoutUpdate(11)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -1108,7 +1245,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingDkgResultChallengePeriodLengthUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the DkgResultChallengePeriodLengthUpdateStarted event", async () => {
@@ -1153,7 +1290,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(11)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -1177,7 +1314,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginDkgResultChallengePeriodLengthUpdate(11)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -1278,7 +1415,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingDkgResultSubmissionTimeoutUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the DkgResultSubmissionTimeoutUpdateStarted event", async () => {
@@ -1323,7 +1460,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginDkgResultSubmissionTimeoutUpdate(1)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -1347,7 +1484,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginDkgResultSubmissionTimeoutUpdate(10)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
@@ -1448,7 +1585,7 @@ describe("WalletRegistryGovernance", async () => {
       it("should start the governance delay timer", async () => {
         expect(
           await walletRegistryGovernance.getRemainingSubmitterPrecedencePeriodLengthUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(constants.governanceDelay)
       })
 
       it("should emit the DkgSubmitterPrecedencePeriodLengthUpdateStarted event", async () => {
@@ -1493,7 +1630,7 @@ describe("WalletRegistryGovernance", async () => {
           .connect(governance)
           .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
@@ -1517,7 +1654,7 @@ describe("WalletRegistryGovernance", async () => {
             .connect(governance)
             .beginDkgSubmitterPrecedencePeriodLengthUpdate(10)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)

@@ -23,7 +23,7 @@ export const constants = {
   groupSize: 100,
   groupThreshold: 51,
   poolWeightDivisor: to1e18(1),
-  governanceDelayCritical: 1209600, // 2 weeks
+  governanceDelay: 604800, // 1 week
 }
 
 export const dkgState = {
@@ -146,7 +146,7 @@ export async function updateWalletRegistryParams(
       params.dkgSubmitterPrecedencePeriodLength
     )
 
-  await helpers.time.increaseTime(constants.governanceDelayCritical)
+  await helpers.time.increaseTime(constants.governanceDelay)
 
   await walletRegistryGovernance
     .connect(governance)
