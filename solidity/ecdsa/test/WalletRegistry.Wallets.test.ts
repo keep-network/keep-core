@@ -14,6 +14,36 @@ import type { FakeContract } from "@defi-wonderland/smock"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
+const validTestData = [
+  {
+    context: "with valid ECDSA key",
+    publicKey: ecdsaData.group1.publicKey,
+    expectedWalletID:
+      "0xa6602e554b8cf7c23538fd040e4ff3520ec680e5e5ce9a075259e613a3e5aa79",
+  },
+  {
+    context: "with leading zeros",
+    publicKey:
+      "0x000000440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
+    expectedWalletID:
+      "0xd13b4fe9e69dde1520091494b27aab6c48a0058967551a25c525c843be472589",
+  },
+  {
+    context: "with trailing zeros",
+    publicKey:
+      "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d00000000",
+    expectedWalletID:
+      "0x525e77a3052a07734c5736074a94b71dd9149650ef6a4c57dac696a3e287d03c",
+  },
+  {
+    context: "with zeros in the middle",
+    publicKey:
+      "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf0320000000061a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
+    expectedWalletID:
+      "0xa8b7226c57b544536f7bf805ef75c7b831488398da117644839f650c5be6cbe0",
+  },
+]
+
 describe("WalletRegistry - Wallets", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let walletOwner: FakeContract<IWalletOwner>
@@ -26,36 +56,7 @@ describe("WalletRegistry - Wallets", async () => {
   describe("approveDkgResult", async () => {
     context("with wallet not registered", async () => {
       context("with valid public key", async () => {
-        const testData = [
-          {
-            context: "with valid ECDSA key",
-            publicKey: ecdsaData.group1.publicKey,
-            expectedWalletID:
-              "0xa6602e554b8cf7c23538fd040e4ff3520ec680e5e5ce9a075259e613a3e5aa79",
-          },
-          {
-            context: "with leading zeros",
-            publicKey:
-              "0x000000440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
-            expectedWalletID:
-              "0xd13b4fe9e69dde1520091494b27aab6c48a0058967551a25c525c843be472589",
-          },
-          {
-            context: "with trailing zeros",
-            publicKey:
-              "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d00000000",
-            expectedWalletID:
-              "0x525e77a3052a07734c5736074a94b71dd9149650ef6a4c57dac696a3e287d03c",
-          },
-          {
-            context: "with zeros in the middle",
-            publicKey:
-              "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf0320000000061a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
-            expectedWalletID:
-              "0xa8b7226c57b544536f7bf805ef75c7b831488398da117644839f650c5be6cbe0",
-          },
-        ]
-        testData.forEach((test) => {
+        validTestData.forEach((test) => {
           let walletID: string
           let dkgResult: DkgResult
 
@@ -86,15 +87,6 @@ describe("WalletRegistry - Wallets", async () => {
             expect(wallet.publicKeyY, "unexpected public key Y").to.be.equal(
               ethers.utils.hexDataSlice(test.publicKey, 32)
             )
-          })
-
-          describe("getWalletPublicKey", async () => {
-            it("should return concatenated public key", async () => {
-              expect(
-                await walletRegistry.getWalletPublicKey(walletID),
-                "unexpected concatenated public key"
-              ).to.be.equal(test.publicKey)
-            })
           })
 
           it("should calculate wallet id", async () => {
@@ -243,38 +235,37 @@ describe("WalletRegistry - Wallets", async () => {
     })
 
     context("with wallet registered", async () => {
-      const walletPublicKey = ecdsaData.group1.publicKey
+      validTestData.forEach((test) => {
+        const walletPublicKey = test.publicKey
+        let walletID: string
 
-      // TODO: Add tests to cover zero padding
+        before("create a wallet", async () => {
+          await createSnapshot()
+          ;({ walletID } = await createNewWallet(
+            walletRegistry,
+            walletOwner.wallet,
+            walletPublicKey
+          ))
+        })
 
-      let walletID: string
+        after(async () => {
+          await restoreSnapshot()
+        })
 
-      before("create a wallet", async () => {
-        await createSnapshot()
-        ;({ walletID } = await createNewWallet(
-          walletRegistry,
-          walletOwner.wallet,
-          walletPublicKey
-        ))
-      })
+        it("should return uncompressed public key", async () => {
+          const actualPublicKey = await walletRegistry.getWalletPublicKey(
+            walletID
+          )
+          await expect(
+            actualPublicKey,
+            "returned public key doesn't match expected"
+          ).to.be.equal(walletPublicKey)
 
-      after(async () => {
-        await restoreSnapshot()
-      })
-
-      it("should return uncompressed public key", async () => {
-        const actualPublicKey = await walletRegistry.getWalletPublicKey(
-          walletID
-        )
-        await expect(
-          actualPublicKey,
-          "returned public key doesn't match expected"
-        ).to.be.equal(walletPublicKey)
-
-        await expect(
-          ethers.utils.arrayify(actualPublicKey),
-          "returned public key is not 64-byte long"
-        ).to.have.lengthOf(64)
+          await expect(
+            ethers.utils.arrayify(actualPublicKey),
+            "returned public key is not 64-byte long"
+          ).to.have.lengthOf(64)
+        })
       })
     })
   })
