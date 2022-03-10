@@ -47,6 +47,13 @@ describe("WalletRegistry - Wallets", async () => {
             expectedWalletID:
               "0x525e77a3052a07734c5736074a94b71dd9149650ef6a4c57dac696a3e287d03c",
           },
+          {
+            context: "with zeros in the middle",
+            publicKey:
+              "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf0320000000061a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
+            expectedWalletID:
+              "0xa8b7226c57b544536f7bf805ef75c7b831488398da117644839f650c5be6cbe0",
+          },
         ]
         testData.forEach((test) => {
           let walletID: string
@@ -73,9 +80,21 @@ describe("WalletRegistry - Wallets", async () => {
               "unexpected members ids hash"
             ).to.be.equal(hashUint32Array(dkgResult.members))
 
-            expect(wallet.publicKey, "unexpected public key").to.be.equal(
-              test.publicKey
+            expect(wallet.publicKeyX, "unexpected public key X").to.be.equal(
+              ethers.utils.hexDataSlice(test.publicKey, 0, 32)
             )
+            expect(wallet.publicKeyY, "unexpected public key Y").to.be.equal(
+              ethers.utils.hexDataSlice(test.publicKey, 32)
+            )
+          })
+
+          describe("getWalletPublicKey", async () => {
+            it("should return concatenated public key", async () => {
+              expect(
+                await walletRegistry.getWalletPublicKey(walletID),
+                "unexpected concatenated public key"
+              ).to.be.equal(test.publicKey)
+            })
           })
 
           it("should calculate wallet id", async () => {

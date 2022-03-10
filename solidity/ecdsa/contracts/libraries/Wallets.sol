@@ -24,9 +24,9 @@ library Wallets {
         // Keccak256 hash of group members identifiers array. Group members do not
         // include operators selected by the sortition pool that misbehaved during DKG.
         bytes32 membersIdsHash;
-        // Uncompressed ECDSA public key (64-byte long) as a concatenation of X
-        // and Y coordinates.
-        bytes publicKey;
+        // Uncompressed ECDSA public key stored as X and Y coordinates (32 bytes each).
+        bytes32 publicKeyX;
+        bytes32 publicKeyY;
     }
 
     struct Data {
@@ -43,18 +43,19 @@ library Wallets {
     function addWallet(
         Data storage self,
         bytes32 membersIdsHash,
-        bytes memory publicKey
+        bytes calldata publicKey
     ) internal returns (bytes32) {
         bytes32 walletID = keccak256(publicKey);
 
         require(
-            self.registry[walletID].publicKey.length == 0,
+            self.registry[walletID].publicKeyX == bytes32(0),
             "Wallet with the given public key already exists"
         );
         require(publicKey.length == 64, "Invalid length of the public key");
 
         self.registry[walletID].membersIdsHash = membersIdsHash;
-        self.registry[walletID].publicKey = publicKey;
+        self.registry[walletID].publicKeyX = bytes32(publicKey[:32]);
+        self.registry[walletID].publicKeyY = bytes32(publicKey[32:]);
 
         return walletID;
     }
@@ -67,7 +68,7 @@ library Wallets {
         view
         returns (bool)
     {
-        return self.registry[walletID].publicKey.length > 0;
+        return self.registry[walletID].publicKeyX != bytes32(0);
     }
 
     /// @notice Gets public key of a wallet with a given wallet ID.
@@ -85,6 +86,10 @@ library Wallets {
             "Wallet with given ID has not been registered"
         );
 
-        return self.registry[walletID].publicKey;
+        return
+            bytes.concat(
+                self.registry[walletID].publicKeyX,
+                self.registry[walletID].publicKeyY
+            );
     }
 }
