@@ -1,17 +1,19 @@
 import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import { BigNumber } from "ethers"
+
 import blsData from "./data/bls"
 import { constants, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
+import { registerOperators } from "./utils/operators"
+
 import type { DeployedContracts } from "./fixtures"
 import type {
   RandomBeaconStub,
   TestToken,
   CallbackContractStub,
+  RandomBeacon,
 } from "../typechain"
-import { registerOperators, Operator, OperatorID } from "./utils/operators"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -33,11 +35,11 @@ const fixture = async () => {
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
-    deployment.randomBeacon as RandomBeaconStub,
+    contracts.randomBeacon as RandomBeacon,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
-  await createGroup(contracts.randomBeacon as RandomBeaconStub, signers)
+  await createGroup(contracts.randomBeacon as RandomBeacon, signers)
 
   return { contracts, signers }
 }
@@ -45,7 +47,6 @@ const fixture = async () => {
 describe("RandomBeacon - Callback", () => {
   let requester: SignerWithAddress
   let submitter: SignerWithAddress
-  let signers: Operator[]
 
   let randomBeacon: RandomBeaconStub
   let testToken: TestToken
@@ -56,9 +57,7 @@ describe("RandomBeacon - Callback", () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
     submitter = await ethers.getSigner((await getUnnamedAccounts())[2])
 
-    let contracts
-      // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ contracts, signers } = await waffle.loadFixture(fixture))
+    const { contracts } = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
     testToken = contracts.testToken as TestToken
@@ -184,7 +183,7 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon.updateRelayEntryParameters(
             params.relayRequestFee,
-            params.relayEntrySubmissionEligibilityDelay,
+            params.relayEntrySoftTimeout,
             params.relayEntryHardTimeout,
             40000
           )

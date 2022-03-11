@@ -10,7 +10,7 @@ export const DelegationAlreadyExists = withBaseModal(({ operatorAddress }) => {
       <ModalBody>
         Delegate tokens for a different operator address or top-up the existing
         delegation for <strong>{operatorAddress}</strong>
-        &nbsp;operartor via <strong>ADD KEEP</strong> button under&nbsp;
+        &nbsp;operator via <strong>ADD KEEP</strong> button under&nbsp;
         <strong>Delegations</strong> table.
       </ModalBody>
     </>

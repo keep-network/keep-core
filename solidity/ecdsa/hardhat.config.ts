@@ -10,6 +10,8 @@ import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
 
+import "./tasks"
+
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
@@ -48,6 +50,11 @@ const config: HardhatUserConfig = {
       accounts: { count: 70 },
       tags: ["local"],
     },
+    development: {
+      url: "http://localhost:8545",
+      chainId: 1101,
+      tags: ["local"],
+    },
     ropsten: {
       url: process.env.CHAIN_API_URL || "",
       chainId: 3,
@@ -66,12 +73,11 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 1, // take the second account
+      // mainnet: ""
     },
     governance: {
       default: 2,
-    },
-    walletOwner: {
-      default: 3,
+      // mainnet: ""
     },
   },
   external: {
@@ -106,6 +112,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
+    except: ["TokenStaking$"],
   },
   mocha: {
     timeout: 60000,

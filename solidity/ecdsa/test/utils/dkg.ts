@@ -7,7 +7,7 @@ import { BigNumber } from "ethers"
 import { selectGroup } from "./groups"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { BigNumberish, ContractTransaction } from "ethers"
+import type { BigNumberish, ContractTransaction, BytesLike } from "ethers"
 import type { SortitionPool, WalletRegistry } from "../../typechain"
 import type { Operator } from "./operators"
 import type {
@@ -19,7 +19,7 @@ const { provider } = waffle
 
 export interface DkgResult {
   submitterMemberIndex: number
-  groupPubKey: string
+  groupPubKey: BytesLike
   misbehavedMembersIndices: number[]
   signatures: string
   signingMembersIndices: number[]
@@ -48,10 +48,10 @@ export function calculateDkgSeed(
 // seed.
 export async function signAndSubmitCorrectDkgResult(
   walletRegistry: WalletRegistry,
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   seed: BigNumber,
   startBlock: number,
-  misbehavedIndices: number[],
+  misbehavedIndices = noMisbehaved,
   submitterIndex = 1,
   numberOfSignatures = 51
 ): Promise<{
@@ -91,7 +91,7 @@ const DKG_RESULT_PARAMS_SIGNATURE =
 // for preparing invalid or malicious results for testing purposes.
 export async function signAndSubmitArbitraryDkgResult(
   walletRegistry: WalletRegistry,
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
@@ -186,7 +186,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
 
 export async function signDkgResult(
   signers: Operator[],
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   misbehavedMembersIndices: number[],
   startBlock: number,
   submitterIndex = 1,
@@ -307,10 +307,6 @@ export async function expectDkgResultSubmittedEvent(
     actualArgs.result.length,
     "invalid result args length"
   ).to.be.equal(Object.keys(expectedArgs.result).length)
-
-  await expect(actualArgs.resultHash, "invalid resultHash").to.be.equal(
-    expectedArgs.resultHash
-  )
 
   await expect(actualArgs.resultHash, "invalid resultHash").to.be.equal(
     expectedArgs.resultHash

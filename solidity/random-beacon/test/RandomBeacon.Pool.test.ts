@@ -2,8 +2,10 @@
 
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+
 import { randomBeaconDeployment, constants } from "./fixtures"
+
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { RandomBeaconStub, SortitionPool, StakingStub } from "../typechain"
 
 const fixture = async () => randomBeaconDeployment()

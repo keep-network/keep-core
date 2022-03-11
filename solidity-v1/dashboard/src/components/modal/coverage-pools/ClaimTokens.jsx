@@ -7,7 +7,7 @@ import OnlyIf from "../../OnlyIf"
 import { ViewInBlockExplorer } from "../../ViewInBlockExplorer"
 import { covKEEP, KEEP } from "../../../utils/token.utils"
 import { shortenAddress } from "../../../utils/general.utils"
-import { withTimeline } from "./withTimeline"
+import { withTimeline } from "../withTimeline"
 import { COV_POOL_TIMELINE_STEPS } from "../../../constants/constants"
 import { SubmitButton } from "../../Button"
 import Button from "../../Button"
@@ -84,6 +84,8 @@ const ClaimTokensComponent = ({
 
 export const ClaimTokens = withTimeline({
   title: "Claim",
-  step: COV_POOL_TIMELINE_STEPS.CLAIM_TOKENS,
-  withDescription: true,
+  timelineProps: {
+    step: COV_POOL_TIMELINE_STEPS.CLAIM_TOKENS,
+    withDescription: true,
+  },
 })(ClaimTokensComponent)

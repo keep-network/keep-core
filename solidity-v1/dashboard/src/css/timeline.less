@@ -45,6 +45,11 @@
               background-color: @color-brand-violet-80;
             }
 
+            &--semi-active {
+              border-color: @color-yellow-30;
+              background-color: @color-yellow-100;
+            }
+
             &--breaker {
               margin-top: 1rem;
               width: 24px;
@@ -71,6 +76,10 @@
 
             &--active {
               border-left: 2px solid @color-brand-violet-80;
+            }
+
+            &--semi-active {
+              border-left: 2px solid @color-yellow-100;
             }
           }
         }
@@ -103,6 +112,15 @@
 
     h4 {
       color: @color-brand-violet-80;
+    }
+  }
+
+  &--semi-active {
+    border-color: @color-yellow-60;
+    border-left-color: @color-yellow-100;
+
+    h4 {
+      color: @color-black;
     }
   }
 }

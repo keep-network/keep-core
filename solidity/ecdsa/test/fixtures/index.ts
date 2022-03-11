@@ -1,8 +1,10 @@
 import { deployments, ethers, helpers, getUnnamedAccounts } from "hardhat"
+import { smock } from "@defi-wonderland/smock"
 
 // eslint-disable-next-line import/no-cycle
 import { registerOperators } from "../utils/operators"
 
+import type { IWalletOwner } from "../../typechain/IWalletOwner"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Operator } from "../utils/operators"
 import type {
@@ -14,15 +16,15 @@ import type {
   WalletRegistryGovernance,
   T,
 } from "../../typechain"
+import type { FakeContract } from "@defi-wonderland/smock"
 
 const { to1e18 } = helpers.number
 
 export const constants = {
   groupSize: 100,
   groupThreshold: 51,
-  minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
-  governanceDelayStandard: 43200, // 12 hours
+  governanceDelay: 604800, // 1 week
 }
 
 export const dkgState = {
@@ -33,72 +35,104 @@ export const dkgState = {
 }
 
 export const params = {
+  minimumAuthorization: to1e18(400000),
+  authorizationDecreaseDelay: 5184000,
   dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
 }
 
-export const walletRegistryFixture = deployments.createFixture(async () => {
-  await deployments.fixture(["WalletRegistry"])
+export const walletRegistryFixture = deployments.createFixture(
+  async (): Promise<{
+    walletRegistry: WalletRegistryStub & WalletRegistry
+    walletRegistryGovernance: WalletRegistryGovernance
+    sortitionPool: SortitionPool
+    staking: StakingStub
+    walletOwner: FakeContract<IWalletOwner>
+    deployer: SignerWithAddress
+    governance: SignerWithAddress
+    thirdParty: SignerWithAddress
+    operators: Operator[]
+    reimbursementPool: ReimbursementPool
+  }> => {
+    await deployments.fixture(["WalletRegistry"])
 
-  const walletRegistry: WalletRegistryStub & WalletRegistry =
-    await ethers.getContract("WalletRegistry")
-  const walletRegistryGovernance: WalletRegistryGovernance =
-    await ethers.getContract("WalletRegistryGovernance")
-  const sortitionPool: SortitionPool = await ethers.getContract("SortitionPool")
+    const walletRegistry: WalletRegistryStub & WalletRegistry =
+      await ethers.getContract("WalletRegistry")
+    const walletRegistryGovernance: WalletRegistryGovernance =
+      await ethers.getContract("WalletRegistryGovernance")
+    const sortitionPool: SortitionPool = await ethers.getContract(
+      "SortitionPool"
+    )
+    const tToken: T = await ethers.getContract("T")
+    const staking: StakingStub = await ethers.getContract("StakingStub")
+
   const reimbursementPool: ReimbursementPool = await ethers.getContract(
     "ReimbursementPool"
   )
-  const tToken: T = await ethers.getContract("T")
-  const staking: StakingStub = await ethers.getContract("StakingStub")
 
-  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
-  const governance: SignerWithAddress = await ethers.getNamedSigner(
-    "governance"
-  )
-  const walletOwner: SignerWithAddress = await ethers.getNamedSigner(
-    "walletOwner"
-  )
+    const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+    const governance: SignerWithAddress = await ethers.getNamedSigner(
+      "governance"
+    )
 
-  const thirdParty: SignerWithAddress = await ethers.getSigner(
-    (
-      await getUnnamedAccounts()
-    )[0]
-  )
+    const thirdParty: SignerWithAddress = await ethers.getSigner(
+      (
+        await getUnnamedAccounts()
+      )[0]
+    )
 
-  // Accounts offset provided to slice getUnnamedAccounts have to include number
-  // of unnamed accounts that were already used.
-  const unnamedAccountsOffset = 1
-  const operators: Operator[] = await registerOperators(
-    walletRegistry,
-    tToken,
-    (
-      await getUnnamedAccounts()
-    ).slice(unnamedAccountsOffset, unnamedAccountsOffset + constants.groupSize)
-  )
+    // Accounts offset provided to slice getUnnamedAccounts have to include number
+    // of unnamed accounts that were already used.
+    const unnamedAccountsOffset = 1
+    const operators: Operator[] = await registerOperators(
+      walletRegistry,
+      tToken,
+      (
+        await getUnnamedAccounts()
+      ).slice(
+        unnamedAccountsOffset,
+        unnamedAccountsOffset + constants.groupSize
+      )
+    )
 
-  // Set parameters with tweaked values to reduce test execution time.
-  await updateWalletDkgRegistryParams(walletRegistryGovernance, governance)
+    // Set parameters with tweaked values to reduce test execution time.
+    await updateWalletRegistryParams(walletRegistryGovernance, governance)
 
-  return {
-    walletRegistry,
-    sortitionPool,
-    reimbursementPool,
-    walletOwner,
-    deployer,
-    governance,
-    thirdParty,
-    operators,
-    staking,
-    walletRegistryGovernance,
+    // Mock Wallet Owner contract.
+    const walletOwner: FakeContract<IWalletOwner> = await initializeWalletOwner(
+      walletRegistryGovernance,
+      governance
+    )
+
+    return {
+      walletRegistry,
+      sortitionPool,
+      reimbursementPool,
+      walletOwner,
+      deployer,
+      governance,
+      thirdParty,
+      operators,
+      staking,
+      walletRegistryGovernance,
+    }
   }
-})
+)
 
-async function updateWalletDkgRegistryParams(
+export async function updateWalletRegistryParams(
   walletRegistryGovernance: WalletRegistryGovernance,
   governance: SignerWithAddress
-) {
+): Promise<void> {
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginMinimumAuthorizationUpdate(params.minimumAuthorization)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginAuthorizationDecreaseDelayUpdate(params.authorizationDecreaseDelay)
+
   await walletRegistryGovernance
     .connect(governance)
     .beginDkgSeedTimeoutUpdate(params.dkgSeedTimeout)
@@ -119,7 +153,15 @@ async function updateWalletDkgRegistryParams(
       params.dkgSubmitterPrecedencePeriodLength
     )
 
-  await helpers.time.increaseTime(constants.governanceDelayStandard)
+  await helpers.time.increaseTime(constants.governanceDelay)
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeMinimumAuthorizationUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeAuthorizationDecreaseDelayUpdate()
 
   await walletRegistryGovernance
     .connect(governance)
@@ -136,4 +178,25 @@ async function updateWalletDkgRegistryParams(
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+}
+
+async function initializeWalletOwner(
+  walletRegistryGovernance: WalletRegistryGovernance,
+  governance: SignerWithAddress
+): Promise<FakeContract<IWalletOwner>> {
+  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+
+  const walletOwner: FakeContract<IWalletOwner> =
+    await smock.fake<IWalletOwner>("IWalletOwner")
+
+  await deployer.sendTransaction({
+    to: walletOwner.address,
+    value: ethers.utils.parseEther("1"),
+  })
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .initializeWalletOwner(walletOwner.address)
+
+  return walletOwner
 }

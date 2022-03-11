@@ -14,7 +14,6 @@ contract WalletRegistryStub is WalletRegistry {
         IWalletStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
-        address _walletOwner,
         ReimbursementPool _reimbursementPool
     )
         WalletRegistry(
@@ -22,7 +21,6 @@ contract WalletRegistryStub is WalletRegistry {
             _staking,
             _ecdsaDkgValidator,
             _randomBeacon,
-            _walletOwner,
             _reimbursementPool
         )
     {}

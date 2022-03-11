@@ -16,6 +16,7 @@ import { selectGroup, hashUint32Array } from "./utils/groups"
 import { createNewWallet } from "./utils/wallets"
 import { submitRelayEntry } from "./utils/randomBeacon"
 
+import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
@@ -27,6 +28,7 @@ import type {
 } from "../typechain"
 import type { DkgResult, DkgResultSubmittedEventArgs } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
+import type { FakeContract } from "@defi-wonderland/smock"
 
 const { to1e18 } = helpers.number
 const { mineBlocks, mineBlocksTo } = helpers.time
@@ -40,7 +42,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
   const groupPublicKey: string = ethers.utils.hexValue(
     ecdsaData.group1.publicKey
   )
-  const groupPublicKeyHash: string = ethers.utils.keccak256(groupPublicKey)
+  const walletID: string = ethers.utils.keccak256(groupPublicKey)
 
   const stubDkgResult: DkgResult = {
     submitterMemberIndex: 1,
@@ -56,9 +58,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let sortitionPool: SortitionPool
   let staking: StakingStub
   let reimbursementPool: ReimbursementPool
+  let walletOwner: FakeContract<IWalletOwner>
 
   let deployer: SignerWithAddress
-  let walletOwner: SignerWithAddress
   let thirdParty: SignerWithAddress
 
   let operators: Operator[]
@@ -105,7 +107,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
         before("start wallet creation", async () => {
           await createSnapshot()
-          tx = await walletRegistry.connect(walletOwner).requestNewWallet()
+          tx = await walletRegistry
+            .connect(walletOwner.wallet)
+            .requestNewWallet()
         })
 
         after(async () => {
@@ -145,7 +149,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       context("with new wallet requested", async () => {
         before("request new wallet", async () => {
           await createSnapshot()
-          await walletRegistry.connect(walletOwner).requestNewWallet()
+          await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
         })
 
         after(async () => {
@@ -155,7 +159,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         context("with relay entry not submitted", async () => {
           it("should revert with 'Current state is not IDLE' error", async () => {
             await expect(
-              walletRegistry.connect(walletOwner).requestNewWallet()
+              walletRegistry.connect(walletOwner.wallet).requestNewWallet()
             ).to.be.revertedWith("Current state is not IDLE")
           })
 
@@ -177,7 +181,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             context("with dkg result not submitted", async () => {
               it("should revert with 'Current state is not IDLE' error", async () => {
                 await expect(
-                  walletRegistry.connect(walletOwner).requestNewWallet()
+                  walletRegistry.connect(walletOwner.wallet).requestNewWallet()
                 ).to.be.revertedWith("Current state is not IDLE")
               })
             })
@@ -205,7 +209,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
               context("with dkg result not approved", async () => {
                 it("should revert with 'current state is not IDLE' error", async () => {
                   await expect(
-                    walletRegistry.connect(walletOwner).requestNewWallet()
+                    walletRegistry
+                      .connect(walletOwner.wallet)
+                      .requestNewWallet()
                   ).to.be.revertedWith("Current state is not IDLE")
                 })
               })
@@ -227,7 +233,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 it("should succeed", async () => {
                   await expect(
-                    walletRegistry.connect(walletOwner).requestNewWallet()
+                    walletRegistry
+                      .connect(walletOwner.wallet)
+                      .requestNewWallet()
                   ).to.not.be.reverted
                 })
               })
@@ -265,7 +273,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 it("should revert", async () => {
                   await expect(
-                    walletRegistry.connect(walletOwner).requestNewWallet()
+                    walletRegistry
+                      .connect(walletOwner.wallet)
+                      .requestNewWallet()
                   ).to.be.revertedWith("Current state is not IDLE")
                 })
               })
@@ -286,7 +296,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               it("should succeed", async () => {
                 await expect(
-                  walletRegistry.connect(walletOwner).requestNewWallet()
+                  walletRegistry.connect(walletOwner.wallet).requestNewWallet()
                 ).not.to.be.reverted
               })
             })
@@ -310,7 +320,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
     context("with new wallet requested", async () => {
       before("request new wallet", async () => {
         await createSnapshot()
-        await walletRegistry.connect(walletOwner).requestNewWallet()
+        await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
       })
 
       after(async () => {
@@ -487,7 +497,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       before(async () => {
         await createSnapshot()
-        const tx = await walletRegistry.connect(walletOwner).requestNewWallet()
+        const tx = await walletRegistry
+          .connect(walletOwner.wallet)
+          .requestNewWallet()
 
         requestNewWalletStartBlock = tx.blockNumber
       })
@@ -814,7 +826,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
     context("with new wallet requested", async () => {
       before("request new wallet", async () => {
         await createSnapshot()
-        await walletRegistry.connect(walletOwner).requestNewWallet()
+        await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
       })
 
       after(async () => {
@@ -1391,7 +1403,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
     context("with new wallet requested", async () => {
       before("request new wallet", async () => {
         await createSnapshot()
-        await walletRegistry.connect(walletOwner).requestNewWallet()
+        await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
       })
 
       after(async () => {
@@ -1533,9 +1545,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 })
 
                 it("should register a new wallet", async () => {
-                  const wallet = await walletRegistry.getWallet(
-                    groupPublicKeyHash
-                  )
+                  const wallet = await walletRegistry.getWallet(walletID)
 
                   await expect(wallet.membersIdsHash).to.be.equal(
                     hashUint32Array(dkgResult.members)
@@ -1559,7 +1569,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should emit WalletCreated event", async () => {
                   await expect(tx)
                     .to.emit(walletRegistry, "WalletCreated")
-                    .withArgs(groupPublicKeyHash, dkgResultHash)
+                    .withArgs(walletID, dkgResultHash)
                 })
 
                 it("should unlock the sortition pool", async () => {
@@ -1754,9 +1764,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               })
 
               it("should register a new wallet", async () => {
-                const wallet = await walletRegistry.getWallet(
-                  groupPublicKeyHash
-                )
+                const wallet = await walletRegistry.getWallet(walletID)
 
                 await expect(wallet.membersIdsHash).to.be.equal(
                   hashUint32Array(dkgResult.members)
@@ -1780,7 +1788,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               it("should emit WalletCreated event", async () => {
                 await expect(tx)
                   .to.emit(walletRegistry, "WalletCreated")
-                  .withArgs(groupPublicKeyHash, dkgResultHash)
+                  .withArgs(walletID, dkgResultHash)
               })
 
               it("should unlock the sortition pool", async () => {
@@ -1873,8 +1881,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               expectedMembers.splice(58, 1) // index -6
 
               expect(
-                (await walletRegistry.getWallet(groupPublicKeyHash))
-                  .membersIdsHash
+                (await walletRegistry.getWallet(walletID)).membersIdsHash
               ).to.be.equal(hashUint32Array(expectedMembers))
             })
 
@@ -2030,20 +2037,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
     context("with wallet registered", async () => {
       const existingWalletPublicKey: string = ecdsaData.group1.publicKey
-      let existingWalletPublicKeyHash: string
+      let existingWalletID: string
 
       before("create a wallet", async () => {
         await createSnapshot()
-        ;({ publicKeyHash: existingWalletPublicKeyHash } =
-          await createNewWallet(
-            walletRegistry,
-            walletOwner,
-            existingWalletPublicKey
-          ))
+        ;({ walletID: existingWalletID } = await createNewWallet(
+          walletRegistry,
+          walletOwner.wallet,
+          existingWalletPublicKey
+        ))
 
-        await expect(
-          await walletRegistry.isWalletRegistered(existingWalletPublicKeyHash)
-        ).to.be.true
+        await expect(await walletRegistry.isWalletRegistered(existingWalletID))
+          .to.be.true
       })
 
       after(async () => {
@@ -2058,7 +2063,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           "request new wallet creation and submit relay entry",
           async () => {
             await createSnapshot()
-            await walletRegistry.connect(walletOwner).requestNewWallet()
+            await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
             ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           }
         )
@@ -2082,7 +2087,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           let submitterBalance: BigNumber
 
           const newResultPublicKey = ecdsaData.group2.publicKey
-          const newResultPublicKeyHash = keccak256(newResultPublicKey)
+          const newWalletID = keccak256(newResultPublicKey)
           const newResultSubmitterIndex = 1
 
           before("submit dkg result", async () => {
@@ -2130,9 +2135,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
 
             it("should register a new wallet", async () => {
-              const wallet = await walletRegistry.getWallet(
-                newResultPublicKeyHash
-              )
+              const wallet = await walletRegistry.getWallet(newWalletID)
 
               await expect(wallet.membersIdsHash).to.be.equal(
                 hashUint32Array(dkgResult.members)
@@ -2142,7 +2145,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             it("should emit WalletCreated event", async () => {
               await expect(tx)
                 .to.emit(walletRegistry, "WalletCreated")
-                .withArgs(newResultPublicKeyHash, dkgResultHash)
+                .withArgs(newWalletID, dkgResultHash)
             })
 
             it("should unlock the sortition pool", async () => {
@@ -2177,7 +2180,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       context("with new wallet requested", async () => {
         before("request new wallet", async () => {
           await createSnapshot()
-          await walletRegistry.connect(walletOwner).requestNewWallet()
+          await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
         })
 
         after(async () => {
@@ -2396,7 +2399,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
 
               context("with token staking seize call failure", async () => {
-                const slashingAmount = constants.minimumStake.add(1)
+                const slashingAmount = params.minimumAuthorization.add(1)
 
                 let tx: Promise<ContractTransaction>
 
@@ -2609,7 +2612,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       before("create a wallet", async () => {
         await createSnapshot()
 
-        await createNewWallet(walletRegistry, walletOwner)
+        await createNewWallet(walletRegistry, walletOwner.wallet)
       })
 
       after(async () => {
@@ -2630,7 +2633,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           "request new wallet creation and submit relay entry",
           async () => {
             await createSnapshot()
-            await walletRegistry.connect(walletOwner).requestNewWallet()
+            await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
             ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
           }
         )
@@ -2924,7 +2927,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       it("should enforce submission start offset", async () => {
         let dkgResult: DkgResult
 
-        await walletRegistry.connect(walletOwner).requestNewWallet()
+        await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
         const { startBlock } = await submitRelayEntry(walletRegistry)
 
         // Submit result 1 at the beginning of the submission period
@@ -3061,7 +3064,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       before("request new wallet creation and submit relay entry", async () => {
         await createSnapshot()
-        await walletRegistry.connect(walletOwner).requestNewWallet()
+        await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
         ;({ startBlock, dkgSeed } = await submitRelayEntry(walletRegistry))
       })
 
@@ -3127,7 +3130,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       before(async () => {
         await createSnapshot()
-        const tx = await walletRegistry.connect(walletOwner).requestNewWallet()
+        const tx = await walletRegistry
+          .connect(walletOwner.wallet)
+          .requestNewWallet()
 
         requestNewWalletStartBlock = tx.blockNumber
       })
@@ -3220,7 +3225,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       before(async () => {
         await createSnapshot()
-        const tx = await walletRegistry.connect(walletOwner).requestNewWallet()
+        const tx = await walletRegistry
+          .connect(walletOwner.wallet)
+          .requestNewWallet()
 
         requestNewWalletStartBlock = tx.blockNumber
       })
@@ -3358,7 +3365,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
       before(async () => {
         await createSnapshot()
-        const tx = await walletRegistry.connect(walletOwner).requestNewWallet()
+        const tx = await walletRegistry
+          .connect(walletOwner.wallet)
+          .requestNewWallet()
 
         requestNewWalletStartBlock = tx.blockNumber
       })
