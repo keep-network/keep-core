@@ -3,7 +3,7 @@ import { expect } from "chai"
 
 import { randomBeaconDeployment } from "./fixtures"
 
-import type { Signer } from "ethers"
+import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -101,6 +101,143 @@ describe("RandomBeaconGovernance", () => {
     )
     await randomBeaconGovernance.deployed()
     await randomBeacon.transferOwnership(randomBeaconGovernance.address)
+  })
+
+  describe("beginGovernanceDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginGovernanceDelayUpdate(1)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginGovernanceDelayUpdate(1337)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the governance delay", async () => {
+        expect(await randomBeaconGovernance.governanceDelay()).to.be.equal(
+          governanceDelay
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingGovernanceDelayUpdateTime()
+        ).to.be.equal(governanceDelay)
+      })
+
+      it("should emit GovernanceDelayUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(randomBeaconGovernance, "GovernanceDelayUpdateStarted")
+          .withArgs(1337, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeGovernanceDelayUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginGovernanceDelayUpdate(7331)
+
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginGovernanceDelayUpdate(7331)
+
+          await helpers.time.increaseTime(governanceDelay)
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeGovernanceDelayUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the governance delay", async () => {
+          expect(await randomBeaconGovernance.governanceDelay()).to.be.equal(
+            7331
+          )
+        })
+
+        it("should emit GovernanceDelayUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "GovernanceDelayUpdated")
+            .withArgs(7331)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingGovernanceDelayUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
   })
 
   describe("beginRelayRequestFeeUpdate", () => {
