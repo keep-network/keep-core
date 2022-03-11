@@ -1970,7 +1970,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
     //       await walletRegistryGovernance.beginDkgResultSubmissionRewardUpdate(
     //         dkgRewardsPoolBalance.mul(2)
     //       )
-    //       await helpers.time.increaseTime(12 * 60 * 60)
+    //       await helpers.time.increaseTime(params.governanceDelay)
     //       await walletRegistryGovernance.finalizeDkgResultSubmissionRewardUpdate()
 
     //       const [genesisTx, genesisSeed] = await genesis(walletRegistry)

@@ -14,6 +14,8 @@ describe("RandomBeaconGovernance", () => {
   let randomBeacon: RandomBeacon
   let randomBeaconGovernance: RandomBeaconGovernance
 
+  const governanceDelay = 604800 // 1 week
+
   const initialRelayRequestFee = 100000
   const initialRelayEntrySoftTimeout = 10
   const initialRelayEntryHardTimeout = 100
@@ -95,7 +97,7 @@ describe("RandomBeaconGovernance", () => {
       "RandomBeaconGovernance"
     )
     randomBeaconGovernance = await RandomBeaconGovernance.deploy(
-      randomBeacon.address
+      randomBeacon.address, governanceDelay
     )
     await randomBeaconGovernance.deployed()
     await randomBeacon.transferOwnership(randomBeaconGovernance.address)
@@ -136,7 +138,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingRelayRequestFeeUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the RelayRequestFeeUpdateStarted event", async () => {
@@ -178,7 +180,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayRequestFeeUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60 - 10) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -202,7 +204,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginRelayRequestFeeUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -294,7 +296,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingRelayEntrySoftTimeoutUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the RelayEntrySoftTimeoutUpdateStarted event", async () => {
@@ -336,7 +338,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntrySoftTimeoutUpdate(1)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -360,7 +362,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginRelayEntrySoftTimeoutUpdate(1)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -425,7 +427,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingRelayEntryHardTimeoutUpdateTime()
-        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the RelayEntryHardTimeoutUpdateStarted event", async () => {
@@ -467,7 +469,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntryHardTimeoutUpdate(123)
 
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -491,7 +493,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginRelayEntryHardTimeoutUpdate(123)
 
-          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -607,7 +609,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingCallbackGasLimitUpdateTime()
-        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the CallbackGasLimitUpdateStarted event", async () => {
@@ -649,7 +651,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginCallbackGasLimitUpdate(123)
 
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -673,7 +675,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginCallbackGasLimitUpdate(123)
 
-          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -765,7 +767,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingGroupCreationFrequencyUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the GroupCreationFrequencyUpdateStarted event", async () => {
@@ -810,7 +812,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupCreationFrequencyUpdate(1)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -834,7 +836,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginGroupCreationFrequencyUpdate(1)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -947,7 +949,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingGroupLifetimeUpdateTime()
-        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the GroupLifetimeUpdateStarted event", async () => {
@@ -989,7 +991,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
 
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -1013,7 +1015,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginGroupLifetimeUpdate(2 * 24 * 60 * 60) // 2 days
 
-          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -1107,7 +1109,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingDkgResultChallengePeriodLengthUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the DkgResultChallengePeriodLengthUpdateStarted event", async () => {
@@ -1152,7 +1154,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultChallengePeriodLengthUpdate(11)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -1176,7 +1178,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginDkgResultChallengePeriodLengthUpdate(11)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -1273,7 +1275,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingDkgResultSubmissionTimeoutUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the DkgResultSubmissionTimeoutUpdateStarted event", async () => {
@@ -1318,7 +1320,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultSubmissionTimeoutUpdate(1)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -1343,7 +1345,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginDkgResultSubmissionTimeoutUpdate(newValue)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -1445,7 +1447,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingDkgSubmitterPrecedencePeriodLengthUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the DkgSubmitterPrecedencePeriodLengthUpdateStarted event", async () => {
@@ -1490,7 +1492,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -1514,7 +1516,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginDkgSubmitterPrecedencePeriodLengthUpdate(1)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -1584,7 +1586,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingDkgResultSubmissionRewardUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the DkgResultSubmissionRewardUpdateStarted event", async () => {
@@ -1629,7 +1631,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgResultSubmissionRewardUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -1653,7 +1655,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginDkgResultSubmissionRewardUpdate(123)
 
-          await helpers.time.increaseTime(24 * 60 * 60)
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -1720,7 +1722,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingSortitionPoolUnlockingRewardUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the SortitionPoolUnlockingRewardUpdateStarted event", async () => {
@@ -1765,7 +1767,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginSortitionPoolUnlockingRewardUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -1789,7 +1791,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginSortitionPoolUnlockingRewardUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -1859,7 +1861,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingIneligibleOperatorNotifierRewardUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the IneligibleOperatorNotifierRewardUpdateStarted event", async () => {
@@ -1904,7 +1906,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginIneligibleOperatorNotifierRewardUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -1928,7 +1930,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginIneligibleOperatorNotifierRewardUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -1998,7 +2000,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingRelayEntrySubmissionFailureSlashingAmountUpdateTime()
-        ).to.be.equal(14 * 24 * 60 * 60) // 2 weeks
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the RelayEntrySubmissionFailureSlashingAmountUpdateStarted event", async () => {
@@ -2043,7 +2045,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
 
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -2067,7 +2069,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginRelayEntrySubmissionFailureSlashingAmountUpdate(123)
 
-          await helpers.time.increaseTime(14 * 24 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -2137,7 +2139,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingUnauthorizedSigningSlashingAmountUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the UnauthorizedSigningSlashingAmountUpdateStarted event", async () => {
@@ -2182,7 +2184,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginUnauthorizedSigningSlashingAmountUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -2206,7 +2208,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginUnauthorizedSigningSlashingAmountUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -2276,7 +2278,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingMaliciousDkgResultSlashingAmountUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the MaliciousDkgResultSlashingAmountUpdateStarted event", async () => {
@@ -2321,7 +2323,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -2345,7 +2347,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginMaliciousDkgResultSlashingAmountUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -2415,7 +2417,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingSortitionPoolRewardsBanDurationUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the SortitionPoolRewardsBanDurationUpdateStarted event", async () => {
@@ -2460,7 +2462,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginSortitionPoolRewardsBanDurationUpdate(123)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -2484,7 +2486,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginSortitionPoolRewardsBanDurationUpdate(123)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -2564,7 +2566,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingUnauthorizedSigningNotificationRewardMultiplierUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the UnauthorizedSigningNotificationRewardMultiplierUpdateStarted event", async () => {
@@ -2609,7 +2611,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -2633,7 +2635,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(100)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -2713,7 +2715,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingRelayEntryTimeoutNotificationRewardMultiplierUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the RelayEntryTimeoutNotificationRewardMultiplierUpdateStarted event", async () => {
@@ -2758,7 +2760,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -2782,7 +2784,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(100)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -2852,7 +2854,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingMimimumAuthorizationUpdateTime()
-        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the MinimumAuthorizationUpdateStarted event", async () => {
@@ -2894,7 +2896,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginMinimumAuthorizationUpdate(123)
 
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -2918,7 +2920,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginMinimumAuthorizationUpdate(123)
 
-          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -2983,7 +2985,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
-        ).to.be.equal(24 * 14 * 60 * 60) // 2 weeks
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the AuthorizationDecreaseDelayUpdateStarted event", async () => {
@@ -3027,7 +3029,7 @@ describe("RandomBeaconGovernance", () => {
         await randomBeaconGovernance
           .connect(governance)
           .beginAuthorizationDecreaseDelayUpdate(123)
-        await helpers.time.increaseTime(13 * 24 * 60 * 60) // 13 days
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
         await expect(
           randomBeaconGovernance
             .connect(governance)
@@ -3050,7 +3052,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginAuthorizationDecreaseDelayUpdate(123)
 
-          await helpers.time.increaseTime(24 * 14 * 60 * 60) // 2 weeks
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)
@@ -3130,7 +3132,7 @@ describe("RandomBeaconGovernance", () => {
       it("should start the governance delay timer", async () => {
         expect(
           await randomBeaconGovernance.getRemainingDkgMaliciousResultNotificationRewardMultiplierUpdateTime()
-        ).to.be.equal(12 * 60 * 60) // 12 hours
+        ).to.be.equal(governanceDelay)
       })
 
       it("should emit the DkgMaliciousResultNotificationRewardMultiplierUpdateStarted event", async () => {
@@ -3175,7 +3177,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
 
-        await helpers.time.increaseTime(11 * 60 * 60) // 11 hours
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
         await expect(
           randomBeaconGovernance
@@ -3199,7 +3201,7 @@ describe("RandomBeaconGovernance", () => {
             .connect(governance)
             .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(100)
 
-          await helpers.time.increaseTime(12 * 60 * 60) // 12 hours
+          await helpers.time.increaseTime(governanceDelay)
 
           tx = await randomBeaconGovernance
             .connect(governance)

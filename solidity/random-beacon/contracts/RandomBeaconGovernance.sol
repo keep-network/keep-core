@@ -89,38 +89,7 @@ contract RandomBeaconGovernance is Ownable {
 
     RandomBeacon public randomBeacon;
 
-    // Long governance delay used for critical parameters giving a chance for
-    // stakers to opt out before the change is finalized in case they do not
-    // agree with that change. The maximum group lifetime must not be longer
-    // than this delay.
-    //
-    // The full list of parameters protected by this delay:
-    // - relay entry hard timeout
-    // - callback gas limit
-    // - group lifetime
-    // - relay entry submission failure slashing amount
-    // - minimum authorization
-    // - authorization decrease delay
-    uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
-
-    // Short governance delay for non-critical parameters. Honest stakers should
-    // not be severely affected by any change of these parameters.
-    //
-    // The full list of parameters protected by this delay:
-    // - relay request fee
-    // - group creation frequency
-    // - relay entry soft timeout
-    // - DKG result challenge period length
-    // - DKG result submission timeout
-    // - DKG submitter precedence period length
-    // - DKG result submission reward
-    // - sortition pool rewards ban duration
-    // - malicious DKG result slashing amount
-    // - sortition pool unlocking reward
-    // - ineligible operator notifier reward
-    // - relay entry timeout notification reward multiplier
-    // - DKG malicious result notification reward multiplier
-    uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
+    uint256 public governanceDelay;
 
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
@@ -270,22 +239,20 @@ contract RandomBeaconGovernance is Ownable {
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
     ///        of the change.
-    modifier onlyAfterGovernanceDelay(
-        uint256 changeInitiatedTimestamp,
-        uint256 delay
-    ) {
+    modifier onlyAfterGovernanceDelay(uint256 changeInitiatedTimestamp) {
         /* solhint-disable not-rely-on-time */
         require(changeInitiatedTimestamp > 0, "Change not initiated");
         require(
-            block.timestamp - changeInitiatedTimestamp >= delay,
+            block.timestamp - changeInitiatedTimestamp >= governanceDelay,
             "Governance delay has not elapsed"
         );
         _;
         /* solhint-enable not-rely-on-time */
     }
 
-    constructor(RandomBeacon _randomBeacon) {
+    constructor(RandomBeacon _randomBeacon, uint256 _governanceDelay) {
         randomBeacon = _randomBeacon;
+        governanceDelay = _governanceDelay;
     }
 
     /// @notice Begins the relay request fee update process.
@@ -308,10 +275,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeRelayRequestFeeUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            relayRequestFeeChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(relayRequestFeeChangeInitiated)
     {
         emit RelayRequestFeeUpdated(newRelayRequestFee);
         // slither-disable-next-line reentrancy-no-eth
@@ -352,10 +316,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeRelayEntrySoftTimeoutUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            relayEntrySoftTimeoutChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(relayEntrySoftTimeoutChangeInitiated)
     {
         emit RelayEntrySoftTimeoutUpdated(newRelayEntrySoftTimeout);
         // slither-disable-next-line reentrancy-no-eth
@@ -392,10 +353,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeRelayEntryHardTimeoutUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            relayEntryHardTimeoutChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(relayEntryHardTimeoutChangeInitiated)
     {
         emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
         // slither-disable-next-line reentrancy-no-eth
@@ -437,10 +395,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeCallbackGasLimitUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            callbackGasLimitChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(callbackGasLimitChangeInitiated)
     {
         emit CallbackGasLimitUpdated(newCallbackGasLimit);
         // slither-disable-next-line reentrancy-no-eth
@@ -480,10 +435,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeGroupCreationFrequencyUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            groupCreationFrequencyChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(groupCreationFrequencyChangeInitiated)
     {
         emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
         // slither-disable-next-line reentrancy-no-eth
@@ -519,10 +471,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeGroupLifetimeUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            groupLifetimeChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(groupLifetimeChangeInitiated)
     {
         emit GroupLifetimeUpdated(newGroupLifetime);
         // slither-disable-next-line reentrancy-no-eth
@@ -561,10 +510,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeDkgResultChallengePeriodLengthUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgResultChallengePeriodLengthChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(dkgResultChallengePeriodLengthChangeInitiated)
     {
         emit DkgResultChallengePeriodLengthUpdated(
             newDkgResultChallengePeriodLength
@@ -608,10 +554,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeDkgResultSubmissionTimeoutUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgResultSubmissionTimeoutChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(dkgResultSubmissionTimeoutChangeInitiated)
     {
         emit DkgResultSubmissionTimeoutUpdated(newDkgResultSubmissionTimeout);
         // slither-disable-next-line reentrancy-no-eth
@@ -652,8 +595,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            dkgSubmitterPrecedencePeriodLengthChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            dkgSubmitterPrecedencePeriodLengthChangeInitiated
         )
     {
         emit DkgSubmitterPrecedencePeriodLengthUpdated(
@@ -691,10 +633,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeDkgResultSubmissionRewardUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgResultSubmissionRewardChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(dkgResultSubmissionRewardChangeInitiated)
     {
         emit DkgResultSubmissionRewardUpdated(newDkgResultSubmissionReward);
         // slither-disable-next-line reentrancy-no-eth
@@ -733,10 +672,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeSortitionPoolUnlockingRewardUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            sortitionPoolUnlockingRewardChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(sortitionPoolUnlockingRewardChangeInitiated)
     {
         emit SortitionPoolUnlockingRewardUpdated(
             newSortitionPoolUnlockingReward
@@ -779,8 +715,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            ineligibleOperatorNotifierRewardChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            ineligibleOperatorNotifierRewardChangeInitiated
         )
     {
         emit IneligibleOperatorNotifierRewardUpdated(
@@ -823,10 +758,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeSortitionPoolRewardsBanDurationUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            sortitionPoolRewardsBanDurationChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(sortitionPoolRewardsBanDurationChangeInitiated)
     {
         emit SortitionPoolRewardsBanDurationUpdated(
             newSortitionPoolRewardsBanDuration
@@ -901,8 +833,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            unauthorizedSigningNotificationRewardMultiplierChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            unauthorizedSigningNotificationRewardMultiplierChangeInitiated
         )
     {
         emit UnauthorizedSigningNotificationRewardMultiplierUpdated(
@@ -930,8 +861,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            relayEntryTimeoutNotificationRewardMultiplierChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            relayEntryTimeoutNotificationRewardMultiplierChangeInitiated
         )
     {
         emit RelayEntryTimeoutNotificationRewardMultiplierUpdated(
@@ -983,8 +913,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            dkgMaliciousResultNotificationRewardMultiplierChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            dkgMaliciousResultNotificationRewardMultiplierChangeInitiated
         )
     {
         emit DkgMaliciousResultNotificationRewardMultiplierUpdated(
@@ -1031,8 +960,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            relayEntrySubmissionFailureSlashingAmountChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
+            relayEntrySubmissionFailureSlashingAmountChangeInitiated
         )
     {
         emit RelayEntrySubmissionFailureSlashingAmountUpdated(
@@ -1073,8 +1001,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            maliciousDkgResultSlashingAmountChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            maliciousDkgResultSlashingAmountChangeInitiated
         )
     {
         emit MaliciousDkgResultSlashingAmountUpdated(
@@ -1115,8 +1042,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            unauthorizedSigningSlashingAmountChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            unauthorizedSigningSlashingAmountChangeInitiated
         )
     {
         emit UnauthorizedSigningSlashingAmountUpdated(
@@ -1155,10 +1081,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeMinimumAuthorizationUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            minimumAuthorizationChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(minimumAuthorizationChangeInitiated)
     {
         emit MinimumAuthorizationUpdated(newMinimumAuthorization);
         // slither-disable-next-line reentrancy-no-eth
@@ -1192,10 +1115,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeAuthorizationDecreaseDelayUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            authorizationDecreaseDelayChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(authorizationDecreaseDelayChangeInitiated)
     {
         emit AuthorizationDecreaseDelayUpdated(newAuthorizationDecreaseDelay);
         // slither-disable-next-line reentrancy-no-eth
@@ -1223,11 +1143,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                relayRequestFeeChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(relayRequestFeeChangeInitiated);
     }
 
     /// @notice Get the time remaining until the relay entry submission soft
@@ -1238,11 +1154,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                relayEntrySoftTimeoutChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(relayEntrySoftTimeoutChangeInitiated);
     }
 
     /// @notice Get the time remaining until the relay entry hard timeout can be
@@ -1253,11 +1165,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                relayEntryHardTimeoutChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(relayEntryHardTimeoutChangeInitiated);
     }
 
     /// @notice Get the time remaining until the callback gas limit can be
@@ -1268,11 +1176,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                callbackGasLimitChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(callbackGasLimitChangeInitiated);
     }
 
     /// @notice Get the time remaining until the group creation frequency can be
@@ -1283,11 +1187,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                groupCreationFrequencyChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(groupCreationFrequencyChangeInitiated);
     }
 
     /// @notice Get the time remaining until the group lifetime can be updated.
@@ -1297,11 +1197,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                groupLifetimeChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(groupLifetimeChangeInitiated);
     }
 
     /// @notice Get the time remaining until the DKG result challenge period
@@ -1314,8 +1210,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                dkgResultChallengePeriodLengthChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                dkgResultChallengePeriodLengthChangeInitiated
             );
     }
 
@@ -1328,10 +1223,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(
-                dkgResultSubmissionTimeoutChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+            getRemainingChangeTime(dkgResultSubmissionTimeoutChangeInitiated);
     }
 
     /// @notice Get the time remaining until the wallet owner can be updated.
@@ -1343,8 +1235,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                dkgSubmitterPrecedencePeriodLengthChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                dkgSubmitterPrecedencePeriodLengthChangeInitiated
             );
     }
 
@@ -1356,11 +1247,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                dkgResultSubmissionRewardChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(dkgResultSubmissionRewardChangeInitiated);
     }
 
     /// @notice Get the time remaining until the sortition pool unlocking reward
@@ -1372,10 +1259,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(
-                sortitionPoolUnlockingRewardChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+            getRemainingChangeTime(sortitionPoolUnlockingRewardChangeInitiated);
     }
 
     /// @notice Get the time remaining until the ineligible operator notifier
@@ -1388,8 +1272,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                ineligibleOperatorNotifierRewardChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                ineligibleOperatorNotifierRewardChangeInitiated
             );
     }
 
@@ -1403,8 +1286,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                relayEntrySubmissionFailureSlashingAmountChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
+                relayEntrySubmissionFailureSlashingAmountChangeInitiated
             );
     }
 
@@ -1418,8 +1300,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                maliciousDkgResultSlashingAmountChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                maliciousDkgResultSlashingAmountChangeInitiated
             );
     }
 
@@ -1433,8 +1314,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                unauthorizedSigningSlashingAmountChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                unauthorizedSigningSlashingAmountChangeInitiated
             );
     }
 
@@ -1446,11 +1326,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                minimumAuthorizationChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(minimumAuthorizationChangeInitiated);
     }
 
     function getRemainingAuthorizationDecreaseDelayUpdateTime()
@@ -1459,10 +1335,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(
-                authorizationDecreaseDelayChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+            getRemainingChangeTime(authorizationDecreaseDelayChangeInitiated);
     }
 
     /// @notice Get the time remaining until the sortition pool rewards ban
@@ -1475,8 +1348,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                sortitionPoolRewardsBanDurationChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                sortitionPoolRewardsBanDurationChangeInitiated
             );
     }
 
@@ -1490,8 +1362,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                relayEntryTimeoutNotificationRewardMultiplierChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                relayEntryTimeoutNotificationRewardMultiplierChangeInitiated
             );
     }
 
@@ -1505,8 +1376,7 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                unauthorizedSigningNotificationRewardMultiplierChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                unauthorizedSigningNotificationRewardMultiplierChangeInitiated
             );
     }
 
@@ -1520,17 +1390,15 @@ contract RandomBeaconGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                dkgMaliciousResultNotificationRewardMultiplierChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                dkgMaliciousResultNotificationRewardMultiplierChangeInitiated
             );
     }
 
     /// @notice Gets the time remaining until the governable parameter update
     ///         can be committed.
     /// @param changeTimestamp Timestamp indicating the beginning of the change.
-    /// @param delay Governance delay.
     /// @return Remaining time in seconds.
-    function getRemainingChangeTime(uint256 changeTimestamp, uint256 delay)
+    function getRemainingChangeTime(uint256 changeTimestamp)
         internal
         view
         returns (uint256)
@@ -1538,10 +1406,10 @@ contract RandomBeaconGovernance is Ownable {
         require(changeTimestamp > 0, "Change not initiated");
         /* solhint-disable-next-line not-rely-on-time */
         uint256 elapsed = block.timestamp - changeTimestamp;
-        if (elapsed >= delay) {
+        if (elapsed >= governanceDelay) {
             return 0;
         } else {
-            return delay - elapsed;
+            return governanceDelay - elapsed;
         }
     }
 }
