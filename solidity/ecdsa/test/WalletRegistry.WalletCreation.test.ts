@@ -1827,6 +1827,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           context("with misbehaved operators", async () => {
             const misbehavedIndices = [2, 9, 11, 30, 60, 64]
+            let misbehavedIds
             let tx: ContractTransaction
             let dkgResult: DkgResult
 
@@ -1835,14 +1836,18 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               await mineBlocksTo(startBlock + dkgTimeout - 1)
 
-              let submitter
-              ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                dkgSeed,
-                startBlock,
-                misbehavedIndices
-              ))
+              let members: number[]
+              let submitter: SignerWithAddress
+              ;({ dkgResult, members, submitter } =
+                await signAndSubmitCorrectDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  dkgSeed,
+                  startBlock,
+                  misbehavedIndices
+                ))
+
+              misbehavedIds = misbehavedIndices.map((i) => members[i - 1])
 
               await mineBlocks(params.dkgResultChallengePeriodLength)
               tx = await walletRegistry
@@ -1869,14 +1874,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
               ).to.be.equal(hashUint32Array(expectedMembers))
             })
 
-            // it("should ban misbehaved operators from sortition pool rewards", async () => {
-            //   const now = await helpers.time.lastBlockTime()
-            //   const expectedUntil = now + params.sortitionPoolRewardsBanDuration
+            it("should ban misbehaved operators from sortition pool rewards", async () => {
+              const now = await helpers.time.lastBlockTime()
+              const expectedUntil = now + params.sortitionPoolRewardsBanDuration
 
-            //   await expect(tx)
-            //     .to.emit(sortitionPool, "IneligibleForRewards")
-            //     .withArgs(misbehavedIds, expectedUntil)
-            // })
+              await expect(tx)
+                .to.emit(sortitionPool, "IneligibleForRewards")
+                .withArgs(misbehavedIds, expectedUntil)
+            })
 
             it("should clean dkg data", async () => {
               await assertDkgResultCleanData(walletRegistry)

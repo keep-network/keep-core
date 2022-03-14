@@ -407,9 +407,13 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
 
         emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
 
-        // TODO: Disable rewards for misbehavedMembers.
-        //slither-disable-next-line redundant-statements
-        misbehavedMembers;
+        if (misbehavedMembers.length > 0) {
+            sortitionPool.setRewardIneligibility(
+                misbehavedMembers,
+                // solhint-disable-next-line not-rely-on-time
+                block.timestamp + sortitionPoolRewardsBanDuration
+            );
+        }
 
         walletOwner.__ecdsaWalletCreatedCallback(
             walletID,
