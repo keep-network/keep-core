@@ -72,6 +72,11 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     ///         operator affected.
     uint256 public maliciousDkgResultNotificationRewardMultiplier;
 
+    /// @notice Duration of the sortition pool rewards ban imposed on operators
+    ///         who missed their turn for DKG result submission or who failed
+    ///         a heartbeat.
+    uint256 public sortitionPoolRewardsBanDuration;
+
     // External dependencies
 
     SortitionPool public immutable sortitionPool;
@@ -129,7 +134,8 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     );
 
     event RewardParametersUpdated(
-        uint256 maliciousDkgResultNotificationRewardMultiplier
+        uint256 maliciousDkgResultNotificationRewardMultiplier,
+        uint256 sortitionPoolRewardsBanDuration
     );
 
     event SlashingParametersUpdated(uint256 maliciousDkgResultSlashingAmount);
@@ -253,12 +259,17 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     ///      validating parameters.
     /// @param _maliciousDkgResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
+    /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
+    ///        ban duration in seconds.
     function updateRewardParameters(
-        uint256 _maliciousDkgResultNotificationRewardMultiplier
+        uint256 _maliciousDkgResultNotificationRewardMultiplier,
+        uint256 _sortitionPoolRewardsBanDuration
     ) external onlyOwner {
         maliciousDkgResultNotificationRewardMultiplier = _maliciousDkgResultNotificationRewardMultiplier;
+        sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         emit RewardParametersUpdated(
-            maliciousDkgResultNotificationRewardMultiplier
+            _maliciousDkgResultNotificationRewardMultiplier,
+            _sortitionPoolRewardsBanDuration
         );
     }
 
@@ -273,7 +284,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
         onlyOwner
     {
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
-        emit SlashingParametersUpdated(maliciousDkgResultSlashingAmount);
+        emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
     }
 
     /// @notice Updates the values of the wallet parameters.
