@@ -68,9 +68,9 @@ export const walletRegistryFixture = deployments.createFixture(
     const tToken: T = await ethers.getContract("T")
     const staking: StakingStub = await ethers.getContract("StakingStub")
 
-  const reimbursementPool: ReimbursementPool = await ethers.getContract(
-    "ReimbursementPool"
-  )
+    const reimbursementPool: ReimbursementPool = await ethers.getContract(
+      "ReimbursementPool"
+    )
 
     const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
     const governance: SignerWithAddress = await ethers.getNamedSigner(

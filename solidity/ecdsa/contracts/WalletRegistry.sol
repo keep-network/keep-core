@@ -44,7 +44,12 @@ interface IWalletStaking {
     ) external;
 }
 
-contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable, Reimbursable {
+contract WalletRegistry is
+    IRandomBeaconConsumer,
+    IWalletRegistry,
+    Ownable,
+    Reimbursable
+{
     using EcdsaAuthorization for EcdsaAuthorization.Data;
     using EcdsaDkg for EcdsaDkg.Data;
     using Wallets for Wallets.Data;
@@ -75,8 +80,21 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable, Reim
     ///         operator affected.
     uint256 public maliciousDkgResultNotificationRewardMultiplier;
 
-    /// @notice Calculated gas cost for submitting a dkg result.
-    uint256 public submitDkgResultGas;
+    /// @notice Calculated max gas cost for submitting a dkg result. This will
+    ///         be refunded as part of the dkg approval process. It is in the
+    ///         submitter's interest to not skip his priority turn on the approval,
+    ///         otherwise the refund of the dkg submission will be refunded to
+    ///         other member that will call the dkg approve function.
+    uint256 public dkgResultSubmissionGas = 305000;
+
+    /// @notice Calculated max gas for approving a dkg result.
+    /// @dev Reimbursement pool's "refund()" already includes transaction gas in
+    ///      its calculation of ETH which is sent back to a msg.sender.
+    ///      Tests will show more gas used, but the refund function is part
+    ///      of the dkg approval process and this is why we can subtract
+    ///      transaction gas from the dkg approval overall gas usage.
+    ///      approveDkgResult - transactionGas: 296000 - 21000 = 275000
+    uint256 public dkgResultApprovalGas = 275000;
 
     // External dependencies
 
@@ -368,11 +386,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable, Reim
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
     function submitDkgResult(EcdsaDkg.Result calldata dkgResult) external {
-        uint256 gasStart = gasleft();
-
         dkg.submitResult(dkgResult);
-
-        submitDkgResultGas = gasStart - gasleft();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
@@ -387,8 +401,6 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable, Reim
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
-        uint256 gasStart = gasleft();
-
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         (bytes32 walletID, bytes32 publicKeyX, bytes32 publicKeyY) = wallets
@@ -408,13 +420,9 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable, Reim
 
         dkg.complete();
 
-        // Refunds msg.sender's ETH for:
-        // - dkg result submission processing
-        // - dkg result submission transaction call
-        // - dkg approval processing
-        // - dkg approval transaction call
+        // Refunds msg.sender's ETH for dkg result submision & dkg approval
         reimbursementPool.refund(
-            submitDkgResultGas + transactionGas + (gasStart - gasleft()),
+            dkgResultSubmissionGas + dkgResultApprovalGas,
             msg.sender
         );
     }

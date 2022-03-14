@@ -5,7 +5,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments } = hre
   const { deployer } = await getNamedAccounts()
 
-  const staticGas = 37500 // gas amount consumed by the refund() + tx cost
+  const staticGas = 41900 // gas amount consumed by the refund() + tx cost
   const maxGasPrice = 20000000000 // 20 gwei
 
   const ReimbursementPool = await deployments.deploy("ReimbursementPool", {
