@@ -233,6 +233,7 @@ describe("Groups", () => {
           expect(storedGroup.registrationBlockNumber).to.be.equal(
             existingGroup.registrationBlockNumber
           )
+
           expect(storedGroup.membersHash).to.be.equal(
             hashUint32Array(existingGroupMembers)
           )
