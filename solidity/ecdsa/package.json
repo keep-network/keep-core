@@ -3,6 +3,16 @@
   "version": "2.0.0-dev",
   "description": "Keep ECDSA Wallet",
   "license": "MIT",
+  "files": [
+    "artifacts/",
+    "build/contracts/",
+    "contracts/",
+    "!**/test/",
+    "deploy/",
+    "export/",
+    "scripts/",
+    "export.json"
+  ],
   "scripts": {
     "format": "npm run lint",
     "format:fix": "npm run lint:fix",
