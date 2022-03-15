@@ -2,6 +2,6 @@
 build/
 cache/
 export/
-external/
+external/npm
 hardhat-dependency-compiler/
 export.json
