@@ -1,8 +1,9 @@
-import { Contract } from "ethers"
 import { ethers, helpers, getNamedAccounts } from "hardhat"
+
+import type { Contract } from "ethers"
 import type {
   SortitionPool,
-  DKGValidator,
+  BeaconDkgValidator as DKGValidator,
   RandomBeaconStub,
   RandomBeaconGovernance,
   StakingStub,
@@ -27,14 +28,16 @@ export const dkgState = {
 }
 
 export const params = {
+  governanceDelay: 604800, // 1 week
   relayRequestFee: to1e18(100),
-  relayEntrySubmissionEligibilityDelay: 10,
+  relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
   groupCreationFrequency: 10,
   groupLifeTime: 1000,
   dkgResultChallengePeriodLength: 100,
-  dkgResultSubmissionEligibilityDelay: 10,
+  dkgResultSubmissionTimeout: 30,
+  dkgSubmitterPrecedencePeriodLength: 5,
   dkgResultSubmissionReward: to1e18(5),
   sortitionPoolUnlockingReward: to1e18(10),
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
@@ -47,6 +50,8 @@ export const params = {
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(100000),
   authorizationDecreaseDelay: 0,
+  reimbursmentPoolStaticGas: 41900,
+  reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("20", "gwei"),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -75,6 +80,19 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
+  const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
+  const reimbursementPool = await ReimbursementPool.deploy(
+    params.reimbursmentPoolStaticGas,
+    params.reimbursmentPoolMaxGasPrice
+  )
+  await reimbursementPool.deployed()
+
+  const contracts: DeployedContracts = { reimbursementPool }
+
+  return contracts
+}
+
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
 
@@ -90,16 +108,18 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const DKG = await ethers.getContractFactory("DKG")
-  const dkg = await DKG.deploy()
+  const BeaconDkg = await ethers.getContractFactory("BeaconDkg")
+  const dkg = await BeaconDkg.deploy()
   await dkg.deployed()
 
   const Heartbeat = await ethers.getContractFactory("Heartbeat")
   const heartbeat = await Heartbeat.deploy()
   await heartbeat.deployed()
 
-  const DKGValidator = await ethers.getContractFactory("DKGValidator")
-  const dkgValidator = (await DKGValidator.deploy(
+  const BeaconDkgValidator = await ethers.getContractFactory(
+    "BeaconDkgValidator"
+  )
+  const dkgValidator = (await BeaconDkgValidator.deploy(
     sortitionPool.address
   )) as DKGValidator
   await dkgValidator.deployed()
@@ -107,7 +127,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
-      DKG: dkg.address,
+      BeaconDkg: dkg.address,
       Heartbeat: heartbeat.address,
     },
   })
@@ -140,7 +160,10 @@ export async function testDeployment(): Promise<DeployedContracts> {
     "RandomBeaconGovernance"
   )
   const randomBeaconGovernance: RandomBeaconGovernance =
-    await RandomBeaconGovernance.deploy(contracts.randomBeacon.address)
+    await RandomBeaconGovernance.deploy(
+      contracts.randomBeacon.address,
+      params.governanceDelay
+    )
   await randomBeaconGovernance.deployed()
   await contracts.randomBeacon.transferOwnership(randomBeaconGovernance.address)
 
@@ -157,7 +180,7 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
 
   await randomBeacon.updateRelayEntryParameters(
     params.relayRequestFee,
-    params.relayEntrySubmissionEligibilityDelay,
+    params.relayEntrySoftTimeout,
     params.relayEntryHardTimeout,
     params.callbackGasLimit
   )
@@ -179,7 +202,8 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
 
   await randomBeacon.updateDkgParameters(
     params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionEligibilityDelay
+    params.dkgResultSubmissionTimeout,
+    params.dkgSubmitterPrecedencePeriodLength
   )
 
   await randomBeacon.updateSlashingParameters(

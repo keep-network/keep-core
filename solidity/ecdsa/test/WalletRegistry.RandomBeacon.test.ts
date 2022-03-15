@@ -7,6 +7,7 @@ import { dkgState, walletRegistryFixture } from "./fixtures"
 import { fakeRandomBeacon, resetMock } from "./utils/randomBeacon"
 import { upgradeRandomBeacon } from "./utils/governance"
 
+import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { MockContract, FakeContract } from "@defi-wonderland/smock"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
@@ -23,8 +24,7 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 describe("WalletRegistry - Random Beacon", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let randomBeaconFake: FakeContract<IRandomBeacon>
-
-  let walletOwner: SignerWithAddress
+  let walletOwner: FakeContract<IWalletOwner>
   let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
@@ -46,7 +46,7 @@ describe("WalletRegistry - Random Beacon", async () => {
           "beacon internal error"
         )
 
-        tx = walletRegistry.connect(walletOwner).requestNewWallet()
+        tx = walletRegistry.connect(walletOwner.wallet).requestNewWallet()
       })
 
       after(async () => {
@@ -68,7 +68,7 @@ describe("WalletRegistry - Random Beacon", async () => {
       before(async () => {
         await createSnapshot()
 
-        tx = walletRegistry.connect(walletOwner).requestNewWallet()
+        tx = walletRegistry.connect(walletOwner.wallet).requestNewWallet()
       })
 
       after(async () => {
@@ -122,7 +122,7 @@ describe("WalletRegistry - Random Beacon", async () => {
         before(async () => {
           await createSnapshot()
 
-          await walletRegistry.connect(walletOwner).requestNewWallet()
+          await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
 
           tx = await walletRegistry
             .connect(randomBeaconFake.wallet)
@@ -166,7 +166,7 @@ describe("WalletRegistry - Random Beacon", async () => {
         before(async () => {
           await createSnapshot()
 
-          await walletRegistry.connect(walletOwner).requestNewWallet()
+          await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
         })
 
         after(async () => {
@@ -202,7 +202,7 @@ describe("WalletRegistry - Random Beacon", async () => {
 
           randomBeaconMock = await mockRandomBeacon(walletRegistry)
 
-          await walletRegistry.connect(walletOwner).requestNewWallet()
+          await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
         })
 
         after(async () => {

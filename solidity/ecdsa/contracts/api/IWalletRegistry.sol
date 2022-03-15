@@ -14,12 +14,18 @@
 
 pragma solidity ^0.8.9;
 
-import "./IRandomBeaconConsumer.sol";
+interface IWalletRegistry {
+    /// @notice Requests a new wallet creation.
+    /// @dev Only a Wallet Owner can call this function.
+    function requestNewWallet() external;
 
-/// @title Random Beacon interface
-interface IRandomBeacon {
-    /// @notice Creates a request to generate a new relay entry. Requires a
-    ///         request fee denominated in T token.
-    /// @param callbackContract Beacon consumer callback contract.
-    function requestRelayEntry(IRandomBeaconConsumer callbackContract) external;
+    /// @notice Gets public key of a wallet with a given wallet ID.
+    ///         The public key is returned in an uncompressed format as a 64-byte
+    ///         concatenation of X and Y coordinates.
+    /// @param walletID ID of the wallet.
+    /// @return Uncompressed public key of the wallet.
+    function getWalletPublicKey(bytes32 walletID)
+        external
+        view
+        returns (bytes memory);
 }

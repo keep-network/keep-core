@@ -7,6 +7,10 @@ const ecdsaData = {
     // ecdsa public key
     publicKey:
       "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c473e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
+    publicKeyX:
+      "0x9a0544440cc47779235ccb76d669590c2cd20c7e431f97e17a1093faf03291c4",
+    publicKeyY:
+      "0x73e661a208a8a565ca1e384059bd2ff7ff6886df081ff1229250099d388c83df",
 
     // digest to sign
     digest1:

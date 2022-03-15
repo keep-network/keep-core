@@ -4,7 +4,13 @@
   "rules": {
     "import/no-extraneous-dependencies": [
       "error",
-      { "devDependencies": ["./test/**/*.ts", "hardhat.config.ts"] }
+      {
+        "devDependencies": [
+          "./test/**/*.ts",
+          "./tasks/**/*.ts",
+          "hardhat.config.ts"
+        ]
+      }
     ],
     "@typescript-eslint/no-use-before-define": "off",
     "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],

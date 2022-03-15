@@ -17,11 +17,19 @@ pragma solidity ^0.8.9;
 import "./WalletRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import {IWalletOwner} from "./api/IWalletOwner.sol";
+import {IRandomBeacon} from "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
+
 /// @title Wallet Registry Governance
-/// @notice Owns the `WalletRegistry` contract and is responsible for updating its
-///         governable parameters in respect to governance delay individual
-///         for each parameter.
+/// @notice Owns the `WalletRegistry` contract and is responsible for updating
+///         its governable parameters in respect to the governance delay.
 contract WalletRegistryGovernance is Ownable {
+    uint256 public newGovernanceDelay;
+    uint256 public governanceDelayChangeInitiated;
+
+    address public newWalletRegistryOwner;
+    uint256 public walletRegistryOwnershipTransferInitiated;
+
     address public newWalletOwner;
     uint256 public walletOwnerChangeInitiated;
 
@@ -52,28 +60,19 @@ contract WalletRegistryGovernance is Ownable {
 
     WalletRegistry public walletRegistry;
 
-    // Long governance delay used for critical parameters giving a chance for
-    // stakers to opt out before the change is finalized in case they do not
-    // agree with that change. The maximum group lifetime must not be longer
-    // than this delay.
-    //
-    // The full list of parameters protected by this delay:
-    // - wallet owner
-    // - minimum authorization
-    // - authorization decrease delay
-    uint256 internal constant CRITICAL_PARAMETER_GOVERNANCE_DELAY = 2 weeks;
+    uint256 public governanceDelay;
 
-    // Short governance delay for non-critical parameters. Honest stakers should
-    // not be severely affected by any change of these parameters.
-    //
-    // The full list of parameters protected by this delay:
-    // - malicious DKG result notification reward multiplier
-    // - malicious DKG result slashing amount
-    // - DKG seed timeout
-    // - DKG result challenge period length
-    // - DKG result submission eligibility delay
-    // - DKG submitter precedence period length
-    uint256 internal constant STANDARD_PARAMETER_GOVERNANCE_DELAY = 12 hours;
+    event GovernanceDelayUpdateStarted(
+        uint256 governanceDelay,
+        uint256 timestamp
+    );
+    event GovernanceDelayUpdated(uint256 governanceDelay);
+
+    event WalletRegistryOwnershipTransferStarted(
+        address newWalletRegistryOwner,
+        uint256 timestamp
+    );
+    event WalletRegistryOwnershipTransferred(address newWalletRegistryOwner);
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
     event WalletOwnerUpdated(address walletOwner);
@@ -137,23 +136,20 @@ contract WalletRegistryGovernance is Ownable {
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
     ///        of the change.
-    /// @param delay Governance delay
-    modifier onlyAfterGovernanceDelay(
-        uint256 changeInitiatedTimestamp,
-        uint256 delay
-    ) {
+    modifier onlyAfterGovernanceDelay(uint256 changeInitiatedTimestamp) {
         /* solhint-disable not-rely-on-time */
         require(changeInitiatedTimestamp > 0, "Change not initiated");
         require(
-            block.timestamp - changeInitiatedTimestamp >= delay,
+            block.timestamp - changeInitiatedTimestamp >= governanceDelay,
             "Governance delay has not elapsed"
         );
         _;
         /* solhint-enable not-rely-on-time */
     }
 
-    constructor(WalletRegistry _walletRegistry) {
+    constructor(WalletRegistry _walletRegistry, uint256 _governanceDelay) {
         walletRegistry = _walletRegistry;
+        governanceDelay = _governanceDelay;
     }
 
     /// @notice Upgrades the random beacon.
@@ -165,7 +161,89 @@ contract WalletRegistryGovernance is Ownable {
             "New random beacon address cannot be zero"
         );
 
-        walletRegistry.upgradeRandomBeacon(_newRandomBeacon);
+        walletRegistry.upgradeRandomBeacon(IRandomBeacon(_newRandomBeacon));
+    }
+
+    /// @notice Initializes the Wallet Owner's address.
+    /// @dev Can be called only by the contract owner. It can be called only if
+    ///      walletOwner has not been set before. It doesn't enforce a governance
+    ///      delay for the initial update. Any subsequent updates should be performed
+    ///      with beginWalletOwnerUpdate/finalizeWalletOwnerUpdate with respect
+    ///      of a governance delay.
+    /// @param _walletOwner The Wallet Owner's address
+    function initializeWalletOwner(address _walletOwner) external onlyOwner {
+        require(
+            address(walletRegistry.walletOwner()) == address(0),
+            "Wallet Owner already initialized"
+        );
+        require(
+            _walletOwner != address(0),
+            "Wallet Owner address cannot be zero"
+        );
+
+        walletRegistry.updateWalletOwner(IWalletOwner(_walletOwner));
+    }
+
+    /// @notice Begins the governance delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newGovernanceDelay New governance delay
+    function beginGovernanceDelayUpdate(uint256 _newGovernanceDelay)
+        external
+        onlyOwner
+    {
+        newGovernanceDelay = _newGovernanceDelay;
+        /* solhint-disable not-rely-on-time */
+        governanceDelayChangeInitiated = block.timestamp;
+        emit GovernanceDelayUpdateStarted(_newGovernanceDelay, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the governance delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeGovernanceDelayUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(governanceDelayChangeInitiated)
+    {
+        emit GovernanceDelayUpdated(newGovernanceDelay);
+        governanceDelay = newGovernanceDelay;
+        governanceDelayChangeInitiated = 0;
+        newGovernanceDelay = 0;
+    }
+
+    /// @notice Begins the wallet registry ownership transfer process.
+    /// @dev Can be called only by the contract owner.
+    function beginWalletRegistryOwnershipTransfer(
+        address _newWalletRegistryOwner
+    ) external onlyOwner {
+        require(
+            address(_newWalletRegistryOwner) != address(0),
+            "New wallet registry owner address cannot be zero"
+        );
+        newWalletRegistryOwner = _newWalletRegistryOwner;
+        /* solhint-disable not-rely-on-time */
+        walletRegistryOwnershipTransferInitiated = block.timestamp;
+        emit WalletRegistryOwnershipTransferStarted(
+            _newWalletRegistryOwner,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the wallet registry ownership transfer process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeWalletRegistryOwnershipTransfer()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(walletRegistryOwnershipTransferInitiated)
+    {
+        emit WalletRegistryOwnershipTransferred(newWalletRegistryOwner);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.transferOwnership(newWalletRegistryOwner);
+        walletRegistryOwnershipTransferInitiated = 0;
+        newWalletRegistryOwner = address(0);
     }
 
     /// @notice Begins the wallet owner update process.
@@ -176,7 +254,7 @@ contract WalletRegistryGovernance is Ownable {
         onlyOwner
     {
         require(
-            _newWalletOwner != address(0),
+            address(_newWalletOwner) != address(0),
             "New wallet owner address cannot be zero"
         );
         /* solhint-disable not-rely-on-time */
@@ -192,14 +270,11 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeWalletOwnerUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            walletOwnerChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(walletOwnerChangeInitiated)
     {
         emit WalletOwnerUpdated(newWalletOwner);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateWalletOwner(newWalletOwner);
+        walletRegistry.updateWalletOwner(IWalletOwner(newWalletOwner));
         walletOwnerChangeInitiated = 0;
         newWalletOwner = address(0);
     }
@@ -227,10 +302,7 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeMinimumAuthorizationUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            minimumAuthorizationChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(minimumAuthorizationChangeInitiated)
     {
         emit MinimumAuthorizationUpdated(newMinimumAuthorization);
         // slither-disable-next-line reentrancy-no-eth
@@ -264,10 +336,7 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeAuthorizationDecreaseDelayUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            authorizationDecreaseDelayChangeInitiated,
-            CRITICAL_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(authorizationDecreaseDelayChangeInitiated)
     {
         emit AuthorizationDecreaseDelayUpdated(newAuthorizationDecreaseDelay);
         // slither-disable-next-line reentrancy-no-eth
@@ -304,8 +373,7 @@ contract WalletRegistryGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            maliciousDkgResultSlashingAmountChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            maliciousDkgResultSlashingAmountChangeInitiated
         )
     {
         emit MaliciousDkgResultSlashingAmountUpdated(
@@ -351,8 +419,7 @@ contract WalletRegistryGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            maliciousDkgResultNotificationRewardMultiplierChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            maliciousDkgResultNotificationRewardMultiplierChangeInitiated
         )
     {
         emit MaliciousDkgResultNotificationRewardMultiplierUpdated(
@@ -387,10 +454,7 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeDkgSeedTimeoutUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgSeedTimeoutChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(dkgSeedTimeoutChangeInitiated)
     {
         emit DkgSeedTimeoutUpdated(newDkgSeedTimeout);
         // slither-disable-next-line reentrancy-no-eth
@@ -431,10 +495,7 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeDkgResultChallengePeriodLengthUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgResultChallengePeriodLengthChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(dkgResultChallengePeriodLengthChangeInitiated)
     {
         emit DkgResultChallengePeriodLengthUpdated(
             newDkgResultChallengePeriodLength
@@ -479,10 +540,7 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeDkgResultSubmissionTimeoutUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgResultSubmissionTimeoutChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
-        )
+        onlyAfterGovernanceDelay(dkgResultSubmissionTimeoutChangeInitiated)
     {
         emit DkgResultSubmissionTimeoutUpdated(newDkgResultSubmissionTimeout);
         // slither-disable-next-line reentrancy-no-eth
@@ -524,8 +582,7 @@ contract WalletRegistryGovernance is Ownable {
         external
         onlyOwner
         onlyAfterGovernanceDelay(
-            dkgSubmitterPrecedencePeriodLengthChangeInitiated,
-            STANDARD_PARAMETER_GOVERNANCE_DELAY
+            dkgSubmitterPrecedencePeriodLengthChangeInitiated
         )
     {
         emit DkgSubmitterPrecedencePeriodLengthUpdated(
@@ -542,6 +599,27 @@ contract WalletRegistryGovernance is Ownable {
         newSubmitterPrecedencePeriodLength = 0;
     }
 
+    /// @notice Get the time remaining until the governance delay can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingGovernanceDelayUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(governanceDelayChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the wallet registry ownership can
+    ///         be transferred.
+    /// @return Remaining time in seconds.
+    function getRemainingWalletRegistryOwnershipTransferDelayTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(walletRegistryOwnershipTransferInitiated);
+    }
+
     /// @notice Get the time remaining until the minimum authorization amount
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -550,11 +628,7 @@ contract WalletRegistryGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                minimumAuthorizationChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(minimumAuthorizationChangeInitiated);
     }
 
     /// @notice Get the time remaining until the authorization decrease delay
@@ -566,10 +640,7 @@ contract WalletRegistryGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(
-                authorizationDecreaseDelayChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+            getRemainingChangeTime(authorizationDecreaseDelayChangeInitiated);
     }
 
     /// @notice Get the time remaining until the malicious DKG result
@@ -582,8 +653,7 @@ contract WalletRegistryGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                maliciousDkgResultSlashingAmountChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                maliciousDkgResultSlashingAmountChangeInitiated
             );
     }
 
@@ -597,8 +667,7 @@ contract WalletRegistryGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                maliciousDkgResultNotificationRewardMultiplierChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                maliciousDkgResultNotificationRewardMultiplierChangeInitiated
             );
     }
 
@@ -609,11 +678,7 @@ contract WalletRegistryGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                dkgSeedTimeoutChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(dkgSeedTimeoutChangeInitiated);
     }
 
     /// @notice Get the time remaining until the DKG result challenge period
@@ -626,8 +691,7 @@ contract WalletRegistryGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                dkgResultChallengePeriodLengthChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                dkgResultChallengePeriodLengthChangeInitiated
             );
     }
 
@@ -640,10 +704,7 @@ contract WalletRegistryGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(
-                dkgResultSubmissionTimeoutChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
-            );
+            getRemainingChangeTime(dkgResultSubmissionTimeoutChangeInitiated);
     }
 
     /// @notice Get the time remaining until the wallet owner can be updated.
@@ -653,11 +714,7 @@ contract WalletRegistryGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                walletOwnerChangeInitiated,
-                CRITICAL_PARAMETER_GOVERNANCE_DELAY
-            );
+        return getRemainingChangeTime(walletOwnerChangeInitiated);
     }
 
     /// @notice Get the time remaining until the wallet owner can be updated.
@@ -669,17 +726,15 @@ contract WalletRegistryGovernance is Ownable {
     {
         return
             getRemainingChangeTime(
-                dkgSubmitterPrecedencePeriodLengthChangeInitiated,
-                STANDARD_PARAMETER_GOVERNANCE_DELAY
+                dkgSubmitterPrecedencePeriodLengthChangeInitiated
             );
     }
 
     /// @notice Gets the time remaining until the governable parameter update
     ///         can be committed.
     /// @param changeTimestamp Timestamp indicating the beginning of the change.
-    /// @param delay Governance delay.
     /// @return Remaining time in seconds.
-    function getRemainingChangeTime(uint256 changeTimestamp, uint256 delay)
+    function getRemainingChangeTime(uint256 changeTimestamp)
         internal
         view
         returns (uint256)
@@ -687,10 +742,10 @@ contract WalletRegistryGovernance is Ownable {
         require(changeTimestamp > 0, "Change not initiated");
         /* solhint-disable-next-line not-rely-on-time */
         uint256 elapsed = block.timestamp - changeTimestamp;
-        if (elapsed >= delay) {
+        if (elapsed >= governanceDelay) {
             return 0;
         }
 
-        return delay - elapsed;
+        return governanceDelay - elapsed;
     }
 }

@@ -8,7 +8,8 @@ import { selectGroup, hashUint32Array } from "./utils/groups"
 import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import ecdsaData from "./data/ecdsa"
 
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { IWalletOwner } from "../typechain/IWalletOwner"
+import type { FakeContract } from "@defi-wonderland/smock"
 import type { DkgResult } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
 import type {
@@ -43,7 +44,7 @@ describe("EcdsaDkgValidator", () => {
 
   let walletRegistry: WalletRegistry
   let sortitionPool: SortitionPool
-  let walletOwner: SignerWithAddress
+  let walletOwner: FakeContract<IWalletOwner>
   let validator: EcdsaDkgValidator
 
   before("load test fixture", async () => {
@@ -53,7 +54,7 @@ describe("EcdsaDkgValidator", () => {
 
     validator = await ethers.getContract("EcdsaDkgValidator")
 
-    await walletRegistry.connect(walletOwner).requestNewWallet()
+    await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
 
     selectedOperators = await selectGroup(sortitionPool, dkgSeed)
 
