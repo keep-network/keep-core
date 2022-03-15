@@ -6,7 +6,7 @@ on:
       - main
       - npm-ecdsa # TODO: remove before merging to main
     paths:
-      - "solidity/ecdsa/contracts**"
+      - "solidity/ecdsa/contracts/**"
       - "solidity/ecdsa/package.json"
       - "solidity/ecdsa/yarn.lock"
       - ".github/workflows/npm-ecdsa.yml"
