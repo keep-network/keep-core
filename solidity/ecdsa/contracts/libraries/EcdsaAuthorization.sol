@@ -110,6 +110,7 @@ library EcdsaAuthorization {
     function registerOperator(Data storage self, address operator) internal {
         address stakingProvider = msg.sender;
 
+        require(operator != address(0), "Operator can not be zero address");
         require(
             self.stakingProviderToOperator[stakingProvider] == address(0),
             "Operator already set for the staking provider"

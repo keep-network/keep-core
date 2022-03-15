@@ -104,6 +104,14 @@ describe("WalletRegistry - Pool", () => {
   })
 
   describe("registerOperator", () => {
+    context("when called with zero-address operator", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(stakingProvider).registerOperator(ZERO_ADDRESS)
+        ).to.be.revertedWith("Operator can not be zero address")
+      })
+    })
+
     // It is not possible to update operator address. Once the operator is
     // registered for the given staking provider, it must remain the same.
     // Staking provider address is unique for each stake delegation - see T
