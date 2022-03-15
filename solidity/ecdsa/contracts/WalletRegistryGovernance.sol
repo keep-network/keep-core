@@ -58,6 +58,12 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newSubmitterPrecedencePeriodLength;
     uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
 
+    uint256 public newDkgResultSubmissionGas;
+    uint256 public dkgResultSubmissionGasChangeInitiated;
+
+    uint256 public newDkgResultApprovalGas;
+    uint256 public dkgResultApprovalGasChangeInitiated;
+
     WalletRegistry public walletRegistry;
 
     uint256 public governanceDelay;
@@ -132,6 +138,18 @@ contract WalletRegistryGovernance is Ownable {
     event DkgSubmitterPrecedencePeriodLengthUpdated(
         uint256 submitterPrecedencePeriodLength
     );
+
+    event DkgResultSubmissionGasUpdateStarted(
+        uint256 dkgResultSubmissionGas,
+        uint256 timestamp
+    );
+    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
+
+    event DkgResultApprovalGasUpdateStarted(
+        uint256 dkgResultApprovalGas,
+        uint256 timestamp
+    );
+    event DkgResultApprovalGasUpdated(uint256 dkgResultApprovalGas);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -433,6 +451,90 @@ contract WalletRegistryGovernance is Ownable {
         newMaliciousDkgResultNotificationRewardMultiplier = 0;
     }
 
+    /// @notice Begins the dkg result submission gas update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultSubmissionGas New DKG result submission gas.
+    function beginDkgResultSubmissionGasUpdate(
+        uint256 _newDkgResultSubmissionGas
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgResultSubmissionGas != 0,
+            "DKG resutl submission gas cannot be zero"
+        );
+
+        newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
+        dkgResultSubmissionGasChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionGasUpdateStarted(
+            newDkgResultSubmissionGas,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the dkg result submission gas update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultSubmissionGasUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgResultSubmissionGasChangeInitiated
+        )
+    {
+        emit DkgResultSubmissionGasUpdated(
+            newDkgResultSubmissionGas
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgResultSubmissionGas(
+            newDkgResultSubmissionGas
+        );
+        dkgResultSubmissionGasChangeInitiated = 0;
+        newDkgResultSubmissionGas = 0;
+    }
+
+    /// @notice Begins the dkg result approval gas update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultApprovalGas New DKG result approval gas.
+    function beginDkgResultApprovalGasUpdate(
+        uint256 _newDkgResultApprovalGas
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgResultApprovalGas != 0,
+            "DKG resutl approval gas cannot be zero"
+        );
+
+        newDkgResultApprovalGas = _newDkgResultApprovalGas;
+        dkgResultApprovalGasChangeInitiated = block.timestamp;
+        emit DkgResultApprovalGasUpdateStarted(
+            newDkgResultApprovalGas,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the dkg result approval gas update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultApprovalGasUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            dkgResultApprovalGasChangeInitiated
+        )
+    {
+        emit DkgResultApprovalGasUpdated(
+            newDkgResultApprovalGas
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgResultApprovalGas(
+            newDkgResultApprovalGas
+        );
+        dkgResultApprovalGasChangeInitiated = 0;
+        newDkgResultApprovalGas = 0;
+    }
+
     /// @notice Begins the DKG seed timeout update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newDkgSeedTimeout New DKG seed timeout in blocks
@@ -727,6 +829,34 @@ contract WalletRegistryGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgSubmitterPrecedencePeriodLengthChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the dkg result submission gas can
+    ///         be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultSubmissionGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                dkgResultSubmissionGasChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the dkg result approval gas can
+    ///         be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultApprovalGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                dkgResultApprovalGasChangeInitiated
             );
     }
 

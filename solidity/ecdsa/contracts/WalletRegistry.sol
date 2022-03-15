@@ -169,6 +169,10 @@ contract WalletRegistry is
 
     event WalletOwnerUpdated(address walletOwner);
 
+    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
+
+    event DkgResultApprovalGasUpdated(uint256 dkgResultApprovalGas);
+
     constructor(
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
@@ -316,6 +320,36 @@ contract WalletRegistry is
 
         walletOwner = _walletOwner;
         emit WalletOwnerUpdated(address(_walletOwner));
+    }
+
+    /// @notice Updates the dkg result submission gas.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultSubmissionGas New dkg result submission gas.
+    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas) external onlyOwner {
+        require(
+            _dkgResultSubmissionGas != 0,
+            "DKG resutl submission gas cannot be zero"
+        );
+
+        dkgResultSubmissionGas = _dkgResultSubmissionGas;
+        emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
+    }
+
+    /// @notice Updates the dkg result approval gas.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultApprovalGas New dkg result approval gas.
+    function updateDkgResultApprovalGas(uint256 _dkgResultApprovalGas) external onlyOwner {
+        require(
+            _dkgResultApprovalGas != 0,
+            "DKG resutl approval gas cannot be zero"
+        );
+
+        dkgResultApprovalGas = _dkgResultApprovalGas;
+        emit DkgResultApprovalGasUpdated(_dkgResultApprovalGas);
     }
 
     /// @notice Registers the caller in the sortition pool.
