@@ -460,7 +460,7 @@ contract WalletRegistryGovernance is Ownable {
         /* solhint-disable not-rely-on-time */
         require(
             _newDkgResultSubmissionGas != 0,
-            "DKG resutl submission gas cannot be zero"
+            "DKG result submission gas cannot be zero"
         );
 
         newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
@@ -497,7 +497,7 @@ contract WalletRegistryGovernance is Ownable {
         /* solhint-disable not-rely-on-time */
         require(
             _newDkgResultApprovalGas != 0,
-            "DKG resutl approval gas cannot be zero"
+            "DKG result approval gas cannot be zero"
         );
 
         newDkgResultApprovalGas = _newDkgResultApprovalGas;

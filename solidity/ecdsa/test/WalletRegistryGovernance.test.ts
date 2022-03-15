@@ -52,6 +52,8 @@ describe("WalletRegistryGovernance", async () => {
   const initialAuthorizationDecreaseDelay = 5184000 // 60 days
   const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
+  const initialDkgResultSubmissionGas = 305000
+  const initialDkgResultApprovalGas = 275000
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
@@ -1023,6 +1025,294 @@ describe("WalletRegistryGovernance", async () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             walletRegistryGovernance.getRemainingMaliciousDkgResultSlashingAmountUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginDkgResultSubmissionGasUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginDkgResultSubmissionGasUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called with value 0", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionGasUpdate(0)
+        ).to.be.revertedWith("DKG result submission gas cannot be zero")
+      })
+    })
+
+    context("when the caller is the owner and value is correct", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgResultSubmissionGasUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the DKG submission result gas", async () => {
+        expect(await walletRegistry.dkgResultSubmissionGas()).to.be.equal(
+          initialDkgResultSubmissionGas
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingDkgResultSubmissionGasUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit the DkgResultSubmissionGasUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "DkgResultSubmissionGasUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgResultSubmissionGasUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeDkgResultSubmissionGasUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgResultSubmissionGasUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgResultSubmissionGasUpdate(100)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgResultSubmissionGasUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionGasUpdate(100)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgResultSubmissionGasUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the DKG result submission", async () => {
+          expect(await walletRegistry.dkgResultSubmissionGas()).to.be.equal(100)
+        })
+
+        it("should emit DkgResultSubmissionGasUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "DkgResultSubmissionGasUpdated")
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingDkgResultSubmissionGasUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginDkgResultApprovalGasUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginDkgResultApprovalGasUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called with value 0", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultApprovalGasUpdate(0)
+        ).to.be.revertedWith("DKG result approval gas cannot be zero")
+      })
+    })
+
+    context("when the caller is the owner and value is correct", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgResultApprovalGasUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the DKG approval result gas", async () => {
+        expect(await walletRegistry.dkgResultApprovalGas()).to.be.equal(
+          initialDkgResultApprovalGas
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingDkgResultApprovalGasUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit the DkgResultApprovalGasUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "DkgResultApprovalGasUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgResultApprovalGasUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeDkgResultApprovalGasUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgResultApprovalGasUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginDkgResultApprovalGasUpdate(100)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgResultApprovalGasUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginDkgResultApprovalGasUpdate(100)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeDkgResultApprovalGasUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the DKG result approval", async () => {
+          expect(await walletRegistry.dkgResultApprovalGas()).to.be.equal(100)
+        })
+
+        it("should emit DkgResultApprovalGasUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "DkgResultApprovalGasUpdated")
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingDkgResultApprovalGasUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }
