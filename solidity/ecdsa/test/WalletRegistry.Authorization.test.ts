@@ -959,7 +959,7 @@ describe("WalletRegistry - Pool", () => {
         it("should revert", async () => {
           await expect(
             walletRegistry.approveAuthorizationDecrease(stakingProvider.address)
-          ).to.be.revertedWith("Authorization decrease delay not passsed")
+          ).to.be.revertedWith("Authorization decrease delay not passed")
         })
       })
 

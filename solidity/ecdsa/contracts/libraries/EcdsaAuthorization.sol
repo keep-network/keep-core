@@ -185,7 +185,7 @@ library EcdsaAuthorization {
     ///         and lower than the minimum authorization.
     ///
     ///         If the operator is not known (`registerOperator` was not called)
-    ///         it lets to `approveAuthorizationDecrease` immediatelly. If the
+    ///         it lets to `approveAuthorizationDecrease` immediately. If the
     ///         operator is known (`registerOperator` was called), the operator
     ///         needs to update state of the sortition pool with a call to
     ///         `joinSortitionPool` or `updateOperatorStatus`. After the
@@ -276,7 +276,7 @@ library EcdsaAuthorization {
         require(
             // solhint-disable-next-line not-rely-on-time
             block.timestamp > decrease.decreasingAt,
-            "Authorization decrease delay not passsed"
+            "Authorization decrease delay not passed"
         );
 
         emit AuthorizationDecreaseApproved(stakingProvider);
