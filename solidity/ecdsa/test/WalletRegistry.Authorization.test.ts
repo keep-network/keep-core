@@ -4,8 +4,14 @@ import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
-import { constants, params, updateWalletRegistryParams } from "./fixtures"
+import {
+  constants,
+  params,
+  initializeWalletOwner,
+  updateWalletRegistryParams,
+} from "./fixtures"
 
+import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { FakeContract } from "@defi-wonderland/smock"
 import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -25,7 +31,7 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const MAX_UINT64 = ethers.BigNumber.from("18446744073709551615") // 2^64 - 1
 
-describe("WalletRegistry - Pool", () => {
+describe("WalletRegistry - Authorization", () => {
   let t: T
   let walletRegistry: WalletRegistry
   let sortitionPool: SortitionPool
@@ -39,7 +45,7 @@ describe("WalletRegistry - Pool", () => {
   let authorizer: SignerWithAddress
   let beneficiary: SignerWithAddress
   let thirdParty: SignerWithAddress
-  let walletOwner: SignerWithAddress
+  let walletOwner: FakeContract<IWalletOwner>
   let slasher: FakeContract<IApplication>
 
   const stakedAmount = to1e18(1000000) // 1M T
@@ -53,9 +59,6 @@ describe("WalletRegistry - Pool", () => {
     sortitionPool = await ethers.getContract("SortitionPool")
     staking = await ethers.getContract("TokenStaking")
 
-    deployer = await ethers.getNamedSigner("deployer")
-    walletOwner = await ethers.getNamedSigner("walletOwner")
-
     const accounts = await getUnnamedAccounts()
     owner = await ethers.getSigner(accounts[1])
     stakingProvider = await ethers.getSigner(accounts[2])
@@ -68,6 +71,9 @@ describe("WalletRegistry - Pool", () => {
       await ethers.getContract("WalletRegistryGovernance")
     const governance = await ethers.getNamedSigner("governance")
     await updateWalletRegistryParams(governanceContract, governance)
+
+    deployer = await ethers.getNamedSigner("deployer")
+    walletOwner = await initializeWalletOwner(governanceContract, governance)
 
     await t.connect(deployer).mint(owner.address, stakedAmount)
     await t.connect(owner).approve(staking.address, stakedAmount)
@@ -1035,7 +1041,7 @@ describe("WalletRegistry - Pool", () => {
           await createSnapshot()
 
           // lock the pool for DKG
-          await walletRegistry.connect(walletOwner).requestNewWallet()
+          await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
 
           // and slash!
           await staking
@@ -1797,7 +1803,7 @@ describe("WalletRegistry - Pool", () => {
           await walletRegistry.updateOperatorStatus(operator.address)
 
           // lock the pool for DKG
-          await walletRegistry.connect(walletOwner).requestNewWallet()
+          await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
 
           // and slash!
           await staking

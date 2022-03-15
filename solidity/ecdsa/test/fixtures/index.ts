@@ -194,7 +194,7 @@ export async function updateWalletRegistryParams(
     .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
 }
 
-async function initializeWalletOwner(
+export async function initializeWalletOwner(
   walletRegistryGovernance: WalletRegistryGovernance,
   governance: SignerWithAddress
 ): Promise<FakeContract<IWalletOwner>> {
