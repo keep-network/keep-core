@@ -275,7 +275,7 @@ library EcdsaAuthorization {
         );
         require(
             // solhint-disable-next-line not-rely-on-time
-            block.timestamp > decrease.decreasingAt,
+            block.timestamp >= decrease.decreasingAt,
             "Authorization decrease delay not passed"
         );
 

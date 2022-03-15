@@ -949,7 +949,9 @@ describe("WalletRegistry - Pool", () => {
           await createSnapshot()
 
           await walletRegistry.updateOperatorStatus(operator.address)
-          await helpers.time.increaseTime(params.authorizationDecreaseDelay - 1)
+          await helpers.time.increaseTime(
+            params.authorizationDecreaseDelay - 60 // -1min
+          )
         })
 
         after(async () => {
