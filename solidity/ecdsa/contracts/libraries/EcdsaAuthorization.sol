@@ -380,6 +380,9 @@ library EcdsaAuthorization {
 
         sortitionPool.insertOperator(operator, _eligibleStake);
 
+        // If there is a pending authorization decrease request, activate it.
+        // At this point, the sortition pool state is up to date so the
+        // authorization decrease delay can start counting.
         if (decrease.decreasingAt == type(uint64).max) {
             decrease.decreasingAt =
                 // solhint-disable-next-line not-rely-on-time
@@ -416,6 +419,9 @@ library EcdsaAuthorization {
             sortitionPool.updateOperatorStatus(operator, _eligibleStake);
         }
 
+        // If there is a pending authorization decrease request, activate it.
+        // At this point, the sortition pool state is up to date so the
+        // authorization decrease delay can start counting.
         if (decrease.decreasingAt == type(uint64).max) {
             decrease.decreasingAt =
                 // solhint-disable-next-line not-rely-on-time
