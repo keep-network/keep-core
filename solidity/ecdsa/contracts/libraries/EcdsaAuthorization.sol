@@ -50,7 +50,7 @@ library EcdsaAuthorization {
         address indexed operator
     );
 
-    event AuthorizationIncreaseRequested(
+    event AuthorizationIncreased(
         address indexed stakingProvider,
         address indexed operator,
         uint96 fromAmount,
@@ -169,7 +169,7 @@ library EcdsaAuthorization {
         // having to wait for the staking provider to do their part.
 
         address operator = self.stakingProviderToOperator[stakingProvider];
-        emit AuthorizationIncreaseRequested(
+        emit AuthorizationIncreased(
             stakingProvider,
             operator,
             fromAmount,

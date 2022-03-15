@@ -133,7 +133,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IApplication, Ownable {
         address indexed operator
     );
 
-    event AuthorizationIncreaseRequested(
+    event AuthorizationIncreased(
         address indexed stakingProvider,
         address indexed operator,
         uint96 fromAmount,

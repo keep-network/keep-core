@@ -364,9 +364,9 @@ describe("WalletRegistry - Pool", () => {
           await restoreSnapshot()
         })
 
-        it("should emit AuthorizationIncreaseRequested", async () => {
+        it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
-            .to.emit(walletRegistry, "AuthorizationIncreaseRequested")
+            .to.emit(walletRegistry, "AuthorizationIncreased")
             .withArgs(
               stakingProvider.address,
               ZERO_ADDRESS,
@@ -396,9 +396,9 @@ describe("WalletRegistry - Pool", () => {
           await restoreSnapshot()
         })
 
-        it("should emit AuthorizationIncreaseRequested", async () => {
+        it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
-            .to.emit(walletRegistry, "AuthorizationIncreaseRequested")
+            .to.emit(walletRegistry, "AuthorizationIncreased")
             .withArgs(stakingProvider.address, ZERO_ADDRESS, 0, stakedAmount)
         })
       })
@@ -443,9 +443,9 @@ describe("WalletRegistry - Pool", () => {
           await restoreSnapshot()
         })
 
-        it("should emit AuthorizationIncreaseRequested", async () => {
+        it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
-            .to.emit(walletRegistry, "AuthorizationIncreaseRequested")
+            .to.emit(walletRegistry, "AuthorizationIncreased")
             .withArgs(
               stakingProvider.address,
               operator.address,
@@ -476,9 +476,9 @@ describe("WalletRegistry - Pool", () => {
           await restoreSnapshot()
         })
 
-        it("should emit AuthorizationIncreaseRequested", async () => {
+        it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
-            .to.emit(walletRegistry, "AuthorizationIncreaseRequested")
+            .to.emit(walletRegistry, "AuthorizationIncreased")
             .withArgs(
               stakingProvider.address,
               operator.address,
