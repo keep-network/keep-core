@@ -323,6 +323,30 @@ library EcdsaAuthorization {
             // If the sortition pool is not locked and the operator is in the
             // sortition pool, we are updating it.
             //
+            // To keep stakes synchronized between applications when staking
+            // providers are slashed, without the risk of running out of gas,
+            // the staking contract queues up slashings and let users process
+            // the transactions. When an application slashes one or more staking
+            // providers, it adds them to the slashing queue on the staking
+            // contract. A queue entry contains the staking provider’s address
+            // and the amount they are due to be slashed.
+            //
+            // When there is at least one staking provider in the slashing
+            // queue, any account can submit a transaction processing one or
+            // more staking providers' slashings, and collecting a reward for
+            // doing so. A queued slashing is processed by updating the staking
+            // provider’s stake to the post-slashing amount, updating authorized
+            // amount for each affected application, and notifying all affected
+            // applications that the staking provider’s authorized stake has
+            // been reduced due to slashing.
+            // 
+            // The entire idea is that the process transaction is expensive
+            // because each application needs to be updated, so the reward for
+            // the processor is hefty and comes from the slashed tokens.
+            // Practically, it means that if the sortition pool is unlocked, and
+            // can be updated, it should be updated because we already paid
+            // someone for updating it.
+            //
             // If the sortition pool is locked, update needs to wait. Other
             // sortition pool members are incentivized to call
             // `updateOperatorStatus` for the problematic operator because they
