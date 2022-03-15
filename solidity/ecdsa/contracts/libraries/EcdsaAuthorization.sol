@@ -67,6 +67,13 @@ library EcdsaAuthorization {
 
     event AuthorizationDecreaseApproved(address indexed stakingProvider);
 
+    event InvoluntaryAuthorizationDecreaseFailed(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount
+    );
+
     event OperatorJoinedSortitionPool(
         address indexed stakingProvider,
         address indexed operator
@@ -306,7 +313,9 @@ library EcdsaAuthorization {
         Data storage self,
         IStaking tokenStaking,
         SortitionPool sortitionPool,
-        address stakingProvider
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
     ) internal {
         address operator = self.stakingProviderToOperator[stakingProvider];
 
@@ -339,7 +348,7 @@ library EcdsaAuthorization {
             // amount for each affected application, and notifying all affected
             // applications that the staking provider’s authorized stake has
             // been reduced due to slashing.
-            // 
+            //
             // The entire idea is that the process transaction is expensive
             // because each application needs to be updated, so the reward for
             // the processor is hefty and comes from the slashed tokens.
@@ -351,20 +360,24 @@ library EcdsaAuthorization {
             // sortition pool members are incentivized to call
             // `updateOperatorStatus` for the problematic operator because they
             // will increase their rewards this way.
-            if (
-                sortitionPool.isOperatorInPool(operator) &&
-                !sortitionPool.isLocked()
-            ) {
-                updateOperatorStatus(
-                    self,
-                    tokenStaking,
-                    sortitionPool,
-                    operator
-                );
+            if (sortitionPool.isOperatorInPool(operator)) {
+                if (sortitionPool.isLocked()) {
+                    emit InvoluntaryAuthorizationDecreaseFailed(
+                        stakingProvider,
+                        operator,
+                        fromAmount,
+                        toAmount
+                    );
+                } else {
+                    updateOperatorStatus(
+                        self,
+                        tokenStaking,
+                        sortitionPool,
+                        operator
+                    );
+                }
             }
         }
-
-        // TODO: event?
     }
 
     /// @notice Lets the operator join the sortition pool. The operator address

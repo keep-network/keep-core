@@ -158,6 +158,13 @@ contract WalletRegistry is
 
     event AuthorizationDecreaseApproved(address indexed stakingProvider);
 
+    event InvoluntaryAuthorizationDecreaseFailed(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount
+    );
+
     event OperatorJoinedSortitionPool(
         address indexed stakingProvider,
         address indexed operator
@@ -323,13 +330,15 @@ contract WalletRegistry is
     ///         their own rewards in the pool.
     function involuntaryAuthorizationDecrease(
         address stakingProvider,
-        uint96,
-        uint96
+        uint96 fromAmount,
+        uint96 toAmount
     ) external onlyStakingContract {
         authorization.involuntaryAuthorizationDecrease(
             staking,
             sortitionPool,
-            stakingProvider
+            stakingProvider,
+            fromAmount,
+            toAmount
         );
     }
 
