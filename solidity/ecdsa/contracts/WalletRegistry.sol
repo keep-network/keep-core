@@ -327,7 +327,10 @@ contract WalletRegistry is
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _dkgResultSubmissionGas New dkg result submission gas.
-    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas) external onlyOwner {
+    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas)
+        external
+        onlyOwner
+    {
         require(
             _dkgResultSubmissionGas != 0,
             "DKG resutl submission gas cannot be zero"
@@ -342,7 +345,10 @@ contract WalletRegistry is
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _dkgResultApprovalGas New dkg result approval gas.
-    function updateDkgResultApprovalGas(uint256 _dkgResultApprovalGas) external onlyOwner {
+    function updateDkgResultApprovalGas(uint256 _dkgResultApprovalGas)
+        external
+        onlyOwner
+    {
         require(
             _dkgResultApprovalGas != 0,
             "DKG resutl approval gas cannot be zero"

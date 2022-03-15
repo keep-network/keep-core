@@ -478,17 +478,11 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeDkgResultSubmissionGasUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgResultSubmissionGasChangeInitiated
-        )
+        onlyAfterGovernanceDelay(dkgResultSubmissionGasChangeInitiated)
     {
-        emit DkgResultSubmissionGasUpdated(
-            newDkgResultSubmissionGas
-        );
+        emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateDkgResultSubmissionGas(
-            newDkgResultSubmissionGas
-        );
+        walletRegistry.updateDkgResultSubmissionGas(newDkgResultSubmissionGas);
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
     }
@@ -496,9 +490,10 @@ contract WalletRegistryGovernance is Ownable {
     /// @notice Begins the dkg result approval gas update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newDkgResultApprovalGas New DKG result approval gas.
-    function beginDkgResultApprovalGasUpdate(
-        uint256 _newDkgResultApprovalGas
-    ) external onlyOwner {
+    function beginDkgResultApprovalGasUpdate(uint256 _newDkgResultApprovalGas)
+        external
+        onlyOwner
+    {
         /* solhint-disable not-rely-on-time */
         require(
             _newDkgResultApprovalGas != 0,
@@ -520,17 +515,11 @@ contract WalletRegistryGovernance is Ownable {
     function finalizeDkgResultApprovalGasUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgResultApprovalGasChangeInitiated
-        )
+        onlyAfterGovernanceDelay(dkgResultApprovalGasChangeInitiated)
     {
-        emit DkgResultApprovalGasUpdated(
-            newDkgResultApprovalGas
-        );
+        emit DkgResultApprovalGasUpdated(newDkgResultApprovalGas);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateDkgResultApprovalGas(
-            newDkgResultApprovalGas
-        );
+        walletRegistry.updateDkgResultApprovalGas(newDkgResultApprovalGas);
         dkgResultApprovalGasChangeInitiated = 0;
         newDkgResultApprovalGas = 0;
     }
@@ -840,10 +829,7 @@ contract WalletRegistryGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                dkgResultSubmissionGasChangeInitiated
-            );
+        return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
     }
 
     /// @notice Get the time remaining until the dkg result approval gas can
@@ -854,10 +840,7 @@ contract WalletRegistryGovernance is Ownable {
         view
         returns (uint256)
     {
-        return
-            getRemainingChangeTime(
-                dkgResultApprovalGasChangeInitiated
-            );
+        return getRemainingChangeTime(dkgResultApprovalGasChangeInitiated);
     }
 
     /// @notice Gets the time remaining until the governable parameter update
