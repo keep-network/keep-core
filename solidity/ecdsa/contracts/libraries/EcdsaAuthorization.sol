@@ -161,6 +161,13 @@ library EcdsaAuthorization {
             "Authorization below the minimum"
         );
 
+        // Note that this function does not require the operator address to be
+        // set for the given staking provider. This allows the stake owner
+        // who is also an authorizer to increase the authorization before the
+        // staking provider sets the operator. This allows delegating stake
+        // and increasing authorization immediately one after another without
+        // having to wait for the staking provider to do their part.
+
         address operator = self.stakingProviderToOperator[stakingProvider];
         emit AuthorizationIncreaseRequested(
             stakingProvider,
