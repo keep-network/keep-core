@@ -1679,8 +1679,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             context("with challenge period passed", async () => {
               let tx: ContractTransaction
-              let initialDkgRewardsPoolBalance: BigNumber
-              let initialsubmitterInitialBalance: BigNumber
 
               before(async () => {
                 await createSnapshot()
@@ -1688,13 +1686,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await mineBlocksTo(
                   resultSubmissionBlock + params.dkgResultChallengePeriodLength
                 )
-
-                // initialDkgRewardsPoolBalance =
-                //   await walletRegistry.dkgRewardsPool()
-
-                // initialsubmitterInitialBalance = await testToken.balanceOf(
-                //   await anotherSubmitter.getAddress()
-                // )
 
                 tx = await walletRegistry
                   .connect(anotherSubmitter)
@@ -2020,10 +2011,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
 
             it("should refund ETH to a submitter", async () => {
-              const postDkgApprovalsubmitterInitialBalance = await provider.getBalance(
-                await submitter.getAddress()
+              const postDkgApprovalSubmitterInitialBalance =
+                await provider.getBalance(await submitter.getAddress())
+              const diff = postDkgApprovalSubmitterInitialBalance.sub(
+                submitterInitialBalance
               )
-              const diff = postDkgApprovalsubmitterInitialBalance.sub(submitterInitialBalance)
 
               expect(diff).to.be.gt(0)
               expect(diff).to.be.lt(
