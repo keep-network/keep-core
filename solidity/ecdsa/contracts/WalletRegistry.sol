@@ -168,7 +168,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(400000e18); // 400k T
         authorization.setAuthorizationDecreaseDelay(5184000); // 60 days
-        
+
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
 

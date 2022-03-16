@@ -1559,6 +1559,15 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should unlock the sortition pool", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.false
                 })
+
+                // there are no misbehaving group members in the result,
+                // everyone should be eligible for rewards
+                it("should not mark properly behaving operators as ineligible for rewards", async () => {
+                  await expect(tx).not.to.emit(
+                    sortitionPool,
+                    "IneligibleForRewards"
+                  )
+                })
               })
 
               context("when called by a third party", async () => {
@@ -1924,6 +1933,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
             }
           )
 
+          // This case shouldn't happen in real life. When a result is submitted
+          // with invalid order of misbehaved operators it should be challenged.
           context("when misbehaved members contains duplicates", async () => {
             const misbehavedIndices = [2, 9, 9, 10]
 
