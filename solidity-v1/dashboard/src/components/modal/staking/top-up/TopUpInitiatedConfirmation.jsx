@@ -26,8 +26,8 @@ export const TopUpInitiatedConfirmation = withBaseModal(
           <section className="text-center">
             <h3>Almost there...</h3>
             <p className="text-big text-grey-70">
-              Return to the token dashboard
-              <strong>in 12 hours</strong>&nbsp;to finalize this transaction!
+              Return to the token dashboard <strong>in 12 hours</strong>&nbsp;to
+              finalize this transaction!
             </p>
           </section>
           <TokenAmount

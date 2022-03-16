@@ -10,6 +10,8 @@ import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
 
+import "./tasks"
+
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
@@ -22,6 +24,13 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+    settings: {
+      outputSelection: {
+        "*": {
+          "*": ["storageLayout"],
+        },
+      },
+    },
   },
   paths: {
     artifacts: "./build",
@@ -39,6 +48,11 @@ const config: HardhatUserConfig = {
           : undefined,
       },
       accounts: { count: 70 },
+      tags: ["local"],
+    },
+    development: {
+      url: "http://localhost:8545",
+      chainId: 1101,
       tags: ["local"],
     },
     ropsten: {
@@ -59,12 +73,11 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 1, // take the second account
+      // mainnet: ""
     },
     governance: {
       default: 2,
-    },
-    walletOwner: {
-      default: 3,
+      // mainnet: ""
     },
   },
   external: {
@@ -88,7 +101,10 @@ const config: HardhatUserConfig = {
     // },
   },
   dependencyCompiler: {
-    paths: ["@threshold-network/solidity-contracts/contracts/token/T.sol"],
+    paths: [
+      "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
+    ],
     keep: true,
   },
   contractSizer: {
@@ -96,6 +112,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
+    except: ["TokenStaking$"],
   },
   mocha: {
     timeout: 60000,

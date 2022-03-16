@@ -19,6 +19,8 @@ import {
   OPERATOR_DELEGATION_UNDELEGATED,
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
   tbtcV2Migration,
+  REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA,
+  ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
 } from "../actions"
 import {
   assetPoolDepositedEventEmitted,
@@ -32,6 +34,7 @@ import { keepBalanceActions } from "../actions"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
 import { showModal } from "../actions/modal"
+import { thresholdStakeKeepEventEmitted } from "../actions/keep-to-t-staking"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take(keepBalanceActions.KEEP_TOKEN_BALANCE_REQUEST_SUCCESS)
@@ -224,6 +227,16 @@ function* observeStakedEvents() {
       }
 
       yield put({ type: "staking/add_delegation", payload: delegation })
+      if (isSameEthAddress(yourAddress, authorizer)) {
+        yield put({
+          type: ADD_STAKE_TO_THRESHOLD_AUTH_DATA,
+          payload: {
+            ...delegation,
+            owner: yourAddress,
+            operatorContractAddress: Keep.thresholdStakingContract.address,
+          },
+        })
+      }
     } catch (error) {
       console.error(`Failed subscribing to StakeDelegated event`, error)
       contractEventCahnnel.close()
@@ -302,6 +315,10 @@ function* observeUndelegatedEvent() {
 
       yield put({ type: "staking/remove_delegation", payload: operator })
       yield put({ type: "staking/add_undelegation", payload: undelegation })
+      yield put({
+        type: REMOVE_STAKE_FROM_THRESHOLD_AUTH_DATA,
+        payload: operator,
+      })
     } catch (error) {
       console.error(`Failed subscribing to Undelegated event`, error)
       contractEventCahnnel.close()
@@ -1156,5 +1173,18 @@ export function* observeAuctionClosedEvent() {
     "AuctionClosed",
     riskManagerAuctionClosedEventEmitted,
     "RiskManagerV1.AuctionClosed"
+  )
+}
+
+export function* observeThresholdStakeKeepEvent() {
+  const thresholdStakingContract =
+    Keep.keepToTStaking.thresholdStakingContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    thresholdStakingContract,
+    "Staked",
+    thresholdStakeKeepEventEmitted,
+    `ThresholdTokenStaking.StakeKeep`
   )
 }

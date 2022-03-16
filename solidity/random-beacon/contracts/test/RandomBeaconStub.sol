@@ -3,10 +3,10 @@ pragma solidity ^0.8.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "../RandomBeacon.sol";
-import "../DKGValidator.sol";
-import "../libraries/DKG.sol";
 import "../libraries/Callback.sol";
 import "../libraries/Groups.sol";
+import {BeaconDkg as DKG} from "../libraries/BeaconDkg.sol";
+import {BeaconDkgValidator as DKGValidator} from "../BeaconDkgValidator.sol";
 
 contract RandomBeaconStub is RandomBeacon {
     constructor(
@@ -43,7 +43,7 @@ contract RandomBeaconStub is RandomBeacon {
         group.groupPubKey = groupPubKey;
         group.membersHash = groupMembersHash;
         /* solhint-disable-next-line not-rely-on-time */
-        group.activationBlockNumber = block.number;
+        group.registrationBlockNumber = block.number;
 
         groups.groupsData[groupPubKeyHash] = group;
         groups.groupsRegistry.push(groupPubKeyHash);
@@ -55,7 +55,7 @@ contract RandomBeaconStub is RandomBeacon {
         returns (uint256)
     {
         return
-            groups.groupsData[groupPubKeyHash].activationBlockNumber +
+            groups.groupsData[groupPubKeyHash].registrationBlockNumber +
             groups.groupLifetime;
     }
 

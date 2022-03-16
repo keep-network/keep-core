@@ -2,17 +2,18 @@
 
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { ContractTransaction } from "ethers"
+
 import { reimbursmentPoolDeployment, params } from "./fixtures"
+
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { ContractTransaction } from "ethers"
 import type { ReimbursementPool } from "../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { provider } = waffle
-const fixture = async () => reimbursmentPoolDeployment()
 
-describe("ReimbursementPool - Pool", () => {
+describe("ReimbursementPool", () => {
   let owner: SignerWithAddress
   let thirdParty: SignerWithAddress
   let refundee: SignerWithAddress
@@ -26,7 +27,7 @@ describe("ReimbursementPool - Pool", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(fixture)
+    const contracts = await waffle.loadFixture(reimbursmentPoolDeployment)
 
     reimbursementPool = contracts.reimbursementPool as ReimbursementPool
   })
@@ -55,7 +56,7 @@ describe("ReimbursementPool - Pool", () => {
     })
 
     context("when the owner funds a reimbursment pool", () => {
-      it("should withdraw entire ETH balance", async () => {
+      it("should send ETH to the Reimbursment Pool", async () => {
         let reimbursementPoolBalance = await provider.getBalance(
           reimbursementPool.address
         )
@@ -79,16 +80,10 @@ describe("ReimbursementPool - Pool", () => {
 
   describe("withdrawAll", () => {
     beforeEach(async () => {
-      await createSnapshot()
-
       await thirdParty.sendTransaction({
         to: reimbursementPool.address,
         value: ethers.utils.parseEther("10.0"), // Send 10.0 ETH
       })
-    })
-
-    afterEach(async () => {
-      await restoreSnapshot()
     })
 
     context("when withdrawing all the funds as a non owner", () => {
@@ -132,11 +127,11 @@ describe("ReimbursementPool - Pool", () => {
         )
       })
 
-      it("should emit WithdrawnFunds event", async () => {
+      it("should emit FundsWithdrawn event", async () => {
         await expect(
           reimbursementPool.connect(owner).withdrawAll(thirdParty.address)
         )
-          .to.emit(reimbursementPool, "WithdrawnFunds")
+          .to.emit(reimbursementPool, "FundsWithdrawn")
           .withArgs(ethers.utils.parseEther("10.0"), thirdParty.address)
       })
     })
@@ -212,13 +207,13 @@ describe("ReimbursementPool - Pool", () => {
         )
       })
 
-      it("should emit WithdrawnFunds event", async () => {
+      it("should emit FundsWithdrawn event", async () => {
         await expect(
           reimbursementPool
             .connect(owner)
             .withdraw(ethers.utils.parseEther("2.0"), thirdParty.address)
         )
-          .to.emit(reimbursementPool, "WithdrawnFunds")
+          .to.emit(reimbursementPool, "FundsWithdrawn")
           .withArgs(ethers.utils.parseEther("2.0"), thirdParty.address)
       })
     })
@@ -285,7 +280,7 @@ describe("ReimbursementPool - Pool", () => {
             refundee.address
           )
 
-          await reimbursementPool
+          const tx = await reimbursementPool
             .connect(thirdPartyContract)
             .refund(50000, refundee.address)
 
@@ -295,13 +290,10 @@ describe("ReimbursementPool - Pool", () => {
           const refundeeBalanceDiff = refundeeBalanceAfter.sub(
             refundeeBalanceBefore
           )
-          expect(refundeeBalanceDiff).to.be.gt(
-            ethers.utils.parseUnits("73000", "gwei")
-          )
-
-          expect(refundeeBalanceDiff).to.be.lt(
-            ethers.utils.parseUnits("146000", "gwei")
-          )
+          // consumed gas: 50k + 41.9k = 91.9k
+          // refund: 91.9k * tx.gasPrice
+          const expectedRefund = ethers.BigNumber.from(91900).mul(tx.gasPrice)
+          expect(refundeeBalanceDiff).to.be.equal(expectedRefund)
         })
 
         it("should not emit SendingEtherFailed event", async () => {
@@ -337,9 +329,9 @@ describe("ReimbursementPool - Pool", () => {
           const refundeeBalanceDiff = refundeeBalanceAfter.sub(
             refundeeBalanceBefore
           )
-          // gas spent + static gas => 50k + 37.5k
+          // gas spent + static gas => 50k + 41.9k
           expect(refundeeBalanceDiff).to.be.eq(
-            ethers.utils.parseUnits("87500", "gwei")
+            ethers.utils.parseUnits("91900", "gwei")
           )
         })
       })
@@ -380,11 +372,11 @@ describe("ReimbursementPool - Pool", () => {
         })
 
         it("should emit SendingEtherFailed event", async () => {
-          // gas spent + static gas => 50k + 37.5k
+          // gas spent + static gas => 50k + 41.9k
           await expect(tx)
             .to.emit(reimbursementPool, "SendingEtherFailed")
             .withArgs(
-              ethers.utils.parseUnits("87500", "gwei"),
+              ethers.utils.parseUnits("91900", "gwei"),
               refundee.address
             )
         })
@@ -413,13 +405,25 @@ describe("ReimbursementPool - Pool", () => {
           .to.be.true
 
         await expect(tx)
-          .to.emit(reimbursementPool, "thirdPartyContract")
+          .to.emit(reimbursementPool, "AuthorizedContract")
           .withArgs(thirdPartyContract.address)
       })
     })
   })
 
-  describe("unuthorize", () => {
+  describe("unauthorize", () => {
+    beforeEach(async () => {
+      await createSnapshot()
+
+      await reimbursementPool
+        .connect(owner)
+        .authorize(thirdPartyContract.address)
+    })
+
+    afterEach(async () => {
+      await restoreSnapshot()
+    })
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -440,7 +444,7 @@ describe("ReimbursementPool - Pool", () => {
           .to.be.false
 
         await expect(tx)
-          .to.emit(reimbursementPool, "UnthirdPartyContract")
+          .to.emit(reimbursementPool, "UnauthorizedContract")
           .withArgs(thirdPartyContract.address)
       })
     })

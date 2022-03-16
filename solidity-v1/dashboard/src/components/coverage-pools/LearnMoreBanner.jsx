@@ -10,8 +10,8 @@ const LearnMoreBanner = ({ onClose }) => {
       <div className="banner__content-wrapper">
         <Banner.Icon icon={Icons.CoveragePool} />
         <Banner.Title className="h3 text-white banner__title--font-weight-600">
-          <p className="mb-0">Deposit KEEP in the coverage pool to</p>
-          <p className="mb-0">secure the network and earn rewards.</p>
+          <h3 className="mb-0">Deposit KEEP in the coverage pool to</h3>
+          <h3 className="mb-0">secure the network and earn rewards.</h3>
         </Banner.Title>
         <NavLink
           to="/coverage-pools/how-it-works"

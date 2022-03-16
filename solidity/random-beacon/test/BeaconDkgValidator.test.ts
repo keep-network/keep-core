@@ -5,18 +5,16 @@ import { ethers, helpers, getUnnamedAccounts, waffle } from "hardhat"
 import { expect } from "chai"
 
 import blsData from "./data/bls"
-
 import { constants } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
-import {
-  signDkgResult,
-  DkgResult,
-  noMisbehaved,
-  hashDKGMembers,
-} from "./utils/dkg"
-import { Operator } from "./utils/operators"
+import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
 
-import type { SortitionPool, DKGValidator } from "../typechain"
+import type { Operator } from "./utils/operators"
+import type {
+  SortitionPool,
+  BeaconDkgValidator as DKGValidator,
+  BeaconDkg as DKG,
+} from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
@@ -37,7 +35,7 @@ const fixture = async () => {
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const DKGValidator = await ethers.getContractFactory("DKGValidator")
+  const DKGValidator = await ethers.getContractFactory("BeaconDkgValidator")
   const dkgValidator = (await DKGValidator.deploy(
     sortitionPool.address
   )) as DKGValidator
@@ -49,7 +47,7 @@ const fixture = async () => {
   }
 }
 
-describe("DKGValidator", () => {
+describe("BeaconDkgValidator", () => {
   const dkgSeed: BigNumber = BigNumber.from(
     "31415926535897932384626433832795028841971693993751058209749445923078164062862"
   )
@@ -92,7 +90,7 @@ describe("DKGValidator", () => {
         _numberOfSignatures
       )
 
-      const dkgResult: DkgResult = {
+      const dkgResult: DKG.ResultStruct = {
         submitterMemberIndex: _submitterIndex,
         groupPubKey: _groupPublicKey,
         misbehavedMembersIndices: _misbehaved,

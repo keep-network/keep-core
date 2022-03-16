@@ -70,7 +70,7 @@ const cards = [
   },
   {
     id: "KEEP_ETH",
-    CardComponent: ActiveLiquidityRewardCard,
+    CardComponent: InactiveLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label,
     liquidityPairContractName: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName,
     MainIcon: Icons.KeepBlackGreen,
@@ -79,6 +79,9 @@ const cards = [
     pool: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool,
     lpTokens: LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens,
     wrapperClassName: "keep-eth",
+    inactivePoolBannerProps: {
+      link: LINK.proposals.repurposingKEEPETHLiquidityIncentives,
+    },
     displayLPTokenBalance: true,
   },
   {

@@ -1,5 +1,6 @@
 import { ethers } from "hardhat"
 import { expect } from "chai"
+
 import { hashDKGMembers } from "./dkg"
 
 describe("hashDKGMembers", () => {

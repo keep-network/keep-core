@@ -19,7 +19,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./AltBn128.sol";
 import "./BLS.sol";
 import "./Groups.sol";
-import "./Submission.sol";
 
 library Relay {
     using SafeERC20 for IERC20;
@@ -38,20 +37,13 @@ library Relay {
         AltBn128.G1Point previousEntry;
         // Fee paid by the relay requester denominated in ETH.
         uint256 relayRequestFee;
-        // The number of blocks it takes for a group member to become
-        // eligible to submit the relay entry.
-        uint32 relayEntrySubmissionEligibilityDelay;
+        // Time in blocks during which a result is expected to be submitted.
+        uint32 relayEntrySoftTimeout;
         // Hard timeout in blocks for a group to submit the relay entry.
         uint32 relayEntryHardTimeout;
         // Slashing amount for not submitting relay entry
         uint96 relayEntrySubmissionFailureSlashingAmount;
     }
-
-    /// @notice Target DKG group size in the threshold relay. A group has
-    ///         the target size if all their members behaved properly during
-    ///         group formation. Actual group size can be lower in groups
-    ///         with proven misbehaved members.
-    uint256 public constant dkgGroupSize = 64;
 
     /// @notice Seed used as the first relay entry value.
     /// It's a G1 point G * PI =
@@ -189,17 +181,15 @@ library Relay {
         self.relayRequestFee = uint96(newRelayRequestFee);
     }
 
-    /// @notice Set relayEntrySubmissionEligibilityDelay parameter.
-    /// @param newRelayEntrySubmissionEligibilityDelay New value of the parameter.
-    function setRelayEntrySubmissionEligibilityDelay(
+    /// @notice Set relayEntrySoftTimeout parameter.
+    /// @param newRelayEntrySoftTimeout New value of the parameter.
+    function setRelayEntrySoftTimeout(
         Data storage self,
-        uint256 newRelayEntrySubmissionEligibilityDelay
+        uint256 newRelayEntrySoftTimeout
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntrySubmissionEligibilityDelay = uint32(
-            newRelayEntrySubmissionEligibilityDelay
-        );
+        self.relayEntrySoftTimeout = uint32(newRelayEntrySoftTimeout);
     }
 
     /// @notice Set relayEntryHardTimeout parameter.
@@ -282,8 +272,7 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 _relayEntryTimeout = (dkgGroupSize *
-            self.relayEntrySubmissionEligibilityDelay) +
+        uint256 _relayEntryTimeout = self.relayEntrySoftTimeout +
             self.relayEntryHardTimeout;
 
         return
@@ -298,9 +287,7 @@ library Relay {
         view
         returns (uint256)
     {
-        return
-            self.currentRequestStartBlock +
-            (dkgGroupSize * self.relayEntrySubmissionEligibilityDelay);
+        return self.currentRequestStartBlock + self.relayEntrySoftTimeout;
     }
 
     /// @notice Computes the slashing factor which should be used during

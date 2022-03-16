@@ -3,7 +3,7 @@
 import { ethers } from "hardhat"
 
 // eslint-disable-next-line import/no-cycle
-import { constants } from "../fixtures"
+import { params } from "../fixtures"
 
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber } from "ethers"
@@ -11,13 +11,16 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { WalletRegistry, T } from "../../typechain"
 
 export type OperatorID = number
-export type Operator = { id: OperatorID; address: Address }
+export type Operator = {
+  id: OperatorID
+  signer: SignerWithAddress
+}
 
 export async function registerOperators(
   walletRegistry: WalletRegistry,
   tToken: T,
   addresses: Address[],
-  stakeAmount: BigNumber = constants.minimumStake
+  stakeAmount: BigNumber = params.minimumAuthorization
 ): Promise<Operator[]> {
   const operators: Operator[] = []
 
@@ -65,7 +68,7 @@ export async function registerOperators(
 
     const id = await sortitionPool.getOperatorID(operator.address)
 
-    operators.push({ id, address: operator.address })
+    operators.push({ id, signer: operator })
   }
 
   return operators
