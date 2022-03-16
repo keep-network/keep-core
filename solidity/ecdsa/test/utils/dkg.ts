@@ -59,7 +59,7 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   submitter: SignerWithAddress
-  submitterBalance: BigNumber
+  submitterInitialBalance: BigNumber
   transaction: ContractTransaction
 }> {
   const sortitionPool = (await ethers.getContractAt(
@@ -101,7 +101,7 @@ export async function signAndSubmitArbitraryDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   submitter: SignerWithAddress
-  submitterBalance: BigNumber
+  submitterInitialBalance: BigNumber
   transaction: ContractTransaction
 }> {
   const { dkgResult } = await signDkgResult(
@@ -121,7 +121,7 @@ export async function signAndSubmitArbitraryDkgResult(
   )
 
   const submitter = signers[submitterIndex - 1].signer
-  const submitterBalance = await provider.getBalance(
+  const submitterInitialBalance = await provider.getBalance(
     await submitter.getAddress()
   )
 
@@ -129,7 +129,7 @@ export async function signAndSubmitArbitraryDkgResult(
     dkgResult,
     dkgResultHash,
     submitter,
-    submitterBalance,
+    submitterInitialBalance,
     ...(await submitDkgResult(walletRegistry, dkgResult, submitter)),
   }
 }

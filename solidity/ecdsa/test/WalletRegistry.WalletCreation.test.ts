@@ -1508,14 +1508,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
               context("when called by a DKG result submitter", async () => {
                 let tx: ContractTransaction
                 // let initialDkgRewardsPoolBalance: BigNumber
-                // let initialSubmitterBalance: BigNumber
+                // let initialsubmitterInitialBalance: BigNumber
 
                 before(async () => {
                   await createSnapshot()
 
                   // initialDkgRewardsPoolBalance =
                   //   await walletRegistry.dkgRewardsPool()
-                  // initialSubmitterBalance = await testToken.balanceOf(
+                  // initialsubmitterInitialBalance = await testToken.balanceOf(
                   //   await submitter.getAddress()
                   // )
                   tx = await walletRegistry
@@ -1552,10 +1552,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 //     initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
                 //   ).to.be.equal(params.dkgResultSubmissionReward)
 
-                //   const currentSubmitterBalance: BigNumber =
+                //   const currentsubmitterInitialBalance: BigNumber =
                 //     await testToken.balanceOf(await submitter.getAddress())
                 //   expect(
-                //     currentSubmitterBalance.sub(initialSubmitterBalance)
+                //     currentsubmitterInitialBalance.sub(initialsubmitterInitialBalance)
                 //   ).to.be.equal(params.dkgResultSubmissionReward)
                 // })
 
@@ -1725,7 +1725,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             context("with challenge period passed", async () => {
               let tx: ContractTransaction
               let initialDkgRewardsPoolBalance: BigNumber
-              let initialSubmitterBalance: BigNumber
+              let initialsubmitterInitialBalance: BigNumber
 
               before(async () => {
                 await createSnapshot()
@@ -1737,7 +1737,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 // initialDkgRewardsPoolBalance =
                 //   await walletRegistry.dkgRewardsPool()
 
-                // initialSubmitterBalance = await testToken.balanceOf(
+                // initialsubmitterInitialBalance = await testToken.balanceOf(
                 //   await anotherSubmitter.getAddress()
                 // )
 
@@ -1771,10 +1771,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
               //     initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
               //   ).to.be.equal(params.dkgResultSubmissionReward)
 
-              //   const currentSubmitterBalance: BigNumber =
+              //   const currentsubmitterInitialBalance: BigNumber =
               //     await testToken.balanceOf(await anotherSubmitter.getAddress())
               //   expect(
-              //     currentSubmitterBalance.sub(initialSubmitterBalance)
+              //     currentsubmitterInitialBalance.sub(initialsubmitterInitialBalance)
               //   ).to.be.equal(params.dkgResultSubmissionReward)
               // })
 
@@ -2077,7 +2077,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
           let dkgResultHash: string
           let dkgResult: DkgResult
           let submitter: SignerWithAddress
-          let submitterBalance: BigNumber
+          let submitterInitialBalance: BigNumber
 
           const newResultPublicKey = ecdsaData.group2.publicKey
           const newWalletID = keccak256(newResultPublicKey)
@@ -2085,7 +2085,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           before("submit dkg result", async () => {
             await createSnapshot()
-            ;({ dkgResult, dkgResultHash, submitter, submitterBalance } =
+            ;({ dkgResult, dkgResultHash, submitter, submitterInitialBalance } =
               await signAndSubmitCorrectDkgResult(
                 walletRegistry,
                 newResultPublicKey,
@@ -2146,10 +2146,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
 
             it("should refund ETH to a submitter", async () => {
-              const postDkgApprovalSubmitterBalance = await provider.getBalance(
+              const postDkgApprovalsubmitterInitialBalance = await provider.getBalance(
                 await submitter.getAddress()
               )
-              const diff = postDkgApprovalSubmitterBalance.sub(submitterBalance)
+              const diff = postDkgApprovalsubmitterInitialBalance.sub(submitterInitialBalance)
 
               expect(diff).to.be.gt(0)
               expect(diff).to.be.lt(
