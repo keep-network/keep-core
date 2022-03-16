@@ -163,10 +163,12 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
 
         // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
+        sortitionPoolRewardsBanDuration = 2 weeks;
 
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(400000e18); // 400k T
         authorization.setAuthorizationDecreaseDelay(5184000); // 60 days
+        
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
