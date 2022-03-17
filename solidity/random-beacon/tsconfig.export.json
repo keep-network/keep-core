@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["./test", "./typechain"],
+  "compilerOptions": {
+    "target": "es5",
+    "esModuleInterop": true,
+    "outDir": "export"
+  }
+}
