@@ -20,12 +20,7 @@ import "./ReimbursementPool.sol";
 abstract contract Reimbursable is Ownable {
     ReimbursementPool public reimbursementPool;
 
-    /// @notice Base transaction gas cost.
-    uint256 public transactionGas = 21000;
-
     event ReimbursementPoolUpdated(address newReimbursementPool);
-
-    event TransactionGasUpdated(uint256 transactionGas);
 
     modifier refundable(address receiver) {
         uint256 gasStart = gasleft();
@@ -40,11 +35,5 @@ abstract contract Reimbursable is Ownable {
         emit ReimbursementPoolUpdated(address(_reimbursementPool));
 
         reimbursementPool = _reimbursementPool;
-    }
-
-    function updateTransactionGas(uint256 _transactionGas) external onlyOwner {
-        emit TransactionGasUpdated(_transactionGas);
-
-        transactionGas = _transactionGas;
     }
 }
