@@ -1192,6 +1192,14 @@ describe("WalletRegistry - Authorization", () => {
             .to.emit(walletRegistry, "AuthorizationDecreaseApproved")
             .withArgs(stakingProvider.address)
         })
+
+        it("should clear pending authorization decrease", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.equal(0)
+        })
       })
     })
   })
