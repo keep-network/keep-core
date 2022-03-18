@@ -674,6 +674,18 @@ contract WalletRegistry is
         return authorization.parameters.authorizationDecreaseDelay;
     }
 
+    /// @notice Returns the current value of the staking provider's eligible
+    ///         stake. Eligible stake is defined as the currently authorized
+    ///         stake minus the pending authorization decrease. Eligible stake
+    ///         is what is used for operator's weight in the sortition pool.
+    function eligibleStake(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        return authorization.eligibleStake(staking, stakingProvider);
+    }
+
     /// @notice Returns the remaining time in seconds that needs to pass before
     ///         the requested authorization decrease can be approved.
     ///         If the sortition pool state was not updated yet by the operator

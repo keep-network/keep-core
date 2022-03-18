@@ -1643,6 +1643,156 @@ describe("WalletRegistry - Authorization", () => {
     })
   })
 
+  describe("eligibleStake", () => {
+    context("when staking provider has no stake authorized", () => {
+      it("should return zero", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(0)
+      })
+    })
+
+    context("when staking provider has stake authorized", () => {
+      let authorizedAmount
+
+      before(async () => {
+        await createSnapshot()
+
+        authorizedAmount = minimumAuthorization
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            authorizedAmount
+          )
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should return authorized amount", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(authorizedAmount)
+      })
+    })
+
+    context(
+      "when staking provider has some part of the stake deauthorizing",
+      () => {
+        let authorizedAmount
+        let deauthorizingAmount
+
+        before(async () => {
+          await createSnapshot()
+
+          authorizedAmount = minimumAuthorization.add(to1e18(2000))
+
+          await staking
+            .connect(authorizer)
+            .increaseAuthorization(
+              stakingProvider.address,
+              walletRegistry.address,
+              authorizedAmount
+            )
+
+          deauthorizingAmount = to1e18(1337)
+          await staking
+            .connect(authorizer)
+            ["requestAuthorizationDecrease(address,address,uint96)"](
+              stakingProvider.address,
+              walletRegistry.address,
+              deauthorizingAmount
+            )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should return authorized amount minus deauthorizing amount", async () => {
+          expect(
+            await walletRegistry.eligibleStake(stakingProvider.address)
+          ).to.equal(authorizedAmount.sub(deauthorizingAmount))
+        })
+      }
+    )
+
+    context("when staking provider has all of the stake deauthorizing", () => {
+      before(async () => {
+        await createSnapshot()
+
+        const authorizedAmount = minimumAuthorization
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            authorizedAmount
+          )
+
+        await staking
+          .connect(authorizer)
+          ["requestAuthorizationDecrease(address,address,uint96)"](
+            stakingProvider.address,
+            walletRegistry.address,
+            authorizedAmount
+          )
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should return zero", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(0)
+      })
+    })
+
+    context("when staking provider has all of the stake deauthorized", () => {
+      before(async () => {
+        await createSnapshot()
+
+        const authorizedAmount = minimumAuthorization.add(1200)
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            authorizedAmount
+          )
+
+        await staking
+          .connect(authorizer)
+          ["requestAuthorizationDecrease(address,address,uint96)"](
+            stakingProvider.address,
+            walletRegistry.address,
+            authorizedAmount
+          )
+
+        await helpers.time.increaseTime(params.authorizationDecreaseDelay)
+
+        await walletRegistry.approveAuthorizationDecrease(
+          stakingProvider.address
+        )
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should return zero", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(0)
+      })
+    })
+  })
+
   describe("isOperatorUpToDate", () => {
     context("when the operator is unknown", () => {
       it("should revert", async () => {

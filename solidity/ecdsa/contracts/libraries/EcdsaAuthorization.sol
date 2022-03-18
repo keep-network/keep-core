@@ -497,10 +497,34 @@ library EcdsaAuthorization {
         }
     }
 
-    /// @notice Returns the current value of operator's eligible stake.
-    ///         Eligible stake is defined as the currently authorized stake
-    ///         minus the pending authorization decrease. Eligible stake is
-    ///         what is used for operator's weight in the pool.
+    /// @notice Returns the current value of the staking provider's eligible
+    ///         stake. Eligible stake is defined as the currently authorized
+    ///         stake minus the pending authorization decrease. Eligible stake
+    ///         is what is used for operator's weight in the pool.
+    /// @dev This function can be exposed to the public in contrast to the
+    ///      second variant accepting `decreasingBy` as a parameter.
+    function eligibleStake(
+        Data storage self,
+        IStaking tokenStaking,
+        address stakingProvider
+    ) internal view returns (uint96) {
+        AuthorizationDecrease storage decrease = self.pendingDecreases[
+            stakingProvider
+        ];
+
+        return
+            eligibleStake(tokenStaking, stakingProvider, decrease.decreasingBy);
+    }
+
+    /// @notice Returns the current value of the staking provider's eligible
+    ///         stake. Eligible stake is defined as the currently authorized
+    ///         stake minus the pending authorization decrease. Eligible stake
+    ///         is what is used for operator's weight in the pool.
+    /// @dev This function is not intended to be exposes to the public.
+    ///      `decreasingBy` must be fetched from `pendingDecreases` mapping and
+    ///      it is passed as a parameter to optimize gas usage of functions that
+    ///      call `eligibleStake` and need to use `AuthorizationDecrease`
+    ///      fetched from `pendingDecreases` for some additional logic.
     function eligibleStake(
         IStaking tokenStaking,
         address stakingProvider,
