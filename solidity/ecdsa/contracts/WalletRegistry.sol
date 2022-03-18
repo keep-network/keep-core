@@ -738,6 +738,12 @@ contract WalletRegistry is
             authorization.isOperatorUpToDate(staking, sortitionPool, operator);
     }
 
+    /// @notice Returns true if the given operator is in the sortition pool.
+    ///         Otherwise, returns false.
+    function isOperatorInPool(address operator) external view returns (bool) {
+        return sortitionPool.isOperatorInPool(operator);
+    }
+
     /// @notice Selects a new group of operators based on the provided seed.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.

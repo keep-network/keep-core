@@ -453,7 +453,12 @@ library EcdsaAuthorization {
                 stakingProvider,
                 decrease.decreasingBy
             );
-            sortitionPool.updateOperatorStatus(operator, _eligibleStake);
+
+            if (_eligibleStake < self.parameters.minimumAuthorization) {
+                sortitionPool.updateOperatorStatus(operator, 0);
+            } else {
+                sortitionPool.updateOperatorStatus(operator, _eligibleStake);
+            }
         }
 
         // If there is a pending authorization decrease request, activate it.

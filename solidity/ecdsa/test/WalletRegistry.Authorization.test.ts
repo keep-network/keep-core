@@ -1355,33 +1355,66 @@ describe("WalletRegistry - Authorization", () => {
         })
 
         context("when the sortition pool is not locked", () => {
-          let tx: ContractTransaction
+          context("when the authorization drops to above the minimum", () => {
+            const slashedAmount = to1e18(100)
+            let tx: ContractTransaction
 
-          before(async () => {
-            await createSnapshot()
+            before(async () => {
+              await createSnapshot()
 
-            // slash!
-            await staking
-              .connect(slasher.wallet)
-              .slash(to1e18(100), [stakingProvider.address])
-            tx = await staking.connect(thirdParty).processSlashing(1)
+              // slash!
+              await staking
+                .connect(slasher.wallet)
+                .slash(slashedAmount, [stakingProvider.address])
+              tx = await staking.connect(thirdParty).processSlashing(1)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should update operator status", async () => {
+              expect(await walletRegistry.isOperatorUpToDate(operator.address))
+                .to.be.true
+            })
+
+            it("should not emit InvoluntaryAuthorizationDecreaseFailed event", async () => {
+              await expect(tx).to.not.emit(
+                walletRegistry,
+                "InvoluntaryAuthorizationDecreaseFailed"
+              )
+            })
           })
 
-          after(async () => {
-            await restoreSnapshot()
-          })
+          context(
+            "when the authorized amount drops to below the minimum",
+            () => {
+              let tx: ContractTransaction
 
-          it("should update operator status", async () => {
-            expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
-              .be.true
-          })
+              before(async () => {
+                const slashingTo = minimumAuthorization.sub(1)
+                const slashingBy = stakedAmount.sub(slashingTo)
 
-          it("should not emit InvoluntaryAuthorizationDecreaseFailed event", async () => {
-            await expect(tx).to.not.emit(
-              walletRegistry,
-              "InvoluntaryAuthorizationDecreaseFailed"
-            )
-          })
+                await createSnapshot()
+
+                // slash!
+                await staking
+                  .connect(slasher.wallet)
+                  .slash(slashingBy, [stakingProvider.address])
+
+                tx = await staking.connect(thirdParty).processSlashing(1)
+              })
+
+              after(async () => {
+                await restoreSnapshot()
+              })
+
+              it("should remove operator from the sortition pool", async () => {
+                expect(await walletRegistry.isOperatorInPool(operator.address))
+                  .to.be.false
+              })
+            }
+          )
         })
       })
     })
@@ -1442,7 +1475,7 @@ describe("WalletRegistry - Authorization", () => {
       })
 
       it("should insert operator into the pool", async () => {
-        expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+        expect(await walletRegistry.isOperatorInPool(operator.address)).to.be
           .true
       })
 
@@ -1489,7 +1522,7 @@ describe("WalletRegistry - Authorization", () => {
         })
 
         it("should insert operator into the pool", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+          expect(await walletRegistry.isOperatorInPool(operator.address)).to.be
             .true
         })
 
@@ -1540,7 +1573,7 @@ describe("WalletRegistry - Authorization", () => {
       })
 
       it("should insert operator into the pool", async () => {
-        expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+        expect(await walletRegistry.isOperatorInPool(operator.address)).to.be
           .true
       })
 
@@ -1611,7 +1644,7 @@ describe("WalletRegistry - Authorization", () => {
         })
 
         it("should insert operator into the pool", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+          expect(await walletRegistry.isOperatorInPool(operator.address)).to.be
             .true
         })
 
@@ -1678,7 +1711,7 @@ describe("WalletRegistry - Authorization", () => {
         })
 
         it("should not insert operator into the pool", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+          expect(await walletRegistry.isOperatorInPool(operator.address)).to.be
             .false
         })
 
@@ -1690,7 +1723,7 @@ describe("WalletRegistry - Authorization", () => {
       })
 
       context("when there was an authorization decrease request", () => {
-        let tx: ContractTransaction //
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -1722,7 +1755,7 @@ describe("WalletRegistry - Authorization", () => {
         })
 
         it("should not insert operator into the pool", async () => {
-          expect(await sortitionPool.isOperatorInPool(operator.address)).to.be
+          expect(await walletRegistry.isOperatorInPool(operator.address)).to.be
             .false
         })
 
@@ -1811,58 +1844,111 @@ describe("WalletRegistry - Authorization", () => {
         })
       })
 
-      context("when there was an authorization decrease request", () => {
-        let tx: ContractTransaction
-        let expectedWeight
+      context(
+        "when there was an authorization decrease request to non-zero",
+        () => {
+          let tx: ContractTransaction
+          let expectedWeight
 
-        before(async () => {
-          await createSnapshot()
+          before(async () => {
+            await createSnapshot()
 
-          // initial authorization was 2 x minimum
-          // we want to decrease to minimum + 1337
-          const deauthorizingTo = minimumAuthorization.add(to1e18(1337))
-          const deauthorizingBy = minimumAuthorization
-            .mul(2)
-            .sub(deauthorizingTo)
-          expectedWeight = deauthorizingTo.div(constants.poolWeightDivisor)
+            // initial authorization was 2 x minimum
+            // we want to decrease to minimum + 1337
+            const deauthorizingTo = minimumAuthorization.add(to1e18(1337))
+            const deauthorizingBy = minimumAuthorization
+              .mul(2)
+              .sub(deauthorizingTo)
+            expectedWeight = deauthorizingTo.div(constants.poolWeightDivisor)
 
-          await staking
-            .connect(authorizer)
-            ["requestAuthorizationDecrease(address,address,uint96)"](
-              stakingProvider.address,
-              walletRegistry.address,
-              deauthorizingBy
-            )
+            await staking
+              .connect(authorizer)
+              ["requestAuthorizationDecrease(address,address,uint96)"](
+                stakingProvider.address,
+                walletRegistry.address,
+                deauthorizingBy
+              )
 
-          tx = await walletRegistry
-            .connect(thirdParty)
-            .updateOperatorStatus(operator.address)
-        })
+            tx = await walletRegistry
+              .connect(thirdParty)
+              .updateOperatorStatus(operator.address)
+          })
 
-        after(async () => {
-          await restoreSnapshot()
-        })
+          after(async () => {
+            await restoreSnapshot()
+          })
 
-        it("should update the pool", async () => {
-          expect(await sortitionPool.getPoolWeight(operator.address)).to.equal(
-            expectedWeight
-          )
-        })
+          it("should update the pool", async () => {
+            expect(
+              await sortitionPool.getPoolWeight(operator.address)
+            ).to.equal(expectedWeight)
+          })
 
-        it("should activate authorization decrease delay", async () => {
-          expect(
-            await walletRegistry.remainingAuthorizationDecreaseDelay(
-              stakingProvider.address
-            )
-          ).to.equal(params.authorizationDecreaseDelay)
-        })
+          it("should activate authorization decrease delay", async () => {
+            expect(
+              await walletRegistry.remainingAuthorizationDecreaseDelay(
+                stakingProvider.address
+              )
+            ).to.equal(params.authorizationDecreaseDelay)
+          })
 
-        it("should emit OperatorStatusUpdated", async () => {
-          await expect(tx)
-            .to.emit(walletRegistry, "OperatorStatusUpdated")
-            .withArgs(stakingProvider.address, operator.address)
-        })
-      })
+          it("should emit OperatorStatusUpdated", async () => {
+            await expect(tx)
+              .to.emit(walletRegistry, "OperatorStatusUpdated")
+              .withArgs(stakingProvider.address, operator.address)
+          })
+        }
+      )
+
+      context(
+        "when there was an authorization decrease request to zero",
+        () => {
+          let tx: ContractTransaction
+
+          before(async () => {
+            await createSnapshot()
+
+            // initial authorization was 2 x minimum
+            // we want to decrease to zero
+            const deauthorizingBy = minimumAuthorization.mul(2)
+
+            await staking
+              .connect(authorizer)
+              ["requestAuthorizationDecrease(address,address,uint96)"](
+                stakingProvider.address,
+                walletRegistry.address,
+                deauthorizingBy
+              )
+
+            tx = await walletRegistry
+              .connect(thirdParty)
+              .updateOperatorStatus(operator.address)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should remove operator from the sortition pool", async () => {
+            expect(await walletRegistry.isOperatorInPool(operator.address)).to
+              .be.false
+          })
+
+          it("should activate authorization decrease delay", async () => {
+            expect(
+              await walletRegistry.remainingAuthorizationDecreaseDelay(
+                stakingProvider.address
+              )
+            ).to.equal(params.authorizationDecreaseDelay)
+          })
+
+          it("should emit OperatorStatusUpdated", async () => {
+            await expect(tx)
+              .to.emit(walletRegistry, "OperatorStatusUpdated")
+              .withArgs(stakingProvider.address, operator.address)
+          })
+        }
+      )
 
       context(
         "when operator is in the process of deauthorizing but also increased authorization in the meantime",
