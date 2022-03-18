@@ -61,8 +61,8 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newDkgResultSubmissionGas;
     uint256 public dkgResultSubmissionGasChangeInitiated;
 
-    uint256 public newDkgResultApprovalGas;
-    uint256 public dkgResultApprovalGasChangeInitiated;
+    uint256 public newDkgApprovalGasOffset;
+    uint256 public dkgApprovalGasOffsetChangeInitiated;
 
     WalletRegistry public walletRegistry;
 
@@ -145,11 +145,11 @@ contract WalletRegistryGovernance is Ownable {
     );
     event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
 
-    event DkgResultApprovalGasUpdateStarted(
-        uint256 dkgResultApprovalGas,
+    event DkgApprovalGasOffsetUpdateStarted(
+        uint256 dkgApprovalGasOffset,
         uint256 timestamp
     );
-    event DkgResultApprovalGasUpdated(uint256 dkgResultApprovalGas);
+    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -487,41 +487,41 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultSubmissionGas = 0;
     }
 
-    /// @notice Begins the dkg result approval gas update process.
+    /// @notice Begins the dkg approval gas offset update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgResultApprovalGas New DKG result approval gas.
-    function beginDkgResultApprovalGasUpdate(uint256 _newDkgResultApprovalGas)
+    /// @param _newDkgApprovalGasOffset New DKG result approval gas.
+    function beginDkgApprovalGasOffsetUpdate(uint256 _newDkgApprovalGasOffset)
         external
         onlyOwner
     {
         /* solhint-disable not-rely-on-time */
         require(
-            _newDkgResultApprovalGas != 0,
+            _newDkgApprovalGasOffset != 0,
             "DKG result approval gas cannot be zero"
         );
 
-        newDkgResultApprovalGas = _newDkgResultApprovalGas;
-        dkgResultApprovalGasChangeInitiated = block.timestamp;
-        emit DkgResultApprovalGasUpdateStarted(
-            newDkgResultApprovalGas,
+        newDkgApprovalGasOffset = _newDkgApprovalGasOffset;
+        dkgApprovalGasOffsetChangeInitiated = block.timestamp;
+        emit DkgApprovalGasOffsetUpdateStarted(
+            newDkgApprovalGasOffset,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the dkg result approval gas update process.
+    /// @notice Finalizes the dkg approval gas offset update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgResultApprovalGasUpdate()
+    function finalizeDkgApprovalGasOffsetUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(dkgResultApprovalGasChangeInitiated)
+        onlyAfterGovernanceDelay(dkgApprovalGasOffsetChangeInitiated)
     {
-        emit DkgResultApprovalGasUpdated(newDkgResultApprovalGas);
+        emit DkgApprovalGasOffsetUpdated(newDkgApprovalGasOffset);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateDkgResultApprovalGas(newDkgResultApprovalGas);
-        dkgResultApprovalGasChangeInitiated = 0;
-        newDkgResultApprovalGas = 0;
+        walletRegistry.updateDkgApprovalGasOffset(newDkgApprovalGasOffset);
+        dkgApprovalGasOffsetChangeInitiated = 0;
+        newDkgApprovalGasOffset = 0;
     }
 
     /// @notice Begins the DKG seed timeout update process.
@@ -832,15 +832,15 @@ contract WalletRegistryGovernance is Ownable {
         return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the dkg result approval gas can
+    /// @notice Get the time remaining until the dkg approval gas offset can
     ///         be updated.
     /// @return Remaining time in seconds.
-    function getRemainingDkgResultApprovalGasUpdateTime()
+    function getRemainingDkgApprovalGasOffsetUpdateTime()
         external
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(dkgResultApprovalGasChangeInitiated);
+        return getRemainingChangeTime(dkgApprovalGasOffsetChangeInitiated);
     }
 
     /// @notice Gets the time remaining until the governable parameter update

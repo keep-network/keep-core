@@ -85,16 +85,11 @@ contract WalletRegistry is
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the dkg submission will be refunded to
     ///         other member that will call the dkg approve function.
-    uint256 public dkgResultSubmissionGas = 305000;
+    uint256 public dkgResultSubmissionGas = 300000;
 
-    /// @notice Calculated max gas for approving a dkg result.
-    /// @dev Reimbursement pool's "refund()" already includes transaction gas in
-    ///      its calculation of ETH which is sent back to a msg.sender.
-    ///      Tests will show more gas used, but the refund function is part
-    ///      of the dkg approval process and this is why we can subtract
-    ///      transaction gas from the dkg approval overall gas usage.
-    ///      approveDkgResult - transactionGas: 296000 - 21000 = 275000
-    uint256 public dkgResultApprovalGas = 275000;
+    // @notice Gas meant to balance the dkg approval's overall cost. Can be updated
+    //         by the governace based on the current market conditions.
+    uint256 public dkgApprovalGasOffset = 65000;
 
     // External dependencies
 
@@ -171,7 +166,7 @@ contract WalletRegistry is
 
     event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
 
-    event DkgResultApprovalGasUpdated(uint256 dkgResultApprovalGas);
+    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
 
     constructor(
         SortitionPool _sortitionPool,
@@ -340,22 +335,22 @@ contract WalletRegistry is
         emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
     }
 
-    /// @notice Updates the dkg result approval gas.
+    /// @notice Updates the dkg approval gas offset.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultApprovalGas New dkg result approval gas.
-    function updateDkgResultApprovalGas(uint256 _dkgResultApprovalGas)
+    /// @param _dkgApprovalGasOffset New dkg result approval gas.
+    function updateDkgApprovalGasOffset(uint256 _dkgApprovalGasOffset)
         external
         onlyOwner
     {
         require(
-            _dkgResultApprovalGas != 0,
+            _dkgApprovalGasOffset != 0,
             "DKG resutl approval gas cannot be zero"
         );
 
-        dkgResultApprovalGas = _dkgResultApprovalGas;
-        emit DkgResultApprovalGasUpdated(_dkgResultApprovalGas);
+        dkgApprovalGasOffset = _dkgApprovalGasOffset;
+        emit DkgApprovalGasOffsetUpdated(_dkgApprovalGasOffset);
     }
 
     /// @notice Registers the caller in the sortition pool.
@@ -441,6 +436,7 @@ contract WalletRegistry is
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+        uint256 gasStart = gasleft();
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         (bytes32 walletID, bytes32 publicKeyX, bytes32 publicKeyY) = wallets
@@ -460,9 +456,11 @@ contract WalletRegistry is
 
         dkg.complete();
 
-        // Refunds msg.sender's ETH for dkg result submision & dkg approval
+        // Refunds msg.sender's ETH for dkg result submission & dkg approval
         reimbursementPool.refund(
-            dkgResultSubmissionGas + dkgResultApprovalGas,
+            dkgResultSubmissionGas +
+                (gasStart - gasleft()) +
+                dkgApprovalGasOffset,
             msg.sender
         );
     }

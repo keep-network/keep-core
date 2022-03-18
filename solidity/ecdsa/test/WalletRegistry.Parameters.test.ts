@@ -186,11 +186,11 @@ describe("WalletRegistry - Parameters", async () => {
     })
   })
 
-  describe("updateDkgResultApprovalGas", async () => {
+  describe("updateDkgApprovalGasOffset", async () => {
     context("when called by the deployer", async () => {
       it("should revert", async () => {
         await expect(
-          walletRegistry.connect(deployer).updateDkgResultApprovalGas(4200)
+          walletRegistry.connect(deployer).updateDkgApprovalGasOffset(4200)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -200,7 +200,7 @@ describe("WalletRegistry - Parameters", async () => {
         await expect(
           walletRegistry
             .connect(walletOwner.wallet)
-            .updateDkgResultApprovalGas(4200)
+            .updateDkgApprovalGasOffset(4200)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -208,7 +208,7 @@ describe("WalletRegistry - Parameters", async () => {
     context("when called by a third party", async () => {
       it("should revert", async () => {
         await expect(
-          walletRegistry.connect(thirdParty).updateDkgResultApprovalGas(4200)
+          walletRegistry.connect(thirdParty).updateDkgApprovalGasOffset(4200)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })

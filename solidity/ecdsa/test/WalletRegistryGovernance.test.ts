@@ -52,8 +52,8 @@ describe("WalletRegistryGovernance", async () => {
   const initialAuthorizationDecreaseDelay = 5184000 // 60 days
   const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
-  const initialDkgResultSubmissionGas = 305000
-  const initialDkgResultApprovalGas = 275000
+  const initialDkgResultSubmissionGas = 300000
+  const initialDkgApprovalGasOffset = 65000
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
@@ -1175,13 +1175,13 @@ describe("WalletRegistryGovernance", async () => {
     )
   })
 
-  describe("beginDkgResultApprovalGasUpdate", () => {
+  describe("beginDkgApprovalGasOffsetUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           walletRegistryGovernance
             .connect(thirdParty)
-            .beginDkgResultApprovalGasUpdate(100)
+            .beginDkgApprovalGasOffsetUpdate(100)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -1191,7 +1191,7 @@ describe("WalletRegistryGovernance", async () => {
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .beginDkgResultApprovalGasUpdate(0)
+            .beginDkgApprovalGasOffsetUpdate(0)
         ).to.be.revertedWith("DKG result approval gas cannot be zero")
       })
     })
@@ -1204,45 +1204,45 @@ describe("WalletRegistryGovernance", async () => {
 
         tx = await walletRegistryGovernance
           .connect(governance)
-          .beginDkgResultApprovalGasUpdate(100)
+          .beginDkgApprovalGasOffsetUpdate(100)
       })
 
       after(async () => {
         await restoreSnapshot()
       })
 
-      it("should not update the DKG approval result gas", async () => {
-        expect(await walletRegistry.dkgResultApprovalGas()).to.be.equal(
-          initialDkgResultApprovalGas
+      it("should not update the DKG approval gas offset", async () => {
+        expect(await walletRegistry.dkgApprovalGasOffset()).to.be.equal(
+          initialDkgApprovalGasOffset
         )
       })
 
       it("should start the governance delay timer", async () => {
         expect(
-          await walletRegistryGovernance.getRemainingDkgResultApprovalGasUpdateTime()
+          await walletRegistryGovernance.getRemainingDkgApprovalGasOffsetUpdateTime()
         ).to.be.equal(constants.governanceDelay)
       })
 
-      it("should emit the DkgResultApprovalGasUpdateStarted event", async () => {
+      it("should emit the DkgApprovalGasOffsetUpdateStarted event", async () => {
         const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
           .timestamp
         await expect(tx)
           .to.emit(
             walletRegistryGovernance,
-            "DkgResultApprovalGasUpdateStarted"
+            "DkgApprovalGasOffsetUpdateStarted"
           )
           .withArgs(100, blockTimestamp)
       })
     })
   })
 
-  describe("finalizeDkgResultApprovalGasUpdate", () => {
+  describe("finalizeDkgApprovalGasOffsetUpdate", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           walletRegistryGovernance
             .connect(thirdParty)
-            .finalizeDkgResultApprovalGasUpdate()
+            .finalizeDkgApprovalGasOffsetUpdate()
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -1252,7 +1252,7 @@ describe("WalletRegistryGovernance", async () => {
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .finalizeDkgResultApprovalGasUpdate()
+            .finalizeDkgApprovalGasOffsetUpdate()
         ).to.be.revertedWith("Change not initiated")
       })
     })
@@ -1263,14 +1263,14 @@ describe("WalletRegistryGovernance", async () => {
 
         await walletRegistryGovernance
           .connect(governance)
-          .beginDkgResultApprovalGasUpdate(100)
+          .beginDkgApprovalGasOffsetUpdate(100)
 
         await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
 
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .finalizeDkgResultApprovalGasUpdate()
+            .finalizeDkgApprovalGasOffsetUpdate()
         ).to.be.revertedWith("Governance delay has not elapsed")
 
         await restoreSnapshot()
@@ -1287,13 +1287,13 @@ describe("WalletRegistryGovernance", async () => {
 
           await walletRegistryGovernance
             .connect(governance)
-            .beginDkgResultApprovalGasUpdate(100)
+            .beginDkgApprovalGasOffsetUpdate(100)
 
           await helpers.time.increaseTime(constants.governanceDelay)
 
           tx = await walletRegistryGovernance
             .connect(governance)
-            .finalizeDkgResultApprovalGasUpdate()
+            .finalizeDkgApprovalGasOffsetUpdate()
         })
 
         after(async () => {
@@ -1301,18 +1301,18 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the DKG result approval", async () => {
-          expect(await walletRegistry.dkgResultApprovalGas()).to.be.equal(100)
+          expect(await walletRegistry.dkgApprovalGasOffset()).to.be.equal(100)
         })
 
-        it("should emit DkgResultApprovalGasUpdated event", async () => {
+        it("should emit DkgApprovalGasOffsetUpdated event", async () => {
           await expect(tx)
-            .to.emit(walletRegistryGovernance, "DkgResultApprovalGasUpdated")
+            .to.emit(walletRegistryGovernance, "DkgApprovalGasOffsetUpdated")
             .withArgs(100)
         })
 
         it("should reset the governance delay timer", async () => {
           await expect(
-            walletRegistryGovernance.getRemainingDkgResultApprovalGasUpdateTime()
+            walletRegistryGovernance.getRemainingDkgApprovalGasOffsetUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

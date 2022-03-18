@@ -191,7 +191,7 @@ async function initializeWalletOwner(
 
   await deployer.sendTransaction({
     to: walletOwner.address,
-    value: ethers.utils.parseEther("1"),
+    value: ethers.utils.parseEther("1000"),
   })
 
   await walletRegistryGovernance

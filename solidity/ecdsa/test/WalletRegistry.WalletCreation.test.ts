@@ -80,7 +80,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
     await thirdParty.sendTransaction({
       to: reimbursementPool.address,
-      value: ethers.utils.parseEther("10.0"), // Send 1.0 ETH
+      value: ethers.utils.parseEther("20.0"), // Send 20.0 ETH
     })
   })
 
@@ -1442,6 +1442,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             let dkgResultHash: string
             let dkgResult: DkgResult
             let submitter: SignerWithAddress
+            let submitterInitialBalance: BigNumber
 
             const submitterIndex = 1
 
@@ -1454,6 +1455,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 dkgResult,
                 dkgResultHash,
                 submitter,
+                submitterInitialBalance,
               } = await signAndSubmitCorrectDkgResult(
                 walletRegistry,
                 groupPublicKey,
@@ -1547,6 +1549,19 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should unlock the sortition pool", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.false
                 })
+
+                it("should refund ETH to a submitter", async () => {
+                  const postDkgApprovalSubmitterInitialBalance =
+                    await provider.getBalance(await submitter.getAddress())
+                  const diff = postDkgApprovalSubmitterInitialBalance.sub(
+                    submitterInitialBalance
+                  )
+
+                  expect(diff).to.be.gt(0)
+                  expect(diff).to.be.lt(
+                    ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+                  )
+                })
               })
 
               context("when called by a third party", async () => {
@@ -1579,11 +1594,17 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                 context("when the third party is eligible", async () => {
                   let tx: ContractTransaction
+                  let thirdPartyInitialBalance: BigNumber
 
                   before(async () => {
                     await createSnapshot()
 
                     await mineBlocks(params.dkgSubmitterPrecedencePeriodLength)
+
+                    thirdPartyInitialBalance = await provider.getBalance(
+                      await thirdParty.getAddress()
+                    )
+
                     tx = await walletRegistry
                       .connect(thirdParty)
                       .approveDkgResult(dkgResult)
@@ -1597,6 +1618,23 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     await expect(tx)
                       .to.emit(walletRegistry, "DkgResultApproved")
                       .withArgs(dkgResultHash, thirdParty.address)
+                  })
+
+                  it("should refund ETH to a third party caller", async () => {
+                    const postDkgApprovalThirdPartyInitialBalance =
+                      await provider.getBalance(await thirdParty.getAddress())
+                    const feeForDkgSubmission = (
+                      await walletRegistry.dkgResultSubmissionGas()
+                    ).mul(tx.gasPrice)
+                    // submission part was done by someone else and this is why
+                    // we add submission dkg fee to the initial balance
+                    const diff = postDkgApprovalThirdPartyInitialBalance.sub(
+                      thirdPartyInitialBalance.add(feeForDkgSubmission)
+                    )
+                    expect(diff).to.be.gt(0)
+                    expect(diff).to.be.lt(
+                      ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+                    )
                   })
                 })
               })
@@ -1679,12 +1717,17 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             context("with challenge period passed", async () => {
               let tx: ContractTransaction
+              let initalAnotherSubmitterBalance: BigNumber
 
               before(async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
                   resultSubmissionBlock + params.dkgResultChallengePeriodLength
+                )
+
+                initalAnotherSubmitterBalance = await provider.getBalance(
+                  await anotherSubmitter.getAddress()
                 )
 
                 tx = await walletRegistry
@@ -1718,6 +1761,24 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               it("should unlock the sortition pool", async () => {
                 await expect(await sortitionPool.isLocked()).to.be.false
+              })
+
+              it("should refund ETH to a submitter", async () => {
+                const postDkgApprovalAnotherSubmitterInitialBalance =
+                  await provider.getBalance(await anotherSubmitter.getAddress())
+                const feeForDkgSubmission = (
+                  await walletRegistry.dkgResultSubmissionGas()
+                ).mul(tx.gasPrice)
+                // submission part was done by someone else and this is why
+                // we add submission dkg fee to the initial balance
+                const diff = postDkgApprovalAnotherSubmitterInitialBalance.sub(
+                  initalAnotherSubmitterBalance.add(feeForDkgSubmission)
+                )
+
+                expect(diff).to.be.gt(0)
+                expect(diff).to.be.lt(
+                  ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
+                )
               })
             })
           })
@@ -1770,20 +1831,21 @@ describe("WalletRegistry - Wallet Creation", async () => {
             const misbehavedIndices = [2, 9, 11, 30, 60, 64]
             let tx: ContractTransaction
             let dkgResult: DkgResult
+            let submitter: SignerWithAddress
+            let submitterInitialBalance: BigNumber
 
             before(async () => {
               await createSnapshot()
 
               await mineBlocksTo(startBlock + dkgTimeout - 1)
-
-              let submitter
-              ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
-                walletRegistry,
-                groupPublicKey,
-                dkgSeed,
-                startBlock,
-                misbehavedIndices
-              ))
+              ;({ dkgResult, submitter, submitterInitialBalance } =
+                await signAndSubmitCorrectDkgResult(
+                  walletRegistry,
+                  groupPublicKey,
+                  dkgSeed,
+                  startBlock,
+                  misbehavedIndices
+                ))
 
               await mineBlocks(params.dkgResultChallengePeriodLength)
               tx = await walletRegistry
@@ -1821,6 +1883,19 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
             it("should clean dkg data", async () => {
               await assertDkgResultCleanData(walletRegistry)
+            })
+
+            it("should refund ETH to a submitter", async () => {
+              const postDkgApprovalSubmitterInitialBalance =
+                await provider.getBalance(await submitter.getAddress())
+              const diff = postDkgApprovalSubmitterInitialBalance.sub(
+                submitterInitialBalance
+              )
+
+              expect(diff).to.be.gt(ethers.utils.parseUnits("-1000000", "gwei")) // -0,001 ETH
+              expect(diff).to.be.lt(
+                ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+              )
             })
           })
 
@@ -2019,7 +2094,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               expect(diff).to.be.gt(0)
               expect(diff).to.be.lt(
-                ethers.utils.parseUnits("40000", "gwei") // 0,00004 ETH
+                ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
               )
             })
           })
@@ -3185,7 +3260,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
               expect(diff).to.be.gt(0)
               expect(diff).to.be.lt(
-                ethers.utils.parseUnits("10000", "gwei") // 0,00001 ETH
+                ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
               )
             })
           })
@@ -3336,7 +3411,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 )
                 expect(diff).to.be.gt(0)
                 expect(diff).to.be.lt(
-                  ethers.utils.parseUnits("20000", "gwei") // 0,00002 ETH
+                  ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
                 )
               })
             })
