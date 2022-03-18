@@ -142,6 +142,14 @@ describe("WalletRegistry - Authorization", () => {
               .connect(stakingProvider)
               .registerOperator(operator.address)
           ).to.be.revertedWith("Operator already set for the staking provider")
+
+          // should revert even if it's another operator than the one previously
+          // registered for the staking provider
+          await expect(
+            walletRegistry
+              .connect(stakingProvider)
+              .registerOperator(thirdParty.address)
+          ).to.be.revertedWith("Operator already set for the staking provider")
         })
       }
     )
