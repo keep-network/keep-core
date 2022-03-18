@@ -508,12 +508,12 @@ library EcdsaAuthorization {
         IStaking tokenStaking,
         address stakingProvider
     ) internal view returns (uint96) {
-        AuthorizationDecrease storage decrease = self.pendingDecreases[
-            stakingProvider
-        ];
-
         return
-            eligibleStake(tokenStaking, stakingProvider, decrease.decreasingBy);
+            eligibleStake(
+                tokenStaking,
+                stakingProvider,
+                pendingAuthorizationDecrease(self, stakingProvider)
+            );
     }
 
     /// @notice Returns the current value of the staking provider's eligible
@@ -537,6 +537,20 @@ library EcdsaAuthorization {
 
         return
             authorizedStake > decreasingBy ? authorizedStake - decreasingBy : 0;
+    }
+
+    /// @notice Returns the amount of stake that is pending authorization
+    ///         decrease for the given staking provider. If no authorization
+    ///         decrease has been requested, returns zero.
+    function pendingAuthorizationDecrease(
+        Data storage self,
+        address stakingProvider
+    ) internal view returns (uint96) {
+        AuthorizationDecrease storage decrease = self.pendingDecreases[
+            stakingProvider
+        ];
+
+        return decrease.decreasingBy;
     }
 
     /// @notice Returns the remaining time in seconds that needs to pass before

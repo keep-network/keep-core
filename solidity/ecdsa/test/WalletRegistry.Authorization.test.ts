@@ -562,11 +562,12 @@ describe("WalletRegistry - Authorization", () => {
       context("when decreasing to zero", () => {
         let tx: ContractTransaction
         const decreasingTo = 0
+        let decreasingBy
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -599,18 +600,27 @@ describe("WalletRegistry - Authorization", () => {
               decreasingTo,
               now
             )
+        })
+
+        it("should capture deauthorizing amount", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.equal(decreasingBy)
         })
       })
 
       context("when decreasing to the minimum", () => {
         let tx: ContractTransaction
         let decreasingTo
+        let decreasingBy
 
         before(async () => {
           await createSnapshot()
 
           decreasingTo = minimumAuthorization
-          const decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -643,18 +653,27 @@ describe("WalletRegistry - Authorization", () => {
               decreasingTo,
               now
             )
+        })
+
+        it("should capture deauthorizing amount", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.equal(decreasingBy)
         })
       })
 
       context("when decreasing to a value above the minimum", () => {
         let tx: ContractTransaction
         let decreasingTo
+        let decreasingBy
 
         before(async () => {
           await createSnapshot()
 
           decreasingTo = minimumAuthorization.add(1)
-          const decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -687,6 +706,51 @@ describe("WalletRegistry - Authorization", () => {
               decreasingTo,
               now
             )
+        })
+
+        it("should capture deauthorizing amount", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.equal(decreasingBy)
+        })
+      })
+
+      context("when called one more time", () => {
+        const deauthorizingFirst = to1e18(10)
+        const deauthorizingSecond = to1e18(20)
+
+        before(async () => {
+          await createSnapshot()
+
+          await staking
+            .connect(authorizer)
+            ["requestAuthorizationDecrease(address,address,uint96)"](
+              stakingProvider.address,
+              walletRegistry.address,
+              deauthorizingFirst
+            )
+
+          await staking
+            .connect(authorizer)
+            ["requestAuthorizationDecrease(address,address,uint96)"](
+              stakingProvider.address,
+              walletRegistry.address,
+              deauthorizingSecond
+            )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should overwrite the previous request", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.be.equal(deauthorizingSecond)
         })
       })
     })
@@ -734,11 +798,12 @@ describe("WalletRegistry - Authorization", () => {
       context("when decreasing to zero", () => {
         let tx: ContractTransaction
         const decreasingTo = 0
+        let decreasingBy
 
         before(async () => {
           await createSnapshot()
 
-          const decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -770,18 +835,27 @@ describe("WalletRegistry - Authorization", () => {
               decreasingTo,
               MAX_UINT64
             )
+        })
+
+        it("should capture deauthorizing amount", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.equal(decreasingBy)
         })
       })
 
       context("when decreasing to the minimum", () => {
         let tx: ContractTransaction
         let decreasingTo
+        let decreasingBy
 
         before(async () => {
           await createSnapshot()
 
           decreasingTo = minimumAuthorization
-          const decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -813,18 +887,27 @@ describe("WalletRegistry - Authorization", () => {
               decreasingTo,
               MAX_UINT64
             )
+        })
+
+        it("should capture deauthorizing amount", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.equal(decreasingBy)
         })
       })
 
       context("when decreasing to a value above the minimum", () => {
         let tx: ContractTransaction
         let decreasingTo
+        let decreasingBy
 
         before(async () => {
           await createSnapshot()
 
           decreasingTo = minimumAuthorization.add(1)
-          const decreasingBy = stakedAmount.sub(decreasingTo)
+          decreasingBy = stakedAmount.sub(decreasingTo)
           tx = await staking
             .connect(authorizer)
             ["requestAuthorizationDecrease(address,address,uint96)"](
@@ -856,6 +939,107 @@ describe("WalletRegistry - Authorization", () => {
               decreasingTo,
               MAX_UINT64
             )
+        })
+
+        it("should capture deauthorizing amount", async () => {
+          expect(
+            await walletRegistry.pendingAuthorizationDecrease(
+              stakingProvider.address
+            )
+          ).to.equal(decreasingBy)
+        })
+      })
+
+      context("when called one more time", () => {
+        const deauthorizingFirst = to1e18(11)
+        const deauthorizingSecond = to1e18(21)
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistry.connect(operator).joinSortitionPool()
+
+          await staking
+            .connect(authorizer)
+            ["requestAuthorizationDecrease(address,address,uint96)"](
+              stakingProvider.address,
+              walletRegistry.address,
+              deauthorizingFirst
+            )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when called before sortition pool was updated", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await staking
+              .connect(authorizer)
+              ["requestAuthorizationDecrease(address,address,uint96)"](
+                stakingProvider.address,
+                walletRegistry.address,
+                deauthorizingSecond
+              )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should overwrite the previous request", async () => {
+            expect(
+              await walletRegistry.pendingAuthorizationDecrease(
+                stakingProvider.address
+              )
+            ).to.be.equal(deauthorizingSecond)
+          })
+
+          it("should require updating the pool before approving", async () => {
+            expect(
+              await walletRegistry.remainingAuthorizationDecreaseDelay(
+                stakingProvider.address
+              )
+            ).to.equal(MAX_UINT64)
+          })
+        })
+
+        context("when called after sortition pool was updated", async () => {
+          before(async () => {
+            await createSnapshot()
+
+            await walletRegistry.updateOperatorStatus(operator.address)
+
+            await staking
+              .connect(authorizer)
+              ["requestAuthorizationDecrease(address,address,uint96)"](
+                stakingProvider.address,
+                walletRegistry.address,
+                deauthorizingSecond
+              )
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should overwrite the previous request", async () => {
+            expect(
+              await walletRegistry.pendingAuthorizationDecrease(
+                stakingProvider.address
+              )
+            ).to.be.equal(deauthorizingSecond)
+          })
+
+          it("should require updating the pool one more time before approving", async () => {
+            expect(
+              await walletRegistry.remainingAuthorizationDecreaseDelay(
+                stakingProvider.address
+              )
+            ).to.equal(MAX_UINT64)
+          })
         })
       })
     })

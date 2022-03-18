@@ -686,6 +686,17 @@ contract WalletRegistry is
         return authorization.eligibleStake(staking, stakingProvider);
     }
 
+    /// @notice Returns the amount of stake that is pending authorization
+    ///         decrease for the given staking provider. If no authorization
+    ///         decrease has been requested, returns zero.
+    function pendingAuthorizationDecrease(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        return authorization.pendingAuthorizationDecrease(stakingProvider);
+    }
+
     /// @notice Returns the remaining time in seconds that needs to pass before
     ///         the requested authorization decrease can be approved.
     ///         If the sortition pool state was not updated yet by the operator
