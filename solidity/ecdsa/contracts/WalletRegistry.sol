@@ -308,7 +308,7 @@ contract WalletRegistry is
 
     /// @notice Approves the previously registered authorization decrease
     ///         request. Reverts if authorization decrease delay have not passed
-    ///         yet or if the auhorization decrease was not requested for the
+    ///         yet or if the authorization decrease was not requested for the
     ///         given staking provider.
     function approveAuthorizationDecrease(address stakingProvider) external {
         authorization.approveAuthorizationDecrease(staking, stakingProvider);
