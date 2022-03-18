@@ -1774,8 +1774,6 @@ describe("WalletRegistry - Authorization", () => {
             authorizedAmount
           )
 
-        await helpers.time.increaseTime(params.authorizationDecreaseDelay)
-
         await walletRegistry.approveAuthorizationDecrease(
           stakingProvider.address
         )
@@ -1790,6 +1788,90 @@ describe("WalletRegistry - Authorization", () => {
           await walletRegistry.eligibleStake(stakingProvider.address)
         ).to.equal(0)
       })
+    })
+  })
+
+  describe("remainingAuthorizationDecreaseDelay", () => {
+    before(async () => {
+      await createSnapshot()
+
+      const authorizedAmount = minimumAuthorization.add(1200)
+      await staking
+        .connect(authorizer)
+        .increaseAuthorization(
+          stakingProvider.address,
+          walletRegistry.address,
+          authorizedAmount
+        )
+
+      await walletRegistry
+        .connect(stakingProvider)
+        .registerOperator(operator.address)
+      await walletRegistry.connect(operator).joinSortitionPool()
+
+      await staking
+        .connect(authorizer)
+        ["requestAuthorizationDecrease(address,address,uint96)"](
+          stakingProvider.address,
+          walletRegistry.address,
+          authorizedAmount
+        )
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    // These tests cover only basic cases. More scenarios such as operator not
+    // registered for the staking provider has been covered in tests for other
+    // functions.
+
+    it("should not activate before sortition pool is updated", async () => {
+      expect(
+        await walletRegistry.remainingAuthorizationDecreaseDelay(
+          stakingProvider.address
+        )
+      ).to.equal(MAX_UINT64)
+    })
+
+    it("should activate after updating sortition pool", async () => {
+      await walletRegistry.updateOperatorStatus(operator.address)
+      expect(
+        await walletRegistry.remainingAuthorizationDecreaseDelay(
+          stakingProvider.address
+        )
+      ).to.equal(params.authorizationDecreaseDelay)
+    })
+
+    it("should reduce over time", async () => {
+      await walletRegistry.updateOperatorStatus(operator.address)
+      await helpers.time.increaseTime(params.authorizationDecreaseDelay / 2)
+      expect(
+        await walletRegistry.remainingAuthorizationDecreaseDelay(
+          stakingProvider.address
+        )
+      ).to.be.closeTo(
+        ethers.BigNumber.from(params.authorizationDecreaseDelay / 2),
+        5 // +- 5sec
+      )
+    })
+
+    it("should eventually go to zero", async () => {
+      await walletRegistry.updateOperatorStatus(operator.address)
+      await helpers.time.increaseTime(params.authorizationDecreaseDelay)
+      expect(
+        await walletRegistry.remainingAuthorizationDecreaseDelay(
+          stakingProvider.address
+        )
+      ).to.equal(0)
+
+      // ...and should remain zero
+      await helpers.time.increaseTime(3600) // +1h
+      expect(
+        await walletRegistry.remainingAuthorizationDecreaseDelay(
+          stakingProvider.address
+        )
+      ).to.equal(0)
     })
   })
 
