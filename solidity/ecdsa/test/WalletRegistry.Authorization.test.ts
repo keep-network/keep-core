@@ -1355,6 +1355,8 @@ describe("WalletRegistry - Authorization", () => {
         })
 
         context("when the sortition pool is not locked", () => {
+          let tx: ContractTransaction
+
           before(async () => {
             await createSnapshot()
 
@@ -1362,7 +1364,7 @@ describe("WalletRegistry - Authorization", () => {
             await staking
               .connect(slasher.wallet)
               .slash(to1e18(100), [stakingProvider.address])
-            await staking.connect(thirdParty).processSlashing(1)
+            tx = await staking.connect(thirdParty).processSlashing(1)
           })
 
           after(async () => {
@@ -1372,6 +1374,13 @@ describe("WalletRegistry - Authorization", () => {
           it("should update operator status", async () => {
             expect(await walletRegistry.isOperatorUpToDate(operator.address)).to
               .be.true
+          })
+
+          it("should not emit InvoluntaryAuthorizationDecreaseFailed event", async () => {
+            await expect(tx).to.not.emit(
+              walletRegistry,
+              "InvoluntaryAuthorizationDecreaseFailed"
+            )
           })
         })
       })
