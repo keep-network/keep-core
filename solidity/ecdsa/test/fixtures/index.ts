@@ -40,7 +40,7 @@ export const params = {
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
-  sortitionPoolRewardsBanDuration: 604800, // 7 days
+  sortitionPoolRewardsBanDuration: 1209600, // 14 days
 }
 
 export const walletRegistryFixture = deployments.createFixture(

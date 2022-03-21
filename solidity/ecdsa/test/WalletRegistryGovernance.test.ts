@@ -52,7 +52,7 @@ describe("WalletRegistryGovernance", async () => {
   const initialAuthorizationDecreaseDelay = 5184000 // 60 days
   const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
-  const initialSortitionPoolRewardsBanDuration = 604800 // 7 days
+  const initialSortitionPoolRewardsBanDuration = 1209600 // 14 days
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
