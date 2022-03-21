@@ -25,4 +25,16 @@ interface IWalletOwner {
         bytes32 publicKeyX,
         bytes32 publicKeyY
     ) external;
+
+    /// @notice Callback function executed once a wallet heartbeat failure
+    ///         is detected.
+    /// @dev Should be callable only by the Wallet Registry.
+    /// @param walletID Wallet's unique identifier.
+    /// @param publicKeyY Wallet's public key's X coordinate.
+    /// @param publicKeyY Wallet's public key's Y coordinate.
+    function __ecdsaWalletHeartbeatFailedCallback(
+        bytes32 walletID,
+        bytes32 publicKeyX,
+        bytes32 publicKeyY
+    ) external;
 }
