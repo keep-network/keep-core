@@ -1836,7 +1836,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           context("with misbehaved operators", async () => {
             const misbehavedIndices = [2, 9, 11, 30, 60, 64]
-            let misbehavedIds
+            let misbehavedIds: number[]
             let tx: ContractTransaction
             let dkgResult: DkgResult
 
@@ -1845,7 +1845,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               await mineBlocksTo(startBlock + dkgTimeout - 1)
 
-              let members: number[]
               let submitter: SignerWithAddress
               ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
                 walletRegistry,
