@@ -1389,8 +1389,6 @@ describe("WalletRegistry - Authorization", () => {
           context(
             "when the authorized amount drops to below the minimum",
             () => {
-              let tx: ContractTransaction
-
               before(async () => {
                 const slashingTo = minimumAuthorization.sub(1)
                 const slashingBy = stakedAmount.sub(slashingTo)
@@ -1402,7 +1400,7 @@ describe("WalletRegistry - Authorization", () => {
                   .connect(slasher.wallet)
                   .slash(slashingBy, [stakingProvider.address])
 
-                tx = await staking.connect(thirdParty).processSlashing(1)
+                await staking.connect(thirdParty).processSlashing(1)
               })
 
               after(async () => {
@@ -2456,6 +2454,287 @@ describe("WalletRegistry - Authorization", () => {
               .be.true
           })
         })
+      })
+    })
+  })
+
+  // Testing final states for scenarios when functions are invoked one after
+  // another. Operator is known and registered in the sortition pool.
+  context("mixed interactions", () => {
+    let initialIncrease
+
+    before(async () => {
+      await createSnapshot()
+
+      await walletRegistry
+        .connect(stakingProvider)
+        .registerOperator(operator.address)
+
+      // Authorized almost the entire staked amount but leave some margin for
+      // authorization increase.
+      initialIncrease = stakedAmount.sub(to1e18(20000))
+      await staking
+        .connect(authorizer)
+        .increaseAuthorization(
+          stakingProvider.address,
+          walletRegistry.address,
+          initialIncrease
+        )
+      await walletRegistry.connect(operator).joinSortitionPool()
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    // Invoke `increaseAuthorization` after `increaseAuthorization`.
+    describe("authorizationIncreased -> authorizationIncreased", () => {
+      let secondIncrease
+
+      before(async () => {
+        await createSnapshot()
+
+        secondIncrease = to1e18(11111)
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            secondIncrease
+          )
+
+        await walletRegistry
+          .connect(operator)
+          .updateOperatorStatus(operator.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should have correct eligible stake", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(initialIncrease.add(secondIncrease))
+      })
+
+      it("should have operator status updated", async () => {
+        expect(await walletRegistry.isOperatorUpToDate(operator.address)).to.be
+          .true
+      })
+    })
+
+    // Invoke `increaseAuthorization` after `authorizationDecreaseRequested`.
+    // The decrease is not yet approved when `increaseAuthorization` is called.
+    describe("authorizationDecreaseRequested -> authorizationIncreased", () => {
+      let firstDecrease
+      let secondIncrease
+
+      before(async () => {
+        await createSnapshot()
+
+        firstDecrease = to1e18(111)
+        await staking
+          .connect(authorizer)
+          ["requestAuthorizationDecrease(address,address,uint96)"](
+            stakingProvider.address,
+            walletRegistry.address,
+            firstDecrease
+          )
+        await walletRegistry
+          .connect(operator)
+          .updateOperatorStatus(operator.address)
+
+        secondIncrease = to1e18(11111)
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            secondIncrease
+          )
+        await walletRegistry
+          .connect(operator)
+          .updateOperatorStatus(operator.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should have correct eligible stake", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(initialIncrease.sub(firstDecrease).add(secondIncrease))
+      })
+
+      it("should have operator status updated", async () => {
+        expect(await walletRegistry.isOperatorUpToDate(operator.address)).to.be
+          .true
+      })
+    })
+
+    // Invoke `increaseAuthorization` after `approveAuthorizationDecrease`.
+    // The decrease is approved when `increaseAuthorization` is called.
+    describe("non-zero approveAuthorizationDecrease -> authorizationIncreased", () => {
+      let firstDecrease
+      let secondIncrease
+
+      before(async () => {
+        await createSnapshot()
+
+        firstDecrease = to1e18(222)
+        await staking
+          .connect(authorizer)
+          ["requestAuthorizationDecrease(address,address,uint96)"](
+            stakingProvider.address,
+            walletRegistry.address,
+            firstDecrease
+          )
+        await walletRegistry
+          .connect(operator)
+          .updateOperatorStatus(operator.address)
+
+        await helpers.time.increaseTime(params.authorizationDecreaseDelay)
+        await walletRegistry.approveAuthorizationDecrease(
+          stakingProvider.address
+        )
+
+        secondIncrease = to1e18(7311)
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            secondIncrease
+          )
+        await walletRegistry
+          .connect(operator)
+          .updateOperatorStatus(operator.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should have correct eligible stake", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(initialIncrease.sub(firstDecrease).add(secondIncrease))
+      })
+
+      it("should have operator status updated", async () => {
+        expect(await walletRegistry.isOperatorUpToDate(operator.address)).to.be
+          .true
+      })
+    })
+
+    // Invoke `increaseAuthorization` after the authorization was decreased to 0.
+    describe("to-zero approveAuthorizationDecrease -> authorizationIncreased", () => {
+      let secondIncrease
+
+      before(async () => {
+        await createSnapshot()
+
+        await staking
+          .connect(authorizer)
+          ["requestAuthorizationDecrease(address,address,uint96)"](
+            stakingProvider.address,
+            walletRegistry.address,
+            initialIncrease
+          )
+        await walletRegistry
+          .connect(operator)
+          .updateOperatorStatus(operator.address)
+
+        await helpers.time.increaseTime(params.authorizationDecreaseDelay)
+        await walletRegistry.approveAuthorizationDecrease(
+          stakingProvider.address
+        )
+
+        secondIncrease = minimumAuthorization.add(to1e18(21))
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            secondIncrease
+          )
+        await walletRegistry.connect(operator).joinSortitionPool()
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should have correct eligible stake", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(secondIncrease)
+      })
+
+      it("should have operator status updated", async () => {
+        expect(await walletRegistry.isOperatorUpToDate(operator.address)).to.be
+          .true
+      })
+    })
+
+    // Invoke `increaseAuthorization` after `involuntaryAuthorizationDecrease`
+    // when the authorization amount dropped below the minimum authorization.
+    describe("below-minimum involuntaryAuthorizationDecrease -> authorizationIncreased", () => {
+      let slashedAmount
+      let secondIncrease
+
+      before(async () => {
+        await createSnapshot()
+
+        const slashingTo = minimumAuthorization.sub(1)
+        // Note that we slash from the entire staked amount given that the
+        // initially authorized amount is less than staked amount and it is
+        // another application slashing. To go below the minimum stake, we need
+        // to start slashing from the entire staked amount, not just the
+        // one authorized for WalletRegistry.
+        slashedAmount = stakedAmount.sub(slashingTo)
+
+        await staking
+          .connect(slasher.wallet)
+          .slash(slashedAmount, [stakingProvider.address])
+        await staking.connect(thirdParty).processSlashing(1)
+
+        // Given that we slashed from the entire staked amount, we need to give
+        // the stake owner some more T and let them top-up the stake before they
+        // increase the authorization again.
+        secondIncrease = to1e18(10000)
+        await t.connect(deployer).mint(owner.address, secondIncrease)
+        await t.connect(owner).approve(staking.address, secondIncrease)
+        await staking
+          .connect(owner)
+          .topUp(stakingProvider.address, secondIncrease)
+
+        // And finally increase!
+        await staking
+          .connect(authorizer)
+          .increaseAuthorization(
+            stakingProvider.address,
+            walletRegistry.address,
+            secondIncrease
+          )
+        await walletRegistry.connect(operator).joinSortitionPool()
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should have correct eligible stake", async () => {
+        expect(
+          await walletRegistry.eligibleStake(stakingProvider.address)
+        ).to.equal(stakedAmount.sub(slashedAmount).add(secondIncrease))
+      })
+
+      it("should have operator status updated", async () => {
+        expect(await walletRegistry.isOperatorUpToDate(operator.address)).to.be
+          .true
       })
     })
   })
