@@ -1847,16 +1847,17 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               let members: number[]
               let submitter: SignerWithAddress
-              ;({ dkgResult, members, submitter } =
-                await signAndSubmitCorrectDkgResult(
-                  walletRegistry,
-                  groupPublicKey,
-                  dkgSeed,
-                  startBlock,
-                  misbehavedIndices
-                ))
+              ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
+                walletRegistry,
+                groupPublicKey,
+                dkgSeed,
+                startBlock,
+                misbehavedIndices
+              ))
 
-              misbehavedIds = misbehavedIndices.map((i) => members[i - 1])
+              misbehavedIds = misbehavedIndices.map(
+                (i) => dkgResult.members[i - 1]
+              )
 
               await mineBlocks(params.dkgResultChallengePeriodLength)
               tx = await walletRegistry

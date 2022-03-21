@@ -56,7 +56,6 @@ export async function signAndSubmitCorrectDkgResult(
   signers: Operator[]
   dkgResult: DkgResult
   dkgResultHash: string
-  members: number[]
   submitter: SignerWithAddress
   transaction: ContractTransaction
 }> {
@@ -98,11 +97,10 @@ export async function signAndSubmitArbitraryDkgResult(
 ): Promise<{
   dkgResult: DkgResult
   dkgResultHash: string
-  members: number[]
   submitter: SignerWithAddress
   transaction: ContractTransaction
 }> {
-  const { dkgResult, members } = await signDkgResult(
+  const { dkgResult } = await signDkgResult(
     signers,
     groupPublicKey,
     misbehavedIndices,
@@ -123,7 +121,6 @@ export async function signAndSubmitArbitraryDkgResult(
   return {
     dkgResult,
     dkgResultHash,
-    members,
     submitter,
     ...(await submitDkgResult(walletRegistry, dkgResult, submitter)),
   }
@@ -190,7 +187,6 @@ export async function signDkgResult(
   dkgResult: DkgResult
   signingMembersIndices: number[]
   signaturesBytes: string
-  members: number[]
 }> {
   const resultHash = ethers.utils.solidityKeccak256(
     ["bytes", "uint8[]", "uint256"],
@@ -232,7 +228,7 @@ export async function signDkgResult(
     membersHash: hashDKGMembers(members, misbehavedMembersIndices),
   }
 
-  return { dkgResult, signingMembersIndices, signaturesBytes, members }
+  return { dkgResult, signingMembersIndices, signaturesBytes }
 }
 
 export async function submitDkgResult(
