@@ -1,10 +1,7 @@
 artifacts
 cache
 node_modules
-coverage
-coverage.json
-build
-.coverage_contracts
-.coverage_artifacts
-.idea
+package-lock.json
+scripts/examples/example_dist_generated.json
+scripts/examples/example_proof_generated.json
 .env

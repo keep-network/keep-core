@@ -1,54 +1,31 @@
 {
   "name": "merkle-distribution",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:1inch/merkle-distribution.git"
-  },
-  "license": "MIT",
-  "dependencies": {
-    "@openzeppelin/contracts": "^4.3.1"
-  },
-  "devDependencies": {
-    "qr-image": "^3.2.0",
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-etherscan": "^2.1.6",
-    "@nomiclabs/hardhat-truffle5": "^2.0.0",
-    "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@openzeppelin/test-helpers": "^0.5.13",
-    "chai": "^4.3.4",
-    "dotenv": "^10.0.0",
-    "eslint": "^7.32.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.24.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0",
-    "eslint-plugin-standard": "^5.0.0",
-    "eth-sig-util": "^3.0.1",
-    "ethers": "^5.4.6",
-    "hardhat": "^2.6.2",
-    "hardhat-deploy": "^0.9.0",
-    "hardhat-gas-reporter": "^1.0.4",
-    "keccak256": "^1.0.3",
-    "merkletreejs": "^0.2.24",
-    "rimraf": "^3.0.2",
-    "solc": "^0.8.9",
-    "solhint": "^3.3.6",
-    "solidity-coverage": "^0.7.17",
-    "ethereumjs-wallet": "^1.0.1"
-  },
+  "main": "index.js",
   "scripts": {
-    "clean": "rimraf artifacts cache coverage coverage.json",
-    "coverage": "hardhat coverage",
-    "deploy": "hardhat deploy --network",
-    "deploy:test": "hardhat deploy",
-    "lint": "yarn run lint:js && yarn run lint:sol",
-    "lint:fix": "yarn run lint:js:fix && yarn run lint:sol:fix",
-    "lint:js": "eslint .",
-    "lint:js:fix": "eslint . --fix",
-    "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
-    "lint:sol:fix": "solhint --max-warnings 0 \"contracts/**/*.sol\" --fix",
-    "test": "hardhat test"
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.5",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@openzeppelin/test-helpers": "^0.5.15",
+    "chai": "^4.3.6",
+    "dotenv": "^16.0.0",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.6.1",
+    "fast-check": "^2.23.2",
+    "hardhat": "^2.9.1",
+    "hardhat-deploy": "^0.11.1",
+    "hardhat-deploy-ethers": "^0.3.0-beta.13",
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.2.31"
+  },
+  "dependencies": {
+    "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
+    "@threshold-network/solidity-contracts": "^1.1.0"
   }
 }

@@ -5,14 +5,14 @@ pragma abicoder v1;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-// import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import "./interfaces/ICumulativeMerkleDrop.sol";
 
 
 contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     using SafeERC20 for IERC20;
-    // using MerkleProof for bytes32[];
+    using MerkleProof for bytes32[];
 
     address public immutable override token;
 
@@ -53,9 +53,9 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         }
     }
 
-    // function verify(bytes32[] calldata merkleProof, bytes32 root, bytes32 leaf) public pure returns (bool) {
-    //     return merkleProof.verify(root, leaf);
-    // }
+    function verify(bytes32[] calldata merkleProof, bytes32 root, bytes32 leaf) public pure returns (bool) {
+        return merkleProof.verify(root, leaf);
+    }
 
     function _verifyAsm(bytes32[] calldata proof, bytes32 root, bytes32 leaf) private pure returns (bool valid) {
         // solhint-disable-next-line no-inline-assembly
