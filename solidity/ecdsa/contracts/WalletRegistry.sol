@@ -321,11 +321,6 @@ contract WalletRegistry is
     ///      interface.
     /// @param _walletOwner New wallet owner address.
     function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
-        require(
-            address(_walletOwner) != address(0),
-            "Wallet owner address cannot be zero"
-        );
-
         walletOwner = _walletOwner;
         emit WalletOwnerUpdated(address(_walletOwner));
     }
