@@ -473,7 +473,7 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
         dkgResultSubmissionGasChangeInitiated = block.timestamp;
         emit DkgResultSubmissionGasUpdateStarted(
-            newDkgResultSubmissionGas,
+            _newDkgResultSubmissionGas,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
@@ -505,7 +505,7 @@ contract WalletRegistryGovernance is Ownable {
         newDkgApprovalGasOffset = _newDkgApprovalGasOffset;
         dkgApprovalGasOffsetChangeInitiated = block.timestamp;
         emit DkgApprovalGasOffsetUpdateStarted(
-            newDkgApprovalGasOffset,
+            _newDkgApprovalGasOffset,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
