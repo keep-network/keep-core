@@ -1848,7 +1848,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await createSnapshot()
 
               await mineBlocksTo(startBlock + dkgTimeout - 1)
-
               ;({ dkgResult, submitter, submitterInitialBalance } =
                 await signAndSubmitCorrectDkgResult(
                   walletRegistry,
