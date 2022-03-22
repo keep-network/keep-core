@@ -28,6 +28,7 @@ export const dkgState = {
 }
 
 export const params = {
+  governanceDelay: 604800, // 1 week
   relayRequestFee: to1e18(100),
   relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
@@ -159,7 +160,10 @@ export async function testDeployment(): Promise<DeployedContracts> {
     "RandomBeaconGovernance"
   )
   const randomBeaconGovernance: RandomBeaconGovernance =
-    await RandomBeaconGovernance.deploy(contracts.randomBeacon.address)
+    await RandomBeaconGovernance.deploy(
+      contracts.randomBeacon.address,
+      params.governanceDelay
+    )
   await randomBeaconGovernance.deployed()
   await contracts.randomBeacon.transferOwnership(randomBeaconGovernance.address)
 

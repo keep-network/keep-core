@@ -15,7 +15,7 @@ import {
   expectDkgResultSubmittedEvent,
 } from "./utils/dkg"
 import { registerOperators } from "./utils/operators"
-import { selectGroup, hashUint32Array } from "./utils/groups"
+import { selectGroup, createGroup, hashUint32Array } from "./utils/groups"
 import { fakeTokenStaking } from "./mocks/staking"
 
 import type { Operator } from "./utils/operators"
@@ -151,52 +151,24 @@ describe("RandomBeacon - Group Creation", () => {
       })
     })
 
-    context("with genesis in progress", async () => {
-      let startBlock: number
-      let genesisSeed: BigNumber
+    context("with no registered groups", async () => {
+      context("with genesis in progress", async () => {
+        let startBlock: number
+        let genesisSeed: BigNumber
 
-      before("run genesis", async () => {
-        await createSnapshot()
-
-        const [genesisTx, seed] = await genesis(randomBeacon)
-        startBlock = genesisTx.blockNumber
-        genesisSeed = seed
-      })
-
-      after(async () => {
-        await restoreSnapshot()
-      })
-
-      context("with dkg result not submitted", async () => {
-        it("should revert with 'Current state is not IDLE' error", async () => {
-          await expect(randomBeacon.genesis()).to.be.revertedWith(
-            "Current state is not IDLE"
-          )
-        })
-      })
-
-      context("with valid dkg result submitted", async () => {
-        let dkgResult: DKG.ResultStruct
-        let submitter: SignerWithAddress
-
-        before(async () => {
+        before("run genesis", async () => {
           await createSnapshot()
 
-          await mineBlocks(constants.offchainDkgTime)
-          ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
-            randomBeacon,
-            groupPublicKey,
-            genesisSeed,
-            startBlock,
-            noMisbehaved
-          ))
+          const [genesisTx, seed] = await genesis(randomBeacon)
+          startBlock = genesisTx.blockNumber
+          genesisSeed = seed
         })
 
         after(async () => {
           await restoreSnapshot()
         })
 
-        context("with dkg result not approved", async () => {
+        context("with dkg result not submitted", async () => {
           it("should revert with 'Current state is not IDLE' error", async () => {
             await expect(randomBeacon.genesis()).to.be.revertedWith(
               "Current state is not IDLE"
@@ -204,13 +176,93 @@ describe("RandomBeacon - Group Creation", () => {
           })
         })
 
-        context("with dkg result approved", async () => {
-          before("approve dkg result", async () => {
+        context("with valid dkg result submitted", async () => {
+          let dkgResult: DKG.ResultStruct
+          let submitter: SignerWithAddress
+
+          before(async () => {
             await createSnapshot()
 
-            await mineBlocks(params.dkgResultChallengePeriodLength)
+            await mineBlocks(constants.offchainDkgTime)
+            ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              genesisSeed,
+              startBlock,
+              noMisbehaved
+            ))
+          })
 
-            await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          context("with dkg result not approved", async () => {
+            it("should revert with 'Current state is not IDLE' error", async () => {
+              await expect(randomBeacon.genesis()).to.be.revertedWith(
+                "Current state is not IDLE"
+              )
+            })
+          })
+
+          context("with dkg result approved", async () => {
+            before("approve dkg result", async () => {
+              await createSnapshot()
+
+              await mineBlocks(params.dkgResultChallengePeriodLength)
+
+              await randomBeacon.connect(submitter).approveDkgResult(dkgResult)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should succeed", async () => {
+              await expect(randomBeacon.genesis()).to.be.revertedWith(
+                "Not awaiting genesis"
+              )
+            })
+          })
+        })
+
+        context("with invalid dkg result submitted", async () => {
+          context("with dkg result challenged", async () => {
+            before("submit and challenge dkg result", async () => {
+              await createSnapshot()
+
+              await mineBlocks(constants.offchainDkgTime)
+              const { dkgResult } = await signAndSubmitArbitraryDkgResult(
+                randomBeacon,
+                groupPublicKey,
+                // Mix operators to make the result malicious
+                mixSigners(await selectGroup(sortitionPool, genesisSeed)),
+                startBlock,
+                noMisbehaved
+              )
+
+              await randomBeacon.challengeDkgResult(dkgResult)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should revert", async () => {
+              await expect(randomBeacon.genesis()).to.be.revertedWith(
+                "Current state is not IDLE"
+              )
+            })
+          })
+        })
+
+        context("with dkg timeout notified", async () => {
+          before("notify dkg timeout", async () => {
+            await createSnapshot()
+
+            await mineBlocks(dkgTimeout)
+
+            await randomBeacon.notifyDkgTimeout()
           })
 
           after(async () => {
@@ -218,59 +270,27 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           it("should succeed", async () => {
-            await expect(randomBeacon.genesis()).to.be.revertedWith(
-              "Not awaiting genesis"
-            )
+            await expect(randomBeacon.genesis()).to.not.be.reverted
           })
         })
       })
+    })
 
-      context("with invalid dkg result submitted", async () => {
-        context("with dkg result challenged", async () => {
-          before("submit and challenge dkg result", async () => {
-            await createSnapshot()
+    context("with existing registered group", async () => {
+      before(async () => {
+        await createSnapshot()
 
-            await mineBlocks(constants.offchainDkgTime)
-            const { dkgResult } = await signAndSubmitArbitraryDkgResult(
-              randomBeacon,
-              groupPublicKey,
-              // Mix operators to make the result malicious
-              mixSigners(await selectGroup(sortitionPool, genesisSeed)),
-              startBlock,
-              noMisbehaved
-            )
-
-            await randomBeacon.challengeDkgResult(dkgResult)
-          })
-
-          after(async () => {
-            await restoreSnapshot()
-          })
-
-          it("should revert", async () => {
-            await expect(randomBeacon.genesis()).to.be.revertedWith(
-              "Current state is not IDLE"
-            )
-          })
-        })
+        await createGroup(randomBeacon, signers)
       })
 
-      context("with dkg timeout notified", async () => {
-        before("notify dkg timeout", async () => {
-          await createSnapshot()
+      after(async () => {
+        await restoreSnapshot()
+      })
 
-          await mineBlocks(dkgTimeout)
-
-          await randomBeacon.notifyDkgTimeout()
-        })
-
-        after(async () => {
-          await restoreSnapshot()
-        })
-
-        it("should succeed", async () => {
-          await expect(randomBeacon.genesis()).to.not.be.reverted
-        })
+      it("should revert with 'current state is not IDLE' error", async () => {
+        await expect(randomBeacon.genesis()).to.be.revertedWith(
+          "Not awaiting genesis"
+        )
       })
     })
   })
@@ -896,18 +916,18 @@ describe("RandomBeacon - Group Creation", () => {
           describe("submission eligibility verification", async () => {
             let submissionStartBlockNumber: number
 
-            before(async () => {
-              await createSnapshot()
-
-              submissionStartBlockNumber =
-                startBlock + constants.offchainDkgTime
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
             context("at the beginning of the submission period", async () => {
+              beforeEach(async () => {
+                await createSnapshot()
+
+                submissionStartBlockNumber =
+                  startBlock + constants.offchainDkgTime
+              })
+
+              afterEach(async () => {
+                await restoreSnapshot()
+              })
+
               it("should succeed for the first member", async () => {
                 await assertSubmissionSucceeds(1)
               })
@@ -922,7 +942,7 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             context("at the end of the submission period", async () => {
-              before(async () => {
+              beforeEach(async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
@@ -932,7 +952,7 @@ describe("RandomBeacon - Group Creation", () => {
                 )
               })
 
-              after(async () => {
+              afterEach(async () => {
                 await restoreSnapshot()
               })
 
@@ -950,7 +970,7 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             context("after the submission period", async () => {
-              before(async () => {
+              beforeEach(async () => {
                 await createSnapshot()
 
                 await mineBlocksTo(
@@ -958,7 +978,7 @@ describe("RandomBeacon - Group Creation", () => {
                 )
               })
 
-              after(async () => {
+              afterEach(async () => {
                 await restoreSnapshot()
               })
 
@@ -1127,7 +1147,7 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               context("at the end of the submission period", async () => {
-                before(async () => {
+                beforeEach(async () => {
                   await createSnapshot()
 
                   await mineBlocksTo(
@@ -1137,7 +1157,7 @@ describe("RandomBeacon - Group Creation", () => {
                   )
                 })
 
-                after(async () => {
+                afterEach(async () => {
                   await restoreSnapshot()
                 })
 
@@ -1255,8 +1275,6 @@ describe("RandomBeacon - Group Creation", () => {
       async function assertSubmissionSucceeds(
         submitterIndex: number
       ): Promise<void> {
-        await createSnapshot()
-
         const {
           transaction: tx,
           dkgResult,
@@ -1275,8 +1293,6 @@ describe("RandomBeacon - Group Creation", () => {
           seed: genesisSeed,
           result: dkgResult,
         })
-
-        await restoreSnapshot()
       }
 
       async function assertSubmissionReverts(
@@ -1915,7 +1931,7 @@ describe("RandomBeacon - Group Creation", () => {
           await randomBeaconGovernance.beginDkgResultSubmissionRewardUpdate(
             dkgRewardsPoolBalance.mul(2)
           )
-          await helpers.time.increaseTime(12 * 60 * 60)
+          await helpers.time.increaseTime(params.governanceDelay)
           await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
 
           const [genesisTx, genesisSeed] = await genesis(randomBeacon)

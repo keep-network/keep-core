@@ -54,6 +54,7 @@ describe("WalletRegistryGovernance", async () => {
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
   const initialDkgResultSubmissionGas = 300000
   const initialDkgApprovalGasOffset = 65000
+  const initialSortitionPoolRewardsBanDuration = 1209600 // 14 days
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
@@ -1462,6 +1463,145 @@ describe("WalletRegistryGovernance", async () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             walletRegistryGovernance.getRemainingMaliciousDkgResultNotificationRewardMultiplierUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginSortitionPoolRewardsBanDurationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginSortitionPoolRewardsBanDurationUpdate(86400)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginSortitionPoolRewardsBanDurationUpdate(86400)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the sortition pool rewards ban duration", async () => {
+        expect(
+          await walletRegistry.sortitionPoolRewardsBanDuration()
+        ).to.be.equal(initialSortitionPoolRewardsBanDuration)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingSortitionPoolRewardsBanDurationUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit the SortitionPoolRewardsBanDurationUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "SortitionPoolRewardsBanDurationUpdateStarted"
+          )
+          .withArgs(86400, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeSortitionPoolRewardsBanDurationUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginSortitionPoolRewardsBanDurationUpdate(86400)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginSortitionPoolRewardsBanDurationUpdate(86400)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeSortitionPoolRewardsBanDurationUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the sortition pool rewards ban duration", async () => {
+          expect(
+            await walletRegistry.sortitionPoolRewardsBanDuration()
+          ).to.be.equal(86400)
+        })
+
+        it("should emit SortitionPoolRewardsBanDurationUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              walletRegistryGovernance,
+              "SortitionPoolRewardsBanDurationUpdated"
+            )
+            .withArgs(86400)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingSortitionPoolRewardsBanDurationUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

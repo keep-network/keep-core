@@ -183,6 +183,30 @@ interface IStakingPoolRewards {
     function notifyRewardAmount(uint256 amount) external;
 }
 
+/// @title PlainTransferEscrowBeneficiary
+/// @notice  PlainTransferEscrowBeneficiary is a beneficiary contract that can
+///          receive a withdrawal order from PhasedEscrow and BatchedPhasedEscrow
+///          contracts. It immediately sends the received tokens to the recipient
+///          set by the beneficiary deployer.
+///          The recipient does not have to implement any custom functions, it can
+///          be a smart contract or EOA - beneficiary is executing a plain ERC20
+///          transfer.
+contract PlainTransferEscrowBeneficiary is Ownable, IBeneficiaryContract {
+    using SafeERC20 for IERC20;
+
+    IERC20 public token;
+    address public recipient;
+
+    constructor(IERC20 _token, address _recipient) public {
+        token = _token;
+        recipient = _recipient;
+    }
+
+    function __escrowSentTokens(uint256 amount) external onlyOwner {
+        token.safeTransfer(recipient, amount);
+    }
+}
+
 /// @title StakingPoolRewardsEscrowBeneficiary
 /// @notice A beneficiary contract that can receive a withdrawal phase from a
 ///         PhasedEscrow contract. Immediately stakes the received tokens on a

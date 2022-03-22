@@ -46,6 +46,9 @@ contract WalletRegistryGovernance is Ownable {
     uint256
         public maliciousDkgResultNotificationRewardMultiplierChangeInitiated;
 
+    uint256 public newSortitionPoolRewardsBanDuration;
+    uint256 public sortitionPoolRewardsBanDurationChangeInitiated;
+
     uint256 public newDkgSeedTimeout;
     uint256 public dkgSeedTimeoutChangeInitiated;
 
@@ -109,6 +112,14 @@ contract WalletRegistryGovernance is Ownable {
     );
     event MaliciousDkgResultNotificationRewardMultiplierUpdated(
         uint256 maliciousDkgResultNotificationRewardMultiplier
+    );
+
+    event SortitionPoolRewardsBanDurationUpdateStarted(
+        uint256 sortitionPoolRewardsBanDuration,
+        uint256 timestamp
+    );
+    event SortitionPoolRewardsBanDurationUpdated(
+        uint256 sortitionPoolRewardsBanDuration
     );
 
     event DkgSeedTimeoutUpdateStarted(
@@ -445,7 +456,8 @@ contract WalletRegistryGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateRewardParameters(
-            newMaliciousDkgResultNotificationRewardMultiplier
+            newMaliciousDkgResultNotificationRewardMultiplier,
+            walletRegistry.sortitionPoolRewardsBanDuration()
         );
         maliciousDkgResultNotificationRewardMultiplierChangeInitiated = 0;
         newMaliciousDkgResultNotificationRewardMultiplier = 0;
@@ -466,8 +478,7 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
         dkgResultSubmissionGasChangeInitiated = block.timestamp;
         emit DkgResultSubmissionGasUpdateStarted(
-            newDkgResultSubmissionGas,
-            block.timestamp
+            newDkgResultSubmissionGas
         );
         /* solhint-enable not-rely-on-time */
     }
@@ -522,6 +533,43 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgApprovalGasOffset(newDkgApprovalGasOffset);
         dkgApprovalGasOffsetChangeInitiated = 0;
         newDkgApprovalGasOffset = 0;
+    }
+
+    /// @notice Begins the sortition pool rewards ban duration update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newSortitionPoolRewardsBanDuration New sortition pool rewards
+    ///        ban duration.
+    function beginSortitionPoolRewardsBanDurationUpdate(
+        uint256 _newSortitionPoolRewardsBanDuration
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newSortitionPoolRewardsBanDuration = _newSortitionPoolRewardsBanDuration;
+        sortitionPoolRewardsBanDurationChangeInitiated = block.timestamp;
+        emit SortitionPoolRewardsBanDurationUpdateStarted(
+            _newSortitionPoolRewardsBanDuration,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the sortition pool rewards ban duration update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeSortitionPoolRewardsBanDurationUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(sortitionPoolRewardsBanDurationChangeInitiated)
+    {
+        emit SortitionPoolRewardsBanDurationUpdated(
+            newSortitionPoolRewardsBanDuration
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateRewardParameters(
+            walletRegistry.maliciousDkgResultNotificationRewardMultiplier(),
+            newSortitionPoolRewardsBanDuration
+        );
+        sortitionPoolRewardsBanDurationChangeInitiated = 0;
+        newSortitionPoolRewardsBanDuration = 0;
     }
 
     /// @notice Begins the DKG seed timeout update process.
@@ -759,6 +807,20 @@ contract WalletRegistryGovernance is Ownable {
         return
             getRemainingChangeTime(
                 maliciousDkgResultNotificationRewardMultiplierChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the sortition pool rewards ban
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingSortitionPoolRewardsBanDurationUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                sortitionPoolRewardsBanDurationChangeInitiated
             );
     }
 
