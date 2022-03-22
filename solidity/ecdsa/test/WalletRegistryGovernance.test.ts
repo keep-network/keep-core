@@ -2294,7 +2294,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      it("should not update the wallet owner", async () => {
+      it("should not update the reimbursement pool", async () => {
         expect(await walletRegistry.walletOwner()).to.be.equal(
           ethers.constants.AddressZero
         )
