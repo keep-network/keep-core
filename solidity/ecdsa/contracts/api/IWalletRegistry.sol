@@ -14,6 +14,8 @@
 
 pragma solidity ^0.8.9;
 
+import "../libraries/EcdsaDkg.sol";
+
 interface IWalletRegistry {
     /// @notice Requests a new wallet creation.
     /// @dev Only a Wallet Owner can call this function.
@@ -28,4 +30,7 @@ interface IWalletRegistry {
         external
         view
         returns (bytes memory);
+
+    /// @notice Check current wallet creation state.
+    function getWalletCreationState() external view returns (EcdsaDkg.State);
 }
