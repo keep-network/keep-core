@@ -339,11 +339,6 @@ contract WalletRegistry is
         external
         onlyOwner
     {
-        require(
-            _dkgResultSubmissionGas != 0,
-            "DKG resutl submission gas cannot be zero"
-        );
-
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
         emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
     }
@@ -357,11 +352,6 @@ contract WalletRegistry is
         external
         onlyOwner
     {
-        require(
-            _dkgApprovalGasOffset != 0,
-            "DKG resutl approval gas cannot be zero"
-        );
-
         dkgApprovalGasOffset = _dkgApprovalGasOffset;
         emit DkgApprovalGasOffsetUpdated(_dkgApprovalGasOffset);
     }
