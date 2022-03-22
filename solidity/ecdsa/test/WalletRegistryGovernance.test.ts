@@ -1147,7 +1147,7 @@ describe("WalletRegistryGovernance", async () => {
           await restoreSnapshot()
         })
 
-        it("should update the DKG result submission", async () => {
+        it("should update the DKG result submission gas", async () => {
           expect(await walletRegistry.dkgResultSubmissionGas()).to.be.equal(100)
         })
 
@@ -1281,7 +1281,7 @@ describe("WalletRegistryGovernance", async () => {
           await restoreSnapshot()
         })
 
-        it("should update the DKG result approval", async () => {
+        it("should update the DKG result approval gas offset", async () => {
           expect(await walletRegistry.dkgApprovalGasOffset()).to.be.equal(100)
         })
 
