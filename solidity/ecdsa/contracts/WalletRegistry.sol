@@ -80,14 +80,14 @@ contract WalletRegistry is
     ///         operator affected.
     uint256 public maliciousDkgResultNotificationRewardMultiplier;
 
-    /// @notice Calculated max gas cost for submitting a dkg result. This will
-    ///         be refunded as part of the dkg approval process. It is in the
+    /// @notice Calculated max gas cost for submitting a DKG result. This will
+    ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
-    ///         otherwise the refund of the dkg submission will be refunded to
-    ///         other member that will call the dkg approve function.
+    ///         otherwise the refund of the DKG submission will be refunded to
+    ///         other member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 300000;
 
-    // @notice Gas meant to balance the dkg approval's overall cost. Can be updated
+    // @notice Gas meant to balance the DKG approval's overall cost. Can be updated
     //         by the governace based on the current market conditions.
     uint256 public dkgApprovalGasOffset = 65000;
 
