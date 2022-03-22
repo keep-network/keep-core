@@ -40,6 +40,7 @@ export const params = {
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
+  sortitionPoolRewardsBanDuration: 1209600, // 14 days
 }
 
 export const walletRegistryFixture = deployments.createFixture(
@@ -146,6 +147,12 @@ export async function updateWalletRegistryParams(
       params.dkgSubmitterPrecedencePeriodLength
     )
 
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginSortitionPoolRewardsBanDurationUpdate(
+      params.sortitionPoolRewardsBanDuration
+    )
+
   await helpers.time.increaseTime(constants.governanceDelay)
 
   await walletRegistryGovernance
@@ -171,6 +178,10 @@ export async function updateWalletRegistryParams(
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeSortitionPoolRewardsBanDurationUpdate()
 }
 
 async function initializeWalletOwner(

@@ -1559,6 +1559,15 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should unlock the sortition pool", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.false
                 })
+
+                // there are no misbehaving group members in the result,
+                // everyone should be eligible for rewards
+                it("should not mark properly behaving operators as ineligible for rewards", async () => {
+                  await expect(tx).not.to.emit(
+                    sortitionPool,
+                    "IneligibleForRewards"
+                  )
+                })
               })
 
               context("when called by a third party", async () => {
@@ -1827,6 +1836,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
           context("with misbehaved operators", async () => {
             const misbehavedIndices = [2, 9, 11, 30, 60, 64]
+            let misbehavedIds: number[]
             let tx: ContractTransaction
             let dkgResult: DkgResult
 
@@ -1835,7 +1845,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               await mineBlocksTo(startBlock + dkgTimeout - 1)
 
-              let submitter
+              let submitter: SignerWithAddress
               ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
                 walletRegistry,
                 groupPublicKey,
@@ -1843,6 +1853,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 startBlock,
                 misbehavedIndices
               ))
+
+              misbehavedIds = misbehavedIndices.map(
+                (i) => dkgResult.members[i - 1]
+              )
 
               await mineBlocks(params.dkgResultChallengePeriodLength)
               tx = await walletRegistry
@@ -1869,14 +1883,14 @@ describe("WalletRegistry - Wallet Creation", async () => {
               ).to.be.equal(hashUint32Array(expectedMembers))
             })
 
-            // it("should ban misbehaved operators from sortition pool rewards", async () => {
-            //   const now = await helpers.time.lastBlockTime()
-            //   const expectedUntil = now + params.sortitionPoolRewardsBanDuration
+            it("should ban misbehaved operators from sortition pool rewards", async () => {
+              const now = await helpers.time.lastBlockTime()
+              const expectedUntil = now + params.sortitionPoolRewardsBanDuration
 
-            //   await expect(tx)
-            //     .to.emit(sortitionPool, "IneligibleForRewards")
-            //     .withArgs(misbehavedIds, expectedUntil)
-            // })
+              await expect(tx)
+                .to.emit(sortitionPool, "IneligibleForRewards")
+                .withArgs(misbehavedIds, expectedUntil)
+            })
 
             it("should clean dkg data", async () => {
               await assertDkgResultCleanData(walletRegistry)
@@ -1919,6 +1933,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
             }
           )
 
+          // This case shouldn't happen in real life. When a result is submitted
+          // with invalid order of misbehaved operators it should be challenged.
           context("when misbehaved members contains duplicates", async () => {
             const misbehavedIndices = [2, 9, 9, 10]
 

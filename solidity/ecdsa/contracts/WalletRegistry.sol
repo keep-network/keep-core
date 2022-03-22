@@ -72,6 +72,11 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     ///         operator affected.
     uint256 public maliciousDkgResultNotificationRewardMultiplier;
 
+    /// @notice Duration of the sortition pool rewards ban imposed on operators
+    ///         who missed their turn for DKG result submission or who failed
+    ///         a heartbeat.
+    uint256 public sortitionPoolRewardsBanDuration;
+
     // External dependencies
 
     SortitionPool public immutable sortitionPool;
@@ -129,7 +134,8 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     );
 
     event RewardParametersUpdated(
-        uint256 maliciousDkgResultNotificationRewardMultiplier
+        uint256 maliciousDkgResultNotificationRewardMultiplier,
+        uint256 sortitionPoolRewardsBanDuration
     );
 
     event SlashingParametersUpdated(uint256 maliciousDkgResultSlashingAmount);
@@ -157,10 +163,12 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
 
         // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
+        sortitionPoolRewardsBanDuration = 2 weeks;
 
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(400000e18); // 400k T
         authorization.setAuthorizationDecreaseDelay(5184000); // 60 days
+
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
@@ -253,12 +261,17 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     ///      validating parameters.
     /// @param _maliciousDkgResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
+    /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
+    ///        ban duration in seconds.
     function updateRewardParameters(
-        uint256 _maliciousDkgResultNotificationRewardMultiplier
+        uint256 _maliciousDkgResultNotificationRewardMultiplier,
+        uint256 _sortitionPoolRewardsBanDuration
     ) external onlyOwner {
         maliciousDkgResultNotificationRewardMultiplier = _maliciousDkgResultNotificationRewardMultiplier;
+        sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         emit RewardParametersUpdated(
-            maliciousDkgResultNotificationRewardMultiplier
+            _maliciousDkgResultNotificationRewardMultiplier,
+            _sortitionPoolRewardsBanDuration
         );
     }
 
@@ -273,7 +286,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
         onlyOwner
     {
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
-        emit SlashingParametersUpdated(maliciousDkgResultSlashingAmount);
+        emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
     }
 
     /// @notice Updates the values of the wallet parameters.
@@ -396,9 +409,13 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
 
         emit WalletCreated(walletID, keccak256(abi.encode(dkgResult)));
 
-        // TODO: Disable rewards for misbehavedMembers.
-        //slither-disable-next-line redundant-statements
-        misbehavedMembers;
+        if (misbehavedMembers.length > 0) {
+            sortitionPool.setRewardIneligibility(
+                misbehavedMembers,
+                // solhint-disable-next-line not-rely-on-time
+                block.timestamp + sortitionPoolRewardsBanDuration
+            );
+        }
 
         walletOwner.__ecdsaWalletCreatedCallback(
             walletID,
