@@ -470,11 +470,6 @@ contract WalletRegistryGovernance is Ownable {
         uint256 _newDkgResultSubmissionGas
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
-        require(
-            _newDkgResultSubmissionGas != 0,
-            "DKG result submission gas cannot be zero"
-        );
-
         newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
         dkgResultSubmissionGasChangeInitiated = block.timestamp;
         emit DkgResultSubmissionGasUpdateStarted(
@@ -507,11 +502,6 @@ contract WalletRegistryGovernance is Ownable {
         onlyOwner
     {
         /* solhint-disable not-rely-on-time */
-        require(
-            _newDkgApprovalGasOffset != 0,
-            "DKG result approval gas cannot be zero"
-        );
-
         newDkgApprovalGasOffset = _newDkgApprovalGasOffset;
         dkgApprovalGasOffsetChangeInitiated = block.timestamp;
         emit DkgApprovalGasOffsetUpdateStarted(

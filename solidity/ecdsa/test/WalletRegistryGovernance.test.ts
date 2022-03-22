@@ -1043,16 +1043,6 @@ describe("WalletRegistryGovernance", async () => {
       })
     })
 
-    context("when called with value 0", () => {
-      it("should revert", async () => {
-        await expect(
-          walletRegistryGovernance
-            .connect(governance)
-            .beginDkgResultSubmissionGasUpdate(0)
-        ).to.be.revertedWith("DKG result submission gas cannot be zero")
-      })
-    })
-
     context("when the caller is the owner and value is correct", () => {
       let tx
 
@@ -1184,16 +1174,6 @@ describe("WalletRegistryGovernance", async () => {
             .connect(thirdParty)
             .beginDkgApprovalGasOffsetUpdate(100)
         ).to.be.revertedWith("Ownable: caller is not the owner")
-      })
-    })
-
-    context("when called with value 0", () => {
-      it("should revert", async () => {
-        await expect(
-          walletRegistryGovernance
-            .connect(governance)
-            .beginDkgApprovalGasOffsetUpdate(0)
-        ).to.be.revertedWith("DKG result approval gas cannot be zero")
       })
     })
 
