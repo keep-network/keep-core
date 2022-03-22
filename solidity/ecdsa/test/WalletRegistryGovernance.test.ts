@@ -2294,6 +2294,16 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
+      describe("when the new reimbursement pool is zero address", async () => {
+        it("should revert", async () => {
+          await expect(
+            walletRegistryGovernance
+              .connect(governance)
+              .beginReimbursementPoolUpdate(ethers.constants.AddressZero)
+          ).to.be.revertedWith("New reimbursement pool address cannot be zero")
+        })
+      })
+
       it("should not update the reimbursement pool", async () => {
         expect(await walletRegistry.walletOwner()).to.be.equal(
           ethers.constants.AddressZero

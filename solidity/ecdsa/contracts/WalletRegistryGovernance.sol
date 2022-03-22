@@ -511,6 +511,10 @@ contract WalletRegistryGovernance is Ownable {
         external
         onlyOwner
     {
+        require(
+            address(_newReimbursementPool) != address(0),
+            "New reimbursement pool address cannot be zero"
+        );
         /* solhint-disable not-rely-on-time */
         newReimbursementPool = _newReimbursementPool;
         reimbursementPoolChangeInitiated = block.timestamp;
