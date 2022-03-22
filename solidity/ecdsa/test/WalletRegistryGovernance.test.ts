@@ -2267,4 +2267,137 @@ describe("WalletRegistryGovernance", async () => {
       }
     )
   })
+
+  describe("beginReimbursementPoolUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginReimbursementPoolUpdate(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginReimbursementPoolUpdate(thirdParty.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the wallet owner", async () => {
+        expect(await walletRegistry.walletOwner()).to.be.equal(
+          ethers.constants.AddressZero
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingReimbursementPoolUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit the ReimbursementPoolUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(walletRegistryGovernance, "ReimbursementPoolUpdateStarted")
+          .withArgs(thirdParty.address, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeReimbursementPoolUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeReimbursementPoolUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeReimbursementPoolUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginReimbursementPoolUpdate(thirdParty.address)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeReimbursementPoolUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginReimbursementPoolUpdate(thirdParty.address)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeReimbursementPoolUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the reimbursement pool", async () => {
+          expect(await walletRegistry.reimbursementPool()).to.be.equal(
+            thirdParty.address
+          )
+        })
+
+        it("should emit ReimbursementPoolUpdated event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistryGovernance, "ReimbursementPoolUpdated")
+            .withArgs(thirdParty.address)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingReimbursementPoolUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
 })

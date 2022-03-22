@@ -16,6 +16,7 @@ pragma solidity ^0.8.9;
 
 import "./WalletRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 
 import {IWalletOwner} from "./api/IWalletOwner.sol";
 import {IRandomBeacon} from "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
@@ -66,6 +67,9 @@ contract WalletRegistryGovernance is Ownable {
 
     uint256 public newDkgApprovalGasOffset;
     uint256 public dkgApprovalGasOffsetChangeInitiated;
+
+    address payable public newReimbursementPool;
+    uint256 public reimbursementPoolChangeInitiated;
 
     WalletRegistry public walletRegistry;
 
@@ -161,6 +165,12 @@ contract WalletRegistryGovernance is Ownable {
         uint256 timestamp
     );
     event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
+
+    event ReimbursementPoolUpdateStarted(
+        address reimbursementPool,
+        uint256 timestamp
+    );
+    event ReimbursementPoolUpdated(address reimbursementPool);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -492,6 +502,40 @@ contract WalletRegistryGovernance is Ownable {
         walletRegistry.updateDkgResultSubmissionGas(newDkgResultSubmissionGas);
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
+    }
+
+    /// @notice Begins the reimbursement pool update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newReimbursementPool New reimbursement pool.
+    function beginReimbursementPoolUpdate(address payable _newReimbursementPool)
+        external
+        onlyOwner
+    {
+        /* solhint-disable not-rely-on-time */
+        newReimbursementPool = _newReimbursementPool;
+        reimbursementPoolChangeInitiated = block.timestamp;
+        emit ReimbursementPoolUpdateStarted(
+            _newReimbursementPool,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the reimbursement pool update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeReimbursementPoolUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(reimbursementPoolChangeInitiated)
+    {
+        emit ReimbursementPoolUpdated(newReimbursementPool);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateReimbursementPool(
+            ReimbursementPool(newReimbursementPool)
+        );
+        reimbursementPoolChangeInitiated = 0;
+        newReimbursementPool = payable(address(0));
     }
 
     /// @notice Begins the dkg approval gas offset update process.
@@ -894,6 +938,16 @@ contract WalletRegistryGovernance is Ownable {
         returns (uint256)
     {
         return getRemainingChangeTime(dkgApprovalGasOffsetChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until reimbursement pool can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingReimbursementPoolUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(reimbursementPoolChangeInitiated);
     }
 
     /// @notice Gets the time remaining until the governable parameter update
