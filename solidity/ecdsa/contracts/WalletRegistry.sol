@@ -723,9 +723,6 @@ contract WalletRegistry is
         return wallets.isWalletRegistered(walletID);
     }
 
-    // TODO: Add function to close the Wallet so the members are notified that
-    // they no longer need to track the wallet.
-
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters()
         external
