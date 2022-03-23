@@ -21,5 +21,7 @@ interface IRandomBeacon {
     /// @notice Creates a request to generate a new relay entry. Requires a
     ///         request fee denominated in T token.
     /// @param callbackContract Beacon consumer callback contract.
-    function requestRelayEntry(IRandomBeaconConsumer callbackContract) external;
+    function requestRelayEntry(IRandomBeaconConsumer callbackContract)
+        external
+        payable;
 }

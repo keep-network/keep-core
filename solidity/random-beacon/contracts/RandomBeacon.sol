@@ -151,8 +151,16 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
     ///         operator affected.
     uint256 public dkgMaliciousResultNotificationRewardMultiplier;
 
-    /// @notice Calculated gas cost for submitting a dkg result.
-    uint256 public submitDkgResultGas;
+    /// @notice Calculated gas cost for submitting a DKG result. This will
+    ///         be refunded as part of the DKG approval process. It is in the
+    ///         submitter's interest to not skip his priority turn on the approval,
+    ///         otherwise the refund of the DKG submission will be refunded to
+    ///         other member that will call the DKG approve function.
+    uint256 public dkgResultSubmissionGas = 235000;
+
+    // @notice Gas is meant to balance the DKG approval's overall cost. Can be
+    //         updated by the governace based on the current market conditions.
+    uint256 public dkgApprovalGasOffset = 65000;
 
     // Other parameters
 
@@ -622,8 +630,6 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
     function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyTimeout();
 
-        transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
-
         dkg.complete();
     }
 
@@ -653,13 +659,11 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
         groups.addGroup(dkgResult.groupPubKey, dkgResult.membersHash);
         dkg.complete();
 
-        // Refunds msg.sender's ETH for:
-        // - dkg result submission processing
-        // - dkg result submission transaction call
-        // - dkg approval processing
-        // - dkg approval transaction call
+        // Refunds msg.sender's ETH for dkg result submission & dkg approval
         reimbursementPool.refund(
-            submitDkgResultGas + transactionGas + (gasStart - gasleft()),
+            dkgResultSubmissionGas +
+                (gasStart - gasleft()) +
+                dkgApprovalGasOffset,
             msg.sender
         );
     }
@@ -746,11 +750,18 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
     ///         random number). Requires a request fee denominated in ETH.
     /// @param callbackContract Beacon consumer callback contract.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
-        payable external
+        external
+        payable
     {
         if (!authorizedContracts[msg.sender]) {
-            require(msg.value >= relay.relayRequestFee, "Fee is less than the required minimum");
-            address(reimbursementPool).call{value: msg.value}("");
+            require(
+                msg.value >= relay.relayRequestFee,
+                "Fee is less than the required minimum"
+            );
+            /* solhint-disable avoid-low-level-calls */
+            // slither-disable-next-line low-level-calls,unchecked-lowlevel
+            address(reimbursementPool).call{value: relay.relayRequestFee}("");
+            /* solhint-enable avoid-low-level-calls */
         }
 
         uint64 groupId = groups.selectGroup(
