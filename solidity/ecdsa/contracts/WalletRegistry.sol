@@ -20,33 +20,21 @@ import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
 import "./EcdsaDkgValidator.sol";
+
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
 import "@keep-network/random-beacon/contracts/Reimbursable.sol";
 import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 
-/// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
-/// IStaking interface from there.
-interface IWalletStaking {
-    function authorizedStake(address stakingProvider, address application)
-        external
-        view
-        returns (uint256);
-
-    function seize(
-        uint96 amount,
-        uint256 rewardMultiplier,
-        address notifier,
-        address[] memory stakingProviders
-    ) external;
-}
+import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract WalletRegistry is
-    IRandomBeaconConsumer,
     IWalletRegistry,
+    IRandomBeaconConsumer,
+    IApplication,
     Ownable,
     Reimbursable
 {
@@ -99,9 +87,7 @@ contract WalletRegistry is
     // External dependencies
 
     SortitionPool public immutable sortitionPool;
-    /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
-    /// IStaking interface from there.
-    IWalletStaking public immutable staking;
+    IStaking public immutable staking;
     IRandomBeacon public randomBeacon;
 
     // Events
@@ -174,9 +160,65 @@ contract WalletRegistry is
 
     event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
 
+    event OperatorRegistered(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    event AuthorizationIncreased(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount
+    );
+
+    event AuthorizationDecreaseRequested(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount,
+        uint64 decreasingAt
+    );
+
+    event AuthorizationDecreaseApproved(address indexed stakingProvider);
+
+    event InvoluntaryAuthorizationDecreaseFailed(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount
+    );
+
+    event OperatorJoinedSortitionPool(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    event OperatorStatusUpdated(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    modifier onlyStakingContract() {
+        require(
+            msg.sender == address(staking),
+            "Caller is not the staking contract"
+        );
+        _;
+    }
+
+    /// @notice Reverts if called not by the Wallet Owner.
+    modifier onlyWalletOwner() {
+        require(
+            msg.sender == address(walletOwner),
+            "Caller is not the Wallet Owner"
+        );
+        _;
+    }
+
     constructor(
         SortitionPool _sortitionPool,
-        IWalletStaking _staking,
+        IStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
@@ -204,13 +246,128 @@ contract WalletRegistry is
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
     }
 
-    /// @notice Reverts if called not by the Wallet Owner.
-    modifier onlyWalletOwner() {
-        require(
-            msg.sender == address(walletOwner),
-            "Caller is not the Wallet Owner"
+    /// @notice Used by staking provider to set operator address that will
+    ///         operate ECDSA node. The given staking provider can set operator
+    ///         address only one time. The operator address can not be changed
+    ///         and must be unique. Reverts if the operator is already set for
+    ///         the staking provider or if the operator address is already in
+    ///         use. Reverts if there is a pending authorization decrease for
+    ///         the staking provider.
+    function registerOperator(address operator) external {
+        authorization.registerOperator(operator);
+    }
+
+    /// @notice Lets the operator join the sortition pool. The operator address
+    ///         must be known - before calling this function, it has to be
+    ///         appointed by the staking provider by calling `registerOperator`.
+    ///         Also, the operator must have the minimum authorization required
+    ///         by ECDSA. Function reverts if there is no minimum stake
+    ///         authorized or if the operator is not known. If there was an
+    ///         authorization decrease requested, it is activated by starting
+    ///         the authorization decrease delay.
+    function joinSortitionPool() external {
+        authorization.joinSortitionPool(staking, sortitionPool);
+    }
+
+    /// @notice Updates status of the operator in the sortition pool. If there
+    ///         was an authorization decrease requested, it is activated by
+    ///         starting the authorization decrease delay.
+    ///         Function reverts if the operator is not known.
+    function updateOperatorStatus(address operator) external {
+        authorization.updateOperatorStatus(staking, sortitionPool, operator);
+    }
+
+    /// @notice Used by T staking contract to inform the application that the
+    ///         authorized stake amount for the given staking provider increased.
+    ///
+    ///         Reverts if the authorization amount is below the minimum.
+    ///
+    ///         The function is not updating the sortition pool. Sortition pool
+    ///         state needs to be updated by the operator with a call to
+    ///         `joinSortitionPool` or `updateOperatorStatus`.
+    ///
+    /// @dev Can only be called by T staking contract.
+    function authorizationIncreased(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyStakingContract {
+        authorization.authorizationIncreased(
+            stakingProvider,
+            fromAmount,
+            toAmount
         );
-        _;
+    }
+
+    /// @notice Used by T staking contract to inform the application that the
+    ///         authorization decrease for the given staking provider has been
+    ///         requested.
+    ///
+    ///         Reverts if the amount after deauthorization would be non-zero
+    ///         and lower than the minimum authorization.
+    ///
+    ///         If the operator is not known (`registerOperator` was not called)
+    ///         it lets to `approveAuthorizationDecrease` immediatelly. If the
+    ///         operator is known (`registerOperator` was called), the operator
+    ///         needs to update state of the sortition pool with a call to
+    ///         `joinSortitionPool` or `updateOperatorStatus`. After the
+    ///         sortition pool state is in sync, authorization decrease delay
+    ///         starts.
+    ///
+    ///         After authorization decrease delay passes, authorization
+    ///         decrease request needs to be approved with a call to
+    ///         `approveAuthorizationDecrease` function.
+    ///
+    ///         If there is a pending authorization decrease request, it is
+    ///         overwritten.
+    ///
+    /// @dev Should only be callable by T staking contract.
+    function authorizationDecreaseRequested(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyStakingContract {
+        authorization.authorizationDecreaseRequested(
+            stakingProvider,
+            fromAmount,
+            toAmount
+        );
+    }
+
+    /// @notice Approves the previously registered authorization decrease
+    ///         request. Reverts if authorization decrease delay have not passed
+    ///         yet or if the authorization decrease was not requested for the
+    ///         given staking provider.
+    function approveAuthorizationDecrease(address stakingProvider) external {
+        authorization.approveAuthorizationDecrease(staking, stakingProvider);
+    }
+
+    /// @notice Used by T staking contract to inform the application the
+    ///         authorization has been decreased for the given staking provider
+    ///         involuntarily, as a result of slashing.
+    ///
+    ///         If the operator is not known (`registerOperator` was not called)
+    ///         the function does nothing. The operator was never in a sortition
+    ///         pool so there is nothing to update.
+    ///
+    ///         If the operator is known, sortition pool is unlocked, and the
+    ///         operator is in the sortition pool, the sortition pool state is
+    ///         updated. If the sortition pool is locked, update needs to be
+    ///         postponed. Every other staker is incentivized to call
+    ///         `updateOperatorStatus` for the problematic operator to increase
+    ///         their own rewards in the pool.
+    function involuntaryAuthorizationDecrease(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyStakingContract {
+        authorization.involuntaryAuthorizationDecrease(
+            staking,
+            sortitionPool,
+            stakingProvider,
+            fromAmount,
+            toAmount
+        );
     }
 
     /// @notice Updates address of the Random Beacon.
@@ -351,32 +508,6 @@ contract WalletRegistry is
         emit DkgApprovalGasOffsetUpdated(_dkgApprovalGasOffset);
     }
 
-    /// @notice Registers the caller in the sortition pool.
-    // TODO: Revisit on integration with Token Staking contract.
-    function registerOperator() external {
-        address operator = msg.sender;
-
-        require(
-            !sortitionPool.isOperatorInPool(operator),
-            "Operator is already registered"
-        );
-
-        sortitionPool.insertOperator(
-            operator,
-            staking.authorizedStake(operator, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `operator`
-        );
-    }
-
-    /// @notice Updates the sortition pool status of the caller.
-    /// @param operator Operator's address.
-    // TODO: Revisit on integration with Token Staking contract.
-    function updateOperatorStatus(address operator) external {
-        sortitionPool.updateOperatorStatus(
-            operator,
-            staking.authorizedStake(msg.sender, address(this)) // FIXME: authorizedStake expects `stakingProvider` instead of `msg.sender`
-        );
-    }
-
     /// @notice Requests a new wallet creation.
     /// @dev Can be called only by the owner of wallets.
     ///      It locks the DKG and request a new relay entry. It expects
@@ -502,7 +633,9 @@ contract WalletRegistry is
             .getIDOperator(maliciousDkgResultSubmitterId);
 
         address[] memory operatorWrapper = new address[](1);
-        operatorWrapper[0] = maliciousDkgResultSubmitterAddress;
+        operatorWrapper[0] = operatorToStakingProvider(
+            maliciousDkgResultSubmitterAddress
+        );
 
         try
             staking.seize(
@@ -605,13 +738,95 @@ contract WalletRegistry is
     /// @notice The minimum authorization amount required so that operator can
     ///         participate in ECDSA Wallet operations.
     function minimumAuthorization() external view returns (uint96) {
-        return authorization.minimumAuthorization;
+        return authorization.parameters.minimumAuthorization;
     }
 
     /// @notice Delay in seconds that needs to pass between the time
     ///         authorization decrease is requested and the time that request
     ///         can get approved.
     function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.authorizationDecreaseDelay;
+        return authorization.parameters.authorizationDecreaseDelay;
+    }
+
+    /// @notice Returns the current value of the staking provider's eligible
+    ///         stake. Eligible stake is defined as the currently authorized
+    ///         stake minus the pending authorization decrease. Eligible stake
+    ///         is what is used for operator's weight in the sortition pool.
+    ///         If the authorized stake minus the pending authorization decrease
+    ///         is below the minimum authorization, eligible stake is 0.
+    function eligibleStake(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        return authorization.eligibleStake(staking, stakingProvider);
+    }
+
+    /// @notice Returns the amount of stake that is pending authorization
+    ///         decrease for the given staking provider. If no authorization
+    ///         decrease has been requested, returns zero.
+    function pendingAuthorizationDecrease(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        return authorization.pendingAuthorizationDecrease(stakingProvider);
+    }
+
+    /// @notice Returns the remaining time in seconds that needs to pass before
+    ///         the requested authorization decrease can be approved.
+    ///         If the sortition pool state was not updated yet by the operator
+    ///         after requesting the authorization decrease, returns
+    ///         `type(uint64).max`.
+    function remainingAuthorizationDecreaseDelay(address stakingProvider)
+        external
+        view
+        returns (uint64)
+    {
+        return
+            authorization.remainingAuthorizationDecreaseDelay(stakingProvider);
+    }
+
+    /// @notice Returns operator registered for the given staking provider.
+    function stakingProviderToOperator(address stakingProvider)
+        external
+        view
+        returns (address)
+    {
+        return authorization.stakingProviderToOperator[stakingProvider];
+    }
+
+    /// @notice Returns staking provider of the given operator.
+    function operatorToStakingProvider(address operator)
+        public
+        view
+        returns (address)
+    {
+        return authorization.operatorToStakingProvider[operator];
+    }
+
+    /// @notice Checks if the operator's authorized stake is in sync with
+    ///         operator's weight in the sortition pool.
+    ///         If the operator is not in the sortition pool and their
+    ///         authorized stake is non-zero, function returns false.
+    function isOperatorUpToDate(address operator) external view returns (bool) {
+        return
+            authorization.isOperatorUpToDate(staking, sortitionPool, operator);
+    }
+
+    /// @notice Returns true if the given operator is in the sortition pool.
+    ///         Otherwise, returns false.
+    function isOperatorInPool(address operator) external view returns (bool) {
+        return sortitionPool.isOperatorInPool(operator);
+    }
+
+    /// @notice Selects a new group of operators based on the provided seed.
+    ///         At least one operator has to be registered in the pool,
+    ///         otherwise the function fails reverting the transaction.
+    /// @param seed Number used to select operators to the group.
+    /// @return IDs of selected group members.
+    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
+        // TODO: Read seed from EcdsaDkg
+        return sortitionPool.selectGroup(EcdsaDkg.groupSize, seed);
     }
 }

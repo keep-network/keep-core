@@ -104,6 +104,7 @@ const config: HardhatUserConfig = {
   dependencyCompiler: {
     paths: [
       "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
       "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
     ],
     keep: true,

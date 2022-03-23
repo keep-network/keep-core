@@ -3,45 +3,22 @@ import { BigNumber } from "ethers"
 import { ethers, helpers, getUnnamedAccounts, waffle } from "hardhat"
 import { expect } from "chai"
 
-import { constants } from "./fixtures"
+import { constants, walletRegistryFixture } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import ecdsaData from "./data/ecdsa"
 
+import type { IWalletOwner } from "../typechain/IWalletOwner"
+import type { FakeContract } from "@defi-wonderland/smock"
 import type { DkgResult } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
-import type { SortitionPool, EcdsaDkgValidator } from "../typechain"
+import type {
+  SortitionPool,
+  EcdsaDkgValidator,
+  WalletRegistry,
+} from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
-const { to1e18 } = helpers.number
-
-const fixture = async () => {
-  const T = await ethers.getContractFactory("T")
-  const t = await T.deploy()
-  await t.deployed()
-
-  const StakingStub = await ethers.getContractFactory("StakingStub")
-  const stakingStub = await StakingStub.deploy()
-  await stakingStub.deployed()
-
-  const SortitionPool = await ethers.getContractFactory("SortitionPool")
-  const sortitionPool = (await SortitionPool.deploy(
-    stakingStub.address,
-    t.address,
-    constants.poolWeightDivisor
-  )) as SortitionPool
-
-  const EcdsaDkgValidator = await ethers.getContractFactory("EcdsaDkgValidator")
-  const dkgValidator = (await EcdsaDkgValidator.deploy(
-    sortitionPool.address
-  )) as EcdsaDkgValidator
-  await dkgValidator.deployed()
-
-  return {
-    sortitionPool,
-    dkgValidator,
-  }
-}
 
 describe("EcdsaDkgValidator", () => {
   const dkgSeed: BigNumber = BigNumber.from(
@@ -65,22 +42,19 @@ describe("EcdsaDkgValidator", () => {
     _membersHash?: string
   ) => Promise<DkgResult>
 
+  let walletRegistry: WalletRegistry
+  let sortitionPool: SortitionPool
+  let walletOwner: FakeContract<IWalletOwner>
   let validator: EcdsaDkgValidator
 
   before("load test fixture", async () => {
-    await createSnapshot()
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ walletRegistry, sortitionPool, walletOwner } =
+      await walletRegistryFixture())
 
-    const contracts = await waffle.loadFixture(fixture)
+    validator = await ethers.getContract("EcdsaDkgValidator")
 
-    const { sortitionPool } = contracts
-    validator = contracts.dkgValidator
-
-    const operators = (await getUnnamedAccounts()).slice(0, constants.groupSize)
-    for (let i = 0; i < operators.length; i++) {
-      await sortitionPool.insertOperator(operators[i], to1e18(100))
-    }
-
-    await sortitionPool.lock()
+    await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
 
     selectedOperators = await selectGroup(sortitionPool, dkgSeed)
 
@@ -120,10 +94,6 @@ describe("EcdsaDkgValidator", () => {
 
       return dkgResult
     }
-  })
-
-  after(async () => {
-    await restoreSnapshot()
   })
 
   describe("validate", () => {
