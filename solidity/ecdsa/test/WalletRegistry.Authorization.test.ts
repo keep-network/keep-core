@@ -105,7 +105,7 @@ describe("WalletRegistry - Authorization", () => {
       await ethers.getSigners()
     )[0].sendTransaction({
       to: slasher.address,
-      value: ethers.utils.parseEther("1"),
+      value: ethers.utils.parseEther("100"),
     })
   })
 
