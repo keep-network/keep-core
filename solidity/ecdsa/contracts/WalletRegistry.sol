@@ -228,8 +228,8 @@ contract WalletRegistry is
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
-        // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
+
         sortitionPoolRewardsBanDuration = 2 weeks;
 
         // slither-disable-next-line too-many-digits
@@ -240,10 +240,10 @@ contract WalletRegistry is
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
         dkg.init(_sortitionPool, _ecdsaDkgValidator);
-        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time // TODO: Verify value
+        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
-        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+        dkg.setResultSubmissionTimeout(100 * 20);
+        dkg.setSubmitterPrecedencePeriodLength(20);
     }
 
     /// @notice Used by staking provider to set operator address that will
