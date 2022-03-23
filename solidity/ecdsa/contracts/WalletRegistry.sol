@@ -329,6 +329,13 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
         randomBeacon.requestRelayEntry(this);
     }
 
+    /// @notice Closes an existing wallet.
+    /// @param walletID ID of the wallet.
+    /// @dev Only a Wallet Owner can call this function.
+    function closeWallet(bytes32 walletID) external onlyWalletOwner {
+        // TODO: Implementation.
+    }
+
     /// @notice A callback that is executed once a new relay entry gets
     ///         generated. It starts the DKG process.
     /// @dev Can be called only by the random beacon contract.

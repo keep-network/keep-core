@@ -21,6 +21,11 @@ interface IWalletRegistry {
     /// @dev Only a Wallet Owner can call this function.
     function requestNewWallet() external;
 
+    /// @notice Closes an existing wallet.
+    /// @param walletID ID of the wallet.
+    /// @dev Only a Wallet Owner can call this function.
+    function closeWallet(bytes32 walletID) external;
+
     /// @notice Gets public key of a wallet with a given wallet ID.
     ///         The public key is returned in an uncompressed format as a 64-byte
     ///         concatenation of X and Y coordinates.
