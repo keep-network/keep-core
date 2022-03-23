@@ -1452,6 +1452,52 @@ describe("WalletRegistry - Authorization", () => {
       })
     })
 
+    // The only option for it to happen is when there was a slashing.
+    context(
+      "when the authorization dropped below the minimum but is still non-zero",
+      () => {
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistry
+            .connect(stakingProvider)
+            .registerOperator(operator.address)
+
+          const authorizedAmount = minimumAuthorization
+          await staking
+            .connect(authorizer)
+            .increaseAuthorization(
+              stakingProvider.address,
+              walletRegistry.address,
+              authorizedAmount
+            )
+
+          const slashingTo = minimumAuthorization.sub(1)
+          // Note that we slash from the entire staked amount given that the
+          // initially authorized amount is less than staked amount and it is
+          // another application slashing. To go below the minimum stake, we need
+          // to start slashing from the entire staked amount, not just the
+          // one authorized for WalletRegistry.
+          const slashedAmount = stakedAmount.sub(slashingTo)
+
+          await staking
+            .connect(slasher.wallet)
+            .slash(slashedAmount, [stakingProvider.address])
+          await staking.connect(thirdParty).processSlashing(1)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should revert", async () => {
+          await expect(
+            walletRegistry.connect(operator).joinSortitionPool()
+          ).to.be.revertedWith("Authorization below the minimum")
+        })
+      }
+    )
+
     context("when the operator has the minimum stake authorized", () => {
       let tx: ContractTransaction
 
