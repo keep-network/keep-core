@@ -14,10 +14,17 @@
 
 pragma solidity ^0.8.9;
 
+import "../libraries/EcdsaDkg.sol";
+
 interface IWalletRegistry {
     /// @notice Requests a new wallet creation.
     /// @dev Only a Wallet Owner can call this function.
     function requestNewWallet() external;
+
+    /// @notice Closes an existing wallet.
+    /// @param walletID ID of the wallet.
+    /// @dev Only a Wallet Owner can call this function.
+    function closeWallet(bytes32 walletID) external;
 
     /// @notice Gets public key of a wallet with a given wallet ID.
     ///         The public key is returned in an uncompressed format as a 64-byte
@@ -28,4 +35,7 @@ interface IWalletRegistry {
         external
         view
         returns (bytes memory);
+
+    /// @notice Check current wallet creation state.
+    function getWalletCreationState() external view returns (EcdsaDkg.State);
 }

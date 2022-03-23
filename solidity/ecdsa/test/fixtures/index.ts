@@ -9,6 +9,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Operator } from "../utils/operators"
 import type {
   SortitionPool,
+  ReimbursementPool,
   WalletRegistry,
   WalletRegistryStub,
   StakingStub,
@@ -40,6 +41,7 @@ export const params = {
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
+  sortitionPoolRewardsBanDuration: 1209600, // 14 days
 }
 
 export const walletRegistryFixture = deployments.createFixture(
@@ -53,6 +55,7 @@ export const walletRegistryFixture = deployments.createFixture(
     governance: SignerWithAddress
     thirdParty: SignerWithAddress
     operators: Operator[]
+    reimbursementPool: ReimbursementPool
   }> => {
     await deployments.fixture(["WalletRegistry"])
 
@@ -65,6 +68,10 @@ export const walletRegistryFixture = deployments.createFixture(
     )
     const tToken: T = await ethers.getContract("T")
     const staking: StakingStub = await ethers.getContract("StakingStub")
+
+    const reimbursementPool: ReimbursementPool = await ethers.getContract(
+      "ReimbursementPool"
+    )
 
     const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
     const governance: SignerWithAddress = await ethers.getNamedSigner(
@@ -103,6 +110,7 @@ export const walletRegistryFixture = deployments.createFixture(
     return {
       walletRegistry,
       sortitionPool,
+      reimbursementPool,
       walletOwner,
       deployer,
       governance,
@@ -146,6 +154,12 @@ export async function updateWalletRegistryParams(
       params.dkgSubmitterPrecedencePeriodLength
     )
 
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginSortitionPoolRewardsBanDurationUpdate(
+      params.sortitionPoolRewardsBanDuration
+    )
+
   await helpers.time.increaseTime(constants.governanceDelay)
 
   await walletRegistryGovernance
@@ -171,6 +185,10 @@ export async function updateWalletRegistryParams(
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeSortitionPoolRewardsBanDurationUpdate()
 }
 
 async function initializeWalletOwner(
@@ -184,7 +202,7 @@ async function initializeWalletOwner(
 
   await deployer.sendTransaction({
     to: walletOwner.address,
-    value: ethers.utils.parseEther("1"),
+    value: ethers.utils.parseEther("1000"),
   })
 
   await walletRegistryGovernance
