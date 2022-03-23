@@ -75,9 +75,9 @@ contract WalletRegistry is
     ///         other member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 300000;
 
-    // @notice Gas meant to balance the DKG approval's overall cost. Can be updated
-    //         by the governace based on the current market conditions.
-    uint256 public dkgApprovalGasOffset = 65000;
+    // @notice Gas meant to balance the DKG result approval's overall cost. Can
+    //         be updated by the governace based on the current market conditions.
+    uint256 public dkgResultApprovalGasOffset = 65000;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for DKG result submission or who failed
@@ -152,13 +152,14 @@ contract WalletRegistry is
         uint256 resultSubmitterPrecedencePeriodLength
     );
 
+    event GasParametersUpdated(
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset
+    );
+
     event RandomBeaconUpgraded(address randomBeacon);
 
     event WalletOwnerUpdated(address walletOwner);
-
-    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
-
-    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
 
     event OperatorRegistered(
         address indexed stakingProvider,
@@ -383,6 +384,17 @@ contract WalletRegistry is
         emit RandomBeaconUpgraded(address(_randomBeacon));
     }
 
+    /// @notice Updates the wallet owner.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters. The wallet owner has to implement `IWalletOwner`
+    ///      interface.
+    /// @param _walletOwner New wallet owner address.
+    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
+        walletOwner = _walletOwner;
+        emit WalletOwnerUpdated(address(_walletOwner));
+    }
+
     /// @notice Updates the values of authorization parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
@@ -471,41 +483,21 @@ contract WalletRegistry is
         emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
     }
 
-    /// @notice Updates the values of the wallet parameters.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
-    ///      validating parameters. The wallet owner has to implement `IWalletOwner`
-    ///      interface.
-    /// @param _walletOwner New wallet owner address.
-    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
-        walletOwner = _walletOwner;
-        emit WalletOwnerUpdated(address(_walletOwner));
-    }
-
-    /// @notice Updates the dkg result submission gas.
+    /// @notice Updates the values of gas-related parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionGas New dkg result submission gas.
-    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas)
-        external
-        onlyOwner
-    {
+    function updateGasParameters(
+        uint256 _dkgResultSubmissionGas,
+        uint256 _dkgResultApprovalGasOffset
+    ) external onlyOwner {
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
-        emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
-    }
+        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
 
-    /// @notice Updates the dkg approval gas offset.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
-    ///      validating parameters.
-    /// @param _dkgApprovalGasOffset New dkg result approval gas.
-    function updateDkgApprovalGasOffset(uint256 _dkgApprovalGasOffset)
-        external
-        onlyOwner
-    {
-        dkgApprovalGasOffset = _dkgApprovalGasOffset;
-        emit DkgApprovalGasOffsetUpdated(_dkgApprovalGasOffset);
+        emit GasParametersUpdated(
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset
+        );
     }
 
     /// @notice Requests a new wallet creation.
@@ -600,7 +592,7 @@ contract WalletRegistry is
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
-                dkgApprovalGasOffset,
+                dkgResultApprovalGasOffset,
             msg.sender
         );
     }
