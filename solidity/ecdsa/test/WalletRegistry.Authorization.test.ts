@@ -213,6 +213,11 @@ describe("WalletRegistry - Authorization", () => {
           .to.emit(walletRegistry, "OperatorRegistered")
           .withArgs(stakingProvider.address, operator.address)
       })
+
+      it("should not register operator in the pool", async () => {
+        expect(await walletRegistry.isOperatorInPool(operator.address)).to.be
+          .false
+      })
     })
 
     // It is possible to approve authorization decrease request immediately
