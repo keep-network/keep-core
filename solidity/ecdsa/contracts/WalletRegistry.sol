@@ -752,6 +752,8 @@ contract WalletRegistry is
     ///         stake. Eligible stake is defined as the currently authorized
     ///         stake minus the pending authorization decrease. Eligible stake
     ///         is what is used for operator's weight in the sortition pool.
+    ///         If the authorized stake minus the pending authorization decrease
+    ///         is below the minimum authorization, eligible stake is 0.
     function eligibleStake(address stakingProvider)
         external
         view

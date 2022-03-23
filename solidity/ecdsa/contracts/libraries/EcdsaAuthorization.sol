@@ -403,15 +403,13 @@ library EcdsaAuthorization {
         ];
 
         uint96 _eligibleStake = eligibleStake(
+            self,
             tokenStaking,
             stakingProvider,
             decrease.decreasingBy
         );
 
-        require(
-            _eligibleStake >= self.parameters.minimumAuthorization,
-            "Authorization below the minimum"
-        );
+        require(_eligibleStake != 0, "Authorization below the minimum");
 
         emit OperatorJoinedSortitionPool(stakingProvider, operator);
 
@@ -449,16 +447,13 @@ library EcdsaAuthorization {
 
         if (sortitionPool.isOperatorInPool(operator)) {
             uint96 _eligibleStake = eligibleStake(
+                self,
                 tokenStaking,
                 stakingProvider,
                 decrease.decreasingBy
             );
 
-            if (_eligibleStake < self.parameters.minimumAuthorization) {
-                sortitionPool.updateOperatorStatus(operator, 0);
-            } else {
-                sortitionPool.updateOperatorStatus(operator, _eligibleStake);
-            }
+            sortitionPool.updateOperatorStatus(operator, _eligibleStake);
         }
 
         // If there is a pending authorization decrease request, activate it.
@@ -490,6 +485,7 @@ library EcdsaAuthorization {
         ];
 
         uint96 _eligibleStake = eligibleStake(
+            self,
             tokenStaking,
             stakingProvider,
             decrease.decreasingBy
@@ -505,7 +501,9 @@ library EcdsaAuthorization {
     /// @notice Returns the current value of the staking provider's eligible
     ///         stake. Eligible stake is defined as the currently authorized
     ///         stake minus the pending authorization decrease. Eligible stake
-    ///         is what is used for operator's weight in the pool.
+    ///         is what is used for operator's weight in the pool. If the
+    ///         authorized stake minus the pending authorization decrease is
+    ///         below the minimum authorization, eligible stake is 0.
     /// @dev This function can be exposed to the public in contrast to the
     ///      second variant accepting `decreasingBy` as a parameter.
     function eligibleStake(
@@ -515,6 +513,7 @@ library EcdsaAuthorization {
     ) internal view returns (uint96) {
         return
             eligibleStake(
+                self,
                 tokenStaking,
                 stakingProvider,
                 pendingAuthorizationDecrease(self, stakingProvider)
@@ -524,13 +523,16 @@ library EcdsaAuthorization {
     /// @notice Returns the current value of the staking provider's eligible
     ///         stake. Eligible stake is defined as the currently authorized
     ///         stake minus the pending authorization decrease. Eligible stake
-    ///         is what is used for operator's weight in the pool.
+    ///         is what is used for operator's weight in the pool. If the
+    ///         authorized stake minus the pending authorization decrease is
+    ///         below the minimum authorization, eligible stake is 0.
     /// @dev This function is not intended to be exposes to the public.
     ///      `decreasingBy` must be fetched from `pendingDecreases` mapping and
     ///      it is passed as a parameter to optimize gas usage of functions that
     ///      call `eligibleStake` and need to use `AuthorizationDecrease`
     ///      fetched from `pendingDecreases` for some additional logic.
     function eligibleStake(
+        Data storage self,
         IStaking tokenStaking,
         address stakingProvider,
         uint96 decreasingBy
@@ -540,8 +542,15 @@ library EcdsaAuthorization {
             address(this)
         );
 
-        return
-            authorizedStake > decreasingBy ? authorizedStake - decreasingBy : 0;
+        uint96 _eligibleStake = authorizedStake > decreasingBy
+            ? authorizedStake - decreasingBy
+            : 0;
+
+        if (_eligibleStake < self.parameters.minimumAuthorization) {
+            return 0;
+        } else {
+            return _eligibleStake;
+        }
     }
 
     /// @notice Returns the amount of stake that is pending authorization
