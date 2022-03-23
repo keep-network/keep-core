@@ -16,9 +16,6 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-// TODO: This contract is just a Stub implementation that was used for gas
-// comparisons for Wallets creation. It should be implemented according to the
-// Wallets' actual use case.
 library Wallets {
     struct Wallet {
         // Keccak256 hash of group members identifiers array. Group members do not
