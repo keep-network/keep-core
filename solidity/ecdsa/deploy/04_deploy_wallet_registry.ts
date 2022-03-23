@@ -6,6 +6,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
 
   const SortitionPool = await deployments.get("SortitionPool")
+  const ReimbursementPool = await deployments.get("ReimbursementPool")
   let TokenStaking = await deployments.get("TokenStaking")
   const EcdsaDkgValidator = await deployments.get("EcdsaDkgValidator")
 
@@ -49,6 +50,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       TokenStaking.address,
       EcdsaDkgValidator.address,
       RandomBeacon.address,
+      ReimbursementPool.address,
     ],
     libraries: { EcdsaDkg: EcdsaDkg.address, Wallets: Wallets.address },
     log: true,

@@ -9,6 +9,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Operator } from "../utils/operators"
 import type {
   SortitionPool,
+  ReimbursementPool,
   WalletRegistry,
   WalletRegistryStub,
   StakingStub,
@@ -54,6 +55,7 @@ export const walletRegistryFixture = deployments.createFixture(
     governance: SignerWithAddress
     thirdParty: SignerWithAddress
     operators: Operator[]
+    reimbursementPool: ReimbursementPool
   }> => {
     await deployments.fixture(["WalletRegistry"])
 
@@ -66,6 +68,10 @@ export const walletRegistryFixture = deployments.createFixture(
     )
     const tToken: T = await ethers.getContract("T")
     const staking: StakingStub = await ethers.getContract("StakingStub")
+
+    const reimbursementPool: ReimbursementPool = await ethers.getContract(
+      "ReimbursementPool"
+    )
 
     const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
     const governance: SignerWithAddress = await ethers.getNamedSigner(
@@ -104,6 +110,7 @@ export const walletRegistryFixture = deployments.createFixture(
     return {
       walletRegistry,
       sortitionPool,
+      reimbursementPool,
       walletOwner,
       deployer,
       governance,
@@ -195,7 +202,7 @@ async function initializeWalletOwner(
 
   await deployer.sendTransaction({
     to: walletOwner.address,
-    value: ethers.utils.parseEther("1"),
+    value: ethers.utils.parseEther("1000"),
   })
 
   await walletRegistryGovernance

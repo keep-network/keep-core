@@ -25,6 +25,9 @@ import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import "@keep-network/random-beacon/contracts/Reimbursable.sol";
+import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
+
 /// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
 /// IStaking interface from there.
 interface IWalletStaking {
@@ -41,7 +44,12 @@ interface IWalletStaking {
     ) external;
 }
 
-contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
+contract WalletRegistry is
+    IRandomBeaconConsumer,
+    IWalletRegistry,
+    Ownable,
+    Reimbursable
+{
     using EcdsaAuthorization for EcdsaAuthorization.Data;
     using EcdsaDkg for EcdsaDkg.Data;
     using Wallets for Wallets.Data;
@@ -71,6 +79,17 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
     uint256 public maliciousDkgResultNotificationRewardMultiplier;
+
+    /// @notice Calculated max gas cost for submitting a DKG result. This will
+    ///         be refunded as part of the DKG approval process. It is in the
+    ///         submitter's interest to not skip his priority turn on the approval,
+    ///         otherwise the refund of the DKG submission will be refunded to
+    ///         other member that will call the DKG approve function.
+    uint256 public dkgResultSubmissionGas = 300000;
+
+    // @notice Gas meant to balance the DKG approval's overall cost. Can be updated
+    //         by the governace based on the current market conditions.
+    uint256 public dkgApprovalGasOffset = 65000;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for DKG result submission or who failed
@@ -151,15 +170,21 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
 
     event WalletOwnerUpdated(address walletOwner);
 
+    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
+
+    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
+
     constructor(
         SortitionPool _sortitionPool,
         IWalletStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
-        IRandomBeacon _randomBeacon
+        IRandomBeacon _randomBeacon,
+        ReimbursementPool _reimbursementPool
     ) {
         sortitionPool = _sortitionPool;
         staking = _staking;
         randomBeacon = _randomBeacon;
+        reimbursementPool = _reimbursementPool;
 
         // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
@@ -296,13 +321,34 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     ///      interface.
     /// @param _walletOwner New wallet owner address.
     function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
-        require(
-            address(_walletOwner) != address(0),
-            "Wallet owner address cannot be zero"
-        );
-
         walletOwner = _walletOwner;
         emit WalletOwnerUpdated(address(_walletOwner));
+    }
+
+    /// @notice Updates the dkg result submission gas.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultSubmissionGas New dkg result submission gas.
+    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas)
+        external
+        onlyOwner
+    {
+        dkgResultSubmissionGas = _dkgResultSubmissionGas;
+        emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
+    }
+
+    /// @notice Updates the dkg approval gas offset.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgApprovalGasOffset New dkg result approval gas.
+    function updateDkgApprovalGasOffset(uint256 _dkgApprovalGasOffset)
+        external
+        onlyOwner
+    {
+        dkgApprovalGasOffset = _dkgApprovalGasOffset;
+        emit DkgApprovalGasOffsetUpdated(_dkgApprovalGasOffset);
     }
 
     /// @notice Registers the caller in the sortition pool.
@@ -383,20 +429,6 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
         dkg.submitResult(dkgResult);
     }
 
-    /// @notice Notifies about seed for DKG delivery timeout. It is expected
-    ///         that a seed is delivered by the Random Beacon as a relay entry in a
-    ///         callback function.
-    function notifySeedTimeout() external {
-        dkg.notifySeedTimeout();
-        dkg.complete();
-    }
-
-    /// @notice Notifies about DKG timeout.
-    function notifyDkgTimeout() external {
-        dkg.notifyDkgTimeout();
-        dkg.complete();
-    }
-
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
     ///         as valid, pays reward to the approver, bans misbehaved group
@@ -409,6 +441,7 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+        uint256 gasStart = gasleft();
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         (bytes32 walletID, bytes32 publicKeyX, bytes32 publicKeyY) = wallets
@@ -430,6 +463,28 @@ contract WalletRegistry is IRandomBeaconConsumer, IWalletRegistry, Ownable {
             publicKeyY
         );
 
+        dkg.complete();
+
+        // Refunds msg.sender's ETH for dkg result submission & dkg approval
+        reimbursementPool.refund(
+            dkgResultSubmissionGas +
+                (gasStart - gasleft()) +
+                dkgApprovalGasOffset,
+            msg.sender
+        );
+    }
+
+    /// @notice Notifies about seed for DKG delivery timeout. It is expected
+    ///         that a seed is delivered by the Random Beacon as a relay entry in a
+    ///         callback function.
+    function notifySeedTimeout() external refundable(msg.sender) {
+        dkg.notifySeedTimeout();
+        dkg.complete();
+    }
+
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout() external refundable(msg.sender) {
+        dkg.notifyDkgTimeout();
         dkg.complete();
     }
 
