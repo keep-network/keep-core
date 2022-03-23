@@ -7,6 +7,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const SortitionPool = await deployments.get("SortitionPool")
   const TokenStaking = await deployments.get("TokenStaking")
+  const ReimbursementPool = await deployments.get("ReimbursementPool")
   const EcdsaDkgValidator = await deployments.get("EcdsaDkgValidator")
 
   // TODO: RandomBeaconStub contract should be replaced by actual implementation of
@@ -39,6 +40,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       TokenStaking.address,
       EcdsaDkgValidator.address,
       RandomBeacon.address,
+      ReimbursementPool.address,
     ],
     libraries: { EcdsaDkg: EcdsaDkg.address, Wallets: Wallets.address },
     log: true,

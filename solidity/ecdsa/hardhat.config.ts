@@ -49,6 +49,7 @@ const config: HardhatUserConfig = {
       },
       accounts: { count: 70 },
       tags: ["local"],
+      gasPrice: 200000000000, // 200 gwei
     },
     development: {
       url: "http://localhost:8545",

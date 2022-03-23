@@ -19,7 +19,7 @@ export async function fakeRandomBeacon(
     await ethers.getSigners()
   )[0].sendTransaction({
     to: randomBeacon.address,
-    value: ethers.utils.parseEther("1"),
+    value: ethers.utils.parseEther("1000"),
   })
 
   return randomBeacon
