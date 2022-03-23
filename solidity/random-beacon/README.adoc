@@ -238,14 +238,14 @@ within the governable eligibility period, `(new_entry % group_size) + 1` and
 so on.
 
 If some group members are notoriously ignoring their duty, the group can vote on
-failed <<heartbeats,heartbeat>> notification for these operators.
+<<inactivity,inactivity>> notification for these operators.
 
 T rewards will be distributed continuously to all operators registered in the beacon
 sortition pool, excluding operators who were marked as ineligible for rewards
 due to failing the heartbeat.
 
-[[heartbeats]]
-=== Heartbeats
+[[inactivity]]
+=== Inactivity notification
 
 Off-chain clients are free to execute any heartbeat protocol they want to ensure
 group members are alive and nodes are operating properly.
@@ -256,27 +256,21 @@ nth blocks and first making sure the information cannot be used for
 `RandomBeacon.reportUnauthorizedSigning()`, that is, the signed information can
 not become `msg.sender` for `reportUnauthorizedSigning` call.
 
-Group members can agree upon members that failed the heartbeat and issue a
-heartbeat failure claim. If the required threshold of group members signed
-the heartbeat failure claim, they can submit it to
-`RandomBeacon.notifyFailedHeartbeat(Heartbeat.FailureClaim calldata claim, uint256 nonce)`
-function and have the group members who failed the heartbeat excluded from
+Group members can agree upon members who are permanently inactive and issue an
+operator inactivity claim. If the required threshold of group members signed
+the operator inactivity claim, they can submit it to
+`RandomBeacon.notifyOperatorInactivity(Inactivity.Claim calldata claim, uint256 nonce)`
+function and have the group members who are inactive excluded from
 the sortition pool rewards for a governable time period.
-
-The submitter of the failed heartbeat claim receives a reward from a separate
-notifier reward pool, funded by DAO for heartbeat failure claims specifically.
-This pool is expected to be funded by DAO with tokens saved from sortition pool
-rewards as a result of having operators marked as ineligible for rewards due to
-failing a heartbeat.
 
 This approach is theoretically susceptible to group members colluding together
 but because a reasonably high number of operators is needed to sign a claim and
 operators signing the claim other than the submitter receive nothing in return,
 we consider this approach safe and good enough. An important advantage of this
 approach is that honest players can decide off-chain when it makes sense to
-submit a heartbeat fail report and mark someone as ineligible for rewards. For
-example, marking an operator ineligible for rewards for the next two weeks have
-a higher impact than prolonging reward ineligibility for 10 minutes for an
+submit an operator inactivity claim and mark someone as ineligible for rewards.
+For example, marking an operator ineligible for rewards for the next two weeks
+have a higher impact than prolonging reward ineligibility for 10 minutes for an
 operator that was already marked as ineligible for rewards. This approach does
 not increase the gas cost of a happy path and leaves some freedom to group
 members. They may mark as ineligible operators who turned off their nodes,
