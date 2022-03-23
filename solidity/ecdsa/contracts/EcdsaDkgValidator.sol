@@ -58,7 +58,6 @@ contract EcdsaDkgValidator {
 
     /// @dev Size in bytes of a public key produced by group members during the
     /// the DKG. The length assumes uncompressed ECDSA public key.
-    // TODO: Investigate if we could use compressed public keys of 33 bytes length.
     uint256 public constant publicKeyByteSize = 64;
 
     /// @dev Size in bytes of a single signature produced by operator supporting
