@@ -2281,9 +2281,12 @@ describe("WalletRegistryGovernance", async () => {
 
     context("when the caller is the owner", () => {
       let tx: ContractTransaction
+      let reimbursementPoolAddress: string
 
       before(async () => {
         await createSnapshot()
+
+        reimbursementPoolAddress = await walletRegistry.reimbursementPool()
 
         tx = await walletRegistryGovernance
           .connect(governance)
@@ -2305,8 +2308,8 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the reimbursement pool", async () => {
-        expect(await walletRegistry.walletOwner()).to.be.equal(
-          ethers.constants.AddressZero
+        expect(await walletRegistry.reimbursementPool()).to.be.equal(
+          reimbursementPoolAddress
         )
       })
 
