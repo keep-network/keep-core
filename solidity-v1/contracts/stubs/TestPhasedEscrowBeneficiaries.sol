@@ -47,3 +47,9 @@ contract TestSimpleStakerRewards {
         token.safeTransferFrom(_from, address(this), _value);
     }
 }
+
+// Simple smart contract mock for testing purposes.
+// Represents any contract receiving ERC20 tokens via plain transfer.
+contract TestSimpleReceiver {
+
+}

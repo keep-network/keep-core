@@ -9,10 +9,11 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Operator } from "../utils/operators"
 import type {
   SortitionPool,
+  ReimbursementPool,
   WalletRegistry,
   WalletRegistryStub,
-  StakingStub,
   WalletRegistryGovernance,
+  TokenStaking,
   T,
 } from "../../typechain"
 import type { FakeContract } from "@defi-wonderland/smock"
@@ -23,6 +24,7 @@ export const constants = {
   groupSize: 100,
   groupThreshold: 51,
   poolWeightDivisor: to1e18(1),
+  tokenStakingNotificationReward: to1e18(10000), // 10k T
   governanceDelay: 604800, // 1 week
 }
 
@@ -40,6 +42,7 @@ export const params = {
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
+  sortitionPoolRewardsBanDuration: 1209600, // 14 days
 }
 
 export const walletRegistryFixture = deployments.createFixture(
@@ -47,12 +50,13 @@ export const walletRegistryFixture = deployments.createFixture(
     walletRegistry: WalletRegistryStub & WalletRegistry
     walletRegistryGovernance: WalletRegistryGovernance
     sortitionPool: SortitionPool
-    staking: StakingStub
+    staking: TokenStaking
     walletOwner: FakeContract<IWalletOwner>
     deployer: SignerWithAddress
     governance: SignerWithAddress
     thirdParty: SignerWithAddress
     operators: Operator[]
+    reimbursementPool: ReimbursementPool
   }> => {
     await deployments.fixture(["WalletRegistry"])
 
@@ -64,7 +68,11 @@ export const walletRegistryFixture = deployments.createFixture(
       "SortitionPool"
     )
     const tToken: T = await ethers.getContract("T")
-    const staking: StakingStub = await ethers.getContract("StakingStub")
+    const staking: TokenStaking = await ethers.getContract("TokenStaking")
+
+    const reimbursementPool: ReimbursementPool = await ethers.getContract(
+      "ReimbursementPool"
+    )
 
     const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
     const governance: SignerWithAddress = await ethers.getNamedSigner(
@@ -91,6 +99,9 @@ export const walletRegistryFixture = deployments.createFixture(
       )
     )
 
+    // Set up TokenStaking parameters
+    await updateTokenStakingParams(tToken, staking, deployer)
+
     // Set parameters with tweaked values to reduce test execution time.
     await updateWalletRegistryParams(walletRegistryGovernance, governance)
 
@@ -103,6 +114,7 @@ export const walletRegistryFixture = deployments.createFixture(
     return {
       walletRegistry,
       sortitionPool,
+      reimbursementPool,
       walletOwner,
       deployer,
       governance,
@@ -113,6 +125,23 @@ export const walletRegistryFixture = deployments.createFixture(
     }
   }
 )
+
+async function updateTokenStakingParams(
+  tToken: T,
+  staking: TokenStaking,
+  deployer: SignerWithAddress
+) {
+  const initialNotifierTreasury = to1e18(100000) // 100k T
+  await tToken
+    .connect(deployer)
+    .approve(staking.address, initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .pushNotificationReward(initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .setNotificationReward(constants.tokenStakingNotificationReward)
+}
 
 export async function updateWalletRegistryParams(
   walletRegistryGovernance: WalletRegistryGovernance,
@@ -146,6 +175,12 @@ export async function updateWalletRegistryParams(
       params.dkgSubmitterPrecedencePeriodLength
     )
 
+  await walletRegistryGovernance
+    .connect(governance)
+    .beginSortitionPoolRewardsBanDurationUpdate(
+      params.sortitionPoolRewardsBanDuration
+    )
+
   await helpers.time.increaseTime(constants.governanceDelay)
 
   await walletRegistryGovernance
@@ -171,9 +206,13 @@ export async function updateWalletRegistryParams(
   await walletRegistryGovernance
     .connect(governance)
     .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeSortitionPoolRewardsBanDurationUpdate()
 }
 
-async function initializeWalletOwner(
+export async function initializeWalletOwner(
   walletRegistryGovernance: WalletRegistryGovernance,
   governance: SignerWithAddress
 ): Promise<FakeContract<IWalletOwner>> {
@@ -184,7 +223,7 @@ async function initializeWalletOwner(
 
   await deployer.sendTransaction({
     to: walletOwner.address,
-    value: ethers.utils.parseEther("1"),
+    value: ethers.utils.parseEther("1000"),
   })
 
   await walletRegistryGovernance

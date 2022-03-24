@@ -14,27 +14,26 @@
 
 pragma solidity ^0.8.9;
 
-interface IWalletOwner {
-    /// @notice Callback function executed once a new wallet is created.
-    /// @dev Should be callable only by the Wallet Registry.
-    /// @param walletID Wallet's unique identifier.
-    /// @param publicKeyY Wallet's public key's X coordinate.
-    /// @param publicKeyY Wallet's public key's Y coordinate.
-    function __ecdsaWalletCreatedCallback(
-        bytes32 walletID,
-        bytes32 publicKeyX,
-        bytes32 publicKeyY
-    ) external;
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ReimbursementPool.sol";
 
-    /// @notice Callback function executed once a wallet heartbeat failure
-    ///         is detected.
-    /// @dev Should be callable only by the Wallet Registry.
-    /// @param walletID Wallet's unique identifier.
-    /// @param publicKeyY Wallet's public key's X coordinate.
-    /// @param publicKeyY Wallet's public key's Y coordinate.
-    function __ecdsaWalletHeartbeatFailedCallback(
-        bytes32 walletID,
-        bytes32 publicKeyX,
-        bytes32 publicKeyY
-    ) external;
+abstract contract Reimbursable is Ownable {
+    ReimbursementPool public reimbursementPool;
+
+    event ReimbursementPoolUpdated(address newReimbursementPool);
+
+    modifier refundable(address receiver) {
+        uint256 gasStart = gasleft();
+        _;
+        reimbursementPool.refund(gasStart - gasleft(), receiver);
+    }
+
+    function updateReimbursementPool(ReimbursementPool _reimbursementPool)
+        external
+        onlyOwner
+    {
+        emit ReimbursementPoolUpdated(address(_reimbursementPool));
+
+        reimbursementPool = _reimbursementPool;
+    }
 }

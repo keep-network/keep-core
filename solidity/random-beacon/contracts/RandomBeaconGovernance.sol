@@ -22,6 +22,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 ///         governable parameters in respect to governance delay individual
 ///         for each parameter.
 contract RandomBeaconGovernance is Ownable {
+    uint256 public newGovernanceDelay;
+    uint256 public governanceDelayChangeInitiated;
+
+    address public newRandomBeaconOwner;
+    uint256 public randomBeaconOwnershipTransferInitiated;
+
     uint256 public newRelayRequestFee;
     uint256 public relayRequestFeeChangeInitiated;
 
@@ -90,6 +96,18 @@ contract RandomBeaconGovernance is Ownable {
     RandomBeacon public randomBeacon;
 
     uint256 public governanceDelay;
+
+    event GovernanceDelayUpdateStarted(
+        uint256 governanceDelay,
+        uint256 timestamp
+    );
+    event GovernanceDelayUpdated(uint256 governanceDelay);
+
+    event RandomBeaconOwnershipTransferStarted(
+        address newRandomBeaconOwner,
+        uint256 timestamp
+    );
+    event RandomBeaconOwnershipTransferred(address newRandomBeaconOwner);
 
     event RelayRequestFeeUpdateStarted(
         uint256 relayRequestFee,
@@ -253,6 +271,69 @@ contract RandomBeaconGovernance is Ownable {
     constructor(RandomBeacon _randomBeacon, uint256 _governanceDelay) {
         randomBeacon = _randomBeacon;
         governanceDelay = _governanceDelay;
+    }
+
+    /// @notice Begins the governance delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newGovernanceDelay New governance delay
+    function beginGovernanceDelayUpdate(uint256 _newGovernanceDelay)
+        external
+        onlyOwner
+    {
+        newGovernanceDelay = _newGovernanceDelay;
+        /* solhint-disable not-rely-on-time */
+        governanceDelayChangeInitiated = block.timestamp;
+        emit GovernanceDelayUpdateStarted(_newGovernanceDelay, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the governance delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeGovernanceDelayUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(governanceDelayChangeInitiated)
+    {
+        emit GovernanceDelayUpdated(newGovernanceDelay);
+        governanceDelay = newGovernanceDelay;
+        governanceDelayChangeInitiated = 0;
+        newGovernanceDelay = 0;
+    }
+
+    /// @notice Begins the random beacon ownership transfer process.
+    /// @dev Can be called only by the contract owner.
+    function beginRandomBeaconOwnershipTransfer(address _newRandomBeaconOwner)
+        external
+        onlyOwner
+    {
+        require(
+            address(_newRandomBeaconOwner) != address(0),
+            "New random beacon owner address cannot be zero"
+        );
+        newRandomBeaconOwner = _newRandomBeaconOwner;
+        /* solhint-disable not-rely-on-time */
+        randomBeaconOwnershipTransferInitiated = block.timestamp;
+        emit RandomBeaconOwnershipTransferStarted(
+            _newRandomBeaconOwner,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the random beacon ownership transfer process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRandomBeaconOwnershipTransfer()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(randomBeaconOwnershipTransferInitiated)
+    {
+        emit RandomBeaconOwnershipTransferred(newRandomBeaconOwner);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.transferOwnership(newRandomBeaconOwner);
+        randomBeaconOwnershipTransferInitiated = 0;
+        newRandomBeaconOwner = address(0);
     }
 
     /// @notice Begins the relay request fee update process.
@@ -1133,6 +1214,27 @@ contract RandomBeaconGovernance is Ownable {
     /// @param recipient Recipient of withdrawn rewards.
     function withdrawIneligibleRewards(address recipient) external onlyOwner {
         randomBeacon.withdrawIneligibleRewards(recipient);
+    }
+
+    /// @notice Get the time remaining until the governance delay can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingGovernanceDelayUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(governanceDelayChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the random beacon ownership can
+    ///         be transferred.
+    /// @return Remaining time in seconds.
+    function getRemainingRandomBeaconOwnershipTransferDelayTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(randomBeaconOwnershipTransferInitiated);
     }
 
     /// @notice Get the time remaining until the relay request fee can be

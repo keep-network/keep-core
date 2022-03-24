@@ -49,6 +49,7 @@ const config: HardhatUserConfig = {
       },
       accounts: { count: 70 },
       tags: ["local"],
+      gasPrice: 200000000000, // 200 gwei
     },
     development: {
       url: "http://localhost:8545",
@@ -103,6 +104,7 @@ const config: HardhatUserConfig = {
   dependencyCompiler: {
     paths: [
       "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
       "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
     ],
     keep: true,

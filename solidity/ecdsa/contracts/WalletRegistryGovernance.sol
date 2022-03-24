@@ -16,6 +16,7 @@ pragma solidity ^0.8.9;
 
 import "./WalletRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 
 import {IWalletOwner} from "./api/IWalletOwner.sol";
 import {IRandomBeacon} from "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
@@ -46,6 +47,9 @@ contract WalletRegistryGovernance is Ownable {
     uint256
         public maliciousDkgResultNotificationRewardMultiplierChangeInitiated;
 
+    uint256 public newSortitionPoolRewardsBanDuration;
+    uint256 public sortitionPoolRewardsBanDurationChangeInitiated;
+
     uint256 public newDkgSeedTimeout;
     uint256 public dkgSeedTimeoutChangeInitiated;
 
@@ -57,6 +61,15 @@ contract WalletRegistryGovernance is Ownable {
 
     uint256 public newSubmitterPrecedencePeriodLength;
     uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
+
+    uint256 public newDkgResultSubmissionGas;
+    uint256 public dkgResultSubmissionGasChangeInitiated;
+
+    uint256 public newDkgApprovalGasOffset;
+    uint256 public dkgApprovalGasOffsetChangeInitiated;
+
+    address payable public newReimbursementPool;
+    uint256 public reimbursementPoolChangeInitiated;
 
     WalletRegistry public walletRegistry;
 
@@ -105,6 +118,14 @@ contract WalletRegistryGovernance is Ownable {
         uint256 maliciousDkgResultNotificationRewardMultiplier
     );
 
+    event SortitionPoolRewardsBanDurationUpdateStarted(
+        uint256 sortitionPoolRewardsBanDuration,
+        uint256 timestamp
+    );
+    event SortitionPoolRewardsBanDurationUpdated(
+        uint256 sortitionPoolRewardsBanDuration
+    );
+
     event DkgSeedTimeoutUpdateStarted(
         uint256 dkgSeedTimeout,
         uint256 timestamp
@@ -132,6 +153,24 @@ contract WalletRegistryGovernance is Ownable {
     event DkgSubmitterPrecedencePeriodLengthUpdated(
         uint256 submitterPrecedencePeriodLength
     );
+
+    event DkgResultSubmissionGasUpdateStarted(
+        uint256 dkgResultSubmissionGas,
+        uint256 timestamp
+    );
+    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
+
+    event DkgApprovalGasOffsetUpdateStarted(
+        uint256 dkgApprovalGasOffset,
+        uint256 timestamp
+    );
+    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
+
+    event ReimbursementPoolUpdateStarted(
+        address reimbursementPool,
+        uint256 timestamp
+    );
+    event ReimbursementPoolUpdated(address reimbursementPool);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -427,10 +466,149 @@ contract WalletRegistryGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateRewardParameters(
-            newMaliciousDkgResultNotificationRewardMultiplier
+            newMaliciousDkgResultNotificationRewardMultiplier,
+            walletRegistry.sortitionPoolRewardsBanDuration()
         );
         maliciousDkgResultNotificationRewardMultiplierChangeInitiated = 0;
         newMaliciousDkgResultNotificationRewardMultiplier = 0;
+    }
+
+    /// @notice Begins the dkg result submission gas update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultSubmissionGas New DKG result submission gas.
+    function beginDkgResultSubmissionGasUpdate(
+        uint256 _newDkgResultSubmissionGas
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
+        dkgResultSubmissionGasChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionGasUpdateStarted(
+            _newDkgResultSubmissionGas,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the dkg result submission gas update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultSubmissionGasUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgResultSubmissionGasChangeInitiated)
+    {
+        emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgResultSubmissionGas(newDkgResultSubmissionGas);
+        dkgResultSubmissionGasChangeInitiated = 0;
+        newDkgResultSubmissionGas = 0;
+    }
+
+    /// @notice Begins the reimbursement pool update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newReimbursementPool New reimbursement pool.
+    function beginReimbursementPoolUpdate(address payable _newReimbursementPool)
+        external
+        onlyOwner
+    {
+        require(
+            address(_newReimbursementPool) != address(0),
+            "New reimbursement pool address cannot be zero"
+        );
+        /* solhint-disable not-rely-on-time */
+        newReimbursementPool = _newReimbursementPool;
+        reimbursementPoolChangeInitiated = block.timestamp;
+        emit ReimbursementPoolUpdateStarted(
+            _newReimbursementPool,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the reimbursement pool update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeReimbursementPoolUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(reimbursementPoolChangeInitiated)
+    {
+        emit ReimbursementPoolUpdated(newReimbursementPool);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateReimbursementPool(
+            ReimbursementPool(newReimbursementPool)
+        );
+        reimbursementPoolChangeInitiated = 0;
+        newReimbursementPool = payable(address(0));
+    }
+
+    /// @notice Begins the dkg approval gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgApprovalGasOffset New DKG result approval gas.
+    function beginDkgApprovalGasOffsetUpdate(uint256 _newDkgApprovalGasOffset)
+        external
+        onlyOwner
+    {
+        /* solhint-disable not-rely-on-time */
+        newDkgApprovalGasOffset = _newDkgApprovalGasOffset;
+        dkgApprovalGasOffsetChangeInitiated = block.timestamp;
+        emit DkgApprovalGasOffsetUpdateStarted(
+            _newDkgApprovalGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the dkg approval gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgApprovalGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgApprovalGasOffsetChangeInitiated)
+    {
+        emit DkgApprovalGasOffsetUpdated(newDkgApprovalGasOffset);
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateDkgApprovalGasOffset(newDkgApprovalGasOffset);
+        dkgApprovalGasOffsetChangeInitiated = 0;
+        newDkgApprovalGasOffset = 0;
+    }
+
+    /// @notice Begins the sortition pool rewards ban duration update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newSortitionPoolRewardsBanDuration New sortition pool rewards
+    ///        ban duration.
+    function beginSortitionPoolRewardsBanDurationUpdate(
+        uint256 _newSortitionPoolRewardsBanDuration
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newSortitionPoolRewardsBanDuration = _newSortitionPoolRewardsBanDuration;
+        sortitionPoolRewardsBanDurationChangeInitiated = block.timestamp;
+        emit SortitionPoolRewardsBanDurationUpdateStarted(
+            _newSortitionPoolRewardsBanDuration,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the sortition pool rewards ban duration update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeSortitionPoolRewardsBanDurationUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(sortitionPoolRewardsBanDurationChangeInitiated)
+    {
+        emit SortitionPoolRewardsBanDurationUpdated(
+            newSortitionPoolRewardsBanDuration
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateRewardParameters(
+            walletRegistry.maliciousDkgResultNotificationRewardMultiplier(),
+            newSortitionPoolRewardsBanDuration
+        );
+        sortitionPoolRewardsBanDurationChangeInitiated = 0;
+        newSortitionPoolRewardsBanDuration = 0;
     }
 
     /// @notice Begins the DKG seed timeout update process.
@@ -671,6 +849,20 @@ contract WalletRegistryGovernance is Ownable {
             );
     }
 
+    /// @notice Get the time remaining until the sortition pool rewards ban
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingSortitionPoolRewardsBanDurationUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                sortitionPoolRewardsBanDurationChangeInitiated
+            );
+    }
+
     /// @notice Get the time remaining until the DKG seed timeout can be updated.
     /// @return Remaining time in seconds.
     function getRemainingDkgSeedTimeoutUpdateTime()
@@ -728,6 +920,38 @@ contract WalletRegistryGovernance is Ownable {
             getRemainingChangeTime(
                 dkgSubmitterPrecedencePeriodLengthChangeInitiated
             );
+    }
+
+    /// @notice Get the time remaining until the dkg result submission gas can
+    ///         be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultSubmissionGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the dkg approval gas offset can
+    ///         be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgApprovalGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(dkgApprovalGasOffsetChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until reimbursement pool can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingReimbursementPoolUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(reimbursementPoolChangeInitiated);
     }
 
     /// @notice Gets the time remaining until the governable parameter update
