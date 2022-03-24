@@ -612,10 +612,10 @@
     "@openzeppelin/upgrades" "^2.7.2"
     openzeppelin-solidity "2.4.0"
 
-"@keep-network/random-beacon@>2.0.0-dev <2.0.0-ropsten":
-  version "2.0.0-dev.0"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.0.tgz#ea5f450256ea42c842c22fce39611fdb77b0bb49"
-  integrity sha512-8bjljuCp9ZpGAuWtdVOkYT/HslAbnoI3DZdNbhCfp9BGPtWQa32XvOHHu25oqY9xj4IgKURoNqGhSbgb4+m5ww==
+"@keep-network/random-beacon@>2.0.0-dev. <2.0.0-ropsten":
+  version "2.0.0-dev.2"
+  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.2.tgz#c010ac4d37d9c75903cac152407bb6dec683435a"
+  integrity sha512-0Mx6QZioacmpSzJjX0QIxPpjYeu8uhk+GNHzjgqKMZfIlfUMPLudJZwumVgsQRIH53ElYkLreToxt7JDATAbDQ==
   dependencies:
     "@keep-network/sortition-pools" "1.2.0-dev.24"
     "@openzeppelin/contracts" "^4.4.2"
