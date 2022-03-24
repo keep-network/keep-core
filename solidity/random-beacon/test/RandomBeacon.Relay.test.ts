@@ -1281,17 +1281,19 @@ describe("RandomBeacon - Relay", () => {
                       )
 
                       await expect(
-                        randomBeacon.connect(claimSender).notifyOperatorInactivity(
-                          {
-                            groupId,
-                            inactiveMembersIndices:
-                              subsequentInactiveMembersIndices,
-                            signatures,
-                            signingMembersIndices,
-                          },
-                          0,
-                          membersIDs
-                        )
+                        randomBeacon
+                          .connect(claimSender)
+                          .notifyOperatorInactivity(
+                            {
+                              groupId,
+                              inactiveMembersIndices:
+                                subsequentInactiveMembersIndices,
+                              signatures,
+                              signingMembersIndices,
+                            },
+                            0,
+                            membersIDs
+                          )
                       ).to.be.revertedWith("Sender must be claim signer")
                     })
                   }
@@ -1315,7 +1317,8 @@ describe("RandomBeacon - Relay", () => {
                     randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        inactiveMembersIndices: subsequentInactiveMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         // Slice removes `0x` prefix from wrong signature.
                         signatures: signatures + invalidSignature.slice(2),
                         signingMembersIndices: [...signingMembersIndices, 33],
@@ -1406,7 +1409,8 @@ describe("RandomBeacon - Relay", () => {
                       randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          inactiveMembersIndices: subsequentInactiveMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           // Remove the first signing member index
                           signingMembersIndices: signingMembersIndices.slice(1),
@@ -1436,7 +1440,8 @@ describe("RandomBeacon - Relay", () => {
                     randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        inactiveMembersIndices: subsequentInactiveMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices,
                       },
@@ -1466,7 +1471,8 @@ describe("RandomBeacon - Relay", () => {
                       randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          inactiveMembersIndices: subsequentInactiveMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           signingMembersIndices,
                         },
@@ -1498,7 +1504,8 @@ describe("RandomBeacon - Relay", () => {
                       randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          inactiveMembersIndices: subsequentInactiveMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           signingMembersIndices,
                         },
@@ -1542,7 +1549,8 @@ describe("RandomBeacon - Relay", () => {
                     randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        inactiveMembersIndices: subsequentInactiveMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices: stubMembersIndices,
                       },
@@ -1571,7 +1579,8 @@ describe("RandomBeacon - Relay", () => {
                     randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        inactiveMembersIndices: subsequentInactiveMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         // Remove the first signature to cause a mismatch with
                         // the signing members count.
                         signatures: `0x${signatures.slice(132)}`,
@@ -1603,7 +1612,8 @@ describe("RandomBeacon - Relay", () => {
                     randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        inactiveMembersIndices: subsequentInactiveMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices,
                       },
@@ -1679,7 +1689,9 @@ describe("RandomBeacon - Relay", () => {
             it("should revert", async () => {
               const inactiveMembersIndices = []
 
-              await assertInactiveMembersIndicesCorrupted(inactiveMembersIndices)
+              await assertInactiveMembersIndicesCorrupted(
+                inactiveMembersIndices
+              )
             })
           })
 
@@ -1692,7 +1704,9 @@ describe("RandomBeacon - Relay", () => {
                   (_, i) => i + 1
                 )
 
-                await assertInactiveMembersIndicesCorrupted(inactiveMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
@@ -1705,7 +1719,9 @@ describe("RandomBeacon - Relay", () => {
               )
               inactiveMembersIndices[0] = 0
 
-              await assertInactiveMembersIndicesCorrupted(inactiveMembersIndices)
+              await assertInactiveMembersIndicesCorrupted(
+                inactiveMembersIndices
+              )
             })
           })
 
@@ -1719,7 +1735,9 @@ describe("RandomBeacon - Relay", () => {
                 )
                 inactiveMembersIndices[inactiveMembersIndices.length - 1] = 65
 
-                await assertInactiveMembersIndicesCorrupted(inactiveMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
@@ -1735,7 +1753,9 @@ describe("RandomBeacon - Relay", () => {
                 // eslint-disable-next-line prefer-destructuring
                 inactiveMembersIndices[10] = inactiveMembersIndices[11]
 
-                await assertInactiveMembersIndicesCorrupted(inactiveMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )

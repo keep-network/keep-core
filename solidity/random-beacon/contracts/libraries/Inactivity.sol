@@ -73,7 +73,10 @@ library Inactivity {
         // Validate inactive members indices. Maximum indices count is equal to
         // the group size and is not limited deliberately to leave a theoretical
         // possibility to accuse more members than `groupSize - groupThreshold`.
-        validateMembersIndices(claim.inactiveMembersIndices, groupMembers.length);
+        validateMembersIndices(
+            claim.inactiveMembersIndices,
+            groupMembers.length
+        );
 
         // Validate signatures array is properly formed and number of
         // signatures and signers is correct.
