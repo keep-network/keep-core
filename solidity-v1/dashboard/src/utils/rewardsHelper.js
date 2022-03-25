@@ -141,7 +141,12 @@ class ExtendedECDSARewards extends RewardsInterface {
         "0xdc8026bc52c1d200477e8aa8d374e934e57c79d1d0c9fa65d121a8f6607987b0",
     },
     // 2021-01-22 -> 2022-02-22
-    { start: 1642809600, end: 1645488000, merkleRoot: "" },
+    {
+      start: 1642809600,
+      end: 1645488000,
+      merkleRoot:
+        "0xa48918393536de2ba2dfb10b66ea91abb7f66352156d34f2f3ffcbb0b976ba2b",
+    },
     // 2021-02-22 -> 2022-03-22
     { start: 1645488000, end: 1647907200, merkleRoot: "" },
   ]
