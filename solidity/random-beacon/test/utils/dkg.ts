@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { ethers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
@@ -15,6 +15,8 @@ import type {
   BeaconDkg as DKG,
   DkgResultSubmittedEvent,
 } from "../../typechain/BeaconDkg"
+
+const { provider } = waffle
 
 export const noMisbehaved = []
 
@@ -53,6 +55,7 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
+  submitterInitialBalance: BigNumber
 }> {
   const sortitionPool = (await ethers.getContractAt(
     "SortitionPool",
@@ -89,6 +92,7 @@ export async function signAndSubmitArbitraryDkgResult(
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
+  submitterInitialBalance: BigNumber
 }> {
   const { members, signingMembersIndices, signaturesBytes } =
     await signDkgResult(
@@ -124,6 +128,9 @@ export async function signAndSubmitArbitraryDkgResult(
   )
 
   const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+  const submitterInitialBalance = await provider.getBalance(
+    await submitter.getAddress()
+  )
 
   const transaction = await randomBeacon
     .connect(submitter)
@@ -135,6 +142,7 @@ export async function signAndSubmitArbitraryDkgResult(
     dkgResultHash,
     members,
     submitter,
+    submitterInitialBalance,
   }
 }
 

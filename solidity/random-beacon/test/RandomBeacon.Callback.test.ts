@@ -82,7 +82,9 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(requester)
-          .requestRelayEntry(callbackContract.address)
+          .requestRelayEntry(callbackContract.address, {
+            value: params.relayRequestFee,
+          })
 
         const callbackData = await randomBeacon.getCallbackData()
 
@@ -98,7 +100,9 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(requester)
-          .requestRelayEntry(callbackContract.address)
+          .requestRelayEntry(callbackContract.address, {
+            value: params.relayRequestFee,
+          })
 
         await randomBeacon
           .connect(submitter)
@@ -106,7 +110,9 @@ describe("RandomBeacon - Callback", () => {
 
         await approveTestToken()
 
-        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
+        await randomBeacon
+          .connect(requester)
+          .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
 
         const callbackData = await randomBeacon.getCallbackData()
         await expect(callbackData.callbackContract).to.equal(ZERO_ADDRESS)
@@ -119,7 +125,9 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(requester)
-          .requestRelayEntry(callbackContract.address)
+          .requestRelayEntry(callbackContract.address, {
+            value: params.relayRequestFee,
+          })
 
         await randomBeacon
           .connect(submitter)
@@ -129,7 +137,9 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon
           .connect(requester)
-          .requestRelayEntry(callbackContract1.address)
+          .requestRelayEntry(callbackContract1.address, {
+            value: params.relayRequestFee,
+          })
 
         const callbackData = await randomBeacon.getCallbackData()
         await expect(callbackData.callbackContract).to.equal(
@@ -159,7 +169,9 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon
             .connect(requester)
-            .requestRelayEntry(callbackContract.address)
+            .requestRelayEntry(callbackContract.address, {
+              value: params.relayRequestFee,
+            })
 
           await randomBeacon
             .connect(submitter)
@@ -189,7 +201,9 @@ describe("RandomBeacon - Callback", () => {
           )
           await randomBeacon
             .connect(requester)
-            .requestRelayEntry(callbackContract.address)
+            .requestRelayEntry(callbackContract.address, {
+              value: params.relayRequestFee,
+            })
 
           const tx = await randomBeacon
             .connect(submitter)
@@ -207,7 +221,9 @@ describe("RandomBeacon - Callback", () => {
 
           await randomBeacon
             .connect(requester)
-            .requestRelayEntry(callbackContract.address)
+            .requestRelayEntry(callbackContract.address, {
+              value: params.relayRequestFee,
+            })
 
           await callbackContract.setFailureFlag(true)
 

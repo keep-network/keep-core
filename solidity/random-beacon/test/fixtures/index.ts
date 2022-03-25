@@ -29,7 +29,7 @@ export const dkgState = {
 
 export const params = {
   governanceDelay: 604800, // 1 week
-  relayRequestFee: to1e18(100),
+  relayRequestFee: ethers.utils.parseEther("0.031"), // 0.031ETH
   relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
@@ -50,8 +50,8 @@ export const params = {
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(100000),
   authorizationDecreaseDelay: 0,
-  reimbursmentPoolStaticGas: 41900,
-  reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("20", "gwei"),
+  reimbursmentPoolStaticGas: 40800,
+  reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -131,6 +131,11 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   )
   await reimbursementPool.deployed()
 
+  await deployer.sendTransaction({
+    to: reimbursementPool.address,
+    value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
+  })
+
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
@@ -157,6 +162,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     stakingStub,
     randomBeacon,
     testToken,
+    reimbursementPool,
   }
 
   return contracts

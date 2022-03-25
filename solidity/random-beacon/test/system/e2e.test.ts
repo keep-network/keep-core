@@ -59,7 +59,7 @@ const fixture = async () => {
 // Signatures in bls.ts were generated outside of this test based on bls_test.go
 describe("System -- e2e", () => {
   // same as in RandomBeacon constructor
-  const relayRequestFee = to1e18(200)
+  const { relayRequestFee } = params
   const relayEntryHardTimeout = 5760
   const relayEntrySoftTimeout = 20
   const callbackGasLimit = 56000
@@ -141,7 +141,9 @@ describe("System -- e2e", () => {
 
       for (let i = 1; i <= 14; i++) {
         await approveTestToken(requester)
-        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
+        await randomBeacon
+          .connect(requester)
+          .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
 
         const txSubmitRelayEntry = await randomBeacon
           .connect(dkgResult.submitter)
