@@ -160,7 +160,15 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
 
     // @notice Gas is meant to balance the DKG approval's overall cost. Can be
     //         updated by the governace based on the current market conditions.
-    uint256 public dkgApprovalGasOffset = 65000;
+    uint256 public dkgApprovalGasOffset = 43500;
+
+    // @notice Gas is meant to balance the failed heartbeat cost. Can be updated
+    //         by the governace based on the current market conditions.
+    uint256 public failedHeartbeatGasOffset = 54500;
+
+    // @notice Gas is meant to balance the relay entry submission cost. Can be
+    //         updated by the governace based on the current market conditions.
+    uint256 public relayEntrySubmissionGasOffset = 11500;
 
     // Other parameters
 
@@ -788,10 +796,9 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
     ///         called only before the soft timeout. This should be the majority
     ///         of cases.
     /// @param entry Group BLS signature over the previous entry.
-    function submitRelayEntry(bytes calldata entry)
-        external
-        refundable(msg.sender)
-    {
+    function submitRelayEntry(bytes calldata entry) external {
+        uint256 gasStart = gasleft();
+
         Groups.Group storage group = groups.getGroup(
             relay.currentRequestGroupID
         );
@@ -805,6 +812,11 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + relayEntrySubmissionGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Creates a new relay entry.
@@ -813,7 +825,8 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
     function submitRelayEntry(
         bytes calldata entry,
         uint32[] calldata groupMembers
-    ) external refundable(msg.sender) {
+    ) external {
+        uint256 gasStart = gasleft();
         uint256 currentRequestId = relay.currentRequestID;
 
         Groups.Group storage group = groups.getGroup(
@@ -857,6 +870,10 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + relayEntrySubmissionGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Reports a relay entry timeout.
@@ -1004,7 +1021,8 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
         Heartbeat.FailureClaim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
-    ) external refundable(msg.sender) {
+    ) external {
+        uint256 gasStart = gasleft();
         uint64 groupId = claim.groupId;
 
         require(nonce == failedHeartbeatNonce[groupId], "Invalid nonce");
@@ -1037,6 +1055,11 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
             ineligibleOperators,
             // solhint-disable-next-line not-rely-on-time
             block.timestamp + sortitionPoolRewardsBanDuration
+        );
+
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + failedHeartbeatGasOffset,
+            msg.sender
         );
     }
 
