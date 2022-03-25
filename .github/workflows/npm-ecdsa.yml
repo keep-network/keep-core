@@ -1,0 +1,53 @@
+name: NPM ECDSA
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "solidity/ecdsa/contracts/**"
+      - "solidity/ecdsa/deploy/**"
+      - "solidity/ecdsa/package.json"
+      - "solidity/ecdsa/yarn.lock"
+      - ".github/workflows/npm-ecdsa.yml"
+  workflow_dispatch:
+
+jobs:
+  npm-compile-publish-contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/ecdsa
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          registry-url: "https://registry.npmjs.org"
+          cache: "yarn"
+          cache-dependency-path: solidity/ecdsa/yarn.lock
+
+      - name: Resolve latest contracts
+        run: |
+          yarn upgrade \
+            @keep-network/random-beacon \
+            @keep-network/sortition-pools \
+            @threshold-network/solidity-contracts
+
+      - name: Compile contracts
+        run: yarn build
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity/ecdsa
+          environment: dev
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
+
+      - name: Publish package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access=public --tag=development
