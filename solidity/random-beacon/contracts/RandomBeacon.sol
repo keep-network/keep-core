@@ -325,6 +325,7 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
     event AuthorizedContract(address contractToAuthorize);
 
     event UnauthorizedContract(address contractToUnauthorize);
+
     event UnauthorizedSigningSlashingFailed(
         uint64 indexed groupId,
         uint256 unauthorizedSigningSlashingAmount,
