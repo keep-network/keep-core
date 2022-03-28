@@ -124,6 +124,9 @@ library EcdsaDkg {
         CHALLENGE
     }
 
+    /// @dev Size of a group in ECDSA wallet.
+    uint256 public constant groupSize = 100;
+
     event DkgStarted(uint256 indexed seed);
 
     // To recreate the members that actively took part in dkg, the selected members

@@ -20,8 +20,8 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
-import "./libraries/Heartbeat.sol";
 import "./Reimbursable.sol";
+import "./libraries/BeaconInactivity.sol";
 import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
 import {BeaconDkgValidator as DKGValidator} from "./BeaconDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -120,8 +120,9 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
     uint256 public unauthorizedSigningSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
-    ///         who missed their turn for relay entry / DKG result submission
-    ///         or operators who failed a heartbeat.
+    ///         who misbehaved during DKG by being inactive or disqualified and
+    ///         for operators that were identified by the rest of group members
+    ///         as inactive via `notifyOperatorInactivity`.
     uint256 public sortitionPoolRewardsBanDuration;
 
     /// @notice Percentage of the staking contract malicious behavior
@@ -172,10 +173,10 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
 
     // Other parameters
 
-    /// @notice Stores current failed heartbeat nonce for given group.
+    /// @notice Stores current operator inactivity claim nonce for given group.
     ///         Each claim is made with an unique nonce which protects
     ///         against claim replay.
-    mapping(uint64 => uint256) public failedHeartbeatNonce; // groupId -> nonce
+    mapping(uint64 => uint256) public inactivityClaimNonce; // groupId -> nonce
 
     /// @notice Authorized contracts that can request a relay entry without
     ///         sending any fees.
@@ -334,7 +335,7 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
+    event InactivityClaimed(uint64 groupId, uint256 nonce, address notifier);
 
     event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
 
@@ -1047,29 +1048,29 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
         }
     }
 
-    /// @notice Notifies about a failed group heartbeat. Using this function,
+    /// @notice Notifies about operators who are inactive. Using this function,
     ///         a majority of the group can decide about punishing specific
-    ///         group members who failed to provide a heartbeat. If provided
+    ///         group members who constantly fail doing their job. If the provided
     ///         claim is proved to be valid and signed by sufficient number
-    ///         of group members, operators of members deemed as failed are
+    ///         of group members, operators of members deemed as inactive are
     ///         banned for sortition pool rewards for duration specified by
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
     ///         the claim must be one of the claim signers. The sender is
     ///         refunded from the Reimbursement Pool. This function can be
     ///         called only for active and non-terminated groups.
     /// @param claim Failure claim.
-    /// @param nonce Current failed heartbeat nonce for given group. Must
+    /// @param nonce Current inactivity claim nonce for the given group. Must
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
-    function notifyFailedHeartbeat(
-        Heartbeat.FailureClaim calldata claim,
+    function notifyOperatorInactivity(
+        BeaconInactivity.Claim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
         uint256 gasStart = gasleft();
         uint64 groupId = claim.groupId;
 
-        require(nonce == failedHeartbeatNonce[groupId], "Invalid nonce");
+        require(nonce == inactivityClaimNonce[groupId], "Invalid nonce");
 
         require(
             groups.isGroupActive(groupId),
@@ -1083,7 +1084,7 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
             "Invalid group members"
         );
 
-        uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
+        uint32[] memory ineligibleOperators = BeaconInactivity.verifyClaim(
             sortitionPool,
             claim,
             group,
@@ -1091,9 +1092,9 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
             groupMembers
         );
 
-        failedHeartbeatNonce[groupId]++;
+        inactivityClaimNonce[groupId]++;
 
-        emit HeartbeatFailed(groupId, nonce, msg.sender);
+        emit InactivityClaimed(groupId, nonce, msg.sender);
 
         sortitionPool.setRewardIneligibility(
             ineligibleOperators,

@@ -19,24 +19,24 @@ import "./Groups.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 
-library Heartbeat {
+library BeaconInactivity {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
-    struct FailureClaim {
-        // ID of the group raising the claim.
+    struct Claim {
+        // ID of the group raising the inactivity claim.
         uint64 groupId;
-        // Indices of members accused of failed heartbeat. Indices must be in
+        // Indices of members accused of being inactive. Indices must be in
         // range [1, groupMembers.length], unique, and sorted in ascending order.
-        uint256[] failedMembersIndices;
+        uint256[] inactiveMembersIndices;
         // Concatenation of signatures from members supporting the claim.
-        // The message to be signed by each member is failed heartbeat nonce
-        // for given group, keccak256 hash of the group public key, and failed
-        // members indices. The calculated hash should be prefixed with
+        // The message to be signed by each member is inactivity claim nonce
+        // for the given group, keccak256 hash of the group public key, and
+        // inactive members indices. The calculated hash should be prefixed with
         // `\x19Ethereum signed message:\n` before signing, so the message
         // to sign is:
         // `\x19Ethereum signed message:\n${keccak256(
-        //    nonce, groupPubKey, failedMembersIndices
+        //    nonce, groupPubKey, inactiveMembersIndices
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
@@ -46,36 +46,37 @@ library Heartbeat {
     }
 
     /// @notice The minimum number of group members needed to interact according
-    ///         to the protocol to produce a valid failure claim.
+    ///         to the protocol to produce a valid inactivity claim.
     uint256 public constant groupThreshold = 33;
 
     /// @notice Size in bytes of a single signature produced by member
-    ///         supporting the failure claim.
+    ///         supporting the inactivity claim.
     uint256 public constant signatureByteSize = 65;
 
-    /// @notice Verifies the failure claim according to rules mentioned in
-    ///         `FailureClaim` struct documentation. Reverts if verification
-    ///         fails.
+    /// @notice Verifies the inactivity claim according to rules mentioned in
+    ///         `Claim` struct documentation. Reverts if verification fails.
     /// @dev Group members hash is validated upstream in
-    ///      RandomBeacon.notifyFailedHeartbeat()
-    /// @param sortitionPool Sortition pool used by the application performing
-    ///        claim verification.
-    /// @param claim Failure claim.
+    ///      RandomBeacon.notifyOperatorInactivity()
+    /// @param sortitionPool Sortition pool reference.
+    /// @param claim Inactivity claim.
     /// @param group Group raising the claim.
     /// @param nonce Current nonce for group used in the claim.
     /// @param groupMembers Identifiers of group members.
-    /// @return failedMembers Identifiers of members who failed the heartbeat.
-    function verifyFailureClaim(
+    /// @return inactiveMembers Identifiers of members who are inactive.
+    function verifyClaim(
         SortitionPool sortitionPool,
-        FailureClaim calldata claim,
+        Claim calldata claim,
         Groups.Group storage group,
         uint256 nonce,
         uint32[] calldata groupMembers
-    ) external view returns (uint32[] memory failedMembers) {
-        // Validate failed members indices. Maximum indices count is equal to
+    ) external view returns (uint32[] memory inactiveMembers) {
+        // Validate inactive members indices. Maximum indices count is equal to
         // the group size and is not limited deliberately to leave a theoretical
         // possibility to accuse more members than `groupSize - groupThreshold`.
-        validateMembersIndices(claim.failedMembersIndices, groupMembers.length);
+        validateMembersIndices(
+            claim.inactiveMembersIndices,
+            groupMembers.length
+        );
 
         // Validate signatures array is properly formed and number of
         // signatures and signers is correct.
@@ -101,14 +102,14 @@ library Heartbeat {
         );
 
         // Each signing member needs to sign the hash of packed `groupPubKey`
-        // and `failedMembersIndices` parameters. Usage of group public key
+        // and `inactiveMembersIndices` parameters. Usage of group public key
         // and not group ID is important because it provides uniqueness of
         // signed messages and prevent against reusing them in future.
         bytes32 signedMessageHash = keccak256(
             abi.encodePacked(
                 nonce,
                 group.groupPubKey,
-                claim.failedMembersIndices
+                claim.inactiveMembersIndices
             )
         ).toEthSignedMessageHash();
 
@@ -141,13 +142,13 @@ library Heartbeat {
 
         require(senderSignatureExists, "Sender must be claim signer");
 
-        failedMembers = new uint32[](claim.failedMembersIndices.length);
-        for (uint256 i = 0; i < claim.failedMembersIndices.length; i++) {
-            uint256 memberIndex = claim.failedMembersIndices[i];
-            failedMembers[i] = groupMembers[memberIndex - 1];
+        inactiveMembers = new uint32[](claim.inactiveMembersIndices.length);
+        for (uint256 i = 0; i < claim.inactiveMembersIndices.length; i++) {
+            uint256 memberIndex = claim.inactiveMembersIndices[i];
+            inactiveMembers[i] = groupMembers[memberIndex - 1];
         }
 
-        return failedMembers;
+        return inactiveMembers;
     }
 
     /// @notice Validates members indices array. Array is considered valid

@@ -6,8 +6,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
 
   const SortitionPool = await deployments.get("SortitionPool")
+  const TokenStaking = await deployments.get("TokenStaking")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
-  let TokenStaking = await deployments.get("TokenStaking")
   const EcdsaDkgValidator = await deployments.get("EcdsaDkgValidator")
 
   // TODO: RandomBeaconStub contract should be replaced by actual implementation of
@@ -28,16 +28,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     from: deployer,
     log: true,
   })
-
-  // TODO: StakingStub contract should be replaced by actual implementation of
-  // TokenStaking contract, as soon as integration is implemented.
-  if (deployments.getNetworkName() === "hardhat") {
-    console.log("deploying StakingStub contract instead of TokenStaking")
-    TokenStaking = await deployments.deploy("StakingStub", {
-      from: deployer,
-      log: true,
-    })
-  }
 
   const WalletRegistry = await deployments.deploy("WalletRegistry", {
     contract:

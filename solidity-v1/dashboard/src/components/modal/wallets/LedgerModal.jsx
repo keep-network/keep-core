@@ -4,6 +4,8 @@ import { ModalHeader } from "../Modal"
 import * as Icons from "../../Icons"
 import Button from "../../Button"
 import { withBaseModal } from "../withBaseModal"
+import { isBrowser, isChrome } from "react-device-detect"
+import OnlyIf from "../../OnlyIf"
 
 const LedgerModalBase = ({ connector, connectAppWithWallet, onClose }) => {
   const [ledgerVersion, setLedgerVersion] = useState("")
@@ -30,7 +32,11 @@ const LedgerModalBase = ({ connector, connectAppWithWallet, onClose }) => {
         icon={<Icons.Ledger className="ledger-logo ledger-logo--black" />}
         walletName="Ledger"
         descriptionIcon={<Icons.LedgerDevice />}
-        description="Plug in Ledger device and unlock."
+        description={
+          isBrowser && isChrome
+            ? "Plug in Ledger device and unlock."
+            : "Connecting to Ledger is currently supported only on Google Chrome browser. Please open the dashboard on Chrome and try again or use Ledger Live Bridge through MetaMask."
+        }
         connector={connector[ledgerVersion]}
         connectAppWithWallet={connectAppWithWallet}
         closeModal={onClose}
@@ -38,7 +44,7 @@ const LedgerModalBase = ({ connector, connectAppWithWallet, onClose }) => {
         numberOfAccounts={5}
         withAccountPagination={true}
       >
-        <>
+        <OnlyIf condition={isBrowser && isChrome}>
           <div
             className="flex column mt-1"
             style={{
@@ -59,7 +65,7 @@ const LedgerModalBase = ({ connector, connectAppWithWallet, onClose }) => {
               ledger legacy
             </Button>
           </div>
-        </>
+        </OnlyIf>
       </SelectedWalletModal>
     </>
   )

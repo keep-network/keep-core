@@ -11,7 +11,7 @@ import "../libraries/Wallets.sol";
 contract WalletRegistryStub is WalletRegistry {
     constructor(
         SortitionPool _sortitionPool,
-        IWalletStaking _staking,
+        IStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
@@ -27,12 +27,5 @@ contract WalletRegistryStub is WalletRegistry {
 
     function getDkgData() external view returns (EcdsaDkg.Data memory) {
         return dkg;
-    }
-
-    // TODO: Use governance update function once it's implemented
-    function setMaliciousDkgResultSlashingAmount(
-        uint96 newMaliciousDkgResultSlashingAmount
-    ) external {
-        maliciousDkgResultSlashingAmount = newMaliciousDkgResultSlashingAmount;
     }
 }

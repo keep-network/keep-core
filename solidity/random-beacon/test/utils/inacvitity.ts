@@ -3,11 +3,11 @@ import { ethers } from "hardhat"
 import type { Operator } from "./operators"
 
 // eslint-disable-next-line import/prefer-default-export
-export async function signHeartbeatFailureClaim(
+export async function signOperatorInactivityClaim(
   signers: Operator[],
   nonce: number,
   groupPubKey: string,
-  failedMembersIndices: number[],
+  inactiveMembersIndices: number[],
   numberOfSignatures: number
 ): Promise<{
   signatures: string
@@ -15,7 +15,7 @@ export async function signHeartbeatFailureClaim(
 }> {
   const messageHash = ethers.utils.solidityKeccak256(
     ["uint256", "bytes", "uint8[]"],
-    [nonce, groupPubKey, failedMembersIndices]
+    [nonce, groupPubKey, inactiveMembersIndices]
   )
 
   const signingMembersIndices: number[] = []

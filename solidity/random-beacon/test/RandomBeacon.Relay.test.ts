@@ -19,7 +19,7 @@ import {
   blsDeployment,
 } from "./fixtures"
 import { createGroup, hashUint32Array } from "./utils/groups"
-import { signHeartbeatFailureClaim } from "./utils/heartbeat"
+import { signOperatorInactivityClaim } from "./utils/inacvitity"
 import { registerOperators } from "./utils/operators"
 import { fakeTokenStaking } from "./mocks/staking"
 
@@ -1161,19 +1161,19 @@ describe("RandomBeacon - Relay", () => {
     )
   })
 
-  describe("notifyFailedHeartbeat", () => {
+  describe("notifyOperatorInactivity", () => {
     const groupId = 0
     const stubSignatures = "0x00"
     const stubMembersIndices = []
-    // Use 31 element `failedMembersIndices` array to simulate the most gas
+    // Use 31 element `inactiveMembersIndices` array to simulate the most gas
     // expensive real-world case. If group size is 64, the required threshold
     // is 33 so we assume 31 operators at most will be marked as ineligible
-    // during a single `notifyFailedHeartbeat` call.
-    const subsequentFailedMembersIndices = Array.from(
+    // during a single `notifyOperatorInactivity` call.
+    const subsequentInactiveMembersIndices = Array.from(
       Array(31),
       (_, i) => i + 1
     )
-    const nonSubsequentFailedMembersIndices = [2, 5, 7, 23, 56]
+    const nonSubsequentInactiveMembersIndices = [2, 5, 7, 23, 56]
     const groupThreshold = 33
 
     let group
@@ -1191,13 +1191,13 @@ describe("RandomBeacon - Relay", () => {
 
     context("when passed nonce is valid", () => {
       context("when group is active and non-terminated", () => {
-        context("when failed members indices are correct", () => {
+        context("when inactive members indices are correct", () => {
           context("when signatures array is correct", () => {
             context("when signing members indices are correct", () => {
               context("when all signatures are correct", () => {
                 context("when claim sender signed the claim", () => {
-                  const assertNotifyFailedHeartbeatSucceed = async (
-                    failedMembersIndices: number[],
+                  const assertNotifyInactivitySucceed = async (
+                    inactiveMembersIndices: number[],
                     signaturesCount: number,
                     modifySignatures: (signatures: string) => string,
                     modifySigningMemberIndices: (
@@ -1215,7 +1215,7 @@ describe("RandomBeacon - Relay", () => {
                       // Assume claim sender is the first signing member.
                       claimSender = await ethers.getSigner(members[0].address)
 
-                      initialNonce = await randomBeacon.failedHeartbeatNonce(
+                      initialNonce = await randomBeacon.inactivityClaimNonce(
                         groupId
                       )
 
@@ -1224,20 +1224,20 @@ describe("RandomBeacon - Relay", () => {
                       )
 
                       const { signatures, signingMembersIndices } =
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           members,
                           0,
                           group.groupPubKey,
-                          failedMembersIndices,
+                          inactiveMembersIndices,
                           signaturesCount
                         )
 
                       tx = await randomBeacon
                         .connect(claimSender)
-                        .notifyFailedHeartbeat(
+                        .notifyOperatorInactivity(
                           {
                             groupId,
-                            failedMembersIndices,
+                            inactiveMembersIndices,
                             signatures: modifySignatures(signatures),
                             signingMembersIndices: modifySigningMemberIndices(
                               signingMembersIndices
@@ -1252,15 +1252,15 @@ describe("RandomBeacon - Relay", () => {
                       await restoreSnapshot()
                     })
 
-                    it("should increment failed heartbeat nonce for the group", async () => {
+                    it("should increment inactivity claim nonce for the group", async () => {
                       expect(
-                        await randomBeacon.failedHeartbeatNonce(groupId)
+                        await randomBeacon.inactivityClaimNonce(groupId)
                       ).to.be.equal(initialNonce.add(1))
                     })
 
-                    it("should emit HeartbeatFailed event", async () => {
+                    it("should emit InactivityClaimed event", async () => {
                       await expect(tx)
-                        .to.emit(randomBeacon, "HeartbeatFailed")
+                        .to.emit(randomBeacon, "InactivityClaimed")
                         .withArgs(
                           groupId,
                           initialNonce.toNumber(),
@@ -1268,13 +1268,13 @@ describe("RandomBeacon - Relay", () => {
                         )
                     })
 
-                    it("should ban sortition pool rewards for ineligible operators", async () => {
+                    it("should ban sortition pool rewards for inactive operators", async () => {
                       const now = await helpers.time.lastBlockTime()
                       const expectedUntil =
                         now + params.sortitionPoolRewardsBanDuration
 
                       const expectedIneligibleMembersIDs =
-                        failedMembersIndices.map((i) => membersIDs[i - 1])
+                        inactiveMembersIndices.map((i) => membersIDs[i - 1])
 
                       await expect(tx)
                         .to.emit(sortitionPool, "IneligibleForRewards")
@@ -1296,10 +1296,10 @@ describe("RandomBeacon - Relay", () => {
                   }
 
                   context(
-                    "when there are multiple subsequent failed members indices",
+                    "when there are multiple subsequent inactive members indices",
                     async () => {
-                      await assertNotifyFailedHeartbeatSucceed(
-                        subsequentFailedMembersIndices,
+                      await assertNotifyInactivitySucceed(
+                        subsequentInactiveMembersIndices,
                         groupThreshold,
                         (signatures) => signatures,
                         (signingMembersIndices) => signingMembersIndices
@@ -1308,9 +1308,9 @@ describe("RandomBeacon - Relay", () => {
                   )
 
                   context(
-                    "when there is only one failed members index",
+                    "when there is only one inactive member index",
                     async () => {
-                      await assertNotifyFailedHeartbeatSucceed(
+                      await assertNotifyInactivitySucceed(
                         [32],
                         groupThreshold,
                         (signatures) => signatures,
@@ -1320,10 +1320,10 @@ describe("RandomBeacon - Relay", () => {
                   )
 
                   context(
-                    "when there are multiple non-subsequent failed members indices",
+                    "when there are multiple non-subsequent inactive members indices",
                     async () => {
-                      await assertNotifyFailedHeartbeatSucceed(
-                        nonSubsequentFailedMembersIndices,
+                      await assertNotifyInactivitySucceed(
+                        nonSubsequentInactiveMembersIndices,
                         groupThreshold,
                         (signatures) => signatures,
                         (signingMembersIndices) => signingMembersIndices
@@ -1364,8 +1364,8 @@ describe("RandomBeacon - Relay", () => {
                         return newSignatures
                       }
 
-                      await assertNotifyFailedHeartbeatSucceed(
-                        subsequentFailedMembersIndices,
+                      await assertNotifyInactivitySucceed(
+                        subsequentInactiveMembersIndices,
                         // Make more signatures than needed to allow picking up
                         // arbitrary signatures.
                         64,
@@ -1381,11 +1381,11 @@ describe("RandomBeacon - Relay", () => {
                   async () => {
                     it("should revert", async () => {
                       const { signatures, signingMembersIndices } =
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           members,
                           0,
                           group.groupPubKey,
-                          subsequentFailedMembersIndices,
+                          subsequentInactiveMembersIndices,
                           groupThreshold
                         )
 
@@ -1397,17 +1397,19 @@ describe("RandomBeacon - Relay", () => {
                       )
 
                       await expect(
-                        randomBeacon.connect(claimSender).notifyFailedHeartbeat(
-                          {
-                            groupId,
-                            failedMembersIndices:
-                              subsequentFailedMembersIndices,
-                            signatures,
-                            signingMembersIndices,
-                          },
-                          0,
-                          membersIDs
-                        )
+                        randomBeacon
+                          .connect(claimSender)
+                          .notifyOperatorInactivity(
+                            {
+                              groupId,
+                              inactiveMembersIndices:
+                                subsequentInactiveMembersIndices,
+                              signatures,
+                              signingMembersIndices,
+                            },
+                            0,
+                            membersIDs
+                          )
                       ).to.be.revertedWith("Sender must be claim signer")
                     })
                   }
@@ -1419,19 +1421,20 @@ describe("RandomBeacon - Relay", () => {
                   // The 32 signers sign correct parameters. Invalid signature
                   // is expected to be provided by signer 33.
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       groupThreshold - 1
                     )
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         // Slice removes `0x` prefix from wrong signature.
                         signatures: signatures + invalidSignature.slice(2),
                         signingMembersIndices: [...signingMembersIndices, 33],
@@ -1448,11 +1451,11 @@ describe("RandomBeacon - Relay", () => {
                     it("should revert", async () => {
                       // Signer 33 signs wrong nonce.
                       const invalidSignature = (
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           [members[32]],
                           1,
                           group.groupPubKey,
-                          subsequentFailedMembersIndices,
+                          subsequentInactiveMembersIndices,
                           1
                         )
                       ).signatures
@@ -1468,11 +1471,11 @@ describe("RandomBeacon - Relay", () => {
                     it("should revert", async () => {
                       // Signer 33 signs wrong group public key.
                       const invalidSignature = (
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           [members[32]],
                           0,
                           "0x010203",
-                          subsequentFailedMembersIndices,
+                          subsequentInactiveMembersIndices,
                           1
                         )
                       ).signatures
@@ -1483,12 +1486,12 @@ describe("RandomBeacon - Relay", () => {
                 )
 
                 context(
-                  "when one of the signatures signed the wrong failed group members indices",
+                  "when one of the signatures signed the wrong inactive group members indices",
                   () => {
                     it("should revert", async () => {
-                      // Signer 33 signs wrong failed group members indices.
+                      // Signer 33 signs wrong inactive group members indices.
                       const invalidSignature = (
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           [members[32]],
                           0,
                           group.groupPubKey,
@@ -1510,19 +1513,20 @@ describe("RandomBeacon - Relay", () => {
                 () => {
                   it("should revert", async () => {
                     const { signatures, signingMembersIndices } =
-                      await signHeartbeatFailureClaim(
+                      await signOperatorInactivityClaim(
                         members,
                         0,
                         group.groupPubKey,
-                        subsequentFailedMembersIndices,
+                        subsequentInactiveMembersIndices,
                         groupThreshold
                       )
 
                     await expect(
-                      randomBeacon.notifyFailedHeartbeat(
+                      randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          failedMembersIndices: subsequentFailedMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           // Remove the first signing member index
                           signingMembersIndices: signingMembersIndices.slice(1),
@@ -1538,21 +1542,22 @@ describe("RandomBeacon - Relay", () => {
               context("when first signing member index is zero", () => {
                 it("should revert", async () => {
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       groupThreshold
                     )
 
                   signingMembersIndices[0] = 0
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices,
                       },
@@ -1568,21 +1573,22 @@ describe("RandomBeacon - Relay", () => {
                 () => {
                   it("should revert", async () => {
                     const { signatures, signingMembersIndices } =
-                      await signHeartbeatFailureClaim(
+                      await signOperatorInactivityClaim(
                         members,
                         0,
                         group.groupPubKey,
-                        subsequentFailedMembersIndices,
+                        subsequentInactiveMembersIndices,
                         groupThreshold
                       )
 
                     signingMembersIndices[signingMembersIndices.length - 1] = 65
 
                     await expect(
-                      randomBeacon.notifyFailedHeartbeat(
+                      randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          failedMembersIndices: subsequentFailedMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           signingMembersIndices,
                         },
@@ -1599,11 +1605,11 @@ describe("RandomBeacon - Relay", () => {
                 () => {
                   it("should revert", async () => {
                     const { signatures, signingMembersIndices } =
-                      await signHeartbeatFailureClaim(
+                      await signOperatorInactivityClaim(
                         members,
                         0,
                         group.groupPubKey,
-                        subsequentFailedMembersIndices,
+                        subsequentInactiveMembersIndices,
                         groupThreshold
                       )
 
@@ -1611,10 +1617,11 @@ describe("RandomBeacon - Relay", () => {
                     signingMembersIndices[10] = signingMembersIndices[11]
 
                     await expect(
-                      randomBeacon.notifyFailedHeartbeat(
+                      randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          failedMembersIndices: subsequentFailedMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           signingMembersIndices,
                         },
@@ -1634,10 +1641,10 @@ describe("RandomBeacon - Relay", () => {
                 const signatures = "0x"
 
                 await expect(
-                  randomBeacon.notifyFailedHeartbeat(
+                  randomBeacon.notifyOperatorInactivity(
                     {
                       groupId,
-                      failedMembersIndices: subsequentFailedMembersIndices,
+                      inactiveMembersIndices: subsequentInactiveMembersIndices,
                       signatures,
                       signingMembersIndices: stubMembersIndices,
                     },
@@ -1655,10 +1662,11 @@ describe("RandomBeacon - Relay", () => {
                   const signatures = "0x010203"
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices: stubMembersIndices,
                       },
@@ -1675,19 +1683,20 @@ describe("RandomBeacon - Relay", () => {
               () => {
                 it("should revert", async () => {
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       groupThreshold
                     )
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         // Remove the first signature to cause a mismatch with
                         // the signing members count.
                         signatures: `0x${signatures.slice(132)}`,
@@ -1706,20 +1715,21 @@ describe("RandomBeacon - Relay", () => {
               () => {
                 it("should revert", async () => {
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       // Provide one signature too few.
                       groupThreshold - 1
                     )
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices,
                       },
@@ -1734,20 +1744,20 @@ describe("RandomBeacon - Relay", () => {
             context("when signatures count is bigger than group size", () => {
               it("should revert", async () => {
                 const { signatures, signingMembersIndices } =
-                  await signHeartbeatFailureClaim(
+                  await signOperatorInactivityClaim(
                     members,
                     0,
                     group.groupPubKey,
-                    subsequentFailedMembersIndices,
+                    subsequentInactiveMembersIndices,
                     // All group signs.
                     members.length
                   )
 
                 await expect(
-                  randomBeacon.notifyFailedHeartbeat(
+                  randomBeacon.notifyOperatorInactivity(
                     {
                       groupId,
-                      failedMembersIndices: subsequentFailedMembersIndices,
+                      inactiveMembersIndices: subsequentInactiveMembersIndices,
                       // Provide one signature too much.
                       signatures: signatures + signatures.slice(2, 132),
                       signingMembersIndices: [
@@ -1765,23 +1775,23 @@ describe("RandomBeacon - Relay", () => {
         })
 
         context("when failed members indices are incorrect", () => {
-          const assertFailedMembersIndicesCorrupted = async (
-            failedMembersIndices: number[]
+          const assertInactiveMembersIndicesCorrupted = async (
+            inactiveMembersIndices: number[]
           ) => {
             const { signatures, signingMembersIndices } =
-              await signHeartbeatFailureClaim(
+              await signOperatorInactivityClaim(
                 members,
                 0,
                 group.groupPubKey,
-                failedMembersIndices,
+                inactiveMembersIndices,
                 groupThreshold
               )
 
             await expect(
-              randomBeacon.notifyFailedHeartbeat(
+              randomBeacon.notifyOperatorInactivity(
                 {
                   groupId,
-                  failedMembersIndices,
+                  inactiveMembersIndices,
                   signatures,
                   signingMembersIndices,
                 },
@@ -1791,67 +1801,77 @@ describe("RandomBeacon - Relay", () => {
             ).to.be.revertedWith("Corrupted members indices")
           }
 
-          context("when failed members indices count is zero", () => {
+          context("when inactive members indices count is zero", () => {
             it("should revert", async () => {
-              const failedMembersIndices = []
+              const inactiveMembersIndices = []
 
-              await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+              await assertInactiveMembersIndicesCorrupted(
+                inactiveMembersIndices
+              )
             })
           })
 
           context(
-            "when failed members indices count is bigger than group size",
+            "when inactive members indices count is bigger than group size",
             () => {
               it("should revert", async () => {
-                const failedMembersIndices = Array.from(
+                const inactiveMembersIndices = Array.from(
                   Array(65),
                   (_, i) => i + 1
                 )
 
-                await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
 
           context("when first failed member index is zero", () => {
             it("should revert", async () => {
-              const failedMembersIndices = Array.from(
+              const inactiveMembersIndices = Array.from(
                 Array(64),
                 (_, i) => i + 1
               )
-              failedMembersIndices[0] = 0
+              inactiveMembersIndices[0] = 0
 
-              await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+              await assertInactiveMembersIndicesCorrupted(
+                inactiveMembersIndices
+              )
             })
           })
 
           context(
-            "when last failed member index is bigger than group size",
+            "when last inactive member index is bigger than group size",
             () => {
               it("should revert", async () => {
-                const failedMembersIndices = Array.from(
+                const inactiveMembersIndices = Array.from(
                   Array(64),
                   (_, i) => i + 1
                 )
-                failedMembersIndices[failedMembersIndices.length - 1] = 65
+                inactiveMembersIndices[inactiveMembersIndices.length - 1] = 65
 
-                await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
 
           context(
-            "when failed members indices are not ordered in ascending order",
+            "when inactive members indices are not ordered in ascending order",
             () => {
               it("should revert", async () => {
-                const failedMembersIndices = Array.from(
+                const inactiveMembersIndices = Array.from(
                   Array(64),
                   (_, i) => i + 1
                 )
                 // eslint-disable-next-line prefer-destructuring
-                failedMembersIndices[10] = failedMembersIndices[11]
+                inactiveMembersIndices[10] = inactiveMembersIndices[11]
 
-                await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
@@ -1874,10 +1894,10 @@ describe("RandomBeacon - Relay", () => {
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.notifyFailedHeartbeat(
+            randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                failedMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: stubMembersIndices,
                 signatures: stubSignatures,
                 signingMembersIndices: stubMembersIndices,
               },
@@ -1909,10 +1929,10 @@ describe("RandomBeacon - Relay", () => {
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.notifyFailedHeartbeat(
+            randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                failedMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: stubMembersIndices,
                 signatures: stubSignatures,
                 signingMembersIndices: stubMembersIndices,
               },
@@ -1927,10 +1947,10 @@ describe("RandomBeacon - Relay", () => {
     context("when passed nonce is invalid", () => {
       it("should revert", async () => {
         await expect(
-          randomBeacon.notifyFailedHeartbeat(
+          randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              failedMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: stubMembersIndices,
               signatures: stubSignatures,
               signingMembersIndices: stubMembersIndices,
             },
@@ -1945,10 +1965,10 @@ describe("RandomBeacon - Relay", () => {
       it("should revert", async () => {
         const invalidMembersId = [0, 1, 42]
         await expect(
-          randomBeacon.notifyFailedHeartbeat(
+          randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              failedMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: stubMembersIndices,
               signatures: stubSignatures,
               signingMembersIndices: stubMembersIndices,
             },
