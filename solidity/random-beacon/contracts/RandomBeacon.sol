@@ -20,7 +20,7 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
-import "./libraries/Inactivity.sol";
+import "./libraries/BeaconInactivity.sol";
 import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
 import {BeaconDkgValidator as DKGValidator} from "./BeaconDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -949,7 +949,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
     function notifyOperatorInactivity(
-        Inactivity.Claim calldata claim,
+        BeaconInactivity.Claim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
@@ -969,7 +969,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             "Invalid group members"
         );
 
-        uint32[] memory ineligibleOperators = Inactivity.verifyClaim(
+        uint32[] memory ineligibleOperators = BeaconInactivity.verifyClaim(
             sortitionPool,
             claim,
             group,

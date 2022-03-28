@@ -112,8 +112,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const dkg = await BeaconDkg.deploy()
   await dkg.deployed()
 
-  const Inactivity = await ethers.getContractFactory("Inactivity")
-  const inactivity = await Inactivity.deploy()
+  const BeaconInactivity = await ethers.getContractFactory("BeaconInactivity")
+  const inactivity = await BeaconInactivity.deploy()
   await inactivity.deployed()
 
   const BeaconDkgValidator = await ethers.getContractFactory(
@@ -128,7 +128,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
       BeaconDkg: dkg.address,
-      Inactivity: inactivity.address,
+      BeaconInactivity: inactivity.address,
     },
   })
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(

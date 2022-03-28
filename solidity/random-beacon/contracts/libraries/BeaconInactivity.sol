@@ -19,7 +19,7 @@ import "./Groups.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 
-library Inactivity {
+library BeaconInactivity {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
