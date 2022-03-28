@@ -93,6 +93,18 @@ contract RandomBeaconGovernance is Ownable {
     uint256
         public dkgMaliciousResultNotificationRewardMultiplierChangeInitiated;
 
+    uint256 public newDkgApprovalGasOffset;
+    uint256 public dkgApprovalGasOffsetChangeInitiated;
+
+    uint256 public newFailedHeartbeatGasOffset;
+    uint256 public failedHeartbeatGasOffsetChangeInitiated;
+
+    uint256 public newRelayEntrySubmissionGasOffset;
+    uint256 public relayEntrySubmissionGasOffsetChangeInitiated;
+
+    uint256 public newDkgResultSubmissionGas;
+    uint256 public dkgResultSubmissionGasChangeInitiated;
+
     RandomBeacon public randomBeacon;
 
     uint256 public governanceDelay;
@@ -253,6 +265,32 @@ contract RandomBeaconGovernance is Ownable {
     event DkgMaliciousResultNotificationRewardMultiplierUpdated(
         uint256 dkgMaliciousResultNotificationRewardMultiplier
     );
+
+    event DkgApprovalGasOffsetUpdateStarted(
+        uint256 dkgApprovalGasOffset,
+        uint256 timestamp
+    );
+    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
+
+    event FailedHeartbeatGasOffsetUpdateStarted(
+        uint256 failedHeartbeatGasOffset,
+        uint256 timestamp
+    );
+    event FailedHeartbeatGasOffsetUpdated(uint256 failedHeartbeatGasOffset);
+
+    event RelayEntrySubmissionGasOffsetUpdateStarted(
+        uint256 relayEntrySubmissionGasOffset,
+        uint256 timestamp
+    );
+    event RelayEntrySubmissionGasOffsetUpdated(
+        uint256 relayEntrySubmissionGasOffset
+    );
+
+    event DkgResultSubmissionGasUpdateStarted(
+        uint256 dkgResultSubmissionGas,
+        uint256 timestamp
+    );
+    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -1057,6 +1095,145 @@ contract RandomBeaconGovernance is Ownable {
         newRelayEntrySubmissionFailureSlashingAmount = 0;
     }
 
+    /// @notice Begins the DKG approval gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgApprovalGasOffset New DKG approval gas offset
+    function beginDkgApprovalGasOffsetUpdate(uint256 _newDkgApprovalGasOffset)
+        external
+        onlyOwner
+    {
+        /* solhint-disable not-rely-on-time */
+        newDkgApprovalGasOffset = _newDkgApprovalGasOffset;
+        dkgApprovalGasOffsetChangeInitiated = block.timestamp;
+        emit DkgApprovalGasOffsetUpdateStarted(
+            _newDkgApprovalGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG approval gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgApprovalGasOffsetAmountUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgApprovalGasOffsetChangeInitiated)
+    {
+        emit DkgApprovalGasOffsetUpdated(newDkgApprovalGasOffset);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGasOffsets(
+            newDkgApprovalGasOffset,
+            randomBeacon.failedHeartbeatGasOffset(),
+            randomBeacon.relayEntrySubmissionGasOffset()
+        );
+        dkgApprovalGasOffsetChangeInitiated = 0;
+        newDkgApprovalGasOffset = 0;
+    }
+
+    /// @notice Begins the failed heartbeat gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newFailedHeartbeatGasOffset New failed heartbeat gas offset
+    function beginFailedHeartbeatGasOffsetUpdate(
+        uint256 _newFailedHeartbeatGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newFailedHeartbeatGasOffset = _newFailedHeartbeatGasOffset;
+        failedHeartbeatGasOffsetChangeInitiated = block.timestamp;
+        emit FailedHeartbeatGasOffsetUpdateStarted(
+            _newFailedHeartbeatGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes failed heartbeat gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeFailedHeartbeatGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(failedHeartbeatGasOffsetChangeInitiated)
+    {
+        emit FailedHeartbeatGasOffsetUpdated(newFailedHeartbeatGasOffset);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGasOffsets(
+            randomBeacon.dkgApprovalGasOffset(),
+            newFailedHeartbeatGasOffset,
+            randomBeacon.relayEntrySubmissionGasOffset()
+        );
+        failedHeartbeatGasOffsetChangeInitiated = 0;
+        newFailedHeartbeatGasOffset = 0;
+    }
+
+    /// @notice Begins the relay entry submission gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newRelayEntrySubmissionGasOffset New relay entry submission gas offset
+    function beginRelayEntrySubmissionGasOffsetUpdate(
+        uint256 _newRelayEntrySubmissionGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newRelayEntrySubmissionGasOffset = _newRelayEntrySubmissionGasOffset;
+        relayEntrySubmissionGasOffsetChangeInitiated = block.timestamp;
+        emit RelayEntrySubmissionGasOffsetUpdateStarted(
+            _newRelayEntrySubmissionGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes relay entry submission gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRelayEntrySubmissionGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(relayEntrySubmissionGasOffsetChangeInitiated)
+    {
+        emit RelayEntrySubmissionGasOffsetUpdated(
+            newRelayEntrySubmissionGasOffset
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGasOffsets(
+            randomBeacon.dkgApprovalGasOffset(),
+            randomBeacon.failedHeartbeatGasOffset(),
+            newRelayEntrySubmissionGasOffset
+        );
+        relayEntrySubmissionGasOffsetChangeInitiated = 0;
+        newRelayEntrySubmissionGasOffset = 0;
+    }
+
+    /// @notice Begins the dkg result submission gas update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultSubmissionGas New relay entry submission gas offset
+    function beginDkgResultSubmissionGasUpdate(
+        uint256 _newDkgResultSubmissionGas
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
+        dkgResultSubmissionGasChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionGasUpdateStarted(
+            _newDkgResultSubmissionGas,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes dkg result submission gas update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultSubmissionGasUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgResultSubmissionGasChangeInitiated)
+    {
+        emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateDkgResultSubmissionGas(newDkgResultSubmissionGas);
+        dkgResultSubmissionGasChangeInitiated = 0;
+        newDkgResultSubmissionGas = 0;
+    }
+
     /// @notice Begins the malicious DKG result slashing amount update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newMaliciousDkgResultSlashingAmount New malicious DKG result
@@ -1506,6 +1683,53 @@ contract RandomBeaconGovernance is Ownable {
             getRemainingChangeTime(
                 dkgMaliciousResultNotificationRewardMultiplierChangeInitiated
             );
+    }
+
+    /// @notice Get the time remaining until the DKG approval gas offset duration
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getDkgApprovalGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(dkgApprovalGasOffsetChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the failed heartbeat gas offset duration
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getFailedHeartbeatGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(failedHeartbeatGasOffsetChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the relay entry submission gas offset
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRelayEntrySubmissionGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                relayEntrySubmissionGasOffsetChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG result submission gas
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getDkgResultSubmissionGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
     }
 
     /// @notice Gets the time remaining until the governable parameter update
