@@ -362,8 +362,8 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             newRelayRequestFee,
-            randomBeacon.relayEntrySoftTimeout(),
-            randomBeacon.relayEntryHardTimeout(),
+            randomBeacon.relayEntryParameters().relayEntrySoftTimeout,
+            randomBeacon.relayEntryParameters().relayEntryHardTimeout,
             randomBeacon.callbackGasLimit()
         );
         relayRequestFeeChangeInitiated = 0;
@@ -402,9 +402,9 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntrySoftTimeoutUpdated(newRelayEntrySoftTimeout);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
+            randomBeacon.relayEntryParameters().relayRequestFee,
             newRelayEntrySoftTimeout,
-            randomBeacon.relayEntryHardTimeout(),
+            randomBeacon.relayEntryParameters().relayEntryHardTimeout,
             randomBeacon.callbackGasLimit()
         );
         relayEntrySoftTimeoutChangeInitiated = 0;
@@ -439,8 +439,8 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
-            randomBeacon.relayEntrySoftTimeout(),
+            randomBeacon.relayEntryParameters().relayRequestFee,
+            randomBeacon.relayEntryParameters().relayEntrySoftTimeout,
             newRelayEntryHardTimeout,
             randomBeacon.callbackGasLimit()
         );
@@ -481,9 +481,9 @@ contract RandomBeaconGovernance is Ownable {
         emit CallbackGasLimitUpdated(newCallbackGasLimit);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
-            randomBeacon.relayEntrySoftTimeout(),
-            randomBeacon.relayEntryHardTimeout(),
+            randomBeacon.relayEntryParameters().relayRequestFee,
+            randomBeacon.relayEntryParameters().relayEntrySoftTimeout,
+            randomBeacon.relayEntryParameters().relayEntryHardTimeout,
             newCallbackGasLimit
         );
         callbackGasLimitChangeInitiated = 0;
@@ -599,8 +599,8 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateDkgParameters(
             newDkgResultChallengePeriodLength,
-            randomBeacon.dkgResultSubmissionTimeout(),
-            randomBeacon.dkgSubmitterPrecedencePeriodLength()
+            randomBeacon.dkgParameters().resultSubmissionTimeout,
+            randomBeacon.dkgParameters().submitterPrecedencePeriodLength
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
         newDkgResultChallengePeriodLength = 0;
@@ -640,9 +640,9 @@ contract RandomBeaconGovernance is Ownable {
         emit DkgResultSubmissionTimeoutUpdated(newDkgResultSubmissionTimeout);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateDkgParameters(
-            randomBeacon.dkgResultChallengePeriodLength(),
+            randomBeacon.dkgParameters().resultChallengePeriodLength,
             newDkgResultSubmissionTimeout,
-            randomBeacon.dkgSubmitterPrecedencePeriodLength()
+            randomBeacon.dkgParameters().submitterPrecedencePeriodLength
         );
         dkgResultSubmissionTimeoutChangeInitiated = 0;
         newDkgResultSubmissionTimeout = 0;
@@ -684,8 +684,8 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateDkgParameters(
-            randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgResultSubmissionTimeout(),
+            randomBeacon.dkgParameters().resultChallengePeriodLength,
+            randomBeacon.dkgParameters().resultSubmissionTimeout,
             newSubmitterPrecedencePeriodLength
         );
         dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;
@@ -1090,7 +1090,9 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
-            randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
+            randomBeacon
+                .relayEntryParameters()
+                .relayEntrySubmissionFailureSlashingAmount,
             newMaliciousDkgResultSlashingAmount,
             randomBeacon.unauthorizedSigningSlashingAmount()
         );
@@ -1131,7 +1133,9 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
-            randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
+            randomBeacon
+                .relayEntryParameters()
+                .relayEntrySubmissionFailureSlashingAmount,
             randomBeacon.maliciousDkgResultSlashingAmount(),
             newUnauthorizedSigningSlashingAmount
         );
@@ -1168,7 +1172,7 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateAuthorizationParameters(
             newMinimumAuthorization,
-            randomBeacon.authorizationDecreaseDelay()
+            randomBeacon.authorizationParameters().authorizationDecreaseDelay
         );
         minimumAuthorizationChangeInitiated = 0;
         newMinimumAuthorization = 0;
@@ -1201,7 +1205,7 @@ contract RandomBeaconGovernance is Ownable {
         emit AuthorizationDecreaseDelayUpdated(newAuthorizationDecreaseDelay);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateAuthorizationParameters(
-            randomBeacon.minimumAuthorization(),
+            randomBeacon.authorizationParameters().minimumAuthorization,
             newAuthorizationDecreaseDelay
         );
         authorizationDecreaseDelayChangeInitiated = 0;

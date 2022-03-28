@@ -23,7 +23,19 @@ import "./Groups.sol";
 library Relay {
     using SafeERC20 for IERC20;
 
+    struct Parameters {
+        // Fee paid by the relay requester.
+        uint96 relayRequestFee;
+        // Time in blocks during which a result is expected to be submitted.
+        uint32 relayEntrySoftTimeout;
+        // Hard timeout in blocks for a group to submit the relay entry.
+        uint32 relayEntryHardTimeout;
+        // Slashing amount for not submitting relay entry
+        uint96 relayEntrySubmissionFailureSlashingAmount;
+    }
+
     struct Data {
+        Parameters parameters;
         // Total count of all requests.
         uint64 requestCount;
         // Data of current request.
@@ -35,14 +47,6 @@ library Relay {
         uint64 currentRequestStartBlock;
         // Previous entry value.
         AltBn128.G1Point previousEntry;
-        // Fee paid by the relay requester.
-        uint96 relayRequestFee;
-        // Time in blocks during which a result is expected to be submitted.
-        uint32 relayEntrySoftTimeout;
-        // Hard timeout in blocks for a group to submit the relay entry.
-        uint32 relayEntryHardTimeout;
-        // Slashing amount for not submitting relay entry
-        uint96 relayEntrySubmissionFailureSlashingAmount;
     }
 
     /// @notice Seed used as the first relay entry value.
@@ -138,7 +142,7 @@ library Relay {
         // the final result needs to be divided by 1e18.
         slashingAmount =
             (getSlashingFactor(self) *
-                self.relayEntrySubmissionFailureSlashingAmount) /
+                self.parameters.relayEntrySubmissionFailureSlashingAmount) /
             1e18;
 
         _submitEntry(self, entry, groupPubKey);
@@ -178,7 +182,7 @@ library Relay {
     {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayRequestFee = uint96(newRelayRequestFee);
+        self.parameters.relayRequestFee = uint96(newRelayRequestFee);
     }
 
     /// @notice Set relayEntrySoftTimeout parameter.
@@ -189,7 +193,9 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntrySoftTimeout = uint32(newRelayEntrySoftTimeout);
+        self.parameters.relayEntrySoftTimeout = uint32(
+            newRelayEntrySoftTimeout
+        );
     }
 
     /// @notice Set relayEntryHardTimeout parameter.
@@ -200,7 +206,9 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntryHardTimeout = uint32(newRelayEntryHardTimeout);
+        self.parameters.relayEntryHardTimeout = uint32(
+            newRelayEntryHardTimeout
+        );
     }
 
     /// @notice Set relayEntrySubmissionFailureSlashingAmount parameter.
@@ -212,7 +220,7 @@ library Relay {
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntrySubmissionFailureSlashingAmount = uint96(
+        self.parameters.relayEntrySubmissionFailureSlashingAmount = uint96(
             newRelayEntrySubmissionFailureSlashingAmount
         );
     }
@@ -272,8 +280,8 @@ library Relay {
         view
         returns (bool)
     {
-        uint256 _relayEntryTimeout = self.relayEntrySoftTimeout +
-            self.relayEntryHardTimeout;
+        uint256 _relayEntryTimeout = self.parameters.relayEntrySoftTimeout +
+            self.parameters.relayEntryHardTimeout;
 
         return
             isRequestInProgress(self) &&
@@ -287,7 +295,9 @@ library Relay {
         view
         returns (uint256)
     {
-        return self.currentRequestStartBlock + self.relayEntrySoftTimeout;
+        return
+            self.currentRequestStartBlock +
+            self.parameters.relayEntrySoftTimeout;
     }
 
     /// @notice Computes the slashing factor which should be used during
@@ -311,7 +321,7 @@ library Relay {
         if (block.number > _softTimeoutBlock) {
             uint256 submissionDelay = block.number - _softTimeoutBlock;
             uint256 slashingFactor = (submissionDelay * 1e18) /
-                self.relayEntryHardTimeout;
+                self.parameters.relayEntryHardTimeout;
             return slashingFactor > 1e18 ? 1e18 : slashingFactor;
         }
 

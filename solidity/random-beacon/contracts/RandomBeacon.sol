@@ -720,7 +720,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
         relay.requestEntry(groupId);
 
-        fundDkgRewardsPool(msg.sender, relay.relayRequestFee);
+        fundDkgRewardsPool(msg.sender, relay.parameters.relayRequestFee);
 
         callback.setCallbackContract(callbackContract);
 
@@ -819,7 +819,8 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             "Invalid group members"
         );
 
-        uint256 slashingAmount = relay
+        uint96 slashingAmount = relay
+            .parameters
             .relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             groupMembers
@@ -1013,68 +1014,34 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         dkg.lockState();
     }
 
-    /// @notice The minimum authorization amount required so that operator can
-    ///         participate in the random beacon. This amount is required to
-    ///         execute slashing for providing a malicious DKG result or when
-    ///         a relay entry times out.
-    function minimumAuthorization() external view returns (uint96) {
-        return authorization.minimumAuthorization;
-    }
-
-    /// @notice Delay in seconds that needs to pass between the time
-    ///         authorization decrease is requested and the time that request
-    ///         gets approved. Protects against free-riders earning rewards and
-    ///         not being active in the network.
-    function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.authorizationDecreaseDelay;
-    }
-
     /// @return Flag indicating whether a relay entry request is currently
     ///         in progress.
     function isRelayRequestInProgress() external view returns (bool) {
         return relay.isRequestInProgress();
     }
 
-    /// @return Relay request fee in T. This fee needs to be provided by the
-    ///         account or contract requesting for a new relay entry.
-    function relayRequestFee() external view returns (uint256) {
-        return relay.relayRequestFee;
-    }
-
-    /// @return Soft timeout in blocks for a group to submit the relay entry.
-    ///         All group members are eligible to submit the relay entry. If
-    ///         soft timeout is reached for submitting the relay entry
-    ///         the slashing starts.
-    function relayEntrySoftTimeout() external view returns (uint256) {
-        return relay.relayEntrySoftTimeout;
-    }
-
-    /// @return Hard timeout in blocks for a group to submit the relay entry.
-    ///         After the soft timeout passes without relay entry submitted,
-    ///         all group members start getting slashed. The slashing amount
-    ///         increases linearly until the group submits the relay entry or until
-    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
-    ///         reached, each group member will get slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`.
-    function relayEntryHardTimeout() external view returns (uint256) {
-        return relay.relayEntryHardTimeout;
-    }
-
-    /// @notice Slashing amount for not submitting relay entry. When
-    ///         relay entry hard timeout is reached without the relay entry
-    ///         submitted, each group member gets slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`. If the relay entry
-    ///         gets submitted after the soft timeout (see
-    ///         `relayEntrySoftTimeout` documentation), but
-    ///         before the hard timeout, each group member gets slashed
-    ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
-    ///         and the time passed since the soft deadline.
-    function relayEntrySubmissionFailureSlashingAmount()
+    /// @notice Retrieves authorization parameters that were set in the
+    ///         Authorization library.
+    function authorizationParameters()
         external
         view
-        returns (uint256)
+        returns (Authorization.Parameters memory)
     {
-        return relay.relayEntrySubmissionFailureSlashingAmount;
+        return authorization.parameters;
+    }
+
+    /// @notice Retrieves relay parameters that were set in the Relay library.
+    function relayEntryParameters()
+        external
+        view
+        returns (Relay.Parameters memory)
+    {
+        return relay.parameters;
+    }
+
+    /// @notice Retrieves dkg parameters that were set in the DKG library.
+    function dkgParameters() external view returns (DKG.Parameters memory) {
+        return dkg.parameters;
     }
 
     /// @notice Group lifetime in blocks. When a group reached its lifetime, it
@@ -1083,37 +1050,6 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         to that group is still pending.
     function groupLifetime() external view returns (uint256) {
         return groups.groupLifetime;
-    }
-
-    /// @notice The number of blocks for which a DKG result can be challenged.
-    ///         Anyone can challenge DKG result for a certain number of blocks
-    ///         before the result is fully accepted and the group registered in
-    ///         the pool of active groups. If the challenge gets accepted, all
-    ///         operators who signed the malicious result get slashed for
-    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
-    ///         rewarded.
-    function dkgResultChallengePeriodLength() external view returns (uint256) {
-        return dkg.parameters.resultChallengePeriodLength;
-    }
-
-    /// @notice Timeout in blocks for a group to submit the DKG result.
-    ///         All members are eligible to submit the DKG result.
-    ///         If `dkgResultSubmissionTimeout` passes without the DKG result
-    ///         submitted, DKG is considered as timed out and no DKG result for
-    ///         this group creation can be submitted anymore.
-    function dkgResultSubmissionTimeout() external view returns (uint256) {
-        return dkg.parameters.resultSubmissionTimeout;
-    }
-
-    /// @notice Time during the DKG result approval stage when the submitter
-    ///         of the DKG result takes the precedence to approve the DKG result.
-    ///         After this time passes anyone can approve the DKG result.
-    function dkgSubmitterPrecedencePeriodLength()
-        external
-        view
-        returns (uint256)
-    {
-        return dkg.parameters.submitterPrecedencePeriodLength;
     }
 
     /// @notice Selects a new group of operators based on the provided seed.
