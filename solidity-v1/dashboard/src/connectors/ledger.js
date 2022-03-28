@@ -1,6 +1,6 @@
 import { LedgerSubprovider } from "@0x/subproviders"
-import TransportU2F from "@ledgerhq/hw-transport-u2f"
 import AppEth from "@ledgerhq/hw-app-eth"
+import TransportWebUSB from "@ledgerhq/hw-transport-webusb"
 import { AbstractHardwareWalletConnector } from "./abstract-connector"
 import { getChainIdFromV, getEthereumTxObj, getChainId } from "./utils"
 import web3Utils from "web3-utils"
@@ -20,7 +20,7 @@ export class LedgerConnector extends AbstractHardwareWalletConnector {
 
 const LEDGER_EXCHANGE_TIMEOUT = 100000
 const ledgerEthereumClientFactoryAsync = async () => {
-  const ledgerConnection = await TransportU2F.create()
+  const ledgerConnection = await TransportWebUSB.create()
   ledgerConnection.setExchangeTimeout(LEDGER_EXCHANGE_TIMEOUT)
   const ledgerEthClient = new AppEth(ledgerConnection)
 
