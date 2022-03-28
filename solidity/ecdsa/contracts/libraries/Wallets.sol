@@ -74,7 +74,7 @@ library Wallets {
     /// @param walletID Wallet's ID.
     /// @return True if a wallet is registered, false otherwise.
     function isWalletRegistered(Data storage self, bytes32 walletID)
-        public
+        internal
         view
         returns (bool)
     {
@@ -87,7 +87,7 @@ library Wallets {
     /// @param walletID ID of the wallet.
     /// @return Uncompressed public key of the wallet.
     function getWalletPublicKey(Data storage self, bytes32 walletID)
-        external
+        internal
         view
         returns (bytes memory)
     {
