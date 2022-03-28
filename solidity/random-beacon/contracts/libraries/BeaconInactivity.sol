@@ -59,14 +59,14 @@ library BeaconInactivity {
     ///      RandomBeacon.notifyOperatorInactivity()
     /// @param sortitionPool Sortition pool reference
     /// @param claim Inactivity claim
-    /// @param group Group raising the claim
+    /// @param groupPubKey Public key of the group raising the claim
     /// @param nonce Current nonce for group used in the claim
     /// @param groupMembers Identifiers of group members
     /// @return inactiveMembers Identifiers of members who are inactive
     function verifyClaim(
         SortitionPool sortitionPool,
         Claim calldata claim,
-        Groups.Group storage group,
+        bytes memory groupPubKey,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external view returns (uint32[] memory inactiveMembers) {
@@ -106,11 +106,7 @@ library BeaconInactivity {
         // them in future in case some other application has a group with the
         // same ID and subset of members.
         bytes32 signedMessageHash = keccak256(
-            abi.encodePacked(
-                nonce,
-                group.groupPubKey,
-                claim.inactiveMembersIndices
-            )
+            abi.encodePacked(nonce, groupPubKey, claim.inactiveMembersIndices)
         ).toEthSignedMessageHash();
 
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
