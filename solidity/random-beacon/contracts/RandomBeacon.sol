@@ -335,6 +335,14 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
 
     event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
 
+    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
+
+    event GasOffsetsUpdated(
+        uint256 dkgApprovalGasOffset,
+        uint256 failedHeartbeatGasOffset,
+        uint256 relayEntrySubmissionGasOffset
+    );
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -548,6 +556,41 @@ contract RandomBeacon is IRandomBeacon, Ownable, Reimbursable {
             _relayEntrySubmissionFailureSlashingAmount,
             maliciousDkgResultSlashingAmount,
             unauthorizedSigningSlashingAmount
+        );
+    }
+
+    /// @notice Updates the DKG result submission gas.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultSubmissionGas DKG result submission gas
+    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas)
+        external
+        onlyOwner
+    {
+        dkgResultSubmissionGas = _dkgResultSubmissionGas;
+        emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
+    }
+
+    /// @notice Updates the given gas offsets.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgApprovalGasOffset New DKG approval gas offset
+    /// @param _failedHeartbeatGasOffset New failed heartbeat gas offset
+    /// @param _relayEntrySubmissionGasOffset New relay entry submission gas offset
+    function updateGasOffsets(
+        uint256 _dkgApprovalGasOffset,
+        uint256 _failedHeartbeatGasOffset,
+        uint256 _relayEntrySubmissionGasOffset
+    ) external onlyOwner {
+        dkgApprovalGasOffset = _dkgApprovalGasOffset;
+        failedHeartbeatGasOffset = _failedHeartbeatGasOffset;
+        relayEntrySubmissionGasOffset = _relayEntrySubmissionGasOffset;
+        emit GasOffsetsUpdated(
+            _dkgApprovalGasOffset,
+            _failedHeartbeatGasOffset,
+            _relayEntrySubmissionGasOffset
         );
     }
 
