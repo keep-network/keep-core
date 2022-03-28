@@ -35,6 +35,7 @@ import type {
   BLS,
   RandomBeaconGovernance,
   IRandomBeaconStaking,
+  ReimbursementPool,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
 import type { ContractTransaction } from "ethers"
@@ -72,6 +73,7 @@ async function fixture() {
     relayStub,
     bls,
     operators,
+    reimbursementPool: deployment.reimbursementPool as ReimbursementPool,
   }
 }
 
@@ -80,11 +82,13 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let submitter: SignerWithAddress
+  let thirdParty: SignerWithAddress
   let members: Operator[]
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
 
   let randomBeacon: RandomBeacon
+  let reimbursementPool: ReimbursementPool
   let sortitionPool: SortitionPool
   let testToken: TestToken
   let staking: StakingStub
@@ -96,6 +100,7 @@ describe("RandomBeacon - Relay", () => {
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
     notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
     submitter = await ethers.getSigner((await getUnnamedAccounts())[3])
+    thirdParty = await ethers.getSigner((await getUnnamedAccounts())[4])
     ;({
       randomBeacon,
       sortitionPool,
@@ -104,6 +109,7 @@ describe("RandomBeacon - Relay", () => {
       relayStub,
       bls,
       operators: members,
+      reimbursementPool,
     } = await waffle.loadFixture(fixture))
 
     membersIDs = members.map((member) => member.id)
@@ -143,8 +149,14 @@ describe("RandomBeacon - Relay", () => {
           context(
             "when relay request does not hit group creation frequency threshold",
             () => {
+              let initialReimbursementPoolBalance: BigNumber
+
               before(async () => {
                 await createSnapshot()
+
+                initialReimbursementPoolBalance = await provider.getBalance(
+                  reimbursementPool.address
+                )
 
                 tx = await randomBeacon
                   .connect(requester)
@@ -168,6 +180,17 @@ describe("RandomBeacon - Relay", () => {
                   dkgState.IDLE
                 )
                 expect(await sortitionPool.isLocked()).to.be.false
+              })
+
+              it("should transfer the relay request fee to the Reimbursement Pool", async () => {
+                const postReimbursementPoolBalance = await provider.getBalance(
+                  reimbursementPool.address
+                )
+                const diff = postReimbursementPoolBalance.sub(
+                  initialReimbursementPoolBalance
+                )
+
+                expect(diff).to.be.equal(params.relayRequestFee)
               })
             }
           )
@@ -221,6 +244,50 @@ describe("RandomBeacon - Relay", () => {
             ).to.be.revertedWith("Fee is less than the required minimum")
           })
         })
+
+        context(
+          "when the requester is an authorized contract and doesn't neeed to pay the relay request fee",
+          () => {
+            let tx: ContractTransaction
+            let initialReimbursementPoolBalance: BigNumber
+
+            before(async () => {
+              await createSnapshot()
+
+              await randomBeacon
+                .connect(deployer)
+                .authorizeContract(thirdParty.address)
+
+              initialReimbursementPoolBalance = await provider.getBalance(
+                reimbursementPool.address
+              )
+
+              tx = await randomBeacon
+                .connect(thirdParty)
+                .requestRelayEntry(ZERO_ADDRESS)
+            })
+
+            after(async () => {
+              await restoreSnapshot()
+            })
+
+            it("should request a relay entry", async () => {
+              await expect(tx)
+                .to.emit(randomBeacon, "RelayEntryRequested")
+                .withArgs(1, 0, blsData.previousEntry)
+            })
+
+            it("should not transfer any fees to the Reimbursement Pool", async () => {
+              const postReimbursementPoolBalance = await provider.getBalance(
+                reimbursementPool.address
+              )
+
+              expect(postReimbursementPoolBalance).to.be.equal(
+                initialReimbursementPoolBalance
+              )
+            })
+          }
+        )
       })
 
       context("when there is an other relay entry in progress", () => {
