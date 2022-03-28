@@ -3,6 +3,7 @@ import { expect } from "chai"
 
 import { randomBeaconDeployment } from "./fixtures"
 
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
 
@@ -11,6 +12,7 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
   let thirdParty: Signer
+  let thirdPartyContract: SignerWithAddress
   let randomBeacon: RandomBeacon
   let randomBeaconGovernance: RandomBeaconGovernance
 
@@ -40,7 +42,7 @@ describe("RandomBeaconGovernance", () => {
 
   // prettier-ignore
   before(async () => {
-    [governance, thirdParty] = await ethers.getSigners()
+    [governance, thirdParty, thirdPartyContract ] = await ethers.getSigners()
 
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
 
@@ -3383,6 +3385,73 @@ describe("RandomBeaconGovernance", () => {
         })
       }
     )
+  })
+
+  describe("authorizeContract", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .authorizeContract(thirdPartyContract.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      it("should authorize a contract", async () => {
+        let isAuthorized = await randomBeacon.authorizedContracts(
+          thirdPartyContract.address
+        )
+        await expect(isAuthorized).to.be.false
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .authorizeContract(thirdPartyContract.address)
+
+        isAuthorized = await randomBeacon.authorizedContracts(
+          thirdPartyContract.address
+        )
+        await expect(isAuthorized).to.be.true
+      })
+    })
+  })
+
+  describe("unauthorizeContract", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .unauthorizeContract(thirdPartyContract.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      before(async () => {
+        await createSnapshot()
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .authorizeContract(thirdPartyContract.address)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should unauthorize a contract", async () => {
+        await randomBeaconGovernance
+          .connect(governance)
+          .unauthorizeContract(thirdPartyContract.address)
+
+        const isAuthorized = await randomBeacon.authorizedContracts(
+          thirdPartyContract.address
+        )
+        await expect(isAuthorized).to.be.false
+      })
+    })
   })
 
   describe("beginDkgMaliciousResultNotificationRewardMultiplierUpdate", () => {
