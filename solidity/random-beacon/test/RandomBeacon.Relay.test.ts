@@ -48,11 +48,24 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 async function fixture() {
   const deployment = await randomBeaconDeployment()
 
+  const bls = (await blsDeployment()).bls as BLS
+
+  const Relay = await ethers.getContractFactory("Relay", {
+    libraries: {
+      BLS: bls.address,
+    },
+  })
+  const relay = await Relay.deploy()
+  await relay.deployed()
+
   // Additional contracts needed by this test suite.
   const relayStub = (await (
-    await ethers.getContractFactory("RelayStub")
+    await ethers.getContractFactory("RelayStub", {
+      libraries: {
+        Relay: relay.address,
+      },
+    })
   ).deploy()) as RelayStub
-  const bls = (await blsDeployment()).bls as BLS
 
   // Register operators in the sortition pool to make group creation
   // possible.

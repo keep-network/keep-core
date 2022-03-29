@@ -71,7 +71,7 @@ library Relay {
 
     /// @notice Initializes the very first `previousEntry` with an initial
     ///         `relaySeed` value. Can be performed only once.
-    function initSeedEntry(Data storage self) internal {
+    function initSeedEntry(Data storage self) external {
         require(
             self.previousEntry.x == 0 && self.previousEntry.y == 0,
             "Seed entry already initialized"
@@ -83,7 +83,7 @@ library Relay {
     ///         include a random number (by signing the previous entry's
     ///         random number).
     /// @param groupId Identifier of the group chosen to handle the request.
-    function requestEntry(Data storage self, uint64 groupId) internal {
+    function requestEntry(Data storage self, uint64 groupId) external {
         require(
             !isRequestInProgress(self),
             "Another relay request in progress"
@@ -111,7 +111,7 @@ library Relay {
         Data storage self,
         bytes calldata entry,
         bytes storage groupPubKey
-    ) internal {
+    ) external {
         require(
             block.number < softTimeoutBlock(self),
             "Relay entry soft timeout passed"
@@ -131,7 +131,7 @@ library Relay {
         Data storage self,
         bytes calldata entry,
         bytes storage groupPubKey
-    ) internal returns (uint256 slashingAmount) {
+    ) external returns (uint256 slashingAmount) {
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
         // factor multiplied by 1e18 to avoid precision loss. In that case
@@ -150,7 +150,7 @@ library Relay {
         Data storage self,
         bytes calldata entry,
         bytes storage groupPubKey
-    ) internal {
+    ) private {
         require(isRequestInProgress(self), "No relay request in progress");
         require(!hasRequestTimedOut(self), "Relay request timed out");
 
@@ -174,7 +174,7 @@ library Relay {
     /// @notice Set relayRequestFee parameter.
     /// @param newRelayRequestFee New value of the parameter.
     function setRelayRequestFee(Data storage self, uint256 newRelayRequestFee)
-        internal
+        external
     {
         require(!isRequestInProgress(self), "Relay request in progress");
 
@@ -186,7 +186,7 @@ library Relay {
     function setRelayEntrySoftTimeout(
         Data storage self,
         uint256 newRelayEntrySoftTimeout
-    ) internal {
+    ) external {
         require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayEntrySoftTimeout = uint32(newRelayEntrySoftTimeout);
@@ -197,7 +197,7 @@ library Relay {
     function setRelayEntryHardTimeout(
         Data storage self,
         uint256 newRelayEntryHardTimeout
-    ) internal {
+    ) external {
         require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayEntryHardTimeout = uint32(newRelayEntryHardTimeout);
@@ -209,7 +209,7 @@ library Relay {
     function setRelayEntrySubmissionFailureSlashingAmount(
         Data storage self,
         uint256 newRelayEntrySubmissionFailureSlashingAmount
-    ) internal {
+    ) external {
         require(!isRequestInProgress(self), "Relay request in progress");
 
         self.relayEntrySubmissionFailureSlashingAmount = uint96(
@@ -221,7 +221,7 @@ library Relay {
     ///         timeout was reported.
     /// @param newGroupId ID of the group chosen to retry the current request.
     function retryOnEntryTimeout(Data storage self, uint64 newGroupId)
-        internal
+        external
     {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
@@ -242,7 +242,7 @@ library Relay {
 
     /// @notice Cleans up the current relay request in case a relay entry
     ///         timeout was reported.
-    function cleanupOnEntryTimeout(Data storage self) internal {
+    function cleanupOnEntryTimeout(Data storage self) external {
         require(hasRequestTimedOut(self), "Relay request did not time out");
 
         emit RelayEntryTimedOut(
@@ -257,21 +257,13 @@ library Relay {
 
     /// @notice Returns whether a relay entry request is currently in progress.
     /// @return True if there is a request in progress. False otherwise.
-    function isRequestInProgress(Data storage self)
-        internal
-        view
-        returns (bool)
-    {
+    function isRequestInProgress(Data storage self) public view returns (bool) {
         return self.currentRequestID != 0;
     }
 
     /// @notice Returns whether the current relay request has timed out.
     /// @return True if the request timed out. False otherwise.
-    function hasRequestTimedOut(Data storage self)
-        internal
-        view
-        returns (bool)
-    {
+    function hasRequestTimedOut(Data storage self) public view returns (bool) {
         uint256 _relayEntryTimeout = self.relayEntrySoftTimeout +
             self.relayEntryHardTimeout;
 
@@ -282,11 +274,7 @@ library Relay {
 
     /// @notice Calculates soft timeout block for the pending relay request.
     /// @return The soft timeout block
-    function softTimeoutBlock(Data storage self)
-        internal
-        view
-        returns (uint256)
-    {
+    function softTimeoutBlock(Data storage self) public view returns (uint256) {
         return self.currentRequestStartBlock + self.relayEntrySoftTimeout;
     }
 

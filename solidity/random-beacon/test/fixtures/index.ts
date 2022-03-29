@@ -112,6 +112,16 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const dkg = await BeaconDkg.deploy()
   await dkg.deployed()
 
+  const { bls } = await blsDeployment()
+
+  const Relay = await ethers.getContractFactory("Relay", {
+    libraries: {
+      BLS: bls.address,
+    },
+  })
+  const relay = await Relay.deploy()
+  await relay.deployed()
+
   const BeaconInactivity = await ethers.getContractFactory("BeaconInactivity")
   const inactivity = await BeaconInactivity.deploy()
   await inactivity.deployed()
@@ -126,8 +136,9 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
     libraries: {
-      BLS: (await blsDeployment()).bls.address,
+      BLS: bls.address,
       BeaconDkg: dkg.address,
+      Relay: relay.address,
       BeaconInactivity: inactivity.address,
     },
   })
