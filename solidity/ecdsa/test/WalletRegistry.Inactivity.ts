@@ -14,7 +14,7 @@ import type { Operator, OperatorID } from "./utils/operators"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
-describe.only("WalletRegistry - Inactivity", () => {
+describe("WalletRegistry - Inactivity", () => {
   const walletPublicKey: string = ecdsaData.group1.publicKey
 
   let walletRegistry: WalletRegistry

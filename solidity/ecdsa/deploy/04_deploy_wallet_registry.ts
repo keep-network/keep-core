@@ -38,7 +38,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       ReimbursementPool.address,
     ],
     libraries: {
-      EcdsaInactivity: EcdsaInactivity.address
+      EcdsaInactivity: EcdsaInactivity.address,
     },
     log: true,
   })

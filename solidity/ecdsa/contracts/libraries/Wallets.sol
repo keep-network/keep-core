@@ -84,7 +84,7 @@ library Wallets {
     /// @param walletID ID of the wallet
     /// @return Wallet signing group members hash
     function getWalletMembersIdsHash(Data storage self, bytes32 walletID)
-        external
+        internal
         view
         returns (bytes32)
     {
