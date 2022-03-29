@@ -161,7 +161,7 @@ contract WalletRegistryGovernance is Ownable {
     event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
 
     event DkgResultApprovalGasOffsetUpdateStarted(
-        uint256 dkgApprovalGasOffset,
+        uint256 dkgResultApprovalGasOffset,
         uint256 timestamp
     );
     event DkgResultApprovalGasOffsetUpdated(uint256 dkgResultApprovalGasOffset);
