@@ -37,11 +37,11 @@ library Wallets {
 
     /// @notice Registers a new wallet.
     /// @dev Uses a public key hash as a unique identifier of a wallet.
-    /// @param membersIdsHash Keccak256 hash of group members identifiers array.
-    /// @param publicKey Uncompressed public key.
-    /// @return walletID Wallet's ID.
-    /// @return publicKeyX Wallet's public key's X coordinate.
-    /// @return publicKeyY Wallet's public key's Y coordinate.
+    /// @param membersIdsHash Keccak256 hash of group members identifiers array
+    /// @param publicKey Uncompressed public key
+    /// @return walletID Wallet's ID
+    /// @return publicKeyX Wallet's public key's X coordinate
+    /// @return publicKeyY Wallet's public key's Y coordinate
     function addWallet(
         Data storage self,
         bytes32 membersIdsHash,
@@ -71,8 +71,8 @@ library Wallets {
     }
 
     /// @notice Checks if a wallet with the given ID is registered.
-    /// @param walletID Wallet's ID.
-    /// @return True if a wallet is registered, false otherwise.
+    /// @param walletID Wallet's ID
+    /// @return True if a wallet is registered, false otherwise
     function isWalletRegistered(Data storage self, bytes32 walletID)
         public
         view
@@ -81,11 +81,24 @@ library Wallets {
         return self.registry[walletID].publicKeyX != bytes32(0);
     }
 
+    /// @notice Returns Keccak256 hash of the wallet signing group members
+    ///         identifiers array. Group members do not include operators
+    ///         selected by the sortition pool that misbehaved during DKG.
+    /// @param walletID ID of the wallet
+    /// @return Wallet signing group members hash
+    function getWalletMembersIdsHash(Data storage self, bytes32 walletID)
+        external
+        view
+        returns (bytes32)
+    {
+        return self.registry[walletID].membersIdsHash;
+    }
+
     /// @notice Gets public key of a wallet with a given wallet ID.
     ///         The public key is returned in an uncompressed format as a 64-byte
     ///         concatenation of X and Y coordinates.
-    /// @param walletID ID of the wallet.
-    /// @return Uncompressed public key of the wallet.
+    /// @param walletID ID of the wallet
+    /// @return Uncompressed public key of the wallet
     function getWalletPublicKey(Data storage self, bytes32 walletID)
         external
         view
