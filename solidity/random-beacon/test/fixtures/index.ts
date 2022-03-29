@@ -123,13 +123,18 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   )) as DKGValidator
   await dkgValidator.deployed()
 
-  const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
-    libraries: {
-      BLS: (await blsDeployment()).bls.address,
-      BeaconDkg: dkg.address,
-      BeaconInactivity: inactivity.address,
-    },
-  })
+  const RandomBeacon =
+    await ethers.getContractFactory<RandomBeaconStub__factory>(
+      "RandomBeaconStub",
+      {
+        libraries: {
+          BLS: (await blsDeployment()).bls.address,
+          BeaconDkg: dkg.address,
+          BeaconInactivity: inactivity.address,
+        },
+      }
+    )
+
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPool.address,
     testToken.address,
@@ -155,9 +160,10 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 export async function testDeployment(): Promise<DeployedContracts> {
   const contracts = await randomBeaconDeployment()
 
-  const RandomBeaconGovernance = await ethers.getContractFactory(
-    "RandomBeaconGovernance"
-  )
+  const RandomBeaconGovernance =
+    await ethers.getContractFactory<RandomBeaconGovernance__factory>(
+      "RandomBeaconGovernance"
+    )
   const randomBeaconGovernance: RandomBeaconGovernance =
     await RandomBeaconGovernance.deploy(
       contracts.randomBeacon.address,
