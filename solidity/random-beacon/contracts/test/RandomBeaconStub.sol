@@ -9,6 +9,8 @@ import {BeaconDkg as DKG} from "../libraries/BeaconDkg.sol";
 import {BeaconDkgValidator as DKGValidator} from "../BeaconDkgValidator.sol";
 
 contract RandomBeaconStub is RandomBeacon {
+    using DKG for DKG.Data;
+
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
@@ -44,5 +46,9 @@ contract RandomBeaconStub is RandomBeacon {
         groups.groupsData[groups.groupsRegistry[groupId]].terminated = true;
         // just add groupId without sorting for simplicity
         groups.activeTerminatedGroups.push(groupId);
+    }
+
+    function dkgLockState() external {
+        dkg.lockState();
     }
 }
