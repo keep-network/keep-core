@@ -37,7 +37,7 @@ import type {
   IRandomBeaconStaking,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
-import type { ContractTransaction } from "ethers"
+import type { ContractTransaction, BigNumberish, BytesLike } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
@@ -367,9 +367,7 @@ describe("RandomBeacon - Relay", () => {
               await createSnapshot()
 
               // Simulate DKG is awaiting a seed.
-              await (
-                randomBeacon as unknown as RandomBeaconStub
-              ).publicDkgLockState()
+              await randomBeacon.dkgLockState()
 
               tx = await randomBeacon
                 .connect(submitter)
@@ -636,10 +634,7 @@ describe("RandomBeacon - Relay", () => {
           })
 
           it("should terminate the group", async () => {
-            const isGroupTeminated = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).isGroupTerminated(0)
-            expect(isGroupTeminated).to.be.equal(true)
+            expect(await isGroupTerminated(0)).to.be.equal(true)
           })
 
           it("should emit RelayEntryTimedOut event", async () => {
@@ -681,9 +676,7 @@ describe("RandomBeacon - Relay", () => {
             )
 
             const registry = await randomBeacon.getGroupsRegistry()
-            const secondGroupLifetime = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).groupLifetimeOf(registry[1])
+            const secondGroupLifetime = await groupLifetimeOf(registry[1])
 
             // Expire second group
             await mineBlocksTo(Number(secondGroupLifetime) + 1)
@@ -733,10 +726,7 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTeminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTeminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
         it("should emit RelayEntryTimedOut event", async () => {
@@ -760,9 +750,7 @@ describe("RandomBeacon - Relay", () => {
             await createSnapshot()
 
             // Simulate DKG is awaiting a seed.
-            await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).publicDkgLockState()
+            await randomBeacon.dkgLockState()
 
             tx = await randomBeacon
               .connect(notifier)
@@ -873,10 +861,7 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTerminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTerminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
         it("should call staking contract to seize the min stake", async () => {
@@ -1863,6 +1848,20 @@ describe("RandomBeacon - Relay", () => {
       })
     })
   })
+
+  async function groupLifetimeOf(
+    groupPubKeyHash: BytesLike
+  ): Promise<BigNumberish> {
+    const groupData = await randomBeacon["getGroup(bytes)"](groupPubKeyHash)
+
+    return groupData.registrationBlockNumber.add(params.groupLifeTime)
+  }
+
+  async function isGroupTerminated(groupID: BigNumberish): Promise<boolean> {
+    const groupData = await randomBeacon["getGroup(uint64)"](groupID)
+
+    return groupData.terminated === true
+  }
 
   async function approveTestToken() {
     await testToken.mint(requester.address, params.relayRequestFee)

@@ -20,8 +20,8 @@ contract RandomBeaconStub is RandomBeacon {
         return dkg;
     }
 
-    function getCallbackData() external view returns (Callback.Data memory) {
-        return callback;
+    function getCallbackContract() external view returns (address) {
+        return address(callback.callbackContract);
     }
 
     function roughlyAddGroup(
@@ -40,29 +40,9 @@ contract RandomBeaconStub is RandomBeacon {
         groups.groupsRegistry.push(groupPubKeyHash);
     }
 
-    function groupLifetimeOf(bytes32 groupPubKeyHash)
-        external
-        view
-        returns (uint256)
-    {
-        return
-            groups.groupsData[groupPubKeyHash].registrationBlockNumber +
-            groups.groupLifetime;
-    }
-
     function roughlyTerminateGroup(uint64 groupId) public {
         groups.groupsData[groups.groupsRegistry[groupId]].terminated = true;
         // just add groupId without sorting for simplicity
         groups.activeTerminatedGroups.push(groupId);
-    }
-
-    function isGroupTerminated(uint64 groupId) external view returns (bool) {
-        bytes32 groupPubKeyHash = groups.groupsRegistry[groupId];
-
-        return groups.groupsData[groupPubKeyHash].terminated;
-    }
-
-    function publicDkgLockState() external {
-        dkgLockState();
     }
 }
