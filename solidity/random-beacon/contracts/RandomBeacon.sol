@@ -315,7 +315,11 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event InactivityClaimed(uint64 groupId, uint256 nonce, address notifier);
+    event InactivityClaimed(
+        uint64 indexed groupId,
+        uint256 nonce,
+        address notifier
+    );
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
