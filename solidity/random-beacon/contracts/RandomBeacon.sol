@@ -972,7 +972,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         uint32[] memory ineligibleOperators = BeaconInactivity.verifyClaim(
             sortitionPool,
             claim,
-            group,
+            group.groupPubKey,
             nonce,
             groupMembers
         );

@@ -30,13 +30,13 @@ library BeaconInactivity {
         // range [1, groupMembers.length], unique, and sorted in ascending order.
         uint256[] inactiveMembersIndices;
         // Concatenation of signatures from members supporting the claim.
-        // The message to be signed by each member is inactivity claim nonce
-        // for the given group, keccak256 hash of the group public key, and
-        // inactive members indices. The calculated hash should be prefixed with
-        // `\x19Ethereum signed message:\n` before signing, so the message
-        // to sign is:
+        // The message to be signed by each member is keccak256 hash of the
+        // concatenation of inactivity claim nonce for the given group, group
+        // public key, and inactive members indices. The calculated hash should
+        // be prefixed with `\x19Ethereum signed message:\n` before signing, so
+        // the message to sign is:
         // `\x19Ethereum signed message:\n${keccak256(
-        //    nonce, groupPubKey, inactiveMembersIndices
+        //    nonce | groupPubKey | inactiveMembersIndices
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
@@ -53,20 +53,20 @@ library BeaconInactivity {
     ///         supporting the inactivity claim.
     uint256 public constant signatureByteSize = 65;
 
-    /// @notice Verifies the inactivity claim according to rules mentioned in
+    /// @notice Verifies the inactivity claim according to the rules defined in
     ///         `Claim` struct documentation. Reverts if verification fails.
     /// @dev Group members hash is validated upstream in
     ///      RandomBeacon.notifyOperatorInactivity()
-    /// @param sortitionPool Sortition pool reference.
-    /// @param claim Inactivity claim.
-    /// @param group Group raising the claim.
-    /// @param nonce Current nonce for group used in the claim.
-    /// @param groupMembers Identifiers of group members.
-    /// @return inactiveMembers Identifiers of members who are inactive.
+    /// @param sortitionPool Sortition pool reference
+    /// @param claim Inactivity claim
+    /// @param groupPubKey Public key of the group raising the claim
+    /// @param nonce Current nonce for group used in the claim
+    /// @param groupMembers Identifiers of group members
+    /// @return inactiveMembers Identifiers of members who are inactive
     function verifyClaim(
         SortitionPool sortitionPool,
         Claim calldata claim,
-        Groups.Group storage group,
+        bytes memory groupPubKey,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external view returns (uint32[] memory inactiveMembers) {
@@ -101,16 +101,12 @@ library BeaconInactivity {
             groupMembers.length
         );
 
-        // Each signing member needs to sign the hash of packed `groupPubKey`
-        // and `inactiveMembersIndices` parameters. Usage of group public key
-        // and not group ID is important because it provides uniqueness of
-        // signed messages and prevent against reusing them in future.
+        // Usage of group public key and not group ID is important because it
+        // provides uniqueness of signed messages and prevent against reusing
+        // them in future in case some other application has a group with the
+        // same ID and subset of members.
         bytes32 signedMessageHash = keccak256(
-            abi.encodePacked(
-                nonce,
-                group.groupPubKey,
-                claim.inactiveMembersIndices
-            )
+            abi.encodePacked(nonce, groupPubKey, claim.inactiveMembersIndices)
         ).toEthSignedMessageHash();
 
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
@@ -155,8 +151,8 @@ library BeaconInactivity {
     ///         if its size and each single index are in [1, groupSize] range,
     ///         indexes are unique, and sorted in an ascending order.
     ///         Reverts if validation fails.
-    /// @param indices Array to validate.
-    /// @param groupSize Group size used as reference.
+    /// @param indices Array to validate
+    /// @param groupSize Group size used as reference
     function validateMembersIndices(
         uint256[] calldata indices,
         uint256 groupSize
