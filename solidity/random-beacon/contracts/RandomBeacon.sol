@@ -92,12 +92,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         is challenged and proven to be malicious, each operator who
     ///         signed the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
-    uint256 public maliciousDkgResultSlashingAmount;
+    uint96 public maliciousDkgResultSlashingAmount;
 
     /// @notice Slashing amount when an unauthorized signing has been proved,
     ///         which means the private key has been leaked and all the group
     ///         members should be punished.
-    uint256 public unauthorizedSigningSlashingAmount;
+    uint96 public unauthorizedSigningSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who misbehaved during DKG by being inactive or disqualified and
@@ -540,9 +540,9 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     /// @param _unauthorizedSigningSlashingAmount New unauthorized signing
     ///        slashing amount
     function updateSlashingParameters(
-        uint256 _relayEntrySubmissionFailureSlashingAmount,
-        uint256 _maliciousDkgResultSlashingAmount,
-        uint256 _unauthorizedSigningSlashingAmount
+        uint96 _relayEntrySubmissionFailureSlashingAmount,
+        uint96 _maliciousDkgResultSlashingAmount,
+        uint96 _unauthorizedSigningSlashingAmount
     ) external onlyOwner {
         relay.setRelayEntrySubmissionFailureSlashingAmount(
             _relayEntrySubmissionFailureSlashingAmount
@@ -769,7 +769,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
 
-        uint256 slashingAmount = maliciousDkgResultSlashingAmount;
+        uint96 slashingAmount = maliciousDkgResultSlashingAmount;
         address maliciousSubmitterAddresses = sortitionPool.getIDOperator(
             maliciousSubmitter
         );
@@ -903,7 +903,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             "Invalid group members"
         );
 
-        uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
+        uint96 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
             address[] memory groupMembersAddresses = sortitionPool
@@ -948,8 +948,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             "Invalid group members"
         );
 
-        uint256 slashingAmount = relay
-            .relayEntrySubmissionFailureSlashingAmount;
+        uint96 slashingAmount = relay.relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             groupMembers
         );
@@ -1194,7 +1193,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     function relayEntrySubmissionFailureSlashingAmount()
         external
         view
-        returns (uint256)
+        returns (uint96)
     {
         return relay.relayEntrySubmissionFailureSlashingAmount;
     }

@@ -131,15 +131,17 @@ library Relay {
         Data storage self,
         bytes calldata entry,
         bytes storage groupPubKey
-    ) internal returns (uint256 slashingAmount) {
+    ) internal returns (uint96 slashingAmount) {
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Note that `getSlashingFactor` returns the
         // factor multiplied by 1e18 to avoid precision loss. In that case
         // the final result needs to be divided by 1e18.
-        slashingAmount =
+        // FIXME: Revisit after https://github.com/keep-network/keep-core/pull/2840
+        // is merged to ensure in tests casting works correctly here.
+        slashingAmount = uint96(
             (getSlashingFactor(self) *
-                self.relayEntrySubmissionFailureSlashingAmount) /
-            1e18;
+                self.relayEntrySubmissionFailureSlashingAmount) / 1e18
+        );
 
         _submitEntry(self, entry, groupPubKey);
 
@@ -208,13 +210,12 @@ library Relay {
     ///        the parameter.
     function setRelayEntrySubmissionFailureSlashingAmount(
         Data storage self,
-        uint256 newRelayEntrySubmissionFailureSlashingAmount
+        uint96 newRelayEntrySubmissionFailureSlashingAmount
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntrySubmissionFailureSlashingAmount = uint96(
-            newRelayEntrySubmissionFailureSlashingAmount
-        );
+        self
+            .relayEntrySubmissionFailureSlashingAmount = newRelayEntrySubmissionFailureSlashingAmount;
     }
 
     /// @notice Retries the current relay request in case a relay entry
