@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop */
 
 import { BigNumber } from "ethers"
-import { ethers, helpers, getUnnamedAccounts, waffle } from "hardhat"
+import {
+  ethers,
+  helpers,
+  getUnnamedAccounts,
+  waffle,
+  deployments,
+} from "hardhat"
 import { expect } from "chai"
 
 import blsData from "./data/bls"
@@ -14,24 +20,22 @@ import type {
   SortitionPool,
   BeaconDkgValidator as DKGValidator,
   BeaconDkg as DKG,
+  TokenStaking,
+  T,
 } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 const { to1e18 } = helpers.number
 
 const fixture = async () => {
-  const TestToken = await ethers.getContractFactory("TestToken")
-  const testToken = await TestToken.deploy()
-  await testToken.deployed()
-
-  const StakingStub = await ethers.getContractFactory("StakingStub")
-  const stakingStub = await StakingStub.deploy()
-  await stakingStub.deployed()
+  await deployments.fixture(["TokenStaking"])
+  const t: T = await ethers.getContract("T")
+  const staking: TokenStaking = await ethers.getContract("TokenStaking")
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    stakingStub.address,
-    testToken.address,
+    staking.address,
+    t.address,
     constants.poolWeightDivisor
   )) as SortitionPool
 

@@ -1,12 +1,16 @@
-import { ethers, helpers, getNamedAccounts } from "hardhat"
+import { ethers, helpers, deployments } from "hardhat"
 
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Contract } from "ethers"
 import type {
   SortitionPool,
   BeaconDkgValidator as DKGValidator,
   RandomBeaconStub,
+  TokenStaking,
   RandomBeaconGovernance,
-  StakingStub,
+  RandomBeaconStub__factory,
+  RandomBeaconGovernance__factory,
+  T,
 } from "../../typechain"
 
 const { to1e18 } = helpers.number
@@ -69,16 +73,6 @@ export async function blsDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function testTokenDeployment(): Promise<DeployedContracts> {
-  const TestToken = await ethers.getContractFactory("TestToken")
-  const testToken = await TestToken.deploy()
-  await testToken.deployed()
-
-  const contracts: DeployedContracts = { testToken }
-
-  return contracts
-}
-
 export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
   const reimbursementPool = await ReimbursementPool.deploy(
@@ -93,19 +87,24 @@ export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
 }
 
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
-  const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+  await deployments.fixture(["TokenStaking"])
+  const t: T = await ethers.getContract("T")
+  const staking: TokenStaking = await ethers.getContract("TokenStaking")
 
-  const { testToken } = await testTokenDeployment()
-
-  const StakingStub = await ethers.getContractFactory("StakingStub")
-  const stakingStub: StakingStub = await StakingStub.deploy()
+  // TODO: Implement Hardhat deployment scripts and load deployed contracts, same
+  // as it's done above for T and TokenStaking.
+  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    stakingStub.address,
-    testToken.address,
+    staking.address,
+    t.address,
     constants.poolWeightDivisor
   )) as SortitionPool
+
+  const Authorization = await ethers.getContractFactory("Authorization")
+  const authorization = await Authorization.deploy()
+  await authorization.deployed()
 
   const BeaconDkg = await ethers.getContractFactory("BeaconDkg")
   const dkg = await BeaconDkg.deploy()
@@ -129,6 +128,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
       {
         libraries: {
           BLS: (await blsDeployment()).bls.address,
+          Authorization: authorization.address,
           BeaconDkg: dkg.address,
           BeaconInactivity: inactivity.address,
         },
@@ -137,11 +137,13 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPool.address,
-    testToken.address,
-    stakingStub.address,
+    t.address,
+    staking.address,
     dkgValidator.address
   )
   await randomBeacon.deployed()
+
+  await staking.connect(deployer).approveApplication(randomBeacon.address)
 
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
 
@@ -149,9 +151,9 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const contracts: DeployedContracts = {
     sortitionPool,
-    stakingStub,
+    staking,
     randomBeacon,
-    testToken,
+    t,
   }
 
   return contracts

@@ -25,10 +25,9 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   RandomBeacon,
   RandomBeaconGovernance,
-  TestToken,
+  T,
   SortitionPool,
-  StakingStub,
-  IRandomBeaconStaking,
+  TokenStaking,
 } from "../typechain"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
 
@@ -50,6 +49,7 @@ const fixture = async () => {
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
     contracts.randomBeacon as RandomBeacon,
+    contracts.t as T,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
@@ -57,15 +57,15 @@ const fixture = async () => {
     contracts.randomBeaconGovernance as RandomBeaconGovernance
   const randomBeacon = contracts.randomBeacon as RandomBeaconTest
   const sortitionPool = contracts.sortitionPool as SortitionPool
-  const staking = contracts.stakingStub as StakingStub
-  const testToken = contracts.testToken as TestToken
+  const staking = contracts.staking as TokenStaking
+  const t = contracts.t as T
 
   return {
     randomBeaconGovernance,
     randomBeacon,
     sortitionPool,
     staking,
-    testToken,
+    t,
     signers,
   }
 }
@@ -83,8 +83,8 @@ describe("RandomBeacon - Group Creation", () => {
   let randomBeaconGovernance: RandomBeaconGovernance
   let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
-  let staking: StakingStub
-  let testToken: TestToken
+  let staking: TokenStaking
+  let t: T
 
   before(async () => {
     thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
@@ -94,7 +94,7 @@ describe("RandomBeacon - Group Creation", () => {
       randomBeacon: randomBeaconStub,
       sortitionPool,
       staking,
-      testToken,
+      t,
       signers,
     } = await waffle.loadFixture(fixture))
 
@@ -1453,7 +1453,7 @@ describe("RandomBeacon - Group Creation", () => {
 
                 initialDkgRewardsPoolBalance =
                   await randomBeacon.dkgRewardsPool()
-                initialSubmitterBalance = await testToken.balanceOf(
+                initialSubmitterBalance = await t.balanceOf(
                   await submitter.getAddress()
                 )
                 tx = await randomBeacon
@@ -1509,8 +1509,9 @@ describe("RandomBeacon - Group Creation", () => {
                   initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
                 ).to.be.equal(params.dkgResultSubmissionReward)
 
-                const currentSubmitterBalance: BigNumber =
-                  await testToken.balanceOf(await submitter.getAddress())
+                const currentSubmitterBalance: BigNumber = await t.balanceOf(
+                  await submitter.getAddress()
+                )
                 expect(
                   currentSubmitterBalance.sub(initialSubmitterBalance)
                 ).to.be.equal(params.dkgResultSubmissionReward)
@@ -1555,7 +1556,7 @@ describe("RandomBeacon - Group Creation", () => {
                   await mineBlocks(params.dkgSubmitterPrecedencePeriodLength)
                   initialDkgRewardsPoolBalance =
                     await randomBeacon.dkgRewardsPool()
-                  initApproverBalance = await testToken.balanceOf(
+                  initApproverBalance = await t.balanceOf(
                     await thirdParty.getAddress()
                   )
                   tx = randomBeacon
@@ -1580,7 +1581,7 @@ describe("RandomBeacon - Group Creation", () => {
                     )
                   ).to.be.equal(params.dkgResultSubmissionReward)
 
-                  const currentApproverBalance = await testToken.balanceOf(
+                  const currentApproverBalance = await t.balanceOf(
                     await thirdParty.getAddress()
                   )
                   expect(
@@ -1680,7 +1681,7 @@ describe("RandomBeacon - Group Creation", () => {
 
               initialDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
 
-              initialSubmitterBalance = await testToken.balanceOf(
+              initialSubmitterBalance = await t.balanceOf(
                 await anotherSubmitter.getAddress()
               )
 
@@ -1731,8 +1732,9 @@ describe("RandomBeacon - Group Creation", () => {
                 initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
               ).to.be.equal(params.dkgResultSubmissionReward)
 
-              const currentSubmitterBalance: BigNumber =
-                await testToken.balanceOf(await anotherSubmitter.getAddress())
+              const currentSubmitterBalance: BigNumber = await t.balanceOf(
+                await anotherSubmitter.getAddress()
+              )
               expect(
                 currentSubmitterBalance.sub(initialSubmitterBalance)
               ).to.be.equal(params.dkgResultSubmissionReward)
@@ -1947,9 +1949,7 @@ describe("RandomBeacon - Group Creation", () => {
             noMisbehaved
           ))
 
-          initApproverBalance = await testToken.balanceOf(
-            await submitter.getAddress()
-          )
+          initApproverBalance = await t.balanceOf(await submitter.getAddress())
 
           await mineBlocks(params.dkgResultChallengePeriodLength)
           tx = randomBeacon.connect(submitter).approveDkgResult(dkgResult)
@@ -1966,7 +1966,7 @@ describe("RandomBeacon - Group Creation", () => {
         it("should pay the approver the whole DKG rewards pool balance", async () => {
           expect(await randomBeacon.dkgRewardsPool()).to.be.equal(0)
 
-          const currentApproverBalance = await testToken.balanceOf(
+          const currentApproverBalance = await t.balanceOf(
             await submitter.getAddress()
           )
           expect(currentApproverBalance.sub(initApproverBalance)).to.be.equal(
@@ -2078,7 +2078,7 @@ describe("RandomBeacon - Group Creation", () => {
 
             initialDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
 
-            initialNotifierBalance = await testToken.balanceOf(
+            initialNotifierBalance = await t.balanceOf(
               await thirdParty.getAddress()
             )
             tx = await randomBeacon.connect(thirdParty).notifyDkgTimeout()
@@ -2103,7 +2103,7 @@ describe("RandomBeacon - Group Creation", () => {
               initialDkgRewardsPoolBalance.sub(currentDkgRewardsPoolBalance)
             ).to.be.equal(params.sortitionPoolUnlockingReward)
 
-            const currentNotifierBalance: BigNumber = await testToken.balanceOf(
+            const currentNotifierBalance: BigNumber = await t.balanceOf(
               await thirdParty.getAddress()
             )
             expect(
@@ -2299,13 +2299,17 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("at the beginning of challenge period", async () => {
             context("called by a third party", async () => {
-              let tx: ContractTransaction
+              let challengeTx: ContractTransaction
+              let slashingTx: ContractTransaction
+
               before(async () => {
                 await createSnapshot()
 
-                tx = await randomBeacon
+                challengeTx = await randomBeacon
                   .connect(thirdParty)
                   .challengeDkgResult(dkgResult)
+
+                slashingTx = await staking.processSlashing(1)
               })
 
               after(async () => {
@@ -2313,7 +2317,7 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should emit DkgResultChallenged event", async () => {
-                await expect(tx)
+                await expect(challengeTx)
                   .to.emit(randomBeacon, "DkgResultChallenged")
                   .withArgs(
                     dkgResultHash,
@@ -2327,17 +2331,27 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should emit DkgMaliciousResultSlashed event", async () => {
-                await expect(tx)
+                await expect(challengeTx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
                   .withArgs(dkgResultHash, to1e18(50000), submitter.address)
               })
 
+              it("should not emit DkgMaliciousResultSlashingFailed event", async () => {
+                await expect(challengeTx).to.not.emit(
+                  randomBeacon,
+                  "DkgMaliciousResultSlashingFailed"
+                )
+              })
+
               it("should slash malicious result submitter", async () => {
-                await expect(tx)
-                  .to.emit(staking, "Seized")
-                  .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-                    submitter.address,
-                  ])
+                const stakingProvider =
+                  await randomBeacon.operatorToStakingProvider(
+                    submitter.address
+                  )
+
+                await expect(slashingTx)
+                  .to.emit(staking, "TokensSeized")
+                  .withArgs(stakingProvider, to1e18(50000), false)
               })
             })
           })
@@ -2358,13 +2372,17 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             context("called by a third party", async () => {
-              let tx: ContractTransaction
+              let challengeTx: ContractTransaction
+              let slashingTx: ContractTransaction
+
               before(async () => {
                 await createSnapshot()
 
-                tx = await randomBeacon
+                challengeTx = await randomBeacon
                   .connect(thirdParty)
                   .challengeDkgResult(dkgResult)
+
+                slashingTx = await staking.processSlashing(1)
               })
 
               after(async () => {
@@ -2372,7 +2390,7 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should emit DkgResultChallenged event", async () => {
-                await expect(tx)
+                await expect(challengeTx)
                   .to.emit(randomBeacon, "DkgResultChallenged")
                   .withArgs(
                     dkgResultHash,
@@ -2386,17 +2404,27 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should emit DkgMaliciousResultSlashed event", async () => {
-                await expect(tx)
+                await expect(challengeTx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
                   .withArgs(dkgResultHash, to1e18(50000), submitter.address)
               })
 
+              it("should not emit DkgMaliciousResultSlashingFailed event", async () => {
+                await expect(challengeTx).to.not.emit(
+                  randomBeacon,
+                  "DkgMaliciousResultSlashingFailed"
+                )
+              })
+
               it("should slash malicious result submitter", async () => {
-                await expect(tx)
-                  .to.emit(staking, "Seized")
-                  .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-                    submitter.address,
-                  ])
+                const stakingProvider =
+                  await randomBeacon.operatorToStakingProvider(
+                    submitter.address
+                  )
+
+                await expect(slashingTx)
+                  .to.emit(staking, "TokensSeized")
+                  .withArgs(stakingProvider, to1e18(50000), false)
               })
             })
           })
@@ -2421,15 +2449,16 @@ describe("RandomBeacon - Group Creation", () => {
             })
           })
 
-          context("with token staking seize call failure", async () => {
-            let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+          // FIXME: Blocked by https://github.com/defi-wonderland/smock/issues/101
+          context.skip("with token staking seize call failure", async () => {
+            let tokenStakingFake: FakeContract<TokenStaking>
             let tx: Promise<ContractTransaction>
 
             before(async () => {
               await createSnapshot()
 
               tokenStakingFake = await fakeTokenStaking(randomBeacon)
-              tokenStakingFake.seize.reverts()
+              tokenStakingFake.seize.reverts("faked function revert")
 
               tx = randomBeacon
                 .connect(thirdParty)
@@ -2483,7 +2512,8 @@ describe("RandomBeacon - Group Creation", () => {
             let dkgResultHash: string
             let dkgResult: DKG.ResultStruct
             let submitter: SignerWithAddress
-            let tx: ContractTransaction
+            let challengeTx: ContractTransaction
+            let slashingTx: ContractTransaction
 
             before(async () => {
               await createSnapshot()
@@ -2496,9 +2526,11 @@ describe("RandomBeacon - Group Creation", () => {
                   noMisbehaved
                 ))
 
-              tx = await randomBeacon
+              challengeTx = await randomBeacon
                 .connect(thirdParty)
                 .challengeDkgResult(dkgResult)
+
+              slashingTx = await staking.processSlashing(1)
             })
 
             after(async () => {
@@ -2506,7 +2538,7 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             it("should emit DkgResultChallenged event", async () => {
-              await expect(tx)
+              await expect(challengeTx)
                 .to.emit(randomBeacon, "DkgResultChallenged")
                 .withArgs(
                   dkgResultHash,
@@ -2520,17 +2552,25 @@ describe("RandomBeacon - Group Creation", () => {
             })
 
             it("should emit DkgMaliciousResultSlashed event", async () => {
-              await expect(tx)
+              await expect(challengeTx)
                 .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
                 .withArgs(dkgResultHash, to1e18(50000), submitter.address)
             })
 
+            it("should not emit DkgMaliciousResultSlashingFailed event", async () => {
+              await expect(challengeTx).to.not.emit(
+                randomBeacon,
+                "DkgMaliciousResultSlashingFailed"
+              )
+            })
+
             it("should slash malicious result submitter", async () => {
-              await expect(tx)
-                .to.emit(staking, "Seized")
-                .withArgs(to1e18(50000), 100, await thirdParty.getAddress(), [
-                  submitter.address,
-                ])
+              const stakingProvider =
+                await randomBeacon.operatorToStakingProvider(submitter.address)
+
+              await expect(slashingTx)
+                .to.emit(staking, "TokensSeized")
+                .withArgs(stakingProvider, to1e18(50000), false)
             })
           }
         )
@@ -2705,12 +2745,10 @@ describe("RandomBeacon - Group Creation", () => {
       await createSnapshot()
 
       previousDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
-      previousRandomBeaconBalance = await testToken.balanceOf(
-        randomBeacon.address
-      )
+      previousRandomBeaconBalance = await t.balanceOf(randomBeacon.address)
 
-      await testToken.mint(await thirdParty.getAddress(), amount)
-      await testToken.connect(thirdParty).approve(randomBeacon.address, amount)
+      await t.mint(await thirdParty.getAddress(), amount)
+      await t.connect(thirdParty).approve(randomBeacon.address, amount)
 
       await randomBeacon.fundDkgRewardsPool(
         await thirdParty.getAddress(),
@@ -2730,9 +2768,7 @@ describe("RandomBeacon - Group Creation", () => {
     })
 
     it("should transfer tokens to the random beacon contract", async () => {
-      const currentRandomBeaconBalance = await testToken.balanceOf(
-        randomBeacon.address
-      )
+      const currentRandomBeaconBalance = await t.balanceOf(randomBeacon.address)
       expect(
         currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
       ).to.be.equal(amount)
@@ -2740,10 +2776,8 @@ describe("RandomBeacon - Group Creation", () => {
   })
 
   async function fundDkgRewardsPool(donateAmount: BigNumber) {
-    await testToken.mint(await thirdParty.getAddress(), donateAmount)
-    await testToken
-      .connect(thirdParty)
-      .approve(randomBeacon.address, donateAmount)
+    await t.mint(await thirdParty.getAddress(), donateAmount)
+    await t.connect(thirdParty).approve(randomBeacon.address, donateAmount)
 
     await randomBeacon.fundDkgRewardsPool(
       await thirdParty.getAddress(),

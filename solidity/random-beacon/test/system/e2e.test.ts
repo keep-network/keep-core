@@ -1,12 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import {
-  ethers,
-  waffle,
-  helpers,
-  getUnnamedAccounts,
-  getNamedAccounts,
-} from "hardhat"
+import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
 import { expect } from "chai"
 
 import {
@@ -24,7 +18,7 @@ import blsData from "../data/bls"
 import { registerOperators } from "../utils/operators"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { RandomBeacon, RandomBeaconStub, TestToken } from "../../typechain"
+import type { RandomBeacon, RandomBeaconStub, T } from "../../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
@@ -37,15 +31,16 @@ const fixture = async () => {
 
   await registerOperators(
     contracts.randomBeacon as RandomBeacon,
+    contracts.t as T,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
   const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
-  const testToken = contracts.testToken as TestToken
+  const t = contracts.t as T
 
   return {
     randomBeacon,
-    testToken,
+    t,
   }
 }
 
@@ -72,17 +67,17 @@ describe("System -- e2e", () => {
   ]
 
   let randomBeacon: RandomBeacon
-  let testToken: TestToken
+  let t: T
   let requester: SignerWithAddress
   let owner: SignerWithAddress
 
   before(async () => {
     const contracts = await waffle.loadFixture(fixture)
 
-    owner = await ethers.getSigner((await getNamedAccounts()).deployer)
+    owner = await ethers.getNamedSigner("deployer")
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
     randomBeacon = contracts.randomBeacon
-    testToken = contracts.testToken
+    t = contracts.t
 
     await randomBeacon
       .connect(owner)
@@ -140,7 +135,7 @@ describe("System -- e2e", () => {
         .approveDkgResult(dkgResult.dkgResult)
 
       for (let i = 1; i <= 14; i++) {
-        await approveTestToken(requester)
+        await approveTokenForFee(requester)
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
         const txSubmitRelayEntry = await randomBeacon
@@ -197,10 +192,8 @@ describe("System -- e2e", () => {
     })
   })
 
-  async function approveTestToken(_requester) {
-    await testToken.mint(_requester.address, relayRequestFee)
-    await testToken
-      .connect(_requester)
-      .approve(randomBeacon.address, relayRequestFee)
+  async function approveTokenForFee(_requester) {
+    await t.mint(_requester.address, relayRequestFee)
+    await t.connect(_requester).approve(randomBeacon.address, relayRequestFee)
   }
 })

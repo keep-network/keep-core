@@ -9,7 +9,7 @@ import { registerOperators } from "./utils/operators"
 import type { DeployedContracts } from "./fixtures"
 import type {
   RandomBeaconStub,
-  TestToken,
+  T,
   CallbackContractStub,
   RandomBeacon,
 } from "../typechain"
@@ -23,7 +23,7 @@ const fixture = async () => {
 
   const contracts: DeployedContracts = {
     randomBeacon: deployment.randomBeacon,
-    testToken: deployment.testToken,
+    t: deployment.t,
     callbackContractStub: await (
       await ethers.getContractFactory("CallbackContractStub")
     ).deploy(),
@@ -36,6 +36,7 @@ const fixture = async () => {
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
     contracts.randomBeacon as RandomBeacon,
+    contracts.t as T,
     (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
   )
 
@@ -49,7 +50,7 @@ describe("RandomBeacon - Callback", () => {
   let submitter: SignerWithAddress
 
   let randomBeacon: RandomBeaconStub
-  let testToken: TestToken
+  let t: T
   let callbackContract: CallbackContractStub
   let callbackContract1: CallbackContractStub
 
@@ -60,7 +61,7 @@ describe("RandomBeacon - Callback", () => {
     const { contracts } = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
-    testToken = contracts.testToken as TestToken
+    t = contracts.t as T
     callbackContract = contracts.callbackContractStub as CallbackContractStub
     callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
   })
@@ -69,7 +70,7 @@ describe("RandomBeacon - Callback", () => {
     before(async () => {
       await createSnapshot()
 
-      await approveTestToken()
+      await approveTokenForFee()
     })
 
     after(async () => {
@@ -102,7 +103,7 @@ describe("RandomBeacon - Callback", () => {
           .connect(submitter)
           ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
-        await approveTestToken()
+        await approveTokenForFee()
 
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
@@ -124,7 +125,7 @@ describe("RandomBeacon - Callback", () => {
           .connect(submitter)
           ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
-        await approveTestToken()
+        await approveTokenForFee()
 
         await randomBeacon
           .connect(requester)
@@ -143,7 +144,7 @@ describe("RandomBeacon - Callback", () => {
     before(async () => {
       await createSnapshot()
 
-      await approveTestToken()
+      await approveTokenForFee()
     })
 
     after(async () => {
@@ -223,9 +224,9 @@ describe("RandomBeacon - Callback", () => {
     })
   })
 
-  async function approveTestToken() {
-    await testToken.mint(requester.address, params.relayRequestFee)
-    await testToken
+  async function approveTokenForFee() {
+    await t.mint(requester.address, params.relayRequestFee)
+    await t
       .connect(requester)
       .approve(randomBeacon.address, params.relayRequestFee)
   }
