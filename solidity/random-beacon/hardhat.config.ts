@@ -65,6 +65,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
+    except: ["TokenStaking$"],
   },
   mocha: {
     timeout: 60000,
