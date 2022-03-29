@@ -16,9 +16,6 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-// TODO: This contract is just a Stub implementation that was used for gas
-// comparisons for Wallets creation. It should be implemented according to the
-// Wallets' actual use case.
 library Wallets {
     struct Wallet {
         // Keccak256 hash of group members identifiers array. Group members do not
@@ -74,7 +71,7 @@ library Wallets {
     /// @param walletID Wallet's ID
     /// @return True if a wallet is registered, false otherwise
     function isWalletRegistered(Data storage self, bytes32 walletID)
-        public
+        internal
         view
         returns (bool)
     {
@@ -100,7 +97,7 @@ library Wallets {
     /// @param walletID ID of the wallet
     /// @return Uncompressed public key of the wallet
     function getWalletPublicKey(Data storage self, bytes32 walletID)
-        external
+        internal
         view
         returns (bytes memory)
     {
