@@ -1,6 +1,6 @@
 {
   "name": "dashboard",
-  "version": "1.17.0-pre",
+  "version": "1.19.0-pre",
   "private": true,
   "license": "MIT",
   "dependencies": {
