@@ -948,7 +948,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
     ///         the claim must be one of the claim signers. This function
     ///         can be called only for active and non-terminated groups.
-    /// @param claim Failure claim.
+    /// @param claim Operator inactivity claim.
     /// @param nonce Current inactivity claim nonce for the given group. Must
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
