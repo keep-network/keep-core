@@ -65,8 +65,8 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newDkgResultSubmissionGas;
     uint256 public dkgResultSubmissionGasChangeInitiated;
 
-    uint256 public newDkgApprovalGasOffset;
-    uint256 public dkgApprovalGasOffsetChangeInitiated;
+    uint256 public newDkgResultApprovalGasOffset;
+    uint256 public dkgResultApprovalGasOffsetChangeInitiated;
 
     address payable public newReimbursementPool;
     uint256 public reimbursementPoolChangeInitiated;
@@ -160,11 +160,11 @@ contract WalletRegistryGovernance is Ownable {
     );
     event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
 
-    event DkgApprovalGasOffsetUpdateStarted(
-        uint256 dkgApprovalGasOffset,
+    event DkgResultApprovalGasOffsetUpdateStarted(
+        uint256 dkgResultApprovalGasOffset,
         uint256 timestamp
     );
-    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
+    event DkgResultApprovalGasOffsetUpdated(uint256 dkgResultApprovalGasOffset);
 
     event ReimbursementPoolUpdateStarted(
         address reimbursementPool,
@@ -499,7 +499,10 @@ contract WalletRegistryGovernance is Ownable {
     {
         emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateDkgResultSubmissionGas(newDkgResultSubmissionGas);
+        walletRegistry.updateGasParameters(
+            newDkgResultSubmissionGas,
+            walletRegistry.dkgResultApprovalGasOffset()
+        );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
     }
@@ -544,34 +547,36 @@ contract WalletRegistryGovernance is Ownable {
 
     /// @notice Begins the dkg approval gas offset update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgApprovalGasOffset New DKG result approval gas.
-    function beginDkgApprovalGasOffsetUpdate(uint256 _newDkgApprovalGasOffset)
-        external
-        onlyOwner
-    {
+    /// @param _newDkgResultApprovalGasOffset New DKG result approval gas.
+    function beginDkgResultApprovalGasOffsetUpdate(
+        uint256 _newDkgResultApprovalGasOffset
+    ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
-        newDkgApprovalGasOffset = _newDkgApprovalGasOffset;
-        dkgApprovalGasOffsetChangeInitiated = block.timestamp;
-        emit DkgApprovalGasOffsetUpdateStarted(
-            _newDkgApprovalGasOffset,
+        newDkgResultApprovalGasOffset = _newDkgResultApprovalGasOffset;
+        dkgResultApprovalGasOffsetChangeInitiated = block.timestamp;
+        emit DkgResultApprovalGasOffsetUpdateStarted(
+            _newDkgResultApprovalGasOffset,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the dkg approval gas offset update process.
+    /// @notice Finalizes the dkg result approval gas offset update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgApprovalGasOffsetUpdate()
+    function finalizeDkgResultApprovalGasOffsetUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(dkgApprovalGasOffsetChangeInitiated)
+        onlyAfterGovernanceDelay(dkgResultApprovalGasOffsetChangeInitiated)
     {
-        emit DkgApprovalGasOffsetUpdated(newDkgApprovalGasOffset);
+        emit DkgResultApprovalGasOffsetUpdated(newDkgResultApprovalGasOffset);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateDkgApprovalGasOffset(newDkgApprovalGasOffset);
-        dkgApprovalGasOffsetChangeInitiated = 0;
-        newDkgApprovalGasOffset = 0;
+        walletRegistry.updateGasParameters(
+            walletRegistry.dkgResultSubmissionGas(),
+            newDkgResultApprovalGasOffset
+        );
+        dkgResultApprovalGasOffsetChangeInitiated = 0;
+        newDkgResultApprovalGasOffset = 0;
     }
 
     /// @notice Begins the sortition pool rewards ban duration update process.
@@ -933,15 +938,16 @@ contract WalletRegistryGovernance is Ownable {
         return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the dkg approval gas offset can
-    ///         be updated.
+    /// @notice Get the time remaining until the dkg result approval gas offset
+    ///         can be updated.
     /// @return Remaining time in seconds.
-    function getRemainingDkgApprovalGasOffsetUpdateTime()
+    function getRemainingDkgResultApprovalGasOffsetUpdateTime()
         external
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(dkgApprovalGasOffsetChangeInitiated);
+        return
+            getRemainingChangeTime(dkgResultApprovalGasOffsetChangeInitiated);
     }
 
     /// @notice Get the time remaining until reimbursement pool can be updated.

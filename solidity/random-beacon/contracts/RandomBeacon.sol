@@ -20,7 +20,7 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
-import "./libraries/Heartbeat.sol";
+import "./libraries/BeaconInactivity.sol";
 import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
 import {BeaconDkgValidator as DKGValidator} from "./BeaconDkgValidator.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -119,8 +119,9 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     uint256 public unauthorizedSigningSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
-    ///         who missed their turn for relay entry / DKG result submission
-    ///         or operators who failed a heartbeat.
+    ///         who misbehaved during DKG by being inactive or disqualified and
+    ///         for operators that were identified by the rest of group members
+    ///         as inactive via `notifyOperatorInactivity`.
     uint256 public sortitionPoolRewardsBanDuration;
 
     /// @notice Percentage of the staking contract malicious behavior
@@ -152,10 +153,10 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     // Other parameters
 
-    /// @notice Stores current failed heartbeat nonce for given group.
+    /// @notice Stores current operator inactivity claim nonce for given group.
     ///         Each claim is made with an unique nonce which protects
     ///         against claim replay.
-    mapping(uint64 => uint256) public failedHeartbeatNonce; // groupId -> nonce
+    mapping(uint64 => uint256) public inactivityClaimNonce; // groupId -> nonce
 
     // External dependencies
 
@@ -170,10 +171,6 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         rewards for actors approving DKG result or notifying about
     ///         DKG timeout.
     uint256 public dkgRewardsPool;
-    /// @notice Rewards pool for heartbeat notifiers. This pool is funded from
-    ///         external donates. Funds are used to cover rewards for actors
-    ///         notifying about failed heartbeats.
-    uint256 public heartbeatNotifierRewardsPool;
 
     // Libraries data storages
 
@@ -318,7 +315,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event HeartbeatFailed(uint64 groupId, uint256 nonce, address notifier);
+    event InactivityClaimed(uint64 groupId, uint256 nonce, address notifier);
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -938,30 +935,27 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         }
     }
 
-    /// @notice Notifies about a failed group heartbeat. Using this function,
+    /// @notice Notifies about operators who are inactive. Using this function,
     ///         a majority of the group can decide about punishing specific
-    ///         group members who failed to provide a heartbeat. If provided
+    ///         group members who constantly fail doing their job. If the provided
     ///         claim is proved to be valid and signed by sufficient number
-    ///         of group members, operators of members deemed as failed are
+    ///         of group members, operators of members deemed as inactive are
     ///         banned for sortition pool rewards for duration specified by
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
-    ///         the claim must be one of the claim signers. The sender is
-    ///         rewarded from `heartbeatNotifierRewardsPool`. Exact reward
-    ///         amount is multiplication of operators marked as ineligible
-    ///         and `ineligibleOperatorNotifierReward` factor. This function
+    ///         the claim must be one of the claim signers. This function
     ///         can be called only for active and non-terminated groups.
     /// @param claim Failure claim.
-    /// @param nonce Current failed heartbeat nonce for given group. Must
+    /// @param nonce Current inactivity claim nonce for the given group. Must
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
-    function notifyFailedHeartbeat(
-        Heartbeat.FailureClaim calldata claim,
+    function notifyOperatorInactivity(
+        BeaconInactivity.Claim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
         uint64 groupId = claim.groupId;
 
-        require(nonce == failedHeartbeatNonce[groupId], "Invalid nonce");
+        require(nonce == inactivityClaimNonce[groupId], "Invalid nonce");
 
         require(
             groups.isGroupActive(groupId),
@@ -975,27 +969,22 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             "Invalid group members"
         );
 
-        uint32[] memory ineligibleOperators = Heartbeat.verifyFailureClaim(
+        uint32[] memory ineligibleOperators = BeaconInactivity.verifyClaim(
             sortitionPool,
             claim,
-            group,
+            group.groupPubKey,
             nonce,
             groupMembers
         );
 
-        failedHeartbeatNonce[groupId]++;
+        inactivityClaimNonce[groupId]++;
 
-        emit HeartbeatFailed(groupId, nonce, msg.sender);
+        emit InactivityClaimed(groupId, nonce, msg.sender);
 
         sortitionPool.setRewardIneligibility(
             ineligibleOperators,
             // solhint-disable-next-line not-rely-on-time
             block.timestamp + sortitionPoolRewardsBanDuration
-        );
-
-        transferHeartbeatNotifierRewards(
-            msg.sender,
-            ineligibleOperatorNotifierReward * ineligibleOperators.length
         );
     }
 
@@ -1008,34 +997,12 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         tToken.safeTransferFrom(from, address(this), value);
     }
 
-    /// @notice Funds the heartbeat notifier rewards pool.
-    /// @param from Address of the funder. The funder must give a sufficient
-    ///        allowance for this contract to make a successful call.
-    /// @param value Token value transferred by the funder.
-    function fundHeartbeatNotifierRewardsPool(address from, uint256 value)
-        external
-    {
-        heartbeatNotifierRewardsPool += value;
-        tToken.safeTransferFrom(from, address(this), value);
-    }
-
     /// @notice Makes a transfer using DKG rewards pool.
     /// @param to Address of the recipient.
     /// @param value Token value transferred to the recipient.
     function transferDkgRewards(address to, uint256 value) internal {
         uint256 actualValue = Math.min(dkgRewardsPool, value);
         dkgRewardsPool -= actualValue;
-        tToken.safeTransfer(to, actualValue);
-    }
-
-    /// @notice Makes a transfer using heartbeat notifier rewards pool.
-    /// @param to Address of the recipient.
-    /// @param value Token value transferred to the recipient.
-    function transferHeartbeatNotifierRewards(address to, uint256 value)
-        internal
-    {
-        uint256 actualValue = Math.min(heartbeatNotifierRewardsPool, value);
-        heartbeatNotifierRewardsPool -= actualValue;
         tToken.safeTransfer(to, actualValue);
     }
 

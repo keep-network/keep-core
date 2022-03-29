@@ -75,9 +75,9 @@ contract WalletRegistry is
     ///         other member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 275000;
 
-    // @notice Gas meant to balance the DKG approval's overall cost. Can be updated
-    //         by the governace based on the current market conditions.
-    uint256 public dkgApprovalGasOffset = 65000;
+    // @notice Gas meant to balance the DKG result approval's overall cost. Can
+    //         be updated by the governace based on the current market conditions.
+    uint256 public dkgResultApprovalGasOffset = 65000;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for DKG result submission or who failed
@@ -152,13 +152,14 @@ contract WalletRegistry is
         uint256 resultSubmitterPrecedencePeriodLength
     );
 
+    event GasParametersUpdated(
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset
+    );
+
     event RandomBeaconUpgraded(address randomBeacon);
 
     event WalletOwnerUpdated(address walletOwner);
-
-    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
-
-    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
 
     event OperatorRegistered(
         address indexed stakingProvider,
@@ -228,8 +229,8 @@ contract WalletRegistry is
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
-        // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
+
         sortitionPoolRewardsBanDuration = 2 weeks;
 
         // slither-disable-next-line too-many-digits
@@ -240,10 +241,10 @@ contract WalletRegistry is
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
         dkg.init(_sortitionPool, _ecdsaDkgValidator);
-        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time // TODO: Verify value
+        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
-        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+        dkg.setResultSubmissionTimeout(100 * 20);
+        dkg.setSubmitterPrecedencePeriodLength(20);
     }
 
     /// @notice Used by staking provider to set operator address that will
@@ -383,6 +384,17 @@ contract WalletRegistry is
         emit RandomBeaconUpgraded(address(_randomBeacon));
     }
 
+    /// @notice Updates the wallet owner.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters. The wallet owner has to implement `IWalletOwner`
+    ///      interface.
+    /// @param _walletOwner New wallet owner address.
+    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
+        walletOwner = _walletOwner;
+        emit WalletOwnerUpdated(address(_walletOwner));
+    }
+
     /// @notice Updates the values of authorization parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
@@ -471,41 +483,21 @@ contract WalletRegistry is
         emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
     }
 
-    /// @notice Updates the values of the wallet parameters.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
-    ///      validating parameters. The wallet owner has to implement `IWalletOwner`
-    ///      interface.
-    /// @param _walletOwner New wallet owner address.
-    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
-        walletOwner = _walletOwner;
-        emit WalletOwnerUpdated(address(_walletOwner));
-    }
-
-    /// @notice Updates the dkg result submission gas.
+    /// @notice Updates the values of gas-related parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionGas New dkg result submission gas.
-    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas)
-        external
-        onlyOwner
-    {
+    function updateGasParameters(
+        uint256 _dkgResultSubmissionGas,
+        uint256 _dkgResultApprovalGasOffset
+    ) external onlyOwner {
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
-        emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
-    }
+        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
 
-    /// @notice Updates the dkg approval gas offset.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
-    ///      validating parameters.
-    /// @param _dkgApprovalGasOffset New dkg result approval gas.
-    function updateDkgApprovalGasOffset(uint256 _dkgApprovalGasOffset)
-        external
-        onlyOwner
-    {
-        dkgApprovalGasOffset = _dkgApprovalGasOffset;
-        emit DkgApprovalGasOffsetUpdated(_dkgApprovalGasOffset);
+        emit GasParametersUpdated(
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset
+        );
     }
 
     /// @notice Requests a new wallet creation.
@@ -600,7 +592,7 @@ contract WalletRegistry is
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
-                dkgApprovalGasOffset,
+                dkgResultApprovalGasOffset,
             msg.sender
         );
     }
@@ -722,9 +714,6 @@ contract WalletRegistry is
     function isWalletRegistered(bytes32 walletID) external view returns (bool) {
         return wallets.isWalletRegistered(walletID);
     }
-
-    // TODO: Add function to close the Wallet so the members are notified that
-    // they no longer need to track the wallet.
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters()
