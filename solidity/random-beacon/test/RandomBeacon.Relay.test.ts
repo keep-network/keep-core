@@ -112,7 +112,7 @@ describe("RandomBeacon - Relay", () => {
     } = await waffle.loadFixture(fixture))
 
     membersIDs = members.map((member) => member.id)
-    membersAddresses = members.map((member) => member.address)
+    membersAddresses = members.map((member) => member.signer.address)
   })
 
   describe("requestRelayEntry", () => {
@@ -1111,7 +1111,7 @@ describe("RandomBeacon - Relay", () => {
                       await createSnapshot()
 
                       // Assume claim sender is the first signing member.
-                      claimSender = await ethers.getSigner(members[0].address)
+                      claimSender = members[0].signer
 
                       initialNonce = await randomBeacon.inactivityClaimNonce(
                         groupId
@@ -1273,9 +1273,7 @@ describe("RandomBeacon - Relay", () => {
                       // Assume claim sender is member `34` - the first member
                       // who did not sign the claim. We take index `33` since
                       // `members` array is zero-based.
-                      const claimSender = await ethers.getSigner(
-                        members[33].address
-                      )
+                      const claimSender = members[33].signer
 
                       await expect(
                         randomBeacon

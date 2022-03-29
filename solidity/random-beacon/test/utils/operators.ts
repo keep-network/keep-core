@@ -4,12 +4,13 @@ import { ethers } from "hardhat"
 
 import { constants } from "../fixtures"
 
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Address } from "hardhat-deploy/types"
 import type { BigNumber } from "ethers"
 import type { RandomBeacon } from "../../typechain"
 
 export type OperatorID = number
-export type Operator = { id: OperatorID; address: Address }
+export type Operator = { id: OperatorID; signer: SignerWithAddress }
 
 export async function registerOperators(
   randomBeacon: RandomBeacon,
@@ -39,7 +40,7 @@ export async function registerOperators(
 
     const id = await sortitionPool.getOperatorID(address)
 
-    operators.push({ id, address })
+    operators.push({ id, signer: operator })
   }
 
   return operators
