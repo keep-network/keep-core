@@ -15,7 +15,6 @@ export const constants = {
   groupSize: 64,
   groupThreshold: 33,
   offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
-  minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
 }
 
