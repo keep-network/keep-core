@@ -8,6 +8,7 @@ import "@nomiclabs/hardhat-waffle"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "@typechain/hardhat"
+import "hardhat-dependency-compiler"
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -59,6 +60,13 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0, // take the first account as deployer
     },
+  },
+  dependencyCompiler: {
+    paths: [
+      "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
+    ],
+    keep: true,
   },
   contractSizer: {
     alphaSort: true,
