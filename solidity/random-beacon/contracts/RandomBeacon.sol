@@ -774,14 +774,16 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             maliciousSubmitter
         );
 
-        address[] memory operatorWrapper = new address[](1);
-        operatorWrapper[0] = maliciousSubmitterAddresses;
+        address[] memory stakingProviderWrapper = new address[](1);
+        stakingProviderWrapper[0] = operatorToStakingProvider(
+            maliciousSubmitterAddresses
+        );
         try
             staking.seize(
                 slashingAmount,
                 dkgMaliciousResultNotificationRewardMultiplier,
                 msg.sender,
-                operatorWrapper
+                stakingProviderWrapper
             )
         {
             // slither-disable-next-line reentrancy-events
@@ -909,7 +911,16 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             address[] memory groupMembersAddresses = sortitionPool
                 .getIDOperators(groupMembers);
 
-            try staking.slash(slashingAmount, groupMembersAddresses) {
+            address[] memory stakingProvidersAddresses = new address[](
+                groupMembersAddresses.length
+            );
+            for (uint256 i = 0; i < groupMembersAddresses.length; i++) {
+                stakingProvidersAddresses[i] = operatorToStakingProvider(
+                    groupMembersAddresses[i]
+                );
+            }
+
+            try staking.slash(slashingAmount, stakingProvidersAddresses) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
@@ -953,12 +964,21 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             groupMembers
         );
 
+        address[] memory stakingProvidersAddresses = new address[](
+            groupMembersAddresses.length
+        );
+        for (uint256 i = 0; i < groupMembersAddresses.length; i++) {
+            stakingProvidersAddresses[i] = operatorToStakingProvider(
+                groupMembersAddresses[i]
+            );
+        }
+
         try
             staking.seize(
                 slashingAmount,
                 relayEntryTimeoutNotificationRewardMultiplier,
                 msg.sender,
-                groupMembersAddresses
+                stakingProvidersAddresses
             )
         {
             // slither-disable-next-line reentrancy-events
@@ -1037,12 +1057,21 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             groupMembers
         );
 
+        address[] memory stakingProvidersAddresses = new address[](
+            groupMembersAddresses.length
+        );
+        for (uint256 i = 0; i < groupMembersAddresses.length; i++) {
+            stakingProvidersAddresses[i] = operatorToStakingProvider(
+                groupMembersAddresses[i]
+            );
+        }
+
         try
             staking.seize(
                 unauthorizedSigningSlashingAmount,
                 unauthorizedSigningNotificationRewardMultiplier,
                 msg.sender,
-                groupMembersAddresses
+                stakingProvidersAddresses
             )
         {
             // slither-disable-next-line reentrancy-events
