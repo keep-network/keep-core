@@ -131,10 +131,10 @@ library Relay {
         Data storage self,
         bytes calldata entry,
         bytes storage groupPubKey
-    ) internal returns (uint256) {
+    ) internal returns (uint96) {
         // If the soft timeout has been exceeded apply stake slashing for
         // all group members. Otherwise, no slashing.
-        uint256 slashingAmount = calculateSlashingAmount(self);
+        uint96 slashingAmount = calculateSlashingAmount(self);
 
         _submitEntry(self, entry, groupPubKey);
 
@@ -172,7 +172,8 @@ library Relay {
     ///         in case the relay entry was submitted after the soft timeout.
     function calculateSlashingAmount(Data storage self)
         internal
-        returns (uint256)
+        view
+        returns (uint96)
     {
         uint256 softTimeout = softTimeoutBlock(self);
 
@@ -186,9 +187,11 @@ library Relay {
             }
 
             return
-                (submissionDelay *
-                    self.relayEntrySubmissionFailureSlashingAmount) /
-                self.relayEntryHardTimeout;
+                uint96(
+                    (submissionDelay *
+                        self.relayEntrySubmissionFailureSlashingAmount) /
+                        self.relayEntryHardTimeout
+                );
         }
 
         return 0;

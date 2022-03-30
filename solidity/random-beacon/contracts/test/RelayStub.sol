@@ -29,7 +29,7 @@ contract RelayStub {
         );
     }
 
-    function calculateSlashingAmount() external returns (uint256) {
+    function calculateSlashingAmount() external view returns (uint256) {
         return relay.calculateSlashingAmount();
     }
 }
