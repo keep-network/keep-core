@@ -780,7 +780,46 @@ describe("WalletRegistry - Inactivity", () => {
               0,
               membersIDs
             )
-          ).to.be.revertedWith("Wallet with given ID has not been registered")
+          ).to.be.revertedWith(
+            "Wallet with the given ID has not been registered"
+          )
+        })
+      })
+
+      context("when wallet has been closed", async () => {
+        before("close the wallet", async () => {
+          await createSnapshot()
+          await walletRegistry.connect(walletOwner.wallet).closeWallet(walletID)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should revert", async () => {
+          const { signatures, signingMembersIndices } =
+            await signOperatorInactivityClaim(
+              members,
+              0,
+              walletPublicKey,
+              subsequentInactiveMembersIndices,
+              groupThreshold
+            )
+
+          await expect(
+            walletRegistry.notifyOperatorInactivity(
+              {
+                walletID,
+                inactiveMembersIndices: subsequentInactiveMembersIndices,
+                signatures,
+                signingMembersIndices,
+              },
+              0,
+              membersIDs
+            )
+          ).to.be.revertedWith(
+            "Wallet with the given ID has not been registered"
+          )
         })
       })
     })
