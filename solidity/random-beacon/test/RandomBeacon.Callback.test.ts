@@ -1,4 +1,4 @@
-import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import blsData from "./data/bls"
@@ -32,7 +32,7 @@ const fixture = async () => {
     ).deploy(),
   }
 
-  // Accounts offset provided to slice getUnnamedAccounts have to include number
+  // Accounts offset provided to slice getUnnamedSigners have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
     contracts.randomBeacon as RandomBeacon,
@@ -56,8 +56,7 @@ describe("RandomBeacon - Callback", () => {
   let callbackContract1: CallbackContractStub
 
   before(async () => {
-    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-    submitter = await ethers.getSigner((await getUnnamedAccounts())[2])
+    ;[requester, submitter] = await ethers.getUnnamedSigners()
 
     const { contracts } = await waffle.loadFixture(fixture)
 

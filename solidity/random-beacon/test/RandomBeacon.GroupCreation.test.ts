@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions, @typescript-eslint/no-extra-semi */
 
-import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import blsData from "./data/bls"
@@ -18,10 +18,11 @@ import { registerOperators } from "./utils/operators"
 import { selectGroup, createGroup, hashUint32Array } from "./utils/groups"
 import { fakeTokenStaking } from "./mocks/staking"
 
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { Operator } from "./utils/operators"
 import type { BeaconDkg as DKG } from "../typechain/RandomBeaconStub"
 import type { FakeContract } from "@defi-wonderland/smock"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   RandomBeacon,
   RandomBeaconGovernance,
@@ -29,7 +30,6 @@ import type {
   SortitionPool,
   TokenStaking,
 } from "../typechain"
-import type { BigNumber, ContractTransaction, Signer } from "ethers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
@@ -45,7 +45,7 @@ type RandomBeaconTest = RandomBeacon & {
 const fixture = async () => {
   const contracts = await testDeployment()
 
-  // Accounts offset provided to slice getUnnamedAccounts have to include number
+  // Accounts offset provided to slice getUnnamedSigners have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
     contracts.randomBeacon as RandomBeacon,
@@ -88,7 +88,7 @@ describe("RandomBeacon - Group Creation", () => {
   let t: T
 
   before(async () => {
-    thirdParty = await ethers.getSigner((await getUnnamedAccounts())[0])
+    ;[thirdParty] = await ethers.getUnnamedSigners()
     let randomBeaconStub: RandomBeaconTest
     ;({
       randomBeaconGovernance,

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop, @typescript-eslint/no-extra-semi */
 
-import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
@@ -30,7 +30,7 @@ import type {
   RandomBeaconGovernance,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
-import type { ContractTransaction, BigNumberish, BytesLike } from "ethers"
+import type { ContractTransaction, BigNumberish } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
@@ -93,9 +93,7 @@ describe("RandomBeacon - Relay", () => {
 
   before(async () => {
     deployer = await ethers.getNamedSigner("deployer")
-    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-    notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
-    submitter = await ethers.getSigner((await getUnnamedAccounts())[3])
+    ;[requester, notifier, submitter] = await ethers.getUnnamedSigners()
     ;({
       randomBeacon,
       sortitionPool,

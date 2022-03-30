@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import {
@@ -76,7 +76,7 @@ describe("System -- e2e", () => {
     const contracts = await waffle.loadFixture(fixture)
 
     owner = await ethers.getNamedSigner("deployer")
-    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+    ;[requester] = await ethers.getUnnamedSigners()
     randomBeacon = contracts.randomBeacon
     t = contracts.t
 

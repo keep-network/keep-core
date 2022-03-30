@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { deployments, ethers, getUnnamedAccounts, helpers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
@@ -51,15 +51,9 @@ describe("RandomBeacon - Authorization", () => {
     sortitionPool = contracts.sortitionPool as SortitionPool
     staking = contracts.staking as TokenStaking
 
-    const accounts = await getUnnamedAccounts()
-    owner = await ethers.getSigner(accounts[1])
-    stakingProvider = await ethers.getSigner(accounts[2])
-    operator = await ethers.getSigner(accounts[3])
-    authorizer = await ethers.getSigner(accounts[4])
-    beneficiary = await ethers.getSigner(accounts[5])
-    thirdParty = await ethers.getSigner(accounts[6])
-
     deployer = await ethers.getNamedSigner("deployer")
+    ;[owner, stakingProvider, operator, authorizer, beneficiary, thirdParty] =
+      await ethers.getUnnamedSigners()
 
     await t.connect(deployer).mint(owner.address, stakedAmount)
     await t.connect(owner).approve(staking.address, stakedAmount)
