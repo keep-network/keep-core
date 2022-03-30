@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
 
@@ -16,6 +17,8 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("WalletRegistry - Inactivity", () => {
   const walletPublicKey: string = ecdsaData.group1.publicKey
+  const walletPublicKeyX: string = ecdsaData.group1.publicKeyX
+  const walletPublicKeyY: string = ecdsaData.group1.publicKeyY
 
   let walletRegistry: WalletRegistry
   let sortitionPool: SortitionPool
@@ -54,6 +57,7 @@ describe("WalletRegistry - Inactivity", () => {
     const nonSubsequentInactiveMembersIndices = [2, 5, 7, 23, 56]
     const groupThreshold = 51
 
+    const heartbeatFailed = true
     const noHeartbeatFailure = false
 
     context("when passed nonce is valid", () => {
@@ -229,6 +233,95 @@ describe("WalletRegistry - Inactivity", () => {
                       )
                     }
                   )
+
+                  context("when heartbeat failed", () => {
+                    before(async () => {
+                      await createSnapshot()
+                      // Assume claim sender is the first signing member.
+                      const claimSender = members[0].signer
+
+                      const { signatures, signingMembersIndices } =
+                        await signOperatorInactivityClaim(
+                          members,
+                          0,
+                          walletPublicKey,
+                          heartbeatFailed,
+                          subsequentInactiveMembersIndices,
+                          groupThreshold
+                        )
+                      await walletRegistry
+                        .connect(claimSender)
+                        .notifyOperatorInactivity(
+                          {
+                            walletID,
+                            inactiveMembersIndices:
+                              subsequentInactiveMembersIndices,
+                            heartbeatFailed,
+                            signatures,
+                            signingMembersIndices,
+                          },
+                          0,
+                          membersIDs
+                        )
+                    })
+
+                    after(async () => {
+                      await restoreSnapshot()
+                      walletOwner.__ecdsaWalletHeartbeatFailedCallback.reset()
+                    })
+
+                    it("should notify the wallet owner", async () => {
+                      await expect(
+                        walletOwner.__ecdsaWalletHeartbeatFailedCallback
+                      ).to.be.calledWith(
+                        walletID,
+                        walletPublicKeyX,
+                        walletPublicKeyY
+                      )
+                    })
+                  })
+
+                  context("when heartbeat did not fail", () => {
+                    before(async () => {
+                      await createSnapshot()
+                      // Assume claim sender is the first signing member.
+                      const claimSender = members[0].signer
+
+                      const { signatures, signingMembersIndices } =
+                        await signOperatorInactivityClaim(
+                          members,
+                          0,
+                          walletPublicKey,
+                          noHeartbeatFailure,
+                          subsequentInactiveMembersIndices,
+                          groupThreshold
+                        )
+                      await walletRegistry
+                        .connect(claimSender)
+                        .notifyOperatorInactivity(
+                          {
+                            walletID,
+                            inactiveMembersIndices:
+                              subsequentInactiveMembersIndices,
+                            heartbeatFailed: noHeartbeatFailure,
+                            signatures,
+                            signingMembersIndices,
+                          },
+                          0,
+                          membersIDs
+                        )
+                    })
+
+                    after(async () => {
+                      await restoreSnapshot()
+                    })
+
+                    it("should not notify the wallet owner", async () => {
+                      await expect(
+                        walletOwner.__ecdsaWalletHeartbeatFailedCallback
+                      ).not.to.be.called
+                    })
+                  })
                 })
 
                 context(
@@ -331,6 +424,27 @@ describe("WalletRegistry - Inactivity", () => {
                           0,
                           "0x010203",
                           noHeartbeatFailure,
+                          subsequentInactiveMembersIndices,
+                          1
+                        )
+                      ).signatures
+
+                      await assertInvalidSignature(invalidSignature)
+                    })
+                  }
+                )
+
+                context(
+                  "when one of the signatures signed wrong heartbeat status",
+                  () => {
+                    it("should revert", async () => {
+                      // Signer 51 signs invalid inactivity status.
+                      const invalidSignature = (
+                        await signOperatorInactivityClaim(
+                          [members[50]],
+                          0,
+                          walletPublicKey,
+                          heartbeatFailed,
                           subsequentInactiveMembersIndices,
                           1
                         )
