@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-extra-semi */
+
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
