@@ -2334,7 +2334,11 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(challengeTx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
-                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                  .withArgs(
+                    dkgResultHash,
+                    params.maliciousDkgResultSlashingAmount,
+                    submitter.address
+                  )
               })
 
               it("should not emit DkgMaliciousResultSlashingFailed event", async () => {
@@ -2352,7 +2356,11 @@ describe("RandomBeacon - Group Creation", () => {
 
                 await expect(slashingTx)
                   .to.emit(staking, "TokensSeized")
-                  .withArgs(stakingProvider, to1e18(50000), false)
+                  .withArgs(
+                    stakingProvider,
+                    params.maliciousDkgResultSlashingAmount,
+                    false
+                  )
               })
             })
           })
@@ -2407,7 +2415,11 @@ describe("RandomBeacon - Group Creation", () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(challengeTx)
                   .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
-                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                  .withArgs(
+                    dkgResultHash,
+                    params.maliciousDkgResultSlashingAmount,
+                    submitter.address
+                  )
               })
 
               it("should not emit DkgMaliciousResultSlashingFailed event", async () => {
@@ -2425,7 +2437,11 @@ describe("RandomBeacon - Group Creation", () => {
 
                 await expect(slashingTx)
                   .to.emit(staking, "TokensSeized")
-                  .withArgs(stakingProvider, to1e18(50000), false)
+                  .withArgs(
+                    stakingProvider,
+                    params.maliciousDkgResultSlashingAmount,
+                    false
+                  )
               })
             })
           })
@@ -2555,7 +2571,11 @@ describe("RandomBeacon - Group Creation", () => {
             it("should emit DkgMaliciousResultSlashed event", async () => {
               await expect(challengeTx)
                 .to.emit(randomBeacon, "DkgMaliciousResultSlashed")
-                .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                .withArgs(
+                  dkgResultHash,
+                  params.maliciousDkgResultSlashingAmount,
+                  submitter.address
+                )
             })
 
             it("should not emit DkgMaliciousResultSlashingFailed event", async () => {
@@ -2571,7 +2591,11 @@ describe("RandomBeacon - Group Creation", () => {
 
               await expect(slashingTx)
                 .to.emit(staking, "TokensSeized")
-                .withArgs(stakingProvider, to1e18(50000), false)
+                .withArgs(
+                  stakingProvider,
+                  params.maliciousDkgResultSlashingAmount,
+                  false
+                )
             })
           }
         )
