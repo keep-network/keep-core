@@ -127,6 +127,8 @@ contract WalletRegistry is
         bytes32 indexed dkgResultHash
     );
 
+    event WalletClosed(bytes32 indexed walletID);
+
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
@@ -523,11 +525,13 @@ contract WalletRegistry is
         randomBeacon.requestRelayEntry(this);
     }
 
-    /// @notice Closes an existing wallet.
+    /// @notice Closes an existing wallet. Reverts if wallet with the given ID
+    ///         does not exist or if it has already been closed.
     /// @param walletID ID of the wallet.
     /// @dev Only a Wallet Owner can call this function.
     function closeWallet(bytes32 walletID) external onlyWalletOwner {
-        // TODO: Implementation.
+        wallets.deleteWallet(walletID);
+        emit WalletClosed(walletID);
     }
 
     /// @notice A callback that is executed once a new relay entry gets

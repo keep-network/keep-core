@@ -67,6 +67,18 @@ library Wallets {
         self.registry[walletID].publicKeyY = publicKeyY;
     }
 
+    /// @notice Deletes wallet with the given ID from the registry. Reverts
+    ///         if wallet with the given ID has not been registered or if it
+    ///         has already been closed.
+    function deleteWallet(Data storage self, bytes32 walletID) internal {
+        require(
+            isWalletRegistered(self, walletID),
+            "Wallet with the given ID has not been registered"
+        );
+
+        delete self.registry[walletID];
+    }
+
     /// @notice Checks if a wallet with the given ID is registered.
     /// @param walletID Wallet's ID
     /// @return True if a wallet is registered, false otherwise
@@ -88,6 +100,11 @@ library Wallets {
         view
         returns (bytes32)
     {
+        require(
+            isWalletRegistered(self, walletID),
+            "Wallet with the given ID has not been registered"
+        );
+
         return self.registry[walletID].membersIdsHash;
     }
 
@@ -103,7 +120,7 @@ library Wallets {
     {
         require(
             isWalletRegistered(self, walletID),
-            "Wallet with given ID has not been registered"
+            "Wallet with the given ID has not been registered"
         );
 
         return
