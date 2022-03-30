@@ -42,6 +42,7 @@ const config: HardhatUserConfig = {
       // unique addresses in staking for each group member.
       accounts: { count: 10 + 5 * 64 },
       tags: ["local"],
+      allowUnlimitedContractSize: true,
     },
     ropsten: {
       url: process.env.CHAIN_API_URL || "",
