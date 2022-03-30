@@ -16,10 +16,6 @@ import type { Operator, OperatorID } from "./utils/operators"
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("WalletRegistry - Inactivity", () => {
-  const walletPublicKey: string = ecdsaData.group1.publicKey
-  const walletPublicKeyX: string = ecdsaData.group1.publicKeyX
-  const walletPublicKeyY: string = ecdsaData.group1.publicKeyY
-
   let walletRegistry: WalletRegistry
   let sortitionPool: SortitionPool
   let walletOwner: FakeContract<IWalletOwner>
@@ -29,6 +25,26 @@ describe("WalletRegistry - Inactivity", () => {
   let members: Operator[]
   let membersIDs: OperatorID[]
   let walletID: string
+
+  const walletPublicKey: string = ecdsaData.group1.publicKey
+  const walletPublicKeyX: string = ecdsaData.group1.publicKeyX
+  const walletPublicKeyY: string = ecdsaData.group1.publicKeyY
+
+  // Use 49 element `inactiveMembersIndices` array to simulate the most gas
+  // expensive real-world case. If group size is 100, the required threshold
+  // is 51 so we assume 49 operators at most will be marked as ineligible
+  // during a single `notifyOperatorInactivity` call.
+  const subsequentInactiveMembersIndices = Array.from(
+    Array(49),
+    (_, i) => i + 1
+  )
+  const nonSubsequentInactiveMembersIndices = [2, 5, 7, 23, 56]
+  const emptyMembersIndices = []
+
+  const groupThreshold = 51
+
+  const heartbeatFailed = true
+  const noHeartbeatFailure = false
 
   before(async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
@@ -44,22 +60,6 @@ describe("WalletRegistry - Inactivity", () => {
   })
 
   describe("notifyOperatorInactivity", () => {
-    const emptyMembersIndices = []
-
-    // Use 49 element `inactiveMembersIndices` array to simulate the most gas
-    // expensive real-world case. If group size is 100, the required threshold
-    // is 51 so we assume 49 operators at most will be marked as ineligible
-    // during a single `notifyOperatorInactivity` call.
-    const subsequentInactiveMembersIndices = Array.from(
-      Array(49),
-      (_, i) => i + 1
-    )
-    const nonSubsequentInactiveMembersIndices = [2, 5, 7, 23, 56]
-    const groupThreshold = 51
-
-    const heartbeatFailed = true
-    const noHeartbeatFailure = false
-
     context("when passed nonce is valid", () => {
       context("when wallet is known", () => {
         context("when inactive members indices are correct", () => {
@@ -1007,6 +1007,95 @@ describe("WalletRegistry - Inactivity", () => {
             invalidMembersId
           )
         ).to.be.revertedWith("Invalid group members")
+      })
+    })
+  })
+
+  describe("inactivityClaimNonce", () => {
+    before(async () => {
+      await createSnapshot()
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    context("when inactivity was claimed", () => {
+      it("should increment continuously", async () => {
+        // Assume claim sender is the first signing member.
+        const claimSender = members[0].signer
+
+        // Sign the first inactivity claim for the group, make sure the nonce
+        // increments to 1.
+        let { signatures, signingMembersIndices } =
+          await signOperatorInactivityClaim(
+            members,
+            0,
+            walletPublicKey,
+            noHeartbeatFailure,
+            subsequentInactiveMembersIndices,
+            groupThreshold
+          )
+        await walletRegistry.connect(claimSender).notifyOperatorInactivity(
+          {
+            walletID,
+            inactiveMembersIndices: subsequentInactiveMembersIndices,
+            heartbeatFailed: noHeartbeatFailure,
+            signatures,
+            signingMembersIndices,
+          },
+          0,
+          membersIDs
+        )
+
+        expect(await walletRegistry.inactivityClaimNonce(walletID)).to.be.equal(
+          1
+        )
+
+        // Sign the second inactivity claim for the group, make sure the nonce
+        // increments to 2.
+        ;({ signatures, signingMembersIndices } =
+          await signOperatorInactivityClaim(
+            members,
+            1,
+            walletPublicKey,
+            noHeartbeatFailure,
+            subsequentInactiveMembersIndices,
+            groupThreshold
+          ))
+        await walletRegistry.connect(claimSender).notifyOperatorInactivity(
+          {
+            walletID,
+            inactiveMembersIndices: subsequentInactiveMembersIndices,
+            heartbeatFailed: noHeartbeatFailure,
+            signatures,
+            signingMembersIndices,
+          },
+          1,
+          membersIDs
+        )
+
+        expect(await walletRegistry.inactivityClaimNonce(walletID)).to.be.equal(
+          2
+        )
+      })
+
+      // In case a new wallet with the same ID (public key) is registered, we
+      // need to make sure old inactivity claims do not work.
+      // Wallet owner may decide to revert in __ecdsaWalletCreatedCallback in
+      // case it is important to have the public keys unique but from the
+      // perspective of WalletRegistry this is not strictly required as long as
+      // inactivity claim nonces are not cleared up upon closing the wallet.
+      context("when wallet has been closed", () => {
+        before(async () => {
+          await walletRegistry.connect(walletOwner.wallet).closeWallet(walletID)
+        })
+
+        it("should remain unchanged", async () => {
+          expect(
+            await walletRegistry.inactivityClaimNonce(walletID)
+          ).to.be.equal(2)
+        })
       })
     })
   })
