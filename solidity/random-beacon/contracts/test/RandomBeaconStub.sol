@@ -10,6 +10,7 @@ import {BeaconDkgValidator as DKGValidator} from "../BeaconDkgValidator.sol";
 
 contract RandomBeaconStub is RandomBeacon {
     using DKG for DKG.Data;
+    using Groups for Groups.Data;
 
     constructor(
         SortitionPool _sortitionPool,
@@ -30,22 +31,11 @@ contract RandomBeaconStub is RandomBeacon {
         bytes calldata groupPubKey,
         bytes32 groupMembersHash
     ) external {
-        bytes32 groupPubKeyHash = keccak256(groupPubKey);
-
-        Groups.Group memory group;
-        group.groupPubKey = groupPubKey;
-        group.membersHash = groupMembersHash;
-        /* solhint-disable-next-line not-rely-on-time */
-        group.registrationBlockNumber = block.number;
-
-        groups.groupsData[groupPubKeyHash] = group;
-        groups.groupsRegistry.push(groupPubKeyHash);
+        groups.addGroup(groupPubKey, groupMembersHash);
     }
 
     function roughlyTerminateGroup(uint64 groupId) public {
-        groups.groupsData[groups.groupsRegistry[groupId]].terminated = true;
-        // just add groupId without sorting for simplicity
-        groups.activeTerminatedGroups.push(groupId);
+        groups.terminateGroup(groupId);
     }
 
     function dkgLockState() external {
