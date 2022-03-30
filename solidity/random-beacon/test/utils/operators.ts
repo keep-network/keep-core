@@ -13,7 +13,6 @@ import type {
   T,
   TokenStaking,
 } from "../../typechain"
-import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 export type OperatorID = number
 export type Operator = { id: OperatorID; signer: SignerWithAddress }
