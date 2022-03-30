@@ -681,11 +681,10 @@ describe("RandomBeacon - Relay", () => {
               hashUint32Array(membersIDs)
             )
 
-            const registry = await randomBeacon.getGroupsRegistry()
-            const secondGroupLifetime = await groupLifetimeOf(registry[1])
+            const secondGroupLifetime = await groupLifetimeOf(1)
 
             // Expire second group
-            await mineBlocksTo(Number(secondGroupLifetime) + 1)
+            await mineBlocksTo(secondGroupLifetime.toNumber() + 1)
 
             tx = await randomBeacon.reportRelayEntryTimeout(membersIDs)
           })
@@ -694,8 +693,15 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
-          it("should clean up current relay request data", async () => {
+          it("should terminate the group", async () => {
+            expect(await isGroupTerminated(0)).to.be.equal(true)
+          })
+
+          it("should not emit RelayEntryRequested", async () => {
             await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          })
+
+          it("should clean up current relay request data", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
         }
@@ -1855,16 +1861,16 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  async function groupLifetimeOf(
-    groupPubKeyHash: BytesLike
-  ): Promise<BigNumberish> {
-    const groupData = await randomBeacon["getGroup(bytes)"](groupPubKeyHash)
+  async function groupLifetimeOf(groupID: BigNumberish): Promise<BigNumber> {
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
 
-    return groupData.registrationBlockNumber.add(params.groupLifeTime)
+    const groupLifeTime = await randomBeacon.callStatic.groupLifetime()
+
+    return groupData.registrationBlockNumber.add(groupLifeTime)
   }
 
   async function isGroupTerminated(groupID: BigNumberish): Promise<boolean> {
-    const groupData = await randomBeacon["getGroup(uint64)"](groupID)
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
 
     return groupData.terminated === true
   }
