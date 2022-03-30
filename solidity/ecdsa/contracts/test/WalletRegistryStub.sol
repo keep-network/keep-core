@@ -1,12 +1,10 @@
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 import "../WalletRegistry.sol";
 import "../EcdsaDkgValidator.sol";
-import "../libraries/EcdsaDkg.sol";
-import "../libraries/Wallets.sol";
 
 contract WalletRegistryStub is WalletRegistry {
     constructor(
