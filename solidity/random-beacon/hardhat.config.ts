@@ -38,7 +38,9 @@ const config: HardhatUserConfig = {
           ? parseInt(process.env.FORKING_BLOCK, 10)
           : undefined,
       },
-      accounts: { count: 70 },
+      // We want to have 10 accounts for various tests and `5 * 64` accounts to use
+      // unique addresses in staking for each group member.
+      accounts: { count: 10 + 5 * 64 },
       tags: ["local"],
     },
     ropsten: {

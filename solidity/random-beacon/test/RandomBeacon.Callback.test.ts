@@ -37,7 +37,8 @@ const fixture = async () => {
   const signers = await registerOperators(
     contracts.randomBeacon as RandomBeacon,
     contracts.t as T,
-    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+    constants.groupSize,
+    2
   )
 
   await createGroup(contracts.randomBeacon as RandomBeacon, signers)

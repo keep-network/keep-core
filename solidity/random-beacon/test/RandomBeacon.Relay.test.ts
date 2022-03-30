@@ -58,7 +58,8 @@ async function fixture() {
   const operators = await registerOperators(
     deployment.randomBeacon as RandomBeacon,
     deployment.t as T,
-    (await getUnnamedAccounts()).slice(0, constants.groupSize)
+    constants.groupSize,
+    3
   )
 
   return {
