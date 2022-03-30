@@ -54,6 +54,8 @@ describe("WalletRegistry - Inactivity", () => {
     const nonSubsequentInactiveMembersIndices = [2, 5, 7, 23, 56]
     const groupThreshold = 51
 
+    const noHeartbeatFailure = false
+
     context("when passed nonce is valid", () => {
       context("when wallet is known", () => {
         context("when inactive members indices are correct", () => {
@@ -88,6 +90,7 @@ describe("WalletRegistry - Inactivity", () => {
                           members,
                           0,
                           walletPublicKey,
+                          noHeartbeatFailure,
                           inactiveMembersIndices,
                           signaturesCount
                         )
@@ -98,6 +101,7 @@ describe("WalletRegistry - Inactivity", () => {
                           {
                             walletID,
                             inactiveMembersIndices,
+                            heartbeatFailed: noHeartbeatFailure,
                             signatures: modifySignatures(signatures),
                             signingMembersIndices: modifySigningMemberIndices(
                               signingMembersIndices
@@ -236,6 +240,7 @@ describe("WalletRegistry - Inactivity", () => {
                           members,
                           0,
                           walletPublicKey,
+                          noHeartbeatFailure,
                           subsequentInactiveMembersIndices,
                           groupThreshold
                         )
@@ -250,6 +255,7 @@ describe("WalletRegistry - Inactivity", () => {
                               walletID,
                               inactiveMembersIndices:
                                 subsequentInactiveMembersIndices,
+                              heartbeatFailed: noHeartbeatFailure,
                               signatures,
                               signingMembersIndices,
                             },
@@ -271,6 +277,7 @@ describe("WalletRegistry - Inactivity", () => {
                       members,
                       0,
                       walletPublicKey,
+                      noHeartbeatFailure,
                       subsequentInactiveMembersIndices,
                       groupThreshold - 1
                     )
@@ -281,6 +288,7 @@ describe("WalletRegistry - Inactivity", () => {
                         walletID,
                         inactiveMembersIndices:
                           subsequentInactiveMembersIndices,
+                        heartbeatFailed: noHeartbeatFailure,
                         // Slice removes `0x` prefix from wrong signature.
                         signatures: signatures + invalidSignature.slice(2),
                         signingMembersIndices: [...signingMembersIndices, 51],
@@ -301,6 +309,7 @@ describe("WalletRegistry - Inactivity", () => {
                           [members[50]],
                           1,
                           walletPublicKey,
+                          noHeartbeatFailure,
                           subsequentInactiveMembersIndices,
                           1
                         )
@@ -321,6 +330,7 @@ describe("WalletRegistry - Inactivity", () => {
                           [members[50]],
                           0,
                           "0x010203",
+                          noHeartbeatFailure,
                           subsequentInactiveMembersIndices,
                           1
                         )
@@ -341,6 +351,7 @@ describe("WalletRegistry - Inactivity", () => {
                           [members[50]],
                           0,
                           walletPublicKey,
+                          noHeartbeatFailure,
                           [1, 2, 3, 4, 5, 6, 7, 8],
                           1
                         )
@@ -363,6 +374,7 @@ describe("WalletRegistry - Inactivity", () => {
                         members,
                         0,
                         walletPublicKey,
+                        noHeartbeatFailure,
                         subsequentInactiveMembersIndices,
                         groupThreshold
                       )
@@ -373,6 +385,7 @@ describe("WalletRegistry - Inactivity", () => {
                           walletID,
                           inactiveMembersIndices:
                             subsequentInactiveMembersIndices,
+                          heartbeatFailed: noHeartbeatFailure,
                           signatures,
                           // Remove the first signing member index
                           signingMembersIndices: signingMembersIndices.slice(1),
@@ -392,6 +405,7 @@ describe("WalletRegistry - Inactivity", () => {
                       members,
                       0,
                       walletPublicKey,
+                      noHeartbeatFailure,
                       subsequentInactiveMembersIndices,
                       groupThreshold
                     )
@@ -404,6 +418,7 @@ describe("WalletRegistry - Inactivity", () => {
                         walletID,
                         inactiveMembersIndices:
                           subsequentInactiveMembersIndices,
+                        heartbeatFailed: noHeartbeatFailure,
                         signatures,
                         signingMembersIndices,
                       },
@@ -423,6 +438,7 @@ describe("WalletRegistry - Inactivity", () => {
                         members,
                         0,
                         walletPublicKey,
+                        noHeartbeatFailure,
                         subsequentInactiveMembersIndices,
                         groupThreshold
                       )
@@ -437,6 +453,7 @@ describe("WalletRegistry - Inactivity", () => {
                           walletID,
                           inactiveMembersIndices:
                             subsequentInactiveMembersIndices,
+                          heartbeatFailed: noHeartbeatFailure,
                           signatures,
                           signingMembersIndices,
                         },
@@ -457,6 +474,7 @@ describe("WalletRegistry - Inactivity", () => {
                         members,
                         0,
                         walletPublicKey,
+                        noHeartbeatFailure,
                         subsequentInactiveMembersIndices,
                         groupThreshold
                       )
@@ -470,6 +488,7 @@ describe("WalletRegistry - Inactivity", () => {
                           walletID,
                           inactiveMembersIndices:
                             subsequentInactiveMembersIndices,
+                          heartbeatFailed: noHeartbeatFailure,
                           signatures,
                           signingMembersIndices,
                         },
@@ -493,6 +512,7 @@ describe("WalletRegistry - Inactivity", () => {
                     {
                       walletID,
                       inactiveMembersIndices: subsequentInactiveMembersIndices,
+                      heartbeatFailed: noHeartbeatFailure,
                       signatures,
                       signingMembersIndices: emptyMembersIndices,
                     },
@@ -515,6 +535,7 @@ describe("WalletRegistry - Inactivity", () => {
                         walletID,
                         inactiveMembersIndices:
                           subsequentInactiveMembersIndices,
+                        heartbeatFailed: noHeartbeatFailure,
                         signatures,
                         signingMembersIndices: emptyMembersIndices,
                       },
@@ -535,6 +556,7 @@ describe("WalletRegistry - Inactivity", () => {
                       members,
                       0,
                       walletPublicKey,
+                      noHeartbeatFailure,
                       subsequentInactiveMembersIndices,
                       groupThreshold
                     )
@@ -545,6 +567,7 @@ describe("WalletRegistry - Inactivity", () => {
                         walletID,
                         inactiveMembersIndices:
                           subsequentInactiveMembersIndices,
+                        heartbeatFailed: noHeartbeatFailure,
                         // Remove the first signature to cause a mismatch with
                         // the signing members count.
                         signatures: `0x${signatures.slice(132)}`,
@@ -567,6 +590,7 @@ describe("WalletRegistry - Inactivity", () => {
                       members,
                       0,
                       walletPublicKey,
+                      noHeartbeatFailure,
                       subsequentInactiveMembersIndices,
                       // Provide one few signature
                       groupThreshold - 1
@@ -578,6 +602,7 @@ describe("WalletRegistry - Inactivity", () => {
                         walletID,
                         inactiveMembersIndices:
                           subsequentInactiveMembersIndices,
+                        heartbeatFailed: noHeartbeatFailure,
                         signatures,
                         signingMembersIndices,
                       },
@@ -596,6 +621,7 @@ describe("WalletRegistry - Inactivity", () => {
                     members,
                     0,
                     walletPublicKey,
+                    noHeartbeatFailure,
                     subsequentInactiveMembersIndices,
                     // All group signs.
                     members.length
@@ -606,6 +632,7 @@ describe("WalletRegistry - Inactivity", () => {
                     {
                       walletID,
                       inactiveMembersIndices: subsequentInactiveMembersIndices,
+                      heartbeatFailed: noHeartbeatFailure,
                       // Provide one more signature
                       // 2 to cut initial '0x' and 132 because signature length
                       // is 130 bytes, so 2+132 = 132
@@ -633,6 +660,7 @@ describe("WalletRegistry - Inactivity", () => {
                 members,
                 0,
                 walletPublicKey,
+                noHeartbeatFailure,
                 inactiveMembersIndices,
                 groupThreshold
               )
@@ -642,6 +670,7 @@ describe("WalletRegistry - Inactivity", () => {
                 {
                   walletID,
                   inactiveMembersIndices,
+                  heartbeatFailed: noHeartbeatFailure,
                   signatures,
                   signingMembersIndices,
                 },
@@ -737,6 +766,7 @@ describe("WalletRegistry - Inactivity", () => {
               members,
               0,
               unknownWalletPublicKey,
+              noHeartbeatFailure,
               subsequentInactiveMembersIndices,
               groupThreshold
             )
@@ -746,6 +776,7 @@ describe("WalletRegistry - Inactivity", () => {
               {
                 walletID,
                 inactiveMembersIndices: subsequentInactiveMembersIndices,
+                heartbeatFailed: noHeartbeatFailure,
                 signatures,
                 signingMembersIndices,
               },
@@ -765,6 +796,7 @@ describe("WalletRegistry - Inactivity", () => {
               members,
               0,
               walletPublicKey,
+              noHeartbeatFailure,
               subsequentInactiveMembersIndices,
               groupThreshold
             )
@@ -774,6 +806,7 @@ describe("WalletRegistry - Inactivity", () => {
               {
                 walletID: unknownWalletID,
                 inactiveMembersIndices: subsequentInactiveMembersIndices,
+                heartbeatFailed: noHeartbeatFailure,
                 signatures,
                 signingMembersIndices,
               },
@@ -802,6 +835,7 @@ describe("WalletRegistry - Inactivity", () => {
               members,
               0,
               walletPublicKey,
+              noHeartbeatFailure,
               subsequentInactiveMembersIndices,
               groupThreshold
             )
@@ -811,6 +845,7 @@ describe("WalletRegistry - Inactivity", () => {
               {
                 walletID,
                 inactiveMembersIndices: subsequentInactiveMembersIndices,
+                heartbeatFailed: noHeartbeatFailure,
                 signatures,
                 signingMembersIndices,
               },
@@ -831,6 +866,7 @@ describe("WalletRegistry - Inactivity", () => {
             {
               walletID,
               inactiveMembersIndices: emptyMembersIndices,
+              heartbeatFailed: noHeartbeatFailure,
               signatures: "0x",
               signingMembersIndices: emptyMembersIndices,
             },
@@ -849,6 +885,7 @@ describe("WalletRegistry - Inactivity", () => {
             {
               walletID,
               inactiveMembersIndices: emptyMembersIndices,
+              heartbeatFailed: noHeartbeatFailure,
               signatures: "0x",
               signingMembersIndices: emptyMembersIndices,
             },
