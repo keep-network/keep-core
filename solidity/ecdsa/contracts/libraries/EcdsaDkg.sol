@@ -124,6 +124,9 @@ library EcdsaDkg {
         CHALLENGE
     }
 
+    /// @dev Size of a group in ECDSA wallet.
+    uint256 public constant groupSize = 100;
+
     event DkgStarted(uint256 indexed seed);
 
     // To recreate the members that actively took part in dkg, the selected members
@@ -227,7 +230,7 @@ library EcdsaDkg {
     ///         a chance to challenge the result as invalid one. Submitter of
     ///         the result needs to be in the sortition pool and if the result
     ///         gets challenged, the submitter will get slashed.
-    function submitResult(Data storage self, Result calldata result) external {
+    function submitResult(Data storage self, Result calldata result) internal {
         require(
             currentState(self) == State.AWAITING_RESULT,
             "Current state is not AWAITING_RESULT"
@@ -308,7 +311,7 @@ library EcdsaDkg {
     ///        during `submitResult`.
     /// @return misbehavedMembers Identifiers of members who misbehaved during DKG.
     function approveResult(Data storage self, Result calldata result)
-        external
+        internal
         returns (uint32[] memory misbehavedMembers)
     {
         require(
@@ -369,7 +372,7 @@ library EcdsaDkg {
     /// @return maliciousResultHash Hash of the malicious result.
     /// @return maliciousSubmitter Identifier of the malicious submitter.
     function challengeResult(Data storage self, Result calldata result)
-        external
+        internal
         returns (bytes32 maliciousResultHash, uint32 maliciousSubmitter)
     {
         require(
@@ -435,7 +438,7 @@ library EcdsaDkg {
     /// @return True if the result is valid. If the result is invalid it returns
     ///         false and an error message.
     function isResultValid(Data storage self, Result calldata result)
-        external
+        internal
         view
         returns (bool, string memory)
     {

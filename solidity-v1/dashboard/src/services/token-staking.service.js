@@ -169,16 +169,20 @@ export const operatorService = {
   fetchPendingUndelegation,
 }
 
-export const getOperatorsOfAuthorizer = async (authorizer) => {
+export const getAllOperatorStakedEventsByAuthorizer = async (authorizer) => {
   const { stakingContract } = await ContractsLoaded
-  return (
-    await stakingContract.getPastEvents("OperatorStaked", {
-      fromBlock: await getContractDeploymentBlockNumber(
-        TOKEN_STAKING_CONTRACT_NAME
-      ),
-      filter: { authorizer },
-    })
-  ).map((_) => _.returnValues.operator)
+  return await stakingContract.getPastEvents("OperatorStaked", {
+    fromBlock: await getContractDeploymentBlockNumber(
+      TOKEN_STAKING_CONTRACT_NAME
+    ),
+    filter: { authorizer },
+  })
+}
+
+export const getOperatorsOfAuthorizer = async (authorizer) => {
+  return (await getAllOperatorStakedEventsByAuthorizer(authorizer)).map(
+    (_) => _.returnValues.operator
+  )
 }
 
 export const getOperatorsOfBeneficiary = async (beneficiary) => {

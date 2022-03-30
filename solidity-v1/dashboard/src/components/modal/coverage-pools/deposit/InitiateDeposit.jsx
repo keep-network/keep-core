@@ -10,7 +10,7 @@ import { useAcceptTermToConfirmFormik } from "../../../../hooks/useAcceptTermToC
 import { FormCheckboxBase } from "../../../FormCheckbox"
 import { SubmitButton } from "../../../Button"
 import { COV_POOL_TIMELINE_STEPS, LINK } from "../../../../constants/constants"
-import { withTimeline } from "../withTimeline"
+import { withTimeline } from "../../withTimeline"
 import List from "../../../List"
 import { CoveragePoolV1ExchangeRate } from "../../../coverage-pools/ExchangeRate"
 import { useDispatch } from "react-redux"
@@ -120,6 +120,8 @@ const InitiateDepositComponent = ({
 
 export const InitiateDeposit = withTimeline({
   title: "Deposit",
-  step: COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS,
-  withDescription: true,
+  timelineProps: {
+    step: COV_POOL_TIMELINE_STEPS.DEPOSITED_TOKENS,
+    withDescription: true,
+  },
 })(InitiateDepositComponent)

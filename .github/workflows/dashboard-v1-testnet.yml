@@ -66,6 +66,17 @@ jobs:
           cache: "npm"
           cache-dependency-path: solidity-v1/dashboard/package-lock.json
 
+      # We need this step because the `@keep-network/tbtc` which we update in
+      # next steps has a dependency to `@summa-tx/relay-sol@2.0.2`
+      # package, which downloads one of its sub-dependencies via unathenticated
+      # `git://` protocol. That protocol is no longer supported. Thanks to this
+      # step `https://` is used instead of `git://`.
+      - name: Configure git to don't use unauthenticated protocol
+        run: git config --global url."https://".insteadOf git://
+
+      # We're not updating `coverage-pools` as we want to use a fixed version
+      # (1.1.0-dev.2) specified in the `package.json`. That package is the last
+      # one that successfully deployed AssetPool for KEEP token.
       - name: Resolve latest contracts
         if: github.event_name != 'workflow_dispatch'
         run: |
@@ -74,7 +85,7 @@ jobs:
               @keep-network/keep-ecdsa \
               @keep-network/tbtc \
               @keep-network/tbtc-v2 \
-              @keep-network/coverage-pools
+              @threshold-network/solidity-contracts
 
       - name: Get upstream packages' versions
         if: github.event_name == 'workflow_dispatch'
@@ -87,7 +98,7 @@ jobs:
             keep-ecdsa-contracts-version = github.com/keep-network/keep-ecdsa/solidity#version
             tbtc-contracts-version = github.com/keep-network/tbtc/solidity#version
             tbtc-v2-contracts-version = github.com/keep-network/tbtc-v2/solidity#version
-            coverage-pools-version = github.com/keep-network/coverage-pools#version
+            threshold-contracts-version = github.com/threshold-network/solidity-contracts#version
 
       - name: Resolve latest contracts
         if: github.event_name == 'workflow_dispatch'
@@ -97,7 +108,7 @@ jobs:
               @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-contracts-version }} \
               @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
               @keep-network/tbtc-v2@${{ steps.upstream-builds-query.outputs.tbtc-v2-contracts-version }} \
-              @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }}
+              @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.threshold-contracts-version }}
 
       - name: NPM build
         run: npm run build

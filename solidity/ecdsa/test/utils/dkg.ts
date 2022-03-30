@@ -1,13 +1,13 @@
 /* eslint-disable no-await-in-loop */
 
-import { ethers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
 import { selectGroup } from "./groups"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { BigNumberish, ContractTransaction } from "ethers"
+import type { BigNumberish, ContractTransaction, BytesLike } from "ethers"
 import type { SortitionPool, WalletRegistry } from "../../typechain"
 import type { Operator } from "./operators"
 import type {
@@ -15,9 +15,11 @@ import type {
   ResultStruct,
 } from "../../typechain/EcdsaDkg"
 
+const { provider } = waffle
+
 export interface DkgResult {
   submitterMemberIndex: number
-  groupPubKey: string
+  groupPubKey: BytesLike
   misbehavedMembersIndices: number[]
   signatures: string
   signingMembersIndices: number[]
@@ -46,10 +48,10 @@ export function calculateDkgSeed(
 // seed.
 export async function signAndSubmitCorrectDkgResult(
   walletRegistry: WalletRegistry,
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   seed: BigNumber,
   startBlock: number,
-  misbehavedIndices: number[],
+  misbehavedIndices = noMisbehaved,
   submitterIndex = 1,
   numberOfSignatures = 51
 ): Promise<{
@@ -57,6 +59,7 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   submitter: SignerWithAddress
+  submitterInitialBalance: BigNumber
   transaction: ContractTransaction
 }> {
   const sortitionPool = (await ethers.getContractAt(
@@ -88,7 +91,7 @@ const DKG_RESULT_PARAMS_SIGNATURE =
 // for preparing invalid or malicious results for testing purposes.
 export async function signAndSubmitArbitraryDkgResult(
   walletRegistry: WalletRegistry,
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   signers: Operator[],
   startBlock: number,
   misbehavedIndices: number[],
@@ -98,6 +101,7 @@ export async function signAndSubmitArbitraryDkgResult(
   dkgResult: DkgResult
   dkgResultHash: string
   submitter: SignerWithAddress
+  submitterInitialBalance: BigNumber
   transaction: ContractTransaction
 }> {
   const { dkgResult } = await signDkgResult(
@@ -117,11 +121,15 @@ export async function signAndSubmitArbitraryDkgResult(
   )
 
   const submitter = signers[submitterIndex - 1].signer
+  const submitterInitialBalance = await provider.getBalance(
+    await submitter.getAddress()
+  )
 
   return {
     dkgResult,
     dkgResultHash,
     submitter,
+    submitterInitialBalance,
     ...(await submitDkgResult(walletRegistry, dkgResult, submitter)),
   }
 }
@@ -178,7 +186,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
 
 export async function signDkgResult(
   signers: Operator[],
-  groupPublicKey: string,
+  groupPublicKey: BytesLike,
   misbehavedMembersIndices: number[],
   startBlock: number,
   submitterIndex = 1,

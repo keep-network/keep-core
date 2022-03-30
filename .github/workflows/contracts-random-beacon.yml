@@ -99,7 +99,7 @@ jobs:
 
       - name: Install Slither
         env:
-          SLITHER_VERSION: 0.8.0
+          SLITHER_VERSION: 0.8.2
         run: pip3 install slither-analyzer==$SLITHER_VERSION
 
       - name: Install dependencies

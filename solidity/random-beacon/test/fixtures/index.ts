@@ -28,6 +28,7 @@ export const dkgState = {
 }
 
 export const params = {
+  governanceDelay: 604800, // 1 week
   relayRequestFee: to1e18(100),
   relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
@@ -49,6 +50,8 @@ export const params = {
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(100000),
   authorizationDecreaseDelay: 0,
+  reimbursmentPoolStaticGas: 41900,
+  reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("20", "gwei"),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -77,6 +80,19 @@ export async function testTokenDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
+  const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
+  const reimbursementPool = await ReimbursementPool.deploy(
+    params.reimbursmentPoolStaticGas,
+    params.reimbursmentPoolMaxGasPrice
+  )
+  await reimbursementPool.deployed()
+
+  const contracts: DeployedContracts = { reimbursementPool }
+
+  return contracts
+}
+
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
 
@@ -96,9 +112,9 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   const dkg = await BeaconDkg.deploy()
   await dkg.deployed()
 
-  const Heartbeat = await ethers.getContractFactory("Heartbeat")
-  const heartbeat = await Heartbeat.deploy()
-  await heartbeat.deployed()
+  const BeaconInactivity = await ethers.getContractFactory("BeaconInactivity")
+  const inactivity = await BeaconInactivity.deploy()
+  await inactivity.deployed()
 
   const BeaconDkgValidator = await ethers.getContractFactory(
     "BeaconDkgValidator"
@@ -112,7 +128,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     libraries: {
       BLS: (await blsDeployment()).bls.address,
       BeaconDkg: dkg.address,
-      Heartbeat: heartbeat.address,
+      BeaconInactivity: inactivity.address,
     },
   })
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
@@ -144,7 +160,10 @@ export async function testDeployment(): Promise<DeployedContracts> {
     "RandomBeaconGovernance"
   )
   const randomBeaconGovernance: RandomBeaconGovernance =
-    await RandomBeaconGovernance.deploy(contracts.randomBeacon.address)
+    await RandomBeaconGovernance.deploy(
+      contracts.randomBeacon.address,
+      params.governanceDelay
+    )
   await randomBeaconGovernance.deployed()
   await contracts.randomBeacon.transferOwnership(randomBeaconGovernance.address)
 

@@ -139,7 +139,6 @@ describe("System -- e2e", () => {
         .connect(dkgResult.submitter)
         .approveDkgResult(dkgResult.dkgResult)
 
-      // Ids of groups that sign a given request in order
       for (let i = 1; i <= 14; i++) {
         await approveTestToken(requester)
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)

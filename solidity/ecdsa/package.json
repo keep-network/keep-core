@@ -3,6 +3,16 @@
   "version": "2.0.0-dev",
   "description": "Keep ECDSA Wallet",
   "license": "MIT",
+  "files": [
+    "artifacts/",
+    "build/contracts/",
+    "contracts/",
+    "!contracts/hardhat-dependency-compiler",
+    "!**/test/",
+    "deploy/",
+    "export/",
+    "export.json"
+  ],
   "scripts": {
     "format": "npm run lint",
     "format:fix": "npm run lint:fix",
@@ -18,7 +28,7 @@
     "build": "hardhat compile",
     "test": "hardhat test --deploy-fixture",
     "deploy": "hardhat deploy --export export.json",
-    "prepack": "tsc -p tsconfig.json && hardhat export-artifacts export/artifacts"
+    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts export/artifacts"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",
@@ -55,7 +65,7 @@
     "@keep-network/random-beacon": "../random-beacon",
     "@keep-network/sortition-pools": "^2.0.0-dev.0",
     "@openzeppelin/contracts": "^4.4.1",
-    "@threshold-network/solidity-contracts": ">0.0.2-dev <0.0.2-ropsten"
+    "@threshold-network/solidity-contracts": ">1.1.0-dev <1.1.0-ropsten"
   },
   "engines": {
     "node": ">= 14.0.0"
