@@ -45,6 +45,12 @@ const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
+// FIXME: As a workaround for a bug https://github.com/dethcrypto/TypeChain/issues/601
+// we declare a new type instead of using `RandomBeaconStub & RandomBeacon` intersection.
+type RandomBeaconTest = RandomBeacon & {
+  dkgLockState: () => Promise<ContractTransaction>
+}
+
 async function fixture() {
   const deployment = await randomBeaconDeployment()
 
@@ -62,7 +68,7 @@ async function fixture() {
   )
 
   return {
-    randomBeacon: deployment.randomBeacon as RandomBeacon,
+    randomBeacon: deployment.randomBeacon as RandomBeaconTest,
     randomBeaconGovernance:
       deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
@@ -83,7 +89,7 @@ describe("RandomBeacon - Relay", () => {
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
 
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
   let testToken: TestToken
   let staking: StakingStub
