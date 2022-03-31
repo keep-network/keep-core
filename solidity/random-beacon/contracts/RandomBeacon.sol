@@ -516,7 +516,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     /// @param _unauthorizedSigningSlashingAmount New unauthorized signing
     ///        slashing amount
     function updateSlashingParameters(
-        uint256 _relayEntrySubmissionFailureSlashingAmount,
+        uint96 _relayEntrySubmissionFailureSlashingAmount,
         uint256 _maliciousDkgResultSlashingAmount,
         uint256 _unauthorizedSigningSlashingAmount
     ) external onlyOwner {
@@ -1076,7 +1076,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     function relayEntrySubmissionFailureSlashingAmount()
         external
         view
-        returns (uint256)
+        returns (uint96)
     {
         return relay.relayEntrySubmissionFailureSlashingAmount;
     }

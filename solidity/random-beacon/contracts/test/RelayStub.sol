@@ -22,14 +22,14 @@ contract RelayStub {
     }
 
     function setRelayEntrySubmissionFailureSlashingAmount(
-        uint256 relayEntrySubmissionFailureSlashingAmount
+        uint96 relayEntrySubmissionFailureSlashingAmount
     ) external {
         relay.setRelayEntrySubmissionFailureSlashingAmount(
             relayEntrySubmissionFailureSlashingAmount
         );
     }
 
-    function calculateSlashingAmount() external view returns (uint256) {
+    function calculateSlashingAmount() external view returns (uint96) {
         return relay.calculateSlashingAmount();
     }
 }

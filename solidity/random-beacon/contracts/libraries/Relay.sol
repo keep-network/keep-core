@@ -234,13 +234,12 @@ library Relay {
     ///        the parameter.
     function setRelayEntrySubmissionFailureSlashingAmount(
         Data storage self,
-        uint256 newRelayEntrySubmissionFailureSlashingAmount
+        uint96 newRelayEntrySubmissionFailureSlashingAmount
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntrySubmissionFailureSlashingAmount = uint96(
-            newRelayEntrySubmissionFailureSlashingAmount
-        );
+        self
+            .relayEntrySubmissionFailureSlashingAmount = newRelayEntrySubmissionFailureSlashingAmount;
     }
 
     /// @notice Retries the current relay request in case a relay entry
