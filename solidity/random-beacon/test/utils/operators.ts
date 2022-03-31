@@ -9,6 +9,7 @@ import type { BigNumber, BigNumberish } from "ethers"
 import type {
   RandomBeacon,
   RandomBeaconStub,
+  SortitionPool,
   T,
   TokenStaking,
 } from "../../typechain"
@@ -25,7 +26,7 @@ export async function registerOperators(
 ): Promise<Operator[]> {
   const operators: Operator[] = []
 
-  const sortitionPool = await ethers.getContractAt(
+  const sortitionPool: SortitionPool = await ethers.getContractAt(
     "SortitionPool",
     await randomBeacon.sortitionPool()
   )
@@ -69,7 +70,7 @@ export async function registerOperators(
 
     await randomBeacon.connect(operator).joinSortitionPool()
 
-    const id = await sortitionPool.getOperatorID(await operator.getAddress())
+    const id = await sortitionPool.getOperatorID(operator.address)
 
     operators.push({ id, signer: operator })
   }
