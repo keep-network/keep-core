@@ -20,6 +20,7 @@ export const constants = {
   groupThreshold: 33,
   offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
   poolWeightDivisor: to1e18(1),
+  tokenStakingNotificationReward: to1e18(10000), // 10k T
 }
 
 export const dkgState = {
@@ -147,6 +148,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
 
+  await updateTokenStakingParams(t, staking, deployer)
   await setFixtureParameters(randomBeacon)
 
   const contracts: DeployedContracts = {
@@ -177,6 +179,21 @@ export async function testDeployment(): Promise<DeployedContracts> {
   const newContracts = { randomBeaconGovernance }
 
   return { ...contracts, ...newContracts }
+}
+
+async function updateTokenStakingParams(
+  t: T,
+  staking: TokenStaking,
+  deployer: SignerWithAddress
+) {
+  const initialNotifierTreasury = to1e18(100000) // 100k T
+  await t.connect(deployer).approve(staking.address, initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .pushNotificationReward(initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .setNotificationReward(constants.tokenStakingNotificationReward)
 }
 
 async function setFixtureParameters(randomBeacon: RandomBeaconStub) {

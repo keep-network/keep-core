@@ -78,7 +78,7 @@ describe("RandomBeacon - Group Creation", () => {
     constants.offchainDkgTime + params.dkgResultSubmissionTimeout
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
-  let thirdParty: Signer
+  let thirdParty: SignerWithAddress
   let signers: Operator[]
 
   let randomBeaconGovernance: RandomBeaconGovernance
@@ -2348,6 +2348,15 @@ describe("RandomBeacon - Group Creation", () => {
                 )
               })
 
+              it("should reward the notifier", async () => {
+                await expect(challengeTx)
+                  .to.emit(staking, "NotifierRewarded")
+                  .withArgs(
+                    thirdParty.address,
+                    constants.tokenStakingNotificationReward
+                  )
+              })
+
               it("should slash malicious result submitter", async () => {
                 const stakingProvider =
                   await randomBeacon.operatorToStakingProvider(
@@ -2427,6 +2436,15 @@ describe("RandomBeacon - Group Creation", () => {
                   randomBeacon,
                   "DkgMaliciousResultSlashingFailed"
                 )
+              })
+
+              it("should reward the notifier", async () => {
+                await expect(challengeTx)
+                  .to.emit(staking, "NotifierRewarded")
+                  .withArgs(
+                    thirdParty.address,
+                    constants.tokenStakingNotificationReward
+                  )
               })
 
               it("should slash malicious result submitter", async () => {
@@ -2583,6 +2601,15 @@ describe("RandomBeacon - Group Creation", () => {
                 randomBeacon,
                 "DkgMaliciousResultSlashingFailed"
               )
+            })
+
+            it("should reward the notifier", async () => {
+              await expect(challengeTx)
+                .to.emit(staking, "NotifierRewarded")
+                .withArgs(
+                  thirdParty.address,
+                  constants.tokenStakingNotificationReward
+                )
             })
 
             it("should slash malicious result submitter", async () => {

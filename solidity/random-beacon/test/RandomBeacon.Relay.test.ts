@@ -325,6 +325,10 @@ describe("RandomBeacon - Relay", () => {
               await restoreSnapshot()
             })
 
+            it("should not reward the notifier", async () => {
+              await expect(tx).to.not.emit(staking, "NotifierRewarded")
+            })
+
             it("should not slash any members", async () => {
               await expect(tx).to.not.emit(staking, "TokensSeized")
               expect(await staking.getSlashingQueueLength()).to.be.equal(0)
@@ -440,6 +444,10 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
+          it("should not reward the notifier", async () => {
+            await expect(tx).to.not.emit(staking, "NotifierRewarded")
+          })
+
           it("should not slash any members", async () => {
             await expect(tx).to.not.emit(staking, "TokensSeized")
             expect(await staking.getSlashingQueueLength()).to.be.equal(0)
@@ -495,6 +503,15 @@ describe("RandomBeacon - Relay", () => {
 
           after(async () => {
             await restoreSnapshot()
+          })
+
+          it("should reward the notifier", async () => {
+            await expect(submissionTx)
+              .to.emit(staking, "NotifierRewarded")
+              .withArgs(
+                submitter.address,
+                constants.tokenStakingNotificationReward
+              )
           })
 
           it("should slash a correct portion of the slashing amount for all group members ", async () => {
@@ -636,6 +653,15 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
+          it("should reward the notifier", async () => {
+            await expect(reportTx)
+              .to.emit(staking, "NotifierRewarded")
+              .withArgs(
+                notifier.address,
+                constants.tokenStakingNotificationReward
+              )
+          })
+
           it("should slash the full slashing amount for all group members", async () => {
             for (let i = 0; i < membersAddresses.length; i++) {
               const stakingProvider =
@@ -754,6 +780,15 @@ describe("RandomBeacon - Relay", () => {
 
         after(async () => {
           await restoreSnapshot()
+        })
+
+        it("should reward the notifier", async () => {
+          await expect(reportTx)
+            .to.emit(staking, "NotifierRewarded")
+            .withArgs(
+              notifier.address,
+              constants.tokenStakingNotificationReward
+            )
         })
 
         it("should slash the full slashing amount for all group members", async () => {
@@ -932,6 +967,12 @@ describe("RandomBeacon - Relay", () => {
 
         it("should terminate the group", async () => {
           expect(await isGroupTerminated(0)).to.be.equal(true)
+        })
+
+        it("should reward the notifier", async () => {
+          await expect(reportTx)
+            .to.emit(staking, "NotifierRewarded")
+            .withArgs(notifer.address, constants.tokenStakingNotificationReward)
         })
 
         it("should slash the minimum stake for all group members", async () => {
