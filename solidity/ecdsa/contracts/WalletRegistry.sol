@@ -20,7 +20,6 @@ import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
 import "./libraries/EcdsaInactivity.sol";
-import "./libraries/EcdsaPubKey.sol";
 import "./EcdsaDkgValidator.sol";
 
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -712,7 +711,7 @@ contract WalletRegistry is
         uint32[] memory ineligibleOperators = EcdsaInactivity.verifyClaim(
             sortitionPool,
             claim,
-            EcdsaPubKey.concat(pubKeyX, pubKeyY),
+            bytes.concat(pubKeyX, pubKeyY),
             nonce,
             groupMembers
         );

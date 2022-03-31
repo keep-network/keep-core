@@ -16,11 +16,7 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./EcdsaPubKey.sol";
-
 library Wallets {
-    using EcdsaPubKey for bytes;
-
     struct Wallet {
         // Keccak256 hash of group members identifiers array. Group members do not
         // include operators selected by the sortition pool that misbehaved during DKG.
@@ -63,8 +59,8 @@ library Wallets {
         );
         require(publicKey.length == 64, "Invalid length of the public key");
 
-        publicKeyX = publicKey.getX();
-        publicKeyY = publicKey.getY();
+        publicKeyX = bytes32(publicKey[:32]);
+        publicKeyY = bytes32(publicKey[32:]);
 
         self.registry[walletID].membersIdsHash = membersIdsHash;
         self.registry[walletID].publicKeyX = publicKeyX;
@@ -146,6 +142,6 @@ library Wallets {
         returns (bytes memory)
     {
         (bytes32 x, bytes32 y) = getWalletPublicKeyCoordinates(self, walletID);
-        return EcdsaPubKey.concat(x, y);
+        return bytes.concat(x, y);
     }
 }
