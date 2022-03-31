@@ -2354,6 +2354,10 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     thirdParty.address,
                     constants.tokenStakingNotificationReward
+                      .mul(
+                        params.dkgMaliciousResultNotificationRewardMultiplier
+                      )
+                      .div(100)
                   )
               })
 
@@ -2444,6 +2448,10 @@ describe("RandomBeacon - Group Creation", () => {
                   .withArgs(
                     thirdParty.address,
                     constants.tokenStakingNotificationReward
+                      .mul(
+                        params.dkgMaliciousResultNotificationRewardMultiplier
+                      )
+                      .div(100)
                   )
               })
 
@@ -2609,6 +2617,8 @@ describe("RandomBeacon - Group Creation", () => {
                 .withArgs(
                   thirdParty.address,
                   constants.tokenStakingNotificationReward
+                    .mul(params.dkgMaliciousResultNotificationRewardMultiplier)
+                    .div(100)
                 )
             })
 

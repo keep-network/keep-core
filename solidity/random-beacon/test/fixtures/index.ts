@@ -186,7 +186,9 @@ async function updateTokenStakingParams(
   staking: TokenStaking,
   deployer: SignerWithAddress
 ) {
-  const initialNotifierTreasury = to1e18(100000) // 100k T
+  // initialNotifierTreasury should be configured high enough to execute all the
+  // slashing in test suites.
+  const initialNotifierTreasury = to1e18(9_000_000) // 9MM T
   await t.connect(deployer).approve(staking.address, initialNotifierTreasury)
   await staking
     .connect(deployer)

@@ -507,13 +507,9 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
-          it("should reward the notifier", async () => {
-            await expect(submissionTx)
-              .to.emit(staking, "NotifierRewarded")
-              .withArgs(
-                submitter.address,
-                constants.tokenStakingNotificationReward
-              )
+          // TokenStaking.slash function is called that doesn't reward the notifier.
+          it("should not reward the notifier", async () => {
+            await expect(submissionTx).to.not.emit(staking, "NotifierRewarded")
           })
 
           it("should slash a correct portion of the slashing amount for all group members ", async () => {
@@ -661,6 +657,9 @@ describe("RandomBeacon - Relay", () => {
               .withArgs(
                 notifier.address,
                 constants.tokenStakingNotificationReward
+                  .mul(params.relayEntryTimeoutNotificationRewardMultiplier)
+                  .div(100)
+                  .mul(membersIDs.length)
               )
           })
 
@@ -790,6 +789,9 @@ describe("RandomBeacon - Relay", () => {
             .withArgs(
               notifier.address,
               constants.tokenStakingNotificationReward
+                .mul(params.relayEntryTimeoutNotificationRewardMultiplier)
+                .div(100)
+                .mul(membersIDs.length)
             )
         })
 
@@ -977,6 +979,9 @@ describe("RandomBeacon - Relay", () => {
             .withArgs(
               notifier.address,
               constants.tokenStakingNotificationReward
+                .mul(params.unauthorizedSigningNotificationRewardMultiplier)
+                .div(100)
+                .mul(membersIDs.length)
             )
         })
 
