@@ -19,12 +19,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
   })
 
-  const EcdsaDkg = await deployments.deploy("EcdsaDkg", {
-    from: deployer,
-    log: true,
-  })
-
-  const Wallets = await deployments.deploy("Wallets", {
+  const EcdsaInactivity = await deployments.deploy("EcdsaInactivity", {
     from: deployer,
     log: true,
   })
@@ -42,7 +37,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       RandomBeacon.address,
       ReimbursementPool.address,
     ],
-    libraries: { EcdsaDkg: EcdsaDkg.address, Wallets: Wallets.address },
+    libraries: {
+      EcdsaInactivity: EcdsaInactivity.address,
+    },
     log: true,
   })
 

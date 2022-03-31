@@ -19,6 +19,7 @@ import "./api/IWalletOwner.sol";
 import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
+import "./libraries/EcdsaInactivity.sol";
 import "./EcdsaDkgValidator.sol";
 
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -73,7 +74,7 @@ contract WalletRegistry is
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
     ///         other member that will call the DKG approve function.
-    uint256 public dkgResultSubmissionGas = 300000;
+    uint256 public dkgResultSubmissionGas = 275000;
 
     // @notice Gas meant to balance the DKG result approval's overall cost. Can
     //         be updated by the governace based on the current market conditions.
@@ -83,6 +84,11 @@ contract WalletRegistry is
     ///         who missed their turn for DKG result submission or who failed
     ///         a heartbeat.
     uint256 public sortitionPoolRewardsBanDuration;
+
+    /// @notice Stores current operator inactivity claim nonce for the given
+    ///         wallet signing group. Each claim is made with a unique nonce
+    ///         which protects against claim replay.
+    mapping(bytes32 => uint256) public inactivityClaimNonce; // walletID -> nonce
 
     // External dependencies
 
@@ -120,6 +126,8 @@ contract WalletRegistry is
         bytes32 indexed walletID,
         bytes32 indexed dkgResultHash
     );
+
+    event WalletClosed(bytes32 indexed walletID);
 
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
@@ -198,6 +206,12 @@ contract WalletRegistry is
     event OperatorStatusUpdated(
         address indexed stakingProvider,
         address indexed operator
+    );
+
+    event InactivityClaimed(
+        bytes32 indexed walletID,
+        uint256 nonce,
+        address notifier
     );
 
     modifier onlyStakingContract() {
@@ -511,11 +525,13 @@ contract WalletRegistry is
         randomBeacon.requestRelayEntry(this);
     }
 
-    /// @notice Closes an existing wallet.
+    /// @notice Closes an existing wallet. Reverts if wallet with the given ID
+    ///         does not exist or if it has already been closed.
     /// @param walletID ID of the wallet.
     /// @dev Only a Wallet Owner can call this function.
     function closeWallet(bytes32 walletID) external onlyWalletOwner {
-        // TODO: Implementation.
+        wallets.deleteWallet(walletID);
+        emit WalletClosed(walletID);
     }
 
     /// @notice A callback that is executed once a new relay entry gets
@@ -653,6 +669,55 @@ contract WalletRegistry is
                 maliciousDkgResultSubmitterAddress
             );
         }
+    }
+
+    /// @notice Notifies about operators who are inactive. Using this function,
+    ///         a majority of the wallet signing group can decide about
+    ///         punishing specific group members who constantly fail doing their
+    ///         job. If the provided claim is proved to be valid and signed by
+    ///         sufficient number of group members, operators of members deemed
+    ///         as inactive are banned for sortition pool rewards for duration
+    ///         specified by `sortitionPoolRewardsBanDuration` parameter. The
+    ///         sender of the claim must be one of the claim signers. This
+    ///         function can be called only for registered wallets.
+    /// @param claim Operator inactivity claim
+    /// @param nonce Current inactivity claim nonce for the given wallet signing
+    ///              group. Must be the same as the stored one
+    /// @param groupMembers Identifiers of the wallet signing group members
+    function notifyOperatorInactivity(
+        EcdsaInactivity.Claim calldata claim,
+        uint256 nonce,
+        uint32[] calldata groupMembers
+    ) external {
+        bytes32 walletID = claim.walletID;
+
+        require(nonce == inactivityClaimNonce[walletID], "Invalid nonce");
+
+        bytes memory publicKey = wallets.getWalletPublicKey(walletID);
+        bytes32 memberIdsHash = wallets.getWalletMembersIdsHash(walletID);
+
+        require(
+            memberIdsHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
+        );
+
+        uint32[] memory ineligibleOperators = EcdsaInactivity.verifyClaim(
+            sortitionPool,
+            claim,
+            publicKey,
+            nonce,
+            groupMembers
+        );
+
+        inactivityClaimNonce[walletID]++;
+
+        emit InactivityClaimed(walletID, nonce, msg.sender);
+
+        sortitionPool.setRewardIneligibility(
+            ineligibleOperators,
+            // solhint-disable-next-line not-rely-on-time
+            block.timestamp + sortitionPoolRewardsBanDuration
+        );
     }
 
     /// @notice Checks if DKG result is valid for the current DKG.

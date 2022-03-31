@@ -80,6 +80,7 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let submitter: SignerWithAddress
+  let thirdParty: SignerWithAddress
   let members: Operator[]
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
@@ -93,6 +94,7 @@ describe("RandomBeacon - Relay", () => {
 
   before(async () => {
     deployer = await ethers.getNamedSigner("deployer")
+    thirdParty = await ethers.getNamedSigner("thirdParty")
     ;[requester, notifier, submitter] = await ethers.getUnnamedSigners()
     ;({
       randomBeacon,
@@ -1176,8 +1178,8 @@ describe("RandomBeacon - Relay", () => {
 
   describe("notifyOperatorInactivity", () => {
     const groupId = 0
-    const stubSignatures = "0x00"
-    const stubMembersIndices = []
+    const emptySignatures = "0x00"
+    const emptyMemberIndices = []
     // Use 31 element `inactiveMembersIndices` array to simulate the most gas
     // expensive real-world case. If group size is 64, the required threshold
     // is 33 so we assume 31 operators at most will be marked as ineligible
@@ -1335,6 +1337,9 @@ describe("RandomBeacon - Relay", () => {
                         59, 61, 62, 64,
                       ]
 
+                      // we cut the first 2 characters to get rid of "0x" and
+                      // then return signature on arbitrary position - each
+                      // signature has 65 bytes so 130 characters
                       const getSignature = (signatures, index) =>
                         signatures
                           .slice(2)
@@ -1384,10 +1389,7 @@ describe("RandomBeacon - Relay", () => {
                           groupThreshold
                         )
 
-                      // Assume claim sender is member `34` - the first member
-                      // who did not sign the claim. We take index `33` since
-                      // `members` array is zero-based.
-                      const claimSender = members[33].signer
+                      const claimSender = thirdParty
 
                       await expect(
                         randomBeacon
@@ -1639,7 +1641,7 @@ describe("RandomBeacon - Relay", () => {
                       groupId,
                       inactiveMembersIndices: subsequentInactiveMembersIndices,
                       signatures,
-                      signingMembersIndices: stubMembersIndices,
+                      signingMembersIndices: emptyMemberIndices,
                     },
                     0,
                     membersIDs
@@ -1661,7 +1663,7 @@ describe("RandomBeacon - Relay", () => {
                         inactiveMembersIndices:
                           subsequentInactiveMembersIndices,
                         signatures,
-                        signingMembersIndices: stubMembersIndices,
+                        signingMembersIndices: emptyMemberIndices,
                       },
                       0,
                       membersIDs
@@ -1767,7 +1769,7 @@ describe("RandomBeacon - Relay", () => {
           })
         })
 
-        context("when failed members indices are incorrect", () => {
+        context("when inactive members indices are incorrect", () => {
           const assertInactiveMembersIndicesCorrupted = async (
             inactiveMembersIndices: number[]
           ) => {
@@ -1820,7 +1822,7 @@ describe("RandomBeacon - Relay", () => {
             }
           )
 
-          context("when first failed member index is zero", () => {
+          context("when first inactive member index is zero", () => {
             it("should revert", async () => {
               const inactiveMembersIndices = Array.from(
                 Array(64),
@@ -1890,9 +1892,9 @@ describe("RandomBeacon - Relay", () => {
             randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                inactiveMembersIndices: stubMembersIndices,
-                signatures: stubSignatures,
-                signingMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: emptyMemberIndices,
+                signatures: emptySignatures,
+                signingMembersIndices: emptyMemberIndices,
               },
               0,
               membersIDs
@@ -1925,9 +1927,9 @@ describe("RandomBeacon - Relay", () => {
             randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                inactiveMembersIndices: stubMembersIndices,
-                signatures: stubSignatures,
-                signingMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: emptyMemberIndices,
+                signatures: emptySignatures,
+                signingMembersIndices: emptyMemberIndices,
               },
               0,
               membersIDs
@@ -1943,9 +1945,9 @@ describe("RandomBeacon - Relay", () => {
           randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              inactiveMembersIndices: stubMembersIndices,
-              signatures: stubSignatures,
-              signingMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: emptyMemberIndices,
+              signatures: emptySignatures,
+              signingMembersIndices: emptyMemberIndices,
             },
             1,
             membersIDs
@@ -1961,9 +1963,9 @@ describe("RandomBeacon - Relay", () => {
           randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              inactiveMembersIndices: stubMembersIndices,
-              signatures: stubSignatures,
-              signingMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: emptyMemberIndices,
+              signatures: emptySignatures,
+              signingMembersIndices: emptyMemberIndices,
             },
             0,
             invalidMembersId

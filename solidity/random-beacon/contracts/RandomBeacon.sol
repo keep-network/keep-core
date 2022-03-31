@@ -296,7 +296,11 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event InactivityClaimed(uint64 groupId, uint256 nonce, address notifier);
+    event InactivityClaimed(
+        uint64 indexed groupId,
+        uint256 nonce,
+        address notifier
+    );
 
     event OperatorRegistered(
         address indexed stakingProvider,
@@ -1101,7 +1105,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
     ///         the claim must be one of the claim signers. This function
     ///         can be called only for active and non-terminated groups.
-    /// @param claim Failure claim.
+    /// @param claim Operator inactivity claim.
     /// @param nonce Current inactivity claim nonce for the given group. Must
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
