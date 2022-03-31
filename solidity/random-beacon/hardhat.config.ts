@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
           : undefined,
       },
       // We want to have 10 accounts for various tests and `5 * 64` accounts to use
-      // unique addresses in staking for each group member.
+      // unique addresses in staking for each operator.
       accounts: { count: 10 + 5 * 64 },
       tags: ["local"],
       allowUnlimitedContractSize: true,
