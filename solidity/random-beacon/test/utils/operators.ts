@@ -37,6 +37,13 @@ export async function registerOperators(
 
   const signers = (await ethers.getUnnamedSigners()).slice(unnamedSignersOffset)
 
+  // We use unique accounts for each staking role for each operator.
+  if (signers.length < numberOfOperators * 5) {
+    throw new Error(
+      "not enough unnamed signers; update hardhat network's configuration account count"
+    )
+  }
+
   for (let i = 0; i < numberOfOperators; i++) {
     const owner: SignerWithAddress = signers[i]
     const stakingProvider: SignerWithAddress =
