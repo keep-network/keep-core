@@ -45,6 +45,9 @@ type RandomBeaconTest = RandomBeacon & {
 
 const fixture = async () => {
   const contracts = await testDeployment()
+  await contracts.randomBeacon.transferOwnership(
+    contracts.randomBeaconGovernance.address
+  )
 
   // Accounts offset provided to slice getUnnamedAccounts have to include number
   // of unnamed accounts that were already used.

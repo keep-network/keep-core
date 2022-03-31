@@ -1,7 +1,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { randomBeaconDeployment } from "./fixtures"
+import { testDeployment } from "./fixtures"
 
 import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
@@ -42,9 +42,10 @@ describe("RandomBeaconGovernance", () => {
   before(async () => {
     [governance, thirdParty] = await ethers.getSigners()
 
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
+    const contracts = await waffle.loadFixture(testDeployment)
 
     randomBeacon = contracts.randomBeacon as RandomBeacon
+    randomBeaconGovernance = contracts.randomBeaconGovernance as RandomBeaconGovernance
 
     await randomBeacon
       .connect(governance)
@@ -93,14 +94,7 @@ describe("RandomBeaconGovernance", () => {
         initialAuthorizationDecreaseDelay
       )
 
-    const RandomBeaconGovernance = await ethers.getContractFactory(
-      "RandomBeaconGovernance"
-    )
-    randomBeaconGovernance = await RandomBeaconGovernance.deploy(
-      randomBeacon.address, governanceDelay
-    )
-    await randomBeaconGovernance.deployed()
-    await randomBeacon.transferOwnership(randomBeaconGovernance.address)
+    await contracts.randomBeacon.transferOwnership(contracts.randomBeaconGovernance.address)
   })
 
   describe("beginGovernanceDelayUpdate", () => {
