@@ -47,7 +47,9 @@ const config: HardhatUserConfig = {
           ? parseInt(process.env.FORKING_BLOCK, 10)
           : undefined,
       },
-      accounts: { count: 70 },
+      // We want to have 10 accounts for various tests and `5 * 100` accounts to use
+      // unique addresses in staking for each operator.
+      accounts: { count: 10 + 5 * 100 },
       tags: ["local"],
       // we use higher gas price for tests to obtain more realistic results
       // for gas refund tests than when the default hardhat ~1 gwei gas price is
