@@ -59,7 +59,7 @@ async function fixture() {
     deployment.randomBeacon as RandomBeacon,
     deployment.t as T,
     constants.groupSize,
-    3
+    4
   )
 
   return {
@@ -94,8 +94,8 @@ describe("RandomBeacon - Relay", () => {
 
   before(async () => {
     deployer = await ethers.getNamedSigner("deployer")
-    thirdParty = await ethers.getNamedSigner("thirdParty")
-    ;[requester, notifier, submitter] = await ethers.getUnnamedSigners()
+    ;[thirdParty, requester, notifier, submitter] =
+      await ethers.getUnnamedSigners()
     ;({
       randomBeacon,
       sortitionPool,
