@@ -369,7 +369,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         unauthorizedSigningNotificationRewardMultiplier = 50;
         dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
-        authorization.setMinimumAuthorization(100000 * 1e18);
+        authorization.setMinimumAuthorization(100000e18); // 100k T
+        authorization.setAuthorizationDecreaseDelay(403200); // ~10 weeks assuming 15s block time
 
         dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time

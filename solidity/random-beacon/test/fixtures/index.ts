@@ -52,8 +52,8 @@ export const params = {
   dkgMaliciousResultNotificationRewardMultiplier: 100,
   ineligibleOperatorNotifierReward: to1e18(200),
   unauthorizedSigningSlashingAmount: to1e18(100000),
-  minimumAuthorization: to1e18(400000),
-  authorizationDecreaseDelay: 5184000,
+  minimumAuthorization: to1e18(100000),
+  authorizationDecreaseDelay: 403200,
   reimbursmentPoolStaticGas: 41900,
   reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("20", "gwei"),
 }
