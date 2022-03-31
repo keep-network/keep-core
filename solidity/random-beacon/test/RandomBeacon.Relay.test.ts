@@ -974,7 +974,10 @@ describe("RandomBeacon - Relay", () => {
         it("should reward the notifier", async () => {
           await expect(reportTx)
             .to.emit(staking, "NotifierRewarded")
-            .withArgs(notifer.address, constants.tokenStakingNotificationReward)
+            .withArgs(
+              notifier.address,
+              constants.tokenStakingNotificationReward
+            )
         })
 
         it("should slash the minimum stake for all group members", async () => {
