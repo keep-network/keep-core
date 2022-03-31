@@ -91,12 +91,8 @@ export const walletRegistryFixture = deployments.createFixture(
     const operators: Operator[] = await registerOperators(
       walletRegistry,
       tToken,
-      (
-        await getUnnamedAccounts()
-      ).slice(
-        unnamedAccountsOffset,
-        unnamedAccountsOffset + constants.groupSize
-      )
+      constants.groupSize,
+      unnamedAccountsOffset
     )
 
     // Set up TokenStaking parameters
