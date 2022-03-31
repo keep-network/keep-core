@@ -84,9 +84,7 @@ describe("RandomBeacon - Callback", () => {
           .connect(requester)
           .requestRelayEntry(callbackContract.address)
 
-        const callbackData = await randomBeacon.getCallbackData()
-
-        await expect(callbackData.callbackContract).to.equal(
+        await expect(await randomBeacon.getCallbackContract()).to.equal(
           callbackContract.address
         )
 
@@ -108,8 +106,9 @@ describe("RandomBeacon - Callback", () => {
 
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
-        const callbackData = await randomBeacon.getCallbackData()
-        await expect(callbackData.callbackContract).to.equal(ZERO_ADDRESS)
+        await expect(await randomBeacon.getCallbackContract()).to.equal(
+          ZERO_ADDRESS
+        )
 
         await restoreSnapshot()
       })
@@ -131,8 +130,7 @@ describe("RandomBeacon - Callback", () => {
           .connect(requester)
           .requestRelayEntry(callbackContract1.address)
 
-        const callbackData = await randomBeacon.getCallbackData()
-        await expect(callbackData.callbackContract).to.equal(
+        await expect(await randomBeacon.getCallbackContract()).to.equal(
           callbackContract1.address
         )
 

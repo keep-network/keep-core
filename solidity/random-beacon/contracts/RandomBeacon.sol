@@ -1010,13 +1010,6 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         tToken.safeTransfer(to, actualValue);
     }
 
-    /// @notice Locks the state of group creation.
-    /// @dev This function is meant to be used by test stubs which inherits
-    ///      from this contract and needs to lock the DKG state arbitrarily.
-    function dkgLockState() internal {
-        dkg.lockState();
-    }
-
     /// @notice The minimum authorization amount required so that operator can
     ///         participate in the random beacon. This amount is required to
     ///         execute slashing for providing a malicious DKG result or when

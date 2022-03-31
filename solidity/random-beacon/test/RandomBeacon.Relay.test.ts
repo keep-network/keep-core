@@ -37,13 +37,19 @@ import type {
   IRandomBeaconStaking,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
-import type { ContractTransaction } from "ethers"
+import type { ContractTransaction, BigNumberish, BytesLike } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+
+// FIXME: As a workaround for a bug https://github.com/dethcrypto/TypeChain/issues/601
+// we declare a new type instead of using `RandomBeaconStub & RandomBeacon` intersection.
+type RandomBeaconTest = RandomBeacon & {
+  dkgLockState: () => Promise<ContractTransaction>
+}
 
 async function fixture() {
   const deployment = await randomBeaconDeployment()
@@ -62,7 +68,7 @@ async function fixture() {
   )
 
   return {
-    randomBeacon: deployment.randomBeacon as RandomBeacon,
+    randomBeacon: deployment.randomBeacon as RandomBeaconTest,
     randomBeaconGovernance:
       deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
@@ -84,7 +90,7 @@ describe("RandomBeacon - Relay", () => {
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
 
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
   let testToken: TestToken
   let staking: StakingStub
@@ -369,9 +375,7 @@ describe("RandomBeacon - Relay", () => {
               await createSnapshot()
 
               // Simulate DKG is awaiting a seed.
-              await (
-                randomBeacon as unknown as RandomBeaconStub
-              ).publicDkgLockState()
+              await randomBeacon.dkgLockState()
 
               tx = await randomBeacon
                 .connect(submitter)
@@ -638,10 +642,7 @@ describe("RandomBeacon - Relay", () => {
           })
 
           it("should terminate the group", async () => {
-            const isGroupTeminated = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).isGroupTerminated(0)
-            expect(isGroupTeminated).to.be.equal(true)
+            expect(await isGroupTerminated(0)).to.be.equal(true)
           })
 
           it("should emit RelayEntryTimedOut event", async () => {
@@ -682,13 +683,10 @@ describe("RandomBeacon - Relay", () => {
               hashUint32Array(membersIDs)
             )
 
-            const registry = await randomBeacon.getGroupsRegistry()
-            const secondGroupLifetime = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).groupLifetimeOf(registry[1])
+            const secondGroupLifetime = await groupLifetimeOf(1)
 
             // Expire second group
-            await mineBlocksTo(Number(secondGroupLifetime) + 1)
+            await mineBlocksTo(secondGroupLifetime.toNumber() + 1)
 
             tx = await randomBeacon.reportRelayEntryTimeout(membersIDs)
           })
@@ -697,8 +695,15 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
-          it("should clean up current relay request data", async () => {
+          it("should terminate the group", async () => {
+            expect(await isGroupTerminated(0)).to.be.equal(true)
+          })
+
+          it("should not emit RelayEntryRequested", async () => {
             await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          })
+
+          it("should clean up current relay request data", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
         }
@@ -735,10 +740,7 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTeminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTeminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
         it("should emit RelayEntryTimedOut event", async () => {
@@ -762,9 +764,7 @@ describe("RandomBeacon - Relay", () => {
             await createSnapshot()
 
             // Simulate DKG is awaiting a seed.
-            await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).publicDkgLockState()
+            await randomBeacon.dkgLockState()
 
             tx = await randomBeacon
               .connect(notifier)
@@ -875,10 +875,7 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTerminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTerminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
         it("should call staking contract to seize the min stake", async () => {
@@ -1863,6 +1860,20 @@ describe("RandomBeacon - Relay", () => {
       })
     })
   })
+
+  async function groupLifetimeOf(groupID: BigNumberish): Promise<BigNumber> {
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
+
+    const groupLifeTime = await randomBeacon.callStatic.groupLifetime()
+
+    return groupData.registrationBlockNumber.add(groupLifeTime)
+  }
+
+  async function isGroupTerminated(groupID: BigNumberish): Promise<boolean> {
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
+
+    return groupData.terminated === true
+  }
 
   async function approveTestToken() {
     await testToken.mint(requester.address, params.relayRequestFee)
