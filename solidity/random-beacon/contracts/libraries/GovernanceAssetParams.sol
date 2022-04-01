@@ -15,7 +15,7 @@
 pragma solidity ^0.8.9;
 
 /// TODO: add desc
-library GovernanceRewardsAndSlashing {
+library GovernanceAssetParams {
     struct Data {
         uint256 governanceDelay;
         uint256 newDkgResultSubmissionReward;
