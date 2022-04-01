@@ -64,12 +64,6 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newSubmitterPrecedencePeriodLength;
     uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
 
-    uint96 public newMinimumAuthorization;
-    uint256 public minimumAuthorizationChangeInitiated;
-
-    uint64 public newAuthorizationDecreaseDelay;
-    uint256 public authorizationDecreaseDelayChangeInitiated;
-
     event DkgResultSubmissionRewardUpdateStarted(
         uint256 dkgResultSubmissionReward,
         uint256 timestamp
@@ -999,32 +993,20 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        /* solhint-disable not-rely-on-time */
-        newMinimumAuthorization = _newMinimumAuthorization;
-        minimumAuthorizationChangeInitiated = block.timestamp;
-        emit MinimumAuthorizationUpdateStarted(
-            _newMinimumAuthorization,
-            block.timestamp
+        governanceAssetParams.beginMinimumAuthorizationUpdate(
+            _newMinimumAuthorization
         );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the minimum authorization amount update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeMinimumAuthorizationUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(minimumAuthorizationChangeInitiated)
-    {
-        emit MinimumAuthorizationUpdated(newMinimumAuthorization);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeMinimumAuthorizationUpdate() external onlyOwner {
         randomBeacon.updateAuthorizationParameters(
-            newMinimumAuthorization,
+            governanceAssetParams.getNewMinimumAuthorization(),
             randomBeacon.authorizationDecreaseDelay()
         );
-        minimumAuthorizationChangeInitiated = 0;
-        newMinimumAuthorization = 0;
+        governanceAssetParams.finalizeMinimumAuthorizationUpdate();
     }
 
     /// @notice Begins the authorization decrease delay update process.
@@ -1033,32 +1015,21 @@ contract RandomBeaconGovernance is Ownable {
     function beginAuthorizationDecreaseDelayUpdate(
         uint64 _newAuthorizationDecreaseDelay
     ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        newAuthorizationDecreaseDelay = _newAuthorizationDecreaseDelay;
-        authorizationDecreaseDelayChangeInitiated = block.timestamp;
-        emit AuthorizationDecreaseDelayUpdateStarted(
-            _newAuthorizationDecreaseDelay,
-            block.timestamp
+        governanceAssetParams.beginAuthorizationDecreaseDelayUpdate(
+            _newAuthorizationDecreaseDelay
         );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the authorization decrease delay update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeAuthorizationDecreaseDelayUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(authorizationDecreaseDelayChangeInitiated)
-    {
-        emit AuthorizationDecreaseDelayUpdated(newAuthorizationDecreaseDelay);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeAuthorizationDecreaseDelayUpdate() external onlyOwner {
         randomBeacon.updateAuthorizationParameters(
             randomBeacon.minimumAuthorization(),
-            newAuthorizationDecreaseDelay
+            governanceAssetParams.getNewAuthorizationDecreaseDelay()
         );
-        authorizationDecreaseDelayChangeInitiated = 0;
-        newAuthorizationDecreaseDelay = 0;
+
+        governanceAssetParams.finalizeAuthorizationDecreaseDelayUpdate();
     }
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
@@ -1332,7 +1303,8 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(minimumAuthorizationChangeInitiated);
+        return
+            governanceAssetParams.getRemainingMimimumAuthorizationUpdateTime();
     }
 
     function getRemainingAuthorizationDecreaseDelayUpdateTime()
@@ -1341,7 +1313,8 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(authorizationDecreaseDelayChangeInitiated);
+            governanceAssetParams
+                .getRemainingAuthorizationDecreaseDelayUpdateTime();
     }
 
     /// @notice Gets the time remaining until the governable parameter update

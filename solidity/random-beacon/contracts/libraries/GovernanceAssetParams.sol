@@ -38,6 +38,10 @@ library GovernanceAssetParams {
         uint256 maliciousDkgResultSlashingAmountChangeInitiated;
         uint256 newUnauthorizedSigningSlashingAmount;
         uint256 unauthorizedSigningSlashingAmountChangeInitiated;
+        uint96 newMinimumAuthorization;
+        uint256 minimumAuthorizationChangeInitiated;
+        uint64 newAuthorizationDecreaseDelay;
+        uint256 authorizationDecreaseDelayChangeInitiated;
     }
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -117,6 +121,18 @@ library GovernanceAssetParams {
     event UnauthorizedSigningSlashingAmountUpdated(
         uint256 unauthorizedSigningSlashingAmount
     );
+
+    event MinimumAuthorizationUpdateStarted(
+        uint96 minimumAuthorization,
+        uint256 timestamp
+    );
+    event MinimumAuthorizationUpdated(uint96 minimumAuthorization);
+
+    event AuthorizationDecreaseDelayUpdateStarted(
+        uint64 authorizationDecreaseDelay,
+        uint256 timestamp
+    );
+    event AuthorizationDecreaseDelayUpdated(uint64 authorizationDecreaseDelay);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -536,6 +552,69 @@ library GovernanceAssetParams {
         self.newUnauthorizedSigningSlashingAmount = 0;
     }
 
+    /// @notice Begins the minimum authorization amount update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newMinimumAuthorization New minimum authorization amount.
+    function beginMinimumAuthorizationUpdate(
+        Data storage self,
+        uint96 _newMinimumAuthorization
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        self.newMinimumAuthorization = _newMinimumAuthorization;
+        self.minimumAuthorizationChangeInitiated = block.timestamp;
+        emit MinimumAuthorizationUpdateStarted(
+            _newMinimumAuthorization,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the minimum authorization amount update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeMinimumAuthorizationUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(self, self.minimumAuthorizationChangeInitiated)
+    {
+        emit MinimumAuthorizationUpdated(self.newMinimumAuthorization);
+        self.minimumAuthorizationChangeInitiated = 0;
+        self.newMinimumAuthorization = 0;
+    }
+
+    /// @notice Begins the authorization decrease delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newAuthorizationDecreaseDelay New authorization decrease delay
+    function beginAuthorizationDecreaseDelayUpdate(
+        Data storage self,
+        uint64 _newAuthorizationDecreaseDelay
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        self.newAuthorizationDecreaseDelay = _newAuthorizationDecreaseDelay;
+        self.authorizationDecreaseDelayChangeInitiated = block.timestamp;
+        emit AuthorizationDecreaseDelayUpdateStarted(
+            _newAuthorizationDecreaseDelay,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the authorization decrease delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeAuthorizationDecreaseDelayUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.authorizationDecreaseDelayChangeInitiated
+        )
+    {
+        emit AuthorizationDecreaseDelayUpdated(
+            self.newAuthorizationDecreaseDelay
+        );
+        self.authorizationDecreaseDelayChangeInitiated = 0;
+        self.newAuthorizationDecreaseDelay = 0;
+    }
+
     /// @notice Get the time remaining until the DKG result submission reward
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -671,6 +750,33 @@ library GovernanceAssetParams {
             );
     }
 
+    /// @notice Get the time remaining until the minimum authorization amount
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingMimimumAuthorizationUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                self,
+                self.minimumAuthorizationChangeInitiated
+            );
+    }
+
+    function getRemainingAuthorizationDecreaseDelayUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                self,
+                self.authorizationDecreaseDelayChangeInitiated
+            );
+    }
+
     function getNewDkgResultSubmissionReward(Data storage self)
         internal
         view
@@ -743,6 +849,22 @@ library GovernanceAssetParams {
         returns (uint256)
     {
         return self.newUnauthorizedSigningSlashingAmount;
+    }
+
+    function getNewMinimumAuthorization(Data storage self)
+        internal
+        view
+        returns (uint96)
+    {
+        return self.newMinimumAuthorization;
+    }
+
+    function getNewAuthorizationDecreaseDelay(Data storage self)
+        internal
+        view
+        returns (uint64)
+    {
+        return self.newAuthorizationDecreaseDelay;
     }
 
     /// @notice Gets the time remaining until the governable parameter update
