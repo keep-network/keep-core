@@ -15,7 +15,7 @@
 pragma solidity ^0.8.9;
 
 /// TODO: add desc
-library GovernanceAssetParams {
+library GovernanceBeaconParams {
     struct Data {
         uint256 governanceDelay;
         uint256 newDkgResultSubmissionReward;
@@ -42,6 +42,14 @@ library GovernanceAssetParams {
         uint256 minimumAuthorizationChangeInitiated;
         uint64 newAuthorizationDecreaseDelay;
         uint256 authorizationDecreaseDelayChangeInitiated;
+        uint256 newRelayRequestFee;
+        uint256 relayRequestFeeChangeInitiated;
+        uint256 newRelayEntrySoftTimeout;
+        uint256 relayEntrySoftTimeoutChangeInitiated;
+        uint256 newRelayEntryHardTimeout;
+        uint256 relayEntryHardTimeoutChangeInitiated;
+        uint256 newCallbackGasLimit;
+        uint256 callbackGasLimitChangeInitiated;
     }
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -133,6 +141,30 @@ library GovernanceAssetParams {
         uint256 timestamp
     );
     event AuthorizationDecreaseDelayUpdated(uint64 authorizationDecreaseDelay);
+
+    event RelayRequestFeeUpdateStarted(
+        uint256 relayRequestFee,
+        uint256 timestamp
+    );
+    event RelayRequestFeeUpdated(uint256 relayRequestFee);
+
+    event RelayEntrySoftTimeoutUpdateStarted(
+        uint256 relayEntrySoftTimeout,
+        uint256 timestamp
+    );
+    event RelayEntrySoftTimeoutUpdated(uint256 relayEntrySoftTimeout);
+
+    event RelayEntryHardTimeoutUpdateStarted(
+        uint256 relayEntryHardTimeout,
+        uint256 timestamp
+    );
+    event RelayEntryHardTimeoutUpdated(uint256 relayEntryHardTimeout);
+
+    event CallbackGasLimitUpdateStarted(
+        uint256 callbackGasLimit,
+        uint256 timestamp
+    );
+    event CallbackGasLimitUpdated(uint256 callbackGasLimit);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -615,6 +647,134 @@ library GovernanceAssetParams {
         self.newAuthorizationDecreaseDelay = 0;
     }
 
+    /// @notice Begins the relay request fee update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newRelayRequestFee New relay request fee
+    function beginRelayRequestFeeUpdate(
+        Data storage self,
+        uint256 _newRelayRequestFee
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        self.newRelayRequestFee = _newRelayRequestFee;
+        self.relayRequestFeeChangeInitiated = block.timestamp;
+        emit RelayRequestFeeUpdateStarted(_newRelayRequestFee, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the relay request fee update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRelayRequestFeeUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(self, self.relayRequestFeeChangeInitiated)
+    {
+        emit RelayRequestFeeUpdated(self.newRelayRequestFee);
+        self.relayRequestFeeChangeInitiated = 0;
+        self.newRelayRequestFee = 0;
+    }
+
+    /// @notice Begins the relay entry soft timeout update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newRelayEntrySoftTimeout New relay entry submission timeout in blocks
+    function beginRelayEntrySoftTimeoutUpdate(
+        Data storage self,
+        uint256 _newRelayEntrySoftTimeout
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newRelayEntrySoftTimeout > 0,
+            "Relay entry soft timeout must be > 0"
+        );
+        self.newRelayEntrySoftTimeout = _newRelayEntrySoftTimeout;
+        self.relayEntrySoftTimeoutChangeInitiated = block.timestamp;
+        emit RelayEntrySoftTimeoutUpdateStarted(
+            _newRelayEntrySoftTimeout,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the relay entry soft timeout update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRelayEntrySoftTimeoutUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.relayEntrySoftTimeoutChangeInitiated
+        )
+    {
+        emit RelayEntrySoftTimeoutUpdated(self.newRelayEntrySoftTimeout);
+        self.relayEntrySoftTimeoutChangeInitiated = 0;
+        self.newRelayEntrySoftTimeout = 0;
+    }
+
+    /// @notice Begins the relay entry hard timeout update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newRelayEntryHardTimeout New relay entry hard timeout in blocks
+    function beginRelayEntryHardTimeoutUpdate(
+        Data storage self,
+        uint256 _newRelayEntryHardTimeout
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        self.newRelayEntryHardTimeout = _newRelayEntryHardTimeout;
+        self.relayEntryHardTimeoutChangeInitiated = block.timestamp;
+        emit RelayEntryHardTimeoutUpdateStarted(
+            _newRelayEntryHardTimeout,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the relay entry hard timeout update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRelayEntryHardTimeoutUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.relayEntryHardTimeoutChangeInitiated
+        )
+    {
+        emit RelayEntryHardTimeoutUpdated(self.newRelayEntryHardTimeout);
+        self.relayEntryHardTimeoutChangeInitiated = 0;
+        self.newRelayEntryHardTimeout = 0;
+    }
+
+    /// @notice Begins the callback gas limit update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newCallbackGasLimit New callback gas limit
+    function beginCallbackGasLimitUpdate(
+        Data storage self,
+        uint256 _newCallbackGasLimit
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        // slither-disable-next-line too-many-digits
+        require(
+            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1e6,
+            "Callback gas limit must be > 0 and <= 1000000"
+        );
+        self.newCallbackGasLimit = _newCallbackGasLimit;
+        self.callbackGasLimitChangeInitiated = block.timestamp;
+        emit CallbackGasLimitUpdateStarted(
+            _newCallbackGasLimit,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the callback gas limit update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeCallbackGasLimitUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(self, self.callbackGasLimitChangeInitiated)
+    {
+        emit CallbackGasLimitUpdated(self.newCallbackGasLimit);
+        self.callbackGasLimitChangeInitiated = 0;
+        self.newCallbackGasLimit = 0;
+    }
+
     /// @notice Get the time remaining until the DKG result submission reward
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -777,6 +937,60 @@ library GovernanceAssetParams {
             );
     }
 
+    /// @notice Get the time remaining until the relay request fee can be
+    ///         updated.
+    /// @return Remaining time in seconds.
+    function getRemainingRelayRequestFeeUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(self, self.relayRequestFeeChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the relay entry submission soft
+    ///         timeout can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingRelayEntrySoftTimeoutUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                self,
+                self.relayEntrySoftTimeoutChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the relay entry hard timeout can be
+    ///         updated.
+    /// @return Remaining time in seconds.
+    function getRemainingRelayEntryHardTimeoutUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                self,
+                self.relayEntryHardTimeoutChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the callback gas limit can be
+    ///         updated.
+    /// @return Remaining time in seconds.
+    function getRemainingCallbackGasLimitUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(self, self.callbackGasLimitChangeInitiated);
+    }
+
     function getNewDkgResultSubmissionReward(Data storage self)
         internal
         view
@@ -865,6 +1079,38 @@ library GovernanceAssetParams {
         returns (uint64)
     {
         return self.newAuthorizationDecreaseDelay;
+    }
+
+    function getNewRelayRequestFee(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newRelayRequestFee;
+    }
+
+    function getNewRelayEntrySoftTimeout(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newRelayEntrySoftTimeout;
+    }
+
+    function getNewRelayEntryHardTimeout(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newRelayEntryHardTimeout;
+    }
+
+    function getNewCallbackGasLimit(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newCallbackGasLimit;
     }
 
     /// @notice Gets the time remaining until the governable parameter update

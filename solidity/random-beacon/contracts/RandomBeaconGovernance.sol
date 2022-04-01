@@ -15,7 +15,7 @@
 pragma solidity ^0.8.9;
 
 import "./RandomBeacon.sol";
-import "./libraries/GovernanceAssetParams.sol";
+import "./libraries/GovernanceBeaconParams.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Keep Random Beacon Governance
@@ -23,9 +23,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 ///         governable parameters in respect to governance delay individual
 ///         for each parameter.
 contract RandomBeaconGovernance is Ownable {
-    using GovernanceAssetParams for GovernanceAssetParams.Data;
+    using GovernanceBeaconParams for GovernanceBeaconParams.Data;
 
-    GovernanceAssetParams.Data internal governanceAssetParams;
+    GovernanceBeaconParams.Data internal governanceBeaconParams;
 
     RandomBeacon public randomBeacon;
 
@@ -36,18 +36,6 @@ contract RandomBeaconGovernance is Ownable {
 
     address public newRandomBeaconOwner;
     uint256 public randomBeaconOwnershipTransferInitiated;
-
-    uint256 public newRelayRequestFee;
-    uint256 public relayRequestFeeChangeInitiated;
-
-    uint256 public newRelayEntrySoftTimeout;
-    uint256 public relayEntrySoftTimeoutChangeInitiated;
-
-    uint256 public newRelayEntryHardTimeout;
-    uint256 public relayEntryHardTimeoutChangeInitiated;
-
-    uint256 public newCallbackGasLimit;
-    uint256 public callbackGasLimitChangeInitiated;
 
     uint256 public newGroupCreationFrequency;
     uint256 public groupCreationFrequencyChangeInitiated;
@@ -236,7 +224,7 @@ contract RandomBeaconGovernance is Ownable {
     }
 
     constructor(RandomBeacon _randomBeacon, uint256 _governanceDelay) {
-        governanceAssetParams.init(_governanceDelay);
+        governanceBeaconParams.init(_governanceDelay);
 
         randomBeacon = _randomBeacon;
         governanceDelay = _governanceDelay;
@@ -312,31 +300,21 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        /* solhint-disable not-rely-on-time */
-        newRelayRequestFee = _newRelayRequestFee;
-        relayRequestFeeChangeInitiated = block.timestamp;
-        emit RelayRequestFeeUpdateStarted(_newRelayRequestFee, block.timestamp);
-        /* solhint-enable not-rely-on-time */
+        governanceBeaconParams.beginRelayRequestFeeUpdate(_newRelayRequestFee);
     }
 
     /// @notice Finalizes the relay request fee update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeRelayRequestFeeUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(relayRequestFeeChangeInitiated)
-    {
-        emit RelayRequestFeeUpdated(newRelayRequestFee);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeRelayRequestFeeUpdate() external onlyOwner {
         randomBeacon.updateRelayEntryParameters(
-            newRelayRequestFee,
+            governanceBeaconParams.getNewRelayRequestFee(),
             randomBeacon.relayEntrySoftTimeout(),
             randomBeacon.relayEntryHardTimeout(),
             randomBeacon.callbackGasLimit()
         );
-        relayRequestFeeChangeInitiated = 0;
-        newRelayRequestFee = 0;
+
+        governanceBeaconParams.finalizeRelayRequestFeeUpdate();
     }
 
     /// @notice Begins the relay entry soft timeout update process.
@@ -346,38 +324,23 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        /* solhint-disable not-rely-on-time */
-        require(
-            _newRelayEntrySoftTimeout > 0,
-            "Relay entry soft timeout must be > 0"
+        governanceBeaconParams.beginRelayEntrySoftTimeoutUpdate(
+            _newRelayEntrySoftTimeout
         );
-        newRelayEntrySoftTimeout = _newRelayEntrySoftTimeout;
-        relayEntrySoftTimeoutChangeInitiated = block.timestamp;
-        emit RelayEntrySoftTimeoutUpdateStarted(
-            _newRelayEntrySoftTimeout,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the relay entry soft timeout update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeRelayEntrySoftTimeoutUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(relayEntrySoftTimeoutChangeInitiated)
-    {
-        emit RelayEntrySoftTimeoutUpdated(newRelayEntrySoftTimeout);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeRelayEntrySoftTimeoutUpdate() external onlyOwner {
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
-            newRelayEntrySoftTimeout,
+            governanceBeaconParams.getNewRelayEntrySoftTimeout(),
             randomBeacon.relayEntryHardTimeout(),
             randomBeacon.callbackGasLimit()
         );
-        relayEntrySoftTimeoutChangeInitiated = 0;
-        newRelayEntrySoftTimeout = 0;
+
+        governanceBeaconParams.finalizeRelayEntrySoftTimeoutUpdate();
     }
 
     /// @notice Begins the relay entry hard timeout update process.
@@ -387,34 +350,22 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        /* solhint-disable not-rely-on-time */
-        newRelayEntryHardTimeout = _newRelayEntryHardTimeout;
-        relayEntryHardTimeoutChangeInitiated = block.timestamp;
-        emit RelayEntryHardTimeoutUpdateStarted(
-            _newRelayEntryHardTimeout,
-            block.timestamp
+        governanceBeaconParams.beginRelayEntryHardTimeoutUpdate(
+            _newRelayEntryHardTimeout
         );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the relay entry hard timeout update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeRelayEntryHardTimeoutUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(relayEntryHardTimeoutChangeInitiated)
-    {
-        emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeRelayEntryHardTimeoutUpdate() external onlyOwner {
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySoftTimeout(),
-            newRelayEntryHardTimeout,
+            governanceBeaconParams.getNewRelayEntryHardTimeout(),
             randomBeacon.callbackGasLimit()
         );
-        relayEntryHardTimeoutChangeInitiated = 0;
-        newRelayEntryHardTimeout = 0;
+        governanceBeaconParams.finalizeRelayEntryHardTimeoutUpdate();
     }
 
     /// @notice Begins the callback gas limit update process.
@@ -424,39 +375,23 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        /* solhint-disable not-rely-on-time */
-        // slither-disable-next-line too-many-digits
-        require(
-            _newCallbackGasLimit > 0 && _newCallbackGasLimit <= 1e6,
-            "Callback gas limit must be > 0 and <= 1000000"
+        governanceBeaconParams.beginCallbackGasLimitUpdate(
+            _newCallbackGasLimit
         );
-        newCallbackGasLimit = _newCallbackGasLimit;
-        callbackGasLimitChangeInitiated = block.timestamp;
-        emit CallbackGasLimitUpdateStarted(
-            _newCallbackGasLimit,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the callback gas limit update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeCallbackGasLimitUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(callbackGasLimitChangeInitiated)
-    {
-        emit CallbackGasLimitUpdated(newCallbackGasLimit);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeCallbackGasLimitUpdate() external onlyOwner {
         randomBeacon.updateRelayEntryParameters(
             randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySoftTimeout(),
             randomBeacon.relayEntryHardTimeout(),
-            newCallbackGasLimit
+            governanceBeaconParams.getNewCallbackGasLimit()
         );
-        callbackGasLimitChangeInitiated = 0;
-        newCallbackGasLimit = 0;
+
+        governanceBeaconParams.finalizeCallbackGasLimitUpdate();
     }
 
     /// @notice Begins the group creation frequency update process.
@@ -667,7 +602,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginDkgResultSubmissionRewardUpdate(
         uint256 _newDkgResultSubmissionReward
     ) external onlyOwner {
-        governanceAssetParams.beginDkgResultSubmissionRewardUpdate(
+        governanceBeaconParams.beginDkgResultSubmissionRewardUpdate(
             _newDkgResultSubmissionReward
         );
     }
@@ -677,7 +612,7 @@ contract RandomBeaconGovernance is Ownable {
     ///      delay elapses.
     function finalizeDkgResultSubmissionRewardUpdate() external onlyOwner {
         randomBeacon.updateRewardParameters(
-            governanceAssetParams.getNewDkgResultSubmissionReward(),
+            governanceBeaconParams.getNewDkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
             randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
@@ -686,7 +621,7 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
 
-        governanceAssetParams.finalizeDkgResultSubmissionRewardUpdate();
+        governanceBeaconParams.finalizeDkgResultSubmissionRewardUpdate();
     }
 
     /// @notice Begins the sortition pool unlocking reward update process.
@@ -695,7 +630,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginSortitionPoolUnlockingRewardUpdate(
         uint256 _newSortitionPoolUnlockingReward
     ) external onlyOwner {
-        governanceAssetParams.beginSortitionPoolUnlockingRewardUpdate(
+        governanceBeaconParams.beginSortitionPoolUnlockingRewardUpdate(
             _newSortitionPoolUnlockingReward
         );
     }
@@ -706,7 +641,7 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeSortitionPoolUnlockingRewardUpdate() external onlyOwner {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
-            governanceAssetParams.getNewSortitionPoolUnlockingReward(),
+            governanceBeaconParams.getNewSortitionPoolUnlockingReward(),
             randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
@@ -714,7 +649,7 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
 
-        governanceAssetParams.finalizeSortitionPoolUnlockingRewardUpdate();
+        governanceBeaconParams.finalizeSortitionPoolUnlockingRewardUpdate();
     }
 
     /// @notice Begins the ineligible operator notifier reward update process.
@@ -724,7 +659,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginIneligibleOperatorNotifierRewardUpdate(
         uint256 _newIneligibleOperatorNotifierReward
     ) external onlyOwner {
-        governanceAssetParams.beginIneligibleOperatorNotifierRewardUpdate(
+        governanceBeaconParams.beginIneligibleOperatorNotifierRewardUpdate(
             _newIneligibleOperatorNotifierReward
         );
     }
@@ -739,14 +674,14 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateRewardParameters(
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
-            governanceAssetParams.getNewIneligibleOperatorNotifierReward(),
+            governanceBeaconParams.getNewIneligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
 
-        governanceAssetParams.finalizeIneligibleOperatorNotifierRewardUpdate();
+        governanceBeaconParams.finalizeIneligibleOperatorNotifierRewardUpdate();
     }
 
     /// @notice Begins the sortition pool rewards ban duration update process.
@@ -756,7 +691,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginSortitionPoolRewardsBanDurationUpdate(
         uint256 _newSortitionPoolRewardsBanDuration
     ) external onlyOwner {
-        governanceAssetParams.beginSortitionPoolRewardsBanDurationUpdate(
+        governanceBeaconParams.beginSortitionPoolRewardsBanDurationUpdate(
             _newSortitionPoolRewardsBanDuration
         );
     }
@@ -772,13 +707,13 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.dkgResultSubmissionReward(),
             randomBeacon.sortitionPoolUnlockingReward(),
             randomBeacon.ineligibleOperatorNotifierReward(),
-            governanceAssetParams.getNewSortitionPoolRewardsBanDuration(),
+            governanceBeaconParams.getNewSortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
 
-        governanceAssetParams.finalizeSortitionPoolRewardsBanDurationUpdate();
+        governanceBeaconParams.finalizeSortitionPoolRewardsBanDurationUpdate();
     }
 
     /// @notice Begins the unauthorized signing notification reward multiplier
@@ -789,7 +724,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginUnauthorizedSigningNotificationRewardMultiplierUpdate(
         uint256 _newUnauthorizedSigningNotificationRewardMultiplier
     ) external onlyOwner {
-        governanceAssetParams
+        governanceBeaconParams
             .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(
                 _newUnauthorizedSigningNotificationRewardMultiplier
             );
@@ -809,12 +744,12 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            governanceAssetParams
+            governanceBeaconParams
                 .getNewUnauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
 
-        governanceAssetParams
+        governanceBeaconParams
             .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate();
     }
 
@@ -826,7 +761,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(
         uint256 _newRelayEntryTimeoutNotificationRewardMultiplier
     ) external onlyOwner {
-        governanceAssetParams
+        governanceBeaconParams
             .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(
                 _newRelayEntryTimeoutNotificationRewardMultiplier
             );
@@ -845,13 +780,13 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.sortitionPoolUnlockingReward(),
             randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
-            governanceAssetParams
+            governanceBeaconParams
                 .getNewRelayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
             randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
         );
 
-        governanceAssetParams
+        governanceBeaconParams
             .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate();
     }
 
@@ -865,7 +800,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginDkgMaliciousResultNotificationRewardMultiplierUpdate(
         uint256 _newDkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
-        governanceAssetParams
+        governanceBeaconParams
             .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(
                 _newDkgMaliciousResultNotificationRewardMultiplier
             );
@@ -887,11 +822,11 @@ contract RandomBeaconGovernance is Ownable {
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            governanceAssetParams
+            governanceBeaconParams
                 .getNewDkgMaliciousResultNotificationRewardMultiplier()
         );
 
-        governanceAssetParams
+        governanceBeaconParams
             .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate();
     }
 
@@ -903,7 +838,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginRelayEntrySubmissionFailureSlashingAmountUpdate(
         uint256 _newRelayEntrySubmissionFailureSlashingAmount
     ) external onlyOwner {
-        governanceAssetParams
+        governanceBeaconParams
             .beginRelayEntrySubmissionFailureSlashingAmountUpdate(
                 _newRelayEntrySubmissionFailureSlashingAmount
             );
@@ -918,13 +853,13 @@ contract RandomBeaconGovernance is Ownable {
         onlyOwner
     {
         randomBeacon.updateSlashingParameters(
-            governanceAssetParams
+            governanceBeaconParams
                 .getNewRelayEntrySubmissionFailureSlashingAmount(),
             randomBeacon.maliciousDkgResultSlashingAmount(),
             randomBeacon.unauthorizedSigningSlashingAmount()
         );
 
-        governanceAssetParams
+        governanceBeaconParams
             .finalizeRelayEntrySubmissionFailureSlashingAmountUpdate();
     }
 
@@ -935,7 +870,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginMaliciousDkgResultSlashingAmountUpdate(
         uint256 _newMaliciousDkgResultSlashingAmount
     ) external onlyOwner {
-        governanceAssetParams.beginMaliciousDkgResultSlashingAmountUpdate(
+        governanceBeaconParams.beginMaliciousDkgResultSlashingAmountUpdate(
             _newMaliciousDkgResultSlashingAmount
         );
     }
@@ -950,11 +885,11 @@ contract RandomBeaconGovernance is Ownable {
     {
         randomBeacon.updateSlashingParameters(
             randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
-            governanceAssetParams.getNewMaliciousDkgResultSlashingAmount(),
+            governanceBeaconParams.getNewMaliciousDkgResultSlashingAmount(),
             randomBeacon.unauthorizedSigningSlashingAmount()
         );
 
-        governanceAssetParams.finalizeMaliciousDkgResultSlashingAmountUpdate();
+        governanceBeaconParams.finalizeMaliciousDkgResultSlashingAmountUpdate();
     }
 
     /// @notice Begins the unauthorized signing slashing amount update process.
@@ -964,7 +899,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginUnauthorizedSigningSlashingAmountUpdate(
         uint256 _newUnauthorizedSigningSlashingAmount
     ) external onlyOwner {
-        governanceAssetParams.beginUnauthorizedSigningSlashingAmountUpdate(
+        governanceBeaconParams.beginUnauthorizedSigningSlashingAmountUpdate(
             _newUnauthorizedSigningSlashingAmount
         );
     }
@@ -980,10 +915,10 @@ contract RandomBeaconGovernance is Ownable {
         randomBeacon.updateSlashingParameters(
             randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
             randomBeacon.maliciousDkgResultSlashingAmount(),
-            governanceAssetParams.getNewUnauthorizedSigningSlashingAmount()
+            governanceBeaconParams.getNewUnauthorizedSigningSlashingAmount()
         );
 
-        governanceAssetParams.finalizeUnauthorizedSigningSlashingAmountUpdate();
+        governanceBeaconParams.finalizeUnauthorizedSigningSlashingAmountUpdate();
     }
 
     /// @notice Begins the minimum authorization amount update process.
@@ -993,7 +928,7 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        governanceAssetParams.beginMinimumAuthorizationUpdate(
+        governanceBeaconParams.beginMinimumAuthorizationUpdate(
             _newMinimumAuthorization
         );
     }
@@ -1003,10 +938,10 @@ contract RandomBeaconGovernance is Ownable {
     ///      delay elapses.
     function finalizeMinimumAuthorizationUpdate() external onlyOwner {
         randomBeacon.updateAuthorizationParameters(
-            governanceAssetParams.getNewMinimumAuthorization(),
+            governanceBeaconParams.getNewMinimumAuthorization(),
             randomBeacon.authorizationDecreaseDelay()
         );
-        governanceAssetParams.finalizeMinimumAuthorizationUpdate();
+        governanceBeaconParams.finalizeMinimumAuthorizationUpdate();
     }
 
     /// @notice Begins the authorization decrease delay update process.
@@ -1015,7 +950,7 @@ contract RandomBeaconGovernance is Ownable {
     function beginAuthorizationDecreaseDelayUpdate(
         uint64 _newAuthorizationDecreaseDelay
     ) external onlyOwner {
-        governanceAssetParams.beginAuthorizationDecreaseDelayUpdate(
+        governanceBeaconParams.beginAuthorizationDecreaseDelayUpdate(
             _newAuthorizationDecreaseDelay
         );
     }
@@ -1026,10 +961,10 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeAuthorizationDecreaseDelayUpdate() external onlyOwner {
         randomBeacon.updateAuthorizationParameters(
             randomBeacon.minimumAuthorization(),
-            governanceAssetParams.getNewAuthorizationDecreaseDelay()
+            governanceBeaconParams.getNewAuthorizationDecreaseDelay()
         );
 
-        governanceAssetParams.finalizeAuthorizationDecreaseDelayUpdate();
+        governanceBeaconParams.finalizeAuthorizationDecreaseDelayUpdate();
     }
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
@@ -1069,7 +1004,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(relayRequestFeeChangeInitiated);
+        return governanceBeaconParams.getRemainingRelayRequestFeeUpdateTime();
     }
 
     /// @notice Get the time remaining until the relay entry submission soft
@@ -1080,7 +1015,9 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(relayEntrySoftTimeoutChangeInitiated);
+        return
+            governanceBeaconParams
+                .getRemainingRelayEntrySoftTimeoutUpdateTime();
     }
 
     /// @notice Get the time remaining until the relay entry hard timeout can be
@@ -1091,7 +1028,9 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(relayEntryHardTimeoutChangeInitiated);
+        return
+            governanceBeaconParams
+                .getRemainingRelayEntryHardTimeoutUpdateTime();
     }
 
     /// @notice Get the time remaining until the callback gas limit can be
@@ -1102,7 +1041,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(callbackGasLimitChangeInitiated);
+        return governanceBeaconParams.getRemainingCallbackGasLimitUpdateTime();
     }
 
     /// @notice Get the time remaining until the group creation frequency can be
@@ -1174,7 +1113,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingDkgResultSubmissionRewardUpdateTime();
     }
 
@@ -1187,7 +1126,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingSortitionPoolUnlockingRewardUpdateTime();
     }
 
@@ -1200,7 +1139,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingIneligibleOperatorNotifierRewardUpdateTime();
     }
 
@@ -1213,7 +1152,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingSortitionPoolRewardsBanDurationUpdateTime();
     }
 
@@ -1226,7 +1165,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingUnauthorizedSigningNotificationRewardMultiplierUpdateTime();
     }
 
@@ -1239,7 +1178,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingRelayEntryTimeoutNotificationRewardMultiplierUpdateTime();
     }
 
@@ -1252,7 +1191,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingDkgMaliciousResultNotificationRewardMultiplierUpdateTime();
     }
 
@@ -1265,7 +1204,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingRelayEntrySubmissionFailureSlashingAmountUpdateTime();
     }
 
@@ -1278,7 +1217,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingMaliciousDkgResultSlashingAmountUpdateTime();
     }
 
@@ -1291,7 +1230,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingUnauthorizedSigningSlashingAmountUpdateTime();
     }
 
@@ -1304,7 +1243,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams.getRemainingMimimumAuthorizationUpdateTime();
+            governanceBeaconParams.getRemainingMimimumAuthorizationUpdateTime();
     }
 
     function getRemainingAuthorizationDecreaseDelayUpdateTime()
@@ -1313,7 +1252,7 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            governanceAssetParams
+            governanceBeaconParams
                 .getRemainingAuthorizationDecreaseDelayUpdateTime();
     }
 

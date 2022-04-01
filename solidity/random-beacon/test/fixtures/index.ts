@@ -156,17 +156,17 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 export async function testDeployment(): Promise<DeployedContracts> {
   const contracts = await randomBeaconDeployment()
 
-  const GovernanceAssetParams = await ethers.getContractFactory(
-    "GovernanceAssetParams"
+  const GovernanceBeaconParams = await ethers.getContractFactory(
+    "GovernanceBeaconParams"
   )
-  const governanceAssetParams = await GovernanceAssetParams.deploy()
-  await governanceAssetParams.deployed()
+  const governanceBeaconParams = await GovernanceBeaconParams.deploy()
+  await governanceBeaconParams.deployed()
 
   const RandomBeaconGovernance = await ethers.getContractFactory(
     "RandomBeaconGovernance",
     {
       libraries: {
-        GovernanceAssetParams: governanceAssetParams.address,
+        GovernanceBeaconParams: governanceBeaconParams.address,
       },
     }
   )
