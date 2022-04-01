@@ -93,6 +93,7 @@ library Wallets {
     /// @notice Returns Keccak256 hash of the wallet signing group members
     ///         identifiers array. Group members do not include operators
     ///         selected by the sortition pool that misbehaved during DKG.
+    ///         Reverts if wallet with the given ID is not registered.
     /// @param walletID ID of the wallet
     /// @return Wallet signing group members hash
     function getWalletMembersIdsHash(Data storage self, bytes32 walletID)
@@ -108,9 +109,31 @@ library Wallets {
         return self.registry[walletID].membersIdsHash;
     }
 
-    /// @notice Gets public key of a wallet with a given wallet ID.
+    /// @notice Gets public key of a wallet with the given wallet ID.
+    ///         The public key is returned as X and Y coordinates.
+    ///         Reverts if wallet with the given ID is not registered.
+    /// @param walletID ID of the wallet
+    /// @return x Public key X coordinate
+    /// @return y Public key Y coordinate
+    function getWalletPublicKeyCoordinates(Data storage self, bytes32 walletID)
+        internal
+        view
+        returns (bytes32 x, bytes32 y)
+    {
+        require(
+            isWalletRegistered(self, walletID),
+            "Wallet with the given ID has not been registered"
+        );
+
+        Wallet storage wallet = self.registry[walletID];
+
+        return (wallet.publicKeyX, wallet.publicKeyY);
+    }
+
+    /// @notice Gets public key of a wallet with the given wallet ID.
     ///         The public key is returned in an uncompressed format as a 64-byte
     ///         concatenation of X and Y coordinates.
+    ///         Reverts if wallet with the given ID is not registered.
     /// @param walletID ID of the wallet
     /// @return Uncompressed public key of the wallet
     function getWalletPublicKey(Data storage self, bytes32 walletID)
@@ -118,15 +141,7 @@ library Wallets {
         view
         returns (bytes memory)
     {
-        require(
-            isWalletRegistered(self, walletID),
-            "Wallet with the given ID has not been registered"
-        );
-
-        return
-            bytes.concat(
-                self.registry[walletID].publicKeyX,
-                self.registry[walletID].publicKeyY
-            );
+        (bytes32 x, bytes32 y) = getWalletPublicKeyCoordinates(self, walletID);
+        return bytes.concat(x, y);
     }
 }

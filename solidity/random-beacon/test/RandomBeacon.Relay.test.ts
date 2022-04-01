@@ -1111,12 +1111,15 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("getSlashingFactor", () => {
-    const submissionTimeout = 640
-    const hardTimeout = 100
-
+  describe("calculateSlashingAmount", () => {
     before(async () => {
-      await relayStub.setTimeouts(submissionTimeout, hardTimeout)
+      await relayStub.setTimeouts(
+        params.relayEntrySoftTimeout,
+        params.relayEntryHardTimeout
+      )
+      await relayStub.setRelayEntrySubmissionFailureSlashingAmount(
+        params.relayEntrySubmissionFailureSlashingAmount
+      )
       await relayStub.setCurrentRequestStartBlock()
     })
 
@@ -1128,41 +1131,31 @@ describe("RandomBeacon - Relay", () => {
       await restoreSnapshot()
     })
 
-    context("when soft timeout has not been exceeded yet", () => {
-      it("should return a slashing factor equal to zero", async () => {
-        await mineBlocks(submissionTimeout)
+    context("when a soft timeout has been exceeded by one block", () => {
+      it("should return a correct slashing amount", async () => {
+        await mineBlocks(params.relayEntrySoftTimeout + 1)
 
-        expect(await relayStub.getSlashingFactor()).to.be.equal(0)
-      })
-    })
-
-    context("when soft timeout has been exceeded by one block", () => {
-      it("should return a correct slashing factor", async () => {
-        await mineBlocks(submissionTimeout + 1)
-
-        // We are exceeded the soft timeout by `1` block so this is the
-        // `submissionDelay` factor. If so we can calculate the slashing factor
-        // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-        // gives `1 * 1e18 / 100 = 10000000000000000` (1%).
-        await expect(await relayStub.getSlashingFactor()).to.be.equal(
-          BigNumber.from("10000000000000000")
-        )
+        // We exceeded the soft timeout by `1`
+        // slashing amount: 1 * 1000e18 / 100 = 10e18
+        expect(
+          await relayStub.callStatic.calculateSlashingAmount()
+        ).to.be.equal(BigNumber.from("10000000000000000000"))
       })
     })
 
     context(
       "when soft timeout has been exceeded by the number of blocks equal to the hard timeout",
       () => {
-        it("should return a correct slashing factor", async () => {
-          await mineBlocks(submissionTimeout + hardTimeout)
-
-          // We are exceeded the soft timeout by `100` blocks so this is the
-          // `submissionDelay` factor. If so we can calculate the slashing
-          // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-          // gives `100 * 1e18 / 100 = 1000000000000000000` (100%).
-          await expect(await relayStub.getSlashingFactor()).to.be.equal(
-            BigNumber.from("1000000000000000000")
+        it("should return a correct slashing amount", async () => {
+          await mineBlocks(
+            params.relayEntrySoftTimeout + params.relayEntryHardTimeout
           )
+
+          // We exceeded the soft timeout by `100`
+          // slashing amount: 100 * 1000e18 / 100 = 1000e18
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
         })
       }
     )
@@ -1171,14 +1164,16 @@ describe("RandomBeacon - Relay", () => {
       "when soft timeout has been exceeded by the number of blocks bigger than the hard timeout",
       () => {
         it("should return a correct slashing factor", async () => {
-          await mineBlocks(submissionTimeout + hardTimeout + 1)
+          await mineBlocks(
+            params.relayEntrySoftTimeout + params.relayEntryHardTimeout + 1
+          )
 
           // We are exceeded the soft timeout by a value bigger than the
           // hard timeout. In that case the maximum value (100%) of the slashing
-          // factor should be returned.
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
-            BigNumber.from("1000000000000000000")
-          )
+          // amount should be returned.
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
         })
       }
     )

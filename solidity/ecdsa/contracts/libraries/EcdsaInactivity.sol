@@ -31,14 +31,21 @@ library EcdsaInactivity {
         // Indices of group members accused of being inactive. Indices must be in
         // range [1, groupMembers.length], unique, and sorted in ascending order.
         uint256[] inactiveMembersIndices;
+        // Indicates if inactivity claim is a wallet-wide heartbeat failure.
+        // If wallet failed a heartbeat, this is signalled to the wallet owner
+        // who may decide to move responsibilities to another wallet
+        // given that the wallet who failed the heartbeat is at risk of not
+        // being able to sign messages soon.
+        bool heartbeatFailed;
         // Concatenation of signatures from members supporting the claim.
         // The message to be signed by each member is keccak256 hash of the
         // concatenation of inactivity claim nonce for the given wallet, wallet
-        // public key, and inactive members indices. The calculated hash should
+        // public key, inactive members indices, and boolean flag indicating
+        // if this is a wallet-wide heartbeat failure. The calculated hash should
         // be prefixed with `\x19Ethereum signed message:\n` before signing, so
         // the message to sign is:
         // `\x19Ethereum signed message:\n${keccak256(
-        //    nonce | walletPubKey | inactiveMembersIndices
+        //    nonce | walletPubKey | inactiveMembersIndices | heartbeatFailed
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
@@ -105,7 +112,12 @@ library EcdsaInactivity {
         );
 
         bytes32 signedMessageHash = keccak256(
-            abi.encodePacked(nonce, walletPubKey, claim.inactiveMembersIndices)
+            abi.encodePacked(
+                nonce,
+                walletPubKey,
+                claim.inactiveMembersIndices,
+                claim.heartbeatFailed
+            )
         ).toEthSignedMessageHash();
 
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(

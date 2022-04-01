@@ -676,10 +676,16 @@ contract WalletRegistry is
     ///         punishing specific group members who constantly fail doing their
     ///         job. If the provided claim is proved to be valid and signed by
     ///         sufficient number of group members, operators of members deemed
-    ///         as inactive are banned for sortition pool rewards for duration
-    ///         specified by `sortitionPoolRewardsBanDuration` parameter. The
-    ///         sender of the claim must be one of the claim signers. This
-    ///         function can be called only for registered wallets.
+    ///         as inactive are banned from sortition pool rewards for the
+    ///         duration specified by `sortitionPoolRewardsBanDuration` parameter.
+    ///         The function allows to signal about single operators being
+    ///         inactive as well as to signal wallet-wide heartbeat failures
+    ///         that are propagated to the wallet owner who should begin the
+    ///         procedure of moving responsibilities to another wallet given
+    ///         that the wallet who failed the heartbeat may soon be not able to
+    ///         function and provide new signatures.
+    ///         The sender of the claim must be one of the claim signers. This
+    ///         function can be called only for registered wallets
     /// @param claim Operator inactivity claim
     /// @param nonce Current inactivity claim nonce for the given wallet signing
     ///              group. Must be the same as the stored one
@@ -693,7 +699,8 @@ contract WalletRegistry is
 
         require(nonce == inactivityClaimNonce[walletID], "Invalid nonce");
 
-        bytes memory publicKey = wallets.getWalletPublicKey(walletID);
+        (bytes32 pubKeyX, bytes32 pubKeyY) = wallets
+            .getWalletPublicKeyCoordinates(walletID);
         bytes32 memberIdsHash = wallets.getWalletMembersIdsHash(walletID);
 
         require(
@@ -704,7 +711,7 @@ contract WalletRegistry is
         uint32[] memory ineligibleOperators = EcdsaInactivity.verifyClaim(
             sortitionPool,
             claim,
-            publicKey,
+            bytes.concat(pubKeyX, pubKeyY),
             nonce,
             groupMembers
         );
@@ -718,6 +725,14 @@ contract WalletRegistry is
             // solhint-disable-next-line not-rely-on-time
             block.timestamp + sortitionPoolRewardsBanDuration
         );
+
+        if (claim.heartbeatFailed) {
+            walletOwner.__ecdsaWalletHeartbeatFailedCallback(
+                walletID,
+                pubKeyX,
+                pubKeyY
+            );
+        }
     }
 
     /// @notice Checks if DKG result is valid for the current DKG.
