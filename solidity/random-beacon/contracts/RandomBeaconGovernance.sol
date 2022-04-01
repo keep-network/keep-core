@@ -64,7 +64,7 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newIneligibleOperatorNotifierReward;
     uint256 public ineligibleOperatorNotifierRewardChangeInitiated;
 
-    uint256 public newRelayEntrySubmissionFailureSlashingAmount;
+    uint96 public newRelayEntrySubmissionFailureSlashingAmount;
     uint256 public relayEntrySubmissionFailureSlashingAmountChangeInitiated;
 
     uint256 public newMaliciousDkgResultSlashingAmount;
@@ -191,7 +191,7 @@ contract RandomBeaconGovernance is Ownable {
         uint256 timestamp
     );
     event RelayEntrySubmissionFailureSlashingAmountUpdated(
-        uint256 relayEntrySubmissionFailureSlashingAmount
+        uint96 relayEntrySubmissionFailureSlashingAmount
     );
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
@@ -1020,7 +1020,7 @@ contract RandomBeaconGovernance is Ownable {
     /// @param _newRelayEntrySubmissionFailureSlashingAmount New relay entry
     ///        submission failure slashing amount
     function beginRelayEntrySubmissionFailureSlashingAmountUpdate(
-        uint256 _newRelayEntrySubmissionFailureSlashingAmount
+        uint96 _newRelayEntrySubmissionFailureSlashingAmount
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         newRelayEntrySubmissionFailureSlashingAmount = _newRelayEntrySubmissionFailureSlashingAmount;
