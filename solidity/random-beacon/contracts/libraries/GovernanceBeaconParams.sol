@@ -50,6 +50,10 @@ library GovernanceBeaconParams {
         uint256 relayEntryHardTimeoutChangeInitiated;
         uint256 newCallbackGasLimit;
         uint256 callbackGasLimitChangeInitiated;
+        uint256 newGroupCreationFrequency;
+        uint256 groupCreationFrequencyChangeInitiated;
+        uint256 newGroupLifetime;
+        uint256 groupLifetimeChangeInitiated;
     }
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -165,6 +169,15 @@ library GovernanceBeaconParams {
         uint256 timestamp
     );
     event CallbackGasLimitUpdated(uint256 callbackGasLimit);
+
+    event GroupCreationFrequencyUpdateStarted(
+        uint256 groupCreationFrequency,
+        uint256 timestamp
+    );
+    event GroupCreationFrequencyUpdated(uint256 groupCreationFrequency);
+
+    event GroupLifetimeUpdateStarted(uint256 groupLifetime, uint256 timestamp);
+    event GroupLifetimeUpdated(uint256 groupLifetime);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -775,6 +788,76 @@ library GovernanceBeaconParams {
         self.newCallbackGasLimit = 0;
     }
 
+    /// --------------------
+
+    /// @notice Begins the group creation frequency update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newGroupCreationFrequency New group creation frequency
+    function beginGroupCreationFrequencyUpdate(
+        Data storage self,
+        uint256 _newGroupCreationFrequency
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newGroupCreationFrequency > 0,
+            "Group creation frequency must be > 0"
+        );
+        self.newGroupCreationFrequency = _newGroupCreationFrequency;
+        self.groupCreationFrequencyChangeInitiated = block.timestamp;
+        emit GroupCreationFrequencyUpdateStarted(
+            _newGroupCreationFrequency,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the group creation frequency update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeGroupCreationFrequencyUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.groupCreationFrequencyChangeInitiated
+        )
+    {
+        emit GroupCreationFrequencyUpdated(self.newGroupCreationFrequency);
+        self.groupCreationFrequencyChangeInitiated = 0;
+        self.newGroupCreationFrequency = 0;
+    }
+
+    /// @notice Begins the group lifetime update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newGroupLifetime New group lifetime in blocks
+    function beginGroupLifetimeUpdate(
+        Data storage self,
+        uint256 _newGroupLifetime
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newGroupLifetime >= 1 days && _newGroupLifetime <= 2 weeks,
+            "Group lifetime must be >= 1 day and <= 2 weeks"
+        );
+        self.newGroupLifetime = _newGroupLifetime;
+        self.groupLifetimeChangeInitiated = block.timestamp;
+        emit GroupLifetimeUpdateStarted(_newGroupLifetime, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the group creation frequency update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeGroupLifetimeUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(self, self.groupLifetimeChangeInitiated)
+    {
+        emit GroupLifetimeUpdated(self.newGroupLifetime);
+        self.groupLifetimeChangeInitiated = 0;
+        self.newGroupLifetime = 0;
+    }
+
+    /// --------------------
+
     /// @notice Get the time remaining until the DKG result submission reward
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -989,6 +1072,47 @@ library GovernanceBeaconParams {
     {
         return
             getRemainingChangeTime(self, self.callbackGasLimitChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the group creation frequency can be
+    ///         updated.
+    /// @return Remaining time in seconds.
+    function getRemainingGroupCreationFrequencyUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                self,
+                self.groupCreationFrequencyChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the group lifetime can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingGroupLifetimeUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(self, self.groupLifetimeChangeInitiated);
+    }
+
+    function getNewGroupCreationFrequency(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newGroupCreationFrequency;
+    }
+
+    function getNewGroupLifetime(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newGroupLifetime;
     }
 
     function getNewDkgResultSubmissionReward(Data storage self)

@@ -37,12 +37,6 @@ contract RandomBeaconGovernance is Ownable {
     address public newRandomBeaconOwner;
     uint256 public randomBeaconOwnershipTransferInitiated;
 
-    uint256 public newGroupCreationFrequency;
-    uint256 public groupCreationFrequencyChangeInitiated;
-
-    uint256 public newGroupLifetime;
-    uint256 public groupLifetimeChangeInitiated;
-
     uint256 public newDkgResultChallengePeriodLength;
     uint256 public dkgResultChallengePeriodLengthChangeInitiated;
 
@@ -400,36 +394,21 @@ contract RandomBeaconGovernance is Ownable {
     function beginGroupCreationFrequencyUpdate(
         uint256 _newGroupCreationFrequency
     ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        require(
-            _newGroupCreationFrequency > 0,
-            "Group creation frequency must be > 0"
+        governanceBeaconParams.beginGroupCreationFrequencyUpdate(
+            _newGroupCreationFrequency
         );
-        newGroupCreationFrequency = _newGroupCreationFrequency;
-        groupCreationFrequencyChangeInitiated = block.timestamp;
-        emit GroupCreationFrequencyUpdateStarted(
-            _newGroupCreationFrequency,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the group creation frequency update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeGroupCreationFrequencyUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(groupCreationFrequencyChangeInitiated)
-    {
-        emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeGroupCreationFrequencyUpdate() external onlyOwner {
         randomBeacon.updateGroupCreationParameters(
-            newGroupCreationFrequency,
+            governanceBeaconParams.getNewGroupCreationFrequency(),
             randomBeacon.groupLifetime()
         );
-        groupCreationFrequencyChangeInitiated = 0;
-        newGroupCreationFrequency = 0;
+
+        governanceBeaconParams.finalizeGroupCreationFrequencyUpdate();
     }
 
     /// @notice Begins the group lifetime update process.
@@ -439,33 +418,19 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        /* solhint-disable not-rely-on-time */
-        require(
-            _newGroupLifetime >= 1 days && _newGroupLifetime <= 2 weeks,
-            "Group lifetime must be >= 1 day and <= 2 weeks"
-        );
-        newGroupLifetime = _newGroupLifetime;
-        groupLifetimeChangeInitiated = block.timestamp;
-        emit GroupLifetimeUpdateStarted(_newGroupLifetime, block.timestamp);
-        /* solhint-enable not-rely-on-time */
+        governanceBeaconParams.beginGroupLifetimeUpdate(_newGroupLifetime);
     }
 
     /// @notice Finalizes the group creation frequency update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeGroupLifetimeUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(groupLifetimeChangeInitiated)
-    {
-        emit GroupLifetimeUpdated(newGroupLifetime);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeGroupLifetimeUpdate() external onlyOwner {
         randomBeacon.updateGroupCreationParameters(
             randomBeacon.groupCreationFrequency(),
-            newGroupLifetime
+            governanceBeaconParams.getNewGroupLifetime()
         );
-        groupLifetimeChangeInitiated = 0;
-        newGroupLifetime = 0;
+
+        governanceBeaconParams.finalizeGroupLifetimeUpdate();
     }
 
     /// @notice Begins the DKG result challenge period length update process.
@@ -1052,7 +1017,9 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(groupCreationFrequencyChangeInitiated);
+        return
+            governanceBeaconParams
+                .getRemainingGroupCreationFrequencyUpdateTime();
     }
 
     /// @notice Get the time remaining until the group lifetime can be updated.
@@ -1062,7 +1029,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(groupLifetimeChangeInitiated);
+        return governanceBeaconParams.getRemainingGroupLifetimeUpdateTime();
     }
 
     /// @notice Get the time remaining until the DKG result challenge period
