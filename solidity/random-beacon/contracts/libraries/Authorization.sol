@@ -30,7 +30,7 @@ import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 ///         pool based on the stake authorized for them.
 library Authorization {
     struct Parameters {
-        // The minimum authorization required by the application so that
+        // The minimum authorization required by the beacon so that
         // operator can join the sortition pool and do the work.
         uint96 minimumAuthorization;
         // Authorization decrease delay in seconds between the time
@@ -92,7 +92,7 @@ library Authorization {
         address indexed operator
     );
 
-    /// @notice Sets the minimum authorization for the application. Without
+    /// @notice Sets the minimum authorization for the beacon. Without
     ///         at least the minimum authorization, staking provider is not
     ///         eligible to join and operate in the network.
     function setMinimumAuthorization(
@@ -155,7 +155,7 @@ library Authorization {
         self.operatorToStakingProvider[operator] = stakingProvider;
     }
 
-    /// @notice Used by T staking contract to inform the application that the
+    /// @notice Used by T staking contract to inform the beacon that the
     ///         authorized stake amount for the given staking provider increased.
     ///
     ///         Reverts if the authorization amount is below the minimum.
@@ -192,7 +192,7 @@ library Authorization {
         );
     }
 
-    /// @notice Used by T staking contract to inform the application that the
+    /// @notice Used by T staking contract to inform the beacon that the
     ///         authorization decrease for the given staking provider has been
     ///         requested.
     ///
@@ -301,7 +301,7 @@ library Authorization {
         delete self.pendingDecreases[stakingProvider];
     }
 
-    /// @notice Used by T staking contract to inform the application the
+    /// @notice Used by T staking contract to inform the beacon the
     ///         authorization has been decreased for the given staking provider
     ///         involuntarily, as a result of slashing.
     ///
@@ -392,7 +392,7 @@ library Authorization {
     ///         must be known - before calling this function, it has to be
     ///         appointed by the staking provider by calling `registerOperator`.
     ///         Also, the operator must have the minimum authorization required
-    ///         by the application. Function reverts if there is no minimum stake
+    ///         by the beacon. Function reverts if there is no minimum stake
     ///         authorized or if the operator is not known. If there was an
     ///         authorization decrease requested, it is activated by starting
     ///         the authorization decrease delay.
