@@ -37,15 +37,6 @@ contract RandomBeaconGovernance is Ownable {
     address public newRandomBeaconOwner;
     uint256 public randomBeaconOwnershipTransferInitiated;
 
-    uint256 public newDkgResultChallengePeriodLength;
-    uint256 public dkgResultChallengePeriodLengthChangeInitiated;
-
-    uint256 public newDkgResultSubmissionTimeout;
-    uint256 public dkgResultSubmissionTimeoutChangeInitiated;
-
-    uint256 public newSubmitterPrecedencePeriodLength;
-    uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
-
     event DkgResultSubmissionRewardUpdateStarted(
         uint256 dkgResultSubmissionReward,
         uint256 timestamp
@@ -440,39 +431,22 @@ contract RandomBeaconGovernance is Ownable {
     function beginDkgResultChallengePeriodLengthUpdate(
         uint256 _newDkgResultChallengePeriodLength
     ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        require(
-            _newDkgResultChallengePeriodLength >= 10,
-            "DKG result challenge period length must be >= 10"
+        governanceBeaconParams.beginDkgResultChallengePeriodLengthUpdate(
+            _newDkgResultChallengePeriodLength
         );
-        newDkgResultChallengePeriodLength = _newDkgResultChallengePeriodLength;
-        dkgResultChallengePeriodLengthChangeInitiated = block.timestamp;
-        emit DkgResultChallengePeriodLengthUpdateStarted(
-            _newDkgResultChallengePeriodLength,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the DKG result challenge period length update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgResultChallengePeriodLengthUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(dkgResultChallengePeriodLengthChangeInitiated)
-    {
-        emit DkgResultChallengePeriodLengthUpdated(
-            newDkgResultChallengePeriodLength
-        );
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeDkgResultChallengePeriodLengthUpdate() external onlyOwner {
         randomBeacon.updateDkgParameters(
-            newDkgResultChallengePeriodLength,
+            governanceBeaconParams.getNewDkgResultChallengePeriodLength(),
             randomBeacon.dkgResultSubmissionTimeout(),
             randomBeacon.dkgSubmitterPrecedencePeriodLength()
         );
-        dkgResultChallengePeriodLengthChangeInitiated = 0;
-        newDkgResultChallengePeriodLength = 0;
+
+        governanceBeaconParams.finalizeDkgResultChallengePeriodLengthUpdate();
     }
 
     /// @notice Begins the DKG result submission timeout update
@@ -483,38 +457,22 @@ contract RandomBeaconGovernance is Ownable {
     function beginDkgResultSubmissionTimeoutUpdate(
         uint256 _newDkgResultSubmissionTimeout
     ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        require(
-            _newDkgResultSubmissionTimeout > 0,
-            "DKG result submission timeout must be > 0"
+        governanceBeaconParams.beginDkgResultSubmissionTimeoutUpdate(
+            _newDkgResultSubmissionTimeout
         );
-        newDkgResultSubmissionTimeout = _newDkgResultSubmissionTimeout;
-        dkgResultSubmissionTimeoutChangeInitiated = block.timestamp;
-        emit DkgResultSubmissionTimeoutUpdateStarted(
-            _newDkgResultSubmissionTimeout,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the DKG result submission timeout update
     ///         process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgResultSubmissionTimeoutUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(dkgResultSubmissionTimeoutChangeInitiated)
-    {
-        emit DkgResultSubmissionTimeoutUpdated(newDkgResultSubmissionTimeout);
-        // slither-disable-next-line reentrancy-no-eth
+    function finalizeDkgResultSubmissionTimeoutUpdate() external onlyOwner {
         randomBeacon.updateDkgParameters(
             randomBeacon.dkgResultChallengePeriodLength(),
-            newDkgResultSubmissionTimeout,
+            governanceBeaconParams.getNewDkgResultSubmissionTimeout(),
             randomBeacon.dkgSubmitterPrecedencePeriodLength()
         );
-        dkgResultSubmissionTimeoutChangeInitiated = 0;
-        newDkgResultSubmissionTimeout = 0;
+        governanceBeaconParams.finalizeDkgResultSubmissionTimeoutUpdate();
     }
 
     /// @notice Begins the DKG submitter precedence period length.
@@ -524,18 +482,9 @@ contract RandomBeaconGovernance is Ownable {
     function beginDkgSubmitterPrecedencePeriodLengthUpdate(
         uint256 _newSubmitterPrecedencePeriodLength
     ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        require(
-            _newSubmitterPrecedencePeriodLength > 0,
-            "DKG submitter precedence period length must be > 0"
+        governanceBeaconParams.beginDkgSubmitterPrecedencePeriodLengthUpdate(
+            _newSubmitterPrecedencePeriodLength
         );
-        newSubmitterPrecedencePeriodLength = _newSubmitterPrecedencePeriodLength;
-        dkgSubmitterPrecedencePeriodLengthChangeInitiated = block.timestamp;
-        emit DkgSubmitterPrecedencePeriodLengthUpdateStarted(
-            _newSubmitterPrecedencePeriodLength,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the DKG submitter precedence period length.
@@ -544,21 +493,14 @@ contract RandomBeaconGovernance is Ownable {
     function finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(
-            dkgSubmitterPrecedencePeriodLengthChangeInitiated
-        )
     {
-        emit DkgSubmitterPrecedencePeriodLengthUpdated(
-            newSubmitterPrecedencePeriodLength
-        );
-        // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateDkgParameters(
             randomBeacon.dkgResultChallengePeriodLength(),
             randomBeacon.dkgResultSubmissionTimeout(),
-            newSubmitterPrecedencePeriodLength
+            governanceBeaconParams.getNewDkgSubmitterPrecedencePeriodLength()
         );
-        dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;
-        newSubmitterPrecedencePeriodLength = 0;
+        governanceBeaconParams
+            .finalizeDkgSubmitterPrecedencePeriodLengthUpdate();
     }
 
     /// @notice Begins the DKG result submission reward update process.
@@ -1041,9 +983,8 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(
-                dkgResultChallengePeriodLengthChangeInitiated
-            );
+            governanceBeaconParams
+                .getRemainingDkgResultChallengePeriodLengthUpdateTime();
     }
 
     /// @notice Get the time remaining until the DKG result submission timeout
@@ -1055,7 +996,8 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(dkgResultSubmissionTimeoutChangeInitiated);
+            governanceBeaconParams
+                .getRemainingDkgResultSubmissionTimeoutUpdateTime();
     }
 
     /// @notice Get the time remaining until the wallet owner can be updated.
@@ -1066,9 +1008,8 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return
-            getRemainingChangeTime(
-                dkgSubmitterPrecedencePeriodLengthChangeInitiated
-            );
+            governanceBeaconParams
+                .getRemainingDkgSubmitterPrecedencePeriodLengthUpdateTime();
     }
 
     /// @notice Get the time remaining until the DKG result submission reward

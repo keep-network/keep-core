@@ -54,6 +54,12 @@ library GovernanceBeaconParams {
         uint256 groupCreationFrequencyChangeInitiated;
         uint256 newGroupLifetime;
         uint256 groupLifetimeChangeInitiated;
+        uint256 newDkgResultChallengePeriodLength;
+        uint256 dkgResultChallengePeriodLengthChangeInitiated;
+        uint256 newDkgResultSubmissionTimeout;
+        uint256 dkgResultSubmissionTimeoutChangeInitiated;
+        uint256 newSubmitterPrecedencePeriodLength;
+        uint256 dkgSubmitterPrecedencePeriodLengthChangeInitiated;
     }
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -178,6 +184,28 @@ library GovernanceBeaconParams {
 
     event GroupLifetimeUpdateStarted(uint256 groupLifetime, uint256 timestamp);
     event GroupLifetimeUpdated(uint256 groupLifetime);
+
+    event DkgResultChallengePeriodLengthUpdateStarted(
+        uint256 dkgResultChallengePeriodLength,
+        uint256 timestamp
+    );
+    event DkgResultChallengePeriodLengthUpdated(
+        uint256 dkgResultChallengePeriodLength
+    );
+
+    event DkgResultSubmissionTimeoutUpdateStarted(
+        uint256 dkgResultSubmissionTimeout,
+        uint256 timestamp
+    );
+    event DkgResultSubmissionTimeoutUpdated(uint256 dkgResultSubmissionTimeout);
+
+    event DkgSubmitterPrecedencePeriodLengthUpdateStarted(
+        uint256 submitterPrecedencePeriodLength,
+        uint256 timestamp
+    );
+    event DkgSubmitterPrecedencePeriodLengthUpdated(
+        uint256 submitterPrecedencePeriodLength
+    );
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -856,7 +884,127 @@ library GovernanceBeaconParams {
         self.newGroupLifetime = 0;
     }
 
-    /// --------------------
+    /// @notice Begins the DKG result challenge period length update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultChallengePeriodLength New DKG result challenge
+    ///        period length in blocks
+    function beginDkgResultChallengePeriodLengthUpdate(
+        Data storage self,
+        uint256 _newDkgResultChallengePeriodLength
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgResultChallengePeriodLength >= 10,
+            "DKG result challenge period length must be >= 10"
+        );
+        self
+            .newDkgResultChallengePeriodLength = _newDkgResultChallengePeriodLength;
+        self.dkgResultChallengePeriodLengthChangeInitiated = block.timestamp;
+        emit DkgResultChallengePeriodLengthUpdateStarted(
+            _newDkgResultChallengePeriodLength,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG result challenge period length update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultChallengePeriodLengthUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.dkgResultChallengePeriodLengthChangeInitiated
+        )
+    {
+        emit DkgResultChallengePeriodLengthUpdated(
+            self.newDkgResultChallengePeriodLength
+        );
+        self.dkgResultChallengePeriodLengthChangeInitiated = 0;
+        self.newDkgResultChallengePeriodLength = 0;
+    }
+
+    /// @notice Begins the DKG result submission timeout update
+    ///         process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultSubmissionTimeout New DKG result submission
+    ///        timeout in blocks
+    function beginDkgResultSubmissionTimeoutUpdate(
+        Data storage self,
+        uint256 _newDkgResultSubmissionTimeout
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newDkgResultSubmissionTimeout > 0,
+            "DKG result submission timeout must be > 0"
+        );
+        self.newDkgResultSubmissionTimeout = _newDkgResultSubmissionTimeout;
+        self.dkgResultSubmissionTimeoutChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionTimeoutUpdateStarted(
+            _newDkgResultSubmissionTimeout,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG result submission timeout update
+    ///         process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultSubmissionTimeoutUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.dkgResultSubmissionTimeoutChangeInitiated
+        )
+    {
+        emit DkgResultSubmissionTimeoutUpdated(
+            self.newDkgResultSubmissionTimeout
+        );
+        self.dkgResultSubmissionTimeoutChangeInitiated = 0;
+        self.newDkgResultSubmissionTimeout = 0;
+    }
+
+    /// @notice Begins the DKG submitter precedence period length.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newSubmitterPrecedencePeriodLength New DKG submitter precedence
+    ///        period length in blocks
+    function beginDkgSubmitterPrecedencePeriodLengthUpdate(
+        Data storage self,
+        uint256 _newSubmitterPrecedencePeriodLength
+    ) external {
+        /* solhint-disable not-rely-on-time */
+        require(
+            _newSubmitterPrecedencePeriodLength > 0,
+            "DKG submitter precedence period length must be > 0"
+        );
+        self
+            .newSubmitterPrecedencePeriodLength = _newSubmitterPrecedencePeriodLength;
+        self.dkgSubmitterPrecedencePeriodLengthChangeInitiated = block
+            .timestamp;
+        emit DkgSubmitterPrecedencePeriodLengthUpdateStarted(
+            _newSubmitterPrecedencePeriodLength,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG submitter precedence period length.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgSubmitterPrecedencePeriodLengthUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.dkgSubmitterPrecedencePeriodLengthChangeInitiated
+        )
+    {
+        emit DkgSubmitterPrecedencePeriodLengthUpdated(
+            self.newSubmitterPrecedencePeriodLength
+        );
+        self.dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;
+        self.newSubmitterPrecedencePeriodLength = 0;
+    }
 
     /// @notice Get the time remaining until the DKG result submission reward
     ///         can be updated.
@@ -1097,6 +1245,70 @@ library GovernanceBeaconParams {
         returns (uint256)
     {
         return getRemainingChangeTime(self, self.groupLifetimeChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the DKG result challenge period
+    ///         length can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultChallengePeriodLengthUpdateTime(
+        Data storage self
+    ) external view returns (uint256) {
+        return
+            getRemainingChangeTime(
+                self,
+                self.dkgResultChallengePeriodLengthChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG result submission timeout
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultSubmissionTimeoutUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                self,
+                self.dkgResultSubmissionTimeoutChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the wallet owner can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgSubmitterPrecedencePeriodLengthUpdateTime(
+        Data storage self
+    ) external view returns (uint256) {
+        return
+            getRemainingChangeTime(
+                self,
+                self.dkgSubmitterPrecedencePeriodLengthChangeInitiated
+            );
+    }
+
+    function getNewDkgResultChallengePeriodLength(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newDkgResultChallengePeriodLength;
+    }
+
+    function getNewDkgResultSubmissionTimeout(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newDkgResultSubmissionTimeout;
+    }
+
+    function getNewDkgSubmitterPrecedencePeriodLength(Data storage self)
+        internal
+        view
+        returns (uint256)
+    {
+        return self.newSubmitterPrecedencePeriodLength;
     }
 
     function getNewGroupCreationFrequency(Data storage self)

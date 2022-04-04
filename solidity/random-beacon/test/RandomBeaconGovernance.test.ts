@@ -1434,7 +1434,7 @@ describe("RandomBeaconGovernance", () => {
           randomBeaconGovernance
             .connect(governance)
             .finalizeDkgResultChallengePeriodLengthUpdate()
-        ).to.be.revertedWith("Change not initiated")
+        ).to.be.revertedWith("New value should be greater than zero")
       })
     })
 
@@ -1600,7 +1600,7 @@ describe("RandomBeaconGovernance", () => {
           randomBeaconGovernance
             .connect(governance)
             .finalizeDkgResultSubmissionTimeoutUpdate()
-        ).to.be.revertedWith("Change not initiated")
+        ).to.be.revertedWith("New value should be greater than zero")
       })
     })
 
@@ -1610,7 +1610,7 @@ describe("RandomBeaconGovernance", () => {
 
         await randomBeaconGovernance
           .connect(governance)
-          .beginDkgResultSubmissionTimeoutUpdate(1)
+          .beginDkgResultSubmissionTimeoutUpdate(181)
 
         await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
