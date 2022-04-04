@@ -4,6 +4,7 @@ import { ethers } from "hardhat"
 
 // eslint-disable-next-line import/no-cycle
 import { params } from "../fixtures"
+import { testConfig } from "../../hardhat.config"
 
 import type { BigNumber, BigNumberish } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -23,8 +24,8 @@ export type Operator = {
 export async function registerOperators(
   walletRegistry: WalletRegistry,
   t: T,
-  numberOfOperators: number,
-  unnamedSignersOffset = 0,
+  numberOfOperators = testConfig.operatorsCount,
+  unnamedSignersOffset = testConfig.nonStakingAccountsCount,
   stakeAmount: BigNumber = params.minimumAuthorization
 ): Promise<Operator[]> {
   const operators: Operator[] = []
