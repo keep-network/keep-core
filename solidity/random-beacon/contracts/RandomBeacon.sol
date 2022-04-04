@@ -645,7 +645,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         If there is a pending authorization decrease request, it is
     ///         overwritten.
     ///
-    /// @dev Should only be callable by T staking contract.
+    /// @dev Can only be called by T staking contract.
     function authorizationDecreaseRequested(
         address stakingProvider,
         uint96 fromAmount,
@@ -659,7 +659,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     }
 
     /// @notice Approves the previously registered authorization decrease
-    ///         request. Reverts if authorization decrease delay have not passed
+    ///         request. Reverts if authorization decrease delay has not passed
     ///         yet or if the authorization decrease was not requested for the
     ///         given staking provider.
     function approveAuthorizationDecrease(address stakingProvider) external {
