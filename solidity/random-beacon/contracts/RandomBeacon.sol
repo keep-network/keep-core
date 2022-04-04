@@ -15,12 +15,12 @@
 pragma solidity ^0.8.9;
 
 import "./api/IRandomBeacon.sol";
-import {BeaconAuthorization as Authorization} from "./libraries/BeaconAuthorization.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
-import "./libraries/BeaconInactivity.sol";
+import {BeaconInactivity as Inactivity} from "./libraries/BeaconInactivity.sol";
+import {BeaconAuthorization as Authorization} from "./libraries/BeaconAuthorization.sol";
 import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
 import {BeaconDkgValidator as DKGValidator} from "./BeaconDkgValidator.sol";
 
@@ -1111,7 +1111,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
     function notifyOperatorInactivity(
-        BeaconInactivity.Claim calldata claim,
+        Inactivity.Claim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
@@ -1131,7 +1131,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             "Invalid group members"
         );
 
-        uint32[] memory ineligibleOperators = BeaconInactivity.verifyClaim(
+        uint32[] memory ineligibleOperators = Inactivity.verifyClaim(
             sortitionPool,
             claim,
             group.groupPubKey,
