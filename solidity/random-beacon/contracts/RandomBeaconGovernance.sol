@@ -222,25 +222,18 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        newGovernanceDelay = _newGovernanceDelay;
-        /* solhint-disable not-rely-on-time */
-        governanceDelayChangeInitiated = block.timestamp;
-        emit GovernanceDelayUpdateStarted(_newGovernanceDelay, block.timestamp);
-        /* solhint-enable not-rely-on-time */
+        governanceBeaconParams.beginGovernanceDelayUpdate(_newGovernanceDelay);
+    }
+
+    function getGovernanceDelay() external view returns (uint256) {
+        return governanceBeaconParams.getGovernanceDelay();
     }
 
     /// @notice Finalizes the governance delay update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeGovernanceDelayUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(governanceDelayChangeInitiated)
-    {
-        emit GovernanceDelayUpdated(newGovernanceDelay);
-        governanceDelay = newGovernanceDelay;
-        governanceDelayChangeInitiated = 0;
-        newGovernanceDelay = 0;
+    function finalizeGovernanceDelayUpdate() external onlyOwner {
+        governanceBeaconParams.finalizeGovernanceDelayUpdate();
     }
 
     /// @notice Begins the random beacon ownership transfer process.
@@ -889,7 +882,7 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(governanceDelayChangeInitiated);
+        return governanceBeaconParams.getRemainingGovernanceDelayUpdateTime();
     }
 
     /// @notice Get the time remaining until the random beacon ownership can

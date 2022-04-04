@@ -214,7 +214,7 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the governance delay", async () => {
-          expect(await randomBeaconGovernance.governanceDelay()).to.be.equal(
+          expect(await randomBeaconGovernance.getGovernanceDelay()).to.be.equal(
             7331
           )
         })

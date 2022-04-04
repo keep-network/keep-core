@@ -60,6 +60,8 @@ library GovernanceBeaconParams {
         uint256 dkgResultSubmissionTimeoutChangeInitiated;
         uint256 newSubmitterPrecedencePeriodLength;
         uint256 dkgSubmitterPrecedencePeriodLengthChangeInitiated;
+        uint256 newGovernanceDelay;
+        uint256 governanceDelayChangeInitiated;
     }
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -206,6 +208,12 @@ library GovernanceBeaconParams {
     event DkgSubmitterPrecedencePeriodLengthUpdated(
         uint256 submitterPrecedencePeriodLength
     );
+
+    event GovernanceDelayUpdateStarted(
+        uint256 governanceDelay,
+        uint256 timestamp
+    );
+    event GovernanceDelayUpdated(uint256 governanceDelay);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -1006,6 +1014,44 @@ library GovernanceBeaconParams {
         self.newSubmitterPrecedencePeriodLength = 0;
     }
 
+    /// @notice Begins the governance delay update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newGovernanceDelay New governance delay
+    function beginGovernanceDelayUpdate(
+        Data storage self,
+        uint256 _newGovernanceDelay
+    ) external {
+        self.newGovernanceDelay = _newGovernanceDelay;
+        /* solhint-disable not-rely-on-time */
+        self.governanceDelayChangeInitiated = block.timestamp;
+        emit GovernanceDelayUpdateStarted(_newGovernanceDelay, block.timestamp);
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the governance delay update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeGovernanceDelayUpdate(Data storage self)
+        external
+        onlyAfterGovernanceDelay(self, self.governanceDelayChangeInitiated)
+    {
+        emit GovernanceDelayUpdated(self.newGovernanceDelay);
+        self.governanceDelay = self.newGovernanceDelay;
+        self.governanceDelayChangeInitiated = 0;
+        self.newGovernanceDelay = 0;
+    }
+
+    /// @notice Get the time remaining until the governance delay can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingGovernanceDelayUpdateTime(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(self, self.governanceDelayChangeInitiated);
+    }
+
     /// @notice Get the time remaining until the DKG result submission reward
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -1285,6 +1331,14 @@ library GovernanceBeaconParams {
                 self,
                 self.dkgSubmitterPrecedencePeriodLengthChangeInitiated
             );
+    }
+
+    function getGovernanceDelay(Data storage self)
+        external
+        view
+        returns (uint256)
+    {
+        return self.governanceDelay;
     }
 
     function getNewDkgResultChallengePeriodLength(Data storage self)
