@@ -15,7 +15,7 @@
 pragma solidity ^0.8.9;
 
 import "./api/IRandomBeacon.sol";
-import "./libraries/Authorization.sol";
+import {BeaconAuthorization as Authorization} from "./libraries/BeaconAuthorization.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";

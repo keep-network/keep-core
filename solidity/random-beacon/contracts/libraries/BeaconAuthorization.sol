@@ -28,7 +28,7 @@ import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 /// @notice Library managing the state of stake authorizations for the operator
 ///         contract and the presence of operators in the sortition
 ///         pool based on the stake authorized for them.
-library Authorization {
+library BeaconAuthorization {
     struct Parameters {
         // The minimum authorization required by the beacon so that
         // operator can join the sortition pool and do the work.

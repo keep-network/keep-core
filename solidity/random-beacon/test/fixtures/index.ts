@@ -103,7 +103,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     constants.poolWeightDivisor
   )) as SortitionPool
 
-  const Authorization = await ethers.getContractFactory("Authorization")
+  const Authorization = await ethers.getContractFactory("BeaconAuthorization")
   const authorization = await Authorization.deploy()
   await authorization.deployed()
 
@@ -129,7 +129,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
       {
         libraries: {
           BLS: (await blsDeployment()).bls.address,
-          Authorization: authorization.address,
+          BeaconAuthorization: authorization.address,
           BeaconDkg: dkg.address,
           BeaconInactivity: inactivity.address,
         },
