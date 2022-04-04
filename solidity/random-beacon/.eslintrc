@@ -15,7 +15,6 @@
         "groups": ["builtin", "external", "parent", "sibling", "index", "type"],
         "newlines-between": "always"
       }
-    ],
-    "prefer-destructuring": "warn"
+    ]
   }
 }
