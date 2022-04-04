@@ -585,7 +585,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         must be known - before calling this function, it has to be
     ///         appointed by the staking provider by calling `registerOperator`.
     ///         Also, the operator must have the minimum authorization required
-    ///         by the application. Function reverts if there is no minimum stake
+    ///         by the beacon. Function reverts if there is no minimum stake
     ///         authorized or if the operator is not known. If there was an
     ///         authorization decrease requested, it is activated by starting
     ///         the authorization decrease delay.
@@ -601,7 +601,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         authorization.updateOperatorStatus(staking, sortitionPool, operator);
     }
 
-    /// @notice Used by T staking contract to inform the application that the
+    /// @notice Used by T staking contract to inform the beacon that the
     ///         authorized stake amount for the given staking provider increased.
     ///
     ///         Reverts if the authorization amount is below the minimum.
@@ -623,7 +623,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         );
     }
 
-    /// @notice Used by T staking contract to inform the application that the
+    /// @notice Used by T staking contract to inform the beacon that the
     ///         authorization decrease for the given staking provider has been
     ///         requested.
     ///
@@ -666,7 +666,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         authorization.approveAuthorizationDecrease(staking, stakingProvider);
     }
 
-    /// @notice Used by T staking contract to inform the application the
+    /// @notice Used by T staking contract to inform the beacon the
     ///         authorization has been decreased for the given staking provider
     ///         involuntarily, as a result of slashing.
     ///
