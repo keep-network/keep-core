@@ -151,7 +151,7 @@ contract RandomBeaconGovernance is Ownable {
     );
 
     event RelayEntrySubmissionFailureSlashingAmountUpdateStarted(
-        uint256 relayEntrySubmissionFailureSlashingAmount,
+        uint96 relayEntrySubmissionFailureSlashingAmount,
         uint256 timestamp
     );
     event RelayEntrySubmissionFailureSlashingAmountUpdated(

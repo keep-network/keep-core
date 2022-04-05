@@ -15,7 +15,7 @@
 pragma solidity ^0.8.9;
 
 /// @title Governance Beacon Params
-/// @notice Library is used by the `RandomBeaconGovernance` contract and is 
+/// @notice Library is used by the `RandomBeaconGovernance` contract and is
 ///         responsible for storing and updating governence parameters.
 library GovernanceBeaconParams {
     struct Data {
@@ -34,7 +34,7 @@ library GovernanceBeaconParams {
         uint256 relayEntryTimeoutNotificationRewardMultiplierChangeInitiated;
         uint256 newDkgMaliciousResultNotificationRewardMultiplier;
         uint256 dkgMaliciousResultNotificationRewardMultiplierChangeInitiated;
-        uint256 newRelayEntrySubmissionFailureSlashingAmount;
+        uint96 newRelayEntrySubmissionFailureSlashingAmount;
         uint256 relayEntrySubmissionFailureSlashingAmountChangeInitiated;
         uint256 newMaliciousDkgResultSlashingAmount;
         uint256 maliciousDkgResultSlashingAmountChangeInitiated;
@@ -123,11 +123,11 @@ library GovernanceBeaconParams {
     );
 
     event RelayEntrySubmissionFailureSlashingAmountUpdateStarted(
-        uint256 relayEntrySubmissionFailureSlashingAmount,
+        uint96 relayEntrySubmissionFailureSlashingAmount,
         uint256 timestamp
     );
     event RelayEntrySubmissionFailureSlashingAmountUpdated(
-        uint256 relayEntrySubmissionFailureSlashingAmount
+        uint96 relayEntrySubmissionFailureSlashingAmount
     );
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
@@ -537,7 +537,7 @@ library GovernanceBeaconParams {
     ///        submission failure slashing amount
     function beginRelayEntrySubmissionFailureSlashingAmountUpdate(
         Data storage self,
-        uint256 _newRelayEntrySubmissionFailureSlashingAmount
+        uint96 _newRelayEntrySubmissionFailureSlashingAmount
     ) external {
         /* solhint-disable not-rely-on-time */
         self
@@ -1518,7 +1518,7 @@ library GovernanceBeaconParams {
     function getNewRelayEntrySubmissionFailureSlashingAmount(Data storage self)
         internal
         view
-        returns (uint256)
+        returns (uint96)
     {
         return self.newRelayEntrySubmissionFailureSlashingAmount;
     }
