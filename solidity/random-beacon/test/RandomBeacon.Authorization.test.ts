@@ -7,7 +7,7 @@ import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 import { constants, params, testDeployment } from "./fixtures"
 
 import type { FakeContract } from "@defi-wonderland/smock"
-import type { BigNumber, ContractTransaction } from "ethers"
+import type { BigNumber, BigNumberish, ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   RandomBeacon,
@@ -40,7 +40,7 @@ describe("RandomBeacon - Authorization", () => {
   let thirdParty: SignerWithAddress
   let slasher: FakeContract<IApplication>
 
-  const stakedAmount = to1e18(1000000) // 1M T
+  const stakedAmount = to1e18(1_000_000) // 1MM T
   let minimumAuthorization: BigNumber
 
   before("load test fixture", async () => {
@@ -541,7 +541,7 @@ describe("RandomBeacon - Authorization", () => {
       context("when decreasing to zero", () => {
         let tx: ContractTransaction
         const decreasingTo = 0
-        let decreasingBy
+        let decreasingBy: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -592,8 +592,8 @@ describe("RandomBeacon - Authorization", () => {
 
       context("when decreasing to the minimum", () => {
         let tx: ContractTransaction
-        let decreasingTo
-        let decreasingBy
+        let decreasingTo: BigNumber
+        let decreasingBy: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -645,8 +645,8 @@ describe("RandomBeacon - Authorization", () => {
 
       context("when decreasing to a value above the minimum", () => {
         let tx: ContractTransaction
-        let decreasingTo
-        let decreasingBy
+        let decreasingTo: BigNumber
+        let decreasingBy: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -777,7 +777,7 @@ describe("RandomBeacon - Authorization", () => {
       context("when decreasing to zero", () => {
         let tx: ContractTransaction
         const decreasingTo = 0
-        let decreasingBy
+        let decreasingBy: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -827,8 +827,8 @@ describe("RandomBeacon - Authorization", () => {
 
       context("when decreasing to the minimum", () => {
         let tx: ContractTransaction
-        let decreasingTo
-        let decreasingBy
+        let decreasingTo: BigNumber
+        let decreasingBy: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -879,8 +879,8 @@ describe("RandomBeacon - Authorization", () => {
 
       context("when decreasing to a value above the minimum", () => {
         let tx: ContractTransaction
-        let decreasingTo
-        let decreasingBy
+        let decreasingTo: BigNumber
+        let decreasingBy: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -1517,7 +1517,7 @@ describe("RandomBeacon - Authorization", () => {
     context(
       "when the operator has more than the minimum stake authorized",
       () => {
-        let authorizedStake
+        let authorizedStake: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -1557,7 +1557,7 @@ describe("RandomBeacon - Authorization", () => {
     )
 
     context("when operator is in the process of deauthorizing", () => {
-      let deauthorizingTo
+      let deauthorizingTo: BigNumber
 
       before(async () => {
         await createSnapshot()
@@ -1616,7 +1616,7 @@ describe("RandomBeacon - Authorization", () => {
     context(
       "when operator is in the process of deauthorizing but also increased authorization in the meantime",
       () => {
-        let expectedAuthorizedStake
+        let expectedAuthorizedStake: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -1821,7 +1821,7 @@ describe("RandomBeacon - Authorization", () => {
 
       context("when the authorization increased", () => {
         let tx: ContractTransaction
-        let expectedWeight
+        let expectedWeight: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -1869,7 +1869,7 @@ describe("RandomBeacon - Authorization", () => {
         "when there was an authorization decrease request to non-zero",
         () => {
           let tx: ContractTransaction
-          let expectedWeight
+          let expectedWeight: BigNumber
 
           before(async () => {
             await createSnapshot()
@@ -1975,7 +1975,7 @@ describe("RandomBeacon - Authorization", () => {
         "when operator is in the process of deauthorizing but also increased authorization in the meantime",
         () => {
           let tx: ContractTransaction
-          let expectedWeight
+          let expectedWeight: BigNumber
 
           before(async () => {
             await createSnapshot()
@@ -2050,7 +2050,7 @@ describe("RandomBeacon - Authorization", () => {
     })
 
     context("when staking provider has stake authorized", () => {
-      let authorizedAmount
+      let authorizedAmount: BigNumber
 
       before(async () => {
         await createSnapshot()
@@ -2079,8 +2079,8 @@ describe("RandomBeacon - Authorization", () => {
     context(
       "when staking provider has some part of the stake deauthorizing",
       () => {
-        let authorizedAmount
-        let deauthorizingAmount
+        let authorizedAmount: BigNumber
+        let deauthorizingAmount: BigNumber
 
         before(async () => {
           await createSnapshot()
@@ -2526,7 +2526,7 @@ describe("RandomBeacon - Authorization", () => {
   // Testing final states for scenarios when functions are invoked one after
   // another. Operator is known and registered in the sortition pool.
   context("mixed interactions", () => {
-    let initialIncrease
+    let initialIncrease: BigNumber
 
     before(async () => {
       await createSnapshot()
@@ -2554,7 +2554,7 @@ describe("RandomBeacon - Authorization", () => {
 
     // Invoke `increaseAuthorization` after `increaseAuthorization`.
     describe("authorizationIncreased -> authorizationIncreased", () => {
-      let secondIncrease
+      let secondIncrease: BigNumberish
 
       before(async () => {
         await createSnapshot()
@@ -2592,8 +2592,8 @@ describe("RandomBeacon - Authorization", () => {
     // Invoke `increaseAuthorization` after `authorizationDecreaseRequested`.
     // The decrease is not yet approved when `increaseAuthorization` is called.
     describe("authorizationDecreaseRequested -> authorizationIncreased", () => {
-      let firstDecrease
-      let secondIncrease
+      let firstDecrease: BigNumberish
+      let secondIncrease: BigNumberish
 
       before(async () => {
         await createSnapshot()
@@ -2642,8 +2642,8 @@ describe("RandomBeacon - Authorization", () => {
     // Invoke `increaseAuthorization` after `approveAuthorizationDecrease`.
     // The decrease is approved when `increaseAuthorization` is called.
     describe("non-zero approveAuthorizationDecrease -> authorizationIncreased", () => {
-      let firstDecrease
-      let secondIncrease
+      let firstDecrease: BigNumber
+      let secondIncrease: BigNumber
 
       before(async () => {
         await createSnapshot()
@@ -2694,7 +2694,7 @@ describe("RandomBeacon - Authorization", () => {
 
     // Invoke `increaseAuthorization` after the authorization was decreased to 0.
     describe("to-zero approveAuthorizationDecrease -> authorizationIncreased", () => {
-      let secondIncrease
+      let secondIncrease: BigNumberish
 
       before(async () => {
         await createSnapshot()
@@ -2743,8 +2743,8 @@ describe("RandomBeacon - Authorization", () => {
     // Invoke `increaseAuthorization` after `involuntaryAuthorizationDecrease`
     // when the authorization amount dropped below the minimum authorization.
     describe("below-minimum involuntaryAuthorizationDecrease -> authorizationIncreased", () => {
-      let slashingTo
-      let secondIncrease
+      let slashingTo: BigNumber
+      let secondIncrease: BigNumber
 
       before(async () => {
         await createSnapshot()
@@ -2800,8 +2800,8 @@ describe("RandomBeacon - Authorization", () => {
     })
 
     describe("authorizationDecreaseRequested -> involuntaryAuthorizationDecrease", () => {
-      let decreasedAmount
-      let slashingTo
+      let decreasedAmount: BigNumber
+      let slashingTo: BigNumber
 
       before(async () => {
         await createSnapshot()
@@ -2847,8 +2847,8 @@ describe("RandomBeacon - Authorization", () => {
     })
 
     describe("authorizationDecreaseRequested -> involuntaryAuthorizationDecrease -> approveAuthorizationDecrease", () => {
-      let decreasedAmount
-      let slashingTo
+      let decreasedAmount: BigNumber
+      let slashingTo: BigNumber
 
       before(async () => {
         await createSnapshot()
@@ -2897,8 +2897,8 @@ describe("RandomBeacon - Authorization", () => {
     })
 
     describe("approveAuthorizationDecrease -> involuntaryAuthorizationDecrease", () => {
-      let decreasedAmount
-      let slashingTo
+      let decreasedAmount: BigNumberish
+      let slashingTo: BigNumberish
 
       before(async () => {
         await createSnapshot()

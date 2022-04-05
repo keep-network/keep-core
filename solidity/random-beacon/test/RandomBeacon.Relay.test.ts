@@ -17,6 +17,7 @@ import { signOperatorInactivityClaim } from "./utils/inacvitity"
 import { registerOperators } from "./utils/operators"
 import { fakeTokenStaking } from "./mocks/staking"
 
+import type { Groups } from "../typechain/RandomBeacon"
 import type { Operator, OperatorID } from "./utils/operators"
 import type { FakeContract } from "@defi-wonderland/smock"
 import type {
@@ -55,6 +56,8 @@ async function fixture() {
 
   // Register operators in the sortition pool to make group creation
   // possible.
+  // Accounts offset provided to slice getUnnamedSigners have to include number
+  // of unnamed accounts that were already used.
   const operators = await registerOperators(
     deployment.randomBeacon as RandomBeacon,
     deployment.t as T,
@@ -512,7 +515,7 @@ describe("RandomBeacon - Relay", () => {
             await expect(submissionTx).to.not.emit(staking, "NotifierRewarded")
           })
 
-          it("should slash a correct portion of the slashing amount for all group members ", async () => {
+          it("should slash a correct portion of the slashing amount for all group members", async () => {
             for (let i = 0; i < membersAddresses.length; i++) {
               const stakingProvider =
                 await randomBeacon.operatorToStakingProvider(
@@ -985,7 +988,7 @@ describe("RandomBeacon - Relay", () => {
             )
         })
 
-        it("should slash the minimum stake for all group members", async () => {
+        it("should slash unauthorized signing slashing amount for all group members", async () => {
           for (let i = 0; i < membersAddresses.length; i++) {
             const stakingProvider =
               await randomBeacon.operatorToStakingProvider(membersAddresses[i])
@@ -1018,6 +1021,7 @@ describe("RandomBeacon - Relay", () => {
         })
       })
 
+      // FIXME: Blocked by https://github.com/defi-wonderland/smock/issues/101
       context.skip("when token staking seize call fails", async () => {
         let tokenStakingFake: FakeContract<TokenStaking>
         let tx: Promise<ContractTransaction>
@@ -1182,7 +1186,7 @@ describe("RandomBeacon - Relay", () => {
   describe("notifyOperatorInactivity", () => {
     const groupId = 0
     const emptySignatures = "0x00"
-    const emptyMemberIndices = []
+    const emptyMemberIndices: number[] = []
     // Use 31 element `inactiveMembersIndices` array to simulate the most gas
     // expensive real-world case. If group size is 64, the required threshold
     // is 33 so we assume 31 operators at most will be marked as ineligible
@@ -1194,7 +1198,7 @@ describe("RandomBeacon - Relay", () => {
     const nonSubsequentInactiveMembersIndices = [2, 5, 7, 23, 56]
     const groupThreshold = 33
 
-    let group
+    let group: Groups.GroupStructOutput
 
     before(async () => {
       await createSnapshot()
@@ -1343,12 +1347,15 @@ describe("RandomBeacon - Relay", () => {
                       // we cut the first 2 characters to get rid of "0x" and
                       // then return signature on arbitrary position - each
                       // signature has 65 bytes so 130 characters
-                      const getSignature = (signatures, index) =>
+                      const getSignature = (
+                        signatures: string,
+                        index: number
+                      ) =>
                         signatures
                           .slice(2)
                           .slice(130 * index, 130 * index + 130)
 
-                      const modifySignatures = (signatures) => {
+                      const modifySignatures = (signatures: string) => {
                         let newSignatures = "0x"
 
                         for (
@@ -1415,7 +1422,9 @@ describe("RandomBeacon - Relay", () => {
               })
 
               context("when one of the signatures is incorrect", () => {
-                const assertInvalidSignature = async (invalidSignature) => {
+                const assertInvalidSignature = async (
+                  invalidSignature: string
+                ) => {
                   // The 32 signers sign correct parameters. Invalid signature
                   // is expected to be provided by signer 33.
                   const { signatures, signingMembersIndices } =
@@ -1801,7 +1810,7 @@ describe("RandomBeacon - Relay", () => {
 
           context("when inactive members indices count is zero", () => {
             it("should revert", async () => {
-              const inactiveMembersIndices = []
+              const inactiveMembersIndices: number[] = []
 
               await assertInactiveMembersIndicesCorrupted(
                 inactiveMembersIndices

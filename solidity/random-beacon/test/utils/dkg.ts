@@ -16,7 +16,7 @@ import type {
   DkgResultSubmittedEvent,
 } from "../../typechain/BeaconDkg"
 
-export const noMisbehaved = []
+export const noMisbehaved: number[] = []
 
 export async function genesis(
   randomBeacon: RandomBeacon

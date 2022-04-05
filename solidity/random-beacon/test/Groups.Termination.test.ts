@@ -5,6 +5,7 @@ import { expect } from "chai"
 
 import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
 
+import type { BigNumberish } from "ethers"
 import type { GroupsStub, GroupsStub__factory } from "../typechain"
 
 const fixture = async () => {
@@ -242,7 +243,7 @@ describe("Groups", () => {
       })
     })
 
-    async function addGroups(start, numberOfGroups) {
+    async function addGroups(start: number, numberOfGroups: number) {
       for (let i = start; i <= numberOfGroups; i++) {
         await groups.addGroup(
           ethers.utils.hexlify(i),
@@ -252,10 +253,10 @@ describe("Groups", () => {
     }
 
     async function runTerminationTest(
-      groupsCount,
-      expiredCount,
-      terminatedGroups,
-      beaconValue
+      groupsCount: number,
+      expiredCount: number,
+      terminatedGroups: number[],
+      beaconValue: BigNumberish
     ) {
       await addGroups(1, expiredCount)
 

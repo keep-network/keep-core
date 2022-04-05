@@ -15,6 +15,7 @@ import { constants } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { signDkgResult, noMisbehaved, hashDKGMembers } from "./utils/dkg"
 
+import type { BigNumberish } from "ethers"
 import type { Operator } from "./utils/operators"
 import type {
   SortitionPool,
@@ -58,9 +59,18 @@ describe("BeaconDkgValidator", () => {
   const dkgStartBlock = 1337
   const groupPublicKey: string = ethers.utils.hexValue(blsData.groupPubKey)
 
-  let selectedOperators
+  let selectedOperators: Operator[]
 
-  let prepareDkgResult
+  let prepareDkgResult: (
+    _groupMembers: Operator[],
+    _signers: Operator[],
+    _groupPublicKey: string,
+    _misbehaved: number[],
+    _startBlock: number,
+    _numberOfSignatures?: number,
+    _submitterIndex?: number
+  ) => Promise<DKG.ResultStruct>
+
   let validator: DKGValidator
 
   before("load test fixture", async () => {
@@ -85,7 +95,7 @@ describe("BeaconDkgValidator", () => {
       _startBlock: number,
       _numberOfSignatures = 33,
       _submitterIndex = 1
-    ) => {
+    ): Promise<DKG.ResultStruct> => {
       const { signingMembersIndices, signaturesBytes } = await signDkgResult(
         _signers,
         _groupPublicKey,
@@ -113,10 +123,10 @@ describe("BeaconDkgValidator", () => {
 
   describe("validate", () => {
     const testValidate = async (
-      _groupMembers,
-      _signers,
-      _groupPublicKey,
-      _misbehaved,
+      _groupMembers: Operator[],
+      _signers: Operator[],
+      _groupPublicKey: string,
+      _misbehaved: number[],
       _membersHash?: string
     ) => {
       const dkgResult = await prepareDkgResult(
@@ -284,9 +294,9 @@ describe("BeaconDkgValidator", () => {
 
   describe("validateFields", () => {
     const testValidateFields = async (
-      _groupMembers,
-      _groupPublicKey,
-      _misbehaved,
+      _groupMembers: Operator[],
+      _groupPublicKey: string,
+      _misbehaved: number[],
       _numberOfSignatures = 33
     ) => {
       const dkgResult = await prepareDkgResult(
@@ -521,7 +531,9 @@ describe("BeaconDkgValidator", () => {
     })
 
     context("when signing members indices array is malformed", async () => {
-      const testSigningMembers = async (_signingMembersIndices) => {
+      const testSigningMembers = async (
+        _signingMembersIndices: BigNumberish[]
+      ) => {
         const dkgResult = await prepareDkgResult(
           selectedOperators,
           selectedOperators,
@@ -581,7 +593,7 @@ describe("BeaconDkgValidator", () => {
   })
 
   describe("validateGroupMembers", () => {
-    const testValidateGroupMembers = async (_groupMembers) => {
+    const testValidateGroupMembers = async (_groupMembers: Operator[]) => {
       const dkgResult = await prepareDkgResult(
         _groupMembers,
         _groupMembers,
@@ -611,7 +623,10 @@ describe("BeaconDkgValidator", () => {
   })
 
   describe("validateSignatures", () => {
-    const testValidateSignatures = async (_groupMembers, _signers) => {
+    const testValidateSignatures = async (
+      _groupMembers: Operator[],
+      _signers: Operator[]
+    ) => {
       const dkgResult = await prepareDkgResult(
         _groupMembers,
         _signers,

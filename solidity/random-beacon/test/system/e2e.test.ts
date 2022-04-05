@@ -193,7 +193,7 @@ describe("System -- e2e", () => {
     })
   })
 
-  async function approveTokenForFee(_requester) {
+  async function approveTokenForFee(_requester: SignerWithAddress) {
     await t.mint(_requester.address, relayRequestFee)
     await t.connect(_requester).approve(randomBeacon.address, relayRequestFee)
   }
