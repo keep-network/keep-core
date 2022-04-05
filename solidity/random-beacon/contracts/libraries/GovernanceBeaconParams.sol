@@ -14,7 +14,9 @@
 
 pragma solidity ^0.8.9;
 
-/// TODO: add desc
+/// @title Governance Beacon Params
+/// @notice Library is used by the `RandomBeaconGovernance` contract and is 
+///         responsible for storing and updating governence parameters.
 library GovernanceBeaconParams {
     struct Data {
         uint256 governanceDelay;
@@ -240,6 +242,8 @@ library GovernanceBeaconParams {
         /* solhint-enable not-rely-on-time */
     }
 
+    /// @notice Inits governance delay param.
+    /// @param _governanceDelay Governance delay
     function init(Data storage self, uint256 _governanceDelay) internal {
         self.governanceDelay = _governanceDelay;
     }
@@ -832,8 +836,6 @@ library GovernanceBeaconParams {
         self.newCallbackGasLimit = 0;
     }
 
-    /// --------------------
-
     /// @notice Begins the group creation frequency update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newGroupCreationFrequency New group creation frequency
@@ -1245,6 +1247,9 @@ library GovernanceBeaconParams {
             );
     }
 
+    /// @notice Get the time remaining until the authorization decrease delay
+    ///         can be updated.
+    /// @return Remaining time in seconds.
     function getRemainingAuthorizationDecreaseDelayUpdateTime(Data storage self)
         external
         view
@@ -1389,6 +1394,7 @@ library GovernanceBeaconParams {
             );
     }
 
+    /// @notice Gets the new random beacon owner.
     function getNewRandomBeaconOwner(Data storage self)
         internal
         view
@@ -1397,6 +1403,7 @@ library GovernanceBeaconParams {
         return self.newRandomBeaconOwner;
     }
 
+    /// @notice Gets the governance delay
     function getGovernanceDelay(Data storage self)
         external
         view
@@ -1405,6 +1412,7 @@ library GovernanceBeaconParams {
         return self.governanceDelay;
     }
 
+    /// @notice Gets the new dkg result challenge period length
     function getNewDkgResultChallengePeriodLength(Data storage self)
         internal
         view
@@ -1413,6 +1421,7 @@ library GovernanceBeaconParams {
         return self.newDkgResultChallengePeriodLength;
     }
 
+    /// @notice Gets the new dkg result submission timeout
     function getNewDkgResultSubmissionTimeout(Data storage self)
         internal
         view
@@ -1421,6 +1430,7 @@ library GovernanceBeaconParams {
         return self.newDkgResultSubmissionTimeout;
     }
 
+    /// @notice Gets the new dkg submitter precedence period length
     function getNewDkgSubmitterPrecedencePeriodLength(Data storage self)
         internal
         view
@@ -1429,6 +1439,7 @@ library GovernanceBeaconParams {
         return self.newSubmitterPrecedencePeriodLength;
     }
 
+    /// @notice Gets the new group creation frequency
     function getNewGroupCreationFrequency(Data storage self)
         internal
         view
@@ -1437,6 +1448,7 @@ library GovernanceBeaconParams {
         return self.newGroupCreationFrequency;
     }
 
+    /// @notice Gets the new group lifetime
     function getNewGroupLifetime(Data storage self)
         internal
         view
@@ -1445,6 +1457,7 @@ library GovernanceBeaconParams {
         return self.newGroupLifetime;
     }
 
+    /// @notice Gets the new dkg result submission reward
     function getNewDkgResultSubmissionReward(Data storage self)
         internal
         view
@@ -1453,6 +1466,7 @@ library GovernanceBeaconParams {
         return self.newDkgResultSubmissionReward;
     }
 
+    /// @notice Gets the new sortition pool unlocking reward
     function getNewSortitionPoolUnlockingReward(Data storage self)
         internal
         view
@@ -1461,6 +1475,7 @@ library GovernanceBeaconParams {
         return self.newSortitionPoolUnlockingReward;
     }
 
+    /// @notice Gets the new ineligible operator notifier reward
     function getNewIneligibleOperatorNotifierReward(Data storage self)
         internal
         view
@@ -1469,6 +1484,7 @@ library GovernanceBeaconParams {
         return self.newIneligibleOperatorNotifierReward;
     }
 
+    /// @notice Gets the new sortition pool rewards ban duration
     function getNewSortitionPoolRewardsBanDuration(Data storage self)
         internal
         view
@@ -1477,24 +1493,28 @@ library GovernanceBeaconParams {
         return self.newSortitionPoolRewardsBanDuration;
     }
 
+    /// @notice Gets the new unaothorized signing notification reward multiplier
     function getNewUnauthorizedSigningNotificationRewardMultiplier(
         Data storage self
     ) internal view returns (uint256) {
         return self.newUnauthorizedSigningNotificationRewardMultiplier;
     }
 
+    /// @notice Gets the new relay entry timeout notification rewards multiplier
     function getNewRelayEntryTimeoutNotificationRewardMultiplier(
         Data storage self
     ) internal view returns (uint256) {
         return self.newRelayEntryTimeoutNotificationRewardMultiplier;
     }
 
+    /// @notice Gets the new dkg malicious notification reward multiplier
     function getNewDkgMaliciousResultNotificationRewardMultiplier(
         Data storage self
     ) internal view returns (uint256) {
         return self.newDkgMaliciousResultNotificationRewardMultiplier;
     }
 
+    /// @notice Gets the new relay entry submission failure slashing amount
     function getNewRelayEntrySubmissionFailureSlashingAmount(Data storage self)
         internal
         view
@@ -1503,6 +1523,7 @@ library GovernanceBeaconParams {
         return self.newRelayEntrySubmissionFailureSlashingAmount;
     }
 
+    /// @notice Gets the new malicious dkg result slashing amount
     function getNewMaliciousDkgResultSlashingAmount(Data storage self)
         internal
         view
@@ -1511,6 +1532,7 @@ library GovernanceBeaconParams {
         return self.newMaliciousDkgResultSlashingAmount;
     }
 
+    /// @notice Gets the new unauthorized signing slashing amount
     function getNewUnauthorizedSigningSlashingAmount(Data storage self)
         internal
         view
@@ -1519,6 +1541,7 @@ library GovernanceBeaconParams {
         return self.newUnauthorizedSigningSlashingAmount;
     }
 
+    /// @notice Gets the new minimum authorization
     function getNewMinimumAuthorization(Data storage self)
         internal
         view
@@ -1527,6 +1550,7 @@ library GovernanceBeaconParams {
         return self.newMinimumAuthorization;
     }
 
+    /// @notice Gets the new authorization decrease delay
     function getNewAuthorizationDecreaseDelay(Data storage self)
         internal
         view
@@ -1535,6 +1559,7 @@ library GovernanceBeaconParams {
         return self.newAuthorizationDecreaseDelay;
     }
 
+    /// @notice Gets the new relay request fee
     function getNewRelayRequestFee(Data storage self)
         internal
         view
@@ -1543,6 +1568,7 @@ library GovernanceBeaconParams {
         return self.newRelayRequestFee;
     }
 
+    /// @notice Gets the new relay entry soft timeout
     function getNewRelayEntrySoftTimeout(Data storage self)
         internal
         view
@@ -1551,6 +1577,7 @@ library GovernanceBeaconParams {
         return self.newRelayEntrySoftTimeout;
     }
 
+    /// @notice Gets the new relay entry hard timeout
     function getNewRelayEntryHardTimeout(Data storage self)
         internal
         view
@@ -1559,6 +1586,7 @@ library GovernanceBeaconParams {
         return self.newRelayEntryHardTimeout;
     }
 
+    /// @notice Gets the new callback gas limit
     function getNewCallbackGasLimit(Data storage self)
         internal
         view
