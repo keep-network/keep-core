@@ -37,13 +37,19 @@ import type {
   IRandomBeaconStaking,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
-import type { ContractTransaction } from "ethers"
+import type { ContractTransaction, BigNumberish, BytesLike } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+
+// FIXME: As a workaround for a bug https://github.com/dethcrypto/TypeChain/issues/601
+// we declare a new type instead of using `RandomBeaconStub & RandomBeacon` intersection.
+type RandomBeaconTest = RandomBeacon & {
+  dkgLockState: () => Promise<ContractTransaction>
+}
 
 async function fixture() {
   const deployment = await randomBeaconDeployment()
@@ -62,7 +68,7 @@ async function fixture() {
   )
 
   return {
-    randomBeacon: deployment.randomBeacon as RandomBeacon,
+    randomBeacon: deployment.randomBeacon as RandomBeaconTest,
     randomBeaconGovernance:
       deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
@@ -79,11 +85,12 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let submitter: SignerWithAddress
+  let thirdParty: SignerWithAddress
   let members: Operator[]
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
 
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
   let testToken: TestToken
   let staking: StakingStub
@@ -92,6 +99,7 @@ describe("RandomBeacon - Relay", () => {
 
   before(async () => {
     deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+    thirdParty = await ethers.getSigner((await getNamedAccounts()).thirdParty)
     requester = await ethers.getSigner((await getUnnamedAccounts())[1])
     notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
     submitter = await ethers.getSigner((await getUnnamedAccounts())[3])
@@ -367,9 +375,7 @@ describe("RandomBeacon - Relay", () => {
               await createSnapshot()
 
               // Simulate DKG is awaiting a seed.
-              await (
-                randomBeacon as unknown as RandomBeaconStub
-              ).publicDkgLockState()
+              await randomBeacon.dkgLockState()
 
               tx = await randomBeacon
                 .connect(submitter)
@@ -636,10 +642,7 @@ describe("RandomBeacon - Relay", () => {
           })
 
           it("should terminate the group", async () => {
-            const isGroupTeminated = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).isGroupTerminated(0)
-            expect(isGroupTeminated).to.be.equal(true)
+            expect(await isGroupTerminated(0)).to.be.equal(true)
           })
 
           it("should emit RelayEntryTimedOut event", async () => {
@@ -680,13 +683,10 @@ describe("RandomBeacon - Relay", () => {
               hashUint32Array(membersIDs)
             )
 
-            const registry = await randomBeacon.getGroupsRegistry()
-            const secondGroupLifetime = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).groupLifetimeOf(registry[1])
+            const secondGroupLifetime = await groupLifetimeOf(1)
 
             // Expire second group
-            await mineBlocksTo(Number(secondGroupLifetime) + 1)
+            await mineBlocksTo(secondGroupLifetime.toNumber() + 1)
 
             tx = await randomBeacon.reportRelayEntryTimeout(membersIDs)
           })
@@ -695,8 +695,15 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
-          it("should clean up current relay request data", async () => {
+          it("should terminate the group", async () => {
+            expect(await isGroupTerminated(0)).to.be.equal(true)
+          })
+
+          it("should not emit RelayEntryRequested", async () => {
             await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          })
+
+          it("should clean up current relay request data", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
         }
@@ -733,10 +740,7 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTeminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTeminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
         it("should emit RelayEntryTimedOut event", async () => {
@@ -760,9 +764,7 @@ describe("RandomBeacon - Relay", () => {
             await createSnapshot()
 
             // Simulate DKG is awaiting a seed.
-            await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).publicDkgLockState()
+            await randomBeacon.dkgLockState()
 
             tx = await randomBeacon
               .connect(notifier)
@@ -873,10 +875,7 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTerminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTerminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
         it("should call staking contract to seize the min stake", async () => {
@@ -990,12 +989,15 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("getSlashingFactor", () => {
-    const submissionTimeout = 640
-    const hardTimeout = 100
-
+  describe("calculateSlashingAmount", () => {
     before(async () => {
-      await relayStub.setTimeouts(submissionTimeout, hardTimeout)
+      await relayStub.setTimeouts(
+        params.relayEntrySoftTimeout,
+        params.relayEntryHardTimeout
+      )
+      await relayStub.setRelayEntrySubmissionFailureSlashingAmount(
+        params.relayEntrySubmissionFailureSlashingAmount
+      )
       await relayStub.setCurrentRequestStartBlock()
     })
 
@@ -1007,41 +1009,31 @@ describe("RandomBeacon - Relay", () => {
       await restoreSnapshot()
     })
 
-    context("when soft timeout has not been exceeded yet", () => {
-      it("should return a slashing factor equal to zero", async () => {
-        await mineBlocks(submissionTimeout)
+    context("when a soft timeout has been exceeded by one block", () => {
+      it("should return a correct slashing amount", async () => {
+        await mineBlocks(params.relayEntrySoftTimeout + 1)
 
-        expect(await relayStub.getSlashingFactor()).to.be.equal(0)
-      })
-    })
-
-    context("when soft timeout has been exceeded by one block", () => {
-      it("should return a correct slashing factor", async () => {
-        await mineBlocks(submissionTimeout + 1)
-
-        // We are exceeded the soft timeout by `1` block so this is the
-        // `submissionDelay` factor. If so we can calculate the slashing factor
-        // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-        // gives `1 * 1e18 / 100 = 10000000000000000` (1%).
-        await expect(await relayStub.getSlashingFactor()).to.be.equal(
-          BigNumber.from("10000000000000000")
-        )
+        // We exceeded the soft timeout by `1`
+        // slashing amount: 1 * 1000e18 / 100 = 10e18
+        expect(
+          await relayStub.callStatic.calculateSlashingAmount()
+        ).to.be.equal(BigNumber.from("10000000000000000000"))
       })
     })
 
     context(
       "when soft timeout has been exceeded by the number of blocks equal to the hard timeout",
       () => {
-        it("should return a correct slashing factor", async () => {
-          await mineBlocks(submissionTimeout + hardTimeout)
-
-          // We are exceeded the soft timeout by `100` blocks so this is the
-          // `submissionDelay` factor. If so we can calculate the slashing
-          // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-          // gives `100 * 1e18 / 100 = 1000000000000000000` (100%).
-          await expect(await relayStub.getSlashingFactor()).to.be.equal(
-            BigNumber.from("1000000000000000000")
+        it("should return a correct slashing amount", async () => {
+          await mineBlocks(
+            params.relayEntrySoftTimeout + params.relayEntryHardTimeout
           )
+
+          // We exceeded the soft timeout by `100`
+          // slashing amount: 100 * 1000e18 / 100 = 1000e18
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
         })
       }
     )
@@ -1050,14 +1042,16 @@ describe("RandomBeacon - Relay", () => {
       "when soft timeout has been exceeded by the number of blocks bigger than the hard timeout",
       () => {
         it("should return a correct slashing factor", async () => {
-          await mineBlocks(submissionTimeout + hardTimeout + 1)
+          await mineBlocks(
+            params.relayEntrySoftTimeout + params.relayEntryHardTimeout + 1
+          )
 
           // We are exceeded the soft timeout by a value bigger than the
           // hard timeout. In that case the maximum value (100%) of the slashing
-          // factor should be returned.
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
-            BigNumber.from("1000000000000000000")
-          )
+          // amount should be returned.
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
         })
       }
     )
@@ -1065,8 +1059,8 @@ describe("RandomBeacon - Relay", () => {
 
   describe("notifyOperatorInactivity", () => {
     const groupId = 0
-    const stubSignatures = "0x00"
-    const stubMembersIndices = []
+    const emptySignatures = "0x00"
+    const emptyMemberIndices = []
     // Use 31 element `inactiveMembersIndices` array to simulate the most gas
     // expensive real-world case. If group size is 64, the required threshold
     // is 33 so we assume 31 operators at most will be marked as ineligible
@@ -1224,6 +1218,9 @@ describe("RandomBeacon - Relay", () => {
                         59, 61, 62, 64,
                       ]
 
+                      // we cut the first 2 characters to get rid of "0x" and
+                      // then return signature on arbitrary position - each
+                      // signature has 65 bytes so 130 characters
                       const getSignature = (signatures, index) =>
                         signatures
                           .slice(2)
@@ -1273,12 +1270,7 @@ describe("RandomBeacon - Relay", () => {
                           groupThreshold
                         )
 
-                      // Assume claim sender is member `34` - the first member
-                      // who did not sign the claim. We take index `33` since
-                      // `members` array is zero-based.
-                      const claimSender = await ethers.getSigner(
-                        members[33].address
-                      )
+                      const claimSender = thirdParty
 
                       await expect(
                         randomBeacon
@@ -1530,7 +1522,7 @@ describe("RandomBeacon - Relay", () => {
                       groupId,
                       inactiveMembersIndices: subsequentInactiveMembersIndices,
                       signatures,
-                      signingMembersIndices: stubMembersIndices,
+                      signingMembersIndices: emptyMemberIndices,
                     },
                     0,
                     membersIDs
@@ -1552,7 +1544,7 @@ describe("RandomBeacon - Relay", () => {
                         inactiveMembersIndices:
                           subsequentInactiveMembersIndices,
                         signatures,
-                        signingMembersIndices: stubMembersIndices,
+                        signingMembersIndices: emptyMemberIndices,
                       },
                       0,
                       membersIDs
@@ -1658,7 +1650,7 @@ describe("RandomBeacon - Relay", () => {
           })
         })
 
-        context("when failed members indices are incorrect", () => {
+        context("when inactive members indices are incorrect", () => {
           const assertInactiveMembersIndicesCorrupted = async (
             inactiveMembersIndices: number[]
           ) => {
@@ -1711,7 +1703,7 @@ describe("RandomBeacon - Relay", () => {
             }
           )
 
-          context("when first failed member index is zero", () => {
+          context("when first inactive member index is zero", () => {
             it("should revert", async () => {
               const inactiveMembersIndices = Array.from(
                 Array(64),
@@ -1781,9 +1773,9 @@ describe("RandomBeacon - Relay", () => {
             randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                inactiveMembersIndices: stubMembersIndices,
-                signatures: stubSignatures,
-                signingMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: emptyMemberIndices,
+                signatures: emptySignatures,
+                signingMembersIndices: emptyMemberIndices,
               },
               0,
               membersIDs
@@ -1816,9 +1808,9 @@ describe("RandomBeacon - Relay", () => {
             randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                inactiveMembersIndices: stubMembersIndices,
-                signatures: stubSignatures,
-                signingMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: emptyMemberIndices,
+                signatures: emptySignatures,
+                signingMembersIndices: emptyMemberIndices,
               },
               0,
               membersIDs
@@ -1834,9 +1826,9 @@ describe("RandomBeacon - Relay", () => {
           randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              inactiveMembersIndices: stubMembersIndices,
-              signatures: stubSignatures,
-              signingMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: emptyMemberIndices,
+              signatures: emptySignatures,
+              signingMembersIndices: emptyMemberIndices,
             },
             1,
             membersIDs
@@ -1852,9 +1844,9 @@ describe("RandomBeacon - Relay", () => {
           randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              inactiveMembersIndices: stubMembersIndices,
-              signatures: stubSignatures,
-              signingMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: emptyMemberIndices,
+              signatures: emptySignatures,
+              signingMembersIndices: emptyMemberIndices,
             },
             0,
             invalidMembersId
@@ -1863,6 +1855,20 @@ describe("RandomBeacon - Relay", () => {
       })
     })
   })
+
+  async function groupLifetimeOf(groupID: BigNumberish): Promise<BigNumber> {
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
+
+    const groupLifeTime = await randomBeacon.callStatic.groupLifetime()
+
+    return groupData.registrationBlockNumber.add(groupLifeTime)
+  }
+
+  async function isGroupTerminated(groupID: BigNumberish): Promise<boolean> {
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
+
+    return groupData.terminated === true
+  }
 
   async function approveTestToken() {
     await testToken.mint(requester.address, params.relayRequestFee)

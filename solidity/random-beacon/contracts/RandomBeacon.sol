@@ -315,7 +315,11 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     event CallbackFailed(uint256 entry, uint256 entrySubmittedBlock);
 
-    event InactivityClaimed(uint64 groupId, uint256 nonce, address notifier);
+    event InactivityClaimed(
+        uint64 indexed groupId,
+        uint256 nonce,
+        address notifier
+    );
 
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
@@ -512,7 +516,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     /// @param _unauthorizedSigningSlashingAmount New unauthorized signing
     ///        slashing amount
     function updateSlashingParameters(
-        uint256 _relayEntrySubmissionFailureSlashingAmount,
+        uint96 _relayEntrySubmissionFailureSlashingAmount,
         uint256 _maliciousDkgResultSlashingAmount,
         uint256 _unauthorizedSigningSlashingAmount
     ) external onlyOwner {
@@ -944,7 +948,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
     ///         the claim must be one of the claim signers. This function
     ///         can be called only for active and non-terminated groups.
-    /// @param claim Failure claim.
+    /// @param claim Operator inactivity claim.
     /// @param nonce Current inactivity claim nonce for the given group. Must
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
@@ -972,7 +976,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         uint32[] memory ineligibleOperators = BeaconInactivity.verifyClaim(
             sortitionPool,
             claim,
-            group,
+            group.groupPubKey,
             nonce,
             groupMembers
         );
@@ -1004,13 +1008,6 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         uint256 actualValue = Math.min(dkgRewardsPool, value);
         dkgRewardsPool -= actualValue;
         tToken.safeTransfer(to, actualValue);
-    }
-
-    /// @notice Locks the state of group creation.
-    /// @dev This function is meant to be used by test stubs which inherits
-    ///      from this contract and needs to lock the DKG state arbitrarily.
-    function dkgLockState() internal {
-        dkg.lockState();
     }
 
     /// @notice The minimum authorization amount required so that operator can
@@ -1072,7 +1069,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     function relayEntrySubmissionFailureSlashingAmount()
         external
         view
-        returns (uint256)
+        returns (uint96)
     {
         return relay.relayEntrySubmissionFailureSlashingAmount;
     }

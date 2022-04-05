@@ -7,6 +7,8 @@ import { createNewWallet } from "./utils/wallets"
 import ecdsaData from "./data/ecdsa"
 import { hashUint32Array } from "./utils/groups"
 
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { ContractTransaction } from "ethers"
 import type { DkgResult } from "./utils/dkg"
 import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { WalletRegistry, WalletRegistryStub } from "../typechain"
@@ -47,10 +49,12 @@ const validTestData = [
 describe("WalletRegistry - Wallets", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let walletOwner: FakeContract<IWalletOwner>
+  let thirdParty: SignerWithAddress
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletOwner } = await walletRegistryFixture())
+    ;({ walletRegistry, walletOwner, thirdParty } =
+      await walletRegistryFixture())
   })
 
   describe("approveDkgResult", async () => {
@@ -230,7 +234,7 @@ describe("WalletRegistry - Wallets", async () => {
       it("should revert", async () => {
         await expect(
           walletRegistry.getWalletPublicKey(formatBytes32String("NON EXISTING"))
-        ).to.be.revertedWith("Wallet with given ID has not been registered")
+        ).to.be.revertedWith("Wallet with the given ID has not been registered")
       })
     })
 
@@ -267,6 +271,96 @@ describe("WalletRegistry - Wallets", async () => {
           ).to.have.lengthOf(64)
         })
       })
+    })
+  })
+
+  describe("closeWallet", async () => {
+    let walletID: string
+
+    before("create a wallet", async () => {
+      await createSnapshot()
+      ;({ walletID } = await createNewWallet(
+        walletRegistry,
+        walletOwner.wallet
+      ))
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    context("when called by a third party", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.connect(thirdParty).closeWallet(walletID)
+        ).to.be.revertedWith("Caller is not the Wallet Owner")
+      })
+    })
+
+    context("when caller is the wallet owner", () => {
+      context("when wallet with the given ID is unknown", () => {
+        it("should revert", async () => {
+          const unknownWalletID: string = ethers.utils.keccak256(walletID)
+          await expect(
+            walletRegistry
+              .connect(walletOwner.wallet)
+              .closeWallet(unknownWalletID)
+          ).to.be.revertedWith(
+            "Wallet with the given ID has not been registered"
+          )
+        })
+      })
+
+      context("when wallet with the given ID is registered", () => {
+        let tx: ContractTransaction
+
+        before("close the wallet", async () => {
+          await createSnapshot()
+
+          tx = await walletRegistry
+            .connect(walletOwner.wallet)
+            .closeWallet(walletID)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should emit WalletClosed event", async () => {
+          await expect(tx)
+            .to.emit(walletRegistry, "WalletClosed")
+            .withArgs(walletID)
+        })
+
+        it("should remove wallet from the registry", async () => {
+          await expect(await walletRegistry.isWalletRegistered(walletID)).to.be
+            .false
+        })
+      })
+
+      context(
+        "when the wallet with the given ID has already been closed",
+        () => {
+          before("close the wallet", async () => {
+            await createSnapshot()
+            await walletRegistry
+              .connect(walletOwner.wallet)
+              .closeWallet(walletID)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
+          it("should revert", async () => {
+            await expect(
+              walletRegistry.connect(walletOwner.wallet).closeWallet(walletID)
+            ).to.be.revertedWith(
+              "Wallet with the given ID has not been registered"
+            )
+          })
+        }
+      )
     })
   })
 })

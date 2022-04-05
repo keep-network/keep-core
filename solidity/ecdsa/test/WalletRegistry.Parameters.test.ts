@@ -160,11 +160,11 @@ describe("WalletRegistry - Parameters", async () => {
     })
   })
 
-  describe("updateDkgResultSubmissionGas", async () => {
+  describe("updateGasParameters", async () => {
     context("when called by the deployer", async () => {
       it("should revert", async () => {
         await expect(
-          walletRegistry.connect(deployer).updateDkgResultSubmissionGas(4200)
+          walletRegistry.connect(deployer).updateGasParameters(4200, 4201)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -174,7 +174,7 @@ describe("WalletRegistry - Parameters", async () => {
         await expect(
           walletRegistry
             .connect(walletOwner.wallet)
-            .updateDkgResultSubmissionGas(4200)
+            .updateGasParameters(4200, 4201)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -182,35 +182,7 @@ describe("WalletRegistry - Parameters", async () => {
     context("when called by a third party", async () => {
       it("should revert", async () => {
         await expect(
-          walletRegistry.connect(thirdParty).updateDkgResultSubmissionGas(4200)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
-      })
-    })
-  })
-
-  describe("updateDkgApprovalGasOffset", async () => {
-    context("when called by the deployer", async () => {
-      it("should revert", async () => {
-        await expect(
-          walletRegistry.connect(deployer).updateDkgApprovalGasOffset(4200)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
-      })
-    })
-
-    context("when called by the wallet owner", async () => {
-      it("should revert", async () => {
-        await expect(
-          walletRegistry
-            .connect(walletOwner.wallet)
-            .updateDkgApprovalGasOffset(4200)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
-      })
-    })
-
-    context("when called by a third party", async () => {
-      it("should revert", async () => {
-        await expect(
-          walletRegistry.connect(thirdParty).updateDkgApprovalGasOffset(4200)
+          walletRegistry.connect(thirdParty).updateGasParameters(4200, 4201)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
