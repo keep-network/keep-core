@@ -40,7 +40,7 @@ describe("RandomBeacon - Authorization", () => {
   let thirdParty: SignerWithAddress
   let slasher: FakeContract<IApplication>
 
-  const stakedAmount = to1e18(1000000) // 1M T
+  const stakedAmount = to1e18(1_000_000) // 1MM T
   let minimumAuthorization: BigNumber
 
   before("load test fixture", async () => {
@@ -1451,7 +1451,7 @@ describe("RandomBeacon - Authorization", () => {
           // initially authorized amount is less than staked amount and it is
           // another application slashing. To go below the minimum stake, we need
           // to start slashing from the entire staked amount, not just the
-          // one authorized for WalletRegistry.
+          // one authorized for RandomBeacon.
           const slashedAmount = stakedAmount.sub(slashingTo)
 
           await staking
@@ -2206,7 +2206,7 @@ describe("RandomBeacon - Authorization", () => {
           // initially authorized amount is less than staked amount and it is
           // another application slashing. To go below the minimum stake, we need
           // to start slashing from the entire staked amount, not just the
-          // one authorized for WalletRegistry.
+          // one authorized for RandomBeacon.
           const slashedAmount = stakedAmount.sub(slashingTo)
 
           await staking
@@ -2470,7 +2470,7 @@ describe("RandomBeacon - Authorization", () => {
 
           // Increase authorization to the maximum possible value and update
           // sortition pool. This way, any slashing from `slasher` application
-          // will affect authorized stake amount for WalletRegistry.
+          // will affect authorized stake amount for RandomBeacon.
           const authorized = await staking.authorizedStake(
             stakingProvider.address,
             randomBeacon.address
@@ -2754,7 +2754,7 @@ describe("RandomBeacon - Authorization", () => {
         // initially authorized amount is less than staked amount and it is
         // another application slashing. To go below the minimum stake, we need
         // to start slashing from the entire staked amount, not just the
-        // one authorized for WalletRegistry.
+        // one authorized for RandomBeacon.
         const slashedAmount = stakedAmount.sub(slashingTo)
 
         await staking

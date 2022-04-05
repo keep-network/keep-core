@@ -29,6 +29,8 @@ const { keccak256 } = ethers.utils
 const fixture = async () => {
   const contracts = await randomBeaconDeployment()
 
+  // Accounts offset provided to slice getUnnamedSigners have to include number
+  // of unnamed accounts that were already used.
   await registerOperators(
     contracts.randomBeacon as RandomBeacon,
     contracts.t as T,

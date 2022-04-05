@@ -55,6 +55,8 @@ async function fixture() {
 
   // Register operators in the sortition pool to make group creation
   // possible.
+  // Accounts offset provided to slice getUnnamedSigners have to include number
+  // of unnamed accounts that were already used.
   const operators = await registerOperators(
     deployment.randomBeacon as RandomBeacon,
     deployment.t as T,
@@ -512,7 +514,7 @@ describe("RandomBeacon - Relay", () => {
             await expect(submissionTx).to.not.emit(staking, "NotifierRewarded")
           })
 
-          it("should slash a correct portion of the slashing amount for all group members ", async () => {
+          it("should slash a correct portion of the slashing amount for all group members", async () => {
             for (let i = 0; i < membersAddresses.length; i++) {
               const stakingProvider =
                 await randomBeacon.operatorToStakingProvider(
@@ -985,7 +987,7 @@ describe("RandomBeacon - Relay", () => {
             )
         })
 
-        it("should slash the minimum stake for all group members", async () => {
+        it("should slash unauthorized signing slashing amount for all group members", async () => {
           for (let i = 0; i < membersAddresses.length; i++) {
             const stakingProvider =
               await randomBeacon.operatorToStakingProvider(membersAddresses[i])
@@ -1018,6 +1020,7 @@ describe("RandomBeacon - Relay", () => {
         })
       })
 
+      // FIXME: Blocked by https://github.com/defi-wonderland/smock/issues/101
       context.skip("when token staking seize call fails", async () => {
         let tokenStakingFake: FakeContract<TokenStaking>
         let tx: Promise<ContractTransaction>
