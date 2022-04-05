@@ -124,7 +124,7 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the governance delay", async () => {
-        expect(await randomBeaconGovernance.governanceDelay()).to.be.equal(
+        expect(await randomBeaconGovernance.getGovernanceDelay()).to.be.equal(
           governanceDelay
         )
       })
@@ -319,7 +319,7 @@ describe("RandomBeaconGovernance", () => {
           randomBeaconGovernance
             .connect(governance)
             .finalizeRandomBeaconOwnershipTransfer()
-        ).to.be.revertedWith("Change not initiated")
+        ).to.be.revertedWith("Ownable: new owner is the zero address")
       })
     })
 

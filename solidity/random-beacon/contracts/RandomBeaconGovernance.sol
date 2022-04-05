@@ -29,14 +29,6 @@ contract RandomBeaconGovernance is Ownable {
 
     RandomBeacon public randomBeacon;
 
-    uint256 public governanceDelay;
-
-    uint256 public newGovernanceDelay;
-    uint256 public governanceDelayChangeInitiated;
-
-    address public newRandomBeaconOwner;
-    uint256 public randomBeaconOwnershipTransferInitiated;
-
     event DkgResultSubmissionRewardUpdateStarted(
         uint256 dkgResultSubmissionReward,
         uint256 timestamp
@@ -194,25 +186,10 @@ contract RandomBeaconGovernance is Ownable {
     );
     event AuthorizationDecreaseDelayUpdated(uint64 authorizationDecreaseDelay);
 
-    /// @notice Reverts if called before the governance delay elapses.
-    /// @param changeInitiatedTimestamp Timestamp indicating the beginning
-    ///        of the change.
-    modifier onlyAfterGovernanceDelay(uint256 changeInitiatedTimestamp) {
-        /* solhint-disable not-rely-on-time */
-        require(changeInitiatedTimestamp > 0, "Change not initiated");
-        require(
-            block.timestamp - changeInitiatedTimestamp >= governanceDelay,
-            "Governance delay has not elapsed"
-        );
-        _;
-        /* solhint-enable not-rely-on-time */
-    }
-
     constructor(RandomBeacon _randomBeacon, uint256 _governanceDelay) {
         governanceBeaconParams.init(_governanceDelay);
 
         randomBeacon = _randomBeacon;
-        governanceDelay = _governanceDelay;
     }
 
     /// @notice Begins the governance delay update process.
@@ -242,33 +219,20 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
-        require(
-            address(_newRandomBeaconOwner) != address(0),
-            "New random beacon owner address cannot be zero"
+        governanceBeaconParams.beginRandomBeaconOwnershipTransfer(
+            _newRandomBeaconOwner
         );
-        newRandomBeaconOwner = _newRandomBeaconOwner;
-        /* solhint-disable not-rely-on-time */
-        randomBeaconOwnershipTransferInitiated = block.timestamp;
-        emit RandomBeaconOwnershipTransferStarted(
-            _newRandomBeaconOwner,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
     }
 
     /// @notice Finalizes the random beacon ownership transfer process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeRandomBeaconOwnershipTransfer()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(randomBeaconOwnershipTransferInitiated)
-    {
-        emit RandomBeaconOwnershipTransferred(newRandomBeaconOwner);
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.transferOwnership(newRandomBeaconOwner);
-        randomBeaconOwnershipTransferInitiated = 0;
-        newRandomBeaconOwner = address(0);
+    function finalizeRandomBeaconOwnershipTransfer() external onlyOwner {
+        randomBeacon.transferOwnership(
+            governanceBeaconParams.getNewRandomBeaconOwner()
+        );
+
+        governanceBeaconParams.finalizeRandomBeaconOwnershipTransfer();
     }
 
     /// @notice Begins the relay request fee update process.
@@ -893,7 +857,9 @@ contract RandomBeaconGovernance is Ownable {
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(randomBeaconOwnershipTransferInitiated);
+        return
+            governanceBeaconParams
+                .getRemainingRandomBeaconOwnershipTransferDelayTime();
     }
 
     /// @notice Get the time remaining until the relay request fee can be
@@ -1155,24 +1121,5 @@ contract RandomBeaconGovernance is Ownable {
         return
             governanceBeaconParams
                 .getRemainingAuthorizationDecreaseDelayUpdateTime();
-    }
-
-    /// @notice Gets the time remaining until the governable parameter update
-    ///         can be committed.
-    /// @param changeTimestamp Timestamp indicating the beginning of the change.
-    /// @return Remaining time in seconds.
-    function getRemainingChangeTime(uint256 changeTimestamp)
-        internal
-        view
-        returns (uint256)
-    {
-        require(changeTimestamp > 0, "Change not initiated");
-        /* solhint-disable-next-line not-rely-on-time */
-        uint256 elapsed = block.timestamp - changeTimestamp;
-        if (elapsed >= governanceDelay) {
-            return 0;
-        } else {
-            return governanceDelay - elapsed;
-        }
     }
 }

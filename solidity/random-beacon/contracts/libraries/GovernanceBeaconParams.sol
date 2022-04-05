@@ -62,6 +62,8 @@ library GovernanceBeaconParams {
         uint256 dkgSubmitterPrecedencePeriodLengthChangeInitiated;
         uint256 newGovernanceDelay;
         uint256 governanceDelayChangeInitiated;
+        address newRandomBeaconOwner;
+        uint256 randomBeaconOwnershipTransferInitiated;
     }
 
     event DkgResultSubmissionRewardUpdateStarted(
@@ -214,6 +216,12 @@ library GovernanceBeaconParams {
         uint256 timestamp
     );
     event GovernanceDelayUpdated(uint256 governanceDelay);
+
+    event RandomBeaconOwnershipTransferStarted(
+        address newRandomBeaconOwner,
+        uint256 timestamp
+    );
+    event RandomBeaconOwnershipTransferred(address newRandomBeaconOwner);
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -1041,6 +1049,41 @@ library GovernanceBeaconParams {
         self.newGovernanceDelay = 0;
     }
 
+    /// @notice Begins the random beacon ownership transfer process.
+    /// @dev Can be called only by the contract owner.
+    function beginRandomBeaconOwnershipTransfer(
+        Data storage self,
+        address _newRandomBeaconOwner
+    ) external {
+        require(
+            address(_newRandomBeaconOwner) != address(0),
+            "New random beacon owner address cannot be zero"
+        );
+        self.newRandomBeaconOwner = _newRandomBeaconOwner;
+        /* solhint-disable not-rely-on-time */
+        self.randomBeaconOwnershipTransferInitiated = block.timestamp;
+        emit RandomBeaconOwnershipTransferStarted(
+            _newRandomBeaconOwner,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the random beacon ownership transfer process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRandomBeaconOwnershipTransfer(Data storage self)
+        external
+        onlyAfterGovernanceDelay(
+            self,
+            self.randomBeaconOwnershipTransferInitiated
+        )
+    {
+        emit RandomBeaconOwnershipTransferred(self.newRandomBeaconOwner);
+        self.randomBeaconOwnershipTransferInitiated = 0;
+        self.newRandomBeaconOwner = address(0);
+    }
+
     /// @notice Get the time remaining until the governance delay can be updated.
     /// @return Remaining time in seconds.
     function getRemainingGovernanceDelayUpdateTime(Data storage self)
@@ -1331,6 +1374,27 @@ library GovernanceBeaconParams {
                 self,
                 self.dkgSubmitterPrecedencePeriodLengthChangeInitiated
             );
+    }
+
+    /// @notice Get the time remaining until the random beacon ownership can
+    ///         be transferred.
+    /// @return Remaining time in seconds.
+    function getRemainingRandomBeaconOwnershipTransferDelayTime(
+        Data storage self
+    ) external view returns (uint256) {
+        return
+            getRemainingChangeTime(
+                self,
+                self.randomBeaconOwnershipTransferInitiated
+            );
+    }
+
+    function getNewRandomBeaconOwner(Data storage self)
+        internal
+        view
+        returns (address)
+    {
+        return self.newRandomBeaconOwner;
     }
 
     function getGovernanceDelay(Data storage self)
