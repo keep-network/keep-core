@@ -25,6 +25,7 @@ import resourceTooltipProps from "../../constants/tooltips"
 import { Keep } from "../../contracts"
 import { MODAL_TYPES } from "../../constants/constants"
 import { CoveragePoolV1ExchangeRate } from "../../components/coverage-pools/ExchangeRate"
+import * as Icons from "../../components/Icons"
 
 const CoveragePoolPage = () => {
   const { openConfirmationModal, openModal } = useModal()
@@ -168,8 +169,28 @@ const CoveragePoolPage = () => {
               )}
               amountClassName={"h3 text-grey-40"}
               symbolClassName={"h3 text-grey-40"}
+              wrapperClassName={"mb-2"}
             />
           </OnlyIf>
+          <span className={"text-grey-60 flex row"}>
+            <Icons.KeepSymbol
+              width={20}
+              height={20}
+              style={{ marginRight: "0.5rem", marginTop: "0.3rem" }}
+            />{" "}
+            <span>
+              Add the covKEEP&nbsp;
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={"https://google.com"}
+                className={"no-arrow"}
+              >
+                token address
+              </a>
+              &nbsp;to your Ethereum wallet to view balance in the wallet.
+            </span>
+          </span>
         </section>
 
         <OnlyIf condition={hasCovKEEPTokens}>
