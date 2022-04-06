@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop, @typescript-eslint/no-extra-semi */
 
-import {
-  ethers,
-  waffle,
-  helpers,
-  getUnnamedAccounts,
-  getNamedAccounts,
-} from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
@@ -28,16 +22,15 @@ import type { FakeContract } from "@defi-wonderland/smock"
 import type {
   RandomBeacon,
   RandomBeaconStub,
-  TestToken,
+  T,
   RelayStub,
   SortitionPool,
-  StakingStub,
+  TokenStaking,
   BLS,
   RandomBeaconGovernance,
-  IRandomBeaconStaking,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
-import type { ContractTransaction, BigNumberish, BytesLike } from "ethers"
+import type { ContractTransaction, BigNumberish } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
@@ -62,9 +55,13 @@ async function fixture() {
 
   // Register operators in the sortition pool to make group creation
   // possible.
+  // Accounts offset provided to slice getUnnamedSigners have to include number
+  // of unnamed accounts that were already used.
   const operators = await registerOperators(
     deployment.randomBeacon as RandomBeacon,
-    (await getUnnamedAccounts()).slice(0, constants.groupSize)
+    deployment.t as T,
+    constants.groupSize,
+    4
   )
 
   return {
@@ -72,8 +69,8 @@ async function fixture() {
     randomBeaconGovernance:
       deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
-    testToken: deployment.testToken as TestToken,
-    staking: deployment.stakingStub as StakingStub,
+    t: deployment.t as T,
+    staking: deployment.staking as TokenStaking,
     relayStub,
     bls,
     operators,
@@ -92,21 +89,19 @@ describe("RandomBeacon - Relay", () => {
 
   let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
-  let testToken: TestToken
-  let staking: StakingStub
+  let t: T
+  let staking: TokenStaking
   let relayStub: RelayStub
   let bls: BLS
 
   before(async () => {
-    deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
-    thirdParty = await ethers.getSigner((await getNamedAccounts()).thirdParty)
-    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-    notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
-    submitter = await ethers.getSigner((await getUnnamedAccounts())[3])
+    deployer = await ethers.getNamedSigner("deployer")
+    ;[thirdParty, requester, notifier, submitter] =
+      await ethers.getUnnamedSigners()
     ;({
       randomBeacon,
       sortitionPool,
-      testToken,
+      t,
       staking,
       relayStub,
       bls,
@@ -114,7 +109,7 @@ describe("RandomBeacon - Relay", () => {
     } = await waffle.loadFixture(fixture))
 
     membersIDs = members.map((member) => member.id)
-    membersAddresses = members.map((member) => member.address)
+    membersAddresses = members.map((member) => member.signer.address)
   })
 
   describe("requestRelayEntry", () => {
@@ -139,10 +134,10 @@ describe("RandomBeacon - Relay", () => {
             await createSnapshot()
 
             previousDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
-            previousRandomBeaconBalance = await testToken.balanceOf(
+            previousRandomBeaconBalance = await t.balanceOf(
               randomBeacon.address
             )
-            await approveTestToken()
+            await approveTokenForFee()
           })
 
           after(async () => {
@@ -175,7 +170,7 @@ describe("RandomBeacon - Relay", () => {
                 ).to.be.equal(params.relayRequestFee)
 
                 // Assert actual transfer took place.
-                const currentRandomBeaconBalance = await testToken.balanceOf(
+                const currentRandomBeaconBalance = await t.balanceOf(
                   randomBeacon.address
                 )
                 expect(
@@ -229,7 +224,7 @@ describe("RandomBeacon - Relay", () => {
                 ).to.be.equal(params.relayRequestFee)
 
                 // Assert actual transfer took place.
-                const currentRandomBeaconBalance = await testToken.balanceOf(
+                const currentRandomBeaconBalance = await t.balanceOf(
                   randomBeacon.address
                 )
                 expect(
@@ -270,7 +265,7 @@ describe("RandomBeacon - Relay", () => {
         before(async () => {
           await createSnapshot()
 
-          await approveTestToken()
+          await approveTokenForFee()
           await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         })
 
@@ -310,7 +305,7 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTestToken()
+        await approveTokenForFee()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -334,8 +329,13 @@ describe("RandomBeacon - Relay", () => {
               await restoreSnapshot()
             })
 
+            it("should not reward the notifier", async () => {
+              await expect(tx).to.not.emit(staking, "NotifierRewarded")
+            })
+
             it("should not slash any members", async () => {
-              await expect(tx).to.not.emit(staking, "Slashed")
+              await expect(tx).to.not.emit(staking, "TokensSeized")
+              expect(await staking.getSlashingQueueLength()).to.be.equal(0)
             })
 
             it("should emit RelayEntrySubmitted event", async () => {
@@ -422,7 +422,7 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTestToken()
+        await approveTokenForFee()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -448,8 +448,13 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
-          it("should not slash members ", async () => {
-            await expect(tx).to.not.emit(staking, "Slashed")
+          it("should not reward the notifier", async () => {
+            await expect(tx).to.not.emit(staking, "NotifierRewarded")
+          })
+
+          it("should not slash any members", async () => {
+            await expect(tx).to.not.emit(staking, "TokensSeized")
+            expect(await staking.getSlashingQueueLength()).to.be.equal(0)
 
             await expect(tx).to.not.emit(randomBeacon, "RelayEntryDelaySlashed")
           })
@@ -466,7 +471,13 @@ describe("RandomBeacon - Relay", () => {
         })
 
         context("when result is submitted after the soft timeout", () => {
-          let tx: ContractTransaction
+          // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
+          // 75% of the soft timeout period elapsed so we expect
+          // `750e18` to be slashed.
+          const slashingAmount = to1e18(750)
+
+          let submissionTx: ContractTransaction
+          let slashingTx: ContractTransaction
 
           before(async () => {
             await createSnapshot()
@@ -484,33 +495,46 @@ describe("RandomBeacon - Relay", () => {
                 0.75 * params.relayEntryHardTimeout -
                 1
             )
-            tx = await randomBeacon
+            submissionTx = await randomBeacon
               .connect(submitter)
               ["submitRelayEntry(bytes,uint32[])"](
                 blsData.groupSignature,
                 membersIDs
               )
+
+            slashingTx = await staking.processSlashing(membersAddresses.length)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          it("should slash a correct portion of the slashing amount for all members ", async () => {
-            // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
-            // 75% of the soft timeout period elapsed so we expect
-            // `750e18` to be slashed.
-            await expect(tx)
-              .to.emit(staking, "Slashed")
-              .withArgs(to1e18(750), membersAddresses)
+          // TokenStaking.slash function is called that doesn't reward the notifier.
+          it("should not reward the notifier", async () => {
+            await expect(submissionTx).to.not.emit(staking, "NotifierRewarded")
+          })
 
-            await expect(tx)
+          it("should slash a correct portion of the slashing amount for all group members", async () => {
+            for (let i = 0; i < membersAddresses.length; i++) {
+              const stakingProvider =
+                await randomBeacon.operatorToStakingProvider(
+                  membersAddresses[i]
+                )
+
+              await expect(slashingTx)
+                .to.emit(staking, "TokensSeized")
+                .withArgs(stakingProvider, slashingAmount, false)
+            }
+          })
+
+          it("should emit RelayEntryDelaySlashed event", async () => {
+            await expect(submissionTx)
               .to.emit(randomBeacon, "RelayEntryDelaySlashed")
-              .withArgs(1, to1e18(750), membersAddresses)
+              .withArgs(1, slashingAmount, membersAddresses)
           })
 
           it("should emit RelayEntrySubmitted event", async () => {
-            await expect(tx)
+            await expect(submissionTx)
               .to.emit(randomBeacon, "RelayEntrySubmitted")
               .withArgs(1, submitter.address, blsData.groupSignature)
           })
@@ -583,7 +607,7 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTestToken()
+      await approveTokenForFee()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -607,7 +631,8 @@ describe("RandomBeacon - Relay", () => {
       context(
         "when other active groups exist after timeout is reported",
         () => {
-          let tx: ContractTransaction
+          let reportTx: ContractTransaction
+          let slashingTx: ContractTransaction
 
           before(async () => {
             await createSnapshot()
@@ -617,28 +642,61 @@ describe("RandomBeacon - Relay", () => {
               hashUint32Array(membersIDs)
             )
 
-            tx = await randomBeacon
+            reportTx = await randomBeacon
               .connect(notifier)
               .reportRelayEntryTimeout(membersIDs)
+
+            slashingTx = await staking.processSlashing(membersAddresses.length)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          it("should slash the full slashing amount for all group members", async () => {
-            await expect(tx)
-              .to.emit(staking, "Seized")
+          it("should reward the notifier", async () => {
+            await expect(reportTx)
+              .to.emit(staking, "NotifierRewarded")
               .withArgs(
-                to1e18(1000),
-                params.relayEntryTimeoutNotificationRewardMultiplier,
                 notifier.address,
+                constants.tokenStakingNotificationReward
+                  .mul(params.relayEntryTimeoutNotificationRewardMultiplier)
+                  .div(100)
+                  .mul(membersIDs.length)
+              )
+          })
+
+          it("should slash the full slashing amount for all group members", async () => {
+            for (let i = 0; i < membersAddresses.length; i++) {
+              const stakingProvider =
+                await randomBeacon.operatorToStakingProvider(
+                  membersAddresses[i]
+                )
+
+              await expect(slashingTx)
+                .to.emit(staking, "TokensSeized")
+                .withArgs(
+                  stakingProvider,
+                  params.relayEntrySubmissionFailureSlashingAmount,
+                  false
+                )
+            }
+          })
+
+          it("should emit RelayEntryTimeoutSlashed event", async () => {
+            await expect(reportTx)
+              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+              .withArgs(
+                1,
+                params.relayEntrySubmissionFailureSlashingAmount,
                 membersAddresses
               )
+          })
 
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
-              .withArgs(1, to1e18(1000), membersAddresses)
+          it("should not emit RelayEntryTimeoutSlashingFailed event", async () => {
+            await expect(reportTx).to.not.emit(
+              randomBeacon,
+              "RelayEntryTimeoutSlashingFailed"
+            )
           })
 
           it("should terminate the group", async () => {
@@ -646,7 +704,7 @@ describe("RandomBeacon - Relay", () => {
           })
 
           it("should emit RelayEntryTimedOut event", async () => {
-            await expect(tx)
+            await expect(reportTx)
               .to.emit(randomBeacon, "RelayEntryTimedOut")
               .withArgs(1, 0)
           })
@@ -655,7 +713,7 @@ describe("RandomBeacon - Relay", () => {
             // We expect the same request ID because this is a retry.
             // Group ID is `1` because we take an active group from `groupsRegistry`
             // array. Group with an index `0` was terminated.
-            await expect(tx)
+            await expect(reportTx)
               .to.emit(randomBeacon, "RelayEntryRequested")
               .withArgs(1, 1, blsData.previousEntry)
 
@@ -710,33 +768,65 @@ describe("RandomBeacon - Relay", () => {
       )
 
       context("when no active groups exist after timeout is reported", () => {
-        let tx: ContractTransaction
+        let reportTx: ContractTransaction
+        let slashingTx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
 
-          tx = await randomBeacon
+          reportTx = await randomBeacon
             .connect(notifier)
             .reportRelayEntryTimeout(membersIDs)
+
+          slashingTx = await staking.processSlashing(membersAddresses.length)
         })
 
         after(async () => {
           await restoreSnapshot()
         })
 
-        it("should slash the full slashing amount for all group members", async () => {
-          await expect(tx)
-            .to.emit(staking, "Seized")
+        it("should reward the notifier", async () => {
+          await expect(reportTx)
+            .to.emit(staking, "NotifierRewarded")
             .withArgs(
-              to1e18(1000),
-              params.relayEntryTimeoutNotificationRewardMultiplier,
               notifier.address,
+              constants.tokenStakingNotificationReward
+                .mul(params.relayEntryTimeoutNotificationRewardMultiplier)
+                .div(100)
+                .mul(membersIDs.length)
+            )
+        })
+
+        it("should slash the full slashing amount for all group members", async () => {
+          for (let i = 0; i < membersAddresses.length; i++) {
+            const stakingProvider =
+              await randomBeacon.operatorToStakingProvider(membersAddresses[i])
+
+            await expect(slashingTx)
+              .to.emit(staking, "TokensSeized")
+              .withArgs(
+                stakingProvider,
+                params.relayEntrySubmissionFailureSlashingAmount,
+                false
+              )
+          }
+        })
+
+        it("should emit RelayEntryTimeoutSlashed event", async () => {
+          await expect(reportTx)
+            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+            .withArgs(
+              1,
+              params.relayEntrySubmissionFailureSlashingAmount,
               membersAddresses
             )
+        })
 
-          await expect(tx)
-            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
-            .withArgs(1, to1e18(1000), membersAddresses)
+        it("should not emit RelayEntryTimeoutSlashingFailed event", async () => {
+          await expect(reportTx).to.not.emit(
+            randomBeacon,
+            "RelayEntryTimeoutSlashingFailed"
+          )
         })
 
         it("should terminate the group", async () => {
@@ -744,13 +834,16 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should emit RelayEntryTimedOut event", async () => {
-          await expect(tx)
+          await expect(reportTx)
             .to.emit(randomBeacon, "RelayEntryTimedOut")
             .withArgs(1, 0)
         })
 
         it("should clean up current relay request data", async () => {
-          await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          await expect(reportTx).to.not.emit(
+            randomBeacon,
+            "RelayEntryRequested"
+          )
           expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
         })
       })
@@ -788,15 +881,16 @@ describe("RandomBeacon - Relay", () => {
         }
       )
 
-      context("when token staking seize call fails", async () => {
-        let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+      // FIXME: Blocked by https://github.com/defi-wonderland/smock/issues/101
+      context.skip("when token staking seize call fails", async () => {
+        let tokenStakingFake: FakeContract<TokenStaking>
         let tx: Promise<ContractTransaction>
 
         before(async () => {
           await createSnapshot()
 
           tokenStakingFake = await fakeTokenStaking(randomBeacon)
-          tokenStakingFake.seize.reverts()
+          tokenStakingFake.seize.reverts("faked function revert")
 
           tx = randomBeacon.reportRelayEntryTimeout(membersIDs)
         })
@@ -846,7 +940,7 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTestToken()
+      await approveTokenForFee()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -856,7 +950,8 @@ describe("RandomBeacon - Relay", () => {
 
     context("when a group is active", () => {
       context("when provided signature is valid", () => {
-        let tx
+        let reportTx: ContractTransaction
+        let slashingTx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -865,9 +960,11 @@ describe("RandomBeacon - Relay", () => {
             notifier.address,
             blsData.secretKey
           )
-          tx = await randomBeacon
+          reportTx = await randomBeacon
             .connect(notifier)
             .reportUnauthorizedSigning(notifierSignature, 0, membersIDs)
+
+          slashingTx = await staking.processSlashing(membersAddresses.length)
         })
 
         after(async () => {
@@ -878,33 +975,61 @@ describe("RandomBeacon - Relay", () => {
           expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
-        it("should call staking contract to seize the min stake", async () => {
-          await expect(tx)
-            .to.emit(staking, "Seized")
+        it("should reward the notifier", async () => {
+          await expect(reportTx)
+            .to.emit(staking, "NotifierRewarded")
             .withArgs(
-              to1e18(100000),
-              params.unauthorizedSigningNotificationRewardMultiplier,
               notifier.address,
+              constants.tokenStakingNotificationReward
+                .mul(params.unauthorizedSigningNotificationRewardMultiplier)
+                .div(100)
+                .mul(membersIDs.length)
+            )
+        })
+
+        it("should slash unauthorized signing slashing amount for all group members", async () => {
+          for (let i = 0; i < membersAddresses.length; i++) {
+            const stakingProvider =
+              await randomBeacon.operatorToStakingProvider(membersAddresses[i])
+
+            await expect(slashingTx)
+              .to.emit(staking, "TokensSeized")
+              .withArgs(
+                stakingProvider,
+                params.unauthorizedSigningSlashingAmount,
+                false
+              )
+          }
+        })
+
+        it("should emit unauthorized signing slashing event", async () => {
+          await expect(reportTx)
+            .to.emit(randomBeacon, "UnauthorizedSigningSlashed")
+            .withArgs(
+              0,
+              params.unauthorizedSigningSlashingAmount,
               membersAddresses
             )
         })
 
-        it("should emit unauthorized signing slashing event", async () => {
-          await expect(tx)
-            .to.emit(randomBeacon, "UnauthorizedSigningSlashed")
-            .withArgs(0, to1e18(100000), membersAddresses)
+        it("should not emit UnauthorizedSigningSlashingFailed", async () => {
+          await expect(reportTx).to.not.emit(
+            randomBeacon,
+            "UnauthorizedSigningSlashingFailed"
+          )
         })
       })
 
-      context("when token staking seize call fails", async () => {
-        let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+      // FIXME: Blocked by https://github.com/defi-wonderland/smock/issues/101
+      context.skip("when token staking seize call fails", async () => {
+        let tokenStakingFake: FakeContract<TokenStaking>
         let tx: Promise<ContractTransaction>
 
         before(async () => {
           await createSnapshot()
 
           tokenStakingFake = await fakeTokenStaking(randomBeacon)
-          tokenStakingFake.seize.reverts()
+          tokenStakingFake.seize.reverts("faked function revert")
 
           const notifierSignature = await bls.sign(
             notifier.address,
@@ -1108,7 +1233,7 @@ describe("RandomBeacon - Relay", () => {
                       await createSnapshot()
 
                       // Assume claim sender is the first signing member.
-                      claimSender = await ethers.getSigner(members[0].address)
+                      claimSender = members[0].signer
 
                       initialNonce = await randomBeacon.inactivityClaimNonce(
                         groupId
@@ -1870,9 +1995,9 @@ describe("RandomBeacon - Relay", () => {
     return groupData.terminated === true
   }
 
-  async function approveTestToken() {
-    await testToken.mint(requester.address, params.relayRequestFee)
-    await testToken
+  async function approveTokenForFee() {
+    await t.mint(requester.address, params.relayRequestFee)
+    await t
       .connect(requester)
       .approve(randomBeacon.address, params.relayRequestFee)
   }

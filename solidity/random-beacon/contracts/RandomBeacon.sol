@@ -15,15 +15,19 @@
 pragma solidity ^0.8.9;
 
 import "./api/IRandomBeacon.sol";
-import "./libraries/Authorization.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
-import "./libraries/BeaconInactivity.sol";
+import {BeaconInactivity as Inactivity} from "./libraries/BeaconInactivity.sol";
+import {BeaconAuthorization as Authorization} from "./libraries/BeaconAuthorization.sol";
 import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
 import {BeaconDkgValidator as DKGValidator} from "./BeaconDkgValidator.sol";
+
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
+import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -34,29 +38,6 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 // bug: https://github.com/crytic/slither/issues/1067
 import {BeaconDkg} from "./libraries/BeaconDkg.sol";
 
-/// @title Staking contract interface
-/// @notice This is an interface with just a few function signatures of the
-///         Staking contract, which is available at
-///         https://github.com/threshold-network/solidity-contracts/blob/main/contracts/staking/IStaking.sol
-///
-/// TODO: Add a dependency to `threshold-network/solidity-contracts` and use
-///       staking interface from there.
-interface IRandomBeaconStaking {
-    function slash(uint256 amount, address[] memory operators) external;
-
-    function seize(
-        uint256 amount,
-        uint256 rewardMultiplier,
-        address notifier,
-        address[] memory operators
-    ) external;
-
-    function eligibleStake(address operator, address operatorContract)
-        external
-        view
-        returns (uint256);
-}
-
 /// @title Keep Random Beacon
 /// @notice Keep Random Beacon contract. It lets anyone request a new
 ///         relay entry and validates the new relay entry provided by the
@@ -64,7 +45,7 @@ interface IRandomBeaconStaking {
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is IRandomBeacon, Ownable {
+contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
     using BeaconDkg for DKG.Data;
@@ -111,12 +92,12 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         is challenged and proven to be malicious, each operator who
     ///         signed the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
-    uint256 public maliciousDkgResultSlashingAmount;
+    uint96 public maliciousDkgResultSlashingAmount;
 
     /// @notice Slashing amount when an unauthorized signing has been proved,
     ///         which means the private key has been leaked and all the group
     ///         members should be punished.
-    uint256 public unauthorizedSigningSlashingAmount;
+    uint96 public unauthorizedSigningSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who misbehaved during DKG by being inactive or disqualified and
@@ -162,7 +143,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
 
     SortitionPool public sortitionPool;
     IERC20 public tToken;
-    IRandomBeaconStaking public staking;
+    IStaking public staking;
 
     // Token bookkeeping
 
@@ -321,6 +302,45 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         address notifier
     );
 
+    event OperatorRegistered(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    event AuthorizationIncreased(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount
+    );
+
+    event AuthorizationDecreaseRequested(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount,
+        uint64 decreasingAt
+    );
+
+    event AuthorizationDecreaseApproved(address indexed stakingProvider);
+
+    event InvoluntaryAuthorizationDecreaseFailed(
+        address indexed stakingProvider,
+        address indexed operator,
+        uint96 fromAmount,
+        uint96 toAmount
+    );
+
+    event OperatorJoinedSortitionPool(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
+    event OperatorStatusUpdated(
+        address indexed stakingProvider,
+        address indexed operator
+    );
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -328,7 +348,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     constructor(
         SortitionPool _sortitionPool,
         IERC20 _tToken,
-        IRandomBeaconStaking _staking,
+        IStaking _staking,
         DKGValidator _dkgValidator
     ) {
         sortitionPool = _sortitionPool;
@@ -349,7 +369,8 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         unauthorizedSigningNotificationRewardMultiplier = 50;
         dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
-        authorization.setMinimumAuthorization(100000 * 1e18);
+        authorization.setMinimumAuthorization(100000e18); // 100k T
+        authorization.setAuthorizationDecreaseDelay(403200); // ~10 weeks assuming 15s block time
 
         dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
@@ -363,6 +384,14 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
         groups.setGroupLifetime(403200); // ~10 weeks assuming 15s block time
+    }
+
+    modifier onlyStakingContract() {
+        require(
+            msg.sender == address(staking),
+            "Caller is not the staking contract"
+        );
+        _;
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -517,8 +546,8 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///        slashing amount
     function updateSlashingParameters(
         uint96 _relayEntrySubmissionFailureSlashingAmount,
-        uint256 _maliciousDkgResultSlashingAmount,
-        uint256 _unauthorizedSigningSlashingAmount
+        uint96 _maliciousDkgResultSlashingAmount,
+        uint96 _unauthorizedSigningSlashingAmount
     ) external onlyOwner {
         relay.setRelayEntrySubmissionFailureSlashingAmount(
             _relayEntrySubmissionFailureSlashingAmount
@@ -541,26 +570,127 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         sortitionPool.withdrawIneligible(recipient);
     }
 
-    /// @notice Registers the caller in the sortition pool.
-    function registerOperator() external {
-        address operator = msg.sender;
+    /// @notice Used by staking provider to set operator address that will
+    ///         operate a node. The given staking provider can set operator
+    ///         address only one time. The operator address can not be changed
+    ///         and must be unique. Reverts if the operator is already set for
+    ///         the staking provider or if the operator address is already in
+    ///         use. Reverts if there is a pending authorization decrease for
+    ///         the staking provider.
+    function registerOperator(address operator) external {
+        authorization.registerOperator(operator);
+    }
 
-        require(
-            !sortitionPool.isOperatorInPool(operator),
-            "Operator is already registered"
-        );
+    /// @notice Lets the operator join the sortition pool. The operator address
+    ///         must be known - before calling this function, it has to be
+    ///         appointed by the staking provider by calling `registerOperator`.
+    ///         Also, the operator must have the minimum authorization required
+    ///         by the beacon. Function reverts if there is no minimum stake
+    ///         authorized or if the operator is not known. If there was an
+    ///         authorization decrease requested, it is activated by starting
+    ///         the authorization decrease delay.
+    function joinSortitionPool() external {
+        authorization.joinSortitionPool(staking, sortitionPool);
+    }
 
-        sortitionPool.insertOperator(
-            operator,
-            staking.eligibleStake(operator, address(this))
+    /// @notice Updates status of the operator in the sortition pool. If there
+    ///         was an authorization decrease requested, it is activated by
+    ///         starting the authorization decrease delay.
+    ///         Function reverts if the operator is not known.
+    function updateOperatorStatus(address operator) external {
+        authorization.updateOperatorStatus(staking, sortitionPool, operator);
+    }
+
+    /// @notice Used by T staking contract to inform the beacon that the
+    ///         authorized stake amount for the given staking provider increased.
+    ///
+    ///         Reverts if the authorization amount is below the minimum.
+    ///
+    ///         The function is not updating the sortition pool. Sortition pool
+    ///         state needs to be updated by the operator with a call to
+    ///         `joinSortitionPool` or `updateOperatorStatus`.
+    ///
+    /// @dev Can only be called by T staking contract.
+    function authorizationIncreased(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyStakingContract {
+        authorization.authorizationIncreased(
+            stakingProvider,
+            fromAmount,
+            toAmount
         );
     }
 
-    /// @notice Updates the sortition pool status of the caller.
-    function updateOperatorStatus() external {
-        sortitionPool.updateOperatorStatus(
-            msg.sender,
-            staking.eligibleStake(msg.sender, address(this))
+    /// @notice Used by T staking contract to inform the beacon that the
+    ///         authorization decrease for the given staking provider has been
+    ///         requested.
+    ///
+    ///         Reverts if the amount after deauthorization would be non-zero
+    ///         and lower than the minimum authorization.
+    ///
+    ///         If the operator is not known (`registerOperator` was not called)
+    ///         it lets to `approveAuthorizationDecrease` immediately. If the
+    ///         operator is known (`registerOperator` was called), the operator
+    ///         needs to update state of the sortition pool with a call to
+    ///         `joinSortitionPool` or `updateOperatorStatus`. After the
+    ///         sortition pool state is in sync, authorization decrease delay
+    ///         starts.
+    ///
+    ///         After authorization decrease delay passes, authorization
+    ///         decrease request needs to be approved with a call to
+    ///         `approveAuthorizationDecrease` function.
+    ///
+    ///         If there is a pending authorization decrease request, it is
+    ///         overwritten.
+    ///
+    /// @dev Can only be called by T staking contract.
+    function authorizationDecreaseRequested(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyStakingContract {
+        authorization.authorizationDecreaseRequested(
+            stakingProvider,
+            fromAmount,
+            toAmount
+        );
+    }
+
+    /// @notice Approves the previously registered authorization decrease
+    ///         request. Reverts if authorization decrease delay has not passed
+    ///         yet or if the authorization decrease was not requested for the
+    ///         given staking provider.
+    function approveAuthorizationDecrease(address stakingProvider) external {
+        authorization.approveAuthorizationDecrease(staking, stakingProvider);
+    }
+
+    /// @notice Used by T staking contract to inform the beacon the
+    ///         authorization has been decreased for the given staking provider
+    ///         involuntarily, as a result of slashing.
+    ///
+    ///         If the operator is not known (`registerOperator` was not called)
+    ///         the function does nothing. The operator was never in a sortition
+    ///         pool so there is nothing to update.
+    ///
+    ///         If the operator is known, sortition pool is unlocked, and the
+    ///         operator is in the sortition pool, the sortition pool state is
+    ///         updated. If the sortition pool is locked, update needs to be
+    ///         postponed. Every other staker is incentivized to call
+    ///         `updateOperatorStatus` for the problematic operator to increase
+    ///         their own rewards in the pool.
+    function involuntaryAuthorizationDecrease(
+        address stakingProvider,
+        uint96 fromAmount,
+        uint96 toAmount
+    ) external onlyStakingContract {
+        authorization.involuntaryAuthorizationDecrease(
+            staking,
+            sortitionPool,
+            stakingProvider,
+            fromAmount,
+            toAmount
         );
     }
 
@@ -644,19 +774,21 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
 
-        uint256 slashingAmount = maliciousDkgResultSlashingAmount;
+        uint96 slashingAmount = maliciousDkgResultSlashingAmount;
         address maliciousSubmitterAddresses = sortitionPool.getIDOperator(
             maliciousSubmitter
         );
 
-        address[] memory operatorWrapper = new address[](1);
-        operatorWrapper[0] = maliciousSubmitterAddresses;
+        address[] memory stakingProviderWrapper = new address[](1);
+        stakingProviderWrapper[0] = operatorToStakingProvider(
+            maliciousSubmitterAddresses
+        );
         try
             staking.seize(
                 slashingAmount,
                 dkgMaliciousResultNotificationRewardMultiplier,
                 msg.sender,
-                operatorWrapper
+                stakingProviderWrapper
             )
         {
             // slither-disable-next-line reentrancy-events
@@ -778,13 +910,22 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             "Invalid group members"
         );
 
-        uint256 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
+        uint96 slashingAmount = relay.submitEntry(entry, group.groupPubKey);
 
         if (slashingAmount > 0) {
             address[] memory groupMembersAddresses = sortitionPool
                 .getIDOperators(groupMembers);
 
-            try staking.slash(slashingAmount, groupMembersAddresses) {
+            address[] memory stakingProvidersAddresses = new address[](
+                groupMembersAddresses.length
+            );
+            for (uint256 i = 0; i < groupMembersAddresses.length; i++) {
+                stakingProvidersAddresses[i] = operatorToStakingProvider(
+                    groupMembersAddresses[i]
+                );
+            }
+
+            try staking.slash(slashingAmount, stakingProvidersAddresses) {
                 // slither-disable-next-line reentrancy-events
                 emit RelayEntryDelaySlashed(
                     currentRequestId,
@@ -823,18 +964,26 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             "Invalid group members"
         );
 
-        uint256 slashingAmount = relay
-            .relayEntrySubmissionFailureSlashingAmount;
+        uint96 slashingAmount = relay.relayEntrySubmissionFailureSlashingAmount;
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
             groupMembers
         );
+
+        address[] memory stakingProvidersAddresses = new address[](
+            groupMembersAddresses.length
+        );
+        for (uint256 i = 0; i < groupMembersAddresses.length; i++) {
+            stakingProvidersAddresses[i] = operatorToStakingProvider(
+                groupMembersAddresses[i]
+            );
+        }
 
         try
             staking.seize(
                 slashingAmount,
                 relayEntryTimeoutNotificationRewardMultiplier,
                 msg.sender,
-                groupMembersAddresses
+                stakingProvidersAddresses
             )
         {
             // slither-disable-next-line reentrancy-events
@@ -913,12 +1062,21 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             groupMembers
         );
 
+        address[] memory stakingProvidersAddresses = new address[](
+            groupMembersAddresses.length
+        );
+        for (uint256 i = 0; i < groupMembersAddresses.length; i++) {
+            stakingProvidersAddresses[i] = operatorToStakingProvider(
+                groupMembersAddresses[i]
+            );
+        }
+
         try
             staking.seize(
                 unauthorizedSigningSlashingAmount,
                 unauthorizedSigningNotificationRewardMultiplier,
                 msg.sender,
-                groupMembersAddresses
+                stakingProvidersAddresses
             )
         {
             // slither-disable-next-line reentrancy-events
@@ -953,7 +1111,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
     function notifyOperatorInactivity(
-        BeaconInactivity.Claim calldata claim,
+        Inactivity.Claim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
@@ -973,7 +1131,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
             "Invalid group members"
         );
 
-        uint32[] memory ineligibleOperators = BeaconInactivity.verifyClaim(
+        uint32[] memory ineligibleOperators = Inactivity.verifyClaim(
             sortitionPool,
             claim,
             group.groupPubKey,
@@ -1015,7 +1173,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         execute slashing for providing a malicious DKG result or when
     ///         a relay entry times out.
     function minimumAuthorization() external view returns (uint96) {
-        return authorization.minimumAuthorization;
+        return authorization.parameters.minimumAuthorization;
     }
 
     /// @notice Delay in seconds that needs to pass between the time
@@ -1023,7 +1181,7 @@ contract RandomBeacon is IRandomBeacon, Ownable {
     ///         gets approved. Protects against free-riders earning rewards and
     ///         not being active in the network.
     function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.authorizationDecreaseDelay;
+        return authorization.parameters.authorizationDecreaseDelay;
     }
 
     /// @return Flag indicating whether a relay entry request is currently
@@ -1113,12 +1271,85 @@ contract RandomBeacon is IRandomBeacon, Ownable {
         return dkg.parameters.submitterPrecedencePeriodLength;
     }
 
+    /// @notice Returns the current value of the staking provider's eligible
+    ///         stake. Eligible stake is defined as the currently authorized
+    ///         stake minus the pending authorization decrease. Eligible stake
+    ///         is what is used for operator's weight in the sortition pool.
+    ///         If the authorized stake minus the pending authorization decrease
+    ///         is below the minimum authorization, eligible stake is 0.
+    function eligibleStake(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        return authorization.eligibleStake(staking, stakingProvider);
+    }
+
+    /// @notice Returns the amount of stake that is pending authorization
+    ///         decrease for the given staking provider. If no authorization
+    ///         decrease has been requested, returns zero.
+    function pendingAuthorizationDecrease(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        return authorization.pendingAuthorizationDecrease(stakingProvider);
+    }
+
+    /// @notice Returns the remaining time in seconds that needs to pass before
+    ///         the requested authorization decrease can be approved.
+    ///         If the sortition pool state was not updated yet by the operator
+    ///         after requesting the authorization decrease, returns
+    ///         `type(uint64).max`.
+    function remainingAuthorizationDecreaseDelay(address stakingProvider)
+        external
+        view
+        returns (uint64)
+    {
+        return
+            authorization.remainingAuthorizationDecreaseDelay(stakingProvider);
+    }
+
+    /// @notice Returns operator registered for the given staking provider.
+    function stakingProviderToOperator(address stakingProvider)
+        external
+        view
+        returns (address)
+    {
+        return authorization.stakingProviderToOperator[stakingProvider];
+    }
+
+    /// @notice Returns staking provider of the given operator.
+    function operatorToStakingProvider(address operator)
+        public
+        view
+        returns (address)
+    {
+        return authorization.operatorToStakingProvider[operator];
+    }
+
+    /// @notice Checks if the operator's authorized stake is in sync with
+    ///         operator's weight in the sortition pool.
+    ///         If the operator is not in the sortition pool and their
+    ///         authorized stake is non-zero, function returns false.
+    function isOperatorUpToDate(address operator) external view returns (bool) {
+        return
+            authorization.isOperatorUpToDate(staking, sortitionPool, operator);
+    }
+
+    /// @notice Returns true if the given operator is in the sortition pool.
+    ///         Otherwise, returns false.
+    function isOperatorInPool(address operator) external view returns (bool) {
+        return sortitionPool.isOperatorInPool(operator);
+    }
+
     /// @notice Selects a new group of operators based on the provided seed.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.
     /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
     function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
+        // TODO: Read seed from RandomBeaconDkg
         return sortitionPool.selectGroup(DKG.groupSize, seed);
     }
 }

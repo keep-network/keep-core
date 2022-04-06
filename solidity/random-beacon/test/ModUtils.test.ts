@@ -1,12 +1,14 @@
 import { ethers, waffle } from "hardhat"
 
-import type { TestModUtils } from "../typechain"
+import type { TestModUtils, TestModUtils__factory } from "../typechain"
 
 describe("ModUtils", () => {
   let testModUtils: TestModUtils
 
   const fixture = async () => {
-    const TestModUtils = await ethers.getContractFactory("TestModUtils")
+    const TestModUtils = await ethers.getContractFactory<TestModUtils__factory>(
+      "TestModUtils"
+    )
     testModUtils = await TestModUtils.deploy()
     await testModUtils.deployed()
 

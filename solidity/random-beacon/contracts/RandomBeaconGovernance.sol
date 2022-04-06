@@ -67,10 +67,10 @@ contract RandomBeaconGovernance is Ownable {
     uint96 public newRelayEntrySubmissionFailureSlashingAmount;
     uint256 public relayEntrySubmissionFailureSlashingAmountChangeInitiated;
 
-    uint256 public newMaliciousDkgResultSlashingAmount;
+    uint96 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
-    uint256 public newUnauthorizedSigningSlashingAmount;
+    uint96 public newUnauthorizedSigningSlashingAmount;
     uint256 public unauthorizedSigningSlashingAmountChangeInitiated;
 
     uint256 public newSortitionPoolRewardsBanDuration;
@@ -187,7 +187,7 @@ contract RandomBeaconGovernance is Ownable {
     );
 
     event RelayEntrySubmissionFailureSlashingAmountUpdateStarted(
-        uint256 relayEntrySubmissionFailureSlashingAmount,
+        uint96 relayEntrySubmissionFailureSlashingAmount,
         uint256 timestamp
     );
     event RelayEntrySubmissionFailureSlashingAmountUpdated(
@@ -195,19 +195,19 @@ contract RandomBeaconGovernance is Ownable {
     );
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
-        uint256 maliciousDkgResultSlashingAmount,
+        uint96 maliciousDkgResultSlashingAmount,
         uint256 timestamp
     );
     event MaliciousDkgResultSlashingAmountUpdated(
-        uint256 maliciousDkgResultSlashingAmount
+        uint96 maliciousDkgResultSlashingAmount
     );
 
     event UnauthorizedSigningSlashingAmountUpdateStarted(
-        uint256 unauthorizedSigningSlashingAmount,
+        uint96 unauthorizedSigningSlashingAmount,
         uint256 timestamp
     );
     event UnauthorizedSigningSlashingAmountUpdated(
-        uint256 unauthorizedSigningSlashingAmount
+        uint96 unauthorizedSigningSlashingAmount
     );
 
     event SortitionPoolRewardsBanDurationUpdateStarted(
@@ -1062,7 +1062,7 @@ contract RandomBeaconGovernance is Ownable {
     /// @param _newMaliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
     function beginMaliciousDkgResultSlashingAmountUpdate(
-        uint256 _newMaliciousDkgResultSlashingAmount
+        uint96 _newMaliciousDkgResultSlashingAmount
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         newMaliciousDkgResultSlashingAmount = _newMaliciousDkgResultSlashingAmount;
@@ -1103,7 +1103,7 @@ contract RandomBeaconGovernance is Ownable {
     /// @param _newUnauthorizedSigningSlashingAmount New unauthorized signing
     ///        slashing amount
     function beginUnauthorizedSigningSlashingAmountUpdate(
-        uint256 _newUnauthorizedSigningSlashingAmount
+        uint96 _newUnauthorizedSigningSlashingAmount
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         newUnauthorizedSigningSlashingAmount = _newUnauthorizedSigningSlashingAmount;

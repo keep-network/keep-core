@@ -5,10 +5,12 @@ import { expect } from "chai"
 
 import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
 
-import type { GroupsStub } from "../typechain"
+import type { GroupsStub, GroupsStub__factory } from "../typechain"
 
 const fixture = async () => {
-  const GroupsStub = await ethers.getContractFactory("GroupsStub")
+  const GroupsStub = await ethers.getContractFactory<GroupsStub__factory>(
+    "GroupsStub"
+  )
   const groups = await GroupsStub.deploy()
 
   return groups

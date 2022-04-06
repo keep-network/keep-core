@@ -4,7 +4,11 @@ import { expect } from "chai"
 import { randomBeaconDeployment } from "./fixtures"
 
 import type { ContractTransaction, Signer } from "ethers"
-import type { RandomBeacon, RandomBeaconGovernance } from "../typechain"
+import type {
+  RandomBeacon,
+  RandomBeaconGovernance,
+  RandomBeaconGovernance__factory,
+} from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
@@ -93,7 +97,7 @@ describe("RandomBeaconGovernance", () => {
         initialAuthorizationDecreaseDelay
       )
 
-    const RandomBeaconGovernance = await ethers.getContractFactory(
+    const RandomBeaconGovernance = await ethers.getContractFactory<RandomBeaconGovernance__factory>(
       "RandomBeaconGovernance"
     )
     randomBeaconGovernance = await RandomBeaconGovernance.deploy(
