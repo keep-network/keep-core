@@ -1,5 +1,5 @@
 /* eslint-disable no-underscore-dangle */
-import { ethers, helpers } from "hardhat"
+import { ethers, helpers, waffle } from "hardhat"
 import { expect } from "chai"
 
 import ecdsaData from "./data/ecdsa"
@@ -14,6 +14,7 @@ import type { SortitionPool, WalletRegistry, IWalletOwner } from "../typechain"
 import type { Operator, OperatorID } from "./utils/operators"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+const { provider } = waffle
 
 describe("WalletRegistry - Inactivity", () => {
   let walletRegistry: WalletRegistry
@@ -77,6 +78,7 @@ describe("WalletRegistry - Inactivity", () => {
                   ) => {
                     let tx: ContractTransaction
                     let initialNonce: BigNumber
+                    let initClaimSenderBalance: BigNumber
                     let claimSender: SignerWithAddress
 
                     before(async () => {
@@ -87,6 +89,10 @@ describe("WalletRegistry - Inactivity", () => {
 
                       initialNonce = await walletRegistry.inactivityClaimNonce(
                         walletID
+                      )
+
+                      initClaimSenderBalance = await provider.getBalance(
+                        claimSender.address
                       )
 
                       const { signatures, signingMembersIndices } =
@@ -118,6 +124,19 @@ describe("WalletRegistry - Inactivity", () => {
 
                     after(async () => {
                       await restoreSnapshot()
+                    })
+
+                    it("should refund ETH", async () => {
+                      const postNotifyThirdPartyBalance =
+                        await provider.getBalance(claimSender.address)
+                      const diff = postNotifyThirdPartyBalance.sub(
+                        initClaimSenderBalance
+                      )
+
+                      expect(diff).to.be.gt(0)
+                      expect(diff).to.be.lt(
+                        ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
+                      )
                     })
 
                     it("should increment inactivity claim nonce for the group", async () => {
