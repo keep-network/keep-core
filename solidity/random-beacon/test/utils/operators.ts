@@ -3,6 +3,7 @@
 import { ethers } from "hardhat"
 
 import { params } from "../fixtures"
+import { testConfig } from "../../hardhat.config"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { BigNumber, BigNumberish } from "ethers"
@@ -20,8 +21,8 @@ export type Operator = { id: OperatorID; signer: SignerWithAddress }
 export async function registerOperators(
   randomBeacon: RandomBeacon,
   t: T,
-  numberOfOperators: number,
-  unnamedSignersOffset = 0,
+  numberOfOperators = testConfig.operatorsCount,
+  unnamedSignersOffset = testConfig.nonStakingAccountsCount,
   stakeAmount: BigNumber = params.minimumAuthorization
 ): Promise<Operator[]> {
   const operators: Operator[] = []

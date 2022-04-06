@@ -10,6 +10,24 @@ import "hardhat-contract-sizer"
 import "@typechain/hardhat"
 import "hardhat-dependency-compiler"
 
+import { task } from "hardhat/config"
+import { TASK_TEST } from "hardhat/builtin-tasks/task-names"
+
+// Configuration for testing environment.
+export const testConfig = {
+  // How many accounts we expect to define for non-staking related signers, e.g.
+  // deployer, thirdParty, governance.
+  // It is used as an offset for getting accounts for operators and stakes registration.
+  nonStakingAccountsCount: 10,
+
+  // How many roles do we need to define for staking, i.e. stakeOwner, stakingProvider,
+  // operator, beneficiary, authorizer.
+  stakingRolesCount: 5,
+
+  // Number of operators to register. Should be at least the same as group size.
+  operatorsCount: 64,
+}
+
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
@@ -38,9 +56,12 @@ const config: HardhatUserConfig = {
           ? parseInt(process.env.FORKING_BLOCK, 10)
           : undefined,
       },
-      // We want to have 10 accounts for various tests and `5 * 64` accounts to use
-      // unique addresses in staking for each operator.
-      accounts: { count: 10 + 5 * 64 },
+      accounts: {
+        // Number of accounts that should be predefined on the testing environment.
+        count:
+          testConfig.nonStakingAccountsCount +
+          testConfig.stakingRolesCount * testConfig.operatorsCount,
+      },
       tags: ["local"],
       allowUnlimitedContractSize: true,
     },
@@ -105,5 +126,20 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
   },
 }
+
+task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
+  const { constants } = require("./test/fixtures")
+
+  if (testConfig.operatorsCount < constants.groupSize) {
+    throw new Error(
+      "not enough accounts predefined for configured group size: " +
+        `expected group size: ${constants.groupSize} ` +
+        `number of predefined accounts: ${testConfig.operatorsCount}`
+    )
+  }
+
+  return runSuper(args)
+})
 
 export default config
