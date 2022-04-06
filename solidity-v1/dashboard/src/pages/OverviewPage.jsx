@@ -5,12 +5,10 @@ import TokenOverview from "../components/TokenOverview"
 import { LoadingOverlay } from "../components/Loadable"
 import { isEmptyArray } from "../utils/array.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
-import Tile from "../components/Tile"
 import { Link } from "react-router-dom"
 import PageWrapper from "../components/PageWrapper"
 import { useSelector, useDispatch } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
-import DelegationPage from "./delegation"
 import * as Icons from "../components/Icons"
 import { useWeb3Address } from "../components/WithWeb3Context"
 import OnlyIf from "../components/OnlyIf"
@@ -22,6 +20,8 @@ import {
 } from "../actions/coverage-pool"
 import useKeepBalanceInfo from "../hooks/useKeepBalanceInfo"
 import useGrantedBalanceInfo from "../hooks/useGrantedBalanceInfo"
+import ThresholdUpgradePage from "./threshold/ThresholdUpgradePage"
+import NavLink from "../components/NavLink"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -114,51 +114,40 @@ const OverviewPage = (props) => {
 
 const OverviewFirstSection = () => {
   return (
-    <Tile
-      title="Make the most of your KEEP tokens by staking them and earning rewards with the token dashboard."
-      titleClassName="h2 mb-2"
-    >
-      <div className="start-staking">
-        <div className="start-staking__btn">
-          <Link
-            to={DelegationPage.route.path}
-            className="btn btn-primary btn-lg"
-          >
-            start staking
-          </Link>
-        </div>
-        <div>
-          <h4 className={"text-grey-40"}>
-            Get KEEP tokens on the following exchanges:
-          </h4>
-          <Icons.BalancerLogo />
-          &nbsp;
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href={
-              "https://balancer.exchange/#/swap/ether/0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"
-            }
-            className="text-black mr-2"
-          >
-            Balancer
-          </a>
-          &nbsp;
-          <Icons.UniswapLogo style={{ verticalAlign: "text-top" }} />
-          &nbsp;
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href={
-              "https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"
-            }
-            className="text-black"
-          >
-            Uniswap
-          </a>
+    <section className="upgrade-threshold-banner tile flex row center">
+      <Icons.KeepTUpgrade className="threshold-upgrade-page__explanation__icon" />
+      <div>
+        <h4 className={"h2 mb-2 text-grey-70"}>
+          Upgrade your KEEP to T and get started with the Threshold Network.
+        </h4>
+        <div className="upgrade-threshold-banner__content">
+          <div className="upgrade-threshold-banner__upgrade-btn">
+            <Link
+              to={ThresholdUpgradePage.route.path}
+              className="btn btn-primary btn-lg"
+            >
+              upgrade now
+            </Link>
+          </div>
+          <div>
+            <h4 className={"text-grey-50"}>
+              Keep and NuCypher merged to form Threshold Network.
+            </h4>
+            <span className={"flex row center"}>
+              <Icons.TTokenSymbol width={25} height={25} />
+              &nbsp;
+              <NavLink
+                to="/threshold/how-it-works"
+                className="upgrade-threshold-banner__learn-more text-black"
+              >
+                Learn more
+              </NavLink>
+              &nbsp;
+            </span>
+          </div>
         </div>
       </div>
-    </Tile>
+    </section>
   )
 }
 

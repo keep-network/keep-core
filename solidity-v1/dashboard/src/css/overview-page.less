@@ -26,6 +26,28 @@
   }
 }
 
+.upgrade-threshold-banner {
+  &__content {
+    display: flex;
+    align-items: center;
+  }
+
+  &__upgrade-btn {
+    margin-right: 2rem;
+    text-align: center;
+  }
+
+  &__learn-more {
+    font-size: 20px;
+    font-weight: 500;
+
+    &::after {
+      content: " ↗";
+      white-space: pre;
+    }
+  }
+}
+
 .balances-layout {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
