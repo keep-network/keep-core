@@ -482,7 +482,7 @@ describe("RandomBeacon - Group Creation", () => {
 
     context("when genesis dkg started", async () => {
       let startBlock: number
-      let genesisSeed
+      let genesisSeed: BigNumber
 
       before("run genesis", async () => {
         await createSnapshot()
@@ -1785,8 +1785,8 @@ describe("RandomBeacon - Group Creation", () => {
       })
 
       context("with misbehaved operators", async () => {
-        const misbehavedIndices = [2, 9, 11, 30, 60, 64]
-        let misbehavedIds
+        const misbehavedIndices: number[] = [2, 9, 11, 30, 60, 64]
+        let misbehavedIds: number[]
         let tx: ContractTransaction
         let dkgResult: DKG.ResultStruct
 
@@ -2142,7 +2142,7 @@ describe("RandomBeacon - Group Creation", () => {
 
     context("with group creation in progress", async () => {
       let startBlock: number
-      let genesisSeed
+      let genesisSeed: BigNumber
 
       before("run genesis", async () => {
         await createSnapshot()

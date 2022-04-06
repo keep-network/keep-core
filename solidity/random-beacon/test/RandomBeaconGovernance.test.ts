@@ -417,7 +417,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -497,7 +497,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -575,7 +575,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -655,7 +655,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -706,7 +706,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -786,7 +786,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -888,7 +888,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -968,7 +968,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -1046,7 +1046,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -1129,7 +1129,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -1228,7 +1228,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -1308,7 +1308,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -1388,7 +1388,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -1471,7 +1471,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -1554,7 +1554,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -1638,7 +1638,7 @@ describe("RandomBeaconGovernance", () => {
       "when the update process is initialized and governance delay passed",
       () => {
         const newValue = 234
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -1726,7 +1726,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -1809,7 +1809,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -1865,7 +1865,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -1948,7 +1948,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2001,7 +2001,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -2084,7 +2084,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2140,7 +2140,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -2223,7 +2223,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2279,7 +2279,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -2362,7 +2362,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2418,7 +2418,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -2501,7 +2501,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2557,7 +2557,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -2640,7 +2640,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2696,7 +2696,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -2779,7 +2779,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2845,7 +2845,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner and value is correct", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -2928,7 +2928,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -2994,7 +2994,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner and value is correct", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -3077,7 +3077,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -3133,7 +3133,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -3213,7 +3213,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -3264,7 +3264,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -3345,7 +3345,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -3411,7 +3411,7 @@ describe("RandomBeaconGovernance", () => {
     })
 
     context("when the caller is the owner and value is correct", () => {
-      let tx
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
@@ -3494,7 +3494,7 @@ describe("RandomBeaconGovernance", () => {
     context(
       "when the update process is initialized and governance delay passed",
       () => {
-        let tx
+        let tx: ContractTransaction
 
         before(async () => {
           await createSnapshot()

@@ -4,11 +4,11 @@ import { expect } from "chai"
 import { hashDKGMembers } from "./dkg"
 
 describe("hashDKGMembers", () => {
-  const members = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109]
+  const members: number[] = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109]
 
   context("when there are no misbehaved members", () => {
     it("should hash all the members", () => {
-      const misbehavedMembers = []
+      const misbehavedMembers: number[] = []
       const expectedMembers = members
 
       const actualHash = hashDKGMembers(members, misbehavedMembers)

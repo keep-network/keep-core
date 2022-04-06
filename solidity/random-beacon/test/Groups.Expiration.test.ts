@@ -5,6 +5,7 @@ import { expect } from "chai"
 
 import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
 
+import type { BigNumberish } from "ethers"
 import type { GroupsStub, GroupsStub__factory } from "../typechain"
 
 const fixture = async () => {
@@ -290,7 +291,7 @@ describe("Groups", () => {
     })
   })
 
-  async function addGroups(firstGroup, numberOfGroups) {
+  async function addGroups(firstGroup: number, numberOfGroups: number) {
     for (let i = firstGroup; i < firstGroup + numberOfGroups; i++) {
       await groups.addGroup(
         ethers.utils.hexlify(i),
@@ -299,7 +300,7 @@ describe("Groups", () => {
     }
   }
 
-  async function expireGroup(groupId) {
+  async function expireGroup(groupId: BigNumberish) {
     const group = await groups.getGroupById(groupId)
     const registrationBlock = group.registrationBlockNumber
     const currentBlock = await ethers.provider.getBlock("latest")
@@ -314,8 +315,8 @@ describe("Groups", () => {
   }
 
   async function addTerminatedGroups(
-    firstGroupIdToTerminate,
-    numberOfTerminatedGroups
+    firstGroupIdToTerminate: number,
+    numberOfTerminatedGroups: number
   ) {
     for (
       let i = firstGroupIdToTerminate;
@@ -326,7 +327,11 @@ describe("Groups", () => {
     }
   }
 
-  async function runExpirationTest(numberOfGroups, expiredCount, beaconValue) {
+  async function runExpirationTest(
+    numberOfGroups: number,
+    expiredCount: number,
+    beaconValue: BigNumberish
+  ) {
     await addGroups(1, numberOfGroups)
     if (expiredCount > 0) {
       // expire group accepts group index, we need to subtract one from the
