@@ -39,7 +39,6 @@ const AppLayout = () => {
       <section className="app__content">
         <Routing />
       </section>
-      <Footer className="app__footer" />
     </>
   )
 }
@@ -51,6 +50,7 @@ const AppHeader = () => {
         <Icons.KeepDashboardLogo />
       </Link>
       <SideMenu />
+      <Footer className="app__footer" />
     </header>
   )
 }
