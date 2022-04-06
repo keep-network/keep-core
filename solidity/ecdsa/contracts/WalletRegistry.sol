@@ -168,7 +168,8 @@ contract WalletRegistry is
 
     event GasParametersUpdated(
         uint256 dkgResultSubmissionGas,
-        uint256 dkgResultApprovalGasOffset
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset
     );
 
     event RandomBeaconUpgraded(address randomBeacon);
@@ -509,14 +510,17 @@ contract WalletRegistry is
     ///      validating parameters.
     function updateGasParameters(
         uint256 _dkgResultSubmissionGas,
-        uint256 _dkgResultApprovalGasOffset
+        uint256 _dkgResultApprovalGasOffset,
+        uint256 _notifyOperatorInactivityGasOffset
     ) external onlyOwner {
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
         dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
+        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
 
         emit GasParametersUpdated(
             _dkgResultSubmissionGas,
-            _dkgResultApprovalGasOffset
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset
         );
     }
 
