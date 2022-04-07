@@ -76,9 +76,15 @@ contract WalletRegistry is
     ///         other member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 275000;
 
-    // @notice Gas meant to balance the DKG result approval's overall cost. Can
-    //         be updated by the governace based on the current market conditions.
+    /// @notice Gas is meant to balance the DKG result approval's overall cost.
+    ///         It can be updated by the governace based on the current market
+    ///         conditions.
     uint256 public dkgResultApprovalGasOffset = 65000;
+
+    /// @notice Gas is meant to balance the notification of an operator inactivity.
+    ///         It can be updated by the governace based on the current market
+    ///         conditions.
+    uint256 public notifyOperatorInactivityGasOffset = 85000;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for DKG result submission or who failed
@@ -162,7 +168,8 @@ contract WalletRegistry is
 
     event GasParametersUpdated(
         uint256 dkgResultSubmissionGas,
-        uint256 dkgResultApprovalGasOffset
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset
     );
 
     event RandomBeaconUpgraded(address randomBeacon);
@@ -503,14 +510,17 @@ contract WalletRegistry is
     ///      validating parameters.
     function updateGasParameters(
         uint256 _dkgResultSubmissionGas,
-        uint256 _dkgResultApprovalGasOffset
+        uint256 _dkgResultApprovalGasOffset,
+        uint256 _notifyOperatorInactivityGasOffset
     ) external onlyOwner {
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
         dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
+        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
 
         emit GasParametersUpdated(
             _dkgResultSubmissionGas,
-            _dkgResultApprovalGasOffset
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset
         );
     }
 
@@ -695,6 +705,8 @@ contract WalletRegistry is
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
+        uint256 gasStart = gasleft();
+
         bytes32 walletID = claim.walletID;
 
         require(nonce == inactivityClaimNonce[walletID], "Invalid nonce");
@@ -733,6 +745,11 @@ contract WalletRegistry is
                 pubKeyY
             );
         }
+
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + notifyOperatorInactivityGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Checks if DKG result is valid for the current DKG.

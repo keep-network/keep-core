@@ -24,7 +24,6 @@ import type {
   WalletRegistry,
   WalletRegistryStub,
   TokenStaking,
-  ReimbursementPool,
 } from "../typechain"
 import type { DkgResult, DkgResultSubmittedEventArgs } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
@@ -57,7 +56,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let sortitionPool: SortitionPool
   let staking: TokenStaking
-  let reimbursementPool: ReimbursementPool
   let walletOwner: FakeContract<IWalletOwner>
 
   let deployer: SignerWithAddress
@@ -70,18 +68,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
     ;({
       walletRegistry,
       sortitionPool,
-      reimbursementPool,
       walletOwner,
       deployer,
       thirdParty,
       operators,
       staking,
     } = await walletRegistryFixture())
-
-    await thirdParty.sendTransaction({
-      to: reimbursementPool.address,
-      value: ethers.utils.parseEther("20.0"), // Send 20.0 ETH
-    })
   })
 
   describe("requestNewWallet", async () => {

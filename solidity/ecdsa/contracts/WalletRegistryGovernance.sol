@@ -71,6 +71,9 @@ contract WalletRegistryGovernance is Ownable {
     address payable public newReimbursementPool;
     uint256 public reimbursementPoolChangeInitiated;
 
+    uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
+    uint256 public newNotifyOperatorInactivityGasOffset;
+
     WalletRegistry public walletRegistry;
 
     uint256 public governanceDelay;
@@ -171,6 +174,14 @@ contract WalletRegistryGovernance is Ownable {
         uint256 timestamp
     );
     event ReimbursementPoolUpdated(address reimbursementPool);
+
+    event NotifyOperatorInactivityGasOffsetUpdateStarted(
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 timestamp
+    );
+    event NotifyOperatorInactivityGasOffsetUpdated(
+        uint256 notifyOperatorInactivityGasOffset
+    );
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -501,7 +512,8 @@ contract WalletRegistryGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
             newDkgResultSubmissionGas,
-            walletRegistry.dkgResultApprovalGasOffset()
+            walletRegistry.dkgResultApprovalGasOffset(),
+            walletRegistry.notifyOperatorInactivityGasOffset()
         );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
@@ -573,10 +585,50 @@ contract WalletRegistryGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
             walletRegistry.dkgResultSubmissionGas(),
-            newDkgResultApprovalGasOffset
+            newDkgResultApprovalGasOffset,
+            walletRegistry.notifyOperatorInactivityGasOffset()
         );
         dkgResultApprovalGasOffsetChangeInitiated = 0;
         newDkgResultApprovalGasOffset = 0;
+    }
+
+    /// @notice Begins notification operator inactivity gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _notifyOperatorInactivityGasOffset New operator inactivity gas offset.
+    function beginNotifyOperatorInactivityGasOffsetUpdate(
+        uint256 _notifyOperatorInactivityGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newNotifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        notifyOperatorInactivityGasOffsetChangeInitiated = block.timestamp;
+        emit NotifyOperatorInactivityGasOffsetUpdateStarted(
+            _notifyOperatorInactivityGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the notify operator inactivity gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeNotifyOperatorInactivityGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            notifyOperatorInactivityGasOffsetChangeInitiated
+        )
+    {
+        emit NotifyOperatorInactivityGasOffsetUpdated(
+            newNotifyOperatorInactivityGasOffset
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateGasParameters(
+            walletRegistry.dkgResultSubmissionGas(),
+            walletRegistry.dkgResultApprovalGasOffset(),
+            newNotifyOperatorInactivityGasOffset
+        );
+        notifyOperatorInactivityGasOffsetChangeInitiated = 0;
+        newNotifyOperatorInactivityGasOffset = 0;
     }
 
     /// @notice Begins the sortition pool rewards ban duration update process.
@@ -958,6 +1010,20 @@ contract WalletRegistryGovernance is Ownable {
         returns (uint256)
     {
         return getRemainingChangeTime(reimbursementPoolChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the operator inactivity gas offset
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                notifyOperatorInactivityGasOffsetChangeInitiated
+            );
     }
 
     /// @notice Gets the time remaining until the governable parameter update
