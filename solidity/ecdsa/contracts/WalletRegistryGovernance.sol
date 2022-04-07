@@ -1012,6 +1012,20 @@ contract WalletRegistryGovernance is Ownable {
         return getRemainingChangeTime(reimbursementPoolChangeInitiated);
     }
 
+    /// @notice Get the time remaining until the operator inactivity gas offset
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                notifyOperatorInactivityGasOffsetChangeInitiated
+            );
+    }
+
     /// @notice Gets the time remaining until the governable parameter update
     ///         can be committed.
     /// @param changeTimestamp Timestamp indicating the beginning of the change.
