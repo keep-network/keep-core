@@ -955,10 +955,11 @@ contract RandomBeaconGovernance is Ownable {
     {
         emit DkgApprovalGasOffsetUpdated(newDkgApprovalGasOffset);
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateGasOffsets(
+        randomBeacon.updateGasParameters(
             newDkgApprovalGasOffset,
             randomBeacon.failedHeartbeatGasOffset(),
-            randomBeacon.relayEntrySubmissionGasOffset()
+            randomBeacon.relayEntrySubmissionGasOffset(),
+            randomBeacon.dkgResultSubmissionGas()
         );
         dkgApprovalGasOffsetChangeInitiated = 0;
         newDkgApprovalGasOffset = 0;
@@ -990,10 +991,11 @@ contract RandomBeaconGovernance is Ownable {
     {
         emit FailedHeartbeatGasOffsetUpdated(newFailedHeartbeatGasOffset);
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateGasOffsets(
+        randomBeacon.updateGasParameters(
             randomBeacon.dkgApprovalGasOffset(),
             newFailedHeartbeatGasOffset,
-            randomBeacon.relayEntrySubmissionGasOffset()
+            randomBeacon.relayEntrySubmissionGasOffset(),
+            randomBeacon.dkgResultSubmissionGas()
         );
         failedHeartbeatGasOffsetChangeInitiated = 0;
         newFailedHeartbeatGasOffset = 0;
@@ -1027,10 +1029,11 @@ contract RandomBeaconGovernance is Ownable {
             newRelayEntrySubmissionGasOffset
         );
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateGasOffsets(
+        randomBeacon.updateGasParameters(
             randomBeacon.dkgApprovalGasOffset(),
             randomBeacon.failedHeartbeatGasOffset(),
-            newRelayEntrySubmissionGasOffset
+            newRelayEntrySubmissionGasOffset,
+            randomBeacon.dkgResultSubmissionGas()
         );
         relayEntrySubmissionGasOffsetChangeInitiated = 0;
         newRelayEntrySubmissionGasOffset = 0;
@@ -1062,7 +1065,12 @@ contract RandomBeaconGovernance is Ownable {
     {
         emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateDkgResultSubmissionGas(newDkgResultSubmissionGas);
+        randomBeacon.updateGasParameters(
+            randomBeacon.dkgApprovalGasOffset(),
+            randomBeacon.failedHeartbeatGasOffset(),
+            randomBeacon.relayEntrySubmissionGasOffset(),
+            newDkgResultSubmissionGas
+        );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
     }
