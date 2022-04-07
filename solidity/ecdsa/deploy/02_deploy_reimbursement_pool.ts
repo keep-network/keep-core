@@ -18,10 +18,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
   })
 
-  await deployerSigner.sendTransaction({
-    to: ReimbursementPool.address,
-    value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
-  })
+  if (deployments.getNetworkName() === "hardhat") {
+    await deployerSigner.sendTransaction({
+      to: ReimbursementPool.address,
+      value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
+    })
+  }
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
