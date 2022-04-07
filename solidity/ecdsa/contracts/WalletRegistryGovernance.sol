@@ -65,11 +65,14 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newDkgResultSubmissionGas;
     uint256 public dkgResultSubmissionGasChangeInitiated;
 
-    uint256 public newDkgApprovalGasOffset;
-    uint256 public dkgApprovalGasOffsetChangeInitiated;
+    uint256 public newDkgResultApprovalGasOffset;
+    uint256 public dkgResultApprovalGasOffsetChangeInitiated;
 
     address payable public newReimbursementPool;
     uint256 public reimbursementPoolChangeInitiated;
+
+    uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
+    uint256 public newNotifyOperatorInactivityGasOffset;
 
     WalletRegistry public walletRegistry;
 
@@ -160,17 +163,25 @@ contract WalletRegistryGovernance is Ownable {
     );
     event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
 
-    event DkgApprovalGasOffsetUpdateStarted(
-        uint256 dkgApprovalGasOffset,
+    event DkgResultApprovalGasOffsetUpdateStarted(
+        uint256 dkgResultApprovalGasOffset,
         uint256 timestamp
     );
-    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
+    event DkgResultApprovalGasOffsetUpdated(uint256 dkgResultApprovalGasOffset);
 
     event ReimbursementPoolUpdateStarted(
         address reimbursementPool,
         uint256 timestamp
     );
     event ReimbursementPoolUpdated(address reimbursementPool);
+
+    event NotifyOperatorInactivityGasOffsetUpdateStarted(
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 timestamp
+    );
+    event NotifyOperatorInactivityGasOffsetUpdated(
+        uint256 notifyOperatorInactivityGasOffset
+    );
 
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
@@ -499,7 +510,11 @@ contract WalletRegistryGovernance is Ownable {
     {
         emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateDkgResultSubmissionGas(newDkgResultSubmissionGas);
+        walletRegistry.updateGasParameters(
+            newDkgResultSubmissionGas,
+            walletRegistry.dkgResultApprovalGasOffset(),
+            walletRegistry.notifyOperatorInactivityGasOffset()
+        );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
     }
@@ -544,34 +559,76 @@ contract WalletRegistryGovernance is Ownable {
 
     /// @notice Begins the dkg approval gas offset update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgApprovalGasOffset New DKG result approval gas.
-    function beginDkgApprovalGasOffsetUpdate(uint256 _newDkgApprovalGasOffset)
-        external
-        onlyOwner
-    {
+    /// @param _newDkgResultApprovalGasOffset New DKG result approval gas.
+    function beginDkgResultApprovalGasOffsetUpdate(
+        uint256 _newDkgResultApprovalGasOffset
+    ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
-        newDkgApprovalGasOffset = _newDkgApprovalGasOffset;
-        dkgApprovalGasOffsetChangeInitiated = block.timestamp;
-        emit DkgApprovalGasOffsetUpdateStarted(
-            _newDkgApprovalGasOffset,
+        newDkgResultApprovalGasOffset = _newDkgResultApprovalGasOffset;
+        dkgResultApprovalGasOffsetChangeInitiated = block.timestamp;
+        emit DkgResultApprovalGasOffsetUpdateStarted(
+            _newDkgResultApprovalGasOffset,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the dkg approval gas offset update process.
+    /// @notice Finalizes the dkg result approval gas offset update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgApprovalGasOffsetUpdate()
+    function finalizeDkgResultApprovalGasOffsetUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(dkgApprovalGasOffsetChangeInitiated)
+        onlyAfterGovernanceDelay(dkgResultApprovalGasOffsetChangeInitiated)
     {
-        emit DkgApprovalGasOffsetUpdated(newDkgApprovalGasOffset);
+        emit DkgResultApprovalGasOffsetUpdated(newDkgResultApprovalGasOffset);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.updateDkgApprovalGasOffset(newDkgApprovalGasOffset);
-        dkgApprovalGasOffsetChangeInitiated = 0;
-        newDkgApprovalGasOffset = 0;
+        walletRegistry.updateGasParameters(
+            walletRegistry.dkgResultSubmissionGas(),
+            newDkgResultApprovalGasOffset,
+            walletRegistry.notifyOperatorInactivityGasOffset()
+        );
+        dkgResultApprovalGasOffsetChangeInitiated = 0;
+        newDkgResultApprovalGasOffset = 0;
+    }
+
+    /// @notice Begins notification operator inactivity gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _notifyOperatorInactivityGasOffset New operator inactivity gas offset.
+    function beginNotifyOperatorInactivityGasOffsetUpdate(
+        uint256 _notifyOperatorInactivityGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newNotifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        notifyOperatorInactivityGasOffsetChangeInitiated = block.timestamp;
+        emit NotifyOperatorInactivityGasOffsetUpdateStarted(
+            _notifyOperatorInactivityGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the notify operator inactivity gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeNotifyOperatorInactivityGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            notifyOperatorInactivityGasOffsetChangeInitiated
+        )
+    {
+        emit NotifyOperatorInactivityGasOffsetUpdated(
+            newNotifyOperatorInactivityGasOffset
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateGasParameters(
+            walletRegistry.dkgResultSubmissionGas(),
+            walletRegistry.dkgResultApprovalGasOffset(),
+            newNotifyOperatorInactivityGasOffset
+        );
+        notifyOperatorInactivityGasOffsetChangeInitiated = 0;
+        newNotifyOperatorInactivityGasOffset = 0;
     }
 
     /// @notice Begins the sortition pool rewards ban duration update process.
@@ -933,15 +990,16 @@ contract WalletRegistryGovernance is Ownable {
         return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the dkg approval gas offset can
-    ///         be updated.
+    /// @notice Get the time remaining until the dkg result approval gas offset
+    ///         can be updated.
     /// @return Remaining time in seconds.
-    function getRemainingDkgApprovalGasOffsetUpdateTime()
+    function getRemainingDkgResultApprovalGasOffsetUpdateTime()
         external
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(dkgApprovalGasOffsetChangeInitiated);
+        return
+            getRemainingChangeTime(dkgResultApprovalGasOffsetChangeInitiated);
     }
 
     /// @notice Get the time remaining until reimbursement pool can be updated.
@@ -952,6 +1010,20 @@ contract WalletRegistryGovernance is Ownable {
         returns (uint256)
     {
         return getRemainingChangeTime(reimbursementPoolChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the operator inactivity gas offset
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                notifyOperatorInactivityGasOffsetChangeInitiated
+            );
     }
 
     /// @notice Gets the time remaining until the governable parameter update

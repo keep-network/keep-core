@@ -14,29 +14,38 @@
 
 pragma solidity ^0.8.9;
 
-import "./BytesLib.sol";
-import "./Groups.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
+import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 
-library BeaconInactivity {
+import "./Wallets.sol";
+
+library EcdsaInactivity {
     using BytesLib for bytes;
     using ECDSA for bytes32;
 
     struct Claim {
-        // ID of the group raising the inactivity claim.
-        uint64 groupId;
-        // Indices of members accused of being inactive. Indices must be in
+        // ID of the wallet whose signing group is raising the inactivity claim.
+        bytes32 walletID;
+        // Indices of group members accused of being inactive. Indices must be in
         // range [1, groupMembers.length], unique, and sorted in ascending order.
         uint256[] inactiveMembersIndices;
+        // Indicates if inactivity claim is a wallet-wide heartbeat failure.
+        // If wallet failed a heartbeat, this is signalled to the wallet owner
+        // who may decide to move responsibilities to another wallet
+        // given that the wallet who failed the heartbeat is at risk of not
+        // being able to sign messages soon.
+        bool heartbeatFailed;
         // Concatenation of signatures from members supporting the claim.
         // The message to be signed by each member is keccak256 hash of the
-        // concatenation of inactivity claim nonce for the given group, group
-        // public key, and inactive members indices. The calculated hash should
+        // concatenation of inactivity claim nonce for the given wallet, wallet
+        // public key, inactive members indices, and boolean flag indicating
+        // if this is a wallet-wide heartbeat failure. The calculated hash should
         // be prefixed with `\x19Ethereum signed message:\n` before signing, so
         // the message to sign is:
         // `\x19Ethereum signed message:\n${keccak256(
-        //    nonce | groupPubKey | inactiveMembersIndices
+        //    nonce | walletPubKey | inactiveMembersIndices | heartbeatFailed
         // )}`
         bytes signatures;
         // Indices of members corresponding to each signature. Indices must be
@@ -45,9 +54,10 @@ library BeaconInactivity {
         uint256[] signingMembersIndices;
     }
 
-    /// @notice The minimum number of group members needed to interact according
-    ///         to the protocol to produce a valid inactivity claim.
-    uint256 public constant groupThreshold = 33;
+    /// @notice The minimum number of wallet signing group members needed to
+    ///         interact according to the protocol to produce a valid inactivity
+    ///         claim.
+    uint256 public constant groupThreshold = 51;
 
     /// @notice Size in bytes of a single signature produced by member
     ///         supporting the inactivity claim.
@@ -55,18 +65,18 @@ library BeaconInactivity {
 
     /// @notice Verifies the inactivity claim according to the rules defined in
     ///         `Claim` struct documentation. Reverts if verification fails.
-    /// @dev Group members hash is validated upstream in
-    ///      RandomBeacon.notifyOperatorInactivity()
+    /// @dev Wallet signing group members hash is validated upstream in
+    ///      `WalletRegistry.notifyOperatorInactivity()`
     /// @param sortitionPool Sortition pool reference
     /// @param claim Inactivity claim
-    /// @param groupPubKey Public key of the group raising the claim
-    /// @param nonce Current nonce for group used in the claim
+    /// @param walletPubKey Public key of the wallet
+    /// @param nonce Current inactivity nonce for wallet used in the claim
     /// @param groupMembers Identifiers of group members
     /// @return inactiveMembers Identifiers of members who are inactive
     function verifyClaim(
         SortitionPool sortitionPool,
         Claim calldata claim,
-        bytes memory groupPubKey,
+        bytes memory walletPubKey,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external view returns (uint32[] memory inactiveMembers) {
@@ -101,12 +111,13 @@ library BeaconInactivity {
             groupMembers.length
         );
 
-        // Usage of group public key and not group ID is important because it
-        // provides uniqueness of signed messages and prevent against reusing
-        // them in future in case some other application has a group with the
-        // same ID and subset of members.
         bytes32 signedMessageHash = keccak256(
-            abi.encodePacked(nonce, groupPubKey, claim.inactiveMembersIndices)
+            abi.encodePacked(
+                nonce,
+                walletPubKey,
+                claim.inactiveMembersIndices,
+                claim.heartbeatFailed
+            )
         ).toEthSignedMessageHash();
 
         address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
@@ -151,8 +162,8 @@ library BeaconInactivity {
     ///         if its size and each single index are in [1, groupSize] range,
     ///         indexes are unique, and sorted in an ascending order.
     ///         Reverts if validation fails.
-    /// @param indices Array to validate
-    /// @param groupSize Group size used as reference
+    /// @param indices Array to validate.
+    /// @param groupSize Group size used as reference.
     function validateMembersIndices(
         uint256[] calldata indices,
         uint256 groupSize

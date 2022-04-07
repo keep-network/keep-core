@@ -1,12 +1,16 @@
-import { ethers, helpers, getNamedAccounts } from "hardhat"
+import { ethers, helpers, deployments } from "hardhat"
 
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Contract } from "ethers"
 import type {
   SortitionPool,
   BeaconDkgValidator as DKGValidator,
   RandomBeaconStub,
+  TokenStaking,
   RandomBeaconGovernance,
-  StakingStub,
+  RandomBeaconStub__factory,
+  RandomBeaconGovernance__factory,
+  T,
 } from "../../typechain"
 
 const { to1e18 } = helpers.number
@@ -15,8 +19,8 @@ export const constants = {
   groupSize: 64,
   groupThreshold: 33,
   offchainDkgTime: 72, // 5 * (1 + 5) + 2 * (1 + 10) + 20
-  minimumStake: to1e18(100000),
   poolWeightDivisor: to1e18(1),
+  tokenStakingNotificationReward: to1e18(10000), // 10k T
 }
 
 export const dkgState = {
@@ -48,8 +52,8 @@ export const params = {
   dkgMaliciousResultNotificationRewardMultiplier: 100,
   ineligibleOperatorNotifierReward: to1e18(200),
   unauthorizedSigningSlashingAmount: to1e18(100000),
-  minimumAuthorization: to1e18(100000),
-  authorizationDecreaseDelay: 0,
+  minimumAuthorization: to1e18(200000),
+  authorizationDecreaseDelay: 403200,
   reimbursmentPoolStaticGas: 40800,
   reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
 }
@@ -70,16 +74,6 @@ export async function blsDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function testTokenDeployment(): Promise<DeployedContracts> {
-  const TestToken = await ethers.getContractFactory("TestToken")
-  const testToken = await TestToken.deploy()
-  await testToken.deployed()
-
-  const contracts: DeployedContracts = { testToken }
-
-  return contracts
-}
-
 export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
   const reimbursementPool = await ReimbursementPool.deploy(
@@ -94,19 +88,24 @@ export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
 }
 
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
-  const deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
+  await deployments.fixture(["TokenStaking"])
+  const t: T = await ethers.getContract("T")
+  const staking: TokenStaking = await ethers.getContract("TokenStaking")
 
-  const { testToken } = await testTokenDeployment()
-
-  const StakingStub = await ethers.getContractFactory("StakingStub")
-  const stakingStub: StakingStub = await StakingStub.deploy()
+  // TODO: Implement Hardhat deployment scripts and load deployed contracts, same
+  // as it's done above for T and TokenStaking.
+  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    stakingStub.address,
-    testToken.address,
+    staking.address,
+    t.address,
     constants.poolWeightDivisor
   )) as SortitionPool
+
+  const Authorization = await ethers.getContractFactory("BeaconAuthorization")
+  const authorization = await Authorization.deploy()
+  await authorization.deployed()
 
   const BeaconDkg = await ethers.getContractFactory("BeaconDkg")
   const dkg = await BeaconDkg.deploy()
@@ -136,32 +135,41 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
   })
 
-  const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
-    libraries: {
-      BLS: (await blsDeployment()).bls.address,
-      BeaconDkg: dkg.address,
-      BeaconInactivity: inactivity.address,
-    },
-  })
+  const RandomBeacon =
+    await ethers.getContractFactory<RandomBeaconStub__factory>(
+      "RandomBeaconStub",
+      {
+        libraries: {
+          BLS: (await blsDeployment()).bls.address,
+          BeaconAuthorization: authorization.address,
+          BeaconDkg: dkg.address,
+          BeaconInactivity: inactivity.address,
+        },
+      }
+    )
+
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPool.address,
-    testToken.address,
-    stakingStub.address,
+    t.address,
+    staking.address,
     dkgValidator.address,
     reimbursementPool.address
   )
   await randomBeacon.deployed()
 
+  await staking.connect(deployer).approveApplication(randomBeacon.address)
+
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
   await reimbursementPool.connect(deployer).authorize(randomBeacon.address)
 
+  await updateTokenStakingParams(t, staking, deployer)
   await setFixtureParameters(randomBeacon)
 
   const contracts: DeployedContracts = {
     sortitionPool,
-    stakingStub,
+    staking,
     randomBeacon,
-    testToken,
+    t,
     reimbursementPool,
   }
 
@@ -171,9 +179,10 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 export async function testDeployment(): Promise<DeployedContracts> {
   const contracts = await randomBeaconDeployment()
 
-  const RandomBeaconGovernance = await ethers.getContractFactory(
-    "RandomBeaconGovernance"
-  )
+  const RandomBeaconGovernance =
+    await ethers.getContractFactory<RandomBeaconGovernance__factory>(
+      "RandomBeaconGovernance"
+    )
   const randomBeaconGovernance: RandomBeaconGovernance =
     await RandomBeaconGovernance.deploy(
       contracts.randomBeacon.address,
@@ -185,6 +194,23 @@ export async function testDeployment(): Promise<DeployedContracts> {
   const newContracts = { randomBeaconGovernance }
 
   return { ...contracts, ...newContracts }
+}
+
+async function updateTokenStakingParams(
+  t: T,
+  staking: TokenStaking,
+  deployer: SignerWithAddress
+) {
+  // initialNotifierTreasury should be configured high enough to execute all the
+  // slashing in test suites.
+  const initialNotifierTreasury = to1e18(9_000_000) // 9MM T
+  await t.connect(deployer).approve(staking.address, initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .pushNotificationReward(initialNotifierTreasury)
+  await staking
+    .connect(deployer)
+    .setNotificationReward(constants.tokenStakingNotificationReward)
 }
 
 async function setFixtureParameters(randomBeacon: RandomBeaconStub) {

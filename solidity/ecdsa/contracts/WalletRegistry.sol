@@ -19,6 +19,7 @@ import "./api/IWalletOwner.sol";
 import "./libraries/EcdsaAuthorization.sol";
 import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
+import "./libraries/EcdsaInactivity.sol";
 import "./EcdsaDkgValidator.sol";
 
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -73,16 +74,27 @@ contract WalletRegistry is
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
     ///         other member that will call the DKG approve function.
-    uint256 public dkgResultSubmissionGas = 300000;
+    uint256 public dkgResultSubmissionGas = 275000;
 
-    // @notice Gas meant to balance the DKG approval's overall cost. Can be updated
-    //         by the governace based on the current market conditions.
-    uint256 public dkgApprovalGasOffset = 65000;
+    /// @notice Gas is meant to balance the DKG result approval's overall cost.
+    ///         It can be updated by the governace based on the current market
+    ///         conditions.
+    uint256 public dkgResultApprovalGasOffset = 65000;
+
+    /// @notice Gas is meant to balance the notification of an operator inactivity.
+    ///         It can be updated by the governace based on the current market
+    ///         conditions.
+    uint256 public notifyOperatorInactivityGasOffset = 85000;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for DKG result submission or who failed
     ///         a heartbeat.
     uint256 public sortitionPoolRewardsBanDuration;
+
+    /// @notice Stores current operator inactivity claim nonce for the given
+    ///         wallet signing group. Each claim is made with a unique nonce
+    ///         which protects against claim replay.
+    mapping(bytes32 => uint256) public inactivityClaimNonce; // walletID -> nonce
 
     // External dependencies
 
@@ -121,6 +133,8 @@ contract WalletRegistry is
         bytes32 indexed dkgResultHash
     );
 
+    event WalletClosed(bytes32 indexed walletID);
+
     event DkgMaliciousResultSlashed(
         bytes32 indexed resultHash,
         uint256 slashingAmount,
@@ -152,13 +166,15 @@ contract WalletRegistry is
         uint256 resultSubmitterPrecedencePeriodLength
     );
 
+    event GasParametersUpdated(
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset
+    );
+
     event RandomBeaconUpgraded(address randomBeacon);
 
     event WalletOwnerUpdated(address walletOwner);
-
-    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
-
-    event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
 
     event OperatorRegistered(
         address indexed stakingProvider,
@@ -199,6 +215,12 @@ contract WalletRegistry is
         address indexed operator
     );
 
+    event InactivityClaimed(
+        bytes32 indexed walletID,
+        uint256 nonce,
+        address notifier
+    );
+
     modifier onlyStakingContract() {
         require(
             msg.sender == address(staking),
@@ -228,8 +250,8 @@ contract WalletRegistry is
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
-        // TODO: Implement governance for the parameters
         // TODO: revisit all initial values
+
         sortitionPoolRewardsBanDuration = 2 weeks;
 
         // slither-disable-next-line too-many-digits
@@ -240,10 +262,10 @@ contract WalletRegistry is
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
         dkg.init(_sortitionPool, _ecdsaDkgValidator);
-        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time // TODO: Verify value
+        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionTimeout(100 * 20); // TODO: Verify value
-        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+        dkg.setResultSubmissionTimeout(100 * 20);
+        dkg.setSubmitterPrecedencePeriodLength(20);
     }
 
     /// @notice Used by staking provider to set operator address that will
@@ -321,7 +343,7 @@ contract WalletRegistry is
     ///         If there is a pending authorization decrease request, it is
     ///         overwritten.
     ///
-    /// @dev Should only be callable by T staking contract.
+    /// @dev Can only be called by T staking contract.
     function authorizationDecreaseRequested(
         address stakingProvider,
         uint96 fromAmount,
@@ -335,7 +357,7 @@ contract WalletRegistry is
     }
 
     /// @notice Approves the previously registered authorization decrease
-    ///         request. Reverts if authorization decrease delay have not passed
+    ///         request. Reverts if authorization decrease delay has not passed
     ///         yet or if the authorization decrease was not requested for the
     ///         given staking provider.
     function approveAuthorizationDecrease(address stakingProvider) external {
@@ -381,6 +403,17 @@ contract WalletRegistry is
     {
         randomBeacon = _randomBeacon;
         emit RandomBeaconUpgraded(address(_randomBeacon));
+    }
+
+    /// @notice Updates the wallet owner.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract. The caller is responsible for
+    ///      validating parameters. The wallet owner has to implement `IWalletOwner`
+    ///      interface.
+    /// @param _walletOwner New wallet owner address.
+    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
+        walletOwner = _walletOwner;
+        emit WalletOwnerUpdated(address(_walletOwner));
     }
 
     /// @notice Updates the values of authorization parameters.
@@ -471,41 +504,24 @@ contract WalletRegistry is
         emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
     }
 
-    /// @notice Updates the values of the wallet parameters.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
-    ///      validating parameters. The wallet owner has to implement `IWalletOwner`
-    ///      interface.
-    /// @param _walletOwner New wallet owner address.
-    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
-        walletOwner = _walletOwner;
-        emit WalletOwnerUpdated(address(_walletOwner));
-    }
-
-    /// @notice Updates the dkg result submission gas.
+    /// @notice Updates the values of gas-related parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionGas New dkg result submission gas.
-    function updateDkgResultSubmissionGas(uint256 _dkgResultSubmissionGas)
-        external
-        onlyOwner
-    {
+    function updateGasParameters(
+        uint256 _dkgResultSubmissionGas,
+        uint256 _dkgResultApprovalGasOffset,
+        uint256 _notifyOperatorInactivityGasOffset
+    ) external onlyOwner {
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
-        emit DkgResultSubmissionGasUpdated(_dkgResultSubmissionGas);
-    }
+        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
+        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
 
-    /// @notice Updates the dkg approval gas offset.
-    /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
-    ///      validating parameters.
-    /// @param _dkgApprovalGasOffset New dkg result approval gas.
-    function updateDkgApprovalGasOffset(uint256 _dkgApprovalGasOffset)
-        external
-        onlyOwner
-    {
-        dkgApprovalGasOffset = _dkgApprovalGasOffset;
-        emit DkgApprovalGasOffsetUpdated(_dkgApprovalGasOffset);
+        emit GasParametersUpdated(
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset
+        );
     }
 
     /// @notice Requests a new wallet creation.
@@ -519,11 +535,13 @@ contract WalletRegistry is
         randomBeacon.requestRelayEntry(this);
     }
 
-    /// @notice Closes an existing wallet.
+    /// @notice Closes an existing wallet. Reverts if wallet with the given ID
+    ///         does not exist or if it has already been closed.
     /// @param walletID ID of the wallet.
     /// @dev Only a Wallet Owner can call this function.
     function closeWallet(bytes32 walletID) external onlyWalletOwner {
-        // TODO: Implementation.
+        wallets.deleteWallet(walletID);
+        emit WalletClosed(walletID);
     }
 
     /// @notice A callback that is executed once a new relay entry gets
@@ -600,7 +618,7 @@ contract WalletRegistry is
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
-                dkgApprovalGasOffset,
+                dkgResultApprovalGasOffset,
             msg.sender
         );
     }
@@ -663,6 +681,77 @@ contract WalletRegistry is
         }
     }
 
+    /// @notice Notifies about operators who are inactive. Using this function,
+    ///         a majority of the wallet signing group can decide about
+    ///         punishing specific group members who constantly fail doing their
+    ///         job. If the provided claim is proved to be valid and signed by
+    ///         sufficient number of group members, operators of members deemed
+    ///         as inactive are banned from sortition pool rewards for the
+    ///         duration specified by `sortitionPoolRewardsBanDuration` parameter.
+    ///         The function allows to signal about single operators being
+    ///         inactive as well as to signal wallet-wide heartbeat failures
+    ///         that are propagated to the wallet owner who should begin the
+    ///         procedure of moving responsibilities to another wallet given
+    ///         that the wallet who failed the heartbeat may soon be not able to
+    ///         function and provide new signatures.
+    ///         The sender of the claim must be one of the claim signers. This
+    ///         function can be called only for registered wallets
+    /// @param claim Operator inactivity claim
+    /// @param nonce Current inactivity claim nonce for the given wallet signing
+    ///              group. Must be the same as the stored one
+    /// @param groupMembers Identifiers of the wallet signing group members
+    function notifyOperatorInactivity(
+        EcdsaInactivity.Claim calldata claim,
+        uint256 nonce,
+        uint32[] calldata groupMembers
+    ) external {
+        uint256 gasStart = gasleft();
+
+        bytes32 walletID = claim.walletID;
+
+        require(nonce == inactivityClaimNonce[walletID], "Invalid nonce");
+
+        (bytes32 pubKeyX, bytes32 pubKeyY) = wallets
+            .getWalletPublicKeyCoordinates(walletID);
+        bytes32 memberIdsHash = wallets.getWalletMembersIdsHash(walletID);
+
+        require(
+            memberIdsHash == keccak256(abi.encode(groupMembers)),
+            "Invalid group members"
+        );
+
+        uint32[] memory ineligibleOperators = EcdsaInactivity.verifyClaim(
+            sortitionPool,
+            claim,
+            bytes.concat(pubKeyX, pubKeyY),
+            nonce,
+            groupMembers
+        );
+
+        inactivityClaimNonce[walletID]++;
+
+        emit InactivityClaimed(walletID, nonce, msg.sender);
+
+        sortitionPool.setRewardIneligibility(
+            ineligibleOperators,
+            // solhint-disable-next-line not-rely-on-time
+            block.timestamp + sortitionPoolRewardsBanDuration
+        );
+
+        if (claim.heartbeatFailed) {
+            walletOwner.__ecdsaWalletHeartbeatFailedCallback(
+                walletID,
+                pubKeyX,
+                pubKeyY
+            );
+        }
+
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + notifyOperatorInactivityGasOffset,
+            msg.sender
+        );
+    }
+
     /// @notice Checks if DKG result is valid for the current DKG.
     /// @param result DKG result.
     /// @return True if the result is valid. If the result is invalid it returns
@@ -722,9 +811,6 @@ contract WalletRegistry is
     function isWalletRegistered(bytes32 walletID) external view returns (bool) {
         return wallets.isWalletRegistered(walletID);
     }
-
-    // TODO: Add function to close the Wallet so the members are notified that
-    // they no longer need to track the wallet.
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters()

@@ -2,6 +2,7 @@
   "files": ["./hardhat.config.ts"],
   "include": ["./deploy", "./test", "./typechain"],
   "compilerOptions": {
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitAny": true
   }
 }

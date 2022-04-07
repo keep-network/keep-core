@@ -3,7 +3,7 @@ import { expect } from "chai"
 
 import { randomBeaconDeployment } from "./fixtures"
 
-import type { Signer } from "ethers"
+import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeaconStub } from "../typechain"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
@@ -45,7 +45,7 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
       beforeEach(async () => {
         tx = await randomBeacon
           .connect(governance)
@@ -112,7 +112,7 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
       beforeEach(async () => {
         tx = await randomBeacon
@@ -161,7 +161,7 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
       beforeEach(async () => {
         tx = await randomBeacon
           .connect(governance)
@@ -207,7 +207,7 @@ describe("RandomBeacon - Parameters", () => {
 
     context("when the caller is the owner", () => {
       context("when values are valid", () => {
-        let tx
+        let tx: ContractTransaction
         beforeEach(async () => {
           tx = await randomBeacon
             .connect(governance)
@@ -323,7 +323,7 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
       beforeEach(async () => {
         tx = await randomBeacon
           .connect(governance)
@@ -410,7 +410,7 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
       beforeEach(async () => {
         tx = await randomBeacon
           .connect(governance)

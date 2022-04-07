@@ -24,7 +24,6 @@ import type {
   WalletRegistry,
   WalletRegistryStub,
   TokenStaking,
-  ReimbursementPool,
 } from "../typechain"
 import type { DkgResult, DkgResultSubmittedEventArgs } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
@@ -57,7 +56,6 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let sortitionPool: SortitionPool
   let staking: TokenStaking
-  let reimbursementPool: ReimbursementPool
   let walletOwner: FakeContract<IWalletOwner>
 
   let deployer: SignerWithAddress
@@ -70,18 +68,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
     ;({
       walletRegistry,
       sortitionPool,
-      reimbursementPool,
       walletOwner,
       deployer,
       thirdParty,
       operators,
       staking,
     } = await walletRegistryFixture())
-
-    await thirdParty.sendTransaction({
-      to: reimbursementPool.address,
-      value: ethers.utils.parseEther("20.0"), // Send 20.0 ETH
-    })
   })
 
   describe("requestNewWallet", async () => {
@@ -1551,9 +1543,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 })
 
                 it("should refund ETH to a submitter", async () => {
-                  const postDkgApprovalSubmitterInitialBalance =
+                  const postDkgResultApprovalSubmitterInitialBalance =
                     await provider.getBalance(await submitter.getAddress())
-                  const diff = postDkgApprovalSubmitterInitialBalance.sub(
+                  const diff = postDkgResultApprovalSubmitterInitialBalance.sub(
                     submitterInitialBalance
                   )
 
@@ -1630,16 +1622,17 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   })
 
                   it("should refund ETH to a third party caller", async () => {
-                    const postDkgApprovalThirdPartyInitialBalance =
+                    const postDkgResultApprovalThirdPartyInitialBalance =
                       await provider.getBalance(await thirdParty.getAddress())
                     const feeForDkgSubmission = (
                       await walletRegistry.dkgResultSubmissionGas()
                     ).mul(tx.gasPrice)
                     // submission part was done by someone else and this is why
                     // we add submission dkg fee to the initial balance
-                    const diff = postDkgApprovalThirdPartyInitialBalance.sub(
-                      thirdPartyInitialBalance.add(feeForDkgSubmission)
-                    )
+                    const diff =
+                      postDkgResultApprovalThirdPartyInitialBalance.sub(
+                        thirdPartyInitialBalance.add(feeForDkgSubmission)
+                      )
                     expect(diff).to.be.gt(0)
                     expect(diff).to.be.lt(
                       ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
@@ -1773,16 +1766,17 @@ describe("WalletRegistry - Wallet Creation", async () => {
               })
 
               it("should refund ETH to a submitter", async () => {
-                const postDkgApprovalAnotherSubmitterInitialBalance =
+                const postDkgResultApprovalAnotherSubmitterInitialBalance =
                   await provider.getBalance(await anotherSubmitter.getAddress())
                 const feeForDkgSubmission = (
                   await walletRegistry.dkgResultSubmissionGas()
                 ).mul(tx.gasPrice)
                 // submission part was done by someone else and this is why
                 // we add submission dkg fee to the initial balance
-                const diff = postDkgApprovalAnotherSubmitterInitialBalance.sub(
-                  initalAnotherSubmitterBalance.add(feeForDkgSubmission)
-                )
+                const diff =
+                  postDkgResultApprovalAnotherSubmitterInitialBalance.sub(
+                    initalAnotherSubmitterBalance.add(feeForDkgSubmission)
+                  )
 
                 expect(diff).to.be.gt(0)
                 expect(diff).to.be.lt(
@@ -1900,9 +1894,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
 
             it("should refund ETH to a submitter", async () => {
-              const postDkgApprovalSubmitterInitialBalance =
+              const postDkgResultApprovalSubmitterInitialBalance =
                 await provider.getBalance(await submitter.getAddress())
-              const diff = postDkgApprovalSubmitterInitialBalance.sub(
+              const diff = postDkgResultApprovalSubmitterInitialBalance.sub(
                 submitterInitialBalance
               )
 
@@ -2102,9 +2096,9 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
 
             it("should refund ETH to a submitter", async () => {
-              const postDkgApprovalSubmitterInitialBalance =
+              const postDkgResultApprovalSubmitterInitialBalance =
                 await provider.getBalance(await submitter.getAddress())
-              const diff = postDkgApprovalSubmitterInitialBalance.sub(
+              const diff = postDkgResultApprovalSubmitterInitialBalance.sub(
                 submitterInitialBalance
               )
 
@@ -3300,7 +3294,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
               expect(diff).to.be.gt(0)
               expect(diff).to.be.lt(
-                ethers.utils.parseUnits("31000", "gwei") // 0,000031 ETH
+                ethers.utils.parseUnits("100000", "gwei") // 0,0001 ETH
               )
             })
           })
