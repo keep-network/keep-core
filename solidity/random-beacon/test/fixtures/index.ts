@@ -42,15 +42,12 @@ export const params = {
   dkgResultChallengePeriodLength: 100,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
-  dkgResultSubmissionReward: to1e18(5),
-  sortitionPoolUnlockingReward: to1e18(10),
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
   relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
   maliciousDkgResultSlashingAmount: to1e18(50000),
   relayEntryTimeoutNotificationRewardMultiplier: 40,
   unauthorizedSigningNotificationRewardMultiplier: 50,
   dkgMaliciousResultNotificationRewardMultiplier: 100,
-  ineligibleOperatorNotifierReward: to1e18(200),
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(200000),
   authorizationDecreaseDelay: 403200,
@@ -227,9 +224,6 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
   )
 
   await randomBeacon.updateRewardParameters(
-    params.dkgResultSubmissionReward,
-    params.sortitionPoolUnlockingReward,
-    params.ineligibleOperatorNotifierReward,
     params.sortitionPoolRewardsBanDuration,
     params.relayEntryTimeoutNotificationRewardMultiplier,
     params.unauthorizedSigningNotificationRewardMultiplier,

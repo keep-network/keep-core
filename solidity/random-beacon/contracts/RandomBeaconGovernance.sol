@@ -55,15 +55,6 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newSubmitterPrecedencePeriodLength;
     uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
 
-    uint256 public newDkgResultSubmissionReward;
-    uint256 public dkgResultSubmissionRewardChangeInitiated;
-
-    uint256 public newSortitionPoolUnlockingReward;
-    uint256 public sortitionPoolUnlockingRewardChangeInitiated;
-
-    uint256 public newIneligibleOperatorNotifierReward;
-    uint256 public ineligibleOperatorNotifierRewardChangeInitiated;
-
     uint96 public newRelayEntrySubmissionFailureSlashingAmount;
     uint256 public relayEntrySubmissionFailureSlashingAmountChangeInitiated;
 
@@ -174,28 +165,6 @@ contract RandomBeaconGovernance is Ownable {
     );
     event DkgSubmitterPrecedencePeriodLengthUpdated(
         uint256 submitterPrecedencePeriodLength
-    );
-
-    event DkgResultSubmissionRewardUpdateStarted(
-        uint256 dkgResultSubmissionReward,
-        uint256 timestamp
-    );
-    event DkgResultSubmissionRewardUpdated(uint256 dkgResultSubmissionReward);
-
-    event SortitionPoolUnlockingRewardUpdateStarted(
-        uint256 sortitionPoolUnlockingReward,
-        uint256 timestamp
-    );
-    event SortitionPoolUnlockingRewardUpdated(
-        uint256 sortitionPoolUnlockingReward
-    );
-
-    event IneligibleOperatorNotifierRewardUpdateStarted(
-        uint256 ineligibleOperatorNotifierReward,
-        uint256 timestamp
-    );
-    event IneligibleOperatorNotifierRewardUpdated(
-        uint256 ineligibleOperatorNotifierReward
     );
 
     event RelayEntrySubmissionFailureSlashingAmountUpdateStarted(
@@ -730,130 +699,6 @@ contract RandomBeaconGovernance is Ownable {
         newSubmitterPrecedencePeriodLength = 0;
     }
 
-    /// @notice Begins the DKG result submission reward update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newDkgResultSubmissionReward New DKG result submission reward
-    function beginDkgResultSubmissionRewardUpdate(
-        uint256 _newDkgResultSubmissionReward
-    ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        newDkgResultSubmissionReward = _newDkgResultSubmissionReward;
-        dkgResultSubmissionRewardChangeInitiated = block.timestamp;
-        emit DkgResultSubmissionRewardUpdateStarted(
-            _newDkgResultSubmissionReward,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the DKG result submission reward update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeDkgResultSubmissionRewardUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(dkgResultSubmissionRewardChangeInitiated)
-    {
-        emit DkgResultSubmissionRewardUpdated(newDkgResultSubmissionReward);
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRewardParameters(
-            newDkgResultSubmissionReward,
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        );
-        dkgResultSubmissionRewardChangeInitiated = 0;
-        newDkgResultSubmissionReward = 0;
-    }
-
-    /// @notice Begins the sortition pool unlocking reward update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newSortitionPoolUnlockingReward New sortition pool unlocking reward
-    function beginSortitionPoolUnlockingRewardUpdate(
-        uint256 _newSortitionPoolUnlockingReward
-    ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        newSortitionPoolUnlockingReward = _newSortitionPoolUnlockingReward;
-        sortitionPoolUnlockingRewardChangeInitiated = block.timestamp;
-        emit SortitionPoolUnlockingRewardUpdateStarted(
-            _newSortitionPoolUnlockingReward,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the sortition pool unlocking reward update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeSortitionPoolUnlockingRewardUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(sortitionPoolUnlockingRewardChangeInitiated)
-    {
-        emit SortitionPoolUnlockingRewardUpdated(
-            newSortitionPoolUnlockingReward
-        );
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            newSortitionPoolUnlockingReward,
-            randomBeacon.ineligibleOperatorNotifierReward(),
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        );
-        sortitionPoolUnlockingRewardChangeInitiated = 0;
-        newSortitionPoolUnlockingReward = 0;
-    }
-
-    /// @notice Begins the ineligible operator notifier reward update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newIneligibleOperatorNotifierReward New ineligible operator
-    ///        notifier reward.
-    function beginIneligibleOperatorNotifierRewardUpdate(
-        uint256 _newIneligibleOperatorNotifierReward
-    ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        newIneligibleOperatorNotifierReward = _newIneligibleOperatorNotifierReward;
-        ineligibleOperatorNotifierRewardChangeInitiated = block.timestamp;
-        emit IneligibleOperatorNotifierRewardUpdateStarted(
-            _newIneligibleOperatorNotifierReward,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the ineligible operator notifier reward update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeIneligibleOperatorNotifierRewardUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(
-            ineligibleOperatorNotifierRewardChangeInitiated
-        )
-    {
-        emit IneligibleOperatorNotifierRewardUpdated(
-            newIneligibleOperatorNotifierReward
-        );
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            newIneligibleOperatorNotifierReward,
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        );
-        ineligibleOperatorNotifierRewardChangeInitiated = 0;
-        newIneligibleOperatorNotifierReward = 0;
-    }
-
     /// @notice Begins the sortition pool rewards ban duration update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newSortitionPoolRewardsBanDuration New sortition pool rewards
@@ -884,9 +729,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             newSortitionPoolRewardsBanDuration,
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
@@ -960,9 +802,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             newUnauthorizedSigningNotificationRewardMultiplier,
@@ -988,9 +827,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             newRelayEntryTimeoutNotificationRewardMultiplier,
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
@@ -1040,9 +876,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
@@ -1527,43 +1360,6 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgSubmitterPrecedencePeriodLengthChangeInitiated
-            );
-    }
-
-    /// @notice Get the time remaining until the DKG result submission reward
-    ///         can be updated.
-    /// @return Remaining time in seconds.
-    function getRemainingDkgResultSubmissionRewardUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return getRemainingChangeTime(dkgResultSubmissionRewardChangeInitiated);
-    }
-
-    /// @notice Get the time remaining until the sortition pool unlocking reward
-    ///         can be updated.
-    /// @return Remaining time in seconds.
-    function getRemainingSortitionPoolUnlockingRewardUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return
-            getRemainingChangeTime(sortitionPoolUnlockingRewardChangeInitiated);
-    }
-
-    /// @notice Get the time remaining until the ineligible operator notifier
-    ///         reward can be updated.
-    /// @return Remaining time in seconds.
-    function getRemainingIneligibleOperatorNotifierRewardUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return
-            getRemainingChangeTime(
-                ineligibleOperatorNotifierRewardChangeInitiated
             );
     }
 

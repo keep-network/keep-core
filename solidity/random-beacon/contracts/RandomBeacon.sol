@@ -73,20 +73,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         a fixed frequency of relay requests.
     uint256 public groupCreationFrequency;
 
-    /// @notice Reward in T for submitting DKG result. The reward is paid to
-    ///         a submitter of a valid DKG result when the DKG result challenge
-    ///         period ends.
-    uint256 public dkgResultSubmissionReward;
-
-    /// @notice Reward in T for unlocking the sortition pool if DKG timed out.
-    ///         When DKG result submission timed out, sortition pool is still
-    ///         locked and someone needs to unlock it. Anyone can do it and earn
-    ///         `sortitionPoolUnlockingReward`.
-    uint256 public sortitionPoolUnlockingReward;
-
-    /// @notice Reward in T for notifying the operator is ineligible.
-    uint256 public ineligibleOperatorNotifierReward;
-
     /// @notice Slashing amount for supporting malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
     ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
@@ -203,9 +189,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     );
 
     event RewardParametersUpdated(
-        uint256 dkgResultSubmissionReward,
-        uint256 sortitionPoolUnlockingReward,
-        uint256 ineligibleOperatorNotifierReward,
         uint256 sortitionPoolRewardsBanDuration,
         uint256 relayEntryTimeoutNotificationRewardMultiplier,
         uint256 unauthorizedSigningNotificationRewardMultiplier,
@@ -389,9 +372,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         callbackGasLimit = 56000;
         groupCreationFrequency = 5;
 
-        dkgResultSubmissionReward = 1000e18;
-        sortitionPoolUnlockingReward = 100e18;
-        ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
@@ -528,10 +508,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionReward New DKG result submission reward
-    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
-    /// @param _ineligibleOperatorNotifierReward New value of the ineligible
-    ///        operator notifier reward.
     /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
     /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
@@ -541,25 +517,16 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @param _dkgMaliciousResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
     function updateRewardParameters(
-        uint256 _dkgResultSubmissionReward,
-        uint256 _sortitionPoolUnlockingReward,
-        uint256 _ineligibleOperatorNotifierReward,
         uint256 _sortitionPoolRewardsBanDuration,
         uint256 _relayEntryTimeoutNotificationRewardMultiplier,
         uint256 _unauthorizedSigningNotificationRewardMultiplier,
         uint256 _dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
-        dkgResultSubmissionReward = _dkgResultSubmissionReward;
-        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
-        ineligibleOperatorNotifierReward = _ineligibleOperatorNotifierReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
         unauthorizedSigningNotificationRewardMultiplier = _unauthorizedSigningNotificationRewardMultiplier;
         dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward,
-            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             unauthorizedSigningNotificationRewardMultiplier,

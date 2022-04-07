@@ -296,9 +296,6 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateRewardParameters", () => {
-    const dkgResultSubmissionReward = 100
-    const sortitionPoolUnlockingReward = 200
-    const ineligibleOperatorNotifierReward = 300
     const sortitionPoolRewardsBanDuration = 400
     const relayEntryTimeoutNotificationRewardMultiplier = 10
     const unauthorizedSigningNotificationRewardMultiplier = 10
@@ -310,9 +307,6 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateRewardParameters(
-              dkgResultSubmissionReward,
-              sortitionPoolUnlockingReward,
-              ineligibleOperatorNotifierReward,
               sortitionPoolRewardsBanDuration,
               relayEntryTimeoutNotificationRewardMultiplier,
               unauthorizedSigningNotificationRewardMultiplier,
@@ -328,32 +322,11 @@ describe("RandomBeacon - Parameters", () => {
         tx = await randomBeacon
           .connect(governance)
           .updateRewardParameters(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward,
-            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             unauthorizedSigningNotificationRewardMultiplier,
             dkgMaliciousResultNotificationRewardMultiplier
           )
-      })
-
-      it("should update the DKG result submission reward", async () => {
-        expect(await randomBeacon.dkgResultSubmissionReward()).to.be.equal(
-          dkgResultSubmissionReward
-        )
-      })
-
-      it("should update the sortition pool unlocking reward", async () => {
-        expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
-          sortitionPoolUnlockingReward
-        )
-      })
-
-      it("should update the ineligible operator notifier reward", async () => {
-        expect(
-          await randomBeacon.ineligibleOperatorNotifierReward()
-        ).to.be.equal(ineligibleOperatorNotifierReward)
       })
 
       it("should update the sortition pool rewards ban duration", async () => {
@@ -378,9 +351,6 @@ describe("RandomBeacon - Parameters", () => {
         await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
           .withArgs(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward,
-            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             unauthorizedSigningNotificationRewardMultiplier,
