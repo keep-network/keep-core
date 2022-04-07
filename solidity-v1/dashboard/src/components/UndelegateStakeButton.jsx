@@ -5,6 +5,7 @@ import { useModal } from "../hooks/useModal"
 import { ContractsLoaded } from "../contracts"
 import { MODAL_TYPES } from "../constants/constants"
 import { cancelStake, undelegateStake } from "../actions/web3"
+import ReactTooltip from "react-tooltip"
 
 const UndelegateStakeButton = (props) => {
   const { openConfirmationModal, openModal } = useModal()
@@ -36,6 +37,48 @@ const UndelegateStakeButton = (props) => {
     })
   }
 
+  const renderUndelegateStakeButton = (delegationOperator, disabled) => {
+    if (disabled) {
+      return (
+        <>
+          <span
+            data-tip
+            data-for={`undelegate-button-for-operator-${delegationOperator}`}
+          >
+            <Button
+              className={`undelegate-stake-button ${props.btnClassName}`}
+              onClick={undelegate}
+              disabled={true}
+            >
+              {props.btnText}
+            </Button>
+          </span>
+          <ReactTooltip
+            id={`undelegate-button-for-operator-${delegationOperator}`}
+            place="top"
+            type="dark"
+            effect={"solid"}
+          >
+            <span>
+              To be eligible to earn monthly rewards you will need to set up and
+              run a PRE node.
+            </span>
+          </ReactTooltip>
+        </>
+      )
+    }
+
+    return (
+      <Button
+        className={props.btnClassName}
+        onClick={undelegate}
+        disabled={props.disabled}
+      >
+        {props.btnText}
+      </Button>
+    )
+  }
+
   return props.isInInitializationPeriod ? (
     <SubmitButton
       className={props.btnClassName}
@@ -46,13 +89,7 @@ const UndelegateStakeButton = (props) => {
       cancel
     </SubmitButton>
   ) : (
-    <Button
-      className={props.btnClassName}
-      onClick={undelegate}
-      disabled={props.disabled}
-    >
-      {props.btnText}
-    </Button>
+    renderUndelegateStakeButton(props.operator, props.disabled)
   )
 }
 
