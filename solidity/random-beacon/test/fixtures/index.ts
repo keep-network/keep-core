@@ -33,7 +33,6 @@ export const dkgState = {
 
 export const params = {
   governanceDelay: 604800, // 1 week
-  relayRequestFee: ethers.utils.parseEther("0.031"), // 0.031ETH
   relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
@@ -217,7 +216,6 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
   )
 
   await randomBeacon.updateRelayEntryParameters(
-    params.relayRequestFee,
     params.relayEntrySoftTimeout,
     params.relayEntryHardTimeout,
     params.callbackGasLimit

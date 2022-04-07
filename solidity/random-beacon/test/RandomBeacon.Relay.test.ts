@@ -162,9 +162,7 @@ describe("RandomBeacon - Relay", () => {
 
                 tx = await randomBeacon
                   .connect(requester)
-                  .requestRelayEntry(ZERO_ADDRESS, {
-                    value: params.relayRequestFee,
-                  })
+                  .requestRelayEntry(ZERO_ADDRESS)
               })
 
               after(async () => {
@@ -183,17 +181,6 @@ describe("RandomBeacon - Relay", () => {
                 )
                 expect(await sortitionPool.isLocked()).to.be.false
               })
-
-              it("should transfer the relay request fee to the Reimbursement Pool", async () => {
-                const postReimbursementPoolBalance = await provider.getBalance(
-                  reimbursementPool.address
-                )
-                const diff = postReimbursementPoolBalance.sub(
-                  initialReimbursementPoolBalance
-                )
-
-                expect(diff).to.be.equal(params.relayRequestFee)
-              })
             }
           )
 
@@ -210,9 +197,7 @@ describe("RandomBeacon - Relay", () => {
 
                 tx = await randomBeacon
                   .connect(requester)
-                  .requestRelayEntry(ZERO_ADDRESS, {
-                    value: params.relayRequestFee,
-                  })
+                  .requestRelayEntry(ZERO_ADDRESS)
               })
 
               after(async () => {
@@ -297,9 +282,7 @@ describe("RandomBeacon - Relay", () => {
           await createSnapshot()
 
           await approveTokenForFee()
-          await randomBeacon
-            .connect(requester)
-            .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
+          await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         })
 
         after(async () => {
@@ -308,9 +291,7 @@ describe("RandomBeacon - Relay", () => {
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS, {
-              value: params.relayRequestFee,
-            })
+            randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
           ).to.be.revertedWith("Another relay request in progress")
         })
       })
@@ -319,9 +300,7 @@ describe("RandomBeacon - Relay", () => {
     context("when no groups exist", () => {
       it("should revert", async () => {
         await expect(
-          randomBeacon
-            .connect(requester)
-            .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
+          randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
         ).to.be.revertedWith("No active groups")
       })
     })
@@ -343,9 +322,7 @@ describe("RandomBeacon - Relay", () => {
         await createSnapshot()
 
         await approveTokenForFee()
-        await randomBeacon
-          .connect(requester)
-          .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
+        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
       after(async () => {
@@ -479,9 +456,7 @@ describe("RandomBeacon - Relay", () => {
         await createSnapshot()
 
         await approveTokenForFee()
-        await randomBeacon
-          .connect(requester)
-          .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
+        await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
       after(async () => {
@@ -700,9 +675,7 @@ describe("RandomBeacon - Relay", () => {
 
       await createGroup(randomBeacon, members)
       await approveTokenForFee()
-      await randomBeacon
-        .connect(requester)
-        .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
+      await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
     after(async () => {
@@ -1035,9 +1008,7 @@ describe("RandomBeacon - Relay", () => {
 
       await createGroup(randomBeacon, members)
       await approveTokenForFee()
-      await randomBeacon
-        .connect(requester)
-        .requestRelayEntry(ZERO_ADDRESS, { value: params.relayRequestFee })
+      await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
     after(async () => {
@@ -2115,9 +2086,7 @@ describe("RandomBeacon - Relay", () => {
   }
 
   async function approveTokenForFee() {
-    await t.mint(requester.address, params.relayRequestFee)
-    await t
-      .connect(requester)
-      .approve(randomBeacon.address, params.relayRequestFee)
+    await t.mint(requester.address)
+    await t.connect(requester).approve(randomBeacon.address)
   }
 })

@@ -22,7 +22,6 @@ describe("RandomBeaconGovernance", () => {
 
   const governanceDelay = 604800 // 1 week
 
-  const initialRelayRequestFee = 100000
   const initialRelayEntrySoftTimeout = 10
   const initialRelayEntryHardTimeout = 100
   const initialCallbackGasLimit = 900000
@@ -52,7 +51,6 @@ describe("RandomBeaconGovernance", () => {
     await randomBeacon
       .connect(governance)
       .updateRelayEntryParameters(
-        initialRelayRequestFee,
         initialRelayEntrySoftTimeout,
         initialRelayEntryHardTimeout,
         initialCallbackGasLimit
@@ -395,137 +393,6 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingRandomBeaconOwnershipTransferDelayTime()
-          ).to.be.revertedWith("Change not initiated")
-        })
-      }
-    )
-  })
-
-  describe("beginRelayRequestFeeUpdate", () => {
-    context("when the caller is not the owner", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeaconGovernance
-            .connect(thirdParty)
-            .beginRelayRequestFeeUpdate(123)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
-      })
-    })
-
-    context("when the caller is the owner", () => {
-      let tx: ContractTransaction
-
-      before(async () => {
-        await createSnapshot()
-
-        tx = await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayRequestFeeUpdate(123)
-      })
-
-      after(async () => {
-        await restoreSnapshot()
-      })
-
-      it("should not update the relay request fee", async () => {
-        expect(await randomBeacon.relayRequestFee()).to.be.equal(
-          initialRelayRequestFee
-        )
-      })
-
-      it("should start the governance delay timer", async () => {
-        expect(
-          await randomBeaconGovernance.getRemainingRelayRequestFeeUpdateTime()
-        ).to.be.equal(governanceDelay)
-      })
-
-      it("should emit the RelayRequestFeeUpdateStarted event", async () => {
-        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
-          .timestamp
-        await expect(tx)
-          .to.emit(randomBeaconGovernance, "RelayRequestFeeUpdateStarted")
-          .withArgs(123, blockTimestamp)
-      })
-    })
-  })
-
-  describe("finalizeRelayRequestFeeUpdate", () => {
-    context("when the caller is not the owner", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeaconGovernance
-            .connect(thirdParty)
-            .finalizeRelayRequestFeeUpdate()
-        ).to.be.revertedWith("Ownable: caller is not the owner")
-      })
-    })
-
-    context("when the update process is not initialized", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeaconGovernance
-            .connect(governance)
-            .finalizeRelayRequestFeeUpdate()
-        ).to.be.revertedWith("Change not initiated")
-      })
-    })
-
-    context("when the governance delay has not passed", () => {
-      it("should revert", async () => {
-        await createSnapshot()
-
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayRequestFeeUpdate(123)
-
-        await helpers.time.increaseTime(governanceDelay - 60) // -1min
-
-        await expect(
-          randomBeaconGovernance
-            .connect(governance)
-            .finalizeRelayRequestFeeUpdate()
-        ).to.be.revertedWith("Governance delay has not elapsed")
-
-        await restoreSnapshot()
-      })
-    })
-
-    context(
-      "when the update process is initialized and governance delay passed",
-      () => {
-        let tx: ContractTransaction
-
-        before(async () => {
-          await createSnapshot()
-
-          await randomBeaconGovernance
-            .connect(governance)
-            .beginRelayRequestFeeUpdate(123)
-
-          await helpers.time.increaseTime(governanceDelay)
-
-          tx = await randomBeaconGovernance
-            .connect(governance)
-            .finalizeRelayRequestFeeUpdate()
-        })
-
-        after(async () => {
-          await restoreSnapshot()
-        })
-
-        it("should update the relay request fee", async () => {
-          expect(await randomBeacon.relayRequestFee()).to.be.equal(123)
-        })
-
-        it("should emit RelayRequestFeeUpdated event", async () => {
-          await expect(tx)
-            .to.emit(randomBeaconGovernance, "RelayRequestFeeUpdated")
-            .withArgs(123)
-        })
-
-        it("should reset the governance delay timer", async () => {
-          await expect(
-            randomBeaconGovernance.getRemainingRelayRequestFeeUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

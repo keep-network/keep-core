@@ -28,9 +28,6 @@ contract RandomBeaconGovernance is Ownable {
     address public newRandomBeaconOwner;
     uint256 public randomBeaconOwnershipTransferInitiated;
 
-    uint256 public newRelayRequestFee;
-    uint256 public relayRequestFeeChangeInitiated;
-
     uint256 public newRelayEntrySoftTimeout;
     uint256 public relayEntrySoftTimeoutChangeInitiated;
 
@@ -111,12 +108,6 @@ contract RandomBeaconGovernance is Ownable {
         uint256 timestamp
     );
     event RandomBeaconOwnershipTransferred(address newRandomBeaconOwner);
-
-    event RelayRequestFeeUpdateStarted(
-        uint256 relayRequestFee,
-        uint256 timestamp
-    );
-    event RelayRequestFeeUpdated(uint256 relayRequestFee);
 
     event RelayEntrySoftTimeoutUpdateStarted(
         uint256 relayEntrySoftTimeout,
@@ -343,40 +334,6 @@ contract RandomBeaconGovernance is Ownable {
         newRandomBeaconOwner = address(0);
     }
 
-    /// @notice Begins the relay request fee update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newRelayRequestFee New relay request fee
-    function beginRelayRequestFeeUpdate(uint256 _newRelayRequestFee)
-        external
-        onlyOwner
-    {
-        /* solhint-disable not-rely-on-time */
-        newRelayRequestFee = _newRelayRequestFee;
-        relayRequestFeeChangeInitiated = block.timestamp;
-        emit RelayRequestFeeUpdateStarted(_newRelayRequestFee, block.timestamp);
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the relay request fee update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeRelayRequestFeeUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(relayRequestFeeChangeInitiated)
-    {
-        emit RelayRequestFeeUpdated(newRelayRequestFee);
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRelayEntryParameters(
-            newRelayRequestFee,
-            randomBeacon.relayEntrySoftTimeout(),
-            randomBeacon.relayEntryHardTimeout(),
-            randomBeacon.callbackGasLimit()
-        );
-        relayRequestFeeChangeInitiated = 0;
-        newRelayRequestFee = 0;
-    }
-
     /// @notice Begins the relay entry soft timeout update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newRelayEntrySoftTimeout New relay entry submission timeout in blocks
@@ -409,7 +366,6 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntrySoftTimeoutUpdated(newRelayEntrySoftTimeout);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
             newRelayEntrySoftTimeout,
             randomBeacon.relayEntryHardTimeout(),
             randomBeacon.callbackGasLimit()
@@ -446,7 +402,6 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySoftTimeout(),
             newRelayEntryHardTimeout,
             randomBeacon.callbackGasLimit()
@@ -488,7 +443,6 @@ contract RandomBeaconGovernance is Ownable {
         emit CallbackGasLimitUpdated(newCallbackGasLimit);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySoftTimeout(),
             randomBeacon.relayEntryHardTimeout(),
             newCallbackGasLimit
@@ -1265,17 +1219,6 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return getRemainingChangeTime(randomBeaconOwnershipTransferInitiated);
-    }
-
-    /// @notice Get the time remaining until the relay request fee can be
-    ///         updated.
-    /// @return Remaining time in seconds.
-    function getRemainingRelayRequestFeeUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return getRemainingChangeTime(relayRequestFeeChangeInitiated);
     }
 
     /// @notice Get the time remaining until the relay entry submission soft

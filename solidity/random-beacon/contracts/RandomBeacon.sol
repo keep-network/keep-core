@@ -171,7 +171,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     );
 
     event RelayEntryParametersUpdated(
-        uint256 relayRequestFee,
         uint256 relayEntrySoftTimeout,
         uint256 relayEntryHardTimeout,
         uint256 callbackGasLimit
@@ -387,10 +386,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
 
         relay.initSeedEntry();
-        // total gas of submit+approve ~780849. Assume gas price is 200gwei
-        // total dkg gas cost: 0.0000002 * 780849 = 0.1561698
-        // there need to be 5 requests to trigger dkg, so 0.156 / 5 = ~0.031 ETH need to be provided to break even.
-        relay.setRelayRequestFee(31e15); // TODO: revisit. Do we want to add a markup?
         relay.setRelayEntrySoftTimeout(1280); // 64 members * 20 blocks = 1280 blocks
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
@@ -432,24 +427,20 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _relayRequestFee New relay request fee
     /// @param _relayEntrySoftTimeout New relay entry submission soft timeout.
     /// @param _relayEntryHardTimeout New relay entry hard timeout
     /// @param _callbackGasLimit New callback gas limit
     function updateRelayEntryParameters(
-        uint256 _relayRequestFee,
         uint256 _relayEntrySoftTimeout,
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
         callbackGasLimit = _callbackGasLimit;
 
-        relay.setRelayRequestFee(_relayRequestFee);
         relay.setRelayEntrySoftTimeout(_relayEntrySoftTimeout);
         relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
-            _relayRequestFee,
             _relayEntrySoftTimeout,
             _relayEntryHardTimeout,
             callbackGasLimit
@@ -893,22 +884,17 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
 
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
-    ///         random number). Requires a request fee denominated in ETH.
+    ///         random number). Requester must be previously authorized by the
+    ///         governance.
     /// @param callbackContract Beacon consumer callback contract.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
         external
         payable
     {
-        if (!authorizedContracts[msg.sender]) {
-            require(
-                msg.value >= relay.relayRequestFee,
-                "Fee is less than the required minimum"
-            );
-            /* solhint-disable avoid-low-level-calls */
-            // slither-disable-next-line low-level-calls,unchecked-lowlevel
-            address(reimbursementPool).call{value: relay.relayRequestFee}("");
-            /* solhint-enable avoid-low-level-calls */
-        }
+        require(
+            authorizedContracts[msg.sender],
+            "Requester must be authorized"
+        );
 
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
@@ -1247,12 +1233,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         in progress.
     function isRelayRequestInProgress() external view returns (bool) {
         return relay.isRequestInProgress();
-    }
-
-    /// @return Relay request fee in T. This fee needs to be provided by the
-    ///         account or contract requesting for a new relay entry.
-    function relayRequestFee() external view returns (uint256) {
-        return relay.relayRequestFee;
     }
 
     /// @return Soft timeout in blocks for a group to submit the relay entry.

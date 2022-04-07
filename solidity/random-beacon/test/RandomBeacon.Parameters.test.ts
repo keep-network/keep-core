@@ -24,7 +24,6 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateRelayEntryParameters", () => {
-    const relayRequestFee = 100
     const relayEntrySoftTimeout = 200
     const relayEntryHardTimeout = 300
     const callbackGasLimit = 400
@@ -35,7 +34,6 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateRelayEntryParameters(
-              relayRequestFee,
               relayEntrySoftTimeout,
               relayEntryHardTimeout,
               callbackGasLimit
@@ -50,17 +48,10 @@ describe("RandomBeacon - Parameters", () => {
         tx = await randomBeacon
           .connect(governance)
           .updateRelayEntryParameters(
-            relayRequestFee,
             relayEntrySoftTimeout,
             relayEntryHardTimeout,
             callbackGasLimit
           )
-      })
-
-      it("should update the relay request fee", async () => {
-        expect(await randomBeacon.relayRequestFee()).to.be.equal(
-          relayRequestFee
-        )
       })
 
       it("should update the relay entry soft timeout", async () => {
@@ -85,7 +76,6 @@ describe("RandomBeacon - Parameters", () => {
         await expect(tx)
           .to.emit(randomBeacon, "RelayEntryParametersUpdated")
           .withArgs(
-            relayRequestFee,
             relayEntrySoftTimeout,
             relayEntryHardTimeout,
             callbackGasLimit
