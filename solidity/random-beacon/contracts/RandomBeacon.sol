@@ -286,9 +286,10 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         address[] groupMembers
     );
 
-    event AuthorizedContract(address contractToAuthorize);
-
-    event UnauthorizedContract(address contractToUnauthorize);
+    event RequesterAuthorizationUpdated(
+        address indexed requester,
+        bool isAuthorized
+    );
 
     event UnauthorizedSigningSlashingFailed(
         uint64 indexed groupId,
@@ -577,20 +578,17 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         );
     }
 
-    /// @notice Authorize contract which can request a relay entry without
-    ///         paying fees. Authorization can be done by the owner only.
-    function authorizeContract(address _contract) external onlyOwner {
-        authorizedContracts[_contract] = true;
+    /// @notice Set authorization for requesters that can request a relay
+    ///         entry. It can be done by the owner only.
+    /// @param requester Requester, can be a contract or EOA
+    /// @param isAuthorized True or false
+    function setRequesterAuthorization(address requester, bool isAuthorized)
+        external
+        onlyOwner
+    {
+        authorizedContracts[requester] = isAuthorized;
 
-        emit AuthorizedContract(_contract);
-    }
-
-    /// @notice Unauthorize contract which can request a relay entry without
-    ///         paying fees. Unauthorization can be done by the owner only.
-    function unauthorizeContract(address _contract) external onlyOwner {
-        delete authorizedContracts[_contract];
-
-        emit UnauthorizedContract(_contract);
+        emit RequesterAuthorizationUpdated(requester, isAuthorized);
     }
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
