@@ -617,15 +617,22 @@
   resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.3.tgz#0aee6913ffde3806d3652297155fb2c1bbff6a50"
   integrity sha512-cqpvGGOBoXqoUxVAqcF5rmlEg8lbmj+LRWzOYW4jaweWVxzRBG2DbaaZ7frHXfJHZ3sicr4cLhlhcqbIuiubYA==
   dependencies:
-    "@keep-network/sortition-pools" "^2.0.0-pre.6"
+    "@keep-network/sortition-pools" "1.2.0-dev.24"
     "@openzeppelin/contracts" "^4.4.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-    "@threshold-network/solidity-contracts" ">1.1.0-dev <1.1.0-ropsten"
 
 "@keep-network/sortition-pools@^2.0.0-pre.6":
   version "2.0.0-pre.6"
   resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.6.tgz#72ca66cc0c476a21644d9b2342f7136268c802eb"
   integrity sha512-i+naD1W10pxCRjzJ63yeNJgpokpWzr7eTDI4TRCT1opIRyYCUPa6VNF+U3WGGToM5PtgrBHIe1TZbL7nx8LTSw==
+  dependencies:
+    "@openzeppelin/contracts" "^4.3.2"
+    "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
+
+"@keep-network/sortition-pools@^2.0.0-pre.7":
+  version "2.0.0-pre.7"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.7.tgz#07ce8d645bbb45855718680b0679fc5dd329e34a"
+  integrity sha512-X5/QeEBAsz0v9QfBZ9YVgP/L5TkQHwW1fuyVIirVuR+Wf5zdsWopixk/yC5fL4BSapNaf4KJeIueMF7Eq8Kv/A==
   dependencies:
     "@openzeppelin/contracts" "^4.3.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
