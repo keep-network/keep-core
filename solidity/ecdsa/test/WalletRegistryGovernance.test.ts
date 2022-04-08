@@ -1044,7 +1044,7 @@ describe("WalletRegistryGovernance", async () => {
       })
     })
 
-    context("when the caller is the owner and value is correct", () => {
+    context("when the caller is the owner", () => {
       let tx
 
       before(async () => {
@@ -1178,7 +1178,7 @@ describe("WalletRegistryGovernance", async () => {
       })
     })
 
-    context("when the caller is the owner and value is correct", () => {
+    context("when the caller is the owner", () => {
       let tx
 
       before(async () => {
@@ -1642,7 +1642,7 @@ describe("WalletRegistryGovernance", async () => {
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the owner and the value is correct", () => {
       let tx
 
       before(async () => {
@@ -1805,7 +1805,7 @@ describe("WalletRegistryGovernance", async () => {
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the owner and the value is correct", () => {
       let tx
 
       before(async () => {
@@ -2145,7 +2145,7 @@ describe("WalletRegistryGovernance", async () => {
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the owner and the value is correct", () => {
       let tx
 
       before(async () => {
@@ -2431,7 +2431,7 @@ describe("WalletRegistryGovernance", async () => {
       })
     })
 
-    context("when the caller is the owner and value is correct", () => {
+    context("when the caller is the owner", () => {
       let tx
 
       before(async () => {

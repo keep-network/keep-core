@@ -94,7 +94,6 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    staking.address,
     t.address,
     constants.poolWeightDivisor
   )) as SortitionPool
@@ -173,6 +172,11 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
+  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+  const governance: SignerWithAddress = await ethers.getNamedSigner(
+    "governance"
+  )
+
   const contracts = await randomBeaconDeployment()
 
   const RandomBeaconGovernance =
@@ -185,7 +189,12 @@ export async function testDeployment(): Promise<DeployedContracts> {
       params.governanceDelay
     )
   await randomBeaconGovernance.deployed()
-  await contracts.randomBeacon.transferOwnership(randomBeaconGovernance.address)
+  await contracts.randomBeacon
+    .connect(deployer)
+    .transferOwnership(randomBeaconGovernance.address)
+  await randomBeaconGovernance
+    .connect(deployer)
+    .transferOwnership(governance.address)
 
   const newContracts = { randomBeaconGovernance }
 

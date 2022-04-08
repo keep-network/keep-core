@@ -613,10 +613,10 @@
     "@openzeppelin/upgrades" "^2.7.2"
     openzeppelin-solidity "2.4.0"
 
-"@keep-network/sortition-pools@^2.0.0-pre.6":
-  version "2.0.0-pre.6"
-  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.6.tgz#72ca66cc0c476a21644d9b2342f7136268c802eb"
-  integrity sha512-i+naD1W10pxCRjzJ63yeNJgpokpWzr7eTDI4TRCT1opIRyYCUPa6VNF+U3WGGToM5PtgrBHIe1TZbL7nx8LTSw==
+"@keep-network/sortition-pools@^2.0.0-pre.7":
+  version "2.0.0-pre.7"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.7.tgz#07ce8d645bbb45855718680b0679fc5dd329e34a"
+  integrity sha512-X5/QeEBAsz0v9QfBZ9YVgP/L5TkQHwW1fuyVIirVuR+Wf5zdsWopixk/yC5fL4BSapNaf4KJeIueMF7Eq8Kv/A==
   dependencies:
     "@openzeppelin/contracts" "^4.3.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
@@ -7032,12 +7032,7 @@ minimatch@^3.0.4:
   dependencies:
     brace-expansion "^1.1.7"
 
-minimist@^1.2.0, minimist@^1.2.5, minimist@~1.2.5:
-  version "1.2.6"
-  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.6.tgz#8637a5b759ea0d6e98702cfb3a9283323c93af44"
-  integrity sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==
-
-minimist@^1.2.5, minimist@^1.2.6:
+minimist@^1.2.0, minimist@^1.2.5, minimist@^1.2.6, minimist@~1.2.5:
   version "1.2.6"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.6.tgz#8637a5b759ea0d6e98702cfb3a9283323c93af44"
   integrity sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==

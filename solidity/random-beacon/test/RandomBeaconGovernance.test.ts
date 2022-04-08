@@ -13,92 +13,99 @@ import type {
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
+const governanceDelay = 604800 // 1 week
+
+const initialRelayEntrySoftTimeout = 10
+const initialRelayEntryHardTimeout = 100
+const initialCallbackGasLimit = 900000
+const initialGroupCreationFrequency = 4
+const initialGroupLifeTime = 60 * 60 * 24 * 7
+const initialDkgResultChallengePeriodLength = 60
+const initialDkgResultSubmissionTimeout = 200
+const initialDkgSubmitterPrecedencePeriodLength = 180
+const initialRelayEntrySubmissionFailureSlashingAmount = 1000
+const initialMaliciousDkgResultSlashingAmount = 1000000000
+const initialUnauthorizedSigningSlashingAmount = 1000000000
+const initialSortitionPoolRewardsBanDuration = 1209600
+const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
+const initialUnauthorizedSignatureNotificationRewardMultiplier = 5
+const initialMinimumAuthorization = 1000000
+const initialAuthorizationDecreaseDelay = 86400
+const initialDkgMaliciousResultNotificationRewardMultiplier = 5
+
+const fixture = async () => {
+  const governance = await ethers.getNamedSigner("deployer")
+
+  const contracts = await randomBeaconDeployment()
+
+  const randomBeacon = contracts.randomBeacon as RandomBeacon
+
+  await randomBeacon
+    .connect(governance)
+    .updateRelayEntryParameters(
+      initialRelayEntrySoftTimeout,
+      initialRelayEntryHardTimeout,
+      initialCallbackGasLimit
+    )
+  await randomBeacon
+    .connect(governance)
+    .updateGroupCreationParameters(
+      initialGroupCreationFrequency,
+      initialGroupLifeTime
+    )
+  await randomBeacon
+    .connect(governance)
+    .updateDkgParameters(
+      initialDkgResultChallengePeriodLength,
+      initialDkgResultSubmissionTimeout,
+      initialDkgSubmitterPrecedencePeriodLength
+    )
+  await randomBeacon
+    .connect(governance)
+    .updateRewardParameters(
+      initialSortitionPoolRewardsBanDuration,
+      initialRelayEntryTimeoutNotificationRewardMultiplier,
+      initialUnauthorizedSignatureNotificationRewardMultiplier,
+      initialDkgMaliciousResultNotificationRewardMultiplier
+    )
+  await randomBeacon
+    .connect(governance)
+    .updateSlashingParameters(
+      initialRelayEntrySubmissionFailureSlashingAmount,
+      initialMaliciousDkgResultSlashingAmount,
+      initialUnauthorizedSigningSlashingAmount
+    )
+
+  await randomBeacon
+    .connect(governance)
+    .updateAuthorizationParameters(
+      initialMinimumAuthorization,
+      initialAuthorizationDecreaseDelay
+    )
+
+  const RandomBeaconGovernance =
+    await ethers.getContractFactory<RandomBeaconGovernance__factory>(
+      "RandomBeaconGovernance"
+    )
+  const randomBeaconGovernance: RandomBeaconGovernance =
+    await RandomBeaconGovernance.deploy(randomBeacon.address, governanceDelay)
+  await randomBeaconGovernance.deployed()
+  await randomBeacon.transferOwnership(randomBeaconGovernance.address)
+
+  return { governance, randomBeaconGovernance, randomBeacon }
+}
+
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
-  let thirdParty: Signer
-  let thirdPartyContract: SignerWithAddress
+  let thirdParty: SignerWithAddress
   let randomBeacon: RandomBeacon
   let randomBeaconGovernance: RandomBeaconGovernance
 
-  const governanceDelay = 604800 // 1 week
-
-  const initialRelayEntrySoftTimeout = 10
-  const initialRelayEntryHardTimeout = 100
-  const initialCallbackGasLimit = 900000
-  const initialGroupCreationFrequency = 4
-  const initialGroupLifeTime = 60 * 60 * 24 * 7
-  const initialDkgResultChallengePeriodLength = 60
-  const initialDkgResultSubmissionTimeout = 200
-  const initialDkgSubmitterPrecedencePeriodLength = 180
-  const initialRelayEntrySubmissionFailureSlashingAmount = 1000
-  const initialMaliciousDkgResultSlashingAmount = 1000000000
-  const initialUnauthorizedSigningSlashingAmount = 1000000000
-  const initialSortitionPoolRewardsBanDuration = 1209600
-  const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
-  const initialUnauthorizedSignatureNotificationRewardMultiplier = 5
-  const initialMinimumAuthorization = 1000000
-  const initialAuthorizationDecreaseDelay = 86400
-  const initialDkgMaliciousResultNotificationRewardMultiplier = 5
-
   // prettier-ignore
   before(async () => {
-    [governance, thirdParty, thirdPartyContract ] = await ethers.getSigners()
-
-    const contracts = await waffle.loadFixture(randomBeaconDeployment)
-
-    randomBeacon = contracts.randomBeacon as RandomBeacon
-
-    await randomBeacon
-      .connect(governance)
-      .updateRelayEntryParameters(
-        initialRelayEntrySoftTimeout,
-        initialRelayEntryHardTimeout,
-        initialCallbackGasLimit
-      )
-    await randomBeacon
-      .connect(governance)
-      .updateGroupCreationParameters(
-        initialGroupCreationFrequency,
-        initialGroupLifeTime
-      )
-    await randomBeacon
-      .connect(governance)
-      .updateDkgParameters(
-        initialDkgResultChallengePeriodLength,
-        initialDkgResultSubmissionTimeout,
-        initialDkgSubmitterPrecedencePeriodLength
-      )
-    await randomBeacon
-      .connect(governance)
-      .updateRewardParameters(
-        initialSortitionPoolRewardsBanDuration,
-        initialRelayEntryTimeoutNotificationRewardMultiplier,
-        initialUnauthorizedSignatureNotificationRewardMultiplier,
-        initialDkgMaliciousResultNotificationRewardMultiplier
-      )
-    await randomBeacon
-      .connect(governance)
-      .updateSlashingParameters(
-        initialRelayEntrySubmissionFailureSlashingAmount,
-        initialMaliciousDkgResultSlashingAmount,
-        initialUnauthorizedSigningSlashingAmount
-      )
-
-    await randomBeacon
-      .connect(governance)
-      .updateAuthorizationParameters(
-        initialMinimumAuthorization,
-        initialAuthorizationDecreaseDelay
-      )
-
-    const RandomBeaconGovernance = await ethers.getContractFactory<RandomBeaconGovernance__factory>(
-      "RandomBeaconGovernance"
-    )
-    randomBeaconGovernance = await RandomBeaconGovernance.deploy(
-      randomBeacon.address, governanceDelay
-    )
-    await randomBeaconGovernance.deployed()
-    await randomBeacon.transferOwnership(randomBeaconGovernance.address)
+    [thirdParty] = await ethers.getUnnamedSigners()
+    ;({ governance, randomBeaconGovernance, randomBeacon } =
+      await waffle.loadFixture(fixture))
   })
 
   describe("beginGovernanceDelayUpdate", () => {
@@ -3052,5 +3059,19 @@ describe("RandomBeaconGovernance", () => {
         })
       }
     )
+  })
+
+  describe("withdrawIneligibleRewards", () => {
+    context("when caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .withdrawIneligibleRewards(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    // The actual functionality is tested in RandomBeacon.Rewards.test.ts
   })
 })
