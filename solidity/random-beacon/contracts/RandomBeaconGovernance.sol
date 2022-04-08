@@ -84,8 +84,8 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newDkgApprovalGasOffset;
     uint256 public dkgApprovalGasOffsetChangeInitiated;
 
-    uint256 public newFailedHeartbeatGasOffset;
-    uint256 public failedHeartbeatGasOffsetChangeInitiated;
+    uint256 public newOperatorInactivityGasOffset;
+    uint256 public operatorInactivityGasOffsetChangeInitiated;
 
     uint256 public newRelayEntrySubmissionGasOffset;
     uint256 public relayEntrySubmissionGasOffsetChangeInitiated;
@@ -232,11 +232,13 @@ contract RandomBeaconGovernance is Ownable {
     );
     event DkgApprovalGasOffsetUpdated(uint256 dkgApprovalGasOffset);
 
-    event FailedHeartbeatGasOffsetUpdateStarted(
-        uint256 failedHeartbeatGasOffset,
+    event OperatorInactivityGasOffsetUpdateStarted(
+        uint256 operatorInactivityGasOffset,
         uint256 timestamp
     );
-    event FailedHeartbeatGasOffsetUpdated(uint256 failedHeartbeatGasOffset);
+    event OperatorInactivityGasOffsetUpdated(
+        uint256 operatorInactivityGasOffset
+    );
 
     event RelayEntrySubmissionGasOffsetUpdateStarted(
         uint256 relayEntrySubmissionGasOffset,
@@ -911,7 +913,7 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
             newDkgApprovalGasOffset,
-            randomBeacon.failedHeartbeatGasOffset(),
+            randomBeacon.operatorInactivityGasOffset(),
             randomBeacon.relayEntrySubmissionGasOffset(),
             randomBeacon.dkgResultSubmissionGas()
         );
@@ -919,40 +921,40 @@ contract RandomBeaconGovernance is Ownable {
         newDkgApprovalGasOffset = 0;
     }
 
-    /// @notice Begins the failed heartbeat gas offset update process.
+    /// @notice Begins the operator inactivity gas offset update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newFailedHeartbeatGasOffset New failed heartbeat gas offset
-    function beginFailedHeartbeatGasOffsetUpdate(
-        uint256 _newFailedHeartbeatGasOffset
+    /// @param _newOperatorInactivityGasOffset New operator inactivity gas offset
+    function beginOperatorInactivityGasOffsetUpdate(
+        uint256 _newOperatorInactivityGasOffset
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
-        newFailedHeartbeatGasOffset = _newFailedHeartbeatGasOffset;
-        failedHeartbeatGasOffsetChangeInitiated = block.timestamp;
-        emit FailedHeartbeatGasOffsetUpdateStarted(
-            _newFailedHeartbeatGasOffset,
+        newOperatorInactivityGasOffset = _newOperatorInactivityGasOffset;
+        operatorInactivityGasOffsetChangeInitiated = block.timestamp;
+        emit OperatorInactivityGasOffsetUpdateStarted(
+            _newOperatorInactivityGasOffset,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes failed heartbeat gas offset update process.
+    /// @notice Finalizes operator inactivity gas offset update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeFailedHeartbeatGasOffsetUpdate()
+    function finalizeOperatorInactivityGasOffsetUpdate()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(failedHeartbeatGasOffsetChangeInitiated)
+        onlyAfterGovernanceDelay(operatorInactivityGasOffsetChangeInitiated)
     {
-        emit FailedHeartbeatGasOffsetUpdated(newFailedHeartbeatGasOffset);
+        emit OperatorInactivityGasOffsetUpdated(newOperatorInactivityGasOffset);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
             randomBeacon.dkgApprovalGasOffset(),
-            newFailedHeartbeatGasOffset,
+            newOperatorInactivityGasOffset,
             randomBeacon.relayEntrySubmissionGasOffset(),
             randomBeacon.dkgResultSubmissionGas()
         );
-        failedHeartbeatGasOffsetChangeInitiated = 0;
-        newFailedHeartbeatGasOffset = 0;
+        operatorInactivityGasOffsetChangeInitiated = 0;
+        newOperatorInactivityGasOffset = 0;
     }
 
     /// @notice Begins the relay entry submission gas offset update process.
@@ -985,7 +987,7 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
             randomBeacon.dkgApprovalGasOffset(),
-            randomBeacon.failedHeartbeatGasOffset(),
+            randomBeacon.operatorInactivityGasOffset(),
             newRelayEntrySubmissionGasOffset,
             randomBeacon.dkgResultSubmissionGas()
         );
@@ -1021,7 +1023,7 @@ contract RandomBeaconGovernance is Ownable {
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
             randomBeacon.dkgApprovalGasOffset(),
-            randomBeacon.failedHeartbeatGasOffset(),
+            randomBeacon.operatorInactivityGasOffset(),
             randomBeacon.relayEntrySubmissionGasOffset(),
             newDkgResultSubmissionGas
         );
@@ -1442,15 +1444,16 @@ contract RandomBeaconGovernance is Ownable {
         return getRemainingChangeTime(dkgApprovalGasOffsetChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the failed heartbeat gas offset duration
+    /// @notice Get the time remaining until the operator inactivity gas offset duration
     ///         can be updated.
     /// @return Remaining time in seconds.
-    function getFailedHeartbeatGasOffsetUpdateTime()
+    function getOperatorInactivityGasOffsetUpdateTime()
         external
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(failedHeartbeatGasOffsetChangeInitiated);
+        return
+            getRemainingChangeTime(operatorInactivityGasOffsetChangeInitiated);
     }
 
     /// @notice Get the time remaining until the relay entry submission gas offset

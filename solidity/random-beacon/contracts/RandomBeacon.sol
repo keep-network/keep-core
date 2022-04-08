@@ -130,9 +130,9 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     //         updated by the governace based on the current market conditions.
     uint256 public dkgApprovalGasOffset = 43500;
 
-    // @notice Gas is meant to balance the failed heartbeat cost. Can be updated
+    // @notice Gas is meant to balance the operator inactivity cost. Can be updated
     //         by the governace based on the current market conditions.
-    uint256 public failedHeartbeatGasOffset = 54500;
+    uint256 public operatorInactivityGasOffset = 54500;
 
     // @notice Gas is meant to balance the relay entry submission cost. Can be
     //         updated by the governace based on the current market conditions.
@@ -346,7 +346,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
 
     event GasParametersUpdated(
         uint256 dkgApprovalGasOffset,
-        uint256 failedHeartbeatGasOffset,
+        uint256 operatorInactivityGasOffset,
         uint256 relayEntrySubmissionGasOffset,
         uint256 dkgResultSubmissionGas
     );
@@ -557,22 +557,22 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _dkgApprovalGasOffset New DKG approval gas offset
-    /// @param _failedHeartbeatGasOffset New failed heartbeat gas offset
+    /// @param _operatorInactivityGasOffset New operator inactivity gas offset
     /// @param _relayEntrySubmissionGasOffset New relay entry submission gas offset
     /// @param _dkgResultSubmissionGas DKG result submission gas
     function updateGasParameters(
         uint256 _dkgApprovalGasOffset,
-        uint256 _failedHeartbeatGasOffset,
+        uint256 _operatorInactivityGasOffset,
         uint256 _relayEntrySubmissionGasOffset,
         uint256 _dkgResultSubmissionGas
     ) external onlyOwner {
         dkgApprovalGasOffset = _dkgApprovalGasOffset;
-        failedHeartbeatGasOffset = _failedHeartbeatGasOffset;
+        operatorInactivityGasOffset = _operatorInactivityGasOffset;
         relayEntrySubmissionGasOffset = _relayEntrySubmissionGasOffset;
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
         emit GasParametersUpdated(
             _dkgApprovalGasOffset,
-            _failedHeartbeatGasOffset,
+            _operatorInactivityGasOffset,
             _relayEntrySubmissionGasOffset,
             _dkgResultSubmissionGas
         );
@@ -1206,7 +1206,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         );
 
         reimbursementPool.refund(
-            (gasStart - gasleft()) + failedHeartbeatGasOffset,
+            (gasStart - gasleft()) + operatorInactivityGasOffset,
             msg.sender
         );
     }
