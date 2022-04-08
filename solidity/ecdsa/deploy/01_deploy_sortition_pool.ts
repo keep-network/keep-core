@@ -13,7 +13,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const SortitionPool = await deployments.deploy("SortitionPool", {
     from: deployer,
-    args: [TokenStaking.address, T.address, POOL_WEIGHT_DIVISOR],
+    args: [T.address, POOL_WEIGHT_DIVISOR],
     log: true,
   })
 
