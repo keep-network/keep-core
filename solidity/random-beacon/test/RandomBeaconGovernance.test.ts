@@ -99,7 +99,7 @@ const fixture = async () => {
   await randomBeaconGovernance.deployed()
   await randomBeacon.transferOwnership(randomBeaconGovernance.address)
 
-  return { governance, randomBeaconGovernance }
+  return { governance, randomBeaconGovernance, randomBeacon }
 }
 
 describe("RandomBeaconGovernance", () => {
@@ -111,7 +111,8 @@ describe("RandomBeaconGovernance", () => {
   // prettier-ignore
   before(async () => {
     [thirdParty] = await ethers.getUnnamedSigners()
-    ;({governance,randomBeaconGovernance} = await waffle.loadFixture(fixture))
+    ;({ governance, randomBeaconGovernance, randomBeacon } =
+      await waffle.loadFixture(fixture))
   })
 
   describe("beginGovernanceDelayUpdate", () => {
