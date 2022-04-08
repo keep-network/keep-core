@@ -18,7 +18,7 @@ pragma solidity ^0.8.9;
 /// @dev A constructor is not defined, which makes the contract compatible with
 ///      upgradable proxies. This requires calling explicitly `_transferGovernance`
 ///      function in a child contract.
-contract Governable {
+abstract contract Governable {
     // Governance of the contract
     address public governance;
 
