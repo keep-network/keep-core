@@ -312,13 +312,13 @@ describe("WalletRegistryGovernance", async () => {
     )
   })
 
-  describe("beginWalletRegistryOwnershipTransfer", () => {
+  describe("beginWalletRegistryGovernanceTransfer", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           walletRegistryGovernance
             .connect(thirdParty)
-            .beginWalletRegistryOwnershipTransfer(
+            .beginWalletRegistryGovernanceTransfer(
               "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
@@ -333,7 +333,7 @@ describe("WalletRegistryGovernance", async () => {
 
         tx = await walletRegistryGovernance
           .connect(governance)
-          .beginWalletRegistryOwnershipTransfer(
+          .beginWalletRegistryGovernanceTransfer(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )
       })
@@ -347,7 +347,7 @@ describe("WalletRegistryGovernance", async () => {
           await expect(
             walletRegistryGovernance
               .connect(governance)
-              .beginWalletRegistryOwnershipTransfer(
+              .beginWalletRegistryGovernanceTransfer(
                 ethers.constants.AddressZero
               )
           ).to.be.revertedWith(
@@ -357,24 +357,24 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not transfer the ownership", async () => {
-        expect(await walletRegistry.owner()).to.be.equal(
+        expect(await walletRegistry.governance()).to.be.equal(
           walletRegistryGovernance.address
         )
       })
 
       it("should start the governance delay timer", async () => {
         expect(
-          await walletRegistryGovernance.getRemainingWalletRegistryOwnershipTransferDelayTime()
+          await walletRegistryGovernance.getRemainingWalletRegistryGovernanceTransferDelayTime()
         ).to.be.equal(constants.governanceDelay)
       })
 
-      it("should emit WalletRegistryOwnershipTransferStarted", async () => {
+      it("should emit WalletRegistryGovernanceTransferStarted", async () => {
         const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
           .timestamp
         await expect(tx)
           .to.emit(
             walletRegistryGovernance,
-            "WalletRegistryOwnershipTransferStarted"
+            "WalletRegistryGovernanceTransferStarted"
           )
           .withArgs(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537",
@@ -384,13 +384,13 @@ describe("WalletRegistryGovernance", async () => {
     })
   })
 
-  describe("finalizeWalletRegistryOwnershipTransfer", () => {
+  describe("finalizeWalletRegistryGovernanceTransfer", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           walletRegistryGovernance
             .connect(thirdParty)
-            .finalizeWalletRegistryOwnershipTransfer()
+            .finalizeWalletRegistryGovernanceTransfer()
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -400,7 +400,7 @@ describe("WalletRegistryGovernance", async () => {
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .finalizeWalletRegistryOwnershipTransfer()
+            .finalizeWalletRegistryGovernanceTransfer()
         ).to.be.revertedWith("Change not initiated")
       })
     })
@@ -411,7 +411,7 @@ describe("WalletRegistryGovernance", async () => {
 
         await walletRegistryGovernance
           .connect(governance)
-          .beginWalletRegistryOwnershipTransfer(
+          .beginWalletRegistryGovernanceTransfer(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )
 
@@ -426,7 +426,7 @@ describe("WalletRegistryGovernance", async () => {
         await expect(
           walletRegistryGovernance
             .connect(governance)
-            .finalizeWalletRegistryOwnershipTransfer()
+            .finalizeWalletRegistryGovernanceTransfer()
         ).to.be.revertedWith("Governance delay has not elapsed")
       })
     })
@@ -441,7 +441,7 @@ describe("WalletRegistryGovernance", async () => {
 
           await walletRegistryGovernance
             .connect(governance)
-            .beginWalletRegistryOwnershipTransfer(
+            .beginWalletRegistryGovernanceTransfer(
               "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
             )
 
@@ -449,7 +449,7 @@ describe("WalletRegistryGovernance", async () => {
 
           tx = await walletRegistryGovernance
             .connect(governance)
-            .finalizeWalletRegistryOwnershipTransfer()
+            .finalizeWalletRegistryGovernanceTransfer()
         })
 
         after(async () => {
@@ -457,23 +457,23 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should transfer wallet registry ownership", async () => {
-          expect(await walletRegistry.owner()).to.be.equal(
+          expect(await walletRegistry.governance()).to.be.equal(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )
         })
 
-        it("should emit WalletRegistryOwnershipTransferred event", async () => {
+        it("should emit WalletRegistryGovernanceTransferred event", async () => {
           await expect(tx)
             .to.emit(
               walletRegistryGovernance,
-              "WalletRegistryOwnershipTransferred"
+              "WalletRegistryGovernanceTransferred"
             )
             .withArgs("0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537")
         })
 
         it("should reset the governance delay timer", async () => {
           await expect(
-            walletRegistryGovernance.getRemainingWalletRegistryOwnershipTransferDelayTime()
+            walletRegistryGovernance.getRemainingWalletRegistryGovernanceTransferDelayTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

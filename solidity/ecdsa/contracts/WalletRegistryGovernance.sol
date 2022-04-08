@@ -29,7 +29,7 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public governanceDelayChangeInitiated;
 
     address public newWalletRegistryOwner;
-    uint256 public walletRegistryOwnershipTransferInitiated;
+    uint256 public walletRegistryGovernanceTransferInitiated;
 
     address public newWalletOwner;
     uint256 public walletOwnerChangeInitiated;
@@ -84,11 +84,11 @@ contract WalletRegistryGovernance is Ownable {
     );
     event GovernanceDelayUpdated(uint256 governanceDelay);
 
-    event WalletRegistryOwnershipTransferStarted(
+    event WalletRegistryGovernanceTransferStarted(
         address newWalletRegistryOwner,
         uint256 timestamp
     );
-    event WalletRegistryOwnershipTransferred(address newWalletRegistryOwner);
+    event WalletRegistryGovernanceTransferred(address newWalletRegistryOwner);
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
     event WalletOwnerUpdated(address walletOwner);
@@ -262,9 +262,9 @@ contract WalletRegistryGovernance is Ownable {
         newGovernanceDelay = 0;
     }
 
-    /// @notice Begins the wallet registry ownership transfer process.
+    /// @notice Begins the wallet registry governance transfer process.
     /// @dev Can be called only by the contract owner.
-    function beginWalletRegistryOwnershipTransfer(
+    function beginWalletRegistryGovernanceTransfer(
         address _newWalletRegistryOwner
     ) external onlyOwner {
         require(
@@ -273,26 +273,26 @@ contract WalletRegistryGovernance is Ownable {
         );
         newWalletRegistryOwner = _newWalletRegistryOwner;
         /* solhint-disable not-rely-on-time */
-        walletRegistryOwnershipTransferInitiated = block.timestamp;
-        emit WalletRegistryOwnershipTransferStarted(
+        walletRegistryGovernanceTransferInitiated = block.timestamp;
+        emit WalletRegistryGovernanceTransferStarted(
             _newWalletRegistryOwner,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the wallet registry ownership transfer process.
+    /// @notice Finalizes the wallet registry governance transfer process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeWalletRegistryOwnershipTransfer()
+    function finalizeWalletRegistryGovernanceTransfer()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(walletRegistryOwnershipTransferInitiated)
+        onlyAfterGovernanceDelay(walletRegistryGovernanceTransferInitiated)
     {
-        emit WalletRegistryOwnershipTransferred(newWalletRegistryOwner);
+        emit WalletRegistryGovernanceTransferred(newWalletRegistryOwner);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.transferOwnership(newWalletRegistryOwner);
-        walletRegistryOwnershipTransferInitiated = 0;
+        walletRegistry.transferGovernance(newWalletRegistryOwner);
+        walletRegistryGovernanceTransferInitiated = 0;
         newWalletRegistryOwner = address(0);
     }
 
@@ -844,15 +844,16 @@ contract WalletRegistryGovernance is Ownable {
         return getRemainingChangeTime(governanceDelayChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the wallet registry ownership can
+    /// @notice Get the time remaining until the wallet registry governance can
     ///         be transferred.
     /// @return Remaining time in seconds.
-    function getRemainingWalletRegistryOwnershipTransferDelayTime()
+    function getRemainingWalletRegistryGovernanceTransferDelayTime()
         external
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(walletRegistryOwnershipTransferInitiated);
+        return
+            getRemainingChangeTime(walletRegistryGovernanceTransferInitiated);
     }
 
     /// @notice Get the time remaining until the minimum authorization amount
