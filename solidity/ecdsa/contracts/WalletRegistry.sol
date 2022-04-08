@@ -239,6 +239,11 @@ contract WalletRegistry is
         _;
     }
 
+    modifier onlyReimbursableAdmin() override {
+        require(governance == msg.sender, "Caller is not the governance");
+        _;
+    }
+
     constructor(
         SortitionPool _sortitionPool,
         IStaking _staking,
