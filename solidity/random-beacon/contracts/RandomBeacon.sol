@@ -897,7 +897,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @param callbackContract Beacon consumer callback contract.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
         external
-        payable
     {
         require(
             authorizedRequesters[msg.sender],
