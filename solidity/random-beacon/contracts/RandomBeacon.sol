@@ -562,7 +562,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     }
 
     /// @notice Withdraw rewards for the given staking provider to their
-    ///         beneficiary address Reverts if staking provider has not
+    ///         beneficiary address. Reverts if staking provider has not
     ///         registered the operator address.
     function withdrawRewards(address stakingProvider) external {
         address operator = stakingProviderToOperator(stakingProvider);

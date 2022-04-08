@@ -84,6 +84,10 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0, // take the first account as deployer
     },
+    governance: {
+      default: 1,
+      // mainnet: ""
+    },
   },
   external: {
     contracts: [
