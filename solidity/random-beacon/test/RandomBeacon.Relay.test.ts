@@ -74,7 +74,7 @@ async function fixture() {
     staking: deployment.staking as TokenStaking,
     relayStub,
     bls,
-    operators
+    operators,
   }
 }
 

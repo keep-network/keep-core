@@ -91,6 +91,10 @@ describe("System -- e2e", () => {
     await randomBeacon
       .connect(owner)
       .updateGroupCreationParameters(groupCreationFrequency, groupLifetime)
+
+    await randomBeacon
+      .connect(owner)
+      .setRequesterAuthorization(requester.address, true)
   })
 
   context("when testing a happy path with 15 relay requests", () => {
@@ -135,7 +139,6 @@ describe("System -- e2e", () => {
         .approveDkgResult(dkgResult.dkgResult)
 
       for (let i = 1; i <= 14; i++) {
-        await approveTokenForFee(requester)
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
         const txSubmitRelayEntry = await randomBeacon
@@ -191,9 +194,4 @@ describe("System -- e2e", () => {
       expect(groupsRegistry[2]).to.deep.equal(keccak256(groupPubKeys[2]))
     })
   })
-
-  async function approveTokenForFee(_requester: SignerWithAddress) {
-    await t.mint(_requester.address)
-    await t.connect(_requester).approve(randomBeacon.address)
-  }
 })
