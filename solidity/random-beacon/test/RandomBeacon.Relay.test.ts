@@ -29,7 +29,6 @@ import type {
   TokenStaking,
   BLS,
   RandomBeaconGovernance,
-  ReimbursementPool,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
 import type { ContractTransaction, BigNumberish } from "ethers"
@@ -72,12 +71,10 @@ async function fixture() {
     randomBeaconGovernance:
       deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
-    t: deployment.t as T,
     staking: deployment.staking as TokenStaking,
     relayStub,
     bls,
-    operators,
-    reimbursementPool: deployment.reimbursementPool as ReimbursementPool,
+    operators
   }
 }
 
@@ -92,9 +89,7 @@ describe("RandomBeacon - Relay", () => {
   let membersAddresses: Address[]
 
   let randomBeacon: RandomBeaconTest
-  let reimbursementPool: ReimbursementPool
   let sortitionPool: SortitionPool
-  let t: T
   let staking: TokenStaking
   let relayStub: RelayStub
   let bls: BLS
@@ -106,42 +101,46 @@ describe("RandomBeacon - Relay", () => {
     ;({
       randomBeacon,
       sortitionPool,
-      t,
       staking,
       relayStub,
       bls,
       operators: members,
-      reimbursementPool,
     } = await waffle.loadFixture(fixture))
 
     membersIDs = members.map((member) => member.id)
     membersAddresses = members.map((member) => member.signer.address)
+
+    await randomBeacon
+      .connect(deployer)
+      .setRequesterAuthorization(requester.address, true)
   })
 
   describe("requestRelayEntry", () => {
-    context("when groups exist", () => {
-      before(async () => {
-        await createSnapshot()
-
-        await createGroup(randomBeacon, members)
+    context("when requester is not authorized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon.connect(thirdParty).requestRelayEntry(ZERO_ADDRESS)
+        ).to.be.revertedWith("Requester must be authorized")
       })
+    })
 
-      after(async () => {
-        await restoreSnapshot()
-      })
+    context("when requester is authorized", () => {
+      context("when groups exist", () => {
+        before(async () => {
+          await createSnapshot()
 
-      context("when there is no other relay entry in progress", () => {
-        context("when the requester pays the relay request fee", () => {
+          await createGroup(randomBeacon, members)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when there is no other relay entry in progress", () => {
           let tx: ContractTransaction
-          let previousRandomBeaconBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
-
-            previousRandomBeaconBalance = await t.balanceOf(
-              randomBeacon.address
-            )
-            await approveTokenForFee()
           })
 
           after(async () => {
@@ -151,14 +150,8 @@ describe("RandomBeacon - Relay", () => {
           context(
             "when relay request does not hit group creation frequency threshold",
             () => {
-              let initialReimbursementPoolBalance: BigNumber
-
               before(async () => {
                 await createSnapshot()
-
-                initialReimbursementPoolBalance = await provider.getBalance(
-                  reimbursementPool.address
-                )
 
                 tx = await randomBeacon
                   .connect(requester)
@@ -224,84 +217,33 @@ describe("RandomBeacon - Relay", () => {
           )
         })
 
-        context("when the requester doesn't pay the relay request fee", () => {
+        context("when there is another relay entry in progress", () => {
+          before(async () => {
+            await createSnapshot()
+
+            await randomBeacon
+              .connect(requester)
+              .requestRelayEntry(ZERO_ADDRESS)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
           it("should revert", async () => {
             await expect(
               randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-            ).to.be.revertedWith("Fee is less than the required minimum")
+            ).to.be.revertedWith("Another relay request in progress")
           })
         })
-
-        context(
-          "when the requester is an authorized contract and doesn't neeed to pay the relay request fee",
-          () => {
-            let tx: ContractTransaction
-            let initialReimbursementPoolBalance: BigNumber
-
-            before(async () => {
-              await createSnapshot()
-
-              await randomBeacon
-                .connect(deployer)
-                .authorizeContract(thirdParty.address)
-
-              initialReimbursementPoolBalance = await provider.getBalance(
-                reimbursementPool.address
-              )
-
-              tx = await randomBeacon
-                .connect(thirdParty)
-                .requestRelayEntry(ZERO_ADDRESS)
-            })
-
-            after(async () => {
-              await restoreSnapshot()
-            })
-
-            it("should request a relay entry", async () => {
-              await expect(tx)
-                .to.emit(randomBeacon, "RelayEntryRequested")
-                .withArgs(1, 0, blsData.previousEntry)
-            })
-
-            it("should not transfer any fees to the Reimbursement Pool", async () => {
-              const postReimbursementPoolBalance = await provider.getBalance(
-                reimbursementPool.address
-              )
-
-              expect(postReimbursementPoolBalance).to.be.equal(
-                initialReimbursementPoolBalance
-              )
-            })
-          }
-        )
       })
 
-      context("when there is an other relay entry in progress", () => {
-        before(async () => {
-          await createSnapshot()
-
-          await approveTokenForFee()
-          await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        })
-
-        after(async () => {
-          await restoreSnapshot()
-        })
-
+      context("when no groups exist", () => {
         it("should revert", async () => {
           await expect(
             randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-          ).to.be.revertedWith("Another relay request in progress")
+          ).to.be.revertedWith("No active groups")
         })
-      })
-    })
-
-    context("when no groups exist", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        ).to.be.revertedWith("No active groups")
       })
     })
   })
@@ -321,7 +263,6 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTokenForFee()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -455,7 +396,6 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTokenForFee()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -674,7 +614,6 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTokenForFee()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -1007,7 +946,6 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTokenForFee()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -2083,10 +2021,5 @@ describe("RandomBeacon - Relay", () => {
     const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
 
     return groupData.terminated === true
-  }
-
-  async function approveTokenForFee() {
-    await t.mint(requester.address)
-    await t.connect(requester).approve(randomBeacon.address)
   }
 })
