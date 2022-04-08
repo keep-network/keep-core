@@ -3,6 +3,7 @@ import { expect } from "chai"
 
 import { randomBeaconDeployment } from "./fixtures"
 
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction, Signer } from "ethers"
 import type {
   RandomBeacon,
@@ -104,7 +105,7 @@ const fixture = async () => {
 
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
-  let thirdParty: Signer
+  let thirdParty: SignerWithAddress
   let randomBeacon: RandomBeacon
   let randomBeaconGovernance: RandomBeaconGovernance
 
@@ -3544,5 +3545,19 @@ describe("RandomBeaconGovernance", () => {
         })
       }
     )
+  })
+
+  describe("withdrawIneligibleRewards", () => {
+    context("when caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .withdrawIneligibleRewards(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    // The actual functionality is tested in RandomBeacon.Rewards.test.ts
   })
 })
