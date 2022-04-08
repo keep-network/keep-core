@@ -834,6 +834,14 @@ contract WalletRegistryGovernance is Ownable {
         newSubmitterPrecedencePeriodLength = 0;
     }
 
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        walletRegistry.withdrawIneligibleRewards(recipient);
+    }
+
     /// @notice Get the time remaining until the governance delay can be updated.
     /// @return Remaining time in seconds.
     function getRemainingGovernanceDelayUpdateTime()

@@ -278,6 +278,15 @@ contract WalletRegistry is
         sortitionPool.withdrawRewards(operator, beneficiary);
     }
 
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      wallet registry governance contract.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        sortitionPool.withdrawIneligible(recipient);
+    }
+
     /// @notice Used by staking provider to set operator address that will
     ///         operate ECDSA node. The given staking provider can set operator
     ///         address only one time. The operator address can not be changed

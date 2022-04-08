@@ -2558,4 +2558,18 @@ describe("WalletRegistryGovernance", async () => {
       }
     )
   })
+
+  describe("withdrawIneligibleRewards", () => {
+    context("when caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .withdrawIneligibleRewards(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    // The actual functionality is tested in WalletRegistry.Rewards.test.ts
+  })
 })

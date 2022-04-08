@@ -4,6 +4,7 @@ import { expect } from "chai"
 import { walletRegistryFixture } from "./fixtures"
 import ecdsaData from "./data/ecdsa"
 import { createNewWallet } from "./utils/wallets"
+import { signOperatorInactivityClaim } from "./utils/inactivity"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { FakeContract } from "@defi-wonderland/smock"
@@ -11,6 +12,7 @@ import type { Operator, OperatorID } from "./utils/operators"
 import type {
   SortitionPool,
   WalletRegistry,
+  WalletRegistryGovernance,
   TokenStaking,
   IWalletOwner,
   T,
@@ -24,13 +26,17 @@ describe("WalletRegistry - Rewards", () => {
   let tToken: T
   let walletRegistry: WalletRegistry
   let staking: TokenStaking
+  let walletRegistryGovernance: WalletRegistryGovernance
   let sortitionPool: SortitionPool
   let walletOwner: FakeContract<IWalletOwner>
 
   let deployer: SignerWithAddress
+  let governance: SignerWithAddress
   let thirdParty: SignerWithAddress
 
   let members: Operator[]
+  let membersIDs: OperatorID[]
+  let walletID: string
 
   const walletPublicKey: string = ecdsaData.group1.publicKey
 
@@ -41,17 +47,21 @@ describe("WalletRegistry - Rewards", () => {
     ;({
       tToken,
       walletRegistry,
+      walletRegistryGovernance,
       staking,
       sortitionPool,
       walletOwner,
       deployer,
+      governance,
       thirdParty,
     } = await walletRegistryFixture())
-    ;({ members } = await createNewWallet(
+    ;({ members, walletID } = await createNewWallet(
       walletRegistry,
       walletOwner.wallet,
       walletPublicKey
     ))
+
+    membersIDs = members.map((member) => member.id)
   })
 
   describe("withdrawRewards", () => {
@@ -88,6 +98,76 @@ describe("WalletRegistry - Rewards", () => {
         expect(await tToken.balanceOf(beneficiary)).to.equal(0)
         await walletRegistry.withdrawRewards(stakingProvider)
         expect(await tToken.balanceOf(beneficiary)).to.be.gt(0)
+      })
+    })
+  })
+
+  describe("withdrawIneligibleRewards", () => {
+    const inactiveMembersIndices = [1, 5, 10]
+    const heartbeatFailed = false
+    const groupThreshold = 51
+
+    context("when called not by the governance", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(thirdParty)
+            .withdrawIneligibleRewards(thirdParty.address)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when called by the governance", () => {
+      before(async () => {
+        await createSnapshot()
+
+        // Assume claim sender is the first signing member.
+        const claimSender = members[0].signer
+
+        const { signatures, signingMembersIndices } =
+          await signOperatorInactivityClaim(
+            members,
+            0,
+            walletPublicKey,
+            heartbeatFailed,
+            inactiveMembersIndices,
+            groupThreshold
+          )
+
+        await walletRegistry.connect(claimSender).notifyOperatorInactivity(
+          {
+            walletID,
+            inactiveMembersIndices,
+            heartbeatFailed,
+            signatures,
+            signingMembersIndices,
+          },
+          0,
+          membersIDs
+        )
+
+        // Allocate sortition pool rewards
+        await tToken.connect(deployer).mint(deployer.address, rewardAmount)
+        await tToken
+          .connect(deployer)
+          .approveAndCall(sortitionPool.address, rewardAmount, [])
+      })
+
+      it("should withdraw ineligible rewards", async () => {
+        // Withdraw rewards for ineligible operator. This action recalculates
+        // the balance of "ineligible rewards" available for withdrawal from
+        // the Sortition Pool
+        const operator = members[0].signer.address
+        const stakingProvider = await walletRegistry.operatorToStakingProvider(
+          operator
+        )
+        await walletRegistry.withdrawRewards(stakingProvider)
+
+        expect(await tToken.balanceOf(thirdParty.address)).to.equal(0)
+        await walletRegistryGovernance
+          .connect(governance)
+          .withdrawIneligibleRewards(thirdParty.address)
+        expect(await tToken.balanceOf(thirdParty.address)).to.be.gt(0)
       })
     })
   })
