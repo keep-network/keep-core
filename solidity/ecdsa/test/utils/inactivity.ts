@@ -7,7 +7,7 @@ export async function signOperatorInactivityClaim(
   signers: Operator[],
   nonce: number,
   groupPubKey: string,
-  operatorInactivity: boolean,
+  failedHeartbeat: boolean,
   inactiveMembersIndices: number[],
   numberOfSignatures: number
 ): Promise<{
@@ -16,7 +16,7 @@ export async function signOperatorInactivityClaim(
 }> {
   const messageHash = ethers.utils.solidityKeccak256(
     ["uint256", "bytes", "uint8[]", "bool"],
-    [nonce, groupPubKey, inactiveMembersIndices, operatorInactivity]
+    [nonce, groupPubKey, inactiveMembersIndices, failedHeartbeat]
   )
 
   const signingMembersIndices: number[] = []
