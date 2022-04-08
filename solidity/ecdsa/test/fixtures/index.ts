@@ -47,6 +47,7 @@ export const params = {
 
 export const walletRegistryFixture = deployments.createFixture(
   async (): Promise<{
+    tToken: T
     walletRegistry: WalletRegistryStub & WalletRegistry
     walletRegistryGovernance: WalletRegistryGovernance
     sortitionPool: SortitionPool
@@ -108,6 +109,7 @@ export const walletRegistryFixture = deployments.createFixture(
     )
 
     return {
+      tToken,
       walletRegistry,
       sortitionPool,
       reimbursementPool,

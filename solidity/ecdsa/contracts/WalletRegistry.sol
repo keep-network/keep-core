@@ -268,6 +268,16 @@ contract WalletRegistry is
         dkg.setSubmitterPrecedencePeriodLength(20);
     }
 
+    /// @notice Withdraw rewards for the given staking provider to their
+    ///         beneficiary address. Reverts if staking provider has not
+    ///         registered the operator address.
+    function withdrawRewards(address stakingProvider) external {
+        address operator = stakingProviderToOperator(stakingProvider);
+        require(operator != address(0), "Unknown operator");
+        (, address beneficiary, ) = staking.rolesOf(stakingProvider);
+        sortitionPool.withdrawRewards(operator, beneficiary);
+    }
+
     /// @notice Used by staking provider to set operator address that will
     ///         operate ECDSA node. The given staking provider can set operator
     ///         address only one time. The operator address can not be changed
@@ -875,7 +885,7 @@ contract WalletRegistry is
 
     /// @notice Returns operator registered for the given staking provider.
     function stakingProviderToOperator(address stakingProvider)
-        external
+        public
         view
         returns (address)
     {
