@@ -123,7 +123,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
-    ///         other member that will call the DKG approve function.
+    ///         another group member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 235000;
 
     // @notice Gas is meant to balance the DKG approval's overall cost. Can be
@@ -147,7 +147,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
 
     /// @notice Authorized contracts that can request a relay entry without
     ///         sending any fees.
-    mapping(address => bool) public authorizedContracts;
+    mapping(address => bool) public authorizedRequesters;
 
     // External dependencies
 
@@ -470,7 +470,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
 
     /// @notice Updates the values of DKG parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
+    ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _resultChallengePeriodLength New DKG result challenge period
     ///        length
@@ -586,7 +586,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         external
         onlyOwner
     {
-        authorizedContracts[requester] = isAuthorized;
+        authorizedRequesters[requester] = isAuthorized;
 
         emit RequesterAuthorizationUpdated(requester, isAuthorized);
     }
@@ -890,7 +890,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         payable
     {
         require(
-            authorizedContracts[msg.sender],
+            authorizedRequesters[msg.sender],
             "Requester must be authorized"
         );
 
@@ -1158,8 +1158,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         of group members, operators of members deemed as inactive are
     ///         banned for sortition pool rewards for duration specified by
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
-    ///         the claim must be one of the claim signers. The sender is
-    ///         refunded from the Reimbursement Pool. This function can be
+    ///         the claim must be one of the claim signers. This function can be
     ///         called only for active and non-terminated groups.
     /// @param claim Failure claim.
     /// @param nonce Current inactivity claim nonce for the given group. Must

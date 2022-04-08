@@ -73,7 +73,7 @@ contract WalletRegistry is
     ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
-    ///         other member that will call the DKG approve function.
+    ///         another group member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 275000;
 
     /// @notice Gas is meant to balance the DKG result approval's overall cost.

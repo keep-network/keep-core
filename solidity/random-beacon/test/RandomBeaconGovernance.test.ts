@@ -2851,7 +2851,7 @@ describe("RandomBeaconGovernance", () => {
 
     context("when the caller is the owner", () => {
       it("should authorize a contract", async () => {
-        let isAuthorized = await randomBeacon.authorizedContracts(
+        let isAuthorized = await randomBeacon.authorizedRequesters(
           thirdPartyContract.address
         )
         await expect(isAuthorized).to.be.false
@@ -2860,7 +2860,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .authorizeContract(thirdPartyContract.address)
 
-        isAuthorized = await randomBeacon.authorizedContracts(
+        isAuthorized = await randomBeacon.authorizedRequesters(
           thirdPartyContract.address
         )
         await expect(isAuthorized).to.be.true
@@ -2897,7 +2897,7 @@ describe("RandomBeaconGovernance", () => {
           .connect(governance)
           .unauthorizeContract(thirdPartyContract.address)
 
-        const isAuthorized = await randomBeacon.authorizedContracts(
+        const isAuthorized = await randomBeacon.authorizedRequesters(
           thirdPartyContract.address
         )
         await expect(isAuthorized).to.be.false
