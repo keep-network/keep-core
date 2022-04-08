@@ -21,7 +21,6 @@ import type {
   SortitionPool,
   BeaconDkgValidator as DKGValidator,
   BeaconDkg as DKG,
-  TokenStaking,
   T,
 } from "../typechain"
 
@@ -31,11 +30,9 @@ const { to1e18 } = helpers.number
 const fixture = async () => {
   await deployments.fixture(["TokenStaking"])
   const t: T = await ethers.getContract("T")
-  const staking: TokenStaking = await ethers.getContract("TokenStaking")
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    staking.address,
     t.address,
     constants.poolWeightDivisor
   )) as SortitionPool

@@ -1929,13 +1929,19 @@ describe("RandomBeacon - Group Creation", () => {
 
           dkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
 
+          const governance: SignerWithAddress = await ethers.getNamedSigner(
+            "governance"
+          )
+
           // Set the DKG result submission reward to twice the amount of test
           // tokens in the DKG rewards pool
-          await randomBeaconGovernance.beginDkgResultSubmissionRewardUpdate(
-            dkgRewardsPoolBalance.mul(2)
-          )
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginDkgResultSubmissionRewardUpdate(dkgRewardsPoolBalance.mul(2))
           await helpers.time.increaseTime(params.governanceDelay)
-          await randomBeaconGovernance.finalizeDkgResultSubmissionRewardUpdate()
+          await randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultSubmissionRewardUpdate()
 
           const [genesisTx, genesisSeed] = await genesis(randomBeacon)
           const startBlock: number = genesisTx.blockNumber

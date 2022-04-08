@@ -561,6 +561,16 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         );
     }
 
+    /// @notice Withdraw rewards for the given staking provider to their
+    ///         beneficiary address. Reverts if staking provider has not
+    ///         registered the operator address.
+    function withdrawRewards(address stakingProvider) external {
+        address operator = stakingProviderToOperator(stakingProvider);
+        require(operator != address(0), "Unknown operator");
+        (, address beneficiary, ) = staking.rolesOf(stakingProvider);
+        sortitionPool.withdrawRewards(operator, beneficiary);
+    }
+
     /// @notice Withdraws rewards belonging to operators marked as ineligible
     ///         for sortition pool rewards.
     /// @dev Can be called only by the contract owner, which should be the
@@ -1312,7 +1322,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
 
     /// @notice Returns operator registered for the given staking provider.
     function stakingProviderToOperator(address stakingProvider)
-        external
+        public
         view
         returns (address)
     {
