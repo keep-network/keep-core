@@ -462,7 +462,7 @@ describe("ReimbursementPool", () => {
     context("when the caller is the owner", () => {
       it("should set the static gas cost", async () => {
         expect(await reimbursementPool.staticGas()).to.be.equal(
-          params.reimbursmentPoolStaticGas
+          params.reimbursementPoolStaticGas
         )
 
         const tx = await reimbursementPool.connect(owner).setStaticGas(42000)
@@ -488,7 +488,7 @@ describe("ReimbursementPool", () => {
     context("when the caller is the owner", () => {
       it("should set the max gas price", async () => {
         expect(await reimbursementPool.maxGasPrice()).to.be.equal(
-          params.reimbursmentPoolMaxGasPrice
+          params.reimbursementPoolMaxGasPrice
         )
         const newMaxGasPrice = ethers.utils.parseUnits("21", "gwei")
 

@@ -50,8 +50,8 @@ export const params = {
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(200000),
   authorizationDecreaseDelay: 403200,
-  reimbursmentPoolStaticGas: 40800,
-  reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
+  reimbursementPoolStaticGas: 40800,
+  reimbursementPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -73,8 +73,8 @@ export async function blsDeployment(): Promise<DeployedContracts> {
 export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
   const reimbursementPool = await ReimbursementPool.deploy(
-    params.reimbursmentPoolStaticGas,
-    params.reimbursmentPoolMaxGasPrice
+    params.reimbursementPoolStaticGas,
+    params.reimbursementPoolMaxGasPrice
   )
   await reimbursementPool.deployed()
 
@@ -120,8 +120,8 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
   const reimbursementPool = await ReimbursementPool.deploy(
-    params.reimbursmentPoolStaticGas,
-    params.reimbursmentPoolMaxGasPrice
+    params.reimbursementPoolStaticGas,
+    params.reimbursementPoolMaxGasPrice
   )
   await reimbursementPool.deployed()
 
