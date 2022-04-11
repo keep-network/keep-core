@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import Button, { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
 import { ContractsLoaded } from "../contracts"
-import { MODAL_TYPES } from "../constants/constants"
+import { LINK, MODAL_TYPES } from "../constants/constants"
 import { cancelStake, undelegateStake } from "../actions/web3"
 import ReactTooltip from "react-tooltip"
 
@@ -58,10 +58,20 @@ const UndelegateStakeButton = (props) => {
             place="top"
             type="dark"
             effect={"solid"}
+            className={"react-tooltip-base"}
+            clickable={true}
+            delayHide={200}
           >
             <span>
-              To be eligible to earn monthly rewards you will need to set up and
-              run a PRE node.
+              This stake is staked on Threshold. You first need to undelegate
+              this stake from the{" "}
+              <a
+                href={LINK.thresholdDapp}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Threshold dashboard here
+              </a>
             </span>
           </ReactTooltip>
         </>
