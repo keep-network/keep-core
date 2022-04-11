@@ -23,12 +23,7 @@ import type { BigNumber, ContractTransaction, Signer } from "ethers"
 import type { Operator } from "./utils/operators"
 import type { BeaconDkg as DKG } from "../typechain/RandomBeaconStub"
 import type { FakeContract } from "@defi-wonderland/smock"
-import type {
-  RandomBeacon,
-  SortitionPool,
-  T,
-  TokenStaking,
-} from "../typechain"
+import type { RandomBeacon, SortitionPool, T, TokenStaking } from "../typechain"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils
@@ -171,20 +166,18 @@ describe("RandomBeacon - Group Creation", () => {
         context("with valid dkg result submitted", async () => {
           let dkgResult: DKG.ResultStruct
           let submitter: SignerWithAddress
-          let submitterInitialBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
 
             await mineBlocks(constants.offchainDkgTime)
-            ;({ dkgResult, submitter, submitterInitialBalance } =
-              await signAndSubmitCorrectDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                genesisSeed,
-                startBlock,
-                noMisbehaved
-              ))
+            ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              genesisSeed,
+              startBlock,
+              noMisbehaved
+            ))
           })
 
           after(async () => {
@@ -215,18 +208,6 @@ describe("RandomBeacon - Group Creation", () => {
             it("should succeed", async () => {
               await expect(randomBeacon.genesis()).to.be.revertedWith(
                 "Not awaiting genesis"
-              )
-            })
-
-            it("should refund ETH", async () => {
-              const postNotifierBalance = await provider.getBalance(
-                submitter.address
-              )
-              const diff = postNotifierBalance.sub(submitterInitialBalance)
-
-              expect(diff).to.be.gt(0)
-              expect(diff).to.be.lt(
-                ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
               )
             })
           })
@@ -392,18 +373,16 @@ describe("RandomBeacon - Group Creation", () => {
         context("when dkg result was submitted", async () => {
           let dkgResult: DKG.ResultStruct
           let submitter: SignerWithAddress
-          let submitterInitialBalance: BigNumber
 
           before("submit dkg result", async () => {
             await createSnapshot()
-            ;({ dkgResult, submitter, submitterInitialBalance } =
-              await signAndSubmitCorrectDkgResult(
-                randomBeacon,
-                groupPublicKey,
-                genesisSeed,
-                startBlock,
-                noMisbehaved
-              ))
+            ;({ dkgResult, submitter } = await signAndSubmitCorrectDkgResult(
+              randomBeacon,
+              groupPublicKey,
+              genesisSeed,
+              startBlock,
+              noMisbehaved
+            ))
           })
 
           after(async () => {
@@ -434,18 +413,6 @@ describe("RandomBeacon - Group Creation", () => {
             it("should return IDLE state", async () => {
               expect(await randomBeacon.getGroupCreationState()).to.be.equal(
                 dkgState.IDLE
-              )
-            })
-
-            it("should refund ETH", async () => {
-              const postNotifierBalance = await provider.getBalance(
-                submitter.address
-              )
-              const diff = postNotifierBalance.sub(submitterInitialBalance)
-
-              expect(diff).to.be.gt(0)
-              expect(diff).to.be.lt(
-                ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
               )
             })
           })
@@ -574,7 +541,6 @@ describe("RandomBeacon - Group Creation", () => {
           let resultSubmissionBlock: number
           let dkgResult: DKG.ResultStruct
           let submitter: SignerWithAddress
-          let submitterInitialBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
@@ -584,7 +550,6 @@ describe("RandomBeacon - Group Creation", () => {
               transaction: tx,
               dkgResult,
               submitter,
-              submitterInitialBalance,
             } = await signAndSubmitCorrectDkgResult(
               randomBeacon,
               groupPublicKey,
@@ -689,18 +654,6 @@ describe("RandomBeacon - Group Creation", () => {
 
             it("should return false", async () => {
               await expect(await randomBeacon.hasDkgTimedOut()).to.be.false
-            })
-
-            it("should refund ETH", async () => {
-              const postNotifierBalance = await provider.getBalance(
-                submitter.address
-              )
-              const diff = postNotifierBalance.sub(submitterInitialBalance)
-
-              expect(diff).to.be.gt(0)
-              expect(diff).to.be.lt(
-                ethers.utils.parseUnits("2000000", "gwei") // 0,000 ETH
-              )
             })
           })
         })
