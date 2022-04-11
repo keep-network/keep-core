@@ -1,4 +1,4 @@
-import { deployments, ethers, helpers, getUnnamedAccounts } from "hardhat"
+import { deployments, ethers, helpers } from "hardhat"
 import { smock } from "@defi-wonderland/smock"
 
 // eslint-disable-next-line import/no-cycle
@@ -79,11 +79,7 @@ export const walletRegistryFixture = deployments.createFixture(
       "governance"
     )
 
-    const thirdParty: SignerWithAddress = await ethers.getSigner(
-      (
-        await getUnnamedAccounts()
-      )[0]
-    )
+    const [thirdParty] = await ethers.getUnnamedSigners()
 
     // Accounts offset provided to slice getUnnamedAccounts have to include number
     // of unnamed accounts that were already used.
