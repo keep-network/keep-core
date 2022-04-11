@@ -939,7 +939,7 @@ contract RandomBeaconGovernance is Ownable {
     /// @notice Finalizes the DKG result approval gas offset update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
-    function finalizeDkgResultApprovalGasOffsetAmountUpdate()
+    function finalizeDkgResultApprovalGasOffsetUpdate()
         external
         onlyOwner
         onlyAfterGovernanceDelay(dkgResultApprovalGasOffsetChangeInitiated)

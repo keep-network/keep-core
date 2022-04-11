@@ -33,6 +33,9 @@ const initialMinimumAuthorization = 1000000
 const initialAuthorizationDecreaseDelay = 86400
 const initialDkgMaliciousResultNotificationRewardMultiplier = 5
 const initialDkgResultSubmissionGas = 235000
+const initialDkgResultApprovalGasOffset = 43500
+const initialNotifyOperatorInactivityGasOffset = 54500
+const initialRelayEntrySubmissionGasOffset = 11500
 
 const fixture = async () => {
   const governance = await ethers.getNamedSigner("deployer")
@@ -3176,6 +3179,139 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingDkgResultSubmissionGasUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginDkgResultApprovalGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginDkgResultApprovalGasOffsetUpdate(1337)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultApprovalGasOffsetUpdate(1337)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the DKG approval gas offset", async () => {
+        expect(await randomBeacon.dkgResultApprovalGasOffset()).to.be.equal(
+          initialDkgResultApprovalGasOffset
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingDkgResultApprovalGasOffsetUpdateTime()
+        ).to.be.equal(governanceDelay)
+      })
+
+      it("should emit the DkgResultApprovalGasOffsetUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(randomBeaconGovernance, "DkgResultApprovalGasOffsetUpdateStarted")
+          .withArgs(1337, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeDkgResultApprovalGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeDkgResultApprovalGasOffsetUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultApprovalGasOffsetUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginDkgResultApprovalGasOffsetUpdate(7331)
+
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultApprovalGasOffsetUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginDkgResultApprovalGasOffsetUpdate(7331)
+
+          await helpers.time.increaseTime(governanceDelay)
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeDkgResultApprovalGasOffsetUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the DKG result approval gas offset", async () => {
+          expect(await randomBeacon.dkgResultApprovalGasOffset()).to.be.equal(
+            7331
+          )
+        })
+
+        it("should emit DkgResultApprovalGasOffsetUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeaconGovernance, "DkgResultApprovalGasOffsetUpdated")
+            .withArgs(7331)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingDkgResultApprovalGasOffsetUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }
