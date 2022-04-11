@@ -617,7 +617,7 @@ contract WalletRegistry is
 
         dkg.complete();
 
-        // Refund msg.sender's ETH for dkg result submission & dkg approval
+        // Refund msg.sender's ETH for DKG result submission and result approval
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
