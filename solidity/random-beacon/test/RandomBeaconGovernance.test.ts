@@ -3227,7 +3227,10 @@ describe("RandomBeaconGovernance", () => {
         const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
           .timestamp
         await expect(tx)
-          .to.emit(randomBeaconGovernance, "DkgResultApprovalGasOffsetUpdateStarted")
+          .to.emit(
+            randomBeaconGovernance,
+            "DkgResultApprovalGasOffsetUpdateStarted"
+          )
           .withArgs(1337, blockTimestamp)
       })
     })
@@ -3305,13 +3308,155 @@ describe("RandomBeaconGovernance", () => {
 
         it("should emit DkgResultApprovalGasOffsetUpdated event", async () => {
           await expect(tx)
-            .to.emit(randomBeaconGovernance, "DkgResultApprovalGasOffsetUpdated")
+            .to.emit(
+              randomBeaconGovernance,
+              "DkgResultApprovalGasOffsetUpdated"
+            )
             .withArgs(7331)
         })
 
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingDkgResultApprovalGasOffsetUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginNotifyOperatorInactivityGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginNotifyOperatorInactivityGasOffsetUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginNotifyOperatorInactivityGasOffsetUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the operator inactivity gas offset", async () => {
+        expect(
+          await randomBeacon.notifyOperatorInactivityGasOffset()
+        ).to.be.equal(initialNotifyOperatorInactivityGasOffset)
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
+        ).to.be.equal(governanceDelay)
+      })
+
+      it("should emit the NotifyOperatorInactivityGasOffsetUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "NotifyOperatorInactivityGasOffsetUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeNotifyOperatorInactivityGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeNotifyOperatorInactivityGasOffsetUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeNotifyOperatorInactivityGasOffsetUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginNotifyOperatorInactivityGasOffsetUpdate(100)
+
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeNotifyOperatorInactivityGasOffsetUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginNotifyOperatorInactivityGasOffsetUpdate(100)
+
+          await helpers.time.increaseTime(governanceDelay)
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeNotifyOperatorInactivityGasOffsetUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the operator inactivity gas offset", async () => {
+          expect(
+            await randomBeacon.notifyOperatorInactivityGasOffset()
+          ).to.be.equal(100)
+        })
+
+        it("should emit NotifyOperatorInactivityGasOffsetUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "NotifyOperatorInactivityGasOffsetUpdated"
+            )
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }
