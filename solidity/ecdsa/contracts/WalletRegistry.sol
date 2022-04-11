@@ -77,7 +77,7 @@ contract WalletRegistry is
     uint256 public dkgResultSubmissionGas = 275000;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
-    ///         cost. It can be updated by the governace based on the current 
+    ///         cost. It can be updated by the governace based on the current
     ///         market conditions.
     uint256 public dkgResultApprovalGasOffset = 65000;
 
