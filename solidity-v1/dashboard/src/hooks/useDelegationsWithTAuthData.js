@@ -25,7 +25,7 @@ const useDelegationsWithTAuthData = () => {
         isStakedToT: tAuthData?.isStakedToT || false,
       }
     })
-  }, [delegations, thresholdAuthState.data])
+  }, [delegations, thresholdAuthState.authData])
 
   return delegationsWithTAuthData
 }
