@@ -1699,7 +1699,7 @@ describe("RandomBeacon - Group Creation", () => {
 
               expect(diff).to.be.gt(0)
               expect(diff).to.be.lt(
-                ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+                ethers.utils.parseUnits("2300000", "gwei") // 0,0023 ETH
               )
             })
           })

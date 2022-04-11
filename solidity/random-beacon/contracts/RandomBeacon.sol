@@ -129,7 +129,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @notice Gas that is meant to balance the DKG result approval's overall
     ///         cost. Can be updated by the governance based on the current
     ///         market conditions.
-    uint256 public dkgResultApprovalGasOffset = 43500;
+    uint256 public dkgResultApprovalGasOffset = 41500;
 
     /// @notice Gas that is meant to balance the operator inactivity notification
     ///         cost. Can be updated by the governance based on the current
@@ -139,7 +139,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @notice Gas that is meant to balance the relay entry submission cost.
     ///         Can be updated by the governance based on the current market
     ///         conditions.
-    uint256 public relayEntrySubmissionGasOffset = 11500;
+    uint256 public relayEntrySubmissionGasOffset = 11250;
 
     // Other parameters
 
