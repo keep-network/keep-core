@@ -40,9 +40,9 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import {BeaconDkg} from "./libraries/BeaconDkg.sol";
 
 /// @title Keep Random Beacon
-/// @notice Keep Random Beacon contract. It lets anyone request a new
+/// @notice Keep Random Beacon contract. It lets to request a new
 ///         relay entry and validates the new relay entry provided by the
-///         network. This contract is in charge of all Random Beacon maintenance
+///         network. This contract is in charge of all other Random Beacon
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
@@ -126,16 +126,19 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         another group member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 235000;
 
-    // @notice Gas is meant to balance the DKG approval's overall cost. Can be
-    //         updated by the governace based on the current market conditions.
+    /// @notice Gas that is meant to balance the DKG approval's overall cost.
+    ///         Can be updated by the governance based on the current market
+    ///         conditions.
     uint256 public dkgApprovalGasOffset = 43500;
 
-    // @notice Gas is meant to balance the operator inactivity cost. Can be updated
-    //         by the governace based on the current market conditions.
-    uint256 public operatorInactivityGasOffset = 54500;
+    /// @notice Gas that is meant to balance the operator inactivity notification
+    ///         cost. Can be updated by the governance based on the current
+    ///         market conditions.
+    uint256 public operatorInactivityNotificationGasOffset = 54500;
 
-    // @notice Gas is meant to balance the relay entry submission cost. Can be
-    //         updated by the governace based on the current market conditions.
+    /// @notice Gas that is meant to balance the relay entry submission cost.
+    ///         Can be updated by the governance based on the current market
+    ///         conditions.
     uint256 public relayEntrySubmissionGasOffset = 11500;
 
     // Other parameters
@@ -145,8 +148,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         against claim replay.
     mapping(uint64 => uint256) public inactivityClaimNonce; // groupId -> nonce
 
-    /// @notice Authorized contracts that can request a relay entry without
-    ///         sending any fees.
+    /// @notice Authorized addresses that can request a relay entry.
     mapping(address => bool) public authorizedRequesters;
 
     // External dependencies
@@ -552,34 +554,38 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         );
     }
 
-    /// @notice Updates the given gas parameters.
+    /// @notice Updates the values of gas parameters.
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _dkgApprovalGasOffset New DKG approval gas offset
-    /// @param _operatorInactivityGasOffset New operator inactivity gas offset
-    /// @param _relayEntrySubmissionGasOffset New relay entry submission gas offset
-    /// @param _dkgResultSubmissionGas DKG result submission gas
+    /// @param _operatorInactivityNotificationGasOffset New operator inactivity 
+    ///        notification gas offset
+    /// @param _relayEntrySubmissionGasOffset New relay entry submission gas
+    ///        offset
+    /// @param _dkgResultSubmissionGas New DKG result submission gas
     function updateGasParameters(
         uint256 _dkgApprovalGasOffset,
-        uint256 _operatorInactivityGasOffset,
+        uint256 _operatorInactivityNotificationGasOffset,
         uint256 _relayEntrySubmissionGasOffset,
         uint256 _dkgResultSubmissionGas
     ) external onlyOwner {
         dkgApprovalGasOffset = _dkgApprovalGasOffset;
-        operatorInactivityGasOffset = _operatorInactivityGasOffset;
+        operatorInactivityNotificationGasOffset = _operatorInactivityNotificationGasOffset;
         relayEntrySubmissionGasOffset = _relayEntrySubmissionGasOffset;
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
         emit GasParametersUpdated(
             _dkgApprovalGasOffset,
-            _operatorInactivityGasOffset,
+            _operatorInactivityNotificationGasOffset,
             _relayEntrySubmissionGasOffset,
             _dkgResultSubmissionGas
         );
     }
 
     /// @notice Set authorization for requesters that can request a relay
-    ///         entry. It can be done by the owner only.
+    ///         entry.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. 
     /// @param requester Requester, can be a contract or EOA
     /// @param isAuthorized True or false
     function setRequesterAuthorization(address requester, bool isAuthorized)
@@ -767,23 +773,20 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         dkg.submitResult(dkgResult);
     }
 
-    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
-    ///         reward to the notifier. Refunds ETH to a notifier for making
-    ///         this call.
+    /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyTimeout();
-
         dkg.complete();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
-    ///         as valid, reimburses ETH to the approver, bans misbehaved group
-    ///         members from the sortition pool rewards, and completes the group
-    ///         creation by activating the candidate group. For the first
-    ///         `submitterPrecedencePeriodLength` blocks after the end of the
-    ///         challenge period can be called only by the DKG result submitter.
-    ///         After that time, can be called by anyone.
+    ///         as valid, bans misbehaved group members from the sortition pool
+    ///         rewards, and completes the group creation by activating the
+    ///         candidate group. For the first `submitterPrecedencePeriodLength`
+    ///         blocks after the end of the challenge period can be called only
+    ///         by the DKG result submitter. After that time, can be called by
+    ///         anyone.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(DKG.Result calldata dkgResult) external {
@@ -802,7 +805,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         groups.addGroup(dkgResult.groupPubKey, dkgResult.membersHash);
         dkg.complete();
 
-        // Refunds msg.sender's ETH for dkg result submission & dkg approval
+        // Refund msg.sender's ETH for DKG result submission and result approval
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
@@ -1169,7 +1172,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
     ///         the claim must be one of the claim signers. This function can be
     ///         called only for active and non-terminated groups.
-    /// @param claim Failure claim.
+    /// @param claim Operator inactivity claim.
     /// @param nonce Current inactivity claim nonce for the given group. Must
     ///        be the same as the stored one.
     /// @param groupMembers Identifiers of group members.
@@ -1214,7 +1217,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         );
 
         reimbursementPool.refund(
-            (gasStart - gasleft()) + operatorInactivityGasOffset,
+            (gasStart - gasleft()) + operatorInactivityNotificationGasOffset,
             msg.sender
         );
     }
