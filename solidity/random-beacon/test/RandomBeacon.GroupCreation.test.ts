@@ -1489,10 +1489,8 @@ describe("RandomBeacon - Group Creation", () => {
               })
 
               it("should refund ETH", async () => {
-                const postNotifierBalance = await provider.getBalance(
-                  submitter.address
-                )
-                const diff = postNotifierBalance.sub(submitterInitialBalance)
+                const postBalance = await provider.getBalance(submitter.address)
+                const diff = postBalance.sub(submitterInitialBalance)
 
                 expect(diff).to.be.gt(0)
                 expect(diff).to.be.lt(
@@ -1532,8 +1530,8 @@ describe("RandomBeacon - Group Creation", () => {
                   await createSnapshot()
 
                   await mineBlocks(params.dkgSubmitterPrecedencePeriodLength)
-                  initApproverBalance = await t.balanceOf(
-                    await thirdParty.getAddress()
+                  initApproverBalance = await provider.getBalance(
+                    thirdParty.address
                   )
                   tx = randomBeacon
                     .connect(thirdParty)
@@ -1546,6 +1544,17 @@ describe("RandomBeacon - Group Creation", () => {
 
                 it("should succeed", async () => {
                   await expect(tx).to.not.be.reverted
+                })
+
+                it("should refund ETH", async () => {
+                  const postBalance = await provider.getBalance(
+                    thirdParty.address
+                  )
+                  const diff = postBalance.sub(initApproverBalance)
+
+                  expect(diff).to.be.gt(0)
+                  // The third party did not submit the result so we are not
+                  // asserting the upper-bound.
                 })
               })
             })
@@ -1562,7 +1571,8 @@ describe("RandomBeacon - Group Creation", () => {
 
           // Submit a second result by another submitter
           const anotherSubmitterIndex = 6
-          let anotherSubmitter: Signer
+          let anotherSubmitter: SignerWithAddress
+          let anotherSubmitterInitialBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
@@ -1586,6 +1596,7 @@ describe("RandomBeacon - Group Creation", () => {
               dkgResult,
               dkgResultHash,
               submitter: anotherSubmitter,
+              submitterInitialBalance: anotherSubmitterInitialBalance,
             } = await signAndSubmitCorrectDkgResult(
               randomBeacon,
               groupPublicKey,
@@ -1628,17 +1639,12 @@ describe("RandomBeacon - Group Creation", () => {
 
           context("with challenge period passed", async () => {
             let tx: ContractTransaction
-            let initialSubmitterBalance: BigNumber
 
             before(async () => {
               await createSnapshot()
 
               await mineBlocksTo(
                 resultSubmissionBlock + params.dkgResultChallengePeriodLength
-              )
-
-              initialSubmitterBalance = await t.balanceOf(
-                await anotherSubmitter.getAddress()
               )
 
               tx = await randomBeacon
@@ -1683,6 +1689,18 @@ describe("RandomBeacon - Group Creation", () => {
 
             it("should unlock the sortition pool", async () => {
               expect(await sortitionPool.isLocked()).to.be.false
+            })
+
+            it("should refund ETH", async () => {
+              const postBalance = await provider.getBalance(
+                anotherSubmitter.address
+              )
+              const diff = postBalance.sub(anotherSubmitterInitialBalance)
+
+              expect(diff).to.be.gt(0)
+              expect(diff).to.be.lt(
+                ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+              )
             })
           })
         })
@@ -1789,10 +1807,8 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         it("should refund ETH", async () => {
-          const postNotifierBalance = await provider.getBalance(
-            submitter.address
-          )
-          const diff = postNotifierBalance.sub(submitterInitialBalance)
+          const postBalance = await provider.getBalance(submitter.address)
+          const diff = postBalance.sub(submitterInitialBalance)
 
           expect(diff).to.be.gt(0)
           expect(diff).to.be.lt(
@@ -1839,10 +1855,8 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           it("should refund ETH", async () => {
-            const postNotifierBalance = await provider.getBalance(
-              submitter.address
-            )
-            const diff = postNotifierBalance.sub(submitterInitialBalance)
+            const postBalance = await provider.getBalance(submitter.address)
+            const diff = postBalance.sub(submitterInitialBalance)
 
             expect(diff).to.be.gt(0)
             expect(diff).to.be.lt(
@@ -1886,10 +1900,8 @@ describe("RandomBeacon - Group Creation", () => {
         })
 
         it("should refund ETH", async () => {
-          const postNotifierBalance = await provider.getBalance(
-            submitter.address
-          )
-          const diff = postNotifierBalance.sub(submitterInitialBalance)
+          const postBalance = await provider.getBalance(submitter.address)
+          const diff = postBalance.sub(submitterInitialBalance)
 
           expect(diff).to.be.gt(0)
           expect(diff).to.be.lt(
@@ -2021,10 +2033,8 @@ describe("RandomBeacon - Group Creation", () => {
           })
 
           it("should refund ETH", async () => {
-            const postThirdPartyBalance = await provider.getBalance(
-              await thirdParty.getAddress()
-            )
-            const diff = postThirdPartyBalance.sub(initialThirdPartyBalance)
+            const postBalance = await provider.getBalance(thirdParty.address)
+            const diff = postBalance.sub(initialThirdPartyBalance)
             expect(diff).to.be.gt(0)
             expect(diff).to.be.lt(
               ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
