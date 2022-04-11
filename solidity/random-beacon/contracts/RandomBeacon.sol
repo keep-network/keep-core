@@ -202,6 +202,18 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         uint256 unauthorizedSigningSlashingAmount
     );
 
+    event GasParametersUpdated(
+        uint256 dkgApprovalGasOffset,
+        uint256 operatorInactivityGasOffset,
+        uint256 relayEntrySubmissionGasOffset,
+        uint256 dkgResultSubmissionGas
+    );
+
+    event RequesterAuthorizationUpdated(
+        address indexed requester,
+        bool isAuthorized
+    );
+
     event DkgStarted(uint256 indexed seed);
 
     event DkgResultSubmitted(
@@ -288,11 +300,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         address[] groupMembers
     );
 
-    event RequesterAuthorizationUpdated(
-        address indexed requester,
-        bool isAuthorized
-    );
-
     event UnauthorizedSigningSlashingFailed(
         uint64 indexed groupId,
         uint256 unauthorizedSigningSlashingAmount,
@@ -344,13 +351,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     event OperatorStatusUpdated(
         address indexed stakingProvider,
         address indexed operator
-    );
-
-    event GasParametersUpdated(
-        uint256 dkgApprovalGasOffset,
-        uint256 operatorInactivityGasOffset,
-        uint256 relayEntrySubmissionGasOffset,
-        uint256 dkgResultSubmissionGas
     );
 
     /// @dev Assigns initial values to parameters to make the beacon work
@@ -559,7 +559,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _dkgApprovalGasOffset New DKG approval gas offset
-    /// @param _operatorInactivityNotificationGasOffset New operator inactivity 
+    /// @param _operatorInactivityNotificationGasOffset New operator inactivity
     ///        notification gas offset
     /// @param _relayEntrySubmissionGasOffset New relay entry submission gas
     ///        offset
@@ -585,7 +585,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @notice Set authorization for requesters that can request a relay
     ///         entry.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      random beacon governance contract. 
+    ///      random beacon governance contract.
     /// @param requester Requester, can be a contract or EOA
     /// @param isAuthorized True or false
     function setRequesterAuthorization(address requester, bool isAuthorized)
