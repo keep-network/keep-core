@@ -23,7 +23,7 @@ import Chip from "../../components/Chip"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
 import { Keep } from "../../contracts"
-import { MODAL_TYPES } from "../../constants/constants"
+import { LINK, MODAL_TYPES } from "../../constants/constants"
 import { CoveragePoolV1ExchangeRate } from "../../components/coverage-pools/ExchangeRate"
 import * as Icons from "../../components/Icons"
 
@@ -183,7 +183,7 @@ const CoveragePoolPage = () => {
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={"https://google.com"}
+                href={LINK.coveragePools.etherscanCovKeepToken}
                 className={"no-arrow"}
               >
                 token address
