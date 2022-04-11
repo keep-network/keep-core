@@ -3463,6 +3463,145 @@ describe("RandomBeaconGovernance", () => {
     )
   })
 
+  describe("beginRelayEntrySubmissionGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginRelayEntrySubmissionGasOffsetUpdate(997)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginRelayEntrySubmissionGasOffsetUpdate(997)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the relay entry submission gas offset", async () => {
+        expect(await randomBeacon.relayEntrySubmissionGasOffset()).to.be.equal(
+          initialRelayEntrySubmissionGasOffset
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingRelayEntrySubmissionGasOffsetUpdateTime()
+        ).to.be.equal(governanceDelay)
+      })
+
+      it("should emit the RelayEntrySubmissionGasOffsetUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "RelayEntrySubmissionGasOffsetUpdateStarted"
+          )
+          .withArgs(997, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeRelayEntrySubmissionGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeRelayEntrySubmissionGasOffsetUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntrySubmissionGasOffsetUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginRelayEntrySubmissionGasOffsetUpdate(997)
+
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
+
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntrySubmissionGasOffsetUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginRelayEntrySubmissionGasOffsetUpdate(997)
+
+          await helpers.time.increaseTime(governanceDelay)
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeRelayEntrySubmissionGasOffsetUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the relay entry submission gas offset", async () => {
+          expect(
+            await randomBeacon.relayEntrySubmissionGasOffset()
+          ).to.be.equal(997)
+        })
+
+        it("should emit RelayEntrySubmissionGasOffsetUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "RelayEntrySubmissionGasOffsetUpdated"
+            )
+            .withArgs(997)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingRelayEntrySubmissionGasOffsetUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
   describe("withdrawIneligibleRewards", () => {
     context("when caller is not the owner", () => {
       it("should revert", async () => {
