@@ -126,9 +126,9 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         another group member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 235000;
 
-    /// @notice Gas that is meant to balance the DKG approval's overall cost.
-    ///         Can be updated by the governance based on the current market
-    ///         conditions.
+    /// @notice Gas that is meant to balance the DKG result approval's overall
+    ///         cost. Can be updated by the governance based on the current
+    ///         market conditions.
     uint256 public dkgResultApprovalGasOffset = 43500;
 
     /// @notice Gas that is meant to balance the operator inactivity notification

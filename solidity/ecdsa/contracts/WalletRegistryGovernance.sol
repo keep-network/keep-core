@@ -554,7 +554,7 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultApprovalGasOffset = 0;
     }
 
-    /// @notice Begins notification operator inactivity gas offset update process.
+    /// @notice Begins the notify operator inactivity gas offset update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newNotifyOperatorInactivityGasOffset New operator inactivity
     ///        notification gas offset

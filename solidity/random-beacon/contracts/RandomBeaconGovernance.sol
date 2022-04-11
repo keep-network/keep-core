@@ -884,7 +884,7 @@ contract RandomBeaconGovernance is Ownable {
         newRelayEntrySubmissionFailureSlashingAmount = 0;
     }
 
-    /// @notice Begins the dkg result submission gas update process.
+    /// @notice Begins the DKG result submission gas update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newDkgResultSubmissionGas New relay entry submission gas offset
     function beginDkgResultSubmissionGasUpdate(
@@ -900,7 +900,7 @@ contract RandomBeaconGovernance is Ownable {
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes dkg result submission gas update process.
+    /// @notice Finalizes DKG result submission gas update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
     function finalizeDkgResultSubmissionGasUpdate()
@@ -956,7 +956,7 @@ contract RandomBeaconGovernance is Ownable {
         newDkgResultApprovalGasOffset = 0;
     }
 
-    /// @notice Begins notification operator inactivity gas offset update process.
+    /// @notice Begins the notify operator inactivity gas offset update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newNotifyOperatorInactivityGasOffset New operator inactivity
     ///        notification gas offset
@@ -1437,6 +1437,17 @@ contract RandomBeaconGovernance is Ownable {
             );
     }
 
+    /// @notice Get the time remaining until the DKG result submission gas
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultSubmissionGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
+    }
+
     /// @notice Get the time remaining until the DKG approval gas offset duration
     ///         can be updated.
     /// @return Remaining time in seconds.
@@ -1449,8 +1460,8 @@ contract RandomBeaconGovernance is Ownable {
             getRemainingChangeTime(dkgResultApprovalGasOffsetChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the operator inactivity gas offset duration
-    ///         can be updated.
+    /// @notice Get the time remaining until the operator inactivity notification
+    ///         gas offset duration can be updated.
     /// @return Remaining time in seconds.
     function getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
         external
@@ -1475,17 +1486,6 @@ contract RandomBeaconGovernance is Ownable {
             getRemainingChangeTime(
                 relayEntrySubmissionGasOffsetChangeInitiated
             );
-    }
-
-    /// @notice Get the time remaining until the DKG result submission gas
-    ///         duration can be updated.
-    /// @return Remaining time in seconds.
-    function getRemainingDkgResultSubmissionGasUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
     }
 
     /// @notice Gets the time remaining until the governable parameter update
