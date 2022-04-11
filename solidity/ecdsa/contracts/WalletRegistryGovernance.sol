@@ -68,8 +68,8 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newDkgResultApprovalGasOffset;
     uint256 public dkgResultApprovalGasOffsetChangeInitiated;
 
-    uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
     uint256 public newNotifyOperatorInactivityGasOffset;
+    uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
 
     address payable public newReimbursementPool;
     uint256 public reimbursementPoolChangeInitiated;
@@ -556,15 +556,16 @@ contract WalletRegistryGovernance is Ownable {
 
     /// @notice Begins notification operator inactivity gas offset update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _notifyOperatorInactivityGasOffset New operator inactivity gas offset.
+    /// @param _newNotifyOperatorInactivityGasOffset New operator inactivity
+    ///        notification gas offset
     function beginNotifyOperatorInactivityGasOffsetUpdate(
-        uint256 _notifyOperatorInactivityGasOffset
+        uint256 _newNotifyOperatorInactivityGasOffset
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
-        newNotifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        newNotifyOperatorInactivityGasOffset = _newNotifyOperatorInactivityGasOffset;
         notifyOperatorInactivityGasOffsetChangeInitiated = block.timestamp;
         emit NotifyOperatorInactivityGasOffsetUpdateStarted(
-            _notifyOperatorInactivityGasOffset,
+            _newNotifyOperatorInactivityGasOffset,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
