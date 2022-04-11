@@ -98,12 +98,13 @@ const fixture = async () => {
 describe("RandomBeaconGovernance", () => {
   let governance: Signer
   let thirdParty: SignerWithAddress
+  let thirdPartyContract: SignerWithAddress
   let randomBeacon: RandomBeacon
   let randomBeaconGovernance: RandomBeaconGovernance
 
   // prettier-ignore
   before(async () => {
-    [thirdParty] = await ethers.getUnnamedSigners()
+    [thirdParty, thirdPartyContract] = await ethers.getUnnamedSigners()
     ;({ governance, randomBeaconGovernance, randomBeacon } =
       await waffle.loadFixture(fixture))
   })
@@ -2845,19 +2846,25 @@ describe("RandomBeaconGovernance", () => {
     )
   })
 
-  describe("authorizeContract", () => {
+  describe("setRequesterAuthorization", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .authorizeContract(thirdPartyContract.address)
+            .setRequesterAuthorization(thirdPartyContract.address, true)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .setRequesterAuthorization(thirdPartyContract.address, false)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
 
     context("when the caller is the owner", () => {
-      it("should authorize a contract", async () => {
+      it("should update requester authorization", async () => {
         let isAuthorized = await randomBeacon.authorizedRequesters(
           thirdPartyContract.address
         )
@@ -2865,46 +2872,18 @@ describe("RandomBeaconGovernance", () => {
 
         await randomBeaconGovernance
           .connect(governance)
-          .authorizeContract(thirdPartyContract.address)
+          .setRequesterAuthorization(thirdPartyContract.address, true)
 
         isAuthorized = await randomBeacon.authorizedRequesters(
           thirdPartyContract.address
         )
         await expect(isAuthorized).to.be.true
-      })
-    })
-  })
-
-  describe("unauthorizeContract", () => {
-    context("when the caller is not the owner", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeaconGovernance
-            .connect(thirdParty)
-            .unauthorizeContract(thirdPartyContract.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
-      })
-    })
-
-    context("when the caller is the owner", () => {
-      before(async () => {
-        await createSnapshot()
 
         await randomBeaconGovernance
           .connect(governance)
-          .authorizeContract(thirdPartyContract.address)
-      })
+          .setRequesterAuthorization(thirdPartyContract.address, false)
 
-      after(async () => {
-        await restoreSnapshot()
-      })
-
-      it("should unauthorize a contract", async () => {
-        await randomBeaconGovernance
-          .connect(governance)
-          .unauthorizeContract(thirdPartyContract.address)
-
-        const isAuthorized = await randomBeacon.authorizedRequesters(
+        isAuthorized = await randomBeacon.authorizedRequesters(
           thirdPartyContract.address
         )
         await expect(isAuthorized).to.be.false
