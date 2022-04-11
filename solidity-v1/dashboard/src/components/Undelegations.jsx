@@ -89,27 +89,33 @@ const Undelegations = ({ undelegations, title }) => {
           )}
         />
         <Column
-          header=""
+          header="actions"
+          headerStyle={{ width: "25%", textAlign: "right" }}
           field=""
           renderContent={(undelegation) =>
             undelegation.isCopiedStake ? (
-              <StatusBadge
-                status={BADGE_STATUS.COMPLETE}
-                className="self-start"
-                text="stake copied"
-              />
+              <div className="flex row center justify-right">
+                <StatusBadge
+                  status={BADGE_STATUS.COMPLETE}
+                  className="self-start"
+                  text="stake copied"
+                />
+              </div>
             ) : (
               undelegation.canRecoverStake && (
-                <RecoverStakeButton
-                  isFromGrant={undelegation.isFromGrant}
-                  isManagedGrant={undelegation.isManagedGrant}
-                  managedGrantContractInstance={
-                    undelegation.managedGrantContractInstance
-                  }
-                  operatorAddress={undelegation.operatorAddress}
-                  amount={undelegation.amount}
-                  btnText="claim"
-                />
+                <div className="flex row center justify-right">
+                  <RecoverStakeButton
+                    btnClassName={"btn btn-semi-sm btn-secondary"}
+                    isFromGrant={undelegation.isFromGrant}
+                    isManagedGrant={undelegation.isManagedGrant}
+                    managedGrantContractInstance={
+                      undelegation.managedGrantContractInstance
+                    }
+                    operatorAddress={undelegation.operatorAddress}
+                    amount={undelegation.amount}
+                    btnText="claim"
+                  />
+                </div>
               )
             )
           }

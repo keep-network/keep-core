@@ -37,7 +37,11 @@ const UndelegateStakeButton = (props) => {
     })
   }
 
-  const renderUndelegateStakeButton = (delegationOperator, disabled) => {
+  const renderUndelegateStakeButton = (
+    delegationOperator,
+    btnClassName,
+    disabled
+  ) => {
     if (disabled) {
       return (
         <>
@@ -46,7 +50,7 @@ const UndelegateStakeButton = (props) => {
             data-for={`undelegate-button-for-operator-${delegationOperator}`}
           >
             <Button
-              className={`undelegate-stake-button ${props.btnClassName}`}
+              className={`undelegate-stake-button ${btnClassName}`}
               onClick={undelegate}
               disabled={true}
             >
@@ -99,7 +103,11 @@ const UndelegateStakeButton = (props) => {
       cancel
     </SubmitButton>
   ) : (
-    renderUndelegateStakeButton(props.operator, props.disabled)
+    renderUndelegateStakeButton(
+      props.operator,
+      props.btnClassName,
+      props.disabled
+    )
   )
 }
 
