@@ -73,17 +73,17 @@ contract WalletRegistry is
     ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
-    ///         other member that will call the DKG approve function.
+    ///         another group member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas = 275000;
 
-    /// @notice Gas is meant to balance the DKG result approval's overall cost.
-    ///         It can be updated by the governace based on the current market
-    ///         conditions.
+    /// @notice Gas that is meant to balance the DKG result approval's overall
+    ///         cost. It can be updated by the governace based on the current
+    ///         market conditions.
     uint256 public dkgResultApprovalGasOffset = 65000;
 
-    /// @notice Gas is meant to balance the notification of an operator inactivity.
-    ///         It can be updated by the governace based on the current market
-    ///         conditions.
+    /// @notice Gas that is meant to balance the notification of an operator
+    ///         inactivity. It can be updated by the governace based on the
+    ///         current market conditions.
     uint256 public notifyOperatorInactivityGasOffset = 85000;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
@@ -508,6 +508,10 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract owner, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
+    /// @param _dkgResultSubmissionGas New DKG result submission gas
+    /// @param _dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param _notifyOperatorInactivityGasOffset New operator inactivity
+    ///        notification gas offset
     function updateGasParameters(
         uint256 _dkgResultSubmissionGas,
         uint256 _dkgResultApprovalGasOffset,
@@ -580,12 +584,11 @@ contract WalletRegistry is
 
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
-    ///         as valid, pays reward to the approver, bans misbehaved group
-    ///         members from the sortition pool rewards, and completes the group
-    ///         creation by activating the candidate group. For the first
-    ///         `resultSubmissionTimeout` blocks after the end of the
-    ///         challenge period can be called only by the DKG result submitter.
-    ///         After that time, can be called by anyone.
+    ///         as valid, bans misbehaved group members from the sortition pool
+    ///         rewards, and completes the group creation by activating the
+    ///         candidate group. For the first `resultSubmissionTimeout` blocks
+    ///         after the end of the challenge period can be called only by the
+    ///         DKG result submitter. After that time, can be called by anyone.
     ///         A new wallet based on the DKG result details.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
@@ -614,7 +617,7 @@ contract WalletRegistry is
 
         dkg.complete();
 
-        // Refunds msg.sender's ETH for dkg result submission & dkg approval
+        // Refund msg.sender's ETH for DKG result submission and result approval
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
