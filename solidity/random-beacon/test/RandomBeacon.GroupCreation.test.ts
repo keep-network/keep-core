@@ -26,7 +26,6 @@ import type { FakeContract } from "@defi-wonderland/smock"
 import type {
   RandomBeacon,
   SortitionPool,
-  ReimbursementPool,
   T,
   TokenStaking,
 } from "../typechain"
@@ -56,7 +55,6 @@ const fixture = async () => {
 
   const randomBeacon = contracts.randomBeacon as RandomBeaconTest
   const sortitionPool = contracts.sortitionPool as SortitionPool
-  const reimbursementPool = contracts.reimbursementPool as ReimbursementPool
   const staking = contracts.staking as TokenStaking
   const t = contracts.t as T
 
@@ -66,7 +64,6 @@ const fixture = async () => {
     staking,
     t,
     signers,
-    reimbursementPool,
   }
 }
 
@@ -82,7 +79,6 @@ describe("RandomBeacon - Group Creation", () => {
 
   let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
-  let reimbursementPool: ReimbursementPool
   let staking: TokenStaking
   let t: T
 
@@ -95,7 +91,6 @@ describe("RandomBeacon - Group Creation", () => {
       staking,
       t,
       signers,
-      reimbursementPool,
     } = await waffle.loadFixture(fixture))
 
     randomBeacon = randomBeaconStub
