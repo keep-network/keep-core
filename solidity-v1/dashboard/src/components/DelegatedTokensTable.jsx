@@ -13,14 +13,14 @@ import web3Utils from "web3-utils"
 import useUpdateInitializedDelegations from "../hooks/useUpdateInitializedDelegations"
 
 const DelegatedTokensTable = ({
-  delegatedTokens,
+  delegationsWithTAuthData,
   cancelStakeSuccessCallback,
   keepTokenBalance,
   grants,
   addKeep,
   undelegationPeriod,
 }) => {
-  useUpdateInitializedDelegations(delegatedTokens)
+  useUpdateInitializedDelegations(delegationsWithTAuthData)
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
       const grant = grants.find(({ id }) => id === grantId)
@@ -57,7 +57,7 @@ const DelegatedTokensTable = ({
     <Tile>
       <DataTable
         title="Delegations"
-        data={delegatedTokens}
+        data={delegationsWithTAuthData}
         itemFieldId="operatorAddress"
         noDataMessage="No delegated tokens."
         centered
@@ -155,6 +155,10 @@ const DelegatedTokensTable = ({
                       delegation.isInInitializationPeriod
                         ? cancelStakeSuccessCallback
                         : () => {}
+                    }
+                    disabled={
+                      delegation.isTStakingContractAuthorized &&
+                      delegation.isStakedToT
                     }
                   />
                 </div>

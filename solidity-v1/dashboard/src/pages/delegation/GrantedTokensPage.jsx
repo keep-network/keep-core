@@ -21,6 +21,7 @@ import { CompoundDropdown as Dropdown } from "../../components/Dropdown"
 import * as Icons from "../../components/Icons"
 import useReleaseTokens from "../../hooks/useReleaseTokens"
 import resourceTooltipProps from "../../constants/tooltips"
+import useDelegationsWithTAuthData from "../../hooks/useDelegationsWithTAuthData"
 
 const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
@@ -33,7 +34,6 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
 
   const {
     undelegations,
-    delegations,
     undelegationPeriod,
     initializationPeriod,
     topUps,
@@ -44,6 +44,8 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
   const { grants, isFetching: areGrantsFetching } = useSelector(
     (state) => state.tokenGrants
   )
+
+  const delegationsWithTAuthData = useDelegationsWithTAuthData()
 
   useEffect(() => {
     if (!isEmptyArray(grants) && isEmptyObj(selectedGrant)) {
@@ -59,9 +61,9 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
     setSelectedGrant(selectedGrant)
   }, [])
 
-  const grantDelegations = useMemo(() => {
-    return delegations.filter(filterBySelectedGrant(selectedGrant))
-  }, [delegations, selectedGrant])
+  const grantDelegationsWithTAuthData = useMemo(() => {
+    return delegationsWithTAuthData.filter(filterBySelectedGrant(selectedGrant))
+  }, [delegationsWithTAuthData, selectedGrant])
 
   const grantUndelegations = useMemo(() => {
     return undelegations.filter(filterBySelectedGrant(selectedGrant))
@@ -70,11 +72,11 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
   const selectedGrantStakedAmount = useMemo(() => {
     if (!selectedGrant.id) return 0
 
-    return [...grantDelegations, ...grantUndelegations]
+    return [...grantDelegationsWithTAuthData, ...grantUndelegations]
       .filter((delegation) => delegation.grantId === selectedGrant.id)
       .map((grantDelegation) => grantDelegation.amount)
       .reduce(add, 0)
-  }, [grantUndelegations, grantDelegations, selectedGrant.id])
+  }, [grantUndelegations, grantDelegationsWithTAuthData, selectedGrant.id])
 
   const onWithdrawTokens = useCallback(
     async (awaitingPromise) => {
@@ -149,7 +151,7 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
         </section>
       </section>
       <DelegationOverview
-        delegations={grantDelegations}
+        delegationsWithTAuthData={grantDelegationsWithTAuthData}
         undelegations={grantUndelegations}
         isFetching={areGrantsFetching}
         topUps={topUps}
