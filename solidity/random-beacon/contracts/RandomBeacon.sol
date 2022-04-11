@@ -129,12 +129,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @notice Gas that is meant to balance the DKG approval's overall cost.
     ///         Can be updated by the governance based on the current market
     ///         conditions.
-    uint256 public dkgApprovalGasOffset = 43500;
+    uint256 public dkgResultApprovalGasOffset = 43500;
 
     /// @notice Gas that is meant to balance the operator inactivity notification
     ///         cost. Can be updated by the governance based on the current
     ///         market conditions.
-    uint256 public operatorInactivityNotificationGasOffset = 54500;
+    uint256 public notifyOperatorInactivityGasOffset = 54500;
 
     /// @notice Gas that is meant to balance the relay entry submission cost.
     ///         Can be updated by the governance based on the current market
@@ -203,10 +203,10 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     );
 
     event GasParametersUpdated(
-        uint256 dkgApprovalGasOffset,
-        uint256 operatorInactivityGasOffset,
-        uint256 relayEntrySubmissionGasOffset,
-        uint256 dkgResultSubmissionGas
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 relayEntrySubmissionGasOffset
     );
 
     event RequesterAuthorizationUpdated(
@@ -558,27 +558,28 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgApprovalGasOffset New DKG approval gas offset
-    /// @param _operatorInactivityNotificationGasOffset New operator inactivity
+    /// @param _dkgResultSubmissionGas New DKG result submission gas
+    /// @param _dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param _notifyOperatorInactivityGasOffset New operator inactivity
     ///        notification gas offset
     /// @param _relayEntrySubmissionGasOffset New relay entry submission gas
     ///        offset
-    /// @param _dkgResultSubmissionGas New DKG result submission gas
     function updateGasParameters(
-        uint256 _dkgApprovalGasOffset,
-        uint256 _operatorInactivityNotificationGasOffset,
-        uint256 _relayEntrySubmissionGasOffset,
-        uint256 _dkgResultSubmissionGas
+        uint256 _dkgResultSubmissionGas,
+        uint256 _dkgResultApprovalGasOffset,
+        uint256 _notifyOperatorInactivityGasOffset,
+        uint256 _relayEntrySubmissionGasOffset
     ) external onlyOwner {
-        dkgApprovalGasOffset = _dkgApprovalGasOffset;
-        operatorInactivityNotificationGasOffset = _operatorInactivityNotificationGasOffset;
-        relayEntrySubmissionGasOffset = _relayEntrySubmissionGasOffset;
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
+        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
+        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        relayEntrySubmissionGasOffset = _relayEntrySubmissionGasOffset;
+
         emit GasParametersUpdated(
-            _dkgApprovalGasOffset,
-            _operatorInactivityNotificationGasOffset,
-            _relayEntrySubmissionGasOffset,
-            _dkgResultSubmissionGas
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset,
+            _relayEntrySubmissionGasOffset
         );
     }
 
@@ -809,7 +810,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
-                dkgApprovalGasOffset,
+                dkgResultApprovalGasOffset,
             msg.sender
         );
     }
@@ -1217,7 +1218,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         );
 
         reimbursementPool.refund(
-            (gasStart - gasleft()) + operatorInactivityNotificationGasOffset,
+            (gasStart - gasleft()) + notifyOperatorInactivityGasOffset,
             msg.sender
         );
     }
