@@ -11,7 +11,7 @@ const useDelegationsWithTAuthData = () => {
 
   const delegationsWithTAuthData = useMemo(() => {
     if (delegations.length === 0) return []
-    if (thresholdAuthState.data?.length === 0) return delegations
+    if (thresholdAuthState.authData?.length === 0) return delegations
     return delegations.map((delegation) => {
       const tAuthData = thresholdAuthState.authData.find((data) => {
         return isSameEthAddress(
