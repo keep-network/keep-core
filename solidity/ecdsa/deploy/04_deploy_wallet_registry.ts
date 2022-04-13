@@ -2,8 +2,9 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getNamedAccounts, deployments, helpers } = hre
+  const { getNamedAccounts, deployments, ethers, helpers } = hre
   const { deployer } = await getNamedAccounts()
+  const { log } = deployments
 
   const SortitionPool = await deployments.get("SortitionPool")
   const TokenStaking = await deployments.get("TokenStaking")
@@ -13,38 +14,39 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // TODO: RandomBeaconStub contract should be replaced by actual implementation of
   // RandomBeacon contract, once @keep-network/random-beacon hardhat deployments
   // scripts are implemented.
-  console.log("deploying RandomBeaconStub contract instead of RandomBeacon")
+  log("deploying RandomBeaconStub contract instead of RandomBeacon")
   const RandomBeacon = await deployments.deploy("RandomBeaconStub", {
     from: deployer,
     log: true,
   })
 
-  const WalletRegistry = await deployments.deploy("WalletRegistry", {
-    contract:
+  const walletRegistry = await helpers.upgrades.deployProxy("WalletRegistry", {
+    contractName:
       deployments.getNetworkName() === "hardhat"
         ? "WalletRegistryStub"
         : undefined,
-    from: deployer,
-    args: [
+    initializerArgs: [
       SortitionPool.address,
       TokenStaking.address,
       EcdsaDkgValidator.address,
       RandomBeacon.address,
       ReimbursementPool.address,
     ],
-    log: true,
+    factoryOpts: {
+      signer: await ethers.getSigner(deployer),
+    },
   })
 
   await helpers.ownable.transferOwnership(
     "SortitionPool",
-    WalletRegistry.address,
+    walletRegistry.address,
     deployer
   )
 
   if (hre.network.tags.tenderly) {
     await hre.tenderly.verify({
       name: "WalletRegistry",
-      address: WalletRegistry.address,
+      address: walletRegistry.address,
     })
   }
 }
