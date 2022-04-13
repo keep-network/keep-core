@@ -356,7 +356,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         staking = _staking;
 
         // TODO: revisit all initial values
-        callbackGasLimit = 56000;
+        callbackGasLimit = 64000;
         groupCreationFrequency = 5;
 
         dkgResultSubmissionReward = 1000e18;
