@@ -31,14 +31,16 @@ import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract WalletRegistry is
     IWalletRegistry,
     IRandomBeaconConsumer,
     IApplication,
     Governable,
-    Reimbursable
+    Reimbursable,
+    Initializable
 {
     using EcdsaAuthorization for EcdsaAuthorization.Data;
     using EcdsaDkg for EcdsaDkg.Data;
@@ -75,17 +77,17 @@ contract WalletRegistry is
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
     ///         other member that will call the DKG approve function.
-    uint256 public dkgResultSubmissionGas = 275000;
+    uint256 public dkgResultSubmissionGas;
 
     /// @notice Gas is meant to balance the DKG result approval's overall cost.
-    ///         It can be updated by the governace based on the current market
+    ///         It can be updated by the governance based on the current market
     ///         conditions.
-    uint256 public dkgResultApprovalGasOffset = 65000;
+    uint256 public dkgResultApprovalGasOffset;
 
     /// @notice Gas is meant to balance the notification of an operator inactivity.
     ///         It can be updated by the governace based on the current market
     ///         conditions.
-    uint256 public notifyOperatorInactivityGasOffset = 85000;
+    uint256 public notifyOperatorInactivityGasOffset;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for DKG result submission or who failed
@@ -99,8 +101,8 @@ contract WalletRegistry is
 
     // External dependencies
 
-    SortitionPool public immutable sortitionPool;
-    IStaking public immutable staking;
+    SortitionPool public sortitionPool;
+    IStaking public staking;
     IRandomBeacon public randomBeacon;
 
     // Events
@@ -244,19 +246,24 @@ contract WalletRegistry is
         _;
     }
 
-    constructor(
+    // TODO: Could the constructor remain?
+    function initialize(
         SortitionPool _sortitionPool,
         IStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
-    ) {
+    ) external initializer {
         sortitionPool = _sortitionPool;
         staking = _staking;
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
         // TODO: revisit all initial values
+
+        dkgResultSubmissionGas = 275000;
+        dkgResultApprovalGasOffset = 65000;
+        notifyOperatorInactivityGasOffset = 85000;
 
         sortitionPoolRewardsBanDuration = 2 weeks;
 

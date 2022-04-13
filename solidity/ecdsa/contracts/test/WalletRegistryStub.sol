@@ -7,22 +7,6 @@ import "../WalletRegistry.sol";
 import "../EcdsaDkgValidator.sol";
 
 contract WalletRegistryStub is WalletRegistry {
-    constructor(
-        SortitionPool _sortitionPool,
-        IStaking _staking,
-        EcdsaDkgValidator _ecdsaDkgValidator,
-        IRandomBeacon _randomBeacon,
-        ReimbursementPool _reimbursementPool
-    )
-        WalletRegistry(
-            _sortitionPool,
-            _staking,
-            _ecdsaDkgValidator,
-            _randomBeacon,
-            _reimbursementPool
-        )
-    {}
-
     function getDkgData() external view returns (EcdsaDkg.Data memory) {
         return dkg;
     }
