@@ -38,4 +38,22 @@ interface IWalletRegistry {
 
     /// @notice Check current wallet creation state.
     function getWalletCreationState() external view returns (EcdsaDkg.State);
+
+    /// @notice Checks whether the given operator is a member of the given
+    ///         wallet signing group.
+    /// @param walletID ID of the wallet
+    /// @param operator Address of the checked operator
+    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    /// @return True - if the operator is a member of the given wallet signing
+    ///         group. False - otherwise.
+    /// @dev Requirements:
+    ///      - The `operator` parameter must be an actual sortition pool operator.
+    ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
+    ///        be exactly the same as the hash stored under `membersIdsHash`
+    ///        for the given `walletID`.
+    function isWalletMember(
+        bytes32 walletID,
+        address operator,
+        uint32[] calldata walletMembersIDs
+    ) external view returns (bool);
 }

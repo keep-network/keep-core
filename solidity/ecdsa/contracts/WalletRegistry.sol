@@ -772,6 +772,43 @@ contract WalletRegistry is
         return dkg.currentState();
     }
 
+    /// @notice Checks whether the given operator is a member of the given
+    ///         wallet signing group.
+    /// @param walletID ID of the wallet
+    /// @param operator Address of the checked operator
+    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    /// @return True - if the operator is a member of the given wallet signing
+    ///         group. False - otherwise.
+    /// @dev Requirements:
+    ///      - The `operator` parameter must be an actual sortition pool operator.
+    ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
+    ///        be exactly the same as the hash stored under `membersIdsHash`
+    ///        for the given `walletID`.
+    function isWalletMember(
+        bytes32 walletID,
+        address operator,
+        uint32[] calldata walletMembersIDs
+    ) external view returns (bool) {
+        uint32 operatorID = sortitionPool.getOperatorID(operator);
+
+        require(operatorID != 0, "Not a sortition pool operator");
+
+        bytes32 memberIdsHash = wallets.getWalletMembersIdsHash(walletID);
+
+        require(
+            memberIdsHash == keccak256(abi.encode(walletMembersIDs)),
+            "Invalid wallet members identifiers"
+        );
+
+        for (uint256 i = 0; i < walletMembersIDs.length; i++) {
+            if (walletMembersIDs[i] == operatorID) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// @notice Checks if awaiting seed timed out.
     /// @return True if awaiting seed timed out, false otherwise.
     function hasSeedTimedOut() external view returns (bool) {
