@@ -785,7 +785,10 @@ contract WalletRegistry is
     ///      - The `operator` parameter must be an actual sortition pool operator.
     ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
     ///        be exactly the same as the hash stored under `membersIdsHash`
-    ///        for the given `walletID`.
+    ///        for the given `walletID`. Those IDs are not directly stored
+    ///        in the contract for gas efficiency purposes but they can be
+    ///        read from appropriate `DkgResultSubmitted` and `DkgResultApproved`
+    ///        events.
     ///      - The `walletMemberIndex` must be in range [1, walletMembersIDs.length]
     function isWalletMember(
         bytes32 walletID,
