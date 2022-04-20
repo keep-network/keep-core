@@ -591,10 +591,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@keep-network/hardhat-helpers@^0.4.1-pre.2":
-  version "0.4.1-pre.2"
-  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.4.1-pre.2.tgz#4c03b7bf52d28378383dbcbd94d9fd3dc3bfbf70"
-  integrity sha512-Mkgy4yD3ZVvyDshejFLTJU2+APX0w1RL9CFDH5P8ulhlzuSfwr07oo7VO2Bqw4WUuM879Rmfnmy1Ffwn/tnzyQ==
+"@keep-network/hardhat-helpers@0.5.0-pre.4":
+  version "0.5.0-pre.4"
+  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.5.0-pre.4.tgz#644c03db57edcecfd12997fca4b2d8f818afffc6"
+  integrity sha512-yYVK+9+OcW6X4ZMlU/QDXJuP5raHGeksmx1LJeE1cps+a+jy527s0/2JIFg1FwevlDkdqd1Ewi9aTXohqo9gUA==
 
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.4":
   version "0.1.0-pre.4"
@@ -1018,6 +1018,13 @@
   integrity sha1-xievwu4i8j8jN/7LNGKKT5fGr7s=
   dependencies:
     "@types/node" "*"
+
+"@types/chai-as-promised@^7.1.5":
+  version "7.1.5"
+  resolved "https://registry.yarnpkg.com/@types/chai-as-promised/-/chai-as-promised-7.1.5.tgz#6e016811f6c7a64f2eed823191c3a6955094e255"
+  integrity sha512-jStwss93SITGBwt/niYrkf2C+/1KTeZCZl1LaeezTlqppAKeoQC7jxyqYuP72sxBGKCIbw7oHgbYssIRzT5FCQ==
+  dependencies:
+    "@types/chai" "*"
 
 "@types/chai@*", "@types/chai@^4.3.0":
   version "4.3.0"
@@ -2661,6 +2668,20 @@ cbor@^4.1.5:
     commander "^3.0.0"
     json-text-sequence "^0.1"
     nofilter "^1.0.3"
+
+cbor@^8.0.0:
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/cbor/-/cbor-8.1.0.tgz#cfc56437e770b73417a2ecbfc9caf6b771af60d5"
+  integrity sha512-DwGjNW9omn6EwP70aXsn7FQJx5kO12tX0bZkaTjzdVFM6/7nhA4t0EENocKGx6D2Bch9PE2KzCUf5SceBdeijg==
+  dependencies:
+    nofilter "^3.1.0"
+
+chai-as-promised@^7.1.1:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/chai-as-promised/-/chai-as-promised-7.1.1.tgz#08645d825deb8696ee61725dbf590c012eb00ca0"
+  integrity sha512-azL6xMoi+uxu6z4rhWQ1jbdUhOMhis2PvscD/xjLqNMkv3BPPp2JyyuTHOrf9BOosGpNQ11v6BKv/g57RXbiaA==
+  dependencies:
+    check-error "^1.0.2"
 
 chai@^4.3.4:
   version "4.3.4"
