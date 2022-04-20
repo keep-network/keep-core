@@ -56,6 +56,11 @@ contract BeaconDkgValidator {
     SortitionPool public sortitionPool;
 
     constructor(SortitionPool _sortitionPool) {
+        require(
+            address(_sortitionPool) != address(0),
+            "Zero-address reference"
+        );
+
         sortitionPool = _sortitionPool;
     }
 

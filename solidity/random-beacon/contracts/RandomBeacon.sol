@@ -369,6 +369,18 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         staking = _staking;
         reimbursementPool = _reimbursementPool;
 
+        require(
+            address(_sortitionPool) != address(0),
+            "Zero-address reference"
+        );
+        require(address(_tToken) != address(0), "Zero-address reference");
+        require(address(_staking) != address(0), "Zero-address reference");
+        require(address(_dkgValidator) != address(0), "Zero-address reference");
+        require(
+            address(_reimbursementPool) != address(0),
+            "Zero-address reference"
+        );
+
         // TODO: revisit all initial values
         callbackGasLimit = 56000;
         groupCreationFrequency = 5;
