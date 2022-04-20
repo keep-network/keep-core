@@ -772,6 +772,50 @@ contract WalletRegistry is
         return dkg.currentState();
     }
 
+    /// @notice Checks whether the given operator is a member of the given
+    ///         wallet signing group.
+    /// @param walletID ID of the wallet
+    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    /// @param operator Address of the checked operator
+    /// @param walletMemberIndex Position of the operator in the wallet signing
+    ///        group members list
+    /// @return True - if the operator is a member of the given wallet signing
+    ///         group. False - otherwise.
+    /// @dev Requirements:
+    ///      - The `operator` parameter must be an actual sortition pool operator.
+    ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
+    ///        be exactly the same as the hash stored under `membersIdsHash`
+    ///        for the given `walletID`. Those IDs are not directly stored
+    ///        in the contract for gas efficiency purposes but they can be
+    ///        read from appropriate `DkgResultSubmitted` and `DkgResultApproved`
+    ///        events.
+    ///      - The `walletMemberIndex` must be in range [1, walletMembersIDs.length]
+    function isWalletMember(
+        bytes32 walletID,
+        uint32[] calldata walletMembersIDs,
+        address operator,
+        uint256 walletMemberIndex
+    ) external view returns (bool) {
+        uint32 operatorID = sortitionPool.getOperatorID(operator);
+
+        require(operatorID != 0, "Not a sortition pool operator");
+
+        bytes32 memberIdsHash = wallets.getWalletMembersIdsHash(walletID);
+
+        require(
+            memberIdsHash == keccak256(abi.encode(walletMembersIDs)),
+            "Invalid wallet members identifiers"
+        );
+
+        require(
+            1 <= walletMemberIndex &&
+                walletMemberIndex <= walletMembersIDs.length,
+            "Wallet member index is out of range"
+        );
+
+        return walletMembersIDs[walletMemberIndex - 1] == operatorID;
+    }
+
     /// @notice Checks if awaiting seed timed out.
     /// @return True if awaiting seed timed out, false otherwise.
     function hasSeedTimedOut() external view returns (bool) {
