@@ -786,7 +786,7 @@ contract WalletRegistry is
     ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
     ///        be exactly the same as the hash stored under `membersIdsHash`
     ///        for the given `walletID`.
-    ///      - The `walletMemberIndex` must be in range [0, walletMembersIDs.length-1]
+    ///      - The `walletMemberIndex` must be in range [1, walletMembersIDs.length]
     function isWalletMember(
         bytes32 walletID,
         uint32[] calldata walletMembersIDs,
@@ -805,12 +805,12 @@ contract WalletRegistry is
         );
 
         require(
-            0 <= walletMemberIndex &&
-                walletMemberIndex <= walletMembersIDs.length - 1,
+            1 <= walletMemberIndex &&
+                walletMemberIndex <= walletMembersIDs.length,
             "Wallet member index is out of range"
         );
 
-        return walletMembersIDs[walletMemberIndex] == operatorID;
+        return walletMembersIDs[walletMemberIndex - 1] == operatorID;
     }
 
     /// @notice Checks if awaiting seed timed out.

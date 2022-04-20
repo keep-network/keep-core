@@ -396,7 +396,7 @@ describe("WalletRegistry - Wallets", async () => {
         context("when the passed wallet members identifiers are valid", () => {
           context("when the wallet member index is in correct range", () => {
             context(
-              "when the given operator is the member of the wallet signing group at given position",
+              "when the given operator is the member of the wallet signing group at the given position",
               () => {
                 it("should return true", async () => {
                   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -405,7 +405,7 @@ describe("WalletRegistry - Wallets", async () => {
                       walletID,
                       walletMembersIDs,
                       walletMembersAddresses[5],
-                      5
+                      6
                     )
                   ).to.be.true
                 })
@@ -413,7 +413,7 @@ describe("WalletRegistry - Wallets", async () => {
             )
 
             context(
-              "when the given operator is not the member of the wallet signing group at given position",
+              "when the given operator is not the member of the wallet signing group at the given position",
               () => {
                 it("should return false", async () => {
                   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -422,7 +422,7 @@ describe("WalletRegistry - Wallets", async () => {
                       walletID,
                       walletMembersIDs,
                       walletMembersAddresses[5],
-                      6
+                      7
                     )
                   ).to.be.false
                 })
@@ -431,17 +431,39 @@ describe("WalletRegistry - Wallets", async () => {
           })
 
           context("when the wallet member index is out of range", () => {
-            it("should revert", async () => {
-              // Max proper value is `walletMembersIDs.length-1`.
-              await expect(
-                walletRegistry.isWalletMember(
-                  walletID,
-                  walletMembersIDs,
-                  walletMembersAddresses[0],
-                  walletMembersIDs.length
-                )
-              ).to.be.revertedWith("Wallet member index is out of range")
-            })
+            context(
+              "when the wallet member index is lesser than the minimum proper value",
+              () => {
+                it("should revert", async () => {
+                  // Min proper value is `1`.
+                  await expect(
+                    walletRegistry.isWalletMember(
+                      walletID,
+                      walletMembersIDs,
+                      walletMembersAddresses[0],
+                      0
+                    )
+                  ).to.be.revertedWith("Wallet member index is out of range")
+                })
+              }
+            )
+
+            context(
+              "when the wallet member index is greater than the maximum proper value",
+              () => {
+                it("should revert", async () => {
+                  // Max proper value is `walletMembersIDs.length`.
+                  await expect(
+                    walletRegistry.isWalletMember(
+                      walletID,
+                      walletMembersIDs,
+                      walletMembersAddresses[0],
+                      walletMembersIDs.length + 1
+                    )
+                  ).to.be.revertedWith("Wallet member index is out of range")
+                })
+              }
+            )
           })
         })
 
