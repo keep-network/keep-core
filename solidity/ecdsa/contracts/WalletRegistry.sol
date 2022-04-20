@@ -775,8 +775,10 @@ contract WalletRegistry is
     /// @notice Checks whether the given operator is a member of the given
     ///         wallet signing group.
     /// @param walletID ID of the wallet
-    /// @param operator Address of the checked operator
     /// @param walletMembersIDs Identifiers of the wallet signing group members
+    /// @param operator Address of the checked operator
+    /// @param walletMemberIndex Position of the operator in the wallet signing
+    ///        group members list
     /// @return True - if the operator is a member of the given wallet signing
     ///         group. False - otherwise.
     /// @dev Requirements:
@@ -784,10 +786,12 @@ contract WalletRegistry is
     ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
     ///        be exactly the same as the hash stored under `membersIdsHash`
     ///        for the given `walletID`.
+    ///      - The `walletMemberIndex` must be in range [0, walletMembersIDs.length-1]
     function isWalletMember(
         bytes32 walletID,
+        uint32[] calldata walletMembersIDs,
         address operator,
-        uint32[] calldata walletMembersIDs
+        uint256 walletMemberIndex
     ) external view returns (bool) {
         uint32 operatorID = sortitionPool.getOperatorID(operator);
 
@@ -800,13 +804,13 @@ contract WalletRegistry is
             "Invalid wallet members identifiers"
         );
 
-        for (uint256 i = 0; i < walletMembersIDs.length; i++) {
-            if (walletMembersIDs[i] == operatorID) {
-                return true;
-            }
-        }
+        require(
+            0 <= walletMemberIndex &&
+                walletMemberIndex <= walletMembersIDs.length - 1,
+            "Wallet member index is out of range"
+        );
 
-        return false;
+        return walletMembersIDs[walletMemberIndex] == operatorID;
     }
 
     /// @notice Checks if awaiting seed timed out.
