@@ -68,6 +68,7 @@
     "@keep-network/random-beacon": "development",
     "@keep-network/sortition-pools": "^2.0.0-pre.6",
     "@openzeppelin/contracts": "^4.4.1",
+    "@openzeppelin/contracts-upgradeable": "^4.6.0-rc.0",
     "@threshold-network/solidity-contracts": ">1.1.0-dev <1.1.0-ropsten"
   },
   "engines": {

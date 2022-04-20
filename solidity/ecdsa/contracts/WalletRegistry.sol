@@ -32,6 +32,9 @@ import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 
+// TODO: We used RC version of @openzeppelin/contracts-upgradeable to use `reinitializer`
+// in upgrades. We should revisit this part before mainnet deployment and use
+// a final release package if it's ready.
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract WalletRegistry is
@@ -261,8 +264,8 @@ contract WalletRegistry is
 
         // TODO: revisit all initial values
 
-        dkgResultSubmissionGas = 288_000;
-        dkgResultApprovalGasOffset = 62_000;
+        dkgResultSubmissionGas = 272_000;
+        dkgResultApprovalGasOffset = 63_000;
         notifyOperatorInactivityGasOffset = 86_000;
 
         sortitionPoolRewardsBanDuration = 2 weeks;
