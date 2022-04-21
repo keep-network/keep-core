@@ -105,6 +105,10 @@ const config: HardhatUserConfig = {
       default: 2,
       // mainnet: ""
     },
+    esdm: {
+      default: 3,
+      // mainnet: ""
+    },
   },
   external: {
     contracts: [
@@ -130,7 +134,9 @@ const config: HardhatUserConfig = {
     paths: [
       "@threshold-network/solidity-contracts/contracts/token/T.sol",
       "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
+      "@threshold-network/solidity-contracts/contracts/governance/ProxyAdminWithDeputy.sol",
       "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
+      "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol",
     ],
     keep: true,
   },
