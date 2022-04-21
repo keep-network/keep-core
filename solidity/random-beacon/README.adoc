@@ -293,15 +293,15 @@ entry.
 4+s|DKG
 
 |groupSize
-|Size of a group in the threshold relay
+|Size of a group in the threshold relay.
 |No
-|64
+|`64`
 
 |groupThreshold
 |The minimum number of group members needed to interact according to the protocol
 to provide signatures for the DKG result. 
 |No
-|33
+|`33`
 
 |activeThreshold
 |The minimum number of active and properly behaving group members during the DKG
@@ -310,105 +310,84 @@ needed to accept the result.
 d|`58` +
 _90% of groupSize_
 
-|offchainDkgTime
-|Time in blocks after which DKG result is complete and ready to be published by
-clients
+|singnatureByteSize
+|Size in bytes of a single signature produced by operator supporting DKG result.
 |No
-d|`72 blocks` +
-_5 * (1 + 5) + 2 * (1 + 10) + 20_
+|`65`
 
 |resultChallengePeriodLength
-|Time in blocks during which a submitted result can be challenged
+|Time in blocks during which a submitted result can be challenged.
 |Yes
 d|`11520 blocks` +
 _~48h assuming 15s block time_
 
 |resultSubmissionTimeout
-|Time in blocks during which a result is expected to be submitted
+|Time in blocks during which a result is expected to be submitted.
 |Yes
 d|`1280 blocks` +
 _64 members * 20 blocks = 1280 blocks_
 
 |submitterPrecedencePeriodLength
-|Time in blocks during which only the result submitter is allowed to approve it
+|Time in blocks during which only the result submitter is allowed to approve it.
 |Yes
 |`20 blocks`
 
 4+s|Groups
 
 |groupLifetime
-|Group lifetime in blocks
+|Group lifetime in blocks.
 |Yes
 d|`403200 blocks` +
 _~10 weeks assuming 15s block time_
 
 4+s|Relay Entry
 
-|relayRequestFee
-|Fee paid in T by the relay requester
-|Yes
-d|`200e18` +
-`200 T`
-
 |relayEntrySoftTimeout
-|Time in blocks during which a result is expected to be submitted
+|Time in blocks during which a result is expected to be submitted.
 |Yes
 d|`1280 blocks` +
 _64 members * 20 blocks = 1280 blocks_
 
 |relayEntryHardTimeout
-|Hard timeout in blocks for a group to submit the relay entry
+|Hard timeout in blocks for a group to submit the relay entry.
 |Yes
 d|`5760 blocks` +
 _~24h assuming 15s block time_
 
 |relayEntrySubmissionFailureSlashingAmount
-|Slashing amount for not submitting relay entry
+|Slashing amount for not submitting relay entry.
 |Yes
 d|`1000e18` +
 _1 000 T_
 
 4+s|Random Beacon
 
+|_owner
+|Address of the RandomBeacon contract owner.
+|Yes
+d|_deployer's address_
+
 |callbackGasLimit
-|Relay entry callback gas limit
+|Relay entry callback gas limit.
 |Yes
 d|`56000`
 
 |groupCreationFrequency
-|The frequency of new group creation
+|The frequency of new group creation.
 |Yes
-|5
-
-|dkgResultSubmissionReward
-|Reward in T for submitting DKG result
-|Yes
-d|`1000e18` +
-_1 000 T_
-
-|sortitionPoolUnlockingReward
-|Reward in T for unlocking the sortition pool if DKG timed out
-|Yes
-d|`1000e18` +
-_1 000 T_
-
-|ineligibleOperatorNotifierReward
-|Reward in T for notifying the operator is ineligible
-|Yes
-|0
+|`5`
 
 |maliciousDkgResultSlashingAmount
-|Slashing amount for submitting malicious DKG result
+|Slashing amount for submitting malicious DKG result.
 |Yes
 d|`50000e18` +
 _50 000 T_
 
 |unauthorizedSigningSlashingAmount
-|Slashing amount when an unauthorized signing has been proved
+|Slashing amount when an unauthorized signing has been proved.
 |Yes
 d|`100e3 * 1e18` +
 _100 000 T_
-
 
 |sortitionPoolRewardsBanDuration
 |Duration of the sortition pool rewards ban imposed on operators who were
@@ -419,34 +398,69 @@ submission or were voted by the group as notoriously failing heartbeats.
 
 |relayEntryTimeoutNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
-will be transferred to the notifier reporting about relay entry timeout
+will be transferred to the notifier reporting about relay entry timeout.
 |Yes
 |`40`
 
 |unauthorizedSigningNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
-will be transferred to the notifier reporting about unauthorized signing
+will be transferred to the notifier reporting about unauthorized signing.
 |Yes
 |`50`
 
 |dkgMaliciousResultNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
-will be transferred to the notifier reporting about a malicious DKG result
+will be transferred to the notifier reporting about a malicious DKG result.
 |Yes
 |`100`
+
+|dkgResultSubmissionGas	
+|Calculated gas cost for submitting a DKG result. This will be refunded as part
+of the DKG approval process.
+|Yes
+|`235000`
+
+|dkgResultApprovalGasOffset
+|Gas that is meant to balance the DKG result approval's overall cost.
+|Yes
+|`41500`
+
+|notifyOperatorInactivityGasOffset
+|Gas that is meant to balance the operator inactivity notification cost.
+|Yes
+|`54500`
+
+|relayEntrySubmissionGasOffset
+|Gas that is meant to balance the relay entry submission cost.
+|Yes
+|`11250`
+
+|authorizedRequesters
+|Authorized addresses that can request a relay entry.
+|No
+|
 
 4+s|Authorization
 
 |minimumAuthorization
 |The minimum authorization amount required so that operator can participate in
-the Random Beacon
+the Random Beacon.
 |Yes
 d|`100000 * 1e18` +
 _100 000 T_
 
 |authorizationDecreaseDelay
 |Delay in seconds that needs to pass between the time authorization decrease is
-requested and the time that request gets approved
+requested and the time that request gets approved.
+|Yes
+d|`403200 blocks` +
+_~10 weeks 15s block time_
+
+4+s|Governance
+
+|governanceDelay
+|Time in blocks after which initiated change of governable parameters can be
+finalized.
 |Yes
 |`0`
 
