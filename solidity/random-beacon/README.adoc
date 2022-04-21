@@ -411,8 +411,9 @@ _100 000 T_
 
 
 |sortitionPoolRewardsBanDuration
-|Duration of the sortition pool rewards ban imposed on operators who were inactive/disqualified
-during off-chain DKG or were voted by the group as notoriously failing heartbeats.
+|Duration of the sortition pool rewards ban imposed on operators who were
+inactive/disqualified during off-chain DKG, misbehaved during the DKG result
+submission or were voted by the group as notoriously failing heartbeats.
 |Yes
 |`2 weeks`
 
