@@ -1,12 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import {
-  ethers,
-  waffle,
-  helpers,
-  getUnnamedAccounts,
-  getNamedAccounts,
-} from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import {
@@ -24,28 +18,31 @@ import blsData from "../data/bls"
 import { registerOperators } from "../utils/operators"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { RandomBeacon, RandomBeaconStub, TestToken } from "../../typechain"
+import type { RandomBeacon, RandomBeaconStub, T } from "../../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
-const { to1e18 } = helpers.number
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { keccak256 } = ethers.utils
 
 const fixture = async () => {
   const contracts = await randomBeaconDeployment()
 
+  // Accounts offset provided to slice getUnnamedSigners have to include number
+  // of unnamed accounts that were already used.
   await registerOperators(
     contracts.randomBeacon as RandomBeacon,
-    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+    contracts.t as T,
+    constants.groupSize,
+    1
   )
 
   const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
-  const testToken = contracts.testToken as TestToken
+  const t = contracts.t as T
 
   return {
     randomBeacon,
-    testToken,
+    t,
   }
 }
 
@@ -59,7 +56,6 @@ const fixture = async () => {
 // Signatures in bls.ts were generated outside of this test based on bls_test.go
 describe("System -- e2e", () => {
   // same as in RandomBeacon constructor
-  const relayRequestFee = to1e18(200)
   const relayEntryHardTimeout = 5760
   const relayEntrySoftTimeout = 20
   const callbackGasLimit = 56000
@@ -72,22 +68,21 @@ describe("System -- e2e", () => {
   ]
 
   let randomBeacon: RandomBeacon
-  let testToken: TestToken
+  let t: T
   let requester: SignerWithAddress
   let owner: SignerWithAddress
 
   before(async () => {
     const contracts = await waffle.loadFixture(fixture)
 
-    owner = await ethers.getSigner((await getNamedAccounts()).deployer)
-    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
+    owner = await ethers.getNamedSigner("deployer")
+    ;[requester] = await ethers.getUnnamedSigners()
     randomBeacon = contracts.randomBeacon
-    testToken = contracts.testToken
+    t = contracts.t
 
     await randomBeacon
       .connect(owner)
       .updateRelayEntryParameters(
-        relayRequestFee,
         relayEntrySoftTimeout,
         relayEntryHardTimeout,
         callbackGasLimit
@@ -96,6 +91,10 @@ describe("System -- e2e", () => {
     await randomBeacon
       .connect(owner)
       .updateGroupCreationParameters(groupCreationFrequency, groupLifetime)
+
+    await randomBeacon
+      .connect(owner)
+      .setRequesterAuthorization(requester.address, true)
   })
 
   context("when testing a happy path with 15 relay requests", () => {
@@ -140,7 +139,6 @@ describe("System -- e2e", () => {
         .approveDkgResult(dkgResult.dkgResult)
 
       for (let i = 1; i <= 14; i++) {
-        await approveTestToken(requester)
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
         const txSubmitRelayEntry = await randomBeacon
@@ -196,11 +194,4 @@ describe("System -- e2e", () => {
       expect(groupsRegistry[2]).to.deep.equal(keccak256(groupPubKeys[2]))
     })
   })
-
-  async function approveTestToken(_requester) {
-    await testToken.mint(_requester.address, relayRequestFee)
-    await testToken
-      .connect(_requester)
-      .approve(randomBeacon.address, relayRequestFee)
-  }
 })

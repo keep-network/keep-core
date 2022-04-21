@@ -2,45 +2,112 @@
 
 import { ethers } from "hardhat"
 
-import { constants } from "../fixtures"
+import { params } from "../fixtures"
+import { testConfig } from "../../hardhat.config"
 
-import type { Address } from "hardhat-deploy/types"
-import type { BigNumber } from "ethers"
-import type { RandomBeacon } from "../../typechain"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { BigNumber, BigNumberish } from "ethers"
+import type {
+  RandomBeacon,
+  RandomBeaconStub,
+  SortitionPool,
+  T,
+  TokenStaking,
+} from "../../typechain"
 
 export type OperatorID = number
-export type Operator = { id: OperatorID; address: Address }
+export type Operator = { id: OperatorID; signer: SignerWithAddress }
 
 export async function registerOperators(
   randomBeacon: RandomBeacon,
-  addresses: Address[],
-  stakeAmount: BigNumber = constants.minimumStake
+  t: T,
+  numberOfOperators = testConfig.operatorsCount,
+  unnamedSignersOffset = testConfig.nonStakingAccountsCount,
+  stakeAmount: BigNumber = params.minimumAuthorization
 ): Promise<Operator[]> {
   const operators: Operator[] = []
 
-  const sortitionPool = await ethers.getContractAt(
+  const sortitionPool: SortitionPool = await ethers.getContractAt(
     "SortitionPool",
     await randomBeacon.sortitionPool()
   )
 
-  const staking = await ethers.getContractAt(
-    "StakingStub",
+  const staking: TokenStaking = await ethers.getContractAt(
+    "TokenStaking",
     await randomBeacon.staking()
   )
 
-  for (let i = 0; i < addresses.length; i++) {
-    const address = addresses[i]
+  const signers = (await ethers.getUnnamedSigners()).slice(unnamedSignersOffset)
 
-    await staking.setStake(address, stakeAmount)
+  // We use unique accounts for each staking role for each operator.
+  if (signers.length < numberOfOperators * 5) {
+    throw new Error(
+      "not enough unnamed signers; update hardhat network's configuration account count"
+    )
+  }
+
+  for (let i = 0; i < numberOfOperators; i++) {
+    const owner: SignerWithAddress = signers[i]
+    const stakingProvider: SignerWithAddress =
+      signers[1 * numberOfOperators + i]
+    const operator: SignerWithAddress = signers[2 * numberOfOperators + i]
+    const beneficiary: SignerWithAddress = signers[3 * numberOfOperators + i]
+    const authorizer: SignerWithAddress = signers[4 * numberOfOperators + i]
+
+    await stake(
+      t,
+      staking,
+      randomBeacon,
+      owner,
+      stakingProvider,
+      stakeAmount,
+      beneficiary,
+      authorizer
+    )
 
     await randomBeacon
-      .connect(await ethers.getSigner(address))
-      .registerOperator()
+      .connect(stakingProvider)
+      .registerOperator(operator.address)
 
-    const id = await sortitionPool.getOperatorID(address)
+    await randomBeacon.connect(operator).joinSortitionPool()
 
-    operators.push({ id, address })
+    const id = await sortitionPool.getOperatorID(operator.address)
+
+    operators.push({ id, signer: operator })
   }
 
   return operators
+}
+
+export async function stake(
+  t: T,
+  staking: TokenStaking,
+  randomBeacon: RandomBeacon | RandomBeaconStub,
+  owner: SignerWithAddress,
+  stakingProvider: SignerWithAddress,
+  stakeAmount: BigNumberish,
+  beneficiary = stakingProvider,
+  authorizer = stakingProvider
+): Promise<void> {
+  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+
+  await t.connect(deployer).mint(owner.address, stakeAmount)
+  await t.connect(owner).approve(staking.address, stakeAmount)
+
+  await staking
+    .connect(owner)
+    .stake(
+      stakingProvider.address,
+      beneficiary.address,
+      authorizer.address,
+      stakeAmount
+    )
+
+  await staking
+    .connect(authorizer)
+    .increaseAuthorization(
+      stakingProvider.address,
+      randomBeacon.address,
+      stakeAmount
+    )
 }

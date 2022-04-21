@@ -3,12 +3,17 @@
 import { ethers } from "hardhat"
 
 // eslint-disable-next-line import/no-cycle
-import { constants } from "../fixtures"
+import { params } from "../fixtures"
+import { testConfig } from "../../hardhat.config"
 
-import type { Address } from "hardhat-deploy/types"
-import type { BigNumber } from "ethers"
+import type { BigNumber, BigNumberish } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { WalletRegistry, T } from "../../typechain"
+import type {
+  WalletRegistry,
+  T,
+  SortitionPool,
+  TokenStaking,
+} from "../../typechain"
 
 export type OperatorID = number
 export type Operator = {
@@ -18,53 +23,56 @@ export type Operator = {
 
 export async function registerOperators(
   walletRegistry: WalletRegistry,
-  tToken: T,
-  addresses: Address[],
-  stakeAmount: BigNumber = constants.minimumStake
+  t: T,
+  numberOfOperators = testConfig.operatorsCount,
+  unnamedSignersOffset = testConfig.nonStakingAccountsCount,
+  stakeAmount: BigNumber = params.minimumAuthorization
 ): Promise<Operator[]> {
   const operators: Operator[] = []
 
-  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
-
-  const sortitionPool = await ethers.getContractAt(
+  const sortitionPool: SortitionPool = await ethers.getContractAt(
     "SortitionPool",
     await walletRegistry.sortitionPool()
   )
 
-  const staking = await ethers.getContractAt(
+  const staking: TokenStaking = await ethers.getContractAt(
     "TokenStaking",
     await walletRegistry.staking()
   )
 
-  for (let i = 0; i < addresses.length; i++) {
-    const stakingProvider: SignerWithAddress = await ethers.getSigner(
-      addresses[i]
+  const signers = (await ethers.getUnnamedSigners()).slice(unnamedSignersOffset)
+
+  // We use unique accounts for each staking role for each operator.
+  if (signers.length < numberOfOperators * 5) {
+    throw new Error(
+      "not enough unnamed signers; update hardhat network's configuration account count"
+    )
+  }
+
+  for (let i = 0; i < numberOfOperators; i++) {
+    const owner: SignerWithAddress = signers[i]
+    const stakingProvider: SignerWithAddress =
+      signers[1 * numberOfOperators + i]
+    const operator: SignerWithAddress = signers[2 * numberOfOperators + i]
+    const beneficiary: SignerWithAddress = signers[3 * numberOfOperators + i]
+    const authorizer: SignerWithAddress = signers[4 * numberOfOperators + i]
+
+    await stake(
+      t,
+      staking,
+      walletRegistry,
+      owner,
+      stakingProvider,
+      stakeAmount,
+      beneficiary,
+      authorizer
     )
 
-    // TODO: Use unique addresses for each role.
-    // const owner: SignerWithAddress = stakingProvider
-    const operator: SignerWithAddress = stakingProvider
-    // const beneficiary: string = operator
-    const authorizer: SignerWithAddress = stakingProvider
+    await walletRegistry
+      .connect(stakingProvider)
+      .registerOperator(operator.address)
 
-    await tToken.connect(deployer).mint(operator.address, stakeAmount)
-
-    await tToken.connect(stakingProvider).approve(staking.address, stakeAmount)
-
-    // TODO: Uncomment when integrating with the real TokenStaking contract.
-    // await staking
-    //   .connect(owner)
-    //   .stake(stakingProvider, beneficiary, authorizer, stakeAmount)
-
-    await staking
-      .connect(authorizer)
-      .increaseAuthorization(
-        stakingProvider.address,
-        walletRegistry.address,
-        stakeAmount
-      )
-
-    await walletRegistry.connect(operator).registerOperator()
+    await walletRegistry.connect(operator).joinSortitionPool()
 
     const id = await sortitionPool.getOperatorID(operator.address)
 
@@ -72,4 +80,37 @@ export async function registerOperators(
   }
 
   return operators
+}
+
+export async function stake(
+  t: T,
+  staking: TokenStaking,
+  randomBeacon: WalletRegistry,
+  owner: SignerWithAddress,
+  stakingProvider: SignerWithAddress,
+  stakeAmount: BigNumberish,
+  beneficiary = stakingProvider,
+  authorizer = stakingProvider
+): Promise<void> {
+  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+
+  await t.connect(deployer).mint(owner.address, stakeAmount)
+  await t.connect(owner).approve(staking.address, stakeAmount)
+
+  await staking
+    .connect(owner)
+    .stake(
+      stakingProvider.address,
+      beneficiary.address,
+      authorizer.address,
+      stakeAmount
+    )
+
+  await staking
+    .connect(authorizer)
+    .increaseAuthorization(
+      stakingProvider.address,
+      randomBeacon.address,
+      stakeAmount
+    )
 }

@@ -21,7 +21,15 @@ contract RelayStub {
         relay.currentRequestStartBlock = uint64(block.number);
     }
 
-    function getSlashingFactor() external view returns (uint256) {
-        return relay.getSlashingFactor();
+    function setRelayEntrySubmissionFailureSlashingAmount(
+        uint96 relayEntrySubmissionFailureSlashingAmount
+    ) external {
+        relay.setRelayEntrySubmissionFailureSlashingAmount(
+            relayEntrySubmissionFailureSlashingAmount
+        );
+    }
+
+    function calculateSlashingAmount() external view returns (uint96) {
+        return relay.calculateSlashingAmount();
     }
 }

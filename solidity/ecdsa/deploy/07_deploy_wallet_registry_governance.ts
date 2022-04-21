@@ -7,11 +7,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const WalletRegistry = await deployments.get("WalletRegistry")
 
+  const GOVERNANCE_DELAY = 604800 // 1 week
+
   const WalletRegistryGovernance = await deployments.deploy(
     "WalletRegistryGovernance",
     {
       from: deployer,
-      args: [WalletRegistry.address],
+      args: [WalletRegistry.address, GOVERNANCE_DELAY],
       log: true,
     }
   )

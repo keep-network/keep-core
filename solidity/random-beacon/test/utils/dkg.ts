@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { ethers } from "hardhat"
+import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
@@ -16,7 +16,9 @@ import type {
   DkgResultSubmittedEvent,
 } from "../../typechain/BeaconDkg"
 
-export const noMisbehaved = []
+const { provider } = waffle
+
+export const noMisbehaved: number[] = []
 
 export async function genesis(
   randomBeacon: RandomBeacon
@@ -53,6 +55,7 @@ export async function signAndSubmitCorrectDkgResult(
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
+  submitterInitialBalance: BigNumber
 }> {
   const sortitionPool = (await ethers.getContractAt(
     "SortitionPool",
@@ -89,6 +92,7 @@ export async function signAndSubmitArbitraryDkgResult(
   dkgResultHash: string
   members: number[]
   submitter: SignerWithAddress
+  submitterInitialBalance: BigNumber
 }> {
   const { members, signingMembersIndices, signaturesBytes } =
     await signDkgResult(
@@ -123,7 +127,10 @@ export async function signAndSubmitArbitraryDkgResult(
     )
   )
 
-  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+  const submitter = signers[submitterIndex - 1].signer
+  const submitterInitialBalance = await provider.getBalance(
+    await submitter.getAddress()
+  )
 
   const transaction = await randomBeacon
     .connect(submitter)
@@ -135,6 +142,7 @@ export async function signAndSubmitArbitraryDkgResult(
     dkgResultHash,
     members,
     submitter,
+    submitterInitialBalance,
   }
 }
 
@@ -190,7 +198,7 @@ export async function signAndSubmitUnrecoverableDkgResult(
     )
   )
 
-  const submitter = await ethers.getSigner(signers[submitterIndex - 1].address)
+  const submitter = signers[submitterIndex - 1].signer
 
   const transaction = await randomBeacon
     .connect(submitter)
@@ -219,7 +227,7 @@ export async function signDkgResult(
   const signingMembersIndices: number[] = []
   const signatures: string[] = []
   for (let i = 0; i < signers.length; i++) {
-    const { id, address } = signers[i]
+    const { id, signer: ethersSigner } = signers[i]
     members.push(id)
 
     if (signatures.length === numberOfSignatures) {
@@ -231,7 +239,6 @@ export async function signDkgResult(
 
     signingMembersIndices.push(signerIndex)
 
-    const ethersSigner = await ethers.getSigner(address)
     const signature = await ethersSigner.signMessage(
       ethers.utils.arrayify(resultHash)
     )

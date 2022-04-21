@@ -1,10 +1,8 @@
 {
+  "files": ["./hardhat.config.ts"],
+  "include": ["./deploy", "./test", "./typechain"],
   "compilerOptions": {
-    "downlevelIteration": true
-  },
-  "files": [
-    "./hardhat.config.ts",
-    "node_modules/@keep-network/hardhat-local-networks-config/src/type-extensions.d.ts"
-  ],
-  "include": ["./deploy", "./test", "./typechain"]
+    "esModuleInterop": true,
+    "noImplicitAny": true
+  }
 }

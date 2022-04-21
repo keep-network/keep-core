@@ -8,14 +8,16 @@ import { constants } from "./fixtures"
 import { noMisbehaved, hashDKGMembers } from "./utils/dkg"
 import { hashUint32Array } from "./utils/groups"
 
-import type { GroupsStub } from "../typechain"
+import type { GroupsStub, GroupsStub__factory } from "../typechain"
 import type { ContractTransaction } from "ethers"
 import type { Groups } from "../typechain/GroupsStub"
 
 const { keccak256 } = ethers.utils
 
 const fixture = async () => {
-  const GroupsStub = await ethers.getContractFactory("GroupsStub")
+  const GroupsStub = await ethers.getContractFactory<GroupsStub__factory>(
+    "GroupsStub"
+  )
   const groups = await GroupsStub.deploy()
 
   return groups
@@ -233,6 +235,7 @@ describe("Groups", () => {
           expect(storedGroup.registrationBlockNumber).to.be.equal(
             existingGroup.registrationBlockNumber
           )
+
           expect(storedGroup.membersHash).to.be.equal(
             hashUint32Array(existingGroupMembers)
           )

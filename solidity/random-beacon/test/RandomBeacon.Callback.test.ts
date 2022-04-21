@@ -1,4 +1,6 @@
-import { ethers, waffle, helpers, getUnnamedAccounts } from "hardhat"
+/* eslint-disable @typescript-eslint/no-extra-semi */
+
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import blsData from "./data/bls"
@@ -9,7 +11,7 @@ import { registerOperators } from "./utils/operators"
 import type { DeployedContracts } from "./fixtures"
 import type {
   RandomBeaconStub,
-  TestToken,
+  T,
   CallbackContractStub,
   RandomBeacon,
 } from "../typechain"
@@ -23,7 +25,7 @@ const fixture = async () => {
 
   const contracts: DeployedContracts = {
     randomBeacon: deployment.randomBeacon,
-    testToken: deployment.testToken,
+    t: deployment.t,
     callbackContractStub: await (
       await ethers.getContractFactory("CallbackContractStub")
     ).deploy(),
@@ -32,11 +34,13 @@ const fixture = async () => {
     ).deploy(),
   }
 
-  // Accounts offset provided to slice getUnnamedAccounts have to include number
+  // Accounts offset provided to slice getUnnamedSigners have to include number
   // of unnamed accounts that were already used.
   const signers = await registerOperators(
     contracts.randomBeacon as RandomBeacon,
-    (await getUnnamedAccounts()).slice(1, 1 + constants.groupSize)
+    contracts.t as T,
+    constants.groupSize,
+    2
   )
 
   await createGroup(contracts.randomBeacon as RandomBeacon, signers)
@@ -49,27 +53,26 @@ describe("RandomBeacon - Callback", () => {
   let submitter: SignerWithAddress
 
   let randomBeacon: RandomBeaconStub
-  let testToken: TestToken
+  let t: T
   let callbackContract: CallbackContractStub
   let callbackContract1: CallbackContractStub
 
   before(async () => {
-    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-    submitter = await ethers.getSigner((await getUnnamedAccounts())[2])
+    ;[requester, submitter] = await ethers.getUnnamedSigners()
 
     const { contracts } = await waffle.loadFixture(fixture)
 
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
-    testToken = contracts.testToken as TestToken
+    t = contracts.t as T
     callbackContract = contracts.callbackContractStub as CallbackContractStub
     callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
+
+    await randomBeacon.setRequesterAuthorization(requester.address, true)
   })
 
   describe("requestRelayEntry", () => {
     before(async () => {
       await createSnapshot()
-
-      await approveTestToken()
     })
 
     after(async () => {
@@ -84,9 +87,7 @@ describe("RandomBeacon - Callback", () => {
           .connect(requester)
           .requestRelayEntry(callbackContract.address)
 
-        const callbackData = await randomBeacon.getCallbackData()
-
-        await expect(callbackData.callbackContract).to.equal(
+        await expect(await randomBeacon.getCallbackContract()).to.equal(
           callbackContract.address
         )
 
@@ -104,12 +105,11 @@ describe("RandomBeacon - Callback", () => {
           .connect(submitter)
           ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
-        await approveTestToken()
-
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
-        const callbackData = await randomBeacon.getCallbackData()
-        await expect(callbackData.callbackContract).to.equal(ZERO_ADDRESS)
+        await expect(await randomBeacon.getCallbackContract()).to.equal(
+          ZERO_ADDRESS
+        )
 
         await restoreSnapshot()
       })
@@ -125,14 +125,11 @@ describe("RandomBeacon - Callback", () => {
           .connect(submitter)
           ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
-        await approveTestToken()
-
         await randomBeacon
           .connect(requester)
           .requestRelayEntry(callbackContract1.address)
 
-        const callbackData = await randomBeacon.getCallbackData()
-        await expect(callbackData.callbackContract).to.equal(
+        await expect(await randomBeacon.getCallbackContract()).to.equal(
           callbackContract1.address
         )
 
@@ -144,8 +141,6 @@ describe("RandomBeacon - Callback", () => {
   describe("submitRelayEntry", () => {
     before(async () => {
       await createSnapshot()
-
-      await approveTestToken()
     })
 
     after(async () => {
@@ -182,7 +177,6 @@ describe("RandomBeacon - Callback", () => {
           await createSnapshot()
 
           await randomBeacon.updateRelayEntryParameters(
-            params.relayRequestFee,
             params.relayEntrySoftTimeout,
             params.relayEntryHardTimeout,
             40000
@@ -224,11 +218,4 @@ describe("RandomBeacon - Callback", () => {
       })
     })
   })
-
-  async function approveTestToken() {
-    await testToken.mint(requester.address, params.relayRequestFee)
-    await testToken
-      .connect(requester)
-      .approve(randomBeacon.address, params.relayRequestFee)
-  }
 })

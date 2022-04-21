@@ -1,28 +1,30 @@
-import { ethers, waffle } from "hardhat"
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { randomBeaconDeployment } from "./fixtures"
 
-import type { Signer } from "ethers"
+import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeaconStub } from "../typechain"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("RandomBeacon - Parameters", () => {
   let governance: Signer
   let thirdParty: Signer
+  let thirdPartyContract: SignerWithAddress
   let randomBeacon: RandomBeaconStub
 
-  // prettier-ignore
-  before(async () => {
-    [governance, thirdParty] = await ethers.getSigners()
-  })
+  before("load test fixture", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;[governance, thirdParty, thirdPartyContract] = await ethers.getSigners()
 
-  beforeEach("load test fixture", async () => {
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
   })
 
   describe("updateRelayEntryParameters", () => {
-    const relayRequestFee = 100
     const relayEntrySoftTimeout = 200
     const relayEntryHardTimeout = 300
     const callbackGasLimit = 400
@@ -33,7 +35,6 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateRelayEntryParameters(
-              relayRequestFee,
               relayEntrySoftTimeout,
               relayEntryHardTimeout,
               callbackGasLimit
@@ -43,22 +44,22 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
-      beforeEach(async () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeacon
           .connect(governance)
           .updateRelayEntryParameters(
-            relayRequestFee,
             relayEntrySoftTimeout,
             relayEntryHardTimeout,
             callbackGasLimit
           )
       })
 
-      it("should update the relay request fee", async () => {
-        expect(await randomBeacon.relayRequestFee()).to.be.equal(
-          relayRequestFee
-        )
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should update the relay entry soft timeout", async () => {
@@ -83,7 +84,6 @@ describe("RandomBeacon - Parameters", () => {
         await expect(tx)
           .to.emit(randomBeacon, "RelayEntryParametersUpdated")
           .withArgs(
-            relayRequestFee,
             relayEntrySoftTimeout,
             relayEntryHardTimeout,
             callbackGasLimit
@@ -110,15 +110,21 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
+      let tx: ContractTransaction
 
-      beforeEach(async () => {
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeacon
           .connect(governance)
           .updateAuthorizationParameters(
             minimumAuthorization,
             authorizationDecreaseDelay
           )
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should update the group creation frequency", async () => {
@@ -159,11 +165,18 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
-      beforeEach(async () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeacon
           .connect(governance)
           .updateGroupCreationParameters(groupCreationFrequency, groupLifetime)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should update the group creation frequency", async () => {
@@ -205,8 +218,11 @@ describe("RandomBeacon - Parameters", () => {
 
     context("when the caller is the owner", () => {
       context("when values are valid", () => {
-        let tx
-        beforeEach(async () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
           tx = await randomBeacon
             .connect(governance)
             .updateDkgParameters(
@@ -214,6 +230,10 @@ describe("RandomBeacon - Parameters", () => {
               dkgResultSubmissionTimeout,
               dkgSubmitterPrecedencePeriodLength
             )
+        })
+
+        after(async () => {
+          await restoreSnapshot()
         })
 
         it("should update the DKG result challenge period length", async () => {
@@ -294,9 +314,6 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateRewardParameters", () => {
-    const dkgResultSubmissionReward = 100
-    const sortitionPoolUnlockingReward = 200
-    const ineligibleOperatorNotifierReward = 300
     const sortitionPoolRewardsBanDuration = 400
     const relayEntryTimeoutNotificationRewardMultiplier = 10
     const unauthorizedSigningNotificationRewardMultiplier = 10
@@ -308,9 +325,6 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateRewardParameters(
-              dkgResultSubmissionReward,
-              sortitionPoolUnlockingReward,
-              ineligibleOperatorNotifierReward,
               sortitionPoolRewardsBanDuration,
               relayEntryTimeoutNotificationRewardMultiplier,
               unauthorizedSigningNotificationRewardMultiplier,
@@ -321,14 +335,14 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
-      beforeEach(async () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeacon
           .connect(governance)
           .updateRewardParameters(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward,
-            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             unauthorizedSigningNotificationRewardMultiplier,
@@ -336,22 +350,8 @@ describe("RandomBeacon - Parameters", () => {
           )
       })
 
-      it("should update the DKG result submission reward", async () => {
-        expect(await randomBeacon.dkgResultSubmissionReward()).to.be.equal(
-          dkgResultSubmissionReward
-        )
-      })
-
-      it("should update the sortition pool unlocking reward", async () => {
-        expect(await randomBeacon.sortitionPoolUnlockingReward()).to.be.equal(
-          sortitionPoolUnlockingReward
-        )
-      })
-
-      it("should update the ineligible operator notifier reward", async () => {
-        expect(
-          await randomBeacon.ineligibleOperatorNotifierReward()
-        ).to.be.equal(ineligibleOperatorNotifierReward)
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should update the sortition pool rewards ban duration", async () => {
@@ -376,9 +376,6 @@ describe("RandomBeacon - Parameters", () => {
         await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
           .withArgs(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward,
-            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             unauthorizedSigningNotificationRewardMultiplier,
@@ -408,8 +405,11 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the owner", () => {
-      let tx
-      beforeEach(async () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
         tx = await randomBeacon
           .connect(governance)
           .updateSlashingParameters(
@@ -417,6 +417,10 @@ describe("RandomBeacon - Parameters", () => {
             maliciousDkgResultSlashingAmount,
             unauthorizedSigningSlashingAmount
           )
+      })
+
+      after(async () => {
+        await restoreSnapshot()
       })
 
       it("should update the relay entry submission failure slashing amount", async () => {
@@ -445,6 +449,91 @@ describe("RandomBeacon - Parameters", () => {
             maliciousDkgResultSlashingAmount,
             unauthorizedSigningSlashingAmount
           )
+      })
+    })
+  })
+
+  describe("authorizedRequesters", () => {
+    it("should be false by default", async () => {
+      const isAuthorized = await randomBeacon.authorizedRequesters(
+        thirdPartyContract.address
+      )
+      await expect(isAuthorized).to.be.false
+    })
+  })
+
+  describe("setRequesterAuthorization", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon
+            .connect(thirdParty)
+            .setRequesterAuthorization(thirdPartyContract.address, true)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      context("when authorizing a contract", () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          tx = await randomBeacon
+            .connect(governance)
+            .setRequesterAuthorization(thirdPartyContract.address, true)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should set contract as authorized", async () => {
+          const isAuthorized = await randomBeacon.authorizedRequesters(
+            thirdPartyContract.address
+          )
+          expect(isAuthorized).to.be.true
+        })
+
+        it("should emit RequesterAuthorizationUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "RequesterAuthorizationUpdated")
+            .withArgs(thirdPartyContract.address, true)
+        })
+      })
+
+      context("when deauthorizing the contract", async () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await randomBeacon
+            .connect(governance)
+            .setRequesterAuthorization(thirdPartyContract.address, true)
+
+          tx = await randomBeacon
+            .connect(governance)
+            .setRequesterAuthorization(thirdPartyContract.address, false)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should set contract as not authorized", async () => {
+          const isAuthorized = await randomBeacon.authorizedRequesters(
+            thirdPartyContract.address
+          )
+          expect(isAuthorized).to.be.false
+        })
+
+        it("should emit RequesterAuthorizationUpdated event", async () => {
+          await expect(tx)
+            .to.emit(randomBeacon, "RequesterAuthorizationUpdated")
+            .withArgs(thirdPartyContract.address, false)
+        })
       })
     })
   })

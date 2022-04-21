@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions, no-await-in-loop, @typescript-eslint/no-extra-semi */
 
-import {
-  ethers,
-  waffle,
-  helpers,
-  getUnnamedAccounts,
-  getNamedAccounts,
-} from "hardhat"
+import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
@@ -19,31 +13,38 @@ import {
   blsDeployment,
 } from "./fixtures"
 import { createGroup, hashUint32Array } from "./utils/groups"
-import { signHeartbeatFailureClaim } from "./utils/heartbeat"
+import { signOperatorInactivityClaim } from "./utils/inacvitity"
 import { registerOperators } from "./utils/operators"
 import { fakeTokenStaking } from "./mocks/staking"
 
+import type { Groups } from "../typechain/RandomBeacon"
 import type { Operator, OperatorID } from "./utils/operators"
 import type { FakeContract } from "@defi-wonderland/smock"
 import type {
   RandomBeacon,
   RandomBeaconStub,
-  TestToken,
+  T,
   RelayStub,
   SortitionPool,
-  StakingStub,
+  TokenStaking,
   BLS,
   RandomBeaconGovernance,
-  IRandomBeaconStaking,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
-import type { ContractTransaction } from "ethers"
+import type { ContractTransaction, BigNumberish } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+const { provider } = waffle
+
+// FIXME: As a workaround for a bug https://github.com/dethcrypto/TypeChain/issues/601
+// we declare a new type instead of using `RandomBeaconStub & RandomBeacon` intersection.
+type RandomBeaconTest = RandomBeacon & {
+  dkgLockState: () => Promise<ContractTransaction>
+}
 
 async function fixture() {
   const deployment = await randomBeaconDeployment()
@@ -56,18 +57,21 @@ async function fixture() {
 
   // Register operators in the sortition pool to make group creation
   // possible.
+  // Accounts offset provided to slice getUnnamedSigners have to include number
+  // of unnamed accounts that were already used.
   const operators = await registerOperators(
     deployment.randomBeacon as RandomBeacon,
-    (await getUnnamedAccounts()).slice(0, constants.groupSize)
+    deployment.t as T,
+    constants.groupSize,
+    4
   )
 
   return {
-    randomBeacon: deployment.randomBeacon as RandomBeacon,
+    randomBeacon: deployment.randomBeacon as RandomBeaconTest,
     randomBeaconGovernance:
       deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
-    testToken: deployment.testToken as TestToken,
-    staking: deployment.stakingStub as StakingStub,
+    staking: deployment.staking as TokenStaking,
     relayStub,
     bls,
     operators,
@@ -79,26 +83,24 @@ describe("RandomBeacon - Relay", () => {
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let submitter: SignerWithAddress
+  let thirdParty: SignerWithAddress
   let members: Operator[]
   let membersIDs: OperatorID[]
   let membersAddresses: Address[]
 
-  let randomBeacon: RandomBeacon
+  let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
-  let testToken: TestToken
-  let staking: StakingStub
+  let staking: TokenStaking
   let relayStub: RelayStub
   let bls: BLS
 
   before(async () => {
-    deployer = await ethers.getSigner((await getNamedAccounts()).deployer)
-    requester = await ethers.getSigner((await getUnnamedAccounts())[1])
-    notifier = await ethers.getSigner((await getUnnamedAccounts())[2])
-    submitter = await ethers.getSigner((await getUnnamedAccounts())[3])
+    deployer = await ethers.getNamedSigner("deployer")
+    ;[thirdParty, requester, notifier, submitter] =
+      await ethers.getUnnamedSigners()
     ;({
       randomBeacon,
       sortitionPool,
-      testToken,
       staking,
       relayStub,
       bls,
@@ -106,35 +108,39 @@ describe("RandomBeacon - Relay", () => {
     } = await waffle.loadFixture(fixture))
 
     membersIDs = members.map((member) => member.id)
-    membersAddresses = members.map((member) => member.address)
+    membersAddresses = members.map((member) => member.signer.address)
+
+    await randomBeacon
+      .connect(deployer)
+      .setRequesterAuthorization(requester.address, true)
   })
 
   describe("requestRelayEntry", () => {
-    context("when groups exist", () => {
-      before(async () => {
-        await createSnapshot()
-
-        await createGroup(randomBeacon, members)
+    context("when requester is not authorized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon.connect(thirdParty).requestRelayEntry(ZERO_ADDRESS)
+        ).to.be.revertedWith("Requester must be authorized")
       })
+    })
 
-      after(async () => {
-        await restoreSnapshot()
-      })
+    context("when requester is authorized", () => {
+      context("when groups exist", () => {
+        before(async () => {
+          await createSnapshot()
 
-      context("when there is no other relay entry in progress", () => {
-        context("when the requester pays the relay request fee", () => {
+          await createGroup(randomBeacon, members)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when there is no other relay entry in progress", () => {
           let tx: ContractTransaction
-          let previousDkgRewardsPoolBalance: BigNumber
-          let previousRandomBeaconBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
-
-            previousDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
-            previousRandomBeaconBalance = await testToken.balanceOf(
-              randomBeacon.address
-            )
-            await approveTestToken()
           })
 
           after(async () => {
@@ -154,25 +160,6 @@ describe("RandomBeacon - Relay", () => {
 
               after(async () => {
                 await restoreSnapshot()
-              })
-
-              it("should deposit relay request fee to the DKG rewards pool", async () => {
-                // Assert correct pool bookkeeping.
-                const currentDkgRewardsPoolBalance =
-                  await randomBeacon.dkgRewardsPool()
-                expect(
-                  currentDkgRewardsPoolBalance.sub(
-                    previousDkgRewardsPoolBalance
-                  )
-                ).to.be.equal(params.relayRequestFee)
-
-                // Assert actual transfer took place.
-                const currentRandomBeaconBalance = await testToken.balanceOf(
-                  randomBeacon.address
-                )
-                expect(
-                  currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
-                ).to.be.equal(params.relayRequestFee)
               })
 
               it("should emit RelayEntryRequested event", async () => {
@@ -210,25 +197,6 @@ describe("RandomBeacon - Relay", () => {
                 await restoreSnapshot()
               })
 
-              it("should deposit relay request fee to the DKG rewards pool", async () => {
-                // Assert correct pool bookkeeping.
-                const currentDkgRewardsPoolBalance =
-                  await randomBeacon.dkgRewardsPool()
-                expect(
-                  currentDkgRewardsPoolBalance.sub(
-                    previousDkgRewardsPoolBalance
-                  )
-                ).to.be.equal(params.relayRequestFee)
-
-                // Assert actual transfer took place.
-                const currentRandomBeaconBalance = await testToken.balanceOf(
-                  randomBeacon.address
-                )
-                expect(
-                  currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
-                ).to.be.equal(params.relayRequestFee)
-              })
-
               it("should emit RelayEntryRequested event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "RelayEntryRequested")
@@ -249,40 +217,33 @@ describe("RandomBeacon - Relay", () => {
           )
         })
 
-        context("when the requester doesn't pay the relay request fee", () => {
+        context("when there is another relay entry in progress", () => {
+          before(async () => {
+            await createSnapshot()
+
+            await randomBeacon
+              .connect(requester)
+              .requestRelayEntry(ZERO_ADDRESS)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
           it("should revert", async () => {
             await expect(
               randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-            ).to.be.revertedWith("Transfer amount exceeds allowance")
+            ).to.be.revertedWith("Another relay request in progress")
           })
         })
       })
 
-      context("when there is an other relay entry in progress", () => {
-        before(async () => {
-          await createSnapshot()
-
-          await approveTestToken()
-          await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        })
-
-        after(async () => {
-          await restoreSnapshot()
-        })
-
+      context("when no groups exist", () => {
         it("should revert", async () => {
           await expect(
             randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-          ).to.be.revertedWith("Another relay request in progress")
+          ).to.be.revertedWith("No active groups")
         })
-      })
-    })
-
-    context("when no groups exist", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        ).to.be.revertedWith("No active groups")
       })
     })
   })
@@ -302,7 +263,6 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTestToken()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -314,8 +274,14 @@ describe("RandomBeacon - Relay", () => {
         context("when entry is valid", () => {
           context("when result is submitted before the soft timeout", () => {
             let tx: ContractTransaction
+            let initialSubmitterBalance: BigNumber
+
             before(async () => {
               await createSnapshot()
+
+              initialSubmitterBalance = await provider.getBalance(
+                submitter.address
+              )
 
               tx = await randomBeacon
                 .connect(submitter)
@@ -326,8 +292,13 @@ describe("RandomBeacon - Relay", () => {
               await restoreSnapshot()
             })
 
+            it("should not reward the notifier", async () => {
+              await expect(tx).to.not.emit(staking, "NotifierRewarded")
+            })
+
             it("should not slash any members", async () => {
-              await expect(tx).to.not.emit(staking, "Slashed")
+              await expect(tx).to.not.emit(staking, "TokensSeized")
+              expect(await staking.getSlashingQueueLength()).to.be.equal(0)
             })
 
             it("should emit RelayEntrySubmitted event", async () => {
@@ -338,6 +309,17 @@ describe("RandomBeacon - Relay", () => {
 
             it("should terminate the relay request", async () => {
               expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+            })
+
+            it("should refund ETH", async () => {
+              const postNotifierBalance = await provider.getBalance(
+                submitter.address
+              )
+              const diff = postNotifierBalance.sub(initialSubmitterBalance)
+              expect(diff).to.be.gt(0)
+              expect(diff).to.be.lt(
+                ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
+              )
             })
           })
 
@@ -367,9 +349,7 @@ describe("RandomBeacon - Relay", () => {
               await createSnapshot()
 
               // Simulate DKG is awaiting a seed.
-              await (
-                randomBeacon as unknown as RandomBeaconStub
-              ).publicDkgLockState()
+              await randomBeacon.dkgLockState()
 
               tx = await randomBeacon
                 .connect(submitter)
@@ -416,7 +396,6 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTestToken()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -427,9 +406,15 @@ describe("RandomBeacon - Relay", () => {
       context("when the input params are valid", () => {
         context("when result is submitted before the soft timeout", () => {
           let tx: ContractTransaction
+          let initialSubmitterBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
+
+            initialSubmitterBalance = await provider.getBalance(
+              submitter.address
+            )
+
             tx = await randomBeacon
               .connect(submitter)
               ["submitRelayEntry(bytes,uint32[])"](
@@ -442,8 +427,13 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
-          it("should not slash members ", async () => {
-            await expect(tx).to.not.emit(staking, "Slashed")
+          it("should not reward the notifier", async () => {
+            await expect(tx).to.not.emit(staking, "NotifierRewarded")
+          })
+
+          it("should not slash any members", async () => {
+            await expect(tx).to.not.emit(staking, "TokensSeized")
+            expect(await staking.getSlashingQueueLength()).to.be.equal(0)
 
             await expect(tx).to.not.emit(randomBeacon, "RelayEntryDelaySlashed")
           })
@@ -457,10 +447,29 @@ describe("RandomBeacon - Relay", () => {
           it("should terminate the relay request", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
+
+          it("should refund ETH", async () => {
+            const postNotifierBalance = await provider.getBalance(
+              submitter.address
+            )
+            const diff = postNotifierBalance.sub(initialSubmitterBalance)
+
+            expect(diff).to.be.gt(0)
+            expect(diff).to.be.lt(
+              ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+            )
+          })
         })
 
         context("when result is submitted after the soft timeout", () => {
-          let tx: ContractTransaction
+          let initialSubmitterBalance: BigNumber
+          // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
+          // 75% of the soft timeout period elapsed so we expect
+          // `750e18` to be slashed.
+          const slashingAmount = to1e18(750)
+
+          let submissionTx: ContractTransaction
+          let slashingTx: ContractTransaction
 
           before(async () => {
             await createSnapshot()
@@ -478,39 +487,67 @@ describe("RandomBeacon - Relay", () => {
                 0.75 * params.relayEntryHardTimeout -
                 1
             )
-            tx = await randomBeacon
+
+            initialSubmitterBalance = await provider.getBalance(
+              submitter.address
+            )
+            submissionTx = await randomBeacon
               .connect(submitter)
               ["submitRelayEntry(bytes,uint32[])"](
                 blsData.groupSignature,
                 membersIDs
               )
+
+            slashingTx = await staking.processSlashing(membersAddresses.length)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          it("should slash a correct portion of the slashing amount for all members ", async () => {
-            // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
-            // 75% of the soft timeout period elapsed so we expect
-            // `750e18` to be slashed.
-            await expect(tx)
-              .to.emit(staking, "Slashed")
-              .withArgs(to1e18(750), membersAddresses)
+          // TokenStaking.slash function is called that doesn't reward the notifier.
+          it("should not reward the notifier", async () => {
+            await expect(submissionTx).to.not.emit(staking, "NotifierRewarded")
+          })
 
-            await expect(tx)
+          it("should slash a correct portion of the slashing amount for all group members", async () => {
+            for (let i = 0; i < membersAddresses.length; i++) {
+              const stakingProvider =
+                await randomBeacon.operatorToStakingProvider(
+                  membersAddresses[i]
+                )
+
+              await expect(slashingTx)
+                .to.emit(staking, "TokensSeized")
+                .withArgs(stakingProvider, slashingAmount, false)
+            }
+          })
+
+          it("should emit RelayEntryDelaySlashed event", async () => {
+            await expect(submissionTx)
               .to.emit(randomBeacon, "RelayEntryDelaySlashed")
-              .withArgs(1, to1e18(750), membersAddresses)
+              .withArgs(1, slashingAmount, membersAddresses)
           })
 
           it("should emit RelayEntrySubmitted event", async () => {
-            await expect(tx)
+            await expect(submissionTx)
               .to.emit(randomBeacon, "RelayEntrySubmitted")
               .withArgs(1, submitter.address, blsData.groupSignature)
           })
 
           it("should terminate the relay request", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          })
+
+          it("should refund ETH", async () => {
+            const postNotifierBalance = await provider.getBalance(
+              submitter.address
+            )
+            const diff = postNotifierBalance.sub(initialSubmitterBalance)
+            expect(diff).to.be.gt(0)
+            expect(diff).to.be.lt(
+              ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+            )
           })
         })
       })
@@ -577,7 +614,6 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTestToken()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -601,7 +637,8 @@ describe("RandomBeacon - Relay", () => {
       context(
         "when other active groups exist after timeout is reported",
         () => {
-          let tx: ContractTransaction
+          let reportTx: ContractTransaction
+          let slashingTx: ContractTransaction
 
           before(async () => {
             await createSnapshot()
@@ -611,39 +648,69 @@ describe("RandomBeacon - Relay", () => {
               hashUint32Array(membersIDs)
             )
 
-            tx = await randomBeacon
+            reportTx = await randomBeacon
               .connect(notifier)
               .reportRelayEntryTimeout(membersIDs)
+
+            slashingTx = await staking.processSlashing(membersAddresses.length)
           })
 
           after(async () => {
             await restoreSnapshot()
           })
 
-          it("should slash the full slashing amount for all group members", async () => {
-            await expect(tx)
-              .to.emit(staking, "Seized")
+          it("should reward the notifier", async () => {
+            await expect(reportTx)
+              .to.emit(staking, "NotifierRewarded")
               .withArgs(
-                to1e18(1000),
-                params.relayEntryTimeoutNotificationRewardMultiplier,
                 notifier.address,
+                constants.tokenStakingNotificationReward
+                  .mul(params.relayEntryTimeoutNotificationRewardMultiplier)
+                  .div(100)
+                  .mul(membersIDs.length)
+              )
+          })
+
+          it("should slash the full slashing amount for all group members", async () => {
+            for (let i = 0; i < membersAddresses.length; i++) {
+              const stakingProvider =
+                await randomBeacon.operatorToStakingProvider(
+                  membersAddresses[i]
+                )
+
+              await expect(slashingTx)
+                .to.emit(staking, "TokensSeized")
+                .withArgs(
+                  stakingProvider,
+                  params.relayEntrySubmissionFailureSlashingAmount,
+                  false
+                )
+            }
+          })
+
+          it("should emit RelayEntryTimeoutSlashed event", async () => {
+            await expect(reportTx)
+              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+              .withArgs(
+                1,
+                params.relayEntrySubmissionFailureSlashingAmount,
                 membersAddresses
               )
+          })
 
-            await expect(tx)
-              .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
-              .withArgs(1, to1e18(1000), membersAddresses)
+          it("should not emit RelayEntryTimeoutSlashingFailed event", async () => {
+            await expect(reportTx).to.not.emit(
+              randomBeacon,
+              "RelayEntryTimeoutSlashingFailed"
+            )
           })
 
           it("should terminate the group", async () => {
-            const isGroupTeminated = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).isGroupTerminated(0)
-            expect(isGroupTeminated).to.be.equal(true)
+            expect(await isGroupTerminated(0)).to.be.equal(true)
           })
 
           it("should emit RelayEntryTimedOut event", async () => {
-            await expect(tx)
+            await expect(reportTx)
               .to.emit(randomBeacon, "RelayEntryTimedOut")
               .withArgs(1, 0)
           })
@@ -652,7 +719,7 @@ describe("RandomBeacon - Relay", () => {
             // We expect the same request ID because this is a retry.
             // Group ID is `1` because we take an active group from `groupsRegistry`
             // array. Group with an index `0` was terminated.
-            await expect(tx)
+            await expect(reportTx)
               .to.emit(randomBeacon, "RelayEntryRequested")
               .withArgs(1, 1, blsData.previousEntry)
 
@@ -680,13 +747,10 @@ describe("RandomBeacon - Relay", () => {
               hashUint32Array(membersIDs)
             )
 
-            const registry = await randomBeacon.getGroupsRegistry()
-            const secondGroupLifetime = await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).groupLifetimeOf(registry[1])
+            const secondGroupLifetime = await groupLifetimeOf(1)
 
             // Expire second group
-            await mineBlocksTo(Number(secondGroupLifetime) + 1)
+            await mineBlocksTo(secondGroupLifetime.toNumber() + 1)
 
             tx = await randomBeacon.reportRelayEntryTimeout(membersIDs)
           })
@@ -695,58 +759,97 @@ describe("RandomBeacon - Relay", () => {
             await restoreSnapshot()
           })
 
-          it("should clean up current relay request data", async () => {
+          it("should terminate the group", async () => {
+            expect(await isGroupTerminated(0)).to.be.equal(true)
+          })
+
+          it("should not emit RelayEntryRequested", async () => {
             await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          })
+
+          it("should clean up current relay request data", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
         }
       )
 
       context("when no active groups exist after timeout is reported", () => {
-        let tx: ContractTransaction
+        let reportTx: ContractTransaction
+        let slashingTx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
 
-          tx = await randomBeacon
+          reportTx = await randomBeacon
             .connect(notifier)
             .reportRelayEntryTimeout(membersIDs)
+
+          slashingTx = await staking.processSlashing(membersAddresses.length)
         })
 
         after(async () => {
           await restoreSnapshot()
         })
 
-        it("should slash the full slashing amount for all group members", async () => {
-          await expect(tx)
-            .to.emit(staking, "Seized")
+        it("should reward the notifier", async () => {
+          await expect(reportTx)
+            .to.emit(staking, "NotifierRewarded")
             .withArgs(
-              to1e18(1000),
-              params.relayEntryTimeoutNotificationRewardMultiplier,
               notifier.address,
+              constants.tokenStakingNotificationReward
+                .mul(params.relayEntryTimeoutNotificationRewardMultiplier)
+                .div(100)
+                .mul(membersIDs.length)
+            )
+        })
+
+        it("should slash the full slashing amount for all group members", async () => {
+          for (let i = 0; i < membersAddresses.length; i++) {
+            const stakingProvider =
+              await randomBeacon.operatorToStakingProvider(membersAddresses[i])
+
+            await expect(slashingTx)
+              .to.emit(staking, "TokensSeized")
+              .withArgs(
+                stakingProvider,
+                params.relayEntrySubmissionFailureSlashingAmount,
+                false
+              )
+          }
+        })
+
+        it("should emit RelayEntryTimeoutSlashed event", async () => {
+          await expect(reportTx)
+            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
+            .withArgs(
+              1,
+              params.relayEntrySubmissionFailureSlashingAmount,
               membersAddresses
             )
+        })
 
-          await expect(tx)
-            .to.emit(randomBeacon, "RelayEntryTimeoutSlashed")
-            .withArgs(1, to1e18(1000), membersAddresses)
+        it("should not emit RelayEntryTimeoutSlashingFailed event", async () => {
+          await expect(reportTx).to.not.emit(
+            randomBeacon,
+            "RelayEntryTimeoutSlashingFailed"
+          )
         })
 
         it("should terminate the group", async () => {
-          const isGroupTeminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTeminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
         it("should emit RelayEntryTimedOut event", async () => {
-          await expect(tx)
+          await expect(reportTx)
             .to.emit(randomBeacon, "RelayEntryTimedOut")
             .withArgs(1, 0)
         })
 
         it("should clean up current relay request data", async () => {
-          await expect(tx).to.not.emit(randomBeacon, "RelayEntryRequested")
+          await expect(reportTx).to.not.emit(
+            randomBeacon,
+            "RelayEntryRequested"
+          )
           expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
         })
       })
@@ -760,9 +863,7 @@ describe("RandomBeacon - Relay", () => {
             await createSnapshot()
 
             // Simulate DKG is awaiting a seed.
-            await (
-              randomBeacon as unknown as RandomBeaconStub
-            ).publicDkgLockState()
+            await randomBeacon.dkgLockState()
 
             tx = await randomBeacon
               .connect(notifier)
@@ -786,15 +887,16 @@ describe("RandomBeacon - Relay", () => {
         }
       )
 
-      context("when token staking seize call fails", async () => {
-        let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+      // FIXME: Blocked by https://github.com/defi-wonderland/smock/issues/101
+      context.skip("when token staking seize call fails", async () => {
+        let tokenStakingFake: FakeContract<TokenStaking>
         let tx: Promise<ContractTransaction>
 
         before(async () => {
           await createSnapshot()
 
           tokenStakingFake = await fakeTokenStaking(randomBeacon)
-          tokenStakingFake.seize.reverts()
+          tokenStakingFake.seize.reverts("faked function revert")
 
           tx = randomBeacon.reportRelayEntryTimeout(membersIDs)
         })
@@ -844,7 +946,6 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTestToken()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -854,7 +955,8 @@ describe("RandomBeacon - Relay", () => {
 
     context("when a group is active", () => {
       context("when provided signature is valid", () => {
-        let tx
+        let reportTx: ContractTransaction
+        let slashingTx: ContractTransaction
 
         before(async () => {
           await createSnapshot()
@@ -863,9 +965,11 @@ describe("RandomBeacon - Relay", () => {
             notifier.address,
             blsData.secretKey
           )
-          tx = await randomBeacon
+          reportTx = await randomBeacon
             .connect(notifier)
             .reportUnauthorizedSigning(notifierSignature, 0, membersIDs)
+
+          slashingTx = await staking.processSlashing(membersAddresses.length)
         })
 
         after(async () => {
@@ -873,39 +977,64 @@ describe("RandomBeacon - Relay", () => {
         })
 
         it("should terminate the group", async () => {
-          const isGroupTerminated = await (
-            randomBeacon as unknown as RandomBeaconStub
-          ).isGroupTerminated(0)
-          expect(isGroupTerminated).to.be.equal(true)
+          expect(await isGroupTerminated(0)).to.be.equal(true)
         })
 
-        it("should call staking contract to seize the min stake", async () => {
-          await expect(tx)
-            .to.emit(staking, "Seized")
+        it("should reward the notifier", async () => {
+          await expect(reportTx)
+            .to.emit(staking, "NotifierRewarded")
             .withArgs(
-              to1e18(100000),
-              params.unauthorizedSigningNotificationRewardMultiplier,
               notifier.address,
+              constants.tokenStakingNotificationReward
+                .mul(params.unauthorizedSigningNotificationRewardMultiplier)
+                .div(100)
+                .mul(membersIDs.length)
+            )
+        })
+
+        it("should slash unauthorized signing slashing amount for all group members", async () => {
+          for (let i = 0; i < membersAddresses.length; i++) {
+            const stakingProvider =
+              await randomBeacon.operatorToStakingProvider(membersAddresses[i])
+
+            await expect(slashingTx)
+              .to.emit(staking, "TokensSeized")
+              .withArgs(
+                stakingProvider,
+                params.unauthorizedSigningSlashingAmount,
+                false
+              )
+          }
+        })
+
+        it("should emit unauthorized signing slashing event", async () => {
+          await expect(reportTx)
+            .to.emit(randomBeacon, "UnauthorizedSigningSlashed")
+            .withArgs(
+              0,
+              params.unauthorizedSigningSlashingAmount,
               membersAddresses
             )
         })
 
-        it("should emit unauthorized signing slashing event", async () => {
-          await expect(tx)
-            .to.emit(randomBeacon, "UnauthorizedSigningSlashed")
-            .withArgs(0, to1e18(100000), membersAddresses)
+        it("should not emit UnauthorizedSigningSlashingFailed", async () => {
+          await expect(reportTx).to.not.emit(
+            randomBeacon,
+            "UnauthorizedSigningSlashingFailed"
+          )
         })
       })
 
-      context("when token staking seize call fails", async () => {
-        let tokenStakingFake: FakeContract<IRandomBeaconStaking>
+      // FIXME: Blocked by https://github.com/defi-wonderland/smock/issues/101
+      context.skip("when token staking seize call fails", async () => {
+        let tokenStakingFake: FakeContract<TokenStaking>
         let tx: Promise<ContractTransaction>
 
         before(async () => {
           await createSnapshot()
 
           tokenStakingFake = await fakeTokenStaking(randomBeacon)
-          tokenStakingFake.seize.reverts()
+          tokenStakingFake.seize.reverts("faked function revert")
 
           const notifierSignature = await bls.sign(
             notifier.address,
@@ -990,12 +1119,15 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  describe("getSlashingFactor", () => {
-    const submissionTimeout = 640
-    const hardTimeout = 100
-
+  describe("calculateSlashingAmount", () => {
     before(async () => {
-      await relayStub.setTimeouts(submissionTimeout, hardTimeout)
+      await relayStub.setTimeouts(
+        params.relayEntrySoftTimeout,
+        params.relayEntryHardTimeout
+      )
+      await relayStub.setRelayEntrySubmissionFailureSlashingAmount(
+        params.relayEntrySubmissionFailureSlashingAmount
+      )
       await relayStub.setCurrentRequestStartBlock()
     })
 
@@ -1007,41 +1139,31 @@ describe("RandomBeacon - Relay", () => {
       await restoreSnapshot()
     })
 
-    context("when soft timeout has not been exceeded yet", () => {
-      it("should return a slashing factor equal to zero", async () => {
-        await mineBlocks(submissionTimeout)
+    context("when a soft timeout has been exceeded by one block", () => {
+      it("should return a correct slashing amount", async () => {
+        await mineBlocks(params.relayEntrySoftTimeout + 1)
 
-        expect(await relayStub.getSlashingFactor()).to.be.equal(0)
-      })
-    })
-
-    context("when soft timeout has been exceeded by one block", () => {
-      it("should return a correct slashing factor", async () => {
-        await mineBlocks(submissionTimeout + 1)
-
-        // We are exceeded the soft timeout by `1` block so this is the
-        // `submissionDelay` factor. If so we can calculate the slashing factor
-        // as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-        // gives `1 * 1e18 / 100 = 10000000000000000` (1%).
-        await expect(await relayStub.getSlashingFactor()).to.be.equal(
-          BigNumber.from("10000000000000000")
-        )
+        // We exceeded the soft timeout by `1`
+        // slashing amount: 1 * 1000e18 / 100 = 10e18
+        expect(
+          await relayStub.callStatic.calculateSlashingAmount()
+        ).to.be.equal(BigNumber.from("10000000000000000000"))
       })
     })
 
     context(
       "when soft timeout has been exceeded by the number of blocks equal to the hard timeout",
       () => {
-        it("should return a correct slashing factor", async () => {
-          await mineBlocks(submissionTimeout + hardTimeout)
-
-          // We are exceeded the soft timeout by `100` blocks so this is the
-          // `submissionDelay` factor. If so we can calculate the slashing
-          // factor as `(submissionDelay * 1e18) / relayEntryHardTimeout` which
-          // gives `100 * 1e18 / 100 = 1000000000000000000` (100%).
-          await expect(await relayStub.getSlashingFactor()).to.be.equal(
-            BigNumber.from("1000000000000000000")
+        it("should return a correct slashing amount", async () => {
+          await mineBlocks(
+            params.relayEntrySoftTimeout + params.relayEntryHardTimeout
           )
+
+          // We exceeded the soft timeout by `100`
+          // slashing amount: 100 * 1000e18 / 100 = 1000e18
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
         })
       }
     )
@@ -1050,83 +1172,37 @@ describe("RandomBeacon - Relay", () => {
       "when soft timeout has been exceeded by the number of blocks bigger than the hard timeout",
       () => {
         it("should return a correct slashing factor", async () => {
-          await mineBlocks(submissionTimeout + hardTimeout + 1)
+          await mineBlocks(
+            params.relayEntrySoftTimeout + params.relayEntryHardTimeout + 1
+          )
 
           // We are exceeded the soft timeout by a value bigger than the
           // hard timeout. In that case the maximum value (100%) of the slashing
-          // factor should be returned.
-          expect(await relayStub.getSlashingFactor()).to.be.equal(
-            BigNumber.from("1000000000000000000")
-          )
+          // amount should be returned.
+          expect(
+            await relayStub.callStatic.calculateSlashingAmount()
+          ).to.be.equal(BigNumber.from("1000000000000000000000"))
         })
       }
     )
   })
 
-  describe("fundHeartbeatNotifierRewardsPool", () => {
-    const amount = to1e18(1000)
-
-    let previousHeartbeatNotifierRewardsPoolBalance: BigNumber
-    let previousRandomBeaconBalance: BigNumber
-
-    before(async () => {
-      await createSnapshot()
-
-      previousHeartbeatNotifierRewardsPoolBalance =
-        await randomBeacon.heartbeatNotifierRewardsPool()
-      previousRandomBeaconBalance = await testToken.balanceOf(
-        randomBeacon.address
-      )
-
-      await testToken.mint(deployer.address, amount)
-      await testToken.connect(deployer).approve(randomBeacon.address, amount)
-
-      await randomBeacon.fundHeartbeatNotifierRewardsPool(
-        deployer.address,
-        amount
-      )
-    })
-
-    after(async () => {
-      await restoreSnapshot()
-    })
-
-    it("should increase the heartbeat notifier rewards pool balance", async () => {
-      const currentHeartbeatNotifierRewardsPoolBalance =
-        await randomBeacon.heartbeatNotifierRewardsPool()
-      expect(
-        currentHeartbeatNotifierRewardsPoolBalance.sub(
-          previousHeartbeatNotifierRewardsPoolBalance
-        )
-      ).to.be.equal(amount)
-    })
-
-    it("should transfer tokens to the random beacon contract", async () => {
-      const currentRandomBeaconBalance = await testToken.balanceOf(
-        randomBeacon.address
-      )
-      expect(
-        currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
-      ).to.be.equal(amount)
-    })
-  })
-
-  describe("notifyFailedHeartbeat", () => {
+  describe("notifyOperatorInactivity", () => {
     const groupId = 0
-    const stubSignatures = "0x00"
-    const stubMembersIndices = []
-    // Use 31 element `failedMembersIndices` array to simulate the most gas
+    const emptySignatures = "0x00"
+    const emptyMemberIndices: number[] = []
+    // Use 31 element `inactiveMembersIndices` array to simulate the most gas
     // expensive real-world case. If group size is 64, the required threshold
     // is 33 so we assume 31 operators at most will be marked as ineligible
-    // during a single `notifyFailedHeartbeat` call.
-    const subsequentFailedMembersIndices = Array.from(
+    // during a single `notifyOperatorInactivity` call.
+    const subsequentInactiveMembersIndices = Array.from(
       Array(31),
       (_, i) => i + 1
     )
-    const nonSubsequentFailedMembersIndices = [2, 5, 7, 23, 56]
+    const nonSubsequentInactiveMembersIndices = [2, 5, 7, 23, 56]
     const groupThreshold = 33
 
-    let group
+    let group: Groups.GroupStructOutput
 
     before(async () => {
       await createSnapshot()
@@ -1141,13 +1217,13 @@ describe("RandomBeacon - Relay", () => {
 
     context("when passed nonce is valid", () => {
       context("when group is active and non-terminated", () => {
-        context("when failed members indices are correct", () => {
+        context("when inactive members indices are correct", () => {
           context("when signatures array is correct", () => {
             context("when signing members indices are correct", () => {
               context("when all signatures are correct", () => {
                 context("when claim sender signed the claim", () => {
-                  const assertNotifyFailedHeartbeatSucceed = async (
-                    failedMembersIndices: number[],
+                  const assertNotifyInactivitySucceed = async (
+                    inactiveMembersIndices: number[],
                     signaturesCount: number,
                     modifySignatures: (signatures: string) => string,
                     modifySigningMemberIndices: (
@@ -1157,47 +1233,37 @@ describe("RandomBeacon - Relay", () => {
                     let tx: ContractTransaction
                     let initialNonce: BigNumber
                     let initialNotifierBalance: BigNumber
-                    let initialHeartbeatNotifierRewardsPoolBalance: BigNumber
                     let claimSender: SignerWithAddress
 
                     before(async () => {
                       await createSnapshot()
 
                       // Assume claim sender is the first signing member.
-                      claimSender = await ethers.getSigner(members[0].address)
+                      claimSender = members[0].signer
 
-                      await fundHeartbeatNotifierRewardsPool(
-                        params.ineligibleOperatorNotifierReward.mul(
-                          failedMembersIndices.length
-                        )
-                      )
-
-                      initialNonce = await randomBeacon.failedHeartbeatNonce(
+                      initialNonce = await randomBeacon.inactivityClaimNonce(
                         groupId
                       )
 
-                      initialNotifierBalance = await testToken.balanceOf(
+                      initialNotifierBalance = await provider.getBalance(
                         claimSender.address
                       )
 
-                      initialHeartbeatNotifierRewardsPoolBalance =
-                        await randomBeacon.heartbeatNotifierRewardsPool()
-
                       const { signatures, signingMembersIndices } =
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           members,
                           0,
                           group.groupPubKey,
-                          failedMembersIndices,
+                          inactiveMembersIndices,
                           signaturesCount
                         )
 
                       tx = await randomBeacon
                         .connect(claimSender)
-                        .notifyFailedHeartbeat(
+                        .notifyOperatorInactivity(
                           {
                             groupId,
-                            failedMembersIndices,
+                            inactiveMembersIndices,
                             signatures: modifySignatures(signatures),
                             signingMembersIndices: modifySigningMemberIndices(
                               signingMembersIndices
@@ -1212,15 +1278,15 @@ describe("RandomBeacon - Relay", () => {
                       await restoreSnapshot()
                     })
 
-                    it("should increment failed heartbeat nonce for the group", async () => {
+                    it("should increment inactivity claim nonce for the group", async () => {
                       expect(
-                        await randomBeacon.failedHeartbeatNonce(groupId)
+                        await randomBeacon.inactivityClaimNonce(groupId)
                       ).to.be.equal(initialNonce.add(1))
                     })
 
-                    it("should emit HeartbeatFailed event", async () => {
+                    it("should emit InactivityClaimed event", async () => {
                       await expect(tx)
-                        .to.emit(randomBeacon, "HeartbeatFailed")
+                        .to.emit(randomBeacon, "InactivityClaimed")
                         .withArgs(
                           groupId,
                           initialNonce.toNumber(),
@@ -1228,47 +1294,38 @@ describe("RandomBeacon - Relay", () => {
                         )
                     })
 
-                    it("should ban sortition pool rewards for ineligible operators", async () => {
+                    it("should ban sortition pool rewards for inactive operators", async () => {
                       const now = await helpers.time.lastBlockTime()
                       const expectedUntil =
                         now + params.sortitionPoolRewardsBanDuration
 
                       const expectedIneligibleMembersIDs =
-                        failedMembersIndices.map((i) => membersIDs[i - 1])
+                        inactiveMembersIndices.map((i) => membersIDs[i - 1])
 
                       await expect(tx)
                         .to.emit(sortitionPool, "IneligibleForRewards")
                         .withArgs(expectedIneligibleMembersIDs, expectedUntil)
                     })
 
-                    it("should pay notifier reward from heartbeat notifier rewards pool", async () => {
-                      const expectedReward =
-                        params.ineligibleOperatorNotifierReward.mul(
-                          failedMembersIndices.length
-                        )
-
-                      const currentNotifierBalance = await testToken.balanceOf(
-                        claimSender.address
+                    it("should refund ETH", async () => {
+                      const postNotifierBalance = await provider.getBalance(
+                        await claimSender.getAddress()
                       )
-                      expect(
-                        currentNotifierBalance.sub(initialNotifierBalance)
-                      ).to.be.equal(expectedReward)
-
-                      const currentHeartbeatNotifierRewardsPoolBalance =
-                        await randomBeacon.heartbeatNotifierRewardsPool()
-                      expect(
-                        initialHeartbeatNotifierRewardsPoolBalance.sub(
-                          currentHeartbeatNotifierRewardsPoolBalance
-                        )
-                      ).to.be.equal(expectedReward)
+                      const diff = postNotifierBalance.sub(
+                        initialNotifierBalance
+                      )
+                      expect(diff).to.be.gt(0)
+                      expect(diff).to.be.lt(
+                        ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+                      )
                     })
                   }
 
                   context(
-                    "when there are multiple subsequent failed members indices",
+                    "when there are multiple subsequent inactive members indices",
                     async () => {
-                      await assertNotifyFailedHeartbeatSucceed(
-                        subsequentFailedMembersIndices,
+                      await assertNotifyInactivitySucceed(
+                        subsequentInactiveMembersIndices,
                         groupThreshold,
                         (signatures) => signatures,
                         (signingMembersIndices) => signingMembersIndices
@@ -1277,9 +1334,9 @@ describe("RandomBeacon - Relay", () => {
                   )
 
                   context(
-                    "when there is only one failed members index",
+                    "when there is only one inactive member index",
                     async () => {
-                      await assertNotifyFailedHeartbeatSucceed(
+                      await assertNotifyInactivitySucceed(
                         [32],
                         groupThreshold,
                         (signatures) => signatures,
@@ -1289,10 +1346,10 @@ describe("RandomBeacon - Relay", () => {
                   )
 
                   context(
-                    "when there are multiple non-subsequent failed members indices",
+                    "when there are multiple non-subsequent inactive members indices",
                     async () => {
-                      await assertNotifyFailedHeartbeatSucceed(
-                        nonSubsequentFailedMembersIndices,
+                      await assertNotifyInactivitySucceed(
+                        nonSubsequentInactiveMembersIndices,
                         groupThreshold,
                         (signatures) => signatures,
                         (signingMembersIndices) => signingMembersIndices
@@ -1309,12 +1366,18 @@ describe("RandomBeacon - Relay", () => {
                         59, 61, 62, 64,
                       ]
 
-                      const getSignature = (signatures, index) =>
+                      // we cut the first 2 characters to get rid of "0x" and
+                      // then return signature on arbitrary position - each
+                      // signature has 65 bytes so 130 characters
+                      const getSignature = (
+                        signatures: string,
+                        index: number
+                      ) =>
                         signatures
                           .slice(2)
                           .slice(130 * index, 130 * index + 130)
 
-                      const modifySignatures = (signatures) => {
+                      const modifySignatures = (signatures: string) => {
                         let newSignatures = "0x"
 
                         for (
@@ -1333,8 +1396,8 @@ describe("RandomBeacon - Relay", () => {
                         return newSignatures
                       }
 
-                      await assertNotifyFailedHeartbeatSucceed(
-                        subsequentFailedMembersIndices,
+                      await assertNotifyInactivitySucceed(
+                        subsequentInactiveMembersIndices,
                         // Make more signatures than needed to allow picking up
                         // arbitrary signatures.
                         64,
@@ -1350,33 +1413,30 @@ describe("RandomBeacon - Relay", () => {
                   async () => {
                     it("should revert", async () => {
                       const { signatures, signingMembersIndices } =
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           members,
                           0,
                           group.groupPubKey,
-                          subsequentFailedMembersIndices,
+                          subsequentInactiveMembersIndices,
                           groupThreshold
                         )
 
-                      // Assume claim sender is member `34` - the first member
-                      // who did not sign the claim. We take index `33` since
-                      // `members` array is zero-based.
-                      const claimSender = await ethers.getSigner(
-                        members[33].address
-                      )
+                      const claimSender = thirdParty
 
                       await expect(
-                        randomBeacon.connect(claimSender).notifyFailedHeartbeat(
-                          {
-                            groupId,
-                            failedMembersIndices:
-                              subsequentFailedMembersIndices,
-                            signatures,
-                            signingMembersIndices,
-                          },
-                          0,
-                          membersIDs
-                        )
+                        randomBeacon
+                          .connect(claimSender)
+                          .notifyOperatorInactivity(
+                            {
+                              groupId,
+                              inactiveMembersIndices:
+                                subsequentInactiveMembersIndices,
+                              signatures,
+                              signingMembersIndices,
+                            },
+                            0,
+                            membersIDs
+                          )
                       ).to.be.revertedWith("Sender must be claim signer")
                     })
                   }
@@ -1384,23 +1444,26 @@ describe("RandomBeacon - Relay", () => {
               })
 
               context("when one of the signatures is incorrect", () => {
-                const assertInvalidSignature = async (invalidSignature) => {
+                const assertInvalidSignature = async (
+                  invalidSignature: string
+                ) => {
                   // The 32 signers sign correct parameters. Invalid signature
                   // is expected to be provided by signer 33.
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       groupThreshold - 1
                     )
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         // Slice removes `0x` prefix from wrong signature.
                         signatures: signatures + invalidSignature.slice(2),
                         signingMembersIndices: [...signingMembersIndices, 33],
@@ -1417,11 +1480,11 @@ describe("RandomBeacon - Relay", () => {
                     it("should revert", async () => {
                       // Signer 33 signs wrong nonce.
                       const invalidSignature = (
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           [members[32]],
                           1,
                           group.groupPubKey,
-                          subsequentFailedMembersIndices,
+                          subsequentInactiveMembersIndices,
                           1
                         )
                       ).signatures
@@ -1437,11 +1500,11 @@ describe("RandomBeacon - Relay", () => {
                     it("should revert", async () => {
                       // Signer 33 signs wrong group public key.
                       const invalidSignature = (
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           [members[32]],
                           0,
                           "0x010203",
-                          subsequentFailedMembersIndices,
+                          subsequentInactiveMembersIndices,
                           1
                         )
                       ).signatures
@@ -1452,12 +1515,12 @@ describe("RandomBeacon - Relay", () => {
                 )
 
                 context(
-                  "when one of the signatures signed the wrong failed group members indices",
+                  "when one of the signatures signed the wrong inactive group members indices",
                   () => {
                     it("should revert", async () => {
-                      // Signer 33 signs wrong failed group members indices.
+                      // Signer 33 signs wrong inactive group members indices.
                       const invalidSignature = (
-                        await signHeartbeatFailureClaim(
+                        await signOperatorInactivityClaim(
                           [members[32]],
                           0,
                           group.groupPubKey,
@@ -1479,19 +1542,20 @@ describe("RandomBeacon - Relay", () => {
                 () => {
                   it("should revert", async () => {
                     const { signatures, signingMembersIndices } =
-                      await signHeartbeatFailureClaim(
+                      await signOperatorInactivityClaim(
                         members,
                         0,
                         group.groupPubKey,
-                        subsequentFailedMembersIndices,
+                        subsequentInactiveMembersIndices,
                         groupThreshold
                       )
 
                     await expect(
-                      randomBeacon.notifyFailedHeartbeat(
+                      randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          failedMembersIndices: subsequentFailedMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           // Remove the first signing member index
                           signingMembersIndices: signingMembersIndices.slice(1),
@@ -1507,21 +1571,22 @@ describe("RandomBeacon - Relay", () => {
               context("when first signing member index is zero", () => {
                 it("should revert", async () => {
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       groupThreshold
                     )
 
                   signingMembersIndices[0] = 0
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices,
                       },
@@ -1537,21 +1602,22 @@ describe("RandomBeacon - Relay", () => {
                 () => {
                   it("should revert", async () => {
                     const { signatures, signingMembersIndices } =
-                      await signHeartbeatFailureClaim(
+                      await signOperatorInactivityClaim(
                         members,
                         0,
                         group.groupPubKey,
-                        subsequentFailedMembersIndices,
+                        subsequentInactiveMembersIndices,
                         groupThreshold
                       )
 
                     signingMembersIndices[signingMembersIndices.length - 1] = 65
 
                     await expect(
-                      randomBeacon.notifyFailedHeartbeat(
+                      randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          failedMembersIndices: subsequentFailedMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           signingMembersIndices,
                         },
@@ -1568,11 +1634,11 @@ describe("RandomBeacon - Relay", () => {
                 () => {
                   it("should revert", async () => {
                     const { signatures, signingMembersIndices } =
-                      await signHeartbeatFailureClaim(
+                      await signOperatorInactivityClaim(
                         members,
                         0,
                         group.groupPubKey,
-                        subsequentFailedMembersIndices,
+                        subsequentInactiveMembersIndices,
                         groupThreshold
                       )
 
@@ -1580,10 +1646,11 @@ describe("RandomBeacon - Relay", () => {
                     signingMembersIndices[10] = signingMembersIndices[11]
 
                     await expect(
-                      randomBeacon.notifyFailedHeartbeat(
+                      randomBeacon.notifyOperatorInactivity(
                         {
                           groupId,
-                          failedMembersIndices: subsequentFailedMembersIndices,
+                          inactiveMembersIndices:
+                            subsequentInactiveMembersIndices,
                           signatures,
                           signingMembersIndices,
                         },
@@ -1603,12 +1670,12 @@ describe("RandomBeacon - Relay", () => {
                 const signatures = "0x"
 
                 await expect(
-                  randomBeacon.notifyFailedHeartbeat(
+                  randomBeacon.notifyOperatorInactivity(
                     {
                       groupId,
-                      failedMembersIndices: subsequentFailedMembersIndices,
+                      inactiveMembersIndices: subsequentInactiveMembersIndices,
                       signatures,
-                      signingMembersIndices: stubMembersIndices,
+                      signingMembersIndices: emptyMemberIndices,
                     },
                     0,
                     membersIDs
@@ -1624,12 +1691,13 @@ describe("RandomBeacon - Relay", () => {
                   const signatures = "0x010203"
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
-                        signingMembersIndices: stubMembersIndices,
+                        signingMembersIndices: emptyMemberIndices,
                       },
                       0,
                       membersIDs
@@ -1644,19 +1712,20 @@ describe("RandomBeacon - Relay", () => {
               () => {
                 it("should revert", async () => {
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       groupThreshold
                     )
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         // Remove the first signature to cause a mismatch with
                         // the signing members count.
                         signatures: `0x${signatures.slice(132)}`,
@@ -1675,20 +1744,21 @@ describe("RandomBeacon - Relay", () => {
               () => {
                 it("should revert", async () => {
                   const { signatures, signingMembersIndices } =
-                    await signHeartbeatFailureClaim(
+                    await signOperatorInactivityClaim(
                       members,
                       0,
                       group.groupPubKey,
-                      subsequentFailedMembersIndices,
+                      subsequentInactiveMembersIndices,
                       // Provide one signature too few.
                       groupThreshold - 1
                     )
 
                   await expect(
-                    randomBeacon.notifyFailedHeartbeat(
+                    randomBeacon.notifyOperatorInactivity(
                       {
                         groupId,
-                        failedMembersIndices: subsequentFailedMembersIndices,
+                        inactiveMembersIndices:
+                          subsequentInactiveMembersIndices,
                         signatures,
                         signingMembersIndices,
                       },
@@ -1703,20 +1773,20 @@ describe("RandomBeacon - Relay", () => {
             context("when signatures count is bigger than group size", () => {
               it("should revert", async () => {
                 const { signatures, signingMembersIndices } =
-                  await signHeartbeatFailureClaim(
+                  await signOperatorInactivityClaim(
                     members,
                     0,
                     group.groupPubKey,
-                    subsequentFailedMembersIndices,
+                    subsequentInactiveMembersIndices,
                     // All group signs.
                     members.length
                   )
 
                 await expect(
-                  randomBeacon.notifyFailedHeartbeat(
+                  randomBeacon.notifyOperatorInactivity(
                     {
                       groupId,
-                      failedMembersIndices: subsequentFailedMembersIndices,
+                      inactiveMembersIndices: subsequentInactiveMembersIndices,
                       // Provide one signature too much.
                       signatures: signatures + signatures.slice(2, 132),
                       signingMembersIndices: [
@@ -1733,24 +1803,24 @@ describe("RandomBeacon - Relay", () => {
           })
         })
 
-        context("when failed members indices are incorrect", () => {
-          const assertFailedMembersIndicesCorrupted = async (
-            failedMembersIndices: number[]
+        context("when inactive members indices are incorrect", () => {
+          const assertInactiveMembersIndicesCorrupted = async (
+            inactiveMembersIndices: number[]
           ) => {
             const { signatures, signingMembersIndices } =
-              await signHeartbeatFailureClaim(
+              await signOperatorInactivityClaim(
                 members,
                 0,
                 group.groupPubKey,
-                failedMembersIndices,
+                inactiveMembersIndices,
                 groupThreshold
               )
 
             await expect(
-              randomBeacon.notifyFailedHeartbeat(
+              randomBeacon.notifyOperatorInactivity(
                 {
                   groupId,
-                  failedMembersIndices,
+                  inactiveMembersIndices,
                   signatures,
                   signingMembersIndices,
                 },
@@ -1760,67 +1830,77 @@ describe("RandomBeacon - Relay", () => {
             ).to.be.revertedWith("Corrupted members indices")
           }
 
-          context("when failed members indices count is zero", () => {
+          context("when inactive members indices count is zero", () => {
             it("should revert", async () => {
-              const failedMembersIndices = []
+              const inactiveMembersIndices: number[] = []
 
-              await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+              await assertInactiveMembersIndicesCorrupted(
+                inactiveMembersIndices
+              )
             })
           })
 
           context(
-            "when failed members indices count is bigger than group size",
+            "when inactive members indices count is bigger than group size",
             () => {
               it("should revert", async () => {
-                const failedMembersIndices = Array.from(
+                const inactiveMembersIndices = Array.from(
                   Array(65),
                   (_, i) => i + 1
                 )
 
-                await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
 
-          context("when first failed member index is zero", () => {
+          context("when first inactive member index is zero", () => {
             it("should revert", async () => {
-              const failedMembersIndices = Array.from(
+              const inactiveMembersIndices = Array.from(
                 Array(64),
                 (_, i) => i + 1
               )
-              failedMembersIndices[0] = 0
+              inactiveMembersIndices[0] = 0
 
-              await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+              await assertInactiveMembersIndicesCorrupted(
+                inactiveMembersIndices
+              )
             })
           })
 
           context(
-            "when last failed member index is bigger than group size",
+            "when last inactive member index is bigger than group size",
             () => {
               it("should revert", async () => {
-                const failedMembersIndices = Array.from(
+                const inactiveMembersIndices = Array.from(
                   Array(64),
                   (_, i) => i + 1
                 )
-                failedMembersIndices[failedMembersIndices.length - 1] = 65
+                inactiveMembersIndices[inactiveMembersIndices.length - 1] = 65
 
-                await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
 
           context(
-            "when failed members indices are not ordered in ascending order",
+            "when inactive members indices are not ordered in ascending order",
             () => {
               it("should revert", async () => {
-                const failedMembersIndices = Array.from(
+                const inactiveMembersIndices = Array.from(
                   Array(64),
                   (_, i) => i + 1
                 )
                 // eslint-disable-next-line prefer-destructuring
-                failedMembersIndices[10] = failedMembersIndices[11]
+                inactiveMembersIndices[10] = inactiveMembersIndices[11]
 
-                await assertFailedMembersIndicesCorrupted(failedMembersIndices)
+                await assertInactiveMembersIndicesCorrupted(
+                  inactiveMembersIndices
+                )
               })
             }
           )
@@ -1843,12 +1923,12 @@ describe("RandomBeacon - Relay", () => {
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.notifyFailedHeartbeat(
+            randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                failedMembersIndices: stubMembersIndices,
-                signatures: stubSignatures,
-                signingMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: emptyMemberIndices,
+                signatures: emptySignatures,
+                signingMembersIndices: emptyMemberIndices,
               },
               0,
               membersIDs
@@ -1878,12 +1958,12 @@ describe("RandomBeacon - Relay", () => {
 
         it("should revert", async () => {
           await expect(
-            randomBeacon.notifyFailedHeartbeat(
+            randomBeacon.notifyOperatorInactivity(
               {
                 groupId,
-                failedMembersIndices: stubMembersIndices,
-                signatures: stubSignatures,
-                signingMembersIndices: stubMembersIndices,
+                inactiveMembersIndices: emptyMemberIndices,
+                signatures: emptySignatures,
+                signingMembersIndices: emptyMemberIndices,
               },
               0,
               membersIDs
@@ -1896,12 +1976,12 @@ describe("RandomBeacon - Relay", () => {
     context("when passed nonce is invalid", () => {
       it("should revert", async () => {
         await expect(
-          randomBeacon.notifyFailedHeartbeat(
+          randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              failedMembersIndices: stubMembersIndices,
-              signatures: stubSignatures,
-              signingMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: emptyMemberIndices,
+              signatures: emptySignatures,
+              signingMembersIndices: emptyMemberIndices,
             },
             1,
             membersIDs
@@ -1914,12 +1994,12 @@ describe("RandomBeacon - Relay", () => {
       it("should revert", async () => {
         const invalidMembersId = [0, 1, 42]
         await expect(
-          randomBeacon.notifyFailedHeartbeat(
+          randomBeacon.notifyOperatorInactivity(
             {
               groupId,
-              failedMembersIndices: stubMembersIndices,
-              signatures: stubSignatures,
-              signingMembersIndices: stubMembersIndices,
+              inactiveMembersIndices: emptyMemberIndices,
+              signatures: emptySignatures,
+              signingMembersIndices: emptyMemberIndices,
             },
             0,
             invalidMembersId
@@ -1929,22 +2009,17 @@ describe("RandomBeacon - Relay", () => {
     })
   })
 
-  async function approveTestToken() {
-    await testToken.mint(requester.address, params.relayRequestFee)
-    await testToken
-      .connect(requester)
-      .approve(randomBeacon.address, params.relayRequestFee)
+  async function groupLifetimeOf(groupID: BigNumberish): Promise<BigNumber> {
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
+
+    const groupLifeTime = await randomBeacon.callStatic.groupLifetime()
+
+    return groupData.registrationBlockNumber.add(groupLifeTime)
   }
 
-  async function fundHeartbeatNotifierRewardsPool(donateAmount: BigNumber) {
-    await testToken.mint(deployer.address, donateAmount)
-    await testToken
-      .connect(deployer)
-      .approve(randomBeacon.address, donateAmount)
+  async function isGroupTerminated(groupID: BigNumberish): Promise<boolean> {
+    const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
 
-    await randomBeacon.fundHeartbeatNotifierRewardsPool(
-      deployer.address,
-      donateAmount
-    )
+    return groupData.terminated === true
   }
 })

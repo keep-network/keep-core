@@ -10,27 +10,30 @@
 // ▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
 // ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
 //
-//
+//                           Trust math, not hardware.
 
 pragma solidity ^0.8.9;
 
-library Authorization {
-    struct Data {
-        uint96 minimumAuthorization;
-        uint64 authorizationDecreaseDelay;
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ReimbursementPool.sol";
+
+abstract contract Reimbursable is Ownable {
+    ReimbursementPool public reimbursementPool;
+
+    event ReimbursementPoolUpdated(address newReimbursementPool);
+
+    modifier refundable(address receiver) {
+        uint256 gasStart = gasleft();
+        _;
+        reimbursementPool.refund(gasStart - gasleft(), receiver);
     }
 
-    function setMinimumAuthorization(
-        Data storage self,
-        uint96 _minimumAuthorization
-    ) internal {
-        self.minimumAuthorization = _minimumAuthorization;
-    }
+    function updateReimbursementPool(ReimbursementPool _reimbursementPool)
+        external
+        onlyOwner
+    {
+        emit ReimbursementPoolUpdated(address(_reimbursementPool));
 
-    function setAuthorizationDecreaseDelay(
-        Data storage self,
-        uint64 _authorizationDecreaseDelay
-    ) internal {
-        self.authorizationDecreaseDelay = _authorizationDecreaseDelay;
+        reimbursementPool = _reimbursementPool;
     }
 }

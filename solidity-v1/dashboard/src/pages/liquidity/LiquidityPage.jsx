@@ -16,16 +16,16 @@ import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
 import MasonryFlexContainer from "../../components/MasonryFlexContainer"
 import KeepOnlyPoolCard from "../../components/liquidity/KeepOnlyPoolCard"
-import ActiveLiquidityRewardCard from "../../components/ActiveLiquidityRewardCard"
 import { LPTokenBalance } from "../../components/liquidity"
 import InactiveLiquidityRewardCard from "../../components/InactiveLiquidityRewardCard"
 import ExternalPoolLiquidityRewardCard from "../../components/ExternalPoolLiquidityRewardCard"
 import OnlyIf from "../../components/OnlyIf"
+import InactiveButExternalLiquidityRewardCard from "../../components/InactiveButExternalLiquidityRewardCard"
 
 const cards = [
   {
     id: "TBTCV2_SADDLE_META_V2",
-    CardComponent: ActiveLiquidityRewardCard,
+    CardComponent: InactiveButExternalLiquidityRewardCard,
     title: LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.label,
     liquidityPairContractName:
       LIQUIDITY_REWARD_PAIRS.TBTCV2_SADDLE_META_V2.contractName,
@@ -231,7 +231,7 @@ const LiquidityPage = ({ headerTitle }) => {
           <Banner.CloseIcon onClick={hideBanner} />
         </Banner>
       )}
-      <MasonryFlexContainer maxHeight={"2300px"}>
+      <MasonryFlexContainer maxHeight={"2100px"}>
         {cards.map(({ id, CardComponent, ...data }) => {
           return (
             <CardComponent

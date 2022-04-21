@@ -1,5 +1,3 @@
-import type { HardhatUserConfig } from "hardhat/config"
-
 import "@keep-network/hardhat-helpers"
 import "@keep-network/hardhat-local-networks-config"
 import "@nomiclabs/hardhat-waffle"
@@ -9,6 +7,27 @@ import "@tenderly/hardhat-tenderly"
 import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
+
+import "./tasks"
+import { task } from "hardhat/config"
+import { TASK_TEST } from "hardhat/builtin-tasks/task-names"
+
+import type { HardhatUserConfig } from "hardhat/config"
+
+// Configuration for testing environment.
+export const testConfig = {
+  // How many accounts we expect to define for non-staking related signers, e.g.
+  // deployer, thirdParty, governance.
+  // It is used as an offset for getting accounts for operators and stakes registration.
+  nonStakingAccountsCount: 10,
+
+  // How many roles do we need to define for staking, i.e. stakeOwner, stakingProvider,
+  // operator, beneficiary, authorizer.
+  stakingRolesCount: 5,
+
+  // Number of operators to register. Should be at least the same as group size.
+  operatorsCount: 100,
+}
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -45,7 +64,21 @@ const config: HardhatUserConfig = {
           ? parseInt(process.env.FORKING_BLOCK, 10)
           : undefined,
       },
-      accounts: { count: 70 },
+      accounts: {
+        // Number of accounts that should be predefined on the testing environment.
+        count:
+          testConfig.nonStakingAccountsCount +
+          testConfig.stakingRolesCount * testConfig.operatorsCount,
+      },
+      tags: ["local"],
+      // we use higher gas price for tests to obtain more realistic results
+      // for gas refund tests than when the default hardhat ~1 gwei gas price is
+      // used
+      gasPrice: 200000000000, // 200 gwei
+    },
+    development: {
+      url: "http://localhost:8545",
+      chainId: 1101,
       tags: ["local"],
     },
     ropsten: {
@@ -66,12 +99,11 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 1, // take the second account
+      // mainnet: ""
     },
     governance: {
       default: 2,
-    },
-    walletOwner: {
-      default: 3,
+      // mainnet: ""
     },
   },
   external: {
@@ -97,6 +129,7 @@ const config: HardhatUserConfig = {
   dependencyCompiler: {
     paths: [
       "@threshold-network/solidity-contracts/contracts/token/T.sol",
+      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
       "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
     ],
     keep: true,
@@ -106,6 +139,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
+    except: ["TokenStaking$"],
   },
   mocha: {
     timeout: 60000,
@@ -114,5 +148,20 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
   },
 }
+
+task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
+  const { constants } = require("./test/fixtures")
+
+  if (testConfig.operatorsCount < constants.groupSize) {
+    throw new Error(
+      "not enough accounts predefined for configured group size: " +
+        `expected group size: ${constants.groupSize} ` +
+        `number of predefined accounts: ${testConfig.operatorsCount}`
+    )
+  }
+
+  return runSuper(args)
+})
 
 export default config
