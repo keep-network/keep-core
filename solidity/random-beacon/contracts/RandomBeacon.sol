@@ -75,7 +75,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
 
     /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
-    ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
+    ///         `resultChallengePeriodLength`. If the DKG result submitted
     ///         is challenged and proven to be malicious, the operator who
     ///         submitted the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
