@@ -73,11 +73,11 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     ///         a fixed frequency of relay requests.
     uint256 public groupCreationFrequency;
 
-    /// @notice Slashing amount for supporting malicious DKG result. Every
+    /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
-    ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
-    ///         is challenged and proven to be malicious, each operator who
-    ///         signed the malicious result is slashed for
+    ///         `resultChallengePeriodLength`. If the DKG result submitted
+    ///         is challenged and proven to be malicious, the operator who
+    ///         submitted the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
     uint96 public maliciousDkgResultSlashingAmount;
 

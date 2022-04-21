@@ -50,7 +50,7 @@ now governable.
 
 === Group Creation
 
-New groups are created with a fixed, governable frequency of relay requests.
+New groups are created with a fixed frequency of relay requests.
 Instead of a v1 ticket-based approach for group selection, we use a sortition
 pool. Group creation start transaction is embedded into relay request
 transaction and locks a sortition pool. From this moment, no operator can enter
@@ -67,16 +67,15 @@ During the challenge period, anyone can notify that the submitted DKG result is
 malicious calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult)`
 function. A malicious DKG result may contain corrupted data, group members not
 selected by the pool, or incorrect supporting signatures. If such malicious
-result is submitted and challenged, the result submitter gets slashed and the
-malicious result is immediately discarded. The length of the challenge period
-and slashing amount are governable parameters.
+result is submitted and successfully challenged, the result submitter gets slashed and the
+malicious result is immediately discarded.
 
 Once the challenge period passes, and no challenges are reported,
 the DKG result submitter should unlock the sortition pool and mark the DKG result as
 accepted calling
 `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)` to receive a
 reward. In case the submitter does not call the approve function within a
-specific governable number of blocks, anyone can do that and receive the
+specific number of blocks, anyone can do that and receive the
 submitter's reward as described in <<fees-and-rewards,Fees and Rewards>> section.
 
 There is a timeout before which a DKG result should be submitted. The timeout
@@ -93,10 +92,10 @@ performed.
 The sortition pool weights operators by their authorized stake amount and allows
 selecting the same operator multiple times. Off-chain DKG protocol executes in
 the same way as for v1 and inactive/disqualified members during the off-chain
-protocol are marked as ineligible for rewards for a certain, governable, period
+protocol are marked as ineligible for rewards for a certain period
 of time when the DKG result is approved.
 
-Each group created in the system remains active for a certain, governable period
+Each group created in the system remains active for a certain period
 of time. A group that expired is no longer selected for any new work. Group
 expiration is performed in the relay request transaction.
 
@@ -124,7 +123,7 @@ function.
 === Callbacks
 
 Random Beacon supports simple, low gas budget callbacks from a relay entry
-submit a transaction with a gas limit being a governable parameter.
+submit a transaction with a gas limit.
 
 When requesting a relay entry, it is possible to pass an optional address
 parameter - this is the address of a contract implementing
@@ -134,7 +133,7 @@ is submitted to the chain.
 Smart contract consuming new relay entry needs to implement `IRandomBeaconConsumer`
 interface. The gas limit for `__beaconCallback` is initially set to 50k gas
 which is enough to `SSTORE` new relay entry, block height in which the entry was
-submitted, and to emit an event. Callback gas limit is a governable value.
+submitted, and to emit an event.
 Failure in the callback function does not revert the relay entry transaction.
 
 ```solidity
@@ -163,7 +162,7 @@ on-chain but off-chain clients are expected to agree and follow it.
 
 If no entry was provided within the soft timeout, all operators in the group
 start bleeding and losing their stake. The bleeding increases linearly from 0 to
-the governable slashing amount per operator over time, until the hard timeout is
+the slashing amount per operator over time, until the hard timeout is
 reached or until a relay entry is submitted by the group.
 
 The time for a single group member to become eligible to submit a result and the
@@ -197,11 +196,10 @@ rewards.
 [[fees-and-rewards]]
 === Fees and Rewards
 
-Relay requester should provide a fee in T. The value of the fee is a governable
-parameter. The entire fee is deposited in the DKG rewards pool that is used to
-reimburse for different actions related to DKG.
+Relay requester should provide a fee in T. The entire fee is deposited in the DKG
+rewards pool that is used to reimburse for different actions related to DKG.
 
-There is a fixed, governable reward for submitting and approving a DKG result
+There is a fixed reward for submitting and approving a DKG result
 paid from the DKG rewards pool. The reward is paid
 to the DKG result submitter in the transaction approving the DKG result. If the
 DKG result submitter failed to approve the result after the challenge period,
@@ -212,7 +210,7 @@ transaction and is as cheap as possible, so no additional reward is paid for
 triggering DKG.
 
 In case the DKG result has not been submitted on time, anyone can unlock the
-pool and receive a fixed, governable reward for reporting DKG timeout. The
+pool and receive a fixed reward for reporting DKG timeout. The
 reward is paid from the DKG reward pool. 
 
 [[dkg-submit-eligibility]]
@@ -234,8 +232,7 @@ Everyone is eligible to submit relay entry at any time but off-chain clients are
 expected to agree and follow the following order to minimize the gas cost and
 distribute costs: the first group member eligible to submit the result is
 `new_entry % group_size`; then, if the selected member does not provide an entry
-within the governable eligibility period, `(new_entry % group_size) + 1` and
-so on.
+within the eligibility period, `(new_entry % group_size) + 1` and so on.
 
 If some group members are notoriously ignoring their duty, the group can vote on
 <<inactivity,inactivity>> notification for these operators.
@@ -277,6 +274,191 @@ members. They may mark as ineligible operators who turned off their nodes,
 operators whose nodes never participate in signing because they are
 misconfigured, or operators who notoriously miss their turn in submitting relay
 entry.
+
+== Parameters
+
+[%header,cols="3m,4,^1,^2m"]
+|=== 
+^|Property Name
+^|Description
+|Governable
+|Default Value
+
+4+s|DKG
+
+|groupSize
+|Size of a group in the threshold relay.
+|No
+|`64`
+
+|groupThreshold
+|The minimum number of group members needed to interact according to the protocol
+to provide signatures for the DKG result. 
+|No
+|`33`
+
+|activeThreshold
+|The minimum number of active and properly behaving group members during the DKG
+needed to accept the result.
+|No
+d|`58` +
+_90% of groupSize_
+
+|singnatureByteSize
+|Size in bytes of a single signature produced by operator supporting DKG result.
+|No
+|`65`
+
+|resultChallengePeriodLength
+|Time in blocks during which a submitted result can be challenged.
+|Yes
+d|`11520 blocks` +
+_~48h assuming 15s block time_
+
+|resultSubmissionTimeout
+|Time in blocks during which a result is expected to be submitted.
+|Yes
+d|`1280 blocks` +
+_64 members * 20 blocks = 1280 blocks_
+
+|submitterPrecedencePeriodLength
+|Time in blocks during which only the result submitter is allowed to approve it.
+|Yes
+|`20 blocks`
+
+4+s|Groups
+
+|groupLifetime
+|Group lifetime in blocks.
+|Yes
+d|`403200 blocks` +
+_~10 weeks assuming 15s block time_
+
+4+s|Relay Entry
+
+|relayEntrySoftTimeout
+|Time in blocks during which a result is expected to be submitted.
+|Yes
+d|`1280 blocks` +
+_64 members * 20 blocks = 1280 blocks_
+
+|relayEntryHardTimeout
+|Hard timeout in blocks for a group to submit the relay entry.
+|Yes
+d|`5760 blocks` +
+_~24h assuming 15s block time_
+
+|relayEntrySubmissionFailureSlashingAmount
+|Slashing amount for not submitting relay entry.
+|Yes
+d|`1000e18` +
+_1 000 T_
+
+4+s|Random Beacon
+
+|_owner
+|Address of the RandomBeacon contract owner.
+|Yes
+d|_deployer's address_
+
+|callbackGasLimit
+|Relay entry callback gas limit.
+|Yes
+d|`56000`
+
+|groupCreationFrequency
+|The frequency of new group creation.
+|Yes
+|`5`
+
+|maliciousDkgResultSlashingAmount
+|Slashing amount for submitting malicious DKG result.
+|Yes
+d|`50000e18` +
+_50 000 T_
+
+|unauthorizedSigningSlashingAmount
+|Slashing amount when an unauthorized signing has been proved.
+|Yes
+d|`100e3 * 1e18` +
+_100 000 T_
+
+|sortitionPoolRewardsBanDuration
+|Duration of the sortition pool rewards ban imposed on operators who were
+inactive/disqualified during off-chain DKG, misbehaved during the DKG result
+submission or were voted by the group as notoriously failing heartbeats.
+|Yes
+|`2 weeks`
+
+|relayEntryTimeoutNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about relay entry timeout.
+|Yes
+|`40`
+
+|unauthorizedSigningNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about unauthorized signing.
+|Yes
+|`50`
+
+|dkgMaliciousResultNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about a malicious DKG result.
+|Yes
+|`100`
+
+|dkgResultSubmissionGas	
+|Calculated gas cost for submitting a DKG result. This will be refunded as part
+of the DKG approval process.
+|Yes
+|`235000`
+
+|dkgResultApprovalGasOffset
+|Gas that is meant to balance the DKG result approval's overall cost.
+|Yes
+|`41500`
+
+|notifyOperatorInactivityGasOffset
+|Gas that is meant to balance the operator inactivity notification cost.
+|Yes
+|`54500`
+
+|relayEntrySubmissionGasOffset
+|Gas that is meant to balance the relay entry submission cost.
+|Yes
+|`11250`
+
+|authorizedRequesters
+|Authorized addresses that can request a relay entry.
+|No
+|
+
+4+s|Authorization
+
+|minimumAuthorization
+|The minimum authorization amount required so that operator can participate in
+the Random Beacon.
+|Yes
+d|`100000 * 1e18` +
+_100 000 T_
+
+|authorizationDecreaseDelay
+|Delay in seconds that needs to pass between the time authorization decrease is
+requested and the time that request gets approved.
+|Yes
+d|`403200 blocks` +
+_~10 weeks 15s block time_
+
+4+s|Governance
+
+|governanceDelay
+|Time in blocks after which initiated change of governable parameters can be
+finalized.
+|Yes
+|`0`
+
+|===
 
 == Build
 
