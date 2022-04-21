@@ -20,24 +20,38 @@ const { mineBlocksTo } = helpers.time
 chai.use(chaiAsPromised)
 
 describe("WalletRegistry - Upgrade", async () => {
+  let proxyAdminOwner: SignerWithAddress
+
+  before(async () => {
+    proxyAdminOwner = await ethers.getNamedSigner("esdm")
+  })
+
   describe("upgradeProxy", () => {
     describe("when new contract fails upgradeability validation", () => {
       describe("when a variable was added before old variables", () => {
         it("should throw an error", async () => {
-          await deployments.fixture(["WalletRegistry"])
+          await deployments.fixture()
 
           await expect(
-            upgradeProxy("WalletRegistry", "WalletRegistryV2Invalid")
+            upgradeProxy("WalletRegistry", "WalletRegistryV2Invalid", {
+              factoryOpts: {
+                signer: proxyAdminOwner,
+              },
+            })
           ).to.be.rejectedWith(Error, "New storage layout is incompatible")
         })
       })
 
       describe("when a variable was removed", () => {
         it("should throw an error", async () => {
-          await deployments.fixture(["WalletRegistry"])
+          await deployments.fixture()
 
           await expect(
-            upgradeProxy("WalletRegistry", "WalletRegistryV2MissingSlot")
+            upgradeProxy("WalletRegistry", "WalletRegistryV2MissingSlot", {
+              factoryOpts: {
+                signer: proxyAdminOwner,
+              },
+            })
           ).to.be.rejectedWith(
             Error,
             "Deleted `maliciousDkgResultNotificationRewardMultiplier`"
@@ -47,7 +61,6 @@ describe("WalletRegistry - Upgrade", async () => {
     })
 
     describe("when a new contract is valid", () => {
-      let deployer: SignerWithAddress
       let tokenStaking: Contract
       let walletRegistryGovernance: Contract
       let walletRegistry: WalletRegistry
@@ -58,8 +71,7 @@ describe("WalletRegistry - Upgrade", async () => {
       const newVarValue = "new variable set for new contract"
 
       before(async () => {
-        await deployments.fixture(["WalletRegistry"])
-        deployer = await ethers.getNamedSigner("deployer")
+        await deployments.fixture()
 
         tokenStaking = await ethers.getContract("TokenStaking")
         walletRegistryGovernance = await ethers.getContract(
@@ -77,7 +89,7 @@ describe("WalletRegistry - Upgrade", async () => {
           "WalletRegistry",
           "WalletRegistryV2",
           {
-            factoryOpts: { signer: deployer },
+            factoryOpts: { signer: proxyAdminOwner },
             proxyOpts: {
               call: {
                 fn: "initializeV2",
@@ -154,7 +166,6 @@ describe("WalletRegistry - Upgrade", async () => {
             walletRegistry: walletRegistryV1,
             sortitionPool,
             walletOwner,
-            deployer,
           } = await walletRegistryFixture()
 
           // Create an existing wallet on Wallet Registry V1
@@ -200,7 +211,7 @@ describe("WalletRegistry - Upgrade", async () => {
             "WalletRegistry",
             "WalletRegistryV2",
             {
-              factoryOpts: { signer: deployer },
+              factoryOpts: { signer: proxyAdminOwner },
               proxyOpts: {
                 call: {
                   fn: "initializeV2",
@@ -241,6 +252,20 @@ describe("WalletRegistry - Upgrade", async () => {
     })
 
     // TODO: Test upgradeability of linked libraries
+  })
+
+  describe("when upgrade is called by the non-proxy-admin-owner", () => {
+    it("should throw an error", async () => {
+      await deployments.fixture()
+
+      await expect(
+        upgradeProxy("WalletRegistry", "WalletRegistryV2", {
+          factoryOpts: {
+            signer: await ethers.getNamedSigner("deployer"),
+          },
+        })
+      ).to.be.rejectedWith(Error, "Ownable: caller is not the owner")
+    })
   })
 })
 
