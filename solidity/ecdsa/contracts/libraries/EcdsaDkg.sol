@@ -289,8 +289,6 @@ library EcdsaDkg {
         require(hasSeedTimedOut(self), "Awaiting seed has not timed out");
 
         emit DkgSeedTimedOut();
-
-        self.sortitionPool.unlock();
     }
 
     /// @notice Notifies about DKG timeout.
