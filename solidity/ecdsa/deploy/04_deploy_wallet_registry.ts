@@ -43,6 +43,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         EcdsaInactivity: EcdsaInactivity.address,
       },
     },
+    proxyOpts: {
+      unsafeAllowLinkedLibraries: true,
+    },
   })
 
   await helpers.ownable.transferOwnership(

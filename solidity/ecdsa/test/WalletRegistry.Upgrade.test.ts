@@ -21,9 +21,11 @@ chai.use(chaiAsPromised)
 
 describe("WalletRegistry - Upgrade", async () => {
   let proxyAdminOwner: SignerWithAddress
+  let EcdsaInactivity: Contract
 
   before(async () => {
     proxyAdminOwner = await ethers.getNamedSigner("esdm")
+    EcdsaInactivity = await ethers.getContract("EcdsaInactivity")
   })
 
   describe("upgradeProxy", () => {
@@ -35,7 +37,11 @@ describe("WalletRegistry - Upgrade", async () => {
           await expect(
             upgradeProxy("WalletRegistry", "WalletRegistryV2Invalid", {
               factoryOpts: {
+                libraries: { EcdsaInactivity: EcdsaInactivity.address },
                 signer: proxyAdminOwner,
+              },
+              proxyOpts: {
+                unsafeAllowLinkedLibraries: true,
               },
             })
           ).to.be.rejectedWith(Error, "New storage layout is incompatible")
@@ -49,7 +55,11 @@ describe("WalletRegistry - Upgrade", async () => {
           await expect(
             upgradeProxy("WalletRegistry", "WalletRegistryV2MissingSlot", {
               factoryOpts: {
+                libraries: { EcdsaInactivity: EcdsaInactivity.address },
                 signer: proxyAdminOwner,
+              },
+              proxyOpts: {
+                unsafeAllowLinkedLibraries: true,
               },
             })
           ).to.be.rejectedWith(
@@ -89,12 +99,16 @@ describe("WalletRegistry - Upgrade", async () => {
           "WalletRegistry",
           "WalletRegistryV2",
           {
-            factoryOpts: { signer: proxyAdminOwner },
+            factoryOpts: {
+              signer: proxyAdminOwner,
+              libraries: { EcdsaInactivity: EcdsaInactivity.address },
+            },
             proxyOpts: {
               call: {
                 fn: "initializeV2",
                 args: [newSortitionPoolAddress, newVarValue],
               },
+              unsafeAllowLinkedLibraries: true,
             },
           }
         )) as WalletRegistryV2
@@ -211,7 +225,10 @@ describe("WalletRegistry - Upgrade", async () => {
             "WalletRegistry",
             "WalletRegistryV2",
             {
-              factoryOpts: { signer: proxyAdminOwner },
+              factoryOpts: {
+                signer: proxyAdminOwner,
+                libraries: { EcdsaInactivity: EcdsaInactivity.address },
+              },
               proxyOpts: {
                 call: {
                   fn: "initializeV2",
@@ -220,6 +237,7 @@ describe("WalletRegistry - Upgrade", async () => {
                     "new variable set for new contract",
                   ],
                 },
+                unsafeAllowLinkedLibraries: true,
               },
             }
           )) as WalletRegistryV2
@@ -262,6 +280,10 @@ describe("WalletRegistry - Upgrade", async () => {
         upgradeProxy("WalletRegistry", "WalletRegistryV2", {
           factoryOpts: {
             signer: await ethers.getNamedSigner("deployer"),
+            libraries: { EcdsaInactivity: EcdsaInactivity.address },
+          },
+          proxyOpts: {
+            unsafeAllowLinkedLibraries: true,
           },
         })
       ).to.be.rejectedWith(Error, "Ownable: caller is not the owner")
