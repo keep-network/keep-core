@@ -16,11 +16,11 @@ pragma solidity ^0.8.9;
 
 import "./api/IWalletRegistry.sol";
 import "./api/IWalletOwner.sol";
-import "./libraries/EcdsaAuthorization.sol";
-import "./libraries/EcdsaDkg.sol";
 import "./libraries/Wallets.sol";
-import "./libraries/EcdsaInactivity.sol";
-import "./EcdsaDkgValidator.sol";
+import {EcdsaAuthorization as Authorization} from "./libraries/EcdsaAuthorization.sol";
+import {EcdsaDkg as DKG} from "./libraries/EcdsaDkg.sol";
+import {EcdsaInactivity as Inactivity} from "./libraries/EcdsaInactivity.sol";
+import {EcdsaDkgValidator as DKGValidator} from "./EcdsaDkgValidator.sol";
 
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
@@ -39,13 +39,13 @@ contract WalletRegistry is
     Ownable,
     Reimbursable
 {
-    using EcdsaAuthorization for EcdsaAuthorization.Data;
-    using EcdsaDkg for EcdsaDkg.Data;
+    using Authorization for Authorization.Data;
+    using DKG for DKG.Data;
     using Wallets for Wallets.Data;
 
     // Libraries data storages
-    EcdsaAuthorization.Data internal authorization;
-    EcdsaDkg.Data internal dkg;
+    Authorization.Data internal authorization;
+    DKG.Data internal dkg;
     Wallets.Data internal wallets;
 
     // Address that is set as owner of all wallets. Only this address can request
@@ -108,7 +108,7 @@ contract WalletRegistry is
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        EcdsaDkg.Result result
+        DKG.Result result
     );
 
     event DkgTimedOut();
@@ -241,7 +241,7 @@ contract WalletRegistry is
     constructor(
         SortitionPool _sortitionPool,
         IStaking _staking,
-        EcdsaDkgValidator _ecdsaDkgValidator,
+        DKGValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
     ) {
@@ -597,7 +597,7 @@ contract WalletRegistry is
     ///      sign is:
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
-    function submitDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+    function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
     }
 
@@ -611,7 +611,7 @@ contract WalletRegistry is
     ///         A new wallet based on the DKG result details.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+    function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint256 gasStart = gasleft();
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
@@ -663,7 +663,7 @@ contract WalletRegistry is
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function challengeDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+    function challengeDkgResult(DKG.Result calldata dkgResult) external {
         (
             bytes32 maliciousDkgResultHash,
             uint32 maliciousDkgResultSubmitterId
@@ -723,7 +723,7 @@ contract WalletRegistry is
     ///              group. Must be the same as the stored one
     /// @param groupMembers Identifiers of the wallet signing group members
     function notifyOperatorInactivity(
-        EcdsaInactivity.Claim calldata claim,
+        Inactivity.Claim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
@@ -742,7 +742,7 @@ contract WalletRegistry is
             "Invalid group members"
         );
 
-        uint32[] memory ineligibleOperators = EcdsaInactivity.verifyClaim(
+        uint32[] memory ineligibleOperators = Inactivity.verifyClaim(
             sortitionPool,
             claim,
             bytes.concat(pubKeyX, pubKeyY),
@@ -778,7 +778,7 @@ contract WalletRegistry is
     /// @param result DKG result.
     /// @return True if the result is valid. If the result is invalid it returns
     ///         false and an error message.
-    function isDkgResultValid(EcdsaDkg.Result calldata result)
+    function isDkgResultValid(DKG.Result calldata result)
         external
         view
         returns (bool, string memory)
@@ -787,7 +787,7 @@ contract WalletRegistry is
     }
 
     /// @notice Check current wallet creation state.
-    function getWalletCreationState() external view returns (EcdsaDkg.State) {
+    function getWalletCreationState() external view returns (DKG.State) {
         return dkg.currentState();
     }
 
@@ -879,11 +879,7 @@ contract WalletRegistry is
     }
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters()
-        external
-        view
-        returns (EcdsaDkg.Parameters memory)
-    {
+    function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
     }
 
@@ -978,7 +974,7 @@ contract WalletRegistry is
     /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
     function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
-        // TODO: Read seed from EcdsaDkg
-        return sortitionPool.selectGroup(EcdsaDkg.groupSize, seed);
+        // TODO: Read seed from DKG
+        return sortitionPool.selectGroup(DKG.groupSize, seed);
     }
 }
