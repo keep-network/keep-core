@@ -61,14 +61,15 @@ describe("RandomBeacon - Constructor", () => {
   describe("constructor", () => {
     context("when all passed addresses are valid", () => {
       it("should work", async () => {
-        await RandomBeacon.deploy(
-          sortitionPool.address,
-          tToken,
-          staking,
-          dkgValidator,
-          reimbursementPool
-        )
-        // ok, did not revert
+        await expect(
+          RandomBeacon.deploy(
+            sortitionPool.address,
+            tToken,
+            staking,
+            dkgValidator,
+            reimbursementPool
+          )
+        ).not.to.be.reverted
       })
     })
 
