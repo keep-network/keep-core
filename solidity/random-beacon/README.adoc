@@ -67,7 +67,9 @@ malicious by calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgRes
 function. A malicious DKG result may contain corrupted data, group members not
 selected by the pool, or incorrect supporting signatures. If such malicious
 result is submitted and successfully challenged, the result submitter gets
-slashed and the malicious result is immediately discarded.
+slashed and the malicious result is immediately discarded. The address which
+notified about malicious DKG result is <<punishment,rewarded>>. DKG timeout
+timer is reset, and group members have another chance to submit a valid result.
 
 Once the challenge period passes, and no valid challenge is reported, the DKG result
 submitter should unlock the sortition pool and mark the DKG result as approved
@@ -217,8 +219,9 @@ entries.
 
 T rewards are allocated to all operators registered in the beacon sortition
 pool, excluding operators who were marked as ineligible for rewards as a result
-of <<inactivity,inactivity>>. Rewards are allocated proportionally to the
-operator's weight in the pool. 
+of being reported by other group members as <<inactivity,inactive>> or as
+a result of being inactive or disqualified during the DKG. Rewards are allocated
+proportionally to the operator's weight in the pool. 
 
 [[transaction-incentives]]
 === Transaction Incentives
@@ -243,8 +246,10 @@ slashing reward, and since this transaction can only be submitted by an operator
 this transaction is also Operator-Only.
 
 In order to compensate the operator for posting the transaction, the gas spent
-will be reimbursed by a DAO-funded eth pool in the same transaction (see
-`Reimbursable` and `ReimbursementPool` smart contracts).
+will be reimbursed by a DAO-funded eth pool in the same transaction. It is
+important to note, that the system has a governable cap for the gas price to
+protect against malicious operators trying to drain the pool (see `Reimbursable`
+and `ReimbursementPool` smart contracts).
 
 Operator-only transactions are `submitDkgResult`, `submitRelayEntry`,
 `notifyOperatorInactivity`, and `approveDkgResult` for a certain number of
