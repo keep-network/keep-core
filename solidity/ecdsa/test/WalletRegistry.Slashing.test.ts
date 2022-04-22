@@ -1,0 +1,152 @@
+/* eslint-disable no-await-in-loop */
+import { helpers } from "hardhat"
+import { expect } from "chai"
+import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
+
+import ecdsaData from "./data/ecdsa"
+import { constants, walletRegistryFixture } from "./fixtures"
+import { createNewWallet } from "./utils/wallets"
+
+import type {
+  WalletRegistry,
+  IWalletOwner,
+  TokenStaking,
+  T,
+} from "../typechain"
+import type { FakeContract } from "@defi-wonderland/smock"
+import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
+import type { Operator, OperatorID } from "./utils/operators"
+
+const { createSnapshot, restoreSnapshot } = helpers.snapshot
+
+describe("WalletRegistry - Slashing", () => {
+  let walletRegistry: WalletRegistry
+  let walletOwner: FakeContract<IWalletOwner>
+  let thirdParty: SignerWithAddress
+  let staking: TokenStaking
+  let tToken: T
+
+  let members: Operator[]
+  let membersIDs: OperatorID[]
+  let membersAddresses: string[]
+  let walletID: string
+
+  const walletPublicKey: string = ecdsaData.group1.publicKey
+  const amountToSlash = to1e18(1000)
+  const rewardMultiplier = 30
+
+  before(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ walletRegistry, walletOwner, thirdParty, staking, tToken } =
+      await walletRegistryFixture())
+    ;({ walletID, members } = await createNewWallet(
+      walletRegistry,
+      walletOwner.wallet,
+      walletPublicKey
+    ))
+
+    membersIDs = members.map((member) => member.id)
+    membersAddresses = members.map((member) => member.signer.address)
+  })
+
+  describe("seize", () => {
+    context("when called not by the wallet owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry
+            .connect(thirdParty)
+            .seize(
+              amountToSlash,
+              rewardMultiplier,
+              thirdParty.address,
+              walletID,
+              membersIDs
+            )
+        ).to.be.revertedWith("Caller is not the Wallet Owner")
+      })
+    })
+
+    context("when called by the wallet owner", () => {
+      context("when the passed wallet members identifiers are invalid", () => {
+        it("should revert", async () => {
+          const corruptedMembersIDs = membersIDs.slice().reverse()
+          await expect(
+            walletRegistry
+              .connect(walletOwner.wallet)
+              .seize(
+                amountToSlash,
+                rewardMultiplier,
+                thirdParty.address,
+                walletID,
+                corruptedMembersIDs
+              )
+          ).to.be.revertedWith("Invalid wallet members identifiers")
+        })
+      })
+
+      context("when the passed wallet members identifiers are valid", () => {
+        let notifierBalanceBefore
+        let notifierBalanceAfter
+
+        before(async () => {
+          await createSnapshot()
+
+          notifierBalanceBefore = await tToken.balanceOf(thirdParty.address)
+          await walletRegistry
+            .connect(walletOwner.wallet)
+            .seize(
+              amountToSlash,
+              rewardMultiplier,
+              thirdParty.address,
+              walletID,
+              membersIDs
+            )
+          notifierBalanceAfter = await tToken.balanceOf(thirdParty.address)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should slash all group members", async () => {
+          expect(await staking.getSlashingQueueLength()).to.equal(
+            constants.groupSize
+          )
+        })
+
+        it("should slash with correct amounts", async () => {
+          for (let i = 0; i < constants.groupSize; i++) {
+            const slashing = await staking.slashingQueue(i)
+            expect(slashing.amount).to.equal(amountToSlash)
+          }
+        })
+
+        it("should slash correct staking providers", async () => {
+          for (let i = 0; i < constants.groupSize; i++) {
+            const slashing = await staking.slashingQueue(i)
+            const expectedStakingProvider =
+              await walletRegistry.operatorToStakingProvider(
+                membersAddresses[i]
+              )
+
+            expect(slashing.stakingProvider).to.equal(expectedStakingProvider)
+          }
+        })
+
+        it("should send correct reward to notifier", async () => {
+          // reward multiplier is in % so we first multiply and then divide by
+          // 100 to get the actual number
+          const perMemberReward = constants.tokenStakingNotificationReward
+            .mul(rewardMultiplier)
+            .div(100)
+
+          const receivedReward = notifierBalanceAfter.sub(notifierBalanceBefore)
+
+          expect(receivedReward).to.equal(
+            perMemberReward.mul(constants.groupSize)
+          )
+        })
+      })
+    })
+  })
+})
