@@ -269,6 +269,9 @@ contract RandomBeaconGovernance is Ownable {
     }
 
     constructor(RandomBeacon _randomBeacon, uint256 _governanceDelay) {
+        require(address(_randomBeacon) != address(0), "Zero-address reference");
+        require(_governanceDelay != 0, "No governance delay");
+
         randomBeacon = _randomBeacon;
         governanceDelay = _governanceDelay;
     }

@@ -34,11 +34,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-// FIXME: As a workaround for a slither [bug] we need to import the library without
-// an alias.
-// bug: https://github.com/crytic/slither/issues/1067
-import {BeaconDkg} from "./libraries/BeaconDkg.sol";
-
 /// @title Keep Random Beacon
 /// @notice Keep Random Beacon contract. It lets to request a new
 ///         relay entry and validates the new relay entry provided by the
@@ -49,7 +44,7 @@ import {BeaconDkg} from "./libraries/BeaconDkg.sol";
 contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
-    using BeaconDkg for DKG.Data;
+    using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
@@ -368,6 +363,18 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         tToken = _tToken;
         staking = _staking;
         reimbursementPool = _reimbursementPool;
+
+        require(
+            address(_sortitionPool) != address(0),
+            "Zero-address reference"
+        );
+        require(address(_tToken) != address(0), "Zero-address reference");
+        require(address(_staking) != address(0), "Zero-address reference");
+        require(address(_dkgValidator) != address(0), "Zero-address reference");
+        require(
+            address(_reimbursementPool) != address(0),
+            "Zero-address reference"
+        );
 
         // TODO: revisit all initial values
         callbackGasLimit = 56000;
@@ -1391,13 +1398,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         return sortitionPool.isOperatorInPool(operator);
     }
 
-    /// @notice Selects a new group of operators based on the provided seed.
+    /// @notice Selects a new group of operators. Can only be called when DKG
+    ///         is in progress and the pool is locked.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.
-    /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
-    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
-        // TODO: Read seed from RandomBeaconDkg
-        return sortitionPool.selectGroup(DKG.groupSize, seed);
+    function selectGroup() external view returns (uint32[] memory) {
+        return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
     }
 }
