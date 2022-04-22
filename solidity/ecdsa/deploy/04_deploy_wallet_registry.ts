@@ -31,8 +31,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
         ? "WalletRegistryStub"
         : undefined,
     initializerArgs: [
-      SortitionPool.address,
-      TokenStaking.address,
       EcdsaDkgValidator.address,
       RandomBeacon.address,
       ReimbursementPool.address,
@@ -44,6 +42,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
       },
     },
     proxyOpts: {
+      constructorArgs: [SortitionPool.address, TokenStaking.address],
       unsafeAllowLinkedLibraries: true,
     },
   })

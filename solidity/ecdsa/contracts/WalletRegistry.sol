@@ -104,8 +104,10 @@ contract WalletRegistry is
 
     // External dependencies
 
-    SortitionPool public sortitionPool;
-    IStaking public staking;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    SortitionPool public immutable sortitionPool;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    IStaking public immutable staking;
     IRandomBeacon public randomBeacon;
 
     // Events
@@ -249,15 +251,20 @@ contract WalletRegistry is
         _;
     }
 
+    /// @dev Used to initialize immutable variables only, use `initialize` function
+    ///      for upgradable contract initialization on deployment.
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(SortitionPool _sortitionPool, IStaking _staking) {
+        sortitionPool = _sortitionPool;
+        staking = _staking;
+    }
+
+    /// @dev Initializes upgradable contract on deployment.
     function initialize(
-        SortitionPool _sortitionPool,
-        IStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
     ) external initializer {
-        sortitionPool = _sortitionPool;
-        staking = _staking;
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
@@ -276,7 +283,7 @@ contract WalletRegistry is
         maliciousDkgResultSlashingAmount = 50000e18;
         maliciousDkgResultNotificationRewardMultiplier = 100;
 
-        dkg.init(_sortitionPool, _ecdsaDkgValidator);
+        dkg.init(sortitionPool, _ecdsaDkgValidator);
         dkg.setSeedTimeout(1440); // ~6h assuming 15s block time
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20);

@@ -13,6 +13,8 @@ import type { TransparentUpgradeableProxy } from "../typechain/TransparentUpgrad
 
 chai.use(chaiAsPromised)
 
+const { AddressZero } = ethers.constants
+
 describe("WalletRegistry - Deployment", async () => {
   let deployer: SignerWithAddress
   let governance: SignerWithAddress
@@ -85,5 +87,11 @@ describe("WalletRegistry - Deployment", async () => {
       await walletRegistryGovernance.owner(),
       "invalid WalletRegistryGovernance owner"
     ).equal(governance.address)
+  })
+
+  it("should revert when initialize called again", async () => {
+    await expect(
+      walletRegistry.initialize(AddressZero, AddressZero, AddressZero)
+    ).to.be.revertedWith("Initializable: contract is already initialized")
   })
 })

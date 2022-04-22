@@ -90,8 +90,10 @@ contract WalletRegistryV2 is
 
     // External dependencies
 
-    SortitionPool public sortitionPool;
-    IStaking public staking;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    SortitionPool public immutable sortitionPool;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    IStaking public immutable staking;
     IRandomBeacon public randomBeacon;
 
     // TEST: New variable
@@ -238,10 +240,13 @@ contract WalletRegistryV2 is
         _;
     }
 
-    // TODO: Could the constructor remain?
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(SortitionPool _sortitionPool, IStaking _staking) {
+        sortitionPool = _sortitionPool;
+        staking = _staking;
+    }
+
     function initialize(
-        SortitionPool _sortitionPool,
-        IStaking _staking,
         EcdsaDkgValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
@@ -250,11 +255,11 @@ contract WalletRegistryV2 is
     }
 
     // TEST: Added initializer for V2
-    function initializeV2(SortitionPool _sortitionPool, string memory _newVar)
+    function initializeV2(IRandomBeacon _randomBeacon, string memory _newVar)
         public
         reinitializer(2)
     {
-        sortitionPool = _sortitionPool;
+        randomBeacon = _randomBeacon;
         newVar = _newVar;
     }
 

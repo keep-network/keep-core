@@ -7,6 +7,11 @@ import "../WalletRegistry.sol";
 import "../EcdsaDkgValidator.sol";
 
 contract WalletRegistryStub is WalletRegistry {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(SortitionPool _sortitionPool, IStaking _staking)
+        WalletRegistry(_sortitionPool, _staking)
+    {}
+
     function getDkgData() external view returns (EcdsaDkg.Data memory) {
         return dkg;
     }

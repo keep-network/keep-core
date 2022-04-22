@@ -16,6 +16,7 @@ import type { Contract } from "ethers"
 import type { UpgradeProxyOptions } from "@openzeppelin/hardhat-upgrades/src/utils/options"
 
 const { mineBlocksTo } = helpers.time
+const { AddressZero } = ethers.constants
 
 chai.use(chaiAsPromised)
 
@@ -41,6 +42,7 @@ describe("WalletRegistry - Upgrade", async () => {
                 signer: proxyAdminOwner,
               },
               proxyOpts: {
+                constructorArgs: [AddressZero, AddressZero],
                 unsafeAllowLinkedLibraries: true,
               },
             })
@@ -59,6 +61,7 @@ describe("WalletRegistry - Upgrade", async () => {
                 signer: proxyAdminOwner,
               },
               proxyOpts: {
+                constructorArgs: [AddressZero, AddressZero],
                 unsafeAllowLinkedLibraries: true,
               },
             })
@@ -72,18 +75,22 @@ describe("WalletRegistry - Upgrade", async () => {
 
     describe("when a new contract is valid", () => {
       let tokenStaking: Contract
+      let reimbursementPool: Contract
       let walletRegistryGovernance: Contract
       let walletRegistry: WalletRegistry
       let newWalletRegistry: WalletRegistryV2
 
       const newSortitionPoolAddress =
         "0x0000000000000000000000000000000000000101"
+      const newRandomBeaconAddress =
+        "0x0000000000000000000000000000000000000202"
       const newVarValue = "new variable set for new contract"
 
       before(async () => {
         await deployments.fixture()
 
         tokenStaking = await ethers.getContract("TokenStaking")
+        reimbursementPool = await ethers.getContract("ReimbursementPool")
         walletRegistryGovernance = await ethers.getContract(
           "WalletRegistryGovernance"
         )
@@ -104,9 +111,10 @@ describe("WalletRegistry - Upgrade", async () => {
               libraries: { EcdsaInactivity: EcdsaInactivity.address },
             },
             proxyOpts: {
+              constructorArgs: [newSortitionPoolAddress, tokenStaking.address],
               call: {
                 fn: "initializeV2",
-                args: [newSortitionPoolAddress, newVarValue],
+                args: [newRandomBeaconAddress, newVarValue],
               },
               unsafeAllowLinkedLibraries: true,
             },
@@ -124,9 +132,15 @@ describe("WalletRegistry - Upgrade", async () => {
         )
       })
 
-      it("should reinitialize existing variable", async () => {
+      it("should reinitialize existing immutable variable", async () => {
         expect(await walletRegistry.sortitionPool()).to.be.equal(
           newSortitionPoolAddress
+        )
+      })
+
+      it("should reinitialize existing variable", async () => {
+        expect(await walletRegistry.randomBeacon()).to.be.equal(
+          newRandomBeaconAddress
         )
       })
 
@@ -135,7 +149,9 @@ describe("WalletRegistry - Upgrade", async () => {
       })
 
       it("should not update already set variable", async () => {
-        expect(await walletRegistry.staking()).to.be.equal(tokenStaking.address)
+        expect(await walletRegistry.reimbursementPool()).to.be.equal(
+          reimbursementPool.address
+        )
       })
 
       it("should not update parameters from library", async () => {
@@ -179,6 +195,7 @@ describe("WalletRegistry - Upgrade", async () => {
           const {
             walletRegistry: walletRegistryV1,
             sortitionPool,
+            staking,
             walletOwner,
           } = await walletRegistryFixture()
 
@@ -230,12 +247,10 @@ describe("WalletRegistry - Upgrade", async () => {
                 libraries: { EcdsaInactivity: EcdsaInactivity.address },
               },
               proxyOpts: {
+                constructorArgs: [sortitionPool.address, staking.address],
                 call: {
                   fn: "initializeV2",
-                  args: [
-                    sortitionPool.address,
-                    "new variable set for new contract",
-                  ],
+                  args: [AddressZero, "new variable set for new contract"],
                 },
                 unsafeAllowLinkedLibraries: true,
               },
@@ -283,6 +298,7 @@ describe("WalletRegistry - Upgrade", async () => {
             libraries: { EcdsaInactivity: EcdsaInactivity.address },
           },
           proxyOpts: {
+            constructorArgs: [AddressZero, AddressZero],
             unsafeAllowLinkedLibraries: true,
           },
         })
