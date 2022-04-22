@@ -2721,6 +2721,41 @@ describe("RandomBeacon - Group Creation", () => {
       await restoreSnapshot()
     })
   })
+
+  describe("selectGroup", async () => {
+    context("when dkg was not triggered", async () => {
+      before(async () => {
+        await createSnapshot()
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert", async () => {
+        await expect(randomBeacon.selectGroup()).to.be.revertedWith(
+          "Sortition pool unlocked"
+        )
+      })
+    })
+
+    context("when dkg was triggered", async () => {
+      before(async () => {
+        await createSnapshot()
+
+        await genesis(randomBeacon)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should select a group", async () => {
+        const selectedGroup = await randomBeacon.selectGroup()
+        expect(selectedGroup.length).to.eq(constants.groupSize)
+      })
+    })
+  })
 })
 
 async function assertDkgResultCleanData(randomBeacon: {
