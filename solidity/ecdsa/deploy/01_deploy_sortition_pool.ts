@@ -8,12 +8,11 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const POOL_WEIGHT_DIVISOR = to1e18(1) // TODO: Update value
 
-  const TokenStaking = await deployments.get("TokenStaking")
   const T = await deployments.get("T")
 
   const SortitionPool = await deployments.deploy("SortitionPool", {
     from: deployer,
-    args: [TokenStaking.address, T.address, POOL_WEIGHT_DIVISOR],
+    args: [T.address, POOL_WEIGHT_DIVISOR],
     log: true,
   })
 
