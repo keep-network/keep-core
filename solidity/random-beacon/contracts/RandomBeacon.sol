@@ -364,6 +364,18 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         staking = _staking;
         reimbursementPool = _reimbursementPool;
 
+        require(
+            address(_sortitionPool) != address(0),
+            "Zero-address reference"
+        );
+        require(address(_tToken) != address(0), "Zero-address reference");
+        require(address(_staking) != address(0), "Zero-address reference");
+        require(address(_dkgValidator) != address(0), "Zero-address reference");
+        require(
+            address(_reimbursementPool) != address(0),
+            "Zero-address reference"
+        );
+
         // TODO: revisit all initial values
         callbackGasLimit = 56000;
         groupCreationFrequency = 5;
@@ -1387,13 +1399,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         return sortitionPool.isOperatorInPool(operator);
     }
 
-    /// @notice Selects a new group of operators based on the provided seed.
+    /// @notice Selects a new group of operators. Can only be called when DKG
+    ///         is in progress and the pool is locked.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.
-    /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
-    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
-        // TODO: Read seed from RandomBeaconDkg
-        return sortitionPool.selectGroup(DKG.groupSize, seed);
+    function selectGroup() external view returns (uint32[] memory) {
+        return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
     }
 }
