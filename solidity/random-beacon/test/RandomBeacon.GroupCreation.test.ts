@@ -2740,10 +2740,13 @@ describe("RandomBeacon - Group Creation", () => {
     })
 
     context("when dkg was triggered", async () => {
+      let genesisSeed: BigNumber
+
       before(async () => {
         await createSnapshot()
 
-        await genesis(randomBeacon)
+        const [, seed] = await genesis(randomBeacon)
+        genesisSeed = seed
       })
 
       after(async () => {
@@ -2753,6 +2756,15 @@ describe("RandomBeacon - Group Creation", () => {
       it("should select a group", async () => {
         const selectedGroup = await randomBeacon.selectGroup()
         expect(selectedGroup.length).to.eq(constants.groupSize)
+      })
+
+      it("should be the same group as if called the sortition pool directly", async () => {
+        const exectedGroup = await sortitionPool.selectGroup(
+          constants.groupSize,
+          genesisSeed.toHexString()
+        )
+        const actualGroup = await randomBeacon.selectGroup()
+        expect(exectedGroup).to.be.deep.equal(actualGroup)
       })
     })
   })
