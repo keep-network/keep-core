@@ -37,6 +37,8 @@ const initialDkgResultApprovalGasOffset = 43500
 const initialNotifyOperatorInactivityGasOffset = 54500
 const initialRelayEntrySubmissionGasOffset = 11500
 
+const ZERO_ADDRESS = ethers.constants.AddressZero
+
 const fixture = async () => {
   const governance = await ethers.getNamedSigner("deployer")
 
@@ -118,6 +120,33 @@ describe("RandomBeaconGovernance", () => {
     [thirdParty, thirdPartyContract] = await ethers.getUnnamedSigners()
     ;({ governance, randomBeaconGovernance, randomBeacon } =
       await waffle.loadFixture(fixture))
+  })
+
+  describe("constructor", () => {
+    let RandomBeaconGovernance: RandomBeaconGovernance__factory
+
+    before(async () => {
+      RandomBeaconGovernance =
+        await ethers.getContractFactory<RandomBeaconGovernance__factory>(
+          "RandomBeaconGovernance"
+        )
+    })
+
+    context("when random beacon is 0-address", () => {
+      it("should revert", async () => {
+        await expect(
+          RandomBeaconGovernance.deploy(ZERO_ADDRESS, 1)
+        ).to.be.revertedWith("Zero-address reference")
+      })
+    })
+
+    context("when governance delay is 0", () => {
+      it("should revert", async () => {
+        await expect(
+          RandomBeaconGovernance.deploy(randomBeacon.address, 0)
+        ).to.be.revertedWith("No governance delay")
+      })
+    })
   })
 
   describe("beginGovernanceDelayUpdate", () => {

@@ -6,7 +6,7 @@ import type { RandomBeacon__factory, SortitionPool } from "../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
-describe.only("RandomBeacon - Constructor", () => {
+describe("RandomBeacon - Constructor", () => {
   let sortitionPool: SortitionPool
   let tToken: string
   let staking: string
