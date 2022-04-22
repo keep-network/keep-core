@@ -342,6 +342,11 @@ _64 members * 20 blocks = 1280 blocks_
 d|`403200 blocks` +
 _~10 weeks assuming 15s block time_
 
+|groupCreationFrequency
+|The number of relay requests needed to kick off a new group creation process.
+|Yes
+|`5`
+
 4+s|Relay Entry
 
 |relayEntrySoftTimeout
@@ -356,28 +361,12 @@ _64 members * 20 blocks = 1280 blocks_
 d|`5760 blocks` +
 _~24h assuming 15s block time_
 
-|relayEntrySubmissionFailureSlashingAmount
-|Slashing amount for not submitting relay entry.
-|Yes
-d|`1000e18` +
-_1 000 T_
-
-4+s|Random Beacon
-
-|_owner
-|Address of the RandomBeacon contract owner.
-|Yes
-d|_deployer's address_
-
 |callbackGasLimit
 |Relay entry callback gas limit.
 |Yes
 d|`56000`
 
-|groupCreationFrequency
-|The frequency of new group creation.
-|Yes
-|`5`
+4+s|Slashing
 
 |maliciousDkgResultSlashingAmount
 |Slashing amount for submitting malicious DKG result.
@@ -385,18 +374,17 @@ d|`56000`
 d|`50000e18` +
 _50 000 T_
 
-|unauthorizedSigningSlashingAmount
-|Slashing amount when an unauthorized signing has been proved.
+|dkgMaliciousResultNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about a malicious DKG result.
 |Yes
-d|`100e3 * 1e18` +
-_100 000 T_
+|`100`
 
-|sortitionPoolRewardsBanDuration
-|Duration of the sortition pool rewards ban imposed on operators who were
-inactive/disqualified during off-chain DKG, misbehaved during the DKG result
-submission or were voted by the group as notoriously failing heartbeats.
+|relayEntrySubmissionFailureSlashingAmount
+|Slashing amount for not submitting relay entry.
 |Yes
-|`2 weeks`
+d|`1000e18` +
+_1 000 T_
 
 |relayEntryTimeoutNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
@@ -404,17 +392,26 @@ will be transferred to the notifier reporting about relay entry timeout.
 |Yes
 |`40`
 
+|unauthorizedSigningSlashingAmount
+|Slashing amount when an unauthorized signing has been proved.
+|Yes
+d|`100e3 * 1e18` +
+_100 000 T_
+
 |unauthorizedSigningNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about unauthorized signing.
 |Yes
 |`50`
 
-|dkgMaliciousResultNotificationRewardMultiplier
-|Percentage of the staking contract malicious behavior notification reward which
-will be transferred to the notifier reporting about a malicious DKG result.
+|sortitionPoolRewardsBanDuration
+|Duration of the sortition pool rewards ban imposed on operators who were
+inactive/disqualified during off-chain DKG or were voted by the group as
+inactive for other reasons.
 |Yes
-|`100`
+|`2 weeks`
+
+4+s|Random Beacon
 
 |dkgResultSubmissionGas	
 |Calculated gas cost for submitting a DKG result. This will be refunded as part
@@ -456,15 +453,7 @@ _100 000 T_
 requested and the time that request gets approved.
 |Yes
 d|`403200 blocks` +
-_~10 weeks 15s block time_
-
-4+s|Governance
-
-|governanceDelay
-|Time in blocks after which initiated change of governable parameters can be
-finalized.
-|Yes
-|`0`
+_~10 weeks assuming 15s block time_
 
 |===
 
