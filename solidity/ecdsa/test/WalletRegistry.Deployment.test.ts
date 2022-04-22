@@ -48,6 +48,8 @@ describe("WalletRegistry - Deployment", async () => {
   })
 
   it("should set WalletRegistry proxy admin", async () => {
+    // To let a non-proxy-admin read the admin we have to read it directly from
+    // the storage slot, see: https://docs.openzeppelin.com/contracts/4.x/api/proxy#TransparentUpgradeableProxy-admin--
     expect(
       ethers.utils.defaultAbiCoder.decode(
         ["address"],

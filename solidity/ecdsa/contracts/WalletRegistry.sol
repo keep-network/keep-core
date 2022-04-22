@@ -249,7 +249,6 @@ contract WalletRegistry is
         _;
     }
 
-    // TODO: Could the constructor remain?
     function initialize(
         SortitionPool _sortitionPool,
         IStaking _staking,
