@@ -170,7 +170,7 @@ library BeaconAuthorization {
         address stakingProvider,
         uint96 fromAmount,
         uint96 toAmount
-    ) public {
+    ) external {
         require(
             toAmount >= self.parameters.minimumAuthorization,
             "Authorization below the minimum"
@@ -324,7 +324,7 @@ library BeaconAuthorization {
         address stakingProvider,
         uint96 fromAmount,
         uint96 toAmount
-    ) public {
+    ) external {
         address operator = self.stakingProviderToOperator[stakingProvider];
 
         if (operator == address(0)) {
@@ -484,7 +484,7 @@ library BeaconAuthorization {
         IStaking tokenStaking,
         SortitionPool sortitionPool,
         address operator
-    ) public view returns (bool) {
+    ) external view returns (bool) {
         address stakingProvider = self.operatorToStakingProvider[operator];
         require(stakingProvider != address(0), "Unknown operator");
 
@@ -518,7 +518,7 @@ library BeaconAuthorization {
         Data storage self,
         IStaking tokenStaking,
         address stakingProvider
-    ) public view returns (uint96) {
+    ) external view returns (uint96) {
         return
             eligibleStake(
                 self,

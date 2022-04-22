@@ -34,11 +34,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-// FIXME: As a workaround for a slither [bug] we need to import the library without
-// an alias.
-// bug: https://github.com/crytic/slither/issues/1067
-import {BeaconDkg} from "./libraries/BeaconDkg.sol";
-
 /// @title Keep Random Beacon
 /// @notice Keep Random Beacon contract. It lets to request a new
 ///         relay entry and validates the new relay entry provided by the
@@ -49,7 +44,7 @@ import {BeaconDkg} from "./libraries/BeaconDkg.sol";
 contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
-    using BeaconDkg for DKG.Data;
+    using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
