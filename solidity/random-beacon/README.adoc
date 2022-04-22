@@ -57,8 +57,8 @@ transaction and locks a sortition pool. From this moment, no operator can enter
 or leave the pool. Once a new relay entry appears on the chain, all off-chain
 clients perform group selection by calling `RandomBeacon.selectGroup()` view
 function for free. After determining group members, clients should perform
-off-chain distributed key generation (DKG). One of the group members submits
-the result to the chain calling
+off-chain distributed key generation (DKG).
+<<operator-only,One of the group members>> submits the result to the chain calling
 `RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)` function.
 Once the result is submitted, a challenge period starts.
 
@@ -84,14 +84,14 @@ timed out by calling `RandomBeacon.notifyDkgTimeout()` and unlock the sortition
 pool. DKG timeout includes the situation when no new relay entry was produced
 and sortition could not be performed.
 
-Off-chain clients are expected to follow the submission order when submitting
-DKG result to avoid front-running and minimize the cost but no ordering is
-enforced on-chain.
+Off-chain clients are expected to follow the <<operator-only,submission order>>
+when submitting DKG result to avoid front-running and minimize the cost but no
+ordering is enforced on-chain.
 
 The sortition pool weights operators by their authorized stake amount and allows
 selecting the same operator multiple times. Off-chain DKG protocol executes in
 the same way as for v1 and inactive/disqualified members during the off-chain
-protocol are marked as ineligible for rewards for a certain period
+protocol are marked as ineligible for <<rewards,rewards>> for a governable period
 of time when the DKG result is approved.
 
 Each group created in the system remains active for a certain period
@@ -110,9 +110,9 @@ producing a new relay entry. The off-chain clients are expected to monitor the
 `RelayEntryRequested` event. If a client is a part of a picked group they should
 start the off-chain protocol to sign the previous relay entry producing a new one.
 
-Off-chain clients are expected to follow the submission order when submitting
-relay entry to avoid front-running and minimize the cost but no ordering is
-enforced on-chain. New relay entry should be submitted using 
+Off-chain clients are expected to follow the <<operator-only,submission order>>
+when submitting relay entry to avoid front-running and minimize the cost but no
+ordering is enforced on-chain. New relay entry should be submitted using 
 `RandomBeacon.submitRelayEntry(bytes calldata entry)` function.
 
 === Callbacks
@@ -163,11 +163,11 @@ requests and associated risk.
 ==== Hard Relay Entry Timeout
 
 When the hard timeout is reached, anyone can notify about this fact by calling
-`RandomBeacon.reportRelayEntryTimeout()` function and receive a notifier
-reward. The group which failed to submit a relay entry is terminated, group
-members are slashed, and if there are still active groups in the beacon, another
-group is selected and tasked with producing a relay entry for the given relay
-request. 
+`RandomBeacon.reportRelayEntryTimeout()` function and receive a
+<<punishment,notifier reward>> . The group which failed to submit a relay entry
+is terminated, group members are slashed, and if there are still active groups
+in the beacon, another group is selected and tasked with producing a relay entry
+for the given relay request. 
 
 ==== DKG Timeout
 
@@ -195,7 +195,7 @@ an operator inactivity claim. If the required threshold of group members signed
 the operator inactivity claim, they can submit it to
 `RandomBeacon.notifyOperatorInactivity(Inactivity.Claim calldata claim, uint256 nonce, int32[] calldata groupMembers)`
 function and have the group members who are inactive excluded from
-the sortition pool rewards for a governable time period.
+the sortition pool <<rewards,rewards>> for a governable time period.
 
 This approach is theoretically susceptible to group members colluding together
 but because a reasonably high number of operators is needed to sign a claim and
@@ -212,11 +212,12 @@ operators whose nodes never participate in signing because they are
 misconfigured, or operators who notoriously miss their turn in submitting relay
 entries.
 
+[[rewards]]
 === Rewards
 
 T rewards are allocated to all operators registered in the beacon sortition
 pool, excluding operators who were marked as ineligible for rewards as a result
-of <<inactivity, inactivity>>. Rewards are allocated proportionally to the
+of <<inactivity,inactivity>>. Rewards are allocated proportionally to the
 operator's weight in the pool. 
 
 [[transaction-incentives]]
@@ -237,9 +238,9 @@ position in the group (can use the hash of the group's pubkey).
 
 If the designated operator does not submit their transaction before a timeout
 expires, the duty moves to the next operator and the group can sign a
-transaction to mark that operator as inactive. Since there is no slashing
-reward, and since this transaction can only be submitted by an operator, this
-transaction is also Operator-Only.
+transaction to mark that operator as <<inactivity,inactive>>. Since there is no
+slashing reward, and since this transaction can only be submitted by an operator,
+this transaction is also Operator-Only.
 
 In order to compensate the operator for posting the transaction, the gas spent
 will be reimbursed by a DAO-funded eth pool in the same transaction (see
