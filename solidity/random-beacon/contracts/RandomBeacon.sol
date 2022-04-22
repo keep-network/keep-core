@@ -784,7 +784,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyTimeout();
-        dkg.complete();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
