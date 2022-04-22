@@ -71,8 +71,8 @@ slashed and the malicious result is immediately discarded.
 
 Once the challenge period passes, and no valid challenge is reported, the DKG result
 submitter should unlock the sortition pool and mark the DKG result as approved
-calling `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`
-The submitter receives  eth reimbursement for both `submitDkgResult` and
+calling `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`.
+The submitter receives an ETH reimbursement for both `submitDkgResult` and
 `approveDkgResult` transaction as described in
 <<transaction-incentives,Transaction Incentives>> section. In case the original
 submitter does not call the `approveDkgResult` function within a specific number
@@ -85,7 +85,7 @@ pool. DKG timeout includes the situation when no new relay entry was produced
 and sortition could not be performed.
 
 Off-chain clients are expected to follow the <<operator-only,submission order>>
-when submitting DKG result to avoid front-running and minimize the cost but no
+when submitting DKG result to avoid front-running and minimize the cost, but no
 ordering is enforced on-chain.
 
 The sortition pool weights operators by their authorized stake amount and allows
@@ -111,7 +111,7 @@ producing a new relay entry. The off-chain clients are expected to monitor the
 start the off-chain protocol to sign the previous relay entry producing a new one.
 
 Off-chain clients are expected to follow the <<operator-only,submission order>>
-when submitting relay entry to avoid front-running and minimize the cost but no
+when submitting relay entry to avoid front-running and minimize the cost, but no
 ordering is enforced on-chain. New relay entry should be submitted using 
 `RandomBeacon.submitRelayEntry(bytes calldata entry)` function.
 
@@ -175,7 +175,7 @@ There is a governable timeout for DKG to complete and for the result to be
 submitted. DKG timeout includes the time it takes to execute off-chain protocol
 to generate a key, and the time it takes to submit the result.
 When DKG timeout is exceeded, anyone can call `RandomBeacon.notifyDkgTimeout()`.
-This function unlocks the sortition pool and clears up DKG data but no slashing
+This function unlocks the sortition pool and clears up DKG data, but no slashing
 for DKG timeout is executed and no one is marked as ineligible for rewards.
 
 [[inactivity]]
@@ -186,7 +186,7 @@ group member key material is still available and nodes are operating properly.
 
 [TIP]
 One example of a heartbeat protocol is signing some piece of information every
-nth block and making sure this piece of information cannot be used for
+n-th block and making sure this piece of information cannot be used for
 `RandomBeacon.reportUnauthorizedSigning()`. Specifically, the signed piece of
 information can not become `msg.sender` for `reportUnauthorizedSigning` call.
 
@@ -197,7 +197,7 @@ the operator inactivity claim, they can submit it to
 function and have the group members who are inactive excluded from
 the sortition pool <<rewards,rewards>> for a governable time period.
 
-This approach is theoretically susceptible to group members colluding together
+This approach is theoretically susceptible to group members colluding together,
 but because a reasonably high number of operators is needed to sign a claim and
 operators signing the claim receive nothing in return,
 we consider this approach safe and good enough. An important advantage of this
@@ -223,7 +223,7 @@ operator's weight in the pool.
 [[transaction-incentives]]
 === Transaction Incentives
 
-There are two types of transactions: <<operator-only,Operator-Only>>,
+There are three types of transactions: <<operator-only,Operator-Only>>,
 <<public-knowledge,Public-Knowledge>>, and <<punishment,Punishment>>.
 
 [[operator-only]]
