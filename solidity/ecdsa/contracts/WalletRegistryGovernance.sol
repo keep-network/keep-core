@@ -945,7 +945,7 @@ contract WalletRegistryGovernance is Ownable {
             );
     }
 
-    /// @notice Get the time remaining until the DKG result submission
+    /// @notice Get the time remaining until the DKG result submission timeout
     ///         can be updated.
     /// @return Remaining time in seconds.
     function getRemainingDkgResultSubmissionTimeoutUpdateTime()
