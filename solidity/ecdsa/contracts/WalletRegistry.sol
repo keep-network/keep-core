@@ -650,13 +650,11 @@ contract WalletRegistry is
     ///         callback function.
     function notifySeedTimeout() external refundable(msg.sender) {
         dkg.notifySeedTimeout();
-        dkg.complete();
     }
 
     /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyDkgTimeout();
-        dkg.complete();
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
