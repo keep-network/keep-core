@@ -246,7 +246,7 @@ slashing reward, and since this transaction can only be submitted by an operator
 this transaction is also Operator-Only.
 
 In order to compensate the operator for posting the transaction, the gas spent
-will be reimbursed by a DAO-funded eth pool in the same transaction. It is
+will be reimbursed by a DAO-funded ETH pool in the same transaction. It is
 important to note, that the system has a governable cap for the gas price to
 protect against malicious operators trying to drain the pool (see `Reimbursable`
 and `ReimbursementPool` smart contracts).
@@ -267,7 +267,7 @@ be executed rarely, and off-chain clients should follow the informal agreement
 about the submission order.
 
 To compensate these transactions, whoever posts them will have the gas spent
-reimbursed by a DAO-funded eth pool in the same transaction.
+reimbursed by a DAO-funded ETH pool in the same transaction.
 
 The only public knowledge transaction is `notifyDkgTimeout`.
 
