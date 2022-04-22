@@ -79,7 +79,7 @@ library EcdsaInactivity {
         bytes memory walletPubKey,
         uint256 nonce,
         uint32[] calldata groupMembers
-    ) internal view returns (uint32[] memory inactiveMembers) {
+    ) external view returns (uint32[] memory inactiveMembers) {
         // Validate inactive members indices. Maximum indices count is equal to
         // the group size and is not limited deliberately to leave a theoretical
         // possibility to accuse more members than `groupSize - groupThreshold`.

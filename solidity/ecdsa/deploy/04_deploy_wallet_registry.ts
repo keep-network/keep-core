@@ -20,6 +20,11 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
   })
 
+  const EcdsaInactivity = await deployments.deploy("EcdsaInactivity", {
+    from: deployer,
+    log: true,
+  })
+
   const walletRegistry = await helpers.upgrades.deployProxy("WalletRegistry", {
     contractName:
       deployments.getNetworkName() === "hardhat"
@@ -34,6 +39,9 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     ],
     factoryOpts: {
       signer: await ethers.getSigner(deployer),
+      libraries: {
+        EcdsaInactivity: EcdsaInactivity.address,
+      },
     },
   })
 
