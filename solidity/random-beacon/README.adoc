@@ -55,39 +55,34 @@ Instead of a v1 ticket-based approach for group selection, we use a sortition
 pool. Group creation start transaction is embedded into relay request
 transaction and locks a sortition pool. From this moment, no operator can enter
 or leave the pool. Once a new relay entry appears on the chain, all off-chain
-clients perform group selection optimistically calling
-`RandomBeacon.selectGroup(seed)` view function for free. Seed is available in
-`DkgStarted` event emitted when the group creation starts. After determining
-group members, clients should perform off-chain distributed key generation (DKG).
- <<dkg-submit-eligibility,Eligible group member>> submits the result to the chain
- calling `RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)` function.
- Once the result is submitted, a challenge period starts.
+clients perform group selection by calling `RandomBeacon.selectGroup()` view
+function for free. After determining group members, clients should perform
+off-chain distributed key generation (DKG). One of the group members submits
+the result to the chain calling
+`RandomBeacon.submitDkgResult(DKG.Result calldata dkgResult)` function.
+Once the result is submitted, a challenge period starts.
 
 During the challenge period, anyone can notify that the submitted DKG result is
-malicious calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult)`
+malicious by calling `RandomBeacon.challengeDkgResult(DKG.Result calldata dkgResult)`
 function. A malicious DKG result may contain corrupted data, group members not
 selected by the pool, or incorrect supporting signatures. If such malicious
-result is submitted and successfully challenged, the result submitter gets slashed and the
-malicious result is immediately discarded.
+result is submitted and successfully challenged, the result submitter gets
+slashed and the malicious result is immediately discarded.
 
-Once the challenge period passes, and no challenges are reported,
-the DKG result submitter should unlock the sortition pool and mark the DKG result as
-accepted calling
-`RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)` to receive a
-reward. In case the submitter does not call the approve function within a
-specific number of blocks, anyone can do that and receive the
-submitter's reward as described in <<fees-and-rewards,Fees and Rewards>> section.
+Once the challenge period passes, and no valid challenge is reported, the DKG result
+submitter should unlock the sortition pool and mark the DKG result as approved
+calling `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`
+The submitter receives  ETH reimbursement for both `submitDkgResult` and
+`approveDkgResult` transaction as described in
+<<transaction-incentives,Transaction Incentives>> section. In case the original
+submitter does not call the `approveDkgResult` function within a specific number
+of blocks, anyone can do that and receive the submitter's reimbursement.
 
-There is a timeout before which a DKG result should be submitted. The timeout
-equals the group size multiplied by the number of blocks for a member to become
-eligible to submit a DKG result. The timer starts at the moment when the first
-member becomes eligible.
-
+There is a timeout before which a DKG result should be submitted.
 In case the DKG result was not submitted before a timeout, anyone can notify DKG
-timed out calling `RandomBeacon.notifyDkgTimeout()` and receive a reward, as
-described in <<fees-and-rewards,Fees and Rewards>> section. DKG timeout includes
-the situation when no new relay entry was produced and sortition could not be
-performed.
+timed out by calling `RandomBeacon.notifyDkgTimeout()` and unlock the sortition
+pool. DKG timeout includes the situation when no new relay entry was produced
+and sortition could not be performed.
 
 The sortition pool weights operators by their authorized stake amount and allows
 selecting the same operator multiple times. Off-chain DKG protocol executes in
@@ -274,6 +269,9 @@ members. They may mark as ineligible operators who turned off their nodes,
 operators whose nodes never participate in signing because they are
 misconfigured, or operators who notoriously miss their turn in submitting relay
 entry.
+
+[[transaction-incentives]]
+=== Transaction Incentives
 
 == Parameters
 
