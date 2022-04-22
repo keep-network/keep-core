@@ -84,6 +84,10 @@ timed out by calling `RandomBeacon.notifyDkgTimeout()` and unlock the sortition
 pool. DKG timeout includes the situation when no new relay entry was produced
 and sortition could not be performed.
 
+Off-chain clients are expected to follow the submission order when submitting
+DKG result to avoid front-running and minimize the cost but no ordering is
+enforced on-chain.
+
 The sortition pool weights operators by their authorized stake amount and allows
 selecting the same operator multiple times. Off-chain DKG protocol executes in
 the same way as for v1 and inactive/disqualified members during the off-chain
@@ -96,11 +100,9 @@ expiration is performed in the relay request transaction.
 
 === Relay Request and Relay Entry
 
-Anyone can request a new relay entry (random number) by calling
+Authorized addresses can request a new relay entry (random number) by calling
 `RandomBeacon.requestRelayEntry(IRandomBeaconConsumer callbackContract)`
-function and providing an optional callback parameter. The requester needs to
-approve enough tokens for a fee, as described in
-<<fees-and-rewards,Fees and Rewards>> section.
+function and providing an optional callback parameter.
 
 In `requestRelayEntry` transaction, groups that reached their maximum lifetime
 are getting expired and one of the remaining active groups is tasked with
@@ -108,12 +110,10 @@ producing a new relay entry. The off-chain clients are expected to monitor the
 `RelayEntryRequested` event. If a client is a part of a picked group they should
 start the off-chain protocol to sign the previous relay entry producing a new one.
 
-Off-chain clients are expected to follow the order when submitting relay entry
-to minimize and distribute costs evenly, as described in
-<<fees-and-rewards,Fees and Rewards>> section but no ordering is enforced
-on-chain. New relay entry should be submitted using 
-`RandomBeacon.submitRelayEntry(bytes calldata entry)`
-function.
+Off-chain clients are expected to follow the submission order when submitting
+relay entry to avoid front-running and minimize the cost but no ordering is
+enforced on-chain. New relay entry should be submitted using 
+`RandomBeacon.submitRelayEntry(bytes calldata entry)` function.
 
 === Callbacks
 
