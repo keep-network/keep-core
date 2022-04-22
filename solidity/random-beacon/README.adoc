@@ -72,7 +72,7 @@ slashed and the malicious result is immediately discarded.
 Once the challenge period passes, and no valid challenge is reported, the DKG result
 submitter should unlock the sortition pool and mark the DKG result as approved
 calling `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`
-The submitter receives  ETH reimbursement for both `submitDkgResult` and
+The submitter receives  eth reimbursement for both `submitDkgResult` and
 `approveDkgResult` transaction as described in
 <<transaction-incentives,Transaction Incentives>> section. In case the original
 submitter does not call the `approveDkgResult` function within a specific number
@@ -212,56 +212,76 @@ operators whose nodes never participate in signing because they are
 misconfigured, or operators who notoriously miss their turn in submitting relay
 entries.
 
-[[fees-and-rewards]]
-=== Fees and Rewards
+=== Rewards
 
-Relay requester should provide a fee in T. The entire fee is deposited in the DKG
-rewards pool that is used to reimburse for different actions related to DKG.
-
-There is a fixed reward for submitting and approving a DKG result
-paid from the DKG rewards pool. The reward is paid
-to the DKG result submitter in the transaction approving the DKG result. If the
-DKG result submitter failed to approve the result after the challenge period,
-anyone can do that and receive the submitter's reward.
-
-The logic triggering new group selection is embedded in relay request
-transaction and is as cheap as possible, so no additional reward is paid for
-triggering DKG.
-
-In case the DKG result has not been submitted on time, anyone can unlock the
-pool and receive a fixed reward for reporting DKG timeout. The
-reward is paid from the DKG reward pool. 
-
-[[dkg-submit-eligibility]]
-The order in which operators are supposed to submit a DKG result is not enforced
-on-chain. The first member eligible to submit the DKG result is a member with
-index `keccak256(new_group_pubkey) % group_size`. Members with subsequent indices
-are becoming eligible one after another, during the result submission period.
-
-[NOTE]
-For example, if `hash(new_group_pubkey) % group_size = 62`, `group_size = 64`,
-group members are becoming eligible in the following order:
-`62, 63, 64, 1, 2, 3, 4, 5, 6, 7, 8, 9, ..., 61`. 
-
-The transaction submitting relay entry is not reimbursable and implementation
-ensures the gas cost of this transaction is as low as possible, below 200k gas
-when no callback is executed.
-
-Everyone is eligible to submit relay entry at any time but off-chain clients are
-expected to agree and follow the following order to minimize the gas cost and
-distribute costs: the first group member eligible to submit the result is
-`new_entry % group_size`; then, if the selected member does not provide an entry
-within the eligibility period, `(new_entry % group_size) + 1` and so on.
-
-If some group members are notoriously ignoring their duty, the group can vote on
-<<inactivity,inactivity>> notification for these operators.
-
-T rewards will be distributed continuously to all operators registered in the beacon
-sortition pool, excluding operators who were marked as ineligible for rewards
-due to failing the heartbeat.
+T rewards are allocated to all operators registered in the beacon sortition
+pool, excluding operators who were marked as ineligible for rewards as a result
+of <<inactivity, inactivity>>. Rewards are allocated proportionally to the
+operator's weight in the pool. 
 
 [[transaction-incentives]]
 === Transaction Incentives
+
+There are two types of transactions: <<operator-only,Operator-Only>>,
+<<public-knowledge,Public-Knowledge>>, and <<punishment,Punishment>>.
+
+[[operator-only]]
+==== Operator-Only
+Operator-Only transactions are where only the operators have access to the
+information required to assemble the transaction with the right input
+parameters.
+
+In order to avoid all operators racing to submit the transaction at the same
+time, we have an off-chain informal agreement to submit based on the operator's
+position in the group (can use the hash of the group's pubkey).
+
+If the designated operator does not submit their transaction before a timeout
+expires, the duty moves to the next operator and the group can sign a
+transaction to mark that operator as inactive. Since there is no slashing
+reward, and since this transaction can only be submitted by an operator, this
+transaction is also Operator-Only.
+
+In order to compensate the operator for posting the transaction, the gas spent
+will be reimbursed by a DAO-funded eth pool in the same transaction (see
+`Reimbursable` and `ReimbursementPool` smart contracts).
+
+Operator-only transactions are `submitDkgResult`, `submitRelayEntry`,
+`notifyOperatorInactivity`, and `approveDkgResult` for a certain number of
+blocks, before a timeout for the original DKG result submitter to call this
+function elapses.
+
+[[public-knowledge]]
+==== Public-Knowledge
+Public-Knowledge transactions are where anyone has access to the information
+required to assemble the transaction and the transaction does not lead to
+punishment.
+
+In order to prevent wasting gas on racing to submit, such transactions need to
+be executed rarely, and off-chain clients should follow the informal agreement
+about the submission order.
+
+To compensate these transactions, whoever posts them will have the gas spent
+reimbursed by a DAO-funded eth pool in the same transaction.
+
+The only public knowledge transaction is `notifyDkgTimeout`.
+
+`approveDkgResult` turns into a public knowledge transaction in case the
+original submitter has not approved the result before the timeout.
+
+[[punishment]]
+==== Punishment
+Punishment transactions are where anyone has access to the information required
+to assemble the transaction (like <<public-knowledge,Public-Knowledge>>) and
+the transaction leads to slashing.
+
+In these transactions, maintaining system health is more important than
+optimizing gas via preventing racing, so we offer up bounties in the form of
+a notifier reward from slashed tokens to whichever submitter submits first. We
+do not compensate gas. Notification rewards are distributed by Threshold Network
+`TokenStaking` contract.
+
+Punishment transactions are: `challengeDkgResult`, `reportRelayEntryTimeout`,
+and `reportUnauthorizedSigning`.
 
 == Parameters
 
