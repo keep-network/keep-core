@@ -178,6 +178,40 @@ When DKG timeout is exceeded, anyone can call `RandomBeacon.notifyDkgTimeout()`.
 This function unlocks the sortition pool and clears up DKG data but no slashing
 for DKG timeout is executed and no one is marked as ineligible for rewards.
 
+[[inactivity]]
+=== Inactivity notification
+
+Off-chain clients are free to execute any heartbeat protocol they want to ensure
+group member key material is still available and nodes are operating properly.
+
+[TIP]
+One example of a heartbeat protocol is signing some piece of information every
+nth block and making sure this piece of information cannot be used for
+`RandomBeacon.reportUnauthorizedSigning()`. Specifically, the signed piece of
+information can not become `msg.sender` for `reportUnauthorizedSigning` call.
+
+Group members can agree to punish members who are permanently inactive and issue
+an operator inactivity claim. If the required threshold of group members signed
+the operator inactivity claim, they can submit it to
+`RandomBeacon.notifyOperatorInactivity(Inactivity.Claim calldata claim, uint256 nonce, int32[] calldata groupMembers)`
+function and have the group members who are inactive excluded from
+the sortition pool rewards for a governable time period.
+
+This approach is theoretically susceptible to group members colluding together
+but because a reasonably high number of operators is needed to sign a claim and
+operators signing the claim receive nothing in return,
+we consider this approach safe and good enough. An important advantage of this
+approach is that honest players can decide off-chain when it makes sense to
+submit an operator inactivity claim and mark someone as ineligible for rewards.
+For example, marking an operator ineligible for rewards for the next two weeks
+have a higher impact than prolonging reward ineligibility for 10 minutes for an
+operator that was already marked as ineligible for rewards. This approach does
+not increase the gas cost of a happy path and leaves some freedom to group
+members. They can mark as ineligible operators who turned off their nodes,
+operators whose nodes never participate in signing because they are
+misconfigured, or operators who notoriously miss their turn in submitting relay
+entries.
+
 [[fees-and-rewards]]
 === Fees and Rewards
 
@@ -225,40 +259,6 @@ If some group members are notoriously ignoring their duty, the group can vote on
 T rewards will be distributed continuously to all operators registered in the beacon
 sortition pool, excluding operators who were marked as ineligible for rewards
 due to failing the heartbeat.
-
-[[inactivity]]
-=== Inactivity notification
-
-Off-chain clients are free to execute any heartbeat protocol they want to ensure
-group members are alive and nodes are operating properly.
-
-[TIP]
-One example of a heartbeat protocol is signing some piece of information every
-nth blocks and first making sure the information cannot be used for
-`RandomBeacon.reportUnauthorizedSigning()`, that is, the signed information can
-not become `msg.sender` for `reportUnauthorizedSigning` call.
-
-Group members can agree upon members who are permanently inactive and issue an
-operator inactivity claim. If the required threshold of group members signed
-the operator inactivity claim, they can submit it to
-`RandomBeacon.notifyOperatorInactivity(Inactivity.Claim calldata claim, uint256 nonce)`
-function and have the group members who are inactive excluded from
-the sortition pool rewards for a governable time period.
-
-This approach is theoretically susceptible to group members colluding together
-but because a reasonably high number of operators is needed to sign a claim and
-operators signing the claim other than the submitter receive nothing in return,
-we consider this approach safe and good enough. An important advantage of this
-approach is that honest players can decide off-chain when it makes sense to
-submit an operator inactivity claim and mark someone as ineligible for rewards.
-For example, marking an operator ineligible for rewards for the next two weeks
-have a higher impact than prolonging reward ineligibility for 10 minutes for an
-operator that was already marked as ineligible for rewards. This approach does
-not increase the gas cost of a happy path and leaves some freedom to group
-members. They may mark as ineligible operators who turned off their nodes,
-operators whose nodes never participate in signing because they are
-misconfigured, or operators who notoriously miss their turn in submitting relay
-entry.
 
 [[transaction-incentives]]
 === Transaction Incentives
