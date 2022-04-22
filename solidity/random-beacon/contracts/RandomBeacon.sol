@@ -1085,6 +1085,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
             // avoid blocking the future group creation.
             if (dkg.currentState() == DKG.State.AWAITING_SEED) {
                 dkg.notifySeedTimedOut();
+                dkg.complete();
             }
         }
     }

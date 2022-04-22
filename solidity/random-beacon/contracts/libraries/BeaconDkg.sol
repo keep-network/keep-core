@@ -283,8 +283,6 @@ library BeaconDkg {
         );
 
         emit DkgSeedTimedOut();
-
-        self.sortitionPool.unlock();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
