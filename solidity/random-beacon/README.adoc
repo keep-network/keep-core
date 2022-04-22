@@ -117,8 +117,8 @@ enforced on-chain. New relay entry should be submitted using
 
 === Callbacks
 
-Random Beacon supports simple, low gas budget callbacks from a relay entry
-submit a transaction with a gas limit.
+Random Beacon supports simple, low-gas-budget callbacks from a relay entry
+submit transaction.
 
 When requesting a relay entry, it is possible to pass an optional address
 parameter - this is the address of a contract implementing
@@ -126,9 +126,8 @@ parameter - this is the address of a contract implementing
 is submitted to the chain.
 
 Smart contract consuming new relay entry needs to implement `IRandomBeaconConsumer`
-interface. The gas limit for `__beaconCallback` is initially set to 50k gas
-which is enough to `SSTORE` new relay entry, block height in which the entry was
-submitted, and to emit an event.
+interface. The gas limit for `__beaconCallback` is initially set to 56k gas
+which is enough to `SSTORE` new relay entry, `SSTORE` block height in which the entry was submitted, and to emit an event.
 Failure in the callback function does not revert the relay entry transaction.
 
 ```solidity
