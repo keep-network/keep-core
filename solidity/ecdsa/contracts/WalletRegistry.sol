@@ -288,10 +288,13 @@ contract WalletRegistry is
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
     ///         for sortition pool rewards.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract.
     /// @param recipient Recipient of withdrawn rewards.
-    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+    function withdrawIneligibleRewards(address recipient)
+        external
+        onlyGovernance
+    {
         sortitionPool.withdrawIneligible(recipient);
     }
 
