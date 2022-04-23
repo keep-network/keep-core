@@ -113,7 +113,7 @@ describe("WalletRegistry - Rewards", () => {
           walletRegistry
             .connect(thirdParty)
             .withdrawIneligibleRewards(thirdParty.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 

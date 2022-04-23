@@ -17,6 +17,7 @@ pragma solidity ^0.8.9;
 import "./api/IWalletRegistry.sol";
 import "./api/IWalletOwner.sol";
 import "./libraries/Wallets.sol";
+import "./Governable.sol";
 import {EcdsaAuthorization as Authorization} from "./libraries/EcdsaAuthorization.sol";
 import {EcdsaDkg as DKG} from "./libraries/EcdsaDkg.sol";
 import {EcdsaInactivity as Inactivity} from "./libraries/EcdsaInactivity.sol";
@@ -36,7 +37,7 @@ contract WalletRegistry is
     IWalletRegistry,
     IRandomBeaconConsumer,
     IApplication,
-    Ownable,
+    Governable,
     Reimbursable
 {
     using Authorization for Authorization.Data;
@@ -238,6 +239,11 @@ contract WalletRegistry is
         _;
     }
 
+    modifier onlyReimbursableAdmin() override {
+        require(governance == msg.sender, "Caller is not the governance");
+        _;
+    }
+
     constructor(
         SortitionPool _sortitionPool,
         IStaking _staking,
@@ -266,6 +272,8 @@ contract WalletRegistry is
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20);
         dkg.setSubmitterPrecedencePeriodLength(20);
+
+        _transferGovernance(msg.sender);
     }
 
     /// @notice Withdraw rewards for the given staking provider to their
@@ -280,10 +288,13 @@ contract WalletRegistry is
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
     ///         for sortition pool rewards.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract.
     /// @param recipient Recipient of withdrawn rewards.
-    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+    function withdrawIneligibleRewards(address recipient)
+        external
+        onlyGovernance
+    {
         sortitionPool.withdrawIneligible(recipient);
     }
 
@@ -412,13 +423,13 @@ contract WalletRegistry is
     }
 
     /// @notice Updates address of the Random Beacon.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _randomBeacon Random Beacon address.
     function upgradeRandomBeacon(IRandomBeacon _randomBeacon)
         external
-        onlyOwner
+        onlyGovernance
     {
         randomBeacon = _randomBeacon;
         emit RandomBeaconUpgraded(address(_randomBeacon));
@@ -430,13 +441,16 @@ contract WalletRegistry is
     ///      validating parameters. The wallet owner has to implement `IWalletOwner`
     ///      interface.
     /// @param _walletOwner New wallet owner address.
-    function updateWalletOwner(IWalletOwner _walletOwner) external onlyOwner {
+    function updateWalletOwner(IWalletOwner _walletOwner)
+        external
+        onlyGovernance
+    {
         walletOwner = _walletOwner;
         emit WalletOwnerUpdated(address(_walletOwner));
     }
 
     /// @notice Updates the values of authorization parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _minimumAuthorization New minimum authorization amount
@@ -445,7 +459,7 @@ contract WalletRegistry is
     function updateAuthorizationParameters(
         uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay
-    ) external onlyOwner {
+    ) external onlyGovernance {
         authorization.setMinimumAuthorization(_minimumAuthorization);
         authorization.setAuthorizationDecreaseDelay(
             _authorizationDecreaseDelay
@@ -458,7 +472,7 @@ contract WalletRegistry is
     }
 
     /// @notice Updates the values of DKG parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _seedTimeout New seed timeout.
@@ -472,7 +486,7 @@ contract WalletRegistry is
         uint256 _resultChallengePeriodLength,
         uint256 _resultSubmissionTimeout,
         uint256 _submitterPrecedencePeriodLength
-    ) external onlyOwner {
+    ) external onlyGovernance {
         dkg.setSeedTimeout(_seedTimeout);
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
         dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
@@ -490,7 +504,7 @@ contract WalletRegistry is
     }
 
     /// @notice Updates the values of reward parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _maliciousDkgResultNotificationRewardMultiplier New value of the
@@ -500,7 +514,7 @@ contract WalletRegistry is
     function updateRewardParameters(
         uint256 _maliciousDkgResultNotificationRewardMultiplier,
         uint256 _sortitionPoolRewardsBanDuration
-    ) external onlyOwner {
+    ) external onlyGovernance {
         maliciousDkgResultNotificationRewardMultiplier = _maliciousDkgResultNotificationRewardMultiplier;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         emit RewardParametersUpdated(
@@ -510,21 +524,21 @@ contract WalletRegistry is
     }
 
     /// @notice Updates the values of slashing parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
     function updateSlashingParameters(uint96 _maliciousDkgResultSlashingAmount)
         external
-        onlyOwner
+        onlyGovernance
     {
         maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
         emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
     }
 
     /// @notice Updates the values of gas-related parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _dkgResultSubmissionGas New DKG result submission gas
@@ -535,7 +549,7 @@ contract WalletRegistry is
         uint256 _dkgResultSubmissionGas,
         uint256 _dkgResultApprovalGasOffset,
         uint256 _notifyOperatorInactivityGasOffset
-    ) external onlyOwner {
+    ) external onlyGovernance {
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
         dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
         notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;

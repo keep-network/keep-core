@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { BigNumber } from "ethers"
-import { ethers, helpers, getUnnamedAccounts, waffle } from "hardhat"
+import { ethers, helpers } from "hardhat"
 import { expect } from "chai"
 
 import { constants, walletRegistryFixture } from "./fixtures"
