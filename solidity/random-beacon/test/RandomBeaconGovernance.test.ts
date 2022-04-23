@@ -103,7 +103,7 @@ const fixture = async () => {
   const randomBeaconGovernance: RandomBeaconGovernance =
     await RandomBeaconGovernance.deploy(randomBeacon.address, governanceDelay)
   await randomBeaconGovernance.deployed()
-  await randomBeacon.transferOwnership(randomBeaconGovernance.address)
+  await randomBeacon.transferGovernance(randomBeaconGovernance.address)
 
   return { governance, randomBeaconGovernance, randomBeacon }
 }
@@ -286,13 +286,13 @@ describe("RandomBeaconGovernance", () => {
     )
   })
 
-  describe("beginRandomBeaconOwnershipTransfer", () => {
+  describe("beginRandomBeaconGovernanceTransfer", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .beginRandomBeaconOwnershipTransfer(
+            .beginRandomBeaconGovernanceTransfer(
               "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
             )
         ).to.be.revertedWith("Ownable: caller is not the owner")
@@ -307,7 +307,7 @@ describe("RandomBeaconGovernance", () => {
 
         tx = await randomBeaconGovernance
           .connect(governance)
-          .beginRandomBeaconOwnershipTransfer(
+          .beginRandomBeaconGovernanceTransfer(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )
       })
@@ -316,35 +316,37 @@ describe("RandomBeaconGovernance", () => {
         await restoreSnapshot()
       })
 
-      context("when new owner is the zero address", () => {
+      context("when new governance is the zero address", () => {
         it("should revert", async () => {
           await expect(
             randomBeaconGovernance
               .connect(governance)
-              .beginRandomBeaconOwnershipTransfer(ethers.constants.AddressZero)
-          ).to.be.revertedWith("New random beacon owner address cannot be zero")
+              .beginRandomBeaconGovernanceTransfer(ethers.constants.AddressZero)
+          ).to.be.revertedWith(
+            "New random beacon governance address cannot be zero"
+          )
         })
       })
 
-      it("should not transfer the ownership", async () => {
-        expect(await randomBeacon.owner()).to.be.equal(
+      it("should not transfer the governance", async () => {
+        expect(await randomBeacon.governance()).to.be.equal(
           randomBeaconGovernance.address
         )
       })
 
       it("should start the governance delay timer", async () => {
         expect(
-          await randomBeaconGovernance.getRemainingRandomBeaconOwnershipTransferDelayTime()
+          await randomBeaconGovernance.getRemainingRandomBeaconGovernanceTransferDelayTime()
         ).to.be.equal(governanceDelay)
       })
 
-      it("should emit RandomBeaconOwnershipTransferStarted", async () => {
+      it("should emit RandomBeaconGovernanceTransferStarted", async () => {
         const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
           .timestamp
         await expect(tx)
           .to.emit(
             randomBeaconGovernance,
-            "RandomBeaconOwnershipTransferStarted"
+            "RandomBeaconGovernanceTransferStarted"
           )
           .withArgs(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537",
@@ -354,13 +356,13 @@ describe("RandomBeaconGovernance", () => {
     })
   })
 
-  describe("finalizeRandomBeaconOwnershipTransfer", () => {
+  describe("finalizeRandomBeaconGovernanceTransfer", () => {
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .finalizeRandomBeaconOwnershipTransfer()
+            .finalizeRandomBeaconGovernanceTransfer()
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
@@ -370,7 +372,7 @@ describe("RandomBeaconGovernance", () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .finalizeRandomBeaconOwnershipTransfer()
+            .finalizeRandomBeaconGovernanceTransfer()
         ).to.be.revertedWith("Change not initiated")
       })
     })
@@ -381,7 +383,7 @@ describe("RandomBeaconGovernance", () => {
 
         await randomBeaconGovernance
           .connect(governance)
-          .beginRandomBeaconOwnershipTransfer(
+          .beginRandomBeaconGovernanceTransfer(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )
 
@@ -396,7 +398,7 @@ describe("RandomBeaconGovernance", () => {
         await expect(
           randomBeaconGovernance
             .connect(governance)
-            .finalizeRandomBeaconOwnershipTransfer()
+            .finalizeRandomBeaconGovernanceTransfer()
         ).to.be.revertedWith("Governance delay has not elapsed")
       })
     })
@@ -411,7 +413,7 @@ describe("RandomBeaconGovernance", () => {
 
           await randomBeaconGovernance
             .connect(governance)
-            .beginRandomBeaconOwnershipTransfer(
+            .beginRandomBeaconGovernanceTransfer(
               "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
             )
 
@@ -419,28 +421,31 @@ describe("RandomBeaconGovernance", () => {
 
           tx = await randomBeaconGovernance
             .connect(governance)
-            .finalizeRandomBeaconOwnershipTransfer()
+            .finalizeRandomBeaconGovernanceTransfer()
         })
 
         after(async () => {
           await restoreSnapshot()
         })
 
-        it("should transfer random beacon ownership", async () => {
-          expect(await randomBeacon.owner()).to.be.equal(
+        it("should transfer random beacon governance", async () => {
+          expect(await randomBeacon.governance()).to.be.equal(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )
         })
 
-        it("should emit RandomBeaconOwnershipTransferred event", async () => {
+        it("should emit RandomBeaconGovernanceTransferred event", async () => {
           await expect(tx)
-            .to.emit(randomBeaconGovernance, "RandomBeaconOwnershipTransferred")
+            .to.emit(
+              randomBeaconGovernance,
+              "RandomBeaconGovernanceTransferred"
+            )
             .withArgs("0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537")
         })
 
         it("should reset the governance delay timer", async () => {
           await expect(
-            randomBeaconGovernance.getRemainingRandomBeaconOwnershipTransferDelayTime()
+            randomBeaconGovernance.getRemainingRandomBeaconGovernanceTransferDelayTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

@@ -191,7 +191,7 @@ export async function testDeployment(): Promise<DeployedContracts> {
   await randomBeaconGovernance.deployed()
   await contracts.randomBeacon
     .connect(deployer)
-    .transferOwnership(randomBeaconGovernance.address)
+    .transferGovernance(randomBeaconGovernance.address)
   await randomBeaconGovernance
     .connect(deployer)
     .transferOwnership(governance.address)

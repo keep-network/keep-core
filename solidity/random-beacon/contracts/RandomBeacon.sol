@@ -20,6 +20,7 @@ import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
 import "./Reimbursable.sol";
+import "./Governable.sol";
 import {BeaconInactivity as Inactivity} from "./libraries/BeaconInactivity.sol";
 import {BeaconAuthorization as Authorization} from "./libraries/BeaconAuthorization.sol";
 import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
@@ -29,7 +30,6 @@ import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
@@ -41,7 +41,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
+contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
     using DKG for DKG.Data;
@@ -401,6 +401,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
         groups.setGroupLifetime(403200); // ~10 weeks assuming 15s block time
+
+        _transferGovernance(msg.sender);
     }
 
     modifier onlyStakingContract() {
@@ -411,8 +413,13 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         _;
     }
 
+    modifier onlyReimbursableAdmin() override {
+        require(governance == msg.sender, "Caller is not the governance");
+        _;
+    }
+
     /// @notice Updates the values of authorization parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _minimumAuthorization New minimum authorization amount
@@ -421,7 +428,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     function updateAuthorizationParameters(
         uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay
-    ) external onlyOwner {
+    ) external onlyGovernance {
         authorization.setMinimumAuthorization(_minimumAuthorization);
         authorization.setAuthorizationDecreaseDelay(
             _authorizationDecreaseDelay
@@ -434,7 +441,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     }
 
     /// @notice Updates the values of relay entry parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _relayEntrySoftTimeout New relay entry submission soft timeout.
@@ -444,7 +451,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         uint256 _relayEntrySoftTimeout,
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
-    ) external onlyOwner {
+    ) external onlyGovernance {
         callbackGasLimit = _callbackGasLimit;
 
         relay.setRelayEntrySoftTimeout(_relayEntrySoftTimeout);
@@ -458,7 +465,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     }
 
     /// @notice Updates the values of group creation parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _groupCreationFrequency New group creation frequency
@@ -466,7 +473,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     function updateGroupCreationParameters(
         uint256 _groupCreationFrequency,
         uint256 _groupLifetime
-    ) external onlyOwner {
+    ) external onlyGovernance {
         groupCreationFrequency = _groupCreationFrequency;
 
         groups.setGroupLifetime(_groupLifetime);
@@ -478,7 +485,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     }
 
     /// @notice Updates the values of DKG parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _resultChallengePeriodLength New DKG result challenge period
@@ -490,7 +497,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         uint256 _resultChallengePeriodLength,
         uint256 _resultSubmissionTimeout,
         uint256 _submitterPrecedencePeriodLength
-    ) external onlyOwner {
+    ) external onlyGovernance {
         dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
         dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
         dkg.setSubmitterPrecedencePeriodLength(
@@ -505,7 +512,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     }
 
     /// @notice Updates the values of reward parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
@@ -521,7 +528,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         uint256 _relayEntryTimeoutNotificationRewardMultiplier,
         uint256 _unauthorizedSigningNotificationRewardMultiplier,
         uint256 _dkgMaliciousResultNotificationRewardMultiplier
-    ) external onlyOwner {
+    ) external onlyGovernance {
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
         unauthorizedSigningNotificationRewardMultiplier = _unauthorizedSigningNotificationRewardMultiplier;
@@ -535,7 +542,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     }
 
     /// @notice Updates the values of slashing parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _relayEntrySubmissionFailureSlashingAmount New relay entry
@@ -548,7 +555,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         uint96 _relayEntrySubmissionFailureSlashingAmount,
         uint96 _maliciousDkgResultSlashingAmount,
         uint96 _unauthorizedSigningSlashingAmount
-    ) external onlyOwner {
+    ) external onlyGovernance {
         relay.setRelayEntrySubmissionFailureSlashingAmount(
             _relayEntrySubmissionFailureSlashingAmount
         );
@@ -562,7 +569,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     }
 
     /// @notice Updates the values of gas parameters.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _dkgResultSubmissionGas New DKG result submission gas
@@ -576,7 +583,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
         uint256 _dkgResultApprovalGasOffset,
         uint256 _notifyOperatorInactivityGasOffset,
         uint256 _relayEntrySubmissionGasOffset
-    ) external onlyOwner {
+    ) external onlyGovernance {
         dkgResultSubmissionGas = _dkgResultSubmissionGas;
         dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
         notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
@@ -592,13 +599,13 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
 
     /// @notice Set authorization for requesters that can request a relay
     ///         entry.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract.
     /// @param requester Requester, can be a contract or EOA
     /// @param isAuthorized True or false
     function setRequesterAuthorization(address requester, bool isAuthorized)
         external
-        onlyOwner
+        onlyGovernance
     {
         authorizedRequesters[requester] = isAuthorized;
 
@@ -617,10 +624,13 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
     ///         for sortition pool rewards.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract.
     /// @param recipient Recipient of withdrawn rewards.
-    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+    function withdrawIneligibleRewards(address recipient)
+        external
+        onlyGovernance
+    {
         sortitionPool.withdrawIneligible(recipient);
     }
 

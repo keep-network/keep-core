@@ -29,7 +29,7 @@ describe("RandomBeacon - Parameters", () => {
     const relayEntryHardTimeout = 300
     const callbackGasLimit = 400
 
-    context("when the caller is not the owner", () => {
+    context("when the caller is not the governance", () => {
       it("should revert", async () => {
         await expect(
           randomBeacon
@@ -39,11 +39,11 @@ describe("RandomBeacon - Parameters", () => {
               relayEntryHardTimeout,
               callbackGasLimit
             )
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the governance", () => {
       let tx: ContractTransaction
 
       before(async () => {
@@ -96,7 +96,7 @@ describe("RandomBeacon - Parameters", () => {
     const minimumAuthorization = 4200000
     const authorizationDecreaseDelay = 86400
 
-    context("when the caller is not the owner", () => {
+    context("when the caller is not the governance", () => {
       it("should revert", async () => {
         await expect(
           randomBeacon
@@ -105,11 +105,11 @@ describe("RandomBeacon - Parameters", () => {
               minimumAuthorization,
               authorizationDecreaseDelay
             )
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the governance", () => {
       let tx: ContractTransaction
 
       before(async () => {
@@ -151,7 +151,7 @@ describe("RandomBeacon - Parameters", () => {
     const groupCreationFrequency = 100
     const groupLifetime = 200
 
-    context("when the caller is not the owner", () => {
+    context("when the caller is not the governance", () => {
       it("should revert", async () => {
         await expect(
           randomBeacon
@@ -160,11 +160,11 @@ describe("RandomBeacon - Parameters", () => {
               groupCreationFrequency,
               groupLifetime
             )
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the governance", () => {
       let tx: ContractTransaction
 
       before(async () => {
@@ -202,7 +202,7 @@ describe("RandomBeacon - Parameters", () => {
     const dkgResultSubmissionTimeout = 400
     const dkgSubmitterPrecedencePeriodLength = 200
 
-    context("when the caller is not the owner", () => {
+    context("when the caller is not the governance", () => {
       it("should revert", async () => {
         await expect(
           randomBeacon
@@ -212,11 +212,11 @@ describe("RandomBeacon - Parameters", () => {
               dkgResultSubmissionTimeout,
               dkgSubmitterPrecedencePeriodLength
             )
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the governance", () => {
       context("when values are valid", () => {
         let tx: ContractTransaction
 
@@ -319,7 +319,7 @@ describe("RandomBeacon - Parameters", () => {
     const unauthorizedSigningNotificationRewardMultiplier = 10
     const dkgMaliciousResultNotificationRewardMultiplier = 20
 
-    context("when the caller is not the owner", () => {
+    context("when the caller is not the governance", () => {
       it("should revert", async () => {
         await expect(
           randomBeacon
@@ -330,11 +330,11 @@ describe("RandomBeacon - Parameters", () => {
               unauthorizedSigningNotificationRewardMultiplier,
               dkgMaliciousResultNotificationRewardMultiplier
             )
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the governance", () => {
       let tx: ContractTransaction
 
       before(async () => {
@@ -390,7 +390,7 @@ describe("RandomBeacon - Parameters", () => {
     const maliciousDkgResultSlashingAmount = 200
     const unauthorizedSigningSlashingAmount = 150
 
-    context("when the caller is not the owner", () => {
+    context("when the caller is not the governance", () => {
       it("should revert", async () => {
         await expect(
           randomBeacon
@@ -400,11 +400,11 @@ describe("RandomBeacon - Parameters", () => {
               maliciousDkgResultSlashingAmount,
               unauthorizedSigningSlashingAmount
             )
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the governance", () => {
       let tx: ContractTransaction
 
       before(async () => {
@@ -463,17 +463,17 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("setRequesterAuthorization", () => {
-    context("when the caller is not the owner", () => {
+    context("when the caller is not the governance", () => {
       it("should revert", async () => {
         await expect(
           randomBeacon
             .connect(thirdParty)
             .setRequesterAuthorization(thirdPartyContract.address, true)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
-    context("when the caller is the owner", () => {
+    context("when the caller is the governance", () => {
       context("when authorizing a contract", () => {
         let tx: ContractTransaction
 
