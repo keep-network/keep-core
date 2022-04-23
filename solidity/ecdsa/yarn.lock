@@ -612,10 +612,8 @@
     "@openzeppelin/upgrades" "^2.7.2"
     openzeppelin-solidity "2.4.0"
 
-"@keep-network/random-beacon@development":
-  version "2.0.0-dev.19"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.19.tgz#c30329d323a14cad1a6575d19a4f40e35c4e8dd4"
-  integrity sha512-ewuoFLCvCfVvKo8ryplAyNsf4Mv0DDk2vw4W00z3nFhrRRm3t7Acwk2EHyLefLV5IMyG7Wlpha61z/dbDzuvAw==
+"@keep-network/random-beacon@../random-beacon":
+  version "2.0.0-dev"
   dependencies:
     "@keep-network/sortition-pools" "^2.0.0-pre.7"
     "@openzeppelin/contracts" "^4.4.2"

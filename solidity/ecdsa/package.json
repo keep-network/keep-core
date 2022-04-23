@@ -62,7 +62,7 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "@keep-network/random-beacon": "development",
+    "@keep-network/random-beacon": "../random-beacon",
     "@keep-network/sortition-pools": "^2.0.0-pre.7",
     "@openzeppelin/contracts": "^4.4.1",
     "@threshold-network/solidity-contracts": ">1.1.0-dev <1.1.0-ropsten"
