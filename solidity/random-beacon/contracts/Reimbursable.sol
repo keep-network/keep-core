@@ -14,10 +14,9 @@
 
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ReimbursementPool.sol";
 
-abstract contract Reimbursable is Ownable {
+abstract contract Reimbursable {
     ReimbursementPool public reimbursementPool;
 
     event ReimbursementPoolUpdated(address newReimbursementPool);
@@ -28,9 +27,13 @@ abstract contract Reimbursable is Ownable {
         reimbursementPool.refund(gasStart - gasleft(), receiver);
     }
 
+    modifier onlyReimbursableAdmin() virtual {
+        _;
+    }
+
     function updateReimbursementPool(ReimbursementPool _reimbursementPool)
         external
-        onlyOwner
+        onlyReimbursableAdmin
     {
         emit ReimbursementPoolUpdated(address(_reimbursementPool));
 
