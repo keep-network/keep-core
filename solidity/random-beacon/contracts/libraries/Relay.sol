@@ -35,8 +35,6 @@ library Relay {
         uint64 currentRequestStartBlock;
         // Previous entry value.
         AltBn128.G1Point previousEntry;
-        // Fee paid by the relay requester.
-        uint96 relayRequestFee;
         // Time in blocks during which a result is expected to be submitted.
         uint32 relayEntrySoftTimeout;
         // Hard timeout in blocks for a group to submit the relay entry.
@@ -195,16 +193,6 @@ library Relay {
         }
 
         return 0;
-    }
-
-    /// @notice Set relayRequestFee parameter.
-    /// @param newRelayRequestFee New value of the parameter.
-    function setRelayRequestFee(Data storage self, uint256 newRelayRequestFee)
-        internal
-    {
-        require(!isRequestInProgress(self), "Relay request in progress");
-
-        self.relayRequestFee = uint96(newRelayRequestFee);
     }
 
     /// @notice Set relayEntrySoftTimeout parameter.

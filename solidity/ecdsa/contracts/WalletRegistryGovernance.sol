@@ -68,8 +68,8 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newDkgResultApprovalGasOffset;
     uint256 public dkgResultApprovalGasOffsetChangeInitiated;
 
-    uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
     uint256 public newNotifyOperatorInactivityGasOffset;
+    uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
 
     address payable public newReimbursementPool;
     uint256 public reimbursementPoolChangeInitiated;
@@ -554,17 +554,18 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultApprovalGasOffset = 0;
     }
 
-    /// @notice Begins notification operator inactivity gas offset update process.
+    /// @notice Begins the notify operator inactivity gas offset update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _notifyOperatorInactivityGasOffset New operator inactivity gas offset.
+    /// @param _newNotifyOperatorInactivityGasOffset New operator inactivity
+    ///        notification gas offset
     function beginNotifyOperatorInactivityGasOffsetUpdate(
-        uint256 _notifyOperatorInactivityGasOffset
+        uint256 _newNotifyOperatorInactivityGasOffset
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
-        newNotifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        newNotifyOperatorInactivityGasOffset = _newNotifyOperatorInactivityGasOffset;
         notifyOperatorInactivityGasOffsetChangeInitiated = block.timestamp;
         emit NotifyOperatorInactivityGasOffsetUpdateStarted(
-            _notifyOperatorInactivityGasOffset,
+            _newNotifyOperatorInactivityGasOffset,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
@@ -746,18 +747,18 @@ contract WalletRegistryGovernance is Ownable {
         newDkgResultChallengePeriodLength = 0;
     }
 
-    /// @notice Begins the DKG result submission eligibility delay update
+    /// @notice Begins the DKG result submission timeout update
     ///         process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newDkgResultSubmissionTimeout New DKG result submission
-    ///        eligibility delay in blocks
+    /// @param _newDkgResultSubmissionTimeout New DKG result submission timeout
+    ///        in blocks
     function beginDkgResultSubmissionTimeoutUpdate(
         uint256 _newDkgResultSubmissionTimeout
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         require(
             _newDkgResultSubmissionTimeout > 0,
-            "DKG result submission eligibility delay must be > 0"
+            "DKG result submission timeout must be > 0"
         );
         newDkgResultSubmissionTimeout = _newDkgResultSubmissionTimeout;
         dkgResultSubmissionTimeoutChangeInitiated = block.timestamp;
@@ -768,7 +769,7 @@ contract WalletRegistryGovernance is Ownable {
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the DKG result submission eligibility delay update
+    /// @notice Finalizes the DKG result submission timeout update
     ///         process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
@@ -832,6 +833,14 @@ contract WalletRegistryGovernance is Ownable {
         );
         dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;
         newSubmitterPrecedencePeriodLength = 0;
+    }
+
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract owner.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient) external onlyOwner {
+        walletRegistry.withdrawIneligibleRewards(recipient);
     }
 
     /// @notice Get the time remaining until the governance delay can be updated.
@@ -946,7 +955,7 @@ contract WalletRegistryGovernance is Ownable {
     }
 
     /// @notice Get the time remaining until the DKG result submission
-    ///         eligibility delay can be updated.
+    ///         can be updated.
     /// @return Remaining time in seconds.
     function getRemainingDkgResultSubmissionTimeoutUpdateTime()
         external

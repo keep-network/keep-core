@@ -290,7 +290,7 @@ library EcdsaDkg {
 
         emit DkgSeedTimedOut();
 
-        self.sortitionPool.unlock();
+        complete(self);
     }
 
     /// @notice Notifies about DKG timeout.
@@ -298,6 +298,8 @@ library EcdsaDkg {
         require(hasDkgTimedOut(self), "DKG has not timed out");
 
         emit DkgTimedOut();
+
+        complete(self);
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for

@@ -28,9 +28,6 @@ contract RandomBeaconGovernance is Ownable {
     address public newRandomBeaconOwner;
     uint256 public randomBeaconOwnershipTransferInitiated;
 
-    uint256 public newRelayRequestFee;
-    uint256 public relayRequestFeeChangeInitiated;
-
     uint256 public newRelayEntrySoftTimeout;
     uint256 public relayEntrySoftTimeoutChangeInitiated;
 
@@ -54,15 +51,6 @@ contract RandomBeaconGovernance is Ownable {
 
     uint256 public newSubmitterPrecedencePeriodLength;
     uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
-
-    uint256 public newDkgResultSubmissionReward;
-    uint256 public dkgResultSubmissionRewardChangeInitiated;
-
-    uint256 public newSortitionPoolUnlockingReward;
-    uint256 public sortitionPoolUnlockingRewardChangeInitiated;
-
-    uint256 public newIneligibleOperatorNotifierReward;
-    uint256 public ineligibleOperatorNotifierRewardChangeInitiated;
 
     uint96 public newRelayEntrySubmissionFailureSlashingAmount;
     uint256 public relayEntrySubmissionFailureSlashingAmountChangeInitiated;
@@ -93,6 +81,18 @@ contract RandomBeaconGovernance is Ownable {
     uint256
         public dkgMaliciousResultNotificationRewardMultiplierChangeInitiated;
 
+    uint256 public newDkgResultSubmissionGas;
+    uint256 public dkgResultSubmissionGasChangeInitiated;
+
+    uint256 public newDkgResultApprovalGasOffset;
+    uint256 public dkgResultApprovalGasOffsetChangeInitiated;
+
+    uint256 public newNotifyOperatorInactivityGasOffset;
+    uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
+
+    uint256 public newRelayEntrySubmissionGasOffset;
+    uint256 public relayEntrySubmissionGasOffsetChangeInitiated;
+
     RandomBeacon public randomBeacon;
 
     uint256 public governanceDelay;
@@ -108,12 +108,6 @@ contract RandomBeaconGovernance is Ownable {
         uint256 timestamp
     );
     event RandomBeaconOwnershipTransferred(address newRandomBeaconOwner);
-
-    event RelayRequestFeeUpdateStarted(
-        uint256 relayRequestFee,
-        uint256 timestamp
-    );
-    event RelayRequestFeeUpdated(uint256 relayRequestFee);
 
     event RelayEntrySoftTimeoutUpdateStarted(
         uint256 relayEntrySoftTimeout,
@@ -162,28 +156,6 @@ contract RandomBeaconGovernance is Ownable {
     );
     event DkgSubmitterPrecedencePeriodLengthUpdated(
         uint256 submitterPrecedencePeriodLength
-    );
-
-    event DkgResultSubmissionRewardUpdateStarted(
-        uint256 dkgResultSubmissionReward,
-        uint256 timestamp
-    );
-    event DkgResultSubmissionRewardUpdated(uint256 dkgResultSubmissionReward);
-
-    event SortitionPoolUnlockingRewardUpdateStarted(
-        uint256 sortitionPoolUnlockingReward,
-        uint256 timestamp
-    );
-    event SortitionPoolUnlockingRewardUpdated(
-        uint256 sortitionPoolUnlockingReward
-    );
-
-    event IneligibleOperatorNotifierRewardUpdateStarted(
-        uint256 ineligibleOperatorNotifierReward,
-        uint256 timestamp
-    );
-    event IneligibleOperatorNotifierRewardUpdated(
-        uint256 ineligibleOperatorNotifierReward
     );
 
     event RelayEntrySubmissionFailureSlashingAmountUpdateStarted(
@@ -254,6 +226,34 @@ contract RandomBeaconGovernance is Ownable {
         uint256 dkgMaliciousResultNotificationRewardMultiplier
     );
 
+    event DkgResultSubmissionGasUpdateStarted(
+        uint256 dkgResultSubmissionGas,
+        uint256 timestamp
+    );
+    event DkgResultSubmissionGasUpdated(uint256 dkgResultSubmissionGas);
+
+    event DkgResultApprovalGasOffsetUpdateStarted(
+        uint256 dkgResultApprovalGasOffset,
+        uint256 timestamp
+    );
+    event DkgResultApprovalGasOffsetUpdated(uint256 dkgResultApprovalGasOffset);
+
+    event NotifyOperatorInactivityGasOffsetUpdateStarted(
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 timestamp
+    );
+    event NotifyOperatorInactivityGasOffsetUpdated(
+        uint256 notifyOperatorInactivityGasOffset
+    );
+
+    event RelayEntrySubmissionGasOffsetUpdateStarted(
+        uint256 relayEntrySubmissionGasOffset,
+        uint256 timestamp
+    );
+    event RelayEntrySubmissionGasOffsetUpdated(
+        uint256 relayEntrySubmissionGasOffset
+    );
+
     /// @notice Reverts if called before the governance delay elapses.
     /// @param changeInitiatedTimestamp Timestamp indicating the beginning
     ///        of the change.
@@ -269,6 +269,9 @@ contract RandomBeaconGovernance is Ownable {
     }
 
     constructor(RandomBeacon _randomBeacon, uint256 _governanceDelay) {
+        require(address(_randomBeacon) != address(0), "Zero-address reference");
+        require(_governanceDelay != 0, "No governance delay");
+
         randomBeacon = _randomBeacon;
         governanceDelay = _governanceDelay;
     }
@@ -336,40 +339,6 @@ contract RandomBeaconGovernance is Ownable {
         newRandomBeaconOwner = address(0);
     }
 
-    /// @notice Begins the relay request fee update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newRelayRequestFee New relay request fee
-    function beginRelayRequestFeeUpdate(uint256 _newRelayRequestFee)
-        external
-        onlyOwner
-    {
-        /* solhint-disable not-rely-on-time */
-        newRelayRequestFee = _newRelayRequestFee;
-        relayRequestFeeChangeInitiated = block.timestamp;
-        emit RelayRequestFeeUpdateStarted(_newRelayRequestFee, block.timestamp);
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the relay request fee update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeRelayRequestFeeUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(relayRequestFeeChangeInitiated)
-    {
-        emit RelayRequestFeeUpdated(newRelayRequestFee);
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRelayEntryParameters(
-            newRelayRequestFee,
-            randomBeacon.relayEntrySoftTimeout(),
-            randomBeacon.relayEntryHardTimeout(),
-            randomBeacon.callbackGasLimit()
-        );
-        relayRequestFeeChangeInitiated = 0;
-        newRelayRequestFee = 0;
-    }
-
     /// @notice Begins the relay entry soft timeout update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newRelayEntrySoftTimeout New relay entry submission timeout in blocks
@@ -402,7 +371,6 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntrySoftTimeoutUpdated(newRelayEntrySoftTimeout);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
             newRelayEntrySoftTimeout,
             randomBeacon.relayEntryHardTimeout(),
             randomBeacon.callbackGasLimit()
@@ -439,7 +407,6 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySoftTimeout(),
             newRelayEntryHardTimeout,
             randomBeacon.callbackGasLimit()
@@ -481,7 +448,6 @@ contract RandomBeaconGovernance is Ownable {
         emit CallbackGasLimitUpdated(newCallbackGasLimit);
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayRequestFee(),
             randomBeacon.relayEntrySoftTimeout(),
             randomBeacon.relayEntryHardTimeout(),
             newCallbackGasLimit
@@ -692,130 +658,6 @@ contract RandomBeaconGovernance is Ownable {
         newSubmitterPrecedencePeriodLength = 0;
     }
 
-    /// @notice Begins the DKG result submission reward update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newDkgResultSubmissionReward New DKG result submission reward
-    function beginDkgResultSubmissionRewardUpdate(
-        uint256 _newDkgResultSubmissionReward
-    ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        newDkgResultSubmissionReward = _newDkgResultSubmissionReward;
-        dkgResultSubmissionRewardChangeInitiated = block.timestamp;
-        emit DkgResultSubmissionRewardUpdateStarted(
-            _newDkgResultSubmissionReward,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the DKG result submission reward update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeDkgResultSubmissionRewardUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(dkgResultSubmissionRewardChangeInitiated)
-    {
-        emit DkgResultSubmissionRewardUpdated(newDkgResultSubmissionReward);
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRewardParameters(
-            newDkgResultSubmissionReward,
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        );
-        dkgResultSubmissionRewardChangeInitiated = 0;
-        newDkgResultSubmissionReward = 0;
-    }
-
-    /// @notice Begins the sortition pool unlocking reward update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newSortitionPoolUnlockingReward New sortition pool unlocking reward
-    function beginSortitionPoolUnlockingRewardUpdate(
-        uint256 _newSortitionPoolUnlockingReward
-    ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        newSortitionPoolUnlockingReward = _newSortitionPoolUnlockingReward;
-        sortitionPoolUnlockingRewardChangeInitiated = block.timestamp;
-        emit SortitionPoolUnlockingRewardUpdateStarted(
-            _newSortitionPoolUnlockingReward,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the sortition pool unlocking reward update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeSortitionPoolUnlockingRewardUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(sortitionPoolUnlockingRewardChangeInitiated)
-    {
-        emit SortitionPoolUnlockingRewardUpdated(
-            newSortitionPoolUnlockingReward
-        );
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            newSortitionPoolUnlockingReward,
-            randomBeacon.ineligibleOperatorNotifierReward(),
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        );
-        sortitionPoolUnlockingRewardChangeInitiated = 0;
-        newSortitionPoolUnlockingReward = 0;
-    }
-
-    /// @notice Begins the ineligible operator notifier reward update process.
-    /// @dev Can be called only by the contract owner.
-    /// @param _newIneligibleOperatorNotifierReward New ineligible operator
-    ///        notifier reward.
-    function beginIneligibleOperatorNotifierRewardUpdate(
-        uint256 _newIneligibleOperatorNotifierReward
-    ) external onlyOwner {
-        /* solhint-disable not-rely-on-time */
-        newIneligibleOperatorNotifierReward = _newIneligibleOperatorNotifierReward;
-        ineligibleOperatorNotifierRewardChangeInitiated = block.timestamp;
-        emit IneligibleOperatorNotifierRewardUpdateStarted(
-            _newIneligibleOperatorNotifierReward,
-            block.timestamp
-        );
-        /* solhint-enable not-rely-on-time */
-    }
-
-    /// @notice Finalizes the ineligible operator notifier reward update process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeIneligibleOperatorNotifierRewardUpdate()
-        external
-        onlyOwner
-        onlyAfterGovernanceDelay(
-            ineligibleOperatorNotifierRewardChangeInitiated
-        )
-    {
-        emit IneligibleOperatorNotifierRewardUpdated(
-            newIneligibleOperatorNotifierReward
-        );
-        // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            newIneligibleOperatorNotifierReward,
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        );
-        ineligibleOperatorNotifierRewardChangeInitiated = 0;
-        newIneligibleOperatorNotifierReward = 0;
-    }
-
     /// @notice Begins the sortition pool rewards ban duration update process.
     /// @dev Can be called only by the contract owner.
     /// @param _newSortitionPoolRewardsBanDuration New sortition pool rewards
@@ -846,9 +688,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             newSortitionPoolRewardsBanDuration,
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
@@ -922,9 +761,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             newUnauthorizedSigningNotificationRewardMultiplier,
@@ -950,9 +786,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             newRelayEntryTimeoutNotificationRewardMultiplier,
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
@@ -1002,9 +835,6 @@ contract RandomBeaconGovernance is Ownable {
         );
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.dkgResultSubmissionReward(),
-            randomBeacon.sortitionPoolUnlockingReward(),
-            randomBeacon.ineligibleOperatorNotifierReward(),
             randomBeacon.sortitionPoolRewardsBanDuration(),
             randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
             randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
@@ -1055,6 +885,157 @@ contract RandomBeaconGovernance is Ownable {
         );
         relayEntrySubmissionFailureSlashingAmountChangeInitiated = 0;
         newRelayEntrySubmissionFailureSlashingAmount = 0;
+    }
+
+    /// @notice Begins the DKG result submission gas update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultSubmissionGas New relay entry submission gas offset
+    function beginDkgResultSubmissionGasUpdate(
+        uint256 _newDkgResultSubmissionGas
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newDkgResultSubmissionGas = _newDkgResultSubmissionGas;
+        dkgResultSubmissionGasChangeInitiated = block.timestamp;
+        emit DkgResultSubmissionGasUpdateStarted(
+            _newDkgResultSubmissionGas,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes DKG result submission gas update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultSubmissionGasUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgResultSubmissionGasChangeInitiated)
+    {
+        emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGasParameters(
+            newDkgResultSubmissionGas,
+            randomBeacon.dkgResultApprovalGasOffset(),
+            randomBeacon.notifyOperatorInactivityGasOffset(),
+            randomBeacon.relayEntrySubmissionGasOffset()
+        );
+        dkgResultSubmissionGasChangeInitiated = 0;
+        newDkgResultSubmissionGas = 0;
+    }
+
+    /// @notice Begins the DKG result approval gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newDkgResultApprovalGasOffset New DKG approval gas offset
+    function beginDkgResultApprovalGasOffsetUpdate(
+        uint256 _newDkgResultApprovalGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newDkgResultApprovalGasOffset = _newDkgResultApprovalGasOffset;
+        dkgResultApprovalGasOffsetChangeInitiated = block.timestamp;
+        emit DkgResultApprovalGasOffsetUpdateStarted(
+            _newDkgResultApprovalGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the DKG result approval gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeDkgResultApprovalGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(dkgResultApprovalGasOffsetChangeInitiated)
+    {
+        emit DkgResultApprovalGasOffsetUpdated(newDkgResultApprovalGasOffset);
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGasParameters(
+            randomBeacon.dkgResultSubmissionGas(),
+            newDkgResultApprovalGasOffset,
+            randomBeacon.notifyOperatorInactivityGasOffset(),
+            randomBeacon.relayEntrySubmissionGasOffset()
+        );
+        dkgResultApprovalGasOffsetChangeInitiated = 0;
+        newDkgResultApprovalGasOffset = 0;
+    }
+
+    /// @notice Begins the notify operator inactivity gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newNotifyOperatorInactivityGasOffset New operator inactivity
+    ///        notification gas offset
+    function beginNotifyOperatorInactivityGasOffsetUpdate(
+        uint256 _newNotifyOperatorInactivityGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newNotifyOperatorInactivityGasOffset = _newNotifyOperatorInactivityGasOffset;
+        notifyOperatorInactivityGasOffsetChangeInitiated = block.timestamp;
+        emit NotifyOperatorInactivityGasOffsetUpdateStarted(
+            _newNotifyOperatorInactivityGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the notify operator inactivity gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeNotifyOperatorInactivityGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            notifyOperatorInactivityGasOffsetChangeInitiated
+        )
+    {
+        emit NotifyOperatorInactivityGasOffsetUpdated(
+            newNotifyOperatorInactivityGasOffset
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGasParameters(
+            randomBeacon.dkgResultSubmissionGas(),
+            randomBeacon.dkgResultApprovalGasOffset(),
+            newNotifyOperatorInactivityGasOffset,
+            randomBeacon.relayEntrySubmissionGasOffset()
+        );
+        notifyOperatorInactivityGasOffsetChangeInitiated = 0;
+        newNotifyOperatorInactivityGasOffset = 0;
+    }
+
+    /// @notice Begins the relay entry submission gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newRelayEntrySubmissionGasOffset New relay entry submission gas offset
+    function beginRelayEntrySubmissionGasOffsetUpdate(
+        uint256 _newRelayEntrySubmissionGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newRelayEntrySubmissionGasOffset = _newRelayEntrySubmissionGasOffset;
+        relayEntrySubmissionGasOffsetChangeInitiated = block.timestamp;
+        emit RelayEntrySubmissionGasOffsetUpdateStarted(
+            _newRelayEntrySubmissionGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes relay entry submission gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeRelayEntrySubmissionGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(relayEntrySubmissionGasOffsetChangeInitiated)
+    {
+        emit RelayEntrySubmissionGasOffsetUpdated(
+            newRelayEntrySubmissionGasOffset
+        );
+        // slither-disable-next-line reentrancy-no-eth
+        randomBeacon.updateGasParameters(
+            randomBeacon.dkgResultSubmissionGas(),
+            randomBeacon.dkgResultApprovalGasOffset(),
+            randomBeacon.notifyOperatorInactivityGasOffset(),
+            newRelayEntrySubmissionGasOffset
+        );
+        relayEntrySubmissionGasOffsetChangeInitiated = 0;
+        newRelayEntrySubmissionGasOffset = 0;
     }
 
     /// @notice Begins the malicious DKG result slashing amount update process.
@@ -1208,6 +1189,17 @@ contract RandomBeaconGovernance is Ownable {
         newAuthorizationDecreaseDelay = 0;
     }
 
+    /// @notice Set authorization for requesters that can request a relay
+    ///         entry. It can be done by the governance only.
+    /// @param requester Requester, can be a contract or EOA
+    /// @param isAuthorized True or false
+    function setRequesterAuthorization(address requester, bool isAuthorized)
+        external
+        onlyOwner
+    {
+        randomBeacon.setRequesterAuthorization(requester, isAuthorized);
+    }
+
     /// @notice Withdraws rewards belonging to operators marked as ineligible
     ///         for sortition pool rewards.
     /// @dev Can be called only by the contract owner.
@@ -1235,17 +1227,6 @@ contract RandomBeaconGovernance is Ownable {
         returns (uint256)
     {
         return getRemainingChangeTime(randomBeaconOwnershipTransferInitiated);
-    }
-
-    /// @notice Get the time remaining until the relay request fee can be
-    ///         updated.
-    /// @return Remaining time in seconds.
-    function getRemainingRelayRequestFeeUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return getRemainingChangeTime(relayRequestFeeChangeInitiated);
     }
 
     /// @notice Get the time remaining until the relay entry submission soft
@@ -1338,43 +1319,6 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgSubmitterPrecedencePeriodLengthChangeInitiated
-            );
-    }
-
-    /// @notice Get the time remaining until the DKG result submission reward
-    ///         can be updated.
-    /// @return Remaining time in seconds.
-    function getRemainingDkgResultSubmissionRewardUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return getRemainingChangeTime(dkgResultSubmissionRewardChangeInitiated);
-    }
-
-    /// @notice Get the time remaining until the sortition pool unlocking reward
-    ///         can be updated.
-    /// @return Remaining time in seconds.
-    function getRemainingSortitionPoolUnlockingRewardUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return
-            getRemainingChangeTime(sortitionPoolUnlockingRewardChangeInitiated);
-    }
-
-    /// @notice Get the time remaining until the ineligible operator notifier
-    ///         reward can be updated.
-    /// @return Remaining time in seconds.
-    function getRemainingIneligibleOperatorNotifierRewardUpdateTime()
-        external
-        view
-        returns (uint256)
-    {
-        return
-            getRemainingChangeTime(
-                ineligibleOperatorNotifierRewardChangeInitiated
             );
     }
 
@@ -1493,6 +1437,57 @@ contract RandomBeaconGovernance is Ownable {
         return
             getRemainingChangeTime(
                 dkgMaliciousResultNotificationRewardMultiplierChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the DKG result submission gas
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultSubmissionGasUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return getRemainingChangeTime(dkgResultSubmissionGasChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the DKG approval gas offset duration
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingDkgResultApprovalGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(dkgResultApprovalGasOffsetChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the operator inactivity notification
+    ///         gas offset duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                notifyOperatorInactivityGasOffsetChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the relay entry submission gas offset
+    ///         duration can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingRelayEntrySubmissionGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                relayEntrySubmissionGasOffsetChangeInitiated
             );
     }
 

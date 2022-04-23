@@ -7,11 +7,15 @@ import { createNewWallet } from "./utils/wallets"
 import ecdsaData from "./data/ecdsa"
 import { hashUint32Array } from "./utils/groups"
 
+import type { Operator } from "./utils/operators"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction } from "ethers"
 import type { DkgResult } from "./utils/dkg"
-import type { IWalletOwner } from "../typechain/IWalletOwner"
-import type { WalletRegistry, WalletRegistryStub } from "../typechain"
+import type {
+  IWalletOwner,
+  WalletRegistry,
+  WalletRegistryStub,
+} from "../typechain"
 import type { FakeContract } from "@defi-wonderland/smock"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -362,5 +366,146 @@ describe("WalletRegistry - Wallets", async () => {
         }
       )
     })
+  })
+
+  describe("isWalletMember", () => {
+    let walletID: string
+    let walletMembersIDs: number[]
+    let walletMembersAddresses: string[]
+
+    before("create a wallet", async () => {
+      await createSnapshot()
+
+      let members: Operator[]
+      ;({ walletID, members } = await createNewWallet(
+        walletRegistry,
+        walletOwner.wallet
+      ))
+
+      walletMembersIDs = members.map((member) => member.id)
+      walletMembersAddresses = members.map((member) => member.signer.address)
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    context(
+      "when the given operator address is an actual sortition pool operator",
+      () => {
+        context("when the passed wallet members identifiers are valid", () => {
+          context("when the wallet member index is in correct range", () => {
+            context(
+              "when the given operator is the member of the wallet signing group at the given position",
+              () => {
+                it("should return true", async () => {
+                  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                  expect(
+                    await walletRegistry.isWalletMember(
+                      walletID,
+                      walletMembersIDs,
+                      walletMembersAddresses[5],
+                      6
+                    )
+                  ).to.be.true
+                })
+              }
+            )
+
+            context(
+              "when the given operator is not the member of the wallet signing group at the given position",
+              () => {
+                it("should return false", async () => {
+                  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                  expect(
+                    await walletRegistry.isWalletMember(
+                      walletID,
+                      walletMembersIDs,
+                      walletMembersAddresses[5],
+                      7
+                    )
+                  ).to.be.false
+                })
+              }
+            )
+          })
+
+          context("when the wallet member index is out of range", () => {
+            context(
+              "when the wallet member index is lesser than the minimum proper value",
+              () => {
+                it("should revert", async () => {
+                  // Min proper value is `1`.
+                  await expect(
+                    walletRegistry.isWalletMember(
+                      walletID,
+                      walletMembersIDs,
+                      walletMembersAddresses[0],
+                      0
+                    )
+                  ).to.be.revertedWith("Wallet member index is out of range")
+                })
+              }
+            )
+
+            context(
+              "when the wallet member index is greater than the maximum proper value",
+              () => {
+                it("should revert", async () => {
+                  // Max proper value is `walletMembersIDs.length`.
+                  await expect(
+                    walletRegistry.isWalletMember(
+                      walletID,
+                      walletMembersIDs,
+                      walletMembersAddresses[0],
+                      walletMembersIDs.length + 1
+                    )
+                  ).to.be.revertedWith("Wallet member index is out of range")
+                })
+              }
+            )
+          })
+        })
+
+        context(
+          "when the passed wallet members identifiers are invalid",
+          () => {
+            it("should revert", async () => {
+              const corruptedWalletMembersIDs = walletMembersIDs.reverse()
+
+              await expect(
+                walletRegistry.isWalletMember(
+                  walletID,
+                  corruptedWalletMembersIDs,
+                  walletMembersAddresses[0],
+                  0
+                )
+              ).to.be.revertedWith("Invalid wallet members identifiers")
+            })
+          }
+        )
+      }
+    )
+
+    context(
+      "when the given operator address is not an actual sortition pool operator",
+      () => {
+        it("should revert", async () => {
+          // To test this scenario, we need an address that is not a
+          // sortition pool operator for sure. The address of the wallet
+          // registry itself seems to be a good candidate.
+          const operator = walletRegistry.address
+
+          await expect(
+            walletRegistry.isWalletMember(
+              walletID,
+              walletMembersIDs,
+              operator,
+              0
+            )
+          ).to.be.revertedWith("Not a sortition pool operator")
+        })
+      }
+    )
   })
 })

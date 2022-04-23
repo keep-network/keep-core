@@ -38,6 +38,7 @@ const { mineBlocks, mineBlocksTo } = helpers.time
 const { to1e18 } = helpers.number
 const ZERO_ADDRESS = ethers.constants.AddressZero
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+const { provider } = waffle
 
 // FIXME: As a workaround for a bug https://github.com/dethcrypto/TypeChain/issues/601
 // we declare a new type instead of using `RandomBeaconStub & RandomBeacon` intersection.
@@ -70,7 +71,6 @@ async function fixture() {
     randomBeaconGovernance:
       deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
-    t: deployment.t as T,
     staking: deployment.staking as TokenStaking,
     relayStub,
     bls,
@@ -90,7 +90,6 @@ describe("RandomBeacon - Relay", () => {
 
   let randomBeacon: RandomBeaconTest
   let sortitionPool: SortitionPool
-  let t: T
   let staking: TokenStaking
   let relayStub: RelayStub
   let bls: BLS
@@ -102,7 +101,6 @@ describe("RandomBeacon - Relay", () => {
     ;({
       randomBeacon,
       sortitionPool,
-      t,
       staking,
       relayStub,
       bls,
@@ -111,34 +109,38 @@ describe("RandomBeacon - Relay", () => {
 
     membersIDs = members.map((member) => member.id)
     membersAddresses = members.map((member) => member.signer.address)
+
+    await randomBeacon
+      .connect(deployer)
+      .setRequesterAuthorization(requester.address, true)
   })
 
   describe("requestRelayEntry", () => {
-    context("when groups exist", () => {
-      before(async () => {
-        await createSnapshot()
-
-        await createGroup(randomBeacon, members)
+    context("when requester is not authorized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon.connect(thirdParty).requestRelayEntry(ZERO_ADDRESS)
+        ).to.be.revertedWith("Requester must be authorized")
       })
+    })
 
-      after(async () => {
-        await restoreSnapshot()
-      })
+    context("when requester is authorized", () => {
+      context("when groups exist", () => {
+        before(async () => {
+          await createSnapshot()
 
-      context("when there is no other relay entry in progress", () => {
-        context("when the requester pays the relay request fee", () => {
+          await createGroup(randomBeacon, members)
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        context("when there is no other relay entry in progress", () => {
           let tx: ContractTransaction
-          let previousDkgRewardsPoolBalance: BigNumber
-          let previousRandomBeaconBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
-
-            previousDkgRewardsPoolBalance = await randomBeacon.dkgRewardsPool()
-            previousRandomBeaconBalance = await t.balanceOf(
-              randomBeacon.address
-            )
-            await approveTokenForFee()
           })
 
           after(async () => {
@@ -158,25 +160,6 @@ describe("RandomBeacon - Relay", () => {
 
               after(async () => {
                 await restoreSnapshot()
-              })
-
-              it("should deposit relay request fee to the DKG rewards pool", async () => {
-                // Assert correct pool bookkeeping.
-                const currentDkgRewardsPoolBalance =
-                  await randomBeacon.dkgRewardsPool()
-                expect(
-                  currentDkgRewardsPoolBalance.sub(
-                    previousDkgRewardsPoolBalance
-                  )
-                ).to.be.equal(params.relayRequestFee)
-
-                // Assert actual transfer took place.
-                const currentRandomBeaconBalance = await t.balanceOf(
-                  randomBeacon.address
-                )
-                expect(
-                  currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
-                ).to.be.equal(params.relayRequestFee)
               })
 
               it("should emit RelayEntryRequested event", async () => {
@@ -214,25 +197,6 @@ describe("RandomBeacon - Relay", () => {
                 await restoreSnapshot()
               })
 
-              it("should deposit relay request fee to the DKG rewards pool", async () => {
-                // Assert correct pool bookkeeping.
-                const currentDkgRewardsPoolBalance =
-                  await randomBeacon.dkgRewardsPool()
-                expect(
-                  currentDkgRewardsPoolBalance.sub(
-                    previousDkgRewardsPoolBalance
-                  )
-                ).to.be.equal(params.relayRequestFee)
-
-                // Assert actual transfer took place.
-                const currentRandomBeaconBalance = await t.balanceOf(
-                  randomBeacon.address
-                )
-                expect(
-                  currentRandomBeaconBalance.sub(previousRandomBeaconBalance)
-                ).to.be.equal(params.relayRequestFee)
-              })
-
               it("should emit RelayEntryRequested event", async () => {
                 await expect(tx)
                   .to.emit(randomBeacon, "RelayEntryRequested")
@@ -253,40 +217,33 @@ describe("RandomBeacon - Relay", () => {
           )
         })
 
-        context("when the requester doesn't pay the relay request fee", () => {
+        context("when there is another relay entry in progress", () => {
+          before(async () => {
+            await createSnapshot()
+
+            await randomBeacon
+              .connect(requester)
+              .requestRelayEntry(ZERO_ADDRESS)
+          })
+
+          after(async () => {
+            await restoreSnapshot()
+          })
+
           it("should revert", async () => {
             await expect(
               randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-            ).to.be.revertedWith("Transfer amount exceeds allowance")
+            ).to.be.revertedWith("Another relay request in progress")
           })
         })
       })
 
-      context("when there is an other relay entry in progress", () => {
-        before(async () => {
-          await createSnapshot()
-
-          await approveTokenForFee()
-          await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        })
-
-        after(async () => {
-          await restoreSnapshot()
-        })
-
+      context("when no groups exist", () => {
         it("should revert", async () => {
           await expect(
             randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-          ).to.be.revertedWith("Another relay request in progress")
+          ).to.be.revertedWith("No active groups")
         })
-      })
-    })
-
-    context("when no groups exist", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
-        ).to.be.revertedWith("No active groups")
       })
     })
   })
@@ -306,7 +263,6 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTokenForFee()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -318,8 +274,14 @@ describe("RandomBeacon - Relay", () => {
         context("when entry is valid", () => {
           context("when result is submitted before the soft timeout", () => {
             let tx: ContractTransaction
+            let initialSubmitterBalance: BigNumber
+
             before(async () => {
               await createSnapshot()
+
+              initialSubmitterBalance = await provider.getBalance(
+                submitter.address
+              )
 
               tx = await randomBeacon
                 .connect(submitter)
@@ -347,6 +309,17 @@ describe("RandomBeacon - Relay", () => {
 
             it("should terminate the relay request", async () => {
               expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+            })
+
+            it("should refund ETH", async () => {
+              const postNotifierBalance = await provider.getBalance(
+                submitter.address
+              )
+              const diff = postNotifierBalance.sub(initialSubmitterBalance)
+              expect(diff).to.be.gt(0)
+              expect(diff).to.be.lt(
+                ethers.utils.parseUnits("2000000", "gwei") // 0,002 ETH
+              )
             })
           })
 
@@ -423,7 +396,6 @@ describe("RandomBeacon - Relay", () => {
       before(async () => {
         await createSnapshot()
 
-        await approveTokenForFee()
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
       })
 
@@ -434,9 +406,15 @@ describe("RandomBeacon - Relay", () => {
       context("when the input params are valid", () => {
         context("when result is submitted before the soft timeout", () => {
           let tx: ContractTransaction
+          let initialSubmitterBalance: BigNumber
 
           before(async () => {
             await createSnapshot()
+
+            initialSubmitterBalance = await provider.getBalance(
+              submitter.address
+            )
+
             tx = await randomBeacon
               .connect(submitter)
               ["submitRelayEntry(bytes,uint32[])"](
@@ -469,9 +447,22 @@ describe("RandomBeacon - Relay", () => {
           it("should terminate the relay request", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
           })
+
+          it("should refund ETH", async () => {
+            const postNotifierBalance = await provider.getBalance(
+              submitter.address
+            )
+            const diff = postNotifierBalance.sub(initialSubmitterBalance)
+
+            expect(diff).to.be.gt(0)
+            expect(diff).to.be.lt(
+              ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+            )
+          })
         })
 
         context("when result is submitted after the soft timeout", () => {
+          let initialSubmitterBalance: BigNumber
           // `relayEntrySubmissionFailureSlashingAmount = 1000e18`.
           // 75% of the soft timeout period elapsed so we expect
           // `750e18` to be slashed.
@@ -495,6 +486,10 @@ describe("RandomBeacon - Relay", () => {
               params.relayEntrySoftTimeout +
                 0.75 * params.relayEntryHardTimeout -
                 1
+            )
+
+            initialSubmitterBalance = await provider.getBalance(
+              submitter.address
             )
             submissionTx = await randomBeacon
               .connect(submitter)
@@ -542,6 +537,17 @@ describe("RandomBeacon - Relay", () => {
 
           it("should terminate the relay request", async () => {
             expect(await randomBeacon.isRelayRequestInProgress()).to.be.false
+          })
+
+          it("should refund ETH", async () => {
+            const postNotifierBalance = await provider.getBalance(
+              submitter.address
+            )
+            const diff = postNotifierBalance.sub(initialSubmitterBalance)
+            expect(diff).to.be.gt(0)
+            expect(diff).to.be.lt(
+              ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+            )
           })
         })
       })
@@ -608,7 +614,6 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTokenForFee()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -941,7 +946,6 @@ describe("RandomBeacon - Relay", () => {
       await createSnapshot()
 
       await createGroup(randomBeacon, members)
-      await approveTokenForFee()
       await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
     })
 
@@ -1228,6 +1232,7 @@ describe("RandomBeacon - Relay", () => {
                   ) => {
                     let tx: ContractTransaction
                     let initialNonce: BigNumber
+                    let initialNotifierBalance: BigNumber
                     let claimSender: SignerWithAddress
 
                     before(async () => {
@@ -1238,6 +1243,10 @@ describe("RandomBeacon - Relay", () => {
 
                       initialNonce = await randomBeacon.inactivityClaimNonce(
                         groupId
+                      )
+
+                      initialNotifierBalance = await provider.getBalance(
+                        claimSender.address
                       )
 
                       const { signatures, signingMembersIndices } =
@@ -1296,6 +1305,19 @@ describe("RandomBeacon - Relay", () => {
                       await expect(tx)
                         .to.emit(sortitionPool, "IneligibleForRewards")
                         .withArgs(expectedIneligibleMembersIDs, expectedUntil)
+                    })
+
+                    it("should refund ETH", async () => {
+                      const postNotifierBalance = await provider.getBalance(
+                        await claimSender.getAddress()
+                      )
+                      const diff = postNotifierBalance.sub(
+                        initialNotifierBalance
+                      )
+                      expect(diff).to.be.gt(0)
+                      expect(diff).to.be.lt(
+                        ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+                      )
                     })
                   }
 
@@ -1999,12 +2021,5 @@ describe("RandomBeacon - Relay", () => {
     const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
 
     return groupData.terminated === true
-  }
-
-  async function approveTokenForFee() {
-    await t.mint(requester.address, params.relayRequestFee)
-    await t
-      .connect(requester)
-      .approve(randomBeacon.address, params.relayRequestFee)
   }
 })

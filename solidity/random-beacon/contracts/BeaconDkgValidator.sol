@@ -56,6 +56,11 @@ contract BeaconDkgValidator {
     SortitionPool public sortitionPool;
 
     constructor(SortitionPool _sortitionPool) {
+        require(
+            address(_sortitionPool) != address(0),
+            "Zero-address reference"
+        );
+
         sortitionPool = _sortitionPool;
     }
 
@@ -98,7 +103,7 @@ contract BeaconDkgValidator {
     /// @return errorMsg validation error message; empty for a valid result
     function validateFields(DKG.Result calldata result)
         public
-        view
+        pure
         returns (bool isValid, string memory errorMsg)
     {
         // Group public key needs to be 128 bytes long.
@@ -254,7 +259,7 @@ contract BeaconDkgValidator {
     ///         challenged.
     function validateMembersHash(DKG.Result calldata result)
         public
-        view
+        pure
         returns (bool)
     {
         if (result.misbehavedMembersIndices.length > 0) {
