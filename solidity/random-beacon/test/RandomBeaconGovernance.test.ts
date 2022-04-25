@@ -506,9 +506,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the relay entry soft timeout", async () => {
-        expect(await randomBeacon.relayEntrySoftTimeout()).to.be.equal(
-          initialRelayEntrySoftTimeout
-        )
+        const { relayEntrySoftTimeout } =
+          await randomBeacon.relayEntryParameters()
+        expect(relayEntrySoftTimeout).to.be.equal(initialRelayEntrySoftTimeout)
       })
 
       it("should start the governance delay timer", async () => {
@@ -592,7 +592,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the relay entry soft timeout", async () => {
-          expect(await randomBeacon.relayEntrySoftTimeout()).to.be.equal(1)
+          const { relayEntrySoftTimeout } =
+            await randomBeacon.relayEntryParameters()
+          expect(relayEntrySoftTimeout).to.be.equal(1)
         })
 
         it("should emit RelayEntrySoftTimeoutUpdated event", async () => {
@@ -637,9 +639,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the relay entry hard timeout", async () => {
-        expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(
-          initialRelayEntryHardTimeout
-        )
+        const { relayEntryHardTimeout } =
+          await randomBeacon.relayEntryParameters()
+        expect(relayEntryHardTimeout).to.be.equal(initialRelayEntryHardTimeout)
       })
 
       it("should start the governance delay timer", async () => {
@@ -723,7 +725,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the relay entry hard timeout", async () => {
-          expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(123)
+          const { relayEntryHardTimeout } =
+            await randomBeacon.relayEntryParameters()
+          expect(relayEntryHardTimeout).to.be.equal(123)
         })
 
         it("should emit RelayEntryHardTimeoutUpdated event", async () => {
@@ -819,9 +823,8 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the callback gas limit", async () => {
-        expect(await randomBeacon.callbackGasLimit()).to.be.equal(
-          initialCallbackGasLimit
-        )
+        const { callbackGasLimit } = await randomBeacon.relayEntryParameters()
+        expect(callbackGasLimit).to.be.equal(initialCallbackGasLimit)
       })
 
       it("should start the governance delay timer", async () => {
@@ -905,7 +908,8 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the callback gas limit", async () => {
-          expect(await randomBeacon.callbackGasLimit()).to.be.equal(123)
+          const { callbackGasLimit } = await randomBeacon.relayEntryParameters()
+          expect(callbackGasLimit).to.be.equal(123)
         })
 
         it("should emit CallbackGasLimitUpdated event", async () => {

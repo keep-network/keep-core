@@ -25,9 +25,9 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateRelayEntryParameters", () => {
-    const relayEntrySoftTimeout = 200
-    const relayEntryHardTimeout = 300
-    const callbackGasLimit = 400
+    const newRelayEntrySoftTimeout = 200
+    const newRelayEntryHardTimeout = 300
+    const newCallbackGasLimit = 400
 
     context("when the caller is not the governance", () => {
       it("should revert", async () => {
@@ -35,9 +35,9 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateRelayEntryParameters(
-              relayEntrySoftTimeout,
-              relayEntryHardTimeout,
-              callbackGasLimit
+              newRelayEntrySoftTimeout,
+              newRelayEntryHardTimeout,
+              newCallbackGasLimit
             )
         ).to.be.revertedWith("Caller is not the governance")
       })
@@ -52,9 +52,9 @@ describe("RandomBeacon - Parameters", () => {
         tx = await randomBeacon
           .connect(governance)
           .updateRelayEntryParameters(
-            relayEntrySoftTimeout,
-            relayEntryHardTimeout,
-            callbackGasLimit
+            newRelayEntrySoftTimeout,
+            newRelayEntryHardTimeout,
+            newCallbackGasLimit
           )
       })
 
@@ -63,30 +63,29 @@ describe("RandomBeacon - Parameters", () => {
       })
 
       it("should update the relay entry soft timeout", async () => {
-        expect(await randomBeacon.relayEntrySoftTimeout()).to.be.equal(
-          relayEntrySoftTimeout
-        )
+        const { relayEntrySoftTimeout } =
+          await randomBeacon.relayEntryParameters()
+        expect(relayEntrySoftTimeout).to.be.equal(newRelayEntrySoftTimeout)
       })
 
       it("should update the relay entry hard timeout", async () => {
-        expect(await randomBeacon.relayEntryHardTimeout()).to.be.equal(
-          relayEntryHardTimeout
-        )
+        const { relayEntryHardTimeout } =
+          await randomBeacon.relayEntryParameters()
+        expect(relayEntryHardTimeout).to.be.equal(newRelayEntryHardTimeout)
       })
 
       it("should update the callback gas limit", async () => {
-        expect(await randomBeacon.callbackGasLimit()).to.be.equal(
-          callbackGasLimit
-        )
+        const { callbackGasLimit } = await randomBeacon.relayEntryParameters()
+        expect(callbackGasLimit).to.be.equal(newCallbackGasLimit)
       })
 
       it("should emit the RelayEntryParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "RelayEntryParametersUpdated")
           .withArgs(
-            relayEntrySoftTimeout,
-            relayEntryHardTimeout,
-            callbackGasLimit
+            newRelayEntrySoftTimeout,
+            newRelayEntryHardTimeout,
+            newCallbackGasLimit
           )
       })
     })

@@ -368,11 +368,16 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(relayEntrySoftTimeoutChangeInitiated)
     {
         emit RelayEntrySoftTimeoutUpdated(newRelayEntrySoftTimeout);
+        (
+            ,
+            uint256 relayEntryHardTimeout,
+            uint256 callbackGasLimit
+        ) = randomBeacon.relayEntryParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
             newRelayEntrySoftTimeout,
-            randomBeacon.relayEntryHardTimeout(),
-            randomBeacon.callbackGasLimit()
+            relayEntryHardTimeout,
+            callbackGasLimit
         );
         relayEntrySoftTimeoutChangeInitiated = 0;
         newRelayEntrySoftTimeout = 0;
@@ -404,11 +409,16 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(relayEntryHardTimeoutChangeInitiated)
     {
         emit RelayEntryHardTimeoutUpdated(newRelayEntryHardTimeout);
+        (
+            uint256 relayEntrySoftTimeout,
+            ,
+            uint256 callbackGasLimit
+        ) = randomBeacon.relayEntryParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayEntrySoftTimeout(),
+            relayEntrySoftTimeout,
             newRelayEntryHardTimeout,
-            randomBeacon.callbackGasLimit()
+            callbackGasLimit
         );
         relayEntryHardTimeoutChangeInitiated = 0;
         newRelayEntryHardTimeout = 0;
@@ -445,10 +455,15 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(callbackGasLimitChangeInitiated)
     {
         emit CallbackGasLimitUpdated(newCallbackGasLimit);
+        (
+            uint256 relayEntrySoftTimeout,
+            uint256 relayEntryHardTimeout,
+
+        ) = randomBeacon.relayEntryParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRelayEntryParameters(
-            randomBeacon.relayEntrySoftTimeout(),
-            randomBeacon.relayEntryHardTimeout(),
+            relayEntrySoftTimeout,
+            relayEntryHardTimeout,
             newCallbackGasLimit
         );
         callbackGasLimitChangeInitiated = 0;

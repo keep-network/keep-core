@@ -62,7 +62,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         callback function provided in the relay request transaction is
     ///         executed. The callback is executed with a new relay entry value
     ///         in the same transaction the relay entry is submitted.
-    uint256 public callbackGasLimit;
+    uint256 internal _callbackGasLimit;
 
     /// @notice The frequency of new group creation. Groups are created with
     ///         a fixed frequency of relay requests.
@@ -377,7 +377,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         );
 
         // TODO: revisit all initial values
-        callbackGasLimit = 56000;
+        _callbackGasLimit = 56000;
         groupCreationFrequency = 5;
 
         _maliciousDkgResultSlashingAmount = 50000e18;
@@ -444,22 +444,22 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _relayEntrySoftTimeout New relay entry submission soft timeout.
-    /// @param _relayEntryHardTimeout New relay entry hard timeout
-    /// @param _callbackGasLimit New callback gas limit
+    /// @param relayEntrySoftTimeout New relay entry submission soft timeout.
+    /// @param relayEntryHardTimeout New relay entry hard timeout
+    /// @param callbackGasLimit New callback gas limit
     function updateRelayEntryParameters(
-        uint256 _relayEntrySoftTimeout,
-        uint256 _relayEntryHardTimeout,
-        uint256 _callbackGasLimit
+        uint256 relayEntrySoftTimeout,
+        uint256 relayEntryHardTimeout,
+        uint256 callbackGasLimit
     ) external onlyGovernance {
-        callbackGasLimit = _callbackGasLimit;
+        _callbackGasLimit = callbackGasLimit;
 
-        relay.setRelayEntrySoftTimeout(_relayEntrySoftTimeout);
-        relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
+        relay.setRelayEntrySoftTimeout(relayEntrySoftTimeout);
+        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
-            _relayEntrySoftTimeout,
-            _relayEntryHardTimeout,
+            relayEntrySoftTimeout,
+            relayEntryHardTimeout,
             callbackGasLimit
         );
     }
@@ -962,7 +962,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             dkg.start(uint256(keccak256(entry)));
         }
 
-        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+        callback.executeCallback(uint256(keccak256(entry)), _callbackGasLimit);
 
         reimbursementPool.refund(
             (gasStart - gasleft()) + _relayEntrySubmissionGasOffset,
@@ -1029,7 +1029,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             dkg.start(uint256(keccak256(entry)));
         }
 
-        callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+        callback.executeCallback(uint256(keccak256(entry)), _callbackGasLimit);
         reimbursementPool.refund(
             (gasStart - gasleft()) + _relayEntrySubmissionGasOffset,
             msg.sender
@@ -1261,25 +1261,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         return relay.isRequestInProgress();
     }
 
-    /// @return Soft timeout in blocks for a group to submit the relay entry.
-    ///         All group members are eligible to submit the relay entry. If
-    ///         soft timeout is reached for submitting the relay entry
-    ///         the slashing starts.
-    function relayEntrySoftTimeout() external view returns (uint256) {
-        return relay.relayEntrySoftTimeout;
-    }
-
-    /// @return Hard timeout in blocks for a group to submit the relay entry.
-    ///         After the soft timeout passes without relay entry submitted,
-    ///         all group members start getting slashed. The slashing amount
-    ///         increases linearly until the group submits the relay entry or until
-    ///         `relayEntryHardTimeout` is reached. When the hard timeout is
-    ///         reached, each group member will get slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`.
-    function relayEntryHardTimeout() external view returns (uint256) {
-        return relay.relayEntryHardTimeout;
-    }
-
     /// @notice Group lifetime in blocks. When a group reached its lifetime, it
     ///         is no longer selected for new relay requests but may still be
     ///         responsible for submitting relay entry if relay request assigned
@@ -1398,6 +1379,38 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @return IDs of selected group members.
     function selectGroup() external view returns (uint32[] memory) {
         return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
+    }
+
+    /// @notice Returns relay-entry-related parameters of the beacon.
+    /// @return relayEntrySoftTimeout Soft timeout in blocks for a group to
+    ///         submit the relay entry. If the soft timeout is reached for
+    ///         submitting the relay entry, the slashing starts.
+    /// @return relayEntryHardTimeout Hard timeout in blocks for a group to
+    ///         submit the relay entry. After the soft timeout passes without
+    ///         relay entry submitted, all group members start getting slashed.
+    ///         The slashing amount increases linearly until the group submits
+    ///         the relay entry or until `relayEntryHardTimeout` is reached.
+    ///         When the hard timeout is reached, each group member will get
+    ///         slashed for `_relayEntrySubmissionFailureSlashingAmount`.
+    /// @return callbackGasLimit Relay entry callback gas limit. This is the gas
+    ///         limit with which callback function provided in the relay request
+    ///         transaction is executed. The callback is executed with a new
+    ///         relay entry value in the same transaction the relay entry is
+    ///         submitted.
+    function relayEntryParameters()
+        external
+        view
+        returns (
+            uint256 relayEntrySoftTimeout,
+            uint256 relayEntryHardTimeout,
+            uint256 callbackGasLimit
+        )
+    {
+        return (
+            relay.relayEntrySoftTimeout,
+            relay.relayEntryHardTimeout,
+            _callbackGasLimit
+        );
     }
 
     /// @notice Returns reward-related parameters of the beacon.
