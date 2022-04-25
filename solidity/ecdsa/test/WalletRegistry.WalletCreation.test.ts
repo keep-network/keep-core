@@ -3455,7 +3455,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
     })
   })
 
-  describe.only("selectGroup", async () => {
+  describe("selectGroup", async () => {
     context("when dkg was not triggered", async () => {
       before(async () => {
         await createSnapshot()
