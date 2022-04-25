@@ -70,16 +70,16 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
     /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
-    ///         `resultChallengePeriodLength`. If the DKG result submitted
+    ///         `dkg.ResultChallengePeriodLength`. If the DKG result submitted
     ///         is challenged and proven to be malicious, the operator who
     ///         submitted the malicious result is slashed for
-    ///         `maliciousDkgResultSlashingAmount`.
-    uint96 public maliciousDkgResultSlashingAmount;
+    ///         `_maliciousDkgResultSlashingAmount`.
+    uint96 internal _maliciousDkgResultSlashingAmount;
 
     /// @notice Slashing amount when an unauthorized signing has been proved,
-    ///         which means the private key has been leaked and all the group
-    ///         members should be punished.
-    uint96 public unauthorizedSigningSlashingAmount;
+    ///         which means the private key leaked and all the group members
+    ///         should be punished.
+    uint96 internal _unauthorizedSigningSlashingAmount;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who misbehaved during DKG by being inactive or disqualified and
@@ -380,8 +380,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         callbackGasLimit = 56000;
         groupCreationFrequency = 5;
 
-        maliciousDkgResultSlashingAmount = 50000e18;
-        unauthorizedSigningSlashingAmount = 100e3 * 1e18;
+        _maliciousDkgResultSlashingAmount = 50000e18;
+        _unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         _sortitionPoolRewardsBanDuration = 2 weeks;
         _relayEntryTimeoutNotificationRewardMultiplier = 40;
         _unauthorizedSigningNotificationRewardMultiplier = 50;
@@ -545,24 +545,24 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _relayEntrySubmissionFailureSlashingAmount New relay entry
+    /// @param relayEntrySubmissionFailureSlashingAmount New relay entry
     ///        submission failure amount
-    /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
+    /// @param maliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
-    /// @param _unauthorizedSigningSlashingAmount New unauthorized signing
+    /// @param unauthorizedSigningSlashingAmount New unauthorized signing
     ///        slashing amount
     function updateSlashingParameters(
-        uint96 _relayEntrySubmissionFailureSlashingAmount,
-        uint96 _maliciousDkgResultSlashingAmount,
-        uint96 _unauthorizedSigningSlashingAmount
+        uint96 relayEntrySubmissionFailureSlashingAmount,
+        uint96 maliciousDkgResultSlashingAmount,
+        uint96 unauthorizedSigningSlashingAmount
     ) external onlyGovernance {
         relay.setRelayEntrySubmissionFailureSlashingAmount(
-            _relayEntrySubmissionFailureSlashingAmount
+            relayEntrySubmissionFailureSlashingAmount
         );
-        maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
-        unauthorizedSigningSlashingAmount = _unauthorizedSigningSlashingAmount;
+        _maliciousDkgResultSlashingAmount = maliciousDkgResultSlashingAmount;
+        _unauthorizedSigningSlashingAmount = unauthorizedSigningSlashingAmount;
         emit SlashingParametersUpdated(
-            _relayEntrySubmissionFailureSlashingAmount,
+            relayEntrySubmissionFailureSlashingAmount,
             maliciousDkgResultSlashingAmount,
             unauthorizedSigningSlashingAmount
         );
@@ -841,7 +841,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         (bytes32 maliciousResultHash, uint32 maliciousSubmitter) = dkg
             .challengeResult(dkgResult);
 
-        uint96 slashingAmount = maliciousDkgResultSlashingAmount;
+        uint96 slashingAmount = _maliciousDkgResultSlashingAmount;
         address maliciousSubmitterAddresses = sortitionPool.getIDOperator(
             maliciousSubmitter
         );
@@ -1156,7 +1156,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
         try
             staking.seize(
-                unauthorizedSigningSlashingAmount,
+                _unauthorizedSigningSlashingAmount,
                 _unauthorizedSigningNotificationRewardMultiplier,
                 msg.sender,
                 stakingProvidersAddresses
@@ -1165,7 +1165,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             // slither-disable-next-line reentrancy-events
             emit UnauthorizedSigningSlashed(
                 groupId,
-                unauthorizedSigningSlashingAmount,
+                _unauthorizedSigningSlashingAmount,
                 groupMembersAddresses
             );
         } catch {
@@ -1174,7 +1174,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             // to complete.
             emit UnauthorizedSigningSlashingFailed(
                 groupId,
-                unauthorizedSigningSlashingAmount,
+                _unauthorizedSigningSlashingAmount,
                 groupMembersAddresses
             );
         }
@@ -1280,23 +1280,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         return relay.relayEntryHardTimeout;
     }
 
-    /// @notice Slashing amount for not submitting relay entry. When
-    ///         relay entry hard timeout is reached without the relay entry
-    ///         submitted, each group member gets slashed for
-    ///         `relayEntrySubmissionFailureSlashingAmount`. If the relay entry
-    ///         gets submitted after the soft timeout (see
-    ///         `relayEntrySoftTimeout` documentation), but
-    ///         before the hard timeout, each group member gets slashed
-    ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
-    ///         and the time passed since the soft deadline.
-    function relayEntrySubmissionFailureSlashingAmount()
-        external
-        view
-        returns (uint96)
-    {
-        return relay.relayEntrySubmissionFailureSlashingAmount;
-    }
-
     /// @notice Group lifetime in blocks. When a group reached its lifetime, it
     ///         is no longer selected for new relay requests but may still be
     ///         responsible for submitting relay entry if relay request assigned
@@ -1310,7 +1293,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         before the result is fully accepted and the group registered in
     ///         the pool of active groups. If the challenge gets accepted, all
     ///         operators who signed the malicious result get slashed for
-    ///         `maliciousDkgResultSlashingAmount` and the notifier gets
+    ///         `_maliciousDkgResultSlashingAmount` and the notifier gets
     ///         rewarded.
     function dkgResultChallengePeriodLength() external view returns (uint256) {
         return dkg.parameters.resultChallengePeriodLength;
@@ -1459,6 +1442,40 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             _relayEntryTimeoutNotificationRewardMultiplier,
             _unauthorizedSigningNotificationRewardMultiplier,
             _dkgMaliciousResultNotificationRewardMultiplier
+        );
+    }
+
+    /// @notice Returns slashing-related parameters of the beacon.
+    /// @return relayEntrySubmissionFailureSlashingAmount Slashing amount for
+    ///         not submitting relay entry. When relay entry hard timeout is
+    ///         reached without the relay entry submitted, each group member
+    ///         gets slashed for `relayEntrySubmissionFailureSlashingAmount`.
+    ///         If the relay entry gets submitted after the soft timeout, but
+    ///         before the hard timeout, each group member gets slashed
+    ///         proportionally to `relayEntrySubmissionFailureSlashingAmount`
+    ///         and the time passed since the soft deadline.
+    /// @return maliciousDkgResultSlashingAmount Slashing amount for submitting
+    ///         a malicious DKG result. Every DKG result submitted can be
+    ///         challenged for the time of `dkg.ResultChallengePeriodLength`.
+    ///         If the DKG result submitted is challenged and proven to be
+    ///         malicious, the operator who submitted the malicious result is
+    ///         slashed for `maliciousDkgResultSlashingAmount`.
+    /// @return unauthorizedSigningSlashingAmount Slashing amount when an
+    ///         unauthorized signing has been proved, which means the private
+    ///         key leaked and all the group members should be punished.
+    function slashingParameters()
+        external
+        view
+        returns (
+            uint96 relayEntrySubmissionFailureSlashingAmount,
+            uint96 maliciousDkgResultSlashingAmount,
+            uint96 unauthorizedSigningSlashingAmount
+        )
+    {
+        return (
+            relay.relayEntrySubmissionFailureSlashingAmount,
+            _maliciousDkgResultSlashingAmount,
+            _unauthorizedSigningSlashingAmount
         );
     }
 

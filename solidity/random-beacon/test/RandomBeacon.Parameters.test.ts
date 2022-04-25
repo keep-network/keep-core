@@ -400,9 +400,9 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateSlashingParameters", () => {
-    const relayEntrySubmissionFailureSlashingAmount = 100
-    const maliciousDkgResultSlashingAmount = 200
-    const unauthorizedSigningSlashingAmount = 150
+    const newRelayEntrySubmissionFailureSlashingAmount = 100
+    const newMaliciousDkgResultSlashingAmount = 200
+    const newUnauthorizedSigningSlashingAmount = 150
 
     context("when the caller is not the governance", () => {
       it("should revert", async () => {
@@ -410,9 +410,9 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateSlashingParameters(
-              relayEntrySubmissionFailureSlashingAmount,
-              maliciousDkgResultSlashingAmount,
-              unauthorizedSigningSlashingAmount
+              newRelayEntrySubmissionFailureSlashingAmount,
+              newMaliciousDkgResultSlashingAmount,
+              newUnauthorizedSigningSlashingAmount
             )
         ).to.be.revertedWith("Caller is not the governance")
       })
@@ -427,9 +427,9 @@ describe("RandomBeacon - Parameters", () => {
         tx = await randomBeacon
           .connect(governance)
           .updateSlashingParameters(
-            relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount,
-            unauthorizedSigningSlashingAmount
+            newRelayEntrySubmissionFailureSlashingAmount,
+            newMaliciousDkgResultSlashingAmount,
+            newUnauthorizedSigningSlashingAmount
           )
       })
 
@@ -438,30 +438,36 @@ describe("RandomBeacon - Parameters", () => {
       })
 
       it("should update the relay entry submission failure slashing amount", async () => {
-        expect(
-          await randomBeacon.relayEntrySubmissionFailureSlashingAmount()
-        ).to.be.equal(relayEntrySubmissionFailureSlashingAmount)
+        const { relayEntrySubmissionFailureSlashingAmount } =
+          await randomBeacon.slashingParameters()
+        expect(relayEntrySubmissionFailureSlashingAmount).to.be.equal(
+          newRelayEntrySubmissionFailureSlashingAmount
+        )
       })
 
       it("should update the malicious DKG result slashing amount", async () => {
-        expect(
-          await randomBeacon.maliciousDkgResultSlashingAmount()
-        ).to.be.equal(maliciousDkgResultSlashingAmount)
+        const { maliciousDkgResultSlashingAmount } =
+          await randomBeacon.slashingParameters()
+        expect(maliciousDkgResultSlashingAmount).to.be.equal(
+          newMaliciousDkgResultSlashingAmount
+        )
       })
 
       it("should update the unauthorized signing slashing amount", async () => {
-        expect(
-          await randomBeacon.unauthorizedSigningSlashingAmount()
-        ).to.be.equal(unauthorizedSigningSlashingAmount)
+        const { unauthorizedSigningSlashingAmount } =
+          await randomBeacon.slashingParameters()
+        expect(unauthorizedSigningSlashingAmount).to.be.equal(
+          newUnauthorizedSigningSlashingAmount
+        )
       })
 
       it("should emit the SlashingParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "SlashingParametersUpdated")
           .withArgs(
-            relayEntrySubmissionFailureSlashingAmount,
-            maliciousDkgResultSlashingAmount,
-            unauthorizedSigningSlashingAmount
+            newRelayEntrySubmissionFailureSlashingAmount,
+            newMaliciousDkgResultSlashingAmount,
+            newUnauthorizedSigningSlashingAmount
           )
       })
     })

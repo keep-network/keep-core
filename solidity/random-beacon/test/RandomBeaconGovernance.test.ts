@@ -1796,9 +1796,11 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the relay entry submission failure slashing amount", async () => {
-        expect(
-          await randomBeacon.relayEntrySubmissionFailureSlashingAmount()
-        ).to.be.equal(initialRelayEntrySubmissionFailureSlashingAmount)
+        const { relayEntrySubmissionFailureSlashingAmount } =
+          await randomBeacon.slashingParameters()
+        expect(relayEntrySubmissionFailureSlashingAmount).to.be.equal(
+          initialRelayEntrySubmissionFailureSlashingAmount
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1885,9 +1887,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the relay entry submission failure slashing amount", async () => {
-          expect(
-            await randomBeacon.relayEntrySubmissionFailureSlashingAmount()
-          ).to.be.equal(123)
+          const { relayEntrySubmissionFailureSlashingAmount } =
+            await randomBeacon.slashingParameters()
+          expect(relayEntrySubmissionFailureSlashingAmount).to.be.equal(123)
         })
 
         it("should emit RelayEntrySubmissionFailureSlashingAmountUpdated event", async () => {
@@ -1935,9 +1937,11 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the unauthorized signing slashing amount", async () => {
-        expect(
-          await randomBeacon.unauthorizedSigningSlashingAmount()
-        ).to.be.equal(initialUnauthorizedSigningSlashingAmount)
+        const { unauthorizedSigningSlashingAmount } =
+          await randomBeacon.slashingParameters()
+        expect(unauthorizedSigningSlashingAmount).to.be.equal(
+          initialUnauthorizedSigningSlashingAmount
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -2024,9 +2028,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the unauthorized signing slashing amount", async () => {
-          expect(
-            await randomBeacon.unauthorizedSigningSlashingAmount()
-          ).to.be.equal(123)
+          const { unauthorizedSigningSlashingAmount } =
+            await randomBeacon.slashingParameters()
+          expect(unauthorizedSigningSlashingAmount).to.be.equal(123)
         })
 
         it("should emit UnauthorizedSigningSlashingAmountUpdated event", async () => {
@@ -2074,9 +2078,11 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the malicious DKG result slashing amount", async () => {
-        expect(
-          await randomBeacon.maliciousDkgResultSlashingAmount()
-        ).to.be.equal(initialMaliciousDkgResultSlashingAmount)
+        const { maliciousDkgResultSlashingAmount } =
+          await randomBeacon.slashingParameters()
+        expect(maliciousDkgResultSlashingAmount).to.be.equal(
+          initialMaliciousDkgResultSlashingAmount
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -2163,9 +2169,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the malicious DKG result slashing amount", async () => {
-          expect(
-            await randomBeacon.maliciousDkgResultSlashingAmount()
-          ).to.be.equal(123)
+          const { maliciousDkgResultSlashingAmount } =
+            await randomBeacon.slashingParameters()
+          expect(maliciousDkgResultSlashingAmount).to.be.equal(123)
         })
 
         it("should emit MaliciousDkgResultSlashingAmountUpdated event", async () => {

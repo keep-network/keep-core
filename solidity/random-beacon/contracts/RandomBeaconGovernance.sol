@@ -900,11 +900,16 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntrySubmissionFailureSlashingAmountUpdated(
             newRelayEntrySubmissionFailureSlashingAmount
         );
+        (
+            ,
+            uint96 maliciousDkgResultSlashingAmount,
+            uint96 unauthorizedSigningSlashingAmount
+        ) = randomBeacon.slashingParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
             newRelayEntrySubmissionFailureSlashingAmount,
-            randomBeacon.maliciousDkgResultSlashingAmount(),
-            randomBeacon.unauthorizedSigningSlashingAmount()
+            maliciousDkgResultSlashingAmount,
+            unauthorizedSigningSlashingAmount
         );
         relayEntrySubmissionFailureSlashingAmountChangeInitiated = 0;
         newRelayEntrySubmissionFailureSlashingAmount = 0;
@@ -1116,11 +1121,16 @@ contract RandomBeaconGovernance is Ownable {
         emit MaliciousDkgResultSlashingAmountUpdated(
             newMaliciousDkgResultSlashingAmount
         );
+        (
+            uint96 relayEntrySubmissionFailureSlashingAmount,
+            ,
+            uint96 unauthorizedSigningSlashingAmount
+        ) = randomBeacon.slashingParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
-            randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
+            relayEntrySubmissionFailureSlashingAmount,
             newMaliciousDkgResultSlashingAmount,
-            randomBeacon.unauthorizedSigningSlashingAmount()
+            unauthorizedSigningSlashingAmount
         );
         maliciousDkgResultSlashingAmountChangeInitiated = 0;
         newMaliciousDkgResultSlashingAmount = 0;
@@ -1157,10 +1167,15 @@ contract RandomBeaconGovernance is Ownable {
         emit UnauthorizedSigningSlashingAmountUpdated(
             newUnauthorizedSigningSlashingAmount
         );
+        (
+            uint96 relayEntrySubmissionFailureSlashingAmount,
+            uint96 maliciousDkgResultSlashingAmount,
+
+        ) = randomBeacon.slashingParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateSlashingParameters(
-            randomBeacon.relayEntrySubmissionFailureSlashingAmount(),
-            randomBeacon.maliciousDkgResultSlashingAmount(),
+            relayEntrySubmissionFailureSlashingAmount,
+            maliciousDkgResultSlashingAmount,
             newUnauthorizedSigningSlashingAmount
         );
         unauthorizedSigningSlashingAmountChangeInitiated = 0;
