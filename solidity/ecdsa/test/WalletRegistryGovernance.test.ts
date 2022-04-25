@@ -342,7 +342,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      context("when new owner is the zero address", () => {
+      context("when new governance is the zero address", () => {
         it("should revert", async () => {
           await expect(
             walletRegistryGovernance
@@ -351,7 +351,7 @@ describe("WalletRegistryGovernance", async () => {
                 ethers.constants.AddressZero
               )
           ).to.be.revertedWith(
-            "New wallet registry owner address cannot be zero"
+            "New wallet registry governance address cannot be zero"
           )
         })
       })
