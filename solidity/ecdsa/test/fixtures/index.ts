@@ -98,6 +98,8 @@ export const walletRegistryFixture = deployments.createFixture(
     // Set parameters with tweaked values to reduce test execution time.
     await updateWalletRegistryParams(walletRegistryGovernance, governance)
 
+    await fundReimbursementPool(deployer, reimbursementPool)
+
     // Mock Wallet Owner contract.
     const walletOwner: FakeContract<IWalletOwner> = await initializeWalletOwner(
       walletRegistryGovernance,
@@ -225,4 +227,14 @@ export async function initializeWalletOwner(
     .initializeWalletOwner(walletOwner.address)
 
   return walletOwner
+}
+
+async function fundReimbursementPool(
+  deployer: SignerWithAddress,
+  reimbursementPool: ReimbursementPool
+) {
+  await deployer.sendTransaction({
+    to: reimbursementPool.address,
+    value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
+  })
 }
