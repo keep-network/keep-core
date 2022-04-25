@@ -17,7 +17,6 @@ pragma solidity ^0.8.9;
 import "./api/IWalletRegistry.sol";
 import "./api/IWalletOwner.sol";
 import "./libraries/Wallets.sol";
-import "./Governable.sol";
 import {EcdsaAuthorization as Authorization} from "./libraries/EcdsaAuthorization.sol";
 import {EcdsaDkg as DKG} from "./libraries/EcdsaDkg.sol";
 import {EcdsaInactivity as Inactivity} from "./libraries/EcdsaInactivity.sol";
@@ -28,10 +27,10 @@ import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
 import "@keep-network/random-beacon/contracts/Reimbursable.sol";
 import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
+import "@keep-network/random-beacon/contracts/Governable.sol";
 
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract WalletRegistry is
     IWalletRegistry,
