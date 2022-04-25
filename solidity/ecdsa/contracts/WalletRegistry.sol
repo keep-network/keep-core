@@ -435,7 +435,7 @@ contract WalletRegistry is
     }
 
     /// @notice Updates the wallet owner.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters. The wallet owner has to implement `IWalletOwner`
     ///      interface.
@@ -979,13 +979,12 @@ contract WalletRegistry is
         return sortitionPool.isOperatorInPool(operator);
     }
 
-    /// @notice Selects a new group of operators based on the provided seed.
+    /// @notice Selects a new group of operators. Can only be called when DKG
+    ///         is in progress and the pool is locked.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.
-    /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
-    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
-        // TODO: Read seed from DKG
-        return sortitionPool.selectGroup(DKG.groupSize, seed);
+    function selectGroup() external view returns (uint32[] memory) {
+        return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
     }
 }
