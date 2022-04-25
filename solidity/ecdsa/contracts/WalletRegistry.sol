@@ -435,7 +435,7 @@ contract WalletRegistry is
     }
 
     /// @notice Updates the wallet owner.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters. The wallet owner has to implement `IWalletOwner`
     ///      interface.
