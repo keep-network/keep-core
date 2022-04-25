@@ -49,7 +49,7 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newDkgResultSubmissionTimeout;
     uint256 public dkgResultSubmissionTimeoutChangeInitiated;
 
-    uint256 public newSubmitterPrecedencePeriodLength;
+    uint256 public newDkgSubmitterPrecedencePeriodLength;
     uint256 public dkgSubmitterPrecedencePeriodLengthChangeInitiated;
 
     uint96 public newRelayEntrySubmissionFailureSlashingAmount;
@@ -668,20 +668,20 @@ contract RandomBeaconGovernance is Ownable {
 
     /// @notice Begins the DKG submitter precedence period length.
     /// @dev Can be called only by the contract owner.
-    /// @param _newSubmitterPrecedencePeriodLength New DKG submitter precedence
+    /// @param _newDkgSubmitterPrecedencePeriodLength New DKG submitter precedence
     ///        period length in blocks
     function beginDkgSubmitterPrecedencePeriodLengthUpdate(
-        uint256 _newSubmitterPrecedencePeriodLength
+        uint256 _newDkgSubmitterPrecedencePeriodLength
     ) external onlyOwner {
         /* solhint-disable not-rely-on-time */
         require(
-            _newSubmitterPrecedencePeriodLength > 0,
+            _newDkgSubmitterPrecedencePeriodLength > 0,
             "DKG submitter precedence period length must be > 0"
         );
-        newSubmitterPrecedencePeriodLength = _newSubmitterPrecedencePeriodLength;
+        newDkgSubmitterPrecedencePeriodLength = _newDkgSubmitterPrecedencePeriodLength;
         dkgSubmitterPrecedencePeriodLengthChangeInitiated = block.timestamp;
         emit DkgSubmitterPrecedencePeriodLengthUpdateStarted(
-            _newSubmitterPrecedencePeriodLength,
+            _newDkgSubmitterPrecedencePeriodLength,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
@@ -698,7 +698,7 @@ contract RandomBeaconGovernance is Ownable {
         )
     {
         emit DkgSubmitterPrecedencePeriodLengthUpdated(
-            newSubmitterPrecedencePeriodLength
+            newDkgSubmitterPrecedencePeriodLength
         );
         (
             uint256 groupCreationFrequency,
@@ -713,10 +713,10 @@ contract RandomBeaconGovernance is Ownable {
             groupLifetime,
             dkgResultChallengePeriodLength,
             dkgResultSubmissionTimeout,
-            newSubmitterPrecedencePeriodLength
+            newDkgSubmitterPrecedencePeriodLength
         );
         dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;
-        newSubmitterPrecedencePeriodLength = 0;
+        newDkgSubmitterPrecedencePeriodLength = 0;
     }
 
     /// @notice Begins the sortition pool rewards ban duration update process.
