@@ -685,12 +685,18 @@ contract RandomBeaconGovernance is Ownable {
         emit SortitionPoolRewardsBanDurationUpdated(
             newSortitionPoolRewardsBanDuration
         );
+        (
+            ,
+            uint256 relayEntryTimeoutNotificationRewardMultiplier,
+            uint256 unauthorizedSigningNotificationRewardMultiplier,
+            uint256 dkgMaliciousResultNotificationRewardMultiplier
+        ) = randomBeacon.rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
             newSortitionPoolRewardsBanDuration,
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+            relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
+            dkgMaliciousResultNotificationRewardMultiplier
         );
         sortitionPoolRewardsBanDurationChangeInitiated = 0;
         newSortitionPoolRewardsBanDuration = 0;
@@ -758,12 +764,18 @@ contract RandomBeaconGovernance is Ownable {
         emit UnauthorizedSigningNotificationRewardMultiplierUpdated(
             newUnauthorizedSigningNotificationRewardMultiplier
         );
+        (
+            uint256 sortitionPoolRewardsBanDuration,
+            uint256 relayEntryTimeoutNotificationRewardMultiplier,
+            ,
+            uint256 dkgMaliciousResultNotificationRewardMultiplier
+        ) = randomBeacon.rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier,
             newUnauthorizedSigningNotificationRewardMultiplier,
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+            dkgMaliciousResultNotificationRewardMultiplier
         );
         unauthorizedSigningNotificationRewardMultiplierChangeInitiated = 0;
         newUnauthorizedSigningNotificationRewardMultiplier = 0;
@@ -783,12 +795,18 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntryTimeoutNotificationRewardMultiplierUpdated(
             newRelayEntryTimeoutNotificationRewardMultiplier
         );
+        (
+            uint256 sortitionPoolRewardsBanDuration,
+            ,
+            uint256 unauthorizedSigningNotificationRewardMultiplier,
+            uint256 dkgMaliciousResultNotificationRewardMultiplier
+        ) = randomBeacon.rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.sortitionPoolRewardsBanDuration(),
+            sortitionPoolRewardsBanDuration,
             newRelayEntryTimeoutNotificationRewardMultiplier,
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
-            randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
+            unauthorizedSigningNotificationRewardMultiplier,
+            dkgMaliciousResultNotificationRewardMultiplier
         );
         relayEntryTimeoutNotificationRewardMultiplierChangeInitiated = 0;
         newRelayEntryTimeoutNotificationRewardMultiplier = 0;
@@ -832,11 +850,17 @@ contract RandomBeaconGovernance is Ownable {
         emit DkgMaliciousResultNotificationRewardMultiplierUpdated(
             newDkgMaliciousResultNotificationRewardMultiplier
         );
+        (
+            uint256 sortitionPoolRewardsBanDuration,
+            uint256 relayEntryTimeoutNotificationRewardMultiplier,
+            uint256 unauthorizedSigningNotificationRewardMultiplier,
+
+        ) = randomBeacon.rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateRewardParameters(
-            randomBeacon.sortitionPoolRewardsBanDuration(),
-            randomBeacon.relayEntryTimeoutNotificationRewardMultiplier(),
-            randomBeacon.unauthorizedSigningNotificationRewardMultiplier(),
+            sortitionPoolRewardsBanDuration,
+            relayEntryTimeoutNotificationRewardMultiplier,
+            unauthorizedSigningNotificationRewardMultiplier,
             newDkgMaliciousResultNotificationRewardMultiplier
         );
         dkgMaliciousResultNotificationRewardMultiplierChangeInitiated = 0;

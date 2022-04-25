@@ -314,10 +314,10 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateRewardParameters", () => {
-    const sortitionPoolRewardsBanDuration = 400
-    const relayEntryTimeoutNotificationRewardMultiplier = 10
-    const unauthorizedSigningNotificationRewardMultiplier = 10
-    const dkgMaliciousResultNotificationRewardMultiplier = 20
+    const newSortitionPoolRewardsBanDuration = 400
+    const newRelayEntryTimeoutNotificationRewardMultiplier = 10
+    const newUnauthorizedSigningNotificationRewardMultiplier = 10
+    const newDkgMaliciousResultNotificationRewardMultiplier = 20
 
     context("when the caller is not the governance", () => {
       it("should revert", async () => {
@@ -325,10 +325,10 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateRewardParameters(
-              sortitionPoolRewardsBanDuration,
-              relayEntryTimeoutNotificationRewardMultiplier,
-              unauthorizedSigningNotificationRewardMultiplier,
-              dkgMaliciousResultNotificationRewardMultiplier
+              newSortitionPoolRewardsBanDuration,
+              newRelayEntryTimeoutNotificationRewardMultiplier,
+              newUnauthorizedSigningNotificationRewardMultiplier,
+              newDkgMaliciousResultNotificationRewardMultiplier
             )
         ).to.be.revertedWith("Caller is not the governance")
       })
@@ -343,10 +343,10 @@ describe("RandomBeacon - Parameters", () => {
         tx = await randomBeacon
           .connect(governance)
           .updateRewardParameters(
-            sortitionPoolRewardsBanDuration,
-            relayEntryTimeoutNotificationRewardMultiplier,
-            unauthorizedSigningNotificationRewardMultiplier,
-            dkgMaliciousResultNotificationRewardMultiplier
+            newSortitionPoolRewardsBanDuration,
+            newRelayEntryTimeoutNotificationRewardMultiplier,
+            newUnauthorizedSigningNotificationRewardMultiplier,
+            newDkgMaliciousResultNotificationRewardMultiplier
           )
       })
 
@@ -355,31 +355,45 @@ describe("RandomBeacon - Parameters", () => {
       })
 
       it("should update the sortition pool rewards ban duration", async () => {
-        expect(
-          await randomBeacon.sortitionPoolRewardsBanDuration()
-        ).to.be.equal(sortitionPoolRewardsBanDuration)
+        const { sortitionPoolRewardsBanDuration } =
+          await randomBeacon.rewardParameters()
+        expect(sortitionPoolRewardsBanDuration).to.be.equal(
+          newSortitionPoolRewardsBanDuration
+        )
       })
 
       it("should update the relay entry timeout notification reward multiplier", async () => {
-        expect(
-          await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
-        ).to.be.equal(relayEntryTimeoutNotificationRewardMultiplier)
+        const { relayEntryTimeoutNotificationRewardMultiplier } =
+          await randomBeacon.rewardParameters()
+        expect(relayEntryTimeoutNotificationRewardMultiplier).to.be.equal(
+          newRelayEntryTimeoutNotificationRewardMultiplier
+        )
+      })
+
+      it("should update the unauthorized signing notification reward multiplier", async () => {
+        const { unauthorizedSigningNotificationRewardMultiplier } =
+          await randomBeacon.rewardParameters()
+        expect(unauthorizedSigningNotificationRewardMultiplier).to.be.equal(
+          newUnauthorizedSigningNotificationRewardMultiplier
+        )
       })
 
       it("should update the DKG malicious result notification reward multiplier", async () => {
-        expect(
-          await randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        ).to.be.equal(dkgMaliciousResultNotificationRewardMultiplier)
+        const { dkgMaliciousResultNotificationRewardMultiplier } =
+          await randomBeacon.rewardParameters()
+        expect(dkgMaliciousResultNotificationRewardMultiplier).to.be.equal(
+          newDkgMaliciousResultNotificationRewardMultiplier
+        )
       })
 
       it("should emit the RewardParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
           .withArgs(
-            sortitionPoolRewardsBanDuration,
-            relayEntryTimeoutNotificationRewardMultiplier,
-            unauthorizedSigningNotificationRewardMultiplier,
-            dkgMaliciousResultNotificationRewardMultiplier
+            newSortitionPoolRewardsBanDuration,
+            newRelayEntryTimeoutNotificationRewardMultiplier,
+            newUnauthorizedSigningNotificationRewardMultiplier,
+            newDkgMaliciousResultNotificationRewardMultiplier
           )
       })
     })

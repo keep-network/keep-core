@@ -85,7 +85,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         who misbehaved during DKG by being inactive or disqualified and
     ///         for operators that were identified by the rest of group members
     ///         as inactive via `notifyOperatorInactivity`.
-    uint256 public sortitionPoolRewardsBanDuration;
+    uint256 internal _sortitionPoolRewardsBanDuration;
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
@@ -94,7 +94,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
-    uint256 public relayEntryTimeoutNotificationRewardMultiplier;
+    uint256 internal _relayEntryTimeoutNotificationRewardMultiplier;
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
@@ -103,7 +103,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
-    uint256 public unauthorizedSigningNotificationRewardMultiplier;
+    uint256 internal _unauthorizedSigningNotificationRewardMultiplier;
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
@@ -112,7 +112,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
-    uint256 public dkgMaliciousResultNotificationRewardMultiplier;
+    uint256 internal _dkgMaliciousResultNotificationRewardMultiplier;
 
     /// @notice Calculated gas cost for submitting a DKG result. This will
     ///         be refunded as part of the DKG approval process. It is in the
@@ -382,10 +382,10 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
-        sortitionPoolRewardsBanDuration = 2 weeks;
-        relayEntryTimeoutNotificationRewardMultiplier = 40;
-        unauthorizedSigningNotificationRewardMultiplier = 50;
-        dkgMaliciousResultNotificationRewardMultiplier = 100;
+        _sortitionPoolRewardsBanDuration = 2 weeks;
+        _relayEntryTimeoutNotificationRewardMultiplier = 40;
+        _unauthorizedSigningNotificationRewardMultiplier = 50;
+        _dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(100000e18); // 100k T
         authorization.setAuthorizationDecreaseDelay(403200); // ~10 weeks assuming 15s block time
@@ -515,24 +515,24 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
+    /// @param sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
-    /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
+    /// @param relayEntryTimeoutNotificationRewardMultiplier New value of the
     ///        relay entry timeout notification reward multiplier.
-    /// @param _unauthorizedSigningNotificationRewardMultiplier New value of the
+    /// @param unauthorizedSigningNotificationRewardMultiplier New value of the
     ///        unauthorized signing notification reward multiplier.
-    /// @param _dkgMaliciousResultNotificationRewardMultiplier New value of the
+    /// @param dkgMaliciousResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
     function updateRewardParameters(
-        uint256 _sortitionPoolRewardsBanDuration,
-        uint256 _relayEntryTimeoutNotificationRewardMultiplier,
-        uint256 _unauthorizedSigningNotificationRewardMultiplier,
-        uint256 _dkgMaliciousResultNotificationRewardMultiplier
+        uint256 sortitionPoolRewardsBanDuration,
+        uint256 relayEntryTimeoutNotificationRewardMultiplier,
+        uint256 unauthorizedSigningNotificationRewardMultiplier,
+        uint256 dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyGovernance {
-        sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
-        relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
-        unauthorizedSigningNotificationRewardMultiplier = _unauthorizedSigningNotificationRewardMultiplier;
-        dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
+        _sortitionPoolRewardsBanDuration = sortitionPoolRewardsBanDuration;
+        _relayEntryTimeoutNotificationRewardMultiplier = relayEntryTimeoutNotificationRewardMultiplier;
+        _unauthorizedSigningNotificationRewardMultiplier = unauthorizedSigningNotificationRewardMultiplier;
+        _dkgMaliciousResultNotificationRewardMultiplier = dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
@@ -815,7 +815,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             sortitionPool.setRewardIneligibility(
                 misbehavedMembers,
                 // solhint-disable-next-line not-rely-on-time
-                block.timestamp + sortitionPoolRewardsBanDuration
+                block.timestamp + _sortitionPoolRewardsBanDuration
             );
         }
 
@@ -853,7 +853,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         try
             staking.seize(
                 slashingAmount,
-                dkgMaliciousResultNotificationRewardMultiplier,
+                _dkgMaliciousResultNotificationRewardMultiplier,
                 msg.sender,
                 stakingProviderWrapper
             )
@@ -1064,7 +1064,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         try
             staking.seize(
                 slashingAmount,
-                relayEntryTimeoutNotificationRewardMultiplier,
+                _relayEntryTimeoutNotificationRewardMultiplier,
                 msg.sender,
                 stakingProvidersAddresses
             )
@@ -1157,7 +1157,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         try
             staking.seize(
                 unauthorizedSigningSlashingAmount,
-                unauthorizedSigningNotificationRewardMultiplier,
+                _unauthorizedSigningNotificationRewardMultiplier,
                 msg.sender,
                 stakingProvidersAddresses
             )
@@ -1186,7 +1186,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         claim is proved to be valid and signed by sufficient number
     ///         of group members, operators of members deemed as inactive are
     ///         banned for sortition pool rewards for duration specified by
-    ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
+    ///         `_sortitionPoolRewardsBanDuration` parameter. The sender of
     ///         the claim must be one of the claim signers. This function can be
     ///         called only for active and non-terminated groups.
     /// @param claim Operator inactivity claim.
@@ -1230,7 +1230,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         sortitionPool.setRewardIneligibility(
             ineligibleOperators,
             // solhint-disable-next-line not-rely-on-time
-            block.timestamp + sortitionPoolRewardsBanDuration
+            block.timestamp + _sortitionPoolRewardsBanDuration
         );
 
         reimbursementPool.refund(
@@ -1415,6 +1415,51 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @return IDs of selected group members.
     function selectGroup() external view returns (uint32[] memory) {
         return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
+    }
+
+    /// @notice Returns reward-related parameters of the beacon.
+    /// @return sortitionPoolRewardsBanDuration Duration of the sortition pool
+    ///         rewards ban imposed on operators who misbehaved during DKG by
+    ///         being inactive or disqualified and for operators that were
+    ///         identified by the rest of group members as inactive via
+    ///         `notifyOperatorInactivity`.
+    /// @return relayEntryTimeoutNotificationRewardMultiplier Percentage of the
+    ///         staking contract malicious behavior notification reward which
+    ///         will be transferred to the notifier reporting about relay entry
+    ///         timeout. Notifiers are rewarded from a notifiers treasury pool.
+    ///         For example, if notification reward is 1000 and the value of the
+    ///         multiplier is 5, the notifier will receive: 5% of 1000 = 50 per
+    ///         each operator affected.
+    /// @return unauthorizedSigningNotificationRewardMultiplier Percentage of the
+    ///         staking contract malicious behavior notification reward which
+    ///         will be transferred to the notifier reporting about unauthorized
+    ///         signing. Notifiers are rewarded from a notifiers treasury pool.
+    ///         For example, if a notification reward is 1000 and the value of
+    ///         the multiplier is 5, the notifier will receive: 5% of 1000 = 50
+    ///         per each operator affected.
+    /// @return dkgMaliciousResultNotificationRewardMultiplier Percentage of the
+    ///         staking contract malicious behavior notification reward which
+    ///         will be transferred to the notifier reporting about a malicious
+    ///         DKG result. Notifiers are rewarded from a notifiers treasury
+    ///         pool. For example, if notification reward is 1000 and the value
+    ///         of the multiplier is 5, the notifier will receive:
+    ///         5% of 1000 = 50 per each operator affected.
+    function rewardParameters()
+        external
+        view
+        returns (
+            uint256 sortitionPoolRewardsBanDuration,
+            uint256 relayEntryTimeoutNotificationRewardMultiplier,
+            uint256 unauthorizedSigningNotificationRewardMultiplier,
+            uint256 dkgMaliciousResultNotificationRewardMultiplier
+        )
+    {
+        return (
+            _sortitionPoolRewardsBanDuration,
+            _relayEntryTimeoutNotificationRewardMultiplier,
+            _unauthorizedSigningNotificationRewardMultiplier,
+            _dkgMaliciousResultNotificationRewardMultiplier
+        );
     }
 
     /// @notice Returns gas-related parameters of the beacon.

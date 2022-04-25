@@ -2213,9 +2213,11 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the sortition pool rewards ban duration", async () => {
-        expect(
-          await randomBeacon.sortitionPoolRewardsBanDuration()
-        ).to.be.equal(initialSortitionPoolRewardsBanDuration)
+        const { sortitionPoolRewardsBanDuration } =
+          await randomBeacon.rewardParameters()
+        expect(sortitionPoolRewardsBanDuration).to.be.equal(
+          initialSortitionPoolRewardsBanDuration
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -2302,9 +2304,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the sortition pool rewards ban duration", async () => {
-          expect(
-            await randomBeacon.sortitionPoolRewardsBanDuration()
-          ).to.be.equal(123)
+          const { sortitionPoolRewardsBanDuration } =
+            await randomBeacon.rewardParameters()
+          expect(sortitionPoolRewardsBanDuration).to.be.equal(123)
         })
 
         it("should emit SortitionPoolRewardsBanDurationUpdated event", async () => {
@@ -2362,9 +2364,11 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the unauthorized signing notification reward multiplier", async () => {
-        expect(
-          await randomBeacon.unauthorizedSigningNotificationRewardMultiplier()
-        ).to.be.equal(initialUnauthorizedSignatureNotificationRewardMultiplier)
+        const { unauthorizedSigningNotificationRewardMultiplier } =
+          await randomBeacon.rewardParameters()
+        expect(unauthorizedSigningNotificationRewardMultiplier).to.be.equal(
+          initialUnauthorizedSignatureNotificationRewardMultiplier
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -2451,9 +2455,11 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the unauthorized signing notification reward multiplier", async () => {
-          expect(
-            await randomBeacon.unauthorizedSigningNotificationRewardMultiplier()
-          ).to.be.equal(100)
+          const { unauthorizedSigningNotificationRewardMultiplier } =
+            await randomBeacon.rewardParameters()
+          expect(unauthorizedSigningNotificationRewardMultiplier).to.be.equal(
+            100
+          )
         })
 
         it("should emit UnauthorizedSigningNotificationRewardMultiplierUpdated event", async () => {
@@ -2511,9 +2517,11 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the relay entry timeout notification reward multiplier", async () => {
-        expect(
-          await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
-        ).to.be.equal(initialRelayEntryTimeoutNotificationRewardMultiplier)
+        const { relayEntryTimeoutNotificationRewardMultiplier } =
+          await randomBeacon.rewardParameters()
+        expect(relayEntryTimeoutNotificationRewardMultiplier).to.be.equal(
+          initialRelayEntryTimeoutNotificationRewardMultiplier
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -2600,9 +2608,10 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the relay entry timeout notification reward multiplier", async () => {
-          expect(
-            await randomBeacon.relayEntryTimeoutNotificationRewardMultiplier()
-          ).to.be.equal(100)
+          const { relayEntryTimeoutNotificationRewardMultiplier } =
+            await randomBeacon.rewardParameters()
+
+          expect(relayEntryTimeoutNotificationRewardMultiplier).to.be.equal(100)
         })
 
         it("should emit RelayEntryTimeoutNotificationRewardMultiplierUpdated event", async () => {
@@ -2973,9 +2982,12 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the DKG malicious result notification reward multiplier", async () => {
-        expect(
-          await randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-        ).to.be.equal(initialDkgMaliciousResultNotificationRewardMultiplier)
+        const { dkgMaliciousResultNotificationRewardMultiplier } =
+          await randomBeacon.rewardParameters()
+
+        expect(dkgMaliciousResultNotificationRewardMultiplier).to.be.equal(
+          initialDkgMaliciousResultNotificationRewardMultiplier
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -3062,9 +3074,11 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the DKG malicious result notification reward multiplier", async () => {
-          expect(
-            await randomBeacon.dkgMaliciousResultNotificationRewardMultiplier()
-          ).to.be.equal(100)
+          const { dkgMaliciousResultNotificationRewardMultiplier } =
+            await randomBeacon.rewardParameters()
+          expect(dkgMaliciousResultNotificationRewardMultiplier).to.be.equal(
+            100
+          )
         })
 
         it("should emit DkgMaliciousResultNotificationRewardMultiplierUpdated event", async () => {
