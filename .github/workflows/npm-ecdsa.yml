@@ -48,13 +48,13 @@ jobs:
           commit: ${{ github.sha }}
 
       - name: Publish package
-        if: github.ref == 'main'
+        if: github.ref == 'refs/heads/main'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access=public --tag=development
 
       - name: Publish package
-        if: github.ref != 'main'
+        if: github.ref != 'refs/heads/main'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access=public

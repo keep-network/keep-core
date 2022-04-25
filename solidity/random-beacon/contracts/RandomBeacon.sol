@@ -19,6 +19,7 @@ import "./libraries/Groups.sol";
 import "./libraries/Relay.sol";
 import "./libraries/Groups.sol";
 import "./libraries/Callback.sol";
+import "./Reimbursable.sol";
 import {BeaconInactivity as Inactivity} from "./libraries/BeaconInactivity.sol";
 import {BeaconAuthorization as Authorization} from "./libraries/BeaconAuthorization.sol";
 import {BeaconDkg as DKG} from "./libraries/BeaconDkg.sol";
@@ -33,22 +34,17 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-// FIXME: As a workaround for a slither [bug] we need to import the library without
-// an alias.
-// bug: https://github.com/crytic/slither/issues/1067
-import {BeaconDkg} from "./libraries/BeaconDkg.sol";
-
 /// @title Keep Random Beacon
-/// @notice Keep Random Beacon contract. It lets anyone request a new
+/// @notice Keep Random Beacon contract. It lets to request a new
 ///         relay entry and validates the new relay entry provided by the
-///         network. This contract is in charge of all Random Beacon maintenance
+///         network. This contract is in charge of all other Random Beacon
 ///         activities such as group lifecycle or slashing.
 /// @dev Should be owned by the governance contract controlling Random Beacon
 ///      parameters.
-contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
+contract RandomBeacon is IRandomBeacon, IApplication, Ownable, Reimbursable {
     using SafeERC20 for IERC20;
     using Authorization for Authorization.Data;
-    using BeaconDkg for DKG.Data;
+    using DKG for DKG.Data;
     using Groups for Groups.Data;
     using Relay for Relay.Data;
     using Callback for Callback.Data;
@@ -72,25 +68,11 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         a fixed frequency of relay requests.
     uint256 public groupCreationFrequency;
 
-    /// @notice Reward in T for submitting DKG result. The reward is paid to
-    ///         a submitter of a valid DKG result when the DKG result challenge
-    ///         period ends.
-    uint256 public dkgResultSubmissionReward;
-
-    /// @notice Reward in T for unlocking the sortition pool if DKG timed out.
-    ///         When DKG result submission timed out, sortition pool is still
-    ///         locked and someone needs to unlock it. Anyone can do it and earn
-    ///         `sortitionPoolUnlockingReward`.
-    uint256 public sortitionPoolUnlockingReward;
-
-    /// @notice Reward in T for notifying the operator is ineligible.
-    uint256 public ineligibleOperatorNotifierReward;
-
-    /// @notice Slashing amount for supporting malicious DKG result. Every
+    /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
-    ///         `dkgResultChallengePeriodLength`. If the DKG result submitted
-    ///         is challenged and proven to be malicious, each operator who
-    ///         signed the malicious result is slashed for
+    ///         `resultChallengePeriodLength`. If the DKG result submitted
+    ///         is challenged and proven to be malicious, the operator who
+    ///         submitted the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
     uint96 public maliciousDkgResultSlashingAmount;
 
@@ -132,6 +114,28 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         operator affected.
     uint256 public dkgMaliciousResultNotificationRewardMultiplier;
 
+    /// @notice Calculated gas cost for submitting a DKG result. This will
+    ///         be refunded as part of the DKG approval process. It is in the
+    ///         submitter's interest to not skip his priority turn on the approval,
+    ///         otherwise the refund of the DKG submission will be refunded to
+    ///         another group member that will call the DKG approve function.
+    uint256 public dkgResultSubmissionGas = 235000;
+
+    /// @notice Gas that is meant to balance the DKG result approval's overall
+    ///         cost. Can be updated by the governance based on the current
+    ///         market conditions.
+    uint256 public dkgResultApprovalGasOffset = 41500;
+
+    /// @notice Gas that is meant to balance the operator inactivity notification
+    ///         cost. Can be updated by the governance based on the current
+    ///         market conditions.
+    uint256 public notifyOperatorInactivityGasOffset = 54500;
+
+    /// @notice Gas that is meant to balance the relay entry submission cost.
+    ///         Can be updated by the governance based on the current market
+    ///         conditions.
+    uint256 public relayEntrySubmissionGasOffset = 11250;
+
     // Other parameters
 
     /// @notice Stores current operator inactivity claim nonce for given group.
@@ -139,19 +143,14 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         against claim replay.
     mapping(uint64 => uint256) public inactivityClaimNonce; // groupId -> nonce
 
+    /// @notice Authorized addresses that can request a relay entry.
+    mapping(address => bool) public authorizedRequesters;
+
     // External dependencies
 
     SortitionPool public sortitionPool;
     IERC20 public tToken;
     IStaking public staking;
-
-    // Token bookkeeping
-
-    /// @notice Rewards pool for DKG actions. This pool is funded from relay
-    ///         request fees and external donates. Funds are used to cover
-    ///         rewards for actors approving DKG result or notifying about
-    ///         DKG timeout.
-    uint256 public dkgRewardsPool;
 
     // Libraries data storages
 
@@ -169,7 +168,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     );
 
     event RelayEntryParametersUpdated(
-        uint256 relayRequestFee,
         uint256 relayEntrySoftTimeout,
         uint256 relayEntryHardTimeout,
         uint256 callbackGasLimit
@@ -187,9 +185,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     );
 
     event RewardParametersUpdated(
-        uint256 dkgResultSubmissionReward,
-        uint256 sortitionPoolUnlockingReward,
-        uint256 ineligibleOperatorNotifierReward,
         uint256 sortitionPoolRewardsBanDuration,
         uint256 relayEntryTimeoutNotificationRewardMultiplier,
         uint256 unauthorizedSigningNotificationRewardMultiplier,
@@ -200,6 +195,18 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         uint256 relayEntrySubmissionFailureSlashingAmount,
         uint256 maliciousDkgResultSlashingAmount,
         uint256 unauthorizedSigningSlashingAmount
+    );
+
+    event GasParametersUpdated(
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 relayEntrySubmissionGasOffset
+    );
+
+    event RequesterAuthorizationUpdated(
+        address indexed requester,
+        bool isAuthorized
     );
 
     event DkgStarted(uint256 indexed seed);
@@ -349,19 +356,30 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         SortitionPool _sortitionPool,
         IERC20 _tToken,
         IStaking _staking,
-        DKGValidator _dkgValidator
+        DKGValidator _dkgValidator,
+        ReimbursementPool _reimbursementPool
     ) {
         sortitionPool = _sortitionPool;
         tToken = _tToken;
         staking = _staking;
+        reimbursementPool = _reimbursementPool;
+
+        require(
+            address(_sortitionPool) != address(0),
+            "Zero-address reference"
+        );
+        require(address(_tToken) != address(0), "Zero-address reference");
+        require(address(_staking) != address(0), "Zero-address reference");
+        require(address(_dkgValidator) != address(0), "Zero-address reference");
+        require(
+            address(_reimbursementPool) != address(0),
+            "Zero-address reference"
+        );
 
         // TODO: revisit all initial values
         callbackGasLimit = 64000;
         groupCreationFrequency = 5;
 
-        dkgResultSubmissionReward = 1000e18;
-        sortitionPoolUnlockingReward = 100e18;
-        ineligibleOperatorNotifierReward = 0;
         maliciousDkgResultSlashingAmount = 50000e18;
         unauthorizedSigningSlashingAmount = 100e3 * 1e18;
         sortitionPoolRewardsBanDuration = 2 weeks;
@@ -378,7 +396,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
 
         relay.initSeedEntry();
-        relay.setRelayRequestFee(200e18);
         relay.setRelayEntrySoftTimeout(1280); // 64 members * 20 blocks = 1280 blocks
         relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
@@ -420,24 +437,20 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _relayRequestFee New relay request fee
     /// @param _relayEntrySoftTimeout New relay entry submission soft timeout.
     /// @param _relayEntryHardTimeout New relay entry hard timeout
     /// @param _callbackGasLimit New callback gas limit
     function updateRelayEntryParameters(
-        uint256 _relayRequestFee,
         uint256 _relayEntrySoftTimeout,
         uint256 _relayEntryHardTimeout,
         uint256 _callbackGasLimit
     ) external onlyOwner {
         callbackGasLimit = _callbackGasLimit;
 
-        relay.setRelayRequestFee(_relayRequestFee);
         relay.setRelayEntrySoftTimeout(_relayEntrySoftTimeout);
         relay.setRelayEntryHardTimeout(_relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
-            _relayRequestFee,
             _relayEntrySoftTimeout,
             _relayEntryHardTimeout,
             callbackGasLimit
@@ -466,7 +479,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
 
     /// @notice Updates the values of DKG parameters.
     /// @dev Can be called only by the contract owner, which should be the
-    ///      wallet registry governance contract. The caller is responsible for
+    ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
     /// @param _resultChallengePeriodLength New DKG result challenge period
     ///        length
@@ -495,10 +508,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     /// @dev Can be called only by the contract owner, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionReward New DKG result submission reward
-    /// @param _sortitionPoolUnlockingReward New sortition pool unlocking reward
-    /// @param _ineligibleOperatorNotifierReward New value of the ineligible
-    ///        operator notifier reward.
     /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
     /// @param _relayEntryTimeoutNotificationRewardMultiplier New value of the
@@ -508,25 +517,16 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     /// @param _dkgMaliciousResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
     function updateRewardParameters(
-        uint256 _dkgResultSubmissionReward,
-        uint256 _sortitionPoolUnlockingReward,
-        uint256 _ineligibleOperatorNotifierReward,
         uint256 _sortitionPoolRewardsBanDuration,
         uint256 _relayEntryTimeoutNotificationRewardMultiplier,
         uint256 _unauthorizedSigningNotificationRewardMultiplier,
         uint256 _dkgMaliciousResultNotificationRewardMultiplier
     ) external onlyOwner {
-        dkgResultSubmissionReward = _dkgResultSubmissionReward;
-        sortitionPoolUnlockingReward = _sortitionPoolUnlockingReward;
-        ineligibleOperatorNotifierReward = _ineligibleOperatorNotifierReward;
         sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
         relayEntryTimeoutNotificationRewardMultiplier = _relayEntryTimeoutNotificationRewardMultiplier;
         unauthorizedSigningNotificationRewardMultiplier = _unauthorizedSigningNotificationRewardMultiplier;
         dkgMaliciousResultNotificationRewardMultiplier = _dkgMaliciousResultNotificationRewardMultiplier;
         emit RewardParametersUpdated(
-            dkgResultSubmissionReward,
-            sortitionPoolUnlockingReward,
-            ineligibleOperatorNotifierReward,
             sortitionPoolRewardsBanDuration,
             relayEntryTimeoutNotificationRewardMultiplier,
             unauthorizedSigningNotificationRewardMultiplier,
@@ -559,6 +559,60 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             maliciousDkgResultSlashingAmount,
             unauthorizedSigningSlashingAmount
         );
+    }
+
+    /// @notice Updates the values of gas parameters.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract. The caller is responsible for
+    ///      validating parameters.
+    /// @param _dkgResultSubmissionGas New DKG result submission gas
+    /// @param _dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param _notifyOperatorInactivityGasOffset New operator inactivity
+    ///        notification gas offset
+    /// @param _relayEntrySubmissionGasOffset New relay entry submission gas
+    ///        offset
+    function updateGasParameters(
+        uint256 _dkgResultSubmissionGas,
+        uint256 _dkgResultApprovalGasOffset,
+        uint256 _notifyOperatorInactivityGasOffset,
+        uint256 _relayEntrySubmissionGasOffset
+    ) external onlyOwner {
+        dkgResultSubmissionGas = _dkgResultSubmissionGas;
+        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
+        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        relayEntrySubmissionGasOffset = _relayEntrySubmissionGasOffset;
+
+        emit GasParametersUpdated(
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset,
+            _relayEntrySubmissionGasOffset
+        );
+    }
+
+    /// @notice Set authorization for requesters that can request a relay
+    ///         entry.
+    /// @dev Can be called only by the contract owner, which should be the
+    ///      random beacon governance contract.
+    /// @param requester Requester, can be a contract or EOA
+    /// @param isAuthorized True or false
+    function setRequesterAuthorization(address requester, bool isAuthorized)
+        external
+        onlyOwner
+    {
+        authorizedRequesters[requester] = isAuthorized;
+
+        emit RequesterAuthorizationUpdated(requester, isAuthorized);
+    }
+
+    /// @notice Withdraw rewards for the given staking provider to their
+    ///         beneficiary address. Reverts if staking provider has not
+    ///         registered the operator address.
+    function withdrawRewards(address stakingProvider) external {
+        address operator = stakingProviderToOperator(stakingProvider);
+        require(operator != address(0), "Unknown operator");
+        (, address beneficiary, ) = staking.rolesOf(stakingProvider);
+        sortitionPool.withdrawRewards(operator, beneficiary);
     }
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
@@ -727,30 +781,25 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         dkg.submitResult(dkgResult);
     }
 
-    /// @notice Notifies about DKG timeout. Pays the sortition pool unlocking
-    ///         reward to the notifier.
-    function notifyDkgTimeout() external {
+    /// @notice Notifies about DKG timeout.
+    function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyTimeout();
-
-        transferDkgRewards(msg.sender, sortitionPoolUnlockingReward);
-
-        dkg.complete();
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
-    ///         as valid, pays reward to the approver, bans misbehaved group
-    ///         members from the sortition pool rewards, and completes the group
-    ///         creation by activating the candidate group. For the first
-    ///         `submitterPrecedencePeriodLength` blocks after the end of the
-    ///         challenge period can be called only by the DKG result submitter.
-    ///         After that time, can be called by anyone.
+    ///         as valid, bans misbehaved group members from the sortition pool
+    ///         rewards, and completes the group creation by activating the
+    ///         candidate group. For the first `submitterPrecedencePeriodLength`
+    ///         blocks after the end of the challenge period can be called only
+    ///         by the DKG result submitter. After that time, can be called by
+    ///         anyone.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
     function approveDkgResult(DKG.Result calldata dkgResult) external {
-        uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
+        uint256 gasStart = gasleft();
 
-        transferDkgRewards(msg.sender, dkgResultSubmissionReward);
+        uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
         if (misbehavedMembers.length > 0) {
             sortitionPool.setRewardIneligibility(
@@ -762,6 +811,14 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
 
         groups.addGroup(dkgResult.groupPubKey, dkgResult.membersHash);
         dkg.complete();
+
+        // Refund msg.sender's ETH for DKG result submission and result approval
+        reimbursementPool.refund(
+            dkgResultSubmissionGas +
+                (gasStart - gasleft()) +
+                dkgResultApprovalGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -845,18 +902,22 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
 
     /// @notice Creates a request to generate a new relay entry, which will
     ///         include a random number (by signing the previous entry's
-    ///         random number). Requires a request fee denominated in T token.
+    ///         random number). Requester must be previously authorized by the
+    ///         governance.
     /// @param callbackContract Beacon consumer callback contract.
     function requestRelayEntry(IRandomBeaconConsumer callbackContract)
         external
     {
+        require(
+            authorizedRequesters[msg.sender],
+            "Requester must be authorized"
+        );
+
         uint64 groupId = groups.selectGroup(
             uint256(keccak256(AltBn128.g1Marshal(relay.previousEntry)))
         );
 
         relay.requestEntry(groupId);
-
-        fundDkgRewardsPool(msg.sender, relay.relayRequestFee);
 
         callback.setCallbackContract(callbackContract);
 
@@ -877,6 +938,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         of cases.
     /// @param entry Group BLS signature over the previous entry.
     function submitRelayEntry(bytes calldata entry) external {
+        uint256 gasStart = gasleft();
+
         Groups.Group storage group = groups.getGroup(
             relay.currentRequestGroupID
         );
@@ -890,6 +953,11 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + relayEntrySubmissionGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Creates a new relay entry.
@@ -899,6 +967,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         bytes calldata entry,
         uint32[] calldata groupMembers
     ) external {
+        uint256 gasStart = gasleft();
         uint256 currentRequestId = relay.currentRequestID;
 
         Groups.Group storage group = groups.getGroup(
@@ -951,6 +1020,10 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         }
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + relayEntrySubmissionGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Reports a relay entry timeout.
@@ -1104,8 +1177,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         of group members, operators of members deemed as inactive are
     ///         banned for sortition pool rewards for duration specified by
     ///         `sortitionPoolRewardsBanDuration` parameter. The sender of
-    ///         the claim must be one of the claim signers. This function
-    ///         can be called only for active and non-terminated groups.
+    ///         the claim must be one of the claim signers. This function can be
+    ///         called only for active and non-terminated groups.
     /// @param claim Operator inactivity claim.
     /// @param nonce Current inactivity claim nonce for the given group. Must
     ///        be the same as the stored one.
@@ -1115,6 +1188,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
+        uint256 gasStart = gasleft();
         uint64 groupId = claim.groupId;
 
         require(nonce == inactivityClaimNonce[groupId], "Invalid nonce");
@@ -1148,24 +1222,11 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
             // solhint-disable-next-line not-rely-on-time
             block.timestamp + sortitionPoolRewardsBanDuration
         );
-    }
 
-    /// @notice Funds the DKG rewards pool.
-    /// @param from Address of the funder. The funder must give a sufficient
-    ///        allowance for this contract to make a successful call.
-    /// @param value Token value transferred by the funder.
-    function fundDkgRewardsPool(address from, uint256 value) public {
-        dkgRewardsPool += value;
-        tToken.safeTransferFrom(from, address(this), value);
-    }
-
-    /// @notice Makes a transfer using DKG rewards pool.
-    /// @param to Address of the recipient.
-    /// @param value Token value transferred to the recipient.
-    function transferDkgRewards(address to, uint256 value) internal {
-        uint256 actualValue = Math.min(dkgRewardsPool, value);
-        dkgRewardsPool -= actualValue;
-        tToken.safeTransfer(to, actualValue);
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + notifyOperatorInactivityGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice The minimum authorization amount required so that operator can
@@ -1188,12 +1249,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
     ///         in progress.
     function isRelayRequestInProgress() external view returns (bool) {
         return relay.isRequestInProgress();
-    }
-
-    /// @return Relay request fee in T. This fee needs to be provided by the
-    ///         account or contract requesting for a new relay entry.
-    function relayRequestFee() external view returns (uint256) {
-        return relay.relayRequestFee;
     }
 
     /// @return Soft timeout in blocks for a group to submit the relay entry.
@@ -1312,7 +1367,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
 
     /// @notice Returns operator registered for the given staking provider.
     function stakingProviderToOperator(address stakingProvider)
-        external
+        public
         view
         returns (address)
     {
@@ -1343,13 +1398,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Ownable {
         return sortitionPool.isOperatorInPool(operator);
     }
 
-    /// @notice Selects a new group of operators based on the provided seed.
+    /// @notice Selects a new group of operators. Can only be called when DKG
+    ///         is in progress and the pool is locked.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.
-    /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
-    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
-        // TODO: Read seed from RandomBeaconDkg
-        return sortitionPool.selectGroup(DKG.groupSize, seed);
+    function selectGroup() external view returns (uint32[] memory) {
+        return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
     }
 }

@@ -66,13 +66,13 @@ describe("RandomBeacon - Callback", () => {
     t = contracts.t as T
     callbackContract = contracts.callbackContractStub as CallbackContractStub
     callbackContract1 = contracts.callbackContractStub1 as CallbackContractStub
+
+    await randomBeacon.setRequesterAuthorization(requester.address, true)
   })
 
   describe("requestRelayEntry", () => {
     before(async () => {
       await createSnapshot()
-
-      await approveTokenForFee()
     })
 
     after(async () => {
@@ -105,8 +105,6 @@ describe("RandomBeacon - Callback", () => {
           .connect(submitter)
           ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
-        await approveTokenForFee()
-
         await randomBeacon.connect(requester).requestRelayEntry(ZERO_ADDRESS)
 
         await expect(await randomBeacon.getCallbackContract()).to.equal(
@@ -127,8 +125,6 @@ describe("RandomBeacon - Callback", () => {
           .connect(submitter)
           ["submitRelayEntry(bytes)"](blsData.groupSignature)
 
-        await approveTokenForFee()
-
         await randomBeacon
           .connect(requester)
           .requestRelayEntry(callbackContract1.address)
@@ -145,8 +141,6 @@ describe("RandomBeacon - Callback", () => {
   describe("submitRelayEntry", () => {
     before(async () => {
       await createSnapshot()
-
-      await approveTokenForFee()
     })
 
     after(async () => {
@@ -183,7 +177,6 @@ describe("RandomBeacon - Callback", () => {
           await createSnapshot()
 
           await randomBeacon.updateRelayEntryParameters(
-            params.relayRequestFee,
             params.relayEntrySoftTimeout,
             params.relayEntryHardTimeout,
             40000
@@ -225,11 +218,4 @@ describe("RandomBeacon - Callback", () => {
       })
     })
   })
-
-  async function approveTokenForFee() {
-    await t.mint(requester.address, params.relayRequestFee)
-    await t
-      .connect(requester)
-      .approve(randomBeacon.address, params.relayRequestFee)
-  }
 })

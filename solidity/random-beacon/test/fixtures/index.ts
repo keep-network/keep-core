@@ -33,7 +33,6 @@ export const dkgState = {
 
 export const params = {
   governanceDelay: 604800, // 1 week
-  relayRequestFee: to1e18(100),
   relayEntrySoftTimeout: 35,
   relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
@@ -42,20 +41,17 @@ export const params = {
   dkgResultChallengePeriodLength: 100,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
-  dkgResultSubmissionReward: to1e18(5),
-  sortitionPoolUnlockingReward: to1e18(10),
   sortitionPoolRewardsBanDuration: 1209600, // 2 weeks
   relayEntrySubmissionFailureSlashingAmount: to1e18(1000),
   maliciousDkgResultSlashingAmount: to1e18(50000),
   relayEntryTimeoutNotificationRewardMultiplier: 40,
   unauthorizedSigningNotificationRewardMultiplier: 50,
   dkgMaliciousResultNotificationRewardMultiplier: 100,
-  ineligibleOperatorNotifierReward: to1e18(200),
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(200000),
   authorizationDecreaseDelay: 403200,
-  reimbursmentPoolStaticGas: 41900,
-  reimbursmentPoolMaxGasPrice: ethers.utils.parseUnits("20", "gwei"),
+  reimbursementPoolStaticGas: 40800,
+  reimbursementPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
 }
 
 // TODO: We should consider using hardhat-deploy plugin for contracts deployment.
@@ -77,8 +73,8 @@ export async function blsDeployment(): Promise<DeployedContracts> {
 export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
   const reimbursementPool = await ReimbursementPool.deploy(
-    params.reimbursmentPoolStaticGas,
-    params.reimbursmentPoolMaxGasPrice
+    params.reimbursementPoolStaticGas,
+    params.reimbursementPoolMaxGasPrice
   )
   await reimbursementPool.deployed()
 
@@ -98,7 +94,6 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
-    staking.address,
     t.address,
     constants.poolWeightDivisor
   )) as SortitionPool
@@ -123,6 +118,18 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   )) as DKGValidator
   await dkgValidator.deployed()
 
+  const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
+  const reimbursementPool = await ReimbursementPool.deploy(
+    params.reimbursementPoolStaticGas,
+    params.reimbursementPoolMaxGasPrice
+  )
+  await reimbursementPool.deployed()
+
+  await deployer.sendTransaction({
+    to: reimbursementPool.address,
+    value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
+  })
+
   const RandomBeacon =
     await ethers.getContractFactory<RandomBeaconStub__factory>(
       "RandomBeaconStub",
@@ -140,13 +147,15 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     sortitionPool.address,
     t.address,
     staking.address,
-    dkgValidator.address
+    dkgValidator.address,
+    reimbursementPool.address
   )
   await randomBeacon.deployed()
 
   await staking.connect(deployer).approveApplication(randomBeacon.address)
 
   await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
+  await reimbursementPool.connect(deployer).authorize(randomBeacon.address)
 
   await updateTokenStakingParams(t, staking, deployer)
   await setFixtureParameters(randomBeacon)
@@ -156,12 +165,18 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     staking,
     randomBeacon,
     t,
+    reimbursementPool,
   }
 
   return contracts
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
+  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+  const governance: SignerWithAddress = await ethers.getNamedSigner(
+    "governance"
+  )
+
   const contracts = await randomBeaconDeployment()
 
   const RandomBeaconGovernance =
@@ -174,7 +189,12 @@ export async function testDeployment(): Promise<DeployedContracts> {
       params.governanceDelay
     )
   await randomBeaconGovernance.deployed()
-  await contracts.randomBeacon.transferOwnership(randomBeaconGovernance.address)
+  await contracts.randomBeacon
+    .connect(deployer)
+    .transferOwnership(randomBeaconGovernance.address)
+  await randomBeaconGovernance
+    .connect(deployer)
+    .transferOwnership(governance.address)
 
   const newContracts = { randomBeaconGovernance }
 
@@ -205,16 +225,12 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
   )
 
   await randomBeacon.updateRelayEntryParameters(
-    params.relayRequestFee,
     params.relayEntrySoftTimeout,
     params.relayEntryHardTimeout,
     params.callbackGasLimit
   )
 
   await randomBeacon.updateRewardParameters(
-    params.dkgResultSubmissionReward,
-    params.sortitionPoolUnlockingReward,
-    params.ineligibleOperatorNotifierReward,
     params.sortitionPoolRewardsBanDuration,
     params.relayEntryTimeoutNotificationRewardMultiplier,
     params.unauthorizedSigningNotificationRewardMultiplier,
