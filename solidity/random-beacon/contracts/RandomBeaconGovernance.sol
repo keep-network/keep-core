@@ -25,8 +25,8 @@ contract RandomBeaconGovernance is Ownable {
     uint256 public newGovernanceDelay;
     uint256 public governanceDelayChangeInitiated;
 
-    address public newRandomBeaconOwner;
-    uint256 public randomBeaconOwnershipTransferInitiated;
+    address public newRandomBeaconGovernance;
+    uint256 public randomBeaconGovernanceTransferInitiated;
 
     uint256 public newRelayEntrySoftTimeout;
     uint256 public relayEntrySoftTimeoutChangeInitiated;
@@ -103,11 +103,11 @@ contract RandomBeaconGovernance is Ownable {
     );
     event GovernanceDelayUpdated(uint256 governanceDelay);
 
-    event RandomBeaconOwnershipTransferStarted(
-        address newRandomBeaconOwner,
+    event RandomBeaconGovernanceTransferStarted(
+        address newRandomBeaconGovernance,
         uint256 timestamp
     );
-    event RandomBeaconOwnershipTransferred(address newRandomBeaconOwner);
+    event RandomBeaconGovernanceTransferred(address newRandomBeaconGovernance);
 
     event RelayEntrySoftTimeoutUpdateStarted(
         uint256 relayEntrySoftTimeout,
@@ -304,39 +304,38 @@ contract RandomBeaconGovernance is Ownable {
         newGovernanceDelay = 0;
     }
 
-    /// @notice Begins the random beacon ownership transfer process.
-    /// @dev Can be called only by the contract owner.
-    function beginRandomBeaconOwnershipTransfer(address _newRandomBeaconOwner)
-        external
-        onlyOwner
-    {
+    /// @notice Begins the random beacon governance transfer process.
+    /// @dev Can be called only by the current contract governance.
+    function beginRandomBeaconGovernanceTransfer(
+        address _newRandomBeaconGovernance
+    ) external onlyOwner {
         require(
-            address(_newRandomBeaconOwner) != address(0),
-            "New random beacon owner address cannot be zero"
+            address(_newRandomBeaconGovernance) != address(0),
+            "New random beacon governance address cannot be zero"
         );
-        newRandomBeaconOwner = _newRandomBeaconOwner;
+        newRandomBeaconGovernance = _newRandomBeaconGovernance;
         /* solhint-disable not-rely-on-time */
-        randomBeaconOwnershipTransferInitiated = block.timestamp;
-        emit RandomBeaconOwnershipTransferStarted(
-            _newRandomBeaconOwner,
+        randomBeaconGovernanceTransferInitiated = block.timestamp;
+        emit RandomBeaconGovernanceTransferStarted(
+            _newRandomBeaconGovernance,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the random beacon ownership transfer process.
-    /// @dev Can be called only by the contract owner, after the governance
-    ///      delay elapses.
-    function finalizeRandomBeaconOwnershipTransfer()
+    /// @notice Finalizes the random beacon governance transfer process.
+    /// @dev Can be called only by the current contract governance, after the
+    ///      governance delay elapses.
+    function finalizeRandomBeaconGovernanceTransfer()
         external
         onlyOwner
-        onlyAfterGovernanceDelay(randomBeaconOwnershipTransferInitiated)
+        onlyAfterGovernanceDelay(randomBeaconGovernanceTransferInitiated)
     {
-        emit RandomBeaconOwnershipTransferred(newRandomBeaconOwner);
+        emit RandomBeaconGovernanceTransferred(newRandomBeaconGovernance);
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.transferOwnership(newRandomBeaconOwner);
-        randomBeaconOwnershipTransferInitiated = 0;
-        newRandomBeaconOwner = address(0);
+        randomBeacon.transferGovernance(newRandomBeaconGovernance);
+        randomBeaconGovernanceTransferInitiated = 0;
+        newRandomBeaconGovernance = address(0);
     }
 
     /// @notice Begins the relay entry soft timeout update process.
@@ -1218,15 +1217,15 @@ contract RandomBeaconGovernance is Ownable {
         return getRemainingChangeTime(governanceDelayChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the random beacon ownership can
+    /// @notice Get the time remaining until the random beacon governance can
     ///         be transferred.
     /// @return Remaining time in seconds.
-    function getRemainingRandomBeaconOwnershipTransferDelayTime()
+    function getRemainingRandomBeaconGovernanceTransferDelayTime()
         external
         view
         returns (uint256)
     {
-        return getRemainingChangeTime(randomBeaconOwnershipTransferInitiated);
+        return getRemainingChangeTime(randomBeaconGovernanceTransferInitiated);
     }
 
     /// @notice Get the time remaining until the relay entry submission soft
