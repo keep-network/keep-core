@@ -90,7 +90,13 @@ describe("System -- e2e", () => {
 
     await randomBeacon
       .connect(owner)
-      .updateGroupCreationParameters(groupCreationFrequency, groupLifetime)
+      .updateGroupCreationParameters(
+        groupCreationFrequency,
+        groupLifetime,
+        10, // dkgResultChallengePeriodLength, does not matter for this test
+        5, // dkgResultSubmissionTimeout, does not matter for this test
+        1 // dkgSubmitterPrecedencePeriodLength, does not matter for this test
+      )
 
     await randomBeacon
       .connect(owner)

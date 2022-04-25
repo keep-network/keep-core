@@ -239,10 +239,7 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
 
   await randomBeacon.updateGroupCreationParameters(
     params.groupCreationFrequency,
-    params.groupLifeTime
-  )
-
-  await randomBeacon.updateDkgParameters(
+    params.groupLifeTime,
     params.dkgResultChallengePeriodLength,
     params.dkgResultSubmissionTimeout,
     params.dkgSubmitterPrecedencePeriodLength

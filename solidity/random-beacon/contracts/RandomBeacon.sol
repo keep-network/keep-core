@@ -66,7 +66,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
     /// @notice The frequency of new group creation. Groups are created with
     ///         a fixed frequency of relay requests.
-    uint256 public groupCreationFrequency;
+    uint256 internal _groupCreationFrequency;
 
     /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
@@ -173,15 +173,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         uint256 callbackGasLimit
     );
 
-    event DkgParametersUpdated(
+    event GroupCreationParametersUpdated(
+        uint256 groupCreationFrequency,
+        uint256 groupLifetime,
         uint256 dkgResultChallengePeriodLength,
         uint256 dkgResultSubmissionTimeout,
         uint256 dkgResultSubmitterPrecedencePeriodLength
-    );
-
-    event GroupCreationParametersUpdated(
-        uint256 groupCreationFrequency,
-        uint256 groupLifetime
     );
 
     event RewardParametersUpdated(
@@ -378,7 +375,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
         // TODO: revisit all initial values
         _callbackGasLimit = 56000;
-        groupCreationFrequency = 5;
+        _groupCreationFrequency = 5;
 
         _maliciousDkgResultSlashingAmount = 50000e18;
         _unauthorizedSigningSlashingAmount = 100e3 * 1e18;
@@ -444,7 +441,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param relayEntrySoftTimeout New relay entry submission soft timeout.
+    /// @param relayEntrySoftTimeout New relay entry submission soft timeout
     /// @param relayEntryHardTimeout New relay entry hard timeout
     /// @param callbackGasLimit New callback gas limit
     function updateRelayEntryParameters(
@@ -468,46 +465,34 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _groupCreationFrequency New group creation frequency
-    /// @param _groupLifetime New group lifetime in blocks
+    /// @param groupCreationFrequency New group creation frequency
+    /// @param groupLifetime New group lifetime in blocks
+    /// @param dkgResultChallengePeriodLength New DKG result challenge period
+    ///        length
+    /// @param dkgResultSubmissionTimeout New DKG result submission timeout
+    /// @param dkgSubmitterPrecedencePeriodLength New DKG result submitter
+    ///        precedence period length
     function updateGroupCreationParameters(
-        uint256 _groupCreationFrequency,
-        uint256 _groupLifetime
+        uint256 groupCreationFrequency,
+        uint256 groupLifetime,
+        uint256 dkgResultChallengePeriodLength,
+        uint256 dkgResultSubmissionTimeout,
+        uint256 dkgSubmitterPrecedencePeriodLength
     ) external onlyGovernance {
-        groupCreationFrequency = _groupCreationFrequency;
-
-        groups.setGroupLifetime(_groupLifetime);
+        _groupCreationFrequency = groupCreationFrequency;
+        groups.setGroupLifetime(groupLifetime);
+        dkg.setResultChallengePeriodLength(dkgResultChallengePeriodLength);
+        dkg.setResultSubmissionTimeout(dkgResultSubmissionTimeout);
+        dkg.setSubmitterPrecedencePeriodLength(
+            dkgSubmitterPrecedencePeriodLength
+        );
 
         emit GroupCreationParametersUpdated(
             groupCreationFrequency,
-            _groupLifetime
-        );
-    }
-
-    /// @notice Updates the values of DKG parameters.
-    /// @dev Can be called only by the contract guvnor, which should be the
-    ///      random beacon governance contract. The caller is responsible for
-    ///      validating parameters.
-    /// @param _resultChallengePeriodLength New DKG result challenge period
-    ///        length
-    /// @param _resultSubmissionTimeout New DKG result submission timeout
-    /// @param _submitterPrecedencePeriodLength New submitter precedence period
-    ///        length
-    function updateDkgParameters(
-        uint256 _resultChallengePeriodLength,
-        uint256 _resultSubmissionTimeout,
-        uint256 _submitterPrecedencePeriodLength
-    ) external onlyGovernance {
-        dkg.setResultChallengePeriodLength(_resultChallengePeriodLength);
-        dkg.setResultSubmissionTimeout(_resultSubmissionTimeout);
-        dkg.setSubmitterPrecedencePeriodLength(
-            _submitterPrecedencePeriodLength
-        );
-
-        emit DkgParametersUpdated(
-            _resultChallengePeriodLength,
-            _resultSubmissionTimeout,
-            _submitterPrecedencePeriodLength
+            groupLifetime,
+            dkgResultChallengePeriodLength,
+            dkgResultSubmissionTimeout,
+            dkgSubmitterPrecedencePeriodLength
         );
     }
 
@@ -518,11 +503,11 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @param sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
     /// @param relayEntryTimeoutNotificationRewardMultiplier New value of the
-    ///        relay entry timeout notification reward multiplier.
+    ///        relay entry timeout notification reward multiplier
     /// @param unauthorizedSigningNotificationRewardMultiplier New value of the
-    ///        unauthorized signing notification reward multiplier.
+    ///        unauthorized signing notification reward multiplier
     /// @param dkgMaliciousResultNotificationRewardMultiplier New value of the
-    ///        DKG malicious result notification reward multiplier.
+    ///        DKG malicious result notification reward multiplier
     function updateRewardParameters(
         uint256 sortitionPoolRewardsBanDuration,
         uint256 relayEntryTimeoutNotificationRewardMultiplier,
@@ -936,7 +921,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         // its state before relay entry is known. That entry will be used as a
         // group selection seed.
         if (
-            relay.requestCount % groupCreationFrequency == 0 &&
+            relay.requestCount % _groupCreationFrequency == 0 &&
             dkg.currentState() == DKG.State.IDLE
         ) {
             dkg.lockState();
@@ -1261,45 +1246,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         return relay.isRequestInProgress();
     }
 
-    /// @notice Group lifetime in blocks. When a group reached its lifetime, it
-    ///         is no longer selected for new relay requests but may still be
-    ///         responsible for submitting relay entry if relay request assigned
-    ///         to that group is still pending.
-    function groupLifetime() external view returns (uint256) {
-        return groups.groupLifetime;
-    }
-
-    /// @notice The number of blocks for which a DKG result can be challenged.
-    ///         Anyone can challenge DKG result for a certain number of blocks
-    ///         before the result is fully accepted and the group registered in
-    ///         the pool of active groups. If the challenge gets accepted, all
-    ///         operators who signed the malicious result get slashed for
-    ///         `_maliciousDkgResultSlashingAmount` and the notifier gets
-    ///         rewarded.
-    function dkgResultChallengePeriodLength() external view returns (uint256) {
-        return dkg.parameters.resultChallengePeriodLength;
-    }
-
-    /// @notice Timeout in blocks for a group to submit the DKG result.
-    ///         All members are eligible to submit the DKG result.
-    ///         If `dkgResultSubmissionTimeout` passes without the DKG result
-    ///         submitted, DKG is considered as timed out and no DKG result for
-    ///         this group creation can be submitted anymore.
-    function dkgResultSubmissionTimeout() external view returns (uint256) {
-        return dkg.parameters.resultSubmissionTimeout;
-    }
-
-    /// @notice Time during the DKG result approval stage when the submitter
-    ///         of the DKG result takes the precedence to approve the DKG result.
-    ///         After this time passes anyone can approve the DKG result.
-    function dkgSubmitterPrecedencePeriodLength()
-        external
-        view
-        returns (uint256)
-    {
-        return dkg.parameters.submitterPrecedencePeriodLength;
-    }
-
     /// @notice Returns the current value of the staking provider's eligible
     ///         stake. Eligible stake is defined as the currently authorized
     ///         stake minus the pending authorization decrease. Eligible stake
@@ -1410,6 +1356,48 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             relay.relayEntrySoftTimeout,
             relay.relayEntryHardTimeout,
             _callbackGasLimit
+        );
+    }
+
+    /// @notice Returns group-creation-related parameters of the beacon.
+    /// @return groupCreationFrequency The frequency of a new group creation.
+    ///         Groups are created with a fixed frequency of relay requests.
+    /// @return groupLifetime Group lifetime in blocks. When a group reached its
+    ///         lifetime, it is no longer selected for new relay requests but
+    ///         may still be responsible for submitting relay entry if relay
+    ///         request assigned to that group is still pending.
+    /// @return dkgResultChallengePeriodLength The number of blocks for which
+    ///         a DKG result can be challenged. Anyone can challenge DKG result
+    ///         for a certain number of blocks before the result is fully
+    ///         accepted and the group registered in the pool of active groups.
+    ///         If the challenge gets accepted, all operators who signed the
+    ///         malicious result get slashed for and the notifier gets rewarded.
+    /// @return dkgResultSubmissionTimeout Timeout in blocks for a group to
+    ///         submit the DKG result. All members are eligible to submit the
+    ///         DKG result. If `dkgResultSubmissionTimeout` passes without the
+    ///         DKG result submitted, DKG is considered as timed out and no DKG
+    ///         result for this group creation can be submitted anymore.
+    /// @return dkgSubmitterPrecedencePeriodLength Time during the DKG result
+    ///         approval stage when the submitter of the DKG result takes the
+    ///         precedence to approve the DKG result. After this time passes
+    ///         anyone can approve the DKG result.
+    function groupCreationParameters()
+        external
+        view
+        returns (
+            uint256 groupCreationFrequency,
+            uint256 groupLifetime,
+            uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultSubmissionTimeout,
+            uint256 dkgSubmitterPrecedencePeriodLength
+        )
+    {
+        return (
+            _groupCreationFrequency,
+            groups.groupLifetime,
+            dkg.parameters.resultChallengePeriodLength,
+            dkg.parameters.resultSubmissionTimeout,
+            dkg.parameters.submitterPrecedencePeriodLength
         );
     }
 

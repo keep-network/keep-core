@@ -57,11 +57,7 @@ const fixture = async () => {
     .connect(governance)
     .updateGroupCreationParameters(
       initialGroupCreationFrequency,
-      initialGroupLifeTime
-    )
-  await randomBeacon
-    .connect(governance)
-    .updateDkgParameters(
+      initialGroupLifeTime,
       initialDkgResultChallengePeriodLength,
       initialDkgResultSubmissionTimeout,
       initialDkgSubmitterPrecedencePeriodLength
@@ -981,7 +977,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the group creation frequency timeout", async () => {
-        expect(await randomBeacon.groupCreationFrequency()).to.be.equal(
+        const { groupCreationFrequency } =
+          await randomBeacon.groupCreationParameters()
+        expect(groupCreationFrequency).to.be.equal(
           initialGroupCreationFrequency
         )
       })
@@ -1070,7 +1068,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the group creation frequency", async () => {
-          expect(await randomBeacon.groupCreationFrequency()).to.be.equal(1)
+          const { groupCreationFrequency } =
+            await randomBeacon.groupCreationParameters()
+          expect(groupCreationFrequency).to.be.equal(1)
         })
 
         it("should emit GroupCreationFrequencyUpdated event", async () => {
@@ -1163,9 +1163,8 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the group lifetime", async () => {
-        expect(await randomBeacon.groupLifetime()).to.be.equal(
-          initialGroupLifeTime
-        )
+        const { groupLifetime } = await randomBeacon.groupCreationParameters()
+        expect(groupLifetime).to.be.equal(initialGroupLifeTime)
       })
 
       it("should start the governance delay timer", async () => {
@@ -1249,9 +1248,8 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the group lifetime", async () => {
-          expect(await randomBeacon.groupLifetime()).to.be.equal(
-            2 * 24 * 60 * 60
-          )
+          const { groupLifetime } = await randomBeacon.groupCreationParameters()
+          expect(groupLifetime).to.be.equal(2 * 24 * 60 * 60)
         })
 
         it("should emit GroupLifetimeUpdated event", async () => {
@@ -1323,7 +1321,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the DKG result challenge period length", async () => {
-        expect(await randomBeacon.dkgResultChallengePeriodLength()).to.be.equal(
+        const { dkgResultChallengePeriodLength } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgResultChallengePeriodLength).to.be.equal(
           initialDkgResultChallengePeriodLength
         )
       })
@@ -1412,9 +1412,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the DKG result challenge period length", async () => {
-          expect(
-            await randomBeacon.dkgResultChallengePeriodLength()
-          ).to.be.equal(11)
+          const { dkgResultChallengePeriodLength } =
+            await randomBeacon.groupCreationParameters()
+          expect(dkgResultChallengePeriodLength).to.be.equal(11)
         })
 
         it("should emit DkgResultChallengePeriodLengthUpdated event", async () => {
@@ -1489,7 +1489,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the DKG result submission timeout", async () => {
-        expect(await randomBeacon.dkgResultSubmissionTimeout()).to.be.equal(
+        const { dkgResultSubmissionTimeout } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgResultSubmissionTimeout).to.be.equal(
           initialDkgResultSubmissionTimeout
         )
       })
@@ -1579,9 +1581,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the DKG result submission timeout", async () => {
-          expect(await randomBeacon.dkgResultSubmissionTimeout()).to.be.equal(
-            newValue
-          )
+          const { dkgResultSubmissionTimeout } =
+            await randomBeacon.groupCreationParameters()
+          expect(dkgResultSubmissionTimeout).to.be.equal(newValue)
         })
 
         it("should emit DkgResultSubmissionTimeoutUpdated event", async () => {
@@ -1661,9 +1663,11 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the DKG submitter precedence period length", async () => {
-        expect(
-          await randomBeacon.dkgSubmitterPrecedencePeriodLength()
-        ).to.be.equal(initialDkgSubmitterPrecedencePeriodLength)
+        const { dkgSubmitterPrecedencePeriodLength } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgSubmitterPrecedencePeriodLength).to.be.equal(
+          initialDkgSubmitterPrecedencePeriodLength
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1750,9 +1754,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the DKG submitter precedence period length", async () => {
-          expect(
-            await randomBeacon.dkgSubmitterPrecedencePeriodLength()
-          ).to.be.equal(1)
+          const { dkgSubmitterPrecedencePeriodLength } =
+            await randomBeacon.groupCreationParameters()
+          expect(dkgSubmitterPrecedencePeriodLength).to.be.equal(1)
         })
 
         it("should emit DkgSubmitterPrecedencePeriodLengthUpdated event", async () => {

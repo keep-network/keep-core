@@ -499,10 +499,20 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(groupCreationFrequencyChangeInitiated)
     {
         emit GroupCreationFrequencyUpdated(newGroupCreationFrequency);
+        (
+            ,
+            uint256 groupLifetime,
+            uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultSubmissionTimeout,
+            uint256 dkgSubmitterPrecedencePeriodLength
+        ) = randomBeacon.groupCreationParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
             newGroupCreationFrequency,
-            randomBeacon.groupLifetime()
+            groupLifetime,
+            dkgResultChallengePeriodLength,
+            dkgResultSubmissionTimeout,
+            dkgSubmitterPrecedencePeriodLength
         );
         groupCreationFrequencyChangeInitiated = 0;
         newGroupCreationFrequency = 0;
@@ -535,10 +545,20 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(groupLifetimeChangeInitiated)
     {
         emit GroupLifetimeUpdated(newGroupLifetime);
+        (
+            uint256 groupCreationFrequency,
+            ,
+            uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultSubmissionTimeout,
+            uint256 dkgSubmitterPrecedencePeriodLength
+        ) = randomBeacon.groupCreationParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGroupCreationParameters(
-            randomBeacon.groupCreationFrequency(),
-            newGroupLifetime
+            groupCreationFrequency,
+            newGroupLifetime,
+            dkgResultChallengePeriodLength,
+            dkgResultSubmissionTimeout,
+            dkgSubmitterPrecedencePeriodLength
         );
         groupLifetimeChangeInitiated = 0;
         newGroupLifetime = 0;
@@ -576,11 +596,20 @@ contract RandomBeaconGovernance is Ownable {
         emit DkgResultChallengePeriodLengthUpdated(
             newDkgResultChallengePeriodLength
         );
+        (
+            uint256 groupCreationFrequency,
+            uint256 groupLifetime,
+            ,
+            uint256 dkgResultSubmissionTimeout,
+            uint256 dkgSubmitterPrecedencePeriodLength
+        ) = randomBeacon.groupCreationParameters();
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateDkgParameters(
+        randomBeacon.updateGroupCreationParameters(
+            groupCreationFrequency,
+            groupLifetime,
             newDkgResultChallengePeriodLength,
-            randomBeacon.dkgResultSubmissionTimeout(),
-            randomBeacon.dkgSubmitterPrecedencePeriodLength()
+            dkgResultSubmissionTimeout,
+            dkgSubmitterPrecedencePeriodLength
         );
         dkgResultChallengePeriodLengthChangeInitiated = 0;
         newDkgResultChallengePeriodLength = 0;
@@ -618,11 +647,20 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(dkgResultSubmissionTimeoutChangeInitiated)
     {
         emit DkgResultSubmissionTimeoutUpdated(newDkgResultSubmissionTimeout);
+        (
+            uint256 groupCreationFrequency,
+            uint256 groupLifetime,
+            uint256 dkgResultChallengePeriodLength,
+            ,
+            uint256 dkgSubmitterPrecedencePeriodLength
+        ) = randomBeacon.groupCreationParameters();
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateDkgParameters(
-            randomBeacon.dkgResultChallengePeriodLength(),
+        randomBeacon.updateGroupCreationParameters(
+            groupCreationFrequency,
+            groupLifetime,
+            dkgResultChallengePeriodLength,
             newDkgResultSubmissionTimeout,
-            randomBeacon.dkgSubmitterPrecedencePeriodLength()
+            dkgSubmitterPrecedencePeriodLength
         );
         dkgResultSubmissionTimeoutChangeInitiated = 0;
         newDkgResultSubmissionTimeout = 0;
@@ -662,10 +700,19 @@ contract RandomBeaconGovernance is Ownable {
         emit DkgSubmitterPrecedencePeriodLengthUpdated(
             newSubmitterPrecedencePeriodLength
         );
+        (
+            uint256 groupCreationFrequency,
+            uint256 groupLifetime,
+            uint256 dkgResultChallengePeriodLength,
+            uint256 dkgResultSubmissionTimeout,
+
+        ) = randomBeacon.groupCreationParameters();
         // slither-disable-next-line reentrancy-no-eth
-        randomBeacon.updateDkgParameters(
-            randomBeacon.dkgResultChallengePeriodLength(),
-            randomBeacon.dkgResultSubmissionTimeout(),
+        randomBeacon.updateGroupCreationParameters(
+            groupCreationFrequency,
+            groupLifetime,
+            dkgResultChallengePeriodLength,
+            dkgResultSubmissionTimeout,
             newSubmitterPrecedencePeriodLength
         );
         dkgSubmitterPrecedencePeriodLengthChangeInitiated = 0;

@@ -147,8 +147,11 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateGroupCreationParameters", () => {
-    const groupCreationFrequency = 100
-    const groupLifetime = 200
+    const newGroupCreationFrequency = 100
+    const newGroupLifetime = 200
+    const newDkgResultChallengePeriodLength = 300
+    const newDkgResultSubmissionTimeout = 400
+    const newDkgSubmitterPrecedencePeriodLength = 200
 
     context("when the caller is not the governance", () => {
       it("should revert", async () => {
@@ -156,8 +159,11 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateGroupCreationParameters(
-              groupCreationFrequency,
-              groupLifetime
+              newGroupCreationFrequency,
+              newGroupLifetime,
+              newDkgResultChallengePeriodLength,
+              newDkgResultSubmissionTimeout,
+              newDkgSubmitterPrecedencePeriodLength
             )
         ).to.be.revertedWith("Caller is not the governance")
       })
@@ -171,7 +177,13 @@ describe("RandomBeacon - Parameters", () => {
 
         tx = await randomBeacon
           .connect(governance)
-          .updateGroupCreationParameters(groupCreationFrequency, groupLifetime)
+          .updateGroupCreationParameters(
+            newGroupCreationFrequency,
+            newGroupLifetime,
+            newDkgResultChallengePeriodLength,
+            newDkgResultSubmissionTimeout,
+            newDkgSubmitterPrecedencePeriodLength
+          )
       })
 
       after(async () => {
@@ -179,89 +191,50 @@ describe("RandomBeacon - Parameters", () => {
       })
 
       it("should update the group creation frequency", async () => {
-        expect(await randomBeacon.groupCreationFrequency()).to.be.equal(
-          groupCreationFrequency
-        )
+        const { groupCreationFrequency } =
+          await randomBeacon.groupCreationParameters()
+        expect(groupCreationFrequency).to.be.equal(groupCreationFrequency)
       })
 
       it("should update the group lifetime", async () => {
-        expect(await randomBeacon.groupLifetime()).to.be.equal(groupLifetime)
+        const { groupLifetime } = await randomBeacon.groupCreationParameters()
+        expect(groupLifetime).to.be.equal(newGroupLifetime)
+      })
+
+      it("should update the DKG result challenge period length", async () => {
+        const { dkgResultChallengePeriodLength } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgResultChallengePeriodLength).to.be.equal(
+          newDkgResultChallengePeriodLength
+        )
+      })
+
+      it("should update the DKG result submission timeout", async () => {
+        const { dkgResultSubmissionTimeout } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgResultSubmissionTimeout).to.be.equal(
+          newDkgResultSubmissionTimeout
+        )
+      })
+
+      it("should update the DKG submitter precedence period", async () => {
+        const { dkgSubmitterPrecedencePeriodLength } =
+          await randomBeacon.groupCreationParameters()
+        expect(dkgSubmitterPrecedencePeriodLength).to.be.equal(
+          newDkgSubmitterPrecedencePeriodLength
+        )
       })
 
       it("should emit the GroupCreationParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "GroupCreationParametersUpdated")
-          .withArgs(groupCreationFrequency, groupLifetime)
-      })
-    })
-  })
-
-  describe("updateDkgParameters", () => {
-    const dkgResultChallengePeriodLength = 300
-    const dkgResultSubmissionTimeout = 400
-    const dkgSubmitterPrecedencePeriodLength = 200
-
-    context("when the caller is not the governance", () => {
-      it("should revert", async () => {
-        await expect(
-          randomBeacon
-            .connect(thirdParty)
-            .updateDkgParameters(
-              dkgResultChallengePeriodLength,
-              dkgResultSubmissionTimeout,
-              dkgSubmitterPrecedencePeriodLength
-            )
-        ).to.be.revertedWith("Caller is not the governance")
-      })
-    })
-
-    context("when the caller is the governance", () => {
-      context("when values are valid", () => {
-        let tx: ContractTransaction
-
-        before(async () => {
-          await createSnapshot()
-
-          tx = await randomBeacon
-            .connect(governance)
-            .updateDkgParameters(
-              dkgResultChallengePeriodLength,
-              dkgResultSubmissionTimeout,
-              dkgSubmitterPrecedencePeriodLength
-            )
-        })
-
-        after(async () => {
-          await restoreSnapshot()
-        })
-
-        it("should update the DKG result challenge period length", async () => {
-          expect(
-            await randomBeacon.dkgResultChallengePeriodLength()
-          ).to.be.equal(dkgResultChallengePeriodLength)
-        })
-
-        it("should update the DKG result submission timeout", async () => {
-          expect(await randomBeacon.dkgResultSubmissionTimeout()).to.be.equal(
-            dkgResultSubmissionTimeout
+          .withArgs(
+            newGroupCreationFrequency,
+            newGroupLifetime,
+            newDkgResultChallengePeriodLength,
+            newDkgResultSubmissionTimeout,
+            newDkgSubmitterPrecedencePeriodLength
           )
-        })
-
-        it("should update the DKG submitter precedence period", async () => {
-          expect(
-            await randomBeacon.dkgSubmitterPrecedencePeriodLength()
-          ).to.be.equal(dkgSubmitterPrecedencePeriodLength)
-        })
-
-        it("should emit the DkgParametersUpdated event", async () => {
-          await expect(tx)
-            .to.emit(randomBeacon, "DkgParametersUpdated")
-            .withArgs(
-              dkgResultChallengePeriodLength,
-              dkgResultSubmissionTimeout,
-              dkgSubmitterPrecedencePeriodLength
-            )
-        })
       })
 
       context("when values are invalid", () => {
@@ -270,18 +243,20 @@ describe("RandomBeacon - Parameters", () => {
           () => {
             it("should revert", async () => {
               const invalidDkgSubmitterPrecedencePeriodLength =
-                dkgResultSubmissionTimeout
+                newDkgResultSubmissionTimeout
 
               await expect(
                 randomBeacon
                   .connect(governance)
-                  .updateDkgParameters(
-                    dkgResultChallengePeriodLength,
-                    dkgResultSubmissionTimeout,
+                  .updateGroupCreationParameters(
+                    newGroupCreationFrequency,
+                    newGroupLifetime,
+                    newDkgResultChallengePeriodLength,
+                    newDkgResultSubmissionTimeout,
                     invalidDkgSubmitterPrecedencePeriodLength
                   )
               ).to.be.revertedWith(
-                "New value should be less than result submission timeout"
+                "Submitter precedence period length should be less than the result submission timeout"
               )
             })
           }
@@ -292,18 +267,20 @@ describe("RandomBeacon - Parameters", () => {
           () => {
             it("should revert", async () => {
               const invalidDkgSubmitterPrecedencePeriodLength =
-                dkgResultSubmissionTimeout + 1
+                newDkgResultSubmissionTimeout + 1
 
               await expect(
                 randomBeacon
                   .connect(governance)
-                  .updateDkgParameters(
-                    dkgResultChallengePeriodLength,
-                    dkgResultSubmissionTimeout,
+                  .updateGroupCreationParameters(
+                    newGroupCreationFrequency,
+                    newGroupLifetime,
+                    newDkgResultChallengePeriodLength,
+                    newDkgResultSubmissionTimeout,
                     invalidDkgSubmitterPrecedencePeriodLength
                   )
               ).to.be.revertedWith(
-                "New value should be less than result submission timeout"
+                "Submitter precedence period length should be less than the result submission timeout"
               )
             })
           }
