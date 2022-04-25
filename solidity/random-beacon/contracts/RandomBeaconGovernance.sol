@@ -911,12 +911,18 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(dkgResultSubmissionGasChangeInitiated)
     {
         emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
+        (
+            ,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset,
+            uint256 relayEntrySubmissionGasOffset
+        ) = randomBeacon.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
             newDkgResultSubmissionGas,
-            randomBeacon.dkgResultApprovalGasOffset(),
-            randomBeacon.notifyOperatorInactivityGasOffset(),
-            randomBeacon.relayEntrySubmissionGasOffset()
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset,
+            relayEntrySubmissionGasOffset
         );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
@@ -947,12 +953,18 @@ contract RandomBeaconGovernance is Ownable {
         onlyAfterGovernanceDelay(dkgResultApprovalGasOffsetChangeInitiated)
     {
         emit DkgResultApprovalGasOffsetUpdated(newDkgResultApprovalGasOffset);
+        (
+            uint256 dkgResultSubmissionGas,
+            ,
+            uint256 notifyOperatorInactivityGasOffset,
+            uint256 relayEntrySubmissionGasOffset
+        ) = randomBeacon.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
-            randomBeacon.dkgResultSubmissionGas(),
+            dkgResultSubmissionGas,
             newDkgResultApprovalGasOffset,
-            randomBeacon.notifyOperatorInactivityGasOffset(),
-            randomBeacon.relayEntrySubmissionGasOffset()
+            notifyOperatorInactivityGasOffset,
+            relayEntrySubmissionGasOffset
         );
         dkgResultApprovalGasOffsetChangeInitiated = 0;
         newDkgResultApprovalGasOffset = 0;
@@ -988,12 +1000,18 @@ contract RandomBeaconGovernance is Ownable {
         emit NotifyOperatorInactivityGasOffsetUpdated(
             newNotifyOperatorInactivityGasOffset
         );
+        (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            ,
+            uint256 relayEntrySubmissionGasOffset
+        ) = randomBeacon.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
-            randomBeacon.dkgResultSubmissionGas(),
-            randomBeacon.dkgResultApprovalGasOffset(),
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
             newNotifyOperatorInactivityGasOffset,
-            randomBeacon.relayEntrySubmissionGasOffset()
+            relayEntrySubmissionGasOffset
         );
         notifyOperatorInactivityGasOffsetChangeInitiated = 0;
         newNotifyOperatorInactivityGasOffset = 0;
@@ -1026,11 +1044,17 @@ contract RandomBeaconGovernance is Ownable {
         emit RelayEntrySubmissionGasOffsetUpdated(
             newRelayEntrySubmissionGasOffset
         );
+        (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset,
+
+        ) = randomBeacon.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         randomBeacon.updateGasParameters(
-            randomBeacon.dkgResultSubmissionGas(),
-            randomBeacon.dkgResultApprovalGasOffset(),
-            randomBeacon.notifyOperatorInactivityGasOffset(),
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset,
             newRelayEntrySubmissionGasOffset
         );
         relayEntrySubmissionGasOffsetChangeInitiated = 0;

@@ -3112,7 +3112,8 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update DKG result submission gas", async () => {
-        expect(await randomBeacon.dkgResultSubmissionGas()).to.be.equal(
+        const { dkgResultSubmissionGas } = await randomBeacon.gasParameters()
+        expect(dkgResultSubmissionGas).to.be.equal(
           initialDkgResultSubmissionGas
         )
       })
@@ -3201,7 +3202,8 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the DKG result submission gas", async () => {
-          expect(await randomBeacon.dkgResultSubmissionGas()).to.be.equal(1337)
+          const { dkgResultSubmissionGas } = await randomBeacon.gasParameters()
+          expect(dkgResultSubmissionGas).to.be.equal(1337)
         })
 
         it("should emit DkgResultSubmissionGasUpdated event", async () => {
@@ -3245,8 +3247,10 @@ describe("RandomBeaconGovernance", () => {
         await restoreSnapshot()
       })
 
-      it("should not update the DKG approval gas offset", async () => {
-        expect(await randomBeacon.dkgResultApprovalGasOffset()).to.be.equal(
+      it("should not update the DKG result approval gas offset", async () => {
+        const { dkgResultApprovalGasOffset } =
+          await randomBeacon.gasParameters()
+        expect(dkgResultApprovalGasOffset).to.be.equal(
           initialDkgResultApprovalGasOffset
         )
       })
@@ -3335,9 +3339,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the DKG result approval gas offset", async () => {
-          expect(await randomBeacon.dkgResultApprovalGasOffset()).to.be.equal(
-            7331
-          )
+          const { dkgResultApprovalGasOffset } =
+            await randomBeacon.gasParameters()
+          expect(dkgResultApprovalGasOffset).to.be.equal(7331)
         })
 
         it("should emit DkgResultApprovalGasOffsetUpdated event", async () => {
@@ -3384,10 +3388,12 @@ describe("RandomBeaconGovernance", () => {
         await restoreSnapshot()
       })
 
-      it("should not update the operator inactivity gas offset", async () => {
-        expect(
-          await randomBeacon.notifyOperatorInactivityGasOffset()
-        ).to.be.equal(initialNotifyOperatorInactivityGasOffset)
+      it("should not update the notify operator inactivity gas offset", async () => {
+        const { notifyOperatorInactivityGasOffset } =
+          await randomBeacon.gasParameters()
+        expect(notifyOperatorInactivityGasOffset).to.be.equal(
+          initialNotifyOperatorInactivityGasOffset
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -3473,10 +3479,10 @@ describe("RandomBeaconGovernance", () => {
           await restoreSnapshot()
         })
 
-        it("should update the operator inactivity gas offset", async () => {
-          expect(
-            await randomBeacon.notifyOperatorInactivityGasOffset()
-          ).to.be.equal(100)
+        it("should update the notify operator inactivity gas offset", async () => {
+          const { notifyOperatorInactivityGasOffset } =
+            await randomBeacon.gasParameters()
+          expect(notifyOperatorInactivityGasOffset).to.be.equal(100)
         })
 
         it("should emit NotifyOperatorInactivityGasOffsetUpdated event", async () => {
@@ -3524,7 +3530,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the relay entry submission gas offset", async () => {
-        expect(await randomBeacon.relayEntrySubmissionGasOffset()).to.be.equal(
+        const { relayEntrySubmissionGasOffset } =
+          await randomBeacon.gasParameters()
+        expect(relayEntrySubmissionGasOffset).to.be.equal(
           initialRelayEntrySubmissionGasOffset
         )
       })
@@ -3613,9 +3621,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the relay entry submission gas offset", async () => {
-          expect(
-            await randomBeacon.relayEntrySubmissionGasOffset()
-          ).to.be.equal(997)
+          const { relayEntrySubmissionGasOffset } =
+            await randomBeacon.gasParameters()
+          expect(relayEntrySubmissionGasOffset).to.be.equal(997)
         })
 
         it("should emit RelayEntrySubmissionGasOffsetUpdated event", async () => {

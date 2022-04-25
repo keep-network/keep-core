@@ -119,22 +119,22 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
     ///         another group member that will call the DKG approve function.
-    uint256 public dkgResultSubmissionGas = 235000;
+    uint256 internal _dkgResultSubmissionGas = 235000;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
     ///         cost. Can be updated by the governance based on the current
     ///         market conditions.
-    uint256 public dkgResultApprovalGasOffset = 41500;
+    uint256 internal _dkgResultApprovalGasOffset = 41500;
 
     /// @notice Gas that is meant to balance the operator inactivity notification
     ///         cost. Can be updated by the governance based on the current
     ///         market conditions.
-    uint256 public notifyOperatorInactivityGasOffset = 54500;
+    uint256 internal _notifyOperatorInactivityGasOffset = 54500;
 
     /// @notice Gas that is meant to balance the relay entry submission cost.
     ///         Can be updated by the governance based on the current market
     ///         conditions.
-    uint256 public relayEntrySubmissionGasOffset = 11250;
+    uint256 internal _relayEntrySubmissionGasOffset = 11250;
 
     // Other parameters
 
@@ -572,28 +572,28 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      random beacon governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionGas New DKG result submission gas
-    /// @param _dkgResultApprovalGasOffset New DKG result approval gas offset
-    /// @param _notifyOperatorInactivityGasOffset New operator inactivity
+    /// @param dkgResultSubmissionGas New DKG result submission gas
+    /// @param dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param notifyOperatorInactivityGasOffset New operator inactivity
     ///        notification gas offset
-    /// @param _relayEntrySubmissionGasOffset New relay entry submission gas
+    /// @param relayEntrySubmissionGasOffset New relay entry submission gas
     ///        offset
     function updateGasParameters(
-        uint256 _dkgResultSubmissionGas,
-        uint256 _dkgResultApprovalGasOffset,
-        uint256 _notifyOperatorInactivityGasOffset,
-        uint256 _relayEntrySubmissionGasOffset
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 relayEntrySubmissionGasOffset
     ) external onlyGovernance {
-        dkgResultSubmissionGas = _dkgResultSubmissionGas;
-        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
-        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
-        relayEntrySubmissionGasOffset = _relayEntrySubmissionGasOffset;
+        _dkgResultSubmissionGas = dkgResultSubmissionGas;
+        _dkgResultApprovalGasOffset = dkgResultApprovalGasOffset;
+        _notifyOperatorInactivityGasOffset = notifyOperatorInactivityGasOffset;
+        _relayEntrySubmissionGasOffset = relayEntrySubmissionGasOffset;
 
         emit GasParametersUpdated(
-            _dkgResultSubmissionGas,
-            _dkgResultApprovalGasOffset,
-            _notifyOperatorInactivityGasOffset,
-            _relayEntrySubmissionGasOffset
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset,
+            relayEntrySubmissionGasOffset
         );
     }
 
@@ -824,9 +824,9 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
         // Refund msg.sender's ETH for DKG result submission and result approval
         reimbursementPool.refund(
-            dkgResultSubmissionGas +
+            _dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
-                dkgResultApprovalGasOffset,
+                _dkgResultApprovalGasOffset,
             msg.sender
         );
     }
@@ -965,7 +965,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
 
         reimbursementPool.refund(
-            (gasStart - gasleft()) + relayEntrySubmissionGasOffset,
+            (gasStart - gasleft()) + _relayEntrySubmissionGasOffset,
             msg.sender
         );
     }
@@ -1031,7 +1031,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
         callback.executeCallback(uint256(keccak256(entry)), callbackGasLimit);
         reimbursementPool.refund(
-            (gasStart - gasleft()) + relayEntrySubmissionGasOffset,
+            (gasStart - gasleft()) + _relayEntrySubmissionGasOffset,
             msg.sender
         );
     }
@@ -1234,7 +1234,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         );
 
         reimbursementPool.refund(
-            (gasStart - gasleft()) + notifyOperatorInactivityGasOffset,
+            (gasStart - gasleft()) + _notifyOperatorInactivityGasOffset,
             msg.sender
         );
     }
@@ -1415,5 +1415,33 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @return IDs of selected group members.
     function selectGroup() external view returns (uint32[] memory) {
         return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
+    }
+
+    /// @notice Returns gas-related parameters of the beacon.
+    /// @return dkgResultSubmissionGas Calculated gas cost for submitting a DKG
+    ///         result. This will be refunded as part of the DKG approval
+    ///         process.
+    /// @return dkgResultApprovalGasOffset Gas that is meant to balance the DKG
+    ///         result approval's overall cost.
+    /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
+    ///         the operator inactivity notification cost.
+    /// @return relayEntrySubmissionGasOffset Gas that is meant to balance the
+    ///         relay entry submission cost.
+    function gasParameters()
+        external
+        view
+        returns (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset,
+            uint256 relayEntrySubmissionGasOffset
+        )
+    {
+        return (
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset,
+            _relayEntrySubmissionGasOffset
+        );
     }
 }
