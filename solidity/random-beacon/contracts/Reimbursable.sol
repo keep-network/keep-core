@@ -17,6 +17,8 @@ pragma solidity ^0.8.9;
 import "./ReimbursementPool.sol";
 
 abstract contract Reimbursable {
+    // The variable should be initialized by the implementing contract.
+    // slither-disable-next-line uninitialized-state
     ReimbursementPool public reimbursementPool;
 
     event ReimbursementPoolUpdated(address newReimbursementPool);
