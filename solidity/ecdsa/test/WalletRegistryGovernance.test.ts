@@ -356,7 +356,7 @@ describe("WalletRegistryGovernance", async () => {
         })
       })
 
-      it("should not transfer the ownership", async () => {
+      it("should not transfer the governance", async () => {
         expect(await walletRegistry.governance()).to.be.equal(
           walletRegistryGovernance.address
         )
@@ -456,7 +456,7 @@ describe("WalletRegistryGovernance", async () => {
           await restoreSnapshot()
         })
 
-        it("should transfer wallet registry ownership", async () => {
+        it("should transfer wallet registry governance", async () => {
           expect(await walletRegistry.governance()).to.be.equal(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )

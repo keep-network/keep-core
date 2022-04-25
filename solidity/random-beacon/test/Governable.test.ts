@@ -25,7 +25,7 @@ describe("Governable", () => {
   })
 
   describe("constructor", () => {
-    it("sets governance to default zero address", async () => {
+    it("should set governance to default zero address", async () => {
       expect(await governable.governance()).to.be.equal(
         ethers.constants.AddressZero
       )
@@ -35,7 +35,7 @@ describe("Governable", () => {
   describe("transferGovernance", () => {
     describe("when governance was not initialized", () => {
       describe("when called by the deployer", () => {
-        it("reverts", async () => {
+        it("should revert", async () => {
           await expect(
             governable
               .connect(deployer)
@@ -45,7 +45,7 @@ describe("Governable", () => {
       })
 
       describe("when called by the governance", () => {
-        it("reverts", async () => {
+        it("should revert", async () => {
           await expect(
             governable
               .connect(governance)
@@ -55,7 +55,7 @@ describe("Governable", () => {
       })
 
       describe("when called by a third party", () => {
-        it("reverts", async () => {
+        it("should revert", async () => {
           await expect(
             governable
               .connect(thirdParty)
@@ -71,7 +71,7 @@ describe("Governable", () => {
       })
 
       describe("when called by the deployer", () => {
-        it("reverts", async () => {
+        it("should revert", async () => {
           await expect(
             governable
               .connect(deployer)
@@ -96,11 +96,11 @@ describe("Governable", () => {
           await restoreSnapshot()
         })
 
-        it("updates governance address", async () => {
+        it("should update governance address", async () => {
           expect(await governable.governance()).to.be.equal(newGovernance)
         })
 
-        it("emits GovernanceTransferred event", async () => {
+        it("should emit GovernanceTransferred event", async () => {
           await expect(tx)
             .to.emit(governable, "GovernanceTransferred")
             .withArgs(governance.address, newGovernance)
@@ -108,7 +108,7 @@ describe("Governable", () => {
       })
 
       describe("when called by a third party", () => {
-        it("reverts", async () => {
+        it("should revert", async () => {
           await expect(
             governable
               .connect(thirdParty)
@@ -118,7 +118,7 @@ describe("Governable", () => {
       })
 
       describe("when new governance is zero address", () => {
-        it("reverts", async () => {
+        it("should revert", async () => {
           await expect(
             governable
               .connect(governance)
@@ -138,40 +138,19 @@ describe("Governable", () => {
       await restoreSnapshot()
     })
 
-    describe("when called by the deployer", () => {
-      it("succeeds", async () => {
-        const newGovernance = ethers.Wallet.createRandom().address
+    it("should succeed when called via an exposed function", async () => {
+      const newGovernance = ethers.Wallet.createRandom().address
 
-        await governable
-          .connect(deployer)
-          ._transferGovernanceExposed(newGovernance)
+      await governable._transferGovernanceExposed(newGovernance)
 
-        expect(await governable.governance()).to.be.equal(newGovernance)
-      })
+      expect(await governable.governance()).to.be.equal(newGovernance)
     })
 
-    describe("when called by the governance", () => {
-      it("succeeds", async () => {
-        const newGovernance = ethers.Wallet.createRandom().address
-
-        await governable
-          .connect(governance)
-          ._transferGovernanceExposed(newGovernance)
-
-        expect(await governable.governance()).to.be.equal(newGovernance)
-      })
-    })
-
-    describe("when called by a third party", () => {
-      it("succeeds", async () => {
-        const newGovernance = ethers.Wallet.createRandom().address
-
-        await governable
-          .connect(thirdParty)
-          ._transferGovernanceExposed(newGovernance)
-
-        expect(await governable.governance()).to.be.equal(newGovernance)
-      })
+    it("should not be exposed directly", async () => {
+      expect(
+        governable.functions,
+        "_transferGovernance function is exposed on the contract"
+      ).to.not.haveOwnProperty("_transferGovernance")
     })
   })
 })
