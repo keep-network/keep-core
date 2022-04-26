@@ -921,9 +921,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the malicious DKG result slashing amount", async () => {
-        expect(
-          await walletRegistry.maliciousDkgResultSlashingAmount()
-        ).to.be.equal(initialMaliciousDkgResultSlashingAmount)
+        const maliciousDkgResultSlashingAmount =
+          await walletRegistry.slashingParameters()
+        expect(maliciousDkgResultSlashingAmount).to.be.equal(
+          initialMaliciousDkgResultSlashingAmount
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1010,9 +1012,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the malicious DKG result slashing amount", async () => {
-          expect(
-            await walletRegistry.maliciousDkgResultSlashingAmount()
-          ).to.be.equal(123)
+          const maliciousDkgResultSlashingAmount =
+            await walletRegistry.slashingParameters()
+          expect(maliciousDkgResultSlashingAmount).to.be.equal(123)
         })
 
         it("should emit MaliciousDkgResultSlashingAmountUpdated event", async () => {

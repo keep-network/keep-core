@@ -48,17 +48,13 @@ contract WalletRegistry is
     DKG.Data internal dkg;
     Wallets.Data internal wallets;
 
-    // Address that is set as owner of all wallets. Only this address can request
-    // new wallets creation and manage their state.
-    IWalletOwner public walletOwner;
-
     /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
-    ///         `resultChallengePeriodLength`. If the DKG result submitted
+    ///         `dkg.resultChallengePeriodLength`. If the DKG result submitted
     ///         is challenged and proven to be malicious, the operator who
     ///         submitted the malicious result is slashed for
-    ///         `maliciousDkgResultSlashingAmount`.
-    uint96 public maliciousDkgResultSlashingAmount;
+    ///         `_maliciousDkgResultSlashingAmount`.
+    uint96 internal _maliciousDkgResultSlashingAmount;
 
     /// @notice Percentage of the staking contract malicious behavior
     ///         notification reward which will be transferred to the notifier
@@ -95,6 +91,10 @@ contract WalletRegistry is
     ///         wallet signing group. Each claim is made with a unique nonce
     ///         which protects against claim replay.
     mapping(bytes32 => uint256) public inactivityClaimNonce; // walletID -> nonce
+
+    // Address that is set as owner of all wallets. Only this address can request
+    // new wallets creation and manage their state.
+    IWalletOwner public walletOwner;
 
     // External dependencies
 
@@ -256,7 +256,7 @@ contract WalletRegistry is
         reimbursementPool = _reimbursementPool;
 
         // TODO: revisit all initial values
-        maliciousDkgResultSlashingAmount = 50000e18;
+        _maliciousDkgResultSlashingAmount = 50000e18;
         _maliciousDkgResultNotificationRewardMultiplier = 100;
         _sortitionPoolRewardsBanDuration = 2 weeks;
 
@@ -524,14 +524,14 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
+    /// @param maliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
-    function updateSlashingParameters(uint96 _maliciousDkgResultSlashingAmount)
+    function updateSlashingParameters(uint96 maliciousDkgResultSlashingAmount)
         external
         onlyGovernance
     {
-        maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
-        emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
+        _maliciousDkgResultSlashingAmount = maliciousDkgResultSlashingAmount;
+        emit SlashingParametersUpdated(maliciousDkgResultSlashingAmount);
     }
 
     /// @notice Updates the values of gas-related parameters.
@@ -688,7 +688,7 @@ contract WalletRegistry is
 
         try
             staking.seize(
-                maliciousDkgResultSlashingAmount,
+                _maliciousDkgResultSlashingAmount,
                 _maliciousDkgResultNotificationRewardMultiplier,
                 msg.sender,
                 operatorWrapper
@@ -697,7 +697,7 @@ contract WalletRegistry is
             // slither-disable-next-line reentrancy-events
             emit DkgMaliciousResultSlashed(
                 maliciousDkgResultHash,
-                maliciousDkgResultSlashingAmount,
+                _maliciousDkgResultSlashingAmount,
                 maliciousDkgResultSubmitterAddress
             );
         } catch {
@@ -706,7 +706,7 @@ contract WalletRegistry is
             // to complete.
             emit DkgMaliciousResultSlashingFailed(
                 maliciousDkgResultHash,
-                maliciousDkgResultSlashingAmount,
+                _maliciousDkgResultSlashingAmount,
                 maliciousDkgResultSubmitterAddress
             );
         }
@@ -915,6 +915,21 @@ contract WalletRegistry is
             _maliciousDkgResultNotificationRewardMultiplier,
             _sortitionPoolRewardsBanDuration
         );
+    }
+
+    /// @notice Retrieves slashing-related parameters.
+    /// @return maliciousDkgResultSlashingAmount Slashing amount for submitting
+    ///         a malicious DKG result. Every DKG result submitted can be
+    ///         challenged for the time of `dkg.resultChallengePeriodLength`.
+    ///         If the DKG result submitted is challenged and proven to be
+    ///         malicious, the operator who submitted the malicious result is
+    ///         slashed for `_maliciousDkgResultSlashingAmount`.
+    function slashingParameters()
+        external
+        view
+        returns (uint96 maliciousDkgResultSlashingAmount)
+    {
+        return _maliciousDkgResultSlashingAmount;
     }
 
     /// @notice Retrieves gas-related parameters.
