@@ -281,7 +281,7 @@ contract WalletRegistry is
         authorization.setMinimumAuthorization(400_000e18); // 400k T
         authorization.setAuthorizationDecreaseDelay(5_184_000); // 60 days
 
-        dkg.init(_sortitionPool, _ecdsaDkgValidator);
+        dkg.init(sortitionPool, _ecdsaDkgValidator);
         dkg.setSeedTimeout(1_440); // ~6h assuming 15s block time
         dkg.setResultChallengePeriodLength(1_1520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20);
