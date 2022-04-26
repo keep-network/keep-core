@@ -18,13 +18,43 @@ import "../libraries/EcdsaDkg.sol";
 
 interface IWalletRegistry {
     /// @notice Requests a new wallet creation.
-    /// @dev Only a Wallet Owner can call this function.
+    /// @dev Only the Wallet Owner can call this function.
     function requestNewWallet() external;
 
     /// @notice Closes an existing wallet.
     /// @param walletID ID of the wallet.
-    /// @dev Only a Wallet Owner can call this function.
+    /// @dev Only the Wallet Owner can call this function.
     function closeWallet(bytes32 walletID) external;
+
+    /// @notice Adds all signing group members of the wallet with the given ID
+    ///         to the slashing queue of the staking contract. The notifier will
+    ///         receive reward per each group member from the staking contract
+    ///         notifiers treasury. The reward is scaled by the
+    ///         `rewardMultiplier` provided as a parameter.
+    /// @param amount Amount of tokens to seize from each signing group member
+    /// @param rewardMultiplier Fraction of the staking contract notifiers
+    ///        reward the notifier should receive; should be between [0, 100]
+    /// @param notifier Address of the misbehavior notifier
+    /// @param walletID ID of the wallet
+    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    /// @dev Only the Wallet Owner can call this function.
+    ///      Requirements:
+    ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
+    ///        be exactly the same as the hash stored under `membersIdsHash`
+    ///        for the given `walletID`. Those IDs are not directly stored
+    ///        in the contract for gas efficiency purposes but they can be
+    ///        read from appropriate `DkgResultSubmitted` and `DkgResultApproved`
+    ///        events.
+    ///      - `rewardMultiplier` must be between [0, 100].
+    ///      - This function does revert if staking contract call reverts.
+    ///        The calling code needs to handle the potential revert.
+    function seize(
+        uint96 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        bytes32 walletID,
+        uint32[] calldata walletMembersIDs
+    ) external;
 
     /// @notice Gets public key of a wallet with a given wallet ID.
     ///         The public key is returned in an uncompressed format as a 64-byte

@@ -783,6 +783,60 @@ contract WalletRegistry is
         );
     }
 
+    /// @notice Allows the wallet owner to add all signing group members of the
+    ///         wallet with the given ID to the slashing queue of the staking .
+    ///         contract. The notifier will receive reward per each group member
+    ///         from the staking contract notifiers treasury. The reward is
+    ///         scaled by the `rewardMultiplier` provided as a parameter.
+    /// @param amount Amount of tokens to seize from each signing group member
+    /// @param rewardMultiplier Fraction of the staking contract notifiers
+    ///        reward the notifier should receive; should be between [0, 100]
+    /// @param notifier Address of the misbehavior notifier
+    /// @param walletID ID of the wallet
+    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    /// @dev Requirements:
+    ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
+    ///        be exactly the same as the hash stored under `membersIdsHash`
+    ///        for the given `walletID`. Those IDs are not directly stored
+    ///        in the contract for gas efficiency purposes but they can be
+    ///        read from appropriate `DkgResultSubmitted` and `DkgResultApproved`
+    ///        events.
+    ///      - `rewardMultiplier` must be between [0, 100].
+    ///      - This function does revert if staking contract call reverts.
+    ///        The calling code needs to handle the potential revert.
+    function seize(
+        uint96 amount,
+        uint256 rewardMultiplier,
+        address notifier,
+        bytes32 walletID,
+        uint32[] calldata walletMembersIDs
+    ) external onlyWalletOwner {
+        bytes32 memberIdsHash = wallets.getWalletMembersIdsHash(walletID);
+        require(
+            memberIdsHash == keccak256(abi.encode(walletMembersIDs)),
+            "Invalid wallet members identifiers"
+        );
+
+        address[] memory groupMembersAddresses = sortitionPool.getIDOperators(
+            walletMembersIDs
+        );
+        address[] memory stakingProvidersAddresses = new address[](
+            walletMembersIDs.length
+        );
+        for (uint256 i = 0; i < groupMembersAddresses.length; i++) {
+            stakingProvidersAddresses[i] = operatorToStakingProvider(
+                groupMembersAddresses[i]
+            );
+        }
+
+        staking.seize(
+            amount,
+            rewardMultiplier,
+            notifier,
+            stakingProvidersAddresses
+        );
+    }
+
     /// @notice Checks if DKG result is valid for the current DKG.
     /// @param result DKG result.
     /// @return True if the result is valid. If the result is invalid it returns
