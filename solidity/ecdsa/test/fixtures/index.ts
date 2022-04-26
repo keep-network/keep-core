@@ -59,7 +59,7 @@ export const walletRegistryFixture = deployments.createFixture(
     operators: Operator[]
     reimbursementPool: ReimbursementPool
   }> => {
-    await deployments.fixture(["WalletRegistry"])
+    await deployments.fixture(["WalletRegistryTransferGovernance"])
 
     const walletRegistry: WalletRegistryStub & WalletRegistry =
       await ethers.getContract("WalletRegistry")
