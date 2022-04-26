@@ -692,10 +692,10 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@openzeppelin/contracts-upgradeable@^4.4":
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.5.1.tgz#dc354082460eb34f5833afdecfab46538b208c4f"
-  integrity sha512-xcKycsSyFauIGMhSeeTJW/Jzz9jZUJdiFNP9Wo/9VhMhw8t5X0M92RY6x176VfcIWsxURMHFWOJVTlFA78HI/w==
+"@openzeppelin/contracts-upgradeable@^4.5":
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.5.2.tgz#90d9e47bacfd8693bfad0ac8a394645575528d05"
+  integrity sha512-xgWZYaPlrEOQo3cBj97Ufiuv79SPd8Brh4GcFYhPgb6WvAq4ppz8dWKL6h+jLAK01rUqMRp/TS9AdXgAeNvCLA==
 
 "@openzeppelin/contracts-upgradeable@^4.6.0-rc.0":
   version "4.6.0-rc.0"
@@ -976,14 +976,14 @@
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
 
-"@threshold-network/solidity-contracts@>1.1.0-dev <1.1.0-ropsten":
-  version "1.1.0-dev.8"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.1.0-dev.8.tgz#5c8ed6e9dab26823f25c319a5ade167c6bb8efa3"
-  integrity sha512-7xsjMIO3jtVDOB3X+tY6rEy9qViGHLwxyNEdgYH85BzpOdXvL3tlmwVnAn0k1fQyRhGLrUOtS56Z6fsDCxyRRg==
+"@threshold-network/solidity-contracts@>1.2.0-dev <1.2.0-ropsten":
+  version "1.2.0-dev.4"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.4.tgz#087d88f03a2d1bd07b64724eaf314f30cf9fa444"
+  integrity sha512-ud90FCblZPTz/62BWUusMZWIIC4dAuHGDbubyY7EmwEoC77YoVgG37X0qCuFE2tIkAImQOW6rcobA7JUNbz9bw==
   dependencies:
     "@keep-network/keep-core" ">1.8.0-dev <1.8.0-pre"
-    "@openzeppelin/contracts" "^4.4"
-    "@openzeppelin/contracts-upgradeable" "^4.4"
+    "@openzeppelin/contracts" "^4.5"
+    "@openzeppelin/contracts-upgradeable" "^4.5"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
 
 "@tsconfig/node10@^1.0.7":

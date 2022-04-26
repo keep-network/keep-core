@@ -127,7 +127,9 @@ async function updateTokenStakingParams(
   staking: TokenStaking,
   deployer: SignerWithAddress
 ) {
-  const initialNotifierTreasury = to1e18(100000) // 100k T
+  const initialNotifierTreasury = constants.tokenStakingNotificationReward.mul(
+    constants.groupSize
+  )
   await tToken
     .connect(deployer)
     .approve(staking.address, initialNotifierTreasury)

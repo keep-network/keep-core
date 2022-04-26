@@ -345,6 +345,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         address indexed operator
     );
 
+    event RewardsWithdrawn(address indexed stakingProvider, uint96 amount);
+
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
@@ -597,14 +599,18 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         emit RequesterAuthorizationUpdated(requester, isAuthorized);
     }
 
-    /// @notice Withdraw rewards for the given staking provider to their
-    ///         beneficiary address. Reverts if staking provider has not
-    ///         registered the operator address.
+    /// @notice Withdraws application rewards for the given staking provider.
+    ///         Rewards are withdrawn to the staking provider's beneficiary
+    ///         address set in the staking contract. Reverts if staking provider
+    ///         has not registered the operator address.
+    /// @dev Emits `RewardsWithdrawn` event.
     function withdrawRewards(address stakingProvider) external {
         address operator = stakingProviderToOperator(stakingProvider);
         require(operator != address(0), "Unknown operator");
         (, address beneficiary, ) = staking.rolesOf(stakingProvider);
-        sortitionPool.withdrawRewards(operator, beneficiary);
+        uint96 amount = sortitionPool.withdrawRewards(operator, beneficiary);
+        // slither-disable-next-line reentrancy-events
+        emit RewardsWithdrawn(stakingProvider, amount);
     }
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
@@ -1258,6 +1264,19 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         returns (uint96)
     {
         return authorization.eligibleStake(staking, stakingProvider);
+    }
+
+    /// @notice Returns the amount of rewards available for withdrawal for the
+    ///         given staking provider. Reverts if staking provider has not
+    ///         registered the operator address.
+    function availableRewards(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        address operator = stakingProviderToOperator(stakingProvider);
+        require(operator != address(0), "Unknown operator");
+        return sortitionPool.getAvailableRewards(operator);
     }
 
     /// @notice Returns the amount of stake that is pending authorization
