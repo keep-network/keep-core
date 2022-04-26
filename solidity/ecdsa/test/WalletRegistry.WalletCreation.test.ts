@@ -15,9 +15,10 @@ import {
 import { selectGroup, hashUint32Array } from "./utils/groups"
 import { createNewWallet } from "./utils/wallets"
 import { submitRelayEntry } from "./utils/randomBeacon"
+import { assertGasUsed } from "./helpers/gas"
 
-import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { BigNumber, ContractTransaction, Signer } from "ethers"
+import type { IWalletOwner } from "../typechain/IWalletOwner"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type {
   SortitionPool,
@@ -894,6 +895,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should not unlock the sortition pool", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.true
                 })
+
+                it("should use close to 288 000 gas", async () => {
+                  await assertGasUsed(tx, 288_000)
+                })
               })
 
               context("with not enough signatures on the result", async () => {
@@ -1297,6 +1302,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                       result: dkgResult,
                     })
                   })
+
+                  it("should use close to 291 000 gas", async () => {
+                    await assertGasUsed(tx, 291_000)
+                  })
                 }
               )
             })
@@ -1562,6 +1571,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     sortitionPool,
                     "IneligibleForRewards"
                   )
+                })
+
+                it("should use close to 272 000 gas", async () => {
+                  await assertGasUsed(tx, 272_000)
                 })
               })
 
@@ -1905,6 +1918,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
               )
             })
+
+            it("should use close to 331 000 gas", async () => {
+              await assertGasUsed(tx, 331_000)
+            })
           })
 
           // This case shouldn't happen in real life. When a result is submitted
@@ -1916,6 +1933,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               let dkgResult: DkgResult
               let submitter: SignerWithAddress
+              let tx: Promise<ContractTransaction>
 
               before(async () => {
                 await createSnapshot()
@@ -1929,6 +1947,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   ))
 
                 await mineBlocks(params.dkgResultChallengePeriodLength)
+
+                tx = walletRegistry
+                  .connect(submitter)
+                  .approveDkgResult(dkgResult)
               })
 
               after(async () => {
@@ -1936,9 +1958,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
               })
 
               it("should succeed", async () => {
-                await expect(
-                  walletRegistry.connect(submitter).approveDkgResult(dkgResult)
-                ).to.not.be.reverted
+                await expect(tx).to.not.be.reverted
+              })
+
+              it("should use close to 331 000 gas", async () => {
+                await assertGasUsed(await tx, 331_000)
               })
             }
           )
@@ -2249,6 +2273,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                       .to.emit(staking, "TokensSeized")
                       .withArgs(stakingProvider, to1e18(50000), false)
                   })
+
+                  it("should use close to 1 855 000 gas", async () => {
+                    await assertGasUsed(challengeTx, 1_855_000, 15_000)
+                  })
                 })
               })
 
@@ -2437,6 +2465,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     .to.emit(staking, "TokensSeized")
                     .withArgs(stakingProvider, to1e18(50000), false)
                 })
+
+                it("should use close to 530 000 gas", async () => {
+                  await assertGasUsed(challengeTx, 530_000, 10_000)
+                })
               }
             )
 
@@ -2482,6 +2514,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should not unlock the sortition pool", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.true
                 })
+
+                it("should use close to 338 000 gas", async () => {
+                  await assertGasUsed(tx, 338_000)
+                })
               }
             )
 
@@ -2524,6 +2560,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               it("should not unlock the sortition pool", async () => {
                 await expect(await sortitionPool.isLocked()).to.be.true
+              })
+
+              it("should use close to 338 000 gas", async () => {
+                await assertGasUsed(tx, 338_000)
               })
             })
 
@@ -3285,6 +3325,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
               await expect(await sortitionPool.isLocked()).to.be.false
             })
 
+            it("should transition DKG to IDLE state", async () => {
+              await expect(
+                await walletRegistry.getWalletCreationState()
+              ).to.be.equal(dkgState.IDLE)
+            })
+
             it("should refund ETH", async () => {
               const postNotifyThirdPartyBalance = await provider.getBalance(
                 thirdParty.address
@@ -3296,6 +3342,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
               expect(diff).to.be.lt(
                 ethers.utils.parseUnits("100000", "gwei") // 0,0001 ETH
               )
+            })
+
+            it("should use close to 78 000 gas", async () => {
+              await assertGasUsed(tx, 78_000)
             })
           })
 
@@ -3447,6 +3497,10 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 expect(diff).to.be.lt(
                   ethers.utils.parseUnits("2500000", "gwei") // 0,0025 ETH
                 )
+              })
+
+              it("should use close to 72 000 gas", async () => {
+                await assertGasUsed(tx, 72_000)
               })
             })
           })
