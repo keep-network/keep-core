@@ -113,9 +113,6 @@ contract WalletRegistryV2MissingSlot is
     IStaking public immutable staking;
     IRandomBeacon public randomBeacon;
 
-    // TEST: New variable
-    string public newVar;
-
     // Events
     event DkgStarted(uint256 indexed seed);
 
@@ -280,7 +277,7 @@ contract WalletRegistryV2MissingSlot is
         reinitializer(2)
     {
         randomBeacon = _randomBeacon;
-        newVar = _newVar;
+        _newVar;
     }
 
     /// @notice Withdraw rewards for the given staking provider to their

@@ -665,16 +665,18 @@ contract WalletRegistryV2 is
         );
     }
 
-    /// @notice Notifies about seed for DKG delivery timeout. It is expected
-    ///         that a seed is delivered by the Random Beacon as a relay entry in a
-    ///         callback function.
-    function notifySeedTimeout() external refundable(msg.sender) {
-        dkg.notifySeedTimeout();
-    }
+    // TEST: Removed function.
+    // /// @notice Notifies about seed for DKG delivery timeout. It is expected
+    // ///         that a seed is delivered by the Random Beacon as a relay entry in a
+    // ///         callback function.
+    // function notifySeedTimeout() external refundable(msg.sender) {
+    //     dkg.notifySeedTimeout();
+    // }
 
+    // TEST: Modified function.
     /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external refundable(msg.sender) {
-        dkg.notifyDkgTimeout();
+        revert("nice try, but no");
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be

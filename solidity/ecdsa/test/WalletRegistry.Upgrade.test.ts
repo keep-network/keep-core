@@ -67,7 +67,7 @@ describe("WalletRegistry - Upgrade", async () => {
             })
           ).to.be.rejectedWith(
             Error,
-            "Deleted `maliciousDkgResultNotificationRewardMultiplier`"
+            "Deleted `_maliciousDkgResultNotificationRewardMultiplier`"
           )
         })
       })
