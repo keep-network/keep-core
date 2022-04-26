@@ -269,9 +269,9 @@ contract WalletRegistry is
 
         // TODO: revisit all initial values
 
-        dkgResultSubmissionGas = 275_000;
+        dkgResultSubmissionGas = 290_000;
         dkgResultApprovalGasOffset = 65_000;
-        notifyOperatorInactivityGasOffset = 85_000;
+        notifyOperatorInactivityGasOffset = 86_000;
 
         sortitionPoolRewardsBanDuration = 2 weeks;
 

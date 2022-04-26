@@ -1551,7 +1551,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
                   expect(diff).to.be.gt(0)
                   expect(diff).to.be.lt(
-                    ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+                    ethers.utils.parseUnits("1200000", "gwei") // 0.0012 ETH
                   )
                 })
 
@@ -2104,7 +2104,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
 
               expect(diff).to.be.gt(0)
               expect(diff).to.be.lt(
-                ethers.utils.parseUnits("1000000", "gwei") // 0,001 ETH
+                ethers.utils.parseUnits("1200000", "gwei") // 0.0012 ETH
               )
             })
           })
