@@ -1447,12 +1447,7 @@ describe("RandomBeacon - Authorization", () => {
             )
 
           const slashingTo = minimumAuthorization.sub(1)
-          // Note that we slash from the entire staked amount given that the
-          // initially authorized amount is less than staked amount and it is
-          // another application slashing. To go below the minimum stake, we need
-          // to start slashing from the entire staked amount, not just the
-          // one authorized for RandomBeacon.
-          const slashedAmount = stakedAmount.sub(slashingTo)
+          const slashedAmount = authorizedAmount.sub(slashingTo)
 
           await staking
             .connect(slasher.wallet)
@@ -2202,12 +2197,7 @@ describe("RandomBeacon - Authorization", () => {
             )
 
           const slashingTo = minimumAuthorization.sub(1)
-          // Note that we slash from the entire staked amount given that the
-          // initially authorized amount is less than staked amount and it is
-          // another application slashing. To go below the minimum stake, we need
-          // to start slashing from the entire staked amount, not just the
-          // one authorized for RandomBeacon.
-          const slashedAmount = stakedAmount.sub(slashingTo)
+          const slashedAmount = authorizedAmount.sub(slashingTo)
 
           await staking
             .connect(slasher.wallet)
@@ -2750,21 +2740,15 @@ describe("RandomBeacon - Authorization", () => {
         await createSnapshot()
 
         slashingTo = minimumAuthorization.sub(1)
-        // Note that we slash from the entire staked amount given that the
-        // initially authorized amount is less than staked amount and it is
-        // another application slashing. To go below the minimum stake, we need
-        // to start slashing from the entire staked amount, not just the
-        // one authorized for RandomBeacon.
-        const slashedAmount = stakedAmount.sub(slashingTo)
+        const slashedAmount = initialIncrease.sub(slashingTo)
 
         await staking
           .connect(slasher.wallet)
           .slash(slashedAmount, [stakingProvider.address])
         await staking.connect(thirdParty).processSlashing(1)
 
-        // Given that we slashed from the entire staked amount, we need to give
-        // the stake owner some more T and let them top-up the stake before they
-        // increase the authorization again.
+        // Give the stake owner some more T and let them top-up the stake before
+        // they increase the authorization again.
         secondIncrease = to1e18(10000)
         await t.connect(deployer).mint(owner.address, secondIncrease)
         await t.connect(owner).approve(staking.address, secondIncrease)
@@ -2819,10 +2803,7 @@ describe("RandomBeacon - Authorization", () => {
           .updateOperatorStatus(operator.address)
 
         slashingTo = initialIncrease.sub(to1e18(100))
-        // Note that we slash from the entire staked amount given that the
-        // initially authorized amount is less than staked amount and it is
-        // another application slashing.
-        const slashedAmount = stakedAmount.sub(slashingTo)
+        const slashedAmount = initialIncrease.sub(slashingTo)
 
         await staking
           .connect(slasher.wallet)
@@ -2866,10 +2847,7 @@ describe("RandomBeacon - Authorization", () => {
           .updateOperatorStatus(operator.address)
 
         slashingTo = initialIncrease.sub(to1e18(100))
-        // Note that we slash from the entire staked amount given that the
-        // initially authorized amount is less than staked amount and it is
-        // another application slashing.
-        const slashedAmount = stakedAmount.sub(slashingTo)
+        const slashedAmount = initialIncrease.sub(slashingTo)
 
         await staking
           .connect(slasher.wallet)
@@ -2919,10 +2897,9 @@ describe("RandomBeacon - Authorization", () => {
         await randomBeacon.approveAuthorizationDecrease(stakingProvider.address)
 
         slashingTo = initialIncrease.sub(to1e18(2500))
-        // Note that we slash from the entire staked amount given that the
-        // initially authorized amount is less than staked amount and it is
-        // another application slashing.
-        const slashedAmount = stakedAmount.sub(slashingTo)
+        const slashedAmount = initialIncrease
+          .sub(decreasedAmount)
+          .sub(slashingTo)
 
         await staking
           .connect(slasher.wallet)
