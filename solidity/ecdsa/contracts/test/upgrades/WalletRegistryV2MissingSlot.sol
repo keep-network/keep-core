@@ -1,6 +1,20 @@
 // This is a contract used to test WalletRegistry upgradeability. It is a copy
 // of WalletRegistry contract with some differences marked with `TEST:` comments.
 
+// SPDX-License-Identifier: MIT
+//
+// ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+// ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//   ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+//   ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+//   ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+//   ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+//   ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+// ▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+// ▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+//
+//                           Trust math, not hardware.
+
 pragma solidity ^0.8.9;
 
 import "../../api/IWalletRegistry.sol";
@@ -21,6 +35,9 @@ import "@keep-network/random-beacon/contracts/Governable.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 
+// TODO: We used RC version of @openzeppelin/contracts-upgradeable to use `reinitializer`
+// in upgrades. We should revisit this part before mainnet deployment and use
+// a final release package if it's ready.
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract WalletRegistryV2MissingSlot is
@@ -40,17 +57,13 @@ contract WalletRegistryV2MissingSlot is
     DKG.Data internal dkg;
     Wallets.Data internal wallets;
 
-    // Address that is set as owner of all wallets. Only this address can request
-    // new wallets creation and manage their state.
-    IWalletOwner public walletOwner;
-
     /// @notice Slashing amount for submitting a malicious DKG result. Every
     ///         DKG result submitted can be challenged for the time of
-    ///         `resultChallengePeriodLength`. If the DKG result submitted
+    ///         `dkg.resultChallengePeriodLength`. If the DKG result submitted
     ///         is challenged and proven to be malicious, the operator who
     ///         submitted the malicious result is slashed for
-    ///         `maliciousDkgResultSlashingAmount`.
-    uint96 public maliciousDkgResultSlashingAmount;
+    ///         `_maliciousDkgResultSlashingAmount`.
+    uint96 internal _maliciousDkgResultSlashingAmount;
 
     // TEST: Removed a variable to simulate inconsistency in the storage slots.
     /// @notice Percentage of the staking contract malicious behavior
@@ -60,33 +73,37 @@ contract WalletRegistryV2MissingSlot is
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
-    // uint256 public maliciousDkgResultNotificationRewardMultiplier;
+    // uint256 internal _maliciousDkgResultNotificationRewardMultiplier;
+
+    /// @notice Duration of the sortition pool rewards ban imposed on operators
+    ///         who missed their turn for DKG result submission or who failed
+    ///         a heartbeat.
+    uint256 internal _sortitionPoolRewardsBanDuration;
 
     /// @notice Calculated max gas cost for submitting a DKG result. This will
     ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
-    uint256 public dkgResultSubmissionGas;
+    uint256 internal _dkgResultSubmissionGas;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
     ///         cost. It can be updated by the governance based on the current
     ///         market conditions.
-    uint256 public dkgResultApprovalGasOffset;
+    uint256 internal _dkgResultApprovalGasOffset;
 
     /// @notice Gas that is meant to balance the notification of an operator
     ///         inactivity. It can be updated by the governance based on the
     ///         current market conditions.
-    uint256 public notifyOperatorInactivityGasOffset;
-
-    /// @notice Duration of the sortition pool rewards ban imposed on operators
-    ///         who missed their turn for DKG result submission or who failed
-    ///         a heartbeat.
-    uint256 public sortitionPoolRewardsBanDuration;
+    uint256 internal _notifyOperatorInactivityGasOffset;
 
     /// @notice Stores current operator inactivity claim nonce for the given
     ///         wallet signing group. Each claim is made with a unique nonce
     ///         which protects against claim replay.
     mapping(bytes32 => uint256) public inactivityClaimNonce; // walletID -> nonce
+
+    // Address that is set as owner of all wallets. Only this address can request
+    // new wallets creation and manage their state.
+    IWalletOwner public walletOwner;
 
     // External dependencies
 
@@ -426,7 +443,7 @@ contract WalletRegistryV2MissingSlot is
     }
 
     /// @notice Updates the wallet owner.
-    /// @dev Can be called only by the contract owner, which should be the
+    /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters. The wallet owner has to implement `IWalletOwner`
     ///      interface.
@@ -497,20 +514,20 @@ contract WalletRegistryV2MissingSlot is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _maliciousDkgResultNotificationRewardMultiplier New value of the
+    /// @param maliciousDkgResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
-    /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
+    /// @param sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
     function updateRewardParameters(
-        uint256 _maliciousDkgResultNotificationRewardMultiplier,
-        uint256 _sortitionPoolRewardsBanDuration
+        uint256 maliciousDkgResultNotificationRewardMultiplier,
+        uint256 sortitionPoolRewardsBanDuration
     ) external onlyGovernance {
         // TEST: Removed a variable to simulate inconsistency in the storage slots.
-        // maliciousDkgResultNotificationRewardMultiplier = _maliciousDkgResultNotificationRewardMultiplier;
-        sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
+        // _maliciousDkgResultNotificationRewardMultiplier = maliciousDkgResultNotificationRewardMultiplier;
+        _sortitionPoolRewardsBanDuration = sortitionPoolRewardsBanDuration;
         emit RewardParametersUpdated(
-            _maliciousDkgResultNotificationRewardMultiplier,
-            _sortitionPoolRewardsBanDuration
+            maliciousDkgResultNotificationRewardMultiplier,
+            sortitionPoolRewardsBanDuration
         );
     }
 
@@ -518,37 +535,37 @@ contract WalletRegistryV2MissingSlot is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _maliciousDkgResultSlashingAmount New malicious DKG result
+    /// @param maliciousDkgResultSlashingAmount New malicious DKG result
     ///        slashing amount
-    function updateSlashingParameters(uint96 _maliciousDkgResultSlashingAmount)
+    function updateSlashingParameters(uint96 maliciousDkgResultSlashingAmount)
         external
         onlyGovernance
     {
-        maliciousDkgResultSlashingAmount = _maliciousDkgResultSlashingAmount;
-        emit SlashingParametersUpdated(_maliciousDkgResultSlashingAmount);
+        _maliciousDkgResultSlashingAmount = maliciousDkgResultSlashingAmount;
+        emit SlashingParametersUpdated(maliciousDkgResultSlashingAmount);
     }
 
     /// @notice Updates the values of gas-related parameters.
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionGas New DKG result submission gas
-    /// @param _dkgResultApprovalGasOffset New DKG result approval gas offset
-    /// @param _notifyOperatorInactivityGasOffset New operator inactivity
+    /// @param dkgResultSubmissionGas New DKG result submission gas
+    /// @param dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param notifyOperatorInactivityGasOffset New operator inactivity
     ///        notification gas offset
     function updateGasParameters(
-        uint256 _dkgResultSubmissionGas,
-        uint256 _dkgResultApprovalGasOffset,
-        uint256 _notifyOperatorInactivityGasOffset
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset
     ) external onlyGovernance {
-        dkgResultSubmissionGas = _dkgResultSubmissionGas;
-        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
-        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        _dkgResultSubmissionGas = dkgResultSubmissionGas;
+        _dkgResultApprovalGasOffset = dkgResultApprovalGasOffset;
+        _notifyOperatorInactivityGasOffset = notifyOperatorInactivityGasOffset;
 
         emit GasParametersUpdated(
-            _dkgResultSubmissionGas,
-            _dkgResultApprovalGasOffset,
-            _notifyOperatorInactivityGasOffset
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset
         );
     }
 
@@ -629,7 +646,7 @@ contract WalletRegistryV2MissingSlot is
             sortitionPool.setRewardIneligibility(
                 misbehavedMembers,
                 // solhint-disable-next-line not-rely-on-time
-                block.timestamp + sortitionPoolRewardsBanDuration
+                block.timestamp + _sortitionPoolRewardsBanDuration
             );
         }
 
@@ -643,9 +660,9 @@ contract WalletRegistryV2MissingSlot is
 
         // Refund msg.sender's ETH for DKG result submission and result approval
         reimbursementPool.refund(
-            dkgResultSubmissionGas +
+            _dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
-                dkgResultApprovalGasOffset,
+                _dkgResultApprovalGasOffset,
             msg.sender
         );
     }
@@ -655,13 +672,11 @@ contract WalletRegistryV2MissingSlot is
     ///         callback function.
     function notifySeedTimeout() external refundable(msg.sender) {
         dkg.notifySeedTimeout();
-        dkg.complete();
     }
 
     /// @notice Notifies about DKG timeout.
     function notifyDkgTimeout() external refundable(msg.sender) {
         dkg.notifyDkgTimeout();
-        dkg.complete();
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -684,7 +699,7 @@ contract WalletRegistryV2MissingSlot is
 
         try
             staking.seize(
-                maliciousDkgResultSlashingAmount,
+                _maliciousDkgResultSlashingAmount,
                 0, // TEST: Removed a variable to simulate inconsistency in the storage slots.
                 msg.sender,
                 operatorWrapper
@@ -693,7 +708,7 @@ contract WalletRegistryV2MissingSlot is
             // slither-disable-next-line reentrancy-events
             emit DkgMaliciousResultSlashed(
                 maliciousDkgResultHash,
-                maliciousDkgResultSlashingAmount,
+                _maliciousDkgResultSlashingAmount,
                 maliciousDkgResultSubmitterAddress
             );
         } catch {
@@ -702,7 +717,7 @@ contract WalletRegistryV2MissingSlot is
             // to complete.
             emit DkgMaliciousResultSlashingFailed(
                 maliciousDkgResultHash,
-                maliciousDkgResultSlashingAmount,
+                _maliciousDkgResultSlashingAmount,
                 maliciousDkgResultSubmitterAddress
             );
         }
@@ -762,7 +777,7 @@ contract WalletRegistryV2MissingSlot is
         sortitionPool.setRewardIneligibility(
             ineligibleOperators,
             // solhint-disable-next-line not-rely-on-time
-            block.timestamp + sortitionPoolRewardsBanDuration
+            block.timestamp + _sortitionPoolRewardsBanDuration
         );
 
         if (claim.heartbeatFailed) {
@@ -774,7 +789,7 @@ contract WalletRegistryV2MissingSlot is
         }
 
         reimbursementPool.refund(
-            (gasStart - gasleft()) + notifyOperatorInactivityGasOffset,
+            (gasStart - gasleft()) + _notifyOperatorInactivityGasOffset,
             msg.sender
         );
     }
@@ -883,11 +898,6 @@ contract WalletRegistryV2MissingSlot is
         return wallets.isWalletRegistered(walletID);
     }
 
-    /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters() external view returns (DKG.Parameters memory) {
-        return dkg.parameters;
-    }
-
     /// @notice The minimum authorization amount required so that operator can
     ///         participate in ECDSA Wallet operations.
     function minimumAuthorization() external view returns (uint96) {
@@ -973,13 +983,83 @@ contract WalletRegistryV2MissingSlot is
         return sortitionPool.isOperatorInPool(operator);
     }
 
-    /// @notice Selects a new group of operators based on the provided seed.
+    /// @notice Selects a new group of operators. Can only be called when DKG
+    ///         is in progress and the pool is locked.
     ///         At least one operator has to be registered in the pool,
     ///         otherwise the function fails reverting the transaction.
-    /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
-    function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
-        // TODO: Read seed from DKG
-        return sortitionPool.selectGroup(DKG.groupSize, seed);
+    function selectGroup() external view returns (uint32[] memory) {
+        return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
+    }
+
+    /// @notice Retrieves dkg parameters that were set in DKG library.
+    function dkgParameters() external view returns (DKG.Parameters memory) {
+        return dkg.parameters;
+    }
+
+    /// @notice Retrieves reward-related parameters.
+    /// @return maliciousDkgResultNotificationRewardMultiplier Percentage of the
+    ///         staking contract malicious behavior notification reward which
+    ///         will be transferred to the notifier reporting about a malicious
+    ///         DKG result. Notifiers are rewarded from a notifiers treasury
+    ///         pool. For example, if notification reward is 1000 and the value
+    ///         of the multiplier is 5, the notifier will receive:
+    ///         5% of 1000 = 50 per each operator affected.
+    /// @return sortitionPoolRewardsBanDuration Duration of the sortition pool
+    ///         rewards ban imposed on operators who missed their turn for DKG
+    ///         result submission or who failed a heartbeat.
+    function rewardParameters()
+        external
+        view
+        returns (
+            uint256 maliciousDkgResultNotificationRewardMultiplier,
+            uint256 sortitionPoolRewardsBanDuration
+        )
+    {
+        return (0, _sortitionPoolRewardsBanDuration); // TEST: Removed a variable to simulate inconsistency in the storage slots.
+    }
+
+    /// @notice Retrieves slashing-related parameters.
+    /// @return maliciousDkgResultSlashingAmount Slashing amount for submitting
+    ///         a malicious DKG result. Every DKG result submitted can be
+    ///         challenged for the time of `dkg.resultChallengePeriodLength`.
+    ///         If the DKG result submitted is challenged and proven to be
+    ///         malicious, the operator who submitted the malicious result is
+    ///         slashed for `_maliciousDkgResultSlashingAmount`.
+    function slashingParameters()
+        external
+        view
+        returns (uint96 maliciousDkgResultSlashingAmount)
+    {
+        return _maliciousDkgResultSlashingAmount;
+    }
+
+    /// @notice Retrieves gas-related parameters.
+    /// @return dkgResultSubmissionGas Calculated max gas cost for submitting
+    ///         a DKG result. This will be refunded as part of the DKG approval
+    ///         process. It is in the submitter's interest to not skip his
+    ///         priority turn on the approval, otherwise the refund of the DKG
+    ///         submission will be refunded to another group member that will
+    ///         call the DKG approve function.
+    /// @return dkgResultApprovalGasOffset Gas that is meant to balance the DKG
+    ///         result approval's overall cost. It can be updated by the
+    ///         governace based on the current market conditions.
+    /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
+    ///         the notification of an operator inactivity. It can be updated by
+    ///         the governace based on the current market conditions.
+    function gasParameters()
+        external
+        view
+        returns (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset
+        )
+    {
+        return (
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset
+        );
     }
 }
