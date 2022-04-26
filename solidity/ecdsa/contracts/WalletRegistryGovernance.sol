@@ -511,11 +511,16 @@ contract WalletRegistryGovernance is Ownable {
         onlyAfterGovernanceDelay(dkgResultSubmissionGasChangeInitiated)
     {
         emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
+        (
+            ,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset
+        ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
             newDkgResultSubmissionGas,
-            walletRegistry.dkgResultApprovalGasOffset(),
-            walletRegistry.notifyOperatorInactivityGasOffset()
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset
         );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
@@ -546,11 +551,16 @@ contract WalletRegistryGovernance is Ownable {
         onlyAfterGovernanceDelay(dkgResultApprovalGasOffsetChangeInitiated)
     {
         emit DkgResultApprovalGasOffsetUpdated(newDkgResultApprovalGasOffset);
+        (
+            uint256 dkgResultSubmissionGas,
+            ,
+            uint256 notifyOperatorInactivityGasOffset
+        ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
-            walletRegistry.dkgResultSubmissionGas(),
+            dkgResultSubmissionGas,
             newDkgResultApprovalGasOffset,
-            walletRegistry.notifyOperatorInactivityGasOffset()
+            notifyOperatorInactivityGasOffset
         );
         dkgResultApprovalGasOffsetChangeInitiated = 0;
         newDkgResultApprovalGasOffset = 0;
@@ -586,10 +596,15 @@ contract WalletRegistryGovernance is Ownable {
         emit NotifyOperatorInactivityGasOffsetUpdated(
             newNotifyOperatorInactivityGasOffset
         );
+        (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+
+        ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
-            walletRegistry.dkgResultSubmissionGas(),
-            walletRegistry.dkgResultApprovalGasOffset(),
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
             newNotifyOperatorInactivityGasOffset
         );
         notifyOperatorInactivityGasOffsetChangeInitiated = 0;

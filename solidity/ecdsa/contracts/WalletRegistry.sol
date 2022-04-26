@@ -74,17 +74,17 @@ contract WalletRegistry is
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
     ///         another group member that will call the DKG approve function.
-    uint256 public dkgResultSubmissionGas = 275000;
+    uint256 internal _dkgResultSubmissionGas = 275000;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
     ///         cost. It can be updated by the governace based on the current
     ///         market conditions.
-    uint256 public dkgResultApprovalGasOffset = 65000;
+    uint256 internal _dkgResultApprovalGasOffset = 65000;
 
     /// @notice Gas that is meant to balance the notification of an operator
     ///         inactivity. It can be updated by the governace based on the
     ///         current market conditions.
-    uint256 public notifyOperatorInactivityGasOffset = 85000;
+    uint256 internal _notifyOperatorInactivityGasOffset = 85000;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
     ///         who missed their turn for DKG result submission or who failed
@@ -540,23 +540,23 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _dkgResultSubmissionGas New DKG result submission gas
-    /// @param _dkgResultApprovalGasOffset New DKG result approval gas offset
-    /// @param _notifyOperatorInactivityGasOffset New operator inactivity
+    /// @param dkgResultSubmissionGas New DKG result submission gas
+    /// @param dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param notifyOperatorInactivityGasOffset New operator inactivity
     ///        notification gas offset
     function updateGasParameters(
-        uint256 _dkgResultSubmissionGas,
-        uint256 _dkgResultApprovalGasOffset,
-        uint256 _notifyOperatorInactivityGasOffset
+        uint256 dkgResultSubmissionGas,
+        uint256 dkgResultApprovalGasOffset,
+        uint256 notifyOperatorInactivityGasOffset
     ) external onlyGovernance {
-        dkgResultSubmissionGas = _dkgResultSubmissionGas;
-        dkgResultApprovalGasOffset = _dkgResultApprovalGasOffset;
-        notifyOperatorInactivityGasOffset = _notifyOperatorInactivityGasOffset;
+        _dkgResultSubmissionGas = dkgResultSubmissionGas;
+        _dkgResultApprovalGasOffset = dkgResultApprovalGasOffset;
+        _notifyOperatorInactivityGasOffset = notifyOperatorInactivityGasOffset;
 
         emit GasParametersUpdated(
-            _dkgResultSubmissionGas,
-            _dkgResultApprovalGasOffset,
-            _notifyOperatorInactivityGasOffset
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset
         );
     }
 
@@ -651,9 +651,9 @@ contract WalletRegistry is
 
         // Refund msg.sender's ETH for DKG result submission and result approval
         reimbursementPool.refund(
-            dkgResultSubmissionGas +
+            _dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
-                dkgResultApprovalGasOffset,
+                _dkgResultApprovalGasOffset,
             msg.sender
         );
     }
@@ -780,7 +780,7 @@ contract WalletRegistry is
         }
 
         reimbursementPool.refund(
-            (gasStart - gasleft()) + notifyOperatorInactivityGasOffset,
+            (gasStart - gasleft()) + _notifyOperatorInactivityGasOffset,
             msg.sender
         );
     }
@@ -892,6 +892,35 @@ contract WalletRegistry is
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
+    }
+
+    /// @notice Retrieves gas-related parameters.
+    /// @return dkgResultSubmissionGas Calculated max gas cost for submitting
+    ///         a DKG result. This will be refunded as part of the DKG approval
+    ///         process. It is in the submitter's interest to not skip his
+    ///         priority turn on the approval, otherwise the refund of the DKG
+    ///         submission will be refunded to another group member that will
+    ///         call the DKG approve function.
+    /// @return dkgResultApprovalGasOffset Gas that is meant to balance the DKG
+    ///         result approval's overall cost. It can be updated by the
+    ///         governace based on the current market conditions.
+    /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
+    ///         the notification of an operator inactivity. It can be updated by
+    ///         the governace based on the current market conditions.
+    function gasParameters()
+        external
+        view
+        returns (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset
+        )
+    {
+        return (
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset
+        );
     }
 
     /// @notice The minimum authorization amount required so that operator can

@@ -1624,9 +1624,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   it("should refund ETH to a third party caller", async () => {
                     const postDkgResultApprovalThirdPartyInitialBalance =
                       await provider.getBalance(await thirdParty.getAddress())
-                    const feeForDkgSubmission = (
-                      await walletRegistry.dkgResultSubmissionGas()
-                    ).mul(tx.gasPrice)
+                    const { dkgResultSubmissionGas } =
+                      await walletRegistry.gasParameters()
+                    const feeForDkgSubmission = dkgResultSubmissionGas.mul(
+                      tx.gasPrice
+                    )
                     // submission part was done by someone else and this is why
                     // we add submission dkg fee to the initial balance
                     const diff =
@@ -1768,9 +1770,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
               it("should refund ETH to a submitter", async () => {
                 const postDkgResultApprovalAnotherSubmitterInitialBalance =
                   await provider.getBalance(await anotherSubmitter.getAddress())
-                const feeForDkgSubmission = (
-                  await walletRegistry.dkgResultSubmissionGas()
-                ).mul(tx.gasPrice)
+                const { dkgResultSubmissionGas } =
+                  await walletRegistry.gasParameters()
+                const feeForDkgSubmission = dkgResultSubmissionGas.mul(
+                  tx.gasPrice
+                )
                 // submission part was done by someone else and this is why
                 // we add submission dkg fee to the initial balance
                 const diff =

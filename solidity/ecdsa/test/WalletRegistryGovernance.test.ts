@@ -1060,7 +1060,8 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the DKG submission result gas", async () => {
-        expect(await walletRegistry.dkgResultSubmissionGas()).to.be.equal(
+        const { dkgResultSubmissionGas } = await walletRegistry.gasParameters()
+        expect(dkgResultSubmissionGas).to.be.equal(
           initialDkgResultSubmissionGas
         )
       })
@@ -1149,7 +1150,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the DKG result submission gas", async () => {
-          expect(await walletRegistry.dkgResultSubmissionGas()).to.be.equal(100)
+          const { dkgResultSubmissionGas } =
+            await walletRegistry.gasParameters()
+          expect(dkgResultSubmissionGas).to.be.equal(100)
         })
 
         it("should emit DkgResultSubmissionGasUpdated event", async () => {
@@ -1194,7 +1197,9 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the DKG approval gas offset", async () => {
-        expect(await walletRegistry.dkgResultApprovalGasOffset()).to.be.equal(
+        const { dkgResultApprovalGasOffset } =
+          await walletRegistry.gasParameters()
+        expect(dkgResultApprovalGasOffset).to.be.equal(
           initialDkgResultApprovalGasOffset
         )
       })
@@ -1283,9 +1288,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the DKG result approval gas offset", async () => {
-          expect(await walletRegistry.dkgResultApprovalGasOffset()).to.be.equal(
-            100
-          )
+          const { dkgResultApprovalGasOffset } =
+            await walletRegistry.gasParameters()
+          expect(dkgResultApprovalGasOffset).to.be.equal(100)
         })
 
         it("should emit DkgResultApprovalGasOffsetUpdated event", async () => {
@@ -2445,9 +2450,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the operator inactivity gas offset", async () => {
-        expect(
-          await walletRegistry.notifyOperatorInactivityGasOffset()
-        ).to.be.equal(initialNotifyOperatorInactivityGasOffset)
+        const { notifyOperatorInactivityGasOffset } =
+          await walletRegistry.gasParameters()
+        expect(notifyOperatorInactivityGasOffset).to.be.equal(
+          initialNotifyOperatorInactivityGasOffset
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -2534,9 +2541,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the operator inactivity gas offset", async () => {
-          expect(
-            await walletRegistry.notifyOperatorInactivityGasOffset()
-          ).to.be.equal(100)
+          const { notifyOperatorInactivityGasOffset } =
+            await walletRegistry.gasParameters()
+          expect(notifyOperatorInactivityGasOffset).to.be.equal(100)
         })
 
         it("should emit NotifyOperatorInactivityGasOffsetUpdated event", async () => {
