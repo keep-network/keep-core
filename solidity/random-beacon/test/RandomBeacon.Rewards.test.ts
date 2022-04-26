@@ -88,8 +88,17 @@ describe("RandomBeacon - Rewards", () => {
     })
 
     context("when called for a known operator", () => {
+      let stakingProvider: string
+      let operator: string
+      let beneficiary: string
+
       before(async () => {
         await createSnapshot()
+
+        operator = operators[0].signer.address
+        stakingProvider = await randomBeacon.operatorToStakingProvider(operator)
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;({ beneficiary } = await staking.rolesOf(stakingProvider))
 
         // Allocate sortition pool rewards
         await t.connect(deployer).mint(deployer.address, rewardAmount)
@@ -103,15 +112,70 @@ describe("RandomBeacon - Rewards", () => {
       })
 
       it("should withdraw rewards", async () => {
-        const operator = operators[0].signer.address
-        const stakingProvider = await randomBeacon.operatorToStakingProvider(
-          operator
-        )
-        const { beneficiary } = await staking.rolesOf(stakingProvider)
-
         expect(await t.balanceOf(beneficiary)).to.equal(0)
         await randomBeacon.withdrawRewards(stakingProvider)
         expect(await t.balanceOf(beneficiary)).to.be.gt(0)
+      })
+
+      it("should emit RewardsWithdrawn event", async () => {
+        const balanceBefore = await t.balanceOf(beneficiary)
+        const tx = await randomBeacon.withdrawRewards(stakingProvider)
+        const balanceAfter = await t.balanceOf(beneficiary)
+        const received = balanceAfter.sub(balanceBefore)
+
+        await expect(tx)
+          .to.emit(randomBeacon, "RewardsWithdrawn")
+          .withArgs(stakingProvider, received)
+      })
+    })
+  })
+
+  describe("availableRewards", () => {
+    context("when called for an unknown operator", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeacon.availableRewards(thirdParty.address)
+        ).to.be.revertedWith("Unknown operator")
+      })
+    })
+
+    context("when called for a known operator", () => {
+      let stakingProvider: string
+      let operator: string
+      let beneficiary: string
+
+      before(async () => {
+        await createSnapshot()
+
+        operator = operators[0].signer.address
+        stakingProvider = await randomBeacon.operatorToStakingProvider(operator)
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;({ beneficiary } = await staking.rolesOf(stakingProvider))
+
+        // Allocate sortition pool rewards
+        await t.connect(deployer).mint(deployer.address, rewardAmount)
+        await t
+          .connect(deployer)
+          .approveAndCall(sortitionPool.address, rewardAmount, [])
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should return the amount of available rewards", async () => {
+        let availableAmount = await randomBeacon.availableRewards(
+          stakingProvider
+        )
+
+        const balanceBefore = await t.balanceOf(beneficiary)
+        await randomBeacon.withdrawRewards(stakingProvider)
+        const balanceAfter = await t.balanceOf(beneficiary)
+
+        expect(availableAmount).to.equal(balanceAfter.sub(balanceBefore))
+
+        availableAmount = await randomBeacon.availableRewards(stakingProvider)
+        expect(availableAmount).to.equal(0)
       })
     })
   })

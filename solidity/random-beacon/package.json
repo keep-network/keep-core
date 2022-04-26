@@ -30,7 +30,7 @@
     "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts export/artifacts"
   },
   "dependencies": {
-    "@keep-network/sortition-pools": "^2.0.0-pre.7",
+    "@keep-network/sortition-pools": "^2.0.0-pre.9",
     "@openzeppelin/contracts": "^4.4.2",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
     "@threshold-network/solidity-contracts": ">1.1.0-dev <1.1.0-ropsten"

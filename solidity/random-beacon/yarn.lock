@@ -613,10 +613,10 @@
     "@openzeppelin/upgrades" "^2.7.2"
     openzeppelin-solidity "2.4.0"
 
-"@keep-network/sortition-pools@^2.0.0-pre.7":
-  version "2.0.0-pre.7"
-  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.7.tgz#07ce8d645bbb45855718680b0679fc5dd329e34a"
-  integrity sha512-X5/QeEBAsz0v9QfBZ9YVgP/L5TkQHwW1fuyVIirVuR+Wf5zdsWopixk/yC5fL4BSapNaf4KJeIueMF7Eq8Kv/A==
+"@keep-network/sortition-pools@^2.0.0-pre.9":
+  version "2.0.0-pre.9"
+  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.9.tgz#2525068532a9dcde7e86d55f239b32fdb8b92648"
+  integrity sha512-u09pSaxtvpm1B8Lu5EdLOUEKWyflE6C1saIm/hLW6dg8LzEHTr/bgfwH2ruqiia/akjZgiNENJp2VBYqs2IEbw==
   dependencies:
     "@openzeppelin/contracts" "^4.3.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
