@@ -477,10 +477,12 @@ contract WalletRegistryGovernance is Ownable {
         emit MaliciousDkgResultNotificationRewardMultiplierUpdated(
             newMaliciousDkgResultNotificationRewardMultiplier
         );
+        (, uint256 sortitionPoolRewardsBanDuration) = walletRegistry
+            .rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateRewardParameters(
             newMaliciousDkgResultNotificationRewardMultiplier,
-            walletRegistry.sortitionPoolRewardsBanDuration()
+            sortitionPoolRewardsBanDuration
         );
         maliciousDkgResultNotificationRewardMultiplierChangeInitiated = 0;
         newMaliciousDkgResultNotificationRewardMultiplier = 0;
@@ -677,9 +679,13 @@ contract WalletRegistryGovernance is Ownable {
         emit SortitionPoolRewardsBanDurationUpdated(
             newSortitionPoolRewardsBanDuration
         );
+        (
+            uint256 maliciousDkgResultNotificationRewardMultiplier,
+
+        ) = walletRegistry.rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateRewardParameters(
-            walletRegistry.maliciousDkgResultNotificationRewardMultiplier(),
+            maliciousDkgResultNotificationRewardMultiplier,
             newSortitionPoolRewardsBanDuration
         );
         sortitionPoolRewardsBanDurationChangeInitiated = 0;

@@ -1348,9 +1348,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the DKG malicious result notification reward multiplier", async () => {
-        expect(
-          await walletRegistry.maliciousDkgResultNotificationRewardMultiplier()
-        ).to.be.equal(initialMaliciousDkgResultNotificationRewardMultiplier)
+        const { maliciousDkgResultNotificationRewardMultiplier } =
+          await walletRegistry.rewardParameters()
+        expect(maliciousDkgResultNotificationRewardMultiplier).to.be.equal(
+          initialMaliciousDkgResultNotificationRewardMultiplier
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1437,9 +1439,11 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the DKG malicious result notification reward multiplier", async () => {
-          expect(
-            await walletRegistry.maliciousDkgResultNotificationRewardMultiplier()
-          ).to.be.equal(100)
+          const { maliciousDkgResultNotificationRewardMultiplier } =
+            await walletRegistry.rewardParameters()
+          expect(maliciousDkgResultNotificationRewardMultiplier).to.be.equal(
+            100
+          )
         })
 
         it("should emit MaliciousDkgResultNotificationRewardMultiplierUpdated event", async () => {
@@ -1487,9 +1491,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the sortition pool rewards ban duration", async () => {
-        expect(
-          await walletRegistry.sortitionPoolRewardsBanDuration()
-        ).to.be.equal(initialSortitionPoolRewardsBanDuration)
+        const { sortitionPoolRewardsBanDuration } =
+          await walletRegistry.rewardParameters()
+        expect(sortitionPoolRewardsBanDuration).to.be.equal(
+          initialSortitionPoolRewardsBanDuration
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1576,9 +1582,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the sortition pool rewards ban duration", async () => {
-          expect(
-            await walletRegistry.sortitionPoolRewardsBanDuration()
-          ).to.be.equal(86400)
+          const { sortitionPoolRewardsBanDuration } =
+            await walletRegistry.rewardParameters()
+          expect(sortitionPoolRewardsBanDuration).to.be.equal(86400)
         })
 
         it("should emit SortitionPoolRewardsBanDurationUpdated event", async () => {

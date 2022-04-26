@@ -67,7 +67,12 @@ contract WalletRegistry is
     ///         notification reward is 1000 and the value of the multiplier is
     ///         5, the notifier will receive: 5% of 1000 = 50 per each
     ///         operator affected.
-    uint256 public maliciousDkgResultNotificationRewardMultiplier;
+    uint256 internal _maliciousDkgResultNotificationRewardMultiplier;
+
+    /// @notice Duration of the sortition pool rewards ban imposed on operators
+    ///         who missed their turn for DKG result submission or who failed
+    ///         a heartbeat.
+    uint256 internal _sortitionPoolRewardsBanDuration;
 
     /// @notice Calculated max gas cost for submitting a DKG result. This will
     ///         be refunded as part of the DKG approval process. It is in the
@@ -85,11 +90,6 @@ contract WalletRegistry is
     ///         inactivity. It can be updated by the governace based on the
     ///         current market conditions.
     uint256 internal _notifyOperatorInactivityGasOffset = 85000;
-
-    /// @notice Duration of the sortition pool rewards ban imposed on operators
-    ///         who missed their turn for DKG result submission or who failed
-    ///         a heartbeat.
-    uint256 public sortitionPoolRewardsBanDuration;
 
     /// @notice Stores current operator inactivity claim nonce for the given
     ///         wallet signing group. Each claim is made with a unique nonce
@@ -256,15 +256,13 @@ contract WalletRegistry is
         reimbursementPool = _reimbursementPool;
 
         // TODO: revisit all initial values
-
-        sortitionPoolRewardsBanDuration = 2 weeks;
+        maliciousDkgResultSlashingAmount = 50000e18;
+        _maliciousDkgResultNotificationRewardMultiplier = 100;
+        _sortitionPoolRewardsBanDuration = 2 weeks;
 
         // slither-disable-next-line too-many-digits
         authorization.setMinimumAuthorization(400000e18); // 400k T
         authorization.setAuthorizationDecreaseDelay(5184000); // 60 days
-
-        maliciousDkgResultSlashingAmount = 50000e18;
-        maliciousDkgResultNotificationRewardMultiplier = 100;
 
         dkg.init(_sortitionPool, _ecdsaDkgValidator);
         dkg.setSeedTimeout(1440); // ~6h assuming 15s block time
@@ -506,19 +504,19 @@ contract WalletRegistry is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
-    /// @param _maliciousDkgResultNotificationRewardMultiplier New value of the
+    /// @param maliciousDkgResultNotificationRewardMultiplier New value of the
     ///        DKG malicious result notification reward multiplier.
-    /// @param _sortitionPoolRewardsBanDuration New sortition pool rewards
+    /// @param sortitionPoolRewardsBanDuration New sortition pool rewards
     ///        ban duration in seconds.
     function updateRewardParameters(
-        uint256 _maliciousDkgResultNotificationRewardMultiplier,
-        uint256 _sortitionPoolRewardsBanDuration
+        uint256 maliciousDkgResultNotificationRewardMultiplier,
+        uint256 sortitionPoolRewardsBanDuration
     ) external onlyGovernance {
-        maliciousDkgResultNotificationRewardMultiplier = _maliciousDkgResultNotificationRewardMultiplier;
-        sortitionPoolRewardsBanDuration = _sortitionPoolRewardsBanDuration;
+        _maliciousDkgResultNotificationRewardMultiplier = maliciousDkgResultNotificationRewardMultiplier;
+        _sortitionPoolRewardsBanDuration = sortitionPoolRewardsBanDuration;
         emit RewardParametersUpdated(
-            _maliciousDkgResultNotificationRewardMultiplier,
-            _sortitionPoolRewardsBanDuration
+            maliciousDkgResultNotificationRewardMultiplier,
+            sortitionPoolRewardsBanDuration
         );
     }
 
@@ -637,7 +635,7 @@ contract WalletRegistry is
             sortitionPool.setRewardIneligibility(
                 misbehavedMembers,
                 // solhint-disable-next-line not-rely-on-time
-                block.timestamp + sortitionPoolRewardsBanDuration
+                block.timestamp + _sortitionPoolRewardsBanDuration
             );
         }
 
@@ -691,7 +689,7 @@ contract WalletRegistry is
         try
             staking.seize(
                 maliciousDkgResultSlashingAmount,
-                maliciousDkgResultNotificationRewardMultiplier,
+                _maliciousDkgResultNotificationRewardMultiplier,
                 msg.sender,
                 operatorWrapper
             )
@@ -768,7 +766,7 @@ contract WalletRegistry is
         sortitionPool.setRewardIneligibility(
             ineligibleOperators,
             // solhint-disable-next-line not-rely-on-time
-            block.timestamp + sortitionPoolRewardsBanDuration
+            block.timestamp + _sortitionPoolRewardsBanDuration
         );
 
         if (claim.heartbeatFailed) {
@@ -892,6 +890,31 @@ contract WalletRegistry is
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
+    }
+
+    /// @notice Retrieves reward-related parameters.
+    /// @return maliciousDkgResultNotificationRewardMultiplier Percentage of the
+    ///         staking contract malicious behavior notification reward which
+    ///         will be transferred to the notifier reporting about a malicious
+    ///         DKG result. Notifiers are rewarded from a notifiers treasury
+    ///         pool. For example, if notification reward is 1000 and the value
+    ///         of the multiplier is 5, the notifier will receive:
+    ///         5% of 1000 = 50 per each operator affected.
+    /// @return sortitionPoolRewardsBanDuration Duration of the sortition pool
+    ///         rewards ban imposed on operators who missed their turn for DKG
+    ///         result submission or who failed a heartbeat.
+    function rewardParameters()
+        external
+        view
+        returns (
+            uint256 maliciousDkgResultNotificationRewardMultiplier,
+            uint256 sortitionPoolRewardsBanDuration
+        )
+    {
+        return (
+            _maliciousDkgResultNotificationRewardMultiplier,
+            _sortitionPoolRewardsBanDuration
+        );
     }
 
     /// @notice Retrieves gas-related parameters.
