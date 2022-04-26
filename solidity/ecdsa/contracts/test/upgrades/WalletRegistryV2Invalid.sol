@@ -5,18 +5,18 @@ pragma solidity ^0.8.9;
 
 import "../../api/IWalletRegistry.sol";
 import "../../api/IWalletOwner.sol";
-import "../../libraries/EcdsaAuthorization.sol";
-import "../../libraries/EcdsaDkg.sol";
 import "../../libraries/Wallets.sol";
-import "../../libraries/EcdsaInactivity.sol";
-import "../../EcdsaDkgValidator.sol";
-import "../../Governable.sol";
+import {EcdsaAuthorization as Authorization} from "../../libraries/EcdsaAuthorization.sol";
+import {EcdsaDkg as DKG} from "../../libraries/EcdsaDkg.sol";
+import {EcdsaInactivity as Inactivity} from "../../libraries/EcdsaInactivity.sol";
+import {EcdsaDkgValidator as DKGValidator} from "../../EcdsaDkgValidator.sol";
 
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeaconConsumer.sol";
 import "@keep-network/random-beacon/contracts/Reimbursable.sol";
 import "@keep-network/random-beacon/contracts/ReimbursementPool.sol";
+import "@keep-network/random-beacon/contracts/Governable.sol";
 
 import "@threshold-network/solidity-contracts/contracts/staking/IApplication.sol";
 import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
@@ -31,27 +31,27 @@ contract WalletRegistryV2Invalid is
     Reimbursable,
     Initializable
 {
-    using EcdsaAuthorization for EcdsaAuthorization.Data;
-    using EcdsaDkg for EcdsaDkg.Data;
+    using Authorization for Authorization.Data;
+    using DKG for DKG.Data;
     using Wallets for Wallets.Data;
 
     // TEST: This is an variable added to fail the upgradeability validation.
     string public newVar;
 
     // Libraries data storages
-    EcdsaAuthorization.Data internal authorization;
-    EcdsaDkg.Data internal dkg;
+    Authorization.Data internal authorization;
+    DKG.Data internal dkg;
     Wallets.Data internal wallets;
 
     // Address that is set as owner of all wallets. Only this address can request
     // new wallets creation and manage their state.
     IWalletOwner public walletOwner;
 
-    /// @notice Slashing amount for supporting malicious DKG result. Every
-    ///         DKG result submitted can be challenged for the time of DKG's
-    ///         `resultChallengePeriodLength` parameter. If the DKG result submitted
-    ///         is challenged and proven to be malicious, each operator who
-    ///         signed the malicious result is slashed for
+    /// @notice Slashing amount for submitting a malicious DKG result. Every
+    ///         DKG result submitted can be challenged for the time of
+    ///         `resultChallengePeriodLength`. If the DKG result submitted
+    ///         is challenged and proven to be malicious, the operator who
+    ///         submitted the malicious result is slashed for
     ///         `maliciousDkgResultSlashingAmount`.
     uint96 public maliciousDkgResultSlashingAmount;
 
@@ -68,17 +68,16 @@ contract WalletRegistryV2Invalid is
     ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
-    ///         other member that will call the DKG approve function.
     uint256 public dkgResultSubmissionGas;
 
-    /// @notice Gas is meant to balance the DKG result approval's overall cost.
-    ///         It can be updated by the governance based on the current market
-    ///         conditions.
+    /// @notice Gas that is meant to balance the DKG result approval's overall
+    ///         cost. It can be updated by the governance based on the current
+    ///         market conditions.
     uint256 public dkgResultApprovalGasOffset;
 
-    /// @notice Gas is meant to balance the notification of an operator inactivity.
-    ///         It can be updated by the governace based on the current market
-    ///         conditions.
+    /// @notice Gas that is meant to balance the notification of an operator
+    ///         inactivity. It can be updated by the governance based on the
+    ///         current market conditions.
     uint256 public notifyOperatorInactivityGasOffset;
 
     /// @notice Duration of the sortition pool rewards ban imposed on operators
@@ -105,7 +104,7 @@ contract WalletRegistryV2Invalid is
     event DkgResultSubmitted(
         bytes32 indexed resultHash,
         uint256 indexed seed,
-        EcdsaDkg.Result result
+        DKG.Result result
     );
 
     event DkgTimedOut();
@@ -240,14 +239,17 @@ contract WalletRegistryV2Invalid is
         _;
     }
 
+    /// @dev Used to initialize immutable variables only, use `initialize` function
+    ///      for upgradable contract initialization on deployment.
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(SortitionPool _sortitionPool, IStaking _staking) {
         sortitionPool = _sortitionPool;
         staking = _staking;
     }
 
+    /// @dev Initializes upgradable contract on deployment.
     function initialize(
-        EcdsaDkgValidator _ecdsaDkgValidator,
+        DKGValidator _ecdsaDkgValidator,
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
     ) external initializer {
@@ -261,6 +263,28 @@ contract WalletRegistryV2Invalid is
     {
         randomBeacon = _randomBeacon;
         newVar = _newVar;
+    }
+
+    /// @notice Withdraw rewards for the given staking provider to their
+    ///         beneficiary address. Reverts if staking provider has not
+    ///         registered the operator address.
+    function withdrawRewards(address stakingProvider) external {
+        address operator = stakingProviderToOperator(stakingProvider);
+        require(operator != address(0), "Unknown operator");
+        (, address beneficiary, ) = staking.rolesOf(stakingProvider);
+        sortitionPool.withdrawRewards(operator, beneficiary);
+    }
+
+    /// @notice Withdraws rewards belonging to operators marked as ineligible
+    ///         for sortition pool rewards.
+    /// @dev Can be called only by the contract guvnor, which should be the
+    ///      wallet registry governance contract.
+    /// @param recipient Recipient of withdrawn rewards.
+    function withdrawIneligibleRewards(address recipient)
+        external
+        onlyGovernance
+    {
+        sortitionPool.withdrawIneligible(recipient);
     }
 
     /// @notice Used by staking provider to set operator address that will
@@ -506,6 +530,10 @@ contract WalletRegistryV2Invalid is
     /// @dev Can be called only by the contract guvnor, which should be the
     ///      wallet registry governance contract. The caller is responsible for
     ///      validating parameters.
+    /// @param _dkgResultSubmissionGas New DKG result submission gas
+    /// @param _dkgResultApprovalGasOffset New DKG result approval gas offset
+    /// @param _notifyOperatorInactivityGasOffset New operator inactivity
+    ///        notification gas offset
     function updateGasParameters(
         uint256 _dkgResultSubmissionGas,
         uint256 _dkgResultApprovalGasOffset,
@@ -572,22 +600,21 @@ contract WalletRegistryV2Invalid is
     ///      sign is:
     ///      `\x19Ethereum signed message:\n${keccak256(groupPubKey,misbehavedIndices,startBlock)}`
     /// @param dkgResult DKG result.
-    function submitDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+    function submitDkgResult(DKG.Result calldata dkgResult) external {
         dkg.submitResult(dkgResult);
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
     ///         the submitted result is finished. Considers the submitted result
-    ///         as valid, pays reward to the approver, bans misbehaved group
-    ///         members from the sortition pool rewards, and completes the group
-    ///         creation by activating the candidate group. For the first
-    ///         `resultSubmissionTimeout` blocks after the end of the
-    ///         challenge period can be called only by the DKG result submitter.
-    ///         After that time, can be called by anyone.
+    ///         as valid, bans misbehaved group members from the sortition pool
+    ///         rewards, and completes the group creation by activating the
+    ///         candidate group. For the first `resultSubmissionTimeout` blocks
+    ///         after the end of the challenge period can be called only by the
+    ///         DKG result submitter. After that time, can be called by anyone.
     ///         A new wallet based on the DKG result details.
     /// @param dkgResult Result to approve. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function approveDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+    function approveDkgResult(DKG.Result calldata dkgResult) external {
         uint256 gasStart = gasleft();
         uint32[] memory misbehavedMembers = dkg.approveResult(dkgResult);
 
@@ -612,7 +639,7 @@ contract WalletRegistryV2Invalid is
 
         dkg.complete();
 
-        // Refunds msg.sender's ETH for dkg result submission & dkg approval
+        // Refund msg.sender's ETH for DKG result submission and result approval
         reimbursementPool.refund(
             dkgResultSubmissionGas +
                 (gasStart - gasleft()) +
@@ -639,7 +666,7 @@ contract WalletRegistryV2Invalid is
     ///         invalid it reverts the DKG back to the result submission phase.
     /// @param dkgResult Result to challenge. Must match the submitted result
     ///        stored during `submitDkgResult`.
-    function challengeDkgResult(EcdsaDkg.Result calldata dkgResult) external {
+    function challengeDkgResult(DKG.Result calldata dkgResult) external {
         (
             bytes32 maliciousDkgResultHash,
             uint32 maliciousDkgResultSubmitterId
@@ -699,7 +726,7 @@ contract WalletRegistryV2Invalid is
     ///              group. Must be the same as the stored one
     /// @param groupMembers Identifiers of the wallet signing group members
     function notifyOperatorInactivity(
-        EcdsaInactivity.Claim calldata claim,
+        Inactivity.Claim calldata claim,
         uint256 nonce,
         uint32[] calldata groupMembers
     ) external {
@@ -718,7 +745,7 @@ contract WalletRegistryV2Invalid is
             "Invalid group members"
         );
 
-        uint32[] memory ineligibleOperators = EcdsaInactivity.verifyClaim(
+        uint32[] memory ineligibleOperators = Inactivity.verifyClaim(
             sortitionPool,
             claim,
             bytes.concat(pubKeyX, pubKeyY),
@@ -754,7 +781,7 @@ contract WalletRegistryV2Invalid is
     /// @param result DKG result.
     /// @return True if the result is valid. If the result is invalid it returns
     ///         false and an error message.
-    function isDkgResultValid(EcdsaDkg.Result calldata result)
+    function isDkgResultValid(DKG.Result calldata result)
         external
         view
         returns (bool, string memory)
@@ -763,8 +790,52 @@ contract WalletRegistryV2Invalid is
     }
 
     /// @notice Check current wallet creation state.
-    function getWalletCreationState() external view returns (EcdsaDkg.State) {
+    function getWalletCreationState() external view returns (DKG.State) {
         return dkg.currentState();
+    }
+
+    /// @notice Checks whether the given operator is a member of the given
+    ///         wallet signing group.
+    /// @param walletID ID of the wallet
+    /// @param walletMembersIDs Identifiers of the wallet signing group members
+    /// @param operator Address of the checked operator
+    /// @param walletMemberIndex Position of the operator in the wallet signing
+    ///        group members list
+    /// @return True - if the operator is a member of the given wallet signing
+    ///         group. False - otherwise.
+    /// @dev Requirements:
+    ///      - The `operator` parameter must be an actual sortition pool operator.
+    ///      - The expression `keccak256(abi.encode(walletMembersIDs))` must
+    ///        be exactly the same as the hash stored under `membersIdsHash`
+    ///        for the given `walletID`. Those IDs are not directly stored
+    ///        in the contract for gas efficiency purposes but they can be
+    ///        read from appropriate `DkgResultSubmitted` and `DkgResultApproved`
+    ///        events.
+    ///      - The `walletMemberIndex` must be in range [1, walletMembersIDs.length]
+    function isWalletMember(
+        bytes32 walletID,
+        uint32[] calldata walletMembersIDs,
+        address operator,
+        uint256 walletMemberIndex
+    ) external view returns (bool) {
+        uint32 operatorID = sortitionPool.getOperatorID(operator);
+
+        require(operatorID != 0, "Not a sortition pool operator");
+
+        bytes32 memberIdsHash = wallets.getWalletMembersIdsHash(walletID);
+
+        require(
+            memberIdsHash == keccak256(abi.encode(walletMembersIDs)),
+            "Invalid wallet members identifiers"
+        );
+
+        require(
+            1 <= walletMemberIndex &&
+                walletMemberIndex <= walletMembersIDs.length,
+            "Wallet member index is out of range"
+        );
+
+        return walletMembersIDs[walletMemberIndex - 1] == operatorID;
     }
 
     /// @notice Checks if awaiting seed timed out.
@@ -811,11 +882,7 @@ contract WalletRegistryV2Invalid is
     }
 
     /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters()
-        external
-        view
-        returns (EcdsaDkg.Parameters memory)
-    {
+    function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
     }
 
@@ -873,7 +940,7 @@ contract WalletRegistryV2Invalid is
 
     /// @notice Returns operator registered for the given staking provider.
     function stakingProviderToOperator(address stakingProvider)
-        external
+        public
         view
         returns (address)
     {
@@ -910,7 +977,7 @@ contract WalletRegistryV2Invalid is
     /// @param seed Number used to select operators to the group.
     /// @return IDs of selected group members.
     function selectGroup(bytes32 seed) external view returns (uint32[] memory) {
-        // TODO: Read seed from EcdsaDkg
-        return sortitionPool.selectGroup(EcdsaDkg.groupSize, seed);
+        // TODO: Read seed from DKG
+        return sortitionPool.selectGroup(DKG.groupSize, seed);
     }
 }
