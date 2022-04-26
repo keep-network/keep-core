@@ -792,7 +792,9 @@ contract WalletRegistry is
     ///        in the contract for gas efficiency purposes but they can be
     ///        read from appropriate `DkgResultSubmitted` and `DkgResultApproved`
     ///        events.
-    ///      - `rewardMultiplier` must be between [0, 100]
+    ///      - `rewardMultiplier` must be between [0, 100].
+    ///      - This function does revert if staking contract call reverts.
+    ///        The calling code needs to handle the potential revert.
     function seize(
         uint96 amount,
         uint256 rewardMultiplier,
