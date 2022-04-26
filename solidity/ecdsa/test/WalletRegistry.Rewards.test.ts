@@ -74,8 +74,19 @@ describe("WalletRegistry - Rewards", () => {
     })
 
     context("when called for a known operator", () => {
+      let stakingProvider: string
+      let operator: string
+      let beneficiary: string
+
       before(async () => {
         await createSnapshot()
+
+        operator = members[0].signer.address
+        stakingProvider = await walletRegistry.operatorToStakingProvider(
+          operator
+        )
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;({ beneficiary } = await staking.rolesOf(stakingProvider))
 
         // Allocate sortition pool rewards
         await tToken.connect(deployer).mint(deployer.address, rewardAmount)
@@ -89,15 +100,72 @@ describe("WalletRegistry - Rewards", () => {
       })
 
       it("should withdraw rewards", async () => {
-        const operator = members[0].signer.address
-        const stakingProvider = await walletRegistry.operatorToStakingProvider(
-          operator
-        )
-        const { beneficiary } = await staking.rolesOf(stakingProvider)
-
         expect(await tToken.balanceOf(beneficiary)).to.equal(0)
         await walletRegistry.withdrawRewards(stakingProvider)
         expect(await tToken.balanceOf(beneficiary)).to.be.gt(0)
+      })
+
+      it("should emit RewardsWithdrawn event", async () => {
+        const balanceBefore = await tToken.balanceOf(beneficiary)
+        const tx = await walletRegistry.withdrawRewards(stakingProvider)
+        const balanceAfter = await tToken.balanceOf(beneficiary)
+        const received = balanceAfter.sub(balanceBefore)
+
+        await expect(tx)
+          .to.emit(walletRegistry, "RewardsWithdrawn")
+          .withArgs(stakingProvider, received)
+      })
+    })
+  })
+
+  describe("availableRewards", () => {
+    context("when called for an unknown operator", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistry.availableRewards(thirdParty.address)
+        ).to.be.revertedWith("Unknown operator")
+      })
+    })
+
+    context("when called for a known operator", () => {
+      let stakingProvider: string
+      let operator: string
+      let beneficiary: string
+
+      before(async () => {
+        await createSnapshot()
+
+        operator = members[0].signer.address
+        stakingProvider = await walletRegistry.operatorToStakingProvider(
+          operator
+        )
+        // eslint-disable-next-line @typescript-eslint/no-extra-semi
+        ;({ beneficiary } = await staking.rolesOf(stakingProvider))
+
+        // Allocate sortition pool rewards
+        await tToken.connect(deployer).mint(deployer.address, rewardAmount)
+        await tToken
+          .connect(deployer)
+          .approveAndCall(sortitionPool.address, rewardAmount, [])
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should return the amount of available rewards", async () => {
+        let availableAmount = await walletRegistry.availableRewards(
+          stakingProvider
+        )
+
+        const balanceBefore = await tToken.balanceOf(beneficiary)
+        await walletRegistry.withdrawRewards(stakingProvider)
+        const balanceAfter = await tToken.balanceOf(beneficiary)
+
+        expect(availableAmount).to.equal(balanceAfter.sub(balanceBefore))
+
+        availableAmount = await walletRegistry.availableRewards(stakingProvider)
+        expect(availableAmount).to.equal(0)
       })
     })
   })
