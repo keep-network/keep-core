@@ -88,9 +88,13 @@ describe("System -- e2e", () => {
         callbackGasLimit
       )
 
-    await randomBeacon
-      .connect(owner)
-      .updateGroupCreationParameters(groupCreationFrequency, groupLifetime)
+    await randomBeacon.connect(owner).updateGroupCreationParameters(
+      groupCreationFrequency,
+      groupLifetime,
+      10, // dkgResultChallengePeriodLength, does not matter for this test
+      5, // dkgResultSubmissionTimeout, does not matter for this test
+      1 // dkgSubmitterPrecedencePeriodLength, does not matter for this test
+    )
 
     await randomBeacon
       .connect(owner)

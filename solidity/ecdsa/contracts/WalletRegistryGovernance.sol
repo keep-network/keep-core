@@ -28,7 +28,7 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newGovernanceDelay;
     uint256 public governanceDelayChangeInitiated;
 
-    address public newWalletRegistryOwner;
+    address public newWalletRegistryGovernance;
     uint256 public walletRegistryGovernanceTransferInitiated;
 
     address public newWalletOwner;
@@ -85,10 +85,12 @@ contract WalletRegistryGovernance is Ownable {
     event GovernanceDelayUpdated(uint256 governanceDelay);
 
     event WalletRegistryGovernanceTransferStarted(
-        address newWalletRegistryOwner,
+        address newWalletRegistryGovernance,
         uint256 timestamp
     );
-    event WalletRegistryGovernanceTransferred(address newWalletRegistryOwner);
+    event WalletRegistryGovernanceTransferred(
+        address newWalletRegistryGovernance
+    );
 
     event WalletOwnerUpdateStarted(address walletOwner, uint256 timestamp);
     event WalletOwnerUpdated(address walletOwner);
@@ -265,17 +267,17 @@ contract WalletRegistryGovernance is Ownable {
     /// @notice Begins the wallet registry governance transfer process.
     /// @dev Can be called only by the contract owner.
     function beginWalletRegistryGovernanceTransfer(
-        address _newWalletRegistryOwner
+        address _newWalletRegistryGovernance
     ) external onlyOwner {
         require(
-            address(_newWalletRegistryOwner) != address(0),
-            "New wallet registry owner address cannot be zero"
+            address(_newWalletRegistryGovernance) != address(0),
+            "New wallet registry governance address cannot be zero"
         );
-        newWalletRegistryOwner = _newWalletRegistryOwner;
+        newWalletRegistryGovernance = _newWalletRegistryGovernance;
         /* solhint-disable not-rely-on-time */
         walletRegistryGovernanceTransferInitiated = block.timestamp;
         emit WalletRegistryGovernanceTransferStarted(
-            _newWalletRegistryOwner,
+            _newWalletRegistryGovernance,
             block.timestamp
         );
         /* solhint-enable not-rely-on-time */
@@ -289,11 +291,11 @@ contract WalletRegistryGovernance is Ownable {
         onlyOwner
         onlyAfterGovernanceDelay(walletRegistryGovernanceTransferInitiated)
     {
-        emit WalletRegistryGovernanceTransferred(newWalletRegistryOwner);
+        emit WalletRegistryGovernanceTransferred(newWalletRegistryGovernance);
         // slither-disable-next-line reentrancy-no-eth
-        walletRegistry.transferGovernance(newWalletRegistryOwner);
+        walletRegistry.transferGovernance(newWalletRegistryGovernance);
         walletRegistryGovernanceTransferInitiated = 0;
-        newWalletRegistryOwner = address(0);
+        newWalletRegistryGovernance = address(0);
     }
 
     /// @notice Begins the wallet owner update process.
@@ -475,10 +477,12 @@ contract WalletRegistryGovernance is Ownable {
         emit MaliciousDkgResultNotificationRewardMultiplierUpdated(
             newMaliciousDkgResultNotificationRewardMultiplier
         );
+        (, uint256 sortitionPoolRewardsBanDuration) = walletRegistry
+            .rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateRewardParameters(
             newMaliciousDkgResultNotificationRewardMultiplier,
-            walletRegistry.sortitionPoolRewardsBanDuration()
+            sortitionPoolRewardsBanDuration
         );
         maliciousDkgResultNotificationRewardMultiplierChangeInitiated = 0;
         newMaliciousDkgResultNotificationRewardMultiplier = 0;
@@ -509,11 +513,16 @@ contract WalletRegistryGovernance is Ownable {
         onlyAfterGovernanceDelay(dkgResultSubmissionGasChangeInitiated)
     {
         emit DkgResultSubmissionGasUpdated(newDkgResultSubmissionGas);
+        (
+            ,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset
+        ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
             newDkgResultSubmissionGas,
-            walletRegistry.dkgResultApprovalGasOffset(),
-            walletRegistry.notifyOperatorInactivityGasOffset()
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset
         );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
@@ -544,11 +553,16 @@ contract WalletRegistryGovernance is Ownable {
         onlyAfterGovernanceDelay(dkgResultApprovalGasOffsetChangeInitiated)
     {
         emit DkgResultApprovalGasOffsetUpdated(newDkgResultApprovalGasOffset);
+        (
+            uint256 dkgResultSubmissionGas,
+            ,
+            uint256 notifyOperatorInactivityGasOffset
+        ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
-            walletRegistry.dkgResultSubmissionGas(),
+            dkgResultSubmissionGas,
             newDkgResultApprovalGasOffset,
-            walletRegistry.notifyOperatorInactivityGasOffset()
+            notifyOperatorInactivityGasOffset
         );
         dkgResultApprovalGasOffsetChangeInitiated = 0;
         newDkgResultApprovalGasOffset = 0;
@@ -584,10 +598,15 @@ contract WalletRegistryGovernance is Ownable {
         emit NotifyOperatorInactivityGasOffsetUpdated(
             newNotifyOperatorInactivityGasOffset
         );
+        (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+
+        ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
-            walletRegistry.dkgResultSubmissionGas(),
-            walletRegistry.dkgResultApprovalGasOffset(),
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
             newNotifyOperatorInactivityGasOffset
         );
         notifyOperatorInactivityGasOffsetChangeInitiated = 0;
@@ -660,9 +679,13 @@ contract WalletRegistryGovernance is Ownable {
         emit SortitionPoolRewardsBanDurationUpdated(
             newSortitionPoolRewardsBanDuration
         );
+        (
+            uint256 maliciousDkgResultNotificationRewardMultiplier,
+
+        ) = walletRegistry.rewardParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateRewardParameters(
-            walletRegistry.maliciousDkgResultNotificationRewardMultiplier(),
+            maliciousDkgResultNotificationRewardMultiplier,
             newSortitionPoolRewardsBanDuration
         );
         sortitionPoolRewardsBanDurationChangeInitiated = 0;

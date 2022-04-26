@@ -342,7 +342,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      context("when new owner is the zero address", () => {
+      context("when new governance is the zero address", () => {
         it("should revert", async () => {
           await expect(
             walletRegistryGovernance
@@ -351,12 +351,12 @@ describe("WalletRegistryGovernance", async () => {
                 ethers.constants.AddressZero
               )
           ).to.be.revertedWith(
-            "New wallet registry owner address cannot be zero"
+            "New wallet registry governance address cannot be zero"
           )
         })
       })
 
-      it("should not transfer the ownership", async () => {
+      it("should not transfer the governance", async () => {
         expect(await walletRegistry.governance()).to.be.equal(
           walletRegistryGovernance.address
         )
@@ -456,7 +456,7 @@ describe("WalletRegistryGovernance", async () => {
           await restoreSnapshot()
         })
 
-        it("should transfer wallet registry ownership", async () => {
+        it("should transfer wallet registry governance", async () => {
           expect(await walletRegistry.governance()).to.be.equal(
             "0x00Ea7D21bcCEeD400aCe08B583554aA619D3e537"
           )
@@ -921,9 +921,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the malicious DKG result slashing amount", async () => {
-        expect(
-          await walletRegistry.maliciousDkgResultSlashingAmount()
-        ).to.be.equal(initialMaliciousDkgResultSlashingAmount)
+        const maliciousDkgResultSlashingAmount =
+          await walletRegistry.slashingParameters()
+        expect(maliciousDkgResultSlashingAmount).to.be.equal(
+          initialMaliciousDkgResultSlashingAmount
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1010,9 +1012,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the malicious DKG result slashing amount", async () => {
-          expect(
-            await walletRegistry.maliciousDkgResultSlashingAmount()
-          ).to.be.equal(123)
+          const maliciousDkgResultSlashingAmount =
+            await walletRegistry.slashingParameters()
+          expect(maliciousDkgResultSlashingAmount).to.be.equal(123)
         })
 
         it("should emit MaliciousDkgResultSlashingAmountUpdated event", async () => {
@@ -1060,7 +1062,8 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the DKG submission result gas", async () => {
-        expect(await walletRegistry.dkgResultSubmissionGas()).to.be.equal(
+        const { dkgResultSubmissionGas } = await walletRegistry.gasParameters()
+        expect(dkgResultSubmissionGas).to.be.equal(
           initialDkgResultSubmissionGas
         )
       })
@@ -1149,7 +1152,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the DKG result submission gas", async () => {
-          expect(await walletRegistry.dkgResultSubmissionGas()).to.be.equal(100)
+          const { dkgResultSubmissionGas } =
+            await walletRegistry.gasParameters()
+          expect(dkgResultSubmissionGas).to.be.equal(100)
         })
 
         it("should emit DkgResultSubmissionGasUpdated event", async () => {
@@ -1194,7 +1199,9 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the DKG approval gas offset", async () => {
-        expect(await walletRegistry.dkgResultApprovalGasOffset()).to.be.equal(
+        const { dkgResultApprovalGasOffset } =
+          await walletRegistry.gasParameters()
+        expect(dkgResultApprovalGasOffset).to.be.equal(
           initialDkgResultApprovalGasOffset
         )
       })
@@ -1283,9 +1290,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the DKG result approval gas offset", async () => {
-          expect(await walletRegistry.dkgResultApprovalGasOffset()).to.be.equal(
-            100
-          )
+          const { dkgResultApprovalGasOffset } =
+            await walletRegistry.gasParameters()
+          expect(dkgResultApprovalGasOffset).to.be.equal(100)
         })
 
         it("should emit DkgResultApprovalGasOffsetUpdated event", async () => {
@@ -1343,9 +1350,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the DKG malicious result notification reward multiplier", async () => {
-        expect(
-          await walletRegistry.maliciousDkgResultNotificationRewardMultiplier()
-        ).to.be.equal(initialMaliciousDkgResultNotificationRewardMultiplier)
+        const { maliciousDkgResultNotificationRewardMultiplier } =
+          await walletRegistry.rewardParameters()
+        expect(maliciousDkgResultNotificationRewardMultiplier).to.be.equal(
+          initialMaliciousDkgResultNotificationRewardMultiplier
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1432,9 +1441,11 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the DKG malicious result notification reward multiplier", async () => {
-          expect(
-            await walletRegistry.maliciousDkgResultNotificationRewardMultiplier()
-          ).to.be.equal(100)
+          const { maliciousDkgResultNotificationRewardMultiplier } =
+            await walletRegistry.rewardParameters()
+          expect(maliciousDkgResultNotificationRewardMultiplier).to.be.equal(
+            100
+          )
         })
 
         it("should emit MaliciousDkgResultNotificationRewardMultiplierUpdated event", async () => {
@@ -1482,9 +1493,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the sortition pool rewards ban duration", async () => {
-        expect(
-          await walletRegistry.sortitionPoolRewardsBanDuration()
-        ).to.be.equal(initialSortitionPoolRewardsBanDuration)
+        const { sortitionPoolRewardsBanDuration } =
+          await walletRegistry.rewardParameters()
+        expect(sortitionPoolRewardsBanDuration).to.be.equal(
+          initialSortitionPoolRewardsBanDuration
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -1571,9 +1584,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the sortition pool rewards ban duration", async () => {
-          expect(
-            await walletRegistry.sortitionPoolRewardsBanDuration()
-          ).to.be.equal(86400)
+          const { sortitionPoolRewardsBanDuration } =
+            await walletRegistry.rewardParameters()
+          expect(sortitionPoolRewardsBanDuration).to.be.equal(86400)
         })
 
         it("should emit SortitionPoolRewardsBanDurationUpdated event", async () => {
@@ -2445,9 +2458,11 @@ describe("WalletRegistryGovernance", async () => {
       })
 
       it("should not update the operator inactivity gas offset", async () => {
-        expect(
-          await walletRegistry.notifyOperatorInactivityGasOffset()
-        ).to.be.equal(initialNotifyOperatorInactivityGasOffset)
+        const { notifyOperatorInactivityGasOffset } =
+          await walletRegistry.gasParameters()
+        expect(notifyOperatorInactivityGasOffset).to.be.equal(
+          initialNotifyOperatorInactivityGasOffset
+        )
       })
 
       it("should start the governance delay timer", async () => {
@@ -2534,9 +2549,9 @@ describe("WalletRegistryGovernance", async () => {
         })
 
         it("should update the operator inactivity gas offset", async () => {
-          expect(
-            await walletRegistry.notifyOperatorInactivityGasOffset()
-          ).to.be.equal(100)
+          const { notifyOperatorInactivityGasOffset } =
+            await walletRegistry.gasParameters()
+          expect(notifyOperatorInactivityGasOffset).to.be.equal(100)
         })
 
         it("should emit NotifyOperatorInactivityGasOffsetUpdated event", async () => {

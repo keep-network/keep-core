@@ -20,6 +20,8 @@ pragma solidity ^0.8.9;
 ///      function in a child contract.
 abstract contract Governable {
     // Governance of the contract
+    // The variable should be initialized by the implementing contract.
+    // slither-disable-next-line uninitialized-state
     address public governance;
 
     // Reserved storage space in case we need to add more variables,

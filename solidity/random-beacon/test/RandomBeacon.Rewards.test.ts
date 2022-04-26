@@ -123,7 +123,7 @@ describe("RandomBeacon - Rewards", () => {
           randomBeacon
             .connect(thirdParty)
             .withdrawIneligibleRewards(thirdParty.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the governance")
       })
     })
 
