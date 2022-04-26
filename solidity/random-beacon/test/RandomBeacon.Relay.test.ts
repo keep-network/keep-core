@@ -186,7 +186,13 @@ describe("RandomBeacon - Relay", () => {
                 // Force group creation on each relay entry.
                 await randomBeacon
                   .connect(deployer)
-                  .updateGroupCreationParameters(1, params.groupLifeTime)
+                  .updateGroupCreationParameters(
+                    1,
+                    params.groupLifeTime,
+                    params.dkgResultChallengePeriodLength,
+                    params.dkgResultSubmissionTimeout,
+                    params.dkgSubmitterPrecedencePeriodLength
+                  )
 
                 tx = await randomBeacon
                   .connect(requester)
@@ -1946,7 +1952,10 @@ describe("RandomBeacon - Relay", () => {
           const newGroupLifetime = 10
           await randomBeacon.updateGroupCreationParameters(
             params.groupCreationFrequency,
-            newGroupLifetime
+            newGroupLifetime,
+            params.dkgResultChallengePeriodLength,
+            params.dkgResultSubmissionTimeout,
+            params.dkgSubmitterPrecedencePeriodLength
           )
           // Simulate group was expired.
           await mineBlocks(newGroupLifetime)
@@ -2012,9 +2021,9 @@ describe("RandomBeacon - Relay", () => {
   async function groupLifetimeOf(groupID: BigNumberish): Promise<BigNumber> {
     const groupData = await randomBeacon.callStatic["getGroup(uint64)"](groupID)
 
-    const groupLifeTime = await randomBeacon.callStatic.groupLifetime()
+    const { groupLifetime } = await randomBeacon.groupCreationParameters()
 
-    return groupData.registrationBlockNumber.add(groupLifeTime)
+    return groupData.registrationBlockNumber.add(groupLifetime)
   }
 
   async function isGroupTerminated(groupID: BigNumberish): Promise<boolean> {

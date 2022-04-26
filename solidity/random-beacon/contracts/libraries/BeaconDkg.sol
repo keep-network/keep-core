@@ -467,7 +467,7 @@ library BeaconDkg {
         require(
             newSubmitterPrecedencePeriodLength <
                 self.parameters.resultSubmissionTimeout,
-            "New value should be less than result submission timeout"
+            "Submitter precedence period length should be less than the result submission timeout"
         );
 
         self
