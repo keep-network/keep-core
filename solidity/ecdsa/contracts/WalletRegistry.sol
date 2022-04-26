@@ -273,17 +273,17 @@ contract WalletRegistry is
         _dkgResultApprovalGasOffset = 65_000;
         _notifyOperatorInactivityGasOffset = 86_000;
 
-        _maliciousDkgResultSlashingAmount = 50000e18;
+        _maliciousDkgResultSlashingAmount = 50_000e18; // 50k T
         _maliciousDkgResultNotificationRewardMultiplier = 100;
         _sortitionPoolRewardsBanDuration = 2 weeks;
 
         // slither-disable-next-line too-many-digits
-        authorization.setMinimumAuthorization(400000e18); // 400k T
-        authorization.setAuthorizationDecreaseDelay(5184000); // 60 days
+        authorization.setMinimumAuthorization(400_000e18); // 400k T
+        authorization.setAuthorizationDecreaseDelay(5_184_000); // 60 days
 
         dkg.init(_sortitionPool, _ecdsaDkgValidator);
-        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time
-        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
+        dkg.setSeedTimeout(1_440); // ~6h assuming 15s block time
+        dkg.setResultChallengePeriodLength(1_1520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(100 * 20);
         dkg.setSubmitterPrecedencePeriodLength(20);
 
