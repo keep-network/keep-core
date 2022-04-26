@@ -191,7 +191,7 @@ export async function testDeployment(): Promise<DeployedContracts> {
   await randomBeaconGovernance.deployed()
   await contracts.randomBeacon
     .connect(deployer)
-    .transferOwnership(randomBeaconGovernance.address)
+    .transferGovernance(randomBeaconGovernance.address)
   await randomBeaconGovernance
     .connect(deployer)
     .transferOwnership(governance.address)
@@ -239,10 +239,7 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
 
   await randomBeacon.updateGroupCreationParameters(
     params.groupCreationFrequency,
-    params.groupLifeTime
-  )
-
-  await randomBeacon.updateDkgParameters(
+    params.groupLifeTime,
     params.dkgResultChallengePeriodLength,
     params.dkgResultSubmissionTimeout,
     params.dkgSubmitterPrecedencePeriodLength

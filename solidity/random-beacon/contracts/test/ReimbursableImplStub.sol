@@ -1,8 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.6;
 
-import "../libraries/Relay.sol";
-import "../libraries/Groups.sol";
-import "../Reimbursable.sol";
+import {Reimbursable} from "../Reimbursable.sol";
 
-contract ReimbursableImplStub is Reimbursable {}
+contract ReimbursableImplStub is Reimbursable {
+    address public admin;
+
+    constructor(address _admin) {
+        admin = _admin;
+    }
+
+    modifier onlyReimbursableAdmin() override {
+        require(admin == msg.sender, "Caller is not the admin");
+        _;
+    }
+}

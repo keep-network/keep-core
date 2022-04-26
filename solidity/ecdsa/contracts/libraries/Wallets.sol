@@ -14,8 +14,6 @@
 
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-
 library Wallets {
     struct Wallet {
         // Keccak256 hash of group members identifiers array. Group members do not

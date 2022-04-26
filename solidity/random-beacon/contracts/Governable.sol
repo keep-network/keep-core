@@ -14,31 +14,39 @@
 
 pragma solidity ^0.8.9;
 
-import "./ReimbursementPool.sol";
-
-abstract contract Reimbursable {
+/// @notice Governable contract.
+/// @dev A constructor is not defined, which makes the contract compatible with
+///      upgradable proxies. This requires calling explicitly `_transferGovernance`
+///      function in a child contract.
+abstract contract Governable {
+    // Governance of the contract
     // The variable should be initialized by the implementing contract.
     // slither-disable-next-line uninitialized-state
-    ReimbursementPool public reimbursementPool;
+    address public governance;
 
-    event ReimbursementPoolUpdated(address newReimbursementPool);
+    event GovernanceTransferred(address oldGovernance, address newGovernance);
 
-    modifier refundable(address receiver) {
-        uint256 gasStart = gasleft();
-        _;
-        reimbursementPool.refund(gasStart - gasleft(), receiver);
-    }
-
-    modifier onlyReimbursableAdmin() virtual {
+    modifier onlyGovernance() virtual {
+        require(governance == msg.sender, "Caller is not the governance");
         _;
     }
 
-    function updateReimbursementPool(ReimbursementPool _reimbursementPool)
+    /// @notice Transfers governance of the contract to `newGovernance`.
+    function transferGovernance(address newGovernance)
         external
-        onlyReimbursableAdmin
+        virtual
+        onlyGovernance
     {
-        emit ReimbursementPoolUpdated(address(_reimbursementPool));
+        require(
+            newGovernance != address(0),
+            "New governance is the zero address"
+        );
+        _transferGovernance(newGovernance);
+    }
 
-        reimbursementPool = _reimbursementPool;
+    function _transferGovernance(address newGovernance) internal virtual {
+        address oldGovernance = governance;
+        governance = newGovernance;
+        emit GovernanceTransferred(oldGovernance, newGovernance);
     }
 }

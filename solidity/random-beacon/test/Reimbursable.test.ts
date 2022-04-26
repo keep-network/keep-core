@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-
 import { ethers } from "hardhat"
 import { expect } from "chai"
 
@@ -8,36 +6,51 @@ import type { ReimbursableImplStub } from "../typechain"
 
 describe("Reimbursable", () => {
   let reimbursableImplStub: ReimbursableImplStub
-  let owner: SignerWithAddress
+  let deployer: SignerWithAddress
+  let admin: SignerWithAddress
   let thirdParty: SignerWithAddress
   let contractToUpdate: SignerWithAddress
 
-  // prettier-ignore
   before(async () => {
-    const ReimbursableImplStub = await ethers.getContractFactory(
-      "ReimbursableImplStub"
-    )
-    reimbursableImplStub = await ReimbursableImplStub.deploy() as ReimbursableImplStub
+    deployer = await ethers.getNamedSigner("deployer")
 
-    [owner, thirdParty, contractToUpdate] =
-      await ethers.getSigners()
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;[admin, thirdParty, contractToUpdate] = await ethers.getUnnamedSigners()
+
+    const ReimbursableImplStub = await ethers.getContractFactory(
+      "ReimbursableImplStub",
+      deployer
+    )
+    reimbursableImplStub = (await ReimbursableImplStub.deploy(
+      admin.address
+    )) as ReimbursableImplStub
   })
 
   describe("updateReimbursementPool", () => {
-    context("when a caller is not the owner", () => {
+    context("when a caller is the deployer", () => {
+      it("should revert", async () => {
+        await expect(
+          reimbursableImplStub
+            .connect(deployer)
+            .updateReimbursementPool(contractToUpdate.address)
+        ).to.be.revertedWith("Caller is not the admin")
+      })
+    })
+
+    context("when a caller is not the admin", () => {
       it("should revert", async () => {
         await expect(
           reimbursableImplStub
             .connect(thirdParty)
             .updateReimbursementPool(contractToUpdate.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner")
+        ).to.be.revertedWith("Caller is not the admin")
       })
     })
 
-    context("when a caller is the owner", () => {
+    context("when a caller is the admin", () => {
       it("should update a reimbursement contract", async () => {
         await reimbursableImplStub
-          .connect(owner)
+          .connect(admin)
           .updateReimbursementPool(contractToUpdate.address)
 
         expect(await reimbursableImplStub.reimbursementPool()).to.be.equal(
@@ -48,7 +61,7 @@ describe("Reimbursable", () => {
       it("should emit ReimbursementPoolUpdated event", async () => {
         await expect(
           reimbursableImplStub
-            .connect(owner)
+            .connect(admin)
             .updateReimbursementPool(contractToUpdate.address)
         )
           .to.emit(reimbursableImplStub, "ReimbursementPoolUpdated")

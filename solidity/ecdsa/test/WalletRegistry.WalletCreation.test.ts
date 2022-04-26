@@ -1624,9 +1624,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   it("should refund ETH to a third party caller", async () => {
                     const postDkgResultApprovalThirdPartyInitialBalance =
                       await provider.getBalance(await thirdParty.getAddress())
-                    const feeForDkgSubmission = (
-                      await walletRegistry.dkgResultSubmissionGas()
-                    ).mul(tx.gasPrice)
+                    const { dkgResultSubmissionGas } =
+                      await walletRegistry.gasParameters()
+                    const feeForDkgSubmission = dkgResultSubmissionGas.mul(
+                      tx.gasPrice
+                    )
                     // submission part was done by someone else and this is why
                     // we add submission dkg fee to the initial balance
                     const diff =
@@ -1768,9 +1770,11 @@ describe("WalletRegistry - Wallet Creation", async () => {
               it("should refund ETH to a submitter", async () => {
                 const postDkgResultApprovalAnotherSubmitterInitialBalance =
                   await provider.getBalance(await anotherSubmitter.getAddress())
-                const feeForDkgSubmission = (
-                  await walletRegistry.dkgResultSubmissionGas()
-                ).mul(tx.gasPrice)
+                const { dkgResultSubmissionGas } =
+                  await walletRegistry.gasParameters()
+                const feeForDkgSubmission = dkgResultSubmissionGas.mul(
+                  tx.gasPrice
+                )
                 // submission part was done by someone else and this is why
                 // we add submission dkg fee to the initial balance
                 const diff =
@@ -3451,6 +3455,52 @@ describe("WalletRegistry - Wallet Creation", async () => {
             })
           })
         })
+      })
+    })
+  })
+
+  describe("selectGroup", async () => {
+    context("when dkg was not triggered", async () => {
+      before(async () => {
+        await createSnapshot()
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should revert", async () => {
+        await expect(walletRegistry.selectGroup()).to.be.revertedWith(
+          "Sortition pool unlocked"
+        )
+      })
+    })
+
+    context("when dkg was triggered", async () => {
+      let dkgSeed: BigNumber
+
+      before(async () => {
+        await createSnapshot()
+        await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
+        ;({ dkgSeed } = await submitRelayEntry(walletRegistry))
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should select a group", async () => {
+        const selectedGroup = await walletRegistry.selectGroup()
+        expect(selectedGroup.length).to.eq(constants.groupSize)
+      })
+
+      it("should be the same group as if called the sortition pool directly", async () => {
+        const exectedGroup = await sortitionPool.selectGroup(
+          constants.groupSize,
+          dkgSeed.toHexString()
+        )
+        const actualGroup = await walletRegistry.selectGroup()
+        expect(exectedGroup).to.be.deep.equal(actualGroup)
       })
     })
   })

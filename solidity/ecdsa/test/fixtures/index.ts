@@ -1,4 +1,4 @@
-import { deployments, ethers, helpers, getUnnamedAccounts } from "hardhat"
+import { deployments, ethers, helpers } from "hardhat"
 import { smock } from "@defi-wonderland/smock"
 
 // eslint-disable-next-line import/no-cycle
@@ -80,11 +80,7 @@ export const walletRegistryFixture = deployments.createFixture(
       "governance"
     )
 
-    const thirdParty: SignerWithAddress = await ethers.getSigner(
-      (
-        await getUnnamedAccounts()
-      )[0]
-    )
+    const [thirdParty] = await ethers.getUnnamedSigners()
 
     // Accounts offset provided to slice getUnnamedAccounts have to include number
     // of unnamed accounts that were already used.
@@ -101,6 +97,8 @@ export const walletRegistryFixture = deployments.createFixture(
 
     // Set parameters with tweaked values to reduce test execution time.
     await updateWalletRegistryParams(walletRegistryGovernance, governance)
+
+    await fundReimbursementPool(deployer, reimbursementPool)
 
     // Mock Wallet Owner contract.
     const walletOwner: FakeContract<IWalletOwner> = await initializeWalletOwner(
@@ -231,4 +229,14 @@ export async function initializeWalletOwner(
     .initializeWalletOwner(walletOwner.address)
 
   return walletOwner
+}
+
+async function fundReimbursementPool(
+  deployer: SignerWithAddress,
+  reimbursementPool: ReimbursementPool
+) {
+  await deployer.sendTransaction({
+    to: reimbursementPool.address,
+    value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
+  })
 }

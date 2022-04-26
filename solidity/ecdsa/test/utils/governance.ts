@@ -10,7 +10,7 @@ export async function upgradeRandomBeacon(
   const walletRegistryGovernance: WalletRegistryGovernance =
     await ethers.getContractAt(
       "WalletRegistryGovernance",
-      await walletRegistry.owner()
+      await walletRegistry.governance()
     )
 
   const governance = await ethers.getNamedSigner("governance")

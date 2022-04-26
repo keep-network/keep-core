@@ -272,6 +272,8 @@ library BeaconDkg {
         require(hasDkgTimedOut(self), "DKG has not timed out");
 
         emit DkgTimedOut();
+
+        complete(self);
     }
 
     /// @notice Notifies about the seed was not delivered and restores the
@@ -284,7 +286,7 @@ library BeaconDkg {
 
         emit DkgSeedTimedOut();
 
-        self.sortitionPool.unlock();
+        complete(self);
     }
 
     /// @notice Approves DKG result. Can be called when the challenge period for
@@ -465,7 +467,7 @@ library BeaconDkg {
         require(
             newSubmitterPrecedencePeriodLength <
                 self.parameters.resultSubmissionTimeout,
-            "New value should be less than result submission timeout"
+            "Submitter precedence period length should be less than the result submission timeout"
         );
 
         self
