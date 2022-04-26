@@ -887,80 +887,6 @@ contract WalletRegistry is
         return wallets.isWalletRegistered(walletID);
     }
 
-    /// @notice Retrieves dkg parameters that were set in DKG library.
-    function dkgParameters() external view returns (DKG.Parameters memory) {
-        return dkg.parameters;
-    }
-
-    /// @notice Retrieves reward-related parameters.
-    /// @return maliciousDkgResultNotificationRewardMultiplier Percentage of the
-    ///         staking contract malicious behavior notification reward which
-    ///         will be transferred to the notifier reporting about a malicious
-    ///         DKG result. Notifiers are rewarded from a notifiers treasury
-    ///         pool. For example, if notification reward is 1000 and the value
-    ///         of the multiplier is 5, the notifier will receive:
-    ///         5% of 1000 = 50 per each operator affected.
-    /// @return sortitionPoolRewardsBanDuration Duration of the sortition pool
-    ///         rewards ban imposed on operators who missed their turn for DKG
-    ///         result submission or who failed a heartbeat.
-    function rewardParameters()
-        external
-        view
-        returns (
-            uint256 maliciousDkgResultNotificationRewardMultiplier,
-            uint256 sortitionPoolRewardsBanDuration
-        )
-    {
-        return (
-            _maliciousDkgResultNotificationRewardMultiplier,
-            _sortitionPoolRewardsBanDuration
-        );
-    }
-
-    /// @notice Retrieves slashing-related parameters.
-    /// @return maliciousDkgResultSlashingAmount Slashing amount for submitting
-    ///         a malicious DKG result. Every DKG result submitted can be
-    ///         challenged for the time of `dkg.resultChallengePeriodLength`.
-    ///         If the DKG result submitted is challenged and proven to be
-    ///         malicious, the operator who submitted the malicious result is
-    ///         slashed for `_maliciousDkgResultSlashingAmount`.
-    function slashingParameters()
-        external
-        view
-        returns (uint96 maliciousDkgResultSlashingAmount)
-    {
-        return _maliciousDkgResultSlashingAmount;
-    }
-
-    /// @notice Retrieves gas-related parameters.
-    /// @return dkgResultSubmissionGas Calculated max gas cost for submitting
-    ///         a DKG result. This will be refunded as part of the DKG approval
-    ///         process. It is in the submitter's interest to not skip his
-    ///         priority turn on the approval, otherwise the refund of the DKG
-    ///         submission will be refunded to another group member that will
-    ///         call the DKG approve function.
-    /// @return dkgResultApprovalGasOffset Gas that is meant to balance the DKG
-    ///         result approval's overall cost. It can be updated by the
-    ///         governace based on the current market conditions.
-    /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
-    ///         the notification of an operator inactivity. It can be updated by
-    ///         the governace based on the current market conditions.
-    function gasParameters()
-        external
-        view
-        returns (
-            uint256 dkgResultSubmissionGas,
-            uint256 dkgResultApprovalGasOffset,
-            uint256 notifyOperatorInactivityGasOffset
-        )
-    {
-        return (
-            _dkgResultSubmissionGas,
-            _dkgResultApprovalGasOffset,
-            _notifyOperatorInactivityGasOffset
-        );
-    }
-
     /// @notice The minimum authorization amount required so that operator can
     ///         participate in ECDSA Wallet operations.
     function minimumAuthorization() external view returns (uint96) {
@@ -1053,5 +979,79 @@ contract WalletRegistry is
     /// @return IDs of selected group members.
     function selectGroup() external view returns (uint32[] memory) {
         return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
+    }
+
+    /// @notice Retrieves dkg parameters that were set in DKG library.
+    function dkgParameters() external view returns (DKG.Parameters memory) {
+        return dkg.parameters;
+    }
+
+    /// @notice Retrieves reward-related parameters.
+    /// @return maliciousDkgResultNotificationRewardMultiplier Percentage of the
+    ///         staking contract malicious behavior notification reward which
+    ///         will be transferred to the notifier reporting about a malicious
+    ///         DKG result. Notifiers are rewarded from a notifiers treasury
+    ///         pool. For example, if notification reward is 1000 and the value
+    ///         of the multiplier is 5, the notifier will receive:
+    ///         5% of 1000 = 50 per each operator affected.
+    /// @return sortitionPoolRewardsBanDuration Duration of the sortition pool
+    ///         rewards ban imposed on operators who missed their turn for DKG
+    ///         result submission or who failed a heartbeat.
+    function rewardParameters()
+        external
+        view
+        returns (
+            uint256 maliciousDkgResultNotificationRewardMultiplier,
+            uint256 sortitionPoolRewardsBanDuration
+        )
+    {
+        return (
+            _maliciousDkgResultNotificationRewardMultiplier,
+            _sortitionPoolRewardsBanDuration
+        );
+    }
+
+    /// @notice Retrieves slashing-related parameters.
+    /// @return maliciousDkgResultSlashingAmount Slashing amount for submitting
+    ///         a malicious DKG result. Every DKG result submitted can be
+    ///         challenged for the time of `dkg.resultChallengePeriodLength`.
+    ///         If the DKG result submitted is challenged and proven to be
+    ///         malicious, the operator who submitted the malicious result is
+    ///         slashed for `_maliciousDkgResultSlashingAmount`.
+    function slashingParameters()
+        external
+        view
+        returns (uint96 maliciousDkgResultSlashingAmount)
+    {
+        return _maliciousDkgResultSlashingAmount;
+    }
+
+    /// @notice Retrieves gas-related parameters.
+    /// @return dkgResultSubmissionGas Calculated max gas cost for submitting
+    ///         a DKG result. This will be refunded as part of the DKG approval
+    ///         process. It is in the submitter's interest to not skip his
+    ///         priority turn on the approval, otherwise the refund of the DKG
+    ///         submission will be refunded to another group member that will
+    ///         call the DKG approve function.
+    /// @return dkgResultApprovalGasOffset Gas that is meant to balance the DKG
+    ///         result approval's overall cost. It can be updated by the
+    ///         governace based on the current market conditions.
+    /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
+    ///         the notification of an operator inactivity. It can be updated by
+    ///         the governace based on the current market conditions.
+    function gasParameters()
+        external
+        view
+        returns (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset
+        )
+    {
+        return (
+            _dkgResultSubmissionGas,
+            _dkgResultApprovalGasOffset,
+            _notifyOperatorInactivityGasOffset
+        );
     }
 }
