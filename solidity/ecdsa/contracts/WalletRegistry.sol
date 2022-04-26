@@ -285,6 +285,7 @@ contract WalletRegistry is
         require(operator != address(0), "Unknown operator");
         (, address beneficiary, ) = staking.rolesOf(stakingProvider);
         uint96 amount = sortitionPool.withdrawRewards(operator, beneficiary);
+        // slither-disable-next-line reentrancy-events
         emit RewardsWithdrawn(stakingProvider, amount);
     }
 
