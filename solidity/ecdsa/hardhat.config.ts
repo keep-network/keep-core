@@ -130,16 +130,21 @@ const config: HardhatUserConfig = {
     //   mainnet: ["./external/mainnet"],
     // },
   },
-  dependencyCompiler: {
-    paths: [
-      "@threshold-network/solidity-contracts/contracts/token/T.sol",
-      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
-      "@threshold-network/solidity-contracts/contracts/governance/ProxyAdminWithDeputy.sol",
-      "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
-      "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol",
-    ],
-    keep: true,
-  },
+  dependencyCompiler:
+    // As a workaround for a slither issue https://github.com/crytic/slither/issues/1140
+    // we disable compilation of dependencies when running slither.
+    process.env.SKIP_DEPENDENCY_COMPILER === "true"
+      ? undefined
+      : {
+          paths: [
+            "@threshold-network/solidity-contracts/contracts/token/T.sol",
+            "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
+            "@threshold-network/solidity-contracts/contracts/governance/ProxyAdminWithDeputy.sol",
+            "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
+            "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol",
+          ],
+          keep: true,
+        },
   contractSizer: {
     alphaSort: true,
     disambiguatePaths: false,
