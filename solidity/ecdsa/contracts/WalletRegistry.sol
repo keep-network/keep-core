@@ -290,14 +290,18 @@ contract WalletRegistry is
         _transferGovernance(msg.sender);
     }
 
-    /// @notice Withdraw rewards for the given staking provider to their
-    ///         beneficiary address. Reverts if staking provider has not
-    ///         registered the operator address.
+    /// @notice Withdraws application rewards for the given staking provider.
+    ///         Rewards are withdrawn to the staking provider's beneficiary
+    ///         address set in the staking contract. Reverts if staking provider
+    ///         has not registered the operator address.
+    /// @dev Emits `RewardsWithdrawn` event.
     function withdrawRewards(address stakingProvider) external {
         address operator = stakingProviderToOperator(stakingProvider);
         require(operator != address(0), "Unknown operator");
         (, address beneficiary, ) = staking.rolesOf(stakingProvider);
-        sortitionPool.withdrawRewards(operator, beneficiary);
+        uint96 amount = sortitionPool.withdrawRewards(operator, beneficiary);
+        // slither-disable-next-line reentrancy-events
+        emit RewardsWithdrawn(stakingProvider, amount);
     }
 
     /// @notice Withdraws rewards belonging to operators marked as ineligible
@@ -958,16 +962,6 @@ contract WalletRegistry is
         return wallets.isWalletRegistered(walletID);
     }
 
-    /// @notice Returns the amount of application rewards available for
-    ///         withdrawal for the given staking provider.
-    function availableRewards(address stakingProvider)
-        external
-        view
-        returns (uint96)
-    {
-        revert("TODO: IMPLEMENT");
-    }
-
     /// @notice The minimum authorization amount required so that operator can
     ///         participate in ECDSA Wallet operations.
     function minimumAuthorization() external view returns (uint96) {
@@ -993,6 +987,19 @@ contract WalletRegistry is
         returns (uint96)
     {
         return authorization.eligibleStake(staking, stakingProvider);
+    }
+
+    /// @notice Returns the amount of rewards available for withdrawal for the
+    ///         given staking provider. Reverts if staking provider has not
+    ///         registered the operator address.
+    function availableRewards(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        address operator = stakingProviderToOperator(stakingProvider);
+        require(operator != address(0), "Unknown operator");
+        return sortitionPool.getAvailableRewards(operator);
     }
 
     /// @notice Returns the amount of stake that is pending authorization
