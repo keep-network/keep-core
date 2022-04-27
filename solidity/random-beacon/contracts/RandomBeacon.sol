@@ -320,8 +320,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     event AuthorizationDecreaseRequested(
         address indexed stakingProvider,
         uint96 fromAmount,
-        uint96 toAmount,
-        uint64 decreasingAt
+        uint96 toAmount
     );
 
     event AuthorizationDecreaseApproved(address indexed stakingProvider);

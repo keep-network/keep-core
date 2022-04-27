@@ -67,8 +67,7 @@ library BeaconAuthorization {
     event AuthorizationDecreaseRequested(
         address indexed stakingProvider,
         uint96 fromAmount,
-        uint96 toAmount,
-        uint64 decreasingAt
+        uint96 toAmount
     );
 
     event AuthorizationDecreaseApproved(address indexed stakingProvider);
@@ -253,8 +252,7 @@ library BeaconAuthorization {
         emit AuthorizationDecreaseRequested(
             stakingProvider,
             fromAmount,
-            toAmount,
-            decreasingAt
+            toAmount
         );
     }
 

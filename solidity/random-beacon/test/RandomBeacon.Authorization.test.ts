@@ -554,10 +554,9 @@ describe("RandomBeacon - Authorization", () => {
         })
 
         it("should emit AuthorizationDecreaseRequested event", async () => {
-          const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(stakingProvider.address, stakedAmount, decreasingTo, now)
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -601,10 +600,9 @@ describe("RandomBeacon - Authorization", () => {
         })
 
         it("should emit AuthorizationDecreaseRequested event", async () => {
-          const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(stakingProvider.address, stakedAmount, decreasingTo, now)
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -648,10 +646,9 @@ describe("RandomBeacon - Authorization", () => {
         })
 
         it("should emit AuthorizationDecreaseRequested event", async () => {
-          const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(stakingProvider.address, stakedAmount, decreasingTo, now)
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -774,12 +771,7 @@ describe("RandomBeacon - Authorization", () => {
         it("should emit AuthorizationDecreaseRequested event", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(
-              stakingProvider.address,
-              stakedAmount,
-              decreasingTo,
-              MAX_UINT64
-            )
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -825,12 +817,7 @@ describe("RandomBeacon - Authorization", () => {
         it("should emit AuthorizationDecreaseRequested event", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(
-              stakingProvider.address,
-              stakedAmount,
-              decreasingTo,
-              MAX_UINT64
-            )
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -876,12 +863,7 @@ describe("RandomBeacon - Authorization", () => {
         it("should emit AuthorizationDecreaseRequested event", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(
-              stakingProvider.address,
-              stakedAmount,
-              decreasingTo,
-              MAX_UINT64
-            )
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo)
         })
 
         it("should capture deauthorizing amount", async () => {
