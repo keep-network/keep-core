@@ -221,8 +221,6 @@ contract WalletRegistry is
         address notifier
     );
 
-    event RewardsWithdrawn(address indexed stakingProvider, uint96 amount);
-
     modifier onlyStakingContract() {
         require(
             msg.sender == address(staking),
