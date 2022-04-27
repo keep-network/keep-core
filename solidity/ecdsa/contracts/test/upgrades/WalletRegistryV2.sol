@@ -952,6 +952,16 @@ contract WalletRegistryV2 is
         return wallets.isWalletRegistered(walletID);
     }
 
+    /// @notice Returns the amount of application rewards available for
+    ///         withdrawal for the given staking provider.
+    function availableRewards(address stakingProvider)
+        external
+        view
+        returns (uint96)
+    {
+        revert("TODO: IMPLEMENT");
+    }
+
     /// @notice The minimum authorization amount required so that operator can
     ///         participate in ECDSA Wallet operations.
     function minimumAuthorization() external view returns (uint96) {
