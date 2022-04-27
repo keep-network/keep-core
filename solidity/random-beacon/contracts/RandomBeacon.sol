@@ -345,8 +345,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         address indexed operator
     );
 
-    event RewardsWithdrawn(address indexed stakingProvider, uint96 amount);
-
     /// @dev Assigns initial values to parameters to make the beacon work
     ///      safely. These parameters are just proposed defaults and they might
     ///      be updated with `update*` functions after the contract deployment
