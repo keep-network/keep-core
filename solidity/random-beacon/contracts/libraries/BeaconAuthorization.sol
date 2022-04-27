@@ -60,14 +60,12 @@ library BeaconAuthorization {
 
     event AuthorizationIncreased(
         address indexed stakingProvider,
-        address indexed operator,
         uint96 fromAmount,
         uint96 toAmount
     );
 
     event AuthorizationDecreaseRequested(
         address indexed stakingProvider,
-        address indexed operator,
         uint96 fromAmount,
         uint96 toAmount,
         uint64 decreasingAt
@@ -77,7 +75,6 @@ library BeaconAuthorization {
 
     event InvoluntaryAuthorizationDecreaseFailed(
         address indexed stakingProvider,
-        address indexed operator,
         uint96 fromAmount,
         uint96 toAmount
     );
@@ -183,13 +180,7 @@ library BeaconAuthorization {
         // and increasing authorization immediately one after another without
         // having to wait for the staking provider to do their part.
 
-        address operator = self.stakingProviderToOperator[stakingProvider];
-        emit AuthorizationIncreased(
-            stakingProvider,
-            operator,
-            fromAmount,
-            toAmount
-        );
+        emit AuthorizationIncreased(stakingProvider, fromAmount, toAmount);
     }
 
     /// @notice Used by T staking contract to inform the beacon that the
@@ -261,7 +252,6 @@ library BeaconAuthorization {
 
         emit AuthorizationDecreaseRequested(
             stakingProvider,
-            operator,
             fromAmount,
             toAmount,
             decreasingAt
@@ -372,7 +362,6 @@ library BeaconAuthorization {
                 if (sortitionPool.isLocked()) {
                     emit InvoluntaryAuthorizationDecreaseFailed(
                         stakingProvider,
-                        operator,
                         fromAmount,
                         toAmount
                     );

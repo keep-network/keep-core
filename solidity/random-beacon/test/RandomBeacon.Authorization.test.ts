@@ -360,12 +360,7 @@ describe("RandomBeacon - Authorization", () => {
         it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationIncreased")
-            .withArgs(
-              stakingProvider.address,
-              ZERO_ADDRESS,
-              0,
-              minimumAuthorization
-            )
+            .withArgs(stakingProvider.address, 0, minimumAuthorization)
         })
       })
 
@@ -392,7 +387,7 @@ describe("RandomBeacon - Authorization", () => {
         it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationIncreased")
-            .withArgs(stakingProvider.address, ZERO_ADDRESS, 0, stakedAmount)
+            .withArgs(stakingProvider.address, 0, stakedAmount)
         })
       })
     })
@@ -439,12 +434,7 @@ describe("RandomBeacon - Authorization", () => {
         it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationIncreased")
-            .withArgs(
-              stakingProvider.address,
-              operator.address,
-              0,
-              minimumAuthorization
-            )
+            .withArgs(stakingProvider.address, 0, minimumAuthorization)
         })
       })
 
@@ -472,12 +462,7 @@ describe("RandomBeacon - Authorization", () => {
         it("should emit AuthorizationIncreased", async () => {
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationIncreased")
-            .withArgs(
-              stakingProvider.address,
-              operator.address,
-              0,
-              stakedAmount
-            )
+            .withArgs(stakingProvider.address, 0, stakedAmount)
         })
       })
     })
@@ -572,13 +557,7 @@ describe("RandomBeacon - Authorization", () => {
           const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(
-              stakingProvider.address,
-              ZERO_ADDRESS,
-              stakedAmount,
-              decreasingTo,
-              now
-            )
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo, now)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -625,13 +604,7 @@ describe("RandomBeacon - Authorization", () => {
           const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(
-              stakingProvider.address,
-              ZERO_ADDRESS,
-              stakedAmount,
-              decreasingTo,
-              now
-            )
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo, now)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -678,13 +651,7 @@ describe("RandomBeacon - Authorization", () => {
           const now = await helpers.time.lastBlockTime()
           await expect(tx)
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
-            .withArgs(
-              stakingProvider.address,
-              ZERO_ADDRESS,
-              stakedAmount,
-              decreasingTo,
-              now
-            )
+            .withArgs(stakingProvider.address, stakedAmount, decreasingTo, now)
         })
 
         it("should capture deauthorizing amount", async () => {
@@ -809,7 +776,6 @@ describe("RandomBeacon - Authorization", () => {
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
             .withArgs(
               stakingProvider.address,
-              operator.address,
               stakedAmount,
               decreasingTo,
               MAX_UINT64
@@ -861,7 +827,6 @@ describe("RandomBeacon - Authorization", () => {
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
             .withArgs(
               stakingProvider.address,
-              operator.address,
               stakedAmount,
               decreasingTo,
               MAX_UINT64
@@ -913,7 +878,6 @@ describe("RandomBeacon - Authorization", () => {
             .to.emit(randomBeacon, "AuthorizationDecreaseRequested")
             .withArgs(
               stakingProvider.address,
-              operator.address,
               stakedAmount,
               decreasingTo,
               MAX_UINT64
@@ -1326,7 +1290,6 @@ describe("RandomBeacon - Authorization", () => {
               .to.emit(randomBeacon, "InvoluntaryAuthorizationDecreaseFailed")
               .withArgs(
                 stakingProvider.address,
-                operator.address,
                 stakedAmount,
                 stakedAmount.sub(slashedAmount)
               )

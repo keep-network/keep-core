@@ -313,14 +313,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
     event AuthorizationIncreased(
         address indexed stakingProvider,
-        address indexed operator,
         uint96 fromAmount,
         uint96 toAmount
     );
 
     event AuthorizationDecreaseRequested(
         address indexed stakingProvider,
-        address indexed operator,
         uint96 fromAmount,
         uint96 toAmount,
         uint64 decreasingAt
@@ -330,7 +328,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
     event InvoluntaryAuthorizationDecreaseFailed(
         address indexed stakingProvider,
-        address indexed operator,
         uint96 fromAmount,
         uint96 toAmount
     );
