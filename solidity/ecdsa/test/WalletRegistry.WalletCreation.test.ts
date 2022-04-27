@@ -1923,8 +1923,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
             })
 
-            it("should use close to 331 000 gas", async () => {
-              await assertGasUsed(tx, 331_000)
+            it("should use close to 330 000 gas", async () => {
+              await assertGasUsed(tx, 330_000, 15_000)
             })
           })
 
@@ -1965,8 +1965,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await expect(tx).to.not.be.reverted
               })
 
-              it("should use close to 331 000 gas", async () => {
-                await assertGasUsed(await tx, 331_000)
+              it("should use close to 330 000 gas", async () => {
+                await assertGasUsed(await tx, 330_000, 15_000)
               })
             }
           )
@@ -2278,8 +2278,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
                       .withArgs(stakingProvider, to1e18(50000), false)
                   })
 
-                  it("should use close to 1 855 000 gas", async () => {
-                    await assertGasUsed(challengeTx, 1_855_000, 15_000)
+                  it("should use close to 1 835 000 gas", async () => {
+                    await assertGasUsed(challengeTx, 1_835_000, 15_000)
                   })
                 })
               })
@@ -2470,8 +2470,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     .withArgs(stakingProvider, to1e18(50000), false)
                 })
 
-                it("should use close to 530 000 gas", async () => {
-                  await assertGasUsed(challengeTx, 530_000, 10_000)
+                it("should use close to 520 000 gas", async () => {
+                  await assertGasUsed(challengeTx, 520_000, 15_000)
                 })
               }
             )
@@ -2519,8 +2519,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   await expect(await sortitionPool.isLocked()).to.be.true
                 })
 
-                it("should use close to 338 000 gas", async () => {
-                  await assertGasUsed(tx, 338_000)
+                it("should use close to 330 000 gas", async () => {
+                  await assertGasUsed(tx, 330_000, 20_000)
                 })
               }
             )
@@ -2566,8 +2566,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 await expect(await sortitionPool.isLocked()).to.be.true
               })
 
-              it("should use close to 338 000 gas", async () => {
-                await assertGasUsed(tx, 338_000)
+              it("should use close to 330 000 gas", async () => {
+                await assertGasUsed(tx, 330_000, 20_000)
               })
             })
 
