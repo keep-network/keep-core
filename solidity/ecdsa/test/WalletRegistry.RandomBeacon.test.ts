@@ -175,8 +175,8 @@ describe("WalletRegistry - Random Beacon", async () => {
 
         // The exact value was noted from a test execution and is used as a reference
         // for all future executions.
-        it("should not exceed 85600", async () => {
-          const expectedGasEstimate = 85600
+        it("should not exceed 85700", async () => {
+          const expectedGasEstimate = 85700
 
           const gasEstimate = await walletRegistry
             .connect(randomBeaconFake.wallet)
