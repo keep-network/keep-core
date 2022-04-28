@@ -131,6 +131,10 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
   },
+  gasReporter: {
+    currency: "USD",
+    coinmarketcap: "b6e0d546-7fcc-40d1-8ff2-faed0aabc2fb" // Basic free plan. Limits to 333 requests per day or 10000 per month
+  }
 }
 
 task("check-accounts-count", "Checks accounts count")
