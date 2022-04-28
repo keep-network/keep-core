@@ -101,7 +101,7 @@ library BeaconAuthorization {
     ///        between the time authorization decrease is requested and the time
     ///        the authorization decrease can be approved, no matter the
     ///        authorization decrease amount.
-    function updateParameters(
+    function setParameters(
         Data storage self,
         uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay
