@@ -133,7 +133,7 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     currency: "USD",
-    coinmarketcap: "b6e0d546-7fcc-40d1-8ff2-faed0aabc2fb" // Basic free plan. Limits to 333 requests per day or 10000 per month
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY
   }
 }
 
