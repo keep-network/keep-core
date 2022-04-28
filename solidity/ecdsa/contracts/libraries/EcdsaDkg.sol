@@ -46,6 +46,10 @@ library EcdsaDkg {
         // approve it. Once this period ends and the submitter have not approved
         // the result, anyone can do it.
         uint256 submitterPrecedencePeriodLength;
+        // Reserved storage space in case we need to add more variables.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        // slither-disable-next-line unused-state
+        uint256[16] __gap;
     }
 
     struct Data {
@@ -71,6 +75,10 @@ library EcdsaDkg {
         bytes32 submittedResultHash;
         // Block number from the moment of the DKG result submission.
         uint256 submittedResultBlock;
+        // Reserved storage space in case we need to add more variables.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        // slither-disable-next-line unused-state
+        uint256[11] __gap;
     }
 
     /// @notice DKG result.
@@ -103,6 +111,8 @@ library EcdsaDkg {
         // Keccak256 hash of group members identifiers that actively took part
         // in DKG (excluding IA/DQ members).
         bytes32 membersHash;
+        // This struct doesn't contain `__gap` property as the structure is not
+        // stored, it is used as a function's calldata argument.
     }
 
     /// @notice States for phases of group creation. The states doesn't include

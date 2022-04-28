@@ -31,11 +31,19 @@ library EcdsaAuthorization {
         // authorization decrease amount is small, significant, or if it is
         // a decrease to zero.
         uint64 authorizationDecreaseDelay;
+        // Reserved storage space in case we need to add more variables.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        // slither-disable-next-line unused-state
+        uint256[18] __gap;
     }
 
     struct AuthorizationDecrease {
         uint96 decreasingBy; // amount
         uint64 decreasingAt; // timestamp
+        // Reserved storage space in case we need to add more variables.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        // slither-disable-next-line unused-state
+        uint256[18] __gap;
     }
 
     struct Data {
@@ -43,6 +51,10 @@ library EcdsaAuthorization {
         mapping(address => address) stakingProviderToOperator;
         mapping(address => address) operatorToStakingProvider;
         mapping(address => AuthorizationDecrease) pendingDecreases;
+        // Reserved storage space in case we need to add more variables.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        // slither-disable-next-line unused-state
+        uint256[16] __gap;
     }
 
     event OperatorRegistered(

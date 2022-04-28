@@ -52,6 +52,8 @@ library EcdsaInactivity {
         // in range [1, groupMembers.length], unique, and sorted in ascending
         // order.
         uint256[] signingMembersIndices;
+        // This struct doesn't contain `__gap` property as the structure is not
+        // stored, it is used as a function's calldata argument.
     }
 
     /// @notice The minimum number of wallet signing group members needed to
