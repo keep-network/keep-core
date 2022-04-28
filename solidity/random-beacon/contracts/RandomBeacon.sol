@@ -384,9 +384,9 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         _unauthorizedSigningNotificationRewardMultiplier = 50;
         _dkgMaliciousResultNotificationRewardMultiplier = 100;
         // slither-disable-next-line too-many-digits
-        authorization.setMinimumAuthorization(100000e18); // 100k T
-        authorization.setAuthorizationDecreaseDelay(403200); // ~10 weeks assuming 15s block time
-
+        // Minimum authorization:         100k T
+        // Authorization decrease delay:  ~10 weeks assuming 15s block time
+        authorization.updateParameters(100000e18, 403200);
         dkg.init(_sortitionPool, _dkgValidator);
         dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
         dkg.setResultSubmissionTimeout(1280); // 64 members * 20 blocks = 1280 blocks // TODO: Verify value
@@ -426,8 +426,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay
     ) external onlyGovernance {
-        authorization.setMinimumAuthorization(_minimumAuthorization);
-        authorization.setAuthorizationDecreaseDelay(
+        authorization.updateParameters(
+            _minimumAuthorization,
             _authorizationDecreaseDelay
         );
 
