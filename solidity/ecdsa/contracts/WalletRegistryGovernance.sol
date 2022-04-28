@@ -40,6 +40,9 @@ contract WalletRegistryGovernance is Ownable {
     uint64 public newAuthorizationDecreaseDelay;
     uint256 public authorizationDecreaseDelayChangeInitiated;
 
+    uint64 public newAuthorizationDecreaseChangePeriod;
+    uint256 public authorizationDecreaseChangePeriodChangeInitiated;
+
     uint96 public newMaliciousDkgResultSlashingAmount;
     uint256 public maliciousDkgResultSlashingAmountChangeInitiated;
 
@@ -106,6 +109,15 @@ contract WalletRegistryGovernance is Ownable {
         uint256 timestamp
     );
     event AuthorizationDecreaseDelayUpdated(uint64 authorizationDecreaseDelay);
+
+    event AuthorizationDecreaseChangePeriodUpdateStarted(
+        uint64 authorizationDecreaseChangePeriod,
+        uint256 timestamp
+    );
+
+    event AuthorizationDecreaseChangePeriodUpdated(
+        uint64 authorizationDecreaseChangePeriod
+    );
 
     event MaliciousDkgResultSlashingAmountUpdateStarted(
         uint256 maliciousDkgResultSlashingAmount,
@@ -357,10 +369,16 @@ contract WalletRegistryGovernance is Ownable {
         onlyAfterGovernanceDelay(minimumAuthorizationChangeInitiated)
     {
         emit MinimumAuthorizationUpdated(newMinimumAuthorization);
+        (
+            ,
+            uint64 authorizationDecreaseDelay,
+            uint64 authorizationDecreaseChangePeriod
+        ) = walletRegistry.authorizationParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateAuthorizationParameters(
             newMinimumAuthorization,
-            walletRegistry.authorizationDecreaseDelay()
+            authorizationDecreaseDelay,
+            authorizationDecreaseChangePeriod
         );
         minimumAuthorizationChangeInitiated = 0;
         newMinimumAuthorization = 0;
@@ -391,13 +409,63 @@ contract WalletRegistryGovernance is Ownable {
         onlyAfterGovernanceDelay(authorizationDecreaseDelayChangeInitiated)
     {
         emit AuthorizationDecreaseDelayUpdated(newAuthorizationDecreaseDelay);
+        (
+            uint96 minimumAuthorization,
+            uint64 authorizationDecreaseChangePeriod,
+
+        ) = walletRegistry.authorizationParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateAuthorizationParameters(
-            walletRegistry.minimumAuthorization(),
-            newAuthorizationDecreaseDelay
+            minimumAuthorization,
+            newAuthorizationDecreaseDelay,
+            authorizationDecreaseChangePeriod
         );
         authorizationDecreaseDelayChangeInitiated = 0;
         newAuthorizationDecreaseDelay = 0;
+    }
+
+    /// @notice Begins the authorization decrease change period update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newAuthorizationDecreaseChangePeriod New authorization decrease change period
+    function beginAuthorizationDecreaseChangePeriodUpdate(
+        uint64 _newAuthorizationDecreaseChangePeriod
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newAuthorizationDecreaseChangePeriod = _newAuthorizationDecreaseChangePeriod;
+        authorizationDecreaseChangePeriodChangeInitiated = block.timestamp;
+        emit AuthorizationDecreaseChangePeriodUpdateStarted(
+            _newAuthorizationDecreaseChangePeriod,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the authorization decrease change period update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeAuthorizationDecreaseChangePeriodUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            authorizationDecreaseChangePeriodChangeInitiated
+        )
+    {
+        emit AuthorizationDecreaseChangePeriodUpdated(
+            newAuthorizationDecreaseChangePeriod
+        );
+        (
+            uint96 minimumAuthorization,
+            uint64 authorizationDecreaseDelay,
+
+        ) = walletRegistry.authorizationParameters();
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateAuthorizationParameters(
+            minimumAuthorization,
+            authorizationDecreaseDelay,
+            newAuthorizationDecreaseChangePeriod
+        );
+        authorizationDecreaseChangePeriodChangeInitiated = 0;
+        newAuthorizationDecreaseChangePeriod = 0;
     }
 
     /// @notice Begins the malicious DKG result slashing amount update process.
@@ -909,6 +977,20 @@ contract WalletRegistryGovernance is Ownable {
     {
         return
             getRemainingChangeTime(authorizationDecreaseDelayChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the authorization decrease change
+    ///         period can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingAuthorizationDecreaseChangePeriodUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                authorizationDecreaseChangePeriodChangeInitiated
+            );
     }
 
     /// @notice Get the time remaining until the malicious DKG result
