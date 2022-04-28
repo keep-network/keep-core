@@ -11,8 +11,6 @@ import "@typechain/hardhat"
 import "hardhat-dependency-compiler"
 
 import { task } from "hardhat/config"
-import { TASK_TEST } from "hardhat/builtin-tasks/task-names"
-
 // Configuration for testing environment.
 export const testConfig = {
   // How many accounts we expect to define for non-staking related signers, e.g.
@@ -135,19 +133,18 @@ const config: HardhatUserConfig = {
   },
 }
 
-task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
-  const { constants } = require("./test/fixtures")
+task("check-accounts-count", "Checks accounts count")
+  .setAction(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
+    const { constants } = require("./test/fixtures")
 
-  if (testConfig.operatorsCount < constants.groupSize) {
-    throw new Error(
-      "not enough accounts predefined for configured group size: " +
-        `expected group size: ${constants.groupSize} ` +
-        `number of predefined accounts: ${testConfig.operatorsCount}`
-    )
-  }
-
-  return runSuper(args)
-})
+    if (testConfig.operatorsCount < constants.groupSize4) {
+      throw new Error(
+        "not enough accounts predefined for configured group size: " +
+          `expected group size: ${constants.groupSize} ` +
+          `number of predefined accounts: ${testConfig.operatorsCount}`
+      )
+    }
+  });
 
 export default config
