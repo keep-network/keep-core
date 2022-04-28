@@ -133,22 +133,21 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     currency: "USD",
-    coinmarketcap: process.env.COINMARKETCAP_API_KEY
-  }
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+  },
 }
 
-task("check-accounts-count", "Checks accounts count")
-  .setAction(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
-    const { constants } = require("./test/fixtures")
+task("check-accounts-count", "Checks accounts count").setAction(async () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
+  const { constants } = require("./test/fixtures")
 
-    if (testConfig.operatorsCount < constants.groupSize4) {
-      throw new Error(
-        "not enough accounts predefined for configured group size: " +
-          `expected group size: ${constants.groupSize} ` +
-          `number of predefined accounts: ${testConfig.operatorsCount}`
-      )
-    }
-  });
+  if (testConfig.operatorsCount < constants.groupSize4) {
+    throw new Error(
+      "not enough accounts predefined for configured group size: " +
+        `expected group size: ${constants.groupSize} ` +
+        `number of predefined accounts: ${testConfig.operatorsCount}`
+    )
+  }
+})
 
 export default config
