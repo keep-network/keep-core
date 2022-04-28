@@ -13,8 +13,7 @@ contract RelayStub {
         uint256 relayEntrySoftTimeout,
         uint256 relayEntryHardTimeout
     ) public {
-        relay.setRelayEntrySoftTimeout(relayEntrySoftTimeout);
-        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
+        relay.setTimeouts(relayEntrySoftTimeout, relayEntryHardTimeout);
     }
 
     function setCurrentRequestStartBlock() external {

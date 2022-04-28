@@ -195,26 +195,22 @@ library Relay {
         return 0;
     }
 
-    /// @notice Set relayEntrySoftTimeout parameter.
-    /// @param newRelayEntrySoftTimeout New value of the parameter.
-    function setRelayEntrySoftTimeout(
+    /// @notice Updates relay-related parameters
+    /// @param _relayEntrySoftTimeout New relay entry soft timeout value.
+    ///        It is the time in blocks during which a result is expected to be
+    ///        submitted so that the group is not slashed.
+    /// @param _relayEntryHardTimeout New relay entry hard timeout value.
+    ///        It is the time in blocks for a group to submit the relay entry
+    ///        before slashing for the full slashing amount happens.
+    function setTimeouts(
         Data storage self,
-        uint256 newRelayEntrySoftTimeout
+        uint256 _relayEntrySoftTimeout,
+        uint256 _relayEntryHardTimeout
     ) internal {
         require(!isRequestInProgress(self), "Relay request in progress");
 
-        self.relayEntrySoftTimeout = uint32(newRelayEntrySoftTimeout);
-    }
-
-    /// @notice Set relayEntryHardTimeout parameter.
-    /// @param newRelayEntryHardTimeout New value of the parameter.
-    function setRelayEntryHardTimeout(
-        Data storage self,
-        uint256 newRelayEntryHardTimeout
-    ) internal {
-        require(!isRequestInProgress(self), "Relay request in progress");
-
-        self.relayEntryHardTimeout = uint32(newRelayEntryHardTimeout);
+        self.relayEntrySoftTimeout = uint32(_relayEntrySoftTimeout);
+        self.relayEntryHardTimeout = uint32(_relayEntryHardTimeout);
     }
 
     /// @notice Set relayEntrySubmissionFailureSlashingAmount parameter.
