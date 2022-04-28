@@ -388,9 +388,10 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         // Authorization decrease delay:  ~10 weeks assuming 15s block time
         authorization.setParameters(100000e18, 403200);
         dkg.init(_sortitionPool, _dkgValidator);
-        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionTimeout(1280); // 64 members * 20 blocks = 1280 blocks // TODO: Verify value
-        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+        // DKG result challenge period length: ~48h assuming 15s block time
+        // DKG result submission timeout: 64 members * 20 blocks = 1280 blocks
+        // DKG result submitter precedence period length: 20 blocks
+        dkg.setParameters(11520, 1280, 20);
 
         relay.initSeedEntry();
         // Relay entry soft timeout: 64 members * 20 blocks = 1280 blocks
@@ -480,9 +481,9 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ) external onlyGovernance {
         _groupCreationFrequency = groupCreationFrequency;
         groups.setGroupLifetime(groupLifetime);
-        dkg.setResultChallengePeriodLength(dkgResultChallengePeriodLength);
-        dkg.setResultSubmissionTimeout(dkgResultSubmissionTimeout);
-        dkg.setSubmitterPrecedencePeriodLength(
+        dkg.setParameters(
+            dkgResultChallengePeriodLength,
+            dkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
 

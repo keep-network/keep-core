@@ -425,54 +425,44 @@ library BeaconDkg {
         return (maliciousResultHash, maliciousSubmitter);
     }
 
-    /// @notice Set resultChallengePeriodLength parameter.
-    function setResultChallengePeriodLength(
+    /// @notice Updates DKG-related parmaeters
+    /// @param _resultChallengePeriodLength New value of the result challenge
+    ///        period length. It is the number of blocks for which a DKG result
+    ///        can be challenged.
+    /// @param _resultSubmissionTimeout New value of the result submission
+    ///        timeout in seconds. It is a timeout for a group to provide a DKG
+    ///        result.
+    /// @param _submitterPrecedencePeriodLength New value of the submitter
+    ///        precedence period length in blocks. It is the time during which
+    ///        only the original DKG result submitter can approve it.
+    function setParameters(
         Data storage self,
-        uint256 newResultChallengePeriodLength
+        uint256 _resultChallengePeriodLength,
+        uint256 _resultSubmissionTimeout,
+        uint256 _submitterPrecedencePeriodLength
     ) internal {
         require(currentState(self) == State.IDLE, "Current state is not IDLE");
 
         require(
-            newResultChallengePeriodLength > 0,
-            "New value should be greater than zero"
+            _resultChallengePeriodLength > 0,
+            "Result challenge period length should be greater than zero"
         );
-
-        self
-            .parameters
-            .resultChallengePeriodLength = newResultChallengePeriodLength;
-    }
-
-    /// @notice Set resultSubmissionTimeout parameter.
-    function setResultSubmissionTimeout(
-        Data storage self,
-        uint256 newResultSubmissionTimeout
-    ) internal {
-        require(currentState(self) == State.IDLE, "Current state is not IDLE");
-
         require(
-            newResultSubmissionTimeout > 0,
-            "New value should be greater than zero"
+            _resultSubmissionTimeout > 0,
+            "Result submission timeout should be greater than zero"
         );
-
-        self.parameters.resultSubmissionTimeout = newResultSubmissionTimeout;
-    }
-
-    /// @notice Set submitterPrecedencePeriodLength parameter.
-    function setSubmitterPrecedencePeriodLength(
-        Data storage self,
-        uint256 newSubmitterPrecedencePeriodLength
-    ) internal {
-        require(currentState(self) == State.IDLE, "Current state is not IDLE");
-
         require(
-            newSubmitterPrecedencePeriodLength <
-                self.parameters.resultSubmissionTimeout,
+            _submitterPrecedencePeriodLength < _resultSubmissionTimeout,
             "Submitter precedence period length should be less than the result submission timeout"
         );
 
         self
             .parameters
-            .submitterPrecedencePeriodLength = newSubmitterPrecedencePeriodLength;
+            .resultChallengePeriodLength = _resultChallengePeriodLength;
+        self.parameters.resultSubmissionTimeout = _resultSubmissionTimeout;
+        self
+            .parameters
+            .submitterPrecedencePeriodLength = _submitterPrecedencePeriodLength;
     }
 
     /// @notice Completes DKG by cleaning up state.
