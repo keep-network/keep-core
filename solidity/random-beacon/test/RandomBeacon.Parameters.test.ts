@@ -92,8 +92,9 @@ describe("RandomBeacon - Parameters", () => {
   })
 
   describe("updateAuthorizationParameters", () => {
-    const minimumAuthorization = 4200000
-    const authorizationDecreaseDelay = 86400
+    const newMinimumAuthorization = 4200000
+    const newAuthorizationDecreaseDelay = 86400
+    const newAuthorizationDecreaseChangePeriod = 43200
 
     context("when the caller is not the governance", () => {
       it("should revert", async () => {
@@ -101,8 +102,9 @@ describe("RandomBeacon - Parameters", () => {
           randomBeacon
             .connect(thirdParty)
             .updateAuthorizationParameters(
-              minimumAuthorization,
-              authorizationDecreaseDelay
+              newMinimumAuthorization,
+              newAuthorizationDecreaseDelay,
+              newAuthorizationDecreaseChangePeriod
             )
         ).to.be.revertedWith("Caller is not the governance")
       })
@@ -117,8 +119,9 @@ describe("RandomBeacon - Parameters", () => {
         tx = await randomBeacon
           .connect(governance)
           .updateAuthorizationParameters(
-            minimumAuthorization,
-            authorizationDecreaseDelay
+            newMinimumAuthorization,
+            newAuthorizationDecreaseDelay,
+            newAuthorizationDecreaseChangePeriod
           )
       })
 
@@ -128,20 +131,34 @@ describe("RandomBeacon - Parameters", () => {
 
       it("should update the group creation frequency", async () => {
         expect(await randomBeacon.minimumAuthorization()).to.be.equal(
-          minimumAuthorization
+          newMinimumAuthorization
         )
       })
 
       it("should update the authorization decrease delay", async () => {
-        expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
+        const { authorizationDecreaseDelay } =
+          await randomBeacon.authorizationParameters()
+        expect(authorizationDecreaseDelay).to.be.equal(
           authorizationDecreaseDelay
+        )
+      })
+
+      it("should update the authorization decrease change period", async () => {
+        const { authorizationDecreaseChangePeriod } =
+          await randomBeacon.authorizationParameters()
+        expect(authorizationDecreaseChangePeriod).to.be.equal(
+          authorizationDecreaseChangePeriod
         )
       })
 
       it("should emit the AuthorizationParametersUpdated event", async () => {
         await expect(tx)
           .to.emit(randomBeacon, "AuthorizationParametersUpdated")
-          .withArgs(minimumAuthorization, authorizationDecreaseDelay)
+          .withArgs(
+            newMinimumAuthorization,
+            newAuthorizationDecreaseDelay,
+            newAuthorizationDecreaseChangePeriod
+          )
       })
     })
   })
