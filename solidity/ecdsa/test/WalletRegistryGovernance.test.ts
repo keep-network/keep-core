@@ -48,10 +48,10 @@ describe("WalletRegistryGovernance", async () => {
   let walletRegistryGovernance: WalletRegistryGovernance
   let thirdParty: SignerWithAddress
 
-  const initialMinimumAuthorization = to1e18(400000)
-  const initialAuthorizationDecreaseDelay = 5184000 // 60 days
-  const initialAuthorizationDecreaseChangePeriod = 5184000 // 60 days
-  const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
+  const initialMinimumAuthorization = to1e18(40000)
+  const initialAuthorizationDecreaseDelay = 3888000 // 45 days
+  const initialAuthorizationDecreaseChangePeriod = 3888000 // 45 days
+  const initialMaliciousDkgResultSlashingAmount = to1e18(400)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
   const initialDkgResultSubmissionGas = 275000
   const initialDkgResultApprovalGasOffset = 65000

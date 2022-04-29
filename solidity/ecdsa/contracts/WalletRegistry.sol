@@ -75,17 +75,17 @@ contract WalletRegistry is
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
     ///         another group member that will call the DKG approve function.
-    uint256 internal _dkgResultSubmissionGas = 275000;
+    uint256 internal _dkgResultSubmissionGas;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
     ///         cost. It can be updated by the governace based on the current
     ///         market conditions.
-    uint256 internal _dkgResultApprovalGasOffset = 65000;
+    uint256 internal _dkgResultApprovalGasOffset;
 
     /// @notice Gas that is meant to balance the notification of an operator
     ///         inactivity. It can be updated by the governace based on the
     ///         current market conditions.
-    uint256 internal _notifyOperatorInactivityGasOffset = 85000;
+    uint256 internal _notifyOperatorInactivityGasOffset;
 
     /// @notice Stores current operator inactivity claim nonce for the given
     ///         wallet signing group. Each claim is made with a unique nonce
@@ -256,21 +256,62 @@ contract WalletRegistry is
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
-        // TODO: revisit all initial values
-        _maliciousDkgResultSlashingAmount = 50000e18;
+        //
+        // All parameters set in the constructor are initial ones, used at the
+        // moment contracts were deployed for the first time. Parameters are
+        // governable and values assigned in the constructor do not need to
+        // reflect the current ones.
+        //
+
+        // Minimum authorization is 40k T.
+        //
+        // Authorization decrease delay is 45 days.
+        //
+        // Authorization decrease change period is 45 days. It means pending
+        // authorization decrease can be overwriten all the time.
+        authorization.setMinimumAuthorization(40_000e18);
+        authorization.setAuthorizationDecreaseDelay(3_888_000);
+        authorization.setAuthorizationDecreaseChangePeriod(3_888_000);
+
+        // Malicious DKG result slashing amount is set initially to 1% of the
+        // minimum authorization (400 T). This values needs to be increased
+        // significantly once the system is fully launched.
+        //
+        // Reported of a malicious DKG result receives 100% of the notifier
+        // reward from the staking contract.
+        //
+        // Inactive operators are set as ineligible for rewards for 2 weeks.
+        _maliciousDkgResultSlashingAmount = 400e18;
         _maliciousDkgResultNotificationRewardMultiplier = 100;
         _sortitionPoolRewardsBanDuration = 2 weeks;
 
-        // slither-disable-next-line too-many-digits
-        authorization.setMinimumAuthorization(400000e18); // 400k T
-        authorization.setAuthorizationDecreaseDelay(5184000); // 60 days
-        authorization.setAuthorizationDecreaseChangePeriod(5184000);
-
+        // DKG seed timeout is set to 48h assuming 15s block time. The same
+        // value is used by the Random Beacon as a relay entry hard timeout.
+        //
+        // DKG result challenge period length is set to 48h as well, assuming
+        // 15s block time.
+        //
+        // DKG result submission timeout, gives each member 20 blocks to submit
+        // the result. Assuming 15s block time, it is ~8h to submit the result
+        // in the pessimistic case.
+        //
+        // The original DKG result submitter has 20 blocks to approve it before
+        // anyone else can do that.
+        //
+        // With these parameters, the happy path takes no more than 104 hours.
+        // In practice, it should take about 48 hours (just the challenge time).
         dkg.init(_sortitionPool, _ecdsaDkgValidator);
-        dkg.setSeedTimeout(1440); // ~6h assuming 15s block time
-        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
+        dkg.setSeedTimeout(11_520);
+        dkg.setResultChallengePeriodLength(11_520);
         dkg.setResultSubmissionTimeout(100 * 20);
         dkg.setSubmitterPrecedencePeriodLength(20);
+
+        // Gas parameters were adjusted based on Ethereum state in April 2022.
+        // If the cost of EVM opcodes change over time, these parameters will
+        // have to be updated.
+        _dkgResultSubmissionGas = 275_000;
+        _dkgResultApprovalGasOffset = 65_000;
+        _notifyOperatorInactivityGasOffset = 85_000;
 
         _transferGovernance(msg.sender);
     }

@@ -2232,7 +2232,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   it("should emit DkgMaliciousResultSlashed event", async () => {
                     await expect(challengeTx)
                       .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                      .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                      .withArgs(dkgResultHash, to1e18(400), submitter.address)
                   })
 
                   it("should reward the notifier", async () => {
@@ -2251,7 +2251,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                       )
                     await expect(slashingTx)
                       .to.emit(staking, "TokensSeized")
-                      .withArgs(stakingProvider, to1e18(50000), false)
+                      .withArgs(stakingProvider, to1e18(400), false)
                   })
                 })
               })
@@ -2306,7 +2306,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   it("should emit DkgMaliciousResultSlashed event", async () => {
                     await expect(challengeTx)
                       .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                      .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                      .withArgs(dkgResultHash, to1e18(400), submitter.address)
                   })
 
                   it("should reward the notifier", async () => {
@@ -2325,7 +2325,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                       )
                     await expect(slashingTx)
                       .to.emit(staking, "TokensSeized")
-                      .withArgs(stakingProvider, to1e18(50000), false)
+                      .withArgs(stakingProvider, to1e18(400), false)
                   })
                 })
               })
@@ -2420,7 +2420,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 it("should emit DkgMaliciousResultSlashed event", async () => {
                   await expect(challengeTx)
                     .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                    .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                    .withArgs(dkgResultHash, to1e18(400), submitter.address)
                 })
 
                 it("should reward the notifier", async () => {
@@ -2439,7 +2439,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     )
                   await expect(slashingTx)
                     .to.emit(staking, "TokensSeized")
-                    .withArgs(stakingProvider, to1e18(50000), false)
+                    .withArgs(stakingProvider, to1e18(400), false)
                 })
               }
             )
@@ -2675,7 +2675,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(challengeTx)
                   .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                  .withArgs(dkgResultHash, to1e18(400), submitter.address)
               })
 
               it("should slash malicious result submitter", async () => {
@@ -2685,7 +2685,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   )
                 await expect(slashingTx)
                   .to.emit(staking, "TokensSeized")
-                  .withArgs(stakingProvider, to1e18(50000), false)
+                  .withArgs(stakingProvider, to1e18(400), false)
               })
             })
           })
@@ -2740,7 +2740,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
               it("should emit DkgMaliciousResultSlashed event", async () => {
                 await expect(challengeTx)
                   .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                  .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                  .withArgs(dkgResultHash, to1e18(400), submitter.address)
               })
 
               it("should slash malicious result submitter", async () => {
@@ -2750,7 +2750,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                   )
                 await expect(slashingTx)
                   .to.emit(staking, "TokensSeized")
-                  .withArgs(stakingProvider, to1e18(50000), false)
+                  .withArgs(stakingProvider, to1e18(400), false)
               })
             })
           })
@@ -2842,7 +2842,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
             it("should emit DkgMaliciousResultSlashed event", async () => {
               await expect(challengeTx)
                 .to.emit(walletRegistry, "DkgMaliciousResultSlashed")
-                .withArgs(dkgResultHash, to1e18(50000), submitter.address)
+                .withArgs(dkgResultHash, to1e18(400), submitter.address)
             })
 
             it("should slash malicious result submitter", async () => {
@@ -2852,7 +2852,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 )
               await expect(slashingTx)
                 .to.emit(staking, "TokensSeized")
-                .withArgs(stakingProvider, to1e18(50000), false)
+                .withArgs(stakingProvider, to1e18(400), false)
             })
           }
         )
