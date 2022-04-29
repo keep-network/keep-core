@@ -54,7 +54,7 @@ library BeaconAuthorization {
         // will have to wait another 10 days to alter it and 14 days to
         // approve it.
         //
-        // This value protect against malicious operators who manipulate
+        // This value protects against malicious operators who manipulate
         // their weight by overwriting authorization decrease request, and
         // lowering or increasing their eligible stake this way.
         //
