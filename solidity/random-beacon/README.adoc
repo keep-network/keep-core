@@ -307,7 +307,7 @@ and `reportUnauthorizedSigning`.
 
 |groupThreshold
 |The minimum number of group members needed to interact according to the protocol
-to provide signatures for the DKG result. 
+to produce a signature
 |No
 |`33`
 

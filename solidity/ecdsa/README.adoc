@@ -180,7 +180,7 @@ entries.
 many members are inactive during the heartbeat failing, it means that the wallet
 is at risk of losing the possibility to sign transactions. Wallet owner
 (TBTC `Bridge`) is informed about a failed heartbeat by
-`IWalletOwner.__ecdsaWalletHeartbeatFailedCallback(bytes32 walletID, bytes32 publicKeyX, bytes32 publicKeyY)` callback function call and starts the process of moving funds out
+`IWalletOwner.__ecdsaWalletHeartbeatFailedCallback` callback function call and starts the process of moving funds out
 of the problematic wallet.
 
 [[rewards]]
@@ -259,6 +259,130 @@ do not compensate gas. Notification rewards are distributed by Threshold Network
 The only punishment transaction in `WalletRegistry` itself if `challengeDkgResult`.
 Additionally, wallet owner can implement its own punishment transactions, and
 slash the signing group members with a call to `WalletRegistry.seize` function.
+
+== Parameters
+
+[%header,cols="3m,4,^1,^2m"]
+|=== 
+^|Property Name
+^|Description
+|Governable
+|Default Value
+
+4+s|DKG
+
+|groupSize
+|Size of a signing group for a wallet.
+|No
+|`100`
+
+|groupThreshold
+|The minimum number of group members needed to interact according to the protocol
+to produce a signature
+|No
+|`51`
+
+|activeThreshold
+|The minimum number of active and properly behaving group members during the DKG
+needed to accept the result.
+|No
+d|`90` +
+_90% of groupSize_
+
+|singnatureByteSize
+|Size in bytes of a single signature produced by operator supporting DKG result.
+|No
+|`65`
+
+|resultChallengePeriodLength
+|Time in blocks during which a submitted result can be challenged.
+|Yes
+d|`11520 blocks` +
+_~48h assuming 15s block time_
+
+|resultSubmissionTimeout
+|Time in blocks during which a result is expected to be submitted.
+|Yes
+d|`2000 blocks` +
+_100 members * 20 blocks = 2000 blocks_
+
+|submitterPrecedencePeriodLength
+|Time in blocks during which only the result submitter is allowed to approve it.
+|Yes
+|`20 blocks`
+
+
+4+s|Slashing
+
+|maliciousDkgResultSlashingAmount
+|Slashing amount for submitting malicious DKG result.
+|Yes
+d|`50000e18` +
+_50 000 T_
+
+|dkgMaliciousResultNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about a malicious DKG result.
+|Yes
+|`100`
+
+|sortitionPoolRewardsBanDuration
+|Duration of the sortition pool rewards ban imposed on operators who were
+inactive/disqualified during off-chain DKG or were voted by the group as
+inactive for other reasons.
+|Yes
+|`2 weeks`
+
+4+s|Gas offsets
+
+|dkgResultSubmissionGas	
+|Calculated gas cost for submitting a DKG result. This will be refunded as part
+of the DKG approval process.
+|Yes
+|`275000`
+
+|dkgResultApprovalGasOffset
+|Gas that is meant to balance the DKG result approval's overall cost.
+|Yes
+|`65000`
+
+|notifyOperatorInactivityGasOffset
+|Gas that is meant to balance the operator inactivity notification cost.
+|Yes
+|`85000`
+
+
+4+s|Authorization
+
+|minimumAuthorization
+|The minimum authorization amount required so that operator can participate in
+the Random Beacon.
+|Yes
+d|`100000 * 1e18` +
+_100 000 T_
+
+|authorizationDecreaseDelay
+|Delay in seconds that needs to pass between the time authorization decrease is
+requested and the time that request gets approved.
+|Yes
+d|`403200 blocks` +
+_~10 weeks assuming 15s block time_
+
+4+s|Wallet Registry
+
+|walletOwner	
+|Wallet owner address capable of requesting new wallets, closing and slashing
+existing ones.
+|Yes
+d|TBTC `Bridge` contract address
+
+|randomBeacon	
+|Random Beacon contract address, needed to produce seed for wallet signing group
+member selection.
+|Yes
+d|`RandomBeacon` contract address
+
+|===
 
 == Build
 
