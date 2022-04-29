@@ -150,7 +150,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    except: ["TokenStaking$"],
+    except: ["TokenStaking$", "contracts/test"],
   },
   mocha: {
     timeout: 60000,
