@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { deployments, ethers, upgrades, helpers } from "hardhat"
+import { deployments, ethers, upgrades } from "hardhat"
 import chai, { expect } from "chai"
 import chaiAsPromised from "chai-as-promised"
 
