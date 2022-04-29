@@ -192,6 +192,74 @@ of being reported by other group members as <<inactivity,inactive>> or as
 a result of being inactive or disqualified during the DKG. Rewards are allocated
 proportionally to the operator's weight in the pool. 
 
+[[transaction-incentives]]
+=== Transaction Incentives
+
+There are three types of transactions: <<operator-only,Operator-Only>>,
+<<public-knowledge,Public-Knowledge>>, and <<punishment,Punishment>>.
+
+[[operator-only]]
+==== Operator-Only
+Operator-Only transactions are where only the operators have access to the
+information required to assemble the transaction with the right input
+parameters.
+
+In order to avoid all operators racing to submit the transaction at the same
+time, we have an off-chain informal agreement to submit based on the operator's
+position in the group (can use the hash of the group's pubkey).
+
+If the designated operator does not submit their transaction before a timeout
+expires, the duty moves to the next operator and the group can sign a
+transaction to mark that operator as <<inactivity,inactive>>. Since there is no
+slashing reward, and since this transaction can only be submitted by an operator,
+this transaction is also Operator-Only.
+
+In order to compensate the operator for posting the transaction, the gas spent
+will be reimbursed by a DAO-funded ETH pool in the same transaction. It is
+important to note, that the system has a governable cap for the gas price to
+protect against malicious operators trying to drain the pool (see `Reimbursable`
+and `ReimbursementPool` smart contracts).
+
+Operator-only transactions are `submitDkgResult`,
+`notifyOperatorInactivity`, and `approveDkgResult` for a certain number of
+blocks, before a timeout for the original DKG result submitter to call this
+function elapses.
+
+[[public-knowledge]]
+==== Public-Knowledge
+Public-Knowledge transactions are where anyone has access to the information
+required to assemble the transaction and the transaction does not lead to
+punishment.
+
+In order to prevent wasting gas on racing to submit, such transactions need to
+be executed rarely, and off-chain clients should follow the informal agreement
+about the submission order.
+
+To compensate these transactions, whoever posts them will have the gas spent
+reimbursed by a DAO-funded ETH pool in the same transaction.
+
+The only two public knowledge transactions are `notifyDkgTimeout` and
+`notifySeedTimeout`.
+
+`approveDkgResult` turns into a public knowledge transaction in case the
+original submitter has not approved the result before the timeout.
+
+[[punishment]]
+==== Punishment
+Punishment transactions are where anyone has access to the information required
+to assemble the transaction (like <<public-knowledge,Public-Knowledge>>) and
+the transaction leads to slashing.
+
+In these transactions, maintaining system health is more important than
+optimizing gas via preventing racing, so we offer up bounties in the form of
+a notifier reward from slashed tokens to whichever submitter submits first. We
+do not compensate gas. Notification rewards are distributed by Threshold Network
+`TokenStaking` contract.
+
+The only punishment transaction in `WalletRegistry` itself if `challengeDkgResult`.
+Additionally, wallet owner can implement its own punishment transactions, and
+slash the signing group members with a call to `WalletRegistry.seize` function.
+
 == Build
 
 The contracts use https://hardhat.org/[*Hardhat*] development
