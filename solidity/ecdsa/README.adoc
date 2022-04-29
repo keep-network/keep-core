@@ -47,6 +47,60 @@ The new version is optimised for larger groups by implementing optimistic
 sortition during DKG protocol. Staker rewards are redesigned and allocated for
 all sortition pool members. Most parameters are now governable.
 
+== The Mechanism
+
+=== Wallet Creation
+
+New wallet is created on request from wallet owner address. Signing group
+creation starts with an owner's call to `WalletRegistry.requestNewWallet()`.
+This transaction locks the sortition pool and sends a request to the Random
+Beacon for a new relay entry. From this moment, no operator can enter
+or leave the pool. Once a new relay entry appears on the chain, all off-chain
+clients perform group selection by calling `WalletRegistry.selectGroup()` view
+function for free. Relay entry provided by the Random Beacon is used as a seed
+for the group selection. After determining signing group members, clients should 
+perform off-chain distributed key generation (DKG).
+<<operator-only,One of the group members>> submits the result to the chain
+calling `WalletRegistry.submitDkgResult(DKG.Result calldata dkgResult)`
+function. Once the result is submitted, a challenge period starts.
+
+During the challenge period, anyone can notify that the submitted DKG result is
+malicious by calling `WalletRegistry.challengeDkgResult(DKG.Result calldata dkgResult)`
+function. A malicious DKG result may contain corrupted data, group members not
+selected by the pool, or incorrect supporting signatures. If such malicious
+result is submitted and successfully challenged, the result submitter gets
+slashed and the malicious result is immediately discarded. The address which
+notified about malicious DKG result is <<punishment,rewarded>>. DKG timeout
+timer is reset, and group members have another chance to submit a valid result.
+
+Once the challenge period passes, and no valid challenge is reported, the DKG
+result submitter should unlock the sortition pool and mark the DKG result as
+approved calling `WalletRegistry.approveDkgResult(DKG.Result calldata dkgResult)`.
+The submitter receives an ETH reimbursement for both `submitDkgResult` and
+`approveDkgResult` transaction as described in
+<<transaction-incentives,Transaction Incentives>> section. In case the original
+submitter does not call the `approveDkgResult` function within a specific number
+of blocks, anyone can do that and receive the submitter's reimbursement.
+
+There is a timeout before which a DKG result should be submitted.
+In case the DKG result was not submitted before a timeout, anyone can notify DKG
+timed out by calling `WalletRegistry.notifyDkgTimeout()` and unlock the sortition
+pool. In case the relay entry was not produced by the random beacon on time,
+anyone can notify a seed timeout by calling `WalletRegistry.notifySeedTimeout()`
+and unlock the sortition pool.
+
+Off-chain clients are expected to follow the <<operator-only,submission order>>
+when submitting DKG result to avoid front-running and minimize the cost, but no
+ordering is enforced on-chain.
+
+The sortition pool weights operators by their authorized stake amount and allows
+selecting the same operator multiple times. Inactive/disqualified members during
+the off-chain DKG protocol are marked as ineligible for <<rewards,rewards>> for
+a governable period of time when the DKG result is approved.
+
+Each ECDSA wallet created in the system remains active until it is closed
+by the wallet owner with a call to `WalletRegistry.closeWallet()`.
+
 == Build
 
 The contracts use https://hardhat.org/[*Hardhat*] development
