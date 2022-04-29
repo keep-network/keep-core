@@ -98,6 +98,19 @@ contract WalletRegistryV2Invalid is
     ///         current market conditions.
     uint256 internal _notifyOperatorInactivityGasOffset;
 
+    /// @notice Gas that is meant to balance the notification of a seed for DKG
+    ///         delivery timeout. It can be updated by the governance based on the
+    ///         current market conditions.
+    uint256 internal _notifySeedTimeoutGasOffset;
+
+    /// @notice Gas that is meant to balance the notification of a DKG protocol
+    ///         execution timeout. It can be updated by the governance based on the
+    ///         current market conditions.
+    /// @dev The value is subtracted for the refundable gas calculation, as the
+    ///      DKG timeout notification transaction recovers some gas when cleaning
+    ///      up the storage.
+    uint256 internal _notifyDkgTimeoutNegativeGasOffset;
+
     /// @notice Stores current operator inactivity claim nonce for the given
     ///         wallet signing group. Each claim is made with a unique nonce
     ///         which protects against claim replay.
@@ -182,7 +195,9 @@ contract WalletRegistryV2Invalid is
     event GasParametersUpdated(
         uint256 dkgResultSubmissionGas,
         uint256 dkgResultApprovalGasOffset,
-        uint256 notifyOperatorInactivityGasOffset
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 notifySeedTimeoutGasOffset,
+        uint256 notifyDkgTimeoutNegativeGasOffset
     );
 
     event RandomBeaconUpgraded(address randomBeacon);
@@ -555,19 +570,29 @@ contract WalletRegistryV2Invalid is
     /// @param dkgResultApprovalGasOffset New DKG result approval gas offset
     /// @param notifyOperatorInactivityGasOffset New operator inactivity
     ///        notification gas offset
+    /// @param notifySeedTimeoutGasOffset New seed for DKG delivery timeout
+    ///        notification gas offset
+    /// @param notifyDkgTimeoutNegativeGasOffset New DKG timeout notification gas
+    ///        offset
     function updateGasParameters(
         uint256 dkgResultSubmissionGas,
         uint256 dkgResultApprovalGasOffset,
-        uint256 notifyOperatorInactivityGasOffset
+        uint256 notifyOperatorInactivityGasOffset,
+        uint256 notifySeedTimeoutGasOffset,
+        uint256 notifyDkgTimeoutNegativeGasOffset
     ) external onlyGovernance {
         _dkgResultSubmissionGas = dkgResultSubmissionGas;
         _dkgResultApprovalGasOffset = dkgResultApprovalGasOffset;
         _notifyOperatorInactivityGasOffset = notifyOperatorInactivityGasOffset;
+        _notifySeedTimeoutGasOffset = notifySeedTimeoutGasOffset;
+        _notifyDkgTimeoutNegativeGasOffset = notifyDkgTimeoutNegativeGasOffset;
 
         emit GasParametersUpdated(
             dkgResultSubmissionGas,
             dkgResultApprovalGasOffset,
-            notifyOperatorInactivityGasOffset
+            notifyOperatorInactivityGasOffset,
+            _notifySeedTimeoutGasOffset,
+            _notifyDkgTimeoutNegativeGasOffset
         );
     }
 
@@ -672,13 +697,30 @@ contract WalletRegistryV2Invalid is
     /// @notice Notifies about seed for DKG delivery timeout. It is expected
     ///         that a seed is delivered by the Random Beacon as a relay entry in a
     ///         callback function.
-    function notifySeedTimeout() external refundable(msg.sender) {
+    function notifySeedTimeout() external {
+        uint256 gasStart = gasleft();
+
         dkg.notifySeedTimeout();
+
+        reimbursementPool.refund(
+            (gasStart - gasleft()) + _notifySeedTimeoutGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Notifies about DKG timeout.
-    function notifyDkgTimeout() external refundable(msg.sender) {
+    function notifyDkgTimeout() external {
+        uint256 gasStart = gasleft();
+
         dkg.notifyDkgTimeout();
+
+        // Note that the offset is subtracted as it is expected that the cleanup
+        // performed on DKG timeout notification removes data from the storage
+        // which is recovering gas for the transaction.
+        reimbursementPool.refund(
+            (gasStart - gasleft()) - _notifyDkgTimeoutNegativeGasOffset,
+            msg.sender
+        );
     }
 
     /// @notice Challenges DKG result. If the submitted result is proved to be
@@ -1118,20 +1160,30 @@ contract WalletRegistryV2Invalid is
     ///         governace based on the current market conditions.
     /// @return notifyOperatorInactivityGasOffset Gas that is meant to balance
     ///         the notification of an operator inactivity. It can be updated by
-    ///         the governace based on the current market conditions.
+    ///         the governance based on the current market conditions.
+    /// @return notifySeedTimeoutGasOffset Gas that is meant to balance the
+    ///         notification of a seed for DKG delivery timeout. It can be updated
+    ///         by the governance based on the current market conditions.
+    /// @return notifyDkgTimeoutNegativeGasOffset Gas that is meant to balance
+    ///         the notification of a DKG protocol execution timeout. It can be
+    ///         updated by the governance based on the current market conditions.
     function gasParameters()
         external
         view
         returns (
             uint256 dkgResultSubmissionGas,
             uint256 dkgResultApprovalGasOffset,
-            uint256 notifyOperatorInactivityGasOffset
+            uint256 notifyOperatorInactivityGasOffset,
+            uint256 notifySeedTimeoutGasOffset,
+            uint256 notifyDkgTimeoutNegativeGasOffset
         )
     {
         return (
             _dkgResultSubmissionGas,
             _dkgResultApprovalGasOffset,
-            _notifyOperatorInactivityGasOffset
+            _notifyOperatorInactivityGasOffset,
+            _notifySeedTimeoutGasOffset,
+            _notifyDkgTimeoutNegativeGasOffset
         );
     }
 }
