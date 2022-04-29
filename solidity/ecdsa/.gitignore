@@ -5,3 +5,6 @@ export/
 external/npm
 hardhat-dependency-compiler/
 export.json
+
+# OpenZeppelin
+.openzeppelin/unknown-*.json
