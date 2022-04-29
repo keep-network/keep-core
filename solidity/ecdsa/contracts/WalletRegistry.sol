@@ -330,7 +330,7 @@ contract WalletRegistry is
         //
         // With these parameters, the happy path takes no more than 104 hours.
         // In practice, it should take about 48 hours (just the challenge time).
-        dkg.init(_sortitionPool, _ecdsaDkgValidator);
+        dkg.init(sortitionPool, _ecdsaDkgValidator);
         dkg.setSeedTimeout(11_520);
         dkg.setResultChallengePeriodLength(11_520);
         dkg.setResultSubmissionTimeout(100 * 20);
