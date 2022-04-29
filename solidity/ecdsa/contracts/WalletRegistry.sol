@@ -270,8 +270,8 @@ contract WalletRegistry is
         // TODO: revisit all initial values
 
         _dkgResultSubmissionGas = 290_000;
-        _dkgResultApprovalGasOffset = 65_000;
-        _notifyOperatorInactivityGasOffset = 86_000;
+        _dkgResultApprovalGasOffset = 72_000;
+        _notifyOperatorInactivityGasOffset = 93_000;
 
         _maliciousDkgResultSlashingAmount = 50_000e18; // 50k T
         _maliciousDkgResultNotificationRewardMultiplier = 100;

@@ -53,8 +53,8 @@ describe("WalletRegistryGovernance", async () => {
   const initialMaliciousDkgResultSlashingAmount = to1e18(50000)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
   const initialDkgResultSubmissionGas = 290_000
-  const initialDkgResultApprovalGasOffset = 65_000
-  const initialNotifyOperatorInactivityGasOffset = 86_000
+  const initialDkgResultApprovalGasOffset = 72_000
+  const initialNotifyOperatorInactivityGasOffset = 93_000
   const initialSortitionPoolRewardsBanDuration = 1209600 // 14 days
 
   before("load test fixture", async () => {
