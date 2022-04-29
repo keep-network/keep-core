@@ -44,8 +44,8 @@ protocol used by the off-chain network of nodes should have three properties:
 Smart contract for the first version of Keep ECDSA ara available in
 link:https://github.com/keep-network/keep-ecdsa/tree/main/solidity[`keep-ecdsa` repository].
 The new version is optimised for larger groups by implementing optimistic
-sortition during DKG protocol. Staker rewards are redesigned and allocated for
-all sortition pool members. Most parameters are now governable.
+selection of group members during DKG protocol. Staker rewards are redesigned
+and allocated for all sortition pool members. Most parameters are now governable.
 
 == The Mechanism
 
@@ -110,6 +110,38 @@ a part of `WalletRegistry`. For TBTC, the wallet owner is the `Bridge` contract.
 The wallet signing group reacts on the state changes in the `Bridge` by
 producing appropriate ECDSA signatures, moving funds on Bitcoin, and proving it
 to the `Bridge` contract.
+
+=== Timeouts
+
+There are two timeouts for a relay entry to be provided by a group: soft timeout
+and hard timeout.
+
+==== DKG Timeout
+
+There is a governable timeout for DKG to complete and for the result to be
+submitted. DKG timeout includes the time it takes to execute off-chain protocol
+to generate a key, and the time it takes to submit the result.
+When DKG timeout is exceeded, anyone can call `RandomBeacon.notifyDkgTimeout()`.
+This function unlocks the sortition pool and clears up DKG data, but no slashing
+for DKG timeout is executed and no one is marked as ineligible for rewards.
+
+==== DKG Seed Timeout
+
+There is a governable timeout for a new signing group selection seed to be
+provided.
+
+For a signing group member selection to be executed by the sortition pool,
+Random Beacon needs to provide a group selection seed. Request to the Random
+Beacon is one of the first steps of the new wallet creation process in
+`WalletRegistry.requestNewWallet()`
+
+Whet Random Beacon did not provide a seed and a timeout for a seed is exceeded,
+anyone can call `WalletRegistry.notifySeedTimeout()`. This function unlocks the
+sortition pool and clears up DKG data, but no slashing for DKG timeout is
+executed by `WalletRegistry` and no one is marked as ineligible for rewards.
+Random Beacon has its own mechanism of slashing for not providing relay entry
+on time.
+
 
 == Build
 
