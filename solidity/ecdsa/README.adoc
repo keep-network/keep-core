@@ -364,7 +364,7 @@ of the DKG approval process.
 |The minimum authorization amount required so that operator can participate in
 the Random Beacon.
 |Yes
-d|`40_000 * 1e18` +
+d|`40_000e18` +
 _40 000 T_
 
 |authorizationDecreaseDelay

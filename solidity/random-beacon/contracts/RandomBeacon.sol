@@ -119,22 +119,22 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
     ///         another group member that will call the DKG approve function.
-    uint256 internal _dkgResultSubmissionGas = 235000;
+    uint256 internal _dkgResultSubmissionGas;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
     ///         cost. Can be updated by the governance based on the current
     ///         market conditions.
-    uint256 internal _dkgResultApprovalGasOffset = 41500;
+    uint256 internal _dkgResultApprovalGasOffset;
 
     /// @notice Gas that is meant to balance the operator inactivity notification
     ///         cost. Can be updated by the governance based on the current
     ///         market conditions.
-    uint256 internal _notifyOperatorInactivityGasOffset = 54500;
+    uint256 internal _notifyOperatorInactivityGasOffset;
 
     /// @notice Gas that is meant to balance the relay entry submission cost.
     ///         Can be updated by the governance based on the current market
     ///         conditions.
-    uint256 internal _relayEntrySubmissionGasOffset = 11250;
+    uint256 internal _relayEntrySubmissionGasOffset;
 
     // Other parameters
 
@@ -374,37 +374,101 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
             "Zero-address reference"
         );
 
-        // TODO: revisit all initial values
-        _callbackGasLimit = 56000;
-        _groupCreationFrequency = 5;
-
-        _maliciousDkgResultSlashingAmount = 50000e18;
-        _unauthorizedSigningSlashingAmount = 100e3 * 1e18;
-        _sortitionPoolRewardsBanDuration = 2 weeks;
-        _relayEntryTimeoutNotificationRewardMultiplier = 40;
-        _unauthorizedSigningNotificationRewardMultiplier = 50;
-        _dkgMaliciousResultNotificationRewardMultiplier = 100;
-        // Minimum authorization: 100k T
-        // Authorization decrease delay: ~10 weeks assuming 15s block time
-        // Authorization decrease change period: equal to the delay
-        // slither-disable-next-line too-many-digits
-        authorization.setParameters(100000e18, 403200, 403200);
-
         dkg.init(_sortitionPool, _dkgValidator);
-        // DKG result challenge period length: ~48h assuming 15s block time
-        // DKG result submission timeout: 64 members * 20 blocks = 1280 blocks
-        // DKG result submitter precedence period length: 20 blocks
-        dkg.setParameters(11520, 1280, 20);
-
         relay.initSeedEntry();
-        // Relay entry soft timeout: 64 members * 20 blocks = 1280 blocks
-        // Relay entry hard timeout:~ 24h assuming 15s block time
-        relay.setTimeouts(1280, 5760);
-        relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
-
-        groups.setGroupLifetime(403200); // ~10 weeks assuming 15s block time
 
         _transferGovernance(msg.sender);
+
+        //
+        // All parameters set in the constructor are initial ones, used at the
+        // moment contracts were deployed for the first time. Parameters are
+        // governable and values assigned in the constructor do not need to
+        // reflect the current ones.
+        //
+
+        // Minimum authorization is 40k T.
+        //
+        // Authorization decrease delay is 45 days.
+        //
+        // Authorization decrease change period is 45 days. It means pending
+        // authorization decrease can be overwriten all the time.
+        authorization.setParameters(40_000e18, 3_888_000, 3_888_000);
+
+        // Malicious DKG result slashing amount is set initially to 1% of the
+        // minimum authorization (400 T). This values needs to be increased
+        // significantly once the system is fully launched.
+        //
+        // Unauthorized signing slashing amount is set initially to 1% of the
+        // minimum authorization (400 T). This values needs to be increased
+        // significantly once the system is fully launched.
+        //
+        // Slashing amount for not providing relay entry on time is set
+        // initially to 1% of the minimum authorization (400 T). This values
+        // needs to be increased significantly once the system is fully launched.
+        //
+        // Inactive operators are set as ineligible for rewards for 2 weeks.
+        _maliciousDkgResultSlashingAmount = 400e18;
+        _unauthorizedSigningSlashingAmount = 400e18;
+        relay.setRelayEntrySubmissionFailureSlashingAmount(400e18);
+
+        // Notifier of a malicious DKG result receives 100% of the notifier
+        // reward from the staking contract.
+        //
+        // Notifier of unauthorized signing receives 100% of the notifier
+        // reward from the staking contract.
+        //
+        // Notifier of relay entry timeout receives 100% of the notifier
+        // reward from the staking contract.
+        _dkgMaliciousResultNotificationRewardMultiplier = 100;
+        _unauthorizedSigningNotificationRewardMultiplier = 100;
+        _relayEntryTimeoutNotificationRewardMultiplier = 100;
+
+        // Inactive operators are set as ineligible for rewards for 2 weeks.
+        _sortitionPoolRewardsBanDuration = 2 weeks;
+
+        // DKG result challenge period length is set to 48h, assuming
+        // 15s block time.
+        //
+        // DKG result submission timeout, gives each member 20 blocks to submit
+        // the result. Assuming 15s block time, it is ~8h to submit the result
+        // in the pessimistic case.
+        //
+        // The original DKG result submitter has 20 blocks to approve it before
+        // anyone else can do that.
+        //
+        // With these parameters, the happy path takes no more than 56 hours.
+        // In practice, it should take about 48 hours (just the challenge time).
+        dkg.setParameters(11_520, 1280, 20);
+
+        // Relay entry soft timeot gives each of 64 members 20 blocks to submit
+        // the result.
+        //
+        // Relay entry hard timeout is set to ~48h assuming 15s block time.
+        relay.setTimeouts(1280, 5760);
+
+        // Callback gas limit is set to 56k units of gas. As of April 2022, it
+        // is enough to store new entry and block number on-chain.
+        // If the cost of EVM opcodes change over time, these parameters will
+        // have to be updated.
+        _callbackGasLimit = 56_000;
+
+        // Group lifetime is set to 45 days assuming 15s block time.
+        //
+        // New group is created every 2 relay requests.
+        //
+        // This way, even if ECDSA WalletRegistry is the only consumer of the
+        // beacon initially, and relay request is executed every week, we should
+        // have 2 active groups in the system all the time.
+        groups.setGroupLifetime(259_200);
+        _groupCreationFrequency = 2;
+
+        // Gas parameters were adjusted based on Ethereum state in April 2022.
+        // If the cost of EVM opcodes change over time, these parameters will
+        // have to be updated.
+        _dkgResultSubmissionGas = 235_000;
+        _dkgResultApprovalGasOffset = 41_500;
+        _notifyOperatorInactivityGasOffset = 54_500;
+        _relayEntrySubmissionGasOffset = 11_250;
     }
 
     modifier onlyStakingContract() {

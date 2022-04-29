@@ -256,6 +256,8 @@ contract WalletRegistry is
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
+        _transferGovernance(msg.sender);
+
         //
         // All parameters set in the constructor are initial ones, used at the
         // moment contracts were deployed for the first time. Parameters are
@@ -277,7 +279,7 @@ contract WalletRegistry is
         // minimum authorization (400 T). This values needs to be increased
         // significantly once the system is fully launched.
         //
-        // Reported of a malicious DKG result receives 100% of the notifier
+        // Notifier of a malicious DKG result receives 100% of the notifier
         // reward from the staking contract.
         //
         // Inactive operators are set as ineligible for rewards for 2 weeks.
@@ -312,8 +314,6 @@ contract WalletRegistry is
         _dkgResultSubmissionGas = 275_000;
         _dkgResultApprovalGasOffset = 65_000;
         _notifyOperatorInactivityGasOffset = 85_000;
-
-        _transferGovernance(msg.sender);
     }
 
     /// @notice Withdraws application rewards for the given staking provider.
