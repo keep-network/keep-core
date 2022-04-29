@@ -4,9 +4,9 @@ import "@nomiclabs/hardhat-waffle"
 import "@typechain/hardhat"
 import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
-import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
+import "hardhat-gas-reporter"
 
 import "./tasks"
 import { task } from "hardhat/config"
@@ -74,7 +74,9 @@ const config: HardhatUserConfig = {
       // we use higher gas price for tests to obtain more realistic results
       // for gas refund tests than when the default hardhat ~1 gwei gas price is
       // used
-      gasPrice: 200000000000, // 200 gwei
+      gasPrice: 200000000000, // 200 gwei,
+      // Ignore contract size on test deployment to hardhat network.
+      allowUnlimitedContractSize: true,
     },
     development: {
       url: "http://localhost:8545",
@@ -160,19 +162,19 @@ const config: HardhatUserConfig = {
   },
 }
 
-task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
-  const { constants } = require("./test/fixtures")
+// task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
+//   // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
+//   const { constants } = require("./test/fixtures")
 
-  if (testConfig.operatorsCount < constants.groupSize) {
-    throw new Error(
-      "not enough accounts predefined for configured group size: " +
-        `expected group size: ${constants.groupSize} ` +
-        `number of predefined accounts: ${testConfig.operatorsCount}`
-    )
-  }
+//   if (testConfig.operatorsCount < constants.groupSize) {
+//     throw new Error(
+//       "not enough accounts predefined for configured group size: " +
+//         `expected group size: ${constants.groupSize} ` +
+//         `number of predefined accounts: ${testConfig.operatorsCount}`
+//     )
+//   }
 
-  return runSuper(args)
-})
+//   return runSuper(args)
+// })
 
 export default config
