@@ -2470,8 +2470,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
                     .withArgs(stakingProvider, to1e18(50000), false)
                 })
 
-                it("should use close to 520 000 gas", async () => {
-                  await assertGasUsed(challengeTx, 520_000, 15_000)
+                it("should use close to 510 000 gas", async () => {
+                  await assertGasUsed(challengeTx, 510_000, 15_000)
                 })
               }
             )
@@ -3348,8 +3348,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
               )
             })
 
-            it("should use close to 78 000 gas", async () => {
-              await assertGasUsed(tx, 78_000)
+            it("should use close to 80 000 gas", async () => {
+              await assertGasUsed(tx, 80_000)
             })
           })
 
@@ -3499,12 +3499,12 @@ describe("WalletRegistry - Wallet Creation", async () => {
                 )
                 expect(diff).to.be.gt(0)
                 expect(diff).to.be.lt(
-                  ethers.utils.parseUnits("2500000", "gwei") // 0,0025 ETH
+                  ethers.utils.parseUnits("100000", "gwei") // 0,0001 ETH
                 )
               })
 
-              it("should use close to 72 000 gas", async () => {
-                await assertGasUsed(tx, 72_000)
+              it("should use close to 74 000 gas", async () => {
+                await assertGasUsed(tx, 74_000)
               })
             })
           })

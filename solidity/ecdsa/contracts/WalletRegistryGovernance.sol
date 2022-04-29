@@ -71,6 +71,12 @@ contract WalletRegistryGovernance is Ownable {
     uint256 public newNotifyOperatorInactivityGasOffset;
     uint256 public notifyOperatorInactivityGasOffsetChangeInitiated;
 
+    uint256 public newNotifySeedTimeoutGasOffset;
+    uint256 public notifySeedTimeoutGasOffsetChangeInitiated;
+
+    uint256 public newNotifyDkgTimeoutNegativeGasOffset;
+    uint256 public notifyDkgTimeoutNegativeGasOffsetChangeInitiated;
+
     address payable public newReimbursementPool;
     uint256 public reimbursementPoolChangeInitiated;
 
@@ -177,6 +183,20 @@ contract WalletRegistryGovernance is Ownable {
     );
     event NotifyOperatorInactivityGasOffsetUpdated(
         uint256 notifyOperatorInactivityGasOffset
+    );
+
+    event NotifySeedTimeoutGasOffsetUpdateStarted(
+        uint256 notifySeedTimeoutGasOffset,
+        uint256 timestamp
+    );
+    event NotifySeedTimeoutGasOffsetUpdated(uint256 notifySeedTimeoutGasOffset);
+
+    event NotifyDkgTimeoutNegativeGasOffsetUpdateStarted(
+        uint256 notifyDkgTimeoutNegativeGasOffset,
+        uint256 timestamp
+    );
+    event NotifyDkgTimeoutNegativeGasOffsetUpdated(
+        uint256 notifyDkgTimeoutNegativeGasOffset
     );
 
     event ReimbursementPoolUpdateStarted(
@@ -516,13 +536,17 @@ contract WalletRegistryGovernance is Ownable {
         (
             ,
             uint256 dkgResultApprovalGasOffset,
-            uint256 notifyOperatorInactivityGasOffset
+            uint256 notifyOperatorInactivityGasOffset,
+            uint256 notifySeedTimeoutGasOffset,
+            uint256 notifyDkgTimeoutNegativeGasOffset
         ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
             newDkgResultSubmissionGas,
             dkgResultApprovalGasOffset,
-            notifyOperatorInactivityGasOffset
+            notifyOperatorInactivityGasOffset,
+            notifySeedTimeoutGasOffset,
+            notifyDkgTimeoutNegativeGasOffset
         );
         dkgResultSubmissionGasChangeInitiated = 0;
         newDkgResultSubmissionGas = 0;
@@ -556,13 +580,17 @@ contract WalletRegistryGovernance is Ownable {
         (
             uint256 dkgResultSubmissionGas,
             ,
-            uint256 notifyOperatorInactivityGasOffset
+            uint256 notifyOperatorInactivityGasOffset,
+            uint256 notifySeedTimeoutGasOffset,
+            uint256 notifyDkgTimeoutNegativeGasOffset
         ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
             dkgResultSubmissionGas,
             newDkgResultApprovalGasOffset,
-            notifyOperatorInactivityGasOffset
+            notifyOperatorInactivityGasOffset,
+            notifySeedTimeoutGasOffset,
+            notifyDkgTimeoutNegativeGasOffset
         );
         dkgResultApprovalGasOffsetChangeInitiated = 0;
         newDkgResultApprovalGasOffset = 0;
@@ -601,16 +629,116 @@ contract WalletRegistryGovernance is Ownable {
         (
             uint256 dkgResultSubmissionGas,
             uint256 dkgResultApprovalGasOffset,
+            ,
+            uint256 notifySeedTimeoutGasOffset,
+            uint256 notifyDkgTimeoutNegativeGasOffset
+        ) = walletRegistry.gasParameters();
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateGasParameters(
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
+            newNotifyOperatorInactivityGasOffset,
+            notifySeedTimeoutGasOffset,
+            notifyDkgTimeoutNegativeGasOffset
+        );
+        notifyOperatorInactivityGasOffsetChangeInitiated = 0;
+        newNotifyOperatorInactivityGasOffset = 0;
+    }
+
+    /// @notice Begins the notify seed for DKG delivery timeout gas offset update
+    ///         process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newNotifySeedTimeoutGasOffset New seed for DKG delivery timeout
+    ///        notification gas offset
+    function beginNotifySeedTimeoutGasOffsetUpdate(
+        uint256 _newNotifySeedTimeoutGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newNotifySeedTimeoutGasOffset = _newNotifySeedTimeoutGasOffset;
+        notifySeedTimeoutGasOffsetChangeInitiated = block.timestamp;
+        emit NotifySeedTimeoutGasOffsetUpdateStarted(
+            _newNotifySeedTimeoutGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the notify seed for DKG delivery timeout gas offset
+    ///         update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeNotifySeedTimeoutGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(notifySeedTimeoutGasOffsetChangeInitiated)
+    {
+        emit NotifySeedTimeoutGasOffsetUpdated(newNotifySeedTimeoutGasOffset);
+        (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset,
+            ,
+            uint256 notifyDkgTimeoutNegativeGasOffset
+        ) = walletRegistry.gasParameters();
+        // slither-disable-next-line reentrancy-no-eth
+        walletRegistry.updateGasParameters(
+            dkgResultSubmissionGas,
+            dkgResultApprovalGasOffset,
+            notifyOperatorInactivityGasOffset,
+            newNotifySeedTimeoutGasOffset,
+            notifyDkgTimeoutNegativeGasOffset
+        );
+        notifySeedTimeoutGasOffsetChangeInitiated = 0;
+        newNotifySeedTimeoutGasOffset = 0;
+    }
+
+    /// @notice Begins the notify DKG timeout gas offset update process.
+    /// @dev Can be called only by the contract owner.
+    /// @param _newNotifyDkgTimeoutNegativeGasOffset New DKG timeout gas notification
+    ///        gas offset
+    function beginNotifyDkgTimeoutNegativeGasOffsetUpdate(
+        uint256 _newNotifyDkgTimeoutNegativeGasOffset
+    ) external onlyOwner {
+        /* solhint-disable not-rely-on-time */
+        newNotifyDkgTimeoutNegativeGasOffset = _newNotifyDkgTimeoutNegativeGasOffset;
+        notifyDkgTimeoutNegativeGasOffsetChangeInitiated = block.timestamp;
+        emit NotifyDkgTimeoutNegativeGasOffsetUpdateStarted(
+            _newNotifyDkgTimeoutNegativeGasOffset,
+            block.timestamp
+        );
+        /* solhint-enable not-rely-on-time */
+    }
+
+    /// @notice Finalizes the notify DKG timeout gas offset update process.
+    /// @dev Can be called only by the contract owner, after the governance
+    ///      delay elapses.
+    function finalizeNotifyDkgTimeoutNegativeGasOffsetUpdate()
+        external
+        onlyOwner
+        onlyAfterGovernanceDelay(
+            notifyDkgTimeoutNegativeGasOffsetChangeInitiated
+        )
+    {
+        emit NotifyDkgTimeoutNegativeGasOffsetUpdated(
+            newNotifyDkgTimeoutNegativeGasOffset
+        );
+        (
+            uint256 dkgResultSubmissionGas,
+            uint256 dkgResultApprovalGasOffset,
+            uint256 notifyOperatorInactivityGasOffset,
+            uint256 notifySeedTimeoutGasOffset,
 
         ) = walletRegistry.gasParameters();
         // slither-disable-next-line reentrancy-no-eth
         walletRegistry.updateGasParameters(
             dkgResultSubmissionGas,
             dkgResultApprovalGasOffset,
-            newNotifyOperatorInactivityGasOffset
+            notifyOperatorInactivityGasOffset,
+            notifySeedTimeoutGasOffset,
+            newNotifyDkgTimeoutNegativeGasOffset
         );
-        notifyOperatorInactivityGasOffsetChangeInitiated = 0;
-        newNotifyOperatorInactivityGasOffset = 0;
+        notifyDkgTimeoutNegativeGasOffsetChangeInitiated = 0;
+        newNotifyDkgTimeoutNegativeGasOffset = 0;
     }
 
     /// @notice Begins the reimbursement pool update process.
@@ -1046,6 +1174,32 @@ contract WalletRegistryGovernance is Ownable {
         return
             getRemainingChangeTime(
                 notifyOperatorInactivityGasOffsetChangeInitiated
+            );
+    }
+
+    /// @notice Get the time remaining until the seed for DKG delivery timeout
+    /// gas offset can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingNotifySeedTimeoutGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(notifySeedTimeoutGasOffsetChangeInitiated);
+    }
+
+    /// @notice Get the time remaining until the DKG timeout gas offset
+    ///         can be updated.
+    /// @return Remaining time in seconds.
+    function getRemainingNotifyDkgTimeoutNegativeGasOffsetUpdateTime()
+        external
+        view
+        returns (uint256)
+    {
+        return
+            getRemainingChangeTime(
+                notifyDkgTimeoutNegativeGasOffsetChangeInitiated
             );
     }
 
