@@ -101,6 +101,16 @@ a governable period of time when the DKG result is approved.
 Each ECDSA wallet created in the system remains active until it is closed
 by the wallet owner with a call to `WalletRegistry.closeWallet()`.
 
+=== Signing
+
+`WalletRegistry` does not expose functions for requesting and submitting ECDSA
+signatures. Wallet signing group needs to monitor the wallet owner contract and
+is responsible for handling requests from the wallet owner - this logic is not
+a part of `WalletRegistry`. For TBTC, the wallet owner is the `Bridge` contract.
+The wallet signing group reacts on the state changes in the `Bridge` by
+producing appropriate ECDSA signatures, moving funds on Bitcoin, and proving it
+to the `Bridge` contract.
+
 == Build
 
 The contracts use https://hardhat.org/[*Hardhat*] development
