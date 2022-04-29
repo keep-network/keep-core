@@ -51,7 +51,7 @@ and allocated for all sortition pool members. Most parameters are now governable
 
 === Wallet Creation
 
-A new wallet is created on request from the wallet owner address. Signing group
+A new wallet is created on request from the `walletOwner` address. Signing group
 creation starts with an owner's call to `WalletRegistry.requestNewWallet()`.
 This transaction locks the sortition pool and sends a request to the Random
 Beacon for a new relay entry. From this moment, no operator can enter
@@ -102,14 +102,14 @@ the off-chain DKG protocol are marked as ineligible for <<rewards,rewards>> for
 a governable period of time when the DKG result is approved.
 
 Each ECDSA wallet created in the system remains active until it is closed
-by the wallet owner with a call to `WalletRegistry.closeWallet()`.
+by the `walletOwner` with a call to `WalletRegistry.closeWallet()`.
 
 === Signing
 
 `WalletRegistry` does not expose functions for requesting and submitting ECDSA
-signatures. Wallet signing group needs to monitor the wallet owner contract and
-is responsible for handling requests from the wallet owner - this logic is not
-a part of `WalletRegistry`. For TBTC v2, the wallet owner is the `Bridge` contract.
+signatures. Wallet signing group needs to monitor the `walletOwner` contract and
+is responsible for handling requests from the `walletOwner` - this logic is not
+a part of `WalletRegistry`. For TBTC v2, the `walletOwner` is the `Bridge` contract.
 The wallet signing group reacts on the state changes in the `Bridge` by
 producing appropriate ECDSA signatures, moving funds on Bitcoin, and proving it
 to the `Bridge` contract.
@@ -178,7 +178,7 @@ entries.
 
 `Inactivity.Claim` has an additional boolean field of `heartbeatFailed`. If too
 many members are inactive during the heartbeat failing, it means that the wallet
-is at risk of losing the possibility to sign transactions. Wallet owner
+is at risk of losing the possibility to sign transactions. `walletOwner`
 (TBTC `Bridge`) is informed about a failed heartbeat by
 `IWalletOwner.__ecdsaWalletHeartbeatFailedCallback` callback function call and starts the process of moving funds out
 of the problematic wallet.
@@ -257,7 +257,7 @@ do not compensate gas. Notification rewards are distributed by Threshold Network
 `TokenStaking` contract.
 
 The only punishment transaction in `WalletRegistry` itself if `challengeDkgResult`.
-Additionally, wallet owner can implement its own punishment transactions, and
+Additionally, `walletOwner` can implement its own punishment transactions, and
 slash the signing group members with a call to `WalletRegistry.seize` function.
 
 == Parameters
@@ -435,7 +435,7 @@ yarn deploy --network <NETWORK>
 ```
 
 After the Bridge contract from tbtc-v2 is deployed it has to be set as the
-Wallet Owner in the `WalletRegistry`:
+`walletOwner` in the `WalletRegistry`:
 
 ```
 npx hardhat --network <NETWORK> initialize-wallet-owner --wallet-owner-address <BRIDGE_ADDRESS>
