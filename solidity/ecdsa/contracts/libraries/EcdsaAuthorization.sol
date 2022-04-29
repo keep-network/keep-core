@@ -40,10 +40,6 @@ library EcdsaAuthorization {
     struct AuthorizationDecrease {
         uint96 decreasingBy; // amount
         uint64 decreasingAt; // timestamp
-        // Reserved storage space in case we need to add more variables.
-        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-        // slither-disable-next-line unused-state
-        uint256[18] __gap;
     }
 
     struct Data {
