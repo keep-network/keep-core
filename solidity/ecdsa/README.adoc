@@ -39,6 +39,13 @@ protocol used by the off-chain network of nodes should have three properties:
   signed version of a given transaction to be performed on behalf of the signing
   group.
 
+== Prior Work
+
+Smart contract for the first version of Keep ECDSA ara available in
+link:https://github.com/keep-network/keep-ecdsa/tree/main/solidity[`keep-ecdsa` repository].
+The new version is optimised for larger groups by implementing optimistic
+sortition during DKG protocol. Staker rewards are redesigned and allocated for
+all sortition pool members. Most parameters are now governable.
 
 == Build
 
