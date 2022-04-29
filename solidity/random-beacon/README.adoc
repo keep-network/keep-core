@@ -51,8 +51,8 @@ now governable.
 === Group Creation
 
 New groups are created with a fixed frequency of relay requests.
-Instead of a v1 ticket-based approach for group selection, we use a sortition
-pool. Group creation start transaction is embedded into relay request
+Instead of a v1 ticket-based approach for a signing group selection, we use
+a sortition pool. Group creation start transaction is embedded into relay request
 transaction and locks a sortition pool. From this moment, no operator can enter
 or leave the pool. Once a new relay entry appears on the chain, all off-chain
 clients perform group selection by calling `RandomBeacon.selectGroup()` view
@@ -76,7 +76,7 @@ result submitter should mark the DKG result as approved calling
 `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`.
 This transaction also unlocks the sortition pool.
 The submitter receives an ETH reimbursement for both `submitDkgResult` and
-`approveDkgResult` transaction as described in
+`approveDkgResult` transactions as described in
 <<transaction-incentives,Transaction Incentives>> section. In case the original
 submitter does not call the `approveDkgResult` function within a specific number
 of blocks, anyone can do that and receive the submitter's reimbursement.
@@ -93,10 +93,11 @@ when submitting DKG result to avoid front-running and minimize the cost, but no
 ordering is enforced on-chain.
 
 The sortition pool weights operators by their authorized stake amount and allows
-selecting the same operator multiple times. Off-chain DKG protocol executes in
-the same way as for v1 and inactive/disqualified members during the off-chain
-protocol are marked as ineligible for <<rewards,rewards>> for a governable period
-of time when the DKG result is approved.
+selecting the same operator to the wallet signing group multiple times.
+Off-chain DKG protocol executes in the same way as for v1 and
+inactive/disqualified members during the off-chain protocol are marked as
+ineligible for <<rewards,rewards>> for a governable period of time when the DKG
+result is approved.
 
 Each group created in the system remains active for a certain period
 of time. A group that expired is no longer selected for any new work. Group
