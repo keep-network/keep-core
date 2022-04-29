@@ -39,6 +39,46 @@ library BeaconAuthorization {
         // authorization decrease amount is small, significant, or if it is
         // a decrease to zero.
         uint64 authorizationDecreaseDelay;
+        // The time period before the authorization decrease delay end,
+        // during which the authorization decrease request can be overwritten.
+        //
+        // When the request is overwritten, the authorization decrease delay is
+        // reset.
+        //
+        // For example, if `authorizationDecraseChangePeriod` is set to 4
+        // days, `authorizationDecreaseDelay` is set to 14 days, and someone
+        // requested authorization decrease, it means they can not
+        // request another decrease for the first 10 days. After 10 days pass,
+        // they can request again and overwrite the previous authorization
+        // decrease request. The delay time will reset for them and they
+        // will have to wait another 10 days to alter it and 14 days to
+        // approve it.
+        //
+        // This value protect against malicious operators who manipulate
+        // their weight by overwriting authorization decrease request, and
+        // lowering or increasing their eligible stake this way.
+        //
+        // If set to a value equal to `authorizationDecreaseDelay, it means
+        // that authorization decrease request can be always overwritten.
+        // If set to zero, it means authorization decrease request can not be
+        // overwritten until the delay end, and one needs to wait for the entire
+        // authorization decrease delay to approve their decrease and request
+        // for another one or to overwrite the pending one.
+        //
+        //   (1) authorization decrease requested timestamp
+        //   (2) from this moment authorization decrease request can be
+        //       overwritten
+        //   (3) from this moment authorization decrease request can be
+        //       approved, assuming it was NOT overwritten in (2)
+        //
+        //  (1)                            (2)                        (3)
+        // --x------------------------------x--------------------------x---->
+        //   |                               \________________________/
+        //   |                             authorizationDecreaseChangePeriod
+        //    \______________________________________________________/
+        //                   authorizationDecreaseDelay
+        //
+        uint64 authorizationDecreaseChangePeriod;
     }
 
     struct AuthorizationDecrease {
@@ -101,15 +141,27 @@ library BeaconAuthorization {
     ///        between the time authorization decrease is requested and the time
     ///        the authorization decrease can be approved, no matter the
     ///        authorization decrease amount.
+    /// @param _authorizationDecreaseChangePeriod New value of the authorization
+    ///        decrease change period. It is the time in seconds, before
+    ///        authorization decrease delay end, during which the pending
+    ///        authorization decrease request can be overwritten.
+    ///        If set to 0, pending authorization decrease request can not be
+    ///        overwritten until the endire `authorizationDecreaseDelay` ends.
+    ///        If set to value equal `authorizationDecreaseDelay`, request can
+    ///        always be overwritten.
     function setParameters(
         Data storage self,
         uint96 _minimumAuthorization,
-        uint64 _authorizationDecreaseDelay
+        uint64 _authorizationDecreaseDelay,
+        uint64 _authorizationDecreaseChangePeriod
     ) external {
         self.parameters.minimumAuthorization = _minimumAuthorization;
         self
             .parameters
             .authorizationDecreaseDelay = _authorizationDecreaseDelay;
+        self
+            .parameters
+            .authorizationDecreaseChangePeriod = _authorizationDecreaseChangePeriod;
     }
 
     /// @notice Used by staking provider to set operator address that will
@@ -196,6 +248,10 @@ library BeaconAuthorization {
     ///         Reverts if the amount after deauthorization would be non-zero
     ///         and lower than the minimum authorization.
     ///
+    ///         Reverts if another authorization decrease request is pending for
+    ///         the staking provider and not enough time passed since the
+    ///         original request (see `authorizationDecreaseChangePeriod`).
+    ///
     ///         If the operator is not known (`registerOperator` was not called)
     ///         it lets to `approveAuthorizationDecrease` immediately. If the
     ///         operator is known (`registerOperator` was called), the operator
@@ -209,7 +265,8 @@ library BeaconAuthorization {
     ///         `approveAuthorizationDecrease` function.
     ///
     ///         If there is a pending authorization decrease request, it is
-    ///         overwritten.
+    ///         overwritten, but only if enough time passed since the original
+    ///         request. Otherwise, the function reverts.
     ///
     /// @dev Should only be callable by T staking contract.
     function authorizationDecreaseRequested(
@@ -244,17 +301,32 @@ library BeaconAuthorization {
             // For now, we set `decreasingAt` as "never decreasing" and let
             // it be updated by `joinSortitionPool` or `updateOperatorStatus`
             // once we know the sortition pool is in sync.
-
-            // solhint-disable-next-line not-rely-on-time
             decreasingAt = type(uint64).max;
         }
 
         uint96 decreasingBy = fromAmount - toAmount;
 
-        self.pendingDecreases[stakingProvider] = AuthorizationDecrease(
-            decreasingBy,
-            decreasingAt
-        );
+        AuthorizationDecrease storage decreaseRequest = self.pendingDecreases[
+            stakingProvider
+        ];
+
+        uint64 pendingDecreaseAt = decreaseRequest.decreasingAt;
+        if (pendingDecreaseAt != 0 && pendingDecreaseAt != type(uint64).max) {
+            // If there is already a pending authorization decrease request for
+            // this staking provider and that request has been activated
+            // (sortition pool was updated), require enough time to pass before
+            // it can be overwritten.
+            require(
+                // solhint-disable-next-line not-rely-on-time
+                block.timestamp >=
+                    pendingDecreaseAt -
+                        self.parameters.authorizationDecreaseChangePeriod,
+                "Not enough time passed since the original request"
+            );
+        }
+
+        decreaseRequest.decreasingBy = decreasingBy;
+        decreaseRequest.decreasingAt = decreasingAt;
 
         emit AuthorizationDecreaseRequested(
             stakingProvider,

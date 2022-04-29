@@ -164,7 +164,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
 
     event AuthorizationParametersUpdated(
         uint96 minimumAuthorization,
-        uint64 authorizationDecreaseDelay
+        uint64 authorizationDecreaseDelay,
+        uint64 authorizationDecreaseChangePeriod
     );
 
     event RelayEntryParametersUpdated(
@@ -383,10 +384,12 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         _relayEntryTimeoutNotificationRewardMultiplier = 40;
         _unauthorizedSigningNotificationRewardMultiplier = 50;
         _dkgMaliciousResultNotificationRewardMultiplier = 100;
-        // Minimum authorization:         100k T
-        // Authorization decrease delay:  ~10 weeks assuming 15s block time
+        // Minimum authorization: 100k T
+        // Authorization decrease delay: ~10 weeks assuming 15s block time
+        // Authorization decrease change period: equal to the delay
         // slither-disable-next-line too-many-digits
-        authorization.setParameters(100000e18, 403200);
+        authorization.setParameters(100000e18, 403200, 403200);
+
         dkg.init(_sortitionPool, _dkgValidator);
         // DKG result challenge period length: ~48h assuming 15s block time
         // DKG result submission timeout: 64 members * 20 blocks = 1280 blocks
@@ -424,18 +427,23 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @param _minimumAuthorization New minimum authorization amount
     /// @param _authorizationDecreaseDelay New authorization decrease delay in
     ///        seconds
+    /// @param _authorizationDecreaseChangePeriod New authorization decrease
+    ///        change period in seconds
     function updateAuthorizationParameters(
         uint96 _minimumAuthorization,
-        uint64 _authorizationDecreaseDelay
+        uint64 _authorizationDecreaseDelay,
+        uint64 _authorizationDecreaseChangePeriod
     ) external onlyGovernance {
         authorization.setParameters(
             _minimumAuthorization,
-            _authorizationDecreaseDelay
+            _authorizationDecreaseDelay,
+            _authorizationDecreaseChangePeriod
         );
 
         emit AuthorizationParametersUpdated(
             _minimumAuthorization,
-            _authorizationDecreaseDelay
+            _authorizationDecreaseDelay,
+            _authorizationDecreaseChangePeriod
         );
     }
 
@@ -683,6 +691,10 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         Reverts if the amount after deauthorization would be non-zero
     ///         and lower than the minimum authorization.
     ///
+    ///         Reverts if another authorization decrease request is pending for
+    ///         the staking provider and not enough time passed since the
+    ///         original request (see `authorizationDecreaseChangePeriod`).
+    ///
     ///         If the operator is not known (`registerOperator` was not called)
     ///         it lets to `approveAuthorizationDecrease` immediately. If the
     ///         operator is known (`registerOperator` was called), the operator
@@ -696,7 +708,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ///         `approveAuthorizationDecrease` function.
     ///
     ///         If there is a pending authorization decrease request, it is
-    ///         overwritten.
+    ///         overwritten, but only if enough time passed since the original
+    ///         request. Otherwise, the function reverts.
     ///
     /// @dev Can only be called by T staking contract.
     function authorizationDecreaseRequested(
@@ -1236,14 +1249,6 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         return authorization.parameters.minimumAuthorization;
     }
 
-    /// @notice Delay in seconds that needs to pass between the time
-    ///         authorization decrease is requested and the time that request
-    ///         gets approved. Protects against free-riders earning rewards and
-    ///         not being active in the network.
-    function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.parameters.authorizationDecreaseDelay;
-    }
-
     /// @return Flag indicating whether a relay entry request is currently
     ///         in progress.
     function isRelayRequestInProgress() external view returns (bool) {
@@ -1342,6 +1347,41 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     /// @return IDs of selected group members.
     function selectGroup() external view returns (uint32[] memory) {
         return sortitionPool.selectGroup(DKG.groupSize, bytes32(dkg.seed));
+    }
+
+    /// @notice Returns authorization-related parameters of the beacon.
+    /// @dev The minimum authorization is also returned by `minimumAuthorization()`
+    ///      function, as a requirement of `IApplication` interface.
+    /// @return minimumAuthorization The minimum authorization amount required
+    ///         so that operator can participate in the random beacon. This
+    ///         amount is required to execute slashing for providing a malicious
+    ///         DKG result or when a relay entry times out.
+    /// @return authorizationDecreaseDelay Delay in seconds that needs to pass
+    ///         between the time authorization decrease is requested and the
+    ///         time that request gets approved. Protects against free-riders
+    ///         earning rewards and not being active in the network.
+    /// @return authorizationDecreaseChangePeriod Authorization decrease change
+    ///        period in seconds. It is the time, before authorization decrease
+    ///        delay end, during which the pending authorization decrease
+    ///        request can be overwritten.
+    ///        If set to 0, pending authorization decrease request can not be
+    ///        overwritten until the endire `authorizationDecreaseDelay` ends.
+    ///        If set to value equal `authorizationDecreaseDelay`, request can
+    ///        always be overwritten.
+    function authorizationParameters()
+        external
+        view
+        returns (
+            uint96 minimumAuthorization,
+            uint64 authorizationDecreaseDelay,
+            uint64 authorizationDecreaseChangePeriod
+        )
+    {
+        return (
+            authorization.parameters.minimumAuthorization,
+            authorization.parameters.authorizationDecreaseDelay,
+            authorization.parameters.authorizationDecreaseChangePeriod
+        );
     }
 
     /// @notice Returns relay-entry-related parameters of the beacon.
