@@ -438,13 +438,13 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         //
         // With these parameters, the happy path takes no more than 56 hours.
         // In practice, it should take about 48 hours (just the challenge time).
-        dkg.setParameters(11_520, 1280, 20);
+        dkg.setParameters(11_520, 1_280, 20);
 
         // Relay entry soft timeot gives each of 64 members 20 blocks to submit
         // the result.
         //
         // Relay entry hard timeout is set to ~48h assuming 15s block time.
-        relay.setTimeouts(1280, 5760);
+        relay.setTimeouts(1_280, 5_760);
 
         // Callback gas limit is set to 56k units of gas. As of April 2022, it
         // is enough to store new entry and block number on-chain.
