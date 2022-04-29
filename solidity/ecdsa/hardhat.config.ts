@@ -162,19 +162,19 @@ const config: HardhatUserConfig = {
   },
 }
 
-// task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
-//   // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
-//   const { constants } = require("./test/fixtures")
+task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
+  const { constants } = require("./test/fixtures")
 
-//   if (testConfig.operatorsCount < constants.groupSize) {
-//     throw new Error(
-//       "not enough accounts predefined for configured group size: " +
-//         `expected group size: ${constants.groupSize} ` +
-//         `number of predefined accounts: ${testConfig.operatorsCount}`
-//     )
-//   }
+  if (testConfig.operatorsCount < constants.groupSize) {
+    throw new Error(
+      "not enough accounts predefined for configured group size: " +
+        `expected group size: ${constants.groupSize} ` +
+        `number of predefined accounts: ${testConfig.operatorsCount}`
+    )
+  }
 
-//   return runSuper(args)
-// })
+  return runSuper(args)
+})
 
 export default config
