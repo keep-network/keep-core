@@ -1,9 +1,11 @@
 :toc: macro
 :icons: font
 
-= Keep ECDSA Wallets
+= Keep ECDSA v2
 
-// TODO: Add intro
+The Keep Network offers threshold ECDSA protocol to generate ECDSA wallets
+without any single signer having access to the corresponding private key. This
+functionality is used by TBTC v2 to manage Bitcoin wallets used by the TBTC Bridge.
 
 ifdef::env-github[]
 :tip-caption: :bulb:
@@ -15,7 +17,372 @@ endif::[]
 
 toc::[]
 
-// TODO: Describe protocol
+== Overview
+
+Keep ECDSA allows creating threshold ECDSA wallets where where `n` parties share
+the power to issue digital signatures under a single public key. A threshold `t`
+is specified such that any subset of `t + 1` players can jointly sign, but any
+smaller subset cannot.
+
+`WalletRegistry` smart contract is an on-chain registry of ECDSA wallets
+controlled by an off-chain network of nodes. The distributed key generation
+protocol used by the off-chain network of nodes should have three properties:
+
+- The signing group as a whole should have an ECDSA public key, which will be
+  shared on the host chain (Ethereum) and will correspond to the Bitcoin wallet
+  owned by that signing group.
+- Each member of the signing group should have a threshold ECDSA secret key
+  share, which can be used to create a threshold ECDSA signature share for any
+  transactions involving the signing group’s wallet.
+- Each member of the signing group should be able to combine a threshold number
+  of signature shares from itself and other members of the group to produce a
+  signed version of a given transaction to be performed on behalf of the signing
+  group.
+
+== Prior Work
+
+Smart contracts for the first version of Keep ECDSA are available in
+link:https://github.com/keep-network/keep-ecdsa/tree/main/solidity[`keep-ecdsa` repository].
+The new version is optimised for larger groups by implementing optimistic
+selection of group members during DKG protocol. Staker rewards are redesigned
+and allocated for all sortition pool members. Most parameters are now governable.
+
+== The Mechanism
+
+=== Wallet Creation
+
+A new wallet is created on request from the `walletOwner` address. Signing group
+creation starts with an owner's call to `WalletRegistry.requestNewWallet()`.
+This transaction locks the sortition pool and sends a request to the Random
+Beacon for a new relay entry. From this moment, no operator can enter
+or leave the pool. Once a new relay entry appears on the chain and gets
+delivered to `WalletRegistry` by the Random Beacon contract via
+`WalletRegistry.__beaconCallback` callback function call, all off-chain
+clients perform group selection calling `WalletRegistry.selectGroup()` view
+function for free. Relay entry provided by the Random Beacon is used as a seed
+for the group selection. After determining signing group members, clients should 
+perform off-chain distributed key generation (DKG).
+<<operator-only,One of the group members>> submits the result to the chain
+calling `WalletRegistry.submitDkgResult(DKG.Result calldata dkgResult)`
+function. Once the result is submitted, a challenge period starts.
+
+During the challenge period, anyone can notify that the submitted DKG result is
+malicious by calling `WalletRegistry.challengeDkgResult(DKG.Result calldata dkgResult)`
+function. A malicious DKG result may contain corrupted data, group members not
+selected by the pool, or incorrect supporting signatures. If such malicious
+result is submitted and successfully challenged, the result submitter gets
+slashed and the malicious result is immediately discarded. The address which
+notified about malicious DKG result is <<punishment,rewarded>>. DKG timeout
+timer is reset, and group members have another chance to submit a valid result.
+
+Once the challenge period passes, and no valid challenge is reported, the DKG
+result submitter should mark the DKG result as approved calling
+`WalletRegistry.approveDkgResult(DKG.Result calldata dkgResult)`.
+This transaction also unlocks the sortition pool.
+The submitter receives an ETH reimbursement for both `submitDkgResult` and
+`approveDkgResult` transactions as described in
+<<transaction-incentives,Transaction Incentives>> section. In case the original
+submitter does not call the `approveDkgResult` function within a specific number
+of blocks, anyone can do that and receive the submitter's reimbursement.
+
+In case the DKG result was not submitted before the timeout, anyone can 
+notify about the timed out DKG by calling `WalletRegistry.notifyDkgTimeout()`
+function and unlock the sortition pool as part of this transaction. 
+In case the relay entry was not produced by the Random Beacon on time,
+anyone can notify a seed timeout by calling `WalletRegistry.notifySeedTimeout()`
+and unlock the sortition pool as a part of this transaction.
+
+Off-chain clients are expected to follow the <<operator-only,submission order>>
+when submitting DKG result to avoid front-running and minimize the cost, but no
+ordering is enforced on-chain.
+
+The sortition pool weights operators by their authorized stake amount and allows
+selecting the same operator multiple times. Inactive/disqualified members during
+the off-chain DKG protocol are marked as ineligible for <<rewards,rewards>> for
+a governable period of time when the DKG result is approved.
+
+Each ECDSA wallet created in the system remains active until it is closed
+by the `walletOwner` with a call to `WalletRegistry.closeWallet()`.
+
+=== Signing
+
+`WalletRegistry` does not expose functions for requesting and submitting ECDSA
+signatures. Wallet signing group needs to monitor the `walletOwner` contract and
+is responsible for handling requests from the `walletOwner` - this logic is not
+a part of `WalletRegistry`. For TBTC v2, the `walletOwner` is the `Bridge` contract.
+The wallet signing group reacts on the state changes in the `Bridge` by
+producing appropriate ECDSA signatures, moving funds on Bitcoin, and proving it
+to the `Bridge` contract.
+
+=== Timeouts
+
+==== DKG Timeout
+
+There is a governable timeout for DKG to complete and for the result to be
+submitted. DKG timeout includes the time it takes to execute off-chain protocol
+to generate a key, and the time it takes to submit the result.
+When DKG timeout is exceeded, anyone can call `RandomBeacon.notifyDkgTimeout()`.
+This function unlocks the sortition pool and clears up DKG data, but no slashing
+for DKG timeout is executed and no one is marked as ineligible for rewards.
+
+==== DKG Seed Timeout
+
+There is a governable timeout for a new signing group selection seed to be
+provided.
+
+For a signing group member selection to be executed by the sortition pool,
+Random Beacon needs to provide a group selection seed. Request to the Random
+Beacon is one of the first steps of the new wallet creation process in
+`WalletRegistry.requestNewWallet()`
+
+When Random Beacon did not provide a seed and a timeout for a seed is exceeded,
+anyone can call `WalletRegistry.notifySeedTimeout()`. This function unlocks the
+sortition pool and clears up DKG data, but no slashing for DKG timeout is
+executed by `WalletRegistry` and no one is marked as ineligible for rewards.
+Random Beacon has its own mechanism of slashing for not providing relay entry
+on time.
+
+[[inactivity]]
+=== Inactivity notification and Heartbeat failures
+
+Off-chain clients are free to execute any heartbeat protocol they want to ensure
+signing group member key share is still available and nodes are operating properly.
+
+[TIP]
+One example of a heartbeat protocol is signing some piece of information every
+n-th block. Wallet signing group members need to ensure the signed piece of
+information can not be used in a fraudulent way and can not be used to accuse
+them for committing a fraud in TBTC `Bridge`.
+
+Group members can agree to punish members who are permanently inactive and issue
+an operator inactivity claim. If the required threshold of group members signed
+the operator inactivity claim, they can submit it to
+`WalletRegistry.notifyOperatorInactivity(Inactivity.Claim calldata claim, uint256 nonce, int32[] calldata groupMembers)`
+function and have the group members who are inactive excluded from the sortition
+pool <<rewards,rewards>> for a governable time period.
+
+This approach is theoretically susceptible to group members colluding together,
+but because a reasonably high number of operators is needed to sign a claim and
+operators signing the claim receive nothing in return,
+we consider this approach safe and good enough. An important advantage of this
+approach is that honest players can decide off-chain when it makes sense to
+submit an operator inactivity claim and mark someone as ineligible for rewards.
+For example, marking an operator ineligible for rewards for the next two weeks
+has a higher impact than prolonging reward ineligibility for 10 minutes for an
+operator that was already marked as ineligible for rewards. This approach does
+not increase the gas cost of a happy path and leaves some freedom to group
+members. They can mark as ineligible operators who turned off their nodes,
+operators whose nodes never participate in signing because they are
+misconfigured, or operators who notoriously miss their turn in submitting relay
+entries.
+
+`Inactivity.Claim` has an additional boolean field of `heartbeatFailed`. If too
+many members are inactive during the heartbeat failing, it means that the wallet
+is at risk of losing the possibility to sign transactions. `walletOwner`
+(TBTC `Bridge`) is informed about a failed heartbeat by
+`IWalletOwner.__ecdsaWalletHeartbeatFailedCallback` callback function call and starts the process of moving funds out
+of the problematic wallet.
+
+[[rewards]]
+=== Rewards
+
+T rewards are allocated to all operators registered in the ECDSA sortition
+pool, excluding operators who were marked as ineligible for rewards as a result
+of being reported by other group members as <<inactivity,inactive>> or as
+a result of being inactive or disqualified during the DKG. Rewards are allocated
+proportionally to the operator's weight in the pool. 
+
+[[transaction-incentives]]
+=== Transaction Incentives
+
+There are three types of transactions: <<operator-only,Operator-Only>>,
+<<public-knowledge,Public-Knowledge>>, and <<punishment,Punishment>>.
+
+[[operator-only]]
+==== Operator-Only
+Operator-Only transactions are where only the operators have access to the
+information required to assemble the transaction with the right input
+parameters.
+
+In order to avoid all operators racing to submit the transaction at the same
+time, we have an off-chain informal agreement to submit based on the operator's
+position in the group (can use the hash of the group's pubkey).
+
+If the designated operator does not submit their transaction before a timeout
+expires, the duty moves to the next operator and the group can sign a
+transaction to mark that operator as <<inactivity,inactive>>. Since there is no
+slashing reward, and since this transaction can only be submitted by an operator,
+this transaction is also Operator-Only.
+
+In order to compensate the operator for posting the transaction, the gas spent
+will be reimbursed by a DAO-funded ETH pool in the same transaction. It is
+important to note, that the system has a governable cap for the gas price to
+protect against malicious operators trying to drain the pool (see `Reimbursable`
+and `ReimbursementPool` smart contracts).
+
+Operator-only transactions are `submitDkgResult`,
+`notifyOperatorInactivity`, and `approveDkgResult` for a certain number of
+blocks, before a timeout for the original DKG result submitter to call this
+function elapses.
+
+[[public-knowledge]]
+==== Public-Knowledge
+Public-Knowledge transactions are where anyone has access to the information
+required to assemble the transaction and the transaction does not lead to
+punishment.
+
+In order to prevent wasting gas on racing to submit, such transactions need to
+be executed rarely, and off-chain clients should follow the informal agreement
+about the submission order.
+
+To compensate these transactions, whoever posts them will have the gas spent
+reimbursed by a DAO-funded ETH pool in the same transaction.
+
+The only two public knowledge transactions are `notifyDkgTimeout` and
+`notifySeedTimeout`.
+
+`approveDkgResult` turns into a public knowledge transaction in case the
+original submitter has not approved the result before the timeout.
+
+[[punishment]]
+==== Punishment
+Punishment transactions are where anyone has access to the information required
+to assemble the transaction (like <<public-knowledge,Public-Knowledge>>) and
+the transaction leads to slashing.
+
+In these transactions, maintaining system health is more important than
+optimizing gas via preventing racing, so we offer up bounties in the form of
+a notifier reward from slashed tokens to whichever submitter submits first. We
+do not compensate gas. Notification rewards are distributed by Threshold Network
+`TokenStaking` contract.
+
+The only punishment transaction in `WalletRegistry` itself if `challengeDkgResult`.
+Additionally, `walletOwner` can implement its own punishment transactions, and
+slash the signing group members with a call to `WalletRegistry.seize` function.
+
+== Parameters
+
+[%header,cols="3m,4,^1,^2m"]
+|=== 
+^|Property Name
+^|Description
+|Governable
+|Default Value
+
+4+s|DKG
+
+|groupSize
+|Size of a signing group for a wallet.
+|No
+|`100`
+
+|groupThreshold
+|The minimum number of group members needed to interact according to the protocol
+to produce a signature
+|No
+|`51`
+
+|activeThreshold
+|The minimum number of active and properly behaving group members during the DKG
+needed to accept the result.
+|No
+d|`90` +
+_90% of groupSize_
+
+|singnatureByteSize
+|Size in bytes of a single signature produced by operator supporting DKG result.
+|No
+|`65`
+
+|resultChallengePeriodLength
+|Time in blocks during which the submitted DKG result can be challenged.
+|Yes
+d|`11520 blocks` +
+_~48h assuming 15s block time_
+
+|resultSubmissionTimeout
+|Time in blocks during which a DKG result is expected to be submitted.
+|Yes
+d|`2000 blocks` +
+_100 members * 20 blocks = 2000 blocks_
+
+|submitterPrecedencePeriodLength
+|Time in blocks during which only the DKG result submitter is allowed to approve it.
+|Yes
+|`20 blocks`
+
+
+4+s|Slashing
+
+|maliciousDkgResultSlashingAmount
+|Slashing amount for submitting malicious DKG result.
+|Yes
+d|`50000e18` +
+_50 000 T_
+
+|dkgMaliciousResultNotificationRewardMultiplier
+|Percentage of the staking contract malicious behavior notification reward which
+will be transferred to the notifier reporting about a malicious DKG result.
+|Yes
+|`100`
+
+|sortitionPoolRewardsBanDuration
+|Duration of the sortition pool rewards ban imposed on operators who were
+inactive/disqualified during off-chain DKG or were voted by the group as
+inactive for other reasons.
+|Yes
+|`2 weeks`
+
+4+s|Gas offsets
+
+|dkgResultSubmissionGas	
+|Calculated gas cost for submitting a DKG result. This will be refunded as part
+of the DKG approval process.
+|Yes
+|`275000`
+
+|dkgResultApprovalGasOffset
+|Gas that is meant to balance the DKG result approval's overall cost.
+|Yes
+|`65000`
+
+|notifyOperatorInactivityGasOffset
+|Gas that is meant to balance the operator inactivity notification cost.
+|Yes
+|`85000`
+
+
+4+s|Authorization
+
+|minimumAuthorization
+|The minimum authorization amount required so that operator can participate in
+the Random Beacon.
+|Yes
+d|`100000 * 1e18` +
+_100 000 T_
+
+|authorizationDecreaseDelay
+|Delay in seconds that needs to pass between the time authorization decrease is
+requested and the time that request gets approved.
+|Yes
+d|`403200 blocks` +
+_~10 weeks assuming 15s block time_
+
+4+s|Wallet Registry
+
+|walletOwner	
+|Wallet owner address capable of requesting new wallets, closing and slashing
+existing ones.
+|Yes
+d|TBTC `Bridge` contract address
+
+|randomBeacon	
+|Random Beacon contract address, needed to produce seed for wallet signing group
+member selection.
+|Yes
+d|`RandomBeacon` contract address
+
+|===
 
 == Build
 
@@ -68,7 +435,7 @@ yarn deploy --network <NETWORK>
 ```
 
 After the Bridge contract from tbtc-v2 is deployed it has to be set as the
-Wallet Owner in the `WalletRegistry`:
+`walletOwner` in the `WalletRegistry`:
 
 ```
 npx hardhat --network <NETWORK> initialize-wallet-owner --wallet-owner-address <BRIDGE_ADDRESS>
