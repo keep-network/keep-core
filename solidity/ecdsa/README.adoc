@@ -3,9 +3,9 @@
 
 = Keep ECDSA v2
 
-The Keep Network offers threshold ECDSA protocol to generate a ECDSA wallets
+The Keep Network offers threshold ECDSA protocol to generate ECDSA wallets
 without any single signer having access to the corresponding private key. This
-functionality is used by TBTC v2 to manage Bitcoin wallets used by TBTC Bridge.
+functionality is used by TBTC v2 to manage Bitcoin wallets used by the TBTC Bridge.
 
 ifdef::env-github[]
 :tip-caption: :bulb:
@@ -25,7 +25,7 @@ is specified such that any subset of `t + 1` players can jointly sign, but any
 smaller subset cannot.
 
 `WalletRegistry` smart contract is an on-chain registry of ECDSA wallets
-controlled by off-chain network of nodes. The distributed key generation
+controlled by an off-chain network of nodes. The distributed key generation
 protocol used by the off-chain network of nodes should have three properties:
 
 - The signing group as a whole should have an ECDSA public key, which will be
@@ -74,20 +74,21 @@ notified about malicious DKG result is <<punishment,rewarded>>. DKG timeout
 timer is reset, and group members have another chance to submit a valid result.
 
 Once the challenge period passes, and no valid challenge is reported, the DKG
-result submitter should unlock the sortition pool and mark the DKG result as
-approved calling `WalletRegistry.approveDkgResult(DKG.Result calldata dkgResult)`.
+result submitter should mark the DKG result as approved calling
+`WalletRegistry.approveDkgResult(DKG.Result calldata dkgResult)`.
+This transaction also unlocks the sortition pool.
 The submitter receives an ETH reimbursement for both `submitDkgResult` and
 `approveDkgResult` transaction as described in
 <<transaction-incentives,Transaction Incentives>> section. In case the original
 submitter does not call the `approveDkgResult` function within a specific number
 of blocks, anyone can do that and receive the submitter's reimbursement.
 
-There is a timeout before which a DKG result should be submitted.
-In case the DKG result was not submitted before a timeout, anyone can notify DKG
-timed out by calling `WalletRegistry.notifyDkgTimeout()` and unlock the sortition
-pool. In case the relay entry was not produced by the Random Beacon on time,
+In case the DKG result was not submitted before the timeout, anyone can 
+notify about the timed out DKG by calling `WalletRegistry.notifyDkgTimeout()`
+function and unlock the sortition pool as part of this transaction. 
+In case the relay entry was not produced by the Random Beacon on time,
 anyone can notify a seed timeout by calling `WalletRegistry.notifySeedTimeout()`
-and unlock the sortition pool.
+and unlock the sortition pool as a part of this transaction.
 
 Off-chain clients are expected to follow the <<operator-only,submission order>>
 when submitting DKG result to avoid front-running and minimize the cost, but no
@@ -106,15 +107,12 @@ by the wallet owner with a call to `WalletRegistry.closeWallet()`.
 `WalletRegistry` does not expose functions for requesting and submitting ECDSA
 signatures. Wallet signing group needs to monitor the wallet owner contract and
 is responsible for handling requests from the wallet owner - this logic is not
-a part of `WalletRegistry`. For TBTC, the wallet owner is the `Bridge` contract.
+a part of `WalletRegistry`. For TBTC v2, the wallet owner is the `Bridge` contract.
 The wallet signing group reacts on the state changes in the `Bridge` by
 producing appropriate ECDSA signatures, moving funds on Bitcoin, and proving it
 to the `Bridge` contract.
 
 === Timeouts
-
-There are two timeouts for a relay entry to be provided by a group: soft timeout
-and hard timeout.
 
 ==== DKG Timeout
 
@@ -168,7 +166,7 @@ we consider this approach safe and good enough. An important advantage of this
 approach is that honest players can decide off-chain when it makes sense to
 submit an operator inactivity claim and mark someone as ineligible for rewards.
 For example, marking an operator ineligible for rewards for the next two weeks
-have a higher impact than prolonging reward ineligibility for 10 minutes for an
+has a higher impact than prolonging reward ineligibility for 10 minutes for an
 operator that was already marked as ineligible for rewards. This approach does
 not increase the gas cost of a happy path and leaves some freedom to group
 members. They can mark as ineligible operators who turned off their nodes,

@@ -71,9 +71,10 @@ slashed and the malicious result is immediately discarded. The address which
 notified about malicious DKG result is <<punishment,rewarded>>. DKG timeout
 timer is reset, and group members have another chance to submit a valid result.
 
-Once the challenge period passes, and no valid challenge is reported, the DKG result
-submitter should unlock the sortition pool and mark the DKG result as approved
-calling `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`.
+Once the challenge period passes, and no valid challenge is reported, the DKG
+result submitter should mark the DKG result as approved calling
+`RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`.
+This transaction also unlocks the sortition pool.
 The submitter receives an ETH reimbursement for both `submitDkgResult` and
 `approveDkgResult` transaction as described in
 <<transaction-incentives,Transaction Incentives>> section. In case the original
@@ -81,9 +82,10 @@ submitter does not call the `approveDkgResult` function within a specific number
 of blocks, anyone can do that and receive the submitter's reimbursement.
 
 There is a timeout before which a DKG result should be submitted.
-In case the DKG result was not submitted before a timeout, anyone can notify DKG
-timed out by calling `RandomBeacon.notifyDkgTimeout()` and unlock the sortition
-pool. DKG timeout includes the situation when no new relay entry was produced
+In case the DKG result was not submitted before the timeout, anyone can 
+notify about the timed out DKG by calling `RandomBeacon.notifyDkgTimeout()`
+function and unlock the sortition pool as part of this transaction. 
+DKG timeout includes the situation when no new relay entry was produced
 and sortition could not be performed.
 
 Off-chain clients are expected to follow the <<operator-only,submission order>>
@@ -206,7 +208,7 @@ we consider this approach safe and good enough. An important advantage of this
 approach is that honest players can decide off-chain when it makes sense to
 submit an operator inactivity claim and mark someone as ineligible for rewards.
 For example, marking an operator ineligible for rewards for the next two weeks
-have a higher impact than prolonging reward ineligibility for 10 minutes for an
+has a higher impact than prolonging reward ineligibility for 10 minutes for an
 operator that was already marked as ineligible for rewards. This approach does
 not increase the gas cost of a happy path and leaves some freedom to group
 members. They can mark as ineligible operators who turned off their nodes,
