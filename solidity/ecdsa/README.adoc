@@ -142,6 +142,47 @@ executed by `WalletRegistry` and no one is marked as ineligible for rewards.
 Random Beacon has its own mechanism of slashing for not providing relay entry
 on time.
 
+[[inactivity]]
+=== Inactivity notification and Heartbeat failures
+
+Off-chain clients are free to execute any heartbeat protocol they want to ensure
+signing group member key share is still available and nodes are operating properly.
+
+[TIP]
+One example of a heartbeat protocol is signing some piece of information every
+n-th block. Wallet signing group members need to ensure the signed piece of
+information can not be used in a fraudulent way and can not be used to accuse
+them for committing a fraud in TBTC `Bridge`.
+
+Group members can agree to punish members who are permanently inactive and issue
+an operator inactivity claim. If the required threshold of group members signed
+the operator inactivity claim, they can submit it to
+`WalletRegistry.notifyOperatorInactivity(Inactivity.Claim calldata claim, uint256 nonce, int32[] calldata groupMembers)`
+function and have the group members who are inactive excluded from the sortition
+pool <<rewards,rewards>> for a governable time period.
+
+This approach is theoretically susceptible to group members colluding together,
+but because a reasonably high number of operators is needed to sign a claim and
+operators signing the claim receive nothing in return,
+we consider this approach safe and good enough. An important advantage of this
+approach is that honest players can decide off-chain when it makes sense to
+submit an operator inactivity claim and mark someone as ineligible for rewards.
+For example, marking an operator ineligible for rewards for the next two weeks
+have a higher impact than prolonging reward ineligibility for 10 minutes for an
+operator that was already marked as ineligible for rewards. This approach does
+not increase the gas cost of a happy path and leaves some freedom to group
+members. They can mark as ineligible operators who turned off their nodes,
+operators whose nodes never participate in signing because they are
+misconfigured, or operators who notoriously miss their turn in submitting relay
+entries.
+
+`Inactivity.Claim` has an additional boolean field of `heartbeatFailed`. If too
+many members are inactive during the heartbeat failing, it means that the wallet
+is at risk of losing the possibility to sign transactions. Wallet owner
+(TBTC `Bridge`) is informed about a failed heartbeat by
+`IWalletOwner.__ecdsaWalletHeartbeatFailedCallback(bytes32 walletID, bytes32 publicKeyX, bytes32 publicKeyY)` callback function call and starts the process of moving funds out
+of the problematic wallet.
+
 
 == Build
 
