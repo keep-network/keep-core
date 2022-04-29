@@ -295,19 +295,19 @@ _90% of groupSize_
 |`65`
 
 |resultChallengePeriodLength
-|Time in blocks during which a submitted result can be challenged.
+|Time in blocks during which the submitted DKG result can be challenged.
 |Yes
 d|`11520 blocks` +
 _~48h assuming 15s block time_
 
 |resultSubmissionTimeout
-|Time in blocks during which a result is expected to be submitted.
+|Time in blocks during which a DKG result is expected to be submitted.
 |Yes
 d|`2000 blocks` +
 _100 members * 20 blocks = 2000 blocks_
 
 |submitterPrecedencePeriodLength
-|Time in blocks during which only the result submitter is allowed to approve it.
+|Time in blocks during which only the DKG result submitter is allowed to approve it.
 |Yes
 |`20 blocks`
 
