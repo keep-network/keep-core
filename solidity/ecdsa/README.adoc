@@ -85,7 +85,7 @@ of blocks, anyone can do that and receive the submitter's reimbursement.
 There is a timeout before which a DKG result should be submitted.
 In case the DKG result was not submitted before a timeout, anyone can notify DKG
 timed out by calling `WalletRegistry.notifyDkgTimeout()` and unlock the sortition
-pool. In case the relay entry was not produced by the random beacon on time,
+pool. In case the relay entry was not produced by the Random Beacon on time,
 anyone can notify a seed timeout by calling `WalletRegistry.notifySeedTimeout()`
 and unlock the sortition pool.
 
@@ -183,6 +183,14 @@ is at risk of losing the possibility to sign transactions. Wallet owner
 `IWalletOwner.__ecdsaWalletHeartbeatFailedCallback(bytes32 walletID, bytes32 publicKeyX, bytes32 publicKeyY)` callback function call and starts the process of moving funds out
 of the problematic wallet.
 
+[[rewards]]
+=== Rewards
+
+T rewards are allocated to all operators registered in the ECDSA sortition
+pool, excluding operators who were marked as ineligible for rewards as a result
+of being reported by other group members as <<inactivity,inactive>> or as
+a result of being inactive or disqualified during the DKG. Rewards are allocated
+proportionally to the operator's weight in the pool. 
 
 == Build
 
