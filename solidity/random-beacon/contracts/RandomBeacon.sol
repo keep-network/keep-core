@@ -383,18 +383,20 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         _relayEntryTimeoutNotificationRewardMultiplier = 40;
         _unauthorizedSigningNotificationRewardMultiplier = 50;
         _dkgMaliciousResultNotificationRewardMultiplier = 100;
+        // Minimum authorization:         100k T
+        // Authorization decrease delay:  ~10 weeks assuming 15s block time
         // slither-disable-next-line too-many-digits
-        authorization.setMinimumAuthorization(100000e18); // 100k T
-        authorization.setAuthorizationDecreaseDelay(403200); // ~10 weeks assuming 15s block time
-
+        authorization.setParameters(100000e18, 403200);
         dkg.init(_sortitionPool, _dkgValidator);
-        dkg.setResultChallengePeriodLength(11520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionTimeout(1280); // 64 members * 20 blocks = 1280 blocks // TODO: Verify value
-        dkg.setSubmitterPrecedencePeriodLength(20); // TODO: Verify value
+        // DKG result challenge period length: ~48h assuming 15s block time
+        // DKG result submission timeout: 64 members * 20 blocks = 1280 blocks
+        // DKG result submitter precedence period length: 20 blocks
+        dkg.setParameters(11520, 1280, 20);
 
         relay.initSeedEntry();
-        relay.setRelayEntrySoftTimeout(1280); // 64 members * 20 blocks = 1280 blocks
-        relay.setRelayEntryHardTimeout(5760); // ~24h assuming 15s block time
+        // Relay entry soft timeout: 64 members * 20 blocks = 1280 blocks
+        // Relay entry hard timeout:~ 24h assuming 15s block time
+        relay.setTimeouts(1280, 5760);
         relay.setRelayEntrySubmissionFailureSlashingAmount(1000e18);
 
         groups.setGroupLifetime(403200); // ~10 weeks assuming 15s block time
@@ -426,8 +428,8 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay
     ) external onlyGovernance {
-        authorization.setMinimumAuthorization(_minimumAuthorization);
-        authorization.setAuthorizationDecreaseDelay(
+        authorization.setParameters(
+            _minimumAuthorization,
             _authorizationDecreaseDelay
         );
 
@@ -450,9 +452,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         uint256 callbackGasLimit
     ) external onlyGovernance {
         _callbackGasLimit = callbackGasLimit;
-
-        relay.setRelayEntrySoftTimeout(relayEntrySoftTimeout);
-        relay.setRelayEntryHardTimeout(relayEntryHardTimeout);
+        relay.setTimeouts(relayEntrySoftTimeout, relayEntryHardTimeout);
 
         emit RelayEntryParametersUpdated(
             relayEntrySoftTimeout,
@@ -481,9 +481,9 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
     ) external onlyGovernance {
         _groupCreationFrequency = groupCreationFrequency;
         groups.setGroupLifetime(groupLifetime);
-        dkg.setResultChallengePeriodLength(dkgResultChallengePeriodLength);
-        dkg.setResultSubmissionTimeout(dkgResultSubmissionTimeout);
-        dkg.setSubmitterPrecedencePeriodLength(
+        dkg.setParameters(
+            dkgResultChallengePeriodLength,
+            dkgResultSubmissionTimeout,
             dkgSubmitterPrecedencePeriodLength
         );
 

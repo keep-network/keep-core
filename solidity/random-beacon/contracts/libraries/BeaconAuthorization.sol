@@ -92,24 +92,21 @@ library BeaconAuthorization {
         address indexed operator
     );
 
-    /// @notice Sets the minimum authorization for the beacon. Without
-    ///         at least the minimum authorization, staking provider is not
-    ///         eligible to join and operate in the network.
-    function setMinimumAuthorization(
+    /// @notice Updates authorization-related parameters.
+    /// @param _minimumAuthorization New value of the minimum authorization for
+    ///        the beacon. Without at least the minimum authorization, staking
+    ///        provider is not eligible to join and operate in the network.
+    /// @param _authorizationDecreaseDelay New value of the authorization
+    ///        decrease delay. It is the time in seconds that needs to pass
+    ///        between the time authorization decrease is requested and the time
+    ///        the authorization decrease can be approved, no matter the
+    ///        authorization decrease amount.
+    function setParameters(
         Data storage self,
-        uint96 _minimumAuthorization
-    ) external {
-        self.parameters.minimumAuthorization = _minimumAuthorization;
-    }
-
-    /// @notice Sets the authorization decrease delay. It is the time in seconds
-    ///         that needs to pass between the time authorization decrease is
-    ///         requested and the time the authorization decrease can be
-    ///         approved, no matter the authorization decrease amount.
-    function setAuthorizationDecreaseDelay(
-        Data storage self,
+        uint96 _minimumAuthorization,
         uint64 _authorizationDecreaseDelay
     ) external {
+        self.parameters.minimumAuthorization = _minimumAuthorization;
         self
             .parameters
             .authorizationDecreaseDelay = _authorizationDecreaseDelay;
