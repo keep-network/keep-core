@@ -50,6 +50,7 @@ export const params = {
   unauthorizedSigningSlashingAmount: to1e18(100000),
   minimumAuthorization: to1e18(200000),
   authorizationDecreaseDelay: 403200,
+  authorizationDecreaseChangePeriod: 403200,
   reimbursementPoolStaticGas: 40800,
   reimbursementPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
 }
@@ -221,7 +222,8 @@ async function updateTokenStakingParams(
 async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
   await randomBeacon.updateAuthorizationParameters(
     params.minimumAuthorization,
-    params.authorizationDecreaseDelay
+    params.authorizationDecreaseDelay,
+    params.authorizationDecreaseChangePeriod
   )
 
   await randomBeacon.updateRelayEntryParameters(

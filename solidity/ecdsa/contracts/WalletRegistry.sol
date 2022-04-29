@@ -80,6 +80,7 @@ contract WalletRegistry is
     ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
+    ///         another group member that will call the DKG approve function.
     uint256 internal _dkgResultSubmissionGas;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
@@ -169,7 +170,8 @@ contract WalletRegistry is
 
     event AuthorizationParametersUpdated(
         uint96 minimumAuthorization,
-        uint64 authorizationDecreaseDelay
+        uint64 authorizationDecreaseDelay,
+        uint64 authorizationDecreaseChangePeriod
     );
 
     event RewardParametersUpdated(
@@ -282,29 +284,66 @@ contract WalletRegistry is
         randomBeacon = _randomBeacon;
         reimbursementPool = _reimbursementPool;
 
-        // TODO: revisit all initial values
+        _transferGovernance(msg.sender);
 
+        //
+        // All parameters set in the constructor are initial ones, used at the
+        // moment contracts were deployed for the first time. Parameters are
+        // governable and values assigned in the constructor do not need to
+        // reflect the current ones.
+        //
+
+        // Minimum authorization is 40k T.
+        //
+        // Authorization decrease delay is 45 days.
+        //
+        // Authorization decrease change period is 45 days. It means pending
+        // authorization decrease can be overwriten all the time.
+        authorization.setMinimumAuthorization(40_000e18);
+        authorization.setAuthorizationDecreaseDelay(3_888_000);
+        authorization.setAuthorizationDecreaseChangePeriod(3_888_000);
+
+        // Malicious DKG result slashing amount is set initially to 1% of the
+        // minimum authorization (400 T). This values needs to be increased
+        // significantly once the system is fully launched.
+        //
+        // Notifier of a malicious DKG result receives 100% of the notifier
+        // reward from the staking contract.
+        //
+        // Inactive operators are set as ineligible for rewards for 2 weeks.
+        _maliciousDkgResultSlashingAmount = 400e18;
+        _maliciousDkgResultNotificationRewardMultiplier = 100;
+        _sortitionPoolRewardsBanDuration = 2 weeks;
+
+        // DKG seed timeout is set to 48h assuming 15s block time. The same
+        // value is used by the Random Beacon as a relay entry hard timeout.
+        //
+        // DKG result challenge period length is set to 48h as well, assuming
+        // 15s block time.
+        //
+        // DKG result submission timeout, gives each member 20 blocks to submit
+        // the result. Assuming 15s block time, it is ~8h to submit the result
+        // in the pessimistic case.
+        //
+        // The original DKG result submitter has 20 blocks to approve it before
+        // anyone else can do that.
+        //
+        // With these parameters, the happy path takes no more than 104 hours.
+        // In practice, it should take about 48 hours (just the challenge time).
+        dkg.init(_sortitionPool, _ecdsaDkgValidator);
+        dkg.setSeedTimeout(11_520);
+        dkg.setResultChallengePeriodLength(11_520);
+        dkg.setResultSubmissionTimeout(100 * 20);
+        dkg.setSubmitterPrecedencePeriodLength(20);
+
+        // Gas parameters were adjusted based on Ethereum state in April 2022.
+        // If the cost of EVM opcodes change over time, these parameters will
+        // have to be updated.
         _dkgResultSubmissionGas = 290_000;
         _dkgResultApprovalGasOffset = 72_000;
         _notifyOperatorInactivityGasOffset = 93_000;
         _notifySeedTimeoutGasOffset = 7_250;
         _notifyDkgTimeoutNegativeGasOffset = 2_300;
-
-        _maliciousDkgResultSlashingAmount = 50_000e18; // 50k T
-        _maliciousDkgResultNotificationRewardMultiplier = 100;
-        _sortitionPoolRewardsBanDuration = 2 weeks;
-
-        // slither-disable-next-line too-many-digits
-        authorization.setMinimumAuthorization(400_000e18); // 400k T
-        authorization.setAuthorizationDecreaseDelay(5_184_000); // 60 days
-
-        dkg.init(sortitionPool, _ecdsaDkgValidator);
-        dkg.setSeedTimeout(1_440); // ~6h assuming 15s block time
-        dkg.setResultChallengePeriodLength(1_1520); // ~48h assuming 15s block time
-        dkg.setResultSubmissionTimeout(100 * 20);
-        dkg.setSubmitterPrecedencePeriodLength(20);
-
-        _transferGovernance(msg.sender);
     }
 
     /// @notice Withdraws application rewards for the given staking provider.
@@ -491,18 +530,25 @@ contract WalletRegistry is
     /// @param _minimumAuthorization New minimum authorization amount
     /// @param _authorizationDecreaseDelay New authorization decrease delay in
     ///        seconds
+    /// @param _authorizationDecreaseChangePeriod New authorization decrease
+    ///        change period in seconds
     function updateAuthorizationParameters(
         uint96 _minimumAuthorization,
-        uint64 _authorizationDecreaseDelay
+        uint64 _authorizationDecreaseDelay,
+        uint64 _authorizationDecreaseChangePeriod
     ) external onlyGovernance {
         authorization.setMinimumAuthorization(_minimumAuthorization);
         authorization.setAuthorizationDecreaseDelay(
             _authorizationDecreaseDelay
         );
+        authorization.setAuthorizationDecreaseChangePeriod(
+            _authorizationDecreaseChangePeriod
+        );
 
         emit AuthorizationParametersUpdated(
             _minimumAuthorization,
-            _authorizationDecreaseDelay
+            _authorizationDecreaseDelay,
+            _authorizationDecreaseChangePeriod
         );
     }
 
@@ -1012,13 +1058,6 @@ contract WalletRegistry is
         return authorization.parameters.minimumAuthorization;
     }
 
-    /// @notice Delay in seconds that needs to pass between the time
-    ///         authorization decrease is requested and the time that request
-    ///         can get approved.
-    function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.parameters.authorizationDecreaseDelay;
-    }
-
     /// @notice Returns the current value of the staking provider's eligible
     ///         stake. Eligible stake is defined as the currently authorized
     ///         stake minus the pending authorization decrease. Eligible stake
@@ -1116,6 +1155,41 @@ contract WalletRegistry is
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
+    }
+
+    /// @notice Returns authorization-related parameters.
+    /// @dev The minimum authorization is also returned by `minimumAuthorization()`
+    ///      function, as a requirement of `IApplication` interface.
+    /// @return minimumAuthorization The minimum authorization amount required
+    ///         so that operator can participate in the random beacon. This
+    ///         amount is required to execute slashing for providing a malicious
+    ///         DKG result or when a relay entry times out.
+    /// @return authorizationDecreaseDelay Delay in seconds that needs to pass
+    ///         between the time authorization decrease is requested and the
+    ///         time that request gets approved. Protects against free-riders
+    ///         earning rewards and not being active in the network.
+    /// @return authorizationDecreaseChangePeriod Authorization decrease change
+    ///         period in seconds. It is the time, before authorization decrease
+    ///         delay end, during which the pending authorization decrease
+    ///         request can be overwritten.
+    ///         If set to 0, pending authorization decrease request can not be
+    ///         overwritten until the endire `authorizationDecreaseDelay` ends.
+    ///         If set to value equal `authorizationDecreaseDelay`, request can
+    ///         always be overwritten.
+    function authorizationParameters()
+        external
+        view
+        returns (
+            uint96 minimumAuthorization,
+            uint64 authorizationDecreaseDelay,
+            uint64 authorizationDecreaseChangePeriod
+        )
+    {
+        return (
+            authorization.parameters.minimumAuthorization,
+            authorization.parameters.authorizationDecreaseDelay,
+            authorization.parameters.authorizationDecreaseChangePeriod
+        );
     }
 
     /// @notice Retrieves reward-related parameters.

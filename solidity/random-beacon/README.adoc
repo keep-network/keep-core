@@ -51,8 +51,8 @@ now governable.
 === Group Creation
 
 New groups are created with a fixed frequency of relay requests.
-Instead of a v1 ticket-based approach for group selection, we use a sortition
-pool. Group creation start transaction is embedded into relay request
+Instead of a v1 ticket-based approach for a signing group selection, we use
+a sortition pool. Group creation start transaction is embedded into relay request
 transaction and locks a sortition pool. From this moment, no operator can enter
 or leave the pool. Once a new relay entry appears on the chain, all off-chain
 clients perform group selection by calling `RandomBeacon.selectGroup()` view
@@ -71,19 +71,21 @@ slashed and the malicious result is immediately discarded. The address which
 notified about malicious DKG result is <<punishment,rewarded>>. DKG timeout
 timer is reset, and group members have another chance to submit a valid result.
 
-Once the challenge period passes, and no valid challenge is reported, the DKG result
-submitter should unlock the sortition pool and mark the DKG result as approved
-calling `RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`.
+Once the challenge period passes, and no valid challenge is reported, the DKG
+result submitter should mark the DKG result as approved calling
+`RandomBeacon.approveDkgResult(DKG.Result calldata dkgResult)`.
+This transaction also unlocks the sortition pool.
 The submitter receives an ETH reimbursement for both `submitDkgResult` and
-`approveDkgResult` transaction as described in
+`approveDkgResult` transactions as described in
 <<transaction-incentives,Transaction Incentives>> section. In case the original
 submitter does not call the `approveDkgResult` function within a specific number
 of blocks, anyone can do that and receive the submitter's reimbursement.
 
 There is a timeout before which a DKG result should be submitted.
-In case the DKG result was not submitted before a timeout, anyone can notify DKG
-timed out by calling `RandomBeacon.notifyDkgTimeout()` and unlock the sortition
-pool. DKG timeout includes the situation when no new relay entry was produced
+In case the DKG result was not submitted before the timeout, anyone can 
+notify about the timed out DKG by calling `RandomBeacon.notifyDkgTimeout()`
+function and unlock the sortition pool as part of this transaction. 
+DKG timeout includes the situation when no new relay entry was produced
 and sortition could not be performed.
 
 Off-chain clients are expected to follow the <<operator-only,submission order>>
@@ -91,10 +93,11 @@ when submitting DKG result to avoid front-running and minimize the cost, but no
 ordering is enforced on-chain.
 
 The sortition pool weights operators by their authorized stake amount and allows
-selecting the same operator multiple times. Off-chain DKG protocol executes in
-the same way as for v1 and inactive/disqualified members during the off-chain
-protocol are marked as ineligible for <<rewards,rewards>> for a governable period
-of time when the DKG result is approved.
+selecting the same operator to the wallet signing group multiple times.
+Off-chain DKG protocol executes in the same way as for v1 and
+inactive/disqualified members during the off-chain protocol are marked as
+ineligible for <<rewards,rewards>> for a governable period of time when the DKG
+result is approved.
 
 Each group created in the system remains active for a certain period
 of time. A group that expired is no longer selected for any new work. Group
@@ -206,7 +209,7 @@ we consider this approach safe and good enough. An important advantage of this
 approach is that honest players can decide off-chain when it makes sense to
 submit an operator inactivity claim and mark someone as ineligible for rewards.
 For example, marking an operator ineligible for rewards for the next two weeks
-have a higher impact than prolonging reward ineligibility for 10 minutes for an
+has a higher impact than prolonging reward ineligibility for 10 minutes for an
 operator that was already marked as ineligible for rewards. This approach does
 not increase the gas cost of a happy path and leaves some freedom to group
 members. They can mark as ineligible operators who turned off their nodes,
@@ -307,7 +310,7 @@ and `reportUnauthorizedSigning`.
 
 |groupThreshold
 |The minimum number of group members needed to interact according to the protocol
-to provide signatures for the DKG result. 
+to produce a signature
 |No
 |`33`
 
@@ -324,19 +327,19 @@ _90% of groupSize_
 |`65`
 
 |resultChallengePeriodLength
-|Time in blocks during which a submitted result can be challenged.
+|Time in blocks during which the submitted DKG result can be challenged.
 |Yes
-d|`11520 blocks` +
+d|`11_520 blocks` +
 _~48h assuming 15s block time_
 
 |resultSubmissionTimeout
-|Time in blocks during which a result is expected to be submitted.
+|Time in blocks during which a DKG result is expected to be submitted.
 |Yes
 d|`1280 blocks` +
 _64 members * 20 blocks = 1280 blocks_
 
 |submitterPrecedencePeriodLength
-|Time in blocks during which only the result submitter is allowed to approve it.
+|Time in blocks during which only the DKG result submitter is allowed to approve it.
 |Yes
 |`20 blocks`
 
@@ -345,13 +348,13 @@ _64 members * 20 blocks = 1280 blocks_
 |groupLifetime
 |Group lifetime in blocks.
 |Yes
-d|`403200 blocks` +
-_~10 weeks assuming 15s block time_
+d|`259_200 blocks` +
+_~30 days assuming 15s block time_
 
 |groupCreationFrequency
 |The number of relay requests needed to kick off a new group creation process.
 |Yes
-|`5`
+|`2`
 
 4+s|Relay Entry
 
@@ -370,15 +373,15 @@ _~24h assuming 15s block time_
 |callbackGasLimit
 |Relay entry callback gas limit.
 |Yes
-d|`56000`
+d|`56_000`
 
 4+s|Slashing
 
 |maliciousDkgResultSlashingAmount
 |Slashing amount for submitting malicious DKG result.
 |Yes
-d|`50000e18` +
-_50 000 T_
+d|`400e18` +
+_400 T_
 
 |dkgMaliciousResultNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
@@ -389,26 +392,26 @@ will be transferred to the notifier reporting about a malicious DKG result.
 |relayEntrySubmissionFailureSlashingAmount
 |Slashing amount for not submitting relay entry.
 |Yes
-d|`1000e18` +
-_1 000 T_
+d|`400e18` +
+_400 T_
 
 |relayEntryTimeoutNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about relay entry timeout.
 |Yes
-|`40`
+|`100`
 
 |unauthorizedSigningSlashingAmount
 |Slashing amount when an unauthorized signing has been proved.
 |Yes
-d|`100e3 * 1e18` +
-_100 000 T_
+d|`400e18` +
+_400 T_
 
 |unauthorizedSigningNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about unauthorized signing.
 |Yes
-|`50`
+|`100`
 
 |sortitionPoolRewardsBanDuration
 |Duration of the sortition pool rewards ban imposed on operators who were
@@ -423,26 +426,26 @@ inactive for other reasons.
 |Calculated gas cost for submitting a DKG result. This will be refunded as part
 of the DKG approval process.
 |Yes
-|`235000`
+|`235_000`
 
 |dkgResultApprovalGasOffset
 |Gas that is meant to balance the DKG result approval's overall cost.
 |Yes
-|`41500`
+|`41_500`
 
 |notifyOperatorInactivityGasOffset
 |Gas that is meant to balance the operator inactivity notification cost.
 |Yes
-|`54500`
+|`54_500`
 
 |relayEntrySubmissionGasOffset
 |Gas that is meant to balance the relay entry submission cost.
 |Yes
-|`11250`
+|`11_250`
 
 |authorizedRequesters
 |Authorized addresses that can request a relay entry.
-|No
+|Yes
 |
 
 4+s|Authorization
@@ -451,15 +454,22 @@ of the DKG approval process.
 |The minimum authorization amount required so that operator can participate in
 the Random Beacon.
 |Yes
-d|`100000 * 1e18` +
-_100 000 T_
+d|`40_000e18` +
+_40 000 T_
 
 |authorizationDecreaseDelay
 |Delay in seconds that needs to pass between the time authorization decrease is
 requested and the time that request gets approved.
 |Yes
-d|`403200 blocks` +
-_~10 weeks assuming 15s block time_
+d|`3_888_000 seconds` +
+_45 days_
+
+|authorizationDecreaseChangePeriod
+|Time period in seconds before the authorization decrease delay end, during
+which the authorization decrease request can be overwritten.
+|Yes
+d|`3_888_000 seconds` +
+_45 days_
 
 |===
 

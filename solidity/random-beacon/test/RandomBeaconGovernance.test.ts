@@ -1,5 +1,6 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
+import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
 import { randomBeaconDeployment } from "./fixtures"
 
@@ -15,23 +16,24 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const governanceDelay = 604800 // 1 week
 
-const initialRelayEntrySoftTimeout = 10
-const initialRelayEntryHardTimeout = 100
-const initialCallbackGasLimit = 900000
-const initialGroupCreationFrequency = 4
-const initialGroupLifeTime = 60 * 60 * 24 * 7
-const initialDkgResultChallengePeriodLength = 60
-const initialDkgResultSubmissionTimeout = 200
-const initialDkgSubmitterPrecedencePeriodLength = 180
-const initialRelayEntrySubmissionFailureSlashingAmount = 1000
-const initialMaliciousDkgResultSlashingAmount = 1000000000
-const initialUnauthorizedSigningSlashingAmount = 1000000000
+const initialRelayEntrySoftTimeout = 1280
+const initialRelayEntryHardTimeout = 5760
+const initialCallbackGasLimit = 56000
+const initialGroupCreationFrequency = 2
+const initialGroupLifeTime = 259200
+const initialDkgResultChallengePeriodLength = 11520
+const initialDkgResultSubmissionTimeout = 1280
+const initialDkgSubmitterPrecedencePeriodLength = 20
+const initialRelayEntrySubmissionFailureSlashingAmount = to1e18(400)
+const initialMaliciousDkgResultSlashingAmount = to1e18(400)
+const initialUnauthorizedSigningSlashingAmount = to1e18(400)
 const initialSortitionPoolRewardsBanDuration = 1209600
-const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
-const initialUnauthorizedSignatureNotificationRewardMultiplier = 5
-const initialMinimumAuthorization = 1000000
-const initialAuthorizationDecreaseDelay = 86400
-const initialDkgMaliciousResultNotificationRewardMultiplier = 5
+const initialRelayEntryTimeoutNotificationRewardMultiplier = 100
+const initialUnauthorizedSignatureNotificationRewardMultiplier = 100
+const initialMinimumAuthorization = to1e18(40000)
+const initialAuthorizationDecreaseDelay = 3888000
+const initialAuthorizationDecreaseChangePeriod = 3888000
+const initialDkgMaliciousResultNotificationRewardMultiplier = 100
 const initialDkgResultSubmissionGas = 235000
 const initialDkgResultApprovalGasOffset = 43500
 const initialNotifyOperatorInactivityGasOffset = 54500
@@ -81,7 +83,8 @@ const fixture = async () => {
     .connect(governance)
     .updateAuthorizationParameters(
       initialMinimumAuthorization,
-      initialAuthorizationDecreaseDelay
+      initialAuthorizationDecreaseDelay,
+      initialAuthorizationDecreaseChangePeriod
     )
   await randomBeacon
     .connect(governance)
@@ -2804,7 +2807,9 @@ describe("RandomBeaconGovernance", () => {
       })
 
       it("should not update the authorization decrease delay", async () => {
-        expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
+        const { authorizationDecreaseDelay } =
+          await randomBeacon.authorizationParameters()
+        expect(authorizationDecreaseDelay).to.be.equal(
           initialAuthorizationDecreaseDelay
         )
       })
@@ -2891,9 +2896,9 @@ describe("RandomBeaconGovernance", () => {
         })
 
         it("should update the authorization decrease delay", async () => {
-          expect(await randomBeacon.authorizationDecreaseDelay()).to.be.equal(
-            123
-          )
+          const { authorizationDecreaseDelay } =
+            await randomBeacon.authorizationParameters()
+          expect(authorizationDecreaseDelay).to.be.equal(123)
         })
 
         it("should emit AuthorizationDecreaseDelayUpdated event", async () => {
@@ -2908,6 +2913,145 @@ describe("RandomBeaconGovernance", () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             randomBeaconGovernance.getRemainingAuthorizationDecreaseDelayUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginAuthorizationDecreaseChangePeriodUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .beginAuthorizationDecreaseChangePeriodUpdate(123)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx: ContractTransaction
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await randomBeaconGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseChangePeriodUpdate(123)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the authorization decrease change period", async () => {
+        const { authorizationDecreaseChangePeriod } =
+          await randomBeacon.authorizationParameters()
+        expect(authorizationDecreaseChangePeriod).to.be.equal(
+          initialAuthorizationDecreaseChangePeriod
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await randomBeaconGovernance.getRemainingAuthorizationDecreaseChangePeriodUpdateTime()
+        ).to.be.equal(governanceDelay)
+      })
+
+      it("should emit the AuthorizationDecreaseChangePeriodUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            randomBeaconGovernance,
+            "AuthorizationDecreaseChangePeriodUpdateStarted"
+          )
+          .withArgs(123, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeAuthorizationDecreaseChangePeriodUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(thirdParty)
+            .finalizeAuthorizationDecreaseChangePeriodUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseChangePeriodUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await randomBeaconGovernance
+          .connect(governance)
+          .beginAuthorizationDecreaseChangePeriodUpdate(123)
+        await helpers.time.increaseTime(governanceDelay - 60) // -1min
+        await expect(
+          randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseChangePeriodUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx: ContractTransaction
+
+        before(async () => {
+          await createSnapshot()
+
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginAuthorizationDecreaseChangePeriodUpdate(123)
+
+          await helpers.time.increaseTime(governanceDelay)
+
+          tx = await randomBeaconGovernance
+            .connect(governance)
+            .finalizeAuthorizationDecreaseChangePeriodUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the authorization decrease change period", async () => {
+          const { authorizationDecreaseChangePeriod } =
+            await randomBeacon.authorizationParameters()
+          expect(authorizationDecreaseChangePeriod).to.be.equal(123)
+        })
+
+        it("should emit AuthorizationDecreaseChangePeriodUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              randomBeaconGovernance,
+              "AuthorizationDecreaseChangePeriodUpdated"
+            )
+            .withArgs(123)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            randomBeaconGovernance.getRemainingAuthorizationDecreaseChangePeriodUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }

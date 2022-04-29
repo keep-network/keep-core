@@ -36,8 +36,9 @@ export const dkgState = {
 }
 
 export const params = {
-  minimumAuthorization: to1e18(400000),
-  authorizationDecreaseDelay: 5184000,
+  minimumAuthorization: to1e18(40000),
+  authorizationDecreaseDelay: 3888000,
+  authorizationDecreaseChangePeriod: 3888000,
   dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
@@ -155,6 +156,12 @@ export async function updateWalletRegistryParams(
 
   await walletRegistryGovernance
     .connect(governance)
+    .beginAuthorizationDecreaseChangePeriodUpdate(
+      params.authorizationDecreaseChangePeriod
+    )
+
+  await walletRegistryGovernance
+    .connect(governance)
     .beginDkgSeedTimeoutUpdate(params.dkgSeedTimeout)
 
   await walletRegistryGovernance
@@ -188,6 +195,10 @@ export async function updateWalletRegistryParams(
   await walletRegistryGovernance
     .connect(governance)
     .finalizeAuthorizationDecreaseDelayUpdate()
+
+  await walletRegistryGovernance
+    .connect(governance)
+    .finalizeAuthorizationDecreaseChangePeriodUpdate()
 
   await walletRegistryGovernance
     .connect(governance)

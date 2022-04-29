@@ -24,7 +24,9 @@ describe("WalletRegistry - Parameters", async () => {
     context("when called by the deployer", () => {
       it("should revert", async () => {
         await expect(
-          walletRegistry.connect(deployer).updateAuthorizationParameters(1, 2)
+          walletRegistry
+            .connect(deployer)
+            .updateAuthorizationParameters(1, 2, 3)
         ).to.be.revertedWith("Caller is not the governance")
       })
     })
@@ -34,7 +36,7 @@ describe("WalletRegistry - Parameters", async () => {
         await expect(
           walletRegistry
             .connect(walletOwner.wallet)
-            .updateAuthorizationParameters(1, 2)
+            .updateAuthorizationParameters(1, 2, 3)
         ).to.be.revertedWith("Caller is not the governance")
       })
     })
@@ -42,7 +44,9 @@ describe("WalletRegistry - Parameters", async () => {
     context("when called by a third party", () => {
       it("should revert", async () => {
         await expect(
-          walletRegistry.connect(thirdParty).updateAuthorizationParameters(1, 2)
+          walletRegistry
+            .connect(thirdParty)
+            .updateAuthorizationParameters(1, 2, 3)
         ).to.be.revertedWith("Caller is not the governance")
       })
     })
