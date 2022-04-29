@@ -1,5 +1,6 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
+import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
 import { randomBeaconDeployment } from "./fixtures"
 
@@ -15,24 +16,24 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const governanceDelay = 604800 // 1 week
 
-const initialRelayEntrySoftTimeout = 10
-const initialRelayEntryHardTimeout = 100
-const initialCallbackGasLimit = 900000
-const initialGroupCreationFrequency = 4
-const initialGroupLifeTime = 60 * 60 * 24 * 7
-const initialDkgResultChallengePeriodLength = 60
-const initialDkgResultSubmissionTimeout = 200
-const initialDkgSubmitterPrecedencePeriodLength = 180
-const initialRelayEntrySubmissionFailureSlashingAmount = 1000
-const initialMaliciousDkgResultSlashingAmount = 1000000000
-const initialUnauthorizedSigningSlashingAmount = 1000000000
+const initialRelayEntrySoftTimeout = 1280
+const initialRelayEntryHardTimeout = 5760
+const initialCallbackGasLimit = 56000
+const initialGroupCreationFrequency = 2
+const initialGroupLifeTime = 259200
+const initialDkgResultChallengePeriodLength = 11520
+const initialDkgResultSubmissionTimeout = 1280
+const initialDkgSubmitterPrecedencePeriodLength = 20
+const initialRelayEntrySubmissionFailureSlashingAmount = to1e18(400)
+const initialMaliciousDkgResultSlashingAmount = to1e18(400)
+const initialUnauthorizedSigningSlashingAmount = to1e18(400)
 const initialSortitionPoolRewardsBanDuration = 1209600
-const initialRelayEntryTimeoutNotificationRewardMultiplier = 5
-const initialUnauthorizedSignatureNotificationRewardMultiplier = 5
-const initialMinimumAuthorization = 1000000
-const initialAuthorizationDecreaseDelay = 86400
-const initialAuthorizationDecreaseChangePeriod = 86400
-const initialDkgMaliciousResultNotificationRewardMultiplier = 5
+const initialRelayEntryTimeoutNotificationRewardMultiplier = 100
+const initialUnauthorizedSignatureNotificationRewardMultiplier = 100
+const initialMinimumAuthorization = to1e18(40000)
+const initialAuthorizationDecreaseDelay = 3888000
+const initialAuthorizationDecreaseChangePeriod = 3888000
+const initialDkgMaliciousResultNotificationRewardMultiplier = 100
 const initialDkgResultSubmissionGas = 235000
 const initialDkgResultApprovalGasOffset = 43500
 const initialNotifyOperatorInactivityGasOffset = 54500

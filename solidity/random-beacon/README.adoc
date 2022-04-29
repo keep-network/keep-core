@@ -329,7 +329,7 @@ _90% of groupSize_
 |resultChallengePeriodLength
 |Time in blocks during which the submitted DKG result can be challenged.
 |Yes
-d|`11520 blocks` +
+d|`11_520 blocks` +
 _~48h assuming 15s block time_
 
 |resultSubmissionTimeout
@@ -348,13 +348,13 @@ _64 members * 20 blocks = 1280 blocks_
 |groupLifetime
 |Group lifetime in blocks.
 |Yes
-d|`403200 blocks` +
-_~10 weeks assuming 15s block time_
+d|`259_200 blocks` +
+_~30 days assuming 15s block time_
 
 |groupCreationFrequency
 |The number of relay requests needed to kick off a new group creation process.
 |Yes
-|`5`
+|`2`
 
 4+s|Relay Entry
 
@@ -373,15 +373,15 @@ _~24h assuming 15s block time_
 |callbackGasLimit
 |Relay entry callback gas limit.
 |Yes
-d|`56000`
+d|`56_000`
 
 4+s|Slashing
 
 |maliciousDkgResultSlashingAmount
 |Slashing amount for submitting malicious DKG result.
 |Yes
-d|`50000e18` +
-_50 000 T_
+d|`400e18` +
+_400 T_
 
 |dkgMaliciousResultNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
@@ -392,26 +392,26 @@ will be transferred to the notifier reporting about a malicious DKG result.
 |relayEntrySubmissionFailureSlashingAmount
 |Slashing amount for not submitting relay entry.
 |Yes
-d|`1000e18` +
-_1 000 T_
+d|`400e18` +
+_400 T_
 
 |relayEntryTimeoutNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about relay entry timeout.
 |Yes
-|`40`
+|`100`
 
 |unauthorizedSigningSlashingAmount
 |Slashing amount when an unauthorized signing has been proved.
 |Yes
-d|`100e3 * 1e18` +
-_100 000 T_
+d|`400e18` +
+_400 T_
 
 |unauthorizedSigningNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
 will be transferred to the notifier reporting about unauthorized signing.
 |Yes
-|`50`
+|`100`
 
 |sortitionPoolRewardsBanDuration
 |Duration of the sortition pool rewards ban imposed on operators who were
@@ -426,26 +426,26 @@ inactive for other reasons.
 |Calculated gas cost for submitting a DKG result. This will be refunded as part
 of the DKG approval process.
 |Yes
-|`235000`
+|`235_000`
 
 |dkgResultApprovalGasOffset
 |Gas that is meant to balance the DKG result approval's overall cost.
 |Yes
-|`41500`
+|`41_500`
 
 |notifyOperatorInactivityGasOffset
 |Gas that is meant to balance the operator inactivity notification cost.
 |Yes
-|`54500`
+|`54_500`
 
 |relayEntrySubmissionGasOffset
 |Gas that is meant to balance the relay entry submission cost.
 |Yes
-|`11250`
+|`11_250`
 
 |authorizedRequesters
 |Authorized addresses that can request a relay entry.
-|No
+|Yes
 |
 
 4+s|Authorization
@@ -454,15 +454,22 @@ of the DKG approval process.
 |The minimum authorization amount required so that operator can participate in
 the Random Beacon.
 |Yes
-d|`100000 * 1e18` +
-_100 000 T_
+d|`40_000e18` +
+_40 000 T_
 
 |authorizationDecreaseDelay
 |Delay in seconds that needs to pass between the time authorization decrease is
 requested and the time that request gets approved.
 |Yes
-d|`403200 blocks` +
-_~10 weeks assuming 15s block time_
+d|`3_888_000 seconds` +
+_45 days_
+
+|authorizationDecreaseChangePeriod
+|Time period in seconds before the authorization decrease delay end, during
+which the authorization decrease request can be overwritten.
+|Yes
+d|`3_888_000 seconds` +
+_45 days_
 
 |===
 
