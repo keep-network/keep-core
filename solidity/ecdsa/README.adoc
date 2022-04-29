@@ -294,10 +294,16 @@ _90% of groupSize_
 |No
 |`65`
 
+|seedTimeout
+|Time in blocks for Random Beacon to provide group selection seed.
+|Yes
+d|`11_520 blocks` +
+_~48h assuming 15s block time_
+
 |resultChallengePeriodLength
 |Time in blocks during which the submitted DKG result can be challenged.
 |Yes
-d|`11520 blocks` +
+d|`11_520 blocks` +
 _~48h assuming 15s block time_
 
 |resultSubmissionTimeout
@@ -317,8 +323,8 @@ _100 members * 20 blocks = 2000 blocks_
 |maliciousDkgResultSlashingAmount
 |Slashing amount for submitting malicious DKG result.
 |Yes
-d|`50000e18` +
-_50 000 T_
+d|`400e18` +
+_400 T_
 
 |dkgMaliciousResultNotificationRewardMultiplier
 |Percentage of the staking contract malicious behavior notification reward which
@@ -339,17 +345,17 @@ inactive for other reasons.
 |Calculated gas cost for submitting a DKG result. This will be refunded as part
 of the DKG approval process.
 |Yes
-|`275000`
+|`275_000`
 
 |dkgResultApprovalGasOffset
 |Gas that is meant to balance the DKG result approval's overall cost.
 |Yes
-|`65000`
+|`65_000`
 
 |notifyOperatorInactivityGasOffset
 |Gas that is meant to balance the operator inactivity notification cost.
 |Yes
-|`85000`
+|`85_000`
 
 
 4+s|Authorization
@@ -358,15 +364,22 @@ of the DKG approval process.
 |The minimum authorization amount required so that operator can participate in
 the Random Beacon.
 |Yes
-d|`100000 * 1e18` +
-_100 000 T_
+d|`40_000 * 1e18` +
+_40 000 T_
 
 |authorizationDecreaseDelay
 |Delay in seconds that needs to pass between the time authorization decrease is
 requested and the time that request gets approved.
 |Yes
-d|`403200 blocks` +
-_~10 weeks assuming 15s block time_
+d|`3_888_000 seconds` +
+_45 days_
+
+|authorizationDecreaseChangePeriod
+|Time period in seconds before the authorization decrease delay end, during
+which the authorization decrease request can be overwritten.
+|Yes
+d|`3_888_000 seconds` +
+_45 days_
 
 4+s|Wallet Registry
 

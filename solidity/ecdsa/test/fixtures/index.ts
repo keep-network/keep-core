@@ -36,9 +36,9 @@ export const dkgState = {
 }
 
 export const params = {
-  minimumAuthorization: to1e18(400000),
-  authorizationDecreaseDelay: 5184000,
-  authorizationDecreaseChangePeriod: 5184000,
+  minimumAuthorization: to1e18(40000),
+  authorizationDecreaseDelay: 3888000,
+  authorizationDecreaseChangePeriod: 3888000,
   dkgSeedTimeout: 8,
   dkgResultChallengePeriodLength: 10,
   dkgResultSubmissionTimeout: 30,
