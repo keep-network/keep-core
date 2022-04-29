@@ -1,9 +1,11 @@
 :toc: macro
 :icons: font
 
-= Keep ECDSA Wallets
+= Keep ECDSA v2
 
-// TODO: Add intro
+The Keep Network offers threshold ECDSA protocol to generate a ECDSA wallets
+without any single signer having access to the corresponding private key. This
+functionality is used by TBTC v2 to manage Bitcoin wallets used by TBTC Bridge.
 
 ifdef::env-github[]
 :tip-caption: :bulb:
@@ -15,7 +17,28 @@ endif::[]
 
 toc::[]
 
-// TODO: Describe protocol
+== Overview
+
+Keep ECDSA allows creating threshold ECDSA wallets where where `n` parties share
+the power to issue digital signatures under a single public key. A threshold `t`
+is specified such that any subset of `t + 1` players can jointly sign, but any
+smaller subset cannot.
+
+`WalletRegistry` smart contract is an on-chain registry of ECDSA wallets
+controlled by off-chain network of nodes. The distributed key generation
+protocol used by the off-chain network of nodes should have three properties:
+
+- The signing group as a whole should have an ECDSA public key, which will be
+  shared on the host chain (Ethereum) and will correspond to the Bitcoin wallet
+  owned by that signing group.
+- Each member of the signing group should have a threshold ECDSA secret key
+  share, which can be used to create a threshold ECDSA signature share for any
+  transactions involving the signing group’s wallet.
+- Each member of the signing group should be able to combine a threshold number
+  of signature shares from itself and other members of the group to produce a
+  signed version of a given transaction to be performed on behalf of the signing
+  group.
+
 
 == Build
 
