@@ -156,11 +156,11 @@ describe("WalletRegistry - Upgrade", async () => {
 
       it("should not update parameters from library", async () => {
         expect((await walletRegistry.dkgParameters()).seedTimeout).to.be.equal(
-          1440
+          11_520
         )
 
         expect(await walletRegistry.minimumAuthorization()).to.be.equal(
-          "400000000000000000000000"
+          "40000000000000000000000"
         )
       })
 

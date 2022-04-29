@@ -2278,8 +2278,8 @@ describe("WalletRegistry - Wallet Creation", async () => {
                       .withArgs(stakingProvider, to1e18(400), false)
                   })
 
-                  it("should use close to 1 835 000 gas", async () => {
-                    await assertGasUsed(challengeTx, 1_835_000, 15_000)
+                  it("should use close to 1 820 000 gas", async () => {
+                    await assertGasUsed(challengeTx, 1_820_000, 30_000)
                   })
                 })
               })
