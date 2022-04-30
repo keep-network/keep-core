@@ -71,7 +71,7 @@ export const LINK = {
   },
   tbtcDapp: "https://dapp.tbtc.network",
   thresholdDapp: "https://dashboard.threshold.network/",
-  setUpPRE: "https://interim-pre-application-docs.readthedocs.io/en/latest/",
+  setUpPRE: "https://docs.nucypher.com/en/latest/",
 }
 
 export const WALLETS = {
