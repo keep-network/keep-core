@@ -36,7 +36,7 @@ describe("WalletRegistry - Upgrade", async () => {
           await deployments.fixture()
 
           await expect(
-            upgradeProxy("WalletRegistry", "WalletRegistryV2Invalid", {
+            upgradeProxy("WalletRegistry", "WalletRegistryV2MisplacedNewSlot", {
               factoryOpts: {
                 libraries: { EcdsaInactivity: EcdsaInactivity.address },
                 signer: proxyAdminOwner,

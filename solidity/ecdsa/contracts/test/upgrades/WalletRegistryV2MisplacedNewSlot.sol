@@ -40,7 +40,7 @@ import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 // a final release package if it's ready.
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract WalletRegistryV2Invalid is
+contract WalletRegistryV2MisplacedNewSlot is
     IWalletRegistry,
     IRandomBeaconConsumer,
     IApplication,
