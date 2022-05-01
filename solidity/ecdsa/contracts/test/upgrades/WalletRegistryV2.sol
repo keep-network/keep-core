@@ -285,7 +285,8 @@ contract WalletRegistryV2 is
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
     ) external initializer {
-        // TEST: Removed initializer of V1
+        // TEST: Removed content of V1's initializer. The `initializer` modifier
+        // protects this function from being called again.
     }
 
     // TEST: Added initializer for V2

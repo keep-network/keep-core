@@ -164,6 +164,12 @@ describe("WalletRegistry - Upgrade", async () => {
         )
       })
 
+      it("should revert when V1's initializer is called", async () => {
+        await expect(
+          newWalletRegistry.initialize(AddressZero, AddressZero, AddressZero)
+        ).to.be.revertedWith("Initializable: contract is already initialized")
+      })
+
       it("should revert for removed function", async () => {
         await expect(walletRegistry.notifySeedTimeout()).to.be.rejectedWith(
           Error,
