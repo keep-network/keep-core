@@ -83,6 +83,7 @@ contract WalletRegistryV2 is
     ///         be refunded as part of the DKG approval process. It is in the
     ///         submitter's interest to not skip his priority turn on the approval,
     ///         otherwise the refund of the DKG submission will be refunded to
+    ///         another group member that will call the DKG approve function.
     uint256 internal _dkgResultSubmissionGas;
 
     /// @notice Gas that is meant to balance the DKG result approval's overall
@@ -175,7 +176,8 @@ contract WalletRegistryV2 is
 
     event AuthorizationParametersUpdated(
         uint96 minimumAuthorization,
-        uint64 authorizationDecreaseDelay
+        uint64 authorizationDecreaseDelay,
+        uint64 authorizationDecreaseChangePeriod
     );
 
     event RewardParametersUpdated(
@@ -277,6 +279,8 @@ contract WalletRegistryV2 is
     constructor(SortitionPool _sortitionPool, IStaking _staking) {
         sortitionPool = _sortitionPool;
         staking = _staking;
+
+        _disableInitializers();
     }
 
     /// @dev Initializes upgradable contract on deployment.
@@ -482,18 +486,25 @@ contract WalletRegistryV2 is
     /// @param _minimumAuthorization New minimum authorization amount
     /// @param _authorizationDecreaseDelay New authorization decrease delay in
     ///        seconds
+    /// @param _authorizationDecreaseChangePeriod New authorization decrease
+    ///        change period in seconds
     function updateAuthorizationParameters(
         uint96 _minimumAuthorization,
-        uint64 _authorizationDecreaseDelay
+        uint64 _authorizationDecreaseDelay,
+        uint64 _authorizationDecreaseChangePeriod
     ) external onlyGovernance {
         authorization.setMinimumAuthorization(_minimumAuthorization);
         authorization.setAuthorizationDecreaseDelay(
             _authorizationDecreaseDelay
         );
+        authorization.setAuthorizationDecreaseChangePeriod(
+            _authorizationDecreaseChangePeriod
+        );
 
         emit AuthorizationParametersUpdated(
             _minimumAuthorization,
-            _authorizationDecreaseDelay
+            _authorizationDecreaseDelay,
+            _authorizationDecreaseChangePeriod
         );
     }
 
@@ -988,13 +999,6 @@ contract WalletRegistryV2 is
         return authorization.parameters.minimumAuthorization;
     }
 
-    /// @notice Delay in seconds that needs to pass between the time
-    ///         authorization decrease is requested and the time that request
-    ///         can get approved.
-    function authorizationDecreaseDelay() external view returns (uint64) {
-        return authorization.parameters.authorizationDecreaseDelay;
-    }
-
     /// @notice Returns the current value of the staking provider's eligible
     ///         stake. Eligible stake is defined as the currently authorized
     ///         stake minus the pending authorization decrease. Eligible stake
@@ -1092,6 +1096,41 @@ contract WalletRegistryV2 is
     /// @notice Retrieves dkg parameters that were set in DKG library.
     function dkgParameters() external view returns (DKG.Parameters memory) {
         return dkg.parameters;
+    }
+
+    /// @notice Returns authorization-related parameters.
+    /// @dev The minimum authorization is also returned by `minimumAuthorization()`
+    ///      function, as a requirement of `IApplication` interface.
+    /// @return minimumAuthorization The minimum authorization amount required
+    ///         so that operator can participate in the random beacon. This
+    ///         amount is required to execute slashing for providing a malicious
+    ///         DKG result or when a relay entry times out.
+    /// @return authorizationDecreaseDelay Delay in seconds that needs to pass
+    ///         between the time authorization decrease is requested and the
+    ///         time that request gets approved. Protects against free-riders
+    ///         earning rewards and not being active in the network.
+    /// @return authorizationDecreaseChangePeriod Authorization decrease change
+    ///         period in seconds. It is the time, before authorization decrease
+    ///         delay end, during which the pending authorization decrease
+    ///         request can be overwritten.
+    ///         If set to 0, pending authorization decrease request can not be
+    ///         overwritten until the endire `authorizationDecreaseDelay` ends.
+    ///         If set to value equal `authorizationDecreaseDelay`, request can
+    ///         always be overwritten.
+    function authorizationParameters()
+        external
+        view
+        returns (
+            uint96 minimumAuthorization,
+            uint64 authorizationDecreaseDelay,
+            uint64 authorizationDecreaseChangePeriod
+        )
+    {
+        return (
+            authorization.parameters.minimumAuthorization,
+            authorization.parameters.authorizationDecreaseDelay,
+            authorization.parameters.authorizationDecreaseChangePeriod
+        );
     }
 
     /// @notice Retrieves reward-related parameters.
