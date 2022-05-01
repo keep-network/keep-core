@@ -34,7 +34,7 @@ library Wallets {
         // Reserved storage space in case we need to add more variables.
         // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
         // slither-disable-next-line unused-state
-        uint256[19] __gap;
+        uint256[49] __gap;
     }
 
     /// @notice Registers a new wallet.
