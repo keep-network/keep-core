@@ -75,7 +75,8 @@ const config: HardhatUserConfig = {
       // for gas refund tests than when the default hardhat ~1 gwei gas price is
       // used
       gasPrice: 200000000000, // 200 gwei,
-      // Ignore contract size on test deployment to hardhat network.
+      // Ignore contract size on deployment to hardhat network, to be able to
+      // deploy stub contracts in tests.
       allowUnlimitedContractSize: true,
     },
     development: {

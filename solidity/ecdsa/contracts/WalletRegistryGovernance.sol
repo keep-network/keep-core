@@ -760,10 +760,10 @@ contract WalletRegistryGovernance is Ownable {
         newNotifySeedTimeoutGasOffset = 0;
     }
 
-    /// @notice Begins the notify DKG timeout gas offset update process.
+    /// @notice Begins the notify DKG timeout negative gas offset update process.
     /// @dev Can be called only by the contract owner.
-    /// @param _newNotifyDkgTimeoutNegativeGasOffset New DKG timeout gas notification
-    ///        gas offset
+    /// @param _newNotifyDkgTimeoutNegativeGasOffset New DKG timeout negative gas
+    ///        notification gas offset
     function beginNotifyDkgTimeoutNegativeGasOffsetUpdate(
         uint256 _newNotifyDkgTimeoutNegativeGasOffset
     ) external onlyOwner {
@@ -777,7 +777,7 @@ contract WalletRegistryGovernance is Ownable {
         /* solhint-enable not-rely-on-time */
     }
 
-    /// @notice Finalizes the notify DKG timeout gas offset update process.
+    /// @notice Finalizes the notify DKG timeout negative gas offset update process.
     /// @dev Can be called only by the contract owner, after the governance
     ///      delay elapses.
     function finalizeNotifyDkgTimeoutNegativeGasOffsetUpdate()
@@ -1271,7 +1271,7 @@ contract WalletRegistryGovernance is Ownable {
             getRemainingChangeTime(notifySeedTimeoutGasOffsetChangeInitiated);
     }
 
-    /// @notice Get the time remaining until the DKG timeout gas offset
+    /// @notice Get the time remaining until the DKG timeout negative gas offset
     ///         can be updated.
     /// @return Remaining time in seconds.
     function getRemainingNotifyDkgTimeoutNegativeGasOffsetUpdateTime()
