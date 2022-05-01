@@ -14,7 +14,7 @@
 
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol";
 
 import "@keep-network/random-beacon/contracts/libraries/BytesLib.sol";
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
@@ -23,7 +23,7 @@ import "./Wallets.sol";
 
 library EcdsaInactivity {
     using BytesLib for bytes;
-    using ECDSA for bytes32;
+    using ECDSAUpgradeable for bytes32;
 
     struct Claim {
         // ID of the wallet whose signing group is raising the inactivity claim.
