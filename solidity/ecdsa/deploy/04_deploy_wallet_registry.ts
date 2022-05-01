@@ -43,7 +43,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     },
     proxyOpts: {
       constructorArgs: [SortitionPool.address, TokenStaking.address],
-      unsafeAllowLinkedLibraries: true,
+      unsafeAllow: ["external-library-linking"],
     },
   })
 

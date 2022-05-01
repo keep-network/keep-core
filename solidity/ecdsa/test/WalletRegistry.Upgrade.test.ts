@@ -43,7 +43,7 @@ describe("WalletRegistry - Upgrade", async () => {
               },
               proxyOpts: {
                 constructorArgs: [AddressZero, AddressZero],
-                unsafeAllowLinkedLibraries: true,
+                unsafeAllow: ["external-library-linking"],
               },
             })
           ).to.be.rejectedWith(Error, "New storage layout is incompatible")
@@ -62,7 +62,7 @@ describe("WalletRegistry - Upgrade", async () => {
               },
               proxyOpts: {
                 constructorArgs: [AddressZero, AddressZero],
-                unsafeAllowLinkedLibraries: true,
+                unsafeAllow: ["external-library-linking"],
               },
             })
           ).to.be.rejectedWith(
@@ -116,7 +116,7 @@ describe("WalletRegistry - Upgrade", async () => {
                 fn: "initializeV2",
                 args: [newRandomBeaconAddress, newVarValue],
               },
-              unsafeAllowLinkedLibraries: true,
+              unsafeAllow: ["external-library-linking"],
             },
           }
         )) as WalletRegistryV2
@@ -252,7 +252,7 @@ describe("WalletRegistry - Upgrade", async () => {
                   fn: "initializeV2",
                   args: [AddressZero, "new variable set for new contract"],
                 },
-                unsafeAllowLinkedLibraries: true,
+                unsafeAllow: ["external-library-linking"],
               },
             }
           )) as WalletRegistryV2
@@ -299,7 +299,7 @@ describe("WalletRegistry - Upgrade", async () => {
           },
           proxyOpts: {
             constructorArgs: [AddressZero, AddressZero],
-            unsafeAllowLinkedLibraries: true,
+            unsafeAllow: ["external-library-linking"],
           },
         })
       ).to.be.rejectedWith(Error, "Ownable: caller is not the owner")
