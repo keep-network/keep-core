@@ -2742,7 +2742,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      it("should not update the operator inactivity gas offset", async () => {
+      it("should not update the notify seed timeout gas offset", async () => {
         const { notifySeedTimeoutGasOffset } =
           await walletRegistry.gasParameters()
         expect(notifySeedTimeoutGasOffset).to.be.equal(
@@ -2833,7 +2833,7 @@ describe("WalletRegistryGovernance", async () => {
           await restoreSnapshot()
         })
 
-        it("should update the operator inactivity gas offset", async () => {
+        it("should update the notify seed timeout gas offset", async () => {
           const { notifySeedTimeoutGasOffset } =
             await walletRegistry.gasParameters()
           expect(notifySeedTimeoutGasOffset).to.be.equal(100)
@@ -2883,7 +2883,7 @@ describe("WalletRegistryGovernance", async () => {
         await restoreSnapshot()
       })
 
-      it("should not update the operator inactivity gas offset", async () => {
+      it("should not update the notify DKG timeout negative gas offset", async () => {
         const { notifyDkgTimeoutNegativeGasOffset } =
           await walletRegistry.gasParameters()
         expect(notifyDkgTimeoutNegativeGasOffset).to.be.equal(
@@ -2974,7 +2974,7 @@ describe("WalletRegistryGovernance", async () => {
           await restoreSnapshot()
         })
 
-        it("should update the operator inactivity gas offset", async () => {
+        it("should update the notify DKG timeout negative gas offset", async () => {
           const { notifyDkgTimeoutNegativeGasOffset } =
             await walletRegistry.gasParameters()
           expect(notifyDkgTimeoutNegativeGasOffset).to.be.equal(100)
