@@ -273,6 +273,8 @@ contract WalletRegistry is
     constructor(SortitionPool _sortitionPool, IStaking _staking) {
         sortitionPool = _sortitionPool;
         staking = _staking;
+
+        _disableInitializers();
     }
 
     /// @dev Initializes upgradable contract on deployment.
