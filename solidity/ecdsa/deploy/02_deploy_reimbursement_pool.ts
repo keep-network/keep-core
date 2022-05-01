@@ -3,11 +3,11 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { getNamedAccounts, deployments } = hre
+  const { getNamedAccounts, ethers, deployments } = hre
   const { deployer } = await getNamedAccounts()
 
-  const staticGas = 40800 // gas amount consumed by the refund() + tx cost
-  const maxGasPrice = 500000000000 // 500 gwei
+  const staticGas = 40_800 // gas amount consumed by the refund() + tx cost
+  const maxGasPrice = ethers.utils.parseUnits("500", "gwei")
 
   const ReimbursementPool = await deployments.deploy("ReimbursementPool", {
     from: deployer,

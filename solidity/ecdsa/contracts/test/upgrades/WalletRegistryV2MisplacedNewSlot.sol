@@ -1,3 +1,6 @@
+// This is a contract used to test WalletRegistry upgradeability. It is a copy
+// of WalletRegistry contract with some differences marked with `TEST:` comments.
+
 // SPDX-License-Identifier: MIT
 //
 // ▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
@@ -14,13 +17,13 @@
 
 pragma solidity ^0.8.9;
 
-import "./api/IWalletRegistry.sol";
-import "./api/IWalletOwner.sol";
-import "./libraries/Wallets.sol";
-import {EcdsaAuthorization as Authorization} from "./libraries/EcdsaAuthorization.sol";
-import {EcdsaDkg as DKG} from "./libraries/EcdsaDkg.sol";
-import {EcdsaInactivity as Inactivity} from "./libraries/EcdsaInactivity.sol";
-import {EcdsaDkgValidator as DKGValidator} from "./EcdsaDkgValidator.sol";
+import "../../api/IWalletRegistry.sol";
+import "../../api/IWalletOwner.sol";
+import "../../libraries/Wallets.sol";
+import {EcdsaAuthorization as Authorization} from "../../libraries/EcdsaAuthorization.sol";
+import {EcdsaDkg as DKG} from "../../libraries/EcdsaDkg.sol";
+import {EcdsaInactivity as Inactivity} from "../../libraries/EcdsaInactivity.sol";
+import {EcdsaDkgValidator as DKGValidator} from "../../EcdsaDkgValidator.sol";
 
 import "@keep-network/sortition-pools/contracts/SortitionPool.sol";
 import "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol";
@@ -37,7 +40,7 @@ import "@threshold-network/solidity-contracts/contracts/staking/IStaking.sol";
 // a final release package if it's ready.
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract WalletRegistry is
+contract WalletRegistryV2MisplacedNewSlot is
     IWalletRegistry,
     IRandomBeaconConsumer,
     IApplication,
@@ -48,6 +51,9 @@ contract WalletRegistry is
     using Authorization for Authorization.Data;
     using DKG for DKG.Data;
     using Wallets for Wallets.Data;
+
+    // TEST: This is an variable added to fail the upgradeability validation.
+    string public newVar;
 
     // Libraries data storages
     Authorization.Data internal authorization;
@@ -283,69 +289,17 @@ contract WalletRegistry is
         IRandomBeacon _randomBeacon,
         ReimbursementPool _reimbursementPool
     ) external initializer {
+        // TEST: Removed content of V1's initializer. The `initializer` modifier
+        // protects this function from being called again.
+    }
+
+    // TEST: Added initializer for V2
+    function initializeV2(IRandomBeacon _randomBeacon, string memory _newVar)
+        public
+        reinitializer(2)
+    {
         randomBeacon = _randomBeacon;
-        reimbursementPool = _reimbursementPool;
-
-        _transferGovernance(msg.sender);
-
-        //
-        // All parameters set in the constructor are initial ones, used at the
-        // moment contracts were deployed for the first time. Parameters are
-        // governable and values assigned in the constructor do not need to
-        // reflect the current ones.
-        //
-
-        // Minimum authorization is 40k T.
-        //
-        // Authorization decrease delay is 45 days.
-        //
-        // Authorization decrease change period is 45 days. It means pending
-        // authorization decrease can be overwriten all the time.
-        authorization.setMinimumAuthorization(40_000e18);
-        authorization.setAuthorizationDecreaseDelay(3_888_000);
-        authorization.setAuthorizationDecreaseChangePeriod(3_888_000);
-
-        // Malicious DKG result slashing amount is set initially to 1% of the
-        // minimum authorization (400 T). This values needs to be increased
-        // significantly once the system is fully launched.
-        //
-        // Notifier of a malicious DKG result receives 100% of the notifier
-        // reward from the staking contract.
-        //
-        // Inactive operators are set as ineligible for rewards for 2 weeks.
-        _maliciousDkgResultSlashingAmount = 400e18;
-        _maliciousDkgResultNotificationRewardMultiplier = 100;
-        _sortitionPoolRewardsBanDuration = 2 weeks;
-
-        // DKG seed timeout is set to 48h assuming 15s block time. The same
-        // value is used by the Random Beacon as a relay entry hard timeout.
-        //
-        // DKG result challenge period length is set to 48h as well, assuming
-        // 15s block time.
-        //
-        // DKG result submission timeout, gives each member 20 blocks to submit
-        // the result. Assuming 15s block time, it is ~8h to submit the result
-        // in the pessimistic case.
-        //
-        // The original DKG result submitter has 20 blocks to approve it before
-        // anyone else can do that.
-        //
-        // With these parameters, the happy path takes no more than 104 hours.
-        // In practice, it should take about 48 hours (just the challenge time).
-        dkg.init(sortitionPool, _ecdsaDkgValidator);
-        dkg.setSeedTimeout(11_520);
-        dkg.setResultChallengePeriodLength(11_520);
-        dkg.setResultSubmissionTimeout(100 * 20);
-        dkg.setSubmitterPrecedencePeriodLength(20);
-
-        // Gas parameters were adjusted based on Ethereum state in April 2022.
-        // If the cost of EVM opcodes change over time, these parameters will
-        // have to be updated.
-        _dkgResultSubmissionGas = 290_000;
-        _dkgResultApprovalGasOffset = 72_000;
-        _notifyOperatorInactivityGasOffset = 93_000;
-        _notifySeedTimeoutGasOffset = 7_250;
-        _notifyDkgTimeoutNegativeGasOffset = 2_300;
+        newVar = _newVar;
     }
 
     /// @notice Withdraws application rewards for the given staking provider.

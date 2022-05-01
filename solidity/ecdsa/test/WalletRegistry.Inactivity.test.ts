@@ -6,6 +6,7 @@ import ecdsaData from "./data/ecdsa"
 import { params, walletRegistryFixture } from "./fixtures"
 import { createNewWallet } from "./utils/wallets"
 import { signOperatorInactivityClaim } from "./utils/inactivity"
+import { assertGasUsed } from "./helpers/gas"
 
 import type { BigNumber, ContractTransaction } from "ethers"
 import type { FakeContract } from "@defi-wonderland/smock"
@@ -74,7 +75,8 @@ describe("WalletRegistry - Inactivity", () => {
                     modifySignatures: (signatures: string) => string,
                     modifySigningMemberIndices: (
                       signingMemberIndices: number[]
-                    ) => number[]
+                    ) => number[],
+                    expectedGasUsed: number
                   ) => {
                     let tx: ContractTransaction
                     let initialNonce: BigNumber
@@ -139,6 +141,17 @@ describe("WalletRegistry - Inactivity", () => {
                       )
                     })
 
+                    it(`should use close to ${expectedGasUsed} gas`, async () => {
+                      await assertGasUsed(
+                        tx,
+                        expectedGasUsed,
+                        ethers.BigNumber.from(expectedGasUsed)
+                          .mul(5) // 5% delta
+                          .div(100)
+                          .toNumber()
+                      )
+                    })
+
                     it("should increment inactivity claim nonce for the group", async () => {
                       expect(
                         await walletRegistry.inactivityClaimNonce(walletID)
@@ -176,7 +189,8 @@ describe("WalletRegistry - Inactivity", () => {
                         subsequentInactiveMembersIndices,
                         groupThreshold,
                         (signatures) => signatures,
-                        (signingMembersIndices) => signingMembersIndices
+                        (signingMembersIndices) => signingMembersIndices,
+                        1_210_000
                       )
                     }
                   )
@@ -188,7 +202,8 @@ describe("WalletRegistry - Inactivity", () => {
                         [32],
                         groupThreshold,
                         (signatures) => signatures,
-                        (signingMembersIndices) => signingMembersIndices
+                        (signingMembersIndices) => signingMembersIndices,
+                        840_000
                       )
                     }
                   )
@@ -200,7 +215,8 @@ describe("WalletRegistry - Inactivity", () => {
                         nonSubsequentInactiveMembersIndices,
                         groupThreshold,
                         (signatures) => signatures,
-                        (signingMembersIndices) => signingMembersIndices
+                        (signingMembersIndices) => signingMembersIndices,
+                        880_000
                       )
                     }
                   )
@@ -248,7 +264,8 @@ describe("WalletRegistry - Inactivity", () => {
                         // arbitrary signatures.
                         100,
                         modifySignatures,
-                        () => newSigningMembersIndices
+                        () => newSigningMembersIndices,
+                        1_240_000
                       )
                     }
                   )

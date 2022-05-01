@@ -373,7 +373,7 @@ _~24h assuming 15s block time_
 |callbackGasLimit
 |Relay entry callback gas limit.
 |Yes
-d|`56_000`
+d|`64_000`
 
 4+s|Slashing
 

@@ -105,8 +105,10 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      # As a workaround for a slither issue https://github.com/crytic/slither/issues/1140
+      # we disable compilation of dependencies when running slither.
       - name: Run Slither
-        run: slither .
+        run: SKIP_DEPENDENCY_COMPILER=true slither .
 
   contracts-build-and-test:
     needs: contracts-detect-changes

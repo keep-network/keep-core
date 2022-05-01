@@ -175,8 +175,8 @@ describe("WalletRegistry - Random Beacon", async () => {
 
         // The exact value was noted from a test execution and is used as a reference
         // for all future executions.
-        it("should not exceed 77330", async () => {
-          const expectedGasEstimate = 77330
+        it("should not exceed 85700", async () => {
+          const expectedGasEstimate = 85700
 
           const gasEstimate = await walletRegistry
             .connect(randomBeaconFake.wallet)
@@ -193,7 +193,9 @@ describe("WalletRegistry - Random Beacon", async () => {
       // interface, hence we use that approach in other tests. Here we want to
       // simulate a real-world use case as much as possible so we switch to
       // mocking the actual contract that uses a Callback library with a set fixed
-      // gas limit.
+      // gas limit. The main point of this test is to validate that `callbackGasLimit`
+      // set in the `RandomBeacon`'s `Callback` library is enough to cover
+      // `WalletRegistry.__beaconCallback` execution.
       context("when called as a callback from random beacon", async () => {
         let randomBeaconMock: MockContract<RandomBeaconStub>
 
@@ -216,7 +218,10 @@ describe("WalletRegistry - Random Beacon", async () => {
 
           const tx = await randomBeaconMock.submitRelayEntry(entry)
 
-          await expect(tx).not.to.emit(randomBeaconMock, "CallbackFailed")
+          await expect(
+            tx,
+            "Callback failed; inspect callbackGasLimit value is sufficient"
+          ).not.to.emit(randomBeaconMock, "CallbackFailed")
         })
       })
     })

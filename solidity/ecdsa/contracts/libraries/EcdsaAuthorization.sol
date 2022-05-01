@@ -71,6 +71,9 @@ library EcdsaAuthorization {
         //                   authorizationDecreaseDelay
         //
         uint64 authorizationDecreaseChangePeriod;
+        // This struct doesn't contain `__gap` property as the structure is
+        // stored inside `Data` struct, that already have a gap that can be used
+        // on upgrade.
     }
 
     struct AuthorizationDecrease {
@@ -83,6 +86,10 @@ library EcdsaAuthorization {
         mapping(address => address) stakingProviderToOperator;
         mapping(address => address) operatorToStakingProvider;
         mapping(address => AuthorizationDecrease) pendingDecreases;
+        // Reserved storage space in case we need to add more variables.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        // slither-disable-next-line unused-state
+        uint256[46] __gap;
     }
 
     event OperatorRegistered(

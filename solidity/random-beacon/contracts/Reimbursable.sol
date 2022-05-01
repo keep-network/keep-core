@@ -21,6 +21,12 @@ abstract contract Reimbursable {
     // slither-disable-next-line uninitialized-state
     ReimbursementPool public reimbursementPool;
 
+    // Reserved storage space in case we need to add more variables,
+    // since there are upgradeable contracts that inherit from this one.
+    // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+    // slither-disable-next-line unused-state
+    uint256[49] private __gap;
+
     event ReimbursementPoolUpdated(address newReimbursementPool);
 
     modifier refundable(address receiver) {

@@ -345,18 +345,27 @@ inactive for other reasons.
 |Calculated gas cost for submitting a DKG result. This will be refunded as part
 of the DKG approval process.
 |Yes
-|`275_000`
+|`290_000`
 
 |dkgResultApprovalGasOffset
 |Gas that is meant to balance the DKG result approval's overall cost.
 |Yes
-|`65_000`
+|`72_000`
 
 |notifyOperatorInactivityGasOffset
 |Gas that is meant to balance the operator inactivity notification cost.
 |Yes
-|`85_000`
+|`93_000`
 
+|notifySeedTimeoutGasOffset
+|Gas that is meant to balance the DKG seed delivery timeout notification cost.
+|Yes
+|`7_250`
+
+|notifyDkgTimeoutNegativeGasOffset
+|Gas that is meant to balance the DKG timeout notification cost.
+|Yes
+|`2_300`
 
 4+s|Authorization
 

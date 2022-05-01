@@ -22,12 +22,19 @@ library Wallets {
         // Uncompressed ECDSA public key stored as X and Y coordinates (32 bytes each).
         bytes32 publicKeyX;
         bytes32 publicKeyY;
+        // This struct doesn't contain `__gap` property as the structure is stored
+        // in a mapping, mappings store values in different slots and they are
+        // not contiguous with other values.
     }
 
     struct Data {
         // Mapping of keccak256 hashes of wallet public keys to wallet details.
         // Hash of public key is considered an unique wallet identifier.
         mapping(bytes32 => Wallet) registry;
+        // Reserved storage space in case we need to add more variables.
+        // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+        // slither-disable-next-line unused-state
+        uint256[49] __gap;
     }
 
     /// @notice Registers a new wallet.

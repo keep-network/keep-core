@@ -4,9 +4,9 @@ import "@nomiclabs/hardhat-waffle"
 import "@typechain/hardhat"
 import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
-import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
+import "hardhat-gas-reporter"
 
 import "./tasks"
 import { task } from "hardhat/config"
@@ -74,7 +74,10 @@ const config: HardhatUserConfig = {
       // we use higher gas price for tests to obtain more realistic results
       // for gas refund tests than when the default hardhat ~1 gwei gas price is
       // used
-      gasPrice: 200000000000, // 200 gwei
+      gasPrice: 200000000000, // 200 gwei,
+      // Ignore contract size on deployment to hardhat network, to be able to
+      // deploy stub contracts in tests.
+      allowUnlimitedContractSize: true,
     },
     development: {
       url: "http://localhost:8545",
@@ -105,6 +108,10 @@ const config: HardhatUserConfig = {
       default: 2,
       // mainnet: ""
     },
+    esdm: {
+      default: 3,
+      // mainnet: ""
+    },
   },
   external: {
     contracts: [
@@ -126,20 +133,27 @@ const config: HardhatUserConfig = {
     //   mainnet: ["./external/mainnet"],
     // },
   },
-  dependencyCompiler: {
-    paths: [
-      "@threshold-network/solidity-contracts/contracts/token/T.sol",
-      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
-      "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
-    ],
-    keep: true,
-  },
+  dependencyCompiler:
+    // As a workaround for a slither issue https://github.com/crytic/slither/issues/1140
+    // we disable compilation of dependencies when running slither.
+    process.env.SKIP_DEPENDENCY_COMPILER === "true"
+      ? undefined
+      : {
+          paths: [
+            "@threshold-network/solidity-contracts/contracts/token/T.sol",
+            "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol",
+            "@threshold-network/solidity-contracts/contracts/governance/ProxyAdminWithDeputy.sol",
+            "@keep-network/random-beacon/contracts/api/IRandomBeacon.sol",
+            "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol",
+          ],
+          keep: true,
+        },
   contractSizer: {
     alphaSort: true,
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    except: ["TokenStaking$"],
+    except: ["TokenStaking$", "contracts/test"],
   },
   mocha: {
     timeout: 60000,

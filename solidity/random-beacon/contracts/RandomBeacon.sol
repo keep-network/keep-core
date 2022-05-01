@@ -450,7 +450,7 @@ contract RandomBeacon is IRandomBeacon, IApplication, Governable, Reimbursable {
         // is enough to store new entry and block number on-chain.
         // If the cost of EVM opcodes change over time, these parameters will
         // have to be updated.
-        _callbackGasLimit = 56_000;
+        _callbackGasLimit = 64_000;
 
         // Group lifetime is set to 45 days assuming 15s block time.
         //

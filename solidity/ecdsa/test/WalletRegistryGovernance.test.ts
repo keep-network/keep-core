@@ -53,9 +53,11 @@ describe("WalletRegistryGovernance", async () => {
   const initialAuthorizationDecreaseChangePeriod = 3888000 // 45 days
   const initialMaliciousDkgResultSlashingAmount = to1e18(400)
   const initialMaliciousDkgResultNotificationRewardMultiplier = 100
-  const initialDkgResultSubmissionGas = 275000
-  const initialDkgResultApprovalGasOffset = 65000
-  const initialNotifyOperatorInactivityGasOffset = 85000
+  const initialDkgResultSubmissionGas = 290_000
+  const initialDkgResultApprovalGasOffset = 72_000
+  const initialNotifyOperatorInactivityGasOffset = 93_000
+  const initialNotifySeedTimeoutGasOffset = 7_250
+  const initialNotifyDkgTimeoutNegativeGasOffset = 2_300
   const initialSortitionPoolRewardsBanDuration = 1209600 // 14 days
 
   before("load test fixture", async () => {
@@ -2708,6 +2710,288 @@ describe("WalletRegistryGovernance", async () => {
         it("should reset the governance delay timer", async () => {
           await expect(
             walletRegistryGovernance.getRemainingNotifyOperatorInactivityGasOffsetUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginNotifySeedTimeoutGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginNotifySeedTimeoutGasOffsetUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginNotifySeedTimeoutGasOffsetUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the notify seed timeout gas offset", async () => {
+        const { notifySeedTimeoutGasOffset } =
+          await walletRegistry.gasParameters()
+        expect(notifySeedTimeoutGasOffset).to.be.equal(
+          initialNotifySeedTimeoutGasOffset
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingNotifySeedTimeoutGasOffsetUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit the NotifySeedTimeoutGasOffsetUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "NotifySeedTimeoutGasOffsetUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeNotifySeedTimeoutGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeNotifySeedTimeoutGasOffsetUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeNotifySeedTimeoutGasOffsetUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginNotifySeedTimeoutGasOffsetUpdate(100)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeNotifySeedTimeoutGasOffsetUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginNotifySeedTimeoutGasOffsetUpdate(100)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeNotifySeedTimeoutGasOffsetUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the notify seed timeout gas offset", async () => {
+          const { notifySeedTimeoutGasOffset } =
+            await walletRegistry.gasParameters()
+          expect(notifySeedTimeoutGasOffset).to.be.equal(100)
+        })
+
+        it("should emit NotifySeedTimeoutGasOffsetUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              walletRegistryGovernance,
+              "NotifySeedTimeoutGasOffsetUpdated"
+            )
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingNotifySeedTimeoutGasOffsetUpdateTime()
+          ).to.be.revertedWith("Change not initiated")
+        })
+      }
+    )
+  })
+
+  describe("beginNotifyDkgTimeoutNegativeGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .beginNotifyDkgTimeoutNegativeGasOffsetUpdate(100)
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the caller is the owner", () => {
+      let tx
+
+      before(async () => {
+        await createSnapshot()
+
+        tx = await walletRegistryGovernance
+          .connect(governance)
+          .beginNotifyDkgTimeoutNegativeGasOffsetUpdate(100)
+      })
+
+      after(async () => {
+        await restoreSnapshot()
+      })
+
+      it("should not update the notify DKG timeout negative gas offset", async () => {
+        const { notifyDkgTimeoutNegativeGasOffset } =
+          await walletRegistry.gasParameters()
+        expect(notifyDkgTimeoutNegativeGasOffset).to.be.equal(
+          initialNotifyDkgTimeoutNegativeGasOffset
+        )
+      })
+
+      it("should start the governance delay timer", async () => {
+        expect(
+          await walletRegistryGovernance.getRemainingNotifyDkgTimeoutNegativeGasOffsetUpdateTime()
+        ).to.be.equal(constants.governanceDelay)
+      })
+
+      it("should emit the NotifyDkgTimeoutNegativeGasOffsetUpdateStarted event", async () => {
+        const blockTimestamp = (await ethers.provider.getBlock(tx.blockNumber))
+          .timestamp
+        await expect(tx)
+          .to.emit(
+            walletRegistryGovernance,
+            "NotifyDkgTimeoutNegativeGasOffsetUpdateStarted"
+          )
+          .withArgs(100, blockTimestamp)
+      })
+    })
+  })
+
+  describe("finalizeNotifyDkgTimeoutNegativeGasOffsetUpdate", () => {
+    context("when the caller is not the owner", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(thirdParty)
+            .finalizeNotifyDkgTimeoutNegativeGasOffsetUpdate()
+        ).to.be.revertedWith("Ownable: caller is not the owner")
+      })
+    })
+
+    context("when the update process is not initialized", () => {
+      it("should revert", async () => {
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeNotifyDkgTimeoutNegativeGasOffsetUpdate()
+        ).to.be.revertedWith("Change not initiated")
+      })
+    })
+
+    context("when the governance delay has not passed", () => {
+      it("should revert", async () => {
+        await createSnapshot()
+
+        await walletRegistryGovernance
+          .connect(governance)
+          .beginNotifyDkgTimeoutNegativeGasOffsetUpdate(100)
+
+        await helpers.time.increaseTime(constants.governanceDelay - 60) // -1min
+
+        await expect(
+          walletRegistryGovernance
+            .connect(governance)
+            .finalizeNotifyDkgTimeoutNegativeGasOffsetUpdate()
+        ).to.be.revertedWith("Governance delay has not elapsed")
+
+        await restoreSnapshot()
+      })
+    })
+
+    context(
+      "when the update process is initialized and governance delay passed",
+      () => {
+        let tx
+
+        before(async () => {
+          await createSnapshot()
+
+          await walletRegistryGovernance
+            .connect(governance)
+            .beginNotifyDkgTimeoutNegativeGasOffsetUpdate(100)
+
+          await helpers.time.increaseTime(constants.governanceDelay)
+
+          tx = await walletRegistryGovernance
+            .connect(governance)
+            .finalizeNotifyDkgTimeoutNegativeGasOffsetUpdate()
+        })
+
+        after(async () => {
+          await restoreSnapshot()
+        })
+
+        it("should update the notify DKG timeout negative gas offset", async () => {
+          const { notifyDkgTimeoutNegativeGasOffset } =
+            await walletRegistry.gasParameters()
+          expect(notifyDkgTimeoutNegativeGasOffset).to.be.equal(100)
+        })
+
+        it("should emit NotifyDkgTimeoutNegativeGasOffsetUpdated event", async () => {
+          await expect(tx)
+            .to.emit(
+              walletRegistryGovernance,
+              "NotifyDkgTimeoutNegativeGasOffsetUpdated"
+            )
+            .withArgs(100)
+        })
+
+        it("should reset the governance delay timer", async () => {
+          await expect(
+            walletRegistryGovernance.getRemainingNotifyDkgTimeoutNegativeGasOffsetUpdateTime()
           ).to.be.revertedWith("Change not initiated")
         })
       }
