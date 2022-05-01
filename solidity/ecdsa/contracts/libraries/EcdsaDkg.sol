@@ -77,7 +77,7 @@ library EcdsaDkg {
         // Reserved storage space in case we need to add more variables.
         // See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
         // slither-disable-next-line unused-state
-        uint256[41] __gap;
+        uint256[38] __gap;
     }
 
     /// @notice DKG result.
