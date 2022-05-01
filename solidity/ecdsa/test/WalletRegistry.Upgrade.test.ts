@@ -132,7 +132,7 @@ describe("WalletRegistry - Upgrade", async () => {
         )
       })
 
-      it("should reinitialize existing immutable variable", async () => {
+      it("should use the new value of the immutable variable", async () => {
         expect(await walletRegistry.sortitionPool()).to.be.equal(
           newSortitionPoolAddress
         )
