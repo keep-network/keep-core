@@ -3551,7 +3551,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       it("should be the same group as if called the sortition pool directly", async () => {
         const exectedGroup = await sortitionPool.selectGroup(
           constants.groupSize,
-          dkgSeed.toHexString()
+          ethers.utils.hexZeroPad(dkgSeed.toHexString(), 32)
         )
         const actualGroup = await walletRegistry.selectGroup()
         expect(exectedGroup).to.be.deep.equal(actualGroup)

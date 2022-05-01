@@ -40,7 +40,7 @@ export async function selectGroup(
 ): Promise<Operator[]> {
   const identifiers = await sortitionPool.selectGroup(
     constants.groupSize,
-    seed.toHexString()
+    ethers.utils.hexZeroPad(seed.toHexString(), 32)
   )
   const addresses = await sortitionPool.getIDOperators(identifiers)
 

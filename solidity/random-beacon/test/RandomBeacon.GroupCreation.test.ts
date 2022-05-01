@@ -2761,7 +2761,7 @@ describe("RandomBeacon - Group Creation", () => {
       it("should be the same group as if called the sortition pool directly", async () => {
         const exectedGroup = await sortitionPool.selectGroup(
           constants.groupSize,
-          genesisSeed.toHexString()
+          ethers.utils.hexZeroPad(genesisSeed.toHexString(), 32)
         )
         const actualGroup = await randomBeacon.selectGroup()
         expect(exectedGroup).to.be.deep.equal(actualGroup)
