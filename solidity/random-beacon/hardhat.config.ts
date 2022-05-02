@@ -141,7 +141,7 @@ task("check-accounts-count", "Checks accounts count").setAction(async () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
   const { constants } = require("./test/fixtures")
 
-  if (testConfig.operatorsCount < constants.groupSize4) {
+  if (testConfig.operatorsCount < constants.groupSize) {
     throw new Error(
       "not enough accounts predefined for configured group size: " +
         `expected group size: ${constants.groupSize} ` +
