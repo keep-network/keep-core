@@ -11,8 +11,6 @@ import "@typechain/hardhat"
 import "hardhat-dependency-compiler"
 
 import { task } from "hardhat/config"
-import { TASK_TEST } from "hardhat/builtin-tasks/task-names"
-
 // Configuration for testing environment.
 export const testConfig = {
   // How many accounts we expect to define for non-staking related signers, e.g.
@@ -133,9 +131,13 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
   },
+  gasReporter: {
+    currency: "USD",
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY,
+  },
 }
 
-task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
+task("check-accounts-count", "Checks accounts count").setAction(async () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
   const { constants } = require("./test/fixtures")
 
@@ -146,8 +148,6 @@ task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
         `number of predefined accounts: ${testConfig.operatorsCount}`
     )
   }
-
-  return runSuper(args)
 })
 
 export default config
