@@ -1,5 +1,5 @@
 % TIP: http://www.tlhiv.org/ltxpreview/ can be used to quickly view a graphic
-% representation of this file.
+% representation of this file and export PNG file.
 \documentclass{standalone}
 \usepackage{tikz}
 \begin{document}
@@ -10,7 +10,7 @@
 \pgfsetlayers{background,main}
 
 \begin{tikzpicture}[
-% STYLES FOR NODES:
+% STYLES FOR NODES
           every node/.style = {fill=yellow!20, font=\footnotesize},
                 base/.style = {rectangle, draw=black,
                                minimum width=7cm, minimum height=1cm,
@@ -41,10 +41,8 @@
 
 % ecdsa
 \node[sub_contract, right=of sortitionPoolWR]     (walletRegistrySub4) {sortitionPool: SortitionPool};
-%\node[sub_contract, above of=walletRegistrySub4] (walletRegistrySub3) {staking: IStaking};
 \node[sub_contract, above of=walletRegistrySub4]  (walletRegistrySub3) {walletOwner: IWalletOwner};
 \node[sub_contract, above of=walletRegistrySub3]  (walletRegistrySub2) {randomBeacon: IRandomBeacon};
-%\node[sub_contract, above of=walletRegistrySub2] (walletRegistrySub1) {walletOwner: IWalletOwner};
 \node[sub_contract, above of=walletRegistrySub2]  (walletRegistrySub1) {staking: IStaking};
 \node[contract, above of=walletRegistrySub1]      (walletRegistry)     {WalletRegistry};
 \node[contract, above=of walletRegistry]          (upgradeableProxy1)  {TransparentUpgradeableProxy};
