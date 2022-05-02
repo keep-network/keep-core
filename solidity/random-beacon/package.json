@@ -15,7 +15,6 @@
   "scripts": {
     "clean": "hardhat clean",
     "build": "hardhat compile",
-    "check-accounts-count": "hardhat check-accounts-count",
     "test": "hardhat check-accounts-count && hardhat test",
     "deploy": "hardhat deploy --export export.json",
     "format": "npm run lint",
