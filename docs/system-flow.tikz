@@ -1,0 +1,134 @@
+% TIP: http://www.tlhiv.org/ltxpreview/ can be used to quickly view a graphic
+% representation of this file.
+\documentclass{standalone}
+\usepackage{tikz}
+\begin{document}
+\usetikzlibrary{positioning,arrows.meta}
+
+% We need layers to draw the background blocks
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\begin{tikzpicture}[
+% STYLES FOR NODES:
+          every node/.style = {fill=yellow!20, font=\footnotesize},
+                base/.style = {rectangle, draw=black,
+                               minimum width=7cm, minimum height=1cm,
+                               text width=6.8cm, text centered, font=\sffamily},
+            contract/.style = {base, fill=blue!10},
+        sub_contract/.style = {base, fill=white, align=left},
+             project/.style = {base, fill=white, draw=white,
+                               minimum height=5mm, align=left, font=\footnotesize}]
+
+% NODES
+% We position the nodes in relation to each other.
+
+% solidity-contracts
+\node[contract]                                   (iStaking)           {IStaking};
+\node[contract, below=of iStaking]                (upgradeableProxy0)  {TransparentUpgradeableProxy};
+\node[contract, below=of upgradeableProxy0]       (tokenStaking)       {TokenStaking};
+\node[contract, below=of tokenStaking]            (iApplication)       {IApplication};
+
+% random-beacon
+\node[contract, below right=of iApplication]      (iRandomBeacon)      {IRandomBeacon};
+\node[contract, below=of iRandomBeacon]           (randomBeacon)       {RandomBeacon};
+\node[sub_contract, below of=randomBeacon]        (randomBeaconSub1)   {sortitionPool: SortitionPool};
+\node[sub_contract, below of=randomBeaconSub1]    (randomBeaconSub2)   {staking: IStaking};
+
+% sortition-pools
+\node[contract, right=of randomBeaconSub1]        (sortitionPool)      {SortitionPool};
+
+% ecdsa
+\node[sub_contract, right=of sortitionPool]       (walletRegistrySub4) {sortitionPool: SortitionPool};
+%\node[sub_contract, above of=walletRegistrySub4] (walletRegistrySub3) {staking: IStaking};
+\node[sub_contract, above of=walletRegistrySub4]  (walletRegistrySub3) {walletOwner: IWalletOwner};
+\node[sub_contract, above of=walletRegistrySub3]  (walletRegistrySub2) {randomBeacon: IRandomBeacon};
+%\node[sub_contract, above of=walletRegistrySub2] (walletRegistrySub1) {walletOwner: IWalletOwner};
+\node[sub_contract, above of=walletRegistrySub2]  (walletRegistrySub1) {staking: IStaking};
+\node[contract, above of=walletRegistrySub1]      (walletRegistry)     {WalletRegistry};
+\node[contract, above=of walletRegistry]          (upgradeableProxy1)  {TransparentUpgradeableProxy};
+\node[contract, above=of upgradeableProxy1]       (iWalletRegistry)    {IWalletRegistry};
+\node[contract, right=of walletRegistry]          (iWalletOwner)       {IWalletOwner};
+
+% tbtc-v2
+\node[contract, below right=of iWalletOwner]      (upgradeableProxy2)  {TransparentUpgradeableProxy};
+\node[contract, below=of upgradeableProxy2]       (bridge)             {Bridge};
+\node[sub_contract, below of=bridge]              (bridgeSub1)         {ecdsaWalletRegistry: IWalletRegistry};
+
+% ARROWS
+% 1. In couple of places (when line needs to bend more than once) we specify
+% coordinates of the point that the arrow needs to pass. The (0,0) coordinate
+% is in the middle of the iStaking node. As we position the nodes in relation
+% to each other (and not by providing strict coordinates), the usage of
+% coordinates when drawing arrows is not ideal - editing the diagram may break
+% some things. This shouldn't be very hard to fix though.
+% 2. For lines that we want to label with 'implements', we create small nodes
+% in the middle of the arrows - they use style defined in `every node/.style`.
+
+\draw[-{Triangle[open]},very thick](tokenStaking.north)      --            node {\textbf{implements}} (upgradeableProxy0.south);
+\draw[-{Triangle[open]},very thick](tokenStaking.south)      --            node {\textbf{implements}} (iApplication.north);
+\draw[-Straight Barb,very thick]   (iStaking.south)          --                                       (upgradeableProxy0.north);
+
+\draw[-{Triangle[open]},very thick](randomBeacon.north)      --            node {\textbf{implements}} (iRandomBeacon.south);
+\draw[-{Triangle[open]},very thick](randomBeacon.west)       -|            node {\textbf{implements}} (iApplication.south);
+\draw[-Straight Barb,very thick]   (randomBeaconSub1.east)   --                                       (sortitionPool.west);
+\draw[-Straight Barb,very thick]   (randomBeaconSub2.west)   -| (-5,-5) |-                            (iStaking.west);
+
+\draw[-{Triangle[open]},very thick](walletRegistry.north)    --            node {\textbf{implements}} (upgradeableProxy1.south);
+\draw[-{Triangle[open]},very thick](walletRegistry.west)     -| (16,-7) |- node {\textbf{implements}} (iApplication.east);
+\draw[-Straight Barb,very thick]   (walletRegistrySub1.west) -| (18,0)  |-                            (iStaking.east);
+\draw[-Straight Barb,very thick]   (walletRegistrySub2.west) -| (16,-9) |-                            (iRandomBeacon.east);
+\draw[-Straight Barb,very thick]   (walletRegistrySub3.east) -| (28.2,-8) |-                          (iWalletOwner.west);
+\draw[-Straight Barb,very thick]   (walletRegistrySub4.west) --                                       (sortitionPool.east);
+\draw[-Straight Barb,very thick]   (iWalletRegistry.south)   --                                       (upgradeableProxy1.north);
+
+\draw[-Straight Barb,very thick]   (bridgeSub1.east)         -| (45,-6) |-                            (iWalletRegistry.east);
+\draw[-{Triangle[open]},very thick](upgradeableProxy2.north) |-            node {\textbf{implements}} (iWalletOwner.east);
+\draw[-Straight Barb,very thick]   (upgradeableProxy2.south) --                                       (bridge.north);
+
+% BACKGROUND BLOCKS
+% To draw the backgrounds behind the nodes we use pgf layers. We calculate top
+% left and bottom right corners position for each background and draw a
+% rectangle between those points.
+
+\begin{pgfonlayer}{background}
+  \path (iStaking.west |- iStaking.north)+(-1.9,1.8) node (a) {};
+  \path (bridgeSub1.south -| bridgeSub1.east)+(+1.8,-1.3) node (b) {};
+  \path[fill=white] (a) rectangle (b);
+
+  \path (iStaking.west |- iStaking.north)+(-0.2,0.9) node (a) {};
+  \path (randomBeaconSub2.south -| iStaking.east)+(+0.2,-0.9) node (b) {};
+  \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
+
+  \path (iRandomBeacon.west |- iStaking.north)+(-0.2,0.9) node (a) {};
+  \path (randomBeaconSub2.south -| iRandomBeacon.east)+(+0.2,-0.9) node (b) {};
+  \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
+
+  \path (sortitionPool.west |- iStaking.north)+(-0.2,0.9) node (a) {};
+  \path (randomBeaconSub2.south -| sortitionPool.east)+(+0.2,-0.9) node (b) {};
+  \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
+
+  \path (iWalletRegistry.west |- iStaking.north)+(-0.2,0.9) node (a) {};
+  \path (randomBeaconSub2.south -| iWalletOwner.east)+(+0.2,-0.9) node (b) {};
+  \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
+
+  \path (bridge.west |- iStaking.north)+(-0.2,0.9) node (a) {};
+  \path (randomBeaconSub2.south -| bridge.east)+(+0.2,-0.9) node (b) {};
+  \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
+\end{pgfonlayer}
+
+% BACKGROUND LABELS
+% We label the projects by creating invisible nodes which we place based on
+% their position in relation to the iStaking node and each other. In one
+% instance we crate transparent node to maintain the correct distances between
+% the nodes. All nodes have white background, as defined in `project/.style`.
+
+\node[project, above=of iStaking]         (solCont)   {threshold-network/solidity-contracts};
+\node[project, right=of solCont]          (ranBeac)   {keep-network/keep-core/solidity/random-beacon};
+\node[project, right=of ranBeac]          (sortPool)  {keep-network/sortition-pool};
+\node[project, right=of sortPool]         (ecdsa)     {keep-network/keep-core/solidity/ecdsa};
+\node[project, right=of ecdsa, opacity=0] (invisible) {keep-network/keep-core/solidity/ecdsa};
+\node[project, right=of invisible]        (tbtcv2)    {keep-network/tbtc-v2/solidity};
+
+\end{tikzpicture}
+\end{document}
