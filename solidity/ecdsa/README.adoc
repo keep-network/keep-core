@@ -260,6 +260,10 @@ The only punishment transaction in `WalletRegistry` itself if `challengeDkgResul
 Additionally, `walletOwner` can implement its own punishment transactions, and
 slash the signing group members with a call to `WalletRegistry.seize` function.
 
+== System Diagram
+
+image::system-diagram.png[System Diagram]
+
 == Parameters
 
 [%header,cols="3m,4,^1,^2m"]
