@@ -36,10 +36,11 @@
 \node[sub_contract, below of=randomBeaconSub1]    (randomBeaconSub2)   {staking: IStaking};
 
 % sortition-pools
-\node[contract, right=of randomBeaconSub1]        (sortitionPool)      {SortitionPool};
+\node[contract, right=of randomBeaconSub2]        (sortitionPoolRB)    {SortitionPool};
+\node[contract, above=of sortitionPoolRB]         (sortitionPoolWR)    {SortitionPool};
 
 % ecdsa
-\node[sub_contract, right=of sortitionPool]       (walletRegistrySub4) {sortitionPool: SortitionPool};
+\node[sub_contract, right=of sortitionPoolWR]     (walletRegistrySub4) {sortitionPool: SortitionPool};
 %\node[sub_contract, above of=walletRegistrySub4] (walletRegistrySub3) {staking: IStaking};
 \node[sub_contract, above of=walletRegistrySub4]  (walletRegistrySub3) {walletOwner: IWalletOwner};
 \node[sub_contract, above of=walletRegistrySub3]  (walletRegistrySub2) {randomBeacon: IRandomBeacon};
@@ -65,22 +66,22 @@
 % 2. For lines that we want to label with 'implements', we create small nodes
 % in the middle of the arrows - they use style defined in `every node/.style`.
 
-\draw[-{Triangle[open]},very thick](tokenStaking.north)      --            node {\textbf{implements}} (upgradeableProxy0.south);
-\draw[-{Triangle[open]},very thick](tokenStaking.south)      --            node {\textbf{implements}} (iApplication.north);
-\draw[-Straight Barb,very thick]   (iStaking.south)          --                                       (upgradeableProxy0.north);
+\draw[-Straight Barb,very thick]   (tokenStaking.south)      --                                       (iApplication.north);
+\draw[-Straight Barb,very thick]   (upgradeableProxy0.south) --                                       (tokenStaking.north);
+\draw[-{Triangle[open]},very thick](upgradeableProxy0.north) --            node {\textbf{implements}} (iStaking.south);
 
 \draw[-{Triangle[open]},very thick](randomBeacon.north)      --            node {\textbf{implements}} (iRandomBeacon.south);
 \draw[-{Triangle[open]},very thick](randomBeacon.west)       -|            node {\textbf{implements}} (iApplication.south);
-\draw[-Straight Barb,very thick]   (randomBeaconSub1.east)   --                                       (sortitionPool.west);
+\draw[-Straight Barb,very thick]   (randomBeaconSub1.east)   -|                                       (sortitionPoolRB.north);
 \draw[-Straight Barb,very thick]   (randomBeaconSub2.west)   -| (-5,-5) |-                            (iStaking.west);
 
-\draw[-{Triangle[open]},very thick](walletRegistry.north)    --            node {\textbf{implements}} (upgradeableProxy1.south);
-\draw[-{Triangle[open]},very thick](walletRegistry.west)     -| (16,-7) |- node {\textbf{implements}} (iApplication.east);
+\draw[-{Triangle[open]},very thick](walletRegistry.west)     -| (16,-6) |- node {\textbf{implements}} (iApplication.east);
 \draw[-Straight Barb,very thick]   (walletRegistrySub1.west) -| (18,0)  |-                            (iStaking.east);
-\draw[-Straight Barb,very thick]   (walletRegistrySub2.west) -| (16,-9) |-                            (iRandomBeacon.east);
+\draw[-Straight Barb,very thick]   (walletRegistrySub2.west) --                                       (iRandomBeacon.east);
 \draw[-Straight Barb,very thick]   (walletRegistrySub3.east) -| (28.2,-8) |-                          (iWalletOwner.west);
-\draw[-Straight Barb,very thick]   (walletRegistrySub4.west) --                                       (sortitionPool.east);
-\draw[-Straight Barb,very thick]   (iWalletRegistry.south)   --                                       (upgradeableProxy1.north);
+\draw[-Straight Barb,very thick]   (walletRegistrySub4.west) --                                       (sortitionPoolWR.east);
+\draw[-Straight Barb,very thick]   (upgradeableProxy1.south) --                                       (walletRegistry.north);
+\draw[-{Triangle[open]},very thick](upgradeableProxy1.north) --            node {\textbf{implements}} (iWalletRegistry.south);
 
 \draw[-Straight Barb,very thick]   (bridgeSub1.east)         -| (45,-6) |-                            (iWalletRegistry.east);
 \draw[-{Triangle[open]},very thick](upgradeableProxy2.north) |-            node {\textbf{implements}} (iWalletOwner.east);
@@ -104,8 +105,8 @@
   \path (randomBeaconSub2.south -| iRandomBeacon.east)+(+0.2,-0.9) node (b) {};
   \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
 
-  \path (sortitionPool.west |- iStaking.north)+(-0.2,0.9) node (a) {};
-  \path (randomBeaconSub2.south -| sortitionPool.east)+(+0.2,-0.9) node (b) {};
+  \path (sortitionPoolRB.west |- iStaking.north)+(-0.2,0.9) node (a) {};
+  \path (randomBeaconSub2.south -| sortitionPoolRB.east)+(+0.2,-0.9) node (b) {};
   \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
 
   \path (iWalletRegistry.west |- iStaking.north)+(-0.2,0.9) node (a) {};
