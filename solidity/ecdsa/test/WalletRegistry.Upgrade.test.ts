@@ -24,7 +24,13 @@ describe("WalletRegistry - Upgrade", async () => {
   let proxyAdminOwner: SignerWithAddress
   let EcdsaInactivity: Contract
 
-  before(async () => {
+  before(async function () {
+    // FIXME: As a workaround for a bug in hardhat-gas-reporter #86 we need to provide
+    // alternative deployment script to obtain a gas report.
+    // Here we ignore tests that are related to the original deployment script.
+    // #86: https://github.com/cgewecke/hardhat-gas-reporter/issues/86
+    if (process.env.GAS_REPORTER_BUG_WORKAROUND === "true") this.skip()
+
     proxyAdminOwner = await ethers.getNamedSigner("esdm")
     EcdsaInactivity = await ethers.getContract("EcdsaInactivity")
   })

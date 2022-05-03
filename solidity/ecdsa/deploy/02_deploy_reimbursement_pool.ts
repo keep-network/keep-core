@@ -6,7 +6,13 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
 
   const staticGas = 40_800 // gas amount consumed by the refund() + tx cost
-  const maxGasPrice = ethers.utils.parseUnits("500", "gwei")
+  // FIXME: As a workaround for a bug in hardhat-gas-reporter #86 we need to provide
+  // alternative deployment script to obtain a gas report.
+  // #86: https://github.com/cgewecke/hardhat-gas-reporter/issues/86
+  const maxGasPrice =
+    process.env.GAS_REPORTER_BUG_WORKAROUND === "true"
+      ? 500_000_000_000
+      : ethers.utils.parseUnits("500", "gwei")
 
   const ReimbursementPool = await deployments.deploy("ReimbursementPool", {
     from: deployer,
