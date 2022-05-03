@@ -54,7 +54,7 @@
     "hardhat-contract-sizer": "^2.3.0",
     "hardhat-dependency-compiler": "^1.1.2",
     "hardhat-deploy": "^0.9.27",
-    "hardhat-gas-reporter": "^1.0.6",
+    "hardhat-gas-reporter": "^1.0.8",
     "prettier": "^2.5.1",
     "prettier-plugin-sh": "^0.8.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
