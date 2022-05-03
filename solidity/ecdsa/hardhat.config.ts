@@ -14,6 +14,8 @@ import { TASK_TEST } from "hardhat/builtin-tasks/task-names"
 
 import type { HardhatUserConfig } from "hardhat/config"
 
+const TASK_CHECK_ACCOUNTS_COUNT = "check-accounts-count"
+
 // Configuration for testing environment.
 export const testConfig = {
   // How many accounts we expect to define for non-staking related signers, e.g.
@@ -164,6 +166,12 @@ const config: HardhatUserConfig = {
 }
 
 task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
+  await hre.run(TASK_CHECK_ACCOUNTS_COUNT)
+
+  return runSuper(args)
+})
+
+task(TASK_CHECK_ACCOUNTS_COUNT, "Checks accounts count").setAction(async () => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires,global-require
   const { constants } = require("./test/fixtures")
 
@@ -174,8 +182,6 @@ task(TASK_TEST, "Runs mocha tests").setAction(async (args, hre, runSuper) => {
         `number of predefined accounts: ${testConfig.operatorsCount}`
     )
   }
-
-  return runSuper(args)
 })
 
 export default config
