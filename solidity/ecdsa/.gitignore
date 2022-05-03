@@ -1,6 +1,7 @@
 # Hardhat
 build/
 cache/
+deployments/hardhat/
 export/
 external/npm
 hardhat-dependency-compiler/
