@@ -9,6 +9,7 @@
     "contracts/",
     "!contracts/hardhat-dependency-compiler",
     "!**/test/",
+    "contracts/test/WalletRegistryStub.sol",
     "deploy/",
     "export/",
     "export.json"
