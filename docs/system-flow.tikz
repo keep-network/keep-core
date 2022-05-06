@@ -1,13 +1,16 @@
-% TIP: http://www.tlhiv.org/ltxpreview/ can be used to quickly view a graphic
-% representation of this file and export PNG file.
-\documentclass{standalone}
-\usepackage{tikz}
-\begin{document}
-\usetikzlibrary{positioning,arrows.meta}
+% TIP: To generate PDF file run `pdflatex filename.tikz`. To generate PNG file
+% run `convert -density 300 filename.pdf -resize 50% filename.png` (requires
+% intallation of `imagemagick` tool). The http://www.tlhiv.org/ltxpreview/ can
+% be used to quickly view a graphic representation of this file.
+
+\documentclass{standalone}%
+\usepackage{tikz}%
+\usetikzlibrary{positioning,arrows.meta}%
+\begin{document}%
 
 % We need layers to draw the background blocks
-\pgfdeclarelayer{background}
-\pgfsetlayers{background,main}
+\pgfdeclarelayer{background}%
+\pgfsetlayers{background,main}%
 
 \begin{tikzpicture}[
 % STYLES FOR NODES
@@ -18,7 +21,10 @@
             contract/.style = {base, fill=blue!10},
         sub_contract/.style = {base, fill=white, align=left},
              project/.style = {base, fill=white, draw=white,
-                               minimum height=5mm, align=left, font=\footnotesize}]
+                               minimum height=5mm, align=left, font=\footnotesize},
+                impl/.style = {> = {Triangle[open]}, very thick},   % defines the arrow tip style when `->, impl` is used
+                norm/.style = {> = Straight Barb, very thick},      % defines the arrow tip style when `->, norm` is used
+]
 
 % NODES
 % We position the nodes in relation to each other.
@@ -55,35 +61,38 @@
 \node[sub_contract, below of=bridge]              (bridgeSub1)         {ecdsaWalletRegistry: IWalletRegistry};
 
 % ARROWS
-% 1. In couple of places (when line needs to bend more than once) we specify
-% coordinates of the point that the arrow needs to pass. The (0,0) coordinate
-% is in the middle of the iStaking node. As we position the nodes in relation
-% to each other (and not by providing strict coordinates), the usage of
-% coordinates when drawing arrows is not ideal - editing the diagram may break
-% some things. This shouldn't be very hard to fix though.
-% 2. For lines that we want to label with 'implements', we create small nodes
-% in the middle of the arrows - they use style defined in `every node/.style`.
+% In places where arrows needs to bend more than once, we force the lines to
+% pass through intermediary points.  The (0,0) coordinate is in the middle of
+% the iStaking node.
+% (a,b) - sets point at an exact (a,b) coordinate
+% +(a,b) - sets point at current point and moves it by (a,b) vector, but doesn't
+%          remember the position afterwards
+% ++(a,b) - sets point at current point and moves it by (a,b) vector and
+%           remembers the position afterwards
+% To ease edition of the diagram in the future we use relative values.
+% 2. For lines that we want to label with 'implements', we create nodes in the
+% middle of the arrows - they use style defined in `every node/.style`.
 
-\draw[-Straight Barb,very thick]   (tokenStaking.south)      --                                       (iApplication.north);
-\draw[-Straight Barb,very thick]   (upgradeableProxy0.south) --                                       (tokenStaking.north);
-\draw[-{Triangle[open]},very thick](upgradeableProxy0.north) --            node {\textbf{implements}} (iStaking.south);
+\draw[->, norm]  (tokenStaking.south)      --                                         (iApplication.north);
+\draw[->, norm]  (upgradeableProxy0.south) --                                         (tokenStaking.north);
+\draw[->, impl]  (upgradeableProxy0.north) --              node {\textbf{implements}} (iStaking.south);
 
-\draw[-{Triangle[open]},very thick](randomBeacon.north)      --            node {\textbf{implements}} (iRandomBeacon.south);
-\draw[-{Triangle[open]},very thick](randomBeacon.west)       -|            node {\textbf{implements}} (iApplication.south);
-\draw[-Straight Barb,very thick]   (randomBeaconSub1.east)   -|                                       (sortitionPoolRB.north);
-\draw[-Straight Barb,very thick]   (randomBeaconSub2.west)   -| (-5,-5) |-                            (iStaking.west);
+\draw[->, impl]  (randomBeacon.north)      --              node {\textbf{implements}} (iRandomBeacon.south);
+\draw[->, impl]  (randomBeacon.west)       -|              node {\textbf{implements}} (iApplication.south);
+\draw[->, norm]  (randomBeaconSub1.east)   -|                                         (sortitionPoolRB.north);
+\draw[->, norm]  (randomBeaconSub2.west)   -| +(-9,0) |-                              (iStaking.west);
 
-\draw[-{Triangle[open]},very thick](walletRegistry.west)     -| (16,-6) |- node {\textbf{implements}} (iApplication.east);
-\draw[-Straight Barb,very thick]   (walletRegistrySub1.west) -| (18,0)  |-                            (iStaking.east);
-\draw[-Straight Barb,very thick]   (walletRegistrySub2.west) --                                       (iRandomBeacon.east);
-\draw[-Straight Barb,very thick]   (walletRegistrySub3.east) -| (28.2,-8) |-                          (iWalletOwner.west);
-\draw[-Straight Barb,very thick]   (walletRegistrySub4.west) --                                       (sortitionPoolWR.east);
-\draw[-Straight Barb,very thick]   (upgradeableProxy1.south) --                                       (walletRegistry.north);
-\draw[-{Triangle[open]},very thick](upgradeableProxy1.north) --            node {\textbf{implements}} (iWalletRegistry.south);
+\draw[->, impl]  (walletRegistry.west)     --     node[pos=0.3] {\textbf{implements}} (iApplication.east);
+\draw[->, norm]  (walletRegistrySub1.west) -| +(-2,0)  |-                             (iStaking.east);
+\draw[->, norm]  (walletRegistrySub2.west) --                                         (iRandomBeacon.east);
+\draw[->, norm]  (walletRegistrySub3.east) -| +(0.5,0) |-                             (iWalletOwner.west);
+\draw[->, norm]  (walletRegistrySub4.west) --                                         (sortitionPoolWR.east);
+\draw[->, norm]  (upgradeableProxy1.south) --                                         (walletRegistry.north);
+\draw[->, impl]  (upgradeableProxy1.north) --              node {\textbf{implements}} (iWalletRegistry.south);
 
-\draw[-Straight Barb,very thick]   (bridgeSub1.east)         -| (45,-6) |-                            (iWalletRegistry.east);
-\draw[-{Triangle[open]},very thick](upgradeableProxy2.north) |-            node {\textbf{implements}} (iWalletOwner.east);
-\draw[-Straight Barb,very thick]   (upgradeableProxy2.south) --                                       (bridge.north);
+\draw[->, norm]  (bridgeSub1.east)         -| +(0.9,0) |-                             (iWalletRegistry.east);
+\draw[->, impl]  (upgradeableProxy2.north) |-              node {\textbf{implements}} (iWalletOwner.east);
+\draw[->, norm]  (upgradeableProxy2.south) --                                         (bridge.north);
 
 % BACKGROUND BLOCKS
 % To draw the backgrounds behind the nodes we use pgf layers. We calculate top
@@ -91,28 +100,28 @@
 % rectangle between those points.
 
 \begin{pgfonlayer}{background}
-  \path (iStaking.west |- iStaking.north)+(-1.9,1.8) node (a) {};
-  \path (bridgeSub1.south -| bridgeSub1.east)+(+1.8,-1.3) node (b) {};
+  \path (iStaking.west |- iStaking.north)+(-1.1,1.6) node (a) {};
+  \path (bridgeSub1.south -| bridgeSub1.east)+(1.1,-2) node (b) {};
   \path[fill=white] (a) rectangle (b);
 
   \path (iStaking.west |- iStaking.north)+(-0.2,0.9) node (a) {};
-  \path (randomBeaconSub2.south -| iStaking.east)+(+0.2,-0.9) node (b) {};
+  \path (randomBeaconSub2.south -| iStaking.east)+(0.2,-0.9) node (b) {};
   \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
 
   \path (iRandomBeacon.west |- iStaking.north)+(-0.2,0.9) node (a) {};
-  \path (randomBeaconSub2.south -| iRandomBeacon.east)+(+0.2,-0.9) node (b) {};
+  \path (randomBeaconSub2.south -| iRandomBeacon.east)+(0.2,-0.9) node (b) {};
   \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
 
   \path (sortitionPoolRB.west |- iStaking.north)+(-0.2,0.9) node (a) {};
-  \path (randomBeaconSub2.south -| sortitionPoolRB.east)+(+0.2,-0.9) node (b) {};
+  \path (randomBeaconSub2.south -| sortitionPoolRB.east)+(0.2,-0.9) node (b) {};
   \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
 
   \path (iWalletRegistry.west |- iStaking.north)+(-0.2,0.9) node (a) {};
-  \path (randomBeaconSub2.south -| iWalletOwner.east)+(+0.2,-0.9) node (b) {};
+  \path (randomBeaconSub2.south -| iWalletOwner.east)+(0.2,-0.9) node (b) {};
   \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
 
   \path (bridge.west |- iStaking.north)+(-0.2,0.9) node (a) {};
-  \path (randomBeaconSub2.south -| bridge.east)+(+0.2,-0.9) node (b) {};
+  \path (randomBeaconSub2.south -| bridge.east)+(0.2,-0.9) node (b) {};
   \path[fill=yellow!20,rounded corners, draw=black!50, dashed] (a) rectangle (b);
 \end{pgfonlayer}
 
