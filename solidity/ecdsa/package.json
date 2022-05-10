@@ -28,6 +28,7 @@
     "clean": "hardhat clean",
     "build": "hardhat compile",
     "test": "hardhat test --deploy-fixture",
+    "test:gas-reporter-workaround": "GAS_REPORTER_BUG_WORKAROUND=true yarn test",
     "deploy": "hardhat deploy --export export.json",
     "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts export/artifacts"
   },

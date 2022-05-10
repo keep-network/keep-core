@@ -970,9 +970,9 @@
     "@openzeppelin/contracts" "^4.1.0"
 
 "@threshold-network/solidity-contracts@>1.2.0-dev <1.2.0-ropsten":
-  version "1.2.0-dev.5"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.5.tgz#270d5e6bf9b4b25c8fbf48ccfcce5f3ef3868d69"
-  integrity sha512-PxmSUw+mUmCCaWyHYvkd5lKzx7TcdC1NbZ1KjV7wfCPA02SHxS8HOjpEdrvQpXJOcdlwnvh1kfPSa9ZtWQ/Z9A==
+  version "1.2.0-dev.6"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.6.tgz#00f78102c81e8c724e805fd646f23f02941ab4cd"
+  integrity sha512-hTSFDxfDmYxSZHy3JIzcuiRf8tAvFxK4oRDAWBTrLlmOcVLQgK7OT+CfXC5qiku9bK+GOEuQmqmeQLQZLieG8Q==
   dependencies:
     "@keep-network/keep-core" ">1.8.0-dev <1.8.0-pre"
     "@openzeppelin/contracts" "^4.5"
