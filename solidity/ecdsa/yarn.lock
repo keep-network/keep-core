@@ -591,10 +591,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz#b520529ec21d8e5945a1851dfd1c32e94e39ff45"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@keep-network/hardhat-helpers@0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.5.0.tgz#9ff1849fc6786191e29e23751729fca34a8a7faa"
-  integrity sha512-okQ6Pa9Wz0cT6rKik3CVEkhTdmmDGJY3C0RjgjO9AePfy6tJpYinHxTkMJxErux+HeN8gUTTHa+j66/fyu+7Gg==
+"@keep-network/hardhat-helpers@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.5.1.tgz#de6363a5da367d01e3a338b3819dcede17737e2b"
+  integrity sha512-oL0LUgA2cYluewtqod6WBp8BI62YK2U+vzmP2FaBE4cTKYdryizupH9eMTAm2/PLNHnhdbhVBh6JEkx8vfTxow==
 
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.4":
   version "0.1.0-pre.4"
@@ -5443,10 +5443,10 @@ hardhat-deploy@^0.9.27:
     murmur-128 "^0.2.1"
     qs "^6.9.4"
 
-hardhat-gas-reporter@^1.0.6:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/hardhat-gas-reporter/-/hardhat-gas-reporter-1.0.7.tgz#b0e06a4f5a4da2369354991b6fa32ff002170573"
-  integrity sha512-calJH1rbhUFwCnw0odJb3Cw+mDmBIsHdVyutsHhA3RY6JELyFVaVxCnITYGr/crkmHqt4tQCYROy7ty6DTLkuA==
+hardhat-gas-reporter@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/hardhat-gas-reporter/-/hardhat-gas-reporter-1.0.8.tgz#93ce271358cd748d9c4185dbb9d1d5525ec145e0"
+  integrity sha512-1G5thPnnhcwLHsFnl759f2tgElvuwdkzxlI65fC9PwxYMEe9cmjkVAAWTf3/3y8uP6ZSPiUiOW8PgZnykmZe0g==
   dependencies:
     array-uniq "1.0.3"
     eth-gas-reporter "^0.2.24"
