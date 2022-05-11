@@ -6,7 +6,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deployer } = await getNamedAccounts()
   const { log } = deployments
 
-  const SortitionPool = await deployments.get("SortitionPool")
+  const SortitionPool = await deployments.get("EcdsaSortitionPool")
   const TokenStaking = await deployments.get("TokenStaking")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
   const EcdsaDkgValidator = await deployments.get("EcdsaDkgValidator")
@@ -49,7 +49,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   })
 
   await helpers.ownable.transferOwnership(
-    "SortitionPool",
+    "EcdsaSortitionPool",
     walletRegistry.address,
     deployer
   )
@@ -67,7 +67,7 @@ export default func
 func.tags = ["WalletRegistry"]
 func.dependencies = [
   "ReimbursementPool",
-  "SortitionPool",
+  "EcdsaSortitionPool",
   "TokenStaking",
   "EcdsaDkgValidator",
 ]

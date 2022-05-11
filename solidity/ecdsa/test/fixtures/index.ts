@@ -71,7 +71,7 @@ export const walletRegistryFixture = deployments.createFixture(
     const walletRegistryGovernance: WalletRegistryGovernance =
       await ethers.getContract("WalletRegistryGovernance")
     const sortitionPool: SortitionPool = await ethers.getContract(
-      "SortitionPool"
+      "EcdsaSortitionPool"
     )
     const tToken: T = await ethers.getContract("T")
     const staking: TokenStaking = await ethers.getContract("TokenStaking")

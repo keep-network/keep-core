@@ -5,7 +5,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments } = hre
   const { deployer } = await getNamedAccounts()
 
-  const SortitionPool = await deployments.get("SortitionPool")
+  const SortitionPool = await deployments.get("EcdsaSortitionPool")
 
   const EcdsaDkgValidator = await deployments.deploy("EcdsaDkgValidator", {
     from: deployer,
@@ -24,4 +24,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["EcdsaDkgValidator"]
-func.dependencies = ["SortitionPool"]
+func.dependencies = ["EcdsaSortitionPool"]
