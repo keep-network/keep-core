@@ -21,7 +21,3 @@ export default func
 
 func.tags = ["TransferProxyAdminOwnership"]
 func.dependencies = ["WalletRegistry"]
-// FIXME: As a workaround for a bug in hardhat-gas-reporter #86 we need to provide
-// alternative deployment script to obtain a gas report.
-// #86: https://github.com/cgewecke/hardhat-gas-reporter/issues/86
-func.skip = async () => process.env.GAS_REPORTER_BUG_WORKAROUND === "true"

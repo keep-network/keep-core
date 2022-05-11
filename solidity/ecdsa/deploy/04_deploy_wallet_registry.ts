@@ -1,11 +1,9 @@
-import type { Contract } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
-import type { DeployResult } from "hardhat-deploy/dist/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { getNamedAccounts, deployments, ethers, helpers } = hre
-  const { deployer, esdm } = await getNamedAccounts()
+  const { deployer } = await getNamedAccounts()
   const { log } = deployments
 
   const SortitionPool = await deployments.get("SortitionPool")
@@ -27,59 +25,28 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     log: true,
   })
 
-  // FIXME: As a workaround for a bug in hardhat-gas-reporter #86 we need to provide
-  // alternative deployment script to obtain a gas report.
-  // #86: https://github.com/cgewecke/hardhat-gas-reporter/issues/86
-  let walletRegistry: DeployResult | Contract
-  if (process.env.GAS_REPORTER_BUG_WORKAROUND === "true") {
-    walletRegistry = await deployments.deploy("WalletRegistry", {
-      contract: "WalletRegistryStub",
-      from: deployer,
-      args: [SortitionPool.address, TokenStaking.address],
+  const walletRegistry = await helpers.upgrades.deployProxy("WalletRegistry", {
+    contractName:
+      deployments.getNetworkName() === "hardhat"
+        ? "WalletRegistryStub"
+        : undefined,
+    initializerArgs: [
+      EcdsaDkgValidator.address,
+      RandomBeacon.address,
+      ReimbursementPool.address,
+    ],
+    factoryOpts: {
+      signer: await ethers.getSigner(deployer),
       libraries: {
         EcdsaInactivity: EcdsaInactivity.address,
       },
-      proxy: {
-        proxyContract: "TransparentUpgradeableProxy",
-        viaAdminContract: "DefaultProxyAdmin",
-        owner: esdm,
-        execute: {
-          init: {
-            methodName: "initialize",
-            args: [
-              EcdsaDkgValidator.address,
-              RandomBeacon.address,
-              ReimbursementPool.address,
-            ],
-          },
-        },
-      },
-      log: true,
-    })
-  } else {
-    walletRegistry = await helpers.upgrades.deployProxy("WalletRegistry", {
-      contractName:
-        deployments.getNetworkName() === "hardhat"
-          ? "WalletRegistryStub"
-          : undefined,
-      initializerArgs: [
-        EcdsaDkgValidator.address,
-        RandomBeacon.address,
-        ReimbursementPool.address,
-      ],
-      factoryOpts: {
-        signer: await ethers.getSigner(deployer),
-        libraries: {
-          EcdsaInactivity: EcdsaInactivity.address,
-        },
-      },
-      proxyOpts: {
-        constructorArgs: [SortitionPool.address, TokenStaking.address],
-        unsafeAllow: ["external-library-linking"],
-        kind: "transparent",
-      },
-    })
-  }
+    },
+    proxyOpts: {
+      constructorArgs: [SortitionPool.address, TokenStaking.address],
+      unsafeAllow: ["external-library-linking"],
+      kind: "transparent",
+    },
+  })
 
   await helpers.ownable.transferOwnership(
     "SortitionPool",

@@ -60,6 +60,10 @@ export const walletRegistryFixture = deployments.createFixture(
     operators: Operator[]
     reimbursementPool: ReimbursementPool
   }> => {
+    // Due to a [bug] in hardhat-gas-reporter plugin we avoid using `--deploy-fixture`
+    // flag of `hardhat-deploy` plugin. This requires us to load a global fixture
+    // (`deployments.fixture()`) instead of loading a specific tag (`deployments.fixture(<tag>)`.
+    // bug: https://github.com/cgewecke/hardhat-gas-reporter/issues/86
     await deployments.fixture()
 
     const walletRegistry: WalletRegistryStub & WalletRegistry =
