@@ -452,14 +452,6 @@ You can run them by doing:
 yarn test
 ```
 
-WARNING: Due to a link:https://github.com/cgewecke/hardhat-gas-reporter/issues/86[bug #86 in `hardhat-gas-reporter` plugin]
-we had to workaround deployment scripts to obtain gas usage report after test
-execution.
-We introduced an alternative deployment path as a workaround.
-To execute tests with the alternative deployment path run `yarn test:gas-reporter-workaround`.
-Please keep in mind that `yarn test` is preferred way for testing. Use alternative
-path only if you want to get the gas report.
-
 === Deploy contracts
 
 To deploy contract execute:

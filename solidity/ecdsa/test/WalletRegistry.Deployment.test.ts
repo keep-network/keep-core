@@ -47,15 +47,7 @@ describe("WalletRegistry - Deployment", async () => {
         walletRegistry.address
       )
 
-    // FIXME: As a workaround for a bug in hardhat-gas-reporter #86 we need to provide
-    // alternative deployment script to obtain a gas report.
-    // Here we align tests to work with alternative deployment path.
-    // #86: https://github.com/cgewecke/hardhat-gas-reporter/issues/86
-    if (process.env.GAS_REPORTER_BUG_WORKAROUND === "true") {
-      proxyAdmin = (await ethers.getContract("DefaultProxyAdmin")) as ProxyAdmin
-    } else {
-      proxyAdmin = (await upgrades.admin.getInstance()) as ProxyAdmin
-    }
+    proxyAdmin = (await upgrades.admin.getInstance()) as ProxyAdmin
 
     expect(deployer.address, "deployer is the same as governance").not.equal(
       governance.address
