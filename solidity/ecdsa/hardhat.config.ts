@@ -123,6 +123,10 @@ const config: HardhatUserConfig = {
         deploy:
           "node_modules/@threshold-network/solidity-contracts/export/deploy",
       },
+      {
+        artifacts: "node_modules/@keep-network/random-beacon/export/artifacts",
+        deploy: "node_modules/@keep-network/random-beacon/export/deploy",
+      },
     ],
     // deployments: {
     //   // For hardhat environment we can fork the mainnet, so we need to point it
