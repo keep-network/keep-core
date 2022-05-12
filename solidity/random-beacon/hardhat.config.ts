@@ -1,5 +1,3 @@
-import type { HardhatUserConfig } from "hardhat/config"
-
 import "@keep-network/hardhat-local-networks-config"
 import "@keep-network/hardhat-helpers"
 import "hardhat-deploy"
@@ -11,6 +9,19 @@ import "@typechain/hardhat"
 import "hardhat-dependency-compiler"
 
 import { task } from "hardhat/config"
+
+import type { HardhatUserConfig } from "hardhat/config"
+
+const thresholdSolidityCompilerConfig = {
+  version: "0.8.9",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 10,
+    },
+  },
+}
+
 // Configuration for testing environment.
 export const testConfig = {
   // How many accounts we expect to define for non-staking related signers, e.g.
@@ -38,6 +49,10 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+    overrides: {
+      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol":
+        thresholdSolidityCompilerConfig,
+    },
   },
   paths: {
     artifacts: "./build",
@@ -123,7 +138,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    except: ["^contracts/test", "TokenStaking$"],
+    except: ["^contracts/test"],
   },
   mocha: {
     timeout: 60000,
