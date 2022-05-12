@@ -969,7 +969,7 @@
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
 
-"@threshold-network/solidity-contracts@^1.2.0-dev.10":
+"@threshold-network/solidity-contracts@>1.2.0-dev <1.2.0-ropsten":
   version "1.2.0-dev.10"
   resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.10.tgz#a17391fec84b80dfd70e6b35bf2f71adb23f9d4f"
   integrity sha512-gVZYFWlet12iT3tOLjgmYkqrwcrWaKvISy6WLb0jVd3se5y8Il20mmivYjar6x+5AvapuXLVeKqQmsYtKhTvRg==
