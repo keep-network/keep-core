@@ -604,14 +604,6 @@
     deepmerge "^4.2.2"
     untildify "^4.0.0"
 
-"@keep-network/keep-core@>1.8.0-dev <1.8.0-pre":
-  version "1.8.0-dev.11"
-  resolved "https://registry.yarnpkg.com/@keep-network/keep-core/-/keep-core-1.8.0-dev.11.tgz#cf607c6b9f86b545d8110ea4857b2eef5f3de737"
-  integrity sha512-NWsG0RqsJm+ZTbSUTWXgmJe6tSyNmHVhx7tQO/7d3/A31hEpbeJeC2H8ro7Pj88M6JDHSvor7svn8bL0KlIy1A==
-  dependencies:
-    "@openzeppelin/upgrades" "^2.7.2"
-    openzeppelin-solidity "2.4.0"
-
 "@keep-network/keep-core@>1.8.1-dev <1.8.1-pre":
   version "1.8.1-dev.0"
   resolved "https://registry.yarnpkg.com/@keep-network/keep-core/-/keep-core-1.8.1-dev.0.tgz#d95864b25800214de43d8840376a68336cb12055"
@@ -621,14 +613,14 @@
     openzeppelin-solidity "2.4.0"
 
 "@keep-network/random-beacon@development":
-  version "2.0.0-dev.34"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.34.tgz#145a15d13b64d878286f1c1fb454d335190dddde"
-  integrity sha512-zrprN1qZd8FkNcMRwnzJqqjgr04YUKZzLTGrO+ZCoRhCMvfa3M/eI1fPLhHEDVpCLxl/zpIh9QFmAxxprsinnw==
+  version "2.0.0-dev.36"
+  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.36.tgz#c2b62974c655301ef218cd6e7b2aa4ef4e8f7ef0"
+  integrity sha512-a1RiOxFtn8GnNmWzM4vwaQE95PMbvzPcDftbRv+n1s6/69rHMIFzHXLbkcMNQ8IIjUD0p+bDqghNOc8lheLHIQ==
   dependencies:
     "@keep-network/sortition-pools" "^2.0.0-pre.9"
     "@openzeppelin/contracts" "^4.6.0"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-    "@threshold-network/solidity-contracts" development
+    "@threshold-network/solidity-contracts" ">1.2.0-dev <1.2.0-ropsten"
 
 "@keep-network/sortition-pools@^2.0.0-pre.9":
   version "2.0.0-pre.9"
@@ -990,16 +982,6 @@
   integrity sha512-gVZYFWlet12iT3tOLjgmYkqrwcrWaKvISy6WLb0jVd3se5y8Il20mmivYjar6x+5AvapuXLVeKqQmsYtKhTvRg==
   dependencies:
     "@keep-network/keep-core" ">1.8.1-dev <1.8.1-pre"
-    "@openzeppelin/contracts" "~4.5.0"
-    "@openzeppelin/contracts-upgradeable" "~4.5.2"
-    "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-
-"@threshold-network/solidity-contracts@development":
-  version "1.2.0-dev.9"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.9.tgz#3dec66f0efa969f792e8cab1938567e3d5e57f3c"
-  integrity sha512-3xVV6H2FzdweQHiG6ZM3FUiGcuVSJOlX5T/c5SkLm8DGz5Kmq6pU2DnciSRAMgi+YT0OGJAMc7uU08011cv3zw==
-  dependencies:
-    "@keep-network/keep-core" ">1.8.0-dev <1.8.0-pre"
     "@openzeppelin/contracts" "~4.5.0"
     "@openzeppelin/contracts-upgradeable" "~4.5.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
