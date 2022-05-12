@@ -613,14 +613,14 @@
     openzeppelin-solidity "2.4.0"
 
 "@keep-network/random-beacon@development":
-  version "2.0.0-dev.25"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.25.tgz#41009e649db29a2bcf5c4e50e2cb874ebb7ebcfa"
-  integrity sha512-LdJ3ffFJdagycX47HYkDWRKCY0/uil8/DCj+grwjAcM2q9BYn9u9ofKY2fvXje/iK+ec6/2Cf6vbJ6BllIG0/A==
+  version "2.0.0-dev.34"
+  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.34.tgz#145a15d13b64d878286f1c1fb454d335190dddde"
+  integrity sha512-zrprN1qZd8FkNcMRwnzJqqjgr04YUKZzLTGrO+ZCoRhCMvfa3M/eI1fPLhHEDVpCLxl/zpIh9QFmAxxprsinnw==
   dependencies:
     "@keep-network/sortition-pools" "^2.0.0-pre.9"
-    "@openzeppelin/contracts" "^4.4.2"
+    "@openzeppelin/contracts" "^4.6.0"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-    "@threshold-network/solidity-contracts" ">1.2.0-dev <1.2.0-ropsten"
+    "@threshold-network/solidity-contracts" development
 
 "@keep-network/sortition-pools@^2.0.0-pre.9":
   version "2.0.0-pre.9"
@@ -685,7 +685,7 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
-"@openzeppelin/contracts-upgradeable@^4.5":
+"@openzeppelin/contracts-upgradeable@~4.5.2":
   version "4.5.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.5.2.tgz#90d9e47bacfd8693bfad0ac8a394645575528d05"
   integrity sha512-xgWZYaPlrEOQo3cBj97Ufiuv79SPd8Brh4GcFYhPgb6WvAq4ppz8dWKL6h+jLAK01rUqMRp/TS9AdXgAeNvCLA==
@@ -695,7 +695,7 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.6.0.tgz#1bf55f230f008554d4c6fe25eb165b85112108b0"
   integrity sha512-5OnVuO4HlkjSCJO165a4i2Pu1zQGzMs//o54LPrwUgxvEO2P3ax1QuaSI0cEHHTveA77guS0PnNugpR2JMsPfA==
 
-"@openzeppelin/contracts@^4.1.0", "@openzeppelin/contracts@^4.4.2", "@openzeppelin/contracts@^4.5":
+"@openzeppelin/contracts@^4.1.0", "@openzeppelin/contracts@~4.5.0":
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.5.0.tgz#3fd75d57de172b3743cdfc1206883f56430409cc"
   integrity sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==
@@ -704,6 +704,11 @@
   version "4.4.2"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.4.2.tgz#4e889c9c66e736f7de189a53f8ba5b8d789425c2"
   integrity sha512-NyJV7sJgoGYqbtNUWgzzOGW4T6rR19FmX1IJgXGdapGPWsuMelGJn9h03nos0iqfforCbCB0iYIR0MtIuIFLLw==
+
+"@openzeppelin/contracts@^4.6.0":
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.6.0.tgz#c91cf64bc27f573836dba4122758b4743418c1b3"
+  integrity sha512-8vi4d50NNya/bQqCmaVzvHNmwHvS0OBKb7HNtuNwEE3scXWrP31fKQoGxNMT+KbzmrNZzatE3QK5p2gFONI/hg==
 
 "@openzeppelin/hardhat-upgrades@^1.17.0":
   version "1.17.0"
@@ -969,14 +974,14 @@
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
 
-"@threshold-network/solidity-contracts@>1.2.0-dev <1.2.0-ropsten":
-  version "1.2.0-dev.6"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.6.tgz#00f78102c81e8c724e805fd646f23f02941ab4cd"
-  integrity sha512-hTSFDxfDmYxSZHy3JIzcuiRf8tAvFxK4oRDAWBTrLlmOcVLQgK7OT+CfXC5qiku9bK+GOEuQmqmeQLQZLieG8Q==
+"@threshold-network/solidity-contracts@development":
+  version "1.2.0-dev.9"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.9.tgz#3dec66f0efa969f792e8cab1938567e3d5e57f3c"
+  integrity sha512-3xVV6H2FzdweQHiG6ZM3FUiGcuVSJOlX5T/c5SkLm8DGz5Kmq6pU2DnciSRAMgi+YT0OGJAMc7uU08011cv3zw==
   dependencies:
     "@keep-network/keep-core" ">1.8.0-dev <1.8.0-pre"
-    "@openzeppelin/contracts" "^4.5"
-    "@openzeppelin/contracts-upgradeable" "^4.5"
+    "@openzeppelin/contracts" "~4.5.0"
+    "@openzeppelin/contracts-upgradeable" "~4.5.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
 
 "@tsconfig/node10@^1.0.7":
@@ -2027,6 +2032,10 @@ babel-plugin-transform-es2015-modules-amd@^6.22.0, babel-plugin-transform-es2015
   version "6.24.1"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-es2015-modules-amd/-/babel-plugin-transform-es2015-modules-amd-6.24.1.tgz#3b3e54017239842d6d19c3011c4bd2f00a00d154"
   integrity sha1-Oz5UAXI5hC1tGcMBHEvS8AoA0VQ=
+  dependencies:
+    babel-plugin-transform-es2015-modules-commonjs "^6.24.1"
+    babel-runtime "^6.22.0"
+    babel-template "^6.24.1"
 
 babel-plugin-transform-es2015-modules-commonjs@^6.23.0, babel-plugin-transform-es2015-modules-commonjs@^6.24.1:
   version "6.26.2"
