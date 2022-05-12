@@ -16,6 +16,16 @@ import type { HardhatUserConfig } from "hardhat/config"
 
 const TASK_CHECK_ACCOUNTS_COUNT = "check-accounts-count"
 
+const thresholdSolidityCompilerConfig = {
+  version: "0.8.9",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 10,
+    },
+  },
+}
+
 // Configuration for testing environment.
 export const testConfig = {
   // How many accounts we expect to define for non-staking related signers, e.g.
@@ -39,10 +49,15 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
+            runs: 200,
           },
         },
       },
     ],
+    overrides: {
+      "@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol":
+        thresholdSolidityCompilerConfig,
+    },
     settings: {
       outputSelection: {
         "*": {
@@ -159,7 +174,7 @@ const config: HardhatUserConfig = {
     disambiguatePaths: false,
     runOnCompile: true,
     strict: true,
-    except: ["TokenStaking$", "contracts/test"],
+    except: ["contracts/test"],
   },
   mocha: {
     timeout: 60000,
