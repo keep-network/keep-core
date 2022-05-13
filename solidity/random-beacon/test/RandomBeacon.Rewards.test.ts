@@ -6,7 +6,7 @@ import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 import { constants, testDeployment } from "./fixtures"
 import { registerOperators } from "./utils/operators"
 import { createGroup } from "./utils/groups"
-import { signOperatorInactivityClaim } from "./utils/inacvitity"
+import { signOperatorInactivityClaim } from "./utils/inactivity"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Operator } from "./utils/operators"
