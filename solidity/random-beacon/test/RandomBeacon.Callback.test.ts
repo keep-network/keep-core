@@ -3,8 +3,6 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { getUnnamedSigners } from "../utils/signers"
-
 import blsData from "./data/bls"
 import { constants, params, randomBeaconDeployment } from "./fixtures"
 import { createGroup } from "./utils/groups"
@@ -60,7 +58,7 @@ describe("RandomBeacon - Callback", () => {
   let callbackContract1: CallbackContractStub
 
   before(async () => {
-    ;[requester, submitter] = await getUnnamedSigners()
+    ;[requester, submitter] = await helpers.signers.getUnnamedSigners()
 
     const { contracts } = await waffle.loadFixture(fixture)
 

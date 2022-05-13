@@ -1,8 +1,5 @@
 import { ethers, helpers, deployments } from "hardhat"
 
-import { getContract } from "../../utils/contracts"
-import { getNamedSigners } from "../../utils/signers"
-
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Contract } from "ethers"
 import type {
@@ -87,13 +84,14 @@ export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
 
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   await deployments.fixture(["TokenStaking"])
-  const t: T = await getContract<T>("T")
+  const t: T = await helpers.contracts.getContract<T>("T")
 
-  const staking: TokenStaking = await getContract<TokenStaking>("TokenStaking")
+  const staking: TokenStaking =
+    await helpers.contracts.getContract<TokenStaking>("TokenStaking")
 
   // TODO: Implement Hardhat deployment scripts and load deployed contracts, same
   // as it's done above for T and TokenStaking.
-  const { deployer } = await getNamedSigners()
+  const { deployer } = await helpers.signers.getNamedSigners()
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
@@ -171,7 +169,7 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
-  const { deployer, governance } = await getNamedSigners()
+  const { deployer, governance } = await helpers.signers.getNamedSigners()
 
   const contracts = await randomBeaconDeployment()
 

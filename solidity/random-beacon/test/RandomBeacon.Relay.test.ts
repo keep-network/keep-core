@@ -4,8 +4,6 @@ import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { BigNumber } from "ethers"
 
-import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
-
 import blsData from "./data/bls"
 import {
   constants,
@@ -97,8 +95,9 @@ describe("RandomBeacon - Relay", () => {
   let bls: BLS
 
   before(async () => {
-    ;({ deployer } = await getNamedSigners())
-    ;[thirdParty, requester, notifier, submitter] = await getUnnamedSigners()
+    ;({ deployer } = await helpers.signers.getNamedSigners())
+    ;[thirdParty, requester, notifier, submitter] =
+      await helpers.signers.getUnnamedSigners()
     ;({
       randomBeacon,
       sortitionPool,

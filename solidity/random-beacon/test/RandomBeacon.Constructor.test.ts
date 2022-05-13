@@ -1,10 +1,11 @@
-import { ethers, getUnnamedAccounts } from "hardhat"
+import { ethers, getUnnamedAccounts, helpers } from "hardhat"
 import { expect } from "chai"
-import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
 import type { RandomBeacon__factory, SortitionPool } from "../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
+
+const { to1e18 } = helpers.number
 
 describe("RandomBeacon - Constructor", () => {
   let sortitionPool: SortitionPool

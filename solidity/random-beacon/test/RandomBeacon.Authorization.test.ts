@@ -2,9 +2,6 @@
 import { ethers, helpers } from "hardhat"
 import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
-import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
-
-import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
 
 import { constants, params, testDeployment } from "./fixtures"
 
@@ -20,6 +17,7 @@ import type {
   RandomBeaconGovernance,
 } from "../typechain"
 
+const { to1e18 } = helpers.number
 const { mineBlocks } = helpers.time
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -57,9 +55,9 @@ describe("RandomBeacon - Authorization", () => {
       contracts.randomBeaconGovernance as RandomBeaconGovernance
     sortitionPool = contracts.sortitionPool as SortitionPool
     staking = contracts.staking as TokenStaking
-    ;({ deployer, governance } = await getNamedSigners())
+    ;({ deployer, governance } = await helpers.signers.getNamedSigners())
     ;[owner, stakingProvider, operator, authorizer, beneficiary, thirdParty] =
-      await getUnnamedSigners()
+      await helpers.signers.getUnnamedSigners()
 
     await t.connect(deployer).mint(owner.address, stakedAmount)
     await t.connect(owner).approve(staking.address, stakedAmount)

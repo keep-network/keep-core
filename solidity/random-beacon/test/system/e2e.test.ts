@@ -16,7 +16,6 @@ import {
 } from "../utils/dkg"
 import blsData from "../data/bls"
 import { registerOperators } from "../utils/operators"
-import { getNamedSigners, getUnnamedSigners } from "../../utils/signers"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { RandomBeacon, RandomBeaconStub, T } from "../../typechain"
@@ -76,8 +75,8 @@ describe("System -- e2e", () => {
   before(async () => {
     const contracts = await waffle.loadFixture(fixture)
 
-    ;({ deployer } = await getNamedSigners())
-    ;[requester] = await getUnnamedSigners()
+    ;({ deployer } = await helpers.signers.getNamedSigners())
+    ;[requester] = await helpers.signers.getUnnamedSigners()
     randomBeacon = contracts.randomBeacon
     t = contracts.t
 

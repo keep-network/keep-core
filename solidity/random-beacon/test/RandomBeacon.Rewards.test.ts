@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-extra-semi */
 import { waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
-
-import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
 
 import { constants, testDeployment } from "./fixtures"
 import { registerOperators } from "./utils/operators"
@@ -21,6 +18,7 @@ import type {
 } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+const { to1e18 } = helpers.number
 
 const fixture = async () => {
   const contracts = await testDeployment()
@@ -74,8 +72,8 @@ describe("RandomBeacon - Rewards", () => {
       t,
       operators,
     } = await waffle.loadFixture(fixture))
-    ;[thirdParty] = await getUnnamedSigners()
-    ;({ deployer, governance } = await getNamedSigners())
+    ;[thirdParty] = await helpers.signers.getUnnamedSigners()
+    ;({ deployer, governance } = await helpers.signers.getNamedSigners())
   })
 
   describe("withdrawRewards", () => {

@@ -1,8 +1,5 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
-import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
-
-import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
 
 import { randomBeaconDeployment } from "./fixtures"
 
@@ -15,6 +12,7 @@ import type {
 } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+const { to1e18 } = helpers.number
 
 const governanceDelay = 604800 // 1 week
 
@@ -44,7 +42,7 @@ const initialRelayEntrySubmissionGasOffset = 11500
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const { deployer: governance } = await getNamedSigners()
+  const { deployer: governance } = await helpers.signers.getNamedSigners()
 
   const contracts = await randomBeaconDeployment()
 
@@ -117,7 +115,7 @@ describe("RandomBeaconGovernance", () => {
 
   // prettier-ignore
   before(async () => {
-    [thirdParty, thirdPartyContract] = await getUnnamedSigners()
+    [thirdParty, thirdPartyContract] = await helpers.signers.getUnnamedSigners()
     ;({ governance, randomBeaconGovernance, randomBeacon } =
       await waffle.loadFixture(fixture))
   })

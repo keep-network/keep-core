@@ -3,8 +3,6 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { getUnnamedSigners } from "../utils/signers"
-
 import blsData from "./data/bls"
 import { constants, dkgState, params, testDeployment } from "./fixtures"
 import {
@@ -80,7 +78,7 @@ describe("RandomBeacon - Group Creation", () => {
   let t: T
 
   before(async () => {
-    ;[thirdParty] = await getUnnamedSigners()
+    ;[thirdParty] = await helpers.signers.getUnnamedSigners()
     let randomBeaconStub: RandomBeaconTest
     ;({
       randomBeacon: randomBeaconStub,
