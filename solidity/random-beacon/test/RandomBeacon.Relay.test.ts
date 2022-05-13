@@ -13,7 +13,7 @@ import {
   blsDeployment,
 } from "./fixtures"
 import { createGroup, hashUint32Array } from "./utils/groups"
-import { signOperatorInactivityClaim } from "./utils/inacvitity"
+import { signOperatorInactivityClaim } from "./utils/inactivity"
 import { registerOperators } from "./utils/operators"
 import { fakeTokenStaking } from "./mocks/staking"
 
