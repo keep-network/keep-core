@@ -3,12 +3,9 @@ import { deployments, ethers, upgrades } from "hardhat"
 import chai, { expect } from "chai"
 import chaiAsPromised from "chai-as-promised"
 
+import type { Contract } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type {
-  ProxyAdmin,
-  WalletRegistry,
-  WalletRegistryGovernance,
-} from "../typechain"
+import type { WalletRegistry, WalletRegistryGovernance } from "../typechain"
 import type { TransparentUpgradeableProxy } from "../typechain/TransparentUpgradeableProxy"
 
 chai.use(chaiAsPromised)
@@ -23,7 +20,7 @@ describe("WalletRegistry - Deployment", async () => {
   let walletRegistry: WalletRegistry
   let walletRegistryGovernance: WalletRegistryGovernance
   let walletRegistryProxy: TransparentUpgradeableProxy
-  let proxyAdmin: ProxyAdmin
+  let proxyAdmin: Contract
   let walletRegistryImplementationAddress: string
 
   before(async () => {
@@ -47,7 +44,7 @@ describe("WalletRegistry - Deployment", async () => {
         walletRegistry.address
       )
 
-    proxyAdmin = (await upgrades.admin.getInstance()) as ProxyAdmin
+    proxyAdmin = await upgrades.admin.getInstance()
 
     expect(deployer.address, "deployer is the same as governance").not.equal(
       governance.address
