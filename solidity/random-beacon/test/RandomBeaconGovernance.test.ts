@@ -2,6 +2,8 @@ import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
+import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
+
 import { randomBeaconDeployment } from "./fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -42,7 +44,7 @@ const initialRelayEntrySubmissionGasOffset = 11500
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const governance = await ethers.getNamedSigner("deployer")
+  const { deployer: governance } = await getNamedSigners()
 
   const contracts = await randomBeaconDeployment()
 
@@ -95,10 +97,9 @@ const fixture = async () => {
       initialRelayEntrySubmissionGasOffset
     )
 
-  const RandomBeaconGovernance =
-    await ethers.getContractFactory<RandomBeaconGovernance__factory>(
-      "RandomBeaconGovernance"
-    )
+  const RandomBeaconGovernance = await ethers.getContractFactory(
+    "RandomBeaconGovernance"
+  )
   const randomBeaconGovernance: RandomBeaconGovernance =
     await RandomBeaconGovernance.deploy(randomBeacon.address, governanceDelay)
   await randomBeaconGovernance.deployed()
@@ -116,7 +117,7 @@ describe("RandomBeaconGovernance", () => {
 
   // prettier-ignore
   before(async () => {
-    [thirdParty, thirdPartyContract] = await ethers.getUnnamedSigners()
+    [thirdParty, thirdPartyContract] = await getUnnamedSigners()
     ;({ governance, randomBeaconGovernance, randomBeacon } =
       await waffle.loadFixture(fixture))
   })
@@ -125,10 +126,9 @@ describe("RandomBeaconGovernance", () => {
     let RandomBeaconGovernance: RandomBeaconGovernance__factory
 
     before(async () => {
-      RandomBeaconGovernance =
-        await ethers.getContractFactory<RandomBeaconGovernance__factory>(
-          "RandomBeaconGovernance"
-        )
+      RandomBeaconGovernance = await ethers.getContractFactory(
+        "RandomBeaconGovernance"
+      )
     })
 
     context("when random beacon is 0-address", () => {

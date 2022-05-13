@@ -45,17 +45,14 @@ describe("RandomBeacon - Constructor", () => {
     const inactivity = await BeaconInactivity.deploy()
     await inactivity.deployed()
 
-    RandomBeacon = await ethers.getContractFactory<RandomBeacon__factory>(
-      "RandomBeacon",
-      {
-        libraries: {
-          BLS: bls.address,
-          BeaconAuthorization: authorization.address,
-          BeaconDkg: dkg.address,
-          BeaconInactivity: inactivity.address,
-        },
-      }
-    )
+    RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
+      libraries: {
+        BLS: bls.address,
+        BeaconAuthorization: authorization.address,
+        BeaconDkg: dkg.address,
+        BeaconInactivity: inactivity.address,
+      },
+    })
   })
 
   describe("constructor", () => {

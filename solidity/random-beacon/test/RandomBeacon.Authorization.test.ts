@@ -4,6 +4,8 @@ import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
 import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
+import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
+
 import { constants, params, testDeployment } from "./fixtures"
 
 import type { FakeContract } from "@defi-wonderland/smock"
@@ -55,11 +57,9 @@ describe("RandomBeacon - Authorization", () => {
       contracts.randomBeaconGovernance as RandomBeaconGovernance
     sortitionPool = contracts.sortitionPool as SortitionPool
     staking = contracts.staking as TokenStaking
-
-    deployer = await ethers.getNamedSigner("deployer")
-    governance = await ethers.getNamedSigner("governance")
+    ;({ deployer, governance } = await getNamedSigners())
     ;[owner, stakingProvider, operator, authorizer, beneficiary, thirdParty] =
-      await ethers.getUnnamedSigners()
+      await getUnnamedSigners()
 
     await t.connect(deployer).mint(owner.address, stakedAmount)
     await t.connect(owner).approve(staking.address, stakedAmount)

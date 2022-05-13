@@ -4,6 +4,7 @@ import { ethers } from "hardhat"
 
 import { params } from "../fixtures"
 import { testConfig } from "../../hardhat.config"
+import { getNamedSigners, getUnnamedSigners } from "../../utils/signers"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { BigNumber, BigNumberish } from "ethers"
@@ -37,7 +38,7 @@ export async function registerOperators(
     await randomBeacon.staking()
   )
 
-  const signers = (await ethers.getUnnamedSigners()).slice(unnamedSignersOffset)
+  const signers = (await getUnnamedSigners()).slice(unnamedSignersOffset)
 
   // We use unique accounts for each staking role for each operator.
   if (signers.length < numberOfOperators * 5) {
@@ -89,7 +90,7 @@ export async function stake(
   beneficiary = stakingProvider,
   authorizer = stakingProvider
 ): Promise<void> {
-  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+  const { deployer } = await getNamedSigners()
 
   await t.connect(deployer).mint(owner.address, stakeAmount)
   await t.connect(owner).approve(staking.address, stakeAmount)

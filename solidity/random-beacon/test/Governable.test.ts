@@ -2,6 +2,8 @@
 import { expect } from "chai"
 import { ethers, helpers } from "hardhat"
 
+import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
+
 import type { ContractTransaction } from "ethers"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { GovernableImpl, GovernableImpl__factory } from "../typechain"
@@ -16,8 +18,8 @@ describe("Governable", () => {
 
   before(async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ deployer, governance } = await ethers.getNamedSigners())
-    ;[thirdParty] = await ethers.getUnnamedSigners()
+    ;({ deployer, governance } = await getNamedSigners())
+    ;[thirdParty] = await getUnnamedSigners()
 
     const GovernableFactory: GovernableImpl__factory =
       await ethers.getContractFactory("GovernableImpl", deployer)

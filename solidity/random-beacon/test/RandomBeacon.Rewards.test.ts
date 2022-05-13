@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-extra-semi */
-import { ethers, waffle, helpers } from "hardhat"
+import { waffle, helpers } from "hardhat"
 import { expect } from "chai"
 import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
+
+import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
 
 import { constants, testDeployment } from "./fixtures"
 import { registerOperators } from "./utils/operators"
@@ -72,10 +74,8 @@ describe("RandomBeacon - Rewards", () => {
       t,
       operators,
     } = await waffle.loadFixture(fixture))
-    ;[thirdParty] = await ethers.getUnnamedSigners()
-
-    deployer = await ethers.getNamedSigner("deployer")
-    governance = await ethers.getNamedSigner("governance")
+    ;[thirdParty] = await getUnnamedSigners()
+    ;({ deployer, governance } = await getNamedSigners())
   })
 
   describe("withdrawRewards", () => {

@@ -16,6 +16,7 @@ import {
 } from "../utils/dkg"
 import blsData from "../data/bls"
 import { registerOperators } from "../utils/operators"
+import { getNamedSigners, getUnnamedSigners } from "../../utils/signers"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { RandomBeacon, RandomBeaconStub, T } from "../../typechain"
@@ -70,25 +71,25 @@ describe("System -- e2e", () => {
   let randomBeacon: RandomBeacon
   let t: T
   let requester: SignerWithAddress
-  let owner: SignerWithAddress
+  let deployer: SignerWithAddress
 
   before(async () => {
     const contracts = await waffle.loadFixture(fixture)
 
-    owner = await ethers.getNamedSigner("deployer")
-    ;[requester] = await ethers.getUnnamedSigners()
+    ;({ deployer } = await getNamedSigners())
+    ;[requester] = await getUnnamedSigners()
     randomBeacon = contracts.randomBeacon
     t = contracts.t
 
     await randomBeacon
-      .connect(owner)
+      .connect(deployer)
       .updateRelayEntryParameters(
         relayEntrySoftTimeout,
         relayEntryHardTimeout,
         callbackGasLimit
       )
 
-    await randomBeacon.connect(owner).updateGroupCreationParameters(
+    await randomBeacon.connect(deployer).updateGroupCreationParameters(
       groupCreationFrequency,
       groupLifetime,
       10, // dkgResultChallengePeriodLength, does not matter for this test
@@ -97,7 +98,7 @@ describe("System -- e2e", () => {
     )
 
     await randomBeacon
-      .connect(owner)
+      .connect(deployer)
       .setRequesterAuthorization(requester.address, true)
   })
 

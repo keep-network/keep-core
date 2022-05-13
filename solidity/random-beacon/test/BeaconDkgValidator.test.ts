@@ -10,6 +10,8 @@ import {
 } from "hardhat"
 import { expect } from "chai"
 
+import { getContract } from "../utils/contracts"
+
 import blsData from "./data/bls"
 import { constants } from "./fixtures"
 import { selectGroup, hashUint32Array } from "./utils/groups"
@@ -29,7 +31,7 @@ const { to1e18 } = helpers.number
 
 const fixture = async () => {
   await deployments.fixture(["TokenStaking"])
-  const t: T = await ethers.getContract("T")
+  const t: T = await getContract("T")
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(

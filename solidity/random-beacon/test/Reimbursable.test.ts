@@ -1,6 +1,8 @@
 import { ethers } from "hardhat"
 import { expect } from "chai"
 
+import { getNamedSigners, getUnnamedSigners } from "../utils/signers"
+
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ReimbursableImplStub } from "../typechain"
 
@@ -12,10 +14,11 @@ describe("Reimbursable", () => {
   let contractToUpdate: SignerWithAddress
 
   before(async () => {
-    deployer = await ethers.getNamedSigner("deployer")
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ deployer } = await getNamedSigners())
 
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;[admin, thirdParty, contractToUpdate] = await ethers.getUnnamedSigners()
+    ;[admin, thirdParty, contractToUpdate] = await getUnnamedSigners()
 
     const ReimbursableImplStub = await ethers.getContractFactory(
       "ReimbursableImplStub",
