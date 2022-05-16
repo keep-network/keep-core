@@ -18,19 +18,13 @@ const fixture = deployments.createFixture(async () => {
   await deployments.fixture(["WalletRegistry"])
 
   const walletRegistry: WalletRegistryStub & WalletRegistry =
-    await ethers.getContract("WalletRegistry")
+    await helpers.contracts.getContract("WalletRegistry")
   const walletRegistryGovernance: WalletRegistryGovernance =
-    await ethers.getContract("WalletRegistryGovernance")
+    await helpers.contracts.getContract("WalletRegistryGovernance")
 
-  const governance: SignerWithAddress = await ethers.getNamedSigner(
-    "governance"
-  )
+  const { governance } = await helpers.signers.getNamedSigners()
 
-  const thirdParty: SignerWithAddress = await ethers.getSigner(
-    (
-      await getUnnamedAccounts()
-    )[0]
-  )
+  const [thirdParty] = await helpers.signers.getUnnamedSigners()
 
   await updateWalletRegistryParams(walletRegistryGovernance, governance)
 

@@ -52,7 +52,7 @@ describe("EcdsaDkgValidator", () => {
     ;({ walletRegistry, sortitionPool, walletOwner } =
       await walletRegistryFixture())
 
-    validator = await ethers.getContract("EcdsaDkgValidator")
+    validator = await helpers.contracts.getContract("EcdsaDkgValidator")
 
     await walletRegistry.connect(walletOwner.wallet).requestNewWallet()
 

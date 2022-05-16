@@ -2,9 +2,9 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { ethers, getNamedAccounts, upgrades, deployments } = hre
+  const { helpers, getNamedAccounts, upgrades, deployments } = hre
   const { esdm } = await getNamedAccounts()
-  const { deployer } = await ethers.getNamedSigners()
+  const { deployer } = await helpers.signers.getNamedSigners()
 
   deployments.log(`transferring ProxyAdmin ownership to ${esdm}`)
 

@@ -25,8 +25,9 @@ describe("WalletRegistry - Upgrade", async () => {
   let EcdsaInactivity: Contract
 
   before(async () => {
-    proxyAdminOwner = await ethers.getNamedSigner("esdm")
-    EcdsaInactivity = await ethers.getContract("EcdsaInactivity")
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;({ esdm: proxyAdminOwner } = await helpers.signers.getNamedSigners())
+    EcdsaInactivity = await helpers.contracts.getContract("EcdsaInactivity")
   })
 
   describe("upgradeProxy", () => {
@@ -89,12 +90,14 @@ describe("WalletRegistry - Upgrade", async () => {
       before(async () => {
         await deployments.fixture()
 
-        tokenStaking = await ethers.getContract("TokenStaking")
-        reimbursementPool = await ethers.getContract("ReimbursementPool")
-        walletRegistryGovernance = await ethers.getContract(
+        tokenStaking = await helpers.contracts.getContract("TokenStaking")
+        reimbursementPool = await helpers.contracts.getContract(
+          "ReimbursementPool"
+        )
+        walletRegistryGovernance = await helpers.contracts.getContract(
           "WalletRegistryGovernance"
         )
-        walletRegistry = (await ethers.getContract(
+        walletRegistry = (await helpers.contracts.getContract(
           "WalletRegistry"
         )) as WalletRegistry & WalletRegistryV2
 
@@ -300,7 +303,7 @@ describe("WalletRegistry - Upgrade", async () => {
       await expect(
         upgradeProxy("WalletRegistry", "WalletRegistryV2", {
           factoryOpts: {
-            signer: await ethers.getNamedSigner("deployer"),
+            signer: (await helpers.signers.getNamedSigners()).deployer,
             libraries: { EcdsaInactivity: EcdsaInactivity.address },
           },
           proxyOpts: {
