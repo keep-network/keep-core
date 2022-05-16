@@ -136,6 +136,7 @@ jobs:
         run: yarn test
 
   contracts-deployment-dry-run:
+    needs: contracts-detect-changes
     if: |
       github.event_name != 'pull_request'
         || needs.contracts-detect-changes.outputs.path-filter == 'true'
