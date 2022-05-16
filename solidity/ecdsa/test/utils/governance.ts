@@ -1,4 +1,4 @@
-import { ethers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 
 import type { WalletRegistry, WalletRegistryGovernance } from "../../typechain"
 
@@ -13,7 +13,7 @@ export async function upgradeRandomBeacon(
       await walletRegistry.governance()
     )
 
-  const governance = await ethers.getNamedSigner("governance")
+  const { governance } = await helpers.signers.getNamedSigners()
 
   await walletRegistryGovernance
     .connect(governance)
