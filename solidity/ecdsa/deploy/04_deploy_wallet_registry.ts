@@ -27,9 +27,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const walletRegistry = await helpers.upgrades.deployProxy("WalletRegistry", {
     contractName:
-      deployments.getNetworkName() === "hardhat"
-        ? "WalletRegistryStub"
-        : undefined,
+      process.env.TEST_USE_STUBS === "true" ? "WalletRegistryStub" : undefined,
     initializerArgs: [
       EcdsaDkgValidator.address,
       RandomBeacon.address,
