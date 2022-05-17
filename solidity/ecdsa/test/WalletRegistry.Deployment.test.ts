@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { deployments, ethers, upgrades } from "hardhat"
+import { deployments, ethers, helpers, upgrades } from "hardhat"
 import chai, { expect } from "chai"
 import chaiAsPromised from "chai-as-promised"
 
@@ -25,24 +25,25 @@ describe("WalletRegistry - Deployment", async () => {
 
   before(async () => {
     await deployments.fixture()
-    ;({ deployer, governance, esdm } = await ethers.getNamedSigners())
+    ;({ deployer, governance, esdm } = await helpers.signers.getNamedSigners())
 
-    walletRegistry = await ethers.getContract<WalletRegistry>("WalletRegistry")
+    walletRegistry = await helpers.contracts.getContract<WalletRegistry>(
+      "WalletRegistry"
+    )
 
     walletRegistryImplementationAddress = (
       await deployments.get("WalletRegistry")
     ).implementation
 
     walletRegistryGovernance =
-      await ethers.getContract<WalletRegistryGovernance>(
+      await helpers.contracts.getContract<WalletRegistryGovernance>(
         "WalletRegistryGovernance"
       )
 
-    walletRegistryProxy =
-      await ethers.getContractAt<TransparentUpgradeableProxy>(
-        "TransparentUpgradeableProxy",
-        walletRegistry.address
-      )
+    walletRegistryProxy = await ethers.getContractAt(
+      "TransparentUpgradeableProxy",
+      walletRegistry.address
+    )
 
     proxyAdmin = await upgrades.admin.getInstance()
 

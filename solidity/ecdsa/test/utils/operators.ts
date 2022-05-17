@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { ethers } from "hardhat"
+import { ethers, helpers } from "hardhat"
 
 // eslint-disable-next-line import/no-cycle
 import { params } from "../fixtures"
@@ -40,7 +40,9 @@ export async function registerOperators(
     await walletRegistry.staking()
   )
 
-  const signers = (await ethers.getUnnamedSigners()).slice(unnamedSignersOffset)
+  const signers = (await helpers.signers.getUnnamedSigners()).slice(
+    unnamedSignersOffset
+  )
 
   // We use unique accounts for each staking role for each operator.
   if (signers.length < numberOfOperators * 5) {
@@ -92,7 +94,7 @@ export async function stake(
   beneficiary = stakingProvider,
   authorizer = stakingProvider
 ): Promise<void> {
-  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+  const { deployer } = await helpers.signers.getNamedSigners()
 
   await t.connect(deployer).mint(owner.address, stakeAmount)
   await t.connect(owner).approve(staking.address, stakeAmount)

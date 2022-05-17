@@ -8,8 +8,6 @@ import type {
   RandomBeaconStub,
   TokenStaking,
   RandomBeaconGovernance,
-  RandomBeaconStub__factory,
-  RandomBeaconGovernance__factory,
   T,
 } from "../../typechain"
 
@@ -86,12 +84,14 @@ export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
 
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   await deployments.fixture(["TokenStaking"])
-  const t: T = await ethers.getContract("T")
-  const staking: TokenStaking = await ethers.getContract("TokenStaking")
+  const t: T = await helpers.contracts.getContract<T>("T")
+
+  const staking: TokenStaking =
+    await helpers.contracts.getContract<TokenStaking>("TokenStaking")
 
   // TODO: Implement Hardhat deployment scripts and load deployed contracts, same
   // as it's done above for T and TokenStaking.
-  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+  const { deployer } = await helpers.signers.getNamedSigners()
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(
@@ -131,18 +131,14 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
   })
 
-  const RandomBeacon =
-    await ethers.getContractFactory<RandomBeaconStub__factory>(
-      "RandomBeaconStub",
-      {
-        libraries: {
-          BLS: (await blsDeployment()).bls.address,
-          BeaconAuthorization: authorization.address,
-          BeaconDkg: dkg.address,
-          BeaconInactivity: inactivity.address,
-        },
-      }
-    )
+  const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
+    libraries: {
+      BLS: (await blsDeployment()).bls.address,
+      BeaconAuthorization: authorization.address,
+      BeaconDkg: dkg.address,
+      BeaconInactivity: inactivity.address,
+    },
+  })
 
   const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
     sortitionPool.address,
@@ -173,17 +169,13 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
 }
 
 export async function testDeployment(): Promise<DeployedContracts> {
-  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
-  const governance: SignerWithAddress = await ethers.getNamedSigner(
-    "governance"
-  )
+  const { deployer, governance } = await helpers.signers.getNamedSigners()
 
   const contracts = await randomBeaconDeployment()
 
-  const RandomBeaconGovernance =
-    await ethers.getContractFactory<RandomBeaconGovernance__factory>(
-      "RandomBeaconGovernance"
-    )
+  const RandomBeaconGovernance = await ethers.getContractFactory(
+    "RandomBeaconGovernance"
+  )
   const randomBeaconGovernance: RandomBeaconGovernance =
     await RandomBeaconGovernance.deploy(
       contracts.randomBeacon.address,

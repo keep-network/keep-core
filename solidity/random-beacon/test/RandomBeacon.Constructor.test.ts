@@ -1,10 +1,11 @@
-import { ethers, getUnnamedAccounts } from "hardhat"
+import { ethers, getUnnamedAccounts, helpers } from "hardhat"
 import { expect } from "chai"
-import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
 import type { RandomBeacon__factory, SortitionPool } from "../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
+
+const { to1e18 } = helpers.number
 
 describe("RandomBeacon - Constructor", () => {
   let sortitionPool: SortitionPool
@@ -45,17 +46,14 @@ describe("RandomBeacon - Constructor", () => {
     const inactivity = await BeaconInactivity.deploy()
     await inactivity.deployed()
 
-    RandomBeacon = await ethers.getContractFactory<RandomBeacon__factory>(
-      "RandomBeacon",
-      {
-        libraries: {
-          BLS: bls.address,
-          BeaconAuthorization: authorization.address,
-          BeaconDkg: dkg.address,
-          BeaconInactivity: inactivity.address,
-        },
-      }
-    )
+    RandomBeacon = await ethers.getContractFactory("RandomBeacon", {
+      libraries: {
+        BLS: bls.address,
+        BeaconAuthorization: authorization.address,
+        BeaconDkg: dkg.address,
+        BeaconInactivity: inactivity.address,
+      },
+    })
   })
 
   describe("constructor", () => {

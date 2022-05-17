@@ -2,16 +2,14 @@ import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
-  const { ethers, getNamedAccounts, upgrades, deployments, helpers } = hre
-  const { esdm, deployer } = await getNamedAccounts()
+  const { helpers, upgrades, deployments } = hre
+  const { esdm, deployer } = await helpers.signers.getNamedSigners()
   const { log } = deployments
-
-  log(`transferring ProxyAdmin ownership to ${esdm}`)
 
   // TODO: Once a DAO is established we want to switch to ProxyAdminWithDeputy and
   // use the DAO as the proxy admin owner and ESDM as the deputy. Until then we
   // use ESDM as the owner of ProxyAdmin contract.
-  const newProxyAdminOwner = esdm
+  const newProxyAdminOwner = esdm.address
 
   const proxyAdmin = await upgrades.admin.getInstance()
 
@@ -22,9 +20,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   // set to the desired address.
   if (!helpers.address.equal(currentOwner, newProxyAdminOwner)) {
     log(`transferring ownership of ProxyAdmin to ${newProxyAdminOwner}`)
-    await proxyAdmin
-      .connect(await ethers.getSigner(deployer))
-      .transferOwnership(newProxyAdminOwner)
+    await proxyAdmin.connect(deployer).transferOwnership(newProxyAdminOwner)
   }
 }
 

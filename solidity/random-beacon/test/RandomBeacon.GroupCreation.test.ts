@@ -78,7 +78,7 @@ describe("RandomBeacon - Group Creation", () => {
   let t: T
 
   before(async () => {
-    ;[thirdParty] = await ethers.getUnnamedSigners()
+    ;[thirdParty] = await helpers.signers.getUnnamedSigners()
     let randomBeaconStub: RandomBeaconTest
     ;({
       randomBeacon: randomBeaconStub,

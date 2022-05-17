@@ -29,7 +29,7 @@ const { to1e18 } = helpers.number
 
 const fixture = async () => {
   await deployments.fixture(["TokenStaking"])
-  const t: T = await ethers.getContract("T")
+  const t: T = await helpers.contracts.getContract("T")
 
   const SortitionPool = await ethers.getContractFactory("SortitionPool")
   const sortitionPool = (await SortitionPool.deploy(

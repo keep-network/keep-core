@@ -1,5 +1,6 @@
 import "@keep-network/hardhat-local-networks-config"
 import "@keep-network/hardhat-helpers"
+import "@nomiclabs/hardhat-ethers"
 import "hardhat-deploy"
 import "@tenderly/hardhat-tenderly"
 import "@nomiclabs/hardhat-waffle"

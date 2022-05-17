@@ -70,25 +70,25 @@ describe("System -- e2e", () => {
   let randomBeacon: RandomBeacon
   let t: T
   let requester: SignerWithAddress
-  let owner: SignerWithAddress
+  let deployer: SignerWithAddress
 
   before(async () => {
     const contracts = await waffle.loadFixture(fixture)
 
-    owner = await ethers.getNamedSigner("deployer")
-    ;[requester] = await ethers.getUnnamedSigners()
+    ;({ deployer } = await helpers.signers.getNamedSigners())
+    ;[requester] = await helpers.signers.getUnnamedSigners()
     randomBeacon = contracts.randomBeacon
     t = contracts.t
 
     await randomBeacon
-      .connect(owner)
+      .connect(deployer)
       .updateRelayEntryParameters(
         relayEntrySoftTimeout,
         relayEntryHardTimeout,
         callbackGasLimit
       )
 
-    await randomBeacon.connect(owner).updateGroupCreationParameters(
+    await randomBeacon.connect(deployer).updateGroupCreationParameters(
       groupCreationFrequency,
       groupLifetime,
       10, // dkgResultChallengePeriodLength, does not matter for this test
@@ -97,7 +97,7 @@ describe("System -- e2e", () => {
     )
 
     await randomBeacon
-      .connect(owner)
+      .connect(deployer)
       .setRequesterAuthorization(requester.address, true)
   })
 

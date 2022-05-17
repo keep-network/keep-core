@@ -58,7 +58,7 @@ describe("RandomBeacon - Callback", () => {
   let callbackContract1: CallbackContractStub
 
   before(async () => {
-    ;[requester, submitter] = await ethers.getUnnamedSigners()
+    ;[requester, submitter] = await helpers.signers.getUnnamedSigners()
 
     const { contracts } = await waffle.loadFixture(fixture)
 

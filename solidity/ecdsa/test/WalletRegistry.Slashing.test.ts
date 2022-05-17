@@ -1,7 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { helpers } from "hardhat"
 import { expect } from "chai"
-import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
 import ecdsaData from "./data/ecdsa"
 import { constants, walletRegistryFixture } from "./fixtures"
@@ -18,6 +17,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { Operator, OperatorID } from "./utils/operators"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
+const { to1e18 } = helpers.number
 
 describe("WalletRegistry - Slashing", () => {
   let walletRegistry: WalletRegistry

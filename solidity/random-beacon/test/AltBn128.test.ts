@@ -1,7 +1,7 @@
 import { ethers, waffle } from "hardhat"
 import { expect } from "chai"
 
-import type { TestAltBn128, TestAltBn128__factory } from "../typechain"
+import type { TestAltBn128 } from "../typechain"
 
 describe("AltBn128", () => {
   const g1 =
@@ -14,9 +14,7 @@ describe("AltBn128", () => {
   let testAltBn128: TestAltBn128
 
   const fixture = async () => {
-    const TestAltBn128 = await ethers.getContractFactory<TestAltBn128__factory>(
-      "TestAltBn128"
-    )
+    const TestAltBn128 = await ethers.getContractFactory("TestAltBn128")
     testAltBn128 = await TestAltBn128.deploy()
     await testAltBn128.deployed()
 

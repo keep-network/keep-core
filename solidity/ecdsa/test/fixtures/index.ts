@@ -67,25 +67,23 @@ export const walletRegistryFixture = deployments.createFixture(
     await deployments.fixture()
 
     const walletRegistry: WalletRegistryStub & WalletRegistry =
-      await ethers.getContract("WalletRegistry")
+      await helpers.contracts.getContract("WalletRegistry")
     const walletRegistryGovernance: WalletRegistryGovernance =
-      await ethers.getContract("WalletRegistryGovernance")
-    const sortitionPool: SortitionPool = await ethers.getContract(
+      await helpers.contracts.getContract("WalletRegistryGovernance")
+    const sortitionPool: SortitionPool = await helpers.contracts.getContract(
       "EcdsaSortitionPool"
     )
-    const tToken: T = await ethers.getContract("T")
-    const staking: TokenStaking = await ethers.getContract("TokenStaking")
-
-    const reimbursementPool: ReimbursementPool = await ethers.getContract(
-      "ReimbursementPool"
+    const tToken: T = await helpers.contracts.getContract("T")
+    const staking: TokenStaking = await helpers.contracts.getContract(
+      "TokenStaking"
     )
 
-    const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
-    const governance: SignerWithAddress = await ethers.getNamedSigner(
-      "governance"
-    )
+    const reimbursementPool: ReimbursementPool =
+      await helpers.contracts.getContract("ReimbursementPool")
 
-    const [thirdParty] = await ethers.getUnnamedSigners()
+    const { deployer, governance } = await helpers.signers.getNamedSigners()
+
+    const [thirdParty] = await helpers.signers.getUnnamedSigners()
 
     // Accounts offset provided to slice getUnnamedAccounts have to include number
     // of unnamed accounts that were already used.
@@ -229,7 +227,7 @@ export async function initializeWalletOwner(
   walletRegistryGovernance: WalletRegistryGovernance,
   governance: SignerWithAddress
 ): Promise<FakeContract<IWalletOwner>> {
-  const deployer: SignerWithAddress = await ethers.getNamedSigner("deployer")
+  const { deployer } = await helpers.signers.getNamedSigners()
 
   const walletOwner: FakeContract<IWalletOwner> =
     await smock.fake<IWalletOwner>("IWalletOwner")

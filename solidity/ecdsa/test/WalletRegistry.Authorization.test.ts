@@ -2,7 +2,6 @@
 import { deployments, ethers, getUnnamedAccounts, helpers } from "hardhat"
 import { smock } from "@defi-wonderland/smock"
 import { expect } from "chai"
-import { to1e18 } from "@keep-network/hardhat-helpers/dist/src/number"
 
 import {
   constants,
@@ -25,6 +24,7 @@ import type {
 } from "../typechain"
 
 const { mineBlocks } = helpers.time
+const { to1e18 } = helpers.number
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
@@ -56,13 +56,13 @@ describe("WalletRegistry - Authorization", () => {
   before("load test fixture", async () => {
     await deployments.fixture(["WalletRegistry"])
 
-    t = await ethers.getContract("T")
-    walletRegistry = await ethers.getContract("WalletRegistry")
-    walletRegistryGovernance = await ethers.getContract(
+    t = await helpers.contracts.getContract("T")
+    walletRegistry = await helpers.contracts.getContract("WalletRegistry")
+    walletRegistryGovernance = await helpers.contracts.getContract(
       "WalletRegistryGovernance"
     )
-    sortitionPool = await ethers.getContract("EcdsaSortitionPool")
-    staking = await ethers.getContract("TokenStaking")
+    sortitionPool = await helpers.contracts.getContract("EcdsaSortitionPool")
+    staking = await helpers.contracts.getContract("TokenStaking")
 
     const accounts = await getUnnamedAccounts()
     owner = await ethers.getSigner(accounts[1])
@@ -71,9 +71,8 @@ describe("WalletRegistry - Authorization", () => {
     authorizer = await ethers.getSigner(accounts[4])
     beneficiary = await ethers.getSigner(accounts[5])
     thirdParty = await ethers.getSigner(accounts[6])
+    ;({ deployer, governance } = await helpers.signers.getNamedSigners())
 
-    deployer = await ethers.getNamedSigner("deployer")
-    governance = await ethers.getNamedSigner("governance")
     walletOwner = await initializeWalletOwner(
       walletRegistryGovernance,
       governance

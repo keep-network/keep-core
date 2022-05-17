@@ -95,9 +95,9 @@ describe("RandomBeacon - Relay", () => {
   let bls: BLS
 
   before(async () => {
-    deployer = await ethers.getNamedSigner("deployer")
+    ;({ deployer } = await helpers.signers.getNamedSigners())
     ;[thirdParty, requester, notifier, submitter] =
-      await ethers.getUnnamedSigners()
+      await helpers.signers.getUnnamedSigners()
     ;({
       randomBeacon,
       sortitionPool,
