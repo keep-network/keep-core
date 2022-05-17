@@ -61,7 +61,7 @@ describe("WalletRegistry - Authorization", () => {
     walletRegistryGovernance = await helpers.contracts.getContract(
       "WalletRegistryGovernance"
     )
-    sortitionPool = await helpers.contracts.getContract("SortitionPool")
+    sortitionPool = await helpers.contracts.getContract("EcdsaSortitionPool")
     staking = await helpers.contracts.getContract("TokenStaking")
 
     const accounts = await getUnnamedAccounts()

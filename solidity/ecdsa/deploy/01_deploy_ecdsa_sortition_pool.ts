@@ -10,7 +10,8 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const T = await deployments.get("T")
 
-  const SortitionPool = await deployments.deploy("SortitionPool", {
+  const SortitionPool = await deployments.deploy("EcdsaSortitionPool", {
+    contract: "SortitionPool",
     from: deployer,
     args: [T.address, POOL_WEIGHT_DIVISOR],
     log: true,
@@ -26,7 +27,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
 export default func
 
-func.tags = ["SortitionPool"]
+func.tags = ["EcdsaSortitionPool"]
 // TokenStaking and T deployments are expected to be resolved from
 // @threshold-network/solidity-contracts
 func.dependencies = ["TokenStaking", "T"]
