@@ -33,6 +33,8 @@ import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
 import TBTCV2Migration from "./tbtc-migration"
 import KeepToTStaking from "./keep-to-t-staking"
+import { PRE } from "./constants"
+import SimplePreApplicationAbi from "./contracts-artifacts/SimplePreApplication.json"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
 /** @typedef { import("../web3").BaseContract} BaseContract */
@@ -42,7 +44,7 @@ class Keep {
   static initialize(web3) {
     const keep = new Keep(web3)
     keep.initializeContracts()
-    keep._initializePREContract().then(() => {
+    keep._initializePREContract(web3).then(() => {
       keep.initializeServices()
     })
 
@@ -210,25 +212,18 @@ class Keep {
     )
   }
 
-  _initializePREContract = async () => {
-    let module
-
-    const localModuleName =
-      "@threshold-network/solidity-contracts/artifacts/SimplePREApplication.json"
-
-    try {
-      module = await import(localModuleName)
-    } catch (err) {
-      module = await import(
-        "@nucypher/nucypher-contracts/artifacts/SimplePREApplication.json"
-      )
-    }
+  _initializePREContract = async (web3) => {
+    const chainId = await web3.lib.eth.getChainId()
+    const preContractAddress = PRE.PRE_ADDRESSESS[chainId]
+    const txHash = chainId === "1" ? PRE.MAINNET_PRE_DEPLOYMENT_TX_HASH : null
+    const deploymentBlock =
+      chainId === "1" ? PRE.MAINNET_PRE_DEPLOYMENT_BLOCK : 1
 
     this.simplePREApplicationContract = this.web3.createContractInstance(
-      module.abi,
-      module.address,
-      null,
-      1
+      SimplePreApplicationAbi,
+      preContractAddress,
+      txHash,
+      deploymentBlock
     )
   }
 
