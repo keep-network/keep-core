@@ -13,6 +13,7 @@
     "@threshold-network/solidity-contracts": ">1.1.0-dev <1.1.0-ropsten",
     "@ledgerhq/hw-app-eth": "^5.13.0",
     "@ledgerhq/hw-transport-webusb": "^6.24.1",
+    "@nucypher/nucypher-contracts": "0.3.0-ropsten",
     "@walletconnect/web3-subprovider": "^1.3.6",
     "axios": "^0.21.2",
     "bignumber.js": "9.0.0",

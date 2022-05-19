@@ -27,6 +27,7 @@ import contracts, {
   REWARDS_POOL_CONTRACT_NAME,
   THRESHOLD_STAKING_CONTRACT_NAME,
   THRESHOLD_KEEP_STAKE_CONTRACT_NAME,
+  SIMPLE_PRE_APPLICATION_CONTRACT_NAME,
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
@@ -41,7 +42,9 @@ class Keep {
   static initialize(web3) {
     const keep = new Keep(web3)
     keep.initializeContracts()
-    keep.initializeServices()
+    keep._initializePREContract().then(() => {
+      keep.initializeServices()
+    })
 
     return keep
   }
@@ -135,7 +138,10 @@ class Keep {
   [THRESHOLD_STAKING_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [THRESHOLD_KEEP_STAKE_CONTRACT_NAME]
+  [THRESHOLD_KEEP_STAKE_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [SIMPLE_PRE_APPLICATION_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
@@ -199,7 +205,30 @@ class Keep {
     this.keepToTStaking = new KeepToTStaking(
       this.thresholdStakingContract,
       this.thresholdKeepStakeContract,
+      this.simplePREApplicationContract,
       this.web3
+    )
+  }
+
+  _initializePREContract = async () => {
+    let module
+
+    const localModuleName =
+      "@threshold-network/solidity-contracts/artifacts/SimplePREApplication.json"
+
+    try {
+      module = await import(localModuleName)
+    } catch (err) {
+      module = await import(
+        "@nucypher/nucypher-contracts/artifacts/SimplePREApplication.json"
+      )
+    }
+
+    this.simplePREApplicationContract = this.web3.createContractInstance(
+      module.abi,
+      module.address,
+      null,
+      1
     )
   }
 

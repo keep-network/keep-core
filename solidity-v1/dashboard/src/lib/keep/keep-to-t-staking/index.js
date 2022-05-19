@@ -8,11 +8,18 @@ class KeepToTStaking {
   /**
    * @param {BaseContract} _thresholdStakingContract
    * @param {BaseContract} _thresholdKeepStakeContract
+   * @param {BaseContract} _simplePREApplicationContract
    * @param {Web3LibWrapper} _web3
    */
-  constructor(_thresholdStakingContract, _thresholdKeepStakeContract, _web3) {
+  constructor(
+    _thresholdStakingContract,
+    _thresholdKeepStakeContract,
+    _simplePREApplicationContract,
+    _web3
+  ) {
     this.thresholdStakingContract = _thresholdStakingContract
     this.thresholdKeepStakeContract = _thresholdKeepStakeContract
+    this.simplePREApplicationContract = _simplePREApplicationContract
     this.web3 = _web3
   }
 
@@ -20,6 +27,15 @@ class KeepToTStaking {
     return await this.thresholdStakingContract.getPastEvents("Staked", {
       stakingProvider: operatorAddresses,
     })
+  }
+
+  getOperatorConfirmedEvents = async (operatorAddresses) => {
+    return await this.simplePREApplicationContract.getPastEvents(
+      "OperatorConfirmed",
+      {
+        stakingProvider: operatorAddresses,
+      }
+    )
   }
 
   resolveOwner = async (operatorAddress) => {
