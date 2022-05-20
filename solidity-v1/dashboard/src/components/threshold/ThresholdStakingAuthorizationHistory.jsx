@@ -96,9 +96,34 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
 }
 
 const AuthorizationHistoryActions = ({ operatorAddress, isPRESetUp }) => {
-  const tooltipText = isPRESetUp
-    ? "Go to the Threshold dashboard to manage and claim your rewards. Rewards will be distributed at the end of every month."
-    : "To be eligible to earn monthly rewards you will need to set up and run a PRE node."
+  const tooltipText = isPRESetUp ? (
+    <span>
+      Go to the{" "}
+      <a
+        className={"no-arrow"}
+        href={LINK.thresholdDapp}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        Threshold dashboard
+      </a>{" "}
+      to manage and claim your rewards. Rewards will be distributed at the end
+      of every month.
+    </span>
+  ) : (
+    <span>
+      To be eligible to earn monthly rewards you will need to{" "}
+      <a
+        className={"no-arrow"}
+        href={LINK.setUpPRE}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        set up and run a PRE node
+      </a>
+      .
+    </span>
+  )
 
   const link = isPRESetUp ? LINK.thresholdDapp : LINK.setUpPRE
 
@@ -128,10 +153,13 @@ const AuthorizationHistoryActions = ({ operatorAddress, isPRESetUp }) => {
       )}
       <ReactTooltip
         id={`set up pre-for-operator-${operatorAddress}`}
+        delayHide={300}
         place="top"
         type="dark"
         effect={"solid"}
-        className={"react-tooltip-base react-tooltip-base--arrow-right"}
+        className={
+          "react-tooltip-base react-tooltip-base--arrow-right react-tooltip-base--stay-on-hover"
+        }
         offset={{ left: "100%!important" }}
       >
         <span>{tooltipText}</span>
