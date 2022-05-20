@@ -14,14 +14,14 @@ import useUpdateInitializedDelegations from "../hooks/useUpdateInitializedDelega
 import * as Icons from "./Icons"
 
 const DelegatedTokensTable = ({
-  delegationsWithTAuthData,
+  delegations,
   cancelStakeSuccessCallback,
   keepTokenBalance,
   grants,
   addKeep,
   undelegationPeriod,
 }) => {
-  useUpdateInitializedDelegations(delegationsWithTAuthData)
+  useUpdateInitializedDelegations(delegations)
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
       const grant = grants.find(({ id }) => id === grantId)
@@ -58,7 +58,7 @@ const DelegatedTokensTable = ({
     <Tile>
       <DataTable
         title="Delegations"
-        data={delegationsWithTAuthData}
+        data={delegations}
         itemFieldId="operatorAddress"
         noDataMessage="No delegated tokens."
         centered

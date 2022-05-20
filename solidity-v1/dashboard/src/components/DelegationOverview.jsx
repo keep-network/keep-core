@@ -11,7 +11,7 @@ import Tag from "./Tag"
 import * as Icons from "./Icons"
 
 const DelegationOverview = ({
-  delegationsWithTAuthData,
+  delegations,
   undelegations,
   isFetching,
   topUps: availableTopUps,
@@ -35,9 +35,8 @@ const DelegationOverview = ({
         isSameEthAddress(lookupOperator, operatorAddress)
       )
 
-      const isDelegation = delegationsWithTAuthData.some(
-        ({ operatorAddress }) =>
-          isSameEthAddress(lookupOperator, operatorAddress)
+      const isDelegation = delegations.some(({ operatorAddress }) =>
+        isSameEthAddress(lookupOperator, operatorAddress)
       )
 
       if (isDelegation || isUndelegation) {
@@ -46,7 +45,7 @@ const DelegationOverview = ({
       }
     }
     return topUps
-  }, [availableTopUps, delegationsWithTAuthData, undelegations])
+  }, [availableTopUps, delegations, undelegations])
 
   return (
     <section>
@@ -67,7 +66,7 @@ const DelegationOverview = ({
         skeletonComponent={<DataTableSkeleton />}
       >
         <DelegatedTokensTable
-          delegationsWithTAuthData={delegationsWithTAuthData}
+          delegations={delegations}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
           keepTokenBalance={keepTokenBalance}
           grants={grants}

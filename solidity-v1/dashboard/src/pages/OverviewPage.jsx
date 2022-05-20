@@ -22,7 +22,6 @@ import useKeepBalanceInfo from "../hooks/useKeepBalanceInfo"
 import useGrantedBalanceInfo from "../hooks/useGrantedBalanceInfo"
 import ThresholdUpgradePage from "./threshold/ThresholdUpgradePage"
 import NavLink from "../components/NavLink"
-import useDelegationsWithTAuthData from "../hooks/useDelegationsWithTAuthData"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -48,10 +47,12 @@ const OverviewPage = (props) => {
   }, [dispatch, isConnected, address])
 
   const keepToken = useSelector((state) => state.keepTokenBalance)
-  const { undelegations, isDelegationDataFetching, undelegationPeriod } =
-    useSelector((state) => state.staking)
-
-  const delegationsWithTAuthData = useDelegationsWithTAuthData()
+  const {
+    delegations,
+    undelegations,
+    isDelegationDataFetching,
+    undelegationPeriod,
+  } = useSelector((state) => state.staking)
 
   const { grants, isFetching: grantsAreFetching } = useSelector(
     (state) => state.tokenGrants
@@ -92,7 +93,7 @@ const OverviewPage = (props) => {
           >
             <DelegatedTokensTable
               title="Delegation History"
-              delegationsWithTAuthData={delegationsWithTAuthData}
+              delegations={delegations}
               cancelStakeSuccessCallback={cancelStakeSuccessCallback}
               keepTokenBalance={keepToken.value}
               grants={grants}

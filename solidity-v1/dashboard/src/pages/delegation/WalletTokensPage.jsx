@@ -10,7 +10,6 @@ import DelegationOverview from "../../components/DelegationOverview"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
 import useKeepBalanceInfo from "../../hooks/useKeepBalanceInfo"
-import useDelegationsWithTAuthData from "../../hooks/useDelegationsWithTAuthData"
 
 const filterByOwned = (delegation) => !delegation.grantId
 
@@ -19,6 +18,7 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
     minimumStake,
     initializationPeriod,
     undelegationPeriod,
+    delegations,
     undelegations,
     isDelegationDataFetching,
     areTopUpsFetching,
@@ -27,11 +27,9 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
 
   const keepToken = useSelector((state) => state.keepTokenBalance)
 
-  const delegationsWithTAuthData = useDelegationsWithTAuthData()
-
-  const ownedDelegationsWithTAuthData = useMemo(() => {
-    return delegationsWithTAuthData.filter(filterByOwned)
-  }, [delegationsWithTAuthData])
+  const ownedDelegations = useMemo(() => {
+    return delegations.filter(filterByOwned)
+  }, [delegations])
 
   const ownedUndelegations = useMemo(() => {
     return undelegations.filter(filterByOwned)
@@ -86,7 +84,7 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
         </section>
       </section>
       <DelegationOverview
-        delegationsWithTAuthData={ownedDelegationsWithTAuthData}
+        delegations={ownedDelegations}
         undelegations={ownedUndelegations}
         isFetching={isDelegationDataFetching}
         topUps={topUps}
