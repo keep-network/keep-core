@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "docs/**"
+      - "docs-v1/**"
       - "solidity-v1/**"
       - "!solidity-v1/dashboard/**"
   pull_request:
@@ -25,7 +25,7 @@ jobs:
         with:
           filters: |
             path-filter:
-              - './((docs|(solidity-v1/!dashboard))/**)'
+              - './((docs-v1|(solidity-v1/!dashboard))/**)'
 
   docs-tex:
     runs-on: ubuntu-latest
@@ -36,9 +36,9 @@ jobs:
         || needs.docs-detect-changes.outputs.path-filter == 'true'
     defaults:
       run:
-        working-directory: ./docs
+        working-directory: ./docs-v1
     env:
-      DOCS_DIR: ${{ github.workspace }}/tmp/docs
+      DOCS_DIR: ${{ github.workspace }}/tmp/docs-v1
     steps:
       - uses: actions/checkout@v2
 
@@ -61,7 +61,7 @@ jobs:
           project: cfc-production
           bucket-name: docs.keep.network
           bucket-path: .
-          build-folder: tmp/docs
+          build-folder: tmp/docs-v1
 
       # A pull_request event is a PR; deploy to preview bucket.
       - if: github.event_name == 'pull_request'
@@ -72,7 +72,7 @@ jobs:
           project: cfc-production
           bucket-name: docs.keep.network
           bucket-path: ./${{ github.head_ref }}
-          build-folder: tmp/docs
+          build-folder: tmp/docs-v1
     
   docs-solidity:
     runs-on: ubuntu-latest
@@ -81,7 +81,7 @@ jobs:
       github.event_name != 'pull_request'
         || needs.docs-detect-changes.outputs.path-filter == 'true'
     env:
-      SOLIDITY_DOCS_DIR: ${{ github.workspace }}/docs/solidity-v1
+      SOLIDITY_DOCS_DIR: ${{ github.workspace }}/docs-v1/solidity-v1
     steps:
       - uses: actions/checkout@v2
 
@@ -114,13 +114,13 @@ jobs:
         continue-on-error: true
         with:
           name: Solidity Docs
-          path: ${{ github.workspace }}/docs/solidity-v1
+          path: ${{ github.workspace }}/docs-v1/solidity-v1
 
       - name: Build HTML docs
         id: html
         uses: thesis/asciidoctor-action@v1.0.1
         with:
-          files: 'docs/*.adoc docs/**/*.adoc'
+          files: 'docs-v1/*.adoc docs-v1/**/*.adoc'
           args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
 
       # A push event is a main merge; deploy to primary bucket.
@@ -132,7 +132,7 @@ jobs:
           project: cfc-production
           bucket-name: docs.keep.network
           bucket-path: .
-          build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+          build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs-v1
 
       # A pull_request event is a PR; deploy to preview bucket.
       - if: github.event_name == 'pull_request'
@@ -143,7 +143,7 @@ jobs:
           project: cfc-production
           bucket-name: docs.keep.network
           bucket-path: ./${{ github.head_ref }}
-          build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+          build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs-v1
 
   docs-pdf:
     runs-on: ubuntu-latest
@@ -166,7 +166,7 @@ jobs:
         id: pdf
         uses: thesis/asciidoctor-action@v1.0.1
         with:
-          files: 'docs/*.adoc docs/**/*.adoc'
+          files: 'docs-v1/*.adoc docs-v1/**/*.adoc'
           format: pdf
           args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
 
@@ -179,7 +179,7 @@ jobs:
           project: cfc-production
           bucket-name: docs.keep.network
           bucket-path: .
-          build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
+          build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs-v1
 
       # A pull_request event is a PR; deploy to preview bucket.
       - if: github.event_name == 'pull_request'
@@ -190,4 +190,4 @@ jobs:
           project: cfc-production
           bucket-name: docs.keep.network
           bucket-path: ./${{ github.head_ref }}
-          build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
+          build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs-v1
