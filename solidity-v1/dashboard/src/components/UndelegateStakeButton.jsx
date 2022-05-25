@@ -37,20 +37,16 @@ const UndelegateStakeButton = (props) => {
     })
   }
 
-  const renderUndelegateStakeButton = (
-    delegationOperator,
-    btnClassName,
-    disabled
-  ) => {
-    if (disabled) {
+  const renderUndelegateStakeButton = () => {
+    if (props.disabled) {
       return (
         <>
           <span
             data-tip
-            data-for={`undelegate-button-for-operator-${delegationOperator}`}
+            data-for={`undelegate-button-for-operator-${props.operator}`}
           >
             <Button
-              className={`undelegate-stake-button ${btnClassName}`}
+              className={`undelegate-stake-button ${props.btnClassName}`}
               onClick={undelegate}
               disabled={true}
             >
@@ -58,7 +54,7 @@ const UndelegateStakeButton = (props) => {
             </Button>
           </span>
           <ReactTooltip
-            id={`undelegate-button-for-operator-${delegationOperator}`}
+            id={`undelegate-button-for-operator-${props.operator}`}
             place="top"
             type="dark"
             effect={"solid"}
@@ -103,11 +99,7 @@ const UndelegateStakeButton = (props) => {
       cancel
     </SubmitButton>
   ) : (
-    renderUndelegateStakeButton(
-      props.operator,
-      props.btnClassName,
-      props.disabled
-    )
+    renderUndelegateStakeButton()
   )
 }
 
