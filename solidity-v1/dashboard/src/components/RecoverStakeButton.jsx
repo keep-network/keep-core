@@ -5,6 +5,7 @@ import { useModal } from "../hooks/useModal"
 import { MODAL_TYPES } from "../constants/constants"
 import { useWeb3Address } from "./WithWeb3Context"
 import * as Icons from "./Icons"
+import { colors } from "../constants/colors"
 
 const RecoverStakeButton = ({
   operatorAddress,
@@ -40,7 +41,7 @@ const RecoverStakeButton = ({
   return (
     <Button className={props.btnClassName} onClick={onRecoverStake}>
       <span className={"flex row center"}>
-        <Icons.Refresh color={"#000000"} width={12} height={12} />
+        <Icons.Refresh color={colors.black} width={12} height={12} />
         &nbsp;{props.btnText}
       </span>
     </Button>
@@ -49,7 +50,7 @@ const RecoverStakeButton = ({
 
 RecoverStakeButton.defaultProps = {
   btnClassName: "btn btn-sm btn-secondary",
-  btnText: "recover",
+  btnText: "claim",
   successCallback: () => {},
   isFromGrant: false,
 }

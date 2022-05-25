@@ -251,7 +251,7 @@ const OK = ({ color }) => (
 )
 
 OK.defaultProps = {
-  color: colors.black,
+  color: colors.night,
 }
 
 const OKBadge = ({ bgColor, color }) => (
