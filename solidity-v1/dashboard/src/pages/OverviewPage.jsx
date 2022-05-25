@@ -5,7 +5,6 @@ import TokenOverview from "../components/TokenOverview"
 import { LoadingOverlay } from "../components/Loadable"
 import { isEmptyArray } from "../utils/array.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
-import { Link } from "react-router-dom"
 import PageWrapper from "../components/PageWrapper"
 import { useSelector, useDispatch } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
@@ -122,12 +121,12 @@ const OverviewFirstSection = () => {
         </h4>
         <div className="upgrade-threshold-banner__content">
           <div className="upgrade-threshold-banner__upgrade-btn">
-            <Link
+            <NavLink
               to={ThresholdUpgradePage.route.path}
               className="btn btn-primary btn-lg"
             >
               upgrade now
-            </Link>
+            </NavLink>
           </div>
           <div>
             <h4 className={"text-grey-50"}>
