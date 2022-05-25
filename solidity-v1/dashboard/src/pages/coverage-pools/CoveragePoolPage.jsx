@@ -173,7 +173,7 @@ const CoveragePoolPage = () => {
             />
           </OnlyIf>
           <span className={"text-grey-60 flex row"}>
-            <Icons.KeepSymbol
+            <Icons.CovKeep
               width={20}
               height={20}
               style={{ marginRight: "0.5rem", marginTop: "0.3rem" }}
