@@ -172,7 +172,7 @@ const CoveragePoolPage = () => {
               wrapperClassName={"mb-2"}
             />
           </OnlyIf>
-          <span className={"text-grey-60 flex row"}>
+          <div className={"text-grey-60 flex row"}>
             <Icons.CovKeep
               width={20}
               height={20}
@@ -189,7 +189,7 @@ const CoveragePoolPage = () => {
               </a>
               &nbsp;to your Ethereum wallet to view balance in the wallet.
             </span>
-          </span>
+          </div>
         </section>
 
         <OnlyIf condition={hasCovKEEPTokens}>
