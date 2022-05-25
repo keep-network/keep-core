@@ -35,6 +35,7 @@ import TBTCV2Migration from "./tbtc-migration"
 import KeepToTStaking from "./keep-to-t-staking"
 import { PRE } from "./constants"
 import SimplePreApplicationAbi from "./contracts-artifacts/SimplePreApplication.json"
+import { getChainId } from "./utils"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
 /** @typedef { import("../web3").BaseContract} BaseContract */
@@ -44,9 +45,7 @@ class Keep {
   static initialize(web3) {
     const keep = new Keep(web3)
     keep.initializeContracts()
-    keep._initializePREContract(web3).then(() => {
-      keep.initializeServices()
-    })
+    keep.initializeServices()
 
     return keep
   }
@@ -59,6 +58,8 @@ class Keep {
   constructor(_web3, exchangeService = null) {
     this.web3 = _web3
     this.exchangeService = exchangeService || new UniswapV2Exchange()
+    this.chainId = getChainId()
+    console.log("CHAIN ID: ", this.chainId)
   }
 
   /** @type {BaseContract} */
@@ -186,6 +187,8 @@ class Keep {
       null,
       1
     )
+
+    this._initializePREContract()
   }
 
   initializeServices = () => {
@@ -212,12 +215,12 @@ class Keep {
     )
   }
 
-  _initializePREContract = async (web3) => {
-    const chainId = await web3.lib.eth.getChainId()
-    const preContractAddress = PRE.PRE_ADDRESSESS[chainId]
-    const txHash = chainId === "1" ? PRE.MAINNET_PRE_DEPLOYMENT_TX_HASH : null
+  _initializePREContract = () => {
+    const preContractAddress = PRE.PRE_ADDRESSESS[this.chainId]
+    const txHash =
+      this.chainId === 1 ? PRE.MAINNET_PRE_DEPLOYMENT_TX_HASH : null
     const deploymentBlock =
-      chainId === "1" ? PRE.MAINNET_PRE_DEPLOYMENT_BLOCK : 1
+      this.chainId === 1 ? PRE.MAINNET_PRE_DEPLOYMENT_BLOCK : 1
 
     this.simplePREApplicationContract = this.web3.createContractInstance(
       SimplePreApplicationAbi,
