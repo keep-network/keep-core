@@ -21,6 +21,7 @@ import useKeepBalanceInfo from "../hooks/useKeepBalanceInfo"
 import useGrantedBalanceInfo from "../hooks/useGrantedBalanceInfo"
 import ThresholdUpgradePage from "./threshold/ThresholdUpgradePage"
 import NavLink from "../components/NavLink"
+import HowItWorksPage from "./threshold/HowItWorksPage"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -136,7 +137,7 @@ const OverviewFirstSection = () => {
               <Icons.TTokenSymbol width={25} height={25} />
               &nbsp;
               <NavLink
-                to="/threshold/how-it-works"
+                to={HowItWorksPage.route.path}
                 className="upgrade-threshold-banner__learn-more text-black"
               >
                 Learn more
