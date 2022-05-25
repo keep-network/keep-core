@@ -184,7 +184,6 @@ const CoveragePoolPage = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 href={LINK.coveragePools.etherscanCovKeepToken}
-                className={"no-arrow"}
               >
                 token address
               </a>
