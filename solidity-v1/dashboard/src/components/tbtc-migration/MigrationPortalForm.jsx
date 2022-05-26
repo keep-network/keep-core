@@ -20,14 +20,14 @@ const styles = {
   fromBox: {
     color: colors.white,
     borderRadius: "0.5rem",
-    backgroundColor: colors.black,
+    backgroundColor: colors.night,
     padding: "0 0.5rem",
   },
   toBox: {
-    color: colors.black,
+    color: colors.night,
     borderRadius: "0.5rem",
-    backgroundColor: colors.white,
-    border: `1px solid ${colors.black}`,
+    backgroundColor: colors.night,
+    border: `1px solid ${colors.night}`,
     padding: "0 0.5rem",
   },
 }

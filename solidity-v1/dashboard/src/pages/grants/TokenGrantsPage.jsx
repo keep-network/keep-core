@@ -4,7 +4,6 @@ import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import ProviderEngine from "web3-provider-engine"
 import { useSelector, useDispatch } from "react-redux"
 import { useParams } from "react-router-dom"
-import { Link } from "react-router-dom"
 import PageWrapper from "../../components/PageWrapper"
 import { TokenGrantDetails } from "../../components/TokenGrantOverview"
 import { LoadingOverlay } from "../../components/Loadable"
@@ -27,6 +26,7 @@ import { Web3Context } from "../../components/WithWeb3Context"
 import { GrantedTokensPage } from "../delegation/GrantedTokensPage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import TokenAmount from "../../components/TokenAmount"
+import NavLink from "../../components/NavLink"
 
 const TokenGrantsPage = (props) => {
   const dispatch = useDispatch()
@@ -67,7 +67,7 @@ const TokenGrantOverview = React.memo(({ tokenGrant }) => {
       <div className="grant-amount">
         <header className="flex row center space-between mb-1">
           <h3 className="text-grey-70">Grant Amount</h3>
-          <Link
+          <NavLink
             to={{
               pathname: GrantedTokensPage.route.path,
               hash: `${tokenGrant.id}`,
@@ -75,7 +75,7 @@ const TokenGrantOverview = React.memo(({ tokenGrant }) => {
             className="btn btn-secondary btn-sm"
           >
             delegate
-          </Link>
+          </NavLink>
         </header>
         <TokenGrantDetails
           selectedGrant={tokenGrant}

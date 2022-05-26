@@ -3,8 +3,9 @@ import { connect } from "react-redux"
 import Button, { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
 import { ContractsLoaded } from "../contracts"
-import { MODAL_TYPES } from "../constants/constants"
+import { LINK, MODAL_TYPES } from "../constants/constants"
 import { cancelStake, undelegateStake } from "../actions/web3"
+import ReactTooltip from "react-tooltip"
 
 const UndelegateStakeButton = (props) => {
   const { openConfirmationModal, openModal } = useModal()
@@ -36,6 +37,58 @@ const UndelegateStakeButton = (props) => {
     })
   }
 
+  const renderUndelegateStakeButton = () => {
+    if (props.disabled) {
+      return (
+        <>
+          <span
+            data-tip
+            data-for={`undelegate-button-for-operator-${props.operator}`}
+          >
+            <Button
+              className={`undelegate-stake-button ${props.btnClassName}`}
+              onClick={undelegate}
+              disabled={true}
+            >
+              {props.btnText}
+            </Button>
+          </span>
+          <ReactTooltip
+            id={`undelegate-button-for-operator-${props.operator}`}
+            place="top"
+            type="dark"
+            effect={"solid"}
+            className={"react-tooltip-base"}
+            clickable={true}
+            delayHide={200}
+          >
+            <span>
+              This stake is staked on Threshold. You first need to undelegate
+              this stake from the{" "}
+              <a
+                href={LINK.thresholdDapp}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Threshold dashboard here
+              </a>
+            </span>
+          </ReactTooltip>
+        </>
+      )
+    }
+
+    return (
+      <Button
+        className={props.btnClassName}
+        onClick={undelegate}
+        disabled={props.disabled}
+      >
+        {props.btnText}
+      </Button>
+    )
+  }
+
   return props.isInInitializationPeriod ? (
     <SubmitButton
       className={props.btnClassName}
@@ -46,13 +99,7 @@ const UndelegateStakeButton = (props) => {
       cancel
     </SubmitButton>
   ) : (
-    <Button
-      className={props.btnClassName}
-      onClick={undelegate}
-      disabled={props.disabled}
-    >
-      {props.btnText}
-    </Button>
+    renderUndelegateStakeButton()
   )
 }
 

@@ -4,6 +4,8 @@ import { ContractsLoaded } from "../contracts"
 import { useModal } from "../hooks/useModal"
 import { MODAL_TYPES } from "../constants/constants"
 import { useWeb3Address } from "./WithWeb3Context"
+import * as Icons from "./Icons"
+import { colors } from "../constants/colors"
 
 const RecoverStakeButton = ({
   operatorAddress,
@@ -38,14 +40,17 @@ const RecoverStakeButton = ({
 
   return (
     <Button className={props.btnClassName} onClick={onRecoverStake}>
-      {props.btnText}
+      <span className={"flex row center"}>
+        <Icons.Refresh color={colors.black} width={12} height={12} />
+        &nbsp;{props.btnText}
+      </span>
     </Button>
   )
 }
 
 RecoverStakeButton.defaultProps = {
   btnClassName: "btn btn-sm btn-secondary",
-  btnText: "recover",
+  btnText: "claim",
   successCallback: () => {},
   isFromGrant: false,
 }

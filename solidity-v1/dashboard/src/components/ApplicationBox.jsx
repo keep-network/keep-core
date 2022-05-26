@@ -1,6 +1,6 @@
 import React from "react"
-import { Link } from "react-router-dom"
 import { colors } from "../constants/colors"
+import NavLink from "./NavLink"
 
 const wrapperStyle = {
   width: "325px",
@@ -34,9 +34,9 @@ const ApplicationBox = ({
       <span className="text-small text-center text-grey-60 mt-3">
         {description}
       </span>
-      <Link to={btnLink} className="btn btn-primary mt-2">
+      <NavLink to={btnLink} className="btn btn-primary mt-2">
         manage
-      </Link>
+      </NavLink>
     </section>
   )
 }

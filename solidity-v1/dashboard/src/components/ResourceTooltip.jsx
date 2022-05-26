@@ -1,8 +1,8 @@
 import React from "react"
-import { Link } from "react-router-dom"
 import Tooltip from "./Tooltip"
 import * as Icons from "./Icons"
 import { colors } from "../constants/colors"
+import NavLink from "./NavLink"
 
 export const ResourceTooltipContent = ({
   title,
@@ -21,9 +21,9 @@ export const ResourceTooltipContent = ({
       <Tooltip.Divider />
       <Tooltip.Content>{content}</Tooltip.Content>
       {withRedirectLink && (
-        <Link to={redirectLink} className="internal text-small">
+        <NavLink to={redirectLink} className="internal text-small">
           {linkText}
-        </Link>
+        </NavLink>
       )}
     </>
   )

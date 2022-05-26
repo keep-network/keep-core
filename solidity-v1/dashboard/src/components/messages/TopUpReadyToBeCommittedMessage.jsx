@@ -1,7 +1,7 @@
 import React from "react"
-import { Link } from "react-router-dom"
 import * as Icons from "../Icons"
 import { Message } from "../Message"
+import NavLink from "../NavLink"
 
 const TopUpReadyToBeCommittedMessage = ({
   sticky,
@@ -17,7 +17,7 @@ const TopUpReadyToBeCommittedMessage = ({
         hash: `${grantId}`,
       }
     : "/delegations/wallet"
-  const content = <Link to={path}>Commit top up</Link>
+  const content = <NavLink to={path}>Commit top up</NavLink>
 
   return (
     <Message

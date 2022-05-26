@@ -128,29 +128,7 @@ const AuthorizationHistoryActions = ({ operatorAddress, isPRESetUp }) => {
   const link = isPRESetUp ? LINK.thresholdDapp : LINK.setUpPRE
 
   return (
-    <a
-      href={link}
-      rel="noopener noreferrer"
-      target="_blank"
-      className={`btn btn-secondary btn-semi-sm`}
-      style={{
-        marginLeft: "auto",
-        fontFamily: `"Work-Sans", sans-serif`,
-      }}
-    >
-      {isPRESetUp ? (
-        <Icons.QuestionFill
-          data-tip
-          data-for={`set up pre-for-operator-${operatorAddress}`}
-          className={"tooltip--button-corner"}
-        />
-      ) : (
-        <Icons.AlertFill
-          data-tip
-          data-for={`set up pre-for-operator-${operatorAddress}`}
-          className={"tooltip--button-corner"}
-        />
-      )}
+    <>
       <ReactTooltip
         id={`set up pre-for-operator-${operatorAddress}`}
         delayHide={300}
@@ -164,21 +142,45 @@ const AuthorizationHistoryActions = ({ operatorAddress, isPRESetUp }) => {
       >
         <span>{tooltipText}</span>
       </ReactTooltip>
-      {isPRESetUp ? (
-        <span className={"flex row center"}>
-          <Icons.TTokenSymbol
-            width={12}
-            height={12}
-            style={{ marginRight: "0.5rem" }}
-          />{" "}
-          rewards
-        </span>
-      ) : (
-        <span>
-          set up pre <Icons.ArrowTopRight />
-        </span>
-      )}
-    </a>
+      <a
+        href={link}
+        rel="noopener noreferrer"
+        target="_blank"
+        className={`btn btn-secondary btn-semi-sm`}
+        style={{
+          marginLeft: "auto",
+          fontFamily: `"Work-Sans", sans-serif`,
+        }}
+      >
+        {isPRESetUp ? (
+          <Icons.QuestionFill
+            data-tip
+            data-for={`set up pre-for-operator-${operatorAddress}`}
+            className={"tooltip--button-corner"}
+          />
+        ) : (
+          <Icons.AlertFill
+            data-tip
+            data-for={`set up pre-for-operator-${operatorAddress}`}
+            className={"tooltip--button-corner"}
+          />
+        )}
+        {isPRESetUp ? (
+          <span className={"flex row center"}>
+            <Icons.TTokenSymbol
+              width={12}
+              height={12}
+              style={{ marginRight: "0.5rem" }}
+            />{" "}
+            rewards
+          </span>
+        ) : (
+          <span>
+            set up pre <Icons.ArrowTopRight />
+          </span>
+        )}
+      </a>
+    </>
   )
 }
 

@@ -66,7 +66,7 @@ const DelegationOverview = ({
         skeletonComponent={<DataTableSkeleton />}
       >
         <DelegatedTokensTable
-          delegatedTokens={delegations}
+          delegations={delegations}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
           keepTokenBalance={keepTokenBalance}
           grants={grants}
