@@ -158,8 +158,3 @@ const contracts = {
 }
 
 export default contracts
-
-// The artifacts from @keep-network/keep-core for a given build only support a single network id
-export function getFirstNetworkIdFromArtifact() {
-  return Object.keys(KeepToken.networks)[0]
-}

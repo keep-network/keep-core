@@ -35,15 +35,14 @@ import TBTCV2Migration from "./tbtc-migration"
 import KeepToTStaking from "./keep-to-t-staking"
 import { PRE } from "./constants"
 import SimplePreApplicationAbi from "./contracts-artifacts/SimplePreApplication.json"
-import { getChainId } from "./utils"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
 /** @typedef { import("../web3").BaseContract} BaseContract */
 /** @typedef { import("./exchange-api").BaseExchange} BaseExchange */
 
 class Keep {
-  static initialize(web3) {
-    const keep = new Keep(web3)
+  static initialize(web3, chainId) {
+    const keep = new Keep(web3, chainId)
     keep.initializeContracts()
     keep.initializeServices()
 
@@ -52,14 +51,14 @@ class Keep {
 
   /**
    * @param {Web3LibWrapper} _web3 The web3 lib wrapper.
+   * @param {number} chainId Id of the current chain.
    * @param {BaseExchange} exchangeService The exchange service that provides
    * data from the external exchanges.
    */
-  constructor(_web3, exchangeService = null) {
+  constructor(_web3, chainId, exchangeService = null) {
     this.web3 = _web3
     this.exchangeService = exchangeService || new UniswapV2Exchange()
-    this.chainId = getChainId()
-    console.log("CHAIN ID: ", this.chainId)
+    this.chainId = chainId
   }
 
   /** @type {BaseContract} */
