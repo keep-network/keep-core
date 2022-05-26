@@ -26,6 +26,7 @@ import { Keep } from "../../contracts"
 import { LINK, MODAL_TYPES } from "../../constants/constants"
 import { CoveragePoolV1ExchangeRate } from "../../components/coverage-pools/ExchangeRate"
 import * as Icons from "../../components/Icons"
+import { ViewInBlockExplorer } from "../../components/ViewInBlockExplorer"
 
 const CoveragePoolPage = () => {
   const { openConfirmationModal, openModal } = useModal()
@@ -180,13 +181,11 @@ const CoveragePoolPage = () => {
             />{" "}
             <span>
               Add the covKEEP&nbsp;
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href={LINK.coveragePools.etherscanCovKeepToken}
-              >
-                token address
-              </a>
+              <ViewInBlockExplorer
+                type="token"
+                id={LINK.coveragePools.covKeepAddress}
+                text={"token address"}
+              />
               &nbsp;to your Ethereum wallet to view balance in the wallet.
             </span>
           </div>
