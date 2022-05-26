@@ -27,19 +27,22 @@ import contracts, {
   REWARDS_POOL_CONTRACT_NAME,
   THRESHOLD_STAKING_CONTRACT_NAME,
   THRESHOLD_KEEP_STAKE_CONTRACT_NAME,
+  SIMPLE_PRE_APPLICATION_CONTRACT_NAME,
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
 import { UniswapV2Exchange } from "./exchange-api"
 import TBTCV2Migration from "./tbtc-migration"
 import KeepToTStaking from "./keep-to-t-staking"
+import { PRE } from "./constants"
+import SimplePreApplicationAbi from "./contracts-artifacts/SimplePreApplication.json"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
 /** @typedef { import("../web3").BaseContract} BaseContract */
 /** @typedef { import("./exchange-api").BaseExchange} BaseExchange */
 
 class Keep {
-  static initialize(web3) {
-    const keep = new Keep(web3)
+  static initialize(web3, chainId) {
+    const keep = new Keep(web3, chainId)
     keep.initializeContracts()
     keep.initializeServices()
 
@@ -48,12 +51,14 @@ class Keep {
 
   /**
    * @param {Web3LibWrapper} _web3 The web3 lib wrapper.
+   * @param {number} chainId Id of the current chain.
    * @param {BaseExchange} exchangeService The exchange service that provides
    * data from the external exchanges.
    */
-  constructor(_web3, exchangeService = null) {
+  constructor(_web3, chainId, exchangeService = null) {
     this.web3 = _web3
     this.exchangeService = exchangeService || new UniswapV2Exchange()
+    this.chainId = chainId
   }
 
   /** @type {BaseContract} */
@@ -135,7 +140,10 @@ class Keep {
   [THRESHOLD_STAKING_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [THRESHOLD_KEEP_STAKE_CONTRACT_NAME]
+  [THRESHOLD_KEEP_STAKE_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [SIMPLE_PRE_APPLICATION_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
@@ -178,6 +186,8 @@ class Keep {
       null,
       1
     )
+
+    this._initializePREContract()
   }
 
   initializeServices = () => {
@@ -199,7 +209,23 @@ class Keep {
     this.keepToTStaking = new KeepToTStaking(
       this.thresholdStakingContract,
       this.thresholdKeepStakeContract,
+      this.simplePREApplicationContract,
       this.web3
+    )
+  }
+
+  _initializePREContract = () => {
+    const preContractAddress = PRE.PRE_ADDRESSESS[this.chainId]
+    const txHash =
+      this.chainId === 1 ? PRE.MAINNET_PRE_DEPLOYMENT_TX_HASH : null
+    const deploymentBlock =
+      this.chainId === 1 ? PRE.MAINNET_PRE_DEPLOYMENT_BLOCK : 1
+
+    this.simplePREApplicationContract = this.web3.createContractInstance(
+      SimplePreApplicationAbi,
+      preContractAddress,
+      txHash,
+      deploymentBlock
     )
   }
 

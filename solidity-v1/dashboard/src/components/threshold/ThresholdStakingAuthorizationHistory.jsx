@@ -83,8 +83,11 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
           header="actions"
           tdStyles={{ textAlign: "right" }}
           field=""
-          renderContent={({ operatorAddress }) => (
-            <AuthorizationHistoryActions operatorAddress={operatorAddress} />
+          renderContent={({ operatorAddress, isPRESetUp }) => (
+            <AuthorizationHistoryActions
+              operatorAddress={operatorAddress}
+              isPRESetUp={isPRESetUp}
+            />
           )}
         />
       </DataTable>
@@ -92,10 +95,41 @@ const ThresholdAuthorizationHistory = ({ contracts }) => {
   )
 }
 
-const AuthorizationHistoryActions = ({ operatorAddress }) => {
+const AuthorizationHistoryActions = ({ operatorAddress, isPRESetUp }) => {
+  const tooltipText = isPRESetUp ? (
+    <span>
+      Go to the{" "}
+      <a
+        className={"no-arrow"}
+        href={LINK.thresholdDapp}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        Threshold dashboard
+      </a>{" "}
+      to manage and claim your rewards. Rewards will be distributed at the end
+      of every month.
+    </span>
+  ) : (
+    <span>
+      To be eligible to earn monthly rewards you will need to{" "}
+      <a
+        className={"no-arrow"}
+        href={LINK.setUpPRE}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        set up and run a PRE node
+      </a>
+      .
+    </span>
+  )
+
+  const link = isPRESetUp ? LINK.thresholdDapp : LINK.setUpPRE
+
   return (
     <a
-      href={LINK.setUpPRE}
+      href={link}
       rel="noopener noreferrer"
       target="_blank"
       className={`btn btn-secondary btn-semi-sm`}
@@ -104,25 +138,46 @@ const AuthorizationHistoryActions = ({ operatorAddress }) => {
         fontFamily: `"Work-Sans", sans-serif`,
       }}
     >
-      <Icons.QuestionFill
-        data-tip
-        data-for={`set up pre-for-operator-${operatorAddress}`}
-        className={"tooltip--button-corner"}
-      />
+      {isPRESetUp ? (
+        <Icons.QuestionFill
+          data-tip
+          data-for={`set up pre-for-operator-${operatorAddress}`}
+          className={"tooltip--button-corner"}
+        />
+      ) : (
+        <Icons.AlertFill
+          data-tip
+          data-for={`set up pre-for-operator-${operatorAddress}`}
+          className={"tooltip--button-corner"}
+        />
+      )}
       <ReactTooltip
         id={`set up pre-for-operator-${operatorAddress}`}
+        delayHide={300}
         place="top"
         type="dark"
         effect={"solid"}
-        className={"react-tooltip-base react-tooltip-base--arrow-right"}
+        className={
+          "react-tooltip-base react-tooltip-base--arrow-right react-tooltip-base--stay-on-hover"
+        }
         offset={{ left: "100%!important" }}
       >
-        <span>
-          To be eligible to earn monthly rewards you will need to set up and run
-          a PRE node.
-        </span>
+        <span>{tooltipText}</span>
       </ReactTooltip>
-      set up pre <Icons.ArrowTopRight />
+      {isPRESetUp ? (
+        <span className={"flex row center"}>
+          <Icons.TTokenSymbol
+            width={12}
+            height={12}
+            style={{ marginRight: "0.5rem" }}
+          />{" "}
+          rewards
+        </span>
+      ) : (
+        <span>
+          set up pre <Icons.ArrowTopRight />
+        </span>
+      )}
     </a>
   )
 }
