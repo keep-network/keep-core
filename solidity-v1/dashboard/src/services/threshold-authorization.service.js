@@ -32,6 +32,13 @@ const fetchThresholdAuthorizationData = async (address) => {
   const keepToTStakedEvents =
     await Keep.keepToTStaking.getStakedEventsByOperator(authorizerOperators)
 
+  const operatorConfirmedEvents = (
+    await Keep.keepToTStaking.getOperatorConfirmedEvents(authorizerOperators)
+  ).reduce((map, _) => {
+    map[_.returnValues.stakingProvider] = _.returnValues.operator
+    return map
+  }, {})
+
   const operatorsStakedToT = keepToTStakedEvents.reduce((map, _) => {
     map[_.returnValues.stakingProvider] = { ..._.returnValues }
     return map
@@ -86,6 +93,7 @@ const fetchThresholdAuthorizationData = async (address) => {
       // Check if grantee is a contract. If it is then the stake from grant
       // can't be moved to T
       canBeMovedToT: !isCodeValid(code),
+      isPRESetUp: operatorConfirmedEvents.hasOwnProperty(operator),
     }
 
     authorizationData.push(authorizerOperator)

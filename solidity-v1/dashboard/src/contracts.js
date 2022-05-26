@@ -56,7 +56,7 @@ import {
 
 import KeepLib from "./lib/keep"
 import { Web3jsWrapper } from "./lib/web3"
-import { getWsUrl } from "./connectors/utils.js"
+import { getChainId, getWsUrl } from "./connectors/utils.js"
 
 const CONTRACT_DEPLOYMENT_BLOCK_CACHE = {}
 
@@ -211,7 +211,10 @@ const ContractsDeferred = new Deferred()
 const Web3Deferred = new Deferred()
 
 /** @type {KeepLib} */
-export const Keep = KeepLib.initialize(new Web3jsWrapper(new Web3(getWsUrl())))
+export const Keep = KeepLib.initialize(
+  new Web3jsWrapper(new Web3(getWsUrl())),
+  getChainId()
+)
 
 export const Web3Loaded = Web3Deferred.promise
 export const ContractsLoaded = ContractsDeferred.promise

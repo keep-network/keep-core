@@ -74,6 +74,9 @@ export const TBTCV2_VENDING_MACHINE_CONTRACT_NAME = "vendingMachineContract"
 export const THRESHOLD_STAKING_CONTRACT_NAME = "thresholdStakingContract"
 export const THRESHOLD_KEEP_STAKE_CONTRACT_NAME = "thresholdKeepStakeContract"
 
+export const SIMPLE_PRE_APPLICATION_CONTRACT_NAME =
+  "simplePREApplicationContract"
+
 const contracts = {
   [KEEP_TOKEN_CONTRACT_NAME]: { artifact: KeepToken },
   [TOKEN_GRANT_CONTRACT_NAME]: { artifact: TokenGrant },
