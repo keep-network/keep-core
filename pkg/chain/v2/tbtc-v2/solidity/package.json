@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@keep-network/tbtc-v2": "development"
+  }
+}
