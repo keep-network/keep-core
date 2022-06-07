@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@threshold-network/solidity-contracts": "development"
+  }
+}
