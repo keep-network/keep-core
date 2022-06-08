@@ -18,12 +18,12 @@ require (
 	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20211001132324-54dddf8aebd4
 	github.com/keep-network/keep-common v1.7.1-0.20211012131917-7102d7b9c6a0
 	github.com/libp2p/go-addr-util v0.2.0
-	github.com/libp2p/go-libp2p v0.15.1
+	github.com/libp2p/go-libp2p v0.20.1
 	github.com/libp2p/go-libp2p-connmgr v0.4.0
-	github.com/libp2p/go-libp2p-core v0.9.0
+	github.com/libp2p/go-libp2p-core v0.16.1
 	github.com/libp2p/go-libp2p-kad-dht v0.16.0
-	github.com/libp2p/go-libp2p-pubsub v0.5.4
-	github.com/libp2p/go-libp2p-tls v0.2.0
+	github.com/libp2p/go-libp2p-pubsub v0.7.0
+	github.com/libp2p/go-libp2p-tls v0.5.0
 	github.com/multiformats/go-multiaddr v0.4.0
 	github.com/urfave/cli v1.22.1
 	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e
