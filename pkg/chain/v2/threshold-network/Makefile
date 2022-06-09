@@ -4,9 +4,8 @@
 # at that path.
 solidity_dir := $(realpath ${SOLIDITY_DIR})
 
-# Contracts solidity sources relative to the solidity_dir.
-solidity_files_sources := \
-	node_modules/@threshold-network/solidity-contracts/contracts/staking/TokenStaking.sol \
+# Contracts for which the bindings should be generated.
+required_contracts := TokenStaking
 
 solidity_dependencies_mapping := \
 	@openzeppelin/=${solidity_dir}/node_modules/@openzeppelin/ \

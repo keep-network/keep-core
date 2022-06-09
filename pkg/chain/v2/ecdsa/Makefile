@@ -3,10 +3,8 @@
 # at that path.
 solidity_dir := $(realpath ${SOLIDITY_DIR})
 
-# Contracts solidity sources relative to the solidity_dir.
-solidity_files_sources := \
-	contracts/WalletRegistry.sol \
-	node_modules/@keep-network/sortition-pools/contracts/SortitionPool.sol
+# Contracts for which the bindings should be generated.
+required_contracts := WalletRegistry SortitionPool
 
 solidity_dependencies_mapping := \
 	openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \

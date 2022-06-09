@@ -1,10 +1,8 @@
 # Solidity files prefixed with the solidity directory path.
 solidity_files := $(addprefix ${solidity_dir}/,${solidity_files_sources}) 
 
-# Bare Solidity filenames without .sol or Solidity directory prefix.
-contract_stems := $(notdir $(basename ${solidity_files}))
 # Go bindings generated for the solidity contracts.
-contract_files := $(addprefix contract/,$(addsuffix .go,${contract_stems}))
+contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
 
 # Function to run solidity sources comilation.
 # Expects two arguments:

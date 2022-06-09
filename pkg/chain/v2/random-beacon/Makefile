@@ -3,17 +3,8 @@
 # at that path.
 solidity_dir := $(realpath ${SOLIDITY_DIR})
 
-# Contracts solidity sources relative to the solidity_dir.
-solidity_files_sources := \
-	contracts/RandomBeacon.sol \
-	node_modules/@keep-network/sortition-pools/contracts/SortitionPool.sol
-
-# Solidity files prefixed with the solidity directory path.
-solidity_files := $(addprefix ${solidity_dir}/,${solidity_files_sources}) 
-
-# Bare Solidity filenames without .sol or Solidity directory prefix.
-contract_stems := $(notdir $(basename ${solidity_files}))
-contract_files := $(addprefix contract/,$(addsuffix .go,${contract_stems}))
+# Contracts for which the bindings should be generated.
+required_contracts := RandomBeacon SortitionPool
 
 solidity_dependencies_mapping := \
 	@openzeppelin/=${solidity_dir}/node_modules/@openzeppelin/ \
