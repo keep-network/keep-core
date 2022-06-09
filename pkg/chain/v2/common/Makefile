@@ -5,7 +5,8 @@ ifndef contracts_dir
 endif
 
 # Solidity files prefixed with the solidity directory path.
-solidity_files := $(wildcard ${contracts_dir}/*.sol)
+# Multiple patterns have to be defined to get the files recursively.
+solidity_files := $(wildcard ${contracts_dir}/*.sol) $(wildcard ${contracts_dir}/*/*.sol)
 
 # Go bindings generated for the solidity contracts.
 contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
