@@ -53,8 +53,6 @@ export const params = {
   reimbursementPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
 }
 
-// TODO: We should consider using hardhat-deploy plugin for contracts deployment.
-
 export interface DeployedContracts {
   [key: string]: Contract
 }
@@ -82,6 +80,8 @@ export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
+// TODO: Read contracts deployed with the hardhat deployment scripts instead of
+// deploying them with ethers in tests.
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
   await deployments.fixture(["TokenStaking"])
   const t: T = await helpers.contracts.getContract<T>("T")
