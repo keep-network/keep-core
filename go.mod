@@ -1,6 +1,6 @@
 module github.com/keep-network/keep-core
 
-go 1.16
+go 1.17
 
 replace github.com/urfave/cli => github.com/keep-network/cli v1.20.0
 
@@ -8,6 +8,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/aristanetworks/goarista v0.0.0-20200206021550-59c4040ef2d3 // indirect
 	github.com/btcsuite/btcd v0.22.1
+	github.com/btcsuite/btcd/btcec/v2 v2.1.3
 	github.com/celo-org/celo-blockchain v0.0.0-20210222234634-f8c8f6744526
 	github.com/ethereum/go-ethereum v1.10.15
 	github.com/gogo/protobuf v1.3.2

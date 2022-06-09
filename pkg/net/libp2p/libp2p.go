@@ -124,8 +124,8 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	net.TransportIdentifier,
 	error,
 ) {
-	networkPublicKey := key.NetworkPublic(publicKey)
-	return peer.IDFromPublicKey(&networkPublicKey)
+	networkPublicKey := key.ECDSAKeyToNetworkKey(&publicKey)
+	return peer.IDFromPublicKey(networkPublicKey)
 }
 
 func (p *provider) BroadcastChannelForwarderFor(name string) {
@@ -393,17 +393,24 @@ func discoverAndListen(
 		)
 	}
 
+	// TODO: Check what to do with the `DefaultConnMgrGracePeriod` parameter
+	// that the connection manager used to accept.
+	newConnManager, err := connmgr.NewConnManager(
+		DefaultConnMgrLowWater,
+		DefaultConnMgrHighWater,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create connection manager: [%v]",
+			err,
+		)
+	}
+
 	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
-		libp2p.ConnectionManager(
-			connmgr.NewConnManager(
-				DefaultConnMgrLowWater,
-				DefaultConnMgrHighWater,
-				DefaultConnMgrGracePeriod,
-			),
-		),
+		libp2p.ConnectionManager(newConnManager),
 	}
 
 	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
@@ -418,7 +425,8 @@ func discoverAndListen(
 		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
 
-	return libp2p.New(ctx, options...)
+	// TODO: Check what to do with `ctx` that `libp2p.New` used to accept
+	return libp2p.New(options...)
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {

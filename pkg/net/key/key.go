@@ -4,10 +4,21 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 
-	"github.com/btcsuite/btcd/btcec"
+	btcec_v2 "github.com/btcsuite/btcd/btcec/v2"
 	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
+
+// TODO: After updating the `libp2p` libraries, the type of
+// `libp2pcrypto.Secp256k1PrivateKey` changed. It used to be `ecdsa.PrivateKey`,
+// now it is `secp.PrivateKey`, because the version of `btcec` has been updated
+// in the `github.com/libp2p/go-libp2p-core/crypto` library to `btcec/v2`.
+// Similar changes affect `libp2pcrypto.Secp256k1PublicKey`.
+// There seem to be two options:
+// 1) Continue using `NetworkPrivate` as libp2pcrypto.Secp256k1PrivateKey (which
+//    is now `secp.PrivateKey`).
+// 2) Change `NetworkPrivate` type to ecdsa.PrivateKey and continue using as it
+//    used to be.
 
 // NetworkPrivate represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for message attributability
@@ -44,16 +55,14 @@ func OperatorKeyToNetworkKey(
 	operatorPrivateKey *operator.PrivateKey,
 	operatorPublicKey *operator.PublicKey,
 ) (*NetworkPrivate, *NetworkPublic) {
-	privKey, pubKey := btcec.PrivKeyFromBytes(
-		btcec.S256(), operatorPrivateKey.D.Bytes(),
-	)
+	privKey, pubKey := btcec_v2.PrivKeyFromBytes(operatorPrivateKey.D.Bytes())
 	return (*NetworkPrivate)(privKey), (*NetworkPublic)(pubKey)
 }
 
 // NetworkPubKeyToChainAddress transforms the network public key into a chain
 // account address, in a string format.
 func NetworkPubKeyToChainAddress(publicKey *NetworkPublic) string {
-	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
+	ecdsaKey := (*btcec_v2.PublicKey)(publicKey).ToECDSA()
 	return operator.PubkeyToAddress(*ecdsaKey).String()
 }
 
@@ -63,7 +72,7 @@ func NetworkPubKeyToChainAddress(publicKey *NetworkPublic) string {
 // type. This allows external consumers of this key to verify integrity of the
 // key without having to understand the internals of the net pkg.
 func Marshal(publicKey *NetworkPublic) []byte {
-	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
+	ecdsaKey := (*btcec_v2.PublicKey)(publicKey).ToECDSA()
 	return elliptic.Marshal(ecdsaKey.Curve, ecdsaKey.X, ecdsaKey.Y)
 }
 
@@ -78,8 +87,28 @@ func Libp2pKeyToNetworkKey(publicKey libp2pcrypto.PubKey) *NetworkPublic {
 	return nil
 }
 
+// ECDSAKeyToNetworkKey takes ecdsa.PublicKey from Go standard library and turns
+// it into public NetworkKey.
+func ECDSAKeyToNetworkKey(publicKey *ecdsa.PublicKey) *NetworkPublic {
+	x, y := new(btcec_v2.FieldVal), new(btcec_v2.FieldVal)
+	x.SetByteSlice(publicKey.X.Bytes())
+	y.SetByteSlice(publicKey.Y.Bytes())
+
+	return (*NetworkPublic)(btcec_v2.NewPublicKey(x, y))
+}
+
+// TODO: Add unit tests for ECDSAKeyToNetworkKey
+
 // NetworkKeyToECDSAKey takes the public NetworkKey and turns it into
 // ecdsa.PublicKey from Go standard library.
 func NetworkKeyToECDSAKey(publicKey *NetworkPublic) *ecdsa.PublicKey {
-	return (*btcec.PublicKey)(publicKey).ToECDSA()
+	return (*btcec_v2.PublicKey)(publicKey).ToECDSA()
 }
+
+// NetworkPrivateKeyToECDSAPrivateKey takes the private NetworkKey and turns it
+// into ecdsa.PrivateKey from Go standard library.
+func NetworkPrivateKeyToECDSAPrivateKey(privateKey *NetworkPrivate) *ecdsa.PrivateKey {
+	return (*btcec_v2.PrivateKey)(privateKey).ToECDSA()
+}
+
+// TODO: Add unit tests for NetworkPrivateKeyToECDSAPrivateKey

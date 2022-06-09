@@ -65,8 +65,8 @@ func (lp *localProvider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	net.TransportIdentifier,
 	error,
 ) {
-	networkPublicKey := key.NetworkPublic(publicKey)
-	return createLocalIdentifier(&networkPublicKey), nil
+	networkPublicKey := key.ECDSAKeyToNetworkKey(&publicKey)
+	return createLocalIdentifier(networkPublicKey), nil
 }
 
 func (lp *localProvider) BroadcastChannelForwarderFor(name string) {
