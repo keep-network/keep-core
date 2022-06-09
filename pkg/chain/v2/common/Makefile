@@ -1,5 +1,11 @@
+# If contracts_dir is not defined by a Makefile using this common Makefile default
+# it to a `contracts/` subdirectory under solidity_dir.
+ifndef contracts_dir
+	contracts_dir = $(addsuffix /contracts/,${solidity_dir})
+endif
+
 # Solidity files prefixed with the solidity directory path.
-solidity_files := $(addprefix ${solidity_dir}/,${solidity_files_sources}) 
+solidity_files := $(wildcard ${contracts_dir}/*.sol)
 
 # Go bindings generated for the solidity contracts.
 contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
