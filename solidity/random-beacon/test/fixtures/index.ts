@@ -9,6 +9,7 @@ import type {
   TokenStaking,
   RandomBeaconGovernance,
   T,
+  ReimbursementPool,
 } from "../../typechain"
 
 const { to1e18 } = helpers.number
@@ -67,92 +68,32 @@ export async function blsDeployment(): Promise<DeployedContracts> {
   return contracts
 }
 
-export async function reimbursmentPoolDeployment(): Promise<DeployedContracts> {
-  const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
-  const reimbursementPool = await ReimbursementPool.deploy(
-    params.reimbursementPoolStaticGas,
-    params.reimbursementPoolMaxGasPrice
-  )
-  await reimbursementPool.deployed()
-
-  const contracts: DeployedContracts = { reimbursementPool }
-
-  return contracts
-}
-
-// TODO: Read contracts deployed with the hardhat deployment scripts instead of
-// deploying them with ethers in tests.
 export async function randomBeaconDeployment(): Promise<DeployedContracts> {
-  await deployments.fixture(["TokenStaking"])
+  await deployments.fixture()
   const t: T = await helpers.contracts.getContract<T>("T")
 
   const staking: TokenStaking =
     await helpers.contracts.getContract<TokenStaking>("TokenStaking")
 
-  // TODO: Implement Hardhat deployment scripts and load deployed contracts, same
-  // as it's done above for T and TokenStaking.
   const { deployer } = await helpers.signers.getNamedSigners()
 
-  const SortitionPool = await ethers.getContractFactory("SortitionPool")
-  const sortitionPool = (await SortitionPool.deploy(
-    t.address,
-    constants.poolWeightDivisor
-  )) as SortitionPool
-
-  const Authorization = await ethers.getContractFactory("BeaconAuthorization")
-  const authorization = await Authorization.deploy()
-  await authorization.deployed()
-
-  const BeaconDkg = await ethers.getContractFactory("BeaconDkg")
-  const dkg = await BeaconDkg.deploy()
-  await dkg.deployed()
-
-  const BeaconInactivity = await ethers.getContractFactory("BeaconInactivity")
-  const inactivity = await BeaconInactivity.deploy()
-  await inactivity.deployed()
-
-  const BeaconDkgValidator = await ethers.getContractFactory(
-    "BeaconDkgValidator"
+  const sortitionPool: SortitionPool = await helpers.contracts.getContract(
+    "BeaconSortitionPool"
   )
-  const dkgValidator = (await BeaconDkgValidator.deploy(
-    sortitionPool.address
-  )) as DKGValidator
-  await dkgValidator.deployed()
+  const randomBeaconGovernance: RandomBeaconGovernance =
+    await helpers.contracts.getContract("RandomBeaconGovernance")
 
-  const ReimbursementPool = await ethers.getContractFactory("ReimbursementPool")
-  const reimbursementPool = await ReimbursementPool.deploy(
-    params.reimbursementPoolStaticGas,
-    params.reimbursementPoolMaxGasPrice
-  )
-  await reimbursementPool.deployed()
+  const reimbursementPool: ReimbursementPool =
+    await helpers.contracts.getContract("ReimbursementPool")
 
   await deployer.sendTransaction({
     to: reimbursementPool.address,
     value: ethers.utils.parseEther("100.0"), // Send 100.0 ETH
   })
 
-  const RandomBeacon = await ethers.getContractFactory("RandomBeaconStub", {
-    libraries: {
-      BLS: (await blsDeployment()).bls.address,
-      BeaconAuthorization: authorization.address,
-      BeaconDkg: dkg.address,
-      BeaconInactivity: inactivity.address,
-    },
-  })
-
-  const randomBeacon: RandomBeaconStub = await RandomBeacon.deploy(
-    sortitionPool.address,
-    t.address,
-    staking.address,
-    dkgValidator.address,
-    reimbursementPool.address
+  const randomBeacon: RandomBeaconStub = await helpers.contracts.getContract(
+    "RandomBeacon"
   )
-  await randomBeacon.deployed()
-
-  await staking.connect(deployer).approveApplication(randomBeacon.address)
-
-  await sortitionPool.connect(deployer).transferOwnership(randomBeacon.address)
-  await reimbursementPool.connect(deployer).authorize(randomBeacon.address)
 
   await updateTokenStakingParams(t, staking, deployer)
   await setFixtureParameters(randomBeacon)
@@ -163,35 +104,10 @@ export async function randomBeaconDeployment(): Promise<DeployedContracts> {
     randomBeacon,
     t,
     reimbursementPool,
+    randomBeaconGovernance,
   }
 
   return contracts
-}
-
-export async function testDeployment(): Promise<DeployedContracts> {
-  const { deployer, governance } = await helpers.signers.getNamedSigners()
-
-  const contracts = await randomBeaconDeployment()
-
-  const RandomBeaconGovernance = await ethers.getContractFactory(
-    "RandomBeaconGovernance"
-  )
-  const randomBeaconGovernance: RandomBeaconGovernance =
-    await RandomBeaconGovernance.deploy(
-      contracts.randomBeacon.address,
-      params.governanceDelay
-    )
-  await randomBeaconGovernance.deployed()
-  await contracts.randomBeacon
-    .connect(deployer)
-    .transferGovernance(randomBeaconGovernance.address)
-  await randomBeaconGovernance
-    .connect(deployer)
-    .transferOwnership(governance.address)
-
-  const newContracts = { randomBeaconGovernance }
-
-  return { ...contracts, ...newContracts }
 }
 
 async function updateTokenStakingParams(
@@ -212,36 +128,145 @@ async function updateTokenStakingParams(
 }
 
 async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
-  await randomBeacon.updateAuthorizationParameters(
-    params.minimumAuthorization,
-    params.authorizationDecreaseDelay,
-    params.authorizationDecreaseChangePeriod
-  )
+  const randomBeaconGovernance: RandomBeaconGovernance =
+    await helpers.contracts.getContract("RandomBeaconGovernance")
+  const { governance } = await helpers.signers.getNamedSigners()
 
-  await randomBeacon.updateRelayEntryParameters(
-    params.relayEntrySoftTimeout,
-    params.relayEntryHardTimeout,
-    params.callbackGasLimit
-  )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginMinimumAuthorizationUpdate(params.minimumAuthorization)
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginAuthorizationDecreaseDelayUpdate(params.authorizationDecreaseDelay)
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginAuthorizationDecreaseChangePeriodUpdate(
+      params.authorizationDecreaseChangePeriod
+    )
 
-  await randomBeacon.updateRewardParameters(
-    params.sortitionPoolRewardsBanDuration,
-    params.relayEntryTimeoutNotificationRewardMultiplier,
-    params.unauthorizedSigningNotificationRewardMultiplier,
-    params.dkgMaliciousResultNotificationRewardMultiplier
-  )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginRelayEntrySoftTimeoutUpdate(params.relayEntrySoftTimeout)
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginRelayEntryHardTimeoutUpdate(params.relayEntryHardTimeout)
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginCallbackGasLimitUpdate(params.callbackGasLimit)
 
-  await randomBeacon.updateGroupCreationParameters(
-    params.groupCreationFrequency,
-    params.groupLifeTime,
-    params.dkgResultChallengePeriodLength,
-    params.dkgResultSubmissionTimeout,
-    params.dkgSubmitterPrecedencePeriodLength
-  )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginSortitionPoolRewardsBanDurationUpdate(
+      params.sortitionPoolRewardsBanDuration
+    )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(
+      params.relayEntryTimeoutNotificationRewardMultiplier
+    )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(
+      params.unauthorizedSigningNotificationRewardMultiplier
+    )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(
+      params.dkgMaliciousResultNotificationRewardMultiplier
+    )
 
-  await randomBeacon.updateSlashingParameters(
-    params.relayEntrySubmissionFailureSlashingAmount,
-    params.maliciousDkgResultSlashingAmount,
-    params.unauthorizedSigningSlashingAmount
-  )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginGroupCreationFrequencyUpdate(params.groupCreationFrequency)
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginGroupLifetimeUpdate(params.groupLifeTime)
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginDkgResultChallengePeriodLengthUpdate(
+      params.dkgResultChallengePeriodLength
+    )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginDkgResultSubmissionTimeoutUpdate(params.dkgResultSubmissionTimeout)
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginDkgSubmitterPrecedencePeriodLengthUpdate(
+      params.dkgSubmitterPrecedencePeriodLength
+    )
+
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginRelayEntrySubmissionFailureSlashingAmountUpdate(
+      params.relayEntrySubmissionFailureSlashingAmount
+    )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginMaliciousDkgResultSlashingAmountUpdate(
+      params.maliciousDkgResultSlashingAmount
+    )
+  await randomBeaconGovernance
+    .connect(governance)
+    .beginUnauthorizedSigningSlashingAmountUpdate(
+      params.unauthorizedSigningSlashingAmount
+    )
+
+  await helpers.time.increaseTime(params.governanceDelay)
+
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeMinimumAuthorizationUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeAuthorizationDecreaseDelayUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeAuthorizationDecreaseChangePeriodUpdate()
+
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeRelayEntrySoftTimeoutUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeRelayEntryHardTimeoutUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeCallbackGasLimitUpdate()
+
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeSortitionPoolRewardsBanDurationUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
+
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeGroupCreationFrequencyUpdate()
+  await randomBeaconGovernance.connect(governance).finalizeGroupLifetimeUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeDkgResultChallengePeriodLengthUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeDkgResultSubmissionTimeoutUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeRelayEntrySubmissionFailureSlashingAmountUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeMaliciousDkgResultSlashingAmountUpdate()
+  await randomBeaconGovernance
+    .connect(governance)
+    .finalizeUnauthorizedSigningSlashingAmountUpdate()
 }

@@ -79,7 +79,7 @@ async function fixture() {
 }
 
 describe("RandomBeacon - Relay", () => {
-  let deployer: SignerWithAddress
+  let governance: SignerWithAddress
   let requester: SignerWithAddress
   let notifier: SignerWithAddress
   let submitter: SignerWithAddress
@@ -89,13 +89,14 @@ describe("RandomBeacon - Relay", () => {
   let membersAddresses: Address[]
 
   let randomBeacon: RandomBeaconTest
+  let randomBeaconGovernance: RandomBeaconGovernance
   let sortitionPool: SortitionPool
   let staking: TokenStaking
   let relayStub: RelayStub
   let bls: BLS
 
   before(async () => {
-    ;({ deployer } = await helpers.signers.getNamedSigners())
+    ;({ governance } = await helpers.signers.getNamedSigners())
     ;[thirdParty, requester, notifier, submitter] =
       await helpers.signers.getUnnamedSigners()
     ;({
@@ -105,13 +106,14 @@ describe("RandomBeacon - Relay", () => {
       relayStub,
       bls,
       operators: members,
+      randomBeaconGovernance,
     } = await waffle.loadFixture(fixture))
 
     membersIDs = members.map((member) => member.id)
     membersAddresses = members.map((member) => member.signer.address)
 
-    await randomBeacon
-      .connect(deployer)
+    await randomBeaconGovernance
+      .connect(governance)
       .setRequesterAuthorization(requester.address, true)
   })
 
@@ -184,15 +186,13 @@ describe("RandomBeacon - Relay", () => {
                 await createSnapshot()
 
                 // Force group creation on each relay entry.
-                await randomBeacon
-                  .connect(deployer)
-                  .updateGroupCreationParameters(
-                    1,
-                    params.groupLifeTime,
-                    params.dkgResultChallengePeriodLength,
-                    params.dkgResultSubmissionTimeout,
-                    params.dkgSubmitterPrecedencePeriodLength
-                  )
+                await randomBeaconGovernance
+                  .connect(governance)
+                  .beginGroupCreationFrequencyUpdate(1)
+                await helpers.time.increaseTime(params.governanceDelay)
+                await randomBeaconGovernance
+                  .connect(governance)
+                  .finalizeGroupCreationFrequencyUpdate()
 
                 tx = await randomBeacon
                   .connect(requester)
@@ -1950,13 +1950,14 @@ describe("RandomBeacon - Relay", () => {
           // Set a short value of group lifetime to avoid long test execution
           // if original value is used.
           const newGroupLifetime = 10
-          await randomBeacon.updateGroupCreationParameters(
-            params.groupCreationFrequency,
-            newGroupLifetime,
-            params.dkgResultChallengePeriodLength,
-            params.dkgResultSubmissionTimeout,
-            params.dkgSubmitterPrecedencePeriodLength
-          )
+          await randomBeaconGovernance
+            .connect(governance)
+            .beginGroupLifetimeUpdate(newGroupLifetime)
+          await helpers.time.increaseTime(params.governanceDelay)
+          await randomBeaconGovernance
+            .connect(governance)
+            .finalizeGroupLifetimeUpdate()
+
           // Simulate group was expired.
           await mineBlocks(newGroupLifetime)
         })

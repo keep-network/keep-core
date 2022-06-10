@@ -1,7 +1,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { randomBeaconDeployment } from "./fixtures"
+import { randomBeaconDeployment, params } from "./fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction, Signer } from "ethers"
@@ -12,96 +12,24 @@ import type {
 } from "../typechain"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
-const { to1e18 } = helpers.number
 
 const governanceDelay = 604800 // 1 week
 
-const initialRelayEntrySoftTimeout = 1280
-const initialRelayEntryHardTimeout = 5760
-const initialCallbackGasLimit = 56000
-const initialGroupCreationFrequency = 2
-const initialGroupLifeTime = 259200
-const initialDkgResultChallengePeriodLength = 11520
-const initialDkgResultSubmissionTimeout = 1280
-const initialDkgSubmitterPrecedencePeriodLength = 20
-const initialRelayEntrySubmissionFailureSlashingAmount = to1e18(400)
-const initialMaliciousDkgResultSlashingAmount = to1e18(400)
-const initialUnauthorizedSigningSlashingAmount = to1e18(400)
-const initialSortitionPoolRewardsBanDuration = 1209600
-const initialRelayEntryTimeoutNotificationRewardMultiplier = 100
-const initialUnauthorizedSignatureNotificationRewardMultiplier = 100
-const initialMinimumAuthorization = to1e18(40000)
-const initialAuthorizationDecreaseDelay = 3888000
-const initialAuthorizationDecreaseChangePeriod = 3888000
-const initialDkgMaliciousResultNotificationRewardMultiplier = 100
 const initialDkgResultSubmissionGas = 235000
-const initialDkgResultApprovalGasOffset = 43500
+const initialDkgResultApprovalGasOffset = 41500
 const initialNotifyOperatorInactivityGasOffset = 54500
-const initialRelayEntrySubmissionGasOffset = 11500
+const initialRelayEntrySubmissionGasOffset = 11250
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
 const fixture = async () => {
-  const { deployer: governance } = await helpers.signers.getNamedSigners()
+  const { governance } = await helpers.signers.getNamedSigners()
 
   const contracts = await randomBeaconDeployment()
 
   const randomBeacon = contracts.randomBeacon as RandomBeacon
-
-  await randomBeacon
-    .connect(governance)
-    .updateRelayEntryParameters(
-      initialRelayEntrySoftTimeout,
-      initialRelayEntryHardTimeout,
-      initialCallbackGasLimit
-    )
-  await randomBeacon
-    .connect(governance)
-    .updateGroupCreationParameters(
-      initialGroupCreationFrequency,
-      initialGroupLifeTime,
-      initialDkgResultChallengePeriodLength,
-      initialDkgResultSubmissionTimeout,
-      initialDkgSubmitterPrecedencePeriodLength
-    )
-  await randomBeacon
-    .connect(governance)
-    .updateRewardParameters(
-      initialSortitionPoolRewardsBanDuration,
-      initialRelayEntryTimeoutNotificationRewardMultiplier,
-      initialUnauthorizedSignatureNotificationRewardMultiplier,
-      initialDkgMaliciousResultNotificationRewardMultiplier
-    )
-  await randomBeacon
-    .connect(governance)
-    .updateSlashingParameters(
-      initialRelayEntrySubmissionFailureSlashingAmount,
-      initialMaliciousDkgResultSlashingAmount,
-      initialUnauthorizedSigningSlashingAmount
-    )
-  await randomBeacon
-    .connect(governance)
-    .updateAuthorizationParameters(
-      initialMinimumAuthorization,
-      initialAuthorizationDecreaseDelay,
-      initialAuthorizationDecreaseChangePeriod
-    )
-  await randomBeacon
-    .connect(governance)
-    .updateGasParameters(
-      initialDkgResultSubmissionGas,
-      initialDkgResultApprovalGasOffset,
-      initialNotifyOperatorInactivityGasOffset,
-      initialRelayEntrySubmissionGasOffset
-    )
-
-  const RandomBeaconGovernance = await ethers.getContractFactory(
-    "RandomBeaconGovernance"
-  )
-  const randomBeaconGovernance: RandomBeaconGovernance =
-    await RandomBeaconGovernance.deploy(randomBeacon.address, governanceDelay)
-  await randomBeaconGovernance.deployed()
-  await randomBeacon.transferGovernance(randomBeaconGovernance.address)
+  const randomBeaconGovernance =
+    contracts.randomBeaconGovernance as RandomBeaconGovernance
 
   return { governance, randomBeaconGovernance, randomBeacon }
 }
@@ -505,7 +433,7 @@ describe("RandomBeaconGovernance", () => {
       it("should not update the relay entry soft timeout", async () => {
         const { relayEntrySoftTimeout } =
           await randomBeacon.relayEntryParameters()
-        expect(relayEntrySoftTimeout).to.be.equal(initialRelayEntrySoftTimeout)
+        expect(relayEntrySoftTimeout).to.be.equal(params.relayEntrySoftTimeout)
       })
 
       it("should start the governance delay timer", async () => {
@@ -638,7 +566,7 @@ describe("RandomBeaconGovernance", () => {
       it("should not update the relay entry hard timeout", async () => {
         const { relayEntryHardTimeout } =
           await randomBeacon.relayEntryParameters()
-        expect(relayEntryHardTimeout).to.be.equal(initialRelayEntryHardTimeout)
+        expect(relayEntryHardTimeout).to.be.equal(params.relayEntryHardTimeout)
       })
 
       it("should start the governance delay timer", async () => {
@@ -821,7 +749,7 @@ describe("RandomBeaconGovernance", () => {
 
       it("should not update the callback gas limit", async () => {
         const { callbackGasLimit } = await randomBeacon.relayEntryParameters()
-        expect(callbackGasLimit).to.be.equal(initialCallbackGasLimit)
+        expect(callbackGasLimit).to.be.equal(params.callbackGasLimit)
       })
 
       it("should start the governance delay timer", async () => {
@@ -981,7 +909,7 @@ describe("RandomBeaconGovernance", () => {
         const { groupCreationFrequency } =
           await randomBeacon.groupCreationParameters()
         expect(groupCreationFrequency).to.be.equal(
-          initialGroupCreationFrequency
+          params.groupCreationFrequency
         )
       })
 
@@ -1165,7 +1093,7 @@ describe("RandomBeaconGovernance", () => {
 
       it("should not update the group lifetime", async () => {
         const { groupLifetime } = await randomBeacon.groupCreationParameters()
-        expect(groupLifetime).to.be.equal(initialGroupLifeTime)
+        expect(groupLifetime).to.be.equal(params.groupLifeTime)
       })
 
       it("should start the governance delay timer", async () => {
@@ -1325,7 +1253,7 @@ describe("RandomBeaconGovernance", () => {
         const { dkgResultChallengePeriodLength } =
           await randomBeacon.groupCreationParameters()
         expect(dkgResultChallengePeriodLength).to.be.equal(
-          initialDkgResultChallengePeriodLength
+          params.dkgResultChallengePeriodLength
         )
       })
 
@@ -1493,7 +1421,7 @@ describe("RandomBeaconGovernance", () => {
         const { dkgResultSubmissionTimeout } =
           await randomBeacon.groupCreationParameters()
         expect(dkgResultSubmissionTimeout).to.be.equal(
-          initialDkgResultSubmissionTimeout
+          params.dkgResultSubmissionTimeout
         )
       })
 
@@ -1667,7 +1595,7 @@ describe("RandomBeaconGovernance", () => {
         const { dkgSubmitterPrecedencePeriodLength } =
           await randomBeacon.groupCreationParameters()
         expect(dkgSubmitterPrecedencePeriodLength).to.be.equal(
-          initialDkgSubmitterPrecedencePeriodLength
+          params.dkgSubmitterPrecedencePeriodLength
         )
       })
 
@@ -1808,7 +1736,7 @@ describe("RandomBeaconGovernance", () => {
         const { relayEntrySubmissionFailureSlashingAmount } =
           await randomBeacon.slashingParameters()
         expect(relayEntrySubmissionFailureSlashingAmount).to.be.equal(
-          initialRelayEntrySubmissionFailureSlashingAmount
+          params.relayEntrySubmissionFailureSlashingAmount
         )
       })
 
@@ -1949,7 +1877,7 @@ describe("RandomBeaconGovernance", () => {
         const { unauthorizedSigningSlashingAmount } =
           await randomBeacon.slashingParameters()
         expect(unauthorizedSigningSlashingAmount).to.be.equal(
-          initialUnauthorizedSigningSlashingAmount
+          params.unauthorizedSigningSlashingAmount
         )
       })
 
@@ -2090,7 +2018,7 @@ describe("RandomBeaconGovernance", () => {
         const { maliciousDkgResultSlashingAmount } =
           await randomBeacon.slashingParameters()
         expect(maliciousDkgResultSlashingAmount).to.be.equal(
-          initialMaliciousDkgResultSlashingAmount
+          params.maliciousDkgResultSlashingAmount
         )
       })
 
@@ -2231,7 +2159,7 @@ describe("RandomBeaconGovernance", () => {
         const { sortitionPoolRewardsBanDuration } =
           await randomBeacon.rewardParameters()
         expect(sortitionPoolRewardsBanDuration).to.be.equal(
-          initialSortitionPoolRewardsBanDuration
+          params.sortitionPoolRewardsBanDuration
         )
       })
 
@@ -2382,7 +2310,7 @@ describe("RandomBeaconGovernance", () => {
         const { unauthorizedSigningNotificationRewardMultiplier } =
           await randomBeacon.rewardParameters()
         expect(unauthorizedSigningNotificationRewardMultiplier).to.be.equal(
-          initialUnauthorizedSignatureNotificationRewardMultiplier
+          params.unauthorizedSigningNotificationRewardMultiplier
         )
       })
 
@@ -2535,7 +2463,7 @@ describe("RandomBeaconGovernance", () => {
         const { relayEntryTimeoutNotificationRewardMultiplier } =
           await randomBeacon.rewardParameters()
         expect(relayEntryTimeoutNotificationRewardMultiplier).to.be.equal(
-          initialRelayEntryTimeoutNotificationRewardMultiplier
+          params.relayEntryTimeoutNotificationRewardMultiplier
         )
       })
 
@@ -2675,7 +2603,7 @@ describe("RandomBeaconGovernance", () => {
 
       it("should not update the minimum authorization amount", async () => {
         expect(await randomBeacon.minimumAuthorization()).to.be.equal(
-          initialMinimumAuthorization
+          params.minimumAuthorization
         )
       })
 
@@ -2808,7 +2736,7 @@ describe("RandomBeaconGovernance", () => {
         const { authorizationDecreaseDelay } =
           await randomBeacon.authorizationParameters()
         expect(authorizationDecreaseDelay).to.be.equal(
-          initialAuthorizationDecreaseDelay
+          params.authorizationDecreaseDelay
         )
       })
 
@@ -2947,7 +2875,7 @@ describe("RandomBeaconGovernance", () => {
         const { authorizationDecreaseChangePeriod } =
           await randomBeacon.authorizationParameters()
         expect(authorizationDecreaseChangePeriod).to.be.equal(
-          initialAuthorizationDecreaseChangePeriod
+          params.authorizationDecreaseChangePeriod
         )
       })
 
@@ -3142,7 +3070,7 @@ describe("RandomBeaconGovernance", () => {
           await randomBeacon.rewardParameters()
 
         expect(dkgMaliciousResultNotificationRewardMultiplier).to.be.equal(
-          initialDkgMaliciousResultNotificationRewardMultiplier
+          params.dkgMaliciousResultNotificationRewardMultiplier
         )
       })
 

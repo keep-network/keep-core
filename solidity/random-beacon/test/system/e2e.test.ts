@@ -18,7 +18,12 @@ import blsData from "../data/bls"
 import { registerOperators } from "../utils/operators"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { RandomBeacon, RandomBeaconStub, T } from "../../typechain"
+import type {
+  RandomBeacon,
+  RandomBeaconStub,
+  T,
+  RandomBeaconGovernance,
+} from "../../typechain"
 
 const ZERO_ADDRESS = ethers.constants.AddressZero
 
@@ -38,10 +43,13 @@ const fixture = async () => {
   )
 
   const randomBeacon = contracts.randomBeacon as RandomBeaconStub & RandomBeacon
+  const randomBeaconGovernance =
+    contracts.randomBeaconGovernance as RandomBeaconGovernance
   const t = contracts.t as T
 
   return {
     randomBeacon,
+    randomBeaconGovernance,
     t,
   }
 }
@@ -68,36 +76,58 @@ describe("System -- e2e", () => {
   ]
 
   let randomBeacon: RandomBeacon
+  let randomBeaconGovernance: RandomBeaconGovernance
   let t: T
   let requester: SignerWithAddress
-  let deployer: SignerWithAddress
+  let governance: SignerWithAddress
 
   before(async () => {
     const contracts = await waffle.loadFixture(fixture)
 
-    ;({ deployer } = await helpers.signers.getNamedSigners())
+    ;({ governance } = await helpers.signers.getNamedSigners())
     ;[requester] = await helpers.signers.getUnnamedSigners()
     randomBeacon = contracts.randomBeacon
+    randomBeaconGovernance = contracts.randomBeaconGovernance
     t = contracts.t
 
-    await randomBeacon
-      .connect(deployer)
-      .updateRelayEntryParameters(
-        relayEntrySoftTimeout,
-        relayEntryHardTimeout,
-        callbackGasLimit
-      )
+    await randomBeaconGovernance
+      .connect(governance)
+      .beginRelayEntrySoftTimeoutUpdate(relayEntrySoftTimeout)
+    await randomBeaconGovernance
+      .connect(governance)
+      .beginRelayEntryHardTimeoutUpdate(relayEntryHardTimeout)
+    await randomBeaconGovernance
+      .connect(governance)
+      .beginCallbackGasLimitUpdate(callbackGasLimit)
 
-    await randomBeacon.connect(deployer).updateGroupCreationParameters(
-      groupCreationFrequency,
-      groupLifetime,
-      10, // dkgResultChallengePeriodLength, does not matter for this test
-      5, // dkgResultSubmissionTimeout, does not matter for this test
-      1 // dkgSubmitterPrecedencePeriodLength, does not matter for this test
-    )
+    await randomBeaconGovernance
+      .connect(governance)
+      .beginGroupCreationFrequencyUpdate(groupCreationFrequency)
+    await randomBeaconGovernance
+      .connect(governance)
+      .beginGroupLifetimeUpdate(groupLifetime)
 
-    await randomBeacon
-      .connect(deployer)
+    await helpers.time.increaseTime(params.governanceDelay)
+
+    await randomBeaconGovernance
+      .connect(governance)
+      .finalizeRelayEntrySoftTimeoutUpdate()
+    await randomBeaconGovernance
+      .connect(governance)
+      .finalizeRelayEntryHardTimeoutUpdate()
+    await randomBeaconGovernance
+      .connect(governance)
+      .finalizeCallbackGasLimitUpdate()
+
+    await randomBeaconGovernance
+      .connect(governance)
+      .finalizeGroupCreationFrequencyUpdate()
+    await randomBeaconGovernance
+      .connect(governance)
+      .finalizeGroupLifetimeUpdate()
+
+    await randomBeaconGovernance
+      .connect(governance)
       .setRequesterAuthorization(requester.address, true)
   })
 
