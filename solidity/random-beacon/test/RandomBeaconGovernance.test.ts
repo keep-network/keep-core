@@ -1100,6 +1100,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
+    // TODO: make sure the range is correct
     context("when the update value is less than one day", () => {
       it("should revert", async () => {
         await expect(
@@ -1124,6 +1125,7 @@ describe("RandomBeaconGovernance", () => {
       })
     })
 
+    // TODO: make sure the range is correct
     context("when the update value is more than 2 weeks", () => {
       it("should revert", async () => {
         await expect(

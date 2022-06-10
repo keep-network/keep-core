@@ -537,6 +537,9 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
+        // TODO: fix it
+        // - The init value in Random Beacon is 45days. Make sure the range is correct.
+        // - _newGroupLifetime is in blocks. Here we compare blocks with time.
         /* solhint-disable not-rely-on-time */
         require(
             _newGroupLifetime >= 1 days && _newGroupLifetime <= 2 weeks,
