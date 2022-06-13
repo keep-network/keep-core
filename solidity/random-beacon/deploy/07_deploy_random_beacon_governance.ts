@@ -12,6 +12,10 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const RandomBeaconGovernance = await deployments.deploy(
     "RandomBeaconGovernance",
     {
+      contract:
+        deployments.getNetworkName() === "hardhat"
+          ? "RandomBeaconGovernanceStub"
+          : undefined,
       from: deployer,
       args: [RandomBeacon.address, GOVERNANCE_DELAY],
       log: true,

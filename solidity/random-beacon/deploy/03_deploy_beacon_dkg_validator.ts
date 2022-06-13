@@ -24,6 +24,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 export default func
 
 func.tags = ["BeaconDkgValidator"]
-func.dependencies = [
-  "BeaconSortitionPool",
-]
+func.dependencies = ["BeaconSortitionPool"]
