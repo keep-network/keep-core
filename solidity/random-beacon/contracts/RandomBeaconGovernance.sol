@@ -537,10 +537,17 @@ contract RandomBeaconGovernance is Ownable {
         external
         onlyOwner
     {
+        (, uint64 authorizationDecreaseDelay, ) = randomBeacon
+            .authorizationParameters();
+        // In blocks assuming 15s block time
+        uint256 groupLifetimeUpperBoundary = authorizationDecreaseDelay / 15;
+        // 1 day assuming 15s block time
+        uint256 groupLifetimeLowerBoundary = 5760;
         /* solhint-disable not-rely-on-time */
         require(
-            _newGroupLifetime >= 1 days && _newGroupLifetime <= 2 weeks,
-            "Group lifetime must be >= 1 day and <= 2 weeks"
+            _newGroupLifetime >= groupLifetimeLowerBoundary &&
+                _newGroupLifetime <= groupLifetimeUpperBoundary,
+            "Group lifetime is not in range"
         );
         newGroupLifetime = _newGroupLifetime;
         groupLifetimeChangeInitiated = block.timestamp;
