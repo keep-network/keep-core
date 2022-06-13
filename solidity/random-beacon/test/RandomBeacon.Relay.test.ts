@@ -28,7 +28,7 @@ import type {
   SortitionPool,
   TokenStaking,
   BLS,
-  RandomBeaconGovernance,
+  RandomBeaconGovernanceStub,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
 import type { ContractTransaction, BigNumberish } from "ethers"
@@ -69,7 +69,7 @@ async function fixture() {
   return {
     randomBeacon: deployment.randomBeacon as RandomBeaconTest,
     randomBeaconGovernance:
-      deployment.randomBeaconGovernance as RandomBeaconGovernance,
+      deployment.randomBeaconGovernance as RandomBeaconGovernanceStub,
     sortitionPool: deployment.sortitionPool as SortitionPool,
     staking: deployment.staking as TokenStaking,
     relayStub,
@@ -89,7 +89,7 @@ describe("RandomBeacon - Relay", () => {
   let membersAddresses: Address[]
 
   let randomBeacon: RandomBeaconTest
-  let randomBeaconGovernance: RandomBeaconGovernance
+  let randomBeaconGovernance: RandomBeaconGovernanceStub
   let sortitionPool: SortitionPool
   let staking: TokenStaking
   let relayStub: RelayStub
@@ -752,6 +752,17 @@ describe("RandomBeacon - Relay", () => {
               "0x01",
               hashUint32Array(membersIDs)
             )
+
+            // Set a short value of group lifetime to avoid long test execution
+            // if original value is used.
+            const newGroupLifetime = 10
+            await randomBeaconGovernance
+              .connect(governance)
+              .beginGroupLifetimeUpdateStub(newGroupLifetime)
+            await helpers.time.increaseTime(params.governanceDelay)
+            await randomBeaconGovernance
+              .connect(governance)
+              .finalizeGroupLifetimeUpdate()
 
             const secondGroupLifetime = await groupLifetimeOf(1)
 
@@ -1952,7 +1963,7 @@ describe("RandomBeacon - Relay", () => {
           const newGroupLifetime = 10
           await randomBeaconGovernance
             .connect(governance)
-            .beginGroupLifetimeUpdate(newGroupLifetime)
+            .beginGroupLifetimeUpdateStub(newGroupLifetime)
           await helpers.time.increaseTime(params.governanceDelay)
           await randomBeaconGovernance
             .connect(governance)

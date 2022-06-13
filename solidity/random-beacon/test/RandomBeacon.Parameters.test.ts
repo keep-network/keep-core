@@ -11,6 +11,8 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("RandomBeacon - Parameters", () => {
+  const BLOCK_TIME = 15
+
   let governance: Signer
   let thirdParty: Signer
   let thirdPartyContract: SignerWithAddress
@@ -150,7 +152,6 @@ describe("RandomBeacon - Parameters", () => {
       })
     })
 
-    // continue fixing here..
     context("when the caller is the governance", () => {
       let tx1: ContractTransaction
       let tx2: ContractTransaction
@@ -244,7 +245,7 @@ describe("RandomBeacon - Parameters", () => {
 
   describe("updateGroupCreationParameters", () => {
     const newGroupCreationFrequency = 100
-    const newGroupLifetime = 200
+    const newGroupLifetime = (2 * 24 * 60 * 60) / BLOCK_TIME // 2days assuming 15s block time
     const newDkgResultChallengePeriodLength = 300
     const newDkgResultSubmissionTimeout = 400
     const newDkgSubmitterPrecedencePeriodLength = 200

@@ -36,7 +36,7 @@ export const params = {
   relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
   groupCreationFrequency: 10,
-  groupLifeTime: 1000,
+  groupLifeTime: 5761, // 1 day in blocks assuming 15s block time
   dkgResultChallengePeriodLength: 100,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,

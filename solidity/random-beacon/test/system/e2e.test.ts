@@ -68,7 +68,7 @@ describe("System -- e2e", () => {
   const relayEntrySoftTimeout = 20
   const callbackGasLimit = 56000
   const groupCreationFrequency = 5
-  const groupLifetime = 403200
+  const groupLifetime = 11520 // 2 days assuming 15s block time
   const groupPubKeys = [
     blsData.groupPubKey,
     blsData.groupPubKey2,
