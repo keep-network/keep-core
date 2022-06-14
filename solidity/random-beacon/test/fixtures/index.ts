@@ -36,7 +36,7 @@ export const params = {
   relayEntryHardTimeout: 100,
   callbackGasLimit: 200000,
   groupCreationFrequency: 10,
-  groupLifeTime: 5761, // 1 day in blocks assuming 15s block time
+  groupLifetime: 5761, // 1 day in blocks assuming 15s block time
   dkgResultChallengePeriodLength: 100,
   dkgResultSubmissionTimeout: 30,
   dkgSubmitterPrecedencePeriodLength: 5,
@@ -52,6 +52,10 @@ export const params = {
   authorizationDecreaseChangePeriod: 403200,
   reimbursementPoolStaticGas: 40800,
   reimbursementPoolMaxGasPrice: ethers.utils.parseUnits("500", "gwei"),
+  dkgResultSubmissionGas: 235000,
+  dkgResultApprovalGasOffset: 41500,
+  notifyOperatorInactivityGasOffset: 54500,
+  relayEntrySubmissionGasOffset: 11250,
 }
 
 export interface DeployedContracts {
@@ -180,7 +184,7 @@ async function setFixtureParameters(randomBeacon: RandomBeaconStub) {
     .beginGroupCreationFrequencyUpdate(params.groupCreationFrequency)
   await randomBeaconGovernance
     .connect(governance)
-    .beginGroupLifetimeUpdate(params.groupLifeTime)
+    .beginGroupLifetimeUpdate(params.groupLifetime)
   await randomBeaconGovernance
     .connect(governance)
     .beginDkgResultChallengePeriodLengthUpdate(
