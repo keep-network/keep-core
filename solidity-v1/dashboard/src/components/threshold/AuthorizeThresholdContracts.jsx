@@ -94,6 +94,7 @@ const AuthorizeThresholdContracts = ({
             stakeAmount,
             isFromGrant,
             canBeMovedToT,
+            isInInitializationPeriod,
           }) => (
             <AuthorizeActions
               key={contract.contractName}
@@ -108,6 +109,7 @@ const AuthorizeThresholdContracts = ({
               canBeMovedToT={canBeMovedToT}
               onAuthorizeBtn={onAuthorizeBtn}
               onStakeBtn={onStakeBtn}
+              isInInitializationPeriod={isInInitializationPeriod}
             />
           )}
         />
@@ -139,6 +141,7 @@ const AuthorizeActions = ({
   canBeMovedToT,
   onAuthorizeBtn,
   onStakeBtn,
+  isInInitializationPeriod,
 }) => {
   const onAuthorize = useCallback(
     async (awaitingPromise) => {
@@ -227,6 +230,35 @@ const AuthorizeActions = ({
       </ReactTooltip>
       stake
     </Button>
+  ) : isInInitializationPeriod ? (
+    <>
+      <ReactTooltip
+        id={`stake-tooltip-for-operator-${operatorAddress}`}
+        place="top"
+        type="dark"
+        effect={"solid"}
+        className={"react-tooltip-base react-tooltip-base--arrow-right"}
+        offset={{ left: "100%!important" }}
+      >
+        <span>
+          This stake is still in initialization period. You will be able to move
+          the stake to T when the initialization period ends.
+        </span>
+      </ReactTooltip>
+      <Button
+        onClick={onAuthorize}
+        className="btn btn-secondary btn-semi-sm"
+        style={{ marginLeft: "auto" }}
+        disabled={true}
+      >
+        <Icons.QuestionFill
+          data-tip
+          data-for={`stake-tooltip-for-operator-${operatorAddress}`}
+          className={"tooltip--button-corner"}
+        />
+        authorize and stake
+      </Button>
+    </>
   ) : (
     <Button
       onClick={onAuthorize}
