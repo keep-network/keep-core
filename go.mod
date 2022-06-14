@@ -9,7 +9,7 @@ require (
 	github.com/aristanetworks/goarista v0.0.0-20200206021550-59c4040ef2d3 // indirect
 	github.com/btcsuite/btcd v0.22.0-beta
 	github.com/celo-org/celo-blockchain v0.0.0-20210222234634-f8c8f6744526
-	github.com/ethereum/go-ethereum v1.10.15
+	github.com/ethereum/go-ethereum v1.10.18
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
 	github.com/google/uuid v1.3.0
