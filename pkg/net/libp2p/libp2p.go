@@ -393,11 +393,10 @@ func discoverAndListen(
 		)
 	}
 
-	// TODO: Check what to do with the `DefaultConnMgrGracePeriod` parameter
-	// that the connection manager used to accept.
 	newConnManager, err := connmgr.NewConnManager(
 		DefaultConnMgrLowWater,
 		DefaultConnMgrHighWater,
+		connmgr.WithGracePeriod(DefaultConnMgrGracePeriod),
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
