@@ -21,11 +21,13 @@
     "hardhat": "^2.9.1",
     "hardhat-deploy": "^0.11.1",
     "hardhat-deploy-ethers": "^0.3.0-beta.13",
+    "hardhat-gas-reporter": "^1.0.8",
     "keccak256": "^1.0.6",
     "merkletreejs": "^0.2.31"
   },
   "dependencies": {
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
-    "@threshold-network/solidity-contracts": "^1.1.0"
+    "ganache-cli": "^6.12.2",
+    "solidity-coverage": "^0.7.21"
   }
 }
