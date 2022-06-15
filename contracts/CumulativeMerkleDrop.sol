@@ -76,7 +76,6 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         bytes32 expectedMerkleRoot,
         bytes32[][] calldata merkleProof
     ) external {
-        require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
         require(accounts.length == cumulativeAmounts.length, "Accounts and amounts must have the same length");
         require(accounts.length == merkleProof.length, "Accounts and proofs must have the same length");
 

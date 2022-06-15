@@ -111,6 +111,13 @@ describe('Cumulative Merkle Distribution', function () {
         )
       )
     })
+    it('should not accept arrays of different length', async function () {
+      const claimAccounts = proofAccounts
+      const claimAmounts = Array.from(claimAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
+      const claimProofs = Array.from(claimAccounts).map((claimAccount, _) => dist.claims[claimAccount].proof)
+      await expect(merkleDist.batchClaimArray(claimAccounts, claimAmounts.slice(0, 4), merkleRoot, claimProofs)).to.be.revertedWith("Accounts and amounts must have the same length")
+      await expect(merkleDist.batchClaimArray(claimAccounts, claimAmounts, merkleRoot, claimProofs.slice(0, 4))).to.be.revertedWith("Accounts and proofs must have the same length")
+    })
   })
 
   context('when batch claim struct tokens', async function () {
