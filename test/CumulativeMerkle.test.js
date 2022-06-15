@@ -68,6 +68,42 @@ describe('Cumulative Merkle Distribution', function () {
     })
   })
 
+  context('when batch claim tokens', async function () {
+    let merkleDist
+    let merkleRoot
+    let tokenTotal
+    let proofAccounts
+
+    before(function () {
+      // numRuns must be less or equal to the number of accounts in `cum_dist`
+      const numRuns = Object.keys(dist.claims).length
+      merkleRoot = dist.merkleRoot
+      tokenTotal = ethers.BigNumber.from(dist.tokenTotal)
+      proofAccounts = Object.keys(dist.claims)
+    })
+
+    beforeEach(async function () {
+      const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
+      merkleDist = await MerkleDist.deploy(token.address)
+      await merkleDist.setMerkleRoot(merkleRoot)
+      await token.mint(merkleDist.address, tokenTotal)
+    })
+
+    it('should accounts get tokens', async function () {
+      const claimAccounts = proofAccounts
+      const claimAmounts = Array.from(proofAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
+      const claimProofs = Array.from(proofAccounts).map((claimAccount, _) => dist.claims[claimAccount].proof)
+
+      const prevBalances = Array.from(proofAccounts).map((claimAccount, _) => token.balanceOf(claimAccount))
+      const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  prevAmmount + claimAmounts[index])
+      
+      await merkleDist.batchClaim(claimAccounts, claimAmounts, merkleRoot, claimProofs)
+
+      const afterBalances = Array.from(proofAccounts).map((claimAccount, _) => token.balanceOf(claimAccount))
+      expect(expBalances).to.equal(afterBalances)
+    })
+  })
+
   context('when claim tokens', async function () {
     let merkleDist
     let merkleRoot
