@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.9;
-pragma abicoder v1;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -18,6 +17,11 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
 
     bytes32 public override merkleRoot;
     mapping(address => uint256) public cumulativeClaimed;
+    struct Claim {
+        address account;
+        uint256 amount;
+        bytes32[] proof;
+    }
 
     constructor(address token_) {
         token = token_;
@@ -33,7 +37,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         uint256 cumulativeAmount,
         bytes32 expectedMerkleRoot,
         bytes32[] calldata merkleProof
-    ) external override {
+    ) public override {
         require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
@@ -51,6 +55,28 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
             IERC20(token).safeTransfer(account, amount);
             emit Claimed(account, amount);
         }
+    }
+
+    function batchClaimStruct(
+        bytes32 expectedMerkleRoot,
+        Claim[] calldata Claims
+    ) external {
+        require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
+
+        // Verify the merkle proofs
+        // bytes32[] leaves = new bytes32[](accounts.length);
+    }
+
+    function batchClaimArray(
+        address[] calldata accounts,
+        uint256[] calldata cumulativeAmounts,
+        bytes32 expectedMerkleRoot,
+        bytes32[][] calldata merkleProof
+    ) external {
+        require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
+
+        // Verify the merkle proofs
+        // bytes32[] leaves = new bytes32[](accounts.length);
     }
 
     function verify(bytes32[] calldata merkleProof, bytes32 root, bytes32 leaf) public pure returns (bool) {
