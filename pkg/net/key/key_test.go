@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/operator"
+	btcec_v2 "github.com/btcsuite/btcd/btcec/v2"
 )
 
 // `geth` uses `go-ethereum` library to generate key with secp256k1 curve.
@@ -91,7 +92,7 @@ func TestSameKeyAsEthereum(t *testing.T) {
 		staticPrivateKey, staticPublicKey,
 	)
 
-	ecdsaPrivateKey := NetworkPrivateKeyToECDSAPrivateKey(libp2pPrivKey)
+	ecdsaPrivateKey := (*btcec_v2.PrivateKey)(libp2pPrivKey).ToECDSA()
 
 	if staticPrivateKey.D.Cmp(ecdsaPrivateKey.D) != 0 {
 		t.Errorf(
@@ -157,6 +158,25 @@ func TestNetworkPubKeyToAddress(t *testing.T) {
 			"unexpected address\nexpected: %v\nactual: %v",
 			ethAddress,
 			libp2pAddress,
+		)
+	}
+}
+
+func TestECDSAKeyToNetworkKey(t *testing.T) {
+	_, ecdsaPublicKey, err := operator.GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	addressFromECDSAKey := crypto.PubkeyToAddress(*ecdsaPublicKey).String()
+
+	networkPublicKey := ECDSAKeyToNetworkKey(ecdsaPublicKey)
+	addressFromNetworkKey := NetworkPubKeyToChainAddress(networkPublicKey)
+
+	if addressFromECDSAKey != addressFromNetworkKey {
+		t.Errorf(
+			"unexpected address\nexpected: %v\nactual: %v",
+			addressFromECDSAKey,
+			addressFromNetworkKey,
 		)
 	}
 }

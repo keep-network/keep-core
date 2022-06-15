@@ -79,25 +79,15 @@ func Libp2pKeyToNetworkKey(publicKey libp2pcrypto.PubKey) *NetworkPublic {
 // ECDSAKeyToNetworkKey takes ecdsa.PublicKey from Go standard library and turns
 // it into public NetworkKey.
 func ECDSAKeyToNetworkKey(publicKey *ecdsa.PublicKey) *NetworkPublic {
-	x, y := new(btcec_v2.FieldVal), new(btcec_v2.FieldVal)
+	var x, y btcec_v2.FieldVal
 	x.SetByteSlice(publicKey.X.Bytes())
 	y.SetByteSlice(publicKey.Y.Bytes())
 
-	return (*NetworkPublic)(btcec_v2.NewPublicKey(x, y))
+	return (*NetworkPublic)(btcec_v2.NewPublicKey(&x, &y))
 }
-
-// TODO: Add unit tests for ECDSAKeyToNetworkKey
 
 // NetworkKeyToECDSAKey takes the public NetworkKey and turns it into
 // ecdsa.PublicKey from Go standard library.
 func NetworkKeyToECDSAKey(publicKey *NetworkPublic) *ecdsa.PublicKey {
 	return (*btcec_v2.PublicKey)(publicKey).ToECDSA()
 }
-
-// NetworkPrivateKeyToECDSAPrivateKey takes the private NetworkKey and turns it
-// into ecdsa.PrivateKey from Go standard library.
-func NetworkPrivateKeyToECDSAPrivateKey(privateKey *NetworkPrivate) *ecdsa.PrivateKey {
-	return (*btcec_v2.PrivateKey)(privateKey).ToECDSA()
-}
-
-// TODO: Add unit tests for NetworkPrivateKeyToECDSAPrivateKey
