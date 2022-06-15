@@ -29,7 +29,7 @@ const fixture = async () => {
   return { governance, randomBeaconGovernance, randomBeacon }
 }
 
-describe.only("RandomBeaconGovernance", () => {
+describe("RandomBeaconGovernance", () => {
   let governance: Signer
   let thirdParty: SignerWithAddress
   let thirdPartyContract: SignerWithAddress
