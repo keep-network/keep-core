@@ -22,7 +22,6 @@ require (
 	github.com/libp2p/go-libp2p-core v0.16.1
 	github.com/libp2p/go-libp2p-kad-dht v0.16.0
 	github.com/libp2p/go-libp2p-pubsub v0.7.0
-	github.com/libp2p/go-libp2p-tls v0.5.0
 	github.com/multiformats/go-multiaddr v0.5.0
 	github.com/urfave/cli v1.22.2
 	golang.org/x/crypto v0.0.0-20220518034528-6f7dac969898

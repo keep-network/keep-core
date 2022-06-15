@@ -4,12 +4,11 @@ import (
 	"context"
 	"net"
 
-	libp2ptls "github.com/libp2p/go-libp2p-tls"
-
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"
+	libp2ptls "github.com/libp2p/go-libp2p/p2p/security/tls"
 )
 
 // ID is the multistream-select protocol ID that should be used when identifying
