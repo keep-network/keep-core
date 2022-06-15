@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -61,11 +60,15 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         bytes32 expectedMerkleRoot,
         Claim[] calldata Claims
     ) external {
-        require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
-
-        // Verify the merkle proofs
-        // bytes32[] leaves = new bytes32[](accounts.length);
-    }
+        for (uint i; i < Claims.length; i++) {
+            claim(
+                Claims[i].account,
+                Claims[i].amount,
+                expectedMerkleRoot,
+                Claims[i].proof
+            );
+        }
+     }
 
     function batchClaimArray(
         address[] calldata accounts,

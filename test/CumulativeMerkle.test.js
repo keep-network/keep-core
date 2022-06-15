@@ -92,13 +92,16 @@ describe('Cumulative Merkle Distribution', function () {
       const claimAmounts = Array.from(proofAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
       const claimProofs = Array.from(proofAccounts).map((claimAccount, _) => dist.claims[claimAccount].proof)
 
-      const prevBalances = Array.from(proofAccounts).map((claimAccount, _) => token.balanceOf(claimAccount))
-      const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  prevAmmount + claimAmounts[index])
-      
+      const prevBalances = await Promise.all(proofAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
+      const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  parseInt(prevAmmount + claimAmounts[index], 10))
+           
       await merkleDist.batchClaimArray(proofAccounts, claimAmounts, merkleRoot, claimProofs)
 
-      const afterBalances = Array.from(proofAccounts).map((claimAccount, _) => token.balanceOf(claimAccount))
-      expect(expBalances).to.equal(afterBalances)
+      const afterBalancesHex = await Promise.all(proofAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
+      const afterBalances = Array.from(afterBalancesHex).map((afterAmmount, _) => parseInt(afterAmmount["_hex"], 16))
+      expBalances.forEach((expAmount, index) => {
+        expect(expAmount).to.equal(afterBalances[index])
+      })
     })
   })
 
@@ -128,13 +131,16 @@ describe('Cumulative Merkle Distribution', function () {
       
       const claimStructs = Array.from(proofAccounts).map((claimAccount, index) => [claimAccount, claimAmounts[index], claimProofs[index]])
 
-      const prevBalances = Array.from(proofAccounts).map((claimAccount, _) => token.balanceOf(claimAccount))
-      const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  prevAmmount + claimAmounts[index])
+      const prevBalances = await Promise.all(proofAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
+      const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  parseInt(prevAmmount + claimAmounts[index], 10))
       
       await merkleDist.batchClaimStruct(merkleRoot, claimStructs)
 
-      const afterBalances = Array.from(proofAccounts).map((claimAccount, _) => token.balanceOf(claimAccount))
-      expect(expBalances).to.equal(afterBalances)
+      const afterBalancesHex = await Promise.all(proofAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
+      const afterBalances = Array.from(afterBalancesHex).map((afterAmmount, _) => parseInt(afterAmmount["_hex"], 16))
+      expBalances.forEach((expAmount, index) => {
+        expect(expAmount).to.equal(afterBalances[index])
+      })
     })
   })
 
