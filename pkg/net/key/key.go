@@ -9,17 +9,6 @@ import (
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
 
-// TODO: After updating the `libp2p` libraries, the type of
-// `libp2pcrypto.Secp256k1PrivateKey` changed. It used to be `ecdsa.PrivateKey`,
-// now it is `secp.PrivateKey`, because the version of `btcec` has been updated
-// in the `github.com/libp2p/go-libp2p-core/crypto` library to `btcec/v2`.
-// Similar changes affect `libp2pcrypto.Secp256k1PublicKey`.
-// There seem to be two options:
-// 1) Continue using `NetworkPrivate` as libp2pcrypto.Secp256k1PrivateKey (which
-//    is now `secp.PrivateKey`).
-// 2) Change `NetworkPrivate` type to ecdsa.PrivateKey and continue using as it
-//    used to be.
-
 // NetworkPrivate represents peer's static key associated with an on-chain
 // stake. It is used to authenticate the peer and for message attributability
 // - each message leaving the peer is signed with its private network key.

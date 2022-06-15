@@ -423,8 +423,6 @@ func discoverAndListen(
 		}
 		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
-
-	// TODO: Check what to do with `ctx` that `libp2p.New` used to accept
 	return libp2p.New(options...)
 }
 
