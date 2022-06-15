@@ -2,7 +2,7 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { params, randomBeaconDeployment } from "./fixtures"
+import { randomBeaconDeployment, params } from "./fixtures"
 
 import type { ContractTransaction, Signer } from "ethers"
 import type { RandomBeaconStub, RandomBeaconGovernance } from "../typechain"
@@ -11,9 +11,7 @@ import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("RandomBeacon - Parameters", () => {
-  const BLOCK_TIME = 15
-
-  let governance: Signer
+  let impersonatedGovernance: SignerWithAddress
   let thirdParty: Signer
   let thirdPartyContract: SignerWithAddress
   let randomBeacon: RandomBeaconStub
@@ -21,13 +19,27 @@ describe("RandomBeacon - Parameters", () => {
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;[thirdParty, thirdPartyContract] = await ethers.getSigners()
-    ;({ governance } = await helpers.signers.getNamedSigners())
+    ;[impersonatedGovernance, thirdParty, thirdPartyContract] =
+      await ethers.getSigners()
+
+    const { governance } = await helpers.signers.getNamedSigners()
 
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
     randomBeaconGovernance =
       contracts.randomBeaconGovernance as RandomBeaconGovernance
+
+    // This transfer is initiated just for the testing purposes. The idea of these
+    // tests is to check the 'update*' functions in isolation and not through the
+    // RandomBeaconGovernance contract. In reality the governance of RandomBeacon
+    // should still remain the RandomBeaconGovernance contract.
+    await randomBeaconGovernance
+      .connect(governance)
+      .beginRandomBeaconGovernanceTransfer(impersonatedGovernance.address)
+    await helpers.time.increaseTime(params.governanceDelay)
+    await randomBeaconGovernance
+      .connect(governance)
+      .finalizeRandomBeaconGovernanceTransfer()
   })
 
   describe("updateRelayEntryParameters", () => {
@@ -50,34 +62,18 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the governance", () => {
-      let tx1: ContractTransaction
-      let tx2: ContractTransaction
-      let tx3: ContractTransaction
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
 
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayEntrySoftTimeoutUpdate(newRelayEntrySoftTimeout)
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayEntryHardTimeoutUpdate(newRelayEntryHardTimeout)
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginCallbackGasLimitUpdate(newCallbackGasLimit)
-
-        await helpers.time.increaseTime(params.governanceDelay)
-
-        tx1 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayEntrySoftTimeoutUpdate()
-        tx2 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayEntryHardTimeoutUpdate()
-        tx3 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeCallbackGasLimitUpdate()
+        tx = await randomBeacon
+          .connect(impersonatedGovernance)
+          .updateRelayEntryParameters(
+            newRelayEntrySoftTimeout,
+            newRelayEntryHardTimeout,
+            newCallbackGasLimit
+          )
       })
 
       after(async () => {
@@ -101,28 +97,8 @@ describe("RandomBeacon - Parameters", () => {
         expect(callbackGasLimit).to.be.equal(newCallbackGasLimit)
       })
 
-      it("should emit the RelayEntryParametersUpdated event for soft timeout", async () => {
-        await expect(tx1)
-          .to.emit(randomBeacon, "RelayEntryParametersUpdated")
-          .withArgs(
-            newRelayEntrySoftTimeout,
-            params.relayEntryHardTimeout,
-            params.callbackGasLimit
-          )
-      })
-
-      it("should emit the RelayEntryParametersUpdated event for hard timeout", async () => {
-        await expect(tx2)
-          .to.emit(randomBeacon, "RelayEntryParametersUpdated")
-          .withArgs(
-            newRelayEntrySoftTimeout,
-            newRelayEntryHardTimeout,
-            params.callbackGasLimit
-          )
-      })
-
-      it("should emit the RelayEntryParametersUpdated event for gas callback", async () => {
-        await expect(tx3)
+      it("should emit the RelayEntryParametersUpdated event", async () => {
+        await expect(tx)
           .to.emit(randomBeacon, "RelayEntryParametersUpdated")
           .withArgs(
             newRelayEntrySoftTimeout,
@@ -153,36 +129,18 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the governance", () => {
-      let tx1: ContractTransaction
-      let tx2: ContractTransaction
-      let tx3: ContractTransaction
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
 
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginMinimumAuthorizationUpdate(newMinimumAuthorization)
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginAuthorizationDecreaseDelayUpdate(newAuthorizationDecreaseDelay)
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginAuthorizationDecreaseChangePeriodUpdate(
+        tx = await randomBeacon
+          .connect(impersonatedGovernance)
+          .updateAuthorizationParameters(
+            newMinimumAuthorization,
+            newAuthorizationDecreaseDelay,
             newAuthorizationDecreaseChangePeriod
           )
-
-        await helpers.time.increaseTime(params.governanceDelay)
-
-        tx1 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeMinimumAuthorizationUpdate()
-        tx2 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeAuthorizationDecreaseDelayUpdate()
-        tx3 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeAuthorizationDecreaseChangePeriodUpdate()
       })
 
       after(async () => {
@@ -211,28 +169,8 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
-      it("should emit the AuthorizationParametersUpdated event for new minimum authorization", async () => {
-        await expect(tx1)
-          .to.emit(randomBeacon, "AuthorizationParametersUpdated")
-          .withArgs(
-            newMinimumAuthorization,
-            params.authorizationDecreaseDelay,
-            params.authorizationDecreaseChangePeriod
-          )
-      })
-
-      it("should emit the AuthorizationParametersUpdated event for new authorization decrease delay", async () => {
-        await expect(tx2)
-          .to.emit(randomBeacon, "AuthorizationParametersUpdated")
-          .withArgs(
-            newMinimumAuthorization,
-            newAuthorizationDecreaseDelay,
-            params.authorizationDecreaseChangePeriod
-          )
-      })
-
-      it("should emit the AuthorizationParametersUpdated event for new authorization decrease change period", async () => {
-        await expect(tx3)
+      it("should emit the AuthorizationParametersUpdated event", async () => {
+        await expect(tx)
           .to.emit(randomBeacon, "AuthorizationParametersUpdated")
           .withArgs(
             newMinimumAuthorization,
@@ -245,7 +183,7 @@ describe("RandomBeacon - Parameters", () => {
 
   describe("updateGroupCreationParameters", () => {
     const newGroupCreationFrequency = 100
-    const newGroupLifetime = (2 * 24 * 60 * 60) / BLOCK_TIME // 2days assuming 15s block time
+    const newGroupLifetime = 200
     const newDkgResultChallengePeriodLength = 300
     const newDkgResultSubmissionTimeout = 400
     const newDkgSubmitterPrecedencePeriodLength = 200
@@ -267,52 +205,20 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the governance", () => {
-      let tx1: ContractTransaction
-      let tx2: ContractTransaction
-      let tx3: ContractTransaction
-      let tx4: ContractTransaction
-      let tx5: ContractTransaction
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
 
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginGroupCreationFrequencyUpdate(newGroupCreationFrequency)
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginGroupLifetimeUpdate(newGroupLifetime)
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginDkgResultChallengePeriodLengthUpdate(
-            newDkgResultChallengePeriodLength
-          )
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginDkgResultSubmissionTimeoutUpdate(newDkgResultSubmissionTimeout)
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginDkgSubmitterPrecedencePeriodLengthUpdate(
+        tx = await randomBeacon
+          .connect(impersonatedGovernance)
+          .updateGroupCreationParameters(
+            newGroupCreationFrequency,
+            newGroupLifetime,
+            newDkgResultChallengePeriodLength,
+            newDkgResultSubmissionTimeout,
             newDkgSubmitterPrecedencePeriodLength
           )
-
-        await helpers.time.increaseTime(params.governanceDelay)
-
-        tx1 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeGroupCreationFrequencyUpdate()
-        tx2 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeGroupLifetimeUpdate()
-        tx3 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeDkgResultChallengePeriodLengthUpdate()
-        tx4 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeDkgResultSubmissionTimeoutUpdate()
-        tx5 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
       })
 
       after(async () => {
@@ -354,56 +260,8 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
-      it("should emit the GroupCreationParametersUpdated event for new group creation frequency", async () => {
-        await expect(tx1)
-          .to.emit(randomBeacon, "GroupCreationParametersUpdated")
-          .withArgs(
-            newGroupCreationFrequency,
-            params.groupLifeTime,
-            params.dkgResultChallengePeriodLength,
-            params.dkgResultSubmissionTimeout,
-            params.dkgSubmitterPrecedencePeriodLength
-          )
-      })
-
-      it("should emit the GroupCreationParametersUpdated event for new group life time", async () => {
-        await expect(tx2)
-          .to.emit(randomBeacon, "GroupCreationParametersUpdated")
-          .withArgs(
-            newGroupCreationFrequency,
-            newGroupLifetime,
-            params.dkgResultChallengePeriodLength,
-            params.dkgResultSubmissionTimeout,
-            params.dkgSubmitterPrecedencePeriodLength
-          )
-      })
-
-      it("should emit the GroupCreationParametersUpdated event for new dkg result challenge period length", async () => {
-        await expect(tx3)
-          .to.emit(randomBeacon, "GroupCreationParametersUpdated")
-          .withArgs(
-            newGroupCreationFrequency,
-            newGroupLifetime,
-            newDkgResultChallengePeriodLength,
-            params.dkgResultSubmissionTimeout,
-            params.dkgSubmitterPrecedencePeriodLength
-          )
-      })
-
-      it("should emit the GroupCreationParametersUpdated event for new dkg result submission timeout", async () => {
-        await expect(tx4)
-          .to.emit(randomBeacon, "GroupCreationParametersUpdated")
-          .withArgs(
-            newGroupCreationFrequency,
-            newGroupLifetime,
-            newDkgResultChallengePeriodLength,
-            newDkgResultSubmissionTimeout,
-            params.dkgSubmitterPrecedencePeriodLength
-          )
-      })
-
-      it("should emit the GroupCreationParametersUpdated event for new dkg submitter precedence period length", async () => {
-        await expect(tx5)
+      it("should emit the GroupCreationParametersUpdated event", async () => {
+        await expect(tx)
           .to.emit(randomBeacon, "GroupCreationParametersUpdated")
           .withArgs(
             newGroupCreationFrequency,
@@ -422,18 +280,16 @@ describe("RandomBeacon - Parameters", () => {
               const invalidDkgSubmitterPrecedencePeriodLength =
                 newDkgResultSubmissionTimeout
 
-              await randomBeaconGovernance
-                .connect(governance)
-                .beginDkgSubmitterPrecedencePeriodLengthUpdate(
-                  invalidDkgSubmitterPrecedencePeriodLength
-                )
-
-              await helpers.time.increaseTime(params.governanceDelay)
-
               await expect(
-                randomBeaconGovernance
-                  .connect(governance)
-                  .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+                randomBeacon
+                  .connect(impersonatedGovernance)
+                  .updateGroupCreationParameters(
+                    newGroupCreationFrequency,
+                    newGroupLifetime,
+                    newDkgResultChallengePeriodLength,
+                    newDkgResultSubmissionTimeout,
+                    invalidDkgSubmitterPrecedencePeriodLength
+                  )
               ).to.be.revertedWith(
                 "Submitter precedence period length should be less than the result submission timeout"
               )
@@ -448,18 +304,16 @@ describe("RandomBeacon - Parameters", () => {
               const invalidDkgSubmitterPrecedencePeriodLength =
                 newDkgResultSubmissionTimeout + 1
 
-              await randomBeaconGovernance
-                .connect(governance)
-                .beginDkgSubmitterPrecedencePeriodLengthUpdate(
-                  invalidDkgSubmitterPrecedencePeriodLength
-                )
-
-              await helpers.time.increaseTime(params.governanceDelay)
-
               await expect(
-                randomBeaconGovernance
-                  .connect(governance)
-                  .finalizeDkgSubmitterPrecedencePeriodLengthUpdate()
+                randomBeacon
+                  .connect(impersonatedGovernance)
+                  .updateGroupCreationParameters(
+                    newGroupCreationFrequency,
+                    newGroupLifetime,
+                    newDkgResultChallengePeriodLength,
+                    newDkgResultSubmissionTimeout,
+                    invalidDkgSubmitterPrecedencePeriodLength
+                  )
               ).to.be.revertedWith(
                 "Submitter precedence period length should be less than the result submission timeout"
               )
@@ -492,49 +346,19 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the governance", () => {
-      let tx1: ContractTransaction
-      let tx2: ContractTransaction
-      let tx3: ContractTransaction
-      let tx4: ContractTransaction
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
 
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginSortitionPoolRewardsBanDurationUpdate(
-            newSortitionPoolRewardsBanDuration
-          )
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayEntryTimeoutNotificationRewardMultiplierUpdate(
-            newRelayEntryTimeoutNotificationRewardMultiplier
-          )
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginUnauthorizedSigningNotificationRewardMultiplierUpdate(
-            newUnauthorizedSigningNotificationRewardMultiplier
-          )
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginDkgMaliciousResultNotificationRewardMultiplierUpdate(
+        tx = await randomBeacon
+          .connect(impersonatedGovernance)
+          .updateRewardParameters(
+            newSortitionPoolRewardsBanDuration,
+            newRelayEntryTimeoutNotificationRewardMultiplier,
+            newUnauthorizedSigningNotificationRewardMultiplier,
             newDkgMaliciousResultNotificationRewardMultiplier
           )
-
-        await helpers.time.increaseTime(params.governanceDelay)
-
-        tx1 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeSortitionPoolRewardsBanDurationUpdate()
-        tx2 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayEntryTimeoutNotificationRewardMultiplierUpdate()
-        tx3 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeUnauthorizedSigningNotificationRewardMultiplierUpdate()
-        tx4 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeDkgMaliciousResultNotificationRewardMultiplierUpdate()
       })
 
       after(async () => {
@@ -573,41 +397,8 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
-      it("should emit the RewardParametersUpdated event for new sortition pool rewards ban duration", async () => {
-        await expect(tx1)
-          .to.emit(randomBeacon, "RewardParametersUpdated")
-          .withArgs(
-            newSortitionPoolRewardsBanDuration,
-            params.relayEntryTimeoutNotificationRewardMultiplier,
-            params.unauthorizedSigningNotificationRewardMultiplier,
-            params.dkgMaliciousResultNotificationRewardMultiplier
-          )
-      })
-
-      it("should emit the RewardParametersUpdated event for new relay entry timeout notification reward multiplier", async () => {
-        await expect(tx2)
-          .to.emit(randomBeacon, "RewardParametersUpdated")
-          .withArgs(
-            newSortitionPoolRewardsBanDuration,
-            newRelayEntryTimeoutNotificationRewardMultiplier,
-            params.unauthorizedSigningNotificationRewardMultiplier,
-            params.dkgMaliciousResultNotificationRewardMultiplier
-          )
-      })
-
-      it("should emit the RewardParametersUpdated event for new unauthorized signing notification reward multiplier", async () => {
-        await expect(tx3)
-          .to.emit(randomBeacon, "RewardParametersUpdated")
-          .withArgs(
-            newSortitionPoolRewardsBanDuration,
-            newRelayEntryTimeoutNotificationRewardMultiplier,
-            newUnauthorizedSigningNotificationRewardMultiplier,
-            params.dkgMaliciousResultNotificationRewardMultiplier
-          )
-      })
-
-      it("should emit the RewardParametersUpdated event for new dkg malicious result notification reward multiplier", async () => {
-        await expect(tx4)
+      it("should emit the RewardParametersUpdated event", async () => {
+        await expect(tx)
           .to.emit(randomBeacon, "RewardParametersUpdated")
           .withArgs(
             newSortitionPoolRewardsBanDuration,
@@ -639,40 +430,18 @@ describe("RandomBeacon - Parameters", () => {
     })
 
     context("when the caller is the governance", () => {
-      let tx1: ContractTransaction
-      let tx2: ContractTransaction
-      let tx3: ContractTransaction
+      let tx: ContractTransaction
 
       before(async () => {
         await createSnapshot()
 
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginRelayEntrySubmissionFailureSlashingAmountUpdate(
-            newRelayEntrySubmissionFailureSlashingAmount
-          )
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginMaliciousDkgResultSlashingAmountUpdate(
-            newMaliciousDkgResultSlashingAmount
-          )
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginUnauthorizedSigningSlashingAmountUpdate(
+        tx = await randomBeacon
+          .connect(impersonatedGovernance)
+          .updateSlashingParameters(
+            newRelayEntrySubmissionFailureSlashingAmount,
+            newMaliciousDkgResultSlashingAmount,
             newUnauthorizedSigningSlashingAmount
           )
-
-        await helpers.time.increaseTime(params.governanceDelay)
-
-        tx1 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeRelayEntrySubmissionFailureSlashingAmountUpdate()
-        tx2 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeMaliciousDkgResultSlashingAmountUpdate()
-        tx3 = await randomBeaconGovernance
-          .connect(governance)
-          .finalizeUnauthorizedSigningSlashingAmountUpdate()
       })
 
       after(async () => {
@@ -703,28 +472,8 @@ describe("RandomBeacon - Parameters", () => {
         )
       })
 
-      it("should emit the SlashingParametersUpdated event for new relay entry submission failure slashing amount", async () => {
-        await expect(tx1)
-          .to.emit(randomBeacon, "SlashingParametersUpdated")
-          .withArgs(
-            newRelayEntrySubmissionFailureSlashingAmount,
-            params.maliciousDkgResultSlashingAmount,
-            params.unauthorizedSigningSlashingAmount
-          )
-      })
-
-      it("should emit the SlashingParametersUpdated event new malicious dkg result slashing amount", async () => {
-        await expect(tx2)
-          .to.emit(randomBeacon, "SlashingParametersUpdated")
-          .withArgs(
-            newRelayEntrySubmissionFailureSlashingAmount,
-            newMaliciousDkgResultSlashingAmount,
-            params.unauthorizedSigningSlashingAmount
-          )
-      })
-
-      it("should emit the SlashingParametersUpdated event new unauthorized signing slashing amount", async () => {
-        await expect(tx3)
+      it("should emit the SlashingParametersUpdated event", async () => {
+        await expect(tx)
           .to.emit(randomBeacon, "SlashingParametersUpdated")
           .withArgs(
             newRelayEntrySubmissionFailureSlashingAmount,
@@ -762,8 +511,8 @@ describe("RandomBeacon - Parameters", () => {
         before(async () => {
           await createSnapshot()
 
-          tx = await randomBeaconGovernance
-            .connect(governance)
+          tx = await randomBeacon
+            .connect(impersonatedGovernance)
             .setRequesterAuthorization(thirdPartyContract.address, true)
         })
 
@@ -791,12 +540,12 @@ describe("RandomBeacon - Parameters", () => {
         before(async () => {
           await createSnapshot()
 
-          await randomBeaconGovernance
-            .connect(governance)
+          await randomBeacon
+            .connect(impersonatedGovernance)
             .setRequesterAuthorization(thirdPartyContract.address, true)
 
-          tx = await randomBeaconGovernance
-            .connect(governance)
+          tx = await randomBeacon
+            .connect(impersonatedGovernance)
             .setRequesterAuthorization(thirdPartyContract.address, false)
         })
 
