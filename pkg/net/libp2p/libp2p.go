@@ -18,12 +18,12 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	"github.com/libp2p/go-libp2p-core/host"
 	libp2pnet "github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
+	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
