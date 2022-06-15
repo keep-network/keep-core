@@ -56,9 +56,9 @@ func newEncryptedAuthenticatedTransport(
 func (t *transport) SecureInbound(
 	ctx context.Context,
 	connection net.Conn,
-	peerID peer.ID,
+	remotePeerID peer.ID,
 ) (sec.SecureConn, error) {
-	encryptedConnection, err := t.encryptionLayer.SecureInbound(ctx, connection, peerID)
+	encryptedConnection, err := t.encryptionLayer.SecureInbound(ctx, connection, remotePeerID)
 	if err != nil {
 		return nil, err
 	}
