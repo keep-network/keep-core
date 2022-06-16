@@ -10,6 +10,7 @@ ENV GOPATH=/go \
 	# GO111MODULE required to support go modules
 	GO111MODULE=on
 
+
 RUN apk add --update --no-cache \
 	g++ \
 	linux-headers \
@@ -24,7 +25,10 @@ RUN apk add --update --no-cache \
 
 COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
-RUN go get gotest.tools/gotestsum
+RUN pwd
+RUN ls -a
+RUN go version
+RUN go install gotest.tools/gotestsum@latest
 
 RUN mkdir -p $APP_DIR $TEST_RESULTS_DIR
 
@@ -38,6 +42,8 @@ RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "http
 COPY go.mod $APP_DIR/
 COPY go.sum $APP_DIR/
 
+RUN pwd
+RUN ls
 RUN go mod download
 
 # Install code generators.
@@ -54,10 +60,14 @@ COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
-RUN go generate ./.../gen
+RUN pwd
+RUN ls
+RUN go generate -v ./.../gen
 
 COPY ./ $APP_DIR/
-RUN go generate ./pkg/gen
+RUN pwd
+RUN ls
+RUN go generate -v ./pkg/gen
 
 # Client Versioning.
 ARG VERSION
