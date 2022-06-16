@@ -7,11 +7,11 @@ DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
-KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity-v1"
+KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 
 # Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
-NETWORK_DEFAULT="local"
+NETWORK_DEFAULT="development"
 KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:-""}
 
@@ -71,46 +71,50 @@ printf "${LOG_START}Starting installation...${LOG_END}"
 printf "Config dir path: $CONFIG_DIR_PATH\n"
 printf "Network: $NETWORK"
 
-cd $KEEP_CORE_SOL_PATH
+cd $KEEP_BEACON_SOL_PATH
 
-printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
-npm install
+printf "${LOG_START}Installing YARN dependencies...${LOG_END}"
+yarn install
 
-if [ "$NETWORK" == "local" ]; then
+if [ "$NETWORK" == "development" ]; then
     printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
     KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-        npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
+        npx hardhat run scripts/unlock-eth-accounts.ts --network $NETWORK
 fi
 
-printf "${LOG_START}Migrating contracts...${LOG_END}"
+printf "${LOG_START}Deploying contracts...${LOG_END}"
 rm -rf build/
 
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
-    npx truffle migrate --reset --network $NETWORK
+    npx hardhat deploy --reset --export export.json --network $NETWORK
+    
+# TODO: T staking
+#       Increasing authorization on RandomBeacon
+#       Build the client
 
-printf "${LOG_START}Copying contract artifacts...${LOG_END}"
-rm -rf artifacts
-cp -r build/contracts artifacts
-npm link
+# printf "${LOG_START}Copying contract artifacts...${LOG_END}"
+# rm -rf artifacts
+# cp -r build/contracts artifacts
+# npm link
 
-printf "${LOG_START}Initializing contracts...${LOG_END}"
+# printf "${LOG_START}Initializing contracts...${LOG_END}"
 
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
-    npx truffle exec scripts/delegate-tokens.js --network $NETWORK
+# CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
+#     npx truffle exec scripts/delegate-tokens.js --network $NETWORK
 
-if [ "$CONTRACTS_ONLY" = false ] ; then
-  printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
-  for CONFIG_FILE in $CONFIG_DIR_PATH/*.toml
-  do
-      KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE \
-      CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
-          npx truffle exec scripts/lcl-client-config.js --network $NETWORK
-  done
+# if [ "$CONTRACTS_ONLY" = false ] ; then
+#   printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
+#   for CONFIG_FILE in $CONFIG_DIR_PATH/*.toml
+#   do
+#       KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE \
+#       CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
+#           npx truffle exec scripts/lcl-client-config.js --network $NETWORK
+#   done
 
-  printf "${LOG_START}Building keep-core client...${LOG_END}"
-  cd $KEEP_CORE_PATH
-  go generate ./...
-  go build -a -o keep-core .
-fi
+#   printf "${LOG_START}Building keep-core client...${LOG_END}"
+#   cd $KEEP_CORE_PATH
+#   go generate ./...
+#   go build -a -o keep-core .
+# fi
 
 printf "${DONE_START}Installation completed!${DONE_END}"
