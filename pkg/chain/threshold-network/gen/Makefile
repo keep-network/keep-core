@@ -5,14 +5,13 @@ solidity_dir := $(realpath ${SOLIDITY_DIR})
 
 # Define a path to the Solidity files, as it's not the default `solidity_dir/contracts`
 # direcotry.
-contracts_dir := $(realpath ${solidity_dir}/node_modules/@keep-network/tbtc-v2/contracts)
+contracts_dir := $(realpath ${solidity_dir}/node_modules/@threshold-network/solidity-contracts/contracts)
 
 # Contracts for which the bindings should be generated.
-required_contracts := Bridge
+required_contracts := TokenStaking
 
 solidity_dependencies_mapping := \
 	@openzeppelin/=${solidity_dir}/node_modules/@openzeppelin/ \
-	@keep-network/=${solidity_dir}/node_modules/@keep-network/ \
 	@thesis/=${solidity_dir}/node_modules/@thesis/
 
-include ../common/Makefile
+include ../../common/gen/Makefile

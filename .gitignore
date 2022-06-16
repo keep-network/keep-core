@@ -53,3 +53,8 @@ export.json
 
 # TypeScript
 typechain/
+
+# Go bindings generator
+pkg/chain/*/gen/_solidity/*
+!pkg/chain/*/gen/_solidity/package.json
+!pkg/chain/*/gen/_solidity/yarn.lock

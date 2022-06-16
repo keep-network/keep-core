@@ -4,13 +4,12 @@
 solidity_dir := $(realpath ${SOLIDITY_DIR})
 
 # Contracts for which the bindings should be generated.
-required_contracts := WalletRegistry SortitionPool
+required_contracts := RandomBeacon SortitionPool
 
 solidity_dependencies_mapping := \
-	openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \
 	@openzeppelin/=${solidity_dir}/node_modules/@openzeppelin/ \
-	@keep-network/=${solidity_dir}/node_modules/@keep-network/ \
-	@threshold-network/=${solidity_dir}/node_modules/@threshold-network/ \
+	@keep-network/=${solidity_dir}/node_modules/@keep-network/  \
+	@threshold-network/=${solidity_dir}/node_modules/@threshold-network/  \
 	@thesis/=${solidity_dir}/node_modules/@thesis/
 
-include ../common/Makefile
+include ../../common/gen/Makefile
