@@ -76,7 +76,7 @@ describe('Cumulative Merkle Distribution', function () {
 
     before(function () {
       // numRuns must be less or equal to the number of accounts in `cum_dist`
-      const numRuns = Object.keys(dist.claims).length
+      const numRuns = 2
       fc.configureGlobal({ numRuns: numRuns, skipEqualValues: true })
       merkleRoot = dist.merkleRoot
       tokenTotal = ethers.BigNumber.from(dist.tokenTotal)
@@ -93,7 +93,7 @@ describe('Cumulative Merkle Distribution', function () {
     it('should accounts get tokens', async function () {
       await fc.assert(
         fc.asyncProperty(
-          fc.integer({ min: 0, max: proofAccounts.length - 1 }),
+          fc.integer({ min: 0, max: 1 }),
           async function (index) {
             const claimAccounts = proofAccounts.slice((proofAccounts.length / 2) * index, (proofAccounts.length / 2) * (index + 1))
             const claimAmounts = Array.from(claimAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
@@ -128,7 +128,7 @@ describe('Cumulative Merkle Distribution', function () {
 
     before(function () {
       // numRuns must be less or equal to the number of accounts in `cum_dist`
-      const numRuns = Object.keys(dist.claims).length
+      const numRuns = 2
       fc.configureGlobal({ numRuns: numRuns, skipEqualValues: true })
       merkleRoot = dist.merkleRoot
       tokenTotal = ethers.BigNumber.from(dist.tokenTotal)
@@ -145,7 +145,7 @@ describe('Cumulative Merkle Distribution', function () {
     it('should accounts get tokens', async function () {
       await fc.assert(
         fc.asyncProperty(
-          fc.integer({ min: 0, max: proofAccounts.length - 1 }),
+          fc.integer({ min: 0, max: 1 }),
           async function (index) {
             const claimAccounts = proofAccounts.slice((proofAccounts.length / 2) * index, (proofAccounts.length / 2) * (index + 1))
             const claimAmounts = Array.from(claimAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
