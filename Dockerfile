@@ -1,4 +1,4 @@
-FROM golang:1.16.7-alpine3.14 AS gobuild
+FROM golang:1.18.3-alpine3.16 AS gobuild
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -66,7 +66,7 @@ ARG REVISION
 RUN GOOS=linux go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
-FROM alpine:3.14
+FROM alpine:3.16
 
 ENV APP_NAME=keep-client \
 	BIN_PATH=/usr/local/bin
