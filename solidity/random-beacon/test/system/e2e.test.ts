@@ -60,9 +60,9 @@ const fixture = async () => {
 // validate the results of the submitted signatures. At the end of this scenario
 // 3 active groups should be added to the chain as a result of signatures submission
 // and dkg under the hood.
-// Group creation frequency is adjusted for the purpose of the testing data.
-// All the other init params should be intact and use existing params from the
-// RandomBeacon constructor.
+// Group creation frequency is adjusted for the purpose of the e2e testing data.
+// All the other init params should be intact and use the existing params set in
+// in tests fixture.
 // Signatures in bls.ts were generated outside of this test based on bls_test.go
 describe("System -- e2e", () => {
   const groupCreationFrequency = 5
