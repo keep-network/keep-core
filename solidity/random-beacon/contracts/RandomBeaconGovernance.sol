@@ -530,18 +530,19 @@ contract RandomBeaconGovernance is Ownable {
         newGroupCreationFrequency = 0;
     }
 
-    /// @notice Begins the group lifetime update process.
+    /// @notice Begins the group lifetime update process. Group lifetime needs to
+    ///         be shorter than the authorization decrease delay to ensure every
+    ///         active group is backed by enough stake. A new group lifetime value
+    ///         is in blocks and has to be calculated based on the average block
+    ///         time and authorization decrease delay which value is in seconds.
     /// @dev Can be called only by the contract owner.
     /// @param _newGroupLifetime New group lifetime in blocks
     function beginGroupLifetimeUpdate(uint256 _newGroupLifetime)
         external
         onlyOwner
     {
+        require(_newGroupLifetime > 0, "Group lifetime must be greater than 0");
         /* solhint-disable not-rely-on-time */
-        require(
-            _newGroupLifetime >= 1 days && _newGroupLifetime <= 2 weeks,
-            "Group lifetime must be >= 1 day and <= 2 weeks"
-        );
         newGroupLifetime = _newGroupLifetime;
         groupLifetimeChangeInitiated = block.timestamp;
         emit GroupLifetimeUpdateStarted(_newGroupLifetime, block.timestamp);

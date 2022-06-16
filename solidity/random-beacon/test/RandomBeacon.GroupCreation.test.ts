@@ -4,7 +4,7 @@ import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
 import blsData from "./data/bls"
-import { constants, dkgState, params, testDeployment } from "./fixtures"
+import { constants, dkgState, params, randomBeaconDeployment } from "./fixtures"
 import {
   genesis,
   signAndSubmitCorrectDkgResult,
@@ -37,7 +37,7 @@ type RandomBeaconTest = RandomBeacon & {
 }
 
 const fixture = async () => {
-  const contracts = await testDeployment()
+  const contracts = await randomBeaconDeployment()
 
   // Accounts offset provided to slice getUnnamedSigners have to include number
   // of unnamed accounts that were already used.

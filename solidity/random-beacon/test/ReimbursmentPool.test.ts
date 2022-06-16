@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 
-import { ethers, waffle, helpers } from "hardhat"
+import { ethers, waffle, helpers, deployments } from "hardhat"
 import { expect } from "chai"
 
-import { reimbursmentPoolDeployment, params } from "./fixtures"
+import { params } from "./fixtures"
 
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import type { ContractTransaction } from "ethers"
@@ -27,9 +27,8 @@ describe("ReimbursementPool", () => {
   })
 
   beforeEach("load test fixture", async () => {
-    const contracts = await waffle.loadFixture(reimbursmentPoolDeployment)
-
-    reimbursementPool = contracts.reimbursementPool as ReimbursementPool
+    await deployments.fixture()
+    reimbursementPool = await helpers.contracts.getContract("ReimbursementPool")
   })
 
   describe("transfer ETH", () => {
