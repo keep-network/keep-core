@@ -1,7 +1,9 @@
 artifacts
 cache
+coverage/
 node_modules
-package-lock.json
 scripts/examples/example_dist_generated.json
 scripts/examples/example_proof_generated.json
 .env
+.DS_Store
+coverage.json
