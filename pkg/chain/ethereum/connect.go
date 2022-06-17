@@ -30,7 +30,7 @@ const (
 
 // Chain is a handle for communication with Ethereum chain.
 type Chain struct {
-	config                           ethereum.Config
+	config                           *ethereum.Config
 	accountKey                       *keystore.Key
 	client                           ethutil.EthereumClient
 	clientRPC                        *rpc.Client
@@ -38,6 +38,8 @@ type Chain struct {
 	chainID                          *big.Int
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
+	miningWaiter                     *ethutil.MiningWaiter
+	nonceManager                     *ethlike.NonceManager
 	blockCounter                     *ethlike.BlockCounter
 	chainConfig                      *relaychain.Config
 
@@ -94,7 +96,7 @@ func connectWithClient(
 	}
 
 	c := &Chain{
-		config:           config,
+		config:           &config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
 		clientWS:         clientWS,
@@ -126,14 +128,14 @@ func connectWithClient(
 		c.accountKey = key
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(c.client, config)
+	c.miningWaiter = ethutil.NewMiningWaiter(c.client, config)
 
 	address, err := config.ContractAddress(KeepRandomBeaconOperatorContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
 
-	nonceManager := ethutil.NewNonceManager(
+	c.nonceManager = ethutil.NewNonceManager(
 		c.client,
 		c.accountKey.Address,
 	)
@@ -144,8 +146,8 @@ func connectWithClient(
 			c.chainID,
 			c.accountKey,
 			c.client,
-			nonceManager,
-			miningWaiter,
+			c.nonceManager,
+			c.miningWaiter,
 			blockCounter,
 			c.transactionMutex,
 		)
@@ -165,8 +167,8 @@ func connectWithClient(
 			c.chainID,
 			c.accountKey,
 			c.client,
-			nonceManager,
-			miningWaiter,
+			c.nonceManager,
+			c.miningWaiter,
 			blockCounter,
 			c.transactionMutex,
 		)
@@ -239,7 +241,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		return nil, err
 	}
 
-	blockCounter, err := ethutil.NewBlockCounter(client)
+	base.blockCounter, err = ethutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -247,14 +249,14 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		)
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(client, config)
+	base.miningWaiter = ethutil.NewMiningWaiter(client, config)
 
 	address, err := config.ContractAddress(KeepRandomBeaconServiceContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
 	}
 
-	nonceManager := ethutil.NewNonceManager(
+	base.nonceManager = ethutil.NewNonceManager(
 		client,
 		base.accountKey.Address,
 	)
@@ -265,8 +267,8 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 			base.chainID,
 			base.accountKey,
 			base.client,
-			nonceManager,
-			miningWaiter,
+			base.nonceManager,
+			base.miningWaiter,
 			blockCounter,
 			base.transactionMutex,
 		)
@@ -291,9 +293,44 @@ func Connect(
 	return connect(ctx, config)
 }
 
+// Config returns configuration.
+func (c *Chain) Config() *ethereum.Config {
+	return c.config
+}
+
+// AccountKey returns keystore.
+func (c *Chain) AccountKey() *keystore.Key {
+	return c.accountKey
+}
+
+// Client returns Ethereum Client.
+func (c *Chain) Client() ethutil.EthereumClient {
+	return c.client
+}
+
+// ChainID returns chain identifner.
+func (c *Chain) ChainID() *big.Int {
+	return c.chainID
+}
+
+// MiningWaiter returns mining waiter.
+func (c *Chain) MiningWaiter() *ethutil.MiningWaiter {
+	return c.miningWaiter
+}
+
+// NonceManager returns nonce manager.
+func (c *Chain) NonceManager() *ethlike.NonceManager {
+	return c.nonceManager
+}
+
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
 func (c *Chain) BlockCounter() (chain.BlockCounter, error) {
 	return c.blockCounter, nil
+}
+
+// TransactionMutex returns transaction mutex.
+func (c *Chain) TransactionMutex() *sync.Mutex {
+	return c.transactionMutex
 }
 
 func fetchChainConfig(c *Chain) (*relaychain.Config, error) {
