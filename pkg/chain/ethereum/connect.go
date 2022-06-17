@@ -104,14 +104,13 @@ func connectWithClient(
 		transactionMutex: &sync.Mutex{},
 	}
 
-	blockCounter, err := ethutil.NewBlockCounter(c.client)
+	c.blockCounter, err = ethutil.NewBlockCounter(c.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
 			err,
 		)
 	}
-	c.blockCounter = blockCounter
 
 	if c.accountKey == nil {
 		key, err := ethutil.DecryptKeyFile(
@@ -148,7 +147,7 @@ func connectWithClient(
 			c.client,
 			c.nonceManager,
 			c.miningWaiter,
-			blockCounter,
+			c.blockCounter,
 			c.transactionMutex,
 		)
 	if err != nil {
@@ -169,7 +168,7 @@ func connectWithClient(
 			c.client,
 			c.nonceManager,
 			c.miningWaiter,
-			blockCounter,
+			c.blockCounter,
 			c.transactionMutex,
 		)
 	if err != nil {
@@ -269,7 +268,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 			base.client,
 			base.nonceManager,
 			base.miningWaiter,
-			blockCounter,
+			base.blockCounter,
 			base.transactionMutex,
 		)
 	if err != nil {
