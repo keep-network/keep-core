@@ -4,3 +4,6 @@ cache/
 export/
 hardhat-dependency-compiler/
 export.json
+
+# Contract artifacts
+/deployments
