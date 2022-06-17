@@ -20,7 +20,8 @@ help()
    echo -e "\nUsage: ENV_VAR(S) $0"\
            "--config-dir <path>"\
            "--network <network>"\
-           "--reuse-contracts"
+           "--skip-deployment <boolean>"\
+           "--skip-client-build <boolean>"
    echo -e "\nEnvironment variables:\n"
    echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
@@ -29,8 +30,8 @@ help()
    echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
    echo -e "\t--network: Ethereum network for keep-core client."\
                         "Available networks and settings are specified in the 'hardhat.config.ts'"
-   echo -e "\t--reuse-contracts: The already deployed contracts can be reused to speed up the development. Default is false.\n"\
-   "Client installation will not be executed.\n"
+   echo -e "\t--skip-deployment: When set to true the old artifacts from the '/deployments' dir are used. Default is false."
+   echo -e "\t--skip-client-build: Should execute contracts part only. Client installation will not be executed.\n"
    exit 1 # Exit script after printing help
 }
 
@@ -38,24 +39,24 @@ help()
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--config-dir")      set -- "$@" "-c" ;;
-    "--network")         set -- "$@" "-n" ;;
-    "--reuse-contracts") set -- "$@" "-d" ;;
-    "--help")            set -- "$@" "-h" ;;
-    *)                   set -- "$@" "$arg"
+    "--config-dir")        set -- "$@" "-c" ;;
+    "--network")           set -- "$@" "-n" ;;
+    "--skip-deployment")   set -- "$@" "-d" ;;
+    "--skip-client-build") set -- "$@" "-b" ;;
+    "--help")              set -- "$@" "-h" ;;
+    *)                     set -- "$@" "$arg"
   esac
 done
 
-
-
 # Parse short options
 OPTIND=1
-while getopts "c:n:dh" opt
+while getopts "c:n:d:b:h" opt
 do
    case "$opt" in
       c ) config_dir_path="$OPTARG" ;;
       n ) network="$OPTARG" ;;
-      d ) reuse_contracts=true ;;
+      d ) skip_deployment="$OPTARG" ;;
+      b ) skip_client_build="$OPTARG" ;;
       h ) help ;;
       ? ) help ;; # Print help in case parameter is non-existent
    esac
@@ -65,9 +66,8 @@ shift $(expr $OPTIND - 1) # remove options from positional parameters
 # Overwrite default properties
 CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
 NETWORK=${network:-$NETWORK_DEFAULT}
-REUSE_CONTRACTS=${reuse_contracts:-false}
-
-echo "reuse contracts::" ${REUSE_CONTRACTS}
+SKIP_DEPLOYMENT=${skip_deployment:-false}
+SKIP_CLIENT_BUILD=${skip_client_build:-false}
 
 # Run script
 printf "${LOG_START}Starting installation...${LOG_END}"
@@ -88,13 +88,13 @@ if [ "$NETWORK" == "development" ]; then
 fi
 
 printf "${LOG_START}Building contracts...${LOG_END}"
-# rm -rf build && rm -rf cache && rm -rf typechain
 
+rm -rf build && rm -rf cache && rm -rf typechain
 yarn build
 
-if [ "$REUSE_CONTRACTS" = false ] ; then
+if [ "$SKIP_DEPLOYMENT" = false ] ; then
    printf "${LOG_START}Deploying contracts...${LOG_END}"
-   rm -rf deployments/development/
+   # rm -rf deployments/development/
 
    CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
       npx hardhat deploy --reset --export export.json --network $NETWORK
@@ -105,10 +105,13 @@ printf "${LOG_START}Initializing contracts...${LOG_END}"
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
     npx hardhat run scripts/init-contracts.ts --network $NETWORK
 
-printf "${LOG_START}Building keep-core client...${LOG_END}"
 
-cd $KEEP_CORE_PATH
-go generate ./...
-go build -a -o keep-core .
+if [ "$SKIP_CLIENT_BUILD" = false ] ; then
+   printf "${LOG_START}Building keep-core client...${LOG_END}"
+
+   cd $KEEP_CORE_PATH
+   go generate ./...
+   go build -a -o keep-core .
+fi
 
 printf "${DONE_START}Installation completed!${DONE_END}"
