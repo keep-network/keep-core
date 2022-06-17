@@ -20,7 +20,7 @@ import (
 // Expected hashes have been calculated on-chain with:
 // `keccak256(abi.encode(groupPubKey, misbehaved))`
 func TestCalculateDKGResultHash(t *testing.T) {
-	chain := &ethereumChain{}
+	chain := &Chain{}
 
 	var tests = map[string]struct {
 		dkgResult    *relaychain.DKGResult
@@ -150,7 +150,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 }
 
 func TestPackTicket(t *testing.T) {
-	chain := &ethereumChain{}
+	chain := &Chain{}
 	toBigInt := func(number string) *big.Int {
 		bigInt, _ := new(big.Int).SetString(number, 10)
 		return bigInt

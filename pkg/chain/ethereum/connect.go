@@ -28,7 +28,8 @@ const (
 	KeepRandomBeaconServiceContractName  = "KeepRandomBeaconService"
 )
 
-type ethereumChain struct {
+// Chain is a handle for communication with Ethereum chain.
+type Chain struct {
 	config                           ethereum.Config
 	accountKey                       *keystore.Key
 	client                           ethutil.EthereumClient
@@ -56,7 +57,7 @@ type ethereumChain struct {
 }
 
 type ethereumUtilityChain struct {
-	ethereumChain
+	Chain
 
 	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
 }
@@ -64,7 +65,7 @@ type ethereumUtilityChain struct {
 func connect(
 	ctx context.Context,
 	config ethereum.Config,
-) (*ethereumChain, error) {
+) (*Chain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -83,7 +84,7 @@ func connectWithClient(
 	client *ethclient.Client,
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
-) (*ethereumChain, error) {
+) (*Chain, error) {
 	chainID, err := client.ChainID(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -92,7 +93,7 @@ func connectWithClient(
 		)
 	}
 
-	ec := &ethereumChain{
+	c := &Chain{
 		config:           config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
@@ -101,16 +102,16 @@ func connectWithClient(
 		transactionMutex: &sync.Mutex{},
 	}
 
-	blockCounter, err := ethutil.NewBlockCounter(ec.client)
+	blockCounter, err := ethutil.NewBlockCounter(c.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
 			err,
 		)
 	}
-	ec.blockCounter = blockCounter
+	c.blockCounter = blockCounter
 
-	if ec.accountKey == nil {
+	if c.accountKey == nil {
 		key, err := ethutil.DecryptKeyFile(
 			config.Account.KeyFile,
 			config.Account.KeyFilePassword,
@@ -122,10 +123,10 @@ func connectWithClient(
 				err,
 			)
 		}
-		ec.accountKey = key
+		c.accountKey = key
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(ec.client, config)
+	miningWaiter := ethutil.NewMiningWaiter(c.client, config)
 
 	address, err := config.ContractAddress(KeepRandomBeaconOperatorContractName)
 	if err != nil {
@@ -133,25 +134,25 @@ func connectWithClient(
 	}
 
 	nonceManager := ethutil.NewNonceManager(
-		ec.client,
-		ec.accountKey.Address,
+		c.client,
+		c.accountKey.Address,
 	)
 
 	keepRandomBeaconOperatorContract, err :=
 		contract.NewKeepRandomBeaconOperator(
 			address,
-			ec.chainID,
-			ec.accountKey,
-			ec.client,
+			c.chainID,
+			c.accountKey,
+			c.client,
 			nonceManager,
 			miningWaiter,
 			blockCounter,
-			ec.transactionMutex,
+			c.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepRandomBeaconOperator contract: [%v]", err)
 	}
-	ec.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
+	c.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
 	address, err = config.ContractAddress(TokenStakingContractName)
 	if err != nil {
@@ -161,28 +162,28 @@ func connectWithClient(
 	stakingContract, err :=
 		contract.NewTokenStaking(
 			address,
-			ec.chainID,
-			ec.accountKey,
-			ec.client,
+			c.chainID,
+			c.accountKey,
+			c.client,
 			nonceManager,
 			miningWaiter,
 			blockCounter,
-			ec.transactionMutex,
+			c.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
 	}
-	ec.stakingContract = stakingContract
+	c.stakingContract = stakingContract
 
-	chainConfig, err := fetchChainConfig(ec)
+	chainConfig, err := fetchChainConfig(c)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch chain config: [%v]", err)
 	}
-	ec.chainConfig = chainConfig
+	c.chainConfig = chainConfig
 
-	ec.initializeBalanceMonitoring(ctx)
+	c.initializeBalanceMonitoring(ctx)
 
-	return ec, nil
+	return c, nil
 }
 
 func addClientWrappers(
@@ -291,25 +292,25 @@ func Connect(
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
-func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
-	return ec.blockCounter, nil
+func (c *Chain) BlockCounter() (chain.BlockCounter, error) {
+	return c.blockCounter, nil
 }
 
-func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
+func fetchChainConfig(c *Chain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
-	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
+	groupSize, err := c.keepRandomBeaconOperatorContract.GroupSize()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
 	}
 
-	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
+	threshold, err := c.keepRandomBeaconOperatorContract.GroupThreshold()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
 	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
+		c.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error calling TicketSubmissionTimeout: [%v]",
@@ -317,7 +318,7 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 		)
 	}
 
-	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
+	resultPublicationBlockStep, err := c.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
 	if err != nil {
 		return nil, fmt.Errorf(
 			"error calling ResultPublicationBlockStep: [%v]",
@@ -325,7 +326,7 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 		)
 	}
 
-	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
+	relayEntryTimeout, err := c.keepRandomBeaconOperatorContract.RelayEntryTimeout()
 	if err != nil {
 		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
 	}
