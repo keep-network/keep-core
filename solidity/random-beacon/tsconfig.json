@@ -1,6 +1,6 @@
 {
   "files": ["./hardhat.config.ts"],
-  "include": ["./deploy", "./test", "./typechain", "./utils"],
+  "include": ["./deploy", "./test", "./typechain", "./utils", "./scripts"],
   "compilerOptions": {
     "esModuleInterop": true,
     "noImplicitAny": true
