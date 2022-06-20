@@ -119,12 +119,16 @@ func (p *provider) ConnectionManager() net.ConnectionManager {
 	return p.connectionManager
 }
 
-func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
+func (p *provider) CreateTransportIdentifier(operatorPublicKey *operator.PublicKey) (
 	net.TransportIdentifier,
 	error,
 ) {
-	networkPublicKey := key.NetworkPublic(publicKey)
-	return peer.IDFromPublicKey(&networkPublicKey)
+	libp2pPublicKey, err := OperatorPublicKeyToLibp2pPublicKey(operatorPublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return peer.IDFromPublicKey(libp2pPublicKey)
 }
 
 func (p *provider) BroadcastChannelForwarderFor(name string) {

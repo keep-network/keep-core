@@ -3,9 +3,9 @@ package net
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
@@ -60,8 +60,10 @@ type Provider interface {
 	ConnectionManager() ConnectionManager
 
 	// CreateTransportIdentifier creates a transport identifier based on the
-	// provided public key.
-	CreateTransportIdentifier(publicKey ecdsa.PublicKey) (TransportIdentifier, error)
+	// provided operator public key.
+	CreateTransportIdentifier(
+		operatorPublicKey *operator.PublicKey,
+	) (TransportIdentifier, error)
 
 	// BroadcastChannelForwarderFor creates a message relay for given channel name.
 	BroadcastChannelForwarderFor(name string)
