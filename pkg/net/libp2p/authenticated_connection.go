@@ -7,7 +7,6 @@ import (
 
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
@@ -128,12 +127,15 @@ func newAuthenticatedOutboundConnection(
 }
 
 func (ac *authenticatedConnection) checkFirewallRules() error {
-	networkKey, ok := ac.remotePeerPublicKey.(*key.NetworkPublic)
-	if !ok {
-		return fmt.Errorf("unexpected type of remote peer's public key")
+	operatorPublicKey, err := Libp2pPublicKeyToOperatorPublicKey(ac.remotePeerPublicKey)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot convert libp2p public key to operator public key: [%v]",
+			err,
+		)
 	}
 
-	return ac.firewall.Validate(key.NetworkKeyToECDSAKey(networkKey))
+	return ac.firewall.Validate(operatorPublicKey)
 }
 
 func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
