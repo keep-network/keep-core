@@ -56,7 +56,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         }
     }
 
-    function batchClaimStruct(
+    function batchClaim(
         bytes32 expectedMerkleRoot,
         Claim[] calldata Claims
     ) external {
@@ -69,25 +69,6 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
             );
         }
      }
-
-    function batchClaimArray(
-        address[] calldata accounts,
-        uint256[] calldata cumulativeAmounts,
-        bytes32 expectedMerkleRoot,
-        bytes32[][] calldata merkleProof
-    ) external {
-        require(accounts.length == cumulativeAmounts.length, "Accounts and amounts must have the same length");
-        require(accounts.length == merkleProof.length, "Accounts and proofs must have the same length");
-
-        for (uint i; i < accounts.length; i++) {
-            claim(
-                accounts[i],
-                cumulativeAmounts[i],
-                expectedMerkleRoot,
-                merkleProof[i]
-            );
-        }
-    }
 
     function verify(bytes32[] calldata merkleProof, bytes32 root, bytes32 leaf) public pure returns (bool) {
         return merkleProof.verify(root, leaf);

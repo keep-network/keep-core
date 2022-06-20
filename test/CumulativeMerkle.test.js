@@ -68,59 +68,7 @@ describe('Cumulative Merkle Distribution', function () {
     })
   })
 
-  context('when batch claim array tokens', async function () {
-    let merkleDist
-    let merkleRoot
-    let tokenTotal
-    let proofAccounts
-
-    before(function () {
-      // numRuns must be less or equal to the number of accounts in `cum_dist`
-      const numRuns = 2
-      fc.configureGlobal({ numRuns: numRuns, skipEqualValues: true })
-      merkleRoot = dist.merkleRoot
-      tokenTotal = ethers.BigNumber.from(dist.tokenTotal)
-      proofAccounts = Object.keys(dist.claims)
-    })
-
-    beforeEach(async function () {
-      const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
-      merkleDist = await MerkleDist.deploy(token.address)
-      await merkleDist.setMerkleRoot(merkleRoot)
-      await token.mint(merkleDist.address, tokenTotal)
-    })
-
-    it('should accounts get tokens', async function () {
-      await fc.assert(
-        fc.asyncProperty(
-          fc.integer({ min: 0, max: 1 }),
-          async function (index) {
-            const claimAccounts = proofAccounts.slice((proofAccounts.length / 2) * index, (proofAccounts.length / 2) * (index + 1))
-            const claimAmounts = Array.from(claimAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
-            const claimProofs = Array.from(claimAccounts).map((claimAccount, _) => dist.claims[claimAccount].proof)
-            const prevBalances = await Promise.all(claimAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
-            const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  parseInt(prevAmmount + claimAmounts[index], 10))
-            await merkleDist.batchClaimArray(claimAccounts, claimAmounts, merkleRoot, claimProofs)
-
-            const afterBalancesHex = await Promise.all(claimAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
-            const afterBalances = Array.from(afterBalancesHex).map((afterAmmount, _) => parseInt(afterAmmount["_hex"], 16))
-            expBalances.forEach((expAmount, index) => {
-              expect(expAmount).to.equal(afterBalances[index])
-            })
-          }
-        )
-      )
-    })
-    it('should not accept arrays of different length', async function () {
-      const claimAccounts = proofAccounts
-      const claimAmounts = Array.from(claimAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
-      const claimProofs = Array.from(claimAccounts).map((claimAccount, _) => dist.claims[claimAccount].proof)
-      await expect(merkleDist.batchClaimArray(claimAccounts, claimAmounts.slice(0, 4), merkleRoot, claimProofs)).to.be.revertedWith("Accounts and amounts must have the same length")
-      await expect(merkleDist.batchClaimArray(claimAccounts, claimAmounts, merkleRoot, claimProofs.slice(0, 4))).to.be.revertedWith("Accounts and proofs must have the same length")
-    })
-  })
-
-  context('when batch claim struct tokens', async function () {
+  context('when batch claim tokens', async function () {
     let merkleDist
     let merkleRoot
     let tokenTotal
@@ -153,7 +101,7 @@ describe('Cumulative Merkle Distribution', function () {
             const claimStructs = Array.from(claimAccounts).map((claimAccount, index) => [claimAccount, claimAmounts[index], claimProofs[index]])
             const prevBalances = await Promise.all(claimAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
             const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  parseInt(prevAmmount + claimAmounts[index], 10))
-            await merkleDist.batchClaimStruct(merkleRoot, claimStructs)
+            await merkleDist.batchClaim(merkleRoot, claimStructs)
 
             const afterBalancesHex = await Promise.all(claimAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
             const afterBalances = Array.from(afterBalancesHex).map((afterAmmount, _) => parseInt(afterAmmount["_hex"], 16))
