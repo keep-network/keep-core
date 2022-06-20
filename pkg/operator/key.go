@@ -40,13 +40,32 @@ type PrivateKey struct {
 	D *big.Int
 }
 
+// MarshalUncompressed marshals the given public key to the 65-byte uncompressed
+// form. This implementation is based on the elliptic.Marshal function.
+func MarshalUncompressed(publicKey *PublicKey) ([]byte, error) {
+	curveBitSize, exists := curveBitSizes[publicKey.Curve]
+	if !exists {
+		return nil, fmt.Errorf("missing curve bit size information")
+	}
+
+	byteLength := (curveBitSize + 7) / 8
+
+	uncompressed := make([]byte, 1+2*byteLength)
+	uncompressed[0] = 4 // uncompressed point
+
+	publicKey.X.FillBytes(uncompressed[1 : 1+byteLength])
+	publicKey.Y.FillBytes(uncompressed[1+byteLength : 1+2*byteLength])
+
+	return uncompressed, nil
+}
+
 // MarshalCompressed marshals the given public key to the 33-byte compressed
 // form. This implementation is based on the elliptic.MarshalCompressed
 // function.
 func MarshalCompressed(publicKey *PublicKey) ([]byte, error) {
 	curveBitSize, exists := curveBitSizes[publicKey.Curve]
 	if !exists {
-		return nil, fmt.Errorf("missing curve bit length information")
+		return nil, fmt.Errorf("missing curve bit size information")
 	}
 
 	byteLength := (curveBitSize + 7) / 8

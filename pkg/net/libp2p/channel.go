@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/internal"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
@@ -285,8 +284,8 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	networkKey := key.Libp2pKeyToNetworkKey(senderIdentifier.pubKey)
-	if networkKey == nil {
+	operatorPublicKey, err := Libp2pPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
+	if err != nil {
 		return fmt.Errorf(
 			"sender [%v] with key [%v] is not of correct type",
 			senderIdentifier.id,
@@ -294,11 +293,21 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
+	operatorPublicKeyBytes, err := operator.MarshalUncompressed(operatorPublicKey)
+	if err != nil {
+		return fmt.Errorf(
+			"cannot marshal sender [%v] key [%v]: [%v]",
+			senderIdentifier.id,
+			senderIdentifier.pubKey,
+			err,
+		)
+	}
+
 	netMessage := internal.BasicMessage(
 		senderIdentifier.id,
 		unmarshaled,
 		string(message.Type),
-		key.Marshal(networkKey),
+		operatorPublicKeyBytes,
 		message.SequenceNumber,
 	)
 
