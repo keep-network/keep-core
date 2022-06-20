@@ -17,10 +17,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/firewall"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/urfave/cli"
 )
 
@@ -120,13 +118,15 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
-		operator.ChainKeyToOperatorKey(ethereumKey),
-	)
+	operatorPrivateKey, _, err := ethereum.ChainKeyToOperatorKeyPair(ethereumKey)
+	if err != nil {
+		return err
+	}
+
 	netProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
-		networkPrivateKey,
+		operatorPrivateKey,
 		libp2p.ProtocolBeacon,
 		firewall.MinimumStakePolicy(stakeMonitor),
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
