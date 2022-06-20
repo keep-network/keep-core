@@ -2,8 +2,8 @@ package libp2p
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/internal"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -370,16 +369,11 @@ func createTopicValidator(filter net.BroadcastChannelFilter) pubsub.Validator {
 	}
 }
 
-func extractPublicKey(peer peer.ID) (*ecdsa.PublicKey, error) {
+func extractPublicKey(peer peer.ID) (*operator.PublicKey, error) {
 	publicKey, err := peer.ExtractPublicKey()
 	if err != nil {
 		return nil, err
 	}
 
-	secp256k1PublicKey, ok := publicKey.(*crypto.Secp256k1PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("public key is of type other than Secp256k1")
-	}
-
-	return key.NetworkKeyToECDSAKey(secp256k1PublicKey), nil
+	return Libp2pPublicKeyToOperatorPublicKey(publicKey)
 }

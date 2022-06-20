@@ -157,7 +157,7 @@ type BroadcastChannel interface {
 // message should be processed by the receivers. It takes the message author's
 // public key as its argument and returns true if the message should be
 // processed or false otherwise.
-type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
+type BroadcastChannelFilter func(*operator.PublicKey) bool
 
 // Firewall represents a set of rules the remote peer has to conform to so that
 // a connection with that peer can be approved.

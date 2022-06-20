@@ -1,8 +1,8 @@
 package group
 
 import (
-	"crypto/ecdsa"
 	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -11,7 +11,7 @@ import (
 // MembershipValidator lets to validate one's membership based on the
 // provided public key.
 type MembershipValidator interface {
-	IsInGroup(publicKey *ecdsa.PublicKey) bool
+	IsInGroup(publicKey *operator.PublicKey) bool
 	IsValidMembership(memberID MemberIndex, publicKey []byte) bool
 }
 
@@ -54,10 +54,10 @@ func NewStakersMembershipValidator(
 // IsInGroup returns true if party with the given public key has been
 // selected to the group. Otherwise, function returns false.
 func (smv *StakersMembershipValidator) IsInGroup(
-	publicKey *ecdsa.PublicKey,
+	publicKey *operator.PublicKey,
 ) bool {
 	address := hex.EncodeToString(
-		smv.signing.PublicKeyToAddress(*publicKey),
+		smv.signing.PublicKeyToAddress(publicKey),
 	)
 	_, isInGroup := smv.members[address]
 	return isInGroup
