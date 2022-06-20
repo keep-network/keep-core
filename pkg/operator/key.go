@@ -1,6 +1,7 @@
 package operator
 
 import (
+	"fmt"
 	"math/big"
 )
 
@@ -14,6 +15,11 @@ const (
 	Undefined Curve = iota
 	Secp256k1
 )
+
+// Holds the bit size of the supported elliptic curves.
+var curveBitSizes = map[Curve]int{
+	Secp256k1: 256,
+}
 
 // PublicKey represents a public key that identifies the node operator.
 // Actually this is an ECDSA public key that is not tied to any particular
@@ -32,4 +38,21 @@ type PublicKey struct {
 type PrivateKey struct {
 	PublicKey
 	D *big.Int
+}
+
+// MarshalCompressed marshals the given public key to the 33-byte compressed
+// form. This implementation is based on the elliptic.MarshalCompressed
+// function.
+func MarshalCompressed(publicKey *PublicKey) ([]byte, error) {
+	curveBitSize, exists := curveBitSizes[publicKey.Curve]
+	if !exists {
+		return nil, fmt.Errorf("missing curve bit length information")
+	}
+
+	byteLength := (curveBitSize + 7) / 8
+	compressed := make([]byte, 1+byteLength)
+	compressed[0] = byte(publicKey.Y.Bit(0)) | 2
+	publicKey.X.FillBytes(compressed[1:])
+
+	return compressed, nil
 }

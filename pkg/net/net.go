@@ -2,7 +2,6 @@ package net
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/gogo/protobuf/proto"
@@ -168,5 +167,5 @@ type Firewall interface {
 	// approved.
 	// If expectations are not met, this function should return an error
 	// describing what is wrong.
-	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
+	Validate(remotePeerPublicKey *operator.PublicKey) error
 }
