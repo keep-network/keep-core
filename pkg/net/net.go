@@ -74,7 +74,7 @@ type Provider interface {
 // from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
-	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
+	GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error)
 	DisconnectPeer(connectedPeer string)
 
 	// AddrStrings returns all listen addresses of the provider.

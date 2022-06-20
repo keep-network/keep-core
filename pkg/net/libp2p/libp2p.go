@@ -3,9 +3,10 @@ package libp2p
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ipfs/go-log"
 
@@ -168,7 +169,7 @@ func (cm *connectionManager) ConnectedPeers() []string {
 	return peers
 }
 
-func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error) {
+func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error) {
 	peerID, err := peer.Decode(connectedPeer)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -187,7 +188,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 		)
 	}
 
-	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
+	return Libp2pPublicKeyToOperatorPublicKey(peerPublicKey)
 }
 
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
