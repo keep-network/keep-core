@@ -2,15 +2,14 @@ package libp2p
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"time"
 
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/net/watchtower"
 
@@ -279,7 +278,7 @@ func WithRoutingTableRefreshPeriod(period time.Duration) ConnectOption {
 func Connect(
 	ctx context.Context,
 	config Config,
-	staticKey *key.NetworkPrivate,
+	operatorPrivateKey *operator.PrivateKey,
 	protocol string,
 	firewall net.Firewall,
 	ticker *retransmission.Ticker,
@@ -295,7 +294,12 @@ func Connect(
 	connectOptions := defaultConnectOptions()
 	connectOptions.apply(options...)
 
-	identity, err := createIdentity(staticKey)
+	privateKey, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	identity, err := createIdentity(privateKey)
 	if err != nil {
 		return nil, err
 	}
