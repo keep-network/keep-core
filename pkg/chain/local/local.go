@@ -80,7 +80,7 @@ type localChain struct {
 	relayEntryTimeoutReportsMutex sync.Mutex
 	relayEntryTimeoutReports      []uint64
 
-	operatorKey *ecdsa.PrivateKey
+	operatorPrivateKey *operator.PrivateKey
 
 	minimumStake *big.Int
 }
@@ -97,8 +97,8 @@ func (c *localChain) Signing() chain.Signing {
 	return commonLocal.NewSigner(c.operatorKey)
 }
 
-func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	return c.operatorKey, &c.operatorKey.PublicKey
+func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey, error) {
+	return c.operatorPrivateKey, &c.operatorPrivateKey.PublicKey, nil
 }
 
 func (c *localChain) GetConfig() *relaychain.Config {
@@ -290,12 +290,12 @@ func Connect(
 	honestThreshold int,
 	minimumStake *big.Int,
 ) Chain {
-	operatorKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(btcec.S256())
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(groupSize, honestThreshold, minimumStake, operatorKey)
+	return ConnectWithKey(groupSize, honestThreshold, minimumStake, operatorPrivateKey)
 }
 
 // ConnectWithKey initializes a local stub implementation of the chain
@@ -304,7 +304,7 @@ func ConnectWithKey(
 	groupSize int,
 	honestThreshold int,
 	minimumStake *big.Int,
-	operatorKey *ecdsa.PrivateKey,
+	operatorPrivateKey *operator.PrivateKey,
 ) Chain {
 	bc, _ := BlockCounter()
 
@@ -332,7 +332,7 @@ func ConnectWithKey(
 		stakeMonitor:             NewStakeMonitor(minimumStake),
 		tickets:                  make([]*relaychain.Ticket, 0),
 		groups:                   []localGroup{group},
-		operatorKey:              operatorKey,
+		operatorPrivateKey:       operatorPrivateKey,
 		minimumStake:             minimumStake,
 	}
 }

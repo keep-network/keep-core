@@ -25,8 +25,22 @@ func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
 	return ec
 }
 
-func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	return operator.ChainKeyToOperatorKey(ec.accountKey)
+func (ec *ethereumChain) GetKeys() (
+	*operator.PrivateKey,
+	*operator.PublicKey,
+	error,
+) {
+	privateKey, publicKey, err := ChainPrivateKeyToOperatorKeyPair(
+		ec.accountKey.PrivateKey,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"cannot convert chain private key to operator key pair: [%v]",
+			err,
+		)
+	}
+
+	return privateKey, publicKey, nil
 }
 
 func (ec *ethereumChain) Signing() chain.Signing {
