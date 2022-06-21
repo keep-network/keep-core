@@ -7,18 +7,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"reflect"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
-// ChainKeyToOperatorKeyPair converts the Ethereum chain key to a universal
-// operator key pair. This conversion decouples the key from the chain-specific
-// curve implementation while preserving the curve name.
-func ChainKeyToOperatorKeyPair(
-	chainKey *keystore.Key,
+// ChainPrivateKeyToOperatorKeyPair converts the Ethereum chain private key to
+// a universal operator key pair. This conversion decouples the key from the
+// chain-specific curve implementation while preserving the curve name.
+func ChainPrivateKeyToOperatorKeyPair(
+	chainPrivateKey *ecdsa.PrivateKey,
 ) (*operator.PrivateKey, *operator.PublicKey, error) {
-	chainPrivateKey := chainKey.PrivateKey
 	chainPublicKey := &chainPrivateKey.PublicKey
 
 	// Ethereum keys use secp256k1 curve underneath. If the given key doesn't

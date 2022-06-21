@@ -118,7 +118,9 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	operatorPrivateKey, _, err := ethereum.ChainKeyToOperatorKeyPair(ethereumKey)
+	operatorPrivateKey, _, err := ethereum.ChainPrivateKeyToOperatorKeyPair(
+		ethereumKey.PrivateKey,
+	)
 	if err != nil {
 		return err
 	}
