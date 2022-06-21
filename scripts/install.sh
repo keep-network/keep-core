@@ -20,8 +20,8 @@ help()
    echo -e "\nUsage: ENV_VAR(S) $0"\
            "--config-dir <path>"\
            "--network <network>"\
-           "--skip-deployment <boolean>"\
-           "--skip-client-build <boolean>"
+           "--skip-deployment"\
+           "--skip-client-build"
    echo -e "\nEnvironment variables:\n"
    echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
@@ -50,13 +50,13 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "c:n:d:b:h" opt
+while getopts "c:n:dbh" opt
 do
    case "$opt" in
       c ) config_dir_path="$OPTARG" ;;
       n ) network="$OPTARG" ;;
-      d ) skip_deployment="$OPTARG" ;;
-      b ) skip_client_build="$OPTARG" ;;
+      d ) skip_deployment=${OPTARG:-true} ;;
+      b ) skip_client_build=${OPTARG:-true} ;;
       h ) help ;;
       ? ) help ;; # Print help in case parameter is non-existent
    esac
