@@ -160,7 +160,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
+	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
 	initializeDiagnostics(ctx, config, netProvider, chainProvider)
 
 	select {
@@ -202,7 +202,7 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
-	ethereumAddress string,
+	operatorPublicKey *operator.PublicKey,
 ) {
 	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
@@ -236,7 +236,7 @@ func initializeMetrics(
 		ctx,
 		registry,
 		stakeMonitor,
-		ethereumAddress,
+		operatorPublicKey,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
 }
