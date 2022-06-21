@@ -13,6 +13,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     using MerkleProof for bytes32[];
 
     address public immutable override token;
+    address public rewardsHolder;
 
     bytes32 public override merkleRoot;
     mapping(address => uint256) public cumulativeClaimed;
@@ -22,6 +23,8 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         bytes32[] proof;
     }
 
+    event RewardsHolderUpdated(address oldRewardsHolder, address newRewardsHolder);
+
     constructor(address token_) {
         token = token_;
     }
@@ -29,6 +32,11 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     function setMerkleRoot(bytes32 merkleRoot_) external override onlyOwner {
         emit MerkelRootUpdated(merkleRoot, merkleRoot_);
         merkleRoot = merkleRoot_;
+    }
+
+    function setRewardsHolder(address rewardsHolder_) external onlyOwner {
+        emit RewardsHolderUpdated(rewardsHolder, rewardsHolder_);
+        rewardsHolder = rewardsHolder_;
     }
 
     function claim(
@@ -51,7 +59,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         // Send the token
         unchecked {
             uint256 amount = cumulativeAmount - preclaimed;
-            IERC20(token).safeTransfer(account, amount);
+            IERC20(token).safeTransferFrom(rewardsHolder, account, amount);
             emit Claimed(account, amount);
         }
     }
