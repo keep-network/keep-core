@@ -22,6 +22,7 @@ async function setup() {
   const accounts = await getAccounts()
   const stakeOwner = accounts[1]
   const stakingProvider = accounts[2]
+  const operator = accounts[3]
   const beneficiary = stakeOwner
   const authorizer = stakeOwner
 
@@ -30,15 +31,19 @@ async function setup() {
   const deployerSigner = await ethers.getSigner(deployer)
   await (await t.connect(deployerSigner).mint(stakeOwner, stakedAmount)).wait()
   const stakeOwnerSigner = await ethers.getSigner(stakeOwner)
-  await (await t.connect(stakeOwnerSigner).approve(staking.address, stakedAmount)).wait()
+  await (
+    await t.connect(stakeOwnerSigner).approve(staking.address, stakedAmount)
+  ).wait()
 
   console.log(
     `Staking ${stakedAmount.toString()} to the staking provider ${stakingProvider} ...`
   )
 
-  await (await staking
-    .connect(stakeOwnerSigner)
-    .stake(stakingProvider, beneficiary, authorizer, stakedAmount)).wait()
+  await (
+    await staking
+      .connect(stakeOwnerSigner)
+      .stake(stakingProvider, beneficiary, authorizer, stakedAmount)
+  ).wait()
 
   console.log(
     `T balance of the staking contract: ${(
@@ -53,13 +58,15 @@ async function setup() {
     `Increasing min authorization ${minimumAuthorization.toString()} for the Random Beacon ...`
   )
 
-  await (await staking
-    .connect(authorizerSigner)
-    .increaseAuthorization(
-      stakingProvider,
-      randomBeacon.address,
-      minimumAuthorization
-    )).wait()
+  await (
+    await staking
+      .connect(authorizerSigner)
+      .increaseAuthorization(
+        stakingProvider,
+        randomBeacon.address,
+        minimumAuthorization
+      )
+  ).wait()
 
   const authorizedStaked = await staking.authorizedStake(
     stakingProvider,
@@ -69,6 +76,15 @@ async function setup() {
   console.log(
     `Staked authorization ${authorizedStaked.toString()} was increased for the Random Beacon`
   )
+
+  console.log(
+    `Registering operator ${operator.toString()} for a staking provider ${stakingProvider.toString()}`
+  )
+
+  const stakingProviderSigner = await ethers.getSigner(stakingProvider)
+  await (
+    await randomBeacon.connect(stakingProviderSigner).registerOperator(operator)
+  ).wait()
 }
 
 setup()
