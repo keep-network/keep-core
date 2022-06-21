@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
@@ -83,6 +84,13 @@ func Start(c *cli.Context) error {
 		)
 	}
 
+	operatorPrivateKey, operatorPublicKey, err := ethereum.ChainPrivateKeyToOperatorKeyPair(
+		ethereumKey.PrivateKey,
+	)
+	if err != nil {
+		return err
+	}
+
 	chainProvider, err := ethereum.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
@@ -98,13 +106,13 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
 	if c.Int(waitForStakeFlag) != 0 {
-		err = waitForStake(stakeMonitor, ethereumKey.Address.Hex(), c.Int(waitForStakeFlag))
+		err = waitForStake(stakeMonitor, operatorPublicKey, c.Int(waitForStakeFlag))
 		if err != nil {
 			return err
 		}
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		ethereumKey.Address.Hex(),
+		operatorPublicKey,
 	)
 	if err != nil {
 		return fmt.Errorf("could not check the stake [%v]", err)
@@ -116,13 +124,6 @@ func Start(c *cli.Context) error {
 				"is correct and it has KEEP tokens delegated and the operator " +
 				"contract has been authorized to operate on the stake",
 		)
-	}
-
-	operatorPrivateKey, _, err := ethereum.ChainPrivateKeyToOperatorKeyPair(
-		ethereumKey.PrivateKey,
-	)
-	if err != nil {
-		return err
 	}
 
 	netProvider, err := libp2p.Connect(
@@ -172,21 +173,28 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) error {
+func waitForStake(
+	stakeMonitor chain.StakeMonitor,
+	operatorPublicKey *operator.PublicKey,
+	timeout int,
+) error {
 	waitMins := 0
 	for waitMins < timeout {
-		hasMinimumStake, err := stakeMonitor.HasMinimumStake(address)
+		hasMinimumStake, err := stakeMonitor.HasMinimumStake(operatorPublicKey)
 		if err != nil {
 			return fmt.Errorf("could not check the stake [%v]", err)
 		}
+
 		if hasMinimumStake {
 			return nil
 		}
-		logger.Warningf("%s below min stake for %d min \n", address, waitMins)
+
+		logger.Warningf("below min stake for %d min \n", waitMins)
 		time.Sleep(time.Minute)
+
 		waitMins++
 	}
-	return fmt.Errorf("timed out waiting for %s to have required minimum stake", address)
+	return fmt.Errorf("timed out waiting to have required minimum stake")
 }
 
 func initializeMetrics(
