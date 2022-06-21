@@ -56,8 +56,14 @@ func NewStakersMembershipValidator(
 func (smv *StakersMembershipValidator) IsInGroup(
 	publicKey *operator.PublicKey,
 ) bool {
+	addressBytes, err := smv.signing.PublicKeyToAddress(publicKey)
+	if err != nil {
+		logger.Errorf("cannot convert public key to chain address: [%v]", err)
+		return false
+	}
+
 	address := hex.EncodeToString(
-		smv.signing.PublicKeyToAddress(publicKey),
+		addressBytes,
 	)
 	_, isInGroup := smv.members[address]
 	return isInGroup
