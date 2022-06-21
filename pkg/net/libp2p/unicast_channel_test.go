@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"strconv"
 	"testing"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -157,12 +157,17 @@ func withNetwork(
 		provider2 net.Provider,
 	),
 ) {
-	privKey1, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey1, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity1, err := createIdentity(privKey1)
+	libp2pPrivateKey1, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity1, err := createIdentity(libp2pPrivateKey1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,12 +181,17 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	privKey2, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey2, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity2, err := createIdentity(privKey2)
+	libp2pPrivateKey2, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity2, err := createIdentity(libp2pPrivateKey2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +216,7 @@ func withNetwork(
 			},
 			Port: provider1Port,
 		},
-		privKey1,
+		operatorPrivateKey1,
 		ProtocolBeacon,
 		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
@@ -226,7 +236,7 @@ func withNetwork(
 			},
 			Port: provider2Port,
 		},
-		privKey2,
+		operatorPrivateKey2,
 		ProtocolBeacon,
 		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),

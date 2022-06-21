@@ -1,19 +1,24 @@
 package libp2p
 
 import (
+	"github.com/keep-network/keep-core/pkg/operator"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 func TestSignAndVerify(t *testing.T) {
-	privateKey, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity, err := createIdentity(privateKey)
+	libp2pPrivateKey, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity, err := createIdentity(libp2pPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,12 +46,17 @@ func TestSignAndVerify(t *testing.T) {
 }
 
 func TestAllFieldsButSignatureAreTaken(t *testing.T) {
-	privateKey, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity, err := createIdentity(privateKey)
+	libp2pPrivateKey, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity, err := createIdentity(libp2pPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}

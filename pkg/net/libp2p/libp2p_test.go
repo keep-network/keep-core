@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
 
@@ -18,7 +18,7 @@ func TestProviderReturnsType(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	privKey, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func TestProviderReturnsType(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		generateDeterministicNetworkConfig(),
-		privKey,
+		operatorPrivateKey,
 		ProtocolBeacon,
 		firewall.Disabled,
 		idleTicker(),
@@ -50,7 +50,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 
 	testName := "testname"
 
-	privKey, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +58,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		generateDeterministicNetworkConfig(),
-		privKey,
+		operatorPrivateKey,
 		ProtocolBeacon,
 		firewall.Disabled,
 		idleTicker(),
@@ -85,12 +85,17 @@ func TestSendReceive(t *testing.T) {
 		expectedPayload = "some text"
 	)
 
-	privKey, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity, err := createIdentity(privKey)
+	libp2pPrivateKey, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity, err := createIdentity(libp2pPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +103,7 @@ func TestSendReceive(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		config,
-		privKey,
+		operatorPrivateKey,
 		ProtocolBeacon,
 		firewall.Disabled,
 		idleTicker(),
@@ -156,7 +161,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	privateKey, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,7 +177,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 	provider, err := Connect(
 		ctx,
 		config,
-		privateKey,
+		operatorPrivateKey,
 		ProtocolBeacon,
 		firewall.Disabled,
 		idleTicker(),
