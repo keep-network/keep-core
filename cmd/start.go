@@ -151,7 +151,7 @@ func Start(c *cli.Context) error {
 
 	err = beacon.Initialize(
 		ctx,
-		ethereumKey.Address.Hex(),
+		operatorPublicKey,
 		chainProvider,
 		netProvider,
 		persistence,
