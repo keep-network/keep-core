@@ -2,7 +2,6 @@ package chain
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -81,7 +80,7 @@ type Signing interface {
 
 	// PublicKeyToAddress converts operator's public key to an address
 	// associated with the chain.
-	PublicKeyToAddress(publicKey ecdsa.PublicKey) []byte
+	PublicKeyToAddress(publicKey *operator.PublicKey) ([]byte, error)
 
 	// PublicKeyToAddress converts operator's public key bytes to an address
 	// associated with the chain.

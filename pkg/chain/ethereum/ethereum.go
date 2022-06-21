@@ -44,7 +44,7 @@ func (ec *ethereumChain) GetKeys() (
 }
 
 func (ec *ethereumChain) Signing() chain.Signing {
-	return ethutil.NewSigner(ec.accountKey.PrivateKey)
+	return newSigner(ec.accountKey)
 }
 
 func (ec *ethereumChain) GetConfig() *relayChain.Config {

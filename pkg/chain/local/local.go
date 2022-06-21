@@ -2,10 +2,9 @@ package local
 
 import (
 	"bytes"
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"encoding/binary"
 	"fmt"
+	"github.com/btcsuite/btcd/btcec"
 	"math/big"
 	"math/rand"
 	"sort"
@@ -13,9 +12,6 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	crand "crypto/rand"
-
-	commonLocal "github.com/keep-network/keep-common/pkg/chain/local"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -94,7 +90,7 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 }
 
 func (c *localChain) Signing() chain.Signing {
-	return commonLocal.NewSigner(c.operatorKey)
+	return newSigner(c.operatorPrivateKey)
 }
 
 func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey, error) {
