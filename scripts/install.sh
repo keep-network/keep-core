@@ -25,7 +25,7 @@ help()
    echo -e "\nEnvironment variables:\n"
    echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
-   echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum. Required for non-local network only"
+   echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum. Required for non-development network only"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
    echo -e "\t--network: Ethereum network for keep-core client."\
@@ -64,7 +64,6 @@ done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
 
 # Overwrite default properties
-CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
 NETWORK=${network:-$NETWORK_DEFAULT}
 SKIP_DEPLOYMENT=${skip_deployment:-false}
 SKIP_CLIENT_BUILD=${skip_client_build:-false}
@@ -72,8 +71,7 @@ SKIP_CLIENT_BUILD=${skip_client_build:-false}
 # Run script
 printf "${LOG_START}Starting installation...${LOG_END}"
 
-printf "Config dir path: $CONFIG_DIR_PATH\n"
-printf "Network: $NETWORK"
+printf "Network: $NETWORK\n"
 
 cd $KEEP_BEACON_SOL_PATH
 
@@ -103,7 +101,7 @@ fi
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
-    npx hardhat run scripts/init-contracts.ts --network $NETWORK
+    npx hardhat run scripts/staking.ts --network $NETWORK
 
 
 if [ "$SKIP_CLIENT_BUILD" = false ] ; then
