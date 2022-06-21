@@ -25,8 +25,9 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
 
     event RewardsHolderUpdated(address oldRewardsHolder, address newRewardsHolder);
 
-    constructor(address token_) {
+    constructor(address token_, address rewardsHolder_) {
         token = token_;
+        rewardsHolder = rewardsHolder_;
     }
 
     function setMerkleRoot(bytes32 merkleRoot_) external override onlyOwner {
