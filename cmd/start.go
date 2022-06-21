@@ -161,7 +161,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
-	initializeDiagnostics(ctx, config, netProvider)
+	initializeDiagnostics(ctx, config, netProvider, chainProvider)
 
 	select {
 	case <-ctx.Done():
@@ -245,6 +245,7 @@ func initializeDiagnostics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
+	chainHandle chain.Handle,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -259,6 +260,6 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
-	diagnostics.RegisterClientInfoSource(registry, netProvider)
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider, chainHandle)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, chainHandle)
 }
