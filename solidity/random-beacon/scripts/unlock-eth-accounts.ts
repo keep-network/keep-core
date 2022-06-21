@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop, import/no-extraneous-dependencies */
-import { ethers } from "ethers"
+import { ethers } from "hardhat"
 
 const password = process.env.KEEP_ETHEREUM_PASSWORD || "password"
 
