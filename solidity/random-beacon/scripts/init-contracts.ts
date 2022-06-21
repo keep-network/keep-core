@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions, import/no-extraneous-dependencies */
+/* eslint-disable import/no-extraneous-dependencies */
 import { ethers, helpers } from "hardhat"
 
 import type { T, TokenStaking, RandomBeacon } from "../typechain"
