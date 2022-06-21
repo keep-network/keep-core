@@ -3,12 +3,12 @@ package local
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"sync/atomic"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 )
 
@@ -23,7 +23,7 @@ type localChannel struct {
 	counter              uint64
 	name                 string
 	identifier           net.TransportIdentifier
-	staticKey            *key.NetworkPublic
+	operatorPublicKey    *operator.PublicKey
 	messageHandlersMutex sync.Mutex
 	messageHandlers      []*messageHandler
 	unmarshalersMutex    sync.Mutex
@@ -56,11 +56,16 @@ func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) e
 		return err
 	}
 
+	operatorPublicKeyBytes, err := operator.MarshalUncompressed(lc.operatorPublicKey)
+	if err != nil {
+		return fmt.Errorf("cannot marshal operator public key: [%v]", err)
+	}
+
 	netMessage := internal.BasicMessage(
 		lc.identifier,
 		unmarshaled,
 		"local",
-		key.Marshal(lc.staticKey),
+		operatorPublicKeyBytes,
 		lc.nextSeqno(),
 	)
 

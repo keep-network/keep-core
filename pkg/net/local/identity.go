@@ -2,9 +2,9 @@ package local
 
 import (
 	"encoding/hex"
+	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/rand"
-
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 var letterRunes = [52]rune{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
@@ -29,6 +29,13 @@ func randomLocalIdentifier() localIdentifier {
 	return localIdentifier(runes)
 }
 
-func createLocalIdentifier(staticKey *key.NetworkPublic) localIdentifier {
-	return localIdentifier(hex.EncodeToString(key.Marshal(staticKey)))
+func createLocalIdentifier(
+	operatorPublicKey *operator.PublicKey,
+) (localIdentifier, error) {
+	operatorPublicKeyBytes, err := operator.MarshalUncompressed(operatorPublicKey)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal operator public key: [%v]", err)
+	}
+
+	return localIdentifier(hex.EncodeToString(operatorPublicKeyBytes)), nil
 }

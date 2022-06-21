@@ -3,10 +3,9 @@ package local
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 	"sync/atomic"
-
-	"github.com/keep-network/keep-core/pkg/net/key"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/internal"
@@ -17,8 +16,8 @@ type unicastChannel struct {
 
 	structMutex *sync.RWMutex
 
-	senderTransportID net.TransportIdentifier
-	senderStaticKey   *key.NetworkPublic
+	senderTransportID       net.TransportIdentifier
+	senderOperatorPublicKey *operator.PublicKey
 
 	receiverTransportID net.TransportIdentifier
 
@@ -33,16 +32,16 @@ type unicastChannelRecv struct {
 
 func newUnicastChannel(
 	senderTransportID net.TransportIdentifier,
-	senderStaticKey *key.NetworkPublic,
+	senderOperatorPublicKey *operator.PublicKey,
 	receiverTransportID net.TransportIdentifier,
 ) *unicastChannel {
 	return &unicastChannel{
-		structMutex:         &sync.RWMutex{},
-		senderTransportID:   senderTransportID,
-		senderStaticKey:     senderStaticKey,
-		receiverTransportID: receiverTransportID,
-		messageReceivers:    make([]*unicastChannelRecv, 0),
-		unmarshalersByType:  make(map[string]func() net.TaggedUnmarshaler),
+		structMutex:             &sync.RWMutex{},
+		senderTransportID:       senderTransportID,
+		senderOperatorPublicKey: senderOperatorPublicKey,
+		receiverTransportID:     receiverTransportID,
+		messageReceivers:        make([]*unicastChannelRecv, 0),
+		unmarshalersByType:      make(map[string]func() net.TaggedUnmarshaler),
 	}
 }
 
@@ -107,11 +106,16 @@ func (uc *unicastChannel) receiveMessage(
 		return err
 	}
 
+	senderOperatorPublicKeyBytes, err := operator.MarshalUncompressed(uc.senderOperatorPublicKey)
+	if err != nil {
+		return fmt.Errorf("cannot marshal operator public key: [%v]", err)
+	}
+
 	message := internal.BasicMessage(
 		uc.senderTransportID,
 		unmarshaled,
 		messageType,
-		key.Marshal(uc.senderStaticKey),
+		senderOperatorPublicKeyBytes,
 		uc.nextSeqno(),
 	)
 
