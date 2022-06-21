@@ -11,6 +11,11 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// DefaultCurve is the default elliptic curve implementation used in the
+// chain/ethereum package. Ethereum uses the secp256k1 curve and the specific
+// implementation is provided by the go-ethereum package.
+var DefaultCurve elliptic.Curve = crypto.S256()
+
 // ChainPrivateKeyToOperatorKeyPair converts the Ethereum chain private key to
 // a universal operator key pair. This conversion decouples the key from the
 // chain-specific curve implementation while preserving the curve name.
@@ -21,7 +26,7 @@ func ChainPrivateKeyToOperatorKeyPair(
 
 	// Ethereum keys use secp256k1 curve underneath. If the given key doesn't
 	// use that curve, something wrong.
-	if !isSecp256k1(chainPublicKey.Curve) {
+	if !isSameCurve(chainPublicKey.Curve, DefaultCurve) {
 		return nil, nil, fmt.Errorf("ethereum chain key does not use secp256k1 curve")
 	}
 
@@ -50,7 +55,7 @@ func OperatorPublicKeyToChainPublicKey(
 	}
 
 	return &ecdsa.PublicKey{
-		Curve: crypto.S256(),
+		Curve: DefaultCurve,
 		X:     operatorPublicKey.X,
 		Y:     operatorPublicKey.Y,
 	}, nil
@@ -72,6 +77,6 @@ func OperatorPublicKeyToChainAddress(
 	return crypto.PubkeyToAddress(*chainPublicKey), nil
 }
 
-func isSecp256k1(curve elliptic.Curve) bool {
-	return reflect.DeepEqual(curve.Params(), crypto.S256().Params())
+func isSameCurve(curve1, curve2 elliptic.Curve) bool {
+	return reflect.DeepEqual(curve1.Params(), curve2.Params())
 }

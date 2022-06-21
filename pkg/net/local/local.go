@@ -5,7 +5,6 @@ package local
 
 import (
 	"context"
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 
@@ -77,7 +76,7 @@ func (lp *localProvider) BroadcastChannelForwarderFor(name string) {
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {
-	_, operatorPublicKey, err := operator.GenerateKeyPair(btcec.S256())
+	_, operatorPublicKey, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		panic(err)
 	}

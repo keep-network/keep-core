@@ -2,10 +2,21 @@ package local
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
+
+// DefaultCurve is the default elliptic curve implementation used in the
+// chain/local package. The local chain uses the secp256k1 curve and the
+// specific implementation is provided by the btcec package. Normally,
+// the go-ethereum implementation could be used as well but that implementation
+// has an unset elliptic curve name (elliptic.Curve.Params().Name
+// returns an empty string) so that curve cannot be easily used with
+// operator.GenerateKeyPair which is widely used in the local chain
+// environment. This is why the btcec implementation is used.
+var DefaultCurve elliptic.Curve = btcec.S256()
 
 // OperatorPublicKeyToChainPublicKey converts an operator public key to
 // a local-chain-specific public key that uses the btcec secp256k1
@@ -18,7 +29,7 @@ func OperatorPublicKeyToChainPublicKey(
 	}
 
 	return &ecdsa.PublicKey{
-		Curve: btcec.S256(),
+		Curve: DefaultCurve,
 		X:     operatorPublicKey.X,
 		Y:     operatorPublicKey.Y,
 	}, nil

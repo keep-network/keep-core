@@ -1,12 +1,18 @@
 package libp2p
 
 import (
+	"crypto/elliptic"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec"
 	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
+
+// DefaultCurve is the default elliptic curve implementation used in the
+// net/libp2p package. LibP2P network uses the secp256k1 curve and the specific
+// implementation is provided by the btcec package.
+var DefaultCurve elliptic.Curve = btcec.S256()
 
 // OperatorPrivateKeyToLibp2pKeyPair converts an operator private key to
 // the libp2p key pair that uses the libp2p-specific curve implementation.
@@ -22,7 +28,7 @@ func OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey *operator.PrivateKey) 
 
 	// Libp2p keys are actually btcec keys under the hood.
 	btcecPrivateKey, btcecPublicKey := btcec.PrivKeyFromBytes(
-		btcec.S256(), operatorPrivateKey.D.Bytes(),
+		DefaultCurve, operatorPrivateKey.D.Bytes(),
 	)
 
 	libp2pPrivateKey := libp2pcrypto.Secp256k1PrivateKey(*btcecPrivateKey)
@@ -42,7 +48,7 @@ func OperatorPublicKeyToLibp2pPublicKey(
 	}
 
 	return &libp2pcrypto.Secp256k1PublicKey{
-		Curve: btcec.S256(),
+		Curve: DefaultCurve,
 		X:     operatorPublicKey.X,
 		Y:     operatorPublicKey.Y,
 	}, nil

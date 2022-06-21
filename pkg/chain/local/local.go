@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/btcsuite/btcd/btcec"
 	"math/big"
 	"math/rand"
 	"sort"
@@ -286,7 +285,7 @@ func Connect(
 	honestThreshold int,
 	minimumStake *big.Int,
 ) Chain {
-	operatorPrivateKey, _, err := operator.GenerateKeyPair(btcec.S256())
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		panic(err)
 	}
