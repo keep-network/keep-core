@@ -1,8 +1,10 @@
 package ethereum
 
 import (
+	"crypto/ecdsa"
 	"crypto/elliptic"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"reflect"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -37,6 +39,39 @@ func ChainKeyToOperatorKeyPair(
 	}
 
 	return privateKey, publicKey, nil
+}
+
+// OperatorPublicKeyToChainPublicKey converts an operator public key to
+// an Ethereum-specific chain public key that uses the go-ethereum-based
+// secp256k1 curve implementation under the hood.
+func OperatorPublicKeyToChainPublicKey(
+	operatorPublicKey *operator.PublicKey,
+) (*ecdsa.PublicKey, error) {
+	if operatorPublicKey.Curve != operator.Secp256k1 {
+		return nil, fmt.Errorf("ethereum supports only secp256k1 operator keys")
+	}
+
+	return &ecdsa.PublicKey{
+		Curve: crypto.S256(),
+		X:     operatorPublicKey.X,
+		Y:     operatorPublicKey.Y,
+	}, nil
+}
+
+// OperatorPublicKeyToChainAddress converts an operator public key to
+// an Ethereum-specific chain address.
+func OperatorPublicKeyToChainAddress(
+	operatorPublicKey *operator.PublicKey,
+) (common.Address, error) {
+	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(operatorPublicKey)
+	if err != nil {
+		return common.Address{}, fmt.Errorf(
+			"cannot convert from operator to chain key: [%v]",
+			err,
+		)
+	}
+
+	return crypto.PubkeyToAddress(*chainPublicKey), nil
 }
 
 func isSecp256k1(curve elliptic.Curve) bool {

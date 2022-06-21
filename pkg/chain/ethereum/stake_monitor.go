@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,21 +14,33 @@ type ethereumStakeMonitor struct {
 	ethereum *ethereumChain
 }
 
-func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
-	if !common.IsHexAddress(address) {
-		return false, fmt.Errorf("not a valid ethereum address: %v", address)
+func (esm *ethereumStakeMonitor) HasMinimumStake(
+	operatorPublicKey *operator.PublicKey,
+) (bool, error) {
+	address, err := OperatorPublicKeyToChainAddress(operatorPublicKey)
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot convert from operator key to chain address: [%v]",
+			err,
+		)
 	}
 
-	return esm.ethereum.HasMinimumStake(common.HexToAddress(address))
+	return esm.ethereum.HasMinimumStake(address)
 }
 
-func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error) {
-	if !common.IsHexAddress(address) {
-		return nil, fmt.Errorf("not a valid ethereum address: %v", address)
+func (esm *ethereumStakeMonitor) StakerFor(
+	operatorPublicKey *operator.PublicKey,
+) (chain.Staker, error) {
+	address, err := OperatorPublicKeyToChainAddress(operatorPublicKey)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot convert from operator key to chain address: [%v]",
+			err,
+		)
 	}
 
 	return &ethereumStaker{
-		address:  address,
+		address:  address.Hex(),
 		ethereum: esm.ethereum,
 	}, nil
 }

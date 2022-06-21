@@ -3,6 +3,7 @@ package chain
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -45,10 +46,10 @@ type StakeMonitor interface {
 	// Having the required minimum of active stake makes the operator eligible
 	// to join the network. If the active stake is not currently undelegating,
 	// operator is also eligible for work selection.
-	HasMinimumStake(address string) (bool, error)
+	HasMinimumStake(operatorPublicKey *operator.PublicKey) (bool, error)
 
-	// StakerFor returns a Staker for the given address.
-	StakerFor(address string) (Staker, error)
+	// StakerFor returns a Staker for the given operator public key.
+	StakerFor(operatorPublicKey *operator.PublicKey) (Staker, error)
 }
 
 // Signing is an interface that provides ability to sign and verify
