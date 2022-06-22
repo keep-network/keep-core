@@ -98,10 +98,10 @@ if [ "$SKIP_DEPLOYMENT" = false ] ; then
       npx hardhat deploy --reset --export export.json --network $NETWORK
 fi
     
-printf "${LOG_START}Initializing contracts...${LOG_END}"
+printf "${LOG_START}Setting up staking...${LOG_END}"
 
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
-    npx hardhat unlock-accounts --network $NETWORK
+    npx hardhat staking --network $NETWORK
 
 
 if [ "$SKIP_CLIENT_BUILD" = false ] ; then
