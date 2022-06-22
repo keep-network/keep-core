@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import { task, types } from "hardhat/config"
 
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
