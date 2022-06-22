@@ -23,8 +23,8 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 	responder := createTestConnectionConfig(t)
 
 	firewall := newMockFirewall()
-	firewall.updatePeer(initiator.libp2pPublicKey, true)
-	firewall.updatePeer(responder.libp2pPublicKey, true)
+	firewall.updatePeer(initiator.networkPublicKey, true)
+	firewall.updatePeer(responder.networkPublicKey, true)
 
 	initiatorConn, responderConn := newConnPair()
 
@@ -45,12 +45,12 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 
 		maliciousInitiatorHijacksHonestRun(t, ac)
 		return
-	}(initiatorConn, initiator.peerID, initiator.libp2pPrivateKey, responder.peerID, responder.libp2pPrivateKey)
+	}(initiatorConn, initiator.peerID, initiator.networkPrivateKey, responder.peerID, responder.networkPrivateKey)
 
 	_, err := newAuthenticatedInboundConnection(
 		responderConn,
 		responder.peerID,
-		responder.libp2pPrivateKey,
+		responder.networkPrivateKey,
 		firewall,
 		ProtocolBeacon,
 	)
@@ -99,7 +99,7 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 	}
 
 	maliciousInitiator := createTestConnectionConfig(t)
-	signedAct3Message, err := maliciousInitiator.libp2pPrivateKey.Sign(act3WireMessage)
+	signedAct3Message, err := maliciousInitiator.networkPrivateKey.Sign(act3WireMessage)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,8 +123,8 @@ func TestHandshake(t *testing.T) {
 	responder := createTestConnectionConfig(t)
 
 	firewall := newMockFirewall()
-	firewall.updatePeer(initiator.libp2pPublicKey, true)
-	firewall.updatePeer(responder.libp2pPublicKey, true)
+	firewall.updatePeer(initiator.networkPublicKey, true)
+	firewall.updatePeer(responder.networkPublicKey, true)
 
 	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
 		connectInitiatorAndResponder(initiator, responder, firewall, t)
@@ -162,7 +162,7 @@ func TestHandshakeInitiatorBlockedByFirewallRules(t *testing.T) {
 
 	firewall := newMockFirewall()
 	// only responder meets firewall rules
-	firewall.updatePeer(responder.libp2pPublicKey, true)
+	firewall.updatePeer(responder.networkPublicKey, true)
 
 	_, _, inboundError, outboundError :=
 		connectInitiatorAndResponder(initiator, responder, firewall, t)
@@ -190,7 +190,7 @@ func TestHandshakeResponderBlockedByFirewallRules(t *testing.T) {
 
 	firewall := newMockFirewall()
 	// only initiator meets firewall rules
-	firewall.updatePeer(initiator.libp2pPublicKey, true)
+	firewall.updatePeer(initiator.networkPublicKey, true)
 
 	_, _, inboundError, outboundError :=
 		connectInitiatorAndResponder(initiator, responder, firewall, t)
@@ -240,12 +240,12 @@ func connectInitiatorAndResponder(
 			ProtocolBeacon,
 		)
 		done <- struct{}{}
-	}(initiatorConn, initiator.peerID, initiator.libp2pPrivateKey, responder.peerID)
+	}(initiatorConn, initiator.peerID, initiator.networkPrivateKey, responder.peerID)
 
 	authnInboundConn, inboundError = newAuthenticatedInboundConnection(
 		responderConn,
 		responder.peerID,
-		responder.libp2pPrivateKey,
+		responder.networkPrivateKey,
 		firewall,
 		ProtocolBeacon,
 	)
@@ -256,9 +256,9 @@ func connectInitiatorAndResponder(
 }
 
 type testConnectionConfig struct {
-	libp2pPrivateKey *libp2pcrypto.Secp256k1PrivateKey
-	libp2pPublicKey  *libp2pcrypto.Secp256k1PublicKey
-	peerID           peer.ID
+	networkPrivateKey *libp2pcrypto.Secp256k1PrivateKey
+	networkPublicKey  *libp2pcrypto.Secp256k1PublicKey
+	peerID            peer.ID
 }
 
 func createTestConnectionConfig(t *testing.T) *testConnectionConfig {
@@ -267,19 +267,19 @@ func createTestConnectionConfig(t *testing.T) *testConnectionConfig {
 		t.Fatal(err)
 	}
 
-	libp2pPrivateKey, libp2pPublicKey, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	networkPrivateKey, networkPublicKey, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	peerID, err := peer.IDFromPrivateKey(libp2pPrivateKey)
+	peerID, err := peer.IDFromPrivateKey(networkPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	return &testConnectionConfig{
-		libp2pPrivateKey,
-		libp2pPublicKey,
+		networkPrivateKey,
+		networkPublicKey,
 		peerID,
 	}
 }
@@ -308,9 +308,9 @@ func (mf *mockFirewall) Validate(remotePeerOperatorPublicKey *operator.PublicKey
 }
 
 func (mf *mockFirewall) updatePeer(
-	remotePeerLibp2pPublicKey *libp2pcrypto.Secp256k1PublicKey,
+	remotePeerNetworkPublicKey *libp2pcrypto.Secp256k1PublicKey,
 	meetsCriteria bool,
 ) {
-	x := remotePeerLibp2pPublicKey.X.Uint64()
+	x := remotePeerNetworkPublicKey.X.Uint64()
 	mf.meetsCriteria[x] = meetsCriteria
 }

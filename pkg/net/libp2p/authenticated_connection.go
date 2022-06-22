@@ -127,7 +127,7 @@ func newAuthenticatedOutboundConnection(
 }
 
 func (ac *authenticatedConnection) checkFirewallRules() error {
-	operatorPublicKey, err := Libp2pPublicKeyToOperatorPublicKey(ac.remotePeerPublicKey)
+	operatorPublicKey, err := NetworkPublicKeyToOperatorPublicKey(ac.remotePeerPublicKey)
 	if err != nil {
 		return fmt.Errorf(
 			"cannot convert libp2p public key to operator public key: [%v]",

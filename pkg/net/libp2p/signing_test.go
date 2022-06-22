@@ -13,12 +13,12 @@ func TestSignAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pPrivateKey, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	networkPrivateKey, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity, err := createIdentity(libp2pPrivateKey)
+	identity, err := createIdentity(networkPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,12 +51,12 @@ func TestAllFieldsButSignatureAreTaken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	libp2pPrivateKey, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	networkPrivateKey, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity, err := createIdentity(libp2pPrivateKey)
+	identity, err := createIdentity(networkPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}

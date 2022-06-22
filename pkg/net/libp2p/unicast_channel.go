@@ -268,7 +268,7 @@ func (uc *unicastChannel) processMessage(message *pb.UnicastNetworkMessage) erro
 		return err
 	}
 
-	operatorPublicKey, err := Libp2pPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
+	operatorPublicKey, err := NetworkPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
 	if err != nil {
 		return fmt.Errorf(
 			"sender [%v] with key [%v] is not of correct type",

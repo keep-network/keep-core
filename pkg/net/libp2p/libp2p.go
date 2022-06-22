@@ -124,12 +124,12 @@ func (p *provider) CreateTransportIdentifier(operatorPublicKey *operator.PublicK
 	net.TransportIdentifier,
 	error,
 ) {
-	libp2pPublicKey, err := OperatorPublicKeyToLibp2pPublicKey(operatorPublicKey)
+	networkPublicKey, err := OperatorPublicKeyToNetworkPublicKey(operatorPublicKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return peer.IDFromPublicKey(libp2pPublicKey)
+	return peer.IDFromPublicKey(networkPublicKey)
 }
 
 func (p *provider) BroadcastChannelForwarderFor(name string) {
@@ -188,7 +188,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*operator.P
 		)
 	}
 
-	return Libp2pPublicKeyToOperatorPublicKey(peerPublicKey)
+	return NetworkPublicKeyToOperatorPublicKey(peerPublicKey)
 }
 
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
@@ -299,12 +299,12 @@ func Connect(
 	connectOptions := defaultConnectOptions()
 	connectOptions.apply(options...)
 
-	privateKey, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey)
+	networkPrivateKey, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	identity, err := createIdentity(privateKey)
+	identity, err := createIdentity(networkPrivateKey)
 	if err != nil {
 		return nil, err
 	}

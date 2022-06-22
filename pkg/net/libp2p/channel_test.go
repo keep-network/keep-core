@@ -170,12 +170,12 @@ func TestCreateTopicValidator(t *testing.T) {
 
 	expectedResults := []bool{true, false, false, true, false}
 	for i, operatorPublicKey := range operatorPublicKeys {
-		libp2pPublicKey, err := OperatorPublicKeyToLibp2pPublicKey(operatorPublicKey)
+		networkPublicKey, err := OperatorPublicKeyToNetworkPublicKey(operatorPublicKey)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		authorID, _ := peer.IDFromPublicKey(libp2pPublicKey)
+		authorID, _ := peer.IDFromPublicKey(networkPublicKey)
 		authorIDBytes, _ := authorID.Marshal()
 		message := &pubsubpb.Message{From: authorIDBytes}
 

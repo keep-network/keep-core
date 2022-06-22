@@ -162,12 +162,12 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	libp2pPrivateKey1, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey1)
+	networkPrivateKey1, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity1, err := createIdentity(libp2pPrivateKey1)
+	identity1, err := createIdentity(networkPrivateKey1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -186,12 +186,12 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	libp2pPrivateKey2, _, err := OperatorPrivateKeyToLibp2pKeyPair(operatorPrivateKey2)
+	networkPrivateKey2, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity2, err := createIdentity(libp2pPrivateKey2)
+	identity2, err := createIdentity(networkPrivateKey2)
 	if err != nil {
 		t.Fatal(err)
 	}
