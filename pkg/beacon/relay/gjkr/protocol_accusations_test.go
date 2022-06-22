@@ -8,7 +8,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/net/ephemeral"
+	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 )
 
 // TODO Add test with many messages from accusers and many accused in the message.
