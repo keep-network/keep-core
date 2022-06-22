@@ -63,6 +63,9 @@ func TestSendReceiveUnicastChannel(t *testing.T) {
 		}
 
 		// Peer 2 get the channel from cache.
+		// Wait for a moment until the messages sent by peer 1 are received by
+		// peer 2, so that the channel is opened and unmarshaller set.
+		time.Sleep(2 * time.Second)
 		peer2Channel, err := provider2.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
