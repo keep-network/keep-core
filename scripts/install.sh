@@ -7,6 +7,8 @@ DONE_START='\n\e[1;32m' # new line + bold + green
 DONE_END='\n\n\e[0m'    # new line + reset
 
 KEEP_CORE_PATH=$PWD
+./scripts/pre-install.sh
+
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 
 # Defaults, can be overwritten by env variables/input parameters
