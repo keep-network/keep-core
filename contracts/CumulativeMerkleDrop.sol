@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interfaces/ICumulativeMerkleDrop.sol";
 
@@ -26,6 +27,8 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     event RewardsHolderUpdated(address oldRewardsHolder, address newRewardsHolder);
 
     constructor(address token_, address rewardsHolder_) {
+        require(IERC20(token_).totalSupply() > 0, "Token contract must be set");
+        require(rewardsHolder_ != address(0), "Rewards GHolder must be an address");
         token = token_;
         rewardsHolder = rewardsHolder_;
     }
@@ -36,6 +39,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     }
 
     function setRewardsHolder(address rewardsHolder_) external onlyOwner {
+        require(rewardsHolder_ != address(0));
         emit RewardsHolderUpdated(rewardsHolder, rewardsHolder_);
         rewardsHolder = rewardsHolder_;
     }

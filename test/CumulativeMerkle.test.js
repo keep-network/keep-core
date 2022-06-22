@@ -33,6 +33,7 @@ describe('Cumulative Merkle Distribution', function () {
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
       const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, 10)
       merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
     })
 
@@ -87,9 +88,9 @@ describe('Cumulative Merkle Distribution', function () {
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
       const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, tokenTotal)
       merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
       await merkleDist.setMerkleRoot(merkleRoot)
-      await token.mint(rewardsHolder.address, tokenTotal)
       await token.connect(rewardsHolder).approve(merkleDist.address, tokenTotal)
     })
 
@@ -135,9 +136,9 @@ describe('Cumulative Merkle Distribution', function () {
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
       const [owner, rewardsHolder] = await ethers.getSigners()
+      await token.mint(rewardsHolder.address, tokenTotal)
       merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
       await merkleDist.setMerkleRoot(merkleRoot)
-      await token.mint(rewardsHolder.address, tokenTotal)
       await token.connect(rewardsHolder).approve(merkleDist.address, tokenTotal)
     })
 
@@ -261,9 +262,9 @@ describe('Cumulative Merkle Distribution', function () {
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
       const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, tokenTotal)
       merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
       await merkleDist.setMerkleRoot(merkleRoot)
-      await token.mint(rewardsHolder.address, tokenTotal)
       await token.connect(rewardsHolder).approve(merkleDist.address, tokenTotal)
     })
 
@@ -346,6 +347,7 @@ describe('Cumulative Merkle Distribution', function () {
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
       const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, 10)
       merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
       await merkleDist.setMerkleRoot(merkleRoot)
     })
