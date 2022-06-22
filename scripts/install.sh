@@ -82,7 +82,7 @@ yarn install
 if [ "$NETWORK" == "development" ]; then
     printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
     KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-        npx hardhat run scripts/unlock-eth-accounts.ts --network $NETWORK
+        npx hardhat unlock-accounts --network $NETWORK
 fi
 
 printf "${LOG_START}Building contracts...${LOG_END}"
@@ -101,7 +101,7 @@ fi
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
-    npx hardhat run scripts/staking.ts --network $NETWORK
+    npx hardhat unlock-accounts --network $NETWORK
 
 
 if [ "$SKIP_CLIENT_BUILD" = false ] ; then

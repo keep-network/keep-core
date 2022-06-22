@@ -8,6 +8,7 @@ import "hardhat-gas-reporter"
 import "hardhat-contract-sizer"
 import "@typechain/hardhat"
 import "hardhat-dependency-compiler"
+import "./tasks"
 
 import { task } from "hardhat/config"
 
