@@ -10,7 +10,6 @@ KEEP_CORE_PATH=$PWD
 KEEP_BEACON_SOL_PATH="$KEEP_CORE_PATH/solidity/random-beacon"
 
 # Defaults, can be overwritten by env variables/input parameters
-CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 NETWORK_DEFAULT="development"
 KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:-""}
@@ -18,7 +17,6 @@ CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:
 help()
 {
    echo -e "\nUsage: ENV_VAR(S) $0"\
-           "--config-dir <path>"\
            "--network <network>"\
            "--skip-deployment"\
            "--skip-client-build"
@@ -27,7 +25,6 @@ help()
            "Required only for 'local' network. Default value is 'password'"
    echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum. Required for non-development network only"
    echo -e "\nCommand line arguments:\n"
-   echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
    echo -e "\t--network: Ethereum network for keep-core client."\
                         "Available networks and settings are specified in the 'hardhat.config.ts'"
    echo -e "\t--skip-deployment: When set to true the old artifacts from the '/deployments' dir are used. Default is false."
@@ -39,7 +36,6 @@ help()
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--config-dir")        set -- "$@" "-c" ;;
     "--network")           set -- "$@" "-n" ;;
     "--skip-deployment")   set -- "$@" "-d" ;;
     "--skip-client-build") set -- "$@" "-b" ;;
@@ -50,10 +46,9 @@ done
 
 # Parse short options
 OPTIND=1
-while getopts "c:n:dbh" opt
+while getopts "n:dbh" opt
 do
    case "$opt" in
-      c ) config_dir_path="$OPTARG" ;;
       n ) network="$OPTARG" ;;
       d ) skip_deployment=${OPTARG:-true} ;;
       b ) skip_client_build=${OPTARG:-true} ;;
