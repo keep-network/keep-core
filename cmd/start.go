@@ -99,26 +99,27 @@ func Start(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
-	if c.Int(waitForStakeFlag) != 0 {
-		err = waitForStake(stakeMonitor, ethereumKey.Address.Hex(), c.Int(waitForStakeFlag))
-		if err != nil {
-			return err
-		}
-	}
-	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		ethereumKey.Address.Hex(),
-	)
-	if err != nil {
-		return fmt.Errorf("could not check the stake [%v]", err)
-	}
-	if !hasMinimumStake {
-		return fmt.Errorf(
-			"no minimum KEEP stake or operator is not authorized to use it; " +
-				"please make sure the operator address in the configuration " +
-				"is correct and it has KEEP tokens delegated and the operator " +
-				"contract has been authorized to operate on the stake",
-		)
-	}
+	// FIXME: Update for V2
+	// if c.Int(waitForStakeFlag) != 0 {
+	// 	err = waitForStake(stakeMonitor, ethereumKey.Address.Hex(), c.Int(waitForStakeFlag))
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	// hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+	// 	ethereumKey.Address.Hex(),
+	// )
+	// if err != nil {
+	// 	return fmt.Errorf("could not check the stake [%v]", err)
+	// }
+	// if !hasMinimumStake {
+	// 	return fmt.Errorf(
+	// 		"no minimum KEEP stake or operator is not authorized to use it; " +
+	// 			"please make sure the operator address in the configuration " +
+	// 			"is correct and it has KEEP tokens delegated and the operator " +
+	// 			"contract has been authorized to operate on the stake",
+	// 	)
+	// }
 
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
 		operator.ChainKeyToOperatorKey(ethereumKey),
