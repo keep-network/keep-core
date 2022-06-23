@@ -18,11 +18,12 @@ RUN apk add --update --no-cache \
 	make \
 	nodejs \
 	npm \
+	yarn \
 	python3 && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.8.9 /usr/bin/solc /usr/bin/solc
 
 RUN go install gotest.tools/gotestsum@latest
 
@@ -43,8 +44,21 @@ RUN go mod download
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
+# V1 contracts
 COPY ./solidity-v1 $APP_DIR/solidity-v1
 RUN cd $APP_DIR/solidity-v1 && npm install
+
+# V2 contracts
+## External contracts
+COPY ./pkg/chain/threshold-network/gen/_solidity $APP_DIR/pkg/chain/threshold-network/gen/_solidity
+COPY ./pkg/chain/tbtc-v2/gen/_solidity $APP_DIR/pkg/chain/tbtc-v2/gen/_solidity
+RUN cd $APP_DIR/pkg/chain/threshold-network/gen/_solidity && yarn install
+RUN cd $APP_DIR/pkg/chain/tbtc-v2/gen/_solidity && yarn install
+
+## Internal contracts
+COPY ./solidity $APP_DIR/solidity
+RUN cd $APP_DIR/solidity/random-beacon && yarn install
+RUN cd $APP_DIR/solidity/ecdsa && yarn install
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
@@ -52,6 +66,7 @@ COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
+
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
 RUN go generate ./.../gen
