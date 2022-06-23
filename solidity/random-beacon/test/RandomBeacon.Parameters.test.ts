@@ -2,26 +2,44 @@
 import { ethers, waffle, helpers } from "hardhat"
 import { expect } from "chai"
 
-import { randomBeaconDeployment } from "./fixtures"
+import { randomBeaconDeployment, params } from "./fixtures"
 
 import type { ContractTransaction, Signer } from "ethers"
-import type { RandomBeaconStub } from "../typechain"
+import type { RandomBeaconStub, RandomBeaconGovernance } from "../typechain"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 describe("RandomBeacon - Parameters", () => {
-  let governance: Signer
+  let impersonatedGovernance: SignerWithAddress
   let thirdParty: Signer
   let thirdPartyContract: SignerWithAddress
   let randomBeacon: RandomBeaconStub
+  let randomBeaconGovernance: RandomBeaconGovernance
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;[governance, thirdParty, thirdPartyContract] = await ethers.getSigners()
+    ;[impersonatedGovernance, thirdParty, thirdPartyContract] =
+      await ethers.getSigners()
+
+    const { governance } = await helpers.signers.getNamedSigners()
 
     const contracts = await waffle.loadFixture(randomBeaconDeployment)
     randomBeacon = contracts.randomBeacon as RandomBeaconStub
+    randomBeaconGovernance =
+      contracts.randomBeaconGovernance as RandomBeaconGovernance
+
+    // This transfer is initiated just for the testing purposes. The idea of these
+    // tests is to check the 'update*' functions in isolation and not through the
+    // RandomBeaconGovernance contract. In reality the governance of RandomBeacon
+    // should still remain the RandomBeaconGovernance contract.
+    await randomBeaconGovernance
+      .connect(governance)
+      .beginRandomBeaconGovernanceTransfer(impersonatedGovernance.address)
+    await helpers.time.increaseTime(params.governanceDelay)
+    await randomBeaconGovernance
+      .connect(governance)
+      .finalizeRandomBeaconGovernanceTransfer()
   })
 
   describe("updateRelayEntryParameters", () => {
@@ -50,7 +68,7 @@ describe("RandomBeacon - Parameters", () => {
         await createSnapshot()
 
         tx = await randomBeacon
-          .connect(governance)
+          .connect(impersonatedGovernance)
           .updateRelayEntryParameters(
             newRelayEntrySoftTimeout,
             newRelayEntryHardTimeout,
@@ -117,7 +135,7 @@ describe("RandomBeacon - Parameters", () => {
         await createSnapshot()
 
         tx = await randomBeacon
-          .connect(governance)
+          .connect(impersonatedGovernance)
           .updateAuthorizationParameters(
             newMinimumAuthorization,
             newAuthorizationDecreaseDelay,
@@ -193,7 +211,7 @@ describe("RandomBeacon - Parameters", () => {
         await createSnapshot()
 
         tx = await randomBeacon
-          .connect(governance)
+          .connect(impersonatedGovernance)
           .updateGroupCreationParameters(
             newGroupCreationFrequency,
             newGroupLifetime,
@@ -264,7 +282,7 @@ describe("RandomBeacon - Parameters", () => {
 
               await expect(
                 randomBeacon
-                  .connect(governance)
+                  .connect(impersonatedGovernance)
                   .updateGroupCreationParameters(
                     newGroupCreationFrequency,
                     newGroupLifetime,
@@ -288,7 +306,7 @@ describe("RandomBeacon - Parameters", () => {
 
               await expect(
                 randomBeacon
-                  .connect(governance)
+                  .connect(impersonatedGovernance)
                   .updateGroupCreationParameters(
                     newGroupCreationFrequency,
                     newGroupLifetime,
@@ -334,7 +352,7 @@ describe("RandomBeacon - Parameters", () => {
         await createSnapshot()
 
         tx = await randomBeacon
-          .connect(governance)
+          .connect(impersonatedGovernance)
           .updateRewardParameters(
             newSortitionPoolRewardsBanDuration,
             newRelayEntryTimeoutNotificationRewardMultiplier,
@@ -418,7 +436,7 @@ describe("RandomBeacon - Parameters", () => {
         await createSnapshot()
 
         tx = await randomBeacon
-          .connect(governance)
+          .connect(impersonatedGovernance)
           .updateSlashingParameters(
             newRelayEntrySubmissionFailureSlashingAmount,
             newMaliciousDkgResultSlashingAmount,
@@ -494,7 +512,7 @@ describe("RandomBeacon - Parameters", () => {
           await createSnapshot()
 
           tx = await randomBeacon
-            .connect(governance)
+            .connect(impersonatedGovernance)
             .setRequesterAuthorization(thirdPartyContract.address, true)
         })
 
@@ -523,11 +541,11 @@ describe("RandomBeacon - Parameters", () => {
           await createSnapshot()
 
           await randomBeacon
-            .connect(governance)
+            .connect(impersonatedGovernance)
             .setRequesterAuthorization(thirdPartyContract.address, true)
 
           tx = await randomBeacon
-            .connect(governance)
+            .connect(impersonatedGovernance)
             .setRequesterAuthorization(thirdPartyContract.address, false)
         })
 
