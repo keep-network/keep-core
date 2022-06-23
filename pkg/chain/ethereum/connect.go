@@ -335,43 +335,11 @@ func (c *Chain) TransactionMutex() *sync.Mutex {
 func fetchChainConfig(c *Chain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
-	groupSize, err := c.keepRandomBeaconOperatorContract.GroupSize()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
-	}
-
-	threshold, err := c.keepRandomBeaconOperatorContract.GroupThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
-	}
-
-	ticketSubmissionTimeout, err :=
-		c.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	resultPublicationBlockStep, err := c.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling ResultPublicationBlockStep: [%v]",
-			err,
-		)
-	}
-
-	relayEntryTimeout, err := c.keepRandomBeaconOperatorContract.RelayEntryTimeout()
-	if err != nil {
-		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
-	}
-
 	return &relaychain.Config{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
+		// Group size and threshold are hardcoded in the RandomBeacon contract.
+		GroupSize:                  64,
+		HonestThreshold:            33,
+		ResultPublicationBlockStep: 10, //TODO: Fetch from chain if needed in V2
+		RelayEntryTimeout:          10, //TODO: Fetch from chain if needed in V2
 	}, nil
 }
