@@ -16,6 +16,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
+	beaconChain "github.com/keep-network/keep-core/pkg/chain/random-beacon"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -31,6 +32,7 @@ func Initialize(
 	chainHandle chain.Handle,
 	netProvider net.Provider,
 	persistence persistence.Handle,
+	beaconChainHandle beaconChain.Handle,
 ) error {
 	relayChain := chainHandle.ThresholdRelay()
 	chainConfig := relayChain.GetConfig()
@@ -208,6 +210,8 @@ func Initialize(
 		)
 		go groupRegistry.UnregisterStaleGroups(registration.GroupPublicKey)
 	})
+
+	go registerAndMonitorStatus(ctx, blockCounter, beaconChainHandle)
 
 	return nil
 }

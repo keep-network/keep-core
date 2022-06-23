@@ -22,6 +22,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/urfave/cli"
+
+	beaconChain "github.com/keep-network/keep-core/pkg/chain/random-beacon"
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
@@ -90,6 +92,11 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
+	beaconChainHandle, err := beaconChain.Connect(chainProvider)
+	if err != nil {
+		return fmt.Errorf("error initializing ethereum chain handle for Beacon: [%w]", err)
+	}
+
 	blockCounter, err := chainProvider.BlockCounter()
 	if err != nil {
 		return err
@@ -153,6 +160,7 @@ func Start(c *cli.Context) error {
 		chainProvider,
 		netProvider,
 		persistence,
+		beaconChainHandle,
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
