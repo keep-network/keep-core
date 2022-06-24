@@ -32,7 +32,9 @@ describe('Cumulative Merkle Distribution', function () {
 
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
-      merkleDist = await MerkleDist.deploy(token.address)
+      const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, 10)
+      merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
     })
 
     it('should be 0 before setting it up', async function () {
@@ -68,6 +70,54 @@ describe('Cumulative Merkle Distribution', function () {
     })
   })
 
+  context('when batch claim tokens', async function () {
+    let merkleDist
+    let merkleRoot
+    let tokenTotal
+    let proofAccounts
+
+    before(function () {
+      // numRuns must be less or equal to the number of accounts in `cum_dist`
+      const numRuns = 2
+      fc.configureGlobal({ numRuns: numRuns, skipEqualValues: true })
+      merkleRoot = dist.merkleRoot
+      tokenTotal = ethers.BigNumber.from(dist.tokenTotal)
+      proofAccounts = Object.keys(dist.claims)
+    })
+
+    beforeEach(async function () {
+      const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
+      const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, tokenTotal)
+      merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
+      await merkleDist.setMerkleRoot(merkleRoot)
+      await token.connect(rewardsHolder).approve(merkleDist.address, tokenTotal)
+    })
+
+    it('should accounts get tokens', async function () {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.integer({ min: 0, max: 1 }),
+          async function (index) {
+            const claimAccounts = proofAccounts.slice((proofAccounts.length / 2) * index, (proofAccounts.length / 2) * (index + 1))
+            const claimAmounts = Array.from(claimAccounts).map((claimAccount, _) => ethers.BigNumber.from(dist.claims[claimAccount].amount))
+            const claimProofs = Array.from(claimAccounts).map((claimAccount, _) => dist.claims[claimAccount].proof)
+            const claimStructs = Array.from(claimAccounts).map((claimAccount, index) => [claimAccount, claimAmounts[index], claimProofs[index]])
+            const prevBalances = await Promise.all(claimAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
+            const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  parseInt(prevAmmount + claimAmounts[index], 10))
+            await merkleDist.batchClaim(merkleRoot, claimStructs)
+
+            const afterBalancesHex = await Promise.all(claimAccounts.map(async (claimAccount, _) => await token.balanceOf(claimAccount)))
+            const afterBalances = Array.from(afterBalancesHex).map((afterAmmount, _) => parseInt(afterAmmount["_hex"], 16))
+            expBalances.forEach((expAmount, index) => {
+              expect(expAmount).to.equal(afterBalances[index])
+            })
+          }
+        )
+      )
+    })
+  })
+
   context('when claim tokens', async function () {
     let merkleDist
     let merkleRoot
@@ -85,9 +135,11 @@ describe('Cumulative Merkle Distribution', function () {
 
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
-      merkleDist = await MerkleDist.deploy(token.address)
+      const [owner, rewardsHolder] = await ethers.getSigners()
+      await token.mint(rewardsHolder.address, tokenTotal)
+      merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
       await merkleDist.setMerkleRoot(merkleRoot)
-      await token.mint(merkleDist.address, tokenTotal)
+      await token.connect(rewardsHolder).approve(merkleDist.address, tokenTotal)
     })
 
     it('should be emitted an event', async function () {
@@ -125,19 +177,20 @@ describe('Cumulative Merkle Distribution', function () {
       )
     })
 
-    it('should merkle dist contract to reduce its balance', async function () {
+    it('should rewards holder to reduce its balance', async function () {
       await fc.assert(
         fc.asyncProperty(
           fc.integer({ min: 0, max: proofAccounts.length - 1 }),
           async function (index) {
+            const [owner, rewardsHolder] = await ethers.getSigners()
             const claimAccount = proofAccounts[index]
             const claimAmount = ethers.BigNumber.from(dist.claims[claimAccount].amount)
             const claimProof = dist.claims[claimAccount].proof
 
-            preBalance = await token.balanceOf(merkleDist.address)
+            preBalance = await token.balanceOf(rewardsHolder.address)
             expBalance = preBalance.sub(claimAmount)
             await merkleDist.claim(claimAccount, claimAmount, merkleRoot, claimProof)
-            const afterBalance = await token.balanceOf(merkleDist.address)
+            const afterBalance = await token.balanceOf(rewardsHolder.address)
             expect(expBalance).to.equal(afterBalance)
           }
         )
@@ -208,9 +261,11 @@ describe('Cumulative Merkle Distribution', function () {
 
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
-      merkleDist = await MerkleDist.deploy(token.address)
+      const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, tokenTotal)
+      merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
       await merkleDist.setMerkleRoot(merkleRoot)
-      await token.mint(merkleDist.address, tokenTotal)
+      await token.connect(rewardsHolder).approve(merkleDist.address, tokenTotal)
     })
 
     it('should be possible to set a new Merkle Root after claiming', async function () {
@@ -249,12 +304,14 @@ describe('Cumulative Merkle Distribution', function () {
         const claimAmount = ethers.BigNumber.from(cumDist.claims[claimAccount].amount)
         const claimProof = cumDist.claims[claimAccount].proof
 
-        await expect(merkleDist.claim(claimAccount, claimAmount, cumulativeMerkleRoot, claimProof)).to.be.revertedWith('Transfer amount exceeds balance')
+        await expect(merkleDist.claim(claimAccount, claimAmount, cumulativeMerkleRoot, claimProof)).to.be.revertedWith('Transfer amount exceeds allowance')
       })
 
       it('should be possible to claim new distribution tokens', async function () {
-        await token.mint(merkleDist.address, cumulativeTokenTotal)
+        const [owner, rewardsHolder] = await ethers.getSigners();
+        await token.mint(rewardsHolder.address, cumulativeTokenTotal)
         await merkleDist.setMerkleRoot(cumulativeMerkleRoot)
+        await token.connect(rewardsHolder).approve(merkleDist.address, cumulativeTokenTotal)
 
         await fc.assert(
           fc.asyncProperty(
@@ -289,7 +346,9 @@ describe('Cumulative Merkle Distribution', function () {
 
     beforeEach(async function () {
       const MerkleDist = await ethers.getContractFactory('CumulativeMerkleDrop')
-      merkleDist = await MerkleDist.deploy(token.address)
+      const [owner, rewardsHolder] = await ethers.getSigners();
+      await token.mint(rewardsHolder.address, 10)
+      merkleDist = await MerkleDist.deploy(token.address, rewardsHolder.address)
       await merkleDist.setMerkleRoot(merkleRoot)
     })
 
