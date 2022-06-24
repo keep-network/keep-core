@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"encoding/binary"
 	"fmt"
 	"math/big"
 	"math/rand"
-	"sort"
 	"sync"
 
 	"github.com/ipfs/go-log"
@@ -105,66 +103,6 @@ func (c *localChain) GetConfig() *relaychain.Config {
 	return c.relayConfig
 }
 
-func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTicketSubmissionPromise {
-	promise := &async.EventGroupTicketSubmissionPromise{}
-
-	c.ticketsMutex.Lock()
-	defer c.ticketsMutex.Unlock()
-
-	c.tickets = append(c.tickets, ticket)
-	sort.SliceStable(c.tickets, func(i, j int) bool {
-		// Ticket value bytes are interpreted as a big-endian unsigned integers.
-		iValue := new(big.Int).SetBytes(c.tickets[i].Value[:])
-		jValue := new(big.Int).SetBytes(c.tickets[j].Value[:])
-
-		return iValue.Cmp(jValue) == -1
-	})
-
-	err := promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
-		BlockNumber: c.simulatedHeight,
-	})
-	if err != nil {
-		logger.Errorf("failed to fulfill promise: [%v]", err)
-	}
-
-	return promise
-}
-
-func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
-	tickets := make([]uint64, len(c.tickets))
-
-	for i := range tickets {
-		tickets[i] = binary.BigEndian.Uint64(c.tickets[i].Value[:])
-	}
-
-	return tickets, nil
-}
-
-func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
-	c.ticketsMutex.Lock()
-	defer c.ticketsMutex.Unlock()
-
-	selectTickets := func() []*relaychain.Ticket {
-		if len(c.tickets) <= c.relayConfig.GroupSize {
-			return c.tickets
-		}
-
-		selectedTickets := make([]*relaychain.Ticket, c.relayConfig.GroupSize)
-		copy(selectedTickets, c.tickets)
-		return selectedTickets
-	}
-
-	selectedTickets := selectTickets()
-
-	selectedParticipants := make([]relaychain.StakerAddress, len(selectedTickets))
-	for i, ticket := range selectedTickets {
-		selectedParticipants[i] = ticket.Proof.StakerValue.Bytes()
-	}
-
-	return selectedParticipants, nil
-}
-
 func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmittedPromise {
 	c.ticketsMutex.Lock()
 	c.tickets = make([]*relaychain.Ticket, 0)
@@ -241,23 +179,6 @@ func (c *localChain) OnRelayEntryRequested(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.relayRequestHandlers, handlerID)
-	})
-}
-
-func (c *localChain) OnGroupSelectionStarted(
-	handler func(entry *event.GroupSelectionStart),
-) subscription.EventSubscription {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
-
-	handlerID := generateHandlerID()
-	c.groupSelectionStartedHandlers[handlerID] = handler
-
-	return subscription.NewEventSubscription(func() {
-		c.handlerMutex.Lock()
-		defer c.handlerMutex.Unlock()
-
-		delete(c.groupSelectionStartedHandlers, handlerID)
 	})
 }
 

@@ -2,10 +2,8 @@ package ethereum
 
 import (
 	"fmt"
-	"math/big"
-	"time"
-
 	"github.com/ipfs/go-log"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -48,37 +46,6 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
 }
 
-func (ec *ethereumChain) SubmitTicket(ticket *relayChain.Ticket) *async.EventGroupTicketSubmissionPromise {
-	submittedTicketPromise := &async.EventGroupTicketSubmissionPromise{}
-
-	failPromise := func(err error) {
-		failErr := submittedTicketPromise.Fail(err)
-		if failErr != nil {
-			logger.Errorf(
-				"failing promise because of: [%v] failed with: [%v].",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	ticketBytes := ec.packTicket(ticket)
-
-	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
-		ticketBytes,
-		ethutil.TransactionOptions{
-			GasLimit: 250000,
-		},
-	)
-	if err != nil {
-		failPromise(err)
-	}
-
-	// TODO: fulfill when submitted
-
-	return submittedTicketPromise
-}
-
 func (ec *ethereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
 	ticketBytes := []uint8{}
 	ticketBytes = append(ticketBytes, ticket.Value[:]...)
@@ -89,55 +56,6 @@ func (ec *ethereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
 	copy(ticketFixedArray[:], ticketBytes[:32])
 
 	return ticketFixedArray
-}
-
-func (ec *ethereumChain) GetSubmittedTickets() ([]uint64, error) {
-	return ec.keepRandomBeaconOperatorContract.SubmittedTickets()
-}
-
-func (ec *ethereumChain) GetSelectedParticipants() ([]relayChain.StakerAddress, error) {
-	var stakerAddresses []relayChain.StakerAddress
-	fetchParticipants := func() error {
-		participants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
-		if err != nil {
-			return err
-		}
-
-		stakerAddresses = make([]relayChain.StakerAddress, len(participants))
-		for i, participant := range participants {
-			stakerAddresses[i] = participant.Bytes()
-		}
-
-		return nil
-	}
-
-	// The reason behind a retry functionality is Infura's load balancer synchronization
-	// problem. Whenever a Keep client is connected to Infura, it might experience
-	// a slight delay with block updates between ethereum clients. One or more
-	// clients might stay behind and report a block number 'n-1', whereas the
-	// actual block number is already 'n'. This delay results in error triggering
-	// a new group selection. To mitigate Infura's sync issue, a Keep client will
-	// retry calling for selected participants up to 4 times.
-	// Synchronization issue can occur on any setup where we have more than one
-	// Ethereum clients behind a load balancer.
-	const numberOfRetries = 10
-	const delay = time.Second
-
-	for i := 1; ; i++ {
-		err := fetchParticipants()
-		if err != nil {
-			if i == numberOfRetries {
-				return nil, err
-			}
-			time.Sleep(delay)
-			logger.Infof(
-				"Retrying getting selected participants; attempt [%v]",
-				i,
-			)
-		} else {
-			return stakerAddresses, nil
-		}
-	}
 }
 
 func (ec *ethereumChain) SubmitRelayEntry(
@@ -243,26 +161,6 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	}
 
 	subscription := ec.keepRandomBeaconOperatorContract.RelayEntryRequested(
-		nil,
-	).OnEvent(onEvent)
-
-	return subscription
-}
-
-func (ec *ethereumChain) OnGroupSelectionStarted(
-	handle func(groupSelectionStart *event.GroupSelectionStart),
-) subscription.EventSubscription {
-	onEvent := func(
-		newEntry *big.Int,
-		blockNumber uint64,
-	) {
-		handle(&event.GroupSelectionStart{
-			NewEntry:    newEntry,
-			BlockNumber: blockNumber,
-		})
-	}
-
-	subscription := ec.keepRandomBeaconOperatorContract.GroupSelectionStarted(
 		nil,
 	).OnEvent(onEvent)
 

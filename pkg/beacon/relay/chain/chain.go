@@ -52,21 +52,8 @@ type RelayEntryInterface interface {
 // GroupSelectionInterface defines the subset of the relay chain interface that
 // pertains to relay group selection activities.
 type GroupSelectionInterface interface {
-	// OnGroupSelectionStarted is a callback that is invoked when an on-chain
-	// group selection started and the contract is ready to accept tickets.
-	OnGroupSelectionStarted(
-		func(groupSelectionStarted *event.GroupSelectionStart),
-	) subscription.EventSubscription
-	// SubmitTicket submits a ticket corresponding to the virtual staker to
-	// the chain, and returns a promise to track the submission. The promise
-	// is fulfilled with the entry as seen on-chain, or failed if there is an
-	// error submitting the entry.
-	SubmitTicket(ticket *Ticket) *async.EventGroupTicketSubmissionPromise
-	// GetSubmittedTickets gets the submitted group candidate tickets so far.
-	GetSubmittedTickets() ([]uint64, error)
-	// GetSelectedParticipants returns `GroupSize` slice of addresses of
-	// candidates which have been selected to the currently assembling group.
-	GetSelectedParticipants() ([]StakerAddress, error)
+	// TODO: Expose a function allowing to check the selected group for the
+	//       given seed.
 }
 
 // GroupRegistrationInterface defines the subset of the relay chain interface
@@ -147,9 +134,6 @@ type Config struct {
 	// HonestThreshold is the minimum number of active participants behaving
 	// according to the protocol needed to generate a new relay entry.
 	HonestThreshold int
-	// TicketSubmissionTimeout is the duration (in blocks) the staker has to
-	// submit any tickets to candidate to a new group.
-	TicketSubmissionTimeout uint64
 	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
 	// before group member with the given index is eligible to submit the
 	// result.

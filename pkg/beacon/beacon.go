@@ -13,7 +13,6 @@ import (
 	dkgresult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -149,54 +148,28 @@ func Initialize(
 		)
 	})
 
-	_ = relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		onGroupSelected := func(group *groupselection.Result) {
-			for index, staker := range group.SelectedStakers {
-				logger.Infof(
-					"new candidate group member [0x%v] with index [%v]",
-					hex.EncodeToString(staker),
-					index,
-				)
-			}
-			node.JoinGroupIfEligible(
-				relayChain,
-				signing,
-				group,
-				event.NewEntry,
-			)
-		}
-
+	// TODO: Add `OnDkgStarted` function to the relay chain interface.
+	_ = relayChain.OnDkgStarted(func(event *event.DkgStarted) {
 		go func() {
+			// TODO: Rename to `NotifyDkgStarted`.
 			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
 				event.BlockNumber,
 			); !ok {
 				logger.Warningf(
-					"group selection event with seed [0x%x] and "+
+					"DKG started event with seed [0x%x] and "+
 						"starting block [%v] has been already processed",
-					event.NewEntry,
+					event.Seed,
 					event.BlockNumber,
 				)
 				return
 			}
 
-			logger.Infof(
-				"group selection started with seed [0x%x] at block [%v]",
-				event.NewEntry,
-				event.BlockNumber,
-			)
-
-			err = groupselection.CandidateToNewGroup(
+			node.JoinGroupIfEligible(
 				relayChain,
-				blockCounter,
-				chainConfig,
-				staker,
-				event.NewEntry,
+				signing,
+				event.Seed,
 				event.BlockNumber,
-				onGroupSelected,
 			)
-			if err != nil {
-				logger.Errorf("tickets submission failed: [%v]", err)
-			}
 		}()
 	})
 

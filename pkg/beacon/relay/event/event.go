@@ -28,9 +28,9 @@ type Request struct {
 	BlockNumber    uint64
 }
 
-// GroupSelectionStart represents a group selection start event.
-type GroupSelectionStart struct {
-	NewEntry    *big.Int
+// DkgStarted represents a DKG start event.
+type DkgStarted struct {
+	Seed        *big.Int
 	BlockNumber uint64
 }
 
