@@ -36,8 +36,8 @@ func TestOperatorPublicKeyToChainPublicKey_NotSecp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Alter the curve information to be undefined.
-	operatorPublicKey.Curve = operator.Undefined
+	// Alter the curve information to be non-supported.
+	operatorPublicKey.Curve = -1
 
 	_, err = operatorPublicKeyToChainPublicKey(operatorPublicKey)
 
@@ -93,7 +93,7 @@ func TestOperatorPrivateKeyToChainKeyPair_NotSecp256k1(t *testing.T) {
 	}
 
 	// Alter the curve information to be undefined.
-	operatorPrivateKey.Curve = operator.Undefined
+	operatorPrivateKey.Curve = -1
 
 	_, _, err = operatorPrivateKeyToChainKeyPair(
 		operatorPrivateKey,

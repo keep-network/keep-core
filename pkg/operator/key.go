@@ -15,8 +15,7 @@ type Curve int
 // Enum that lists all the elliptic curves that can be used with the operator
 // keys.
 const (
-	Undefined Curve = iota
-	Secp256k1
+	Secp256k1 Curve = iota
 )
 
 // Holds the bit size of the supported elliptic curves. All curves specified by
@@ -29,8 +28,6 @@ var curveBitSizes = map[Curve]int{
 // operator.Curve enum instance.
 func ParseCurve(value string) (Curve, error) {
 	switch value {
-	case "undefined":
-		return Undefined, nil
 	case "secp256k1":
 		return Secp256k1, nil
 	}
@@ -42,8 +39,6 @@ func ParseCurve(value string) (Curve, error) {
 // enum instance.
 func (c Curve) String() string {
 	switch c {
-	case Undefined:
-		return "undefined"
 	case Secp256k1:
 		return "secp256k1"
 	default:

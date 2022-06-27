@@ -52,8 +52,8 @@ func TestOperatorPrivateKeyToNetworkKeyPair_NotSecp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Alter the curve information to be undefined.
-	operatorPrivateKey.Curve = operator.Undefined
+	// Alter the curve information to be non-supported.
+	operatorPrivateKey.Curve = -1
 
 	_, _, err = operatorPrivateKeyToNetworkKeyPair(
 		operatorPrivateKey,
@@ -102,8 +102,8 @@ func TestOperatorPublicKeyToNetworkPublicKey_NotSecp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Alter the curve information to be undefined.
-	operatorPublicKey.Curve = operator.Undefined
+	// Alter the curve information to be non-supported.
+	operatorPublicKey.Curve = -1
 
 	_, err = operatorPublicKeyToNetworkPublicKey(
 		operatorPublicKey,

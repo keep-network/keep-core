@@ -109,7 +109,7 @@ func TestOperatorPublicKeyToChainPublicKey(t *testing.T) {
 
 func TestOperatorPublicKeyToChainPublicKey_NotSecp256k1(t *testing.T) {
 	operatorPublicKey := &operator.PublicKey{
-		Curve: operator.Undefined,
+		Curve: -1,
 	}
 
 	_, err := operatorPublicKeyToChainPublicKey(operatorPublicKey)
@@ -167,7 +167,7 @@ func TestOperatorPublicKeyToChainAddress(t *testing.T) {
 
 func TestOperatorPublicKeyToChainAddress_NotSecp256k1(t *testing.T) {
 	operatorPublicKey := &operator.PublicKey{
-		Curve: operator.Undefined,
+		Curve: -1,
 	}
 
 	_, err := operatorPublicKeyToChainAddress(operatorPublicKey)
