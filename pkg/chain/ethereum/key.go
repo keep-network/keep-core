@@ -25,7 +25,7 @@ func ChainPrivateKeyToOperatorKeyPair(
 	chainPublicKey := &chainPrivateKey.PublicKey
 
 	// Ethereum keys use secp256k1 curve underneath. If the given key doesn't
-	// use that curve, something wrong.
+	// use that curve, something is wrong.
 	if !isSameCurve(chainPublicKey.Curve, DefaultCurve) {
 		return nil, nil, fmt.Errorf("ethereum chain key does not use secp256k1 curve")
 	}
