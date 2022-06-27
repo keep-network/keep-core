@@ -18,12 +18,12 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	"github.com/libp2p/go-libp2p-core/host"
 	libp2pnet "github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
+	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
@@ -402,17 +402,23 @@ func discoverAndListen(
 		)
 	}
 
+	newConnManager, err := connmgr.NewConnManager(
+		DefaultConnMgrLowWater,
+		DefaultConnMgrHighWater,
+		connmgr.WithGracePeriod(DefaultConnMgrGracePeriod),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create connection manager: [%v]",
+			err,
+		)
+	}
+
 	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
-		libp2p.ConnectionManager(
-			connmgr.NewConnManager(
-				DefaultConnMgrLowWater,
-				DefaultConnMgrHighWater,
-				DefaultConnMgrGracePeriod,
-			),
-		),
+		libp2p.ConnectionManager(newConnManager),
 	}
 
 	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
@@ -427,7 +433,7 @@ func discoverAndListen(
 		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
 
-	return libp2p.New(ctx, options...)
+	return libp2p.New(options...)
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {
