@@ -18,7 +18,7 @@ var DefaultCurve elliptic.Curve = crypto.S256()
 
 // ChainPrivateKeyToOperatorKeyPair converts the Ethereum chain private key to
 // a universal operator key pair. This conversion decouples the key from the
-// chain-specific curve implementation while preserving the curve name.
+// chain-specific curve implementation while preserving the curve.
 func ChainPrivateKeyToOperatorKeyPair(
 	chainPrivateKey *ecdsa.PrivateKey,
 ) (*operator.PrivateKey, *operator.PublicKey, error) {
