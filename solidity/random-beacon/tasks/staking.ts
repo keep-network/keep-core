@@ -75,7 +75,7 @@ async function setup(
   const authorizerSigner = await ethers.getSigner(authorizer)
 
   console.log(
-    `Increasing min authorization ${stakingAuthorization.toString()} for the Random Beacon ...`
+    `Increasing authorization ${stakingAuthorization.toString()} for the Random Beacon ...`
   )
 
   await (

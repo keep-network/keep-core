@@ -23,8 +23,12 @@ task("unlock-accounts", "Unlock ethereum accounts").setAction(
 
         try {
           console.log(`\nUnlocking account: ${account}`)
-          const signerAccount = provider.getSigner(account)
-          await signerAccount.unlock(password)
+          // An explicit duration of zero seconds unlocks the key until geth exits.
+          await provider.send("personal_unlockAccount", [
+            account.toLowerCase(),
+            password,
+            0,
+          ])
           console.log("Account unlocked!")
         } catch (error) {
           console.log(`\nAccount: ${account} not unlocked!`)
