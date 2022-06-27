@@ -2,10 +2,9 @@ package net
 
 import (
 	"context"
-	"crypto/ecdsa"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/gogo/protobuf/proto"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
@@ -60,8 +59,10 @@ type Provider interface {
 	ConnectionManager() ConnectionManager
 
 	// CreateTransportIdentifier creates a transport identifier based on the
-	// provided public key.
-	CreateTransportIdentifier(publicKey ecdsa.PublicKey) (TransportIdentifier, error)
+	// provided operator public key.
+	CreateTransportIdentifier(
+		operatorPublicKey *operator.PublicKey,
+	) (TransportIdentifier, error)
 
 	// BroadcastChannelForwarderFor creates a message relay for given channel name.
 	BroadcastChannelForwarderFor(name string)
@@ -72,7 +73,7 @@ type Provider interface {
 // from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
-	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
+	GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error)
 	DisconnectPeer(connectedPeer string)
 
 	// AddrStrings returns all listen addresses of the provider.
@@ -155,7 +156,7 @@ type BroadcastChannel interface {
 // message should be processed by the receivers. It takes the message author's
 // public key as its argument and returns true if the message should be
 // processed or false otherwise.
-type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
+type BroadcastChannelFilter func(*operator.PublicKey) bool
 
 // Firewall represents a set of rules the remote peer has to conform to so that
 // a connection with that peer can be approved.
@@ -166,5 +167,5 @@ type Firewall interface {
 	// approved.
 	// If expectations are not met, this function should return an error
 	// describing what is wrong.
-	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
+	Validate(remotePeerPublicKey *operator.PublicKey) error
 }

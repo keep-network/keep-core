@@ -2,19 +2,19 @@ package local
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 func TestNewChannelNotification(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	peer1Provider, _ := initTestProvider()
-	peer2Provider, peer2StaticKey := initTestProvider()
+	peer1Provider, _ := initTestProvider(t)
+	peer2Provider, peer2OperatorPublicKey := initTestProvider(t)
 
 	peer1NewChannelNotificationCount := 0
 	peer1Provider.OnUnicastChannelOpened(func(channel net.UnicastChannel) {
@@ -26,8 +26,15 @@ func TestNewChannelNotification(t *testing.T) {
 		peer2NewChannelNotificationCount++
 	})
 
-	remotePeerID := createLocalIdentifier(peer2StaticKey)
-	peer1Provider.UnicastChannelWith(remotePeerID)
+	remotePeerID, err := createLocalIdentifier(peer2OperatorPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = peer1Provider.UnicastChannelWith(remotePeerID)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	<-ctx.Done() // give some time for notifications...
 
@@ -49,17 +56,28 @@ func TestExistingChannelNotification(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	peer1Provider, _ := initTestProvider()
-	peer2Provider, peer2StaticKey := initTestProvider()
+	peer1Provider, _ := initTestProvider(t)
+	peer2Provider, peer2OperatorPublicKey := initTestProvider(t)
 
 	newChannelNotificationCount := 0
 	peer2Provider.OnUnicastChannelOpened(func(channel net.UnicastChannel) {
 		newChannelNotificationCount++
 	})
 
-	remotePeerID := createLocalIdentifier(peer2StaticKey)
-	peer1Provider.UnicastChannelWith(remotePeerID)
-	peer1Provider.UnicastChannelWith(remotePeerID)
+	remotePeerID, err := createLocalIdentifier(peer2OperatorPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = peer1Provider.UnicastChannelWith(remotePeerID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = peer1Provider.UnicastChannelWith(remotePeerID)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	<-ctx.Done() // give some time for notifications...
 
@@ -78,11 +96,18 @@ func TestSendAndReceive(t *testing.T) {
 	//
 	// Prepare communication channel between peer1 and peer2
 	//
-	peer1Provider, peer1StaticKey := initTestProvider()
-	peer2Provider, peer2StaticKey := initTestProvider()
+	peer1Provider, peer1OperatorPublicKey := initTestProvider(t)
+	peer2Provider, peer2OperatorPublicKey := initTestProvider(t)
 
-	remotePeer1ID := createLocalIdentifier(peer1StaticKey)
-	remotePeer2ID := createLocalIdentifier(peer2StaticKey)
+	remotePeer1ID, err := createLocalIdentifier(peer1OperatorPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	remotePeer2ID, err := createLocalIdentifier(peer2OperatorPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	channel1, err := peer1Provider.UnicastChannelWith(remotePeer2ID)
 	if err != nil {
@@ -181,9 +206,12 @@ func TestTalkToSelf(t *testing.T) {
 	//
 	// Prepare self-communication channel (e.g. two goroutines)
 	//
-	peerProvider, peerStaticKey := initTestProvider()
+	peerProvider, peerOperatorPublicKey := initTestProvider(t)
 
-	peerTransportID := createLocalIdentifier(peerStaticKey)
+	peerTransportID, err := createLocalIdentifier(peerOperatorPublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	channel1, err := peerProvider.UnicastChannelWith(peerTransportID)
 	if err != nil {
@@ -261,11 +289,11 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 	defer cancel2()
 
 	peer1ID := localIdentifier("peer-0xAAEF12")
-	_, peer1StaticKey, _ := key.GenerateStaticNetworkKey()
+	_, peer1OperatorPublicKey, _ := operator.GenerateKeyPair(DefaultCurve)
 
 	peer2ID := localIdentifier("peer-0x121211")
 
-	unicastChannel := newUnicastChannel(peer1ID, peer1StaticKey, peer2ID)
+	unicastChannel := newUnicastChannel(peer1ID, peer1OperatorPublicKey, peer2ID)
 	unicastChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockMessage{}
 	})
@@ -305,11 +333,15 @@ func TestTimedOutHandlerNotReceiveUnicastMessage(t *testing.T) {
 	}
 }
 
-func initTestProvider() (net.Provider, *key.NetworkPublic) {
-	_, staticKey, _ := key.GenerateStaticNetworkKey()
-	provider := ConnectWithKey(staticKey)
+func initTestProvider(t *testing.T) (net.Provider, *operator.PublicKey) {
+	_, operatorPublicKey, err := operator.GenerateKeyPair(DefaultCurve)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	return provider, staticKey
+	provider := ConnectWithKey(operatorPublicKey)
+
+	return provider, operatorPublicKey
 }
 
 type mockMessage struct {
