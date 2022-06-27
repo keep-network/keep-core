@@ -35,6 +35,9 @@ WORKDIR $APP_DIR
 ARG GITHUB_TOKEN
 RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
 
+# Use `https://` instead of unauthenticated `git://` protocol.
+RUN git config --global url."https://".insteadOf git://
+
 # Get dependencies.
 COPY go.mod $APP_DIR/
 COPY go.sum $APP_DIR/
