@@ -19,6 +19,7 @@ RUN apk add --update --no-cache \
 	nodejs \
 	npm \
 	yarn \
+	bash \
 	python3 && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
