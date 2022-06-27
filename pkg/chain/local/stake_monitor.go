@@ -113,8 +113,7 @@ type localStaker struct {
 }
 
 func (ls *localStaker) Address() relaychain.StakerAddress {
-	publicKeyBytes := operator.MarshalCompressed(ls.publicKey)
-	return publicKeyBytes
+	return operator.MarshalCompressed(ls.publicKey)
 }
 
 func (ls *localStaker) Stake() (*big.Int, error) {

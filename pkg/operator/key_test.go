@@ -132,11 +132,9 @@ func TestMarshalCompressed_EvenYCoordinate(t *testing.T) {
 		Y:     y,
 	}
 
-	publicKeyBytes := MarshalCompressed(publicKey)
-
 	expectedPublicKeyHex :=
 		"026f3d3cc22b5a3ab0cd9f56500b0abd104476a9d4b7a55fef000fee30ba4a7768"
-	actualPublicKeyHex := hex.EncodeToString(publicKeyBytes)
+	actualPublicKeyHex := publicKey.String()
 	if expectedPublicKeyHex != actualPublicKeyHex {
 		t.Errorf(
 			"unexpected marshaled public key\nexpected: %v\nactual:   %v\n",
@@ -169,11 +167,9 @@ func TestMarshalCompressed_OddYCoordinate(t *testing.T) {
 		Y:     y,
 	}
 
-	publicKeyBytes := MarshalCompressed(publicKey)
-
 	expectedPublicKeyHex :=
 		"03063b948fffa3220bf302ee2874cfd26802f2fab2a3e6ababcb66ffb6d21218b3"
-	actualPublicKeyHex := hex.EncodeToString(publicKeyBytes)
+	actualPublicKeyHex := publicKey.String()
 	if expectedPublicKeyHex != actualPublicKeyHex {
 		t.Errorf(
 			"unexpected marshaled public key\nexpected: %v\nactual:   %v\n",

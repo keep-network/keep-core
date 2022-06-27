@@ -1,7 +1,6 @@
 package firewall
 
 import (
-	"encoding/hex"
 	"fmt"
 	"github.com/keep-network/keep-common/pkg/cache"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -54,9 +53,7 @@ type minimumStakePolicy struct {
 func (msp *minimumStakePolicy) Validate(
 	remotePeerPublicKey *operator.PublicKey,
 ) error {
-	remotePeerPublicKeyBytes := operator.MarshalCompressed(remotePeerPublicKey)
-
-	remotePeerPublicKeyHex := hex.EncodeToString(remotePeerPublicKeyBytes)
+	remotePeerPublicKeyHex := remotePeerPublicKey.String()
 
 	// First, check in the in-memory time caches to minimize hits to ETH client.
 	// If the Keep client with the given chain address is in the positive result

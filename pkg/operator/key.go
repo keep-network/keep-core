@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 )
@@ -56,6 +57,12 @@ func (c Curve) String() string {
 type PublicKey struct {
 	Curve Curve
 	X, Y  *big.Int
+}
+
+// String returns the hexadecimal representation of the public key in the
+// compressed form prefixed with 02 or 03 byte.
+func (pk *PublicKey) String() string {
+	return hex.EncodeToString(MarshalCompressed(pk))
 }
 
 // PrivateKey represents an operator private key corresponding to an
