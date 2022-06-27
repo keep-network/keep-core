@@ -2,8 +2,8 @@ package libp2p
 
 import (
 	"context"
+	"crypto/elliptic"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"io"
 	"net"
 	"reflect"
@@ -14,6 +14,7 @@ import (
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
+	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 )
@@ -311,6 +312,7 @@ func (mf *mockFirewall) updatePeer(
 	remotePeerNetworkPublicKey *libp2pcrypto.Secp256k1PublicKey,
 	meetsCriteria bool,
 ) {
-	x := remotePeerNetworkPublicKey.X.Uint64()
-	mf.meetsCriteria[x] = meetsCriteria
+	rawRemotePeerPublicKey, _ := remotePeerNetworkPublicKey.Raw()
+	x, _ := elliptic.Unmarshal(DefaultCurve, rawRemotePeerPublicKey)
+	mf.meetsCriteria[x.Uint64()] = meetsCriteria
 }

@@ -2,12 +2,14 @@ package libp2p
 
 import (
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
-	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	"reflect"
 	"testing"
+
+	"github.com/keep-network/keep-core/pkg/operator"
+	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
 
 func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
@@ -23,14 +25,16 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(networkPublicKey.Curve.Params(), DefaultCurve.Params()) {
-		t.Errorf("network public key uses the wrong curve")
+	rawNetworkPublicKey, err := networkPublicKey.Raw()
+	if err != nil {
+		t.Fatal(err)
 	}
+	x, y := elliptic.Unmarshal(DefaultCurve, rawNetworkPublicKey)
 
-	if networkPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
+	if x.Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
-	if networkPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
+	if y.Cmp(operatorPublicKey.Y) != 0 {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 
