@@ -170,7 +170,7 @@ func TestCreateTopicValidator(t *testing.T) {
 
 	expectedResults := []bool{true, false, false, true, false}
 	for i, operatorPublicKey := range operatorPublicKeys {
-		networkPublicKey, err := OperatorPublicKeyToNetworkPublicKey(operatorPublicKey)
+		networkPublicKey, err := operatorPublicKeyToNetworkPublicKey(operatorPublicKey)
 		if err != nil {
 			t.Fatal(err)
 		}

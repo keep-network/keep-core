@@ -284,7 +284,7 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	operatorPublicKey, err := NetworkPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
+	operatorPublicKey, err := networkPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
 	if err != nil {
 		return fmt.Errorf(
 			"sender [%v] with key [%v] is not of correct type",
@@ -384,5 +384,5 @@ func extractPublicKey(peer peer.ID) (*operator.PublicKey, error) {
 		return nil, err
 	}
 
-	return NetworkPublicKeyToOperatorPublicKey(publicKey)
+	return networkPublicKeyToOperatorPublicKey(publicKey)
 }

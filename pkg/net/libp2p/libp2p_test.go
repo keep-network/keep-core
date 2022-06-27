@@ -90,7 +90,7 @@ func TestSendReceive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	networkPrivateKey, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
+	networkPrivateKey, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}

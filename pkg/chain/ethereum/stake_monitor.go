@@ -17,7 +17,7 @@ type ethereumStakeMonitor struct {
 func (esm *ethereumStakeMonitor) HasMinimumStake(
 	operatorPublicKey *operator.PublicKey,
 ) (bool, error) {
-	address, err := OperatorPublicKeyToChainAddress(operatorPublicKey)
+	address, err := operatorPublicKeyToChainAddress(operatorPublicKey)
 	if err != nil {
 		return false, fmt.Errorf(
 			"cannot convert from operator key to chain address: [%v]",
@@ -31,7 +31,7 @@ func (esm *ethereumStakeMonitor) HasMinimumStake(
 func (esm *ethereumStakeMonitor) StakerFor(
 	operatorPublicKey *operator.PublicKey,
 ) (chain.Staker, error) {
-	address, err := OperatorPublicKeyToChainAddress(operatorPublicKey)
+	address, err := operatorPublicKeyToChainAddress(operatorPublicKey)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot convert from operator key to chain address: [%v]",

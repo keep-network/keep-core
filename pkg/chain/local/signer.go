@@ -11,7 +11,7 @@ type signer struct {
 }
 
 func newSigner(operatorPrivateKey *operator.PrivateKey) *signer {
-	chainPrivateKey, _, err := OperatorPrivateKeyToChainKeyPair(operatorPrivateKey)
+	chainPrivateKey, _, err := operatorPrivateKeyToChainKeyPair(operatorPrivateKey)
 	if err != nil {
 		panic(err)
 	}
@@ -24,7 +24,7 @@ func newSigner(operatorPrivateKey *operator.PrivateKey) *signer {
 func (s *signer) PublicKeyToAddress(
 	publicKey *operator.PublicKey,
 ) ([]byte, error) {
-	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(publicKey)
+	chainPublicKey, err := operatorPublicKeyToChainPublicKey(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot convert operator key to chain key: [%v]",

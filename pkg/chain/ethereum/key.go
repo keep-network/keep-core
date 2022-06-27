@@ -44,10 +44,10 @@ func ChainPrivateKeyToOperatorKeyPair(
 	return privateKey, publicKey, nil
 }
 
-// OperatorPublicKeyToChainPublicKey converts an operator public key to
+// operatorPublicKeyToChainPublicKey converts an operator public key to
 // an Ethereum-specific chain public key that uses the go-ethereum-based
 // secp256k1 curve implementation under the hood.
-func OperatorPublicKeyToChainPublicKey(
+func operatorPublicKeyToChainPublicKey(
 	operatorPublicKey *operator.PublicKey,
 ) (*ecdsa.PublicKey, error) {
 	if operatorPublicKey.Curve != operator.Secp256k1 {
@@ -61,12 +61,12 @@ func OperatorPublicKeyToChainPublicKey(
 	}, nil
 }
 
-// OperatorPublicKeyToChainAddress converts an operator public key to
+// operatorPublicKeyToChainAddress converts an operator public key to
 // an Ethereum-specific chain address.
-func OperatorPublicKeyToChainAddress(
+func operatorPublicKeyToChainAddress(
 	operatorPublicKey *operator.PublicKey,
 ) (common.Address, error) {
-	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(operatorPublicKey)
+	chainPublicKey, err := operatorPublicKeyToChainPublicKey(operatorPublicKey)
 	if err != nil {
 		return common.Address{}, fmt.Errorf(
 			"cannot convert from operator to chain key: [%v]",

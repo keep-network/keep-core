@@ -165,7 +165,7 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	networkPrivateKey1, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey1)
+	networkPrivateKey1, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +189,7 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	networkPrivateKey2, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey2)
+	networkPrivateKey2, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey2)
 	if err != nil {
 		t.Fatal(err)
 	}

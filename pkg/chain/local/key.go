@@ -18,10 +18,10 @@ import (
 // environment. This is why the btcec implementation is used.
 var DefaultCurve elliptic.Curve = btcec.S256()
 
-// OperatorPublicKeyToChainPublicKey converts an operator public key to
+// operatorPublicKeyToChainPublicKey converts an operator public key to
 // a local-chain-specific public key that uses the btcec secp256k1
 // curve implementation under the hood.
-func OperatorPublicKeyToChainPublicKey(
+func operatorPublicKeyToChainPublicKey(
 	operatorPublicKey *operator.PublicKey,
 ) (*ecdsa.PublicKey, error) {
 	if operatorPublicKey.Curve != operator.Secp256k1 {
@@ -35,15 +35,15 @@ func OperatorPublicKeyToChainPublicKey(
 	}, nil
 }
 
-// OperatorPrivateKeyToChainKeyPair converts an operator private key to
+// operatorPrivateKeyToChainKeyPair converts an operator private key to
 // a local-chain-specific key pair that uses the btcec secp256k1
 // curve implementation under the hood.
-func OperatorPrivateKeyToChainKeyPair(
+func operatorPrivateKeyToChainKeyPair(
 	operatorPrivateKey *operator.PrivateKey,
 ) (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 	operatorPublicKey := &operatorPrivateKey.PublicKey
 
-	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(
+	chainPublicKey, err := operatorPublicKeyToChainPublicKey(
 		operatorPublicKey,
 	)
 	if err != nil {

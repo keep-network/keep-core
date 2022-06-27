@@ -16,7 +16,7 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	networkPrivateKey, networkPublicKey, err := OperatorPrivateKeyToNetworkKeyPair(
+	networkPrivateKey, networkPublicKey, err := operatorPrivateKeyToNetworkKeyPair(
 		operatorPrivateKey,
 	)
 	if err != nil {
@@ -55,7 +55,7 @@ func TestOperatorPrivateKeyToNetworkKeyPair_NotSecp256k1(t *testing.T) {
 	// Alter the curve information to be undefined.
 	operatorPrivateKey.Curve = operator.Undefined
 
-	_, _, err = OperatorPrivateKeyToNetworkKeyPair(
+	_, _, err = operatorPrivateKeyToNetworkKeyPair(
 		operatorPrivateKey,
 	)
 
@@ -77,7 +77,7 @@ func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	networkPublicKey, err := OperatorPublicKeyToNetworkPublicKey(
+	networkPublicKey, err := operatorPublicKeyToNetworkPublicKey(
 		operatorPublicKey,
 	)
 	if err != nil {
@@ -105,7 +105,7 @@ func TestOperatorPublicKeyToNetworkPublicKey_NotSecp256k1(t *testing.T) {
 	// Alter the curve information to be undefined.
 	operatorPublicKey.Curve = operator.Undefined
 
-	_, err = OperatorPublicKeyToNetworkPublicKey(
+	_, err = operatorPublicKeyToNetworkPublicKey(
 		operatorPublicKey,
 	)
 
@@ -127,7 +127,7 @@ func TestNetworkPublicKeyToOperatorPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	operatorPublicKey, err := NetworkPublicKeyToOperatorPublicKey(networkPublicKey)
+	operatorPublicKey, err := networkPublicKeyToOperatorPublicKey(networkPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +154,7 @@ func TestNetworkPublicKeyToOperatorPublicKey_NotSecp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = NetworkPublicKeyToOperatorPublicKey(networkPublicKey)
+	_, err = networkPublicKeyToOperatorPublicKey(networkPublicKey)
 
 	expectedError := fmt.Errorf(
 		"unrecognized libp2p public key type",
