@@ -19,6 +19,12 @@ const (
 	Secp256k1
 )
 
+// Holds the bit size of the supported elliptic curves. All curves specified by
+// the Curve enum MUST have the bit size specified here.
+var curveBitSizes = map[Curve]int{
+	Secp256k1: 256,
+}
+
 // ParseCurve takes a curve name as string and parses it to a specific
 // operator.Curve enum instance.
 func ParseCurve(value string) (Curve, error) {
@@ -43,11 +49,6 @@ func (c Curve) String() string {
 	default:
 		panic("unknown curve")
 	}
-}
-
-// Holds the bit size of the supported elliptic curves.
-var curveBitSizes = map[Curve]int{
-	Secp256k1: 256,
 }
 
 // PublicKey represents a public key that identifies the node operator.
@@ -101,10 +102,11 @@ func GenerateKeyPair(
 
 // MarshalUncompressed marshals the given public key to the 65-byte uncompressed
 // form. This implementation is based on the elliptic.Marshal function.
-func MarshalUncompressed(publicKey *PublicKey) ([]byte, error) {
+func MarshalUncompressed(publicKey *PublicKey) []byte {
 	curveBitSize, exists := curveBitSizes[publicKey.Curve]
 	if !exists {
-		return nil, fmt.Errorf("missing curve bit size information")
+		// Should not happen but just in case.
+		panic("missing curve bit size information")
 	}
 
 	byteLength := (curveBitSize + 7) / 8
@@ -115,16 +117,17 @@ func MarshalUncompressed(publicKey *PublicKey) ([]byte, error) {
 	publicKey.X.FillBytes(uncompressed[1 : 1+byteLength])
 	publicKey.Y.FillBytes(uncompressed[1+byteLength : 1+2*byteLength])
 
-	return uncompressed, nil
+	return uncompressed
 }
 
 // MarshalCompressed marshals the given public key to the 33-byte compressed
 // form. This implementation is based on the elliptic.MarshalCompressed
 // function.
-func MarshalCompressed(publicKey *PublicKey) ([]byte, error) {
+func MarshalCompressed(publicKey *PublicKey) []byte {
 	curveBitSize, exists := curveBitSizes[publicKey.Curve]
 	if !exists {
-		return nil, fmt.Errorf("missing curve bit size information")
+		// Should not happen but just in case.
+		panic("missing curve bit size information")
 	}
 
 	byteLength := (curveBitSize + 7) / 8
@@ -132,5 +135,5 @@ func MarshalCompressed(publicKey *PublicKey) ([]byte, error) {
 	compressed[0] = byte(publicKey.Y.Bit(0)) | 2
 	publicKey.X.FillBytes(compressed[1:])
 
-	return compressed, nil
+	return compressed
 }

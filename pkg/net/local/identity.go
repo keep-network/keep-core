@@ -2,7 +2,6 @@ package local
 
 import (
 	"encoding/hex"
-	"fmt"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/rand"
 )
@@ -32,10 +31,7 @@ func randomLocalIdentifier() localIdentifier {
 func createLocalIdentifier(
 	operatorPublicKey *operator.PublicKey,
 ) (localIdentifier, error) {
-	operatorPublicKeyBytes, err := operator.MarshalUncompressed(operatorPublicKey)
-	if err != nil {
-		return "", fmt.Errorf("cannot marshal operator public key: [%v]", err)
-	}
+	operatorPublicKeyBytes := operator.MarshalUncompressed(operatorPublicKey)
 
 	return localIdentifier(hex.EncodeToString(operatorPublicKeyBytes)), nil
 }

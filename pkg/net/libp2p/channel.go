@@ -293,15 +293,7 @@ func (c *channel) processContainerMessage(
 		)
 	}
 
-	operatorPublicKeyBytes, err := operator.MarshalUncompressed(operatorPublicKey)
-	if err != nil {
-		return fmt.Errorf(
-			"cannot marshal sender [%v] key [%v]: [%v]",
-			senderIdentifier.id,
-			senderIdentifier.pubKey,
-			err,
-		)
-	}
+	operatorPublicKeyBytes := operator.MarshalUncompressed(operatorPublicKey)
 
 	netMessage := internal.BasicMessage(
 		senderIdentifier.id,

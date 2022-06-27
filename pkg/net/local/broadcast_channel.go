@@ -56,10 +56,7 @@ func (lc *localChannel) Send(ctx context.Context, message net.TaggedMarshaler) e
 		return err
 	}
 
-	operatorPublicKeyBytes, err := operator.MarshalUncompressed(lc.operatorPublicKey)
-	if err != nil {
-		return fmt.Errorf("cannot marshal operator public key: [%v]", err)
-	}
+	operatorPublicKeyBytes := operator.MarshalUncompressed(lc.operatorPublicKey)
 
 	netMessage := internal.BasicMessage(
 		lc.identifier,

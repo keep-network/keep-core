@@ -54,13 +54,7 @@ type minimumStakePolicy struct {
 func (msp *minimumStakePolicy) Validate(
 	remotePeerPublicKey *operator.PublicKey,
 ) error {
-	remotePeerPublicKeyBytes, err := operator.MarshalCompressed(remotePeerPublicKey)
-	if err != nil {
-		return fmt.Errorf(
-			"cannot marshal remote peer public key: [%v]",
-			err,
-		)
-	}
+	remotePeerPublicKeyBytes := operator.MarshalCompressed(remotePeerPublicKey)
 
 	remotePeerPublicKeyHex := hex.EncodeToString(remotePeerPublicKeyBytes)
 

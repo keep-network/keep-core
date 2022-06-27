@@ -88,10 +88,7 @@ func generatePublicKey(t *testing.T) *operator.PublicKey {
 func generatePublicKeyBytes(t *testing.T) []byte {
 	operatorPublicKey := generatePublicKey(t)
 
-	operatorPublicKeyBytes, err := operator.MarshalUncompressed(operatorPublicKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	operatorPublicKeyBytes := operator.MarshalUncompressed(operatorPublicKey)
 
 	return operatorPublicKeyBytes
 }

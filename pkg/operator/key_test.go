@@ -94,10 +94,7 @@ func TestMarshalUncompressed(t *testing.T) {
 		Y:     y,
 	}
 
-	publicKeyBytes, err := MarshalUncompressed(publicKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	publicKeyBytes := MarshalUncompressed(publicKey)
 
 	expectedPublicKeyHex :=
 		"046f3d3cc22b5a3ab0cd9f56500b0abd104476a9d4b7a55fef000fee30ba4a7768" +
@@ -108,25 +105,6 @@ func TestMarshalUncompressed(t *testing.T) {
 			"unexpected marshaled public key\nexpected: %v\nactual:   %v\n",
 			expectedPublicKeyHex,
 			actualPublicKeyHex,
-		)
-	}
-}
-
-func TestMarshalUncompressed_UnsupportedCurve(t *testing.T) {
-	publicKey := &PublicKey{
-		Curve: Undefined,
-	}
-
-	_, err := MarshalUncompressed(publicKey)
-
-	expectedError := fmt.Errorf(
-		"missing curve bit size information",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
 		)
 	}
 }
@@ -154,10 +132,7 @@ func TestMarshalCompressed_EvenYCoordinate(t *testing.T) {
 		Y:     y,
 	}
 
-	publicKeyBytes, err := MarshalCompressed(publicKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	publicKeyBytes := MarshalCompressed(publicKey)
 
 	expectedPublicKeyHex :=
 		"026f3d3cc22b5a3ab0cd9f56500b0abd104476a9d4b7a55fef000fee30ba4a7768"
@@ -194,10 +169,7 @@ func TestMarshalCompressed_OddYCoordinate(t *testing.T) {
 		Y:     y,
 	}
 
-	publicKeyBytes, err := MarshalCompressed(publicKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	publicKeyBytes := MarshalCompressed(publicKey)
 
 	expectedPublicKeyHex :=
 		"03063b948fffa3220bf302ee2874cfd26802f2fab2a3e6ababcb66ffb6d21218b3"
@@ -207,25 +179,6 @@ func TestMarshalCompressed_OddYCoordinate(t *testing.T) {
 			"unexpected marshaled public key\nexpected: %v\nactual:   %v\n",
 			expectedPublicKeyHex,
 			actualPublicKeyHex,
-		)
-	}
-}
-
-func TestMarshalCompressed_UnsupportedCurve(t *testing.T) {
-	publicKey := &PublicKey{
-		Curve: Undefined,
-	}
-
-	_, err := MarshalCompressed(publicKey)
-
-	expectedError := fmt.Errorf(
-		"missing curve bit size information",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
 		)
 	}
 }

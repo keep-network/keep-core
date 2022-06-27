@@ -194,10 +194,7 @@ func TestCreateTopicValidator(t *testing.T) {
 }
 
 func toEncodedBytes(t *testing.T, publicKey *operator.PublicKey) string {
-	publicKeyBytes, err := operator.MarshalUncompressed(publicKey)
-	if err != nil {
-		t.Fatal(err)
-	}
+	publicKeyBytes := operator.MarshalUncompressed(publicKey)
 
 	return hex.EncodeToString(publicKeyBytes)
 }
