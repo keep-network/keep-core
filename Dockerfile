@@ -16,13 +16,10 @@ RUN apk add --update --no-cache \
 	make \
 	nodejs \
 	npm \
-	yarn \
 	bash \
 	python3 && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
-
-COPY --from=ethereum/solc:0.8.9 /usr/bin/solc /usr/bin/solc
 
 RUN go install gotest.tools/gotestsum@latest
 
@@ -50,24 +47,23 @@ RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go in
 COPY ./solidity-v1 $APP_DIR/solidity-v1
 RUN cd $APP_DIR/solidity-v1 && npm install
 
-# V2 contracts
-## External contracts
-COPY ./pkg/chain/threshold-network/gen/_solidity $APP_DIR/pkg/chain/threshold-network/gen/_solidity
-COPY ./pkg/chain/tbtc-v2/gen/_solidity $APP_DIR/pkg/chain/tbtc-v2/gen/_solidity
-RUN cd $APP_DIR/pkg/chain/threshold-network/gen/_solidity && yarn install
-RUN cd $APP_DIR/pkg/chain/tbtc-v2/gen/_solidity && yarn install
-
-## Internal contracts
-COPY ./solidity $APP_DIR/solidity
-RUN cd $APP_DIR/solidity/random-beacon && yarn install
-RUN cd $APP_DIR/solidity/ecdsa && yarn install
-
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
-COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
+COPY ./pkg/chain/common/gen $APP_DIR/pkg/chain/common/gen
+COPY ./pkg/chain/ecdsa/gen $APP_DIR/pkg/chain/ecdsa/gen
+COPY ./pkg/chain/random-beacon/gen $APP_DIR/pkg/chain/random-beacon/gen
+COPY ./pkg/chain/tbtc-v2/gen $APP_DIR/pkg/chain/tbtc-v2/gen
+COPY ./pkg/chain/threshold-network/gen $APP_DIR/pkg/chain/threshold-network/gen
 COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
+
+# Download contracts artifacts.
+# If CONTRACTS_NPM_PACKAGE_TAG is not set it will download NPM packages versions
+# published and tagged as `development`.
+ARG CONTRACTS_NPM_PACKAGE_TAG
+COPY ./scripts/download-artifacts.sh $APP_DIR/scripts/download-artifacts.sh
+RUN CONTRACTS_NPM_PACKAGE_TAG=$CONTRACTS_NPM_PACKAGE_TAG $APP_DIR/scripts/download-artifacts.sh
 
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config

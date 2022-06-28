@@ -55,4 +55,4 @@ export.json
 typechain/
 
 # Go bindings generator
-pkg/chain/*/gen/_contracts/*
+pkg/chain/*/gen/_contracts
