@@ -27,17 +27,8 @@ RUN mkdir -p $APP_DIR $TEST_RESULTS_DIR
 
 WORKDIR $APP_DIR
 
-# Configure GitHub token to be able to get private repositories.
-ARG GITHUB_TOKEN
-RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
-
-# Use `https://` instead of unauthenticated `git://` protocol.
-RUN git config --global url."https://".insteadOf git://
-
 # Get dependencies.
-COPY go.mod $APP_DIR/
-COPY go.sum $APP_DIR/
-
+COPY go.mod go.sum $APP_DIR/
 RUN go mod download
 
 # Install code generators.
