@@ -1,25 +1,16 @@
-# If contracts_dir is not defined by a Makefile using this common Makefile default
-# it to a `contracts/` subdirectory under solidity_dir.
-ifndef contracts_dir
-	contracts_dir = $(addsuffix /contracts/,${solidity_dir})
+
+# Tag of the npm package version for contracts artifacts. If not set by the 
+# `CONTRACTS_NPM_PACKAGE_TAG` environment variable it defaults to `development`.
+npm_package_tag:=$(CONTRACTS_NPM_PACKAGE_TAG)
+ifndef npm_package_tag
+	npm_package_tag=development
 endif
 
-# Solidity files prefixed with the solidity directory path.
-# Multiple patterns have to be defined to get the files recursively.
-solidity_files := $(wildcard ${contracts_dir}/*.sol) $(wildcard ${contracts_dir}/*/*.sol)
+contracts_dir =_contracts
+artifacts_dir = $(realpath ${contracts_dir}/package/export/artifacts)
 
 # Go bindings generated for the solidity contracts.
 contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
-
-# Function to run solidity sources comilation.
-# Expects two arguments:
-# 1 - dependencies mapping for contracts import
-# 2 - solidity source file path
-solc_generate = solc $(1) \
-		--allow-paths ${solidity_dir} \
-		--overwrite \
-		--abi \
-		-o abi $(2)
 
 all: gen_contract_go
 
@@ -30,10 +21,15 @@ clean:
 	rm -r cmd/*
 	mv tmp/* cmd && rm -r tmp
 
+download_artifacts:
+	rm -rf ${contracts_dir} && mkdir ${contracts_dir}
+	npm pack --pack-destination=${contracts_dir} ${npm_package_name}@${npm_package_tag}
+	tar -zxf ${contracts_dir}/*.tgz -C ${contracts_dir}
+
 gen_contract_go: ${contract_files}
 
-abi/%.abi: ${solidity_files}
-	$(call solc_generate, ${solidity_dependencies_mapping}, $(filter %$*.sol, ${solidity_files}))
+abi/%.abi: ${artifacts_dir}/%.json
+	jq .abi $< > abi/$*.abi
 
 abi/%.go: abi/%.abi
 	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
