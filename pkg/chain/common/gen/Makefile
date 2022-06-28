@@ -21,6 +21,7 @@ clean:
 	rm -r cmd/*
 	mv tmp/* cmd && rm -r tmp
 
+# It requires npm of at least 7.x version to support `pack-destination` flag.
 download_artifacts:
 	rm -rf ${contracts_dir} && mkdir ${contracts_dir}
 	npm pack --pack-destination=${contracts_dir} ${npm_package_name}@${npm_package_tag}\
