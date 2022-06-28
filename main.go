@@ -57,6 +57,7 @@ func main() {
 			Usage:       "full path to the configuration file",
 		},
 	}
+
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
 		cmd.RelayCommand,
