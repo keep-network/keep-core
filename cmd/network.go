@@ -65,8 +65,8 @@ func pingRequest(c *cli.Context) error {
 		privKey      *operator.PrivateKey
 	)
 
-	bootstrapPeerPrivKey, _ := getBootstrapPeerNetworkKey()
-	standardPeerPrivKey, _ := getStandardPeerNetworkKey()
+	bootstrapPeerPrivKey, _ := getBootstrapPeerOperatorKey()
+	standardPeerPrivKey, _ := getStandardPeerOperatorKey()
 
 	if isBootstrapNode {
 		privKey = bootstrapPeerPrivKey
@@ -302,27 +302,27 @@ func (pm *PongMessage) Unmarshal(bytes []byte) error {
 	return nil
 }
 
-// getBootstrapPeerNetworkKey returns hardcoded public and private network key
+// getBootstrapPeerOperatorKey returns hardcoded public and private operator key
 // of the bootstrap peer. We hardcode those values because we need to initialize
 // stakes on both sides of the connection using the local, stubbed `StakeMonitor`.
-func getBootstrapPeerNetworkKey() (
+func getBootstrapPeerOperatorKey() (
 	*operator.PrivateKey,
 	*operator.PublicKey,
 ) {
-	return getPeerNetworkKey(big.NewInt(128838122312))
+	return getPeerOperatorKey(big.NewInt(128838122312))
 }
 
-// getStandardPeerNetworkKey returns hardcoded public and private network key
+// getStandardPeerOperatorKey returns hardcoded public and private operator key
 // of the standard peer. We hardcode those values because we need to initialize
 // stake on both sides of the connection using local, stubbed `StakeMonitor`.
-func getStandardPeerNetworkKey() (
+func getStandardPeerOperatorKey() (
 	*operator.PrivateKey,
 	*operator.PublicKey,
 ) {
-	return getPeerNetworkKey(big.NewInt(6743262236222))
+	return getPeerOperatorKey(big.NewInt(6743262236222))
 }
 
-func getPeerNetworkKey(privateEcdsaKey *big.Int) (
+func getPeerOperatorKey(privateEcdsaKey *big.Int) (
 	*operator.PrivateKey,
 	*operator.PublicKey,
 ) {

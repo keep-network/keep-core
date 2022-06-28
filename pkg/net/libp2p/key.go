@@ -15,10 +15,10 @@ import (
 // implementation is provided by the btcec package.
 var DefaultCurve elliptic.Curve = btcec.S256()
 
-// OperatorPrivateKeyToNetworkKeyPair converts an operator private key to
+// operatorPrivateKeyToNetworkKeyPair converts an operator private key to
 // the libp2p network key pair that uses the libp2p-specific curve
 // implementation.
-func OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey) (
+func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey) (
 	*libp2pcrypto.Secp256k1PrivateKey,
  	*libp2pcrypto.Secp256k1PublicKey,
 	error,
@@ -37,10 +37,10 @@ func OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 	return &networkPrivateKey, &networkPublicKey, nil
 }
 
-// OperatorPublicKeyToNetworkPublicKey converts an operator public key to
+// operatorPublicKeyToNetworkPublicKey converts an operator public key to
 // the libp2p network public key that uses the libp2p-specific curve
 // implementation.
-func OperatorPublicKeyToNetworkPublicKey(
+func operatorPublicKeyToNetworkPublicKey(
 	operatorPublicKey *operator.PublicKey,
 ) (*libp2pcrypto.Secp256k1PublicKey, error) {
 	// Make sure that libp2p package receives only secp256k1 operator keys.
@@ -58,9 +58,9 @@ func OperatorPublicKeyToNetworkPublicKey(
 	return &networkPublicKey, nil
 }
 
-// NetworkPublicKeyToOperatorPublicKey converts a libp2p network public key to
+// networkPublicKeyToOperatorPublicKey converts a libp2p network public key to
 // the operator public key that is agnostic regarding the curve implementation.
-func NetworkPublicKeyToOperatorPublicKey(
+func networkPublicKeyToOperatorPublicKey(
 	networkPublicKey libp2pcrypto.PubKey,
 ) (*operator.PublicKey, error) {
 	switch publicKey := networkPublicKey.(type) {

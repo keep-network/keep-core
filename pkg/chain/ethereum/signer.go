@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// TODO: Consider moving the `EthereumSigner` out of `keep-common` to this file.
 type signer struct {
 	*ethutil.EthereumSigner
 }
@@ -20,7 +21,7 @@ func newSigner(chainKey *keystore.Key) *signer {
 func (s *signer) PublicKeyToAddress(
 	publicKey *operator.PublicKey,
 ) ([]byte, error) {
-	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(publicKey)
+	chainPublicKey, err := operatorPublicKeyToChainPublicKey(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot convert operator key to chain key: [%v]",

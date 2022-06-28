@@ -82,7 +82,7 @@ type Signing interface {
 	// associated with the chain.
 	PublicKeyToAddress(publicKey *operator.PublicKey) ([]byte, error)
 
-	// PublicKeyToAddress converts operator's public key bytes to an address
+	// PublicKeyBytesToAddress converts operator's public key bytes to an address
 	// associated with the chain.
 	PublicKeyBytesToAddress(publicKey []byte) []byte
 }

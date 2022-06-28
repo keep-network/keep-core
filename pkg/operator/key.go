@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 )
@@ -15,16 +16,19 @@ type Curve int
 // Enum that lists all the elliptic curves that can be used with the operator
 // keys.
 const (
-	Undefined Curve = iota
-	Secp256k1
+	Secp256k1 Curve = iota
 )
+
+// Holds the bit size of the supported elliptic curves. All curves specified by
+// the Curve enum MUST have the bit size specified here.
+var curveBitSizes = map[Curve]int{
+	Secp256k1: 256,
+}
 
 // ParseCurve takes a curve name as string and parses it to a specific
 // operator.Curve enum instance.
 func ParseCurve(value string) (Curve, error) {
 	switch value {
-	case "undefined":
-		return Undefined, nil
 	case "secp256k1":
 		return Secp256k1, nil
 	}
@@ -36,18 +40,11 @@ func ParseCurve(value string) (Curve, error) {
 // enum instance.
 func (c Curve) String() string {
 	switch c {
-	case Undefined:
-		return "undefined"
 	case Secp256k1:
 		return "secp256k1"
 	default:
 		panic("unknown curve")
 	}
-}
-
-// Holds the bit size of the supported elliptic curves.
-var curveBitSizes = map[Curve]int{
-	Secp256k1: 256,
 }
 
 // PublicKey represents a public key that identifies the node operator.
@@ -60,6 +57,12 @@ var curveBitSizes = map[Curve]int{
 type PublicKey struct {
 	Curve Curve
 	X, Y  *big.Int
+}
+
+// String returns the hexadecimal representation of the public key in the
+// compressed form prefixed with 02 or 03 byte.
+func (pk *PublicKey) String() string {
+	return hex.EncodeToString(MarshalCompressed(pk))
 }
 
 // PrivateKey represents an operator private key corresponding to an
@@ -101,10 +104,11 @@ func GenerateKeyPair(
 
 // MarshalUncompressed marshals the given public key to the 65-byte uncompressed
 // form. This implementation is based on the elliptic.Marshal function.
-func MarshalUncompressed(publicKey *PublicKey) ([]byte, error) {
+func MarshalUncompressed(publicKey *PublicKey) []byte {
 	curveBitSize, exists := curveBitSizes[publicKey.Curve]
 	if !exists {
-		return nil, fmt.Errorf("missing curve bit size information")
+		// Should not happen but just in case.
+		panic("missing curve bit size information")
 	}
 
 	byteLength := (curveBitSize + 7) / 8
@@ -115,16 +119,17 @@ func MarshalUncompressed(publicKey *PublicKey) ([]byte, error) {
 	publicKey.X.FillBytes(uncompressed[1 : 1+byteLength])
 	publicKey.Y.FillBytes(uncompressed[1+byteLength : 1+2*byteLength])
 
-	return uncompressed, nil
+	return uncompressed
 }
 
 // MarshalCompressed marshals the given public key to the 33-byte compressed
 // form. This implementation is based on the elliptic.MarshalCompressed
 // function.
-func MarshalCompressed(publicKey *PublicKey) ([]byte, error) {
+func MarshalCompressed(publicKey *PublicKey) []byte {
 	curveBitSize, exists := curveBitSizes[publicKey.Curve]
 	if !exists {
-		return nil, fmt.Errorf("missing curve bit size information")
+		// Should not happen but just in case.
+		panic("missing curve bit size information")
 	}
 
 	byteLength := (curveBitSize + 7) / 8
@@ -132,5 +137,5 @@ func MarshalCompressed(publicKey *PublicKey) ([]byte, error) {
 	compressed[0] = byte(publicKey.Y.Bit(0)) | 2
 	publicKey.X.FillBytes(compressed[1:])
 
-	return compressed, nil
+	return compressed
 }

@@ -127,14 +127,6 @@ jobs:
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      - name: Migrate contracts on Celo
-        if: github.event.inputs.environment == 'alfajores'
-        env:
-          CHAIN_API_URL: ${{ secrets.KEEP_TEST_CELO_HOSTNAME }}
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
-            ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
-      
       - name: Copy artifacts
         run: |
           mkdir -p artifacts

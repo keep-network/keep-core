@@ -90,7 +90,7 @@ func TestOperatorPublicKeyToChainPublicKey(t *testing.T) {
 		Y:     y,
 	}
 
-	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(operatorPublicKey)
+	chainPublicKey, err := operatorPublicKeyToChainPublicKey(operatorPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,10 +109,10 @@ func TestOperatorPublicKeyToChainPublicKey(t *testing.T) {
 
 func TestOperatorPublicKeyToChainPublicKey_NotSecp256k1(t *testing.T) {
 	operatorPublicKey := &operator.PublicKey{
-		Curve: operator.Undefined,
+		Curve: -1,
 	}
 
-	_, err := OperatorPublicKeyToChainPublicKey(operatorPublicKey)
+	_, err := operatorPublicKeyToChainPublicKey(operatorPublicKey)
 
 	expectedError := fmt.Errorf(
 		"ethereum supports only secp256k1 operator keys",
@@ -149,7 +149,7 @@ func TestOperatorPublicKeyToChainAddress(t *testing.T) {
 		Y:     y,
 	}
 
-	chainAddress, err := OperatorPublicKeyToChainAddress(operatorPublicKey)
+	chainAddress, err := operatorPublicKeyToChainAddress(operatorPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,10 +167,10 @@ func TestOperatorPublicKeyToChainAddress(t *testing.T) {
 
 func TestOperatorPublicKeyToChainAddress_NotSecp256k1(t *testing.T) {
 	operatorPublicKey := &operator.PublicKey{
-		Curve: operator.Undefined,
+		Curve: -1,
 	}
 
-	_, err := OperatorPublicKeyToChainAddress(operatorPublicKey)
+	_, err := operatorPublicKeyToChainAddress(operatorPublicKey)
 
 	expectedError := fmt.Errorf(
 		"cannot convert from operator to chain key: " +

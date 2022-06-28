@@ -268,7 +268,7 @@ func createTestConnectionConfig(t *testing.T) *testConnectionConfig {
 		t.Fatal(err)
 	}
 
-	networkPrivateKey, networkPublicKey, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
+	networkPrivateKey, networkPublicKey, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
 	if err != nil {
 		t.Fatal(err)
 	}

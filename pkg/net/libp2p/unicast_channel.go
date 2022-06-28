@@ -268,7 +268,7 @@ func (uc *unicastChannel) processMessage(message *pb.UnicastNetworkMessage) erro
 		return err
 	}
 
-	operatorPublicKey, err := NetworkPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
+	operatorPublicKey, err := networkPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
 	if err != nil {
 		return fmt.Errorf(
 			"sender [%v] with key [%v] is not of correct type",
@@ -277,15 +277,7 @@ func (uc *unicastChannel) processMessage(message *pb.UnicastNetworkMessage) erro
 		)
 	}
 
-	operatorPublicKeyBytes, err := operator.MarshalUncompressed(operatorPublicKey)
-	if err != nil {
-		return fmt.Errorf(
-			"cannot marshal sender [%v] key [%v]: [%v]",
-			senderIdentifier.id,
-			senderIdentifier.pubKey,
-			err,
-		)
-	}
+	operatorPublicKeyBytes := operator.MarshalUncompressed(operatorPublicKey)
 
 	uc.deliver(internal.BasicMessage(
 		senderIdentifier.id,

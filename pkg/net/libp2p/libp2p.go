@@ -124,7 +124,7 @@ func (p *provider) CreateTransportIdentifier(operatorPublicKey *operator.PublicK
 	net.TransportIdentifier,
 	error,
 ) {
-	networkPublicKey, err := OperatorPublicKeyToNetworkPublicKey(operatorPublicKey)
+	networkPublicKey, err := operatorPublicKeyToNetworkPublicKey(operatorPublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*operator.P
 		)
 	}
 
-	return NetworkPublicKeyToOperatorPublicKey(peerPublicKey)
+	return networkPublicKeyToOperatorPublicKey(peerPublicKey)
 }
 
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
@@ -299,7 +299,7 @@ func Connect(
 	connectOptions := defaultConnectOptions()
 	connectOptions.apply(options...)
 
-	networkPrivateKey, _, err := OperatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
+	networkPrivateKey, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
 	if err != nil {
 		return nil, err
 	}

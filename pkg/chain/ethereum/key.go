@@ -18,14 +18,14 @@ var DefaultCurve elliptic.Curve = crypto.S256()
 
 // ChainPrivateKeyToOperatorKeyPair converts the Ethereum chain private key to
 // a universal operator key pair. This conversion decouples the key from the
-// chain-specific curve implementation while preserving the curve name.
+// chain-specific curve implementation while preserving the curve.
 func ChainPrivateKeyToOperatorKeyPair(
 	chainPrivateKey *ecdsa.PrivateKey,
 ) (*operator.PrivateKey, *operator.PublicKey, error) {
 	chainPublicKey := &chainPrivateKey.PublicKey
 
 	// Ethereum keys use secp256k1 curve underneath. If the given key doesn't
-	// use that curve, something wrong.
+	// use that curve, something is wrong.
 	if !isSameCurve(chainPublicKey.Curve, DefaultCurve) {
 		return nil, nil, fmt.Errorf("ethereum chain key does not use secp256k1 curve")
 	}
@@ -44,10 +44,10 @@ func ChainPrivateKeyToOperatorKeyPair(
 	return privateKey, publicKey, nil
 }
 
-// OperatorPublicKeyToChainPublicKey converts an operator public key to
+// operatorPublicKeyToChainPublicKey converts an operator public key to
 // an Ethereum-specific chain public key that uses the go-ethereum-based
 // secp256k1 curve implementation under the hood.
-func OperatorPublicKeyToChainPublicKey(
+func operatorPublicKeyToChainPublicKey(
 	operatorPublicKey *operator.PublicKey,
 ) (*ecdsa.PublicKey, error) {
 	if operatorPublicKey.Curve != operator.Secp256k1 {
@@ -61,12 +61,12 @@ func OperatorPublicKeyToChainPublicKey(
 	}, nil
 }
 
-// OperatorPublicKeyToChainAddress converts an operator public key to
+// operatorPublicKeyToChainAddress converts an operator public key to
 // an Ethereum-specific chain address.
-func OperatorPublicKeyToChainAddress(
+func operatorPublicKeyToChainAddress(
 	operatorPublicKey *operator.PublicKey,
 ) (common.Address, error) {
-	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(operatorPublicKey)
+	chainPublicKey, err := operatorPublicKeyToChainPublicKey(operatorPublicKey)
 	if err != nil {
 		return common.Address{}, fmt.Errorf(
 			"cannot convert from operator to chain key: [%v]",

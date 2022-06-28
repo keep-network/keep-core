@@ -106,10 +106,7 @@ func (uc *unicastChannel) receiveMessage(
 		return err
 	}
 
-	senderOperatorPublicKeyBytes, err := operator.MarshalUncompressed(uc.senderOperatorPublicKey)
-	if err != nil {
-		return fmt.Errorf("cannot marshal operator public key: [%v]", err)
-	}
+	senderOperatorPublicKeyBytes := operator.MarshalUncompressed(uc.senderOperatorPublicKey)
 
 	message := internal.BasicMessage(
 		uc.senderTransportID,

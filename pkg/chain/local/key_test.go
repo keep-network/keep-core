@@ -13,7 +13,7 @@ func TestOperatorPublicKeyToChainPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	chainPublicKey, err := OperatorPublicKeyToChainPublicKey(operatorPublicKey)
+	chainPublicKey, err := operatorPublicKeyToChainPublicKey(operatorPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,10 +36,10 @@ func TestOperatorPublicKeyToChainPublicKey_NotSecp256k1(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Alter the curve information to be undefined.
-	operatorPublicKey.Curve = operator.Undefined
+	// Alter the curve information to be non-supported.
+	operatorPublicKey.Curve = -1
 
-	_, err = OperatorPublicKeyToChainPublicKey(operatorPublicKey)
+	_, err = operatorPublicKeyToChainPublicKey(operatorPublicKey)
 
 	expectedError := fmt.Errorf(
 		"local chain supports only secp256k1 operator keys",
@@ -59,7 +59,7 @@ func TestOperatorPrivateKeyToChainKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	chainPrivateKey, chainPublicKey, err := OperatorPrivateKeyToChainKeyPair(
+	chainPrivateKey, chainPublicKey, err := operatorPrivateKeyToChainKeyPair(
 		operatorPrivateKey,
 	)
 	if err != nil {
@@ -93,9 +93,9 @@ func TestOperatorPrivateKeyToChainKeyPair_NotSecp256k1(t *testing.T) {
 	}
 
 	// Alter the curve information to be undefined.
-	operatorPrivateKey.Curve = operator.Undefined
+	operatorPrivateKey.Curve = -1
 
-	_, _, err = OperatorPrivateKeyToChainKeyPair(
+	_, _, err = operatorPrivateKeyToChainKeyPair(
 		operatorPrivateKey,
 	)
 

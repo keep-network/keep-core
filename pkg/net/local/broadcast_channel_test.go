@@ -226,10 +226,7 @@ loop:
 			)
 		}
 
-		operatorPublicKey1Bytes, err := operator.MarshalUncompressed(operatorPublicKey1)
-		if err != nil {
-			t.Fatal(err)
-		}
+		operatorPublicKey1Bytes := operator.MarshalUncompressed(operatorPublicKey1)
 
 		testutils.AssertBytesEqual(t, operatorPublicKey1Bytes, msg.SenderPublicKey())
 	}
