@@ -1,16 +1,6 @@
-# Environment provides the solidity directory as a potentially-relative path,
-# which we resolve. Then we resolve the Solidity files in a contracts/ directory
-# at that path.
-solidity_dir := $(realpath ${SOLIDITY_DIR})
+npm_package_name=@keep-network/ecdsa
 
 # Contracts for which the bindings should be generated.
 required_contracts := WalletRegistry SortitionPool
-
-solidity_dependencies_mapping := \
-	openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \
-	@openzeppelin/=${solidity_dir}/node_modules/@openzeppelin/ \
-	@keep-network/=${solidity_dir}/node_modules/@keep-network/ \
-	@threshold-network/=${solidity_dir}/node_modules/@threshold-network/ \
-	@thesis/=${solidity_dir}/node_modules/@thesis/
 
 include ../../common/gen/Makefile

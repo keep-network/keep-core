@@ -1,3 +1,5 @@
 package gen
 
-//go:generate sh -c "SOLIDITY_DIR=./_solidity/ make"
+// TODO: Requires npm 8.x
+
+//go:generate make
