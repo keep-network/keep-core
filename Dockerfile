@@ -34,10 +34,6 @@ RUN go mod download
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
-# V1 contracts
-COPY ./solidity-v1 $APP_DIR/solidity-v1
-RUN cd $APP_DIR/solidity-v1 && npm install
-
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/common/gen $APP_DIR/pkg/chain/common/gen
 COPY ./pkg/chain/ecdsa/gen $APP_DIR/pkg/chain/ecdsa/gen

@@ -17,15 +17,14 @@ Dockerfile
 **/node_modules/*
 
 # Solidity stuff.
-# We want to include only bare contracts and NPM package configuration for Go code
-# generator.
 solidity-v1/
-!solidity-v1/contracts
-!solidity-v1/package.json
-!solidity-v1/package-lock.json
 solidity/
 
 # Go stuff.
 **/gen/_contracts
 **/gen/*/**/*.go
 !**/gen/cmd/cmd.go
+
+# Legacy V1 contracts bindings.
+# We won't generate new bindings in the docker build process, but use the existing ones.
+!pkg/chain/gen
