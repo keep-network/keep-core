@@ -104,7 +104,7 @@ chmod 755 -R ./protoc
 sudo mv protoc/bin/protoc /usr/local/bin
 sudo mv protoc/include/* /usr/local/include
 
-go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
+go install github.com/gogo/protobuf/protoc-gen-gogoslick@latest
 
 if ! [ -x "$(command -v protoc)" ]; then echo "protoc installation failed"; exit 1; fi
 if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then echo "protoc-gen-gogoslick installation failed"; exit 1; fi
