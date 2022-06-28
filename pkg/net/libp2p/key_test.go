@@ -1,13 +1,12 @@
 package libp2p
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
 	"reflect"
 	"testing"
 
+	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
@@ -25,27 +24,28 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rawNetworkPublicKey, err := networkPublicKey.Raw()
-	if err != nil {
-		t.Fatal(err)
-	}
-	x, y := elliptic.Unmarshal(DefaultCurve, rawNetworkPublicKey)
+	ecdsaPublicKey := (*secp.PublicKey)(networkPublicKey).ToECDSA()
 
-	if x.Cmp(operatorPublicKey.X) != 0 {
+	if !reflect.DeepEqual(ecdsaPublicKey.Curve.Params(), DefaultCurve.Params()) {
+		t.Errorf("network public key uses the wrong curve")
+	}
+	if ecdsaPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
-	if y.Cmp(operatorPublicKey.Y) != 0 {
+	if ecdsaPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 
+	ecdsaPrivateKey := (*secp.PrivateKey)(networkPrivateKey).ToECDSA()
+
 	if !reflect.DeepEqual(
-		networkPrivateKey.PublicKey,
-		(ecdsa.PublicKey)(*networkPublicKey),
+		ecdsaPrivateKey.PublicKey,
+		*ecdsaPublicKey,
 	) {
 		t.Errorf("network private key contains wrong network public key")
 	}
 
-	if networkPrivateKey.D.Cmp(operatorPrivateKey.D) != 0 {
+	if ecdsaPrivateKey.D.Cmp(operatorPrivateKey.D) != 0 {
 		t.Errorf("network private key has a wrong D parameter")
 	}
 }
@@ -88,14 +88,15 @@ func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(networkPublicKey.Curve.Params(), DefaultCurve.Params()) {
+	ecdsaPublicKey := (*secp.PublicKey)(networkPublicKey).ToECDSA()
+
+	if !reflect.DeepEqual(ecdsaPublicKey.Curve.Params(), DefaultCurve.Params()) {
 		t.Errorf("network public key uses the wrong curve")
 	}
-
-	if networkPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
+    if ecdsaPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
-	if networkPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
+	if ecdsaPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 }
@@ -140,14 +141,17 @@ func TestNetworkPublicKeyToOperatorPublicKey(t *testing.T) {
 		t.Errorf("operator public key uses the wrong curve")
 	}
 
-	if operatorPublicKey.X.Cmp(
-		networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey).X,
-	) != 0 {
+	publicKey, ok := networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
+	if !ok {
+		t.Fatal("wrong type of public key")
+	}
+
+	ecdsaPublicKey := (*secp.PublicKey)(publicKey).ToECDSA()
+
+	if operatorPublicKey.X.Cmp(ecdsaPublicKey.X) != 0 {
 		t.Errorf("operator public key has a wrong X coordinate")
 	}
-	if operatorPublicKey.Y.Cmp(
-		networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey).Y,
-	) != 0 {
+	if operatorPublicKey.Y.Cmp(ecdsaPublicKey.Y) != 0 {
 		t.Errorf("operator public key has a wrong Y coordinate")
 	}
 }

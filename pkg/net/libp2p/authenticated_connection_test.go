@@ -2,7 +2,6 @@ package libp2p
 
 import (
 	"context"
-	"crypto/elliptic"
 	"fmt"
 	"io"
 	"net"
@@ -10,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	protoio "github.com/gogo/protobuf/io"
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -312,7 +312,6 @@ func (mf *mockFirewall) updatePeer(
 	remotePeerNetworkPublicKey *libp2pcrypto.Secp256k1PublicKey,
 	meetsCriteria bool,
 ) {
-	rawRemotePeerPublicKey, _ := remotePeerNetworkPublicKey.Raw()
-	x, _ := elliptic.Unmarshal(DefaultCurve, rawRemotePeerPublicKey)
-	mf.meetsCriteria[x.Uint64()] = meetsCriteria
+	ecdsaPublicKey := (*secp.PublicKey)(remotePeerNetworkPublicKey).ToECDSA()
+	mf.meetsCriteria[ecdsaPublicKey.X.Uint64()] = meetsCriteria
 }

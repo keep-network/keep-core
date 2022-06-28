@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec"
+	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
-	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
 // DefaultCurve is the default elliptic curve implementation used in the
@@ -20,7 +20,7 @@ var DefaultCurve elliptic.Curve = btcec.S256()
 // implementation.
 func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey) (
 	*libp2pcrypto.Secp256k1PrivateKey,
- 	*libp2pcrypto.Secp256k1PublicKey,
+	*libp2pcrypto.Secp256k1PublicKey,
 	error,
 ) {
 	// Make sure that libp2p package receives only secp256k1 operator keys.
@@ -48,11 +48,13 @@ func operatorPublicKeyToNetworkPublicKey(
 		return nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
 	}
 
-	var x, y secp.FieldVal
-	x.SetByteSlice(operatorPublicKey.X.Bytes())
-	y.SetByteSlice(operatorPublicKey.Y.Bytes())
+	rawOperatorPublicKey := operator.MarshalCompressed(operatorPublicKey)
 
-	secpNetworkPublicKey := secp.NewPublicKey(&x, &y)
+	secpNetworkPublicKey, err := secp.ParsePubKey(rawOperatorPublicKey)
+	if err != nil {
+		return nil, err
+	}
+
 	networkPublicKey := libp2pcrypto.Secp256k1PublicKey(*secpNetworkPublicKey)
 
 	return &networkPublicKey, nil
@@ -65,16 +67,11 @@ func networkPublicKeyToOperatorPublicKey(
 ) (*operator.PublicKey, error) {
 	switch publicKey := networkPublicKey.(type) {
 	case *libp2pcrypto.Secp256k1PublicKey:
-		rawNetworkPublicKey, err := publicKey.Raw()
-		if err != nil {
-			return nil, err
-		}
-
-		x, y := elliptic.Unmarshal(DefaultCurve, rawNetworkPublicKey)
+		ecdsaPublicKey := (*secp.PublicKey)(publicKey).ToECDSA()
 		return &operator.PublicKey{
 			Curve: operator.Secp256k1,
-			X:     x,
-			Y:     y,
+			X:     ecdsaPublicKey.X,
+			Y:     ecdsaPublicKey.Y,
 		}, nil
 	}
 	return nil, fmt.Errorf("unrecognized libp2p public key type")
