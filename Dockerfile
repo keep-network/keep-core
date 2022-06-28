@@ -6,9 +6,7 @@ ENV GOPATH=/go \
 	APP_DIR=/go/src/github.com/keep-network/keep-core \
 	TEST_RESULTS_DIR=/mnt/test-results \
 	BIN_PATH=/usr/local/bin \
-	LD_LIBRARY_PATH=/usr/local/lib/ \
-	# GO111MODULE required to support go modules
-	GO111MODULE=on
+	LD_LIBRARY_PATH=/usr/local/lib/
 
 RUN apk add --update --no-cache \
 	g++ \
