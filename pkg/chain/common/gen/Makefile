@@ -23,8 +23,8 @@ clean:
 
 download_artifacts:
 	rm -rf ${contracts_dir} && mkdir ${contracts_dir}
-	npm pack --pack-destination=${contracts_dir} ${npm_package_name}@${npm_package_tag}
-	tar -zxf ${contracts_dir}/*.tgz -C ${contracts_dir}
+	npm pack --pack-destination=${contracts_dir} ${npm_package_name}@${npm_package_tag}\
+		| xargs -I{} tar -zxf ${contracts_dir}/{} -C ${contracts_dir}
 
 gen_contract_go: ${contract_files}
 
