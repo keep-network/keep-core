@@ -31,11 +31,11 @@ var logger = log.Logger("keep-sortition")
 func RegisterAndMonitorStatus(
 	ctx context.Context,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle Handle,
+	chain Handle,
 ) {
 	go func() {
 		operatorRegisteredChan := make(chan string)
-		go waitUntilRegistered(ctx, blockCounter, chainSortitionHandle, operatorRegisteredChan)
+		go waitUntilRegistered(ctx, blockCounter, chain, operatorRegisteredChan)
 
 		for {
 			select {
@@ -47,7 +47,7 @@ func RegisterAndMonitorStatus(
 					stakingProvider,
 				)
 
-				isInPool, err := chainSortitionHandle.IsOperatorInPool()
+				isInPool, err := chain.IsOperatorInPool()
 				if err != nil {
 					logger.Errorf(
 						"failed to verify if the operator is in the sortition pool: [%v]",
@@ -60,7 +60,7 @@ func RegisterAndMonitorStatus(
 				if !isInPool {
 					// if the operator is not in the sortition pool, we need to
 					// join the sortition pool
-					joinSortitionPoolWhenEligible(ctx, stakingProvider, blockCounter, chainSortitionHandle)
+					joinSortitionPoolWhenEligible(ctx, stakingProvider, blockCounter, chain)
 				}
 
 				return
@@ -70,7 +70,7 @@ func RegisterAndMonitorStatus(
 
 	go func() {
 		joinedPoolChan := make(chan struct{})
-		go waitUntilJoined(ctx, blockCounter, chainSortitionHandle, joinedPoolChan)
+		go waitUntilJoined(ctx, blockCounter, chain, joinedPoolChan)
 
 		for {
 			select {
@@ -92,7 +92,7 @@ func RegisterAndMonitorStatus(
 func waitUntilRegistered(
 	parentCtx context.Context,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle Handle,
+	chain Handle,
 	operatorRegisteredChan chan string,
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -103,7 +103,7 @@ func waitUntilRegistered(
 	for {
 		select {
 		case <-newBlockChan:
-			stakingProvider, err := chainSortitionHandle.OperatorToStakingProvider()
+			stakingProvider, err := chain.OperatorToStakingProvider()
 			if err != nil {
 				if errors.Is(err, ErrOperatorNotRegistered) {
 					logger.Warn(
@@ -137,7 +137,7 @@ func joinSortitionPoolWhenEligible(
 	parentCtx context.Context,
 	stakingProvider string,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle Handle,
+	chain Handle,
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
@@ -147,7 +147,7 @@ func joinSortitionPoolWhenEligible(
 	for {
 		select {
 		case <-newBlockChan:
-			eligibleStake, err := chainSortitionHandle.EligibleStake(stakingProvider)
+			eligibleStake, err := chain.EligibleStake(stakingProvider)
 			if err != nil {
 				logger.Errorf(
 					"failed to verify if the operator [%s] is eligible to join the sortition pool: [%v]",
@@ -168,7 +168,7 @@ func joinSortitionPoolWhenEligible(
 
 			logger.Infof("joining the sortition pool...")
 
-			if err := chainSortitionHandle.JoinSortitionPool(); err != nil {
+			if err := chain.JoinSortitionPool(); err != nil {
 				logger.Errorf("failed to join the sortition pool: [%v]", err)
 				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
 				continue
@@ -185,7 +185,7 @@ func joinSortitionPoolWhenEligible(
 func waitUntilJoined(
 	parentCtx context.Context,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle Handle,
+	chain Handle,
 	outChan chan struct{},
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -196,7 +196,7 @@ func waitUntilJoined(
 	for {
 		select {
 		case <-newBlockChan:
-			isInPool, err := chainSortitionHandle.IsOperatorInPool()
+			isInPool, err := chain.IsOperatorInPool()
 			if err != nil {
 				logger.Errorf(
 					"failed to verify if the operator is in the sortition pool: [%w]",
