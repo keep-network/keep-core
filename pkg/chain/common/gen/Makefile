@@ -15,6 +15,7 @@ contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
 all: gen_contract_go
 
 clean:
+	rm -rf ${contracts_dir}/*
 	rm -r abi/*
 	rm -r contract/*
 	mkdir tmp && mv cmd/cmd*.go tmp
