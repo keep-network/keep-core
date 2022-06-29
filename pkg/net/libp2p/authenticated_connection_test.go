@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 	protoio "github.com/gogo/protobuf/io"
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -312,6 +311,9 @@ func (mf *mockFirewall) updatePeer(
 	remotePeerNetworkPublicKey *libp2pcrypto.Secp256k1PublicKey,
 	meetsCriteria bool,
 ) {
-	ecdsaPublicKey := (*secp.PublicKey)(remotePeerNetworkPublicKey).ToECDSA()
-	mf.meetsCriteria[ecdsaPublicKey.X.Uint64()] = meetsCriteria
+	operatorPublicKey, _ := networkPublicKeyToOperatorPublicKey(
+		remotePeerNetworkPublicKey,
+	)
+
+	mf.meetsCriteria[operatorPublicKey.X.Uint64()] = meetsCriteria
 }
