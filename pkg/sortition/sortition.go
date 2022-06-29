@@ -110,8 +110,9 @@ func waitUntilRegistered(
 			stakingProvider, err := chain.OperatorToStakingProvider()
 			if err != nil {
 				if errors.Is(err, ErrOperatorNotRegistered) {
-					logger.Warn(
-						"operator is not registered; please make sure a staking provider registered the operator",
+					logger.Warnf(
+						"operator is not registered; please make sure a staking provider registered the operator; retry in %s",
+						operatorRegistrationRetryDelay,
 					)
 					time.Sleep(operatorRegistrationRetryDelay)
 				} else {
@@ -163,7 +164,7 @@ func joinSortitionPoolWhenEligible(
 			}
 
 			if eligibleStake.Cmp(big.NewInt(0)) == 0 {
-				logger.Warnf("operator is not eligible to join the sortition pool")
+				logger.Warnf("operator is not eligible to join the sortition pool; retry in %s", eligibilityRetryDelay)
 				time.Sleep(eligibilityRetryDelay)
 				continue
 			}
@@ -224,7 +225,7 @@ func waitUntilJoined(
 				continue
 			}
 			if !isInPool {
-				logger.Debugf("operator is not yet in the sortition pool, waiting...")
+				logger.Debugf("operator is not yet in the sortition pool; retry on next block")
 				continue
 			}
 
