@@ -22,7 +22,7 @@ var operatorRegistrationRetryDelay = 5 * time.Minute
 
 // eligibilityRetryDelay defines the delay between checks whether the operator
 // is eligible to join the sortition pool.
-const eligibilityRetryDelay = 20 * time.Minute
+var eligibilityRetryDelay = 20 * time.Minute
 
 var logger = log.Logger("keep-sortition")
 

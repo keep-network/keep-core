@@ -19,6 +19,7 @@ type localChain struct {
 	sortitionPoolMutex sync.RWMutex
 
 	operatorToStakingProviderAttempts int
+	eligibleStakeAttempts             int
 }
 
 func connect(operatorAddress common.Address) *localChain {
@@ -50,7 +51,14 @@ func (lc *localChain) OperatorToStakingProvider() (string, error) {
 }
 
 func (lc *localChain) EligibleStake(stakingProvider string) (*big.Int, error) {
-	return lc.eligibleStakes[stakingProvider], nil
+	lc.eligibleStakeAttempts++
+
+	eligibleStake, ok := lc.eligibleStakes[stakingProvider]
+	if !ok {
+		return big.NewInt(0), nil
+	}
+
+	return eligibleStake, nil
 }
 
 func (lc *localChain) IsOperatorInPool() (bool, error) {

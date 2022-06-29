@@ -2,6 +2,7 @@ package sortition
 
 import (
 	"context"
+	"math/big"
 	"sync"
 	"testing"
 	"time"
@@ -104,6 +105,62 @@ func TestWaitUntilRegistered_NotRegistered(t *testing.T) {
 	// Wait for the `waitResolve` to resolve to verify if the `waitUntilRegistered`
 	// function completes execution.
 	resolveWait.Wait()
+}
+
+func TestJoinSortitionPoolWhenEligible(t *testing.T) {
+	operator, _ := generateAddress()
+	stakingProvider, _ := generateAddress()
+	blockCounter, _ := local.BlockCounter()
+	localChain := connect(operator)
+
+	localChain.registerOperator(stakingProvider, operator)
+
+	// Overwrite the default delay to make things happen faster in the test.
+	eligibilityRetryDelay = 1 * time.Second
+	// Time delay after which the operator gets eligible in the test.
+	eligibilityTestDelay := 2 * time.Second
+	// Each eligibility check happens every `eligibilityRetryDelay`.
+	// We expect that the operator will join the pool after `eligibilityTestDelay`.
+	expectedEligibleStakeAttempts := 3
+
+	resolveWait := &sync.WaitGroup{}
+	resolveWait.Add(1)
+	go func() {
+		joinSortitionPoolWhenEligible(
+			context.Background(),
+			stakingProvider.Hex(),
+			blockCounter,
+			localChain,
+		)
+		resolveWait.Done()
+	}()
+
+	isInPool, _ := localChain.IsOperatorInPool()
+	if isInPool {
+		t.Fatalf("operator is already registered in the pool")
+	}
+
+	go func() {
+		time.Sleep(eligibilityTestDelay)
+		localChain.eligibleStakes[stakingProvider.Hex()] = big.NewInt(100)
+	}()
+
+	// Wait for the `waitResolve` to resolve to verify if the `waitUntilRegistered`
+	// function completes execution.
+	resolveWait.Wait()
+
+	isInPool, _ = localChain.IsOperatorInPool()
+	if !isInPool {
+		t.Errorf("operator was not registered in the pool")
+	}
+
+	if localChain.eligibleStakeAttempts != expectedEligibleStakeAttempts {
+		t.Errorf(
+			"unexpected EligibleStake attempts\nexpected: [%d]\nactual:   [%d]",
+			expectedEligibleStakeAttempts,
+			localChain.eligibleStakeAttempts,
+		)
+	}
 }
 
 func generateAddress() (common.Address, error) {
