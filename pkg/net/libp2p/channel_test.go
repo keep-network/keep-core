@@ -2,19 +2,15 @@ package libp2p
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"reflect"
 	"sort"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec"
 	"github.com/keep-network/keep-core/pkg/net"
-	crypto "github.com/libp2p/go-libp2p-core/crypto"
 	peer "github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	pubsubpb "github.com/libp2p/go-libp2p-pubsub/pb"
@@ -154,27 +150,32 @@ func TestUnregisterWhenHandling(t *testing.T) {
 }
 
 func TestCreateTopicValidator(t *testing.T) {
-	publicKeys := make([]crypto.PubKey, 5)
-	for i := range publicKeys {
-		_, publicKey, _ := crypto.GenerateSecp256k1Key(rand.Reader)
-		publicKeys[i] = publicKey
+	operatorPublicKeys := make([]*operator.PublicKey, 5)
+	for i := range operatorPublicKeys {
+		_, operatorPublicKey, _ := operator.GenerateKeyPair(DefaultCurve)
+		operatorPublicKeys[i] = operatorPublicKey
 	}
 
 	authorizations := map[string]bool{
-		toEncodedBytes(toEcdsaPublicKey(publicKeys[0])): true,
-		toEncodedBytes(toEcdsaPublicKey(publicKeys[3])): true,
+		toEncodedBytes(t, operatorPublicKeys[0]): true,
+		toEncodedBytes(t, operatorPublicKeys[3]): true,
 	}
 
-	filter := func(publicKey *ecdsa.PublicKey) bool {
-		_, isAuthorized := authorizations[toEncodedBytes(publicKey)]
+	filter := func(publicKey *operator.PublicKey) bool {
+		_, isAuthorized := authorizations[toEncodedBytes(t, publicKey)]
 		return isAuthorized
 	}
 
 	validator := createTopicValidator(filter)
 
 	expectedResults := []bool{true, false, false, true, false}
-	for i, publicKey := range publicKeys {
-		authorID, _ := peer.IDFromPublicKey(publicKey)
+	for i, operatorPublicKey := range operatorPublicKeys {
+		networkPublicKey, err := operatorPublicKeyToNetworkPublicKey(operatorPublicKey)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		authorID, _ := peer.IDFromPublicKey(networkPublicKey)
 		authorIDBytes, _ := authorID.Marshal()
 		message := &pubsubpb.Message{From: authorIDBytes}
 
@@ -192,15 +193,10 @@ func TestCreateTopicValidator(t *testing.T) {
 	}
 }
 
-func toEcdsaPublicKey(publicKey crypto.PubKey) *ecdsa.PublicKey {
-	secp256k1PublicKey, _ := publicKey.(*crypto.Secp256k1PublicKey)
-	return (*btcec.PublicKey)(secp256k1PublicKey).ToECDSA()
-}
+func toEncodedBytes(t *testing.T, publicKey *operator.PublicKey) string {
+	publicKeyBytes := operator.MarshalUncompressed(publicKey)
 
-func toEncodedBytes(publicKey *ecdsa.PublicKey) string {
-	return hex.EncodeToString(
-		elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y),
-	)
+	return hex.EncodeToString(publicKeyBytes)
 }
 
 type mockNetMessage struct {

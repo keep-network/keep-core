@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/operator"
+
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -26,7 +28,7 @@ var logger = log.Logger("keep-beacon")
 // otherwise enters a blocked loop.
 func Initialize(
 	ctx context.Context,
-	stakingID string,
+	operatorPublicKey *operator.PublicKey,
 	chainHandle chain.Handle,
 	netProvider net.Provider,
 	persistence persistence.Handle,
@@ -39,7 +41,7 @@ func Initialize(
 		return err
 	}
 
-	staker, err := stakeMonitor.StakerFor(stakingID)
+	staker, err := stakeMonitor.StakerFor(operatorPublicKey)
 	if err != nil {
 		return err
 	}

@@ -115,7 +115,7 @@ type Interface interface {
 	GetConfig() *Config
 	// GetKeys returns the key pair used to attest for messages being sent to
 	// the chain.
-	GetKeys() (*operator.PrivateKey, *operator.PublicKey)
+	GetKeys() (*operator.PrivateKey, *operator.PublicKey, error)
 	// MinimumStake returns the current on-chain value representing the minimum
 	// necessary amount of KEEP a client must lock up to participate in the
 	// threshold relay. This value can change over time according to the minimum

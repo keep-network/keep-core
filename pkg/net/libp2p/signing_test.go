@@ -4,16 +4,10 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 func TestSignAndVerify(t *testing.T) {
-	privateKey, _, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	identity, err := createIdentity(privateKey)
+	identity, err := generateIdentity()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,12 +35,7 @@ func TestSignAndVerify(t *testing.T) {
 }
 
 func TestAllFieldsButSignatureAreTaken(t *testing.T) {
-	privateKey, _, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	identity, err := createIdentity(privateKey)
+	identity, err := generateIdentity()
 	if err != nil {
 		t.Fatal(err)
 	}

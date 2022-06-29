@@ -1,12 +1,9 @@
 package group
 
 import (
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"testing"
-
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	crand "crypto/rand"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
@@ -20,8 +17,15 @@ func TestIsInGroup(t *testing.T) {
 	publicKey2 := generatePublicKey(t)
 	publicKey3 := generatePublicKey(t)
 
-	address1 := signing.PublicKeyToAddress(*publicKey1)
-	address2 := signing.PublicKeyToAddress(*publicKey2)
+	address1, err := signing.PublicKeyToAddress(publicKey1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	address2, err := signing.PublicKeyToAddress(publicKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	validator := NewStakersMembershipValidator(
 		[]relaychain.StakerAddress{address1, address2, address2},
@@ -72,16 +76,19 @@ func TestIsValidMembership(t *testing.T) {
 	}
 }
 
-func generatePublicKey(t *testing.T) *ecdsa.PublicKey {
-	key, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+func generatePublicKey(t *testing.T) *operator.PublicKey {
+	_, operatorPublicKey, err := operator.GenerateKeyPair(local.DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return &key.PublicKey
+	return operatorPublicKey
 }
 
 func generatePublicKeyBytes(t *testing.T) []byte {
-	publicKey := generatePublicKey(t)
-	return elliptic.Marshal(publicKey.Curve, publicKey.X, publicKey.Y)
+	operatorPublicKey := generatePublicKey(t)
+
+	operatorPublicKeyBytes := operator.MarshalUncompressed(operatorPublicKey)
+
+	return operatorPublicKeyBytes
 }

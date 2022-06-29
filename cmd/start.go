@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
@@ -17,10 +18,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/firewall"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/urfave/cli"
 )
 
@@ -85,6 +84,13 @@ func Start(c *cli.Context) error {
 		)
 	}
 
+	operatorPrivateKey, operatorPublicKey, err := ethereum.ChainPrivateKeyToOperatorKeyPair(
+		ethereumKey.PrivateKey,
+	)
+	if err != nil {
+		return err
+	}
+
 	chainProvider, err := ethereum.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
@@ -100,13 +106,13 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
 	if c.Int(waitForStakeFlag) != 0 {
-		err = waitForStake(stakeMonitor, ethereumKey.Address.Hex(), c.Int(waitForStakeFlag))
+		err = waitForStake(stakeMonitor, operatorPublicKey, c.Int(waitForStakeFlag))
 		if err != nil {
 			return err
 		}
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		ethereumKey.Address.Hex(),
+		operatorPublicKey,
 	)
 	if err != nil {
 		return fmt.Errorf("could not check the stake [%v]", err)
@@ -120,13 +126,10 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
-		operator.ChainKeyToOperatorKey(ethereumKey),
-	)
 	netProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,
-		networkPrivateKey,
+		operatorPrivateKey,
 		libp2p.ProtocolBeacon,
 		firewall.MinimumStakePolicy(stakeMonitor),
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
@@ -148,7 +151,7 @@ func Start(c *cli.Context) error {
 
 	err = beacon.Initialize(
 		ctx,
-		ethereumKey.Address.Hex(),
+		operatorPublicKey,
 		chainProvider,
 		netProvider,
 		persistence,
@@ -157,8 +160,8 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
-	initializeDiagnostics(ctx, config, netProvider)
+	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
+	initializeDiagnostics(ctx, config, netProvider, chainProvider)
 
 	select {
 	case <-ctx.Done():
@@ -170,21 +173,28 @@ func Start(c *cli.Context) error {
 	}
 }
 
-func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) error {
+func waitForStake(
+	stakeMonitor chain.StakeMonitor,
+	operatorPublicKey *operator.PublicKey,
+	timeout int,
+) error {
 	waitMins := 0
 	for waitMins < timeout {
-		hasMinimumStake, err := stakeMonitor.HasMinimumStake(address)
+		hasMinimumStake, err := stakeMonitor.HasMinimumStake(operatorPublicKey)
 		if err != nil {
 			return fmt.Errorf("could not check the stake [%v]", err)
 		}
+
 		if hasMinimumStake {
 			return nil
 		}
-		logger.Warningf("%s below min stake for %d min \n", address, waitMins)
+
+		logger.Warningf("below min stake for %d min \n", waitMins)
 		time.Sleep(time.Minute)
+
 		waitMins++
 	}
-	return fmt.Errorf("timed out waiting for %s to have required minimum stake", address)
+	return fmt.Errorf("timed out waiting to have required minimum stake")
 }
 
 func initializeMetrics(
@@ -192,7 +202,7 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
-	ethereumAddress string,
+	operatorPublicKey *operator.PublicKey,
 ) {
 	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
@@ -226,7 +236,7 @@ func initializeMetrics(
 		ctx,
 		registry,
 		stakeMonitor,
-		ethereumAddress,
+		operatorPublicKey,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
 }
@@ -235,6 +245,7 @@ func initializeDiagnostics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
+	chainHandle chain.Handle,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -249,6 +260,6 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
-	diagnostics.RegisterClientInfoSource(registry, netProvider)
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider, chainHandle)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, chainHandle)
 }

@@ -1,15 +1,13 @@
 package firewall
 
 import (
-	"crypto/ecdsa"
 	"fmt"
-	"time"
-
 	"github.com/keep-network/keep-common/pkg/cache"
+	"github.com/keep-network/keep-core/pkg/operator"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 // Disabled is an empty Firewall implementation enforcing no rules
@@ -18,7 +16,7 @@ var Disabled = &noFirewall{}
 
 type noFirewall struct{}
 
-func (nf *noFirewall) Validate(remotePeerPublicKey *ecdsa.PublicKey) error {
+func (nf *noFirewall) Validate(remotePeerPublicKey *operator.PublicKey) error {
 	return nil
 }
 
@@ -53,10 +51,9 @@ type minimumStakePolicy struct {
 }
 
 func (msp *minimumStakePolicy) Validate(
-	remotePeerPublicKey *ecdsa.PublicKey,
+	remotePeerPublicKey *operator.PublicKey,
 ) error {
-	networkPublicKey := key.NetworkPublic(*remotePeerPublicKey)
-	address := key.NetworkPubKeyToChainAddress(&networkPublicKey)
+	remotePeerPublicKeyHex := remotePeerPublicKey.String()
 
 	// First, check in the in-memory time caches to minimize hits to ETH client.
 	// If the Keep client with the given chain address is in the positive result
@@ -70,15 +67,15 @@ func (msp *minimumStakePolicy) Validate(
 	msp.positiveResultCache.Sweep()
 	msp.negativeResultCache.Sweep()
 
-	if msp.positiveResultCache.Has(address) {
+	if msp.positiveResultCache.Has(remotePeerPublicKeyHex) {
 		return nil
 	}
 
-	if msp.negativeResultCache.Has(address) {
+	if msp.negativeResultCache.Has(remotePeerPublicKeyHex) {
 		return errNoMinimumStake
 	}
 
-	hasMinimumStake, err := msp.stakeMonitor.HasMinimumStake(address)
+	hasMinimumStake, err := msp.stakeMonitor.HasMinimumStake(remotePeerPublicKey)
 	if err != nil {
 		return fmt.Errorf(
 			"could not validate remote peer's minimum stake: [%v]",
@@ -89,13 +86,13 @@ func (msp *minimumStakePolicy) Validate(
 	if !hasMinimumStake {
 		// Add this address to the negative result cache.
 		// We'll not hit HasMinimumStake again for the entire caching period.
-		msp.negativeResultCache.Add(address)
+		msp.negativeResultCache.Add(remotePeerPublicKeyHex)
 		return errNoMinimumStake
 	}
 
 	// Add this address to the positive result cache.
 	// We'll not hit HasMinimumStake again for the entire caching period.
-	msp.positiveResultCache.Add(address)
+	msp.positiveResultCache.Add(remotePeerPublicKeyHex)
 
 	return nil
 }
