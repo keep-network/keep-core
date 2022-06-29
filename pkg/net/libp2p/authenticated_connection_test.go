@@ -23,8 +23,16 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 	responder := createTestConnectionConfig(t)
 
 	firewall := newMockFirewall()
-	firewall.updatePeer(initiator.networkPublicKey, true)
-	firewall.updatePeer(responder.networkPublicKey, true)
+
+	err := firewall.updatePeer(initiator.networkPublicKey, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = firewall.updatePeer(responder.networkPublicKey, true)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	initiatorConn, responderConn := newConnPair()
 
@@ -47,7 +55,7 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 		return
 	}(initiatorConn, initiator.peerID, initiator.networkPrivateKey, responder.peerID, responder.networkPrivateKey)
 
-	_, err := newAuthenticatedInboundConnection(
+	_, err = newAuthenticatedInboundConnection(
 		responderConn,
 		responder.peerID,
 		responder.networkPrivateKey,
@@ -123,8 +131,16 @@ func TestHandshake(t *testing.T) {
 	responder := createTestConnectionConfig(t)
 
 	firewall := newMockFirewall()
-	firewall.updatePeer(initiator.networkPublicKey, true)
-	firewall.updatePeer(responder.networkPublicKey, true)
+
+	err := firewall.updatePeer(initiator.networkPublicKey, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = firewall.updatePeer(responder.networkPublicKey, true)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
 		connectInitiatorAndResponder(initiator, responder, firewall, t)
@@ -189,8 +205,12 @@ func TestHandshakeResponderBlockedByFirewallRules(t *testing.T) {
 	responder := createTestConnectionConfig(t)
 
 	firewall := newMockFirewall()
+
 	// only initiator meets firewall rules
-	firewall.updatePeer(initiator.networkPublicKey, true)
+	err := firewall.updatePeer(initiator.networkPublicKey, true)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	_, _, inboundError, outboundError :=
 		connectInitiatorAndResponder(initiator, responder, firewall, t)
@@ -310,10 +330,16 @@ func (mf *mockFirewall) Validate(remotePeerOperatorPublicKey *operator.PublicKey
 func (mf *mockFirewall) updatePeer(
 	remotePeerNetworkPublicKey *libp2pcrypto.Secp256k1PublicKey,
 	meetsCriteria bool,
-) {
-	operatorPublicKey, _ := networkPublicKeyToOperatorPublicKey(
+) (error) {
+	operatorPublicKey, err := networkPublicKeyToOperatorPublicKey(
 		remotePeerNetworkPublicKey,
 	)
 
+	if err != nil {
+		return err
+	}
+
 	mf.meetsCriteria[operatorPublicKey.X.Uint64()] = meetsCriteria
+
+	return nil
 }
