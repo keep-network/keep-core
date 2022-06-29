@@ -64,8 +64,11 @@ type GroupRegistrationInterface interface {
 	OnGroupRegistered(
 		func(groupRegistration *event.GroupRegistration),
 	) subscription.EventSubscription
-	// Checks if a group with the given public key is considered as
-	// stale on-chain. Group is considered as stale if it is expired and when
+	// IsGroupRegistered checks if group with the given public key is registered
+	// on-chain.
+	IsGroupRegistered(groupPublicKey []byte) (bool, error)
+	// IsStaleGroup checks if a group with the given public key is considered
+	// as stale on-chain. Group is considered as stale if it is expired and when
 	// its expiration time and potentially executed operation timeout are both
 	// in the past. Stale group is never selected by the chain to any new
 	// operation.
@@ -105,9 +108,6 @@ type DistributedKeyGenerationInterface interface {
 	OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission),
 	) subscription.EventSubscription
-	// IsGroupRegistered checks if group with the given public key is registered
-	// on-chain.
-	IsGroupRegistered(groupPublicKey []byte) (bool, error)
 	// CalculateDKGResultHash calculates 256-bit hash of DKG result in standard
 	// specific for the chain. Operation is performed off-chain.
 	CalculateDKGResultHash(dkgResult *DKGResult) (DKGResultHash, error)
