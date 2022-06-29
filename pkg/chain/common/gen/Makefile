@@ -16,11 +16,11 @@ all: gen_contract_go
 
 clean:
 	rm -rf ${contracts_dir}/*
-	rm -r abi/*
-	rm -r contract/*
+	rm -rf abi/*
+	rm -rf contract/*
 	mkdir tmp && mv cmd/cmd*.go tmp
-	rm -r cmd/*
-	mv tmp/* cmd && rm -r tmp
+	rm -rf cmd/*
+	mv tmp/* cmd && rm -rf tmp
 
 # It requires npm of at least 7.x version to support `pack-destination` flag.
 download_artifacts:
