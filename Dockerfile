@@ -45,12 +45,9 @@ COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
 
-# Download contracts artifacts.
 # If CONTRACTS_NPM_PACKAGE_TAG is not set it will download NPM packages versions
 # published and tagged as `development`.
 ARG CONTRACTS_NPM_PACKAGE_TAG
-COPY ./scripts/download-artifacts.sh $APP_DIR/scripts/download-artifacts.sh
-RUN CONTRACTS_NPM_PACKAGE_TAG=$CONTRACTS_NPM_PACKAGE_TAG $APP_DIR/scripts/download-artifacts.sh
 
 # Need this to resolve imports in generated Ethereum commands.
 COPY ./config $APP_DIR/config
