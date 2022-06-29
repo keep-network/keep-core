@@ -27,6 +27,8 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 		return nil, nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
 	}
 
+	// Note that `btcec.PrivKeyFromBytes` uses the secp256k1 implementation
+	// provided by decred underneath
 	btcecPrivateKey, btcecPublicKey := btcec.PrivKeyFromBytes(
 		operatorPrivateKey.D.Bytes(),
 	)
