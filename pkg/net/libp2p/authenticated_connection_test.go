@@ -334,7 +334,6 @@ func (mf *mockFirewall) updatePeer(
 	operatorPublicKey, err := networkPublicKeyToOperatorPublicKey(
 		remotePeerNetworkPublicKey,
 	)
-
 	if err != nil {
 		return err
 	}
