@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
@@ -24,7 +24,7 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ecdsaPublicKey := (*secp.PublicKey)(networkPublicKey).ToECDSA()
+	ecdsaPublicKey := (*btcec.PublicKey)(networkPublicKey).ToECDSA()
 
 	if !reflect.DeepEqual(ecdsaPublicKey.Curve.Params(), DefaultCurve.Params()) {
 		t.Errorf("network public key uses the wrong curve")
@@ -36,7 +36,7 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 
-	ecdsaPrivateKey := (*secp.PrivateKey)(networkPrivateKey).ToECDSA()
+	ecdsaPrivateKey := (*btcec.PrivateKey)(networkPrivateKey).ToECDSA()
 
 	if !reflect.DeepEqual(
 		ecdsaPrivateKey.PublicKey,
@@ -88,12 +88,12 @@ func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ecdsaPublicKey := (*secp.PublicKey)(networkPublicKey).ToECDSA()
+	ecdsaPublicKey := (*btcec.PublicKey)(networkPublicKey).ToECDSA()
 
 	if !reflect.DeepEqual(ecdsaPublicKey.Curve.Params(), DefaultCurve.Params()) {
 		t.Errorf("network public key uses the wrong curve")
 	}
-    if ecdsaPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
+	if ecdsaPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
 	if ecdsaPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
@@ -146,7 +146,7 @@ func TestNetworkPublicKeyToOperatorPublicKey(t *testing.T) {
 		t.Fatal("wrong type of public key")
 	}
 
-	ecdsaPublicKey := (*secp.PublicKey)(publicKey).ToECDSA()
+	ecdsaPublicKey := (*btcec.PublicKey)(publicKey).ToECDSA()
 
 	if operatorPublicKey.X.Cmp(ecdsaPublicKey.X) != 0 {
 		t.Errorf("operator public key has a wrong X coordinate")

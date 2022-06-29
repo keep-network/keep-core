@@ -4,8 +4,7 @@ import (
 	"crypto/elliptic"
 	"fmt"
 
-	"github.com/btcsuite/btcd/btcec"
-	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
@@ -28,11 +27,12 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 		return nil, nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
 	}
 
-	secpPrivateKey := secp.PrivKeyFromBytes(operatorPrivateKey.D.Bytes())
-	secpPublicKey := secpPrivateKey.PubKey()
+	btcecPrivateKey, btcecPublickKey := btcec.PrivKeyFromBytes(
+		operatorPrivateKey.D.Bytes(),
+	)
 
-	networkPrivateKey := libp2pcrypto.Secp256k1PrivateKey(*secpPrivateKey)
-	networkPublicKey := libp2pcrypto.Secp256k1PublicKey(*secpPublicKey)
+	networkPrivateKey := libp2pcrypto.Secp256k1PrivateKey(*btcecPrivateKey)
+	networkPublicKey := libp2pcrypto.Secp256k1PublicKey(*btcecPublickKey)
 
 	return &networkPrivateKey, &networkPublicKey, nil
 }
@@ -48,14 +48,14 @@ func operatorPublicKeyToNetworkPublicKey(
 		return nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
 	}
 
-	rawOperatorPublicKey := operator.MarshalCompressed(operatorPublicKey)
+	operatorPublicKeyBytes := operator.MarshalCompressed(operatorPublicKey)
 
-	secpNetworkPublicKey, err := secp.ParsePubKey(rawOperatorPublicKey)
+	btcecPublicKey, err := btcec.ParsePubKey(operatorPublicKeyBytes)
 	if err != nil {
 		return nil, err
 	}
 
-	networkPublicKey := libp2pcrypto.Secp256k1PublicKey(*secpNetworkPublicKey)
+	networkPublicKey := libp2pcrypto.Secp256k1PublicKey(*btcecPublicKey)
 
 	return &networkPublicKey, nil
 }
@@ -67,11 +67,11 @@ func networkPublicKeyToOperatorPublicKey(
 ) (*operator.PublicKey, error) {
 	switch publicKey := networkPublicKey.(type) {
 	case *libp2pcrypto.Secp256k1PublicKey:
-		ecdsaPublicKey := (*secp.PublicKey)(publicKey).ToECDSA()
+		btcecPublicKey := (*btcec.PublicKey)(publicKey)
 		return &operator.PublicKey{
 			Curve: operator.Secp256k1,
-			X:     ecdsaPublicKey.X,
-			Y:     ecdsaPublicKey.Y,
+			X:     btcecPublicKey.X(),
+			Y:     btcecPublicKey.Y(),
 		}, nil
 	}
 	return nil, fmt.Errorf("unrecognized libp2p public key type")
