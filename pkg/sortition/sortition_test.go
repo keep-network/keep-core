@@ -118,11 +118,21 @@ func TestJoinSortitionPoolWhenEligible(t *testing.T) {
 
 	// Overwrite the default delay to make things happen faster in the test.
 	eligibilityRetryDelay = 1 * time.Second
+	// Overwrite the default delay to make things happen faster in the test.
+	poolLockRetryDelay = 1 * time.Second
+
 	// Time delay after which the operator gets eligible in the test.
 	eligibilityTestDelay := 2 * time.Second
+	// Time delay after which the sortition pool gets unlocked in the test.
+	lockTestDelay := 1 * time.Second
+
 	// Each eligibility check happens every `eligibilityRetryDelay`.
-	// We expect that the operator will join the pool after `eligibilityTestDelay`.
-	expectedEligibleStakeAttempts := 3
+	// We expect that the operator will join the pool after `eligibilityTestDelay`
+	// and `lockTestDelay`.
+	expectedEligibleStakeAttempts := 4
+
+	// Lock the sortition pool.
+	localChain.isPoolLocked = true
 
 	resolveWait := &sync.WaitGroup{}
 	resolveWait.Add(1)
@@ -144,6 +154,9 @@ func TestJoinSortitionPoolWhenEligible(t *testing.T) {
 	go func() {
 		time.Sleep(eligibilityTestDelay)
 		localChain.eligibleStakes[stakingProvider.Hex()] = big.NewInt(100)
+
+		time.Sleep(lockTestDelay)
+		localChain.isPoolLocked = false
 	}()
 
 	// Wait for the `waitResolve` to resolve to verify if the `waitUntilRegistered`
