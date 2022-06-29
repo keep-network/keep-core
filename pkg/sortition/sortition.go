@@ -18,7 +18,7 @@ const retryDelay = 1 * time.Second
 
 // operatorRegistrationRetryDelay defines the delay between checks whether the operator
 // is registered by a staking provider.
-const operatorRegistrationRetryDelay = 5 * time.Second
+var operatorRegistrationRetryDelay = 5 * time.Minute
 
 // eligibilityRetryDelay defines the delay between checks whether the operator
 // is eligible to join the sortition pool.
