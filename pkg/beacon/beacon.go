@@ -18,6 +18,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	beaconChain "github.com/keep-network/keep-core/pkg/chain/random-beacon"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/sortition"
 )
 
 var logger = log.Logger("keep-beacon")
@@ -211,7 +212,7 @@ func Initialize(
 		go groupRegistry.UnregisterStaleGroups(registration.GroupPublicKey)
 	})
 
-	go registerAndMonitorStatus(ctx, blockCounter, beaconChainHandle)
+	go sortition.RegisterAndMonitorStatus(ctx, blockCounter, beaconChainHandle)
 
 	return nil
 }

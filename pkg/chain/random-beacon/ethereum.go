@@ -10,7 +10,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain/random-beacon/gen/contract"
-	"github.com/keep-network/keep-core/pkg/chain/sortition"
+	"github.com/keep-network/keep-core/pkg/sortition"
 )
 
 // Definitions of contract names.

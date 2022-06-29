@@ -1,4 +1,4 @@
-package beacon
+package sortition
 
 import (
 	"context"
@@ -6,8 +6,9 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ipfs/go-log"
+
 	corechain "github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/sortition"
 )
 
 // retryDelay defines the delay between retries related to the registration logic
@@ -23,12 +24,14 @@ const operatorRegistrationRetryDelay = 5 * time.Second
 // is eligible to join the sortition pool.
 const eligibilityRetryDelay = 20 * time.Minute
 
-// registerAndMonitorStatus checks whether the operator is registered by a staking
+var logger = log.Logger("keep-sortition")
+
+// RegisterAndMonitorStatus checks whether the operator is registered by a staking
 // provider and joins the sortition pool if the operator is eligible.
-func registerAndMonitorStatus(
+func RegisterAndMonitorStatus(
 	ctx context.Context,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle sortition.Handle,
+	chainSortitionHandle Handle,
 ) {
 	go func() {
 		operatorRegisteredChan := make(chan string)
@@ -93,7 +96,7 @@ func joinSortitionPoolWhenEligible(
 	parentCtx context.Context,
 	stakingProvider string,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle sortition.Handle,
+	chainSortitionHandle Handle,
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
@@ -139,7 +142,7 @@ func joinSortitionPoolWhenEligible(
 func waitUntilRegistered(
 	parentCtx context.Context,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle sortition.Handle,
+	chainSortitionHandle Handle,
 	operatorRegisteredChan chan string,
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -152,7 +155,7 @@ func waitUntilRegistered(
 		case <-newBlockChan:
 			stakingProvider, err := chainSortitionHandle.OperatorToStakingProvider()
 			if err != nil {
-				if errors.Is(err, sortition.ErrOperatorNotRegistered) {
+				if errors.Is(err, ErrOperatorNotRegistered) {
 					logger.Warn(
 						"operator is not registered; please make sure a staking provider registered the operator",
 					)
@@ -180,7 +183,7 @@ func waitUntilRegistered(
 func waitUntilJoined(
 	parentCtx context.Context,
 	blockCounter corechain.BlockCounter,
-	chainSortitionHandle sortition.Handle,
+	chainSortitionHandle Handle,
 	outChan chan struct{},
 ) {
 	ctx, cancel := context.WithCancel(parentCtx)
