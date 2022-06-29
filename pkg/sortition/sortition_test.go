@@ -8,12 +8,18 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Start `waitUntilRegistered` when an operator is already registered.
 func TestWaitUntilRegistered_AlreadyRegistered(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
 	operator, _ := generateAddress()
 	stakingProvider, _ := generateAddress()
 	blockCounter, _ := local.BlockCounter()
@@ -58,6 +64,11 @@ func TestWaitUntilRegistered_AlreadyRegistered(t *testing.T) {
 // Start `waitUntilRegistered` when an operator has not been registered yet.
 // Register the operator when the waiting loop is running.
 func TestWaitUntilRegistered_NotRegistered(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
 	operator, _ := generateAddress()
 	stakingProvider, _ := generateAddress()
 	blockCounter, _ := local.BlockCounter()
@@ -109,6 +120,11 @@ func TestWaitUntilRegistered_NotRegistered(t *testing.T) {
 }
 
 func TestJoinSortitionPoolWhenEligible(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
 	operator, _ := generateAddress()
 	stakingProvider, _ := generateAddress()
 	blockCounter, _ := local.BlockCounter()
@@ -180,6 +196,11 @@ func TestJoinSortitionPoolWhenEligible(t *testing.T) {
 
 // Start `waitUntilJoined` when an operator already joined the sortition pool.
 func TestWaitUntilJoined_AlreadyJoined(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
 	operator, _ := generateAddress()
 	blockCounter, _ := local.BlockCounter()
 	localChain := connect(operator)
@@ -219,6 +240,11 @@ func TestWaitUntilJoined_AlreadyJoined(t *testing.T) {
 // Start `waitUntilJoined` when an operator has not been registered yet.
 // Register the operator when the waiting loop is running.
 func TestWaitUntilJoined_NotJoined(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
 	operator, _ := generateAddress()
 	blockCounter, _ := local.BlockCounter()
 	localChain := connect(operator)
