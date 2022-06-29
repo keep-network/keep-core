@@ -88,6 +88,47 @@ func RegisterAndMonitorStatus(
 	}()
 }
 
+// waitUntilJoined blocks until the operator is registered by a staking provider.
+func waitUntilRegistered(
+	parentCtx context.Context,
+	blockCounter corechain.BlockCounter,
+	chainSortitionHandle Handle,
+	operatorRegisteredChan chan string,
+) {
+	ctx, cancel := context.WithCancel(parentCtx)
+	defer cancel()
+
+	newBlockChan := blockCounter.WatchBlocks(ctx) // TODO: Check every X blocks
+
+	for {
+		select {
+		case <-newBlockChan:
+			stakingProvider, err := chainSortitionHandle.OperatorToStakingProvider()
+			if err != nil {
+				if errors.Is(err, ErrOperatorNotRegistered) {
+					logger.Warn(
+						"operator is not registered; please make sure a staking provider registered the operator",
+					)
+					time.Sleep(operatorRegistrationRetryDelay)
+				} else {
+					logger.Errorf(
+						"failed to check if the operator is registered for a staking provider: [%v]",
+						err,
+					)
+					time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+				}
+				continue
+			}
+
+			operatorRegisteredChan <- stakingProvider
+			close(operatorRegisteredChan)
+			return
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 // joinSortitionPoolWhenEligible checks current operator's eligibility to join
 // the sortition pool and if it is positive, joins the pool.
 // If the operator is not eligible, it executes the check for each new mined
@@ -133,47 +174,6 @@ func joinSortitionPoolWhenEligible(
 				continue
 			}
 
-			return
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-// waitUntilJoined blocks until the operator is registered by a staking provider.
-func waitUntilRegistered(
-	parentCtx context.Context,
-	blockCounter corechain.BlockCounter,
-	chainSortitionHandle Handle,
-	operatorRegisteredChan chan string,
-) {
-	ctx, cancel := context.WithCancel(parentCtx)
-	defer cancel()
-
-	newBlockChan := blockCounter.WatchBlocks(ctx) // TODO: Check every X blocks
-
-	for {
-		select {
-		case <-newBlockChan:
-			stakingProvider, err := chainSortitionHandle.OperatorToStakingProvider()
-			if err != nil {
-				if errors.Is(err, ErrOperatorNotRegistered) {
-					logger.Warn(
-						"operator is not registered; please make sure a staking provider registered the operator",
-					)
-					time.Sleep(operatorRegistrationRetryDelay)
-				} else {
-					logger.Errorf(
-						"failed to check if the operator is registered for a staking provider: [%v]",
-						err,
-					)
-					time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
-				}
-				continue
-			}
-
-			operatorRegisteredChan <- stakingProvider
-			close(operatorRegisteredChan)
 			return
 		case <-ctx.Done():
 			return
