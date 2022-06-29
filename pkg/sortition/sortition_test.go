@@ -33,13 +33,6 @@ func TestWaitUntilRegistered_AlreadyRegistered(t *testing.T) {
 	}()
 
 	actualStakingProvider := <-operatorRegisteredChan
-	if actualStakingProvider != stakingProvider.Hex() {
-		t.Errorf(
-			"unexpected staking provider\nexpected: [%s]\nactual:   [%s]",
-			stakingProvider,
-			actualStakingProvider,
-		)
-	}
 
 	if localChain.operatorToStakingProviderAttempts != expectedOperatorToStakingProviderAttempts {
 		t.Errorf(
@@ -49,10 +42,17 @@ func TestWaitUntilRegistered_AlreadyRegistered(t *testing.T) {
 		)
 	}
 
+	if actualStakingProvider != stakingProvider.Hex() {
+		t.Errorf(
+			"unexpected staking provider\nexpected: [%s]\nactual:   [%s]",
+			stakingProvider,
+			actualStakingProvider,
+		)
+	}
+
 	// Wait for the `waitResolve` to resolve to verify if the `waitUntilRegistered`
 	// function completes execution.
 	resolveWait.Wait()
-
 }
 
 // Start `waitUntilRegistered` when an operator has not been registered yet.
@@ -86,19 +86,20 @@ func TestWaitUntilRegistered_NotRegistered(t *testing.T) {
 	}()
 
 	actualStakingProvider := <-operatorRegisteredChan
-	if actualStakingProvider != stakingProvider.Hex() {
-		t.Errorf(
-			"unexpected staking provider\nexpected: [%s]\nactual:   [%s]",
-			stakingProvider,
-			actualStakingProvider,
-		)
-	}
 
 	if localChain.operatorToStakingProviderAttempts != expectedOperatorToStakingProviderAttempts {
 		t.Errorf(
 			"unexpected OperatorToStakingProvider attempts\nexpected: [%d]\nactual:   [%d]",
 			expectedOperatorToStakingProviderAttempts,
 			localChain.operatorToStakingProviderAttempts,
+		)
+	}
+
+	if actualStakingProvider != stakingProvider.Hex() {
+		t.Errorf(
+			"unexpected staking provider\nexpected: [%s]\nactual:   [%s]",
+			stakingProvider,
+			actualStakingProvider,
 		)
 	}
 
@@ -137,7 +138,7 @@ func TestJoinSortitionPoolWhenEligible(t *testing.T) {
 
 	isInPool, _ := localChain.IsOperatorInPool()
 	if isInPool {
-		t.Fatalf("operator is already registered in the pool")
+		t.Fatalf("operator already joined the pool")
 	}
 
 	go func() {
@@ -149,11 +150,6 @@ func TestJoinSortitionPoolWhenEligible(t *testing.T) {
 	// function completes execution.
 	resolveWait.Wait()
 
-	isInPool, _ = localChain.IsOperatorInPool()
-	if !isInPool {
-		t.Errorf("operator was not registered in the pool")
-	}
-
 	if localChain.eligibleStakeAttempts != expectedEligibleStakeAttempts {
 		t.Errorf(
 			"unexpected EligibleStake attempts\nexpected: [%d]\nactual:   [%d]",
@@ -161,6 +157,97 @@ func TestJoinSortitionPoolWhenEligible(t *testing.T) {
 			localChain.eligibleStakeAttempts,
 		)
 	}
+
+	isInPool, _ = localChain.IsOperatorInPool()
+	if !isInPool {
+		t.Errorf("operator has not joined the pool")
+	}
+
+}
+
+// Start `waitUntilJoined` when an operator already joined the sortition pool.
+func TestWaitUntilJoined_AlreadyJoined(t *testing.T) {
+	operator, _ := generateAddress()
+	blockCounter, _ := local.BlockCounter()
+	localChain := connect(operator)
+
+	joinedPoolChan := make(chan struct{})
+
+	expectedIsOperatorInPoolAttempts := 1
+
+	localChain.sortitionPool[operator.Hex()] = big.NewInt(200)
+
+	resolveWait := &sync.WaitGroup{}
+	resolveWait.Add(1)
+	go func() {
+		waitUntilJoined(context.Background(), blockCounter, localChain, joinedPoolChan)
+		resolveWait.Done()
+	}()
+
+	<-joinedPoolChan
+	if localChain.isOperatorInPoolAttempts != expectedIsOperatorInPoolAttempts {
+		t.Errorf(
+			"unexpected IsOperatorInPool attempts\nexpected: [%d]\nactual:   [%d]",
+			expectedIsOperatorInPoolAttempts,
+			localChain.isOperatorInPoolAttempts,
+		)
+	}
+
+	isInPool, _ := localChain.IsOperatorInPool()
+	if !isInPool {
+		t.Errorf("operator has not joined the pool")
+	}
+
+	// Wait for the `waitResolve` to resolve to verify if the `waitUntilRegistered`
+	// function completes execution.
+	resolveWait.Wait()
+}
+
+// Start `waitUntilJoined` when an operator has not been registered yet.
+// Register the operator when the waiting loop is running.
+func TestWaitUntilJoined_NotJoined(t *testing.T) {
+	operator, _ := generateAddress()
+	blockCounter, _ := local.BlockCounter()
+	localChain := connect(operator)
+
+	joinedPoolChan := make(chan struct{})
+
+	// Time delay after which the operator joins the pool in the test.
+	joinPoolTestDelay := 3 * time.Second
+	// Each pool check happens every block (500 ms).
+	// We expect that the operator will be registered after `joinPoolTestDelay`.
+	expectedIsOperatorInPoolAttempts := 7
+
+	resolveWait := &sync.WaitGroup{}
+	resolveWait.Add(1)
+	go func() {
+		waitUntilJoined(context.Background(), blockCounter, localChain, joinedPoolChan)
+		resolveWait.Done()
+	}()
+
+	go func() {
+		time.Sleep(joinPoolTestDelay)
+		localChain.sortitionPool[operator.Hex()] = big.NewInt(200)
+	}()
+
+	<-joinedPoolChan
+
+	if localChain.isOperatorInPoolAttempts != expectedIsOperatorInPoolAttempts {
+		t.Errorf(
+			"unexpected OperatorToStakingProvider attempts\nexpected: [%d]\nactual:   [%d]",
+			expectedIsOperatorInPoolAttempts,
+			localChain.isOperatorInPoolAttempts,
+		)
+	}
+
+	isInPool, _ := localChain.IsOperatorInPool()
+	if !isInPool {
+		t.Errorf("operator has not joined the pool")
+	}
+
+	// Wait for the `waitResolve` to resolve to verify if the `waitUntilRegistered`
+	// function completes execution.
+	resolveWait.Wait()
 }
 
 func generateAddress() (common.Address, error) {

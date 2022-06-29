@@ -20,6 +20,7 @@ type localChain struct {
 
 	operatorToStakingProviderAttempts int
 	eligibleStakeAttempts             int
+	isOperatorInPoolAttempts          int
 }
 
 func connect(operatorAddress common.Address) *localChain {
@@ -62,6 +63,8 @@ func (lc *localChain) EligibleStake(stakingProvider string) (*big.Int, error) {
 }
 
 func (lc *localChain) IsOperatorInPool() (bool, error) {
+	lc.isOperatorInPoolAttempts++
+
 	lc.sortitionPoolMutex.RLock()
 	defer lc.sortitionPoolMutex.RUnlock()
 
