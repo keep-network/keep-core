@@ -18,6 +18,8 @@ type localChain struct {
 	sortitionPool      map[string]*big.Int
 	sortitionPoolMutex sync.RWMutex
 
+	isPoolLocked bool
+
 	operatorToStakingProviderAttempts int
 	eligibleStakeAttempts             int
 	isOperatorInPoolAttempts          int
@@ -60,6 +62,10 @@ func (lc *localChain) EligibleStake(stakingProvider string) (*big.Int, error) {
 	}
 
 	return eligibleStake, nil
+}
+
+func (lc *localChain) IsPoolLocked() (bool, error) {
+	return lc.isPoolLocked, nil
 }
 
 func (lc *localChain) IsOperatorInPool() (bool, error) {
