@@ -308,15 +308,6 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
 	}
 
-	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
 	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -333,7 +324,6 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	return &relaychain.Config{
 		GroupSize:                  int(groupSize.Int64()),
 		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
 		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
 		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
 	}, nil

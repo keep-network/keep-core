@@ -69,8 +69,7 @@ func Initialize(
 	// time needed for publication as we are interested about the minimum
 	// possible off-chain group create protocol duration.
 	minGroupCreationDurationBlocks :=
-		chainConfig.TicketSubmissionTimeout +
-			gjkr.ProtocolBlocks() +
+		gjkr.ProtocolBlocks() +
 			dkgresult.PrePublicationBlocks()
 
 	eventDeduplicator := event.NewDeduplicator(

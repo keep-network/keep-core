@@ -63,18 +63,6 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
 }
 
-func (ec *ethereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
-	ticketBytes := []uint8{}
-	ticketBytes = append(ticketBytes, ticket.Value[:]...)
-	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.StakerValue.Bytes(), 20)[0:20]...)
-	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
-
-	ticketFixedArray := [32]uint8{}
-	copy(ticketFixedArray[:], ticketBytes[:32])
-
-	return ticketFixedArray
-}
-
 func (ec *ethereumChain) SubmitRelayEntry(
 	entry []byte,
 ) *async.EventEntrySubmittedPromise {

@@ -56,20 +56,16 @@ type localChain struct {
 	lastSubmittedDKGResultSignatures map[relaychain.GroupMemberIndex][]byte
 	lastSubmittedRelayEntry          []byte
 
-	handlerMutex                  sync.Mutex
-	relayEntryHandlers            map[int]func(entry *event.EntrySubmitted)
-	relayRequestHandlers          map[int]func(request *event.Request)
-	groupSelectionStartedHandlers map[int]func(groupSelectionStart *event.GroupSelectionStart)
-	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
-	dkgStartedHandlers            map[int]func(submission *event.DKGStarted)
-	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
+	handlerMutex             sync.Mutex
+	relayEntryHandlers       map[int]func(entry *event.EntrySubmitted)
+	relayRequestHandlers     map[int]func(request *event.Request)
+	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
+	dkgStartedHandlers       map[int]func(submission *event.DKGStarted)
+	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
 
 	simulatedHeight uint64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
-
-	tickets      []*relaychain.Ticket
-	ticketsMutex sync.Mutex
 
 	relayEntryTimeoutReportsMutex sync.Mutex
 	relayEntryTimeoutReports      []uint64
@@ -100,10 +96,6 @@ func (c *localChain) GetConfig() *relaychain.Config {
 }
 
 func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmittedPromise {
-	c.ticketsMutex.Lock()
-	c.tickets = make([]*relaychain.Ticket, 0)
-	c.ticketsMutex.Unlock()
-
 	relayEntryPromise := &async.EventEntrySubmittedPromise{}
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
@@ -237,18 +229,16 @@ func ConnectWithKey(
 		relayConfig: &relaychain.Config{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
-			TicketSubmissionTimeout:    6,
 			ResultPublicationBlockStep: resultPublicationBlockStep,
 			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
-		dkgStartedHandlers:       make(map[int]func(submission *event.DkgStarted)),
+		dkgStartedHandlers:       make(map[int]func(submission *event.DKGStarted)),
 		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 		blockCounter:             bc,
 		stakeMonitor:             NewStakeMonitor(minimumStake),
-		tickets:                  make([]*relaychain.Ticket, 0),
 		groups:                   []localGroup{group},
 		operatorPrivateKey:       operatorPrivateKey,
 		minimumStake:             minimumStake,
