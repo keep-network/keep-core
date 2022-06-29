@@ -79,8 +79,10 @@ func TestWaitUntilRegistered_NotRegistered(t *testing.T) {
 		resolveWait.Done()
 	}()
 
-	time.Sleep(registrationTestDelay)
-	localChain.registerOperator(stakingProvider, operator)
+	go func() {
+		time.Sleep(registrationTestDelay)
+		localChain.registerOperator(stakingProvider, operator)
+	}()
 
 	actualStakingProvider := <-operatorRegisteredChan
 	if actualStakingProvider != stakingProvider.Hex() {
