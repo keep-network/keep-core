@@ -28,8 +28,8 @@ type Request struct {
 	BlockNumber    uint64
 }
 
-// DkgStarted represents a DKG start event.
-type DkgStarted struct {
+// DKGStarted represents a DKG start event.
+type DKGStarted struct {
 	Seed        *big.Int
 	BlockNumber uint64
 }

@@ -150,10 +150,9 @@ func Initialize(
 		)
 	})
 
-	// TODO: Add `OnDkgStarted` function to the relay chain interface.
-	_ = relayChain.OnDkgStarted(func(event *event.DkgStarted) {
+	_ = relayChain.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
-			// TODO: Rename to `NotifyDkgStarted`.
+			// TODO: Rename to `NotifyDKGStarted`.
 			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
 				event.BlockNumber,
 			); !ok {

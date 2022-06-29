@@ -61,6 +61,7 @@ type localChain struct {
 	relayRequestHandlers          map[int]func(request *event.Request)
 	groupSelectionStartedHandlers map[int]func(groupSelectionStart *event.GroupSelectionStart)
 	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
+	dkgStartedHandlers            map[int]func(submission *event.DKGStarted)
 	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 
 	simulatedHeight uint64
@@ -243,6 +244,7 @@ func ConnectWithKey(
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
+		dkgStartedHandlers:       make(map[int]func(submission *event.DkgStarted)),
 		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 		blockCounter:             bc,
 		stakeMonitor:             NewStakeMonitor(minimumStake),
@@ -376,6 +378,23 @@ func (c *localChain) SubmitDKGResult(
 	}
 
 	return dkgResultPublicationPromise
+}
+
+func (c *localChain) OnDKGStarted(
+	handler func(event *event.DKGStarted),
+) subscription.EventSubscription {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := generateHandlerID()
+	c.dkgStartedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.dkgStartedHandlers, handlerID)
+	})
 }
 
 func (c *localChain) OnDKGResultSubmitted(

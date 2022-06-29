@@ -86,6 +86,11 @@ type GroupInterface interface {
 // interface that pertains specifically to group formation's distributed key
 // generation process.
 type DistributedKeyGenerationInterface interface {
+	// OnDKGStarted registers a callback that is invoked when an on-chain
+	// notification of the DKG process start is seen.
+	OnDKGStarted(
+		func(event *event.DKGStarted),
+	) subscription.EventSubscription
 	// SubmitDKGResult sends DKG result to a chain, along with signatures over
 	// result hash from group participants supporting the result.
 	// Signatures over DKG result hash are collected in a map keyed by signer's

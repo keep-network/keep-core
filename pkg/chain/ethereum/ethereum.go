@@ -1,6 +1,8 @@
 package ethereum
 
 import (
+	"context"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 
@@ -229,6 +231,44 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 	}
 
 	return stakerAddresses, nil
+}
+
+// TODO: Implement a real DkgStarted event subscription once it is possible
+//       on the contract side. The current implementation generate a fake
+//       event every 100th block where the seed is the keccak256 of the
+//       block number.
+func (ec *ethereumChain) OnDKGStarted(
+	handler func(event *event.DKGStarted),
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	blocksChan := ec.blockCounter.WatchBlocks(ctx)
+
+	go func() {
+		for {
+			select {
+			case block := <-blocksChan:
+				// Generate an event every 100th block.
+				if block%100 == 0 {
+					// The seed is keccak256(block).
+					blockBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(blockBytes, block)
+					seedBytes := crypto.Keccak256(blockBytes)
+					seed := new(big.Int).SetBytes(seedBytes)
+
+					handler(&event.DKGStarted{
+						Seed:        seed,
+						BlockNumber: block,
+					})
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		cancelCtx()
+	})
 }
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
