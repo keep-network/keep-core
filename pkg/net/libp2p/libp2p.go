@@ -402,7 +402,7 @@ func discoverAndListen(
 		)
 	}
 
-	newConnManager, err := connmgr.NewConnManager(
+	connectionManager, err := connmgr.NewConnManager(
 		DefaultConnMgrLowWater,
 		DefaultConnMgrHighWater,
 		connmgr.WithGracePeriod(DefaultConnMgrGracePeriod),
@@ -418,7 +418,7 @@ func discoverAndListen(
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
-		libp2p.ConnectionManager(newConnManager),
+		libp2p.ConnectionManager(connectionManager),
 	}
 
 	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
