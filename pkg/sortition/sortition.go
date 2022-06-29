@@ -123,6 +123,8 @@ func joinSortitionPoolWhenEligible(
 				continue
 			}
 
+			// TODO: Check if the sortition pool is unlocked
+
 			logger.Infof("joining the sortition pool...")
 
 			if err := chainSortitionHandle.JoinSortitionPool(); err != nil {
