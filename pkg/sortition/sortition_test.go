@@ -13,6 +13,99 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// Start `RegisterAndMonitorStatus` when an operator is already registered and eligible
+// to join the pool.
+func TestRegisterAndMonitorStatus_AlreadyRegisteredAndEligible(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
+	operatorRegistrationRetryDelay = 1 * time.Second
+	eligibilityRetryDelay = 1 * time.Second
+
+	operator, _ := generateAddress()
+	stakingProvider, _ := generateAddress()
+	blockCounter, _ := local.BlockCounter()
+	localChain := connect(operator)
+
+	localChain.registerOperator(stakingProvider, operator)
+	localChain.eligibleStakes[stakingProvider.Hex()] = big.NewInt(100)
+
+	RegisterAndMonitorStatus(context.Background(), blockCounter, localChain)
+
+	time.Sleep(3 * time.Second)
+
+	isInPool, _ := localChain.IsOperatorInPool()
+	if !isInPool {
+		t.Errorf("operator has not joined the pool")
+	}
+}
+
+// Start `RegisterAndMonitorStatus` when an operator is already in the sortition
+// pool.
+func TestRegisterAndMonitorStatus_AlreadyInPool(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
+	operatorRegistrationRetryDelay = 1 * time.Second
+	eligibilityRetryDelay = 1 * time.Second
+
+	operator, _ := generateAddress()
+	stakingProvider, _ := generateAddress()
+	blockCounter, _ := local.BlockCounter()
+	localChain := connect(operator)
+
+	localChain.registerOperator(stakingProvider, operator)
+	localChain.eligibleStakes[stakingProvider.Hex()] = big.NewInt(100)
+	localChain.JoinSortitionPool()
+
+	RegisterAndMonitorStatus(context.Background(), blockCounter, localChain)
+
+	time.Sleep(1 * time.Second)
+
+	isInPool, _ := localChain.IsOperatorInPool()
+	if !isInPool {
+		t.Errorf("operator has not joined the pool")
+	}
+}
+
+// Start `RegisterAndMonitorStatus` when an operator is not yet registered
+// for a staking provider nor eligible to join the sortition pool.
+func TestRegisterAndMonitorStatus_NotRegisteredAndEligible(t *testing.T) {
+	err := log.SetLogLevel("*", "DEBUG")
+	if err != nil {
+		t.Fatalf("logger initialization failed: [%v]", err)
+	}
+
+	operatorRegistrationRetryDelay = 1 * time.Second
+	eligibilityRetryDelay = 1 * time.Second
+
+	operator, _ := generateAddress()
+	stakingProvider, _ := generateAddress()
+	blockCounter, _ := local.BlockCounter()
+	localChain := connect(operator)
+
+	RegisterAndMonitorStatus(context.Background(), blockCounter, localChain)
+
+	time.Sleep(2 * time.Second)
+
+	localChain.registerOperator(stakingProvider, operator)
+
+	time.Sleep(2 * time.Second)
+
+	localChain.eligibleStakes[stakingProvider.Hex()] = big.NewInt(100)
+
+	time.Sleep(1 * time.Second)
+
+	isInPool, _ := localChain.IsOperatorInPool()
+	if !isInPool {
+		t.Errorf("operator has not joined the pool")
+	}
+}
+
 // Start `waitUntilRegistered` when an operator is already registered.
 func TestWaitUntilRegistered_AlreadyRegistered(t *testing.T) {
 	err := log.SetLogLevel("*", "DEBUG")
