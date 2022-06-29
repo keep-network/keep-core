@@ -5,7 +5,6 @@
 docs/
 infrastructure/
 scripts/
-!scripts/download-artifacts.sh
 
 # Top-level files unrealted to the build.
 CODEOWNERS
