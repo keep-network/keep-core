@@ -64,7 +64,7 @@ func TestRegisterAndMonitorStatus_AlreadyInPool(t *testing.T) {
 
 	RegisterAndMonitorStatus(context.Background(), blockCounter, localChain)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	isInPool, _ := localChain.IsOperatorInPool()
 	if !isInPool {
@@ -90,15 +90,15 @@ func TestRegisterAndMonitorStatus_NotRegisteredAndEligible(t *testing.T) {
 
 	RegisterAndMonitorStatus(context.Background(), blockCounter, localChain)
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	localChain.registerOperator(stakingProvider, operator)
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	localChain.eligibleStakes[stakingProvider.Hex()] = big.NewInt(100)
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	isInPool, _ := localChain.IsOperatorInPool()
 	if !isInPool {
