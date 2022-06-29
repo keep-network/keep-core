@@ -14,6 +14,7 @@ var ErrOperatorNotRegistered = errors.New("operator not registered")
 type Handle interface {
 	OperatorToStakingProvider() (string, error)
 	EligibleStake(stakingProvider string) (*big.Int, error)
+	IsPoolLocked() (bool, error)
 	IsOperatorInPool() (bool, error)
 	JoinSortitionPool() error
 }

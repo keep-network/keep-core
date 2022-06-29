@@ -23,7 +23,8 @@ const (
 type EthereumHandle struct {
 	*ethereum.Chain
 
-	randomBeacon *contract.RandomBeacon
+	sortitionPool *contract.SortitionPool
+	randomBeacon  *contract.RandomBeacon
 }
 
 // Connect connects to chain.
@@ -64,6 +65,24 @@ func Connect(ec chain.Handle) (*EthereumHandle, error) {
 		)
 	}
 
+	sortitionPoolAddress, err := eh.randomBeacon.SortitionPool()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get sortition pool address: [%v]",
+			err,
+		)
+	}
+
+	eh.sortitionPool, err = contract.NewSortitionPool(
+		sortitionPoolAddress,
+		eh.ChainID(),
+		eh.AccountKey(),
+		eh.Client(),
+		eh.NonceManager(),
+		eh.MiningWaiter(),
+		blockCounter.(*ethlike.BlockCounter),
+		eh.TransactionMutex())
+
 	return eh, nil
 }
 
@@ -99,6 +118,11 @@ func (eh *EthereumHandle) EligibleStake(stakingProvider string) (*big.Int, error
 	}
 
 	return eligibleStake, nil
+}
+
+// IsPoolLocked checks if the sortition pool is locked.
+func (eh *EthereumHandle) IsPoolLocked() (bool, error) {
+	return eh.sortitionPool.IsLocked()
 }
 
 // IsOperatorInPool checks if the operator is in the sortition pool.

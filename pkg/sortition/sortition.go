@@ -24,6 +24,10 @@ var operatorRegistrationRetryDelay = 5 * time.Minute
 // is eligible to join the sortition pool.
 var eligibilityRetryDelay = 20 * time.Minute
 
+// poolLockRetryDelay defines the delay between checks whether the sortition pool
+// is locked.
+var poolLockRetryDelay = 10 * time.Minute
+
 var logger = log.Logger("keep-sortition")
 
 // RegisterAndMonitorStatus checks whether the operator is registered by a staking
@@ -164,7 +168,21 @@ func joinSortitionPoolWhenEligible(
 				continue
 			}
 
-			// TODO: Check if the sortition pool is unlocked
+			isPoolLocked, err := chain.IsPoolLocked()
+			if err != nil {
+				logger.Errorf(
+					"failed to verify if the sortition pool is locked: [%v]",
+					err,
+				)
+				time.Sleep(retryDelay) // TODO: #413 Replace with backoff.
+				continue
+			}
+
+			if isPoolLocked {
+				logger.Warnf("sortition pool is currently locked; retry in %s", poolLockRetryDelay)
+				time.Sleep(poolLockRetryDelay)
+				continue
+			}
 
 			logger.Infof("joining the sortition pool...")
 
