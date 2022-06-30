@@ -11,6 +11,7 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/keep-network/keep-core/pkg/net/bootstrap"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/net/watchtower"
 
@@ -25,7 +26,6 @@ import (
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
-	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
