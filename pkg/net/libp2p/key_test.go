@@ -136,12 +136,12 @@ func TestNetworkPublicKeyToOperatorPublicKey(t *testing.T) {
 		t.Errorf("operator public key uses the wrong curve")
 	}
 
-	publicKey, ok := networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
+	libp2pPublicKey, ok := networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
 	if !ok {
 		t.Fatal("network public key is not an instance of the libp2p secp256k1 public key")
 	}
 
-	btcecPublicKey := (*btcec.PublicKey)(publicKey)
+	btcecPublicKey := (*btcec.PublicKey)(libp2pPublicKey)
 
 	if operatorPublicKey.X.Cmp(btcecPublicKey.X()) != 0 {
 		t.Errorf("operator public key has a wrong X coordinate")
