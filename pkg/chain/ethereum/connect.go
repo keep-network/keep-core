@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"math/big"
 	"sync"
 
@@ -53,6 +54,11 @@ type ethereumChain struct {
 	// nonce. Serializing submission ensures that each nonce is requested after
 	// a previous transaction has been submitted.
 	transactionMutex *sync.Mutex
+
+	// TODO: Temporary helper map. Should be removed once proper RandomBeacon
+	//       v2 implementation is here.
+	dkgResultSubmissionHandlersMutex sync.Mutex
+	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 }
 
 type ethereumUtilityChain struct {
@@ -93,12 +99,13 @@ func connectWithClient(
 	}
 
 	ec := &ethereumChain{
-		config:           config,
-		client:           addClientWrappers(config, client),
-		clientRPC:        clientRPC,
-		clientWS:         clientWS,
-		chainID:          chainID,
-		transactionMutex: &sync.Mutex{},
+		config:                      config,
+		client:                      addClientWrappers(config, client),
+		clientRPC:                   clientRPC,
+		clientWS:                    clientWS,
+		chainID:                     chainID,
+		transactionMutex:            &sync.Mutex{},
+		dkgResultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 	}
 
 	blockCounter, err := ethutil.NewBlockCounter(ec.client)

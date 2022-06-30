@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"math/rand"
 
 	"github.com/ipfs/go-log"
 
@@ -259,28 +260,28 @@ func (ec *ethereumChain) OnDKGStarted(
 	})
 }
 
+// TODO: Implement a real OnDKGResultSubmitted event subscription once it is
+//       possible on the contract side. The current implementation just pipes
+//       the DKG submission event generated within SubmitDKGResult to the
+//       handlers registered in the dkgResultSubmissionHandlers map.
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) subscription.EventSubscription {
-	onEvent := func(
-		memberIndex *big.Int,
-		groupPublicKey []byte,
-		misbehaved []byte,
-		blockNumber uint64,
-	) {
-		handler(&event.DKGResultSubmission{
-			MemberIndex:    uint32(memberIndex.Uint64()),
-			GroupPublicKey: groupPublicKey,
-			Misbehaved:     misbehaved,
-			BlockNumber:    blockNumber,
-		})
-	}
+	ec.dkgResultSubmissionHandlersMutex.Lock()
+	defer ec.dkgResultSubmissionHandlersMutex.Unlock()
 
-	subscription := ec.keepRandomBeaconOperatorContract.DkgResultSubmittedEvent(
-		nil,
-	).OnEvent(onEvent)
+	// #nosec G404 (insecure random number source (rand))
+	// Temporary test implementation doesn't require secure randomness.
+	handlerID := rand.Int()
 
-	return subscription
+	ec.dkgResultSubmissionHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		ec.dkgResultSubmissionHandlersMutex.Lock()
+		defer ec.dkgResultSubmissionHandlersMutex.Unlock()
+
+		delete(ec.dkgResultSubmissionHandlers, handlerID)
+	})
 }
 
 func (ec *ethereumChain) ReportRelayEntryTimeout() error {
@@ -313,6 +314,11 @@ func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	return ec.keepRandomBeaconOperatorContract.GetGroupPublicKey(currentRequestGroupIndex)
 }
 
+// TODO: Implement a real SubmitDKGResult action once it is possible on the
+//       contract side. The current implementation just creates and pipes
+//       the DKG submission event to the handlers registered in the
+//       dkgResultSubmissionHandlers map. Consider getting rid of the result
+//       promise in favor of the fire-and-forget style.
 func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex relayChain.GroupMemberIndex,
 	result *relayChain.DKGResult,
@@ -365,24 +371,26 @@ func (ec *ethereumChain) SubmitDKGResult(
 		}
 	}()
 
-	membersIndicesOnChainFormat, signaturesOnChainFormat, err :=
-		convertSignaturesToChainFormat(signatures)
+	ec.dkgResultSubmissionHandlersMutex.Lock()
+	defer ec.dkgResultSubmissionHandlersMutex.Unlock()
+
+	blockNumber, err := ec.blockCounter.CurrentBlock()
 	if err != nil {
 		close(publishedResult)
-		failPromise(fmt.Errorf("converting signatures failed [%v]", err))
+		subscription.Unsubscribe()
+		failPromise(err)
 		return resultPublicationPromise
 	}
 
-	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		big.NewInt(int64(participantIndex)),
-		result.GroupPublicKey,
-		result.Misbehaved,
-		signaturesOnChainFormat,
-		membersIndicesOnChainFormat,
-	); err != nil {
-		subscription.Unsubscribe()
-		close(publishedResult)
-		failPromise(err)
+	for _, handler := range ec.dkgResultSubmissionHandlers {
+		go func(handler func(*event.DKGResultSubmission)) {
+			handler(&event.DKGResultSubmission{
+				MemberIndex:    uint32(participantIndex),
+				GroupPublicKey: result.GroupPublicKey,
+				Misbehaved:     result.Misbehaved,
+				BlockNumber:    blockNumber,
+			})
+		}(handler)
 	}
 
 	return resultPublicationPromise
