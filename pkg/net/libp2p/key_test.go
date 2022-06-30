@@ -37,15 +37,13 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 	btcecPrivateKey := (*btcec.PrivateKey)(networkPrivateKey)
 
 	if !reflect.DeepEqual(
-		*btcecPrivateKey.PubKey(),
-		*btcecPublicKey,
+		btcecPrivateKey.PubKey(),
+		btcecPublicKey,
 	) {
 		t.Errorf("network private key contains wrong network public key")
 	}
 
-	d := extractD(btcecPrivateKey)
-
-	if d.Cmp(operatorPrivateKey.D) != 0 {
+	if extractD(btcecPrivateKey).Cmp(operatorPrivateKey.D) != 0 {
 		t.Errorf("network private key has a wrong D parameter")
 	}
 }
