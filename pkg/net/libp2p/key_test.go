@@ -3,6 +3,7 @@ package libp2p
 import (
 	"crypto/rand"
 	"fmt"
+	"math/big"
 	"reflect"
 	"testing"
 
@@ -24,28 +25,27 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ecdsaPublicKey := (*btcec.PublicKey)(networkPublicKey).ToECDSA()
+	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
 
-	if !reflect.DeepEqual(ecdsaPublicKey.Curve.Params(), DefaultCurve.Params()) {
-		t.Errorf("network public key uses the wrong curve")
-	}
-	if ecdsaPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
+	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
-	if ecdsaPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
+	if btcecPublicKey.Y().Cmp(operatorPublicKey.Y) != 0 {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 
-	ecdsaPrivateKey := (*btcec.PrivateKey)(networkPrivateKey).ToECDSA()
+	btcecPrivateKey := (*btcec.PrivateKey)(networkPrivateKey)
 
 	if !reflect.DeepEqual(
-		ecdsaPrivateKey.PublicKey,
-		*ecdsaPublicKey,
+		*btcecPrivateKey.PubKey(),
+		*btcecPublicKey,
 	) {
 		t.Errorf("network private key contains wrong network public key")
 	}
 
-	if ecdsaPrivateKey.D.Cmp(operatorPrivateKey.D) != 0 {
+	d := extractD(btcecPrivateKey)
+
+	if d.Cmp(operatorPrivateKey.D) != 0 {
 		t.Errorf("network private key has a wrong D parameter")
 	}
 }
@@ -88,15 +88,12 @@ func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ecdsaPublicKey := (*btcec.PublicKey)(networkPublicKey).ToECDSA()
+	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
 
-	if !reflect.DeepEqual(ecdsaPublicKey.Curve.Params(), DefaultCurve.Params()) {
-		t.Errorf("network public key uses the wrong curve")
-	}
-	if ecdsaPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
+	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
-	if ecdsaPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
+	if btcecPublicKey.Y().Cmp(operatorPublicKey.Y) != 0 {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 }
@@ -146,12 +143,12 @@ func TestNetworkPublicKeyToOperatorPublicKey(t *testing.T) {
 		t.Fatal("wrong type of public key")
 	}
 
-	ecdsaPublicKey := (*btcec.PublicKey)(publicKey).ToECDSA()
+	btcecPublicKey := (*btcec.PublicKey)(publicKey)
 
-	if operatorPublicKey.X.Cmp(ecdsaPublicKey.X) != 0 {
+	if operatorPublicKey.X.Cmp(btcecPublicKey.X()) != 0 {
 		t.Errorf("operator public key has a wrong X coordinate")
 	}
-	if operatorPublicKey.Y.Cmp(ecdsaPublicKey.Y) != 0 {
+	if operatorPublicKey.Y.Cmp(btcecPublicKey.Y()) != 0 {
 		t.Errorf("operator public key has a wrong Y coordinate")
 	}
 }
@@ -174,4 +171,9 @@ func TestNetworkPublicKeyToOperatorPublicKey_NotSecp256k1(t *testing.T) {
 			err,
 		)
 	}
+}
+
+func extractD(privateKey *btcec.PrivateKey) *big.Int {
+	privateKeyBytes := privateKey.Key.Bytes()
+	return new(big.Int).SetBytes(privateKeyBytes[:])
 }
