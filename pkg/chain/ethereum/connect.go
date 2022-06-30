@@ -298,15 +298,9 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
-	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
-	}
-
-	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
-	}
+	// TODO: Fetch from RandomBeacon v2 contract.
+	groupSize := 100
+	honestThreshold := 51
 
 	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
 	if err != nil {
@@ -322,8 +316,8 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	}
 
 	return &relaychain.Config{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
+		GroupSize:                  groupSize,
+		HonestThreshold:            honestThreshold,
 		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
 		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
 	}, nil
