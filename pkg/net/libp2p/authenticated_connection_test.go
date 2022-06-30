@@ -276,8 +276,8 @@ func connectInitiatorAndResponder(
 }
 
 type testConnectionConfig struct {
-	networkPrivateKey *libp2pcrypto.Secp256k1PrivateKey
-	networkPublicKey  *libp2pcrypto.Secp256k1PublicKey
+	networkPrivateKey libp2pcrypto.PrivKey
+	networkPublicKey  libp2pcrypto.PubKey
 	peerID            peer.ID
 }
 
@@ -328,7 +328,7 @@ func (mf *mockFirewall) Validate(remotePeerOperatorPublicKey *operator.PublicKey
 }
 
 func (mf *mockFirewall) updatePeer(
-	remotePeerNetworkPublicKey *libp2pcrypto.Secp256k1PublicKey,
+	remotePeerNetworkPublicKey libp2pcrypto.PubKey,
 	meetsCriteria bool,
 ) (error) {
 	operatorPublicKey, err := networkPublicKeyToOperatorPublicKey(

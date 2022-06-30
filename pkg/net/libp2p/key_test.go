@@ -25,7 +25,12 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
+	secp256k1PublicKey, ok := networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
+	if !ok {
+		t.Fatal("wrong type of public key")
+	}
+
+	btcecPublicKey := (*btcec.PublicKey)(secp256k1PublicKey)
 
 	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
@@ -34,7 +39,12 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 
-	btcecPrivateKey := (*btcec.PrivateKey)(networkPrivateKey)
+	secp256k1PrivateKey, ok := networkPrivateKey.(*libp2pcrypto.Secp256k1PrivateKey)
+	if !ok {
+		t.Fatal("wrong type of private key")
+	}
+
+	btcecPrivateKey := (*btcec.PrivateKey)(secp256k1PrivateKey)
 
 	if !reflect.DeepEqual(
 		*btcecPrivateKey.PubKey(),
@@ -88,7 +98,12 @@ func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
+	secp256k1PublicKey, ok := networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
+	if !ok {
+		t.Fatal("wrong type of public key")
+	}
+
+	btcecPublicKey := (*btcec.PublicKey)(secp256k1PublicKey)
 
 	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")

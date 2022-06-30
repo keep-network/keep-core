@@ -18,8 +18,8 @@ var DefaultCurve elliptic.Curve = btcec.S256()
 // the libp2p network key pair that uses the libp2p-specific curve
 // implementation.
 func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey) (
-	*libp2pcrypto.Secp256k1PrivateKey,
-	*libp2pcrypto.Secp256k1PublicKey,
+	libp2pcrypto.PrivKey,
+	libp2pcrypto.PubKey,
 	error,
 ) {
 	// Make sure that libp2p package receives only secp256k1 operator keys.
@@ -27,16 +27,18 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 		return nil, nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
 	}
 
-	// Note that `btcec.PrivKeyFromBytes` uses the secp256k1 implementation
-	// provided by decred underneath
-	btcecPrivateKey, btcecPublicKey := btcec.PrivKeyFromBytes(
+	// Note that `libp2pcrypto.UnmarshalSecp256k1PrivateKey` uses the secp256k1
+	// implementation provided by decred underneath
+	privateNetworkKey, err := libp2pcrypto.UnmarshalSecp256k1PrivateKey(
 		operatorPrivateKey.D.Bytes(),
 	)
+	if err != nil {
+		return nil, nil, err
+	}
 
-	networkPrivateKey := libp2pcrypto.Secp256k1PrivateKey(*btcecPrivateKey)
-	networkPublicKey := libp2pcrypto.Secp256k1PublicKey(*btcecPublicKey)
+	publicNetworkKey := privateNetworkKey.GetPublic()
 
-	return &networkPrivateKey, &networkPublicKey, nil
+	return privateNetworkKey, publicNetworkKey, nil
 }
 
 // operatorPublicKeyToNetworkPublicKey converts an operator public key to
@@ -44,7 +46,7 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 // implementation.
 func operatorPublicKeyToNetworkPublicKey(
 	operatorPublicKey *operator.PublicKey,
-) (*libp2pcrypto.Secp256k1PublicKey, error) {
+) (libp2pcrypto.PubKey, error) {
 	// Make sure that libp2p package receives only secp256k1 operator keys.
 	if operatorPublicKey.Curve != operator.Secp256k1 {
 		return nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
@@ -52,14 +54,16 @@ func operatorPublicKeyToNetworkPublicKey(
 
 	operatorPublicKeyBytes := operator.MarshalCompressed(operatorPublicKey)
 
-	btcecPublicKey, err := btcec.ParsePubKey(operatorPublicKeyBytes)
+	// Note that `libp2pcrypto.UnmarshalSecp256k1PublicKey` uses the secp256k1
+	// implementation provided by decred underneath
+	networkPublicKey, err := libp2pcrypto.UnmarshalSecp256k1PublicKey(
+		operatorPublicKeyBytes,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	networkPublicKey := libp2pcrypto.Secp256k1PublicKey(*btcecPublicKey)
-
-	return &networkPublicKey, nil
+	return networkPublicKey, nil
 }
 
 // networkPublicKeyToOperatorPublicKey converts a libp2p network public key to
