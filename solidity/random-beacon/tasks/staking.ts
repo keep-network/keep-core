@@ -2,14 +2,18 @@ import { task, types } from "hardhat/config"
 
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
+// TODO: split to 4 different tasks: mint, stake, increase authorization and
+// register an operator
 task(
-  "staking",
+  "stake",
   "Stakes T tokens, increases authorization and registers the operator "
 )
-  .addOptionalParam("owner", "Staking owner address", undefined, types.string)
-  .addOptionalParam("provider", "Staking provider", undefined, types.string)
-  .addOptionalParam("operator", "Staking operator", undefined, types.string)
-  .addOptionalParam("amount", "Staking amount", 1_000_000, types.int)
+  .addParam("owner", "Stake owner address", undefined, types.string)
+  .addParam("provider", "Staking provider", undefined, types.string)
+  .addParam("operator", "Staking operator", undefined, types.string)
+  .addOptionalParam("beneficiary", "Stake beneficiary", undefined, types.string)
+  .addOptionalParam("authorizer", "Stake authorizer", undefined, types.string)
+  .addOptionalParam("amount", "Stake amount", 1_000_000, types.int)
   .addOptionalParam(
     "authorization",
     "Authorization amount",
@@ -26,42 +30,51 @@ async function setup(
     owner: string
     provider: string
     operator: string
+    beneficiary: string
+    authorizer: string
     amount: BigInteger
     authorization: BigInteger
   }
 ) {
+
   const { ethers, helpers, getNamedAccounts } = hre
-  const { owner, provider, operator, amount, authorization } = args
+  let { owner, provider, operator, beneficiary, authorizer, amount, authorization } = args
 
   const { deployer } = await getNamedAccounts()
   const { to1e18 } = helpers.number
   const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
   const randomBeacon = await helpers.contracts.getContract("RandomBeacon")
-  const accounts = await new ethers.providers.JsonRpcProvider().listAccounts()
-  const stakeOwner = owner || accounts[1]
-  const stakingProvider = provider || accounts[2]
-  const stakingOperator = operator || accounts[3]
-  const beneficiary = stakeOwner
-  const authorizer = stakeOwner
 
   const stakedAmount = to1e18(amount)
 
   const deployerSigner = await ethers.getSigner(deployer)
-  await (await t.connect(deployerSigner).mint(stakeOwner, stakedAmount)).wait()
-  const stakeOwnerSigner = await ethers.getSigner(stakeOwner)
+  await (await t.connect(deployerSigner).mint(owner, stakedAmount)).wait()
+  const stakeOwnerSigner = await ethers.getSigner(owner)
   await (
     await t.connect(stakeOwnerSigner).approve(staking.address, stakedAmount)
   ).wait()
 
+  // Beneficiary can equal to the owner if not set otherwise. This simplification
+  // is used for development purposes.
+  if (beneficiary === undefined) {
+    beneficiary = owner
+  }
+
+  // Authorizer can equal to the owner if not set otherwise. This simplification
+  // is used for development purposes.
+  if (authorizer === undefined) {
+    authorizer = owner
+  }
+
   console.log(
-    `Staking ${stakedAmount.toString()} to the staking provider ${stakingProvider} ...`
+    `Staking ${stakedAmount.toString()} to the staking provider ${provider} ...`
   )
 
   await (
     await staking
       .connect(stakeOwnerSigner)
-      .stake(stakingProvider, beneficiary, authorizer, stakedAmount)
+      .stake(provider, beneficiary, authorizer, stakedAmount)
   ).wait()
 
   console.log(
@@ -71,7 +84,7 @@ async function setup(
   )
 
   const stakingAuthorization =
-    authorization || (await randomBeacon.minimumAuthorization())
+    to1e18(authorization) || (await randomBeacon.minimumAuthorization())
   const authorizerSigner = await ethers.getSigner(authorizer)
 
   console.log(
@@ -82,14 +95,14 @@ async function setup(
     await staking
       .connect(authorizerSigner)
       .increaseAuthorization(
-        stakingProvider,
+        provider,
         randomBeacon.address,
         stakingAuthorization
       )
   ).wait()
 
   const authorizedStaked = await staking.authorizedStake(
-    stakingProvider,
+    provider,
     randomBeacon.address
   )
 
@@ -98,13 +111,13 @@ async function setup(
   )
 
   console.log(
-    `Registering operator ${stakingOperator.toString()} for a staking provider ${stakingProvider.toString()} ...`
+    `Registering operator ${operator.toString()} for a staking provider ${provider.toString()} ...`
   )
 
-  const stakingProviderSigner = await ethers.getSigner(stakingProvider)
+  const stakingProviderSigner = await ethers.getSigner(provider)
   await (
     await randomBeacon
       .connect(stakingProviderSigner)
-      .registerOperator(stakingOperator)
+      .registerOperator(operator)
   ).wait()
 }
