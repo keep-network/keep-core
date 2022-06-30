@@ -141,7 +141,7 @@ func Initialize(
 			// TODO: Event deduplication logic that is aware of the full group
 			//       creation process with result challenges and approves.
 
-			node.JoinGroupIfEligible(
+			node.JoinDKGIfEligible(
 				relayChain,
 				signing,
 				event.Seed,
