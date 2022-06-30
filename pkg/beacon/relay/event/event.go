@@ -34,13 +34,6 @@ type DKGStarted struct {
 	BlockNumber uint64
 }
 
-// GroupTicketSubmission represents a group selection ticket submission event.
-type GroupTicketSubmission struct {
-	TicketValue *big.Int
-
-	BlockNumber uint64
-}
-
 // GroupRegistration represents an event of registering a new group with the
 // given public key.
 type GroupRegistration struct {
