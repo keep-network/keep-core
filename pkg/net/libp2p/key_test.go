@@ -25,6 +25,9 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// To access X and Y coordinates `networkPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them
 	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
 
 	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
@@ -34,6 +37,9 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 
+	// To access the D value `networkPrivateKey`needs to be converted to the
+	// underlying `type btcec.PrivateKey` as the type
+	// `libp2pcrypto.Secp256k1PrivateKey` does not expose it.
 	btcecPrivateKey := (*btcec.PrivateKey)(networkPrivateKey)
 
 	if !reflect.DeepEqual(
@@ -86,6 +92,9 @@ func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// To access X and Y coordinates `networkPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them
 	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
 
 	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
@@ -141,6 +150,9 @@ func TestNetworkPublicKeyToOperatorPublicKey(t *testing.T) {
 		t.Fatal("network public key is not an instance of the libp2p secp256k1 public key")
 	}
 
+	// To access X and Y coordinates `libp2pPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them
 	btcecPublicKey := (*btcec.PublicKey)(libp2pPublicKey)
 
 	if operatorPublicKey.X.Cmp(btcecPublicKey.X()) != 0 {
