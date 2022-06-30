@@ -19,7 +19,8 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     bytes32 public override merkleRoot;
     mapping(address => uint256) public cumulativeClaimed;
     struct Claim {
-        address account;
+        address stakingProvider;
+        address beneficiary;
         uint256 amount;
         bytes32[] proof;
     }
@@ -46,7 +47,8 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     }
 
     function claim(
-        address account,
+        address stakingProvider,
+        address beneficiary,
         uint256 cumulativeAmount,
         bytes32 expectedMerkleRoot,
         bytes32[] calldata merkleProof
@@ -54,19 +56,19 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
-        bytes32 leaf = keccak256(abi.encodePacked(account, cumulativeAmount));
+        bytes32 leaf = keccak256(abi.encodePacked(stakingProvider, cumulativeAmount));
         require(_verifyAsm(merkleProof, expectedMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
-        uint256 preclaimed = cumulativeClaimed[account];
+        uint256 preclaimed = cumulativeClaimed[stakingProvider];
         require(preclaimed < cumulativeAmount, "CMD: Nothing to claim");
         cumulativeClaimed[account] = cumulativeAmount;
 
         // Send the token
         unchecked {
             uint256 amount = cumulativeAmount - preclaimed;
-            IERC20(token).safeTransferFrom(rewardsHolder, account, amount);
-            emit Claimed(account, amount);
+            IERC20(token).safeTransferFrom(rewardsHolder, beneficiary, amount);
+            emit Claimed(stakingProvider, amount, beneficiary, expectedMerkleRoot);
         }
     }
 
@@ -76,7 +78,8 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     ) external {
         for (uint i; i < Claims.length; i++) {
             claim(
-                Claims[i].account,
+                Claims[i].stakingProvider,
+                Claims[i].beneficiary,
                 Claims[i].amount,
                 expectedMerkleRoot,
                 Claims[i].proof
