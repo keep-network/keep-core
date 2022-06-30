@@ -99,7 +99,7 @@ func (n *Node) JoinDKGIfEligible(
 		}
 
 		for _, index := range indexes {
-			// capture player index for goroutine
+			// Capture the player index for the goroutine.
 			playerIndex := index
 
 			go func() {
@@ -120,20 +120,30 @@ func (n *Node) JoinDKGIfEligible(
 					return
 				}
 
-				// final broadcast channel name for group is the compressed
-				// public key of the group
+				// The final broadcast channel name for group is the compressed
+				// public key of the group.
 				channelName := hex.EncodeToString(
 					signer.GroupPublicKeyBytesCompressed(),
 				)
 
-				err = n.groupRegistry.RegisterGroup(signer, channelName)
+				// Register the candidate group. Note that such a group is
+				// non-operable and the node should monitor for the group
+				// approval event in order to register an approved group in the
+				// group registry as well.
+				err = n.groupRegistry.RegisterCandidateGroup(signer, channelName)
 				if err != nil {
-					logger.Errorf("failed to register a group: [%v]", err)
+					logger.Errorf(
+						"[member:%v] failed to register a candidate group [%v]: [%v]",
+						signer.MemberID(),
+						channelName,
+						err,
+					)
 				}
 
 				logger.Infof(
-					"[member:%v] ready to operate in the group",
+					"[member:%v] candidate group [%v] registered successfully",
 					signer.MemberID(),
+					channelName,
 				)
 			}()
 		}

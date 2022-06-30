@@ -10,7 +10,7 @@ import (
 )
 
 type storage interface {
-	save(membership *Membership) error
+	save(membership *Membership, groupState GroupState) error
 	readAll() (<-chan *Membership, <-chan error)
 	archive(groupPublicKey []byte) error
 }
@@ -25,7 +25,10 @@ func newStorage(persistence persistence.Handle) storage {
 	}
 }
 
-func (ps *persistentStorage) save(membership *Membership) error {
+func (ps *persistentStorage) save(
+	membership *Membership,
+	groupState GroupState,
+) error {
 	membershipBytes, err := membership.Marshal()
 	if err != nil {
 		return fmt.Errorf("marshalling of the membership failed: [%v]", err)
@@ -33,7 +36,19 @@ func (ps *persistentStorage) save(membership *Membership) error {
 
 	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytesCompressed())
 
-	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
+	var directory string
+	switch groupState {
+	case GroupStateCandidate:
+		directory = hexGroupPublicKey + "_candidate"
+	case GroupStateApproved:
+		directory = hexGroupPublicKey
+	}
+
+	return ps.handle.Save(
+		membershipBytes,
+		directory,
+		"/membership_"+fmt.Sprint(membership.Signer.MemberID()),
+	)
 }
 
 func (ps *persistentStorage) archive(groupPublicKeyCompressed []byte) error {

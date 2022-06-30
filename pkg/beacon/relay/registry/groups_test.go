@@ -51,12 +51,36 @@ var (
 	)
 )
 
-func TestRegisterGroup(t *testing.T) {
+func TestRegisterCandidateGroup(t *testing.T) {
 	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
 
 	gr := NewGroupRegistry(chain, persistenceMock)
 
-	gr.RegisterGroup(signer1, channelName1)
+	err := gr.RegisterCandidateGroup(signer1, channelName1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Candidate group is a non-operable group so should not be in the
+	// groups cache.
+	actual := gr.GetGroup(signer1.GroupPublicKeyBytes())
+
+	if actual != nil {
+		t.Fatalf(
+			"Expecting a nil, but a group was returned instead",
+		)
+	}
+}
+
+func TestRegisterApprovedGroup(t *testing.T) {
+	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
+
+	gr := NewGroupRegistry(chain, persistenceMock)
+
+	err := gr.RegisterApprovedGroup(signer1, channelName1)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actual := gr.GetGroup(signer1.GroupPublicKeyBytes())
 
@@ -118,15 +142,15 @@ func TestLoadGroup(t *testing.T) {
 
 func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
-		groupsToRemove: [][]byte{},
+		groupsToRemove:       [][]byte{},
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
 	gr := NewGroupRegistry(mockChain, persistenceMock)
 
-	gr.RegisterGroup(signer1, channelName1)
-	gr.RegisterGroup(signer2, channelName1)
-	gr.RegisterGroup(signer3, channelName1)
+	gr.RegisterApprovedGroup(signer1, channelName1)
+	gr.RegisterApprovedGroup(signer2, channelName1)
+	gr.RegisterApprovedGroup(signer3, channelName1)
 
 	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
 
@@ -160,9 +184,9 @@ func TestUnregisterStaleGroupsSkipLastGroupCheck(t *testing.T) {
 
 	gr := NewGroupRegistry(mockChain, persistenceMock)
 
-	gr.RegisterGroup(signer1, channelName1)
-	gr.RegisterGroup(signer2, channelName1)
-	gr.RegisterGroup(signer3, channelName1)
+	gr.RegisterApprovedGroup(signer1, channelName1)
+	gr.RegisterApprovedGroup(signer2, channelName1)
+	gr.RegisterApprovedGroup(signer3, channelName1)
 
 	gr.UnregisterStaleGroups(signer3.GroupPublicKeyBytes())
 
@@ -194,6 +218,12 @@ func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
 func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 	func(groupRegistration *event.GroupRegistration),
 ) subscription.EventSubscription {
+	panic("not implemented")
+}
+
+func (mgri *mockGroupRegistrationInterface) IsGroupRegistered(
+	groupPublicKey []byte,
+) (bool, error) {
 	panic("not implemented")
 }
 

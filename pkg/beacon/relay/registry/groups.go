@@ -12,6 +12,20 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 )
 
+// GroupState determines the given group state.
+type GroupState int
+
+// Enum that denotes possible group states.
+const (
+	// GroupStateCandidate represents a candidate group whose group public key
+	// was created but not yet approved. A candidate group is non-operable.
+	GroupStateCandidate GroupState = iota
+
+	// GroupStateApproved represents an approved group whose group public key
+	// was successfully approved. An approved group is fully-operable.
+	GroupStateApproved
+)
+
 // Groups represents a collection of Keep groups in which the given
 // client is a member.
 type Groups struct {
@@ -44,11 +58,26 @@ func NewGroupRegistry(
 	}
 }
 
-// RegisterGroup registers that a group was successfully created by the given
-// groupPublicKey.
-func (g *Groups) RegisterGroup(
+// RegisterCandidateGroup registers that a candidate group with the given
+// public key was successfully created.
+func (g *Groups) RegisterCandidateGroup(
+	signer *dkg.ThresholdSigner,
+	channelName string) error {
+	return g.registerGroup(signer, channelName, GroupStateCandidate)
+}
+
+// RegisterApprovedGroup registers that a candidate group with the given
+// public key was successfully approved.
+func (g *Groups) RegisterApprovedGroup(
+	signer *dkg.ThresholdSigner,
+	channelName string) error {
+	return g.registerGroup(signer, channelName, GroupStateApproved)
+}
+
+func (g *Groups) registerGroup(
 	signer *dkg.ThresholdSigner,
 	channelName string,
+	groupState GroupState,
 ) error {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
@@ -60,7 +89,7 @@ func (g *Groups) RegisterGroup(
 		ChannelName: channelName,
 	}
 
-	err := g.storage.save(membership)
+	err := g.storage.save(membership, groupState)
 	if err != nil {
 		return fmt.Errorf("could not persist membership to the storage: [%v]", err)
 	}
