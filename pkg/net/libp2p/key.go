@@ -33,7 +33,9 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 		operatorPrivateKey.D.Bytes(),
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf(
+			"cannot unmarshal operator private key as a libp2p secp256k1 private key: [%v]", err,
+		)
 	}
 
 	libp2pPublicKey := libp2pPrivateKey.GetPublic()
@@ -74,7 +76,9 @@ func operatorPublicKeyToNetworkPublicKey(
 		operatorPublicKeyBytes,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"cannot unmarshal operator public key as a libp2p secp256k1 public key: [%v]", err,
+		)
 	}
 
 	networkPublicKey, ok := libp2pPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
