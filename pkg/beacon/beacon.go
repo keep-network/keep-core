@@ -12,9 +12,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	dkgresult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -64,18 +62,7 @@ func Initialize(
 		groupRegistry,
 	)
 
-	// We need to calculate group selection duration here as we can't do it
-	// inside the deduplicator due to import cycles. We don't include the
-	// time needed for publication as we are interested about the minimum
-	// possible off-chain group create protocol duration.
-	minGroupCreationDurationBlocks :=
-		gjkr.ProtocolBlocks() +
-			dkgresult.PrePublicationBlocks()
-
-	eventDeduplicator := event.NewDeduplicator(
-		relayChain,
-		minGroupCreationDurationBlocks,
-	)
+	eventDeduplicator := event.NewDeduplicator(relayChain)
 
 	node.ResumeSigningIfEligible(relayChain, signing)
 
@@ -151,18 +138,8 @@ func Initialize(
 
 	_ = relayChain.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
-			// TODO: Rename to `NotifyDKGStarted`.
-			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
-				event.BlockNumber,
-			); !ok {
-				logger.Warningf(
-					"DKG started event with seed [0x%x] and "+
-						"starting block [%v] has been already processed",
-					event.Seed,
-					event.BlockNumber,
-				)
-				return
-			}
+			// TODO: Event deduplication logic that is aware of the full group
+			//       creation process with result challenges and approves.
 
 			node.JoinGroupIfEligible(
 				relayChain,

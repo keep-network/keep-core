@@ -24,14 +24,9 @@ type chain interface {
 // should be handled.
 //
 // Those events are supported:
-// - group selection started
 // - relay entry requested
 type Deduplicator struct {
-	chain                          chain
-	minGroupCreationDurationBlocks uint64
-
-	groupSelectionMutex             sync.Mutex
-	currentGroupSelectionStartBlock uint64
+	chain chain
 
 	relayEntryMutex             sync.Mutex
 	currentRequestStartBlock    uint64
@@ -39,37 +34,10 @@ type Deduplicator struct {
 }
 
 // NewDeduplicator constructs a new Deduplicator instance.
-func NewDeduplicator(
-	chain chain,
-	minGroupCreationDurationBlocks uint64,
-) *Deduplicator {
+func NewDeduplicator(chain chain) *Deduplicator {
 	return &Deduplicator{
-		chain:                          chain,
-		minGroupCreationDurationBlocks: minGroupCreationDurationBlocks,
+		chain: chain,
 	}
-}
-
-// NotifyGroupSelectionStarted notifies the client wants to start group
-// selection upon receiving an event. It returns boolean indicating whether the
-// client should proceed with the execution or ignore the event as a duplicate.
-func (d *Deduplicator) NotifyGroupSelectionStarted(
-	newGroupSelectionStartBlock uint64,
-) bool {
-	d.groupSelectionMutex.Lock()
-	defer d.groupSelectionMutex.Unlock()
-
-	minCurrentGroupCreationEndBlock := d.currentGroupSelectionStartBlock +
-		d.minGroupCreationDurationBlocks
-
-	shouldUpdate := d.currentGroupSelectionStartBlock == 0 ||
-		newGroupSelectionStartBlock > minCurrentGroupCreationEndBlock
-
-	if shouldUpdate {
-		d.currentGroupSelectionStartBlock = newGroupSelectionStartBlock
-		return true
-	}
-
-	return false
 }
 
 // NotifyRelayEntryStarted notifies the client wants to start relay entry
@@ -122,7 +90,7 @@ func (d *Deduplicator) NotifyRelayEntryStarted(
 				if newRequestPreviousEntry ==
 					hex.EncodeToString(currentRequestPreviousEntryOnChain[:]) &&
 					newRequestStartBlock ==
-					currentRequestStartBlockOnChain.Uint64() {
+						currentRequestStartBlockOnChain.Uint64() {
 					return true, nil
 				}
 			} else {
