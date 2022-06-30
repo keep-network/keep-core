@@ -18,8 +18,8 @@ var DefaultCurve elliptic.Curve = btcec.S256()
 // the libp2p network key pair that uses the libp2p-specific curve
 // implementation.
 func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey) (
-	libp2pcrypto.PrivKey,
-	libp2pcrypto.PubKey,
+	*libp2pcrypto.Secp256k1PrivateKey,
+	*libp2pcrypto.Secp256k1PublicKey,
 	error,
 ) {
 	// Make sure that libp2p package receives only secp256k1 operator keys.
@@ -29,14 +29,28 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 
 	// Note that `libp2pcrypto.UnmarshalSecp256k1PrivateKey` uses the secp256k1
 	// implementation provided by decred underneath
-	privateNetworkKey, err := libp2pcrypto.UnmarshalSecp256k1PrivateKey(
+	privKey, err := libp2pcrypto.UnmarshalSecp256k1PrivateKey(
 		operatorPrivateKey.D.Bytes(),
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	publicNetworkKey := privateNetworkKey.GetPublic()
+	pubKey := privKey.GetPublic()
+
+	privateNetworkKey, ok := privKey.(*libp2pcrypto.Secp256k1PrivateKey)
+	if !ok {
+		return nil, nil, fmt.Errorf(
+			"network private key is not an instance of the libp2p secp256k1 private key",
+		)
+	}
+
+	publicNetworkKey, ok := pubKey.(*libp2pcrypto.Secp256k1PublicKey)
+	if !ok {
+		return nil, nil, fmt.Errorf(
+			"network public key is not an instance of the libp2p secp256k1 public key",
+		)
+	}
 
 	return privateNetworkKey, publicNetworkKey, nil
 }
@@ -46,7 +60,7 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 // implementation.
 func operatorPublicKeyToNetworkPublicKey(
 	operatorPublicKey *operator.PublicKey,
-) (libp2pcrypto.PubKey, error) {
+) (*libp2pcrypto.Secp256k1PublicKey, error) {
 	// Make sure that libp2p package receives only secp256k1 operator keys.
 	if operatorPublicKey.Curve != operator.Secp256k1 {
 		return nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
@@ -56,11 +70,18 @@ func operatorPublicKeyToNetworkPublicKey(
 
 	// Note that `libp2pcrypto.UnmarshalSecp256k1PublicKey` uses the secp256k1
 	// implementation provided by decred underneath
-	networkPublicKey, err := libp2pcrypto.UnmarshalSecp256k1PublicKey(
+	pubKey, err := libp2pcrypto.UnmarshalSecp256k1PublicKey(
 		operatorPublicKeyBytes,
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	networkPublicKey, ok := pubKey.(*libp2pcrypto.Secp256k1PublicKey)
+	if !ok {
+		return nil, fmt.Errorf(
+			"network public key is not an instance of the libp2p secp256k1 public key",
+		)
 	}
 
 	return networkPublicKey, nil
