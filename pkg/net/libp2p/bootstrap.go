@@ -1,4 +1,4 @@
-package bootstrap
+package libp2p
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	logging "github.com/ipfs/go-log"
 	"github.com/jbenet/goprocess"
 	goprocessctx "github.com/jbenet/goprocess/context"
 	periodicproc "github.com/jbenet/goprocess/periodic"
@@ -18,8 +17,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/peerstore"
 	"github.com/libp2p/go-libp2p-core/routing"
 )
-
-var logger = logging.Logger("bootstrap")
 
 // ErrNotEnoughBootstrapPeers signals that we do not have enough bootstrap
 // peers to bootstrap correctly.

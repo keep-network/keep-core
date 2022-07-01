@@ -11,7 +11,6 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/bootstrap"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/net/watchtower"
 
@@ -479,11 +478,11 @@ func (p *provider) bootstrap(
 		return err
 	}
 
-	bootstrapConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
+	bootstrapConfig := BootstrapConfigWithPeers(peerInfos)
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
-	_, err = bootstrap.Bootstrap(
+	_, err = Bootstrap(
 		p.identity.id,
 		p.host,
 		p.routing,
