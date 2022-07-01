@@ -85,7 +85,13 @@ func Bootstrap(
 	if rt != nil {
 		ctx := goprocessctx.OnClosingContext(proc)
 		if err := rt.Bootstrap(ctx); err != nil {
-			proc.Close()
+			if procErr := proc.Close(); procErr != nil {
+				return nil, fmt.Errorf(
+					"process closing error [%v] while handling bootstrap error [%v]",
+					procErr,
+					err,
+				)
+			}
 			return nil, err
 		}
 	}
