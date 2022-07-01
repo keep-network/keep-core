@@ -53,8 +53,15 @@ func (n *Node) JoinDKGIfEligible(
 	dkgSeed *big.Int,
 	dkgStartBlockNumber uint64,
 ) {
-	// TODO: Fetch selected group members from the sortition pool.
-	groupMembers := make([]relaychain.StakerAddress, 0)
+	groupMembers, err := relayChain.SelectGroup(dkgSeed)
+	if err != nil {
+		logger.Errorf(
+			"failed to select group with seed [%v]: [%v]",
+			dkgSeed,
+			err,
+		)
+		return
+	}
 
 	if len(groupMembers) > maxGroupSize {
 		logger.Errorf(
@@ -83,9 +90,8 @@ func (n *Node) JoinDKGIfEligible(
 			return
 		}
 
-		// TODO: Setup the correct validator.
 		membershipValidator := group.NewStakersMembershipValidator(
-			nil,
+			groupMembers,
 			signing,
 		)
 

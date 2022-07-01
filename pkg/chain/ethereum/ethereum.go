@@ -173,6 +173,20 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	return subscription
 }
 
+// TODO: Implement a real SelectGroup function once it is possible on the
+//       contract side. The current implementation just return a group
+//       where all members belong to the chain operator.
+func (ec *ethereumChain) SelectGroup(seed *big.Int) ([]relayChain.StakerAddress, error) {
+	groupSize := ec.GetConfig().GroupSize
+	groupMembers := make([]relayChain.StakerAddress, groupSize)
+
+	for index := range groupMembers {
+		groupMembers[index] = ec.accountKey.Address.Bytes()
+	}
+
+	return groupMembers, nil
+}
+
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) subscription.EventSubscription {

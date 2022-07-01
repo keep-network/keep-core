@@ -170,6 +170,10 @@ func (c *localChain) OnRelayEntryRequested(
 	})
 }
 
+func (c *localChain) SelectGroup(seed *big.Int) ([]relaychain.StakerAddress, error) {
+	panic("not implemented")
+}
+
 func (c *localChain) OnGroupRegistered(
 	handler func(groupRegistration *event.GroupRegistration),
 ) subscription.EventSubscription {
