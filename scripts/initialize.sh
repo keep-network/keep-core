@@ -18,7 +18,7 @@ help()
            "--network <network>"\
            "--stake-owner <stake owner address>"\
            "--staking-provider <staking provider address>"\
-           "--staking-operator <staking operator address>"\
+           "--operator <operator address>"\
            "--beneficiary <beneficiary address>"\
            "--authorizer <authorizer address>"\
            "--staking-amount <staking amount>"\
@@ -29,7 +29,7 @@ help()
    echo -e "\t--network: Ethereum network for keep-core client."\
                         "Available networks and settings are specified in the 'hardhat.config.ts'"
    echo -e "\t--staking-provider: Staking provider address"
-   echo -e "\t--staking-operator: Staking operator address"
+   echo -e "\t--operator: Operator address"
    echo -e "\t--beneficiary: Staking beneficiary address"
    echo -e "\t--authorizer: Staking authorizer address"
    echo -e "\t--stake-amount: Staking amount"
@@ -44,7 +44,7 @@ for arg in "$@"; do
     "--network")              set -- "$@" "-n" ;;
     "--stake-owner")          set -- "$@" "-o" ;;
     "--staking-provider")     set -- "$@" "-p" ;;
-    "--staking-operator")     set -- "$@" "-d" ;;
+    "--operator")             set -- "$@" "-d" ;;
     "--beneficiary")          set -- "$@" "-b" ;;
     "--authorizer")           set -- "$@" "-a" ;;
     "--stake-amount")         set -- "$@" "-s" ;;
@@ -62,7 +62,7 @@ do
       n ) network="$OPTARG" ;;
       o ) stake_owner="$OPTARG" ;;
       p ) staking_provider="$OPTARG" ;;
-      d ) staking_operator="$OPTARG" ;;
+      d ) operator="$OPTARG" ;;
       b ) beneficiary="$OPTARG" ;;
       a ) authorizer="$OPTARG" ;;
       s ) stake_amount="$OPTARG" ;;
@@ -85,8 +85,8 @@ if [ -z "$staking_provider" ]; then
    staking_provider=${stake_owner}
 fi
 
-if [ -z "$staking_operator" ]; then
-   staking_operator=${stake_owner}
+if [ -z "$operator" ]; then
+   operator=${stake_owner}
 fi
 
 if [ -z "$beneficiary" ]; then
@@ -112,7 +112,7 @@ cd $KEEP_BEACON_SOL_PATH
 printf "${LOG_START}Setting up staking...${LOG_END}"
 
 stake="npx hardhat stake --network $NETWORK --owner ${stake_owner} \
-    --provider ${staking_provider} --operator ${staking_operator} \
+    --provider ${staking_provider} --operator ${operator} \
     --beneficiary ${beneficiary} --authorizer ${authorizer} "
 
 eval ${stake} ${stake_amount_opt} ${authorization_amount_opt}

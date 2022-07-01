@@ -17,7 +17,7 @@ task(
   .addOptionalParam("amount", "Stake amount", 1_000_000, types.int)
   .addOptionalParam(
     "authorization",
-    "Authorization amount",
+    "Authorization amount (default: minimumAuthorization)",
     undefined,
     types.int
   )
@@ -57,13 +57,13 @@ async function setup(
 
   // Beneficiary can equal to the owner if not set otherwise. This simplification
   // is used for development purposes.
-  if (beneficiary === undefined) {
+  if (!beneficiary) {
     beneficiary = owner
   }
 
   // Authorizer can equal to the owner if not set otherwise. This simplification
   // is used for development purposes.
-  if (authorizer === undefined) {
+  if (!authorizer) {
     authorizer = owner
   }
 

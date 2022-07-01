@@ -36,8 +36,6 @@ for arg in "$@"; do
   shift
   case "$arg" in
     "--network")           set -- "$@" "-n" ;;
-    "--stake-owner")       set -- "$@" "-o" ;;
-    "--staking-provider")  set -- "$@" "-p" ;;
     "--skip-deployment")   set -- "$@" "-d" ;;
     "--skip-client-build") set -- "$@" "-b" ;;
     "--help")              set -- "$@" "-h" ;;
