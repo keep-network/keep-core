@@ -79,7 +79,7 @@ if [ "$NETWORK" == "development" ]; then
 fi
 
 printf "${LOG_START}Building contracts...${LOG_END}"
-yarn clean && rm -rf cache
+yarn clean
 yarn build
 
 if [ "$SKIP_DEPLOYMENT" = false ] ; then
