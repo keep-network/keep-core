@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers';
 import { task, types } from "hardhat/config"
 
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
@@ -8,11 +9,11 @@ task(
   "stake",
   "Stakes T tokens, increases authorization and registers the operator "
 )
-  .addParam("owner", "Stake owner address", undefined, types.string)
-  .addParam("provider", "Staking provider", undefined, types.string)
-  .addParam("operator", "Staking operator", undefined, types.string)
-  .addOptionalParam("beneficiary", "Stake beneficiary", undefined, types.string)
-  .addOptionalParam("authorizer", "Stake authorizer", undefined, types.string)
+  .addParam("owner", "Stake Owner address", undefined, types.string)
+  .addParam("provider", "Staking Provider", undefined, types.string)
+  .addParam("operator", "Staking Operator", undefined, types.string)
+  .addOptionalParam("beneficiary", "Stake Beneficiary", undefined, types.string)
+  .addOptionalParam("authorizer", "Stake Authorizer", undefined, types.string)
   .addOptionalParam("amount", "Stake amount", 1_000_000, types.int)
   .addOptionalParam(
     "authorization",
@@ -32,15 +33,15 @@ async function setup(
     operator: string
     beneficiary: string
     authorizer: string
-    amount: BigInteger
-    authorization: BigInteger
+    amount: BigNumber
+    authorization: BigNumber
   }
 ) {
 
-  const { ethers, helpers, getNamedAccounts } = hre
+  const { ethers, helpers } = hre
   let { owner, provider, operator, beneficiary, authorizer, amount, authorization } = args
 
-  const { deployer } = await getNamedAccounts()
+  const { deployer } = await helpers.signers.getNamedSigners()
   const { to1e18 } = helpers.number
   const t = await helpers.contracts.getContract("T")
   const staking = await helpers.contracts.getContract("TokenStaking")
@@ -48,8 +49,7 @@ async function setup(
 
   const stakedAmount = to1e18(amount)
 
-  const deployerSigner = await ethers.getSigner(deployer)
-  await (await t.connect(deployerSigner).mint(owner, stakedAmount)).wait()
+  await (await t.connect(deployer).mint(owner, stakedAmount)).wait()
   const stakeOwnerSigner = await ethers.getSigner(owner)
   await (
     await t.connect(stakeOwnerSigner).approve(staking.address, stakedAmount)
@@ -83,12 +83,16 @@ async function setup(
     ).toString()}`
   )
 
-  const stakingAuthorization =
-    to1e18(authorization) || (await randomBeacon.minimumAuthorization())
+  if (authorization) {
+    authorization = to1e18(authorization)
+  } else {
+    authorization = await randomBeacon.minimumAuthorization()
+  }
+
   const authorizerSigner = await ethers.getSigner(authorizer)
 
   console.log(
-    `Increasing authorization ${stakingAuthorization.toString()} for the Random Beacon ...`
+    `Increasing authorization ${authorization.toString()} for the Random Beacon ...`
   )
 
   await (
@@ -97,7 +101,7 @@ async function setup(
       .increaseAuthorization(
         provider,
         randomBeacon.address,
-        stakingAuthorization
+        authorization
       )
   ).wait()
 

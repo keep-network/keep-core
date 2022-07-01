@@ -81,7 +81,6 @@ if [ "$NETWORK" == "development" ]; then
 fi
 
 printf "${LOG_START}Building contracts...${LOG_END}"
-
 yarn clean && rm -rf cache
 yarn build
 
