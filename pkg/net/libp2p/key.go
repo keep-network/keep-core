@@ -29,30 +29,32 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 
 	// Note that `libp2pcrypto.UnmarshalSecp256k1PrivateKey` uses the secp256k1
 	// implementation provided by decred underneath
-	privKey, err := libp2pcrypto.UnmarshalSecp256k1PrivateKey(
+	libp2pPrivateKey, err := libp2pcrypto.UnmarshalSecp256k1PrivateKey(
 		operatorPrivateKey.D.Bytes(),
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf(
+			"cannot unmarshal operator private key as a libp2p secp256k1 private key: [%v]", err,
+		)
 	}
 
-	pubKey := privKey.GetPublic()
+	libp2pPublicKey := libp2pPrivateKey.GetPublic()
 
-	privateNetworkKey, ok := privKey.(*libp2pcrypto.Secp256k1PrivateKey)
+	networkPrivateKey, ok := libp2pPrivateKey.(*libp2pcrypto.Secp256k1PrivateKey)
 	if !ok {
 		return nil, nil, fmt.Errorf(
 			"network private key is not an instance of the libp2p secp256k1 private key",
 		)
 	}
 
-	publicNetworkKey, ok := pubKey.(*libp2pcrypto.Secp256k1PublicKey)
+	networkPublicKey, ok := libp2pPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
 	if !ok {
 		return nil, nil, fmt.Errorf(
 			"network public key is not an instance of the libp2p secp256k1 public key",
 		)
 	}
 
-	return privateNetworkKey, publicNetworkKey, nil
+	return networkPrivateKey, networkPublicKey, nil
 }
 
 // operatorPublicKeyToNetworkPublicKey converts an operator public key to
@@ -70,14 +72,16 @@ func operatorPublicKeyToNetworkPublicKey(
 
 	// Note that `libp2pcrypto.UnmarshalSecp256k1PublicKey` uses the secp256k1
 	// implementation provided by decred underneath
-	pubKey, err := libp2pcrypto.UnmarshalSecp256k1PublicKey(
+	libp2pPublicKey, err := libp2pcrypto.UnmarshalSecp256k1PublicKey(
 		operatorPublicKeyBytes,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(
+			"cannot unmarshal operator public key as a libp2p secp256k1 public key: [%v]", err,
+		)
 	}
 
-	networkPublicKey, ok := pubKey.(*libp2pcrypto.Secp256k1PublicKey)
+	networkPublicKey, ok := libp2pPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
 	if !ok {
 		return nil, fmt.Errorf(
 			"network public key is not an instance of the libp2p secp256k1 public key",
