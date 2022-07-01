@@ -59,16 +59,13 @@ const fixture = async () => {
 // new signing group. The next steps call the random beacon relay requests and
 // validate the results of the submitted signatures. At the end of this scenario
 // 3 active groups should be added to the chain as a result of signatures submission
-// and dkg under the hood. All the init params map 1:1 real params set in the
-// RandomBeacon constructor.
+// and dkg under the hood.
+// Group creation frequency is adjusted for the purpose of the e2e testing data.
+// All the other init params should be intact and use the existing params set in
+// in tests fixture.
 // Signatures in bls.ts were generated outside of this test based on bls_test.go
 describe("System -- e2e", () => {
-  // same as in RandomBeacon constructor
-  const relayEntryHardTimeout = 5760
-  const relayEntrySoftTimeout = 20
-  const callbackGasLimit = 56000
   const groupCreationFrequency = 5
-  const groupLifetime = 11520 // 2 days assuming 15s block time
   const groupPubKeys = [
     blsData.groupPubKey,
     blsData.groupPubKey2,
@@ -92,39 +89,13 @@ describe("System -- e2e", () => {
 
     await randomBeaconGovernance
       .connect(governance)
-      .beginRelayEntrySoftTimeoutUpdate(relayEntrySoftTimeout)
-    await randomBeaconGovernance
-      .connect(governance)
-      .beginRelayEntryHardTimeoutUpdate(relayEntryHardTimeout)
-    await randomBeaconGovernance
-      .connect(governance)
-      .beginCallbackGasLimitUpdate(callbackGasLimit)
-
-    await randomBeaconGovernance
-      .connect(governance)
       .beginGroupCreationFrequencyUpdate(groupCreationFrequency)
-    await randomBeaconGovernance
-      .connect(governance)
-      .beginGroupLifetimeUpdate(groupLifetime)
 
     await helpers.time.increaseTime(params.governanceDelay)
 
     await randomBeaconGovernance
       .connect(governance)
-      .finalizeRelayEntrySoftTimeoutUpdate()
-    await randomBeaconGovernance
-      .connect(governance)
-      .finalizeRelayEntryHardTimeoutUpdate()
-    await randomBeaconGovernance
-      .connect(governance)
-      .finalizeCallbackGasLimitUpdate()
-
-    await randomBeaconGovernance
-      .connect(governance)
       .finalizeGroupCreationFrequencyUpdate()
-    await randomBeaconGovernance
-      .connect(governance)
-      .finalizeGroupLifetimeUpdate()
 
     await randomBeaconGovernance
       .connect(governance)

@@ -15,13 +15,7 @@ const { createSnapshot, restoreSnapshot } = helpers.snapshot
 
 const governanceDelay = 604800 // 1 week
 
-const initialDkgResultSubmissionGas = 235000
-const initialDkgResultApprovalGasOffset = 41500
-const initialNotifyOperatorInactivityGasOffset = 54500
-const initialRelayEntrySubmissionGasOffset = 11250
-
 const ZERO_ADDRESS = ethers.constants.AddressZero
-const BLOCK_TIME = 15 // assuming 1 block is mined every 15sec
 
 const fixture = async () => {
   const { governance } = await helpers.signers.getNamedSigners()
@@ -1019,83 +1013,25 @@ describe("RandomBeaconGovernance", () => {
   })
 
   describe("beginGroupLifetimeUpdate", () => {
+    const newGroupLifetime = params.groupLifetime + 1
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
           randomBeaconGovernance
             .connect(thirdParty)
-            .beginGroupLifetimeUpdate((2 * 24 * 60 * 60) / BLOCK_TIME) // 2 days
+            .beginGroupLifetimeUpdate(newGroupLifetime)
         ).to.be.revertedWith("Ownable: caller is not the owner")
       })
     })
 
-    context("when the update value is less than one day", () => {
+    context("when the update value is zero", () => {
       it("should revert", async () => {
         await expect(
-          randomBeaconGovernance
-            .connect(governance)
-            .beginGroupLifetimeUpdate((23 * 60 * 60) / BLOCK_TIME - 1) // 24 hours - 1 block
-        ).to.be.revertedWith("Group lifetime is not in range")
+          randomBeaconGovernance.connect(governance).beginGroupLifetimeUpdate(0)
+        ).to.be.revertedWith("Group lifetime must be greater than 0")
       })
     })
-
-    context("when the update value is one day", () => {
-      it("should accept the value", async () => {
-        await createSnapshot()
-
-        await randomBeaconGovernance
-          .connect(governance)
-          .beginGroupLifetimeUpdate((24 * 60 * 60) / BLOCK_TIME) // 24 hours assumint 15s block time
-
-        // works, did not revert
-
-        await restoreSnapshot()
-      })
-    })
-
-    context(
-      "when the update value is more than Authorization Decrease Delay",
-      () => {
-        it("should revert", async () => {
-          const authorizationParams =
-            await randomBeacon.authorizationParameters()
-
-          await expect(
-            randomBeaconGovernance
-              .connect(governance)
-              .beginGroupLifetimeUpdate(
-                authorizationParams.authorizationDecreaseDelay.div(15).add(1)
-              )
-          ).to.be.revertedWith("Group lifetime is not in range")
-        })
-      }
-    )
-
-    context(
-      "when the update value is Authorization Decrease Delay in blocks",
-      () => {
-        it("should accept the value", async () => {
-          await createSnapshot()
-
-          const authorizationParams =
-            await randomBeacon.authorizationParameters()
-          console.log(
-            "authorizationParams!!!",
-            authorizationParams.authorizationDecreaseDelay.toString()
-          )
-
-          await randomBeaconGovernance
-            .connect(governance)
-            .beginGroupLifetimeUpdate(
-              authorizationParams.authorizationDecreaseDelay.div(BLOCK_TIME)
-            )
-
-          // works, did not revert
-
-          await restoreSnapshot()
-        })
-      }
-    )
 
     context("when the caller is the owner", () => {
       let tx: ContractTransaction
@@ -1105,7 +1041,7 @@ describe("RandomBeaconGovernance", () => {
 
         tx = await randomBeaconGovernance
           .connect(governance)
-          .beginGroupLifetimeUpdate((2 * 24 * 60 * 60) / BLOCK_TIME) // 2 days
+          .beginGroupLifetimeUpdate(newGroupLifetime)
       })
 
       after(async () => {
@@ -1114,7 +1050,7 @@ describe("RandomBeaconGovernance", () => {
 
       it("should not update the group lifetime", async () => {
         const { groupLifetime } = await randomBeacon.groupCreationParameters()
-        expect(groupLifetime).to.be.equal(params.groupLifeTime)
+        expect(groupLifetime).to.be.equal(params.groupLifetime)
       })
 
       it("should start the governance delay timer", async () => {
@@ -1128,12 +1064,14 @@ describe("RandomBeaconGovernance", () => {
           .timestamp
         await expect(tx)
           .to.emit(randomBeaconGovernance, "GroupLifetimeUpdateStarted")
-          .withArgs((2 * 24 * 60 * 60) / BLOCK_TIME, blockTimestamp) // 2 days
+          .withArgs(newGroupLifetime, blockTimestamp)
       })
     })
   })
 
   describe("finalizeGroupLifetimeUpdate", () => {
+    const newGroupLifetime = params.groupLifetime + 1
+
     context("when the caller is not the owner", () => {
       it("should revert", async () => {
         await expect(
@@ -1160,7 +1098,7 @@ describe("RandomBeaconGovernance", () => {
 
         await randomBeaconGovernance
           .connect(governance)
-          .beginGroupLifetimeUpdate((2 * 24 * 60 * 60) / BLOCK_TIME) // 2 days
+          .beginGroupLifetimeUpdate(newGroupLifetime)
 
         await helpers.time.increaseTime(governanceDelay - 60) // -1min
 
@@ -1184,7 +1122,7 @@ describe("RandomBeaconGovernance", () => {
 
           await randomBeaconGovernance
             .connect(governance)
-            .beginGroupLifetimeUpdate((2 * 24 * 60 * 60) / BLOCK_TIME) // 2 days
+            .beginGroupLifetimeUpdate(newGroupLifetime)
 
           await helpers.time.increaseTime(governanceDelay)
 
@@ -1199,13 +1137,13 @@ describe("RandomBeaconGovernance", () => {
 
         it("should update the group lifetime", async () => {
           const { groupLifetime } = await randomBeacon.groupCreationParameters()
-          expect(groupLifetime).to.be.equal((2 * 24 * 60 * 60) / BLOCK_TIME)
+          expect(groupLifetime).to.be.equal(newGroupLifetime)
         })
 
         it("should emit GroupLifetimeUpdated event", async () => {
           await expect(tx)
             .to.emit(randomBeaconGovernance, "GroupLifetimeUpdated")
-            .withArgs((2 * 24 * 60 * 60) / BLOCK_TIME) // 2 days
+            .withArgs(newGroupLifetime)
         })
 
         it("should reset the governance delay timer", async () => {
@@ -3233,7 +3171,7 @@ describe("RandomBeaconGovernance", () => {
       it("should not update DKG result submission gas", async () => {
         const { dkgResultSubmissionGas } = await randomBeacon.gasParameters()
         expect(dkgResultSubmissionGas).to.be.equal(
-          initialDkgResultSubmissionGas
+          params.dkgResultSubmissionGas
         )
       })
 
@@ -3370,7 +3308,7 @@ describe("RandomBeaconGovernance", () => {
         const { dkgResultApprovalGasOffset } =
           await randomBeacon.gasParameters()
         expect(dkgResultApprovalGasOffset).to.be.equal(
-          initialDkgResultApprovalGasOffset
+          params.dkgResultApprovalGasOffset
         )
       })
 
@@ -3511,7 +3449,7 @@ describe("RandomBeaconGovernance", () => {
         const { notifyOperatorInactivityGasOffset } =
           await randomBeacon.gasParameters()
         expect(notifyOperatorInactivityGasOffset).to.be.equal(
-          initialNotifyOperatorInactivityGasOffset
+          params.notifyOperatorInactivityGasOffset
         )
       })
 
@@ -3652,7 +3590,7 @@ describe("RandomBeaconGovernance", () => {
         const { relayEntrySubmissionGasOffset } =
           await randomBeacon.gasParameters()
         expect(relayEntrySubmissionGasOffset).to.be.equal(
-          initialRelayEntrySubmissionGasOffset
+          params.relayEntrySubmissionGasOffset
         )
       })
 

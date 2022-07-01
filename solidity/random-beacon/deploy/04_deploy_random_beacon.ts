@@ -9,6 +9,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const TokenStaking = await deployments.get("TokenStaking")
   const ReimbursementPool = await deployments.get("ReimbursementPool")
   const BeaconSortitionPool = await deployments.get("BeaconSortitionPool")
+  const BeaconDkgValidator = await deployments.get("BeaconDkgValidator")
 
   const BLS = await deployments.deploy("BLS", {
     from: deployer,
@@ -27,12 +28,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const BeaconInactivity = await deployments.deploy("BeaconInactivity", {
     from: deployer,
-    log: true,
-  })
-
-  const BeaconDkgValidator = await deployments.deploy("BeaconDkgValidator", {
-    from: deployer,
-    args: [BeaconSortitionPool.address],
     log: true,
   })
 
@@ -80,4 +75,5 @@ func.dependencies = [
   "TokenStaking",
   "ReimbursementPool",
   "BeaconSortitionPool",
+  "BeaconDkgValidator",
 ]

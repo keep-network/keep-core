@@ -13,7 +13,6 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
@@ -63,19 +62,17 @@ func RunTest(
 	rules interception.Rules,
 	previousEntry []byte,
 ) (*Result, error) {
-	privateKey, publicKey, err := operator.GenerateKeyPair()
+	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(chainLocal.DefaultCurve)
 	if err != nil {
 		return nil, err
 	}
 
-	_, networkPublicKey := key.OperatorKeyToNetworkKey(privateKey, publicKey)
-
 	network := interception.NewNetwork(
-		netLocal.ConnectWithKey(networkPublicKey),
+		netLocal.ConnectWithKey(operatorPublicKey),
 		rules,
 	)
 
-	chain := chainLocal.ConnectWithKey(len(signers), threshold, minimumStake, privateKey)
+	chain := chainLocal.ConnectWithKey(len(signers), threshold, minimumStake, operatorPrivateKey)
 
 	return executeSigning(signers, threshold, chain, network, previousEntry)
 }

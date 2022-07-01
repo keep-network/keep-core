@@ -3,9 +3,8 @@ package local
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
-
-	"github.com/keep-network/keep-core/pkg/net/key"
 
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -14,8 +13,8 @@ var unicastChannelManagersMutex = &sync.RWMutex{}
 var unicastChannelManagers = make(map[string]*unicastChannelManager)
 
 type unicastChannelManager struct {
-	transportID net.TransportIdentifier
-	staticKey   *key.NetworkPublic
+	transportID       net.TransportIdentifier
+	operatorPublicKey *operator.PublicKey
 
 	channelsMutex *sync.RWMutex
 	channels      map[net.TransportIdentifier]*unicastChannel
@@ -30,12 +29,15 @@ type onChannelOpenedHandler struct {
 }
 
 func newUnicastChannelManager(
-	staticKey *key.NetworkPublic,
+	operatorPublicKey *operator.PublicKey,
 ) *unicastChannelManager {
 	unicastChannelManagersMutex.Lock()
 	defer unicastChannelManagersMutex.Unlock()
 
-	transportID := createLocalIdentifier(staticKey)
+	transportID, err := createLocalIdentifier(operatorPublicKey)
+	if err != nil {
+		panic(err)
+	}
 
 	existingChannelManager, ok := unicastChannelManagers[transportID.String()]
 	if ok {
@@ -44,7 +46,7 @@ func newUnicastChannelManager(
 
 	channelManager := &unicastChannelManager{
 		transportID:                  transportID,
-		staticKey:                    staticKey,
+		operatorPublicKey:            operatorPublicKey,
 		channelsMutex:                &sync.RWMutex{},
 		channels:                     make(map[net.TransportIdentifier]*unicastChannel),
 		onChannelOpenedHandlersMutex: &sync.RWMutex{},
@@ -103,7 +105,7 @@ func (up *unicastChannelManager) createUnicastChannelWith(
 		return channel
 	}
 
-	channel = newUnicastChannel(up.transportID, up.staticKey, peer)
+	channel = newUnicastChannel(up.transportID, up.operatorPublicKey, peer)
 	up.addUnicastChannel(channel)
 
 	if notify {

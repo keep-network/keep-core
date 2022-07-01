@@ -13,7 +13,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/ephemeral"
+	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 )
 
 func TestExecute_HappyPath(t *testing.T) {

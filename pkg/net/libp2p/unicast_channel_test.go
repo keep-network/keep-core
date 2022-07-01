@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"strconv"
 	"testing"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -63,6 +63,9 @@ func TestSendReceiveUnicastChannel(t *testing.T) {
 		}
 
 		// Peer 2 get the channel from cache.
+		// Wait for a moment until the messages sent by peer 1 are received by
+		// peer 2, so that the channel is opened and unmarshaller set.
+		time.Sleep(2 * time.Second)
 		peer2Channel, err := provider2.UnicastChannelWith(identity1.id)
 		if err != nil {
 			t.Fatal(err)
@@ -157,12 +160,17 @@ func withNetwork(
 		provider2 net.Provider,
 	),
 ) {
-	privKey1, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey1, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity1, err := createIdentity(privKey1)
+	networkPrivateKey1, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity1, err := createIdentity(networkPrivateKey1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,12 +184,17 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	privKey2, _, err := key.GenerateStaticNetworkKey()
+	operatorPrivateKey2, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	identity2, err := createIdentity(privKey2)
+	networkPrivateKey2, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity2, err := createIdentity(networkPrivateKey2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -206,7 +219,7 @@ func withNetwork(
 			},
 			Port: provider1Port,
 		},
-		privKey1,
+		operatorPrivateKey1,
 		ProtocolBeacon,
 		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
@@ -226,7 +239,7 @@ func withNetwork(
 			},
 			Port: provider2Port,
 		},
-		privKey2,
+		operatorPrivateKey2,
 		ProtocolBeacon,
 		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),

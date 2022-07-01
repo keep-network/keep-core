@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"io"
 	"sync"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/net/internal"
-	"github.com/keep-network/keep-core/pkg/net/key"
 
 	"github.com/libp2p/go-libp2p-core/peer"
 
@@ -268,8 +268,8 @@ func (uc *unicastChannel) processMessage(message *pb.UnicastNetworkMessage) erro
 		return err
 	}
 
-	networkKey := key.Libp2pKeyToNetworkKey(senderIdentifier.pubKey)
-	if networkKey == nil {
+	operatorPublicKey, err := networkPublicKeyToOperatorPublicKey(senderIdentifier.pubKey)
+	if err != nil {
 		return fmt.Errorf(
 			"sender [%v] with key [%v] is not of correct type",
 			senderIdentifier.id,
@@ -277,11 +277,13 @@ func (uc *unicastChannel) processMessage(message *pb.UnicastNetworkMessage) erro
 		)
 	}
 
+	operatorPublicKeyBytes := operator.MarshalUncompressed(operatorPublicKey)
+
 	uc.deliver(internal.BasicMessage(
 		senderIdentifier.id,
 		unmarshaled,
 		string(message.Type),
-		key.Marshal(networkKey),
+		operatorPublicKeyBytes,
 		uint64(0),
 	))
 

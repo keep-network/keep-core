@@ -2,15 +2,15 @@ package libp2p
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/operator"
+
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/net/watchtower"
 
@@ -18,12 +18,12 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	"github.com/libp2p/go-libp2p-core/host"
 	libp2pnet "github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
+	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
 	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
@@ -120,12 +120,16 @@ func (p *provider) ConnectionManager() net.ConnectionManager {
 	return p.connectionManager
 }
 
-func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
+func (p *provider) CreateTransportIdentifier(operatorPublicKey *operator.PublicKey) (
 	net.TransportIdentifier,
 	error,
 ) {
-	networkPublicKey := key.NetworkPublic(publicKey)
-	return peer.IDFromPublicKey(&networkPublicKey)
+	networkPublicKey, err := operatorPublicKeyToNetworkPublicKey(operatorPublicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return peer.IDFromPublicKey(networkPublicKey)
 }
 
 func (p *provider) BroadcastChannelForwarderFor(name string) {
@@ -165,7 +169,7 @@ func (cm *connectionManager) ConnectedPeers() []string {
 	return peers
 }
 
-func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error) {
+func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*operator.PublicKey, error) {
 	peerID, err := peer.Decode(connectedPeer)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -184,7 +188,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 		)
 	}
 
-	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
+	return networkPublicKeyToOperatorPublicKey(peerPublicKey)
 }
 
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
@@ -279,7 +283,7 @@ func WithRoutingTableRefreshPeriod(period time.Duration) ConnectOption {
 func Connect(
 	ctx context.Context,
 	config Config,
-	staticKey *key.NetworkPrivate,
+	operatorPrivateKey *operator.PrivateKey,
 	protocol string,
 	firewall net.Firewall,
 	ticker *retransmission.Ticker,
@@ -295,7 +299,12 @@ func Connect(
 	connectOptions := defaultConnectOptions()
 	connectOptions.apply(options...)
 
-	identity, err := createIdentity(staticKey)
+	networkPrivateKey, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	identity, err := createIdentity(networkPrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -393,17 +402,23 @@ func discoverAndListen(
 		)
 	}
 
+	connectionManager, err := connmgr.NewConnManager(
+		DefaultConnMgrLowWater,
+		DefaultConnMgrHighWater,
+		connmgr.WithGracePeriod(DefaultConnMgrGracePeriod),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create connection manager: [%v]",
+			err,
+		)
+	}
+
 	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
-		libp2p.ConnectionManager(
-			connmgr.NewConnManager(
-				DefaultConnMgrLowWater,
-				DefaultConnMgrHighWater,
-				DefaultConnMgrGracePeriod,
-			),
-		),
+		libp2p.ConnectionManager(connectionManager),
 	}
 
 	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
@@ -418,7 +433,7 @@ func discoverAndListen(
 		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
 
-	return libp2p.New(ctx, options...)
+	return libp2p.New(options...)
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {

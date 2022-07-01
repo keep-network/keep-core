@@ -20,7 +20,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
-	"github.com/keep-network/keep-core/pkg/net/key"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
@@ -63,15 +62,13 @@ func RunTest(
 	seed *big.Int,
 	rules interception.Rules,
 ) (*Result, error) {
-	privateKey, publicKey, err := operator.GenerateKeyPair()
+	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(chainLocal.DefaultCurve)
 	if err != nil {
 		return nil, err
 	}
 
-	_, networkPublicKey := key.OperatorKeyToNetworkKey(privateKey, publicKey)
-
 	network := interception.NewNetwork(
-		netLocal.ConnectWithKey(networkPublicKey),
+		netLocal.ConnectWithKey(operatorPublicKey),
 		rules,
 	)
 
@@ -79,12 +76,16 @@ func RunTest(
 		groupSize,
 		honestThreshold,
 		minimumStake,
-		privateKey,
+		operatorPrivateKey,
 	)
 
-	address := chain.Signing().PublicKeyBytesToAddress(
-		key.Marshal(networkPublicKey),
-	)
+	address, err := chain.Signing().PublicKeyToAddress(operatorPublicKey)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"cannot convert operator public key to chain address: [%v]",
+			err,
+		)
+	}
 
 	selectedStakers := make([]relaychain.StakerAddress, groupSize)
 	for i := range selectedStakers {

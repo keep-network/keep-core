@@ -28,7 +28,7 @@ import type {
   SortitionPool,
   TokenStaking,
   BLS,
-  RandomBeaconGovernanceStub,
+  RandomBeaconGovernance,
 } from "../typechain"
 import type { Address } from "hardhat-deploy/types"
 import type { ContractTransaction, BigNumberish } from "ethers"
@@ -69,7 +69,7 @@ async function fixture() {
   return {
     randomBeacon: deployment.randomBeacon as RandomBeaconTest,
     randomBeaconGovernance:
-      deployment.randomBeaconGovernance as RandomBeaconGovernanceStub,
+      deployment.randomBeaconGovernance as RandomBeaconGovernance,
     sortitionPool: deployment.sortitionPool as SortitionPool,
     staking: deployment.staking as TokenStaking,
     relayStub,
@@ -89,7 +89,7 @@ describe("RandomBeacon - Relay", () => {
   let membersAddresses: Address[]
 
   let randomBeacon: RandomBeaconTest
-  let randomBeaconGovernance: RandomBeaconGovernanceStub
+  let randomBeaconGovernance: RandomBeaconGovernance
   let sortitionPool: SortitionPool
   let staking: TokenStaking
   let relayStub: RelayStub
@@ -758,7 +758,7 @@ describe("RandomBeacon - Relay", () => {
             const newGroupLifetime = 10
             await randomBeaconGovernance
               .connect(governance)
-              .beginGroupLifetimeUpdateStub(newGroupLifetime)
+              .beginGroupLifetimeUpdate(newGroupLifetime)
             await helpers.time.increaseTime(params.governanceDelay)
             await randomBeaconGovernance
               .connect(governance)
@@ -1963,7 +1963,7 @@ describe("RandomBeacon - Relay", () => {
           const newGroupLifetime = 10
           await randomBeaconGovernance
             .connect(governance)
-            .beginGroupLifetimeUpdateStub(newGroupLifetime)
+            .beginGroupLifetimeUpdate(newGroupLifetime)
           await helpers.time.increaseTime(params.governanceDelay)
           await randomBeaconGovernance
             .connect(governance)
