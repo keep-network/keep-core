@@ -986,6 +986,16 @@
     "@openzeppelin/contracts-upgradeable" "~4.5.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
 
+"@threshold-network/solidity-contracts@development":
+  version "1.2.0-dev.14"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.14.tgz#2e7104e41fdf261696aec8dc3a94de7c77be6a53"
+  integrity sha512-9OBoYMelzzVN1MKswRCtdTmwRuz3JvDHFRJo8jJuSiHeINHWbvAYQyz0KkF4qEhvLmbMxsRfO82jQcmN+LjqKg==
+  dependencies:
+    "@keep-network/keep-core" ">1.8.1-dev <1.8.1-pre"
+    "@openzeppelin/contracts" "~4.5.0"
+    "@openzeppelin/contracts-upgradeable" "~4.5.2"
+    "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
+
 "@tsconfig/node10@^1.0.7":
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/@tsconfig/node10/-/node10-1.0.8.tgz#c1e4e80d6f964fbecb3359c43bd48b40f7cadad9"
