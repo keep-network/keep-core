@@ -87,7 +87,7 @@ const config: HardhatUserConfig = {
           testConfig.nonStakingAccountsCount +
           testConfig.stakingRolesCount * testConfig.operatorsCount,
       },
-      tags: ["local"],
+      tags: ["allowStubs"],
       // we use higher gas price for tests to obtain more realistic results
       // for gas refund tests than when the default hardhat ~1 gwei gas price is
       // used
@@ -99,7 +99,7 @@ const config: HardhatUserConfig = {
     development: {
       url: "http://localhost:8545",
       chainId: 1101,
-      tags: ["local"],
+      tags: ["allowStubs"],
     },
     ropsten: {
       url: process.env.CHAIN_API_URL || "",
