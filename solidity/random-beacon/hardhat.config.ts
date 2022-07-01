@@ -97,11 +97,6 @@ const config: HardhatUserConfig = {
         : undefined,
       tags: ["tenderly"],
     },
-    development: {
-      url: "http://localhost:8545",
-      chainId: 1101,
-      tags: ["local"],
-    },
   },
   // // Define local networks configuration file path to load networks from the file.
   // localNetworksConfig: "./.hardhat/networks.ts",
