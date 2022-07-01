@@ -9,6 +9,8 @@ interface ICumulativeMerkleDrop {
     event MerkelRootUpdated(bytes32 oldMerkleRoot, bytes32 newMerkleRoot);
     // This event is triggered whenever a call to #claim succeeds.
     event Claimed(address indexed stakingProvider, uint256 amount, address beneficiary, bytes32 merkleRoot);
+    // This event is triggered whenever a call to #setRewardsHolder succeeds.
+    event RewardsHolderUpdated(address oldRewardsHolder, address newRewardsHolder);
 
     // Returns the address of the token distributed by this contract.
     function token() external view returns (address);
