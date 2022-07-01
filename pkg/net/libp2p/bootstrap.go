@@ -45,7 +45,7 @@ var DefaultBootstrapConfig = BootstrapConfig{
 	ConnectionTimeout: (30 * time.Second) / 3, // Perod / 3
 }
 
-func BootstrapConfigWithPeers(pis []peer.AddrInfo) BootstrapConfig {
+func bootstrapConfigWithPeers(pis []peer.AddrInfo) BootstrapConfig {
 	cfg := DefaultBootstrapConfig
 	cfg.BootstrapPeers = func() []peer.AddrInfo {
 		return pis
@@ -193,9 +193,9 @@ func bootstrapConnect(
 	return nil
 }
 
-type Peers []peer.AddrInfo
+type peers []peer.AddrInfo
 
-func (p Peers) ToPeerInfos() []peer.AddrInfo {
+func (p peers) toPeerInfos() []peer.AddrInfo {
 	pinfos := make(map[peer.ID]*peer.AddrInfo)
 	for _, bootstrap := range p {
 		pinfo, ok := pinfos[bootstrap.ID]

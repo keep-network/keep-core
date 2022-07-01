@@ -31,7 +31,7 @@ func TestMultipleAddrsPerPeer(t *testing.T) {
 		bsps = append(bsps, bsp1[0], bsp2[0])
 	}
 
-	pinfos := Peers.ToPeerInfos(bsps)
+	pinfos := peers.toPeerInfos(bsps)
 	if len(pinfos) != len(bsps)/2 {
 		t.Fatal("expected fewer peers")
 	}

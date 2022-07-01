@@ -478,7 +478,7 @@ func (p *provider) bootstrap(
 		return err
 	}
 
-	bootstrapConfig := BootstrapConfigWithPeers(peerInfos)
+	bootstrapConfig := bootstrapConfigWithPeers(peerInfos)
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
