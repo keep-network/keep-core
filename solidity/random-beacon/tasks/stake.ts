@@ -1,6 +1,6 @@
-import { BigNumber } from 'ethers';
 import { task, types } from "hardhat/config"
 
+import type { BigNumber } from "ethers"
 import type { HardhatRuntimeEnvironment } from "hardhat/types"
 
 // TODO: split to 4 different tasks: mint, stake, increase authorization and
@@ -37,9 +37,9 @@ async function setup(
     authorization: BigNumber
   }
 ) {
-
   const { ethers, helpers } = hre
-  let { owner, provider, operator, beneficiary, authorizer, amount, authorization } = args
+  const { owner, provider, operator, amount } = args
+  let { beneficiary, authorizer, authorization } = args
 
   const { deployer } = await helpers.signers.getNamedSigners()
   const { to1e18 } = helpers.number
@@ -98,11 +98,7 @@ async function setup(
   await (
     await staking
       .connect(authorizerSigner)
-      .increaseAuthorization(
-        provider,
-        randomBeacon.address,
-        authorization
-      )
+      .increaseAuthorization(provider, randomBeacon.address, authorization)
   ).wait()
 
   const authorizedStaked = await staking.authorizedStake(
@@ -120,8 +116,6 @@ async function setup(
 
   const stakingProviderSigner = await ethers.getSigner(provider)
   await (
-    await randomBeacon
-      .connect(stakingProviderSigner)
-      .registerOperator(operator)
+    await randomBeacon.connect(stakingProviderSigner).registerOperator(operator)
   ).wait()
 }
