@@ -6,70 +6,6 @@ import (
 	"testing"
 )
 
-func TestStartGroupSelection_NoPriorGroupSelections(t *testing.T) {
-	chain := &testChain{
-		currentRequestStartBlockValue:    nil,
-		currentRequestPreviousEntryValue: []byte{},
-	}
-
-	// In case of first group selection for that node, the last group selection
-	// block number held by the deduplicator is zero.
-	deduplicator := NewDeduplicator(
-		chain,
-		200,
-	)
-
-	canGenerate := deduplicator.NotifyGroupSelectionStarted(5)
-
-	if !canGenerate {
-		t.Fatal("should be allowed to start group selection")
-	}
-}
-
-func TestStartGroupSelection_MinGroupSelectionDurationPassed(t *testing.T) {
-	chain := &testChain{
-		currentRequestStartBlockValue:    nil,
-		currentRequestPreviousEntryValue: []byte{},
-	}
-
-	deduplicator := NewDeduplicator(
-		chain,
-		200,
-	)
-
-	// Simulate the last group selection occured at block 100
-	deduplicator.NotifyGroupSelectionStarted(100)
-
-	// Group selection will be possible at block 100 + 200 + 1 = 301
-	canGenerate := deduplicator.NotifyGroupSelectionStarted(301)
-
-	if !canGenerate {
-		t.Fatal("should be allowed to start group selection")
-	}
-}
-
-func TestStartGroupSelection_MinGroupSelectionDurationNotPassed(t *testing.T) {
-	chain := &testChain{
-		currentRequestStartBlockValue:    nil,
-		currentRequestPreviousEntryValue: []byte{},
-	}
-
-	deduplicator := NewDeduplicator(
-		chain,
-		200,
-	)
-
-	// Simulate the last group selection occured at block 100
-	deduplicator.NotifyGroupSelectionStarted(100)
-
-	// Group selection will be possible at block 100 + 200 + 1 = 301
-	canGenerate := deduplicator.NotifyGroupSelectionStarted(300)
-
-	if canGenerate {
-		t.Fatal("should not be allowed to start group selection")
-	}
-}
-
 func TestStartRelayEntry_NoPriorRelayEntries(t *testing.T) {
 	chain := &testChain{
 		currentRequestStartBlockValue:    nil,
@@ -78,7 +14,6 @@ func TestStartRelayEntry_NoPriorRelayEntries(t *testing.T) {
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
@@ -102,7 +37,6 @@ func TestStartRelayEntry_LowerStartBlock(t *testing.T) {
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err := deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -131,7 +65,6 @@ func TestStartRelayEntry_HigherStartBlock_DifferentPreviousEntry(t *testing.T) {
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err := deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -165,7 +98,6 @@ func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_ConfirmedOnChain(t *
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -199,7 +131,6 @@ func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_PreviousEntryNotConf
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -233,7 +164,6 @@ func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_StartBlockNotConfirm
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
