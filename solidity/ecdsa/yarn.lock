@@ -613,14 +613,14 @@
     openzeppelin-solidity "2.4.0"
 
 "@keep-network/random-beacon@development":
-  version "2.0.0-dev.37"
-  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.37.tgz#e5807b11d71e475cff3823c979a6b51c711e72b6"
-  integrity sha512-B2dfpbg7hR8/1rZqDugfRXZFav20cLgJjN7FS0MR8ziU3BsMxgU5mKhharqzPk6SV/pi8wtPb7QpsUqbS6reTw==
+  version "2.0.0-dev.41"
+  resolved "https://registry.yarnpkg.com/@keep-network/random-beacon/-/random-beacon-2.0.0-dev.41.tgz#b42442b95b7410729fe066e224d5d47277087568"
+  integrity sha512-3/FGR5Ft9vatlshTBOgvdwZlvRhrlCB78+7sQlJRjtv7Lc9z2TarBImlom6e3OcI8ufhgTMaCREdtLUe8erWhQ==
   dependencies:
     "@keep-network/sortition-pools" "^2.0.0-pre.9"
     "@openzeppelin/contracts" "^4.6.0"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-    "@threshold-network/solidity-contracts" ">1.2.0-dev <1.2.0-ropsten"
+    "@threshold-network/solidity-contracts" development
 
 "@keep-network/sortition-pools@^2.0.0-pre.9":
   version "2.0.0-pre.9"
@@ -975,16 +975,6 @@
   resolved "https://codeload.github.com/thesis/solidity-contracts/tar.gz/4985bcfc28e36eed9838993b16710e1b500f9e85"
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
-
-"@threshold-network/solidity-contracts@>1.2.0-dev <1.2.0-ropsten":
-  version "1.2.0-dev.10"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.10.tgz#a17391fec84b80dfd70e6b35bf2f71adb23f9d4f"
-  integrity sha512-gVZYFWlet12iT3tOLjgmYkqrwcrWaKvISy6WLb0jVd3se5y8Il20mmivYjar6x+5AvapuXLVeKqQmsYtKhTvRg==
-  dependencies:
-    "@keep-network/keep-core" ">1.8.1-dev <1.8.1-pre"
-    "@openzeppelin/contracts" "~4.5.0"
-    "@openzeppelin/contracts-upgradeable" "~4.5.2"
-    "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
 
 "@threshold-network/solidity-contracts@development":
   version "1.2.0-dev.14"
