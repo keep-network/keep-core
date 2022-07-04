@@ -25,7 +25,6 @@ import (
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
 	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
-	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -479,11 +478,11 @@ func (p *provider) bootstrap(
 		return err
 	}
 
-	bootstrapConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
+	bootstrapConfig := bootstrapConfigWithPeers(peerInfos)
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
-	_, err = bootstrap.Bootstrap(
+	_, err = Bootstrap(
 		p.identity.id,
 		p.host,
 		p.routing,
