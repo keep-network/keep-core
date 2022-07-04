@@ -53,6 +53,11 @@ func (n *Node) JoinDKGIfEligible(
 	dkgSeed *big.Int,
 	dkgStartBlockNumber uint64,
 ) {
+	logger.Infof(
+		"checking eligibility for DKG with seed [%v]",
+		hex.EncodeToString(dkgSeed.Bytes()),
+	)
+
 	groupMembers, err := relayChain.SelectGroup(dkgSeed)
 	if err != nil {
 		logger.Errorf(
@@ -84,6 +89,12 @@ func (n *Node) JoinDKGIfEligible(
 	channelName := dkgSeed.Text(16)
 
 	if len(indexes) > 0 {
+		logger.Infof(
+			"joining DKG with seed [%v] and controlling [%v] group members",
+			hex.EncodeToString(dkgSeed.Bytes()),
+			len(indexes),
+		)
+
 		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 		if err != nil {
 			logger.Errorf("failed to get broadcast channel: [%v]", err)
@@ -153,6 +164,11 @@ func (n *Node) JoinDKGIfEligible(
 				)
 			}()
 		}
+	} else {
+		logger.Infof(
+			"not eligible for DKG with seed [%v]",
+			hex.EncodeToString(dkgSeed.Bytes()),
+		)
 	}
 
 	return
