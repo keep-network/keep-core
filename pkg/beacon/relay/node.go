@@ -155,6 +155,7 @@ func (n *Node) JoinDKGIfEligible(
 						channelName,
 						err,
 					)
+					return
 				}
 
 				logger.Infof(
