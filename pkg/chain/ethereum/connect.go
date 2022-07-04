@@ -306,8 +306,8 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
 	// TODO: Fetch from RandomBeacon v2 contract.
-	groupSize := 100
-	honestThreshold := 51
+	groupSize := 64
+	honestThreshold := 33
 
 	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
 	if err != nil {
