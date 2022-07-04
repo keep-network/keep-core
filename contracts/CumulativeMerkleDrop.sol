@@ -26,9 +26,10 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
 
     event RewardsHolderUpdated(address oldRewardsHolder, address newRewardsHolder);
 
-    constructor(address token_, address rewardsHolder_) {
+    constructor(address token_, address rewardsHolder_, address newOwner) {
         require(IERC20(token_).totalSupply() > 0, "Token contract must be set");
-        require(rewardsHolder_ != address(0), "Rewards GHolder must be an address");
+        require(rewardsHolder_ != address(0), "Rewards Holder must be an address");
+        transferOwnership(newOwner);
         token = token_;
         rewardsHolder = rewardsHolder_;
     }
