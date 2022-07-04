@@ -62,7 +62,8 @@ func NewGroupRegistry(
 // public key was successfully created.
 func (g *Groups) RegisterCandidateGroup(
 	signer *dkg.ThresholdSigner,
-	channelName string) error {
+	channelName string,
+) error {
 	return g.registerGroup(signer, channelName, GroupStateCandidate)
 }
 
@@ -70,7 +71,8 @@ func (g *Groups) RegisterCandidateGroup(
 // public key was successfully approved.
 func (g *Groups) RegisterApprovedGroup(
 	signer *dkg.ThresholdSigner,
-	channelName string) error {
+	channelName string,
+) error {
 	return g.registerGroup(signer, channelName, GroupStateApproved)
 }
 
@@ -94,7 +96,9 @@ func (g *Groups) registerGroup(
 		return fmt.Errorf("could not persist membership to the storage: [%v]", err)
 	}
 
-	g.myGroups[groupPublicKey] = append(g.myGroups[groupPublicKey], membership)
+	if groupState == GroupStateApproved {
+		g.myGroups[groupPublicKey] = append(g.myGroups[groupPublicKey], membership)
+	}
 
 	return nil
 }
