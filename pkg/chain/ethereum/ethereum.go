@@ -250,8 +250,8 @@ func (ec *ethereumChain) OnDKGStarted(
 		for {
 			select {
 			case block := <-blocksChan:
-				// Generate an event every 100th block.
-				if block%100 == 0 {
+				// Generate an event every 500th block.
+				if block%500 == 0 {
 					// The seed is keccak256(block).
 					blockBytes := make([]byte, 8)
 					binary.BigEndian.PutUint64(blockBytes, block)
