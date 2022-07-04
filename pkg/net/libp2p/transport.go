@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/libp2p/go-libp2p-tls"
+	libp2ptls "github.com/libp2p/go-libp2p/p2p/security/tls"
 
 	keepNet "github.com/keep-network/keep-core/pkg/net"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
@@ -57,8 +57,9 @@ func newEncryptedAuthenticatedTransport(
 func (t *transport) SecureInbound(
 	ctx context.Context,
 	connection net.Conn,
+	remotePeerID peer.ID,
 ) (sec.SecureConn, error) {
-	encryptedConnection, err := t.encryptionLayer.SecureInbound(ctx, connection)
+	encryptedConnection, err := t.encryptionLayer.SecureInbound(ctx, connection, remotePeerID)
 	if err != nil {
 		return nil, err
 	}

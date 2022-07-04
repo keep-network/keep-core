@@ -1,13 +1,15 @@
 package libp2p
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
-	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
+	"math/big"
 	"reflect"
 	"testing"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/keep-network/keep-core/pkg/operator"
+	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
 
 func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
@@ -23,25 +25,31 @@ func TestOperatorPrivateKeyToNetworkKeyPair(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(networkPublicKey.Curve.Params(), DefaultCurve.Params()) {
-		t.Errorf("network public key uses the wrong curve")
-	}
+	// To access X and Y coordinates `networkPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them
+	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
 
-	if networkPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
+	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
-	if networkPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
+	if btcecPublicKey.Y().Cmp(operatorPublicKey.Y) != 0 {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 
+	// To access the D value `networkPrivateKey`needs to be converted to the
+	// underlying `type btcec.PrivateKey` as the type
+	// `libp2pcrypto.Secp256k1PrivateKey` does not expose it.
+	btcecPrivateKey := (*btcec.PrivateKey)(networkPrivateKey)
+
 	if !reflect.DeepEqual(
-		networkPrivateKey.PublicKey,
-		(ecdsa.PublicKey)(*networkPublicKey),
+		btcecPrivateKey.PubKey(),
+		btcecPublicKey,
 	) {
 		t.Errorf("network private key contains wrong network public key")
 	}
 
-	if networkPrivateKey.D.Cmp(operatorPrivateKey.D) != 0 {
+	if extractD(btcecPrivateKey).Cmp(operatorPrivateKey.D) != 0 {
 		t.Errorf("network private key has a wrong D parameter")
 	}
 }
@@ -84,14 +92,15 @@ func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(networkPublicKey.Curve.Params(), DefaultCurve.Params()) {
-		t.Errorf("network public key uses the wrong curve")
-	}
+	// To access X and Y coordinates `networkPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them
+	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
 
-	if networkPublicKey.X.Cmp(operatorPublicKey.X) != 0 {
+	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
 		t.Errorf("network public key has a wrong X coordinate")
 	}
-	if networkPublicKey.Y.Cmp(operatorPublicKey.Y) != 0 {
+	if btcecPublicKey.Y().Cmp(operatorPublicKey.Y) != 0 {
 		t.Errorf("network public key has a wrong Y coordinate")
 	}
 }
@@ -136,14 +145,20 @@ func TestNetworkPublicKeyToOperatorPublicKey(t *testing.T) {
 		t.Errorf("operator public key uses the wrong curve")
 	}
 
-	if operatorPublicKey.X.Cmp(
-		networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey).X,
-	) != 0 {
+	libp2pPublicKey, ok := networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey)
+	if !ok {
+		t.Fatal("network public key is not an instance of the libp2p secp256k1 public key")
+	}
+
+	// To access X and Y coordinates `libp2pPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them
+	btcecPublicKey := (*btcec.PublicKey)(libp2pPublicKey)
+
+	if operatorPublicKey.X.Cmp(btcecPublicKey.X()) != 0 {
 		t.Errorf("operator public key has a wrong X coordinate")
 	}
-	if operatorPublicKey.Y.Cmp(
-		networkPublicKey.(*libp2pcrypto.Secp256k1PublicKey).Y,
-	) != 0 {
+	if operatorPublicKey.Y.Cmp(btcecPublicKey.Y()) != 0 {
 		t.Errorf("operator public key has a wrong Y coordinate")
 	}
 }
@@ -166,4 +181,9 @@ func TestNetworkPublicKeyToOperatorPublicKey_NotSecp256k1(t *testing.T) {
 			err,
 		)
 	}
+}
+
+func extractD(privateKey *btcec.PrivateKey) *big.Int {
+	privateKeyBytes := privateKey.Key.Bytes()
+	return new(big.Int).SetBytes(privateKeyBytes[:])
 }
