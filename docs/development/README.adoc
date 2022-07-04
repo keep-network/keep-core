@@ -1,21 +1,21 @@
 :toc: macro
 
-= Keep developer documentation
+= T developer documentation
 
 toc::[]
 
-== <<local-keep-network.adoc,Setting up local Keep network>>
+== <<local-t-network.adoc,Setting up local T network>>
 
 For development purposes, it is convenient to set up a local Ethereum client with
 a group of connected peers. A note-taken walkthrough covers the entire process
-including setting up a local Ethereum client, deploying Keep contracts and
-configuring Keep peers.
+including setting up a local Ethereum client, deploying T contracts and
+configuring T peers.
 
 == Quick installation
 
 To quickly install and start a client use the following scripts.
 
-=== Install script
+=== Install scripts
 
 The `+install.sh+` script will:
 
@@ -23,16 +23,23 @@ The `+install.sh+` script will:
 * unlock accounts
 * build contracts
 * deploy contracts
-* setup staking contract
 * build client
 
-Please refer to the script's help for available command arguments and environment variables. `./install.sh --help`
+The `+initialize.sh+` script will:
 
-To start the installation execute:
+* mint & approve `T` tokens
+* stake `T` tokens
+* increase authorization for `RandomBeacon`
+* register operator
 
-....
-./scripts/install.sh
-....
+Please refer to the scripts `help` for available command arguments and environment variables. `./install.sh --help` or `./initialize.sh --help`. Accounts unlocking and staking can be run outside of these scripts as standalone hardhat tasks.
+
+To start the installation:
+
+* run `./scripts/install.sh`. You need to run it only once.
+
+* run `./scripts/initialize.sh --stake-owner <address>` for each client. Ex. if you need to initialize a network with 3 clients, then run this script 3 times with a different <address>.
+
 
 === Starting a client
 
@@ -40,7 +47,7 @@ TBD
 
 == Development Guidelines
 
-There are two primary languages in the Keep code right now:
+There are two primary languages in the T code right now:
 
 Go::
   Go code largely adheres to community practices where they have been decided.
@@ -56,7 +63,7 @@ Solidity::
 
 == Working with Solidity contracts
 
-The fastest and easiest way to have local Ethereum testent is to use Hardhat.
+The fastest and easiest way to have a local Ethereum testent is to use Hardhat.
 https://hardhat.org/
 
 

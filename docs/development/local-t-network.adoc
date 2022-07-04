@@ -1,6 +1,6 @@
 :toc: macro
 
-= Setting up local Keep network for development purposes
+= Setting up local T network for development purposes
 
 toc::[]
 
@@ -34,7 +34,7 @@ Repeat passphrase:
 Address: {3e208f39da1bc335464f40d85546ad6a1b66a9a4}
 ```
 
-Create a new account for each Keep peer individually. Peer's network identifier
+Create a new account for each T peer individually. Peer's network identifier
 is derived from the account's address and all messages from the peer are signed
 with the private key belonging to the account. Create 5 accounts for 5 peers. For simplicity, please set the password to `password`.
 ```
