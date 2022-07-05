@@ -13,6 +13,11 @@ function genMerkleLeaf (account, beneficiary, amount) {
   return MerkleTree.bufferToHex(keccak256(leaf))
 }
 
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
+}
+
+
 describe('Cumulative Merkle Distribution', function () {
   let token
 
@@ -105,13 +110,13 @@ describe('Cumulative Merkle Distribution', function () {
             const claimBeneficiaries = Array.from(claimAccounts).map((claimAccount, _) => dist.claims[claimAccount].beneficiary)
             const claimStructs = Array.from(claimAccounts).map((claimAccount, index) => [claimAccount, claimBeneficiaries[index], claimAmounts[index], claimProofs[index]])
             const prevBalances = await Promise.all(claimBeneficiaries.map(async (beneficiary, _) => await token.balanceOf(beneficiary)))
-            const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>  parseInt(prevAmmount + claimAmounts[index], 10))
             await merkleDist.batchClaim(merkleRoot, claimStructs)
 
             const afterBalancesHex = await Promise.all(claimBeneficiaries.map(async (beneficiary, _) => await token.balanceOf(beneficiary)))
             const afterBalances = Array.from(afterBalancesHex).map((afterAmmount, _) => parseInt(afterAmmount["_hex"], 16))
-            console.log(afterBalances)
-            console.log(expBalances)
+            const additions = Object.fromEntries(claimBeneficiaries.filter(onlyUnique).map((i) => [i, 0]))
+            claimBeneficiaries.forEach((beneficiary, index) => {additions[beneficiary] += parseInt(claimAmounts[index], 10)})
+            const expBalances = Array.from(prevBalances).map((prevAmmount, index) =>parseInt(prevAmmount + additions[claimBeneficiaries[index]], 10))
             expBalances.forEach((expAmount, index) => {
               expect(expAmount).to.equal(afterBalances[index])
             })
