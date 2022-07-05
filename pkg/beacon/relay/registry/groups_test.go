@@ -276,9 +276,9 @@ func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, 
 	outputData := make(chan persistence.DataDescriptor, 3)
 	outputErrors := make(chan error)
 
-	outputData <- &testDataDescriptor{"1", "dir", membershipBytes1}
-	outputData <- &testDataDescriptor{"2", "dir", membershipBytes2}
-	outputData <- &testDataDescriptor{"3", "dir", membershipBytes3}
+	outputData <- &testDataDescriptor{approvedMembershipPrefix + "_1", "dir", membershipBytes1}
+	outputData <- &testDataDescriptor{approvedMembershipPrefix + "_2", "dir", membershipBytes2}
+	outputData <- &testDataDescriptor{approvedMembershipPrefix + "_3", "dir", membershipBytes3}
 
 	close(outputData)
 	close(outputErrors)
