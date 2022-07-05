@@ -79,7 +79,6 @@ type Config struct {
 type provider struct {
 	channelManagerMutex     sync.Mutex
 	broadcastChannelManager *channelManager
-	unicastChannelManager   *unicastChannelManager
 
 	identity          *identity
 	host              host.Host
@@ -87,18 +86,6 @@ type provider struct {
 	disseminationTime int
 
 	connectionManager *connectionManager
-}
-
-func (p *provider) UnicastChannelWith(
-	peerID net.TransportIdentifier,
-) (net.UnicastChannel, error) {
-	return p.unicastChannelManager.getUnicastChannelWithHandshake(peerID)
-}
-
-func (p *provider) OnUnicastChannelOpened(
-	handler func(channel net.UnicastChannel),
-) {
-	p.unicastChannelManager.onChannelOpened(handler)
 }
 
 func (p *provider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
@@ -327,8 +314,6 @@ func Connect(
 		return nil, err
 	}
 
-	unicastChannelManager := newUnicastChannelManager(ctx, identity, host)
-
 	dhtDatastore := dssync.MutexWrap(dstore.NewMapDatastore())
 	router, err := dht.New(
 		ctx,
@@ -345,7 +330,6 @@ func Connect(
 
 	provider := &provider{
 		broadcastChannelManager: broadcastChannelManager,
-		unicastChannelManager:   unicastChannelManager,
 		identity:                identity,
 		host:                    rhost.Wrap(host, router),
 		routing:                 router,
