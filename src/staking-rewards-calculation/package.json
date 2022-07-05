@@ -1,0 +1,18 @@
+{
+  "name": "@manumonti/staking-rewards-calculation",
+  "version": "1.0.43",
+  "description": "Staking rewards calculation in Threshold Network",
+  "type": "module",
+  "main": "index",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "GPL-3.0-or-later",
+  "dependencies": {
+    "@urql/core": "^2.5.0",
+    "bignumber.js": "^9.0.2",
+    "graphql": "^16.5.0",
+    "isomorphic-unfetch": "^3.1.0"
+  }
+}
