@@ -34,14 +34,14 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     }
 
     function setMerkleRoot(bytes32 merkleRoot_) external override onlyOwner {
-        merkleRoot = merkleRoot_;
         emit MerkelRootUpdated(merkleRoot, merkleRoot_);
+        merkleRoot = merkleRoot_;
     }
 
     function setRewardsHolder(address rewardsHolder_) external onlyOwner {
         require(rewardsHolder_ != address(0), "Rewards holder must be an address");
-        rewardsHolder = rewardsHolder_;
         emit RewardsHolderUpdated(rewardsHolder, rewardsHolder_);
+        rewardsHolder = rewardsHolder_;
     }
 
     function claim(
@@ -54,7 +54,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         require(merkleRoot == expectedMerkleRoot, "Merkle root was updated");
 
         // Verify the merkle proof
-        bytes32 leaf = keccak256(abi.encodePacked(stakingProvider, cumulativeAmount));
+        bytes32 leaf = keccak256(abi.encodePacked(stakingProvider, beneficiary, cumulativeAmount));
         require(_verifyAsm(merkleProof, expectedMerkleRoot, leaf), "Invalid proof");
 
         // Mark it claimed

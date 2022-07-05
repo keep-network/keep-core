@@ -21,7 +21,7 @@ async function main () {
   if (typeof distJson !== 'object') throw new Error('Invalid JSON')
 
   const merkleRoot = proofJson.merkleRoot
-  const tokenTotal = new BN(distJson.tokenTotal.slice(2), 16)
+  const totalAmount = new BN(distJson.totalAmount.slice(2), 16)
   const account = Object.keys(proofJson.claims)[0]
   const amount = proofJson.claims[account].amount
   const merkleProof = proofJson.claims[account].proof
@@ -32,7 +32,7 @@ async function main () {
   merkleRootContract = await cumulativeMerkle.merkleRoot()
   console.log('Merkle Root in contract:', merkleRootContract)
 
-  await token.mint(cumulativeMerkle.address, tokenTotal.toString())
+  await token.mint(cumulativeMerkle.address, totalAmount.toString())
   console.log('Mint:', (await token.balanceOf(cumulativeMerkle.address)).toString(), 'tokens minted')
 
   console.log('Balance of account before claim:', (await token.balanceOf(account)).toString())
