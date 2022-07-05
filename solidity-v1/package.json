@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-core",
-  "version": "1.8.0-dev",
+  "version": "1.8.1-dev",
   "description": "Smart Contracts for the Keep Network Core",
   "repository": {
     "type": "git",
