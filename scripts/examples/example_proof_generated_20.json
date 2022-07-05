@@ -1,0 +1,15 @@
+{
+  "merkleRoot": "0xb32f71b4cfc8a40d61161a3f922d56fa82529e754a3e997aebefefa429e34360",
+  "claims": {
+    "0x2f9e94217C3f3493A2E65676E0F409fF5642A9AC": {
+      "beneficiary": "0x2f9e94217C3f3493A2E65676E0F409fF5642A9AC",
+      "amount": 1500000000000,
+      "proof": [
+        "0xdd81146ab7489c6fbd5d7dca0405fca29e0ae27951e32267888ef85d6ec7e970",
+        "0xfa42dd59b8f79b2c995fb21d6b86ba5cc50aebcd465554c517a0855b19993e4e",
+        "0x3d144506d5302d0bf7f0facda134dfb6e8ad9f5592f7912520fd61761bfecb00",
+        "0xd5d0b028b9f0461f15450864b00cc762b1b87df7fad6bfe1c4f047f16463e5ba"
+      ]
+    }
+  }
+}
