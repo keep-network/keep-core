@@ -94,7 +94,7 @@ const config: HardhatUserConfig = {
       gasPrice: 200000000000, // 200 gwei,
       // Ignore contract size on deployment to hardhat network, to be able to
       // deploy stub contracts in tests.
-      allowUnlimitedContractSize: true,
+      allowUnlimitedContractSize: process.env.TEST_USE_STUBS_ECDSA === "true",
     },
     development: {
       url: "http://localhost:8545",
