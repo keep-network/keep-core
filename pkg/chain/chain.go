@@ -2,11 +2,19 @@ package chain
 
 import (
 	"context"
+
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 )
+
+// Address is a chain-agnostic representation of a chain address.
+type Address string
+
+func (a Address) String() string {
+	return string(a)
+}
 
 // BlockCounter is an interface that provides the ability to wait for a certain
 // number of abstract blocks or watch as they are mined.
@@ -80,10 +88,12 @@ type Signing interface {
 
 	// PublicKeyToAddress converts operator's public key to an address
 	// associated with the chain.
+	// TODO: Refactor to return Address type
 	PublicKeyToAddress(publicKey *operator.PublicKey) ([]byte, error)
 
 	// PublicKeyBytesToAddress converts operator's public key bytes to an address
 	// associated with the chain.
+	// TODO: Refactor to return Address type
 	PublicKeyBytesToAddress(publicKey []byte) []byte
 }
 
