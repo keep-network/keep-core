@@ -16,18 +16,25 @@ const (
 func TestOperatorToStakingProvider_NotRegisteredOperator(t *testing.T) {
 	localChain := connectLocal(testOperatorAddress)
 
-	_, err := localChain.OperatorToStakingProvider()
-
-	testutils.AssertErrorsEqual(t, ErrOperatorNotRegistered, err)
+	_, ok, err := localChain.OperatorToStakingProvider()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok {
+		t.Fatal("Expected operator not to be registered")
+	}
 }
 
 func TestOperatorToStakingProvider(t *testing.T) {
 	localChain := connectLocal(testOperatorAddress)
 	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
 
-	stakingProvider, err := localChain.OperatorToStakingProvider()
+	stakingProvider, ok, err := localChain.OperatorToStakingProvider()
 	if err != nil {
 		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("Expected operator to be registered")
 	}
 
 	testutils.AssertStringsEqual(
@@ -70,7 +77,7 @@ func TestJoinSortitionPool_NotRegisteredOperator(t *testing.T) {
 	localChain := connectLocal(testOperatorAddress)
 
 	err := localChain.JoinSortitionPool()
-	testutils.AssertErrorsEqual(t, ErrOperatorNotRegistered, err)
+	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
 }
 
 func TestJoinSortitionPool_AuthorizationBelowMinimum(t *testing.T) {

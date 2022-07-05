@@ -8,6 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
+var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider")
 var errAuthorizationBelowMinimum = fmt.Errorf("authorization below the minimum")
 var errOperatorAlreadyRegisteredInPool = fmt.Errorf("operator is already registered in the pool")
 
@@ -54,16 +55,12 @@ func (lc *localChain) setEligibleStake(stakingProvider chain.Address, stake *big
 	lc.eligibleStake[stakingProvider] = stake
 }
 
-func (lc *localChain) OperatorToStakingProvider() (chain.Address, error) {
+func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
 	lc.operatorToStakingProviderMutex.RLock()
 	defer lc.operatorToStakingProviderMutex.RUnlock()
 
 	stakingProvider, ok := lc.operatorToStakingProvider[lc.operatorAddress]
-	if !ok {
-		return "", ErrOperatorNotRegistered
-	}
-
-	return stakingProvider, nil
+	return stakingProvider, ok, nil
 }
 
 func (lc *localChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
@@ -100,7 +97,7 @@ func (lc *localChain) JoinSortitionPool() error {
 
 	stakingProvider, ok := lc.operatorToStakingProvider[lc.operatorAddress]
 	if !ok {
-		return ErrOperatorNotRegistered
+		return errOperatorUnknown
 	}
 
 	eligibleStake, ok := lc.eligibleStake[stakingProvider]
