@@ -18,7 +18,7 @@ function toBN(x) {
 
 function makeDist(wallets, data) {
   const elements = wallets.map(
-    (w, i) => w + data[i].beneficiary + toBN(data[i].amount).toString(16, 64)
+    (w, i) => w + data[i].beneficiary.substr(2) + toBN(data[i].amount).toString(16, 64)
   )
   const tree = new MerkleTree(elements, keccak256, {
     hashLeaves: true,
@@ -44,7 +44,7 @@ function main() {
 
   const claims = Object.entries(json).map(([wallet, data]) => {
     leaf = MerkleTree.bufferToHex(
-      keccak256(wallet + data.beneficiary + toBN(data.amount).toString(16, 64))
+      keccak256(wallet + data.beneficiary.substr(2) + toBN(data.amount).toString(16, 64))
     )
     return {
       wallet: wallet,
