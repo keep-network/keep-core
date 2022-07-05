@@ -18,14 +18,13 @@ import (
 	dssync "github.com/ipfs/go-datastore/sync"
 	addrutil "github.com/libp2p/go-addr-util"
 	"github.com/libp2p/go-libp2p"
-	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	"github.com/libp2p/go-libp2p-core/host"
 	libp2pnet "github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	rhost "github.com/libp2p/go-libp2p/p2p/host/routed"
+	connmgr "github.com/libp2p/go-libp2p/p2p/net/connmgr"
 
-	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -80,7 +79,6 @@ type Config struct {
 type provider struct {
 	channelManagerMutex     sync.Mutex
 	broadcastChannelManager *channelManager
-	unicastChannelManager   *unicastChannelManager
 
 	identity          *identity
 	host              host.Host
@@ -88,18 +86,6 @@ type provider struct {
 	disseminationTime int
 
 	connectionManager *connectionManager
-}
-
-func (p *provider) UnicastChannelWith(
-	peerID net.TransportIdentifier,
-) (net.UnicastChannel, error) {
-	return p.unicastChannelManager.getUnicastChannelWithHandshake(peerID)
-}
-
-func (p *provider) OnUnicastChannelOpened(
-	handler func(channel net.UnicastChannel),
-) {
-	p.unicastChannelManager.onChannelOpened(handler)
 }
 
 func (p *provider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
@@ -328,8 +314,6 @@ func Connect(
 		return nil, err
 	}
 
-	unicastChannelManager := newUnicastChannelManager(ctx, identity, host)
-
 	dhtDatastore := dssync.MutexWrap(dstore.NewMapDatastore())
 	router, err := dht.New(
 		ctx,
@@ -346,7 +330,6 @@ func Connect(
 
 	provider := &provider{
 		broadcastChannelManager: broadcastChannelManager,
-		unicastChannelManager:   unicastChannelManager,
 		identity:                identity,
 		host:                    rhost.Wrap(host, router),
 		routing:                 router,
@@ -402,17 +385,23 @@ func discoverAndListen(
 		)
 	}
 
+	connectionManager, err := connmgr.NewConnManager(
+		DefaultConnMgrLowWater,
+		DefaultConnMgrHighWater,
+		connmgr.WithGracePeriod(DefaultConnMgrGracePeriod),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"could not create connection manager: [%v]",
+			err,
+		)
+	}
+
 	options := []libp2p.Option{
 		libp2p.ListenAddrs(addrs...),
 		libp2p.Identity(identity.privKey),
 		libp2p.Security(handshakeID, transport),
-		libp2p.ConnectionManager(
-			connmgr.NewConnManager(
-				DefaultConnMgrLowWater,
-				DefaultConnMgrHighWater,
-				DefaultConnMgrGracePeriod,
-			),
-		),
+		libp2p.ConnectionManager(connectionManager),
 	}
 
 	if addresses := parseMultiaddresses(announcedAddresses); len(addresses) > 0 {
@@ -427,7 +416,7 @@ func discoverAndListen(
 		options = append(options, libp2p.AddrsFactory(addressFactory))
 	}
 
-	return libp2p.New(ctx, options...)
+	return libp2p.New(options...)
 }
 
 func getListenAddrs(port int) ([]ma.Multiaddr, error) {
@@ -473,11 +462,11 @@ func (p *provider) bootstrap(
 		return err
 	}
 
-	bootstrapConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
+	bootstrapConfig := bootstrapConfigWithPeers(peerInfos)
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.
-	_, err = bootstrap.Bootstrap(
+	_, err = Bootstrap(
 		p.identity.id,
 		p.host,
 		p.routing,

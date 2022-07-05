@@ -28,7 +28,7 @@
     "build": "hardhat compile",
     "test": "TEST_USE_STUBS=true hardhat test",
     "deploy": "hardhat deploy --export export.json",
-    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts export/artifacts"
+    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts --including-no-public-functions export/artifacts"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",
@@ -69,7 +69,7 @@
     "@keep-network/sortition-pools": "^2.0.0-pre.9",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
-    "@threshold-network/solidity-contracts": ">1.2.0-dev <1.2.0-ropsten"
+    "@threshold-network/solidity-contracts": "development"
   },
   "engines": {
     "node": ">= 14.0.0"

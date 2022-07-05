@@ -4,7 +4,6 @@
 package local
 
 import (
-	"context"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"sync"
 
@@ -28,24 +27,10 @@ type localProvider struct {
 	id                    localIdentifier
 	operatorPublicKey     *operator.PublicKey
 	connectionManager     *localConnectionManager
-	unicastChannelManager *unicastChannelManager
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
 	return lp.id
-}
-
-func (lp *localProvider) UnicastChannelWith(peerID net.TransportIdentifier) (
-	net.UnicastChannel,
-	error,
-) {
-	return lp.unicastChannelManager.UnicastChannelWith(peerID)
-}
-
-func (lp *localProvider) OnUnicastChannelOpened(
-	handler func(channel net.UnicastChannel),
-) {
-	lp.unicastChannelManager.OnUnicastChannelOpened(context.Background(), handler)
 }
 
 func (lp *localProvider) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
@@ -92,7 +77,6 @@ func ConnectWithKey(operatorPublicKey *operator.PublicKey) Provider {
 		id:                    randomLocalIdentifier(),
 		operatorPublicKey:     operatorPublicKey,
 		connectionManager:     &localConnectionManager{peers: make(map[string]*operator.PublicKey)},
-		unicastChannelManager: newUnicastChannelManager(operatorPublicKey),
 	}
 }
 

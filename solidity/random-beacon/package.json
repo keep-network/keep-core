@@ -14,7 +14,7 @@
     "export.json"
   ],
   "scripts": {
-    "clean": "hardhat clean",
+    "clean": "hardhat clean && rm -rf cache",
     "build": "hardhat compile",
     "test": "hardhat check-accounts-count && hardhat test",
     "deploy": "hardhat deploy --export export.json",
@@ -28,13 +28,13 @@
     "lint:fix:sol": "solhint 'contracts/**/*.sol' --fix && prettier --write '**/*.sol'",
     "lint:config": "prettier --check '**/*.@(json|yaml)'",
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'",
-    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts export/artifacts"
+    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts --including-no-public-functions export/artifacts"
   },
   "dependencies": {
     "@keep-network/sortition-pools": "^2.0.0-pre.9",
     "@openzeppelin/contracts": "^4.6.0",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
-    "@threshold-network/solidity-contracts": ">1.2.0-dev <1.2.0-ropsten"
+    "@threshold-network/solidity-contracts": "development"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",
@@ -57,7 +57,7 @@
     "hardhat": "^2.6.4",
     "hardhat-contract-sizer": "^2.5.1",
     "hardhat-dependency-compiler": "^1.1.2",
-    "hardhat-deploy": "^0.11.2",
+    "hardhat-deploy": "^0.11.10",
     "hardhat-gas-reporter": "^1.0.8",
     "prettier": "^2.4.1",
     "prettier-plugin-solidity": "^1.0.0-beta.18",
