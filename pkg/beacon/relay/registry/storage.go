@@ -2,11 +2,17 @@ package registry
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 
 	"encoding/hex"
+)
+
+const (
+	candidateMembershipPrefix = "candidate_membership"
+	approvedMembershipPrefix  = "approved_membership"
 )
 
 type storage interface {
@@ -34,21 +40,23 @@ func (ps *persistentStorage) save(
 		return fmt.Errorf("marshalling of the membership failed: [%v]", err)
 	}
 
-	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytesCompressed())
+	directory := hex.EncodeToString(membership.Signer.GroupPublicKeyBytesCompressed())
 
-	var directory string
+	var membershipPrefix string
 	switch groupState {
 	case GroupStateCandidate:
-		directory = hexGroupPublicKey + "_candidate"
+		membershipPrefix = candidateMembershipPrefix
 	case GroupStateApproved:
-		directory = hexGroupPublicKey
+		membershipPrefix = approvedMembershipPrefix
 	}
 
-	return ps.handle.Save(
-		membershipBytes,
-		directory,
-		"/membership_"+fmt.Sprint(membership.Signer.MemberID()),
+	fileName := fmt.Sprintf(
+		"/%v_%v",
+		membershipPrefix,
+		fmt.Sprint(membership.Signer.MemberID()),
 	)
+
+	return ps.handle.Save(membershipBytes, directory, fileName)
 }
 
 func (ps *persistentStorage) archive(groupPublicKeyCompressed []byte) error {
@@ -94,6 +102,11 @@ func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
 	// error to an output errors channel.
 	go func() {
 		for descriptor := range inputData {
+			// Proceed only approved groups and skip the candidate ones.
+			if !strings.HasPrefix(descriptor.Name(), approvedMembershipPrefix) {
+				continue
+			}
+
 			content, err := descriptor.Content()
 			if err != nil {
 				outputErrors <- fmt.Errorf(
