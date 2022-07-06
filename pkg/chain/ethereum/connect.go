@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"math/big"
 	"sync"
 
@@ -53,6 +54,11 @@ type ethereumChain struct {
 	// nonce. Serializing submission ensures that each nonce is requested after
 	// a previous transaction has been submitted.
 	transactionMutex *sync.Mutex
+
+	// TODO: Temporary helper map. Should be removed once proper RandomBeacon
+	//       v2 implementation is here.
+	dkgResultSubmissionHandlersMutex sync.Mutex
+	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 }
 
 type ethereumUtilityChain struct {
@@ -93,12 +99,13 @@ func connectWithClient(
 	}
 
 	ec := &ethereumChain{
-		config:           config,
-		client:           addClientWrappers(config, client),
-		clientRPC:        clientRPC,
-		clientWS:         clientWS,
-		chainID:          chainID,
-		transactionMutex: &sync.Mutex{},
+		config:                      config,
+		client:                      addClientWrappers(config, client),
+		clientRPC:                   clientRPC,
+		clientWS:                    clientWS,
+		chainID:                     chainID,
+		transactionMutex:            &sync.Mutex{},
+		dkgResultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 	}
 
 	blockCounter, err := ethutil.NewBlockCounter(ec.client)
@@ -180,7 +187,9 @@ func connectWithClient(
 	}
 	ec.chainConfig = chainConfig
 
-	ec.initializeBalanceMonitoring(ctx)
+	// TODO: Disable balance monitoring to be able to start the client
+	//       without v1 contracts deployed.
+	// ec.initializeBalanceMonitoring(ctx)
 
 	return ec, nil
 }
@@ -298,43 +307,16 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
-	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
-	}
-
-	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
-	}
-
-	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling ResultPublicationBlockStep: [%v]",
-			err,
-		)
-	}
-
-	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
-	if err != nil {
-		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
-	}
+	// TODO: Fetch from RandomBeacon v2 contract.
+	groupSize := 64
+	honestThreshold := 33
+	resultPublicationBlockStep := 6
+	relayEntryTimeout := groupSize * resultPublicationBlockStep
 
 	return &relaychain.Config{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
+		GroupSize:                  groupSize,
+		HonestThreshold:            honestThreshold,
+		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
+		RelayEntryTimeout:          uint64(relayEntryTimeout),
 	}, nil
 }

@@ -3,18 +3,16 @@ package beacon
 import (
 	"context"
 	"encoding/hex"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	dkgresult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -64,19 +62,7 @@ func Initialize(
 		groupRegistry,
 	)
 
-	// We need to calculate group selection duration here as we can't do it
-	// inside the deduplicator due to import cycles. We don't include the
-	// time needed for publication as we are interested about the minimum
-	// possible off-chain group create protocol duration.
-	minGroupCreationDurationBlocks :=
-		chainConfig.TicketSubmissionTimeout +
-			gjkr.ProtocolBlocks() +
-			dkgresult.PrePublicationBlocks()
-
-	eventDeduplicator := event.NewDeduplicator(
-		relayChain,
-		minGroupCreationDurationBlocks,
-	)
+	eventDeduplicator := event.NewDeduplicator(relayChain)
 
 	node.ResumeSigningIfEligible(relayChain, signing)
 
@@ -150,54 +136,32 @@ func Initialize(
 		)
 	})
 
-	_ = relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		onGroupSelected := func(group *groupselection.Result) {
-			for index, staker := range group.SelectedStakers {
-				logger.Infof(
-					"new candidate group member [0x%v] with index [%v]",
-					hex.EncodeToString(staker),
-					index,
-				)
-			}
-			node.JoinGroupIfEligible(
-				relayChain,
-				signing,
-				group,
-				event.NewEntry,
-			)
-		}
-
+	_ = relayChain.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
-			if ok := eventDeduplicator.NotifyGroupSelectionStarted(
-				event.BlockNumber,
+			if ok := eventDeduplicator.NotifyDKGStarted(
+				event.Seed,
 			); !ok {
 				logger.Warningf(
-					"group selection event with seed [0x%x] and "+
+					"DKG started event with seed [0x%x] and "+
 						"starting block [%v] has been already processed",
-					event.NewEntry,
+					event.Seed,
 					event.BlockNumber,
 				)
 				return
 			}
 
 			logger.Infof(
-				"group selection started with seed [0x%x] at block [%v]",
-				event.NewEntry,
+				"DKG started with seed [0x%x] at block [%v]",
+				event.Seed,
 				event.BlockNumber,
 			)
 
-			err = groupselection.CandidateToNewGroup(
+			node.JoinDKGIfEligible(
 				relayChain,
-				blockCounter,
-				chainConfig,
-				staker,
-				event.NewEntry,
+				signing,
+				event.Seed,
 				event.BlockNumber,
-				onGroupSelected,
 			)
-			if err != nil {
-				logger.Errorf("tickets submission failed: [%v]", err)
-			}
 		}()
 	})
 
