@@ -187,7 +187,9 @@ func connectWithClient(
 	}
 	ec.chainConfig = chainConfig
 
-	ec.initializeBalanceMonitoring(ctx)
+	// TODO: Disable balance monitoring to be able to start the client
+	//       without v1 contracts deployed.
+	// ec.initializeBalanceMonitoring(ctx)
 
 	return ec, nil
 }
@@ -308,24 +310,13 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	// TODO: Fetch from RandomBeacon v2 contract.
 	groupSize := 64
 	honestThreshold := 33
-
-	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling ResultPublicationBlockStep: [%v]",
-			err,
-		)
-	}
-
-	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
-	if err != nil {
-		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
-	}
+	resultPublicationBlockStep := 6
+	relayEntryTimeout := groupSize * resultPublicationBlockStep
 
 	return &relaychain.Config{
 		GroupSize:                  groupSize,
 		HonestThreshold:            honestThreshold,
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
+		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
+		RelayEntryTimeout:          uint64(relayEntryTimeout),
 	}, nil
 }
