@@ -141,6 +141,7 @@ func (n *Node) JoinDKGIfEligible(
 					signer.GroupPublicKeyBytesCompressed(),
 				)
 
+				// TODO: Consider snapshotting the key material just in case.
 				err = n.groupRegistry.RegisterGroup(signer, groupPublicKey)
 				if err != nil {
 					logger.Errorf(
