@@ -7,24 +7,24 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 )
 
-// TBTCChain represents a TBTC-specific chain handle.
-type TBTCChain struct {
+// TbtcChain represents a TBTC-specific chain handle.
+type TbtcChain struct {
 	*Chain
 }
 
-// NewTBTCChain construct a new instance of the TBTC-specific Ethereum
+// NewTbtcChain construct a new instance of the TBTC-specific Ethereum
 // chain handle.
-func NewTBTCChain(
+func NewTbtcChain(
 	ctx context.Context,
 	config *ethereum.Config,
 	client ethutil.EthereumClient,
-) (*TBTCChain, error) {
+) (*TbtcChain, error) {
 	chain, err := NewChain(ctx, config, client)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create base chain handle: [%v]", err)
 	}
 
-	return &TBTCChain{
+	return &TbtcChain{
 		Chain: chain,
 	}, nil
 }
