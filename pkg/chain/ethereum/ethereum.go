@@ -238,7 +238,7 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 
 // TODO: Implement a real DkgStarted event subscription once it is possible
 //       on the contract side. The current implementation generate a fake
-//       event every 100th block where the seed is the keccak256 of the
+//       event every 500th block where the seed is the keccak256 of the
 //       block number.
 func (ec *ethereumChain) OnDKGStarted(
 	handler func(event *event.DKGStarted),
