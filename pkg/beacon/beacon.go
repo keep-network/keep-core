@@ -138,8 +138,23 @@ func Initialize(
 
 	_ = relayChain.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
-			// TODO: Event deduplication logic that is aware of the full group
-			//       creation process with result challenges and approves.
+			if ok := eventDeduplicator.NotifyDKGStarted(
+				event.Seed,
+			); !ok {
+				logger.Warningf(
+					"DKG started event with seed [0x%x] and "+
+						"starting block [%v] has been already processed",
+					event.Seed,
+					event.BlockNumber,
+				)
+				return
+			}
+
+			logger.Infof(
+				"DKG started with seed [0x%x] at block [%v]",
+				event.Seed,
+				event.BlockNumber,
+			)
 
 			node.JoinDKGIfEligible(
 				relayChain,

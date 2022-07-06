@@ -3,8 +3,16 @@ package event
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/keep-network/keep-common/pkg/cache"
 	"math/big"
 	"sync"
+	"time"
+)
+
+const (
+	// DKGSeedCachePeriod is the time period the cache maintains
+	// the DKG seed corresponding to a DKG instance.
+	DKGSeedCachePeriod = 7 * 24 * time.Hour
 )
 
 // Local chain interface to avoid import cycles.
@@ -24,9 +32,12 @@ type chain interface {
 // should be handled.
 //
 // Those events are supported:
+// - DKG started
 // - relay entry requested
 type Deduplicator struct {
 	chain chain
+
+	dkgSeedCache *cache.TimeCache
 
 	relayEntryMutex             sync.Mutex
 	currentRequestStartBlock    uint64
@@ -36,8 +47,31 @@ type Deduplicator struct {
 // NewDeduplicator constructs a new Deduplicator instance.
 func NewDeduplicator(chain chain) *Deduplicator {
 	return &Deduplicator{
-		chain: chain,
+		chain:        chain,
+		dkgSeedCache: cache.NewTimeCache(DKGSeedCachePeriod),
 	}
+}
+
+// NotifyDKGStarted notifies the client wants to start the distributed key
+// generation upon receiving an event. It returns boolean indicating whether the
+// client should proceed with the execution or ignore the event as a duplicate.
+func (d *Deduplicator) NotifyDKGStarted(
+	newDKGSeed *big.Int,
+) bool {
+	d.dkgSeedCache.Sweep()
+
+	// The cache key is the hexadecimal representation of the seed.
+	cacheKey := newDKGSeed.Text(16)
+	// If the key is not in the cache, that means the seed was not handled
+	// yet and the client should proceed with the execution.
+	if !d.dkgSeedCache.Has(cacheKey) {
+		d.dkgSeedCache.Add(cacheKey)
+		return true
+	}
+
+	// Otherwise, the DKG seed is a duplicate and the client should not proceed
+	// with the execution.
+	return false
 }
 
 // NotifyRelayEntryStarted notifies the client wants to start relay entry

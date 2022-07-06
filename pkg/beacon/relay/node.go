@@ -54,14 +54,14 @@ func (n *Node) JoinDKGIfEligible(
 	dkgStartBlockNumber uint64,
 ) {
 	logger.Infof(
-		"checking eligibility for DKG with seed [%v]",
-		hex.EncodeToString(dkgSeed.Bytes()),
+		"checking eligibility for DKG with seed [0x%x]",
+		dkgSeed,
 	)
 
 	groupMembers, err := relayChain.SelectGroup(dkgSeed)
 	if err != nil {
 		logger.Errorf(
-			"failed to select group with seed [%v]: [%v]",
+			"failed to select group with seed [0x%x]: [%v]",
 			dkgSeed,
 			err,
 		)
@@ -90,8 +90,8 @@ func (n *Node) JoinDKGIfEligible(
 
 	if len(indexes) > 0 {
 		logger.Infof(
-			"joining DKG with seed [%v] and controlling [%v] group members",
-			hex.EncodeToString(dkgSeed.Bytes()),
+			"joining DKG with seed [0x%x] and controlling [%v] group members",
+			dkgSeed,
 			len(indexes),
 		)
 
@@ -161,10 +161,7 @@ func (n *Node) JoinDKGIfEligible(
 			}()
 		}
 	} else {
-		logger.Infof(
-			"not eligible for DKG with seed [%v]",
-			hex.EncodeToString(dkgSeed.Bytes()),
-		)
+		logger.Infof("not eligible for DKG with seed [0x%x]", dkgSeed)
 	}
 
 	return
