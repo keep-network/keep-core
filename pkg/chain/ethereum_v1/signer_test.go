@@ -1,4 +1,4 @@
-package ethereum
+package ethereum_v1
 
 import (
 	"crypto/rand"

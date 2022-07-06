@@ -7,7 +7,7 @@ import (
 
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum_v1"
 	"github.com/urfave/cli"
 )
 
@@ -51,7 +51,7 @@ func relayRequest(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: [%v]", err)
 	}
 
-	utility, err := ethereum.ConnectUtility(cfg.Ethereum)
+	utility, err := ethereum_v1.ConnectUtility(cfg.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -91,7 +91,7 @@ func genesis(c *cli.Context) error {
 		return fmt.Errorf("error reading config file: [%v]", err)
 	}
 
-	utility, err := ethereum.ConnectUtility(cfg.Ethereum)
+	utility, err := ethereum_v1.ConnectUtility(cfg.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
