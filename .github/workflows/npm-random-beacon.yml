@@ -32,8 +32,10 @@ jobs:
       - name: Resolve latest contracts
         run: yarn upgrade @keep-network/sortition-pools
 
-      - name: Compile contracts
-        run: yarn build
+      # Deploy contracts to a local network to generate deployment artifacts that
+      # are required by dashboard and client compilation.
+      - name: Deploy contracts
+        run: yarn deploy --network hardhat --write true
 
       - name: Bump up package version
         id: npm-version-bump
@@ -48,7 +50,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access=public --tag=development
+        run: npm publish --access=public --network=hardhat --tag=development
 
       - name: Publish package
         if: github.ref != 'refs/heads/main'
