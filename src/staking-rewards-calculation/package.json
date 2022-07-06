@@ -1,6 +1,6 @@
 {
   "name": "@manumonti/staking-rewards-calculation",
-  "version": "1.0.43",
+  "version": "1.0.45",
   "description": "Staking rewards calculation in Threshold Network",
   "type": "module",
   "main": "index",

@@ -138,8 +138,25 @@ async function getEpochsBetweenDatesByOwner(
   return data
 }
 
-async function getOperatorConfirmedTimestamp (stakingProviderAddress) {
+async function getOpConfTimestamp(gqlClient, stakingProviderAddress) {
+  let data
 
+  const OP_CONF_TIMESTAMP = gql`
+    query SimplePREApplications($address: String) {
+      simplePREApplication(id: $address) {
+        confirmedTimestamp
+      }
+    }
+  `
+
+  await gqlClient
+    .query(OP_CONF_TIMESTAMP, { address: stakingProviderAddress })
+    .toPromise()
+    .then((result) => {
+      data = result?.data?.simplePREApplication?.confirmedTimestamp
+    })
+
+  return data ? parseInt(data) : data
 }
 
 /**
@@ -235,31 +252,51 @@ async function getOngoingRewards(
   })
 
   const rewards = []
-
   // Calculate the rewards of each stake
   // Rewards formula: r = (s_1 * y_t) * t / 365; where y_t is 0.15
-  Object.keys(stakeList).map((stakingProvider) => {
-    const stake = stakeList[stakingProvider]
-    const reward = stake.reduce((total, epochStake) => {
-      const stakeAmount = BigNumber(epochStake.amount)
-      const epochDuration = epochStake.epochDuration
-        ? parseInt(epochStake.epochDuration)
-        : currentTime - epochStake.epochTimestamp
-      const epochReward = stakeAmount
-        .times(15)
-        .times(epochDuration)
-        .div(SECONDS_IN_YEAR * 100)
-      return total.plus(epochReward)
-    }, BigNumber(0))
+  await Promise.all(
+    Object.keys(stakeList).map(async (stakingProvider) => {
+      let reward = BigNumber(0)
 
-    const rewardsItem = {
-      stakingProvider: stakingProvider,
-      reward: reward,
-    }
+      const stake = stakeList[stakingProvider]
+      // Check if operator is confirmed and when
+      const opConfTimestamp = await getOpConfTimestamp(
+        gqlClient,
+        stakingProvider
+      )
+      if (opConfTimestamp) {
+        reward = stake.reduce((total, epochStake) => {
+          let epochReward = BigNumber(0)
+          const stakeAmount = BigNumber(epochStake.amount)
+          const epochTimestamp = parseInt(epochStake.epochTimestamp)
+          let epochDuration = epochStake.epochDuration
+            ? parseInt(epochStake.epochDuration)
+            : currentTime - epochStake.epochTimestamp
 
-    rewards.push(rewardsItem)
-  })
+          // If the operator was confirmed in the middle of this epoch...
+          if (
+            opConfTimestamp > epochTimestamp &&
+            opConfTimestamp <= epochTimestamp + epochDuration
+          ) {
+            epochDuration = epochTimestamp + epochDuration - opConfTimestamp
+          }
 
+          epochReward = stakeAmount
+            .times(15)
+            .times(epochDuration)
+            .div(SECONDS_IN_YEAR * 100)
+
+          return total.plus(epochReward)
+        }, BigNumber(0))
+      }
+
+      const rewardsItem = {
+        stakingProvider: stakingProvider,
+        reward: reward,
+      }
+      rewards.push(rewardsItem)
+    })
+  )
   return rewards
 }
 
