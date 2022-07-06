@@ -27,10 +27,17 @@ func operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey *operator.PrivateKey)
 		return nil, nil, fmt.Errorf("libp2p supports only secp256k1 operator keys")
 	}
 
+	operatorKeyBytes := operatorPrivateKey.D.Bytes()
+
+	// The length of operator private key bytes may be less than 32. In that
+	// case pad it with zeros to the length of 32 bytes.
+	paddedOperatorKeyBytes := make([]byte, 32)
+	copy(paddedOperatorKeyBytes[32 - len(operatorKeyBytes):], operatorKeyBytes)
+
 	// Note that `libp2pcrypto.UnmarshalSecp256k1PrivateKey` uses the secp256k1
 	// implementation provided by decred underneath
 	libp2pPrivateKey, err := libp2pcrypto.UnmarshalSecp256k1PrivateKey(
-		operatorPrivateKey.D.Bytes(),
+		paddedOperatorKeyBytes,
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
