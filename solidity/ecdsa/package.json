@@ -28,7 +28,7 @@
     "build": "hardhat compile",
     "test": "TEST_USE_STUBS=true hardhat test",
     "deploy": "hardhat deploy --export export.json",
-    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts export/artifacts"
+    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts --including-no-public-functions export/artifacts"
   },
   "devDependencies": {
     "@defi-wonderland/smock": "^2.0.7",

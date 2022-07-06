@@ -3,77 +3,20 @@ package libp2p
 import (
 	"context"
 	"testing"
+	"strconv"
 
-	"github.com/keep-network/keep-core/pkg/net/gen/pb"
+	"github.com/keep-network/keep-core/pkg/firewall"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/net"
+	"github.com/multiformats/go-multiaddr"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	pubsubpb "github.com/libp2p/go-libp2p-pubsub/pb"
 )
-
-func TestFuzzUnicastChannelReceiveSide(t *testing.T) {
-	ctx := context.Background()
-
-	withNetwork(ctx, t, 5000, func(
-		_ *identity,
-		identity2 *identity,
-		provider1 net.Provider,
-		_ net.Provider,
-	) {
-		testChannel, err := provider1.UnicastChannelWith(identity2.id)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		unicastTestChannel, ok := testChannel.(*unicastChannel)
-		if !ok {
-			t.Fatal("could not cast to unicast channel")
-		}
-
-		for i := 0; i < 100; i++ {
-			var message pb.UnicastNetworkMessage
-
-			f := fuzz.New().NilChance(0.01).NumElements(0, 1024)
-			f.Fuzz(&message)
-
-			_ = unicastTestChannel.processMessage(&message)
-		}
-	})
-}
-
-func TestFuzzUnicastChannelRoundtrip(t *testing.T) {
-	ctx := context.Background()
-
-	withNetwork(ctx, t, 6000, func(
-		_ *identity,
-		identity2 *identity,
-		provider1 net.Provider,
-		provider2 net.Provider,
-	) {
-		testChannel, err := provider1.UnicastChannelWith(identity2.id)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		provider2.OnUnicastChannelOpened(func(channel net.UnicastChannel) {
-			channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-				return &fuzzingMessage{}
-			})
-		})
-
-		for i := 0; i < 100; i++ {
-			var message fuzzingMessage
-
-			f := fuzz.New().NilChance(0.01).NumElements(0, 1024)
-			f.Fuzz(&message)
-
-			_ = testChannel.Send(&message)
-		}
-	})
-}
 
 func TestFuzzBroadcastChannelReceiveSide(t *testing.T) {
 	ctx := context.Background()
@@ -160,4 +103,111 @@ func (m *fuzzingMessage) Marshal() ([]byte, error) {
 func (m *fuzzingMessage) Unmarshal(bytes []byte) error {
 	m.Bytes = bytes
 	return nil
+}
+
+func withNetwork(
+	ctx context.Context,
+	t *testing.T,
+	startingPort int,
+	testFn func(
+		identity1 *identity,
+		identity2 *identity,
+		provider1 net.Provider,
+		provider2 net.Provider,
+	),
+) {
+	operatorPrivateKey1, _, err := operator.GenerateKeyPair(DefaultCurve)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	networkPrivateKey1, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity1, err := createIdentity(networkPrivateKey1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider1Port := startingPort
+
+	multiaddr1, err := multiaddr.NewMultiaddr(
+		"/ip4/127.0.0.1/tcp/" + strconv.Itoa(provider1Port),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	operatorPrivateKey2, _, err := operator.GenerateKeyPair(DefaultCurve)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	networkPrivateKey2, _, err := operatorPrivateKeyToNetworkKeyPair(operatorPrivateKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity2, err := createIdentity(networkPrivateKey2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider2Port := startingPort + 1
+
+	multiaddr2, err := multiaddr.NewMultiaddr(
+		"/ip4/127.0.0.1/tcp/" + strconv.Itoa(provider2Port),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider1, err := Connect(
+		ctx,
+		Config{
+			Peers: []string{
+				multiaddressWithIdentity(
+					multiaddr2,
+					identity2.id,
+				),
+			},
+			Port: provider1Port,
+		},
+		operatorPrivateKey1,
+		ProtocolBeacon,
+		firewall.Disabled,
+		retransmission.NewTicker(make(chan uint64)),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider2, err := Connect(
+		ctx,
+		Config{
+			Peers: []string{
+				multiaddressWithIdentity(
+					multiaddr1,
+					identity1.id,
+				),
+			},
+			Port: provider2Port,
+		},
+		operatorPrivateKey2,
+		ProtocolBeacon,
+		firewall.Disabled,
+		retransmission.NewTicker(make(chan uint64)),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testFn(
+		identity1,
+		identity2,
+		provider1,
+		provider2,
+	)
 }

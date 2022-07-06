@@ -28,7 +28,7 @@
     "lint:fix:sol": "solhint 'contracts/**/*.sol' --fix && prettier --write '**/*.sol'",
     "lint:config": "prettier --check '**/*.@(json|yaml)'",
     "lint:config:fix": "prettier --write '**/*.@(json|yaml)'",
-    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts export/artifacts"
+    "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts --including-no-public-functions export/artifacts"
   },
   "dependencies": {
     "@keep-network/sortition-pools": "^2.0.0-pre.9",
