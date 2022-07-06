@@ -15,7 +15,7 @@ This is a Hardhat project:
 - `scripts`: Hardhat scripts:
   - `gen_merkle_dist.js`: generate new Merkle distribution
   - `verify_proof.js`: verify Merkle proof
-  - `example_run_claim.js`: example about how to claim tokens using the contract
+  - `claim_example.js`: example about how to claim tokens using the contract
 
 ## Examples
 
