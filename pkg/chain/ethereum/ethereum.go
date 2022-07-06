@@ -47,6 +47,8 @@ func NewChain(
 		)
 	}
 
+	// TODO: Consider adding the balance monitoring.
+
 	return &Chain{
 		key:          key,
 		client:       clientWithAddons,
