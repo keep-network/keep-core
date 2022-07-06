@@ -157,7 +157,6 @@ func Start(c *cli.Context) error {
 		ctx,
 		operatorPublicKey,
 		chainProvider.ThresholdRelay(),
-		stakeMonitor,
 		blockCounter,
 		chainProvider.Signing(),
 		netProvider,

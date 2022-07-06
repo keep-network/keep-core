@@ -13,7 +13,4 @@ type StakeMonitor interface {
 	// to join the network. If the active stake is not currently undelegating,
 	// operator is also eligible for work selection.
 	HasMinimumStake(operatorPublicKey *operator.PublicKey) (bool, error)
-
-	// StakerFor returns a Staker for the given operator public key.
-	StakerFor(operatorPublicKey *operator.PublicKey) (Staker, error)
 }

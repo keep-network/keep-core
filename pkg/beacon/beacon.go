@@ -28,7 +28,6 @@ func Initialize(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	relayChain relaychain.Interface,
-	stakeMonitor chain.StakeMonitor,
 	blockCounter chain.BlockCounter,
 	signing chain.Signing,
 	netProvider net.Provider,
@@ -36,16 +35,11 @@ func Initialize(
 ) error {
 	chainConfig := relayChain.GetConfig()
 
-	staker, err := stakeMonitor.StakerFor(operatorPublicKey)
-	if err != nil {
-		return err
-	}
-
 	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := relay.NewNode(
-		staker,
+		operatorPublicKey,
 		netProvider,
 		blockCounter,
 		chainConfig,
