@@ -20,7 +20,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-var logger = log.Logger("keep-chain-ethereum")
+var logger = log.Logger("keep-chain-ethereum-v1")
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
 func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
