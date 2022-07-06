@@ -137,18 +137,16 @@ func (n *Node) JoinDKGIfEligible(
 					return
 				}
 
-				// The final broadcast channel name for group is the compressed
-				// public key of the group.
-				channelName := hex.EncodeToString(
+				groupPublicKey := hex.EncodeToString(
 					signer.GroupPublicKeyBytesCompressed(),
 				)
 
-				err = n.groupRegistry.RegisterGroup(signer, channelName)
+				err = n.groupRegistry.RegisterGroup(signer, groupPublicKey)
 				if err != nil {
 					logger.Errorf(
 						"[member:%v] failed to register a group [%v]: [%v]",
 						signer.MemberID(),
-						channelName,
+						groupPublicKey,
 						err,
 					)
 					return
@@ -157,7 +155,7 @@ func (n *Node) JoinDKGIfEligible(
 				logger.Infof(
 					"[member:%v] group [%v] registered successfully",
 					signer.MemberID(),
-					channelName,
+					groupPublicKey,
 				)
 			}()
 		}
