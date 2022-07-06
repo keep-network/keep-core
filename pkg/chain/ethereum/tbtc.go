@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+	"fmt"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 )
@@ -17,8 +18,13 @@ func NewTBTCChain(
 	ctx context.Context,
 	config *ethereum.Config,
 	client ethutil.EthereumClient,
-) *TBTCChain {
-	return &TBTCChain{
-		Chain: NewChain(ctx, config, client),
+) (*TBTCChain, error) {
+	chain, err := NewChain(ctx, config, client)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create base chain handle: [%v]", err)
 	}
+
+	return &TBTCChain{
+		Chain: chain,
+	}, nil
 }

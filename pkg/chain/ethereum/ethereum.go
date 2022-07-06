@@ -2,6 +2,8 @@ package ethereum
 
 import (
 	"context"
+	"fmt"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
@@ -15,7 +17,8 @@ var logger = log.Logger("keep-chain-ethereum")
 // provides the implementation of generic features like balance monitor,
 // block counter and similar.
 type Chain struct {
-	client ethutil.EthereumClient
+	client       ethutil.EthereumClient
+	blockCounter *ethlike.BlockCounter
 }
 
 // NewChain construct a new instance of the Ethereum chain handle.
@@ -23,10 +26,21 @@ func NewChain(
 	ctx context.Context,
 	config *ethereum.Config,
 	client ethutil.EthereumClient,
-) *Chain {
-	return &Chain{
-		client: wrapClientAddons(config, client),
+) (*Chain, error) {
+	clientWithAddons := wrapClientAddons(config, client)
+
+	blockCounter, err := ethutil.NewBlockCounter(clientWithAddons)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
 	}
+
+	return &Chain{
+		client:       clientWithAddons,
+		blockCounter: blockCounter,
+	}, nil
 }
 
 // wrapClientAddons wraps the client instance with add-ons like logging, rate
