@@ -3,9 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/keep-network/keep-core/pkg/chain/ethereum_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -111,20 +112,23 @@ func Start(c *cli.Context) error {
 			return err
 		}
 	}
-	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		operatorPublicKey,
-	)
-	if err != nil {
-		return fmt.Errorf("could not check the stake [%v]", err)
-	}
-	if !hasMinimumStake {
-		return fmt.Errorf(
-			"no minimum KEEP stake or operator is not authorized to use it; " +
-				"please make sure the operator address in the configuration " +
-				"is correct and it has KEEP tokens delegated and the operator " +
-				"contract has been authorized to operate on the stake",
-		)
-	}
+
+	// TODO: Disable the minimum stake check to be able to start the client
+	//       without v1 contracts deployed.
+	// hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+	// 	operatorPublicKey,
+	// )
+	// if err != nil {
+	// 	return fmt.Errorf("could not check the stake [%v]", err)
+	// }
+	// if !hasMinimumStake {
+	// 	return fmt.Errorf(
+	// 		"no minimum KEEP stake or operator is not authorized to use it; " +
+	// 			"please make sure the operator address in the configuration " +
+	// 			"is correct and it has KEEP tokens delegated and the operator " +
+	// 			"contract has been authorized to operate on the stake",
+	// 	)
+	// }
 
 	netProvider, err := libp2p.Connect(
 		ctx,

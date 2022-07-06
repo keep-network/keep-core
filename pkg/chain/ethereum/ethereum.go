@@ -2,6 +2,7 @@ package ethereum
 
 import (
 	"context"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
