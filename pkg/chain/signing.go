@@ -31,9 +31,11 @@ type Signing interface {
 
 	// PublicKeyToAddress converts operator's public key to an address
 	// associated with the chain.
+	// TODO: Refactor to return Address type
 	PublicKeyToAddress(publicKey *operator.PublicKey) ([]byte, error)
 
 	// PublicKeyBytesToAddress converts operator's public key bytes to an address
 	// associated with the chain.
+	// TODO: Refactor to return Address type
 	PublicKeyBytesToAddress(publicKey []byte) []byte
 }
