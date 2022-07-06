@@ -209,8 +209,9 @@ func (ec *ethereumChain) OnGroupRegistered(
 	return subscription
 }
 
+// TODO: Implement for RandomBeacon v2.
 func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-	return ec.keepRandomBeaconOperatorContract.IsGroupRegistered(groupPublicKey)
+	return false, nil
 }
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
