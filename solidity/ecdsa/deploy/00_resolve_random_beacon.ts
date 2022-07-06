@@ -1,7 +1,4 @@
-import type {
-  HardhatRuntimeEnvironment,
-  HardhatNetworkConfig,
-} from "hardhat/types"
+import type { HardhatRuntimeEnvironment } from "hardhat/types"
 import type { DeployFunction } from "hardhat-deploy/types"
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -9,16 +6,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { log } = deployments
   const { deployer } = await getNamedAccounts()
 
-  const RandomBeacon = await deployments.getOrNull("RandomBeacon")
-
-  if (RandomBeacon && helpers.address.isValid(RandomBeacon.address)) {
-    log(`using external RandomBeacon at ${RandomBeacon.address}`)
-  } else if (
-    !hre.network.tags.allowStubs ||
-    (hre.network.config as HardhatNetworkConfig)?.forking?.enabled
-  ) {
-    throw new Error("deployed RandomBeacon contract not found")
-  } else {
+  // When TEST_USE_STUBS is set we deploy a RandomBeaconStub for unit tests.
+  if (process.env.TEST_USE_STUBS === "true") {
     log("deploying RandomBeacon stub")
 
     await deployments.deploy("RandomBeacon", {
