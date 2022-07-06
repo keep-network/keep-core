@@ -9,6 +9,10 @@ type stakeMonitor struct {
 	chain *Chain
 }
 
+func newStakeMonitor(chain *Chain) *stakeMonitor {
+	return &stakeMonitor{chain: chain}
+}
+
 // TODO: Real implementation with v2 contracts.
 func (sm *stakeMonitor) HasMinimumStake(
 	operatorPublicKey *operator.PublicKey,
@@ -17,5 +21,5 @@ func (sm *stakeMonitor) HasMinimumStake(
 }
 
 func (c *Chain) StakeMonitor() (chain.StakeMonitor, error) {
-	return &stakeMonitor{chain: c}, nil
+	return newStakeMonitor(c), nil
 }

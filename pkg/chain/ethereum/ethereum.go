@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
 	"github.com/ipfs/go-log"
@@ -17,6 +18,7 @@ var logger = log.Logger("keep-chain-ethereum")
 // provides the implementation of generic features like balance monitor,
 // block counter and similar.
 type Chain struct {
+	key          *keystore.Key
 	client       ethutil.EthereumClient
 	blockCounter *ethlike.BlockCounter
 }
@@ -27,6 +29,14 @@ func NewChain(
 	config *ethereum.Config,
 	client ethutil.EthereumClient,
 ) (*Chain, error) {
+	key, err := decryptKey(config)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to decrypt Ethereum key: [%v]",
+			err,
+		)
+	}
+
 	clientWithAddons := wrapClientAddons(config, client)
 
 	blockCounter, err := ethutil.NewBlockCounter(clientWithAddons)
@@ -38,6 +48,7 @@ func NewChain(
 	}
 
 	return &Chain{
+		key:          key,
 		client:       clientWithAddons,
 		blockCounter: blockCounter,
 	}, nil
@@ -70,4 +81,12 @@ func wrapClientAddons(
 	}
 
 	return loggingClient
+}
+
+// decryptKey decrypts the chain key pointed by the config.
+func decryptKey(config *ethereum.Config) (*keystore.Key, error) {
+	return ethutil.DecryptKeyFile(
+		config.Account.KeyFile,
+		config.Account.KeyFilePassword,
+	)
 }
