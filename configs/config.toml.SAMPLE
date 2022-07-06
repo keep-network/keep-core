@@ -62,11 +62,11 @@
 	KeepRandomBeaconService = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
 [LibP2P]
- 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
+ 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmFRJtCWfdXhZEZHWb4tUpH1QMMgzH1oiamCfUuK6NgqWX"]
  	Port = 3920
 	#
 	# Uncomment to override the node's default addresses announced in the network
-	# AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]    
+	# AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
 	#
 	# Uncomment to enable courtesy message dissemination for topics this node is
 	# not subscribed to. Messages will be forwarded to peers for the duration
