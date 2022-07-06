@@ -30,7 +30,7 @@ func Initialize(port int) (*diagnostics.Registry, bool) {
 func RegisterConnectedPeersSource(
 	registry *diagnostics.Registry,
 	netProvider net.Provider,
-	chainHandle chain.Handle,
+	signing chain.Signing,
 ) {
 	registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -45,7 +45,7 @@ func RegisterConnectedPeersSource(
 				continue
 			}
 
-			peerChainAddressBytes, err := chainHandle.Signing().PublicKeyToAddress(
+			peerChainAddressBytes, err := signing.PublicKeyToAddress(
 				peerPublicKey,
 			)
 			if err != nil {
@@ -54,7 +54,7 @@ func RegisterConnectedPeersSource(
 			}
 
 			peersList[i] = map[string]interface{}{
-				"network_id":       peer,
+				"network_id":    peer,
 				"chain_address": hex.EncodeToString(peerChainAddressBytes),
 			}
 		}
@@ -74,7 +74,7 @@ func RegisterConnectedPeersSource(
 func RegisterClientInfoSource(
 	registry *diagnostics.Registry,
 	netProvider net.Provider,
-	chainHandle chain.Handle,
+	signing chain.Signing,
 ) {
 	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -86,7 +86,7 @@ func RegisterClientInfoSource(
 			return ""
 		}
 
-		clientChainAddressBytes, err := chainHandle.Signing().PublicKeyToAddress(
+		clientChainAddressBytes, err := signing.PublicKeyToAddress(
 			clientPublicKey,
 		)
 		if err != nil {
@@ -95,7 +95,7 @@ func RegisterClientInfoSource(
 		}
 
 		clientInfo := map[string]interface{}{
-			"network_id":       clientID,
+			"network_id":    clientID,
 			"chain_address": hex.EncodeToString(clientChainAddressBytes),
 		}
 

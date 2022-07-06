@@ -27,29 +27,19 @@ var logger = log.Logger("keep-beacon")
 func Initialize(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	chainHandle chain.Handle,
+	relayChain relaychain.Interface,
+	stakeMonitor chain.StakeMonitor,
+	blockCounter chain.BlockCounter,
+	signing chain.Signing,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	relayChain := chainHandle.ThresholdRelay()
 	chainConfig := relayChain.GetConfig()
-
-	stakeMonitor, err := chainHandle.StakeMonitor()
-	if err != nil {
-		return err
-	}
 
 	staker, err := stakeMonitor.StakerFor(operatorPublicKey)
 	if err != nil {
 		return err
 	}
-
-	blockCounter, err := chainHandle.BlockCounter()
-	if err != nil {
-		return err
-	}
-
-	signing := chainHandle.Signing()
 
 	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
 	groupRegistry.LoadExistingGroups()

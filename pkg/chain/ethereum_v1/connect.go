@@ -221,7 +221,7 @@ func addClientWrappers(
 func Connect(
 	ctx context.Context,
 	config ethereum.Config,
-) (chain.Handle, error) {
+) (*ethereumChain, error) {
 	return connect(ctx, config)
 }
 

@@ -152,7 +152,10 @@ func Start(c *cli.Context) error {
 	err = beacon.Initialize(
 		ctx,
 		operatorPublicKey,
-		chainProvider,
+		chainProvider.ThresholdRelay(),
+		stakeMonitor,
+		blockCounter,
+		chainProvider.Signing(),
 		netProvider,
 		persistence,
 	)
@@ -161,7 +164,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
-	initializeDiagnostics(ctx, config, netProvider, chainProvider)
+	initializeDiagnostics(ctx, config, netProvider, chainProvider.Signing())
 
 	select {
 	case <-ctx.Done():
@@ -245,7 +248,7 @@ func initializeDiagnostics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
-	chainHandle chain.Handle,
+	signing chain.Signing,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -260,6 +263,6 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider, chainHandle)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, chainHandle)
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, signing)
 }
