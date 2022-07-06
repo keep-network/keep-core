@@ -59,7 +59,6 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		cmd.StartCommand,
-		cmd.RelayCommand,
 		cmd.PingCommand,
 		cmd.EthereumCommand,
 	}

@@ -5,7 +5,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 )
 
 // BlockCounter is an interface that provides the ability to wait for a certain
@@ -94,15 +93,4 @@ type Handle interface {
 	StakeMonitor() (StakeMonitor, error)
 	ThresholdRelay() relaychain.Interface
 	Signing() Signing
-}
-
-// Utility represents a handle to a blockchain that provides access to certain
-// utility functions for Keep network interactions. Notably, these functions can
-// either be application or operator functionality, and they are generally not
-// part of the day-to-day process of operating a Keep node.
-type Utility interface {
-	Handle
-
-	Genesis() error
-	RequestRelayEntry() *async.EventEntryGeneratedPromise
 }
