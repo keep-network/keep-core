@@ -2,7 +2,6 @@ package registry
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -10,13 +9,8 @@ import (
 	"encoding/hex"
 )
 
-const (
-	candidateMembershipPrefix = "candidate_membership"
-	approvedMembershipPrefix  = "approved_membership"
-)
-
 type storage interface {
-	save(membership *Membership, groupState GroupState) error
+	save(membership *Membership) error
 	readAll() (<-chan *Membership, <-chan error)
 	archive(groupPublicKey []byte) error
 }
@@ -31,32 +25,15 @@ func newStorage(persistence persistence.Handle) storage {
 	}
 }
 
-func (ps *persistentStorage) save(
-	membership *Membership,
-	groupState GroupState,
-) error {
+func (ps *persistentStorage) save(membership *Membership) error {
 	membershipBytes, err := membership.Marshal()
 	if err != nil {
 		return fmt.Errorf("marshalling of the membership failed: [%v]", err)
 	}
 
-	directory := hex.EncodeToString(membership.Signer.GroupPublicKeyBytesCompressed())
+	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytesCompressed())
 
-	var membershipPrefix string
-	switch groupState {
-	case GroupStateCandidate:
-		membershipPrefix = candidateMembershipPrefix
-	case GroupStateApproved:
-		membershipPrefix = approvedMembershipPrefix
-	}
-
-	fileName := fmt.Sprintf(
-		"/%v_%v",
-		membershipPrefix,
-		fmt.Sprint(membership.Signer.MemberID()),
-	)
-
-	return ps.handle.Save(membershipBytes, directory, fileName)
+	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
 }
 
 func (ps *persistentStorage) archive(groupPublicKeyCompressed []byte) error {
@@ -102,11 +79,6 @@ func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
 	// error to an output errors channel.
 	go func() {
 		for descriptor := range inputData {
-			// Proceed only approved groups and skip the candidate ones.
-			if !strings.HasPrefix(descriptor.Name(), approvedMembershipPrefix) {
-				continue
-			}
-
 			content, err := descriptor.Content()
 			if err != nil {
 				outputErrors <- fmt.Errorf(

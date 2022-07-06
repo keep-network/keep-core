@@ -143,14 +143,10 @@ func (n *Node) JoinDKGIfEligible(
 					signer.GroupPublicKeyBytesCompressed(),
 				)
 
-				// Register the candidate group. Note that such a group is
-				// non-operable and the node should monitor for the group
-				// approval event in order to register an approved group in the
-				// group registry as well.
-				err = n.groupRegistry.RegisterCandidateGroup(signer, channelName)
+				err = n.groupRegistry.RegisterGroup(signer, channelName)
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] failed to register a candidate group [%v]: [%v]",
+						"[member:%v] failed to register a group [%v]: [%v]",
 						signer.MemberID(),
 						channelName,
 						err,
@@ -159,7 +155,7 @@ func (n *Node) JoinDKGIfEligible(
 				}
 
 				logger.Infof(
-					"[member:%v] candidate group [%v] registered successfully",
+					"[member:%v] group [%v] registered successfully",
 					signer.MemberID(),
 					channelName,
 				)

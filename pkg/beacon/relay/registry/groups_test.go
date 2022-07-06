@@ -51,36 +51,12 @@ var (
 	)
 )
 
-func TestRegisterCandidateGroup(t *testing.T) {
+func TestRegisterGroup(t *testing.T) {
 	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
 
 	gr := NewGroupRegistry(chain, persistenceMock)
 
-	err := gr.RegisterCandidateGroup(signer1, channelName1)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Candidate group is a non-operable group so should not be in the
-	// groups cache.
-	actual := gr.GetGroup(signer1.GroupPublicKeyBytes())
-
-	if actual != nil {
-		t.Fatalf(
-			"Expecting a nil, but a group was returned instead",
-		)
-	}
-}
-
-func TestRegisterApprovedGroup(t *testing.T) {
-	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
-
-	gr := NewGroupRegistry(chain, persistenceMock)
-
-	err := gr.RegisterApprovedGroup(signer1, channelName1)
-	if err != nil {
-		t.Fatal(err)
-	}
+	gr.RegisterGroup(signer1, channelName1)
 
 	actual := gr.GetGroup(signer1.GroupPublicKeyBytes())
 
@@ -148,9 +124,9 @@ func TestUnregisterStaleGroups(t *testing.T) {
 
 	gr := NewGroupRegistry(mockChain, persistenceMock)
 
-	gr.RegisterApprovedGroup(signer1, channelName1)
-	gr.RegisterApprovedGroup(signer2, channelName1)
-	gr.RegisterApprovedGroup(signer3, channelName1)
+	gr.RegisterGroup(signer1, channelName1)
+	gr.RegisterGroup(signer2, channelName1)
+	gr.RegisterGroup(signer3, channelName1)
 
 	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
 
@@ -184,9 +160,9 @@ func TestUnregisterStaleGroupsSkipLastGroupCheck(t *testing.T) {
 
 	gr := NewGroupRegistry(mockChain, persistenceMock)
 
-	gr.RegisterApprovedGroup(signer1, channelName1)
-	gr.RegisterApprovedGroup(signer2, channelName1)
-	gr.RegisterApprovedGroup(signer3, channelName1)
+	gr.RegisterGroup(signer1, channelName1)
+	gr.RegisterGroup(signer2, channelName1)
+	gr.RegisterGroup(signer3, channelName1)
 
 	gr.UnregisterStaleGroups(signer3.GroupPublicKeyBytes())
 
@@ -276,9 +252,9 @@ func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, 
 	outputData := make(chan persistence.DataDescriptor, 3)
 	outputErrors := make(chan error)
 
-	outputData <- &testDataDescriptor{approvedMembershipPrefix + "_1", "dir", membershipBytes1}
-	outputData <- &testDataDescriptor{approvedMembershipPrefix + "_2", "dir", membershipBytes2}
-	outputData <- &testDataDescriptor{approvedMembershipPrefix + "_3", "dir", membershipBytes3}
+	outputData <- &testDataDescriptor{"1", "dir", membershipBytes1}
+	outputData <- &testDataDescriptor{"2", "dir", membershipBytes2}
+	outputData <- &testDataDescriptor{"3", "dir", membershipBytes3}
 
 	close(outputData)
 	close(outputErrors)
