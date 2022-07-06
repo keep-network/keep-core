@@ -14,7 +14,7 @@
     "export.json"
   ],
   "scripts": {
-    "clean": "hardhat clean && rm -rf cache",
+    "clean": "hardhat clean && rm -rf cache/ export/ external/npm export.json",
     "build": "hardhat compile",
     "test": "hardhat check-accounts-count && USE_EXTERNAL_DEPLOY=true TEST_USE_STUBS_BEACON=true hardhat test",
     "deploy": "hardhat deploy --export export.json",
