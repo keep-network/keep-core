@@ -18,6 +18,9 @@ interface ICumulativeMerkleDrop {
     function merkleRoot() external view returns (bytes32);
     // Sets the merkle root of the merkle tree containing cumulative account balances available to claim.
     function setMerkleRoot(bytes32 merkleRoot_) external;
+
+    function setRewardsHolder(address rewardsHolder_) external;
+
     // Claim the given amount of the token to the given address. Reverts if the inputs are invalid.
     function claim(
         address stakingProvider,
