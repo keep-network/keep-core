@@ -4,7 +4,7 @@ import { expect } from "chai"
 import { smock } from "@defi-wonderland/smock"
 
 import { dkgState, walletRegistryFixture } from "./fixtures"
-import { fakeRandomBeacon, resetMock } from "./utils/randomBeacon"
+import { resetMock } from "./utils/randomBeacon"
 import { upgradeRandomBeacon } from "./utils/governance"
 
 import type { IWalletOwner } from "../typechain/IWalletOwner"
@@ -29,10 +29,12 @@ describe("WalletRegistry - Random Beacon", async () => {
 
   before("load test fixture", async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletOwner, thirdParty } =
-      await walletRegistryFixture())
-
-    randomBeaconFake = await fakeRandomBeacon(walletRegistry)
+    ;({
+      walletRegistry,
+      walletOwner,
+      thirdParty,
+      randomBeacon: randomBeaconFake,
+    } = await walletRegistryFixture())
   })
 
   describe("requestNewWallet", async () => {

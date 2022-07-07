@@ -25,23 +25,6 @@ var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
 var relayRequestTimeout = uint64(8)
 
-// Chain is an extention of chain.Handle interface which exposes
-// additional functions useful for testing.
-type Chain interface {
-	chain.Handle
-
-	// GetLastDKGResult returns the last DKG result submitted to the chain
-	// as well as all the signatures that supported that result.
-	GetLastDKGResult() (*relaychain.DKGResult, map[relaychain.GroupMemberIndex][]byte)
-
-	// GetLastRelayEntry returns the last relay entry submitted to the chain.
-	GetLastRelayEntry() []byte
-
-	// GetRelayEntryTimeoutReports returns an array of blocks which denote at what
-	// block a relay entry timeout occured.
-	GetRelayEntryTimeoutReports() []uint64
-}
-
 type localGroup struct {
 	groupPublicKey          []byte
 	registrationBlockHeight uint64
@@ -202,7 +185,7 @@ func Connect(
 	groupSize int,
 	honestThreshold int,
 	minimumStake *big.Int,
-) Chain {
+) *localChain {
 	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		panic(err)
@@ -218,7 +201,7 @@ func ConnectWithKey(
 	honestThreshold int,
 	minimumStake *big.Int,
 	operatorPrivateKey *operator.PrivateKey,
-) Chain {
+) *localChain {
 	bc, _ := BlockCounter()
 
 	currentBlock, _ := bc.CurrentBlock()
