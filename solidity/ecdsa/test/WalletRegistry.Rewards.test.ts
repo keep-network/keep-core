@@ -16,6 +16,7 @@ import type {
   TokenStaking,
   IWalletOwner,
   T,
+  IRandomBeacon,
 } from "../typechain"
 
 const { to1e18 } = helpers.number
@@ -28,6 +29,7 @@ describe("WalletRegistry - Rewards", () => {
   let staking: TokenStaking
   let walletRegistryGovernance: WalletRegistryGovernance
   let sortitionPool: SortitionPool
+  let randomBeacon: FakeContract<IRandomBeacon>
   let walletOwner: FakeContract<IWalletOwner>
 
   let deployer: SignerWithAddress
@@ -50,6 +52,7 @@ describe("WalletRegistry - Rewards", () => {
       walletRegistryGovernance,
       staking,
       sortitionPool,
+      randomBeacon,
       walletOwner,
       deployer,
       governance,
@@ -58,6 +61,7 @@ describe("WalletRegistry - Rewards", () => {
     ;({ members, walletID } = await createNewWallet(
       walletRegistry,
       walletOwner.wallet,
+      randomBeacon,
       walletPublicKey
     ))
 

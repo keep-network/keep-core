@@ -11,6 +11,7 @@ import type {
   IWalletOwner,
   TokenStaking,
   T,
+  IRandomBeacon,
 } from "../typechain"
 import type { FakeContract } from "@defi-wonderland/smock"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -21,6 +22,7 @@ const { to1e18 } = helpers.number
 
 describe("WalletRegistry - Slashing", () => {
   let walletRegistry: WalletRegistry
+  let randomBeacon: FakeContract<IRandomBeacon>
   let walletOwner: FakeContract<IWalletOwner>
   let thirdParty: SignerWithAddress
   let staking: TokenStaking
@@ -37,11 +39,18 @@ describe("WalletRegistry - Slashing", () => {
 
   before(async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, walletOwner, thirdParty, staking, tToken } =
-      await walletRegistryFixture())
+    ;({
+      walletRegistry,
+      randomBeacon,
+      walletOwner,
+      thirdParty,
+      staking,
+      tToken,
+    } = await walletRegistryFixture())
     ;({ walletID, members } = await createNewWallet(
       walletRegistry,
       walletOwner.wallet,
+      randomBeacon,
       walletPublicKey
     ))
 
