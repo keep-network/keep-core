@@ -74,6 +74,9 @@ function main() {
 
   fs.writeFileSync(GEN_DIST_PATH, JSON.stringify(dist_json, null, 2))
   fs.writeFileSync(GEN_PROOF_PATH, JSON.stringify(proof_json, null, 2))
+
+  console.log("Distribution generated in: ", GEN_DIST_PATH)
+  console.log("First distribution proof generated in: ", GEN_PROOF_PATH)
 }
 
 main()
