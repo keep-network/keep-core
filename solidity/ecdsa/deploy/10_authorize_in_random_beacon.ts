@@ -21,8 +21,3 @@ export default func
 
 func.tags = ["WalletRegistryAuthorizeInBeacon"]
 func.dependencies = ["RandomBeaconGovernance", "WalletRegistry"]
-// When TEST_USE_STUBS is set we deploy a RandomBeaconStub for unit tests, hence
-// there is no need for authorization.
-func.skip = async function (hre: HardhatRuntimeEnvironment): Promise<boolean> {
-  return process.env.TEST_USE_STUBS === "true"
-}
