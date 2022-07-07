@@ -970,7 +970,7 @@
     deepmerge "^4.2.2"
     untildify "^4.0.0"
 
-"@keep-network/keep-core@goerli":
+"@keep-network/keep-core@>1.8.1-dev <1.8.1-pre":
   version "1.8.1-goerli.0"
   resolved "https://registry.yarnpkg.com/@keep-network/keep-core/-/keep-core-1.8.1-goerli.0.tgz#238485aab51902021d42357bf59695225002f0ab"
   integrity sha512-h3La/RqbyEZjBBPg8V+pcRFo3UpWZUF4CxWfXHZnUR4PnkZKnIDrTNFQPhpV2uYFZwrbJxTR9mzOq/DOAiXPwA==
@@ -1375,12 +1375,12 @@
   dependencies:
     "@openzeppelin/contracts" "^4.1.0"
 
-"@threshold-network/solidity-contracts@goerli":
-  version "1.2.0-goerli.0"
-  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-goerli.0.tgz#888d4fc39ccbe8bc6ffafebfb7eff2e640d3752b"
-  integrity sha512-BLSz43ofUnkq/edn5lCfnpO00l5Z/XUQu0ls0iPmsyAQwhWgQEWmT8GgQsQsnaAfKJYZ7IhUQoZ/3T7QzT8HVw==
+"@threshold-network/solidity-contracts@development":
+  version "1.2.0-dev.15"
+  resolved "https://registry.yarnpkg.com/@threshold-network/solidity-contracts/-/solidity-contracts-1.2.0-dev.15.tgz#3415579a3be37aed452656a91124c8bd575df569"
+  integrity sha512-kETXCaWVho0uTh8Dtq3pAewlbw37tfqzFQRwh2cHjiQ78xtKpj1JZ+VbsAOnsPuLqqfCLHZmfWvK2dLfLaeFZQ==
   dependencies:
-    "@keep-network/keep-core" goerli
+    "@keep-network/keep-core" ">1.8.1-dev <1.8.1-pre"
     "@openzeppelin/contracts" "~4.5.0"
     "@openzeppelin/contracts-upgradeable" "~4.5.2"
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
@@ -5959,7 +5959,7 @@ hardhat-dependency-compiler@^1.1.2:
   resolved "https://registry.yarnpkg.com/hardhat-dependency-compiler/-/hardhat-dependency-compiler-1.1.2.tgz#02867b7c6dd3de4924d9d3d6593feab8408f1eeb"
   integrity sha512-LVnsPSZnGvzWVvlpewlkPKlPtFP/S9V41RC1fd/ygZc4jkG8ubNlfE82nwiGw5oPueHSmFi6TACgmyrEOokK8w==
 
-hardhat-deploy@^0.11.11:
+hardhat-deploy@^0.11.10:
   version "0.11.11"
   resolved "https://registry.yarnpkg.com/hardhat-deploy/-/hardhat-deploy-0.11.11.tgz#479040ba84d5b6d582d8fc719a3e77656ba8dc66"
   integrity sha512-/37No1l6aFMMc4+t+a0/8gk6OwwD4tyW8bSQqV/0IZEiaHiNa7hOV4rTbC9B7277SDHVoFUrV/fwmk7IDiB8sQ==
