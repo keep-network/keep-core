@@ -83,7 +83,7 @@ func newChain(
 	config ethereum.Config,
 	client *ethclient.Client,
 ) (*Chain, error) {
-	chainID, err := client.ChainID(context.Background())
+	chainID, err := client.ChainID(ctx)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to resolve Ethereum chain id: [%v]",
