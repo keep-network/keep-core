@@ -2,13 +2,13 @@ package libp2p
 
 import (
 	"context"
-	"testing"
 	"strconv"
+	"testing"
 
 	"github.com/keep-network/keep-core/pkg/firewall"
+	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/net"

@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 )
 
@@ -15,14 +15,14 @@ func TestSubmitDKGResult(t *testing.T) {
 	honestThreshold := 3
 	groupSize := 5
 
-	chainHandle, initialBlock, err := initChainHandle(honestThreshold, groupSize)
+	relayChain, _, initialBlock, err := initChainHandle(honestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	config := chainHandle.ThresholdRelay().GetConfig()
+	config := relayChain.GetConfig()
 
-	result := &relayChain.DKGResult{
+	result := &relaychain.DKGResult{
 		GroupPublicKey: []byte{123, 45},
 	}
 	signatures := map[group.MemberIndex][]byte{
@@ -58,15 +58,13 @@ func TestSubmitDKGResult(t *testing.T) {
 			}
 
 			// Reinitialize chain to reset block counter
-			chainHandle, initialBlockHeight, err := initChainHandle(
+			relayChain, blockCounter, initialBlockHeight, err := initChainHandle(
 				honestThreshold,
 				groupSize,
 			)
 			if err != nil {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
-
-			relayChain := chainHandle.ThresholdRelay()
 
 			isSubmitted, err := relayChain.IsGroupRegistered(result.GroupPublicKey)
 			if err != nil {
@@ -76,8 +74,6 @@ func TestSubmitDKGResult(t *testing.T) {
 			if isSubmitted {
 				t.Fatalf("result is already submitted to the chain")
 			}
-
-			blockCounter, _ := chainHandle.BlockCounter()
 
 			err = member.SubmitDKGResult(
 				result,
@@ -132,26 +128,26 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		resultToPublish1  *relayChain.DKGResult
-		resultToPublish2  *relayChain.DKGResult
+		resultToPublish1  *relaychain.DKGResult
+		resultToPublish2  *relaychain.DKGResult
 		expectedDuration1 func(tStep uint64) uint64 // index * t_step
 		expectedDuration2 func(tStep uint64) uint64 // index * t_step
 	}{
 		"two members publish the same results": {
-			resultToPublish1: &relayChain.DKGResult{
+			resultToPublish1: &relaychain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
-			resultToPublish2: &relayChain.DKGResult{
+			resultToPublish2: &relaychain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
 			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
 			expectedDuration2: func(tStep uint64) uint64 { return 0 }, // result already published by member 1 -1
 		},
 		"two members publish different results": {
-			resultToPublish1: &relayChain.DKGResult{
+			resultToPublish1: &relaychain.DKGResult{
 				GroupPublicKey: []byte{201},
 			},
-			resultToPublish2: &relayChain.DKGResult{
+			resultToPublish2: &relaychain.DKGResult{
 				GroupPublicKey: []byte{202},
 			},
 			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
@@ -160,13 +156,13 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			chainHandle, initialBlock, err :=
+			relayChain, blockCounter, initialBlock, err :=
 				initChainHandle(honestThreshold, groupSize)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			config := chainHandle.ThresholdRelay().GetConfig()
+			config := relayChain.GetConfig()
 
 			tStep := config.ResultPublicationBlockStep
 
@@ -179,12 +175,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 			defer close(result2Chan)
 
 			go func() {
-				blockCounter, _ := chainHandle.BlockCounter()
-
 				err := member1.SubmitDKGResult(
 					test.resultToPublish1,
 					signatures,
-					chainHandle.ThresholdRelay(),
+					relayChain,
 					blockCounter,
 					initialBlock,
 				)
@@ -197,12 +191,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 			}()
 
 			go func() {
-				blockCounter, _ := chainHandle.BlockCounter()
-
 				err := member2.SubmitDKGResult(
 					test.resultToPublish2,
 					signatures,
-					chainHandle.ThresholdRelay(),
+					relayChain,
 					blockCounter,
 					initialBlock,
 				)
@@ -224,17 +216,22 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 }
 
-func initChainHandle(honestThreshold int, groupSize int) (chain.Handle, uint64, error) {
+func initChainHandle(honestThreshold int, groupSize int) (
+	relaychain.Interface,
+	chain.BlockCounter,
+	uint64,
+	error,
+) {
 	chainHandle := local.Connect(groupSize, honestThreshold, big.NewInt(200))
 
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 	initialBlockChan, err := blockCounter.BlockHeightWaiter(1)
 	if err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 
-	return chainHandle, <-initialBlockChan, nil
+	return chainHandle.ThresholdRelay(), blockCounter, <-initialBlockChan, nil
 }

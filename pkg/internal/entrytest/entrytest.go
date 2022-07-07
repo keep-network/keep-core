@@ -7,6 +7,8 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"sync"
 	"time"
@@ -74,21 +76,31 @@ func RunTest(
 
 	chain := chainLocal.ConnectWithKey(len(signers), threshold, minimumStake, operatorPrivateKey)
 
-	return executeSigning(signers, threshold, chain, network, previousEntry)
-}
-
-func executeSigning(
-	signers []*dkg.ThresholdSigner,
-	threshold int,
-	chain chainLocal.Chain,
-	network interception.Network,
-	previousEntry []byte,
-) (*Result, error) {
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {
 		return nil, err
 	}
 
+	return executeSigning(
+		signers,
+		threshold,
+		chain.ThresholdRelay(),
+		blockCounter,
+		chain.GetLastRelayEntry,
+		network,
+		previousEntry,
+	)
+}
+
+func executeSigning(
+	signers []*dkg.ThresholdSigner,
+	threshold int,
+	relayChain relaychain.Interface,
+	blockCounter chain.BlockCounter,
+	lastRelayEntryGetter func() []byte,
+	network interception.Network,
+	previousEntry []byte,
+) (*Result, error) {
 	// local broadcast channel implementation is global for all tests;
 	// to avoid conflicts between tests we need to randomize channel name
 	// so that no channel name is shared between two tests
@@ -104,7 +116,7 @@ func executeSigning(
 	}
 
 	entrySubmissionChan := make(chan *event.EntrySubmitted)
-	_ = chain.ThresholdRelay().OnRelayEntrySubmitted(
+	_ = relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			entrySubmissionChan <- event
 		},
@@ -132,7 +144,7 @@ func executeSigning(
 			err := entry.SignAndSubmit(
 				blockCounter,
 				broadcastChannel,
-				chain.ThresholdRelay(),
+				relayChain,
 				previousEntry,
 				threshold,
 				signer,
@@ -157,7 +169,7 @@ func executeSigning(
 
 	select {
 	case <-entrySubmissionChan:
-		entry := chain.GetLastRelayEntry()
+		entry := lastRelayEntryGetter()
 		return &Result{
 			entry,
 			signerFailures,

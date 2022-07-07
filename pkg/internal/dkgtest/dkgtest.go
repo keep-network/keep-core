@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math"
 	"math/big"
 	"sync"
@@ -79,6 +80,11 @@ func RunTest(
 		operatorPrivateKey,
 	)
 
+	blockCounter, err := chain.BlockCounter()
+	if err != nil {
+		return nil, err
+	}
+
 	address, err := chain.Signing().PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -92,21 +98,30 @@ func RunTest(
 		selectedStakers[i] = address
 	}
 
-	return executeDKG(seed, chain, network, selectedStakers)
+	return executeDKG(
+		seed,
+		chain.ThresholdRelay(),
+		blockCounter,
+		chain.Signing(),
+		chain.GetLastDKGResult,
+		network,
+		selectedStakers,
+	)
 }
 
 func executeDKG(
 	seed *big.Int,
-	chain chainLocal.Chain,
+	relayChain relaychain.Interface,
+	blockCounter chain.BlockCounter,
+	signing chain.Signing,
+	lastDKGResultGetter func() (
+		*relaychain.DKGResult,
+		map[relaychain.GroupMemberIndex][]byte,
+	),
 	network interception.Network,
 	selectedStakers []relaychain.StakerAddress,
 ) (*Result, error) {
-	relayConfig := chain.ThresholdRelay().GetConfig()
-
-	blockCounter, err := chain.BlockCounter()
-	if err != nil {
-		return nil, err
-	}
+	relayConfig := relayChain.GetConfig()
 
 	broadcastChannel, err := network.BroadcastChannelFor(fmt.Sprintf("dkg-test-%v", seed))
 	if err != nil {
@@ -114,7 +129,7 @@ func executeDKG(
 	}
 
 	resultSubmissionChan := make(chan *event.DKGResultSubmission)
-	_ = chain.ThresholdRelay().OnDKGResultSubmitted(
+	_ = relayChain.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			resultSubmissionChan <- event
 		},
@@ -142,7 +157,7 @@ func executeDKG(
 
 	membershipValidator := group.NewStakersMembershipValidator(
 		selectedStakers,
-		chain.Signing(),
+		signing,
 	)
 
 	for i := 0; i < relayConfig.GroupSize; i++ {
@@ -156,8 +171,8 @@ func executeDKG(
 				membershipValidator,
 				startBlockHeight,
 				blockCounter,
-				chain.ThresholdRelay(),
-				chain.Signing(),
+				relayChain,
+				signing,
 				broadcastChannel,
 			)
 			if signer != nil {
@@ -183,7 +198,7 @@ func executeDKG(
 	select {
 	case <-resultSubmissionChan:
 		// result was published to the chain, let's fetch it
-		dkgResult, dkgResultSignatures := chain.GetLastDKGResult()
+		dkgResult, dkgResultSignatures := lastDKGResultGetter()
 		return &Result{
 			dkgResult,
 			dkgResultSignatures,

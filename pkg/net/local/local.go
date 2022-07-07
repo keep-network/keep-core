@@ -24,9 +24,9 @@ type Provider interface {
 }
 
 type localProvider struct {
-	id                    localIdentifier
-	operatorPublicKey     *operator.PublicKey
-	connectionManager     *localConnectionManager
+	id                localIdentifier
+	operatorPublicKey *operator.PublicKey
+	connectionManager *localConnectionManager
 }
 
 func (lp *localProvider) ID() net.TransportIdentifier {
@@ -74,9 +74,9 @@ func Connect() Provider {
 // identify network messages.
 func ConnectWithKey(operatorPublicKey *operator.PublicKey) Provider {
 	return &localProvider{
-		id:                    randomLocalIdentifier(),
-		operatorPublicKey:     operatorPublicKey,
-		connectionManager:     &localConnectionManager{peers: make(map[string]*operator.PublicKey)},
+		id:                randomLocalIdentifier(),
+		operatorPublicKey: operatorPublicKey,
+		connectionManager: &localConnectionManager{peers: make(map[string]*operator.PublicKey)},
 	}
 }
 

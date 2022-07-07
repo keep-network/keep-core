@@ -10,6 +10,44 @@ import (
 	crand "crypto/rand"
 )
 
+// AssertErrorsEqual checks if two errors are equal. If not, it reports a test
+// failure.
+func AssertErrorsEqual(t *testing.T, expected error, actual error) {
+	if expected != actual {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expected,
+			actual,
+		)
+	}
+}
+
+// AssertStringsEqual checks if two strings are equal. If not, it reports a test
+// failure.
+func AssertStringsEqual(t *testing.T, description string, expected string, actual string) {
+	if expected != actual {
+		t.Errorf(
+			"unexpected %s\nexpected: %s\nactual:   %s\n",
+			description,
+			expected,
+			actual,
+		)
+	}
+}
+
+// AssertBigIntsEqual checks if two not-nil big integers are equal. If not, it
+// reports a test failure.
+func AssertBigIntsEqual(t *testing.T, description string, expected *big.Int, actual *big.Int) {
+	if expected.Cmp(actual) != 0 {
+		t.Errorf(
+			"unexpected %s\nexpected: %v\nactual:   %v\n",
+			description,
+			expected,
+			actual,
+		)
+	}
+}
+
 // AssertBytesEqual takes a testing.T and two byte slices and reports an error
 // if the two bytes are not equal.
 func AssertBytesEqual(t *testing.T, expectedBytes []byte, actualBytes []byte) {

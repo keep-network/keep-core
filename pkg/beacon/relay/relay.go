@@ -3,6 +3,7 @@ package relay
 import (
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
@@ -20,18 +21,18 @@ const maxGroupSize = 255
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
-	staker chain.Staker,
+	operatorPublicKey *operator.PublicKey,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
 	chainConfig *relayChain.Config,
 	groupRegistry *registry.Groups,
 ) Node {
 	return Node{
-		Staker:        staker,
-		netProvider:   netProvider,
-		blockCounter:  blockCounter,
-		chainConfig:   chainConfig,
-		groupRegistry: groupRegistry,
+		operatorPublicKey: operatorPublicKey,
+		netProvider:       netProvider,
+		blockCounter:      blockCounter,
+		chainConfig:       chainConfig,
+		groupRegistry:     groupRegistry,
 	}
 }
 

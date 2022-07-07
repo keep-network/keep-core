@@ -3,8 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"time"
+
+	"github.com/keep-network/keep-core/pkg/chain/ethereum_v1"
+	"github.com/keep-network/keep-core/pkg/operator"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -16,7 +18,6 @@ import (
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -84,14 +85,14 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	operatorPrivateKey, operatorPublicKey, err := ethereum.ChainPrivateKeyToOperatorKeyPair(
+	operatorPrivateKey, operatorPublicKey, err := ethereum_v1.ChainPrivateKeyToOperatorKeyPair(
 		ethereumKey.PrivateKey,
 	)
 	if err != nil {
 		return err
 	}
 
-	chainProvider, err := ethereum.Connect(ctx, config.Ethereum)
+	chainProvider, err := ethereum_v1.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -111,20 +112,23 @@ func Start(c *cli.Context) error {
 			return err
 		}
 	}
-	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		operatorPublicKey,
-	)
-	if err != nil {
-		return fmt.Errorf("could not check the stake [%v]", err)
-	}
-	if !hasMinimumStake {
-		return fmt.Errorf(
-			"no minimum KEEP stake or operator is not authorized to use it; " +
-				"please make sure the operator address in the configuration " +
-				"is correct and it has KEEP tokens delegated and the operator " +
-				"contract has been authorized to operate on the stake",
-		)
-	}
+
+	// TODO: Disable the minimum stake check to be able to start the client
+	//       without v1 contracts deployed.
+	// hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+	// 	operatorPublicKey,
+	// )
+	// if err != nil {
+	// 	return fmt.Errorf("could not check the stake [%v]", err)
+	// }
+	// if !hasMinimumStake {
+	// 	return fmt.Errorf(
+	// 		"no minimum KEEP stake or operator is not authorized to use it; " +
+	// 			"please make sure the operator address in the configuration " +
+	// 			"is correct and it has KEEP tokens delegated and the operator " +
+	// 			"contract has been authorized to operate on the stake",
+	// 	)
+	// }
 
 	netProvider, err := libp2p.Connect(
 		ctx,
@@ -152,7 +156,9 @@ func Start(c *cli.Context) error {
 	err = beacon.Initialize(
 		ctx,
 		operatorPublicKey,
-		chainProvider,
+		chainProvider.ThresholdRelay(),
+		blockCounter,
+		chainProvider.Signing(),
 		netProvider,
 		persistence,
 	)
@@ -161,7 +167,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
-	initializeDiagnostics(ctx, config, netProvider, chainProvider)
+	initializeDiagnostics(ctx, config, netProvider, chainProvider.Signing())
 
 	select {
 	case <-ctx.Done():
@@ -245,7 +251,7 @@ func initializeDiagnostics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
-	chainHandle chain.Handle,
+	signing chain.Signing,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -260,6 +266,6 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	diagnostics.RegisterConnectedPeersSource(registry, netProvider, chainHandle)
-	diagnostics.RegisterClientInfoSource(registry, netProvider, chainHandle)
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider, signing)
+	diagnostics.RegisterClientInfoSource(registry, netProvider, signing)
 }

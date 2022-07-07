@@ -1,13 +1,11 @@
 package local
 
 import (
-	"fmt"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"reflect"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 // StakeMonitor implements `chain.StakeMonitor` interface and works
@@ -26,9 +24,9 @@ func NewStakeMonitor(minimumStake *big.Int) *StakeMonitor {
 }
 
 // StakerFor returns a staker.Staker instance for the given operator public key.
-func (lsm *StakeMonitor) StakerFor(
+func (lsm *StakeMonitor) stakerFor(
 	operatorPublicKey *operator.PublicKey,
-) (chain.Staker, error) {
+) (*localStaker, error) {
 	if staker := lsm.findStakerByPublicKey(operatorPublicKey); staker != nil {
 		return staker, nil
 	}
@@ -58,7 +56,7 @@ func (lsm *StakeMonitor) findStakerByPublicKey(
 func (lsm *StakeMonitor) HasMinimumStake(
 	operatorPublicKey *operator.PublicKey,
 ) (bool, error) {
-	staker, err := lsm.StakerFor(operatorPublicKey)
+	staker, err := lsm.stakerFor(operatorPublicKey)
 	if err != nil {
 		return false, err
 	}
@@ -74,17 +72,12 @@ func (lsm *StakeMonitor) HasMinimumStake(
 // StakeTokens stakes enough tokens for the provided public key to be a network
 // operator. It stakes `5 * minimumStake` by default.
 func (lsm *StakeMonitor) StakeTokens(operatorPublicKey *operator.PublicKey) error {
-	staker, err := lsm.StakerFor(operatorPublicKey)
+	staker, err := lsm.stakerFor(operatorPublicKey)
 	if err != nil {
 		return err
 	}
 
-	stakerLocal, ok := staker.(*localStaker)
-	if !ok {
-		return fmt.Errorf("invalid type of staker")
-	}
-
-	stakerLocal.stake = new(big.Int).Mul(big.NewInt(5), lsm.minimumStake)
+	staker.stake = new(big.Int).Mul(big.NewInt(5), lsm.minimumStake)
 
 	return nil
 }
@@ -92,17 +85,12 @@ func (lsm *StakeMonitor) StakeTokens(operatorPublicKey *operator.PublicKey) erro
 // UnstakeTokens unstakes all tokens from the provided public key so it can no
 // longer be a network operator.
 func (lsm *StakeMonitor) UnstakeTokens(operatorPublicKey *operator.PublicKey) error {
-	staker, err := lsm.StakerFor(operatorPublicKey)
+	staker, err := lsm.stakerFor(operatorPublicKey)
 	if err != nil {
 		return err
 	}
 
-	stakerLocal, ok := staker.(*localStaker)
-	if !ok {
-		return fmt.Errorf("invalid type of staker")
-	}
-
-	stakerLocal.stake = big.NewInt(0)
+	staker.stake = big.NewInt(0)
 
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -30,4 +31,8 @@ func (s *signer) PublicKeyToAddress(
 	}
 
 	return s.EthereumSigner.PublicKeyToAddress(*chainPublicKey), nil
+}
+
+func (c *Chain) Signing() chain.Signing {
+	return newSigner(c.key)
 }

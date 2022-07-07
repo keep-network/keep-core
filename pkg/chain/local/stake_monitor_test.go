@@ -15,7 +15,7 @@ func TestStakerFor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	staker, err := monitor.StakerFor(operatorPublicKey)
+	staker, err := monitor.stakerFor(operatorPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,7 +126,7 @@ func TestStake(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	staker, err := monitor.StakerFor(operatorPublicKey)
+	staker, err := monitor.stakerFor(operatorPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}

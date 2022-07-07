@@ -3,6 +3,7 @@ import { smock } from "@defi-wonderland/smock"
 
 // eslint-disable-next-line import/no-cycle
 import { registerOperators } from "../utils/operators"
+import { fakeRandomBeacon } from "../utils/randomBeacon"
 
 import type { IWalletOwner } from "../../typechain/IWalletOwner"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
@@ -15,6 +16,7 @@ import type {
   WalletRegistryGovernance,
   TokenStaking,
   T,
+  IRandomBeacon,
 } from "../../typechain"
 import type { FakeContract } from "@defi-wonderland/smock"
 
@@ -52,13 +54,14 @@ export const walletRegistryFixture = deployments.createFixture(
     walletRegistry: WalletRegistryStub & WalletRegistry
     walletRegistryGovernance: WalletRegistryGovernance
     sortitionPool: SortitionPool
+    reimbursementPool: ReimbursementPool
     staking: TokenStaking
+    randomBeacon: FakeContract<IRandomBeacon>
     walletOwner: FakeContract<IWalletOwner>
     deployer: SignerWithAddress
     governance: SignerWithAddress
     thirdParty: SignerWithAddress
     operators: Operator[]
-    reimbursementPool: ReimbursementPool
   }> => {
     // Due to a [bug] in hardhat-gas-reporter plugin we avoid using `--deploy-fixture`
     // flag of `hardhat-deploy` plugin. This requires us to load a global fixture
@@ -80,6 +83,10 @@ export const walletRegistryFixture = deployments.createFixture(
 
     const reimbursementPool: ReimbursementPool =
       await helpers.contracts.getContract("ReimbursementPool")
+
+    const randomBeacon: FakeContract<IRandomBeacon> = await fakeRandomBeacon(
+      walletRegistry
+    )
 
     const { deployer, governance } = await helpers.signers.getNamedSigners()
 
@@ -114,6 +121,7 @@ export const walletRegistryFixture = deployments.createFixture(
       walletRegistry,
       sortitionPool,
       reimbursementPool,
+      randomBeacon,
       walletOwner,
       deployer,
       governance,

@@ -11,7 +11,12 @@ import { assertGasUsed } from "./helpers/gas"
 import type { BigNumber, ContractTransaction } from "ethers"
 import type { FakeContract } from "@defi-wonderland/smock"
 import type { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
-import type { SortitionPool, WalletRegistry, IWalletOwner } from "../typechain"
+import type {
+  SortitionPool,
+  WalletRegistry,
+  IWalletOwner,
+  IRandomBeacon,
+} from "../typechain"
 import type { Operator, OperatorID } from "./utils/operators"
 
 const { createSnapshot, restoreSnapshot } = helpers.snapshot
@@ -20,6 +25,7 @@ const { provider } = waffle
 describe("WalletRegistry - Inactivity", () => {
   let walletRegistry: WalletRegistry
   let sortitionPool: SortitionPool
+  let randomBeacon: FakeContract<IRandomBeacon>
   let walletOwner: FakeContract<IWalletOwner>
 
   let thirdParty: SignerWithAddress
@@ -50,11 +56,12 @@ describe("WalletRegistry - Inactivity", () => {
 
   before(async () => {
     // eslint-disable-next-line @typescript-eslint/no-extra-semi
-    ;({ walletRegistry, sortitionPool, walletOwner, thirdParty } =
+    ;({ walletRegistry, sortitionPool, randomBeacon, walletOwner, thirdParty } =
       await walletRegistryFixture())
     ;({ members, walletID } = await createNewWallet(
       walletRegistry,
       walletOwner.wallet,
+      randomBeacon,
       walletPublicKey
     ))
 

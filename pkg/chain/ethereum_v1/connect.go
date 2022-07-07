@@ -1,10 +1,12 @@
-package ethereum
+package ethereum_v1
 
 import (
 	"context"
 	"fmt"
 	"math/big"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
 	"github.com/keep-network/keep-common/pkg/rate"
 
@@ -53,12 +55,11 @@ type ethereumChain struct {
 	// nonce. Serializing submission ensures that each nonce is requested after
 	// a previous transaction has been submitted.
 	transactionMutex *sync.Mutex
-}
 
-type ethereumUtilityChain struct {
-	ethereumChain
-
-	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
+	// TODO: Temporary helper map. Should be removed once proper RandomBeacon
+	//       v2 implementation is here.
+	dkgResultSubmissionHandlersMutex sync.Mutex
+	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 }
 
 func connect(
@@ -93,12 +94,13 @@ func connectWithClient(
 	}
 
 	ec := &ethereumChain{
-		config:           config,
-		client:           addClientWrappers(config, client),
-		clientRPC:        clientRPC,
-		clientWS:         clientWS,
-		chainID:          chainID,
-		transactionMutex: &sync.Mutex{},
+		config:                      config,
+		client:                      addClientWrappers(config, client),
+		clientRPC:                   clientRPC,
+		clientWS:                    clientWS,
+		chainID:                     chainID,
+		transactionMutex:            &sync.Mutex{},
+		dkgResultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 	}
 
 	blockCounter, err := ethutil.NewBlockCounter(ec.client)
@@ -180,7 +182,9 @@ func connectWithClient(
 	}
 	ec.chainConfig = chainConfig
 
-	ec.initializeBalanceMonitoring(ctx)
+	// TODO: Disable balance monitoring to be able to start the client
+	//       without v1 contracts deployed.
+	// ec.initializeBalanceMonitoring(ctx)
 
 	return ec, nil
 }
@@ -212,73 +216,6 @@ func addClientWrappers(
 	return loggingBackend
 }
 
-// ConnectUtility makes the network connection to the Ethereum network and
-// returns a utility handle to the chain interface with additional methods for
-// non- standard client interactions. Note: for other things to work correctly
-// the configuration will need to reference a websocket, "ws://", or local IPC
-// connection.
-func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
-	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error connecting to Ethereum server: %s [%v]",
-			config.URL,
-			err,
-		)
-	}
-
-	base, err := connectWithClient(
-		context.Background(),
-		config,
-		client,
-		clientWS,
-		clientRPC,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	blockCounter, err := ethutil.NewBlockCounter(client)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to create Ethereum blockcounter: [%v]",
-			err,
-		)
-	}
-
-	miningWaiter := ethutil.NewMiningWaiter(client, config)
-
-	address, err := config.ContractAddress(KeepRandomBeaconServiceContractName)
-	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
-	}
-
-	nonceManager := ethutil.NewNonceManager(
-		client,
-		base.accountKey.Address,
-	)
-
-	keepRandomBeaconServiceContract, err :=
-		contract.NewKeepRandomBeaconService(
-			address,
-			base.chainID,
-			base.accountKey,
-			base.client,
-			nonceManager,
-			miningWaiter,
-			blockCounter,
-			base.transactionMutex,
-		)
-	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepRandomBeaconService contract: [%v]", err)
-	}
-
-	return &ethereumUtilityChain{
-		*base,
-		keepRandomBeaconServiceContract,
-	}, nil
-}
-
 // Connect makes the network connection to the Ethereum network and returns a
 // standard handle to the chain interface. Note: for other things to work
 // correctly the configuration will need to reference a websocket, "ws://", or
@@ -286,7 +223,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 func Connect(
 	ctx context.Context,
 	config ethereum.Config,
-) (chain.Handle, error) {
+) (*ethereumChain, error) {
 	return connect(ctx, config)
 }
 
@@ -298,43 +235,16 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
-	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
-	}
-
-	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
-	}
-
-	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling ResultPublicationBlockStep: [%v]",
-			err,
-		)
-	}
-
-	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
-	if err != nil {
-		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
-	}
+	// TODO: Fetch from RandomBeacon v2 contract.
+	groupSize := 64
+	honestThreshold := 33
+	resultPublicationBlockStep := 6
+	relayEntryTimeout := groupSize * resultPublicationBlockStep
 
 	return &relaychain.Config{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
+		GroupSize:                  groupSize,
+		HonestThreshold:            honestThreshold,
+		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
+		RelayEntryTimeout:          uint64(relayEntryTimeout),
 	}, nil
 }
