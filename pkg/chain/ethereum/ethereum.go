@@ -45,8 +45,32 @@ type Chain struct {
 	transactionMutex *sync.Mutex
 }
 
-// NewChain construct a new instance of the Ethereum chain handle.
-func NewChain(
+// Connect creates Random Beacon and TBTC Ethereum chain handles.
+func Connect(
+	ctx context.Context,
+	config ethereum.Config,
+	client *ethclient.Client,
+) (*BeaconChain, *TbtcChain, error) {
+	baseChain, err := newChain(ctx, config, client)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create base chain handle: [%v]", err)
+	}
+
+	beaconChain, err := newBeaconChain(config, baseChain)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create beacon chain handle: [%v]", err)
+	}
+
+	tbtcChain, err := newTbtcChain(baseChain)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not create TBTC chain handle: [%v]", err)
+	}
+
+	return beaconChain, tbtcChain, nil
+}
+
+// newChain construct a new instance of the Ethereum chain handle.
+func newChain(
 	ctx context.Context,
 	config ethereum.Config,
 	client *ethclient.Client,

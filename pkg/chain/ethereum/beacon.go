@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
@@ -23,7 +22,6 @@ type BeaconChain struct {
 // newBeaconChain construct a new instance of the beacon-specific Ethereum
 // chain handle.
 func newBeaconChain(
-	ctx context.Context,
 	config ethereum.Config,
 	baseChain *Chain,
 ) (*BeaconChain, error) {
