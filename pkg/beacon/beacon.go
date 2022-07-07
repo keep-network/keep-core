@@ -1,7 +1,6 @@
 package beacon
 
 import (
-	"context"
 	"encoding/hex"
 	"time"
 
@@ -24,7 +23,6 @@ var logger = log.Logger("keep-beacon")
 // internal random beacon implementation. Returns an error if this failed,
 // otherwise enters a blocked loop.
 func Initialize(
-	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
