@@ -11,9 +11,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/altbn128"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 	"github.com/keep-network/keep-core/pkg/internal/dkgtest"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 )
 
 func TestExecute_HappyPath(t *testing.T) {

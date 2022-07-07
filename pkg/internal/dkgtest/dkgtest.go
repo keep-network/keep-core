@@ -115,9 +115,9 @@ func executeDKG(
 	blockCounter chain.BlockCounter,
 	signing chain.Signing,
 	lastDKGResultGetter func() (
-	*relaychain.DKGResult,
-	map[relaychain.GroupMemberIndex][]byte,
-),
+		*relaychain.DKGResult,
+		map[relaychain.GroupMemberIndex][]byte,
+	),
 	network interception.Network,
 	selectedStakers []relaychain.StakerAddress,
 ) (*Result, error) {
