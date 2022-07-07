@@ -58,7 +58,13 @@ jobs:
           node-version: "14.x"
           cache: "npm"
           cache-dependency-path: solidity-v1/package-lock.json
-            
+
+      # This step forces Git to download dependencies using `https://` protocol,
+      # even if `package-lock.json` refers to some package via `git://`. Using
+      # `git://` is no longer supported by GH.
+      - name: Configure git to don't use unauthenticated protocol
+        run: git config --global url."https://".insteadOf git://
+
       - name: Install dependencies
         run: npm ci
 
