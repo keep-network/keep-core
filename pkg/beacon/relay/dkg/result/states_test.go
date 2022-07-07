@@ -15,18 +15,18 @@ func TestAcceptValidSignatureHashMessage(t *testing.T) {
 		GroupPublicKey: []byte("He’s the hero Gotham deserves."),
 	}
 
-	members, chainHandles, err := initializeSigningMembers(groupSize)
+	members, relayChains, signings, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	member, _ := members[0], chainHandles[0]
-	member2, chain2 := members[1], chainHandles[1]
+	member, _, _ := members[0], relayChains[0], signings[0]
+	member2, relayChain2, signing2 := members[1], relayChains[1], signings[1]
 
 	message2, err := member2.SignDKGResult(
 		dkgResult,
-		chain2.ThresholdRelay(),
-		chain2.Signing(),
+		relayChain2,
+		signing2,
 	)
 
 	state := &resultSigningState{
@@ -36,7 +36,7 @@ func TestAcceptValidSignatureHashMessage(t *testing.T) {
 
 	state.Receive(&mockSignatureMessage{
 		message2,
-		chain2.Signing().PublicKey(),
+		signing2.PublicKey(),
 	})
 
 	if len(state.signatureMessages) != 1 {
@@ -58,18 +58,18 @@ func TestDoNotAcceptMessageWithSwappedKey(t *testing.T) {
 		GroupPublicKey: []byte("But not the one it needs right now."),
 	}
 
-	members, chainHandles, err := initializeSigningMembers(groupSize)
+	members, relayChains, signings, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	member, _ := members[0], chainHandles[0]
-	member2, chain2 := members[1], chainHandles[1]
+	member, _, _ := members[0], relayChains[0], signings[0]
+	member2, relayChain2, signing2 := members[1], relayChains[1], signings[1]
 
 	message2, err := member2.SignDKGResult(
 		dkgResult,
-		chain2.ThresholdRelay(),
-		chain2.Signing(),
+		relayChain2,
+		signing2,
 	)
 
 	state := &resultSigningState{
