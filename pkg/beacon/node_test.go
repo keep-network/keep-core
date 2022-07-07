@@ -19,7 +19,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		fmt.Printf("failed to setup a block counter: [%v]", err)
 	}
 
-	node := &Node{
+	node := &node{
 		blockCounter: blockCounter,
 	}
 
@@ -77,7 +77,7 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 		fmt.Printf("failed to setup a block counter: [%v]", err)
 	}
 
-	node := &Node{
+	node := &node{
 		blockCounter: blockCounter,
 	}
 

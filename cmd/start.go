@@ -59,7 +59,7 @@ func init() {
 		}
 }
 
-// Start starts a node; if it's not a bootstrap node it will get the Node.URLs
+// Start starts a node; if it's not a bootstrap node it will get the node.URLs
 // from the config file
 func Start(c *cli.Context) error {
 	ctx := context.Background()

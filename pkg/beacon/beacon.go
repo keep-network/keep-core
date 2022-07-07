@@ -35,7 +35,7 @@ func Initialize(
 	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
-	node := NewNode(
+	node := newNode(
 		operatorPublicKey,
 		netProvider,
 		blockCounter,
