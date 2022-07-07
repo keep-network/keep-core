@@ -90,6 +90,11 @@ func newBeaconChain(
 	}, nil
 }
 
+// OperatorToStakingProvider returns the staking provider address for the
+// current operator. If the staking provider has not been registered for the
+// operator, the returned address is empty and the boolean flag is set to false
+// If the staking provider has been registered, the address is not empty and the
+// boolean flag indicates true.
 func (bc *BeaconChain) OperatorToStakingProvider() (chain.Address, bool, error) {
 	stakingProvider, err := bc.randomBeacon.OperatorToStakingProvider(bc.key.Address)
 	if err != nil {
@@ -110,6 +115,12 @@ func (bc *BeaconChain) OperatorToStakingProvider() (chain.Address, bool, error) 
 	return chain.Address(stakingProvider.Hex()), true, nil
 }
 
+// EligibleStake returns the current value of the staking provider's eligible
+// stake. Eligible stake is defined as the currently authorized stake minus the
+// pending authorization decrease. Eligible stake is what is used for operator's
+// weight in the sortition pool. If the authorized stake minus the pending
+// authorization decrease is below the minimum authorization, eligible stake
+// is 0.
 func (bc *BeaconChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
 	eligibleStake, err := bc.randomBeacon.EligibleStake(common.HexToAddress(stakingProvider.String()))
 	if err != nil {
@@ -123,14 +134,20 @@ func (bc *BeaconChain) EligibleStake(stakingProvider chain.Address) (*big.Int, e
 	return eligibleStake, nil
 }
 
+// IsPoolLocked returns true if the sortition pool is locked and no state
+// changes are allowed.
 func (bc *BeaconChain) IsPoolLocked() (bool, error) {
 	return bc.sortitionPool.IsLocked()
 }
 
+// IsOperatorInPool returns true if the current operator is registered in the
+// sortition pool.
 func (bc *BeaconChain) IsOperatorInPool() (bool, error) {
 	return bc.randomBeacon.IsOperatorInPool(bc.key.Address)
 }
 
+// JoinSortitionPool executes a transaction to have the current operator join
+// the sortition pool.
 func (bc *BeaconChain) JoinSortitionPool() error {
 	_, err := bc.randomBeacon.JoinSortitionPool()
 	return err
