@@ -18,11 +18,11 @@ type localChain struct {
 	operatorToStakingProvider      map[chain.Address]chain.Address
 	operatorToStakingProviderMutex sync.RWMutex
 
-	// Stake for an operator, as set in the Sortition Pool contract.
+	// Weight of an operator, as set in the Sortition Pool contract.
 	sortitionPool      map[chain.Address]*big.Int
 	sortitionPoolMutex sync.RWMutex
 
-	// Stake for an operator, as set in the Token Staking contract,
+	// Stake for a staking provider, as set in the Token Staking contract,
 	// minus the pending authorization decrease.
 	eligibleStake      map[chain.Address]*big.Int
 	eligibleStakeMutex sync.RWMutex
@@ -86,6 +86,28 @@ func (lc *localChain) IsOperatorInPool() (bool, error) {
 	_, ok := lc.sortitionPool[lc.operatorAddress]
 
 	return ok, nil
+}
+
+func (lc *localChain) IsOperatorUpToDate() (bool, error) {
+	lc.sortitionPoolMutex.RLock()
+	defer lc.sortitionPoolMutex.RUnlock()
+
+	lc.eligibleStakeMutex.RLock()
+	defer lc.eligibleStakeMutex.RUnlock()
+
+	stakingProvider, isRegistered := lc.operatorToStakingProvider[lc.operatorAddress]
+	if !isRegistered {
+		return false, errOperatorUnknown
+	}
+
+	eligibleStake, hasStake := lc.eligibleStake[stakingProvider]
+	weight, isInPool := lc.sortitionPool[lc.operatorAddress]
+
+	if !isInPool {
+		return !hasStake || eligibleStake.Cmp(big.NewInt(0)) == 0, nil
+	} else {
+		return weight.Cmp(eligibleStake) == 0, nil
+	}
 }
 
 func (lc *localChain) JoinSortitionPool() error {

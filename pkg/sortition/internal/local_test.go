@@ -73,6 +73,96 @@ func TestEligibleStake(t *testing.T) {
 	)
 }
 
+func TestOperatorUpToDate_NotRegisteredOperator(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+
+	_, err := localChain.IsOperatorUpToDate()
+	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
+}
+
+func TestOperatorUpToDate_NoStake(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+
+	isUpToDate, err := localChain.IsOperatorUpToDate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !isUpToDate {
+		t.Fatal("expected the operator to be up to date")
+	}
+}
+
+func TestOperatorUpToDate_ZeroStake(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(0))
+
+	isUpToDate, err := localChain.IsOperatorUpToDate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !isUpToDate {
+		t.Fatal("expected the operator to be up to date")
+	}
+}
+
+func TestOperatorUpToDate_NonZeroStakeNotInPool(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+
+	isUpToDate, err := localChain.IsOperatorUpToDate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if isUpToDate {
+		t.Fatal("expected the operator not to be up to date")
+	}
+}
+
+func TestOperatorUpToDate_StakeInSyncWithWeight(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	err := localChain.JoinSortitionPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isUpToDate, err := localChain.IsOperatorUpToDate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !isUpToDate {
+		t.Fatal("expected the operator to be up to date")
+	}
+}
+
+func TestOperatorUpToDate_StakeNotInSyncWithWeight(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	err := localChain.JoinSortitionPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(101))
+
+	isUpToDate, err := localChain.IsOperatorUpToDate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if isUpToDate {
+		t.Fatal("expected the operator not to be up to date")
+	}
+}
+
 func TestJoinSortitionPool_NotRegisteredOperator(t *testing.T) {
 	localChain := connectLocal(testOperatorAddress)
 
