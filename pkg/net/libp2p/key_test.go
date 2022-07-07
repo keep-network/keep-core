@@ -79,6 +79,148 @@ func TestOperatorPrivateKeyToNetworkKeyPair_NotSecp256k1(t *testing.T) {
 	}
 }
 
+func TestOperatorPrivateKeyToNetworkKeyPair_OperatorKeyBytesLengthShorterThan32(t *testing.T) {
+	operatorPublicKey := operator.PublicKey{
+		Curve: operator.Secp256k1,
+		X:     big.NewInt(0),
+		Y:     big.NewInt(0),
+	}
+	operatorPublicKey.X.UnmarshalText([]byte(
+		"97427329544416289364384965587373348295173301176370762853904909401438964894172",
+	))
+	operatorPublicKey.Y.UnmarshalText([]byte(
+		"74629372855232926020228171103363510898329534375325069073334079268933673928899",
+	))
+
+	operatorPrivateKey := &operator.PrivateKey{
+		PublicKey: operatorPublicKey,
+		D:         big.NewInt(0),
+	}
+	// The D value will be 31-byte long.
+	operatorPrivateKey.D.UnmarshalText([]byte(
+		"93742012702679576205257802297208635061933563746198248090895937324950509169",
+	))
+
+	networkPrivateKey, networkPublicKey, err := operatorPrivateKeyToNetworkKeyPair(
+		operatorPrivateKey,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// To access X and Y coordinates `networkPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them
+	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
+
+	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
+		t.Errorf("network public key has a wrong X coordinate")
+	}
+	if btcecPublicKey.Y().Cmp(operatorPublicKey.Y) != 0 {
+		t.Errorf("network public key has a wrong Y coordinate")
+	}
+
+	// To access the D value `networkPrivateKey`needs to be converted to the
+	// underlying `type btcec.PrivateKey` as the type
+	// `libp2pcrypto.Secp256k1PrivateKey` does not expose it.
+	btcecPrivateKey := (*btcec.PrivateKey)(networkPrivateKey)
+
+	if !reflect.DeepEqual(
+		btcecPrivateKey.PubKey(),
+		btcecPublicKey,
+	) {
+		t.Errorf("network private key contains wrong network public key")
+	}
+
+	if extractD(btcecPrivateKey).Cmp(operatorPrivateKey.D) != 0 {
+		t.Errorf("network private key has a wrong D parameter")
+	}
+}
+
+func TestOperatorPrivateKeyToNetworkKeyPair_OperatorKeyBytesLengthEqualTo32(t *testing.T) {
+	operatorPublicKey := operator.PublicKey{
+		Curve: operator.Secp256k1,
+		X:     big.NewInt(0),
+		Y:     big.NewInt(0),
+	}
+	operatorPublicKey.X.UnmarshalText([]byte(
+		"100773973786886702528067362833887681119299455607054007058082928411975884796343",
+	))
+	operatorPublicKey.Y.UnmarshalText([]byte(
+		"114537311513994193611577651952591602316970335059766760441557249896390043285921",
+	))
+
+	operatorPrivateKey := &operator.PrivateKey{
+		PublicKey: operatorPublicKey,
+		D:         big.NewInt(0),
+	}
+	// The D value will be 32-byte long.
+	operatorPrivateKey.D.UnmarshalText([]byte(
+		"27821820627376159532519075045721078275565093530261898135224182555762310064846",
+	))
+
+	networkPrivateKey, networkPublicKey, err := operatorPrivateKeyToNetworkKeyPair(
+		operatorPrivateKey,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// To access X and Y coordinates `networkPublicKey` needs to be converted
+	// to the underlying `type btcec.PublicKey` as the type
+	// `libp2pcrypto.Secp256k1PublicKey` does not expose them.
+	btcecPublicKey := (*btcec.PublicKey)(networkPublicKey)
+
+	if btcecPublicKey.X().Cmp(operatorPublicKey.X) != 0 {
+		t.Errorf("network public key has a wrong X coordinate")
+	}
+	if btcecPublicKey.Y().Cmp(operatorPublicKey.Y) != 0 {
+		t.Errorf("network public key has a wrong Y coordinate")
+	}
+
+	// To access the D value `networkPrivateKey`needs to be converted to the
+	// underlying `type btcec.PrivateKey` as the type
+	// `libp2pcrypto.Secp256k1PrivateKey` does not expose it.
+	btcecPrivateKey := (*btcec.PrivateKey)(networkPrivateKey)
+
+	if !reflect.DeepEqual(
+		btcecPrivateKey.PubKey(),
+		btcecPublicKey,
+	) {
+		t.Errorf("network private key contains wrong network public key")
+	}
+
+	if extractD(btcecPrivateKey).Cmp(operatorPrivateKey.D) != 0 {
+		t.Errorf("network private key has a wrong D parameter")
+	}
+}
+
+func TestOperatorPrivateKeyToNetworkKeyPair_OperatorKeyBytesLengthLongerThan32(t *testing.T) {
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Alter the D value so that its length exceeds 32 bytes
+	operatorPrivateKeyBytes := [33]byte{0: 1}
+	operatorPrivateKey.D.SetBytes(operatorPrivateKeyBytes[:])
+
+	_, _, err = operatorPrivateKeyToNetworkKeyPair(
+		operatorPrivateKey,
+	)
+
+	expectedError := fmt.Errorf(
+		"operator private key byte length is greater than 32 bytes",
+	)
+	if !reflect.DeepEqual(expectedError, err) {
+		t.Errorf(
+			"unexpected error\nexpected: %v\nactual:   %v\n",
+			expectedError,
+			err,
+		)
+	}
+}
+
 func TestOperatorPublicKeyToNetworkPublicKey(t *testing.T) {
 	_, operatorPublicKey, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
