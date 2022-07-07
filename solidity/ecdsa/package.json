@@ -28,6 +28,7 @@
     "build": "hardhat compile",
     "test": "TEST_USE_STUBS_ECDSA=true hardhat test",
     "deploy": "hardhat deploy --export export.json",
+    "deploy:test": "TEST_USE_STUBS_ECDSA=true npm run deploy",
     "prepack": "tsc -p tsconfig.export.json && hardhat export-artifacts --including-no-public-functions export/artifacts"
   },
   "devDependencies": {
