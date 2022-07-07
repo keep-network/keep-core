@@ -16,7 +16,7 @@
   "scripts": {
     "clean": "hardhat clean && rm -rf cache",
     "build": "hardhat compile",
-    "test": "hardhat check-accounts-count && hardhat test",
+    "test": "hardhat check-accounts-count && TEST_USE_STUBS_BEACON=true hardhat test",
     "deploy": "hardhat deploy --export export.json",
     "format": "npm run lint",
     "format:fix": "npm run lint:fix",
