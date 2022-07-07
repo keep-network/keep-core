@@ -49,8 +49,16 @@ type Chain struct {
 func Connect(
 	ctx context.Context,
 	config ethereum.Config,
-	client *ethclient.Client,
 ) (*BeaconChain, *TbtcChain, error) {
+	client, err := ethclient.Dial(config.URL)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"error Connecting to Ethereum Server: %s [%v]",
+			config.URL,
+			err,
+		)
+	}
+
 	baseChain, err := newChain(ctx, config, client)
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not create base chain handle: [%v]", err)
