@@ -159,7 +159,7 @@ jobs:
             -exclude-dir=pkg/chain/gen
             ./...
 
-  client-lint:
+  client-format:
     needs: client-detect-changes
     if: |
       github.event_name == 'push'
@@ -168,5 +168,5 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Lint Go
-        uses: keep-network/golint-action@v1.0.2
+      - name: Go format
+        uses: Jerome1337/gofmt-action@v1.0.4

@@ -510,7 +510,7 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 	groupSize := 5
 	honestThreshold := 3
 
-	localChain := Connect(groupSize, honestThreshold, big.NewInt(200)).(*localChain)
+	localChain := Connect(groupSize, honestThreshold, big.NewInt(200))
 	chainHandle := localChain.ThresholdRelay()
 
 	var tests = map[string]struct {

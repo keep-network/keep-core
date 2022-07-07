@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/keep-network/keep-core/pkg/operator"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 
@@ -24,9 +26,7 @@ import (
 type Node struct {
 	mutex sync.Mutex
 
-	// Staker is an on-chain identity that this node is using to prove its
-	// stake in the system.
-	Staker chain.Staker
+	operatorPublicKey *operator.PublicKey
 
 	// External interactors.
 	netProvider  net.Provider
@@ -76,10 +76,16 @@ func (n *Node) JoinDKGIfEligible(
 		return
 	}
 
+	operatorAddress, err := signing.PublicKeyToAddress(n.operatorPublicKey)
+	if err != nil {
+		logger.Errorf("failed to get operator address: [%v]", err)
+		return
+	}
+
 	indexes := make([]uint8, 0)
 	for index, groupMember := range groupMembers {
 		// See if we are amongst those chosen
-		if bytes.Compare(groupMember, n.Staker.Address()) == 0 {
+		if bytes.Compare(groupMember, operatorAddress) == 0 {
 			indexes = append(indexes, uint8(index))
 		}
 	}

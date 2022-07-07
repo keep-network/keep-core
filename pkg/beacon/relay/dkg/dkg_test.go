@@ -2,6 +2,7 @@ package dkg
 
 import (
 	"fmt"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"math/big"
 	"reflect"
 	"testing"
@@ -20,7 +21,7 @@ var (
 	gjkrResult                  *gjkr.Result
 	dkgResultChannel            chan *event.DKGResultSubmission
 	startPublicationBlockHeight uint64
-	localChain                  chain.Handle
+	relayChain                  relaychain.Interface
 	blockCounter                chain.BlockCounter
 )
 
@@ -30,7 +31,8 @@ func setup() {
 	gjkrResult = &gjkr.Result{GroupPublicKey: groupPublicKey}
 	dkgResultChannel = make(chan *event.DKGResultSubmission, 1)
 	startPublicationBlockHeight = uint64(0)
-	localChain = local.Connect(5, 3, big.NewInt(10))
+	localChain := local.Connect(5, 3, big.NewInt(10))
+	relayChain = localChain.ThresholdRelay()
 	blockCounter, _ = localChain.BlockCounter()
 }
 
@@ -47,7 +49,7 @@ func TestDecideMemberFate_HappyPath(t *testing.T) {
 		gjkrResult,
 		dkgResultChannel,
 		startPublicationBlockHeight,
-		localChain.ThresholdRelay(),
+		relayChain,
 		blockCounter,
 	)
 
@@ -74,7 +76,7 @@ func TestDecideMemberFate_NotSameGroupPublicKey(t *testing.T) {
 		gjkrResult,
 		dkgResultChannel,
 		startPublicationBlockHeight,
-		localChain.ThresholdRelay(),
+		relayChain,
 		blockCounter,
 	)
 
@@ -105,7 +107,7 @@ func TestDecideMemberFate_MemberIsMisbehaved(t *testing.T) {
 		gjkrResult,
 		dkgResultChannel,
 		startPublicationBlockHeight,
-		localChain.ThresholdRelay(),
+		relayChain,
 		blockCounter,
 	)
 
@@ -131,7 +133,7 @@ func TestDecideMemberFate_Timeout(t *testing.T) {
 		gjkrResult,
 		dkgResultChannel,
 		startPublicationBlockHeight,
-		localChain.ThresholdRelay(),
+		relayChain,
 		blockCounter,
 	)
 

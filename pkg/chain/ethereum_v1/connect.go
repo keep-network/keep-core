@@ -1,11 +1,12 @@
-package ethereum
+package ethereum_v1
 
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"math/big"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
 	"github.com/keep-network/keep-common/pkg/rate"
 
@@ -59,12 +60,6 @@ type ethereumChain struct {
 	//       v2 implementation is here.
 	dkgResultSubmissionHandlersMutex sync.Mutex
 	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
-}
-
-type ethereumUtilityChain struct {
-	ethereumChain
-
-	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
 }
 
 func connect(
@@ -221,73 +216,6 @@ func addClientWrappers(
 	return loggingBackend
 }
 
-// ConnectUtility makes the network connection to the Ethereum network and
-// returns a utility handle to the chain interface with additional methods for
-// non- standard client interactions. Note: for other things to work correctly
-// the configuration will need to reference a websocket, "ws://", or local IPC
-// connection.
-func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
-	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error connecting to Ethereum server: %s [%v]",
-			config.URL,
-			err,
-		)
-	}
-
-	base, err := connectWithClient(
-		context.Background(),
-		config,
-		client,
-		clientWS,
-		clientRPC,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	blockCounter, err := ethutil.NewBlockCounter(client)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to create Ethereum blockcounter: [%v]",
-			err,
-		)
-	}
-
-	miningWaiter := ethutil.NewMiningWaiter(client, config)
-
-	address, err := config.ContractAddress(KeepRandomBeaconServiceContractName)
-	if err != nil {
-		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
-	}
-
-	nonceManager := ethutil.NewNonceManager(
-		client,
-		base.accountKey.Address,
-	)
-
-	keepRandomBeaconServiceContract, err :=
-		contract.NewKeepRandomBeaconService(
-			address,
-			base.chainID,
-			base.accountKey,
-			base.client,
-			nonceManager,
-			miningWaiter,
-			blockCounter,
-			base.transactionMutex,
-		)
-	if err != nil {
-		return nil, fmt.Errorf("error attaching to KeepRandomBeaconService contract: [%v]", err)
-	}
-
-	return &ethereumUtilityChain{
-		*base,
-		keepRandomBeaconServiceContract,
-	}, nil
-}
-
 // Connect makes the network connection to the Ethereum network and returns a
 // standard handle to the chain interface. Note: for other things to work
 // correctly the configuration will need to reference a websocket, "ws://", or
@@ -295,7 +223,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 func Connect(
 	ctx context.Context,
 	config ethereum.Config,
-) (chain.Handle, error) {
+) (*ethereumChain, error) {
 	return connect(ctx, config)
 }
 
