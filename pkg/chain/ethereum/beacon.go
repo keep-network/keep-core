@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain/random-beacon/gen/contract"
 )
@@ -21,18 +20,13 @@ type BeaconChain struct {
 	randomBeacon *contract.RandomBeacon
 }
 
-// NewBeaconChain construct a new instance of the beacon-specific Ethereum
+// newBeaconChain construct a new instance of the beacon-specific Ethereum
 // chain handle.
-func NewBeaconChain(
+func newBeaconChain(
 	ctx context.Context,
 	config ethereum.Config,
-	client *ethclient.Client,
+	baseChain *Chain,
 ) (*BeaconChain, error) {
-	chain, err := NewChain(ctx, config, client)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create base chain handle: [%v]", err)
-	}
-
 	randomBeaconAddress, err := config.ContractAddress(RandomBeaconContractName)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -45,13 +39,13 @@ func NewBeaconChain(
 	randomBeacon, err :=
 		contract.NewRandomBeacon(
 			randomBeaconAddress,
-			chain.chainID,
-			chain.key,
-			chain.client,
-			chain.nonceManager,
-			chain.miningWaiter,
-			chain.blockCounter,
-			chain.transactionMutex,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -62,7 +56,7 @@ func NewBeaconChain(
 	}
 
 	return &BeaconChain{
-		Chain:        chain,
+		Chain:        baseChain,
 		randomBeacon: randomBeacon,
 	}, nil
 }
