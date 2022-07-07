@@ -118,7 +118,7 @@ func TestLoadGroup(t *testing.T) {
 
 func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
-		groupsToRemove: [][]byte{},
+		groupsToRemove:       [][]byte{},
 		groupsCheckedIfStale: make(map[string]bool),
 	}
 
@@ -194,6 +194,12 @@ func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
 func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 	func(groupRegistration *event.GroupRegistration),
 ) subscription.EventSubscription {
+	panic("not implemented")
+}
+
+func (mgri *mockGroupRegistrationInterface) IsGroupRegistered(
+	groupPublicKey []byte,
+) (bool, error) {
 	panic("not implemented")
 }
 

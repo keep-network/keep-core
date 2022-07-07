@@ -7,6 +7,9 @@ import (
 )
 
 // Staker represents a single staker in the system.
+// DEPRECATED
+// TODO: The "staker" should probably become "operator" to reflect random
+//       beacon v2 structure.
 type Staker interface {
 	// Address returns staker's address
 	Address() relaychain.StakerAddress

@@ -2,71 +2,53 @@ package event
 
 import (
 	"encoding/hex"
+	"github.com/keep-network/keep-common/pkg/cache"
 	"math/big"
 	"testing"
+	"time"
 )
 
-func TestStartGroupSelection_NoPriorGroupSelections(t *testing.T) {
+const testDKGSeedCachePeriod = 1 * time.Second
+
+func TestNotifyDKGStarted(t *testing.T) {
 	chain := &testChain{
 		currentRequestStartBlockValue:    nil,
 		currentRequestPreviousEntryValue: []byte{},
 	}
 
-	// In case of first group selection for that node, the last group selection
-	// block number held by the deduplicator is zero.
-	deduplicator := NewDeduplicator(
-		chain,
-		200,
-	)
-
-	canGenerate := deduplicator.NotifyGroupSelectionStarted(5)
-
-	if !canGenerate {
-		t.Fatal("should be allowed to start group selection")
-	}
-}
-
-func TestStartGroupSelection_MinGroupSelectionDurationPassed(t *testing.T) {
-	chain := &testChain{
-		currentRequestStartBlockValue:    nil,
-		currentRequestPreviousEntryValue: []byte{},
+	deduplicator := &Deduplicator{
+		chain:        chain,
+		dkgSeedCache: cache.NewTimeCache(testDKGSeedCachePeriod),
 	}
 
-	deduplicator := NewDeduplicator(
-		chain,
-		200,
-	)
+	seed1 := big.NewInt(100)
+	seed2 := big.NewInt(200)
 
-	// Simulate the last group selection occured at block 100
-	deduplicator.NotifyGroupSelectionStarted(100)
-
-	// Group selection will be possible at block 100 + 200 + 1 = 301
-	canGenerate := deduplicator.NotifyGroupSelectionStarted(301)
-
-	if !canGenerate {
-		t.Fatal("should be allowed to start group selection")
-	}
-}
-
-func TestStartGroupSelection_MinGroupSelectionDurationNotPassed(t *testing.T) {
-	chain := &testChain{
-		currentRequestStartBlockValue:    nil,
-		currentRequestPreviousEntryValue: []byte{},
+	// Add the first seed.
+	canJoinDKG := deduplicator.NotifyDKGStarted(seed1)
+	if !canJoinDKG {
+		t.Fatal("should be allowed to join DKG")
 	}
 
-	deduplicator := NewDeduplicator(
-		chain,
-		200,
-	)
+	// Add the second seed.
+	canJoinDKG = deduplicator.NotifyDKGStarted(seed2)
+	if !canJoinDKG {
+		t.Fatal("should be allowed to join DKG")
+	}
 
-	// Simulate the last group selection occured at block 100
-	deduplicator.NotifyGroupSelectionStarted(100)
+	// Add the first seed before caching period elapses.
+	canJoinDKG = deduplicator.NotifyDKGStarted(seed1)
+	if canJoinDKG {
+		t.Fatal("should not be allowed to join DKG")
+	}
 
-	// Group selection will be possible at block 100 + 200 + 1 = 301
-	canGenerate := deduplicator.NotifyGroupSelectionStarted(300)
+	// Wait until caching period elapses.
+	time.Sleep(testDKGSeedCachePeriod)
 
-	if canGenerate {
-		t.Fatal("should not be allowed to start group selection")
+	// Add the first seed again.
+	canJoinDKG = deduplicator.NotifyDKGStarted(seed1)
+	if !canJoinDKG {
+		t.Fatal("should be allowed to join DKG")
 	}
 }
 
@@ -78,7 +60,6 @@ func TestStartRelayEntry_NoPriorRelayEntries(t *testing.T) {
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	canGenerate, err := deduplicator.NotifyRelayEntryStarted(
@@ -102,7 +83,6 @@ func TestStartRelayEntry_LowerStartBlock(t *testing.T) {
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err := deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -131,7 +111,6 @@ func TestStartRelayEntry_HigherStartBlock_DifferentPreviousEntry(t *testing.T) {
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err := deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -165,7 +144,6 @@ func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_ConfirmedOnChain(t *
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -199,7 +177,6 @@ func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_PreviousEntryNotConf
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")
@@ -233,7 +210,6 @@ func TestStartRelayEntry_HigherStartBlock_SamePreviousEntry_StartBlockNotConfirm
 
 	deduplicator := NewDeduplicator(
 		chain,
-		200,
 	)
 
 	_, err = deduplicator.NotifyRelayEntryStarted(100, "01")

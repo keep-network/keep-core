@@ -933,10 +933,10 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/object-schema/-/object-schema-1.2.0.tgz#87de7af9c231826fdd68ac7258f77c429e0e5fcf"
   integrity sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==
 
-"@keep-network/hardhat-helpers@^0.6.0-pre.7":
-  version "0.6.0-pre.7"
-  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.6.0-pre.7.tgz#0b8fbc7c8ee7248f0babbfe4f2f957f5ef3f8507"
-  integrity sha512-6inPdST2lAwxYLGl619udVLJDoW41maQzxc2MD1YmvUDlkrHsI4GmSmqkj+mJPtLVVEbxqCjwQNjyDkSmIICvQ==
+"@keep-network/hardhat-helpers@^0.6.0-pre.8":
+  version "0.6.0-pre.8"
+  resolved "https://registry.yarnpkg.com/@keep-network/hardhat-helpers/-/hardhat-helpers-0.6.0-pre.8.tgz#6e0722889a0132dabed5182fb32f6424ff4a77d0"
+  integrity sha512-51oLHceBubutBYxfVk2pLjgyhvpcDC1ahKM3V9lOiTa9lbWyY18Dza7rnM9V04kq+8DbweQRM0M9/f+K26nl9g==
 
 "@keep-network/hardhat-local-networks-config@^0.1.0-pre.0":
   version "0.1.0-pre.0"
@@ -947,9 +947,9 @@
     untildify "^4.0.0"
 
 "@keep-network/keep-core@>1.8.1-dev <1.8.1-pre":
-  version "1.8.1-dev.0"
-  resolved "https://registry.yarnpkg.com/@keep-network/keep-core/-/keep-core-1.8.1-dev.0.tgz#d95864b25800214de43d8840376a68336cb12055"
-  integrity sha512-gFXkgN4PYOYCZ14AskL7fZHEFW5mu3BDd+TJKBuKZc1q9CgRMOK+dxpJnSctxmSH1tV+Ln9v9yqlSkfPCoiBHw==
+  version "1.8.1-goerli.0"
+  resolved "https://registry.yarnpkg.com/@keep-network/keep-core/-/keep-core-1.8.1-goerli.0.tgz#238485aab51902021d42357bf59695225002f0ab"
+  integrity sha512-h3La/RqbyEZjBBPg8V+pcRFo3UpWZUF4CxWfXHZnUR4PnkZKnIDrTNFQPhpV2uYFZwrbJxTR9mzOq/DOAiXPwA==
   dependencies:
     "@openzeppelin/upgrades" "^2.7.2"
     openzeppelin-solidity "2.4.0"
