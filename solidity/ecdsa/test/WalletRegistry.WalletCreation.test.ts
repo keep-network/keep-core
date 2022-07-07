@@ -25,6 +25,7 @@ import type {
   WalletRegistry,
   WalletRegistryStub,
   TokenStaking,
+  IRandomBeacon,
 } from "../typechain"
 import type { DkgResult, DkgResultSubmittedEventArgs } from "./utils/dkg"
 import type { Operator } from "./utils/operators"
@@ -57,6 +58,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
   let walletRegistry: WalletRegistryStub & WalletRegistry
   let sortitionPool: SortitionPool
   let staking: TokenStaking
+  let randomBeacon: FakeContract<IRandomBeacon>
   let walletOwner: FakeContract<IWalletOwner>
 
   let deployer: SignerWithAddress
@@ -69,6 +71,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
     ;({
       walletRegistry,
       sortitionPool,
+      randomBeacon,
       walletOwner,
       deployer,
       thirdParty,
@@ -2015,6 +2018,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
         ;({ walletID: existingWalletID } = await createNewWallet(
           walletRegistry,
           walletOwner.wallet,
+          randomBeacon,
           existingWalletPublicKey
         ))
 
@@ -2604,7 +2608,7 @@ describe("WalletRegistry - Wallet Creation", async () => {
       before("create a wallet", async () => {
         await createSnapshot()
 
-        await createNewWallet(walletRegistry, walletOwner.wallet)
+        await createNewWallet(walletRegistry, walletOwner.wallet, randomBeacon)
       })
 
       after(async () => {
