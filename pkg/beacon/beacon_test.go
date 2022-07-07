@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )

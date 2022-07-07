@@ -40,10 +40,10 @@ COPY ./pkg/chain/ecdsa/gen $APP_DIR/pkg/chain/ecdsa/gen
 COPY ./pkg/chain/random-beacon/gen $APP_DIR/pkg/chain/random-beacon/gen
 COPY ./pkg/chain/tbtc-v2/gen $APP_DIR/pkg/chain/tbtc-v2/gen
 COPY ./pkg/chain/threshold-network/gen $APP_DIR/pkg/chain/threshold-network/gen
-COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
-COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
-COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
-COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
+COPY ./pkg/beacon/entry/gen $APP_DIR/pkg/beacon/entry/gen
+COPY ./pkg/beacon/gjkr/gen $APP_DIR/pkg/beacon/gjkr/gen
+COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
+COPY ./pkg/beacon/registry/gen $APP_DIR/pkg/beacon/registry/gen
 
 # If CONTRACTS_NPM_PACKAGE_TAG is not set it will download NPM packages versions
 # published and tagged as `development`.

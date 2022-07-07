@@ -6,13 +6,13 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 
 	"github.com/keep-network/keep-common/pkg/rate"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"

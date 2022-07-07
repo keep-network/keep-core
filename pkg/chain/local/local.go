@@ -9,8 +9,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"

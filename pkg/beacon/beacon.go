@@ -10,10 +10,9 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/beacon/relay"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
+	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
@@ -38,7 +37,7 @@ func Initialize(
 	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
-	node := relay.NewNode(
+	node := NewNode(
 		operatorPublicKey,
 		netProvider,
 		blockCounter,
