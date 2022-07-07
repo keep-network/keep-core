@@ -136,3 +136,21 @@ func (lc *localChain) JoinSortitionPool() error {
 
 	return nil
 }
+
+func (lc *localChain) UpdateOperatorStatus() error {
+	lc.eligibleStakeMutex.RLock()
+	defer lc.eligibleStakeMutex.RUnlock()
+
+	lc.sortitionPoolMutex.Lock()
+	defer lc.sortitionPoolMutex.Unlock()
+
+	stakingProvider, isRegistered := lc.operatorToStakingProvider[lc.operatorAddress]
+	if !isRegistered {
+		return errOperatorUnknown
+	}
+
+	eligibleStake := lc.eligibleStake[stakingProvider]
+	lc.sortitionPool[lc.operatorAddress] = eligibleStake
+
+	return nil
+}

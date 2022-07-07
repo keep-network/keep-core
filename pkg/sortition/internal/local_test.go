@@ -202,3 +202,41 @@ func TestJoinSortitionPool_OperatorAlreadyInPool(t *testing.T) {
 	err = localChain.JoinSortitionPool()
 	testutils.AssertErrorsEqual(t, errOperatorAlreadyRegisteredInPool, err)
 }
+
+func TestUpdateOperatorStatus_NotRegisteredOperator(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+
+	err := localChain.UpdateOperatorStatus()
+	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
+}
+
+func TestUpdateOperatorStatus(t *testing.T) {
+	localChain := connectLocal(testOperatorAddress)
+	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	err := localChain.JoinSortitionPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(101))
+
+	isUpToDate, err := localChain.IsOperatorUpToDate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if isUpToDate {
+		t.Fatal("expected the operator not to be up to date")
+	}
+
+	localChain.UpdateOperatorStatus()
+
+	isUpToDate, err = localChain.IsOperatorUpToDate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !isUpToDate {
+		t.Fatal("expected the operator to be up to date")
+	}
+}

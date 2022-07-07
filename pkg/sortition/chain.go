@@ -42,4 +42,8 @@ type Chain interface {
 	// JoinSortitionPool executes a transaction to have the current operator
 	// join the sortition pool.
 	JoinSortitionPool() error
+
+	// UpdateOperatorStatus executes a transaction to update the current
+	// operator's state in the sortition pool.
+	UpdateOperatorStatus() error
 }
