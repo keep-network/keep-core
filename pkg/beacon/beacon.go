@@ -145,7 +145,6 @@ func Initialize(
 
 			node.JoinDKGIfEligible(
 				beaconChain,
-				beaconChain.Signing(),
 				event.Seed,
 				event.BlockNumber,
 			)
