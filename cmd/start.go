@@ -156,6 +156,7 @@ func Start(c *cli.Context) error {
 	err = beacon.Initialize(
 		operatorPublicKey,
 		chainProvider.ThresholdRelay(),
+		chainProvider.ThresholdRelay(), // TODO: Use v2 ethereum implementation
 		netProvider,
 		persistence,
 	)

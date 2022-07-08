@@ -24,35 +24,36 @@ var logger = log.Logger("keep-beacon")
 // otherwise enters a blocked loop.
 func Initialize(
 	operatorPublicKey *operator.PublicKey,
+	beaconChainV1 beaconchain.Interface, // TODO: Remove once transition from v1 to v2 is done.
 	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	chainConfig := beaconChain.GetConfig()
+	chainConfig := beaconChainV1.GetConfig()
 
-	blockCounter, err := beaconChain.BlockCounter()
+	blockCounterV1, err := beaconChainV1.BlockCounter()
 	if err != nil {
 		return fmt.Errorf("failed to get block counter instance: [%v]", err)
 	}
 
-	signing := beaconChain.Signing()
+	signingV1 := beaconChainV1.Signing()
 
-	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
+	groupRegistry := registry.NewGroupRegistry(beaconChainV1, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := newNode(
 		operatorPublicKey,
 		netProvider,
-		blockCounter,
+		blockCounterV1,
 		chainConfig,
 		groupRegistry,
 	)
 
-	eventDeduplicator := event.NewDeduplicator(beaconChain)
+	eventDeduplicator := event.NewDeduplicator(beaconChainV1)
 
-	node.ResumeSigningIfEligible(beaconChain, signing)
+	node.ResumeSigningIfEligible(beaconChainV1, signingV1)
 
-	_ = beaconChain.OnRelayEntryRequested(func(request *event.Request) {
+	_ = beaconChainV1.OnRelayEntryRequested(func(request *event.Request) {
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
@@ -93,8 +94,8 @@ func Initialize(
 
 					node.GenerateRelayEntry(
 						request.PreviousEntry,
-						beaconChain,
-						signing,
+						beaconChainV1,
+						signingV1,
 						request.GroupPublicKey,
 						request.BlockNumber,
 					)
@@ -104,7 +105,7 @@ func Initialize(
 			}
 
 			go node.MonitorRelayEntry(
-				beaconChain,
+				beaconChainV1,
 				request.BlockNumber,
 				chainConfig,
 			)
@@ -115,7 +116,7 @@ func Initialize(
 
 		confirmCurrentRelayRequest(
 			request.BlockNumber,
-			beaconChain,
+			beaconChainV1,
 			onConfirmed,
 			currentRelayRequestConfirmationRetries,
 			currentRelayRequestConfirmationDelay,
@@ -144,14 +145,14 @@ func Initialize(
 
 			node.JoinDKGIfEligible(
 				beaconChain,
-				signing,
+				beaconChain.Signing(),
 				event.Seed,
 				event.BlockNumber,
 			)
 		}()
 	})
 
-	_ = beaconChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+	_ = beaconChainV1.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		logger.Infof(
 			"new group with public key [0x%x] registered on-chain at block [%v]",
 			registration.GroupPublicKey,
