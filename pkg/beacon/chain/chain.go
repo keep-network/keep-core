@@ -3,11 +3,11 @@ package chain
 import (
 	"bytes"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -124,14 +124,12 @@ type DistributedKeyGenerationInterface interface {
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold random beacon.
 	GetConfig() *Config
-	// GetKeys returns the key pair used to attest for messages being sent to
-	// the chain.
-	GetKeys() (*operator.PrivateKey, *operator.PublicKey, error)
-	// MinimumStake returns the current on-chain value representing the minimum
-	// necessary amount of KEEP a client must lock up to participate in the
-	// random beacon. This value can change over time according to the minimum
-	// stake schedule.
-	MinimumStake() (*big.Int, error)
+	// BlockCounter returns the chain's block counter.
+	BlockCounter() (chain.BlockCounter, error)
+	// Signing returns the chain's signer.
+	Signing() chain.Signing
+	// StakeMonitor returns the chain's stake monitor.
+	StakeMonitor() (chain.StakeMonitor, error)
 
 	GroupInterface
 	RelayEntryInterface
