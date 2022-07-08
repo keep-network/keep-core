@@ -25,7 +25,7 @@ This is a Hardhat project:
   total amount of tokens to be claimed by stakers, the Merkle root, and the info of each stake. It's
   the output of `gen_merkle_dist.js`.
 - `example_proof_generated_<n>.json`: This is an example of the data that will be provided to each
-  staker. Includes the Merkle root, the token's amount to be claimed and the Merkle proof. It's the
+  staker. Includes the Merkle root, the amount of tokens to be claimed and the Merkle proof. It's the
   output of `gen_merkle_dist.js`.
 
 ## Installation
