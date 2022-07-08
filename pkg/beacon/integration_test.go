@@ -1,4 +1,4 @@
-// Package relay_test contains integration tests for the whole random beacon
+// Package beacon_test contains integration tests for the whole random beacon
 // roundtrip including DKG and threshold signing.
 package beacon_test
 
