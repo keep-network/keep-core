@@ -1,8 +1,10 @@
 package local
 
 import (
+	"encoding/hex"
 	"fmt"
 	commonlocal "github.com/keep-network/keep-common/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -24,14 +26,22 @@ func newSigner(operatorPrivateKey *operator.PrivateKey) *signer {
 
 func (s *signer) PublicKeyToAddress(
 	publicKey *operator.PublicKey,
-) ([]byte, error) {
+) (chain.Address, error) {
 	chainPublicKey, err := operatorPublicKeyToChainPublicKey(publicKey)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"cannot convert operator key to chain key: [%v]",
 			err,
 		)
 	}
 
-	return s.Signer.PublicKeyToAddress(*chainPublicKey), nil
+	addressBytes := s.Signer.PublicKeyToAddress(*chainPublicKey)
+
+	return chain.Address(hex.EncodeToString(addressBytes)), nil
+}
+
+func (s *signer) PublicKeyBytesToAddress(publicKey []byte) chain.Address {
+	addressBytes := s.Signer.PublicKeyBytesToAddress(publicKey)
+
+	return chain.Address(hex.EncodeToString(addressBytes))
 }

@@ -3,7 +3,9 @@ package ethereum_v1
 import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -20,14 +22,22 @@ func newSigner(chainKey *keystore.Key) *signer {
 
 func (s *signer) PublicKeyToAddress(
 	publicKey *operator.PublicKey,
-) ([]byte, error) {
+) (chain.Address, error) {
 	chainPublicKey, err := operatorPublicKeyToChainPublicKey(publicKey)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return "", fmt.Errorf(
 			"cannot convert operator key to chain key: [%v]",
 			err,
 		)
 	}
 
-	return s.EthereumSigner.PublicKeyToAddress(*chainPublicKey), nil
+	addressBytes := s.EthereumSigner.PublicKeyToAddress(*chainPublicKey)
+
+	return chain.Address(common.BytesToAddress(addressBytes).String()), nil
+}
+
+func (s *signer) PublicKeyBytesToAddress(publicKey []byte) chain.Address {
+	addressBytes := s.EthereumSigner.PublicKeyBytesToAddress(publicKey)
+
+	return chain.Address(common.BytesToAddress(addressBytes).String())
 }

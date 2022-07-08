@@ -7,7 +7,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"sync"
@@ -17,9 +17,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/dkg"
+	"github.com/keep-network/keep-core/pkg/beacon/entry"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
@@ -95,7 +95,7 @@ func RunTest(
 func executeSigning(
 	signers []*dkg.ThresholdSigner,
 	threshold int,
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 	lastRelayEntryGetter func() []byte,
 	network interception.Network,
@@ -116,7 +116,7 @@ func executeSigning(
 	}
 
 	entrySubmissionChan := make(chan *event.EntrySubmitted)
-	_ = relayChain.OnRelayEntrySubmitted(
+	_ = beaconChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			entrySubmissionChan <- event
 		},
@@ -144,7 +144,7 @@ func executeSigning(
 			err := entry.SignAndSubmit(
 				blockCounter,
 				broadcastChannel,
-				relayChain,
+				beaconChain,
 				previousEntry,
 				threshold,
 				signer,

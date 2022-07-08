@@ -9,8 +9,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -31,12 +31,12 @@ type localGroup struct {
 }
 
 type localChain struct {
-	relayConfig *relaychain.Config
+	relayConfig *beaconchain.Config
 
 	groups []localGroup
 
-	lastSubmittedDKGResult           *relaychain.DKGResult
-	lastSubmittedDKGResultSignatures map[relaychain.GroupMemberIndex][]byte
+	lastSubmittedDKGResult           *beaconchain.DKGResult
+	lastSubmittedDKGResultSignatures map[beaconchain.GroupMemberIndex][]byte
 	lastSubmittedRelayEntry          []byte
 
 	handlerMutex             sync.Mutex
@@ -74,7 +74,7 @@ func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey, error
 	return c.operatorPrivateKey, &c.operatorPrivateKey.PublicKey, nil
 }
 
-func (c *localChain) GetConfig() *relaychain.Config {
+func (c *localChain) GetConfig() *beaconchain.Config {
 	return c.relayConfig
 }
 
@@ -153,7 +153,7 @@ func (c *localChain) OnRelayEntryRequested(
 	})
 }
 
-func (c *localChain) SelectGroup(seed *big.Int) ([]relaychain.StakerAddress, error) {
+func (c *localChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 	panic("not implemented")
 }
 
@@ -175,8 +175,8 @@ func (c *localChain) OnGroupRegistered(
 	})
 }
 
-func (c *localChain) ThresholdRelay() relaychain.Interface {
-	return relaychain.Interface(c)
+func (c *localChain) ThresholdRelay() beaconchain.Interface {
+	return beaconchain.Interface(c)
 }
 
 // Connect initializes a local stub implementation of the chain
@@ -213,7 +213,7 @@ func ConnectWithKey(
 	resultPublicationBlockStep := uint64(3)
 
 	return &localChain{
-		relayConfig: &relaychain.Config{
+		relayConfig: &beaconchain.Config{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
 			ResultPublicationBlockStep: resultPublicationBlockStep,
@@ -267,7 +267,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 }
 
 func (c *localChain) GetGroupMembers(groupPublicKey []byte) (
-	[]relaychain.StakerAddress,
+	[]chain.Address,
 	error,
 ) {
 	return nil, nil // no-op
@@ -284,9 +284,9 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	participantIndex relaychain.GroupMemberIndex,
-	resultToPublish *relaychain.DKGResult,
-	signatures map[relaychain.GroupMemberIndex][]byte,
+	participantIndex beaconchain.GroupMemberIndex,
+	resultToPublish *beaconchain.DKGResult,
+	signatures map[beaconchain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -392,8 +392,8 @@ func (c *localChain) OnDKGResultSubmitted(
 }
 
 func (c *localChain) GetLastDKGResult() (
-	*relaychain.DKGResult,
-	map[relaychain.GroupMemberIndex][]byte,
+	*beaconchain.DKGResult,
+	map[beaconchain.GroupMemberIndex][]byte,
 ) {
 	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }
@@ -437,10 +437,10 @@ func (c *localChain) MinimumStake() (*big.Int, error) {
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.
 func (c *localChain) CalculateDKGResultHash(
-	dkgResult *relaychain.DKGResult,
-) (relaychain.DKGResultHash, error) {
+	dkgResult *beaconchain.DKGResult,
+) (beaconchain.DKGResultHash, error) {
 	encodedDKGResult := fmt.Sprint(dkgResult)
-	dkgResultHash := relaychain.DKGResultHash(
+	dkgResultHash := beaconchain.DKGResultHash(
 		sha3.Sum256([]byte(encodedDKGResult)),
 	)
 

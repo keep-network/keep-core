@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 )
 
 // EventEntryGeneratedPromise represents an eventual completion of an

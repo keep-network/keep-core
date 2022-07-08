@@ -1,7 +1,6 @@
 package local
 
 import (
-	"encoding/hex"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"testing"
@@ -35,7 +34,7 @@ func TestSigner_PublicKeyToAddress(t *testing.T) {
 		PublicKey: *operatorPublicKey,
 	})
 
-	addressBytes, err := signer.PublicKeyToAddress(operatorPublicKey)
+	address, err := signer.PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +42,7 @@ func TestSigner_PublicKeyToAddress(t *testing.T) {
 	expectedAddress :=
 		"043f89dfad9a9ace8437a2c752448b6de75aac78613ce97e0469f13c92006c54cb9" +
 			"6bd09fc1b36e316a369a82f5d5e11c3225352deafca2772f8e0f62813cfccb3"
-	actualAddress := hex.EncodeToString(addressBytes)
+	actualAddress := address.String()
 	if expectedAddress != actualAddress {
 		t.Errorf(
 			"unexpected address\nexpected: %v\nactual:   %v\n",
