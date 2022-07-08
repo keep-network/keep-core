@@ -20,6 +20,8 @@ const (
 	statusCheckTick = 10 * time.Millisecond
 )
 
+// If environment variable `PRINT_LOGS_IN_TEST` is set to `true`, logger in
+// the code called by unit tests prints to the console.
 func TestMain(m *testing.M) {
 	if os.Getenv("PRINT_LOGS_IN_TEST") == "true" {
 		err := log.SetLogLevel("*", "DEBUG")
