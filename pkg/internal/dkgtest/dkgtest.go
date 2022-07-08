@@ -111,7 +111,7 @@ func RunTest(
 
 func executeDKG(
 	seed *big.Int,
-	relayChain beaconchain.Interface,
+	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 	signing chain.Signing,
 	lastDKGResultGetter func() (
@@ -121,7 +121,7 @@ func executeDKG(
 	network interception.Network,
 	selectedStakers []chain.Address,
 ) (*Result, error) {
-	relayConfig := relayChain.GetConfig()
+	relayConfig := beaconChain.GetConfig()
 
 	broadcastChannel, err := network.BroadcastChannelFor(fmt.Sprintf("dkg-test-%v", seed))
 	if err != nil {
@@ -129,7 +129,7 @@ func executeDKG(
 	}
 
 	resultSubmissionChan := make(chan *event.DKGResultSubmission)
-	_ = relayChain.OnDKGResultSubmitted(
+	_ = beaconChain.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			resultSubmissionChan <- event
 		},
@@ -171,7 +171,7 @@ func executeDKG(
 				membershipValidator,
 				startBlockHeight,
 				blockCounter,
-				relayChain,
+				beaconChain,
 				signing,
 				broadcastChannel,
 			)

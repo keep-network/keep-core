@@ -27,7 +27,7 @@ func ExecuteDKG(
 	membershipValidator group.MembershipValidator,
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
-	relayChain beaconchain.Interface,
+	beaconChain beaconchain.Interface,
 	signing chain.Signing,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
@@ -58,7 +58,7 @@ func ExecuteDKG(
 	startPublicationBlockHeight := gjkrEndBlockHeight
 
 	dkgResultChannel := make(chan *event.DKGResultSubmission)
-	dkgResultSubscription := relayChain.OnDKGResultSubmitted(
+	dkgResultSubscription := beaconChain.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			dkgResultChannel <- event
 		},
@@ -71,7 +71,7 @@ func ExecuteDKG(
 		membershipValidator,
 		gjkrResult,
 		channel,
-		relayChain,
+		beaconChain,
 		signing,
 		blockCounter,
 		startPublicationBlockHeight,
@@ -94,7 +94,7 @@ func ExecuteDKG(
 			gjkrResult,
 			dkgResultChannel,
 			startPublicationBlockHeight,
-			relayChain,
+			beaconChain,
 			blockCounter,
 		); err != nil {
 			return nil, err
@@ -118,13 +118,13 @@ func decideMemberFate(
 	gjkrResult *gjkr.Result,
 	dkgResultChannel chan *event.DKGResultSubmission,
 	startPublicationBlockHeight uint64,
-	relayChain beaconchain.Interface,
+	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 ) error {
 	dkgResultEvent, err := waitForDkgResultEvent(
 		dkgResultChannel,
 		startPublicationBlockHeight,
-		relayChain,
+		beaconChain,
 		blockCounter,
 	)
 	if err != nil {
@@ -163,10 +163,10 @@ func decideMemberFate(
 func waitForDkgResultEvent(
 	dkgResultChannel chan *event.DKGResultSubmission,
 	startPublicationBlockHeight uint64,
-	relayChain beaconchain.Interface,
+	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 ) (*event.DKGResultSubmission, error) {
-	config := relayChain.GetConfig()
+	config := beaconChain.GetConfig()
 
 	timeoutBlock := startPublicationBlockHeight +
 		dkgResult.PrePublicationBlocks() +

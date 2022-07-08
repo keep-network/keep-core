@@ -233,7 +233,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 }
 
 func fetchChainConfig(ec *ethereumChain) (*beaconchain.Config, error) {
-	logger.Infof("fetching relay chain config")
+	logger.Infof("fetching beacon chain config")
 
 	// TODO: Fetch from RandomBeacon v2 contract.
 	groupSize := 64
