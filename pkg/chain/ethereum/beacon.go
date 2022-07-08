@@ -3,6 +3,10 @@ package ethereum
 import (
 	"bytes"
 	"fmt"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
+	"github.com/keep-network/keep-core/pkg/gen/async"
+	"github.com/keep-network/keep-core/pkg/subscription"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,6 +26,8 @@ type BeaconChain struct {
 
 	randomBeacon  *contract.RandomBeacon
 	sortitionPool *contract.SortitionPool
+
+	chainConfig *beaconchain.Config
 }
 
 // newBeaconChain construct a new instance of the beacon-specific Ethereum
@@ -83,11 +89,25 @@ func newBeaconChain(
 		)
 	}
 
+	chainConfig, err := fetchChainConfig(randomBeacon)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to fetch the chain config: [%v]",
+			err,
+		)
+	}
+
 	return &BeaconChain{
 		Chain:         baseChain,
 		randomBeacon:  randomBeacon,
 		sortitionPool: sortitionPool,
+		chainConfig:   chainConfig,
 	}, nil
+}
+
+// GetConfig returns the expected configuration of the random beacon.
+func (bc *BeaconChain) GetConfig() *beaconchain.Config {
+	return bc.chainConfig
 }
 
 // OperatorToStakingProvider returns the staking provider address for the
@@ -151,4 +171,125 @@ func (bc *BeaconChain) IsOperatorInPool() (bool, error) {
 func (bc *BeaconChain) JoinSortitionPool() error {
 	_, err := bc.randomBeacon.JoinSortitionPool()
 	return err
+}
+
+func (bc *BeaconChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) OnGroupRegistered(
+	handler func(groupRegistration *event.GroupRegistration),
+) subscription.EventSubscription {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) GetGroupMembers(
+	groupPublicKey []byte,
+) ([]chain.Address, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) OnDKGStarted(
+	handler func(event *event.DKGStarted),
+) subscription.EventSubscription {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) SubmitDKGResult(
+	participantIndex beaconchain.GroupMemberIndex,
+	dkgResult *beaconchain.DKGResult,
+	signatures map[beaconchain.GroupMemberIndex][]byte,
+) *async.EventDKGResultSubmissionPromise {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) OnDKGResultSubmitted(
+	handler func(event *event.DKGResultSubmission),
+) subscription.EventSubscription {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) CalculateDKGResultHash(
+	dkgResult *beaconchain.DKGResult,
+) (beaconchain.DKGResultHash, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) SubmitRelayEntry(entry []byte) *async.EventEntrySubmittedPromise {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) OnRelayEntrySubmitted(
+	handler func(entry *event.EntrySubmitted),
+) subscription.EventSubscription {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) OnRelayEntryRequested(
+	handler func(request *event.Request),
+) subscription.EventSubscription {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) ReportRelayEntryTimeout() error {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) IsEntryInProgress() (bool, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) CurrentRequestStartBlock() (*big.Int, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+func (bc *BeaconChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+	// TODO: Implementation.
+	panic("not implemented yet")
+}
+
+// fetchChainConfig fetches the on-chain random beacon config.
+// TODO: Adjust to the random beacon v2 requirements.
+func fetchChainConfig(
+	randomBeacon *contract.RandomBeacon,
+) (*beaconchain.Config, error) {
+	groupSize := 64
+	honestThreshold := 33
+	resultPublicationBlockStep := 6
+	relayEntryTimeout := groupSize * resultPublicationBlockStep
+
+	return &beaconchain.Config{
+		GroupSize:                  groupSize,
+		HonestThreshold:            honestThreshold,
+		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
+		RelayEntryTimeout:          uint64(relayEntryTimeout),
+	}, nil
 }

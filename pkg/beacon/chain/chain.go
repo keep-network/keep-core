@@ -117,7 +117,7 @@ type DistributedKeyGenerationInterface interface {
 // Interface represents the interface that the random beacon expects to interact
 // with the anchoring blockchain on.
 type Interface interface {
-	// GetConfig returns the expected configuration of the threshold random beacon.
+	// GetConfig returns the expected configuration of the random beacon.
 	GetConfig() *Config
 	// BlockCounter returns the chain's block counter.
 	BlockCounter() (chain.BlockCounter, error)
@@ -132,6 +132,7 @@ type Interface interface {
 }
 
 // Config contains the config data needed for the random beacon to operate.
+// TODO: Adjust to the random beacon v2 requirements.
 type Config struct {
 	// GroupSize is the size of a group in the random beacon.
 	GroupSize int

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/chain/ethereum_v1"
@@ -73,6 +74,11 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
+	beaconChain, _, err := ethereum.Connect(ctx, config.Ethereum)
+	if err != nil {
+		return fmt.Errorf("cannot connect to the Ethereum node: [%v]", err)
+	}
+
 	ethereumKey, err := ethutil.DecryptKeyFile(
 		config.Ethereum.Account.KeyFile,
 		config.Ethereum.Account.KeyFilePassword,
@@ -92,22 +98,22 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	chainProvider, err := ethereum_v1.Connect(ctx, config.Ethereum)
+	chainProviderV1, err := ethereum_v1.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	blockCounter, err := chainProvider.BlockCounter()
+	blockCounterV1, err := chainProviderV1.BlockCounter()
 	if err != nil {
 		return err
 	}
 
-	stakeMonitor, err := chainProvider.StakeMonitor()
+	stakeMonitorV1, err := chainProviderV1.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
 	if c.Int(waitForStakeFlag) != 0 {
-		err = waitForStake(stakeMonitor, operatorPublicKey, c.Int(waitForStakeFlag))
+		err = waitForStake(stakeMonitorV1, operatorPublicKey, c.Int(waitForStakeFlag))
 		if err != nil {
 			return err
 		}
@@ -115,7 +121,7 @@ func Start(c *cli.Context) error {
 
 	// TODO: Disable the minimum stake check to be able to start the client
 	//       without v1 contracts deployed.
-	// hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+	// hasMinimumStake, err := stakeMonitorV1.HasMinimumStake(
 	// 	operatorPublicKey,
 	// )
 	// if err != nil {
@@ -135,8 +141,8 @@ func Start(c *cli.Context) error {
 		config.LibP2P,
 		operatorPrivateKey,
 		libp2p.ProtocolBeacon,
-		firewall.MinimumStakePolicy(stakeMonitor),
-		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
+		firewall.MinimumStakePolicy(stakeMonitorV1),
+		retransmission.NewTicker(blockCounterV1.WatchBlocks(ctx)),
 	)
 	if err != nil {
 		return err
@@ -155,8 +161,8 @@ func Start(c *cli.Context) error {
 
 	err = beacon.Initialize(
 		operatorPublicKey,
-		chainProvider.ThresholdRelay(),
-		chainProvider.ThresholdRelay(), // TODO: Use v2 ethereum implementation
+		chainProviderV1.ThresholdRelay(),
+		beaconChain,
 		netProvider,
 		persistence,
 	)
@@ -164,8 +170,8 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
-	initializeDiagnostics(ctx, config, netProvider, chainProvider.Signing())
+	initializeMetrics(ctx, config, netProvider, stakeMonitorV1, operatorPublicKey)
+	initializeDiagnostics(ctx, config, netProvider, chainProviderV1.Signing())
 
 	select {
 	case <-ctx.Done():
