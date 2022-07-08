@@ -143,16 +143,19 @@ const config: HardhatUserConfig = {
         deploy: "node_modules/@keep-network/random-beacon/export/deploy",
       },
     ],
-    // deployments: {
-    //   // For hardhat environment we can fork the mainnet, so we need to point it
-    //   // to the contract artifacts.
-    //   hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
-    //   // For development environment we expect the local dependencies to be linked
-    //   // with `yarn link` command.
-    //   development: ["node_modules/@keep-network/keep-core/artifacts"],
-    //   ropsten: ["node_modules/@keep-network/keep-core/artifacts"],
-    //   mainnet: ["./external/mainnet"],
-    // },
+    deployments: {
+      // For hardhat environment we can fork the mainnet, so we need to point it
+      // to the contract artifacts.
+      hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
+      // For development environment we expect the local dependencies to be linked
+      // with `yarn link` command.
+      development: [
+        "node_modules/@threshold-network/solidity-contracts/artifacts",
+        "node_modules/@keep-network/random-beacon",
+      ],
+      ropsten: ["node_modules/@keep-network/keep-core/artifacts"],
+      mainnet: ["./external/mainnet"],
+    },
   },
   dependencyCompiler:
     // As a workaround for a slither issue https://github.com/crytic/slither/issues/1140
