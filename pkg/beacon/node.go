@@ -1,7 +1,6 @@
 package beacon
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
@@ -100,7 +99,7 @@ func (n *node) JoinDKGIfEligible(
 	indexes := make([]uint8, 0)
 	for index, groupMember := range groupMembers {
 		// See if we are amongst those chosen
-		if bytes.Compare(groupMember, operatorAddress) == 0 {
+		if groupMember == operatorAddress {
 			indexes = append(indexes, uint8(index))
 		}
 	}

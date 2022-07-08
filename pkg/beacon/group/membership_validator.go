@@ -1,10 +1,8 @@
 package group
 
 import (
-	"encoding/hex"
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -30,12 +28,12 @@ type StakersMembershipValidator struct {
 // NewStakersMembershipValidator creates a validator for the provided
 // group selection result.
 func NewStakersMembershipValidator(
-	stakersAddresses []beaconchain.StakerAddress,
+	stakersAddresses []chain.Address,
 	signing chain.Signing,
 ) *StakersMembershipValidator {
 	members := make(map[string][]int)
 	for position, address := range stakersAddresses {
-		addressAsString := hex.EncodeToString(address)
+		addressAsString := address.String()
 		positions, ok := members[addressAsString]
 		if ok {
 			positions = append(positions, position)
@@ -56,16 +54,13 @@ func NewStakersMembershipValidator(
 func (smv *StakersMembershipValidator) IsInGroup(
 	publicKey *operator.PublicKey,
 ) bool {
-	addressBytes, err := smv.signing.PublicKeyToAddress(publicKey)
+	address, err := smv.signing.PublicKeyToAddress(publicKey)
 	if err != nil {
 		logger.Errorf("cannot convert public key to chain address: [%v]", err)
 		return false
 	}
 
-	address := hex.EncodeToString(
-		addressBytes,
-	)
-	_, isInGroup := smv.members[address]
+	_, isInGroup := smv.members[address.String()]
 	return isInGroup
 }
 
@@ -77,9 +72,8 @@ func (smv *StakersMembershipValidator) IsValidMembership(
 	memberID MemberIndex,
 	publicKey []byte,
 ) bool {
-	address := hex.EncodeToString(
-		smv.signing.PublicKeyBytesToAddress(publicKey),
-	)
+	address := smv.signing.PublicKeyBytesToAddress(publicKey).String()
+
 	positions, isInGroup := smv.members[address]
 
 	if !isInGroup {

@@ -1,7 +1,6 @@
 package diagnostics
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"github.com/keep-network/keep-core/pkg/chain"
 
@@ -45,7 +44,7 @@ func RegisterConnectedPeersSource(
 				continue
 			}
 
-			peerChainAddressBytes, err := signing.PublicKeyToAddress(
+			peerChainAddress, err := signing.PublicKeyToAddress(
 				peerPublicKey,
 			)
 			if err != nil {
@@ -55,7 +54,7 @@ func RegisterConnectedPeersSource(
 
 			peersList[i] = map[string]interface{}{
 				"network_id":    peer,
-				"chain_address": hex.EncodeToString(peerChainAddressBytes),
+				"chain_address": peerChainAddress.String(),
 			}
 		}
 
@@ -86,7 +85,7 @@ func RegisterClientInfoSource(
 			return ""
 		}
 
-		clientChainAddressBytes, err := signing.PublicKeyToAddress(
+		clientChainAddress, err := signing.PublicKeyToAddress(
 			clientPublicKey,
 		)
 		if err != nil {
@@ -96,7 +95,7 @@ func RegisterClientInfoSource(
 
 		clientInfo := map[string]interface{}{
 			"network_id":    clientID,
-			"chain_address": hex.EncodeToString(clientChainAddressBytes),
+			"chain_address": clientChainAddress.String(),
 		}
 
 		bytes, err := json.Marshal(clientInfo)

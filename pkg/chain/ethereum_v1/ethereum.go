@@ -176,12 +176,12 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 // TODO: Implement a real SelectGroup function once it is possible on the
 //       contract side. The current implementation just return a group
 //       where all members belong to the chain operator.
-func (ec *ethereumChain) SelectGroup(seed *big.Int) ([]beaconchain.StakerAddress, error) {
+func (ec *ethereumChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 	groupSize := ec.GetConfig().GroupSize
-	groupMembers := make([]beaconchain.StakerAddress, groupSize)
+	groupMembers := make([]chain.Address, groupSize)
 
 	for index := range groupMembers {
-		groupMembers[index] = ec.accountKey.Address.Bytes()
+		groupMembers[index] = chain.Address(ec.accountKey.Address.String())
 	}
 
 	return groupMembers, nil
@@ -219,7 +219,7 @@ func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 }
 
 func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
-	[]beaconchain.StakerAddress,
+	[]chain.Address,
 	error,
 ) {
 	members, err := ec.keepRandomBeaconOperatorContract.GetGroupMembers(
@@ -229,9 +229,9 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 		return nil, err
 	}
 
-	stakerAddresses := make([]beaconchain.StakerAddress, len(members))
+	stakerAddresses := make([]chain.Address, len(members))
 	for i, member := range members {
-		stakerAddresses[i] = member.Bytes()
+		stakerAddresses[i] = chain.Address(member.String())
 	}
 
 	return stakerAddresses, nil
