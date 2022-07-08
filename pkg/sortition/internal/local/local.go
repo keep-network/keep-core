@@ -103,10 +103,10 @@ func (lc *localChain) IsOperatorUpToDate() (bool, error) {
 	eligibleStake, hasStake := lc.eligibleStake[stakingProvider]
 	weight, isInPool := lc.sortitionPool[lc.operatorAddress]
 
-	if !isInPool {
-		return !hasStake || eligibleStake.Cmp(big.NewInt(0)) == 0, nil
-	} else {
+	if isInPool {
 		return weight.Cmp(eligibleStake) == 0, nil
+	} else {
+		return !hasStake || eligibleStake.Cmp(big.NewInt(0)) == 0, nil
 	}
 }
 
