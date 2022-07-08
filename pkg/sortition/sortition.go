@@ -16,6 +16,11 @@ var logger = log.Logger("keep-sortition")
 
 var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider, check Threshold dashboard")
 
+// MonitorPool periodically checks the status of the operator in the sortition
+// pool. If the operator is supposed to be in the sortition pool but is not
+// there yet, the function attempts to add the operator to the pool. If the
+// operator is already in the pool and its status is no longer up to date, the
+// function attempts to update the operator's status in the pool.
 func MonitorPool(
 	ctx context.Context,
 	chain Chain,
