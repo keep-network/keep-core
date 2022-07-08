@@ -2,12 +2,17 @@ package ethereum
 
 import (
 	"bytes"
+	"context"
+	"encoding/binary"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"math/big"
+	"math/rand"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
@@ -28,6 +33,11 @@ type BeaconChain struct {
 	sortitionPool *contract.SortitionPool
 
 	chainConfig *beaconchain.Config
+
+	// TODO: Temporary helper map. Should be removed once real-world DKG
+	//       result submission is implemented.
+	dkgResultSubmissionHandlersMutex sync.Mutex
+	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 }
 
 // newBeaconChain construct a new instance of the beacon-specific Ethereum
@@ -98,10 +108,11 @@ func newBeaconChain(
 	}
 
 	return &BeaconChain{
-		Chain:         baseChain,
-		randomBeacon:  randomBeacon,
-		sortitionPool: sortitionPool,
-		chainConfig:   chainConfig,
+		Chain:                       baseChain,
+		randomBeacon:                randomBeacon,
+		sortitionPool:               sortitionPool,
+		chainConfig:                 chainConfig,
+		dkgResultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 	}, nil
 }
 
@@ -173,9 +184,17 @@ func (bc *BeaconChain) JoinSortitionPool() error {
 	return err
 }
 
+// TODO: Implement a real SelectGroup function. The current implementation just
+//       returns a group where all members belong to the chain operator.
 func (bc *BeaconChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	groupSize := bc.GetConfig().GroupSize
+	groupMembers := make([]chain.Address, groupSize)
+
+	for index := range groupMembers {
+		groupMembers[index] = chain.Address(bc.Chain.key.Address.String())
+	}
+
+	return groupMembers, nil
 }
 
 func (bc *BeaconChain) OnGroupRegistered(
@@ -185,9 +204,9 @@ func (bc *BeaconChain) OnGroupRegistered(
 	panic("not implemented yet")
 }
 
+// TODO: Implement a real IsGroupRegistered function.
 func (bc *BeaconChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return false, nil
 }
 
 func (bc *BeaconChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
@@ -202,27 +221,146 @@ func (bc *BeaconChain) GetGroupMembers(
 	panic("not implemented yet")
 }
 
+// TODO: Implement a real OnDKGStarted event subscription. The current
+//       implementation generates a fake event every 500th block where the
+//       seed is the keccak256 of the block number.
 func (bc *BeaconChain) OnDKGStarted(
 	handler func(event *event.DKGStarted),
 ) subscription.EventSubscription {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	blocksChan := bc.blockCounter.WatchBlocks(ctx)
+
+	go func() {
+		for {
+			select {
+			case block := <-blocksChan:
+				// Generate an event every 500th block.
+				if block%500 == 0 {
+					// The seed is keccak256(block).
+					blockBytes := make([]byte, 8)
+					binary.BigEndian.PutUint64(blockBytes, block)
+					seedBytes := crypto.Keccak256(blockBytes)
+					seed := new(big.Int).SetBytes(seedBytes)
+
+					handler(&event.DKGStarted{
+						Seed:        seed,
+						BlockNumber: block,
+					})
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return subscription.NewEventSubscription(func() {
+		cancelCtx()
+	})
 }
 
+// TODO: Implement a real SubmitDKGResult action. The current implementation
+//       just creates and pipes the DKG submission event to the handlers
+//       registered in the dkgResultSubmissionHandlers map. Consider getting
+//       rid of the result promise in favor of the fire-and-forget style.
 func (bc *BeaconChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	dkgResult *beaconchain.DKGResult,
 	signatures map[beaconchain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
+
+	failPromise := func(err error) {
+		failErr := resultPublicationPromise.Fail(err)
+		if failErr != nil {
+			logger.Errorf(
+				"failed to fail promise for [%v]: [%v]",
+				err,
+				failErr,
+			)
+		}
+	}
+
+	publishedResult := make(chan *event.DKGResultSubmission)
+
+	subscription := bc.OnDKGResultSubmitted(
+		func(onChainEvent *event.DKGResultSubmission) {
+			publishedResult <- onChainEvent
+		},
+	)
+
+	go func() {
+		for {
+			select {
+			case event, success := <-publishedResult:
+				// Channel is closed when SubmitDKGResult failed.
+				// When this happens, event is nil.
+				if !success {
+					return
+				}
+
+				subscription.Unsubscribe()
+				close(publishedResult)
+
+				err := resultPublicationPromise.Fulfill(event)
+				if err != nil {
+					logger.Errorf(
+						"failed to fulfill promise: [%v]",
+						err,
+					)
+				}
+
+				return
+			}
+		}
+	}()
+
+	bc.dkgResultSubmissionHandlersMutex.Lock()
+	defer bc.dkgResultSubmissionHandlersMutex.Unlock()
+
+	blockNumber, err := bc.blockCounter.CurrentBlock()
+	if err != nil {
+		close(publishedResult)
+		subscription.Unsubscribe()
+		failPromise(err)
+		return resultPublicationPromise
+	}
+
+	for _, handler := range bc.dkgResultSubmissionHandlers {
+		go func(handler func(*event.DKGResultSubmission)) {
+			handler(&event.DKGResultSubmission{
+				MemberIndex:    uint32(participantIndex),
+				GroupPublicKey: dkgResult.GroupPublicKey,
+				Misbehaved:     dkgResult.Misbehaved,
+				BlockNumber:    blockNumber,
+			})
+		}(handler)
+	}
+
+	return resultPublicationPromise
 }
 
+// TODO: Implement a real OnDKGResultSubmitted event subscription. The current
+//       implementation just pipes the DKG submission event generated within
+//       SubmitDKGResult to the handlers registered in the
+//       dkgResultSubmissionHandlers map.
 func (bc *BeaconChain) OnDKGResultSubmitted(
 	handler func(event *event.DKGResultSubmission),
 ) subscription.EventSubscription {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	bc.dkgResultSubmissionHandlersMutex.Lock()
+	defer bc.dkgResultSubmissionHandlersMutex.Unlock()
+
+	// #nosec G404 (insecure random number source (rand))
+	// Temporary test implementation doesn't require secure randomness.
+	handlerID := rand.Int()
+
+	bc.dkgResultSubmissionHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		bc.dkgResultSubmissionHandlersMutex.Lock()
+		defer bc.dkgResultSubmissionHandlersMutex.Unlock()
+
+		delete(bc.dkgResultSubmissionHandlers, handlerID)
+	})
 }
 
 func (bc *BeaconChain) CalculateDKGResultHash(

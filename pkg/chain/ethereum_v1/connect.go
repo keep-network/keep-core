@@ -6,8 +6,6 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/beacon/event"
-
 	"github.com/keep-network/keep-common/pkg/rate"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
@@ -55,11 +53,6 @@ type ethereumChain struct {
 	// nonce. Serializing submission ensures that each nonce is requested after
 	// a previous transaction has been submitted.
 	transactionMutex *sync.Mutex
-
-	// TODO: Temporary helper map. Should be removed once proper RandomBeacon
-	//       v2 implementation is here.
-	dkgResultSubmissionHandlersMutex sync.Mutex
-	dkgResultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
 }
 
 func connect(
@@ -100,7 +93,6 @@ func connectWithClient(
 		clientWS:                    clientWS,
 		chainID:                     chainID,
 		transactionMutex:            &sync.Mutex{},
-		dkgResultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 	}
 
 	blockCounter, err := ethutil.NewBlockCounter(ec.client)
