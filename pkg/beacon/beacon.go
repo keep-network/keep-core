@@ -54,7 +54,10 @@ func Initialize(
 		groupRegistry,
 	)
 
-	sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	err = sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	if err != nil {
+		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
+	}
 
 	eventDeduplicator := event.NewDeduplicator(legacyBeaconChain)
 
