@@ -30,7 +30,10 @@ jobs:
           cache-dependency-path: solidity/random-beacon/yarn.lock
 
       - name: Resolve latest contracts
-        run: yarn upgrade @keep-network/sortition-pools
+        run: |
+          yarn upgrade \
+            @keep-network/sortition-pools \
+            @threshold-network/solidity-contracts
 
       # Deploy contracts to a local network to generate deployment artifacts that
       # are required by dashboard and client compilation.
