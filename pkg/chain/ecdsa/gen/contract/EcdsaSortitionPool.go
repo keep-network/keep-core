@@ -29,10 +29,10 @@ import (
 // Create a package-level logger for this contract. The logger exists at
 // package level so that the logger is registered at startup and can be
 // included or excluded from logging at startup by name.
-var spLogger = log.Logger("keep-contract-SortitionPool")
+var espLogger = log.Logger("keep-contract-EcdsaSortitionPool")
 
-type SortitionPool struct {
-	contract          *abi.SortitionPool
+type EcdsaSortitionPool struct {
+	contract          *abi.EcdsaSortitionPool
 	contractAddress   common.Address
 	contractABI       *hostchainabi.ABI
 	caller            bind.ContractCaller
@@ -47,7 +47,7 @@ type SortitionPool struct {
 	transactionMutex *sync.Mutex
 }
 
-func NewSortitionPool(
+func NewEcdsaSortitionPool(
 	contractAddress common.Address,
 	chainId *big.Int,
 	accountKey *keystore.Key,
@@ -56,7 +56,7 @@ func NewSortitionPool(
 	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
-) (*SortitionPool, error) {
+) (*EcdsaSortitionPool, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
@@ -72,7 +72,7 @@ func NewSortitionPool(
 		return nil, fmt.Errorf("failed to instantiate transactor: [%v]", err)
 	}
 
-	contract, err := abi.NewSortitionPool(
+	contract, err := abi.NewEcdsaSortitionPool(
 		contractAddress,
 		backend,
 	)
@@ -84,12 +84,12 @@ func NewSortitionPool(
 		)
 	}
 
-	contractABI, err := hostchainabi.JSON(strings.NewReader(abi.SortitionPoolABI))
+	contractABI, err := hostchainabi.JSON(strings.NewReader(abi.EcdsaSortitionPoolABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
 	}
 
-	return &SortitionPool{
+	return &EcdsaSortitionPool{
 		contract:          contract,
 		contractAddress:   contractAddress,
 		contractABI:       &contractABI,
@@ -108,13 +108,13 @@ func NewSortitionPool(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (sp *SortitionPool) InsertOperator(
+func (esp *EcdsaSortitionPool) InsertOperator(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction insertOperator",
 		" params: ",
 		fmt.Sprint(
@@ -123,12 +123,12 @@ func (sp *SortitionPool) InsertOperator(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -138,22 +138,22 @@ func (sp *SortitionPool) InsertOperator(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.InsertOperator(
+	transaction, err := esp.contract.InsertOperator(
 		transactorOptions,
 		arg_operator,
 		arg_authorizedStake,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"insertOperator",
 			arg_operator,
@@ -161,13 +161,13 @@ func (sp *SortitionPool) InsertOperator(
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction insertOperator with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -181,15 +181,15 @@ func (sp *SortitionPool) InsertOperator(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.InsertOperator(
+			transaction, err := esp.contract.InsertOperator(
 				newTransactorOptions,
 				arg_operator,
 				arg_authorizedStake,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"insertOperator",
 					arg_operator,
@@ -197,7 +197,7 @@ func (sp *SortitionPool) InsertOperator(
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction insertOperator with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -207,13 +207,13 @@ func (sp *SortitionPool) InsertOperator(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallInsertOperator(
+func (esp *EcdsaSortitionPool) CallInsertOperator(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 	blockNumber *big.Int,
@@ -221,12 +221,12 @@ func (sp *SortitionPool) CallInsertOperator(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"insertOperator",
 		&result,
 		arg_operator,
@@ -236,18 +236,18 @@ func (sp *SortitionPool) CallInsertOperator(
 	return err
 }
 
-func (sp *SortitionPool) InsertOperatorGasEstimate(
+func (esp *EcdsaSortitionPool) InsertOperatorGasEstimate(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"insertOperator",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_operator,
 		arg_authorizedStake,
 	)
@@ -256,20 +256,20 @@ func (sp *SortitionPool) InsertOperatorGasEstimate(
 }
 
 // Transaction submission.
-func (sp *SortitionPool) Lock(
+func (esp *EcdsaSortitionPool) Lock(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction lock",
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -279,32 +279,32 @@ func (sp *SortitionPool) Lock(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.Lock(
+	transaction, err := esp.contract.Lock(
 		transactorOptions,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"lock",
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction lock with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -318,19 +318,19 @@ func (sp *SortitionPool) Lock(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.Lock(
+			transaction, err := esp.contract.Lock(
 				newTransactorOptions,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"lock",
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction lock with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -340,24 +340,24 @@ func (sp *SortitionPool) Lock(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallLock(
+func (esp *EcdsaSortitionPool) CallLock(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"lock",
 		&result,
 	)
@@ -365,22 +365,22 @@ func (sp *SortitionPool) CallLock(
 	return err
 }
 
-func (sp *SortitionPool) LockGasEstimate() (uint64, error) {
+func (esp *EcdsaSortitionPool) LockGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"lock",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (sp *SortitionPool) ReceiveApproval(
+func (esp *EcdsaSortitionPool) ReceiveApproval(
 	arg_sender common.Address,
 	arg_amount *big.Int,
 	arg_token common.Address,
@@ -388,7 +388,7 @@ func (sp *SortitionPool) ReceiveApproval(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction receiveApproval",
 		" params: ",
 		fmt.Sprint(
@@ -399,12 +399,12 @@ func (sp *SortitionPool) ReceiveApproval(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -414,14 +414,14 @@ func (sp *SortitionPool) ReceiveApproval(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.ReceiveApproval(
+	transaction, err := esp.contract.ReceiveApproval(
 		transactorOptions,
 		arg_sender,
 		arg_amount,
@@ -429,9 +429,9 @@ func (sp *SortitionPool) ReceiveApproval(
 		arg3,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"receiveApproval",
 			arg_sender,
@@ -441,13 +441,13 @@ func (sp *SortitionPool) ReceiveApproval(
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -461,7 +461,7 @@ func (sp *SortitionPool) ReceiveApproval(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.ReceiveApproval(
+			transaction, err := esp.contract.ReceiveApproval(
 				newTransactorOptions,
 				arg_sender,
 				arg_amount,
@@ -469,9 +469,9 @@ func (sp *SortitionPool) ReceiveApproval(
 				arg3,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"receiveApproval",
 					arg_sender,
@@ -481,7 +481,7 @@ func (sp *SortitionPool) ReceiveApproval(
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -491,13 +491,13 @@ func (sp *SortitionPool) ReceiveApproval(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallReceiveApproval(
+func (esp *EcdsaSortitionPool) CallReceiveApproval(
 	arg_sender common.Address,
 	arg_amount *big.Int,
 	arg_token common.Address,
@@ -507,12 +507,12 @@ func (sp *SortitionPool) CallReceiveApproval(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"receiveApproval",
 		&result,
 		arg_sender,
@@ -524,7 +524,7 @@ func (sp *SortitionPool) CallReceiveApproval(
 	return err
 }
 
-func (sp *SortitionPool) ReceiveApprovalGasEstimate(
+func (esp *EcdsaSortitionPool) ReceiveApprovalGasEstimate(
 	arg_sender common.Address,
 	arg_amount *big.Int,
 	arg_token common.Address,
@@ -533,11 +533,11 @@ func (sp *SortitionPool) ReceiveApprovalGasEstimate(
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"receiveApproval",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_sender,
 		arg_amount,
 		arg_token,
@@ -548,20 +548,20 @@ func (sp *SortitionPool) ReceiveApprovalGasEstimate(
 }
 
 // Transaction submission.
-func (sp *SortitionPool) RenounceOwnership(
+func (esp *EcdsaSortitionPool) RenounceOwnership(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction renounceOwnership",
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -571,32 +571,32 @@ func (sp *SortitionPool) RenounceOwnership(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.RenounceOwnership(
+	transaction, err := esp.contract.RenounceOwnership(
 		transactorOptions,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"renounceOwnership",
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction renounceOwnership with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -610,19 +610,19 @@ func (sp *SortitionPool) RenounceOwnership(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.RenounceOwnership(
+			transaction, err := esp.contract.RenounceOwnership(
 				newTransactorOptions,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"renounceOwnership",
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction renounceOwnership with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -632,24 +632,24 @@ func (sp *SortitionPool) RenounceOwnership(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallRenounceOwnership(
+func (esp *EcdsaSortitionPool) CallRenounceOwnership(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"renounceOwnership",
 		&result,
 	)
@@ -657,27 +657,27 @@ func (sp *SortitionPool) CallRenounceOwnership(
 	return err
 }
 
-func (sp *SortitionPool) RenounceOwnershipGasEstimate() (uint64, error) {
+func (esp *EcdsaSortitionPool) RenounceOwnershipGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"renounceOwnership",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (sp *SortitionPool) RestoreRewardEligibility(
+func (esp *EcdsaSortitionPool) RestoreRewardEligibility(
 	arg_operator common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction restoreRewardEligibility",
 		" params: ",
 		fmt.Sprint(
@@ -685,12 +685,12 @@ func (sp *SortitionPool) RestoreRewardEligibility(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -700,34 +700,34 @@ func (sp *SortitionPool) RestoreRewardEligibility(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.RestoreRewardEligibility(
+	transaction, err := esp.contract.RestoreRewardEligibility(
 		transactorOptions,
 		arg_operator,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"restoreRewardEligibility",
 			arg_operator,
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction restoreRewardEligibility with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -741,21 +741,21 @@ func (sp *SortitionPool) RestoreRewardEligibility(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.RestoreRewardEligibility(
+			transaction, err := esp.contract.RestoreRewardEligibility(
 				newTransactorOptions,
 				arg_operator,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"restoreRewardEligibility",
 					arg_operator,
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction restoreRewardEligibility with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -765,25 +765,25 @@ func (sp *SortitionPool) RestoreRewardEligibility(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallRestoreRewardEligibility(
+func (esp *EcdsaSortitionPool) CallRestoreRewardEligibility(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"restoreRewardEligibility",
 		&result,
 		arg_operator,
@@ -792,17 +792,17 @@ func (sp *SortitionPool) CallRestoreRewardEligibility(
 	return err
 }
 
-func (sp *SortitionPool) RestoreRewardEligibilityGasEstimate(
+func (esp *EcdsaSortitionPool) RestoreRewardEligibilityGasEstimate(
 	arg_operator common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"restoreRewardEligibility",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_operator,
 	)
 
@@ -810,13 +810,13 @@ func (sp *SortitionPool) RestoreRewardEligibilityGasEstimate(
 }
 
 // Transaction submission.
-func (sp *SortitionPool) SetRewardIneligibility(
+func (esp *EcdsaSortitionPool) SetRewardIneligibility(
 	arg_operators []uint32,
 	arg_until *big.Int,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction setRewardIneligibility",
 		" params: ",
 		fmt.Sprint(
@@ -825,12 +825,12 @@ func (sp *SortitionPool) SetRewardIneligibility(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -840,22 +840,22 @@ func (sp *SortitionPool) SetRewardIneligibility(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.SetRewardIneligibility(
+	transaction, err := esp.contract.SetRewardIneligibility(
 		transactorOptions,
 		arg_operators,
 		arg_until,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"setRewardIneligibility",
 			arg_operators,
@@ -863,13 +863,13 @@ func (sp *SortitionPool) SetRewardIneligibility(
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction setRewardIneligibility with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -883,15 +883,15 @@ func (sp *SortitionPool) SetRewardIneligibility(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.SetRewardIneligibility(
+			transaction, err := esp.contract.SetRewardIneligibility(
 				newTransactorOptions,
 				arg_operators,
 				arg_until,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"setRewardIneligibility",
 					arg_operators,
@@ -899,7 +899,7 @@ func (sp *SortitionPool) SetRewardIneligibility(
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction setRewardIneligibility with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -909,13 +909,13 @@ func (sp *SortitionPool) SetRewardIneligibility(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallSetRewardIneligibility(
+func (esp *EcdsaSortitionPool) CallSetRewardIneligibility(
 	arg_operators []uint32,
 	arg_until *big.Int,
 	blockNumber *big.Int,
@@ -923,12 +923,12 @@ func (sp *SortitionPool) CallSetRewardIneligibility(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"setRewardIneligibility",
 		&result,
 		arg_operators,
@@ -938,18 +938,18 @@ func (sp *SortitionPool) CallSetRewardIneligibility(
 	return err
 }
 
-func (sp *SortitionPool) SetRewardIneligibilityGasEstimate(
+func (esp *EcdsaSortitionPool) SetRewardIneligibilityGasEstimate(
 	arg_operators []uint32,
 	arg_until *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"setRewardIneligibility",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_operators,
 		arg_until,
 	)
@@ -958,12 +958,12 @@ func (sp *SortitionPool) SetRewardIneligibilityGasEstimate(
 }
 
 // Transaction submission.
-func (sp *SortitionPool) TransferOwnership(
+func (esp *EcdsaSortitionPool) TransferOwnership(
 	arg_newOwner common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction transferOwnership",
 		" params: ",
 		fmt.Sprint(
@@ -971,12 +971,12 @@ func (sp *SortitionPool) TransferOwnership(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -986,34 +986,34 @@ func (sp *SortitionPool) TransferOwnership(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.TransferOwnership(
+	transaction, err := esp.contract.TransferOwnership(
 		transactorOptions,
 		arg_newOwner,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"transferOwnership",
 			arg_newOwner,
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction transferOwnership with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1027,21 +1027,21 @@ func (sp *SortitionPool) TransferOwnership(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.TransferOwnership(
+			transaction, err := esp.contract.TransferOwnership(
 				newTransactorOptions,
 				arg_newOwner,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"transferOwnership",
 					arg_newOwner,
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction transferOwnership with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1051,25 +1051,25 @@ func (sp *SortitionPool) TransferOwnership(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallTransferOwnership(
+func (esp *EcdsaSortitionPool) CallTransferOwnership(
 	arg_newOwner common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"transferOwnership",
 		&result,
 		arg_newOwner,
@@ -1078,17 +1078,17 @@ func (sp *SortitionPool) CallTransferOwnership(
 	return err
 }
 
-func (sp *SortitionPool) TransferOwnershipGasEstimate(
+func (esp *EcdsaSortitionPool) TransferOwnershipGasEstimate(
 	arg_newOwner common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"transferOwnership",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_newOwner,
 	)
 
@@ -1096,20 +1096,20 @@ func (sp *SortitionPool) TransferOwnershipGasEstimate(
 }
 
 // Transaction submission.
-func (sp *SortitionPool) Unlock(
+func (esp *EcdsaSortitionPool) Unlock(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction unlock",
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1119,32 +1119,32 @@ func (sp *SortitionPool) Unlock(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.Unlock(
+	transaction, err := esp.contract.Unlock(
 		transactorOptions,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"unlock",
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction unlock with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1158,19 +1158,19 @@ func (sp *SortitionPool) Unlock(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.Unlock(
+			transaction, err := esp.contract.Unlock(
 				newTransactorOptions,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"unlock",
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction unlock with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1180,24 +1180,24 @@ func (sp *SortitionPool) Unlock(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallUnlock(
+func (esp *EcdsaSortitionPool) CallUnlock(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"unlock",
 		&result,
 	)
@@ -1205,28 +1205,28 @@ func (sp *SortitionPool) CallUnlock(
 	return err
 }
 
-func (sp *SortitionPool) UnlockGasEstimate() (uint64, error) {
+func (esp *EcdsaSortitionPool) UnlockGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"unlock",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (sp *SortitionPool) UpdateOperatorStatus(
+func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction updateOperatorStatus",
 		" params: ",
 		fmt.Sprint(
@@ -1235,12 +1235,12 @@ func (sp *SortitionPool) UpdateOperatorStatus(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1250,22 +1250,22 @@ func (sp *SortitionPool) UpdateOperatorStatus(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.UpdateOperatorStatus(
+	transaction, err := esp.contract.UpdateOperatorStatus(
 		transactorOptions,
 		arg_operator,
 		arg_authorizedStake,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"updateOperatorStatus",
 			arg_operator,
@@ -1273,13 +1273,13 @@ func (sp *SortitionPool) UpdateOperatorStatus(
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction updateOperatorStatus with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1293,15 +1293,15 @@ func (sp *SortitionPool) UpdateOperatorStatus(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.UpdateOperatorStatus(
+			transaction, err := esp.contract.UpdateOperatorStatus(
 				newTransactorOptions,
 				arg_operator,
 				arg_authorizedStake,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"updateOperatorStatus",
 					arg_operator,
@@ -1309,7 +1309,7 @@ func (sp *SortitionPool) UpdateOperatorStatus(
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction updateOperatorStatus with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1319,13 +1319,13 @@ func (sp *SortitionPool) UpdateOperatorStatus(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallUpdateOperatorStatus(
+func (esp *EcdsaSortitionPool) CallUpdateOperatorStatus(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 	blockNumber *big.Int,
@@ -1333,12 +1333,12 @@ func (sp *SortitionPool) CallUpdateOperatorStatus(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"updateOperatorStatus",
 		&result,
 		arg_operator,
@@ -1348,18 +1348,18 @@ func (sp *SortitionPool) CallUpdateOperatorStatus(
 	return err
 }
 
-func (sp *SortitionPool) UpdateOperatorStatusGasEstimate(
+func (esp *EcdsaSortitionPool) UpdateOperatorStatusGasEstimate(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"updateOperatorStatus",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_operator,
 		arg_authorizedStake,
 	)
@@ -1368,12 +1368,12 @@ func (sp *SortitionPool) UpdateOperatorStatusGasEstimate(
 }
 
 // Transaction submission.
-func (sp *SortitionPool) WithdrawIneligible(
+func (esp *EcdsaSortitionPool) WithdrawIneligible(
 	arg_recipient common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction withdrawIneligible",
 		" params: ",
 		fmt.Sprint(
@@ -1381,12 +1381,12 @@ func (sp *SortitionPool) WithdrawIneligible(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1396,34 +1396,34 @@ func (sp *SortitionPool) WithdrawIneligible(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.WithdrawIneligible(
+	transaction, err := esp.contract.WithdrawIneligible(
 		transactorOptions,
 		arg_recipient,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"withdrawIneligible",
 			arg_recipient,
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction withdrawIneligible with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1437,21 +1437,21 @@ func (sp *SortitionPool) WithdrawIneligible(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.WithdrawIneligible(
+			transaction, err := esp.contract.WithdrawIneligible(
 				newTransactorOptions,
 				arg_recipient,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"withdrawIneligible",
 					arg_recipient,
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction withdrawIneligible with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1461,25 +1461,25 @@ func (sp *SortitionPool) WithdrawIneligible(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallWithdrawIneligible(
+func (esp *EcdsaSortitionPool) CallWithdrawIneligible(
 	arg_recipient common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"withdrawIneligible",
 		&result,
 		arg_recipient,
@@ -1488,17 +1488,17 @@ func (sp *SortitionPool) CallWithdrawIneligible(
 	return err
 }
 
-func (sp *SortitionPool) WithdrawIneligibleGasEstimate(
+func (esp *EcdsaSortitionPool) WithdrawIneligibleGasEstimate(
 	arg_recipient common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"withdrawIneligible",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_recipient,
 	)
 
@@ -1506,13 +1506,13 @@ func (sp *SortitionPool) WithdrawIneligibleGasEstimate(
 }
 
 // Transaction submission.
-func (sp *SortitionPool) WithdrawRewards(
+func (esp *EcdsaSortitionPool) WithdrawRewards(
 	arg_operator common.Address,
 	arg_beneficiary common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	spLogger.Debug(
+	espLogger.Debug(
 		"submitting transaction withdrawRewards",
 		" params: ",
 		fmt.Sprint(
@@ -1521,12 +1521,12 @@ func (sp *SortitionPool) WithdrawRewards(
 		),
 	)
 
-	sp.transactionMutex.Lock()
-	defer sp.transactionMutex.Unlock()
+	esp.transactionMutex.Lock()
+	defer esp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *sp.transactorOptions
+	*transactorOptions = *esp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1536,22 +1536,22 @@ func (sp *SortitionPool) WithdrawRewards(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := sp.nonceManager.CurrentNonce()
+	nonce, err := esp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := sp.contract.WithdrawRewards(
+	transaction, err := esp.contract.WithdrawRewards(
 		transactorOptions,
 		arg_operator,
 		arg_beneficiary,
 	)
 	if err != nil {
-		return transaction, sp.errorResolver.ResolveError(
+		return transaction, esp.errorResolver.ResolveError(
 			err,
-			sp.transactorOptions.From,
+			esp.transactorOptions.From,
 			nil,
 			"withdrawRewards",
 			arg_operator,
@@ -1559,13 +1559,13 @@ func (sp *SortitionPool) WithdrawRewards(
 		)
 	}
 
-	spLogger.Infof(
+	espLogger.Infof(
 		"submitted transaction withdrawRewards with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go sp.miningWaiter.ForceMining(
+	go esp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1579,15 +1579,15 @@ func (sp *SortitionPool) WithdrawRewards(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := sp.contract.WithdrawRewards(
+			transaction, err := esp.contract.WithdrawRewards(
 				newTransactorOptions,
 				arg_operator,
 				arg_beneficiary,
 			)
 			if err != nil {
-				return nil, sp.errorResolver.ResolveError(
+				return nil, esp.errorResolver.ResolveError(
 					err,
-					sp.transactorOptions.From,
+					esp.transactorOptions.From,
 					nil,
 					"withdrawRewards",
 					arg_operator,
@@ -1595,7 +1595,7 @@ func (sp *SortitionPool) WithdrawRewards(
 				)
 			}
 
-			spLogger.Infof(
+			espLogger.Infof(
 				"submitted transaction withdrawRewards with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1605,13 +1605,13 @@ func (sp *SortitionPool) WithdrawRewards(
 		},
 	)
 
-	sp.nonceManager.IncrementNonce()
+	esp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (sp *SortitionPool) CallWithdrawRewards(
+func (esp *EcdsaSortitionPool) CallWithdrawRewards(
 	arg_operator common.Address,
 	arg_beneficiary common.Address,
 	blockNumber *big.Int,
@@ -1619,12 +1619,12 @@ func (sp *SortitionPool) CallWithdrawRewards(
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.transactorOptions.From,
+		esp.transactorOptions.From,
 		blockNumber, nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"withdrawRewards",
 		&result,
 		arg_operator,
@@ -1634,18 +1634,18 @@ func (sp *SortitionPool) CallWithdrawRewards(
 	return result, err
 }
 
-func (sp *SortitionPool) WithdrawRewardsGasEstimate(
+func (esp *EcdsaSortitionPool) WithdrawRewardsGasEstimate(
 	arg_operator common.Address,
 	arg_beneficiary common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		sp.callerOptions.From,
-		sp.contractAddress,
+		esp.callerOptions.From,
+		esp.contractAddress,
 		"withdrawRewards",
-		sp.contractABI,
-		sp.transactor,
+		esp.contractABI,
+		esp.transactor,
 		arg_operator,
 		arg_beneficiary,
 	)
@@ -1655,18 +1655,18 @@ func (sp *SortitionPool) WithdrawRewardsGasEstimate(
 
 // ----- Const Methods ------
 
-func (sp *SortitionPool) CanRestoreRewardEligibility(
+func (esp *EcdsaSortitionPool) CanRestoreRewardEligibility(
 	arg_operator uint32,
 ) (bool, error) {
-	result, err := sp.contract.CanRestoreRewardEligibility(
-		sp.callerOptions,
+	result, err := esp.contract.CanRestoreRewardEligibility(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"canRestoreRewardEligibility",
 			arg_operator,
@@ -1676,20 +1676,20 @@ func (sp *SortitionPool) CanRestoreRewardEligibility(
 	return result, err
 }
 
-func (sp *SortitionPool) CanRestoreRewardEligibilityAtBlock(
+func (esp *EcdsaSortitionPool) CanRestoreRewardEligibilityAtBlock(
 	arg_operator uint32,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"canRestoreRewardEligibility",
 		&result,
 		arg_operator,
@@ -1698,18 +1698,18 @@ func (sp *SortitionPool) CanRestoreRewardEligibilityAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) GetAvailableRewards(
+func (esp *EcdsaSortitionPool) GetAvailableRewards(
 	arg_operator common.Address,
 ) (*big.Int, error) {
-	result, err := sp.contract.GetAvailableRewards(
-		sp.callerOptions,
+	result, err := esp.contract.GetAvailableRewards(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"getAvailableRewards",
 			arg_operator,
@@ -1719,20 +1719,20 @@ func (sp *SortitionPool) GetAvailableRewards(
 	return result, err
 }
 
-func (sp *SortitionPool) GetAvailableRewardsAtBlock(
+func (esp *EcdsaSortitionPool) GetAvailableRewardsAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"getAvailableRewards",
 		&result,
 		arg_operator,
@@ -1741,18 +1741,18 @@ func (sp *SortitionPool) GetAvailableRewardsAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) GetIDOperator(
+func (esp *EcdsaSortitionPool) GetIDOperator(
 	arg_id uint32,
 ) (common.Address, error) {
-	result, err := sp.contract.GetIDOperator(
-		sp.callerOptions,
+	result, err := esp.contract.GetIDOperator(
+		esp.callerOptions,
 		arg_id,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"getIDOperator",
 			arg_id,
@@ -1762,20 +1762,20 @@ func (sp *SortitionPool) GetIDOperator(
 	return result, err
 }
 
-func (sp *SortitionPool) GetIDOperatorAtBlock(
+func (esp *EcdsaSortitionPool) GetIDOperatorAtBlock(
 	arg_id uint32,
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"getIDOperator",
 		&result,
 		arg_id,
@@ -1784,18 +1784,18 @@ func (sp *SortitionPool) GetIDOperatorAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) GetIDOperators(
+func (esp *EcdsaSortitionPool) GetIDOperators(
 	arg_ids []uint32,
 ) ([]common.Address, error) {
-	result, err := sp.contract.GetIDOperators(
-		sp.callerOptions,
+	result, err := esp.contract.GetIDOperators(
+		esp.callerOptions,
 		arg_ids,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"getIDOperators",
 			arg_ids,
@@ -1805,20 +1805,20 @@ func (sp *SortitionPool) GetIDOperators(
 	return result, err
 }
 
-func (sp *SortitionPool) GetIDOperatorsAtBlock(
+func (esp *EcdsaSortitionPool) GetIDOperatorsAtBlock(
 	arg_ids []uint32,
 	blockNumber *big.Int,
 ) ([]common.Address, error) {
 	var result []common.Address
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"getIDOperators",
 		&result,
 		arg_ids,
@@ -1827,18 +1827,18 @@ func (sp *SortitionPool) GetIDOperatorsAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) GetOperatorID(
+func (esp *EcdsaSortitionPool) GetOperatorID(
 	arg_operator common.Address,
 ) (uint32, error) {
-	result, err := sp.contract.GetOperatorID(
-		sp.callerOptions,
+	result, err := esp.contract.GetOperatorID(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"getOperatorID",
 			arg_operator,
@@ -1848,20 +1848,20 @@ func (sp *SortitionPool) GetOperatorID(
 	return result, err
 }
 
-func (sp *SortitionPool) GetOperatorIDAtBlock(
+func (esp *EcdsaSortitionPool) GetOperatorIDAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (uint32, error) {
 	var result uint32
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"getOperatorID",
 		&result,
 		arg_operator,
@@ -1870,18 +1870,18 @@ func (sp *SortitionPool) GetOperatorIDAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) GetPoolWeight(
+func (esp *EcdsaSortitionPool) GetPoolWeight(
 	arg_operator common.Address,
 ) (*big.Int, error) {
-	result, err := sp.contract.GetPoolWeight(
-		sp.callerOptions,
+	result, err := esp.contract.GetPoolWeight(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"getPoolWeight",
 			arg_operator,
@@ -1891,20 +1891,20 @@ func (sp *SortitionPool) GetPoolWeight(
 	return result, err
 }
 
-func (sp *SortitionPool) GetPoolWeightAtBlock(
+func (esp *EcdsaSortitionPool) GetPoolWeightAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"getPoolWeight",
 		&result,
 		arg_operator,
@@ -1913,15 +1913,15 @@ func (sp *SortitionPool) GetPoolWeightAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) IneligibleEarnedRewards() (*big.Int, error) {
-	result, err := sp.contract.IneligibleEarnedRewards(
-		sp.callerOptions,
+func (esp *EcdsaSortitionPool) IneligibleEarnedRewards() (*big.Int, error) {
+	result, err := esp.contract.IneligibleEarnedRewards(
+		esp.callerOptions,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"ineligibleEarnedRewards",
 		)
@@ -1930,19 +1930,19 @@ func (sp *SortitionPool) IneligibleEarnedRewards() (*big.Int, error) {
 	return result, err
 }
 
-func (sp *SortitionPool) IneligibleEarnedRewardsAtBlock(
+func (esp *EcdsaSortitionPool) IneligibleEarnedRewardsAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"ineligibleEarnedRewards",
 		&result,
 	)
@@ -1950,18 +1950,18 @@ func (sp *SortitionPool) IneligibleEarnedRewardsAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) IsEligibleForRewards(
+func (esp *EcdsaSortitionPool) IsEligibleForRewards(
 	arg_operator uint32,
 ) (bool, error) {
-	result, err := sp.contract.IsEligibleForRewards(
-		sp.callerOptions,
+	result, err := esp.contract.IsEligibleForRewards(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"isEligibleForRewards",
 			arg_operator,
@@ -1971,20 +1971,20 @@ func (sp *SortitionPool) IsEligibleForRewards(
 	return result, err
 }
 
-func (sp *SortitionPool) IsEligibleForRewardsAtBlock(
+func (esp *EcdsaSortitionPool) IsEligibleForRewardsAtBlock(
 	arg_operator uint32,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"isEligibleForRewards",
 		&result,
 		arg_operator,
@@ -1993,15 +1993,15 @@ func (sp *SortitionPool) IsEligibleForRewardsAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) IsLocked() (bool, error) {
-	result, err := sp.contract.IsLocked(
-		sp.callerOptions,
+func (esp *EcdsaSortitionPool) IsLocked() (bool, error) {
+	result, err := esp.contract.IsLocked(
+		esp.callerOptions,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"isLocked",
 		)
@@ -2010,19 +2010,19 @@ func (sp *SortitionPool) IsLocked() (bool, error) {
 	return result, err
 }
 
-func (sp *SortitionPool) IsLockedAtBlock(
+func (esp *EcdsaSortitionPool) IsLockedAtBlock(
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"isLocked",
 		&result,
 	)
@@ -2030,18 +2030,18 @@ func (sp *SortitionPool) IsLockedAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) IsOperatorInPool(
+func (esp *EcdsaSortitionPool) IsOperatorInPool(
 	arg_operator common.Address,
 ) (bool, error) {
-	result, err := sp.contract.IsOperatorInPool(
-		sp.callerOptions,
+	result, err := esp.contract.IsOperatorInPool(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"isOperatorInPool",
 			arg_operator,
@@ -2051,20 +2051,20 @@ func (sp *SortitionPool) IsOperatorInPool(
 	return result, err
 }
 
-func (sp *SortitionPool) IsOperatorInPoolAtBlock(
+func (esp *EcdsaSortitionPool) IsOperatorInPoolAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"isOperatorInPool",
 		&result,
 		arg_operator,
@@ -2073,18 +2073,18 @@ func (sp *SortitionPool) IsOperatorInPoolAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) IsOperatorRegistered(
+func (esp *EcdsaSortitionPool) IsOperatorRegistered(
 	arg_operator common.Address,
 ) (bool, error) {
-	result, err := sp.contract.IsOperatorRegistered(
-		sp.callerOptions,
+	result, err := esp.contract.IsOperatorRegistered(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"isOperatorRegistered",
 			arg_operator,
@@ -2094,20 +2094,20 @@ func (sp *SortitionPool) IsOperatorRegistered(
 	return result, err
 }
 
-func (sp *SortitionPool) IsOperatorRegisteredAtBlock(
+func (esp *EcdsaSortitionPool) IsOperatorRegisteredAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"isOperatorRegistered",
 		&result,
 		arg_operator,
@@ -2116,20 +2116,20 @@ func (sp *SortitionPool) IsOperatorRegisteredAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) IsOperatorUpToDate(
+func (esp *EcdsaSortitionPool) IsOperatorUpToDate(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 ) (bool, error) {
-	result, err := sp.contract.IsOperatorUpToDate(
-		sp.callerOptions,
+	result, err := esp.contract.IsOperatorUpToDate(
+		esp.callerOptions,
 		arg_operator,
 		arg_authorizedStake,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"isOperatorUpToDate",
 			arg_operator,
@@ -2140,7 +2140,7 @@ func (sp *SortitionPool) IsOperatorUpToDate(
 	return result, err
 }
 
-func (sp *SortitionPool) IsOperatorUpToDateAtBlock(
+func (esp *EcdsaSortitionPool) IsOperatorUpToDateAtBlock(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 	blockNumber *big.Int,
@@ -2148,13 +2148,13 @@ func (sp *SortitionPool) IsOperatorUpToDateAtBlock(
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"isOperatorUpToDate",
 		&result,
 		arg_operator,
@@ -2164,15 +2164,15 @@ func (sp *SortitionPool) IsOperatorUpToDateAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) OperatorsInPool() (*big.Int, error) {
-	result, err := sp.contract.OperatorsInPool(
-		sp.callerOptions,
+func (esp *EcdsaSortitionPool) OperatorsInPool() (*big.Int, error) {
+	result, err := esp.contract.OperatorsInPool(
+		esp.callerOptions,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"operatorsInPool",
 		)
@@ -2181,19 +2181,19 @@ func (sp *SortitionPool) OperatorsInPool() (*big.Int, error) {
 	return result, err
 }
 
-func (sp *SortitionPool) OperatorsInPoolAtBlock(
+func (esp *EcdsaSortitionPool) OperatorsInPoolAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"operatorsInPool",
 		&result,
 	)
@@ -2201,15 +2201,15 @@ func (sp *SortitionPool) OperatorsInPoolAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) Owner() (common.Address, error) {
-	result, err := sp.contract.Owner(
-		sp.callerOptions,
+func (esp *EcdsaSortitionPool) Owner() (common.Address, error) {
+	result, err := esp.contract.Owner(
+		esp.callerOptions,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"owner",
 		)
@@ -2218,19 +2218,19 @@ func (sp *SortitionPool) Owner() (common.Address, error) {
 	return result, err
 }
 
-func (sp *SortitionPool) OwnerAtBlock(
+func (esp *EcdsaSortitionPool) OwnerAtBlock(
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"owner",
 		&result,
 	)
@@ -2238,15 +2238,15 @@ func (sp *SortitionPool) OwnerAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) PoolWeightDivisor() (*big.Int, error) {
-	result, err := sp.contract.PoolWeightDivisor(
-		sp.callerOptions,
+func (esp *EcdsaSortitionPool) PoolWeightDivisor() (*big.Int, error) {
+	result, err := esp.contract.PoolWeightDivisor(
+		esp.callerOptions,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"poolWeightDivisor",
 		)
@@ -2255,19 +2255,19 @@ func (sp *SortitionPool) PoolWeightDivisor() (*big.Int, error) {
 	return result, err
 }
 
-func (sp *SortitionPool) PoolWeightDivisorAtBlock(
+func (esp *EcdsaSortitionPool) PoolWeightDivisorAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"poolWeightDivisor",
 		&result,
 	)
@@ -2275,15 +2275,15 @@ func (sp *SortitionPool) PoolWeightDivisorAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) RewardToken() (common.Address, error) {
-	result, err := sp.contract.RewardToken(
-		sp.callerOptions,
+func (esp *EcdsaSortitionPool) RewardToken() (common.Address, error) {
+	result, err := esp.contract.RewardToken(
+		esp.callerOptions,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"rewardToken",
 		)
@@ -2292,19 +2292,19 @@ func (sp *SortitionPool) RewardToken() (common.Address, error) {
 	return result, err
 }
 
-func (sp *SortitionPool) RewardTokenAtBlock(
+func (esp *EcdsaSortitionPool) RewardTokenAtBlock(
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"rewardToken",
 		&result,
 	)
@@ -2312,18 +2312,18 @@ func (sp *SortitionPool) RewardTokenAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) RewardsEligibilityRestorableAt(
+func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAt(
 	arg_operator uint32,
 ) (*big.Int, error) {
-	result, err := sp.contract.RewardsEligibilityRestorableAt(
-		sp.callerOptions,
+	result, err := esp.contract.RewardsEligibilityRestorableAt(
+		esp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"rewardsEligibilityRestorableAt",
 			arg_operator,
@@ -2333,20 +2333,20 @@ func (sp *SortitionPool) RewardsEligibilityRestorableAt(
 	return result, err
 }
 
-func (sp *SortitionPool) RewardsEligibilityRestorableAtAtBlock(
+func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAtAtBlock(
 	arg_operator uint32,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"rewardsEligibilityRestorableAt",
 		&result,
 		arg_operator,
@@ -2355,20 +2355,20 @@ func (sp *SortitionPool) RewardsEligibilityRestorableAtAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) SelectGroup(
+func (esp *EcdsaSortitionPool) SelectGroup(
 	arg_groupSize *big.Int,
 	arg_seed [32]byte,
 ) ([]uint32, error) {
-	result, err := sp.contract.SelectGroup(
-		sp.callerOptions,
+	result, err := esp.contract.SelectGroup(
+		esp.callerOptions,
 		arg_groupSize,
 		arg_seed,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"selectGroup",
 			arg_groupSize,
@@ -2379,7 +2379,7 @@ func (sp *SortitionPool) SelectGroup(
 	return result, err
 }
 
-func (sp *SortitionPool) SelectGroupAtBlock(
+func (esp *EcdsaSortitionPool) SelectGroupAtBlock(
 	arg_groupSize *big.Int,
 	arg_seed [32]byte,
 	blockNumber *big.Int,
@@ -2387,13 +2387,13 @@ func (sp *SortitionPool) SelectGroupAtBlock(
 	var result []uint32
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"selectGroup",
 		&result,
 		arg_groupSize,
@@ -2403,15 +2403,15 @@ func (sp *SortitionPool) SelectGroupAtBlock(
 	return result, err
 }
 
-func (sp *SortitionPool) TotalWeight() (*big.Int, error) {
-	result, err := sp.contract.TotalWeight(
-		sp.callerOptions,
+func (esp *EcdsaSortitionPool) TotalWeight() (*big.Int, error) {
+	result, err := esp.contract.TotalWeight(
+		esp.callerOptions,
 	)
 
 	if err != nil {
-		return result, sp.errorResolver.ResolveError(
+		return result, esp.errorResolver.ResolveError(
 			err,
-			sp.callerOptions.From,
+			esp.callerOptions.From,
 			nil,
 			"totalWeight",
 		)
@@ -2420,19 +2420,19 @@ func (sp *SortitionPool) TotalWeight() (*big.Int, error) {
 	return result, err
 }
 
-func (sp *SortitionPool) TotalWeightAtBlock(
+func (esp *EcdsaSortitionPool) TotalWeightAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		sp.callerOptions.From,
+		esp.callerOptions.From,
 		blockNumber,
 		nil,
-		sp.contractABI,
-		sp.caller,
-		sp.errorResolver,
-		sp.contractAddress,
+		esp.contractABI,
+		esp.caller,
+		esp.errorResolver,
+		esp.contractAddress,
 		"totalWeight",
 		&result,
 	)
@@ -2442,9 +2442,9 @@ func (sp *SortitionPool) TotalWeightAtBlock(
 
 // ------ Events -------
 
-func (sp *SortitionPool) IneligibleForRewardsEvent(
+func (esp *EcdsaSortitionPool) IneligibleForRewardsEvent(
 	opts *ethlike.SubscribeOpts,
-) *SpIneligibleForRewardsSubscription {
+) *EspIneligibleForRewardsSubscription {
 	if opts == nil {
 		opts = new(ethlike.SubscribeOpts)
 	}
@@ -2455,27 +2455,27 @@ func (sp *SortitionPool) IneligibleForRewardsEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &SpIneligibleForRewardsSubscription{
-		sp,
+	return &EspIneligibleForRewardsSubscription{
+		esp,
 		opts,
 	}
 }
 
-type SpIneligibleForRewardsSubscription struct {
-	contract *SortitionPool
+type EspIneligibleForRewardsSubscription struct {
+	contract *EcdsaSortitionPool
 	opts     *ethlike.SubscribeOpts
 }
 
-type sortitionPoolIneligibleForRewardsFunc func(
+type ecdsaSortitionPoolIneligibleForRewardsFunc func(
 	Ids []uint32,
 	Until *big.Int,
 	blockNumber uint64,
 )
 
-func (ifrs *SpIneligibleForRewardsSubscription) OnEvent(
-	handler sortitionPoolIneligibleForRewardsFunc,
+func (ifrs *EspIneligibleForRewardsSubscription) OnEvent(
+	handler ecdsaSortitionPoolIneligibleForRewardsFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.SortitionPoolIneligibleForRewards)
+	eventChan := make(chan *abi.EcdsaSortitionPoolIneligibleForRewards)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -2500,8 +2500,8 @@ func (ifrs *SpIneligibleForRewardsSubscription) OnEvent(
 	})
 }
 
-func (ifrs *SpIneligibleForRewardsSubscription) Pipe(
-	sink chan *abi.SortitionPoolIneligibleForRewards,
+func (ifrs *EspIneligibleForRewardsSubscription) Pipe(
+	sink chan *abi.EcdsaSortitionPoolIneligibleForRewards,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
@@ -2514,14 +2514,14 @@ func (ifrs *SpIneligibleForRewardsSubscription) Pipe(
 			case <-ticker.C:
 				lastBlock, err := ifrs.contract.blockCounter.CurrentBlock()
 				if err != nil {
-					spLogger.Errorf(
+					espLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
 				fromBlock := lastBlock - ifrs.opts.PastBlocks
 
-				spLogger.Infof(
+				espLogger.Infof(
 					"subscription monitoring fetching past IneligibleForRewards events "+
 						"starting from block [%v]",
 					fromBlock,
@@ -2531,13 +2531,13 @@ func (ifrs *SpIneligibleForRewardsSubscription) Pipe(
 					nil,
 				)
 				if err != nil {
-					spLogger.Errorf(
+					espLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 					continue
 				}
-				spLogger.Infof(
+				espLogger.Infof(
 					"subscription monitoring fetched [%v] past IneligibleForRewards events",
 					len(events),
 				)
@@ -2559,18 +2559,18 @@ func (ifrs *SpIneligibleForRewardsSubscription) Pipe(
 	})
 }
 
-func (sp *SortitionPool) watchIneligibleForRewards(
-	sink chan *abi.SortitionPoolIneligibleForRewards,
+func (esp *EcdsaSortitionPool) watchIneligibleForRewards(
+	sink chan *abi.EcdsaSortitionPoolIneligibleForRewards,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return sp.contract.WatchIneligibleForRewards(
+		return esp.contract.WatchIneligibleForRewards(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 		)
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		spLogger.Errorf(
+		espLogger.Errorf(
 			"subscription to event IneligibleForRewards had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2579,7 +2579,7 @@ func (sp *SortitionPool) watchIneligibleForRewards(
 	}
 
 	subscriptionFailedFn := func(err error) {
-		spLogger.Errorf(
+		espLogger.Errorf(
 			"subscription to event IneligibleForRewards failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
@@ -2596,11 +2596,11 @@ func (sp *SortitionPool) watchIneligibleForRewards(
 	)
 }
 
-func (sp *SortitionPool) PastIneligibleForRewardsEvents(
+func (esp *EcdsaSortitionPool) PastIneligibleForRewardsEvents(
 	startBlock uint64,
 	endBlock *uint64,
-) ([]*abi.SortitionPoolIneligibleForRewards, error) {
-	iterator, err := sp.contract.FilterIneligibleForRewards(
+) ([]*abi.EcdsaSortitionPoolIneligibleForRewards, error) {
+	iterator, err := esp.contract.FilterIneligibleForRewards(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -2613,7 +2613,7 @@ func (sp *SortitionPool) PastIneligibleForRewardsEvents(
 		)
 	}
 
-	events := make([]*abi.SortitionPoolIneligibleForRewards, 0)
+	events := make([]*abi.EcdsaSortitionPoolIneligibleForRewards, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -2623,11 +2623,11 @@ func (sp *SortitionPool) PastIneligibleForRewardsEvents(
 	return events, nil
 }
 
-func (sp *SortitionPool) OwnershipTransferredEvent(
+func (esp *EcdsaSortitionPool) OwnershipTransferredEvent(
 	opts *ethlike.SubscribeOpts,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
-) *SpOwnershipTransferredSubscription {
+) *EspOwnershipTransferredSubscription {
 	if opts == nil {
 		opts = new(ethlike.SubscribeOpts)
 	}
@@ -2638,31 +2638,31 @@ func (sp *SortitionPool) OwnershipTransferredEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &SpOwnershipTransferredSubscription{
-		sp,
+	return &EspOwnershipTransferredSubscription{
+		esp,
 		opts,
 		previousOwnerFilter,
 		newOwnerFilter,
 	}
 }
 
-type SpOwnershipTransferredSubscription struct {
-	contract            *SortitionPool
+type EspOwnershipTransferredSubscription struct {
+	contract            *EcdsaSortitionPool
 	opts                *ethlike.SubscribeOpts
 	previousOwnerFilter []common.Address
 	newOwnerFilter      []common.Address
 }
 
-type sortitionPoolOwnershipTransferredFunc func(
+type ecdsaSortitionPoolOwnershipTransferredFunc func(
 	PreviousOwner common.Address,
 	NewOwner common.Address,
 	blockNumber uint64,
 )
 
-func (ots *SpOwnershipTransferredSubscription) OnEvent(
-	handler sortitionPoolOwnershipTransferredFunc,
+func (ots *EspOwnershipTransferredSubscription) OnEvent(
+	handler ecdsaSortitionPoolOwnershipTransferredFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.SortitionPoolOwnershipTransferred)
+	eventChan := make(chan *abi.EcdsaSortitionPoolOwnershipTransferred)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -2687,8 +2687,8 @@ func (ots *SpOwnershipTransferredSubscription) OnEvent(
 	})
 }
 
-func (ots *SpOwnershipTransferredSubscription) Pipe(
-	sink chan *abi.SortitionPoolOwnershipTransferred,
+func (ots *EspOwnershipTransferredSubscription) Pipe(
+	sink chan *abi.EcdsaSortitionPoolOwnershipTransferred,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
@@ -2701,14 +2701,14 @@ func (ots *SpOwnershipTransferredSubscription) Pipe(
 			case <-ticker.C:
 				lastBlock, err := ots.contract.blockCounter.CurrentBlock()
 				if err != nil {
-					spLogger.Errorf(
+					espLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
 				fromBlock := lastBlock - ots.opts.PastBlocks
 
-				spLogger.Infof(
+				espLogger.Infof(
 					"subscription monitoring fetching past OwnershipTransferred events "+
 						"starting from block [%v]",
 					fromBlock,
@@ -2720,13 +2720,13 @@ func (ots *SpOwnershipTransferredSubscription) Pipe(
 					ots.newOwnerFilter,
 				)
 				if err != nil {
-					spLogger.Errorf(
+					espLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 					continue
 				}
-				spLogger.Infof(
+				espLogger.Infof(
 					"subscription monitoring fetched [%v] past OwnershipTransferred events",
 					len(events),
 				)
@@ -2750,13 +2750,13 @@ func (ots *SpOwnershipTransferredSubscription) Pipe(
 	})
 }
 
-func (sp *SortitionPool) watchOwnershipTransferred(
-	sink chan *abi.SortitionPoolOwnershipTransferred,
+func (esp *EcdsaSortitionPool) watchOwnershipTransferred(
+	sink chan *abi.EcdsaSortitionPoolOwnershipTransferred,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return sp.contract.WatchOwnershipTransferred(
+		return esp.contract.WatchOwnershipTransferred(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 			previousOwnerFilter,
@@ -2765,7 +2765,7 @@ func (sp *SortitionPool) watchOwnershipTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		spLogger.Errorf(
+		espLogger.Errorf(
 			"subscription to event OwnershipTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2774,7 +2774,7 @@ func (sp *SortitionPool) watchOwnershipTransferred(
 	}
 
 	subscriptionFailedFn := func(err error) {
-		spLogger.Errorf(
+		espLogger.Errorf(
 			"subscription to event OwnershipTransferred failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
@@ -2791,13 +2791,13 @@ func (sp *SortitionPool) watchOwnershipTransferred(
 	)
 }
 
-func (sp *SortitionPool) PastOwnershipTransferredEvents(
+func (esp *EcdsaSortitionPool) PastOwnershipTransferredEvents(
 	startBlock uint64,
 	endBlock *uint64,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
-) ([]*abi.SortitionPoolOwnershipTransferred, error) {
-	iterator, err := sp.contract.FilterOwnershipTransferred(
+) ([]*abi.EcdsaSortitionPoolOwnershipTransferred, error) {
+	iterator, err := esp.contract.FilterOwnershipTransferred(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -2812,7 +2812,7 @@ func (sp *SortitionPool) PastOwnershipTransferredEvents(
 		)
 	}
 
-	events := make([]*abi.SortitionPoolOwnershipTransferred, 0)
+	events := make([]*abi.EcdsaSortitionPoolOwnershipTransferred, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -2822,11 +2822,11 @@ func (sp *SortitionPool) PastOwnershipTransferredEvents(
 	return events, nil
 }
 
-func (sp *SortitionPool) RewardEligibilityRestoredEvent(
+func (esp *EcdsaSortitionPool) RewardEligibilityRestoredEvent(
 	opts *ethlike.SubscribeOpts,
 	operatorFilter []common.Address,
 	idFilter []uint32,
-) *SpRewardEligibilityRestoredSubscription {
+) *EspRewardEligibilityRestoredSubscription {
 	if opts == nil {
 		opts = new(ethlike.SubscribeOpts)
 	}
@@ -2837,31 +2837,31 @@ func (sp *SortitionPool) RewardEligibilityRestoredEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &SpRewardEligibilityRestoredSubscription{
-		sp,
+	return &EspRewardEligibilityRestoredSubscription{
+		esp,
 		opts,
 		operatorFilter,
 		idFilter,
 	}
 }
 
-type SpRewardEligibilityRestoredSubscription struct {
-	contract       *SortitionPool
+type EspRewardEligibilityRestoredSubscription struct {
+	contract       *EcdsaSortitionPool
 	opts           *ethlike.SubscribeOpts
 	operatorFilter []common.Address
 	idFilter       []uint32
 }
 
-type sortitionPoolRewardEligibilityRestoredFunc func(
+type ecdsaSortitionPoolRewardEligibilityRestoredFunc func(
 	Operator common.Address,
 	Id uint32,
 	blockNumber uint64,
 )
 
-func (rers *SpRewardEligibilityRestoredSubscription) OnEvent(
-	handler sortitionPoolRewardEligibilityRestoredFunc,
+func (rers *EspRewardEligibilityRestoredSubscription) OnEvent(
+	handler ecdsaSortitionPoolRewardEligibilityRestoredFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.SortitionPoolRewardEligibilityRestored)
+	eventChan := make(chan *abi.EcdsaSortitionPoolRewardEligibilityRestored)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -2886,8 +2886,8 @@ func (rers *SpRewardEligibilityRestoredSubscription) OnEvent(
 	})
 }
 
-func (rers *SpRewardEligibilityRestoredSubscription) Pipe(
-	sink chan *abi.SortitionPoolRewardEligibilityRestored,
+func (rers *EspRewardEligibilityRestoredSubscription) Pipe(
+	sink chan *abi.EcdsaSortitionPoolRewardEligibilityRestored,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
@@ -2900,14 +2900,14 @@ func (rers *SpRewardEligibilityRestoredSubscription) Pipe(
 			case <-ticker.C:
 				lastBlock, err := rers.contract.blockCounter.CurrentBlock()
 				if err != nil {
-					spLogger.Errorf(
+					espLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
 				fromBlock := lastBlock - rers.opts.PastBlocks
 
-				spLogger.Infof(
+				espLogger.Infof(
 					"subscription monitoring fetching past RewardEligibilityRestored events "+
 						"starting from block [%v]",
 					fromBlock,
@@ -2919,13 +2919,13 @@ func (rers *SpRewardEligibilityRestoredSubscription) Pipe(
 					rers.idFilter,
 				)
 				if err != nil {
-					spLogger.Errorf(
+					espLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 					continue
 				}
-				spLogger.Infof(
+				espLogger.Infof(
 					"subscription monitoring fetched [%v] past RewardEligibilityRestored events",
 					len(events),
 				)
@@ -2949,13 +2949,13 @@ func (rers *SpRewardEligibilityRestoredSubscription) Pipe(
 	})
 }
 
-func (sp *SortitionPool) watchRewardEligibilityRestored(
-	sink chan *abi.SortitionPoolRewardEligibilityRestored,
+func (esp *EcdsaSortitionPool) watchRewardEligibilityRestored(
+	sink chan *abi.EcdsaSortitionPoolRewardEligibilityRestored,
 	operatorFilter []common.Address,
 	idFilter []uint32,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return sp.contract.WatchRewardEligibilityRestored(
+		return esp.contract.WatchRewardEligibilityRestored(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 			operatorFilter,
@@ -2964,7 +2964,7 @@ func (sp *SortitionPool) watchRewardEligibilityRestored(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		spLogger.Errorf(
+		espLogger.Errorf(
 			"subscription to event RewardEligibilityRestored had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2973,7 +2973,7 @@ func (sp *SortitionPool) watchRewardEligibilityRestored(
 	}
 
 	subscriptionFailedFn := func(err error) {
-		spLogger.Errorf(
+		espLogger.Errorf(
 			"subscription to event RewardEligibilityRestored failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
@@ -2990,13 +2990,13 @@ func (sp *SortitionPool) watchRewardEligibilityRestored(
 	)
 }
 
-func (sp *SortitionPool) PastRewardEligibilityRestoredEvents(
+func (esp *EcdsaSortitionPool) PastRewardEligibilityRestoredEvents(
 	startBlock uint64,
 	endBlock *uint64,
 	operatorFilter []common.Address,
 	idFilter []uint32,
-) ([]*abi.SortitionPoolRewardEligibilityRestored, error) {
-	iterator, err := sp.contract.FilterRewardEligibilityRestored(
+) ([]*abi.EcdsaSortitionPoolRewardEligibilityRestored, error) {
+	iterator, err := esp.contract.FilterRewardEligibilityRestored(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -3011,7 +3011,7 @@ func (sp *SortitionPool) PastRewardEligibilityRestoredEvents(
 		)
 	}
 
-	events := make([]*abi.SortitionPoolRewardEligibilityRestored, 0)
+	events := make([]*abi.EcdsaSortitionPoolRewardEligibilityRestored, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
