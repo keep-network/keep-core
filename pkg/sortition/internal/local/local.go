@@ -1,4 +1,4 @@
-package sortition
+package local
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ type localChain struct {
 	isPoolLocked bool
 }
 
-func connectLocal(operatorAddress chain.Address) *localChain {
+func Connect(operatorAddress chain.Address) *localChain {
 	return &localChain{
 		operatorAddress:           operatorAddress,
 		operatorToStakingProvider: make(map[chain.Address]chain.Address),
@@ -40,7 +40,7 @@ func connectLocal(operatorAddress chain.Address) *localChain {
 }
 
 // This is a test util function to setup the chain
-func (lc *localChain) registerOperator(stakingProvider chain.Address, operator chain.Address) {
+func (lc *localChain) RegisterOperator(stakingProvider chain.Address, operator chain.Address) {
 	lc.operatorToStakingProviderMutex.Lock()
 	defer lc.operatorToStakingProviderMutex.Unlock()
 
@@ -48,7 +48,7 @@ func (lc *localChain) registerOperator(stakingProvider chain.Address, operator c
 }
 
 // This is a test util function to setup the chain
-func (lc *localChain) setEligibleStake(stakingProvider chain.Address, stake *big.Int) {
+func (lc *localChain) SetEligibleStake(stakingProvider chain.Address, stake *big.Int) {
 	lc.eligibleStakeMutex.Lock()
 	defer lc.eligibleStakeMutex.Unlock()
 
