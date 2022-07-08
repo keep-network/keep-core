@@ -8,12 +8,12 @@ import (
 
 // Chain handle for interaction with the sortition pool contracts.
 type Chain interface {
-	// OperatorToStakingProvider returns the staking provider address for the
+	// CurrentOperatorToStakingProvider returns the staking provider address for the
 	// current operator. If the staking provider has not been registered for the
 	// operator, the returned address is empty and the boolean flag is set to
 	// false. If the staking provider has been registered, the address is not
 	// empty and the boolean flag indicates true.
-	OperatorToStakingProvider() (chain.Address, bool, error)
+	CurrentOperatorToStakingProvider() (chain.Address, bool, error)
 
 	// EligibleStake returns the current value of the staking provider's
 	// eligible stake. Eligible stake is defined as the currently authorized

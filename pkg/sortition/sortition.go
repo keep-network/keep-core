@@ -26,7 +26,7 @@ func MonitorPool(
 	chain Chain,
 	tick time.Duration,
 ) error {
-	_, isRegistered, err := chain.OperatorToStakingProvider()
+	_, isRegistered, err := chain.CurrentOperatorToStakingProvider()
 	if err != nil {
 		return fmt.Errorf("could not resolve staking provider: [%v]", err)
 	}
