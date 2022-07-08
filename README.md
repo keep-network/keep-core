@@ -61,3 +61,12 @@ npx hardhat --network ropsten deploy
 ```
 
 The contract will be deployed and the source code will be verified on etherscan.
+
+## Test Deployment
+In order to run a test deployment:
+```bash
+npx hardhat --network mainnet_test deploy
+```
+
+This will use the deployment script in `deploy-test`.
+The difference is that it also deploys a mock Token contract, which makes testing on mainnet possible.
