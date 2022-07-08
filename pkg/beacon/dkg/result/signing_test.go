@@ -18,7 +18,7 @@ import (
 func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	groupSize := 10
 
-	dkgResult := &beaconChain.DKGResult{
+	dkgResult := &beaconchain.DKGResult{
 		GroupPublicKey: []byte{10},
 	}
 
@@ -68,8 +68,8 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 func TestVerifyDKGResultSignatures(t *testing.T) {
 	groupSize := 10
 
-	dkgResultHash1 := beaconChain.DKGResultHash{10}
-	dkgResultHash2 := beaconChain.DKGResultHash{20}
+	dkgResultHash1 := beaconchain.DKGResultHash{10}
+	dkgResultHash2 := beaconchain.DKGResultHash{20}
 
 	members, _, signings, err := initializeSigningMembers(groupSize)
 	if err != nil {

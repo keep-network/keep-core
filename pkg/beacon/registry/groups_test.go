@@ -3,13 +3,13 @@ package registry
 import (
 	"bytes"
 	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"reflect"
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-common/pkg/persistence"
-	"github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
@@ -215,7 +215,7 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 
 func (mgri *mockGroupRegistrationInterface) GetGroupMembers(
 	groupPublicKey []byte,
-) ([]chain.StakerAddress, error) {
+) ([]chain.Address, error) {
 	return nil, nil // no-op
 }
 

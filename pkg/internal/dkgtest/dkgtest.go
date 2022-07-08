@@ -29,7 +29,7 @@ var minimumStake = big.NewInt(20)
 
 // Result of a DKG test execution.
 type Result struct {
-	dkgResult           *relaychain.DKGResult
+	dkgResult           *beaconchain.DKGResult
 	dkgResultSignatures map[group.MemberIndex][]byte
 	signers             []*dkg.ThresholdSigner
 	memberFailures      []error
@@ -73,19 +73,19 @@ func RunTest(
 		rules,
 	)
 
-	chain := chainLocal.ConnectWithKey(
+	localChain := chainLocal.ConnectWithKey(
 		groupSize,
 		honestThreshold,
 		minimumStake,
 		operatorPrivateKey,
 	)
 
-	blockCounter, err := chain.BlockCounter()
+	blockCounter, err := localChain.BlockCounter()
 	if err != nil {
 		return nil, err
 	}
 
-	address, err := chain.Signing().PublicKeyToAddress(operatorPublicKey)
+	address, err := localChain.Signing().PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot convert operator public key to chain address: [%v]",
@@ -93,17 +93,17 @@ func RunTest(
 		)
 	}
 
-	selectedStakers := make([]relaychain.StakerAddress, groupSize)
+	selectedStakers := make([]chain.Address, groupSize)
 	for i := range selectedStakers {
 		selectedStakers[i] = address
 	}
 
 	return executeDKG(
 		seed,
-		chain.ThresholdRelay(),
+		localChain.ThresholdRelay(),
 		blockCounter,
-		chain.Signing(),
-		chain.GetLastDKGResult,
+		localChain.Signing(),
+		localChain.GetLastDKGResult,
 		network,
 		selectedStakers,
 	)
@@ -115,11 +115,11 @@ func executeDKG(
 	blockCounter chain.BlockCounter,
 	signing chain.Signing,
 	lastDKGResultGetter func() (
-		*relaychain.DKGResult,
-		map[relaychain.GroupMemberIndex][]byte,
+		*beaconchain.DKGResult,
+		map[beaconchain.GroupMemberIndex][]byte,
 	),
 	network interception.Network,
-	selectedStakers []relaychain.StakerAddress,
+	selectedStakers []chain.Address,
 ) (*Result, error) {
 	relayConfig := relayChain.GetConfig()
 

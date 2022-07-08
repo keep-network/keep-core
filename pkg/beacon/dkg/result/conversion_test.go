@@ -1,6 +1,7 @@
 package result
 
 import (
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"math/big"
 	"testing"
 
@@ -17,7 +18,7 @@ func TestConvertResult(t *testing.T) {
 		disqualifiedMemberIDs []group.MemberIndex
 		inactiveMemberIDs     []group.MemberIndex
 		gjkrResult            *gjkr.Result
-		expectedResult        *beaconChain.DKGResult
+		expectedResult        *beaconchain.DKGResult
 	}{
 		"group public key not provided, DQ and IA empty": {
 			disqualifiedMemberIDs: []group.MemberIndex{},
@@ -26,7 +27,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: nil,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &beaconChain.DKGResult{
+			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{},
 				Misbehaved:     []byte{},
 			},
@@ -38,7 +39,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &beaconChain.DKGResult{
+			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{},
 			},
@@ -50,7 +51,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &beaconChain.DKGResult{
+			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{0x01, 0x03, 0x04, 0x05, 0x32},
 			},
@@ -62,7 +63,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &beaconChain.DKGResult{
+			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{0x05},
 			},
@@ -74,7 +75,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &beaconChain.DKGResult{
+			expectedResult: &beaconchain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{0x01, 0x05, 0x3C},
 			},

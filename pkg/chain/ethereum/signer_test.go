@@ -3,7 +3,6 @@ package ethereum
 import (
 	"crypto/rand"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"testing"
@@ -35,13 +34,13 @@ func TestSigner_PublicKeyToAddress(t *testing.T) {
 	// The chain key is not relevant in this scenario.
 	signer := newSigner(keystore.NewKeyForDirectICAP(rand.Reader))
 
-	addressBytes, err := signer.PublicKeyToAddress(operatorPublicKey)
+	address, err := signer.PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expectedAddress := "0x09e303E34F5aC4350caF327aD92d752602f3B061"
-	actualAddress := common.BytesToAddress(addressBytes).Hex()
+	actualAddress := address.String()
 	if expectedAddress != actualAddress {
 		t.Errorf(
 			"unexpected address\nexpected: %v\nactual:   %v\n",

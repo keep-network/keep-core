@@ -22,7 +22,7 @@ func TestSubmitDKGResult(t *testing.T) {
 
 	config := beaconChain.GetConfig()
 
-	result := &relaychain.DKGResult{
+	result := &beaconchain.DKGResult{
 		GroupPublicKey: []byte{123, 45},
 	}
 	signatures := map[group.MemberIndex][]byte{
@@ -128,26 +128,26 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 
 	var tests = map[string]struct {
-		resultToPublish1  *relaychain.DKGResult
-		resultToPublish2  *relaychain.DKGResult
+		resultToPublish1  *beaconchain.DKGResult
+		resultToPublish2  *beaconchain.DKGResult
 		expectedDuration1 func(tStep uint64) uint64 // index * t_step
 		expectedDuration2 func(tStep uint64) uint64 // index * t_step
 	}{
 		"two members publish the same results": {
-			resultToPublish1: &relaychain.DKGResult{
+			resultToPublish1: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
-			resultToPublish2: &relaychain.DKGResult{
+			resultToPublish2: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{101},
 			},
 			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step
 			expectedDuration2: func(tStep uint64) uint64 { return 0 }, // result already published by member 1 -1
 		},
 		"two members publish different results": {
-			resultToPublish1: &relaychain.DKGResult{
+			resultToPublish1: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{201},
 			},
-			resultToPublish2: &relaychain.DKGResult{
+			resultToPublish2: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{202},
 			},
 			expectedDuration1: func(tStep uint64) uint64 { return 0 }, // (P1-1) * t_step

@@ -35,8 +35,8 @@ type localChain struct {
 
 	groups []localGroup
 
-	lastSubmittedDKGResult           *relaychain.DKGResult
-	lastSubmittedDKGResultSignatures map[relaychain.GroupMemberIndex][]byte
+	lastSubmittedDKGResult           *beaconchain.DKGResult
+	lastSubmittedDKGResultSignatures map[beaconchain.GroupMemberIndex][]byte
 	lastSubmittedRelayEntry          []byte
 
 	handlerMutex             sync.Mutex
@@ -153,7 +153,7 @@ func (c *localChain) OnRelayEntryRequested(
 	})
 }
 
-func (c *localChain) SelectGroup(seed *big.Int) ([]relaychain.StakerAddress, error) {
+func (c *localChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 	panic("not implemented")
 }
 
@@ -267,7 +267,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 }
 
 func (c *localChain) GetGroupMembers(groupPublicKey []byte) (
-	[]relaychain.StakerAddress,
+	[]chain.Address,
 	error,
 ) {
 	return nil, nil // no-op
@@ -284,9 +284,9 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	participantIndex relaychain.GroupMemberIndex,
-	resultToPublish *relaychain.DKGResult,
-	signatures map[relaychain.GroupMemberIndex][]byte,
+	participantIndex beaconchain.GroupMemberIndex,
+	resultToPublish *beaconchain.DKGResult,
+	signatures map[beaconchain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -392,8 +392,8 @@ func (c *localChain) OnDKGResultSubmitted(
 }
 
 func (c *localChain) GetLastDKGResult() (
-	*relaychain.DKGResult,
-	map[relaychain.GroupMemberIndex][]byte,
+	*beaconchain.DKGResult,
+	map[beaconchain.GroupMemberIndex][]byte,
 ) {
 	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }
@@ -437,10 +437,10 @@ func (c *localChain) MinimumStake() (*big.Int, error) {
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.
 func (c *localChain) CalculateDKGResultHash(
-	dkgResult *relaychain.DKGResult,
-) (relaychain.DKGResultHash, error) {
+	dkgResult *beaconchain.DKGResult,
+) (beaconchain.DKGResultHash, error) {
 	encodedDKGResult := fmt.Sprint(dkgResult)
-	dkgResultHash := relaychain.DKGResultHash(
+	dkgResultHash := beaconchain.DKGResultHash(
 		sha3.Sum256([]byte(encodedDKGResult)),
 	)
 

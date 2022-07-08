@@ -1,11 +1,11 @@
 package local
 
 import (
+	"encoding/hex"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"reflect"
-
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 )
 
 // StakeMonitor implements `chain.StakeMonitor` interface and works
@@ -100,8 +100,8 @@ type localStaker struct {
 	stake     *big.Int
 }
 
-func (ls *localStaker) Address() relaychain.StakerAddress {
-	return operator.MarshalCompressed(ls.publicKey)
+func (ls *localStaker) Address() chain.Address {
+	return chain.Address(hex.EncodeToString(operator.MarshalCompressed(ls.publicKey)))
 }
 
 func (ls *localStaker) Stake() (*big.Int, error) {

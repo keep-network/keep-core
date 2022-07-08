@@ -109,9 +109,9 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	memberIndex := relaychain.GroupMemberIndex(1)
-	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := map[relaychain.GroupMemberIndex][]byte{
+	memberIndex := beaconchain.GroupMemberIndex(1)
+	dkgResult := &beaconchain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := map[beaconchain.GroupMemberIndex][]byte{
 		1: []byte{101},
 		2: []byte{102},
 		3: []byte{103},
@@ -155,9 +155,9 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 	subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	memberIndex := relaychain.GroupMemberIndex(1)
-	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := map[relaychain.GroupMemberIndex][]byte{
+	memberIndex := beaconchain.GroupMemberIndex(1)
+	dkgResult := &beaconchain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := map[beaconchain.GroupMemberIndex][]byte{
 		1: []byte{101},
 		2: []byte{102},
 		3: []byte{103},
@@ -191,9 +191,9 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	defer subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	memberIndex := relaychain.GroupMemberIndex(1)
-	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := map[relaychain.GroupMemberIndex][]byte{
+	memberIndex := beaconchain.GroupMemberIndex(1)
+	dkgResult := &beaconchain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := map[beaconchain.GroupMemberIndex][]byte{
 		1: []byte{101},
 		2: []byte{102},
 		3: []byte{103},
@@ -238,9 +238,9 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	subscription.Unsubscribe()
 
 	groupPublicKey := []byte("1")
-	memberIndex := relaychain.GroupMemberIndex(1)
-	dkgResult := &relaychain.DKGResult{GroupPublicKey: groupPublicKey}
-	signatures := map[relaychain.GroupMemberIndex][]byte{
+	memberIndex := beaconchain.GroupMemberIndex(1)
+	dkgResult := &beaconchain.DKGResult{GroupPublicKey: groupPublicKey}
+	signatures := map[beaconchain.GroupMemberIndex][]byte{
 		1: []byte{101},
 		2: []byte{102},
 		3: []byte{103},
@@ -483,12 +483,12 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 
 	chainHandle := localChain.ThresholdRelay()
 
-	memberIndex := relaychain.GroupMemberIndex(1)
-	result := &relaychain.DKGResult{
+	memberIndex := beaconchain.GroupMemberIndex(1)
+	result := &beaconchain.DKGResult{
 		GroupPublicKey: []byte{11},
 	}
 
-	signatures := map[relaychain.GroupMemberIndex][]byte{
+	signatures := map[beaconchain.GroupMemberIndex][]byte{
 		1: []byte{101},
 		2: []byte{102},
 		3: []byte{103},
@@ -514,28 +514,28 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 	chainHandle := localChain.ThresholdRelay()
 
 	var tests = map[string]struct {
-		signatures    map[relaychain.GroupMemberIndex][]byte
+		signatures    map[beaconchain.GroupMemberIndex][]byte
 		expectedError error
 	}{
 		"no signatures": {
-			signatures:    map[relaychain.GroupMemberIndex][]byte{},
+			signatures:    map[beaconchain.GroupMemberIndex][]byte{},
 			expectedError: fmt.Errorf("failed to submit result with [0] signatures for honest threshold [%v]", honestThreshold),
 		},
 		"one signature": {
-			signatures: map[relaychain.GroupMemberIndex][]byte{
+			signatures: map[beaconchain.GroupMemberIndex][]byte{
 				1: []byte{101},
 			},
 			expectedError: fmt.Errorf("failed to submit result with [1] signatures for honest threshold [%v]", honestThreshold),
 		},
 		"one less signature than threshold": {
-			signatures: map[relaychain.GroupMemberIndex][]byte{
+			signatures: map[beaconchain.GroupMemberIndex][]byte{
 				1: []byte{101},
 				2: []byte{102},
 			},
 			expectedError: fmt.Errorf("failed to submit result with [2] signatures for honest threshold [%v]", honestThreshold),
 		},
 		"threshold signatures": {
-			signatures: map[relaychain.GroupMemberIndex][]byte{
+			signatures: map[beaconchain.GroupMemberIndex][]byte{
 				1: []byte{101},
 				2: []byte{102},
 				3: []byte{103},
@@ -543,7 +543,7 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 			expectedError: nil,
 		},
 		"one more signature than threshold": {
-			signatures: map[relaychain.GroupMemberIndex][]byte{
+			signatures: map[beaconchain.GroupMemberIndex][]byte{
 				1: []byte{101},
 				2: []byte{102},
 				3: []byte{103},
@@ -552,7 +552,7 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 			expectedError: nil,
 		},
 		"signatures from all group members": {
-			signatures: map[relaychain.GroupMemberIndex][]byte{
+			signatures: map[beaconchain.GroupMemberIndex][]byte{
 				1: []byte{101},
 				2: []byte{102},
 				3: []byte{103},
@@ -571,7 +571,7 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 			errorChan := make(chan error)
 
 			memberIndex := uint8(1)
-			result := &relaychain.DKGResult{
+			result := &beaconchain.DKGResult{
 				GroupPublicKey: []byte{11},
 			}
 
@@ -604,7 +604,7 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 func TestCalculateDKGResultHash(t *testing.T) {
 	localChain := &localChain{}
 
-	dkgResult := &relaychain.DKGResult{
+	dkgResult := &beaconchain.DKGResult{
 		GroupPublicKey: []byte{3, 40, 200},
 		Misbehaved:     []byte{1, 2, 8, 14},
 	}
@@ -615,7 +615,7 @@ func TestCalculateDKGResultHash(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expectedHash := relaychain.DKGResultHash{}
+	expectedHash := beaconchain.DKGResultHash{}
 	copy(
 		expectedHash[:],
 		common.Hex2Bytes(expectedHashString)[:32],

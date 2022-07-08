@@ -21,19 +21,19 @@ func TestCalculateDKGResultHash(t *testing.T) {
 	chain := &ethereumChain{}
 
 	var tests = map[string]struct {
-		dkgResult    *relaychain.DKGResult
+		dkgResult    *beaconchain.DKGResult
 		expectedHash string
 	}{
 
 		"dkg result with no misbehaving members": {
-			dkgResult: &relaychain.DKGResult{
+			dkgResult: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{0x64},
 				Misbehaved:     []byte{},
 			},
 			expectedHash: "f1918e8562236eb17adc8502332f4c9c82bc14e19bfc0aa10ab674ff75b3d2f3",
 		},
 		"dkg result with misbehaving members": {
-			dkgResult: &relaychain.DKGResult{
+			dkgResult: &beaconchain.DKGResult{
 				GroupPublicKey: []byte{0x64},
 				Misbehaved:     []byte{0x03, 0x05},
 			},

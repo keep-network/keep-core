@@ -1,17 +1,17 @@
 package group
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"testing"
 
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 func TestIsInGroup(t *testing.T) {
-	chain := local.Connect(3, 3, big.NewInt(100))
-	signing := chain.Signing()
+	localChain := local.Connect(3, 3, big.NewInt(100))
+	signing := localChain.Signing()
 
 	publicKey1 := generatePublicKey(t)
 	publicKey2 := generatePublicKey(t)
@@ -28,7 +28,7 @@ func TestIsInGroup(t *testing.T) {
 	}
 
 	validator := NewStakersMembershipValidator(
-		[]relaychain.StakerAddress{address1, address2, address2},
+		[]chain.Address{address1, address2, address2},
 		signing,
 	)
 
@@ -44,8 +44,8 @@ func TestIsInGroup(t *testing.T) {
 }
 
 func TestIsValidMembership(t *testing.T) {
-	chain := local.Connect(3, 3, big.NewInt(100))
-	signing := chain.Signing()
+	localChain := local.Connect(3, 3, big.NewInt(100))
+	signing := localChain.Signing()
 
 	publicKey1 := generatePublicKeyBytes(t)
 	publicKey2 := generatePublicKeyBytes(t)
@@ -55,7 +55,7 @@ func TestIsValidMembership(t *testing.T) {
 	address2 := signing.PublicKeyBytesToAddress(publicKey2)
 
 	validator := NewStakersMembershipValidator(
-		[]relaychain.StakerAddress{address2, address1, address2},
+		[]chain.Address{address2, address1, address2},
 		signing,
 	)
 
