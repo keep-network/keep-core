@@ -162,3 +162,10 @@ func (bc *BeaconChain) JoinSortitionPool() error {
 	_, err := bc.randomBeacon.JoinSortitionPool()
 	return err
 }
+
+// UpdateOperatorStatus executes a transaction to update the current
+// operator's state in the sortition pool.
+func (bc *BeaconChain) UpdateOperatorStatus() error {
+	_, err := bc.randomBeacon.UpdateOperatorStatus(bc.key.Address)
+	return err
+}
