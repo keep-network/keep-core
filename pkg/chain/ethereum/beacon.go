@@ -146,9 +146,26 @@ func (bc *BeaconChain) IsOperatorInPool() (bool, error) {
 	return bc.randomBeacon.IsOperatorInPool(bc.key.Address)
 }
 
+// IsOperatorUpToDate checks if the operator's authorized stake is in sync
+// with operator's weight in the sortition pool.
+// If the operator's authorized stake is not in sync with sortition pool
+// weight, function returns false.
+// If the operator is not in the sortition pool and their authorized stake
+// is non-zero, function returns false.
+func (bc *BeaconChain) IsOperatorUpToDate() (bool, error) {
+	return bc.randomBeacon.IsOperatorUpToDate(bc.key.Address)
+}
+
 // JoinSortitionPool executes a transaction to have the current operator join
 // the sortition pool.
 func (bc *BeaconChain) JoinSortitionPool() error {
 	_, err := bc.randomBeacon.JoinSortitionPool()
+	return err
+}
+
+// UpdateOperatorStatus executes a transaction to update the current
+// operator's state in the sortition pool.
+func (bc *BeaconChain) UpdateOperatorStatus() error {
+	_, err := bc.randomBeacon.UpdateOperatorStatus(bc.key.Address)
 	return err
 }
