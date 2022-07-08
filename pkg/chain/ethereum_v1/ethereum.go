@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -23,7 +23,7 @@ import (
 var logger = log.Logger("keep-chain-ethereum-v1")
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
-func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
+func (ec *ethereumChain) ThresholdRelay() beaconchain.Interface {
 	return ec
 }
 
@@ -49,7 +49,7 @@ func (ec *ethereumChain) Signing() chain.Signing {
 	return newSigner(ec.accountKey)
 }
 
-func (ec *ethereumChain) GetConfig() *relayChain.Config {
+func (ec *ethereumChain) GetConfig() *beaconchain.Config {
 	return ec.chainConfig
 }
 
@@ -176,9 +176,9 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 // TODO: Implement a real SelectGroup function once it is possible on the
 //       contract side. The current implementation just return a group
 //       where all members belong to the chain operator.
-func (ec *ethereumChain) SelectGroup(seed *big.Int) ([]relayChain.StakerAddress, error) {
+func (ec *ethereumChain) SelectGroup(seed *big.Int) ([]beaconchain.StakerAddress, error) {
 	groupSize := ec.GetConfig().GroupSize
-	groupMembers := make([]relayChain.StakerAddress, groupSize)
+	groupMembers := make([]beaconchain.StakerAddress, groupSize)
 
 	for index := range groupMembers {
 		groupMembers[index] = ec.accountKey.Address.Bytes()
@@ -219,7 +219,7 @@ func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 }
 
 func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
-	[]relayChain.StakerAddress,
+	[]beaconchain.StakerAddress,
 	error,
 ) {
 	members, err := ec.keepRandomBeaconOperatorContract.GetGroupMembers(
@@ -229,7 +229,7 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 		return nil, err
 	}
 
-	stakerAddresses := make([]relayChain.StakerAddress, len(members))
+	stakerAddresses := make([]beaconchain.StakerAddress, len(members))
 	for i, member := range members {
 		stakerAddresses[i] = member.Bytes()
 	}
@@ -335,9 +335,9 @@ func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 //       dkgResultSubmissionHandlers map. Consider getting rid of the result
 //       promise in favor of the fire-and-forget style.
 func (ec *ethereumChain) SubmitDKGResult(
-	participantIndex relayChain.GroupMemberIndex,
-	result *relayChain.DKGResult,
-	signatures map[relayChain.GroupMemberIndex][]byte,
+	participantIndex beaconchain.GroupMemberIndex,
+	result *beaconchain.DKGResult,
+	signatures map[beaconchain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -416,7 +416,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 // concatenated signatures. Signatures and member indices are returned in the
 // matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
-	signatures map[relayChain.GroupMemberIndex][]byte,
+	signatures map[beaconchain.GroupMemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
@@ -444,13 +444,13 @@ func convertSignaturesToChainFormat(
 // hash over it. This corresponds to the DKG result hash calculation on-chain.
 // Hashes calculated off-chain and on-chain must always match.
 func (ec *ethereumChain) CalculateDKGResultHash(
-	dkgResult *relayChain.DKGResult,
-) (relayChain.DKGResultHash, error) {
+	dkgResult *beaconchain.DKGResult,
+) (beaconchain.DKGResultHash, error) {
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 
-	return relayChain.DKGResultHashFromBytes(hash)
+	return beaconchain.DKGResultHashFromBytes(hash)
 }
 
 func (ec *ethereumChain) Address() common.Address {

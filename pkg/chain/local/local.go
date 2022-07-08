@@ -9,7 +9,7 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -31,7 +31,7 @@ type localGroup struct {
 }
 
 type localChain struct {
-	relayConfig *relaychain.Config
+	relayConfig *beaconchain.Config
 
 	groups []localGroup
 
@@ -74,7 +74,7 @@ func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey, error
 	return c.operatorPrivateKey, &c.operatorPrivateKey.PublicKey, nil
 }
 
-func (c *localChain) GetConfig() *relaychain.Config {
+func (c *localChain) GetConfig() *beaconchain.Config {
 	return c.relayConfig
 }
 
@@ -175,8 +175,8 @@ func (c *localChain) OnGroupRegistered(
 	})
 }
 
-func (c *localChain) ThresholdRelay() relaychain.Interface {
-	return relaychain.Interface(c)
+func (c *localChain) ThresholdRelay() beaconchain.Interface {
+	return beaconchain.Interface(c)
 }
 
 // Connect initializes a local stub implementation of the chain
@@ -213,7 +213,7 @@ func ConnectWithKey(
 	resultPublicationBlockStep := uint64(3)
 
 	return &localChain{
-		relayConfig: &relaychain.Config{
+		relayConfig: &beaconchain.Config{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
 			ResultPublicationBlockStep: resultPublicationBlockStep,

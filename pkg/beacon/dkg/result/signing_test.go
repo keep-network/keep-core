@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
@@ -18,11 +18,11 @@ import (
 func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	groupSize := 10
 
-	dkgResult := &relayChain.DKGResult{
+	dkgResult := &beaconChain.DKGResult{
 		GroupPublicKey: []byte{10},
 	}
 
-	members, relayChains, signings, err := initializeSigningMembers(groupSize)
+	members, beaconChains, signings, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 	for i, member := range members {
 		message, err := member.SignDKGResult(
 			dkgResult,
-			relayChains[i],
+			beaconChains[i],
 			signings[i],
 		)
 		if err != nil {
@@ -68,8 +68,8 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 func TestVerifyDKGResultSignatures(t *testing.T) {
 	groupSize := 10
 
-	dkgResultHash1 := relayChain.DKGResultHash{10}
-	dkgResultHash2 := relayChain.DKGResultHash{20}
+	dkgResultHash1 := beaconChain.DKGResultHash{10}
+	dkgResultHash2 := beaconChain.DKGResultHash{20}
 
 	members, _, signings, err := initializeSigningMembers(groupSize)
 	if err != nil {
@@ -307,7 +307,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 
 func initializeSigningMembers(groupSize int) (
 	[]*SigningMember,
-	[]relayChain.Interface,
+	[]beaconchain.Interface,
 	[]chain.Signing,
 	error,
 ) {
@@ -318,7 +318,7 @@ func initializeSigningMembers(groupSize int) (
 	dkgGroup := group.NewDkgGroup(dishonestThreshold, groupSize)
 
 	members := make([]*SigningMember, groupSize)
-	relayChains := make([]relayChain.Interface, groupSize)
+	beaconChains := make([]beaconchain.Interface, groupSize)
 	signings := make([]chain.Signing, groupSize)
 
 	for i := 0; i < groupSize; i++ {
@@ -342,11 +342,11 @@ func initializeSigningMembers(groupSize int) (
 			operatorPrivateKey,
 		)
 
-		relayChains[i] = chain.ThresholdRelay()
+		beaconChains[i] = chain.ThresholdRelay()
 		signings[i] = chain.Signing()
 	}
 
-	return members, relayChains, signings, nil
+	return members, beaconChains, signings, nil
 }
 
 type mockMembershipValidator struct{}

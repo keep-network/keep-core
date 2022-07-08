@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 )
 
 func TestLocalSubmitRelayEntry(t *testing.T) {

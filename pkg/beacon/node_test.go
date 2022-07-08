@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 )
 
@@ -23,8 +23,8 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		blockCounter: blockCounter,
 	}
 
-	relayChain := chain.ThresholdRelay()
-	chainConfig := &relaychain.Config{
+	beaconChain := chain.ThresholdRelay()
+	chainConfig := &beaconchain.Config{
 		RelayEntryTimeout: uint64(relayEntryTimeout),
 	}
 	startBlockHeight, err := blockCounter.CurrentBlock()
@@ -33,7 +33,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 	}
 
 	go node.MonitorRelayEntry(
-		relayChain,
+		beaconChain,
 		startBlockHeight,
 		chainConfig,
 	)
@@ -81,8 +81,8 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 		blockCounter: blockCounter,
 	}
 
-	relayChain := chain.ThresholdRelay()
-	chainConfig := &relaychain.Config{
+	beaconChain := chain.ThresholdRelay()
+	chainConfig := &beaconchain.Config{
 		RelayEntryTimeout: uint64(relayEntryTimeout),
 	}
 	startBlockHeight, err := blockCounter.CurrentBlock()
@@ -91,7 +91,7 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 	}
 
 	go node.MonitorRelayEntry(
-		relayChain,
+		beaconChain,
 		startBlockHeight,
 		chainConfig,
 	)

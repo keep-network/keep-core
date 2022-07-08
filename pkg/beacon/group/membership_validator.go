@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -30,7 +30,7 @@ type StakersMembershipValidator struct {
 // NewStakersMembershipValidator creates a validator for the provided
 // group selection result.
 func NewStakersMembershipValidator(
-	stakersAddresses []relaychain.StakerAddress,
+	stakersAddresses []beaconchain.StakerAddress,
 	signing chain.Signing,
 ) *StakersMembershipValidator {
 	members := make(map[string][]int)

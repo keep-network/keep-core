@@ -8,7 +8,7 @@ import (
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ipfs/go-log"
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/bls"
@@ -34,7 +34,7 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 func SignAndSubmit(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
-	relayChain relayChain.Interface,
+	beaconChain beaconchain.Interface,
 	previousEntryBytes []byte,
 	honestThreshold int,
 	signer *dkg.ThresholdSigner,
@@ -44,14 +44,14 @@ func SignAndSubmit(
 	defer cancelCtx()
 
 	relayEntrySubmittedChannel := make(chan uint64)
-	subscription := relayChain.OnRelayEntrySubmitted(
+	subscription := beaconChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			relayEntrySubmittedChannel <- event.BlockNumber
 		},
 	)
 	defer subscription.Unsubscribe()
 
-	chainConfig := relayChain.GetConfig()
+	chainConfig := beaconChain.GetConfig()
 
 	relayEntryTimeoutChannel, err := blockCounter.BlockHeightWaiter(
 		startBlockHeight + chainConfig.RelayEntryTimeout,
@@ -137,7 +137,7 @@ func SignAndSubmit(
 	}
 
 	submitter := &relayEntrySubmitter{
-		chain:        relayChain,
+		chain:        beaconChain,
 		blockCounter: blockCounter,
 		index:        signer.MemberID(),
 	}

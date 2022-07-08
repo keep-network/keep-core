@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"reflect"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 )
 
 // StakeMonitor implements `chain.StakeMonitor` interface and works

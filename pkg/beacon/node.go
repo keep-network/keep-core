@@ -6,7 +6,7 @@ import (
 	"fmt"
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -28,7 +28,7 @@ type node struct {
 	// External interactors.
 	netProvider  net.Provider
 	blockCounter chain.BlockCounter
-	chainConfig  *relaychain.Config
+	chainConfig  *beaconchain.Config
 
 	groupRegistry *registry.Groups
 }
@@ -39,7 +39,7 @@ func newNode(
 	operatorPublicKey *operator.PublicKey,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-	chainConfig *relaychain.Config,
+	chainConfig *beaconchain.Config,
 	groupRegistry *registry.Groups,
 ) *node {
 	return &node{
@@ -63,7 +63,7 @@ func (n *node) IsInGroup(groupPublicKey []byte) bool {
 // and JoinDKGIfEligible can block for an extended period of time while it
 // completes the on-chain operation.
 func (n *node) JoinDKGIfEligible(
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	signing chain.Signing,
 	dkgSeed *big.Int,
 	dkgStartBlockNumber uint64,
@@ -73,7 +73,7 @@ func (n *node) JoinDKGIfEligible(
 		dkgSeed,
 	)
 
-	groupMembers, err := relayChain.SelectGroup(dkgSeed)
+	groupMembers, err := beaconChain.SelectGroup(dkgSeed)
 	if err != nil {
 		logger.Errorf(
 			"failed to select group with seed [0x%x]: [%v]",
@@ -149,7 +149,7 @@ func (n *node) JoinDKGIfEligible(
 					membershipValidator,
 					dkgStartBlockNumber,
 					n.blockCounter,
-					relayChain,
+					beaconChain,
 					signing,
 					broadcastChannel,
 				)
@@ -204,10 +204,10 @@ func (n *node) ForwardSignatureShares(groupPublicKeyBytes []byte) {
 // ResumeSigningIfEligible enables a client to rejoin the ongoing signing process
 // after it was crashed or restarted and if it belongs to the signing group.
 func (n *node) ResumeSigningIfEligible(
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	signing chain.Signing,
 ) {
-	isEntryInProgress, err := relayChain.IsEntryInProgress()
+	isEntryInProgress, err := beaconChain.IsEntryInProgress()
 	if err != nil {
 		logger.Errorf(
 			"failed checking if an entry is in progress: [%v]",
@@ -217,7 +217,7 @@ func (n *node) ResumeSigningIfEligible(
 	}
 
 	if isEntryInProgress {
-		previousEntry, err := relayChain.CurrentRequestPreviousEntry()
+		previousEntry, err := beaconChain.CurrentRequestPreviousEntry()
 		if err != nil {
 			logger.Errorf(
 				"failed to get a previous entry for the current request: [%v]",
@@ -225,7 +225,7 @@ func (n *node) ResumeSigningIfEligible(
 			)
 			return
 		}
-		entryStartBlock, err := relayChain.CurrentRequestStartBlock()
+		entryStartBlock, err := beaconChain.CurrentRequestStartBlock()
 		if err != nil {
 			logger.Errorf(
 				"failed to get a start block for the current request: [%v]",
@@ -233,7 +233,7 @@ func (n *node) ResumeSigningIfEligible(
 			)
 			return
 		}
-		groupPublicKey, err := relayChain.CurrentRequestGroupPublicKey()
+		groupPublicKey, err := beaconChain.CurrentRequestGroupPublicKey()
 		if err != nil {
 			logger.Errorf(
 				"failed to get a group public key for the current request: [%v]",
@@ -248,7 +248,7 @@ func (n *node) ResumeSigningIfEligible(
 		)
 		n.GenerateRelayEntry(
 			previousEntry,
-			relayChain,
+			beaconChain,
 			signing,
 			groupPublicKey,
 			entryStartBlock.Uint64(),
@@ -261,9 +261,9 @@ func (n *node) ResumeSigningIfEligible(
 // fulfill its work, then this node notifies the chain about it. In the case of
 // delivering a relay entry by a processing group, this node does nothing.
 func (n *node) MonitorRelayEntry(
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	relayRequestBlockNumber uint64,
-	chainConfig *relaychain.Config,
+	chainConfig *beaconchain.Config,
 ) {
 	logger.Infof("monitoring chain for a new relay entry")
 
@@ -274,7 +274,7 @@ func (n *node) MonitorRelayEntry(
 
 	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
 
-	subscription := relayChain.OnRelayEntrySubmitted(
+	subscription := beaconChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},
@@ -289,7 +289,7 @@ func (n *node) MonitorRelayEntry(
 				"relay entry was not submitted on time, reporting timeout at block [%v]",
 				blockNumber,
 			)
-			err = relayChain.ReportRelayEntryTimeout()
+			err = beaconChain.ReportRelayEntryTimeout()
 			if err != nil {
 				logger.Errorf("could not report a relay entry timeout: [%v]", err)
 			}
@@ -313,7 +313,7 @@ func (n *node) MonitorRelayEntry(
 // and submission is performed in a background goroutine.
 func (n *node) GenerateRelayEntry(
 	previousEntry []byte,
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	signing chain.Signing,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
@@ -332,7 +332,7 @@ func (n *node) GenerateRelayEntry(
 
 	entry.RegisterUnmarshallers(channel)
 
-	groupMembers, err := relayChain.GetGroupMembers(groupPublicKey)
+	groupMembers, err := beaconChain.GetGroupMembers(groupPublicKey)
 	if err != nil {
 		logger.Errorf("could not get group members: [%v]", err)
 		return
@@ -357,7 +357,7 @@ func (n *node) GenerateRelayEntry(
 			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
-				relayChain,
+				beaconChain,
 				previousEntry,
 				n.chainConfig.HonestThreshold,
 				member.Signer,

@@ -1,9 +1,9 @@
 package result
 
 import (
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"sort"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 )
@@ -12,7 +12,7 @@ import (
 // specific DKG result form. It serializes a group public key to bytes and
 // converts disqualified and inactive members lists to one list of misbehaving
 // participants where each byte represents misbehaving member index.
-func convertGjkrResult(gjkrResult *gjkr.Result) *relayChain.DKGResult {
+func convertGjkrResult(gjkrResult *gjkr.Result) *beaconchain.DKGResult {
 	groupPublicKey := make([]byte, 0)
 
 	// We convert the point G2, to compress the point correctly
@@ -52,7 +52,7 @@ func convertGjkrResult(gjkrResult *gjkr.Result) *relayChain.DKGResult {
 		return bytes
 	}
 
-	return &relayChain.DKGResult{
+	return &beaconchain.DKGResult{
 		GroupPublicKey: groupPublicKey,
 		Misbehaved: convertToMisbehaved(
 			gjkrResult.Group.InactiveMemberIDs(),

@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 )
 
@@ -15,12 +15,12 @@ func TestSubmitDKGResult(t *testing.T) {
 	honestThreshold := 3
 	groupSize := 5
 
-	relayChain, _, initialBlock, err := initChainHandle(honestThreshold, groupSize)
+	beaconChain, _, initialBlock, err := initChainHandle(honestThreshold, groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	config := relayChain.GetConfig()
+	config := beaconChain.GetConfig()
 
 	result := &relaychain.DKGResult{
 		GroupPublicKey: []byte{123, 45},
@@ -58,7 +58,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			}
 
 			// Reinitialize chain to reset block counter
-			relayChain, blockCounter, initialBlockHeight, err := initChainHandle(
+			beaconChain, blockCounter, initialBlockHeight, err := initChainHandle(
 				honestThreshold,
 				groupSize,
 			)
@@ -66,7 +66,7 @@ func TestSubmitDKGResult(t *testing.T) {
 				t.Fatalf("chain initialization failed [%v]", err)
 			}
 
-			isSubmitted, err := relayChain.IsGroupRegistered(result.GroupPublicKey)
+			isSubmitted, err := beaconChain.IsGroupRegistered(result.GroupPublicKey)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -78,7 +78,7 @@ func TestSubmitDKGResult(t *testing.T) {
 			err = member.SubmitDKGResult(
 				result,
 				signatures,
-				relayChain,
+				beaconChain,
 				blockCounter,
 				initialBlockHeight,
 			)
@@ -94,7 +94,7 @@ func TestSubmitDKGResult(t *testing.T) {
 					currentBlock,
 				)
 			}
-			isSubmitted, err = relayChain.IsGroupRegistered(result.GroupPublicKey)
+			isSubmitted, err = beaconChain.IsGroupRegistered(result.GroupPublicKey)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -156,13 +156,13 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			relayChain, blockCounter, initialBlock, err :=
+			beaconChain, blockCounter, initialBlock, err :=
 				initChainHandle(honestThreshold, groupSize)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			config := relayChain.GetConfig()
+			config := beaconChain.GetConfig()
 
 			tStep := config.ResultPublicationBlockStep
 
@@ -178,7 +178,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				err := member1.SubmitDKGResult(
 					test.resultToPublish1,
 					signatures,
-					relayChain,
+					beaconChain,
 					blockCounter,
 					initialBlock,
 				)
@@ -194,7 +194,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				err := member2.SubmitDKGResult(
 					test.resultToPublish2,
 					signatures,
-					relayChain,
+					beaconChain,
 					blockCounter,
 					initialBlock,
 				)
@@ -217,7 +217,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 }
 
 func initChainHandle(honestThreshold int, groupSize int) (
-	relaychain.Interface,
+	beaconchain.Interface,
 	chain.BlockCounter,
 	uint64,
 	error,

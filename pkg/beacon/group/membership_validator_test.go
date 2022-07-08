@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 

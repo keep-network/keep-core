@@ -3,7 +3,7 @@ package result
 import (
 	"fmt"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -47,9 +47,9 @@ func NewSubmittingMember(
 //
 // See Phase 14 of the protocol specification.
 func (sm *SubmittingMember) SubmitDKGResult(
-	result *relayChain.DKGResult,
+	result *beaconchain.DKGResult,
 	signatures map[group.MemberIndex][]byte,
-	chainRelay relayChain.Interface,
+	chainRelay beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {

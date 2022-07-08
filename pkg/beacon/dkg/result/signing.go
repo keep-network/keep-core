@@ -5,7 +5,7 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/chain"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 )
 
@@ -24,7 +24,7 @@ type SigningMember struct {
 	membershipValidator group.MembershipValidator
 
 	// Hash of DKG result preferred by the current participant.
-	preferredDKGResultHash relayChain.DKGResultHash
+	preferredDKGResultHash beaconchain.DKGResultHash
 	// Signature over preferredDKGResultHash calculated by the member.
 	selfDKGResultSignature []byte
 }
@@ -47,14 +47,14 @@ func NewSigningMember(
 //
 // See Phase 13 of the protocol specification.
 func (sm *SigningMember) SignDKGResult(
-	dkgResult *relayChain.DKGResult,
-	relayChain relayChain.Interface,
+	dkgResult *beaconchain.DKGResult,
+	beaconChain beaconchain.Interface,
 	signing chain.Signing,
 ) (
 	*DKGResultHashSignatureMessage,
 	error,
 ) {
-	resultHash, err := relayChain.CalculateDKGResultHash(dkgResult)
+	resultHash, err := beaconChain.CalculateDKGResultHash(dkgResult)
 	if err != nil {
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}

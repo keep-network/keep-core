@@ -3,7 +3,7 @@ package result
 import (
 	"fmt"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/beacon/state"
@@ -32,14 +32,14 @@ func Publish(
 	membershipValidator group.MembershipValidator,
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
-	relayChain relayChain.Interface,
+	beaconChain beaconchain.Interface,
 	signing chain.Signing,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
 	initialState := &resultSigningState{
 		channel:                 channel,
-		relayChain:              relayChain,
+		beaconChain:             beaconChain,
 		signing:                 signing,
 		blockCounter:            blockCounter,
 		member:                  NewSigningMember(memberIndex, dkgGroup, membershipValidator),

@@ -1,31 +1,31 @@
 package result
 
 import (
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"reflect"
 	"testing"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
 func TestAcceptValidSignatureHashMessage(t *testing.T) {
 	groupSize := 2
 
-	dkgResult := &relayChain.DKGResult{
+	dkgResult := &beaconchain.DKGResult{
 		GroupPublicKey: []byte("He’s the hero Gotham deserves."),
 	}
 
-	members, relayChains, signings, err := initializeSigningMembers(groupSize)
+	members, beaconChains, signings, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	member, _, _ := members[0], relayChains[0], signings[0]
-	member2, relayChain2, signing2 := members[1], relayChains[1], signings[1]
+	member, _, _ := members[0], beaconChains[0], signings[0]
+	member2, beaconChain2, signing2 := members[1], beaconChains[1], signings[1]
 
 	message2, err := member2.SignDKGResult(
 		dkgResult,
-		relayChain2,
+		beaconChain2,
 		signing2,
 	)
 
@@ -54,21 +54,21 @@ func TestAcceptValidSignatureHashMessage(t *testing.T) {
 func TestDoNotAcceptMessageWithSwappedKey(t *testing.T) {
 	groupSize := 2
 
-	dkgResult := &relayChain.DKGResult{
+	dkgResult := &beaconchain.DKGResult{
 		GroupPublicKey: []byte("But not the one it needs right now."),
 	}
 
-	members, relayChains, signings, err := initializeSigningMembers(groupSize)
+	members, beaconChains, signings, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	member, _, _ := members[0], relayChains[0], signings[0]
-	member2, relayChain2, signing2 := members[1], relayChains[1], signings[1]
+	member, _, _ := members[0], beaconChains[0], signings[0]
+	member2, beaconChain2, signing2 := members[1], beaconChains[1], signings[1]
 
 	message2, err := member2.SignDKGResult(
 		dkgResult,
-		relayChain2,
+		beaconChain2,
 		signing2,
 	)
 

@@ -3,14 +3,14 @@ package entry
 import (
 	"fmt"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 type relayEntrySubmitter struct {
-	chain        relayChain.Interface
+	chain        beaconchain.Interface
 	blockCounter chain.BlockCounter
 
 	index group.MemberIndex

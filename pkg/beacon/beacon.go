@@ -9,7 +9,7 @@ import (
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -24,15 +24,15 @@ var logger = log.Logger("keep-beacon")
 // otherwise enters a blocked loop.
 func Initialize(
 	operatorPublicKey *operator.PublicKey,
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 	signing chain.Signing,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	chainConfig := relayChain.GetConfig()
+	chainConfig := beaconChain.GetConfig()
 
-	groupRegistry := registry.NewGroupRegistry(relayChain, persistence)
+	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := newNode(
@@ -43,11 +43,11 @@ func Initialize(
 		groupRegistry,
 	)
 
-	eventDeduplicator := event.NewDeduplicator(relayChain)
+	eventDeduplicator := event.NewDeduplicator(beaconChain)
 
-	node.ResumeSigningIfEligible(relayChain, signing)
+	node.ResumeSigningIfEligible(beaconChain, signing)
 
-	_ = relayChain.OnRelayEntryRequested(func(request *event.Request) {
+	_ = beaconChain.OnRelayEntryRequested(func(request *event.Request) {
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
@@ -88,7 +88,7 @@ func Initialize(
 
 					node.GenerateRelayEntry(
 						request.PreviousEntry,
-						relayChain,
+						beaconChain,
 						signing,
 						request.GroupPublicKey,
 						request.BlockNumber,
@@ -99,7 +99,7 @@ func Initialize(
 			}
 
 			go node.MonitorRelayEntry(
-				relayChain,
+				beaconChain,
 				request.BlockNumber,
 				chainConfig,
 			)
@@ -110,14 +110,14 @@ func Initialize(
 
 		confirmCurrentRelayRequest(
 			request.BlockNumber,
-			relayChain,
+			beaconChain,
 			onConfirmed,
 			currentRelayRequestConfirmationRetries,
 			currentRelayRequestConfirmationDelay,
 		)
 	})
 
-	_ = relayChain.OnDKGStarted(func(event *event.DKGStarted) {
+	_ = beaconChain.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
 			if ok := eventDeduplicator.NotifyDKGStarted(
 				event.Seed,
@@ -138,7 +138,7 @@ func Initialize(
 			)
 
 			node.JoinDKGIfEligible(
-				relayChain,
+				beaconChain,
 				signing,
 				event.Seed,
 				event.BlockNumber,
@@ -146,7 +146,7 @@ func Initialize(
 		}()
 	})
 
-	_ = relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+	_ = beaconChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		logger.Infof(
 			"new group with public key [0x%x] registered on-chain at block [%v]",
 			registration.GroupPublicKey,
@@ -175,7 +175,7 @@ func Initialize(
 // not have their state in sync yet.
 func confirmCurrentRelayRequest(
 	expectedRequestStartBlock uint64,
-	chain relaychain.RelayEntryInterface,
+	chain beaconchain.RelayEntryInterface,
 	onConfirmed func(),
 	maxRetries int,
 	delay time.Duration,

@@ -7,7 +7,7 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
@@ -27,7 +27,7 @@ func ExecuteDKG(
 	membershipValidator group.MembershipValidator,
 	startBlockHeight uint64,
 	blockCounter chain.BlockCounter,
-	relayChain relaychain.Interface,
+	relayChain beaconchain.Interface,
 	signing chain.Signing,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
@@ -118,7 +118,7 @@ func decideMemberFate(
 	gjkrResult *gjkr.Result,
 	dkgResultChannel chan *event.DKGResultSubmission,
 	startPublicationBlockHeight uint64,
-	relayChain relaychain.Interface,
+	relayChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 ) error {
 	dkgResultEvent, err := waitForDkgResultEvent(
@@ -163,7 +163,7 @@ func decideMemberFate(
 func waitForDkgResultEvent(
 	dkgResultChannel chan *event.DKGResultSubmission,
 	startPublicationBlockHeight uint64,
-	relayChain relaychain.Interface,
+	relayChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 ) (*event.DKGResultSubmission, error) {
 	config := relayChain.GetConfig()

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"sync"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -20,7 +20,7 @@ type Groups struct {
 	// key is group public key in uncompressed form
 	myGroups map[string][]*Membership
 
-	relayChain relaychain.GroupRegistrationInterface
+	beaconChain beaconchain.GroupRegistrationInterface
 
 	storage storage
 }
@@ -33,14 +33,14 @@ type Membership struct {
 
 // NewGroupRegistry returns an empty GroupRegistry.
 func NewGroupRegistry(
-	relayChain relaychain.GroupRegistrationInterface,
+	beaconChain beaconchain.GroupRegistrationInterface,
 	persistence persistence.Handle,
 ) *Groups {
 	return &Groups{
-		myGroups:   make(map[string][]*Membership),
-		relayChain: relayChain,
-		storage:    newStorage(persistence),
-		mutex:      sync.Mutex{},
+		myGroups:    make(map[string][]*Membership),
+		beaconChain: beaconChain,
+		storage:     newStorage(persistence),
+		mutex:       sync.Mutex{},
 	}
 }
 
@@ -103,7 +103,7 @@ func (g *Groups) UnregisterStaleGroups(latestGroupPublicKey []byte) {
 		// recent state of the chain which might lead to loggin a false positive
 		// error: "Group does not exist".
 		if !bytes.Equal(latestGroupPublicKey, publicKeyBytes) {
-			isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
+			isStaleGroup, err := g.beaconChain.IsStaleGroup(publicKeyBytes)
 			if err != nil {
 				logger.Errorf(
 					"failed to check if stale for group with public key [%s]: [%v]",

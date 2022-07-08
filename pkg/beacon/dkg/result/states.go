@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/beacon/state"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -32,13 +32,13 @@ func PrePublicationBlocks() uint64 {
 // State is part of phase 13 of the protocol.
 type resultSigningState struct {
 	channel      net.BroadcastChannel
-	relayChain   relayChain.Interface
+	beaconChain  beaconchain.Interface
 	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
-	result *relayChain.DKGResult
+	result *beaconchain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
 
@@ -54,7 +54,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.relayChain, rss.signing)
+	message, err := rss.member.SignDKGResult(rss.result, rss.beaconChain, rss.signing)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func (rss *resultSigningState) Next() signingState {
 	// set up the verification state, phase 13 part 2
 	return &signaturesVerificationState{
 		channel:           rss.channel,
-		relayChain:        rss.relayChain,
+		beaconChain:       rss.beaconChain,
 		signing:           rss.signing,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
@@ -126,13 +126,13 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 // State is part of phase 13 of the protocol.
 type signaturesVerificationState struct {
 	channel      net.BroadcastChannel
-	relayChain   relayChain.Interface
+	beaconChain  beaconchain.Interface
 	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
 
-	result *relayChain.DKGResult
+	result *beaconchain.DKGResult
 
 	signatureMessages []*DKGResultHashSignatureMessage
 	validSignatures   map[group.MemberIndex][]byte
@@ -168,7 +168,7 @@ func (svs *signaturesVerificationState) Receive(msg net.Message) error {
 func (svs *signaturesVerificationState) Next() signingState {
 	return &resultSubmissionState{
 		channel:      svs.channel,
-		relayChain:   svs.relayChain,
+		beaconChain:  svs.beaconChain,
 		blockCounter: svs.blockCounter,
 		member:       NewSubmittingMember(svs.member.index),
 		result:       svs.result,
@@ -190,12 +190,12 @@ func (svs *signaturesVerificationState) MemberIndex() group.MemberIndex {
 // State covers, the final phase, phase 14 of the protocol.
 type resultSubmissionState struct {
 	channel      net.BroadcastChannel
-	relayChain   relayChain.Interface
+	beaconChain  beaconchain.Interface
 	blockCounter chain.BlockCounter
 
 	member *SubmittingMember
 
-	result     *relayChain.DKGResult
+	result     *beaconchain.DKGResult
 	signatures map[group.MemberIndex][]byte
 
 	submissionStartBlockHeight uint64
@@ -217,7 +217,7 @@ func (rss *resultSubmissionState) Initiate(ctx context.Context) error {
 	return rss.member.SubmitDKGResult(
 		rss.result,
 		rss.signatures,
-		rss.relayChain,
+		rss.beaconChain,
 		rss.blockCounter,
 		rss.submissionStartBlockHeight,
 	)

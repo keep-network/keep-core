@@ -12,7 +12,7 @@ import (
 
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -40,7 +40,7 @@ type ethereumChain struct {
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
 	blockCounter                     *ethlike.BlockCounter
-	chainConfig                      *relaychain.Config
+	chainConfig                      *beaconchain.Config
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -232,7 +232,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	return ec.blockCounter, nil
 }
 
-func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
+func fetchChainConfig(ec *ethereumChain) (*beaconchain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
 	// TODO: Fetch from RandomBeacon v2 contract.
@@ -241,7 +241,7 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	resultPublicationBlockStep := 6
 	relayEntryTimeout := groupSize * resultPublicationBlockStep
 
-	return &relaychain.Config{
+	return &beaconchain.Config{
 		GroupSize:                  groupSize,
 		HonestThreshold:            honestThreshold,
 		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	relayChain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 )
@@ -18,7 +17,7 @@ func TestConvertResult(t *testing.T) {
 		disqualifiedMemberIDs []group.MemberIndex
 		inactiveMemberIDs     []group.MemberIndex
 		gjkrResult            *gjkr.Result
-		expectedResult        *relayChain.DKGResult
+		expectedResult        *beaconChain.DKGResult
 	}{
 		"group public key not provided, DQ and IA empty": {
 			disqualifiedMemberIDs: []group.MemberIndex{},
@@ -27,7 +26,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: nil,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &relayChain.DKGResult{
+			expectedResult: &beaconChain.DKGResult{
 				GroupPublicKey: []byte{},
 				Misbehaved:     []byte{},
 			},
@@ -39,7 +38,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &relayChain.DKGResult{
+			expectedResult: &beaconChain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{},
 			},
@@ -51,7 +50,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &relayChain.DKGResult{
+			expectedResult: &beaconChain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{0x01, 0x03, 0x04, 0x05, 0x32},
 			},
@@ -63,7 +62,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &relayChain.DKGResult{
+			expectedResult: &beaconChain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{0x05},
 			},
@@ -75,7 +74,7 @@ func TestConvertResult(t *testing.T) {
 				GroupPublicKey: publicKey,
 				Group:          group.NewDkgGroup(32, 64),
 			},
-			expectedResult: &relayChain.DKGResult{
+			expectedResult: &beaconChain.DKGResult{
 				GroupPublicKey: marshalledPublicKey,
 				Misbehaved:     []byte{0x01, 0x05, 0x3C},
 			},

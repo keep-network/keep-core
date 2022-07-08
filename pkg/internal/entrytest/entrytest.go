@@ -7,7 +7,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"math/big"
 	"sync"
@@ -95,7 +95,7 @@ func RunTest(
 func executeSigning(
 	signers []*dkg.ThresholdSigner,
 	threshold int,
-	relayChain relaychain.Interface,
+	relayChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 	lastRelayEntryGetter func() []byte,
 	network interception.Network,

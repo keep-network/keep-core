@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/dkg/result"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -111,7 +111,7 @@ func RunTest(
 
 func executeDKG(
 	seed *big.Int,
-	relayChain relaychain.Interface,
+	relayChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 	signing chain.Signing,
 	lastDKGResultGetter func() (
