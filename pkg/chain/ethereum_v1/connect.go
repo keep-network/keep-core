@@ -87,12 +87,12 @@ func connectWithClient(
 	}
 
 	ec := &ethereumChain{
-		config:                      config,
-		client:                      addClientWrappers(config, client),
-		clientRPC:                   clientRPC,
-		clientWS:                    clientWS,
-		chainID:                     chainID,
-		transactionMutex:            &sync.Mutex{},
+		config:           config,
+		client:           addClientWrappers(config, client),
+		clientRPC:        clientRPC,
+		clientWS:         clientWS,
+		chainID:          chainID,
+		transactionMutex: &sync.Mutex{},
 	}
 
 	blockCounter, err := ethutil.NewBlockCounter(ec.client)
