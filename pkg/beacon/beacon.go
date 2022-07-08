@@ -2,6 +2,7 @@ package beacon
 
 import (
 	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -12,7 +13,6 @@ import (
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/registry"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
@@ -25,12 +25,17 @@ var logger = log.Logger("keep-beacon")
 func Initialize(
 	operatorPublicKey *operator.PublicKey,
 	beaconChain beaconchain.Interface,
-	blockCounter chain.BlockCounter,
-	signing chain.Signing,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
 	chainConfig := beaconChain.GetConfig()
+
+	blockCounter, err := beaconChain.BlockCounter()
+	if err != nil {
+		return fmt.Errorf("failed to get block counter instance: [%v]", err)
+	}
+
+	signing := beaconChain.Signing()
 
 	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()

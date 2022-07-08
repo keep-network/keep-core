@@ -156,8 +156,6 @@ func Start(c *cli.Context) error {
 	err = beacon.Initialize(
 		operatorPublicKey,
 		chainProvider.ThresholdRelay(),
-		blockCounter,
-		chainProvider.Signing(),
 		netProvider,
 		persistence,
 	)
