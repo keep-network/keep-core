@@ -102,10 +102,16 @@ func checkOperatorStatus(chain Chain) error {
 
 	if !isOperatorInPool {
 		logger.Infof("joining the sortition pool")
-		chain.JoinSortitionPool()
+		err := chain.JoinSortitionPool()
+		if err != nil {
+			logger.Errorf("could not join the sortition pool: [%v]", err)
+		}
 	} else {
 		logger.Infof("updating operator status in the sortition pool")
-		chain.UpdateOperatorStatus()
+		err := chain.UpdateOperatorStatus()
+		if err != nil {
+			logger.Errorf("could not update the sortition pool: [%v]", err)
+		}
 	}
 
 	return nil
