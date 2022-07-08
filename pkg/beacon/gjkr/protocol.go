@@ -497,8 +497,8 @@ func (cvm *CommitmentsVerifyingMember) isValidPeerSharesMessage(
 // What, using elliptic curve, is the same as:
 // `G * s_ji + H * t_ji == Σ (C_j[k] * (i^k))` for `k` in `[0..T]`
 func (cm *CommittingMember) areSharesValidAgainstCommitments(
-	shareS, shareT *big.Int,    // s_ji, t_ji
-	commitments []*bn256.G1,    // C_j
+	shareS, shareT *big.Int, // s_ji, t_ji
+	commitments []*bn256.G1, // C_j
 	memberID group.MemberIndex, // i
 ) bool {
 	if len(commitments) == 0 {
@@ -1312,7 +1312,7 @@ func (rm *ReconstructingMember) recoverMisbehavedShares(
 	// other members `k` who revealed the ephemeral key.
 	addShare := func(
 		misbehavedMemberID, revealingMemberID group.MemberIndex, // m, k
-		shareS *big.Int,                                         // s_mk
+		shareS *big.Int, // s_mk
 	) {
 		// If a `misbehavedShares` entry already exists in the slice for given
 		// misbehaved member add the share.
