@@ -181,12 +181,43 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      # TODO: Configure tenderly
+      - name: Get upstream packages versions
+        uses: keep-network/ci/actions/upstream-builds-query@v1
+        id: upstream-builds-query
+        with:
+          upstream-builds: ${{ github.event.inputs.upstream_builds }}
+          query: |
+            solidity-contracts-version = github.com/threshold-network/solidity-contracts#version
+            random-beacon-version = github.com/keep-network/keep-core/solidity/random-beacon#version
 
-      - name: Deploy contracts
+      - name: Resolve latest contracts
+        run: |
+          yarn upgrade \
+            @threshold-network/solidity-contracts@${{ steps.upstream-builds-query.outputs.solidity-contracts-version }} \
+            @keep-network/random-beacon@${{ steps.upstream-builds-query.outputs.random-beacon-version }} \
+            @keep-network/sortition-pools
+
+      - name: Configure tenderly
         env:
-          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME_HTTP }}
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
+        run: ./config_tenderly.sh
+
+      # Ultimately, we want to get rid of steps deploying on Ropsten (as it will
+      # be shut down in Q4 2022) and switch to deployment on Goerli. We're
+      # leaving both deployment options for the transition period.
+
+      - name: Deploy contracts on Ropsten
+        if: github.event.inputs.environment == 'ropsten'
+        env:
+          CHAIN_API_URL: ${{ secrets.ROPSTEN_ETH_HOSTNAME_HTTP }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.ROPSTEN_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: yarn deploy --network ${{ github.event.inputs.environment }}
+      
+      - name: Deploy contracts on Goerli
+        if: github.event.inputs.environment == 'goerli'
+        env:
+          CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: yarn deploy --network ${{ github.event.inputs.environment }}
 
       - name: Bump up package version
@@ -201,6 +232,69 @@ jobs:
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }}
+        # TODO: remove `--dry-run` before merge to main
+        run: npm publish --access=public --tag ${{ github.event.inputs.environment }} --network=${{ github.event.inputs.environment }} --dry-run
 
-      # TODO: Notify CI about completion of the workflow
+      # TODO: restore commented out `uses` config before merge to `main``
+      - name: Notify CI about completion of the workflow
+        # uses: keep-network/ci/actions/notify-workflow-completed@v1
+        uses: keep-network/ci/actions/notify-workflow-completed@ci-goerli
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-core/solidity/ecdsa"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          upstream_ref: ${{ github.event.inputs.upstream_ref }}
+          version: ${{ steps.npm-version-bump.outputs.version }}
+
+      - name: Upload files needed for etherscan verification
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts for etherscan verifcation
+          path: |
+            ./solidity/ecdsa/deployments
+            ./solidity/ecdsa/package.json
+            ./solidity/ecdsa/yarn.lock
+
+  contracts-etherscan-verification:
+    needs: [contracts-deployment-testnet]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/ecdsa
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download files needed for etherscan verification
+        uses: actions/download-artifact@v2
+        with:
+          name: Artifacts for etherscan verifcation
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "14.x"
+          cache: "yarn"
+          cache-dependency-path: solidity/ecdsa/yarn.lock
+
+      - name: Install needed dependencies
+        run: yarn install --frozen-lockfile
+
+      # If we don't remove the `keep-core` contracts from `node-modules`, the
+      # `etherscan-verify` plugins tries to verify them, which is not desired.
+      - name: Prepare for verification on Etherscan
+        run: |
+          rm -rf ./node_modules/@keep-network/keep-core
+          rm -rf ./node_modules/@keep-network/random-beacon
+          rm -rf ./node_modules/@keep-network/sortition-pools
+          rm -rf ./node_modules/@threshold-network/solidity-contracts
+          rm -rf ./external/npm
+
+      - name: Verify contracts on Etherscan
+        env:
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          CHAIN_API_URL: ${{ secrets.ROPSTEN_ETH_HOSTNAME_HTTP }}
+        run: |
+          yarn run hardhat --network ${{ github.event.inputs.environment }} \
+            etherscan-verify --license GPL-3.0 --force-license

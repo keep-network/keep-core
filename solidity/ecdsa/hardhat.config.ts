@@ -3,6 +3,7 @@ import "@keep-network/hardhat-local-networks-config"
 import "@nomiclabs/hardhat-waffle"
 import "@typechain/hardhat"
 import "hardhat-deploy"
+import "@nomiclabs/hardhat-etherscan"
 import "@tenderly/hardhat-tenderly"
 import "hardhat-contract-sizer"
 import "hardhat-dependency-compiler"
@@ -115,6 +116,9 @@ const config: HardhatUserConfig = {
   tenderly: {
     username: "thesis",
     project: "",
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   namedAccounts: {
     deployer: {
