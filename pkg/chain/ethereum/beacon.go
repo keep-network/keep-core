@@ -210,6 +210,7 @@ func (bc *BeaconChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 	seedBytes := [32]byte{}
 	seed.FillBytes(seedBytes[:])
 
+	// TODO: Replace with a call to the RandomBeacon.selectGroup function.
 	operatorsIDs, err := bc.sortitionPool.SelectGroup(groupSize, seedBytes)
 	if err != nil {
 		return nil, fmt.Errorf(
