@@ -52,7 +52,7 @@ else
 	jq -jr .address ${artifacts_dir}/$*.json > _address/$*
 endif
 
-contract/%.go cmd/%.go: abi/%.abi abi/%.go _address/%
+contract/%.go cmd/%.go: abi/%.abi abi/%.go _address/% ${artifacts_dir}/%.json
 	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/$*.go cmd/$*.go
 
 # Don't remove intermediate files that got generated.
