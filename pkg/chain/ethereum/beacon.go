@@ -78,7 +78,7 @@ func newBeaconChain(
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to SortitionPool contract: [%v]",
+			"failed to attach to BeaconSortitionPool contract: [%v]",
 			err,
 		)
 	}
