@@ -15,7 +15,7 @@ import (
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/tbtc-v2/gen/contract"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/contract"
 
 	"github.com/urfave/cli"
 )

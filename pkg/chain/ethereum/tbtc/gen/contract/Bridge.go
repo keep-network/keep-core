@@ -23,7 +23,7 @@ import (
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain/tbtc-v2/gen/abi"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/abi"
 )
 
 // Create a package-level logger for this contract. The logger exists at
@@ -2714,6 +2714,154 @@ func (b *Bridge) RevealDepositGasEstimate(
 }
 
 // Transaction submission.
+func (b *Bridge) SetSpvMaintainerStatus(
+	arg_spvMaintainer common.Address,
+	arg_isTrusted bool,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	bLogger.Debug(
+		"submitting transaction setSpvMaintainerStatus",
+		" params: ",
+		fmt.Sprint(
+			arg_spvMaintainer,
+			arg_isTrusted,
+		),
+	)
+
+	b.transactionMutex.Lock()
+	defer b.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *b.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := b.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := b.contract.SetSpvMaintainerStatus(
+		transactorOptions,
+		arg_spvMaintainer,
+		arg_isTrusted,
+	)
+	if err != nil {
+		return transaction, b.errorResolver.ResolveError(
+			err,
+			b.transactorOptions.From,
+			nil,
+			"setSpvMaintainerStatus",
+			arg_spvMaintainer,
+			arg_isTrusted,
+		)
+	}
+
+	bLogger.Infof(
+		"submitted transaction setSpvMaintainerStatus with id: [%s] and nonce [%v]",
+		transaction.Hash(),
+		transaction.Nonce(),
+	)
+
+	go b.miningWaiter.ForceMining(
+		transaction,
+		transactorOptions,
+		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
+			// If original transactor options has a non-zero gas limit, that
+			// means the client code set it on their own. In that case, we
+			// should rewrite the gas limit from the original transaction
+			// for each resubmission. If the gas limit is not set by the client
+			// code, let the the submitter re-estimate the gas limit on each
+			// resubmission.
+			if transactorOptions.GasLimit != 0 {
+				newTransactorOptions.GasLimit = transactorOptions.GasLimit
+			}
+
+			transaction, err := b.contract.SetSpvMaintainerStatus(
+				newTransactorOptions,
+				arg_spvMaintainer,
+				arg_isTrusted,
+			)
+			if err != nil {
+				return nil, b.errorResolver.ResolveError(
+					err,
+					b.transactorOptions.From,
+					nil,
+					"setSpvMaintainerStatus",
+					arg_spvMaintainer,
+					arg_isTrusted,
+				)
+			}
+
+			bLogger.Infof(
+				"submitted transaction setSpvMaintainerStatus with id: [%s] and nonce [%v]",
+				transaction.Hash(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	b.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (b *Bridge) CallSetSpvMaintainerStatus(
+	arg_spvMaintainer common.Address,
+	arg_isTrusted bool,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		b.transactorOptions.From,
+		blockNumber, nil,
+		b.contractABI,
+		b.caller,
+		b.errorResolver,
+		b.contractAddress,
+		"setSpvMaintainerStatus",
+		&result,
+		arg_spvMaintainer,
+		arg_isTrusted,
+	)
+
+	return err
+}
+
+func (b *Bridge) SetSpvMaintainerStatusGasEstimate(
+	arg_spvMaintainer common.Address,
+	arg_isTrusted bool,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		b.callerOptions.From,
+		b.contractAddress,
+		"setSpvMaintainerStatus",
+		b.contractABI,
+		b.transactor,
+		arg_spvMaintainer,
+		arg_isTrusted,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (b *Bridge) SetVaultStatus(
 	arg_vault common.Address,
 	arg_isTrusted bool,
@@ -4556,6 +4704,7 @@ func (b *Bridge) UpdateRedemptionParameters(
 	arg_redemptionDustThreshold uint64,
 	arg_redemptionTreasuryFeeDivisor uint64,
 	arg_redemptionTxMaxFee uint64,
+	arg_redemptionTxMaxTotalFee uint64,
 	arg_redemptionTimeout uint32,
 	arg_redemptionTimeoutSlashingAmount *big.Int,
 	arg_redemptionTimeoutNotifierRewardMultiplier uint32,
@@ -4569,6 +4718,7 @@ func (b *Bridge) UpdateRedemptionParameters(
 			arg_redemptionDustThreshold,
 			arg_redemptionTreasuryFeeDivisor,
 			arg_redemptionTxMaxFee,
+			arg_redemptionTxMaxTotalFee,
 			arg_redemptionTimeout,
 			arg_redemptionTimeoutSlashingAmount,
 			arg_redemptionTimeoutNotifierRewardMultiplier,
@@ -4602,6 +4752,7 @@ func (b *Bridge) UpdateRedemptionParameters(
 		arg_redemptionDustThreshold,
 		arg_redemptionTreasuryFeeDivisor,
 		arg_redemptionTxMaxFee,
+		arg_redemptionTxMaxTotalFee,
 		arg_redemptionTimeout,
 		arg_redemptionTimeoutSlashingAmount,
 		arg_redemptionTimeoutNotifierRewardMultiplier,
@@ -4615,6 +4766,7 @@ func (b *Bridge) UpdateRedemptionParameters(
 			arg_redemptionDustThreshold,
 			arg_redemptionTreasuryFeeDivisor,
 			arg_redemptionTxMaxFee,
+			arg_redemptionTxMaxTotalFee,
 			arg_redemptionTimeout,
 			arg_redemptionTimeoutSlashingAmount,
 			arg_redemptionTimeoutNotifierRewardMultiplier,
@@ -4646,6 +4798,7 @@ func (b *Bridge) UpdateRedemptionParameters(
 				arg_redemptionDustThreshold,
 				arg_redemptionTreasuryFeeDivisor,
 				arg_redemptionTxMaxFee,
+				arg_redemptionTxMaxTotalFee,
 				arg_redemptionTimeout,
 				arg_redemptionTimeoutSlashingAmount,
 				arg_redemptionTimeoutNotifierRewardMultiplier,
@@ -4659,6 +4812,7 @@ func (b *Bridge) UpdateRedemptionParameters(
 					arg_redemptionDustThreshold,
 					arg_redemptionTreasuryFeeDivisor,
 					arg_redemptionTxMaxFee,
+					arg_redemptionTxMaxTotalFee,
 					arg_redemptionTimeout,
 					arg_redemptionTimeoutSlashingAmount,
 					arg_redemptionTimeoutNotifierRewardMultiplier,
@@ -4685,6 +4839,7 @@ func (b *Bridge) CallUpdateRedemptionParameters(
 	arg_redemptionDustThreshold uint64,
 	arg_redemptionTreasuryFeeDivisor uint64,
 	arg_redemptionTxMaxFee uint64,
+	arg_redemptionTxMaxTotalFee uint64,
 	arg_redemptionTimeout uint32,
 	arg_redemptionTimeoutSlashingAmount *big.Int,
 	arg_redemptionTimeoutNotifierRewardMultiplier uint32,
@@ -4704,6 +4859,7 @@ func (b *Bridge) CallUpdateRedemptionParameters(
 		arg_redemptionDustThreshold,
 		arg_redemptionTreasuryFeeDivisor,
 		arg_redemptionTxMaxFee,
+		arg_redemptionTxMaxTotalFee,
 		arg_redemptionTimeout,
 		arg_redemptionTimeoutSlashingAmount,
 		arg_redemptionTimeoutNotifierRewardMultiplier,
@@ -4716,6 +4872,7 @@ func (b *Bridge) UpdateRedemptionParametersGasEstimate(
 	arg_redemptionDustThreshold uint64,
 	arg_redemptionTreasuryFeeDivisor uint64,
 	arg_redemptionTxMaxFee uint64,
+	arg_redemptionTxMaxTotalFee uint64,
 	arg_redemptionTimeout uint32,
 	arg_redemptionTimeoutSlashingAmount *big.Int,
 	arg_redemptionTimeoutNotifierRewardMultiplier uint32,
@@ -4731,6 +4888,7 @@ func (b *Bridge) UpdateRedemptionParametersGasEstimate(
 		arg_redemptionDustThreshold,
 		arg_redemptionTreasuryFeeDivisor,
 		arg_redemptionTxMaxFee,
+		arg_redemptionTxMaxTotalFee,
 		arg_redemptionTimeout,
 		arg_redemptionTimeoutSlashingAmount,
 		arg_redemptionTimeoutNotifierRewardMultiplier,
@@ -5449,6 +5607,7 @@ type redemptionParameters struct {
 	RedemptionDustThreshold                   uint64
 	RedemptionTreasuryFeeDivisor              uint64
 	RedemptionTxMaxFee                        uint64
+	RedemptionTxMaxTotalFee                   uint64
 	RedemptionTimeout                         uint32
 	RedemptionTimeoutSlashingAmount           *big.Int
 	RedemptionTimeoutNotifierRewardMultiplier uint32
@@ -9370,6 +9529,7 @@ type bridgeRedemptionParametersUpdatedFunc func(
 	RedemptionDustThreshold uint64,
 	RedemptionTreasuryFeeDivisor uint64,
 	RedemptionTxMaxFee uint64,
+	RedemptionTxMaxTotalFee uint64,
 	RedemptionTimeout uint32,
 	RedemptionTimeoutSlashingAmount *big.Int,
 	RedemptionTimeoutNotifierRewardMultiplier uint32,
@@ -9392,6 +9552,7 @@ func (rpus *BRedemptionParametersUpdatedSubscription) OnEvent(
 					event.RedemptionDustThreshold,
 					event.RedemptionTreasuryFeeDivisor,
 					event.RedemptionTxMaxFee,
+					event.RedemptionTxMaxTotalFee,
 					event.RedemptionTimeout,
 					event.RedemptionTimeoutSlashingAmount,
 					event.RedemptionTimeoutNotifierRewardMultiplier,
@@ -10109,6 +10270,196 @@ func (b *Bridge) PastRedemptionsCompletedEvents(
 	}
 
 	events := make([]*abi.BridgeRedemptionsCompleted, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (b *Bridge) SpvMaintainerStatusUpdatedEvent(
+	opts *ethlike.SubscribeOpts,
+	spvMaintainerFilter []common.Address,
+) *BSpvMaintainerStatusUpdatedSubscription {
+	if opts == nil {
+		opts = new(ethlike.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &BSpvMaintainerStatusUpdatedSubscription{
+		b,
+		opts,
+		spvMaintainerFilter,
+	}
+}
+
+type BSpvMaintainerStatusUpdatedSubscription struct {
+	contract            *Bridge
+	opts                *ethlike.SubscribeOpts
+	spvMaintainerFilter []common.Address
+}
+
+type bridgeSpvMaintainerStatusUpdatedFunc func(
+	SpvMaintainer common.Address,
+	IsTrusted bool,
+	blockNumber uint64,
+)
+
+func (smsus *BSpvMaintainerStatusUpdatedSubscription) OnEvent(
+	handler bridgeSpvMaintainerStatusUpdatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.BridgeSpvMaintainerStatusUpdated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.SpvMaintainer,
+					event.IsTrusted,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := smsus.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (smsus *BSpvMaintainerStatusUpdatedSubscription) Pipe(
+	sink chan *abi.BridgeSpvMaintainerStatusUpdated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(smsus.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := smsus.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - smsus.opts.PastBlocks
+
+				bLogger.Infof(
+					"subscription monitoring fetching past SpvMaintainerStatusUpdated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := smsus.contract.PastSpvMaintainerStatusUpdatedEvents(
+					fromBlock,
+					nil,
+					smsus.spvMaintainerFilter,
+				)
+				if err != nil {
+					bLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				bLogger.Infof(
+					"subscription monitoring fetched [%v] past SpvMaintainerStatusUpdated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := smsus.contract.watchSpvMaintainerStatusUpdated(
+		sink,
+		smsus.spvMaintainerFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (b *Bridge) watchSpvMaintainerStatusUpdated(
+	sink chan *abi.BridgeSpvMaintainerStatusUpdated,
+	spvMaintainerFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return b.contract.WatchSpvMaintainerStatusUpdated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			spvMaintainerFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		bLogger.Errorf(
+			"subscription to event SpvMaintainerStatusUpdated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"host chain connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		bLogger.Errorf(
+			"subscription to event SpvMaintainerStatusUpdated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
+		subscribeFn,
+		chainutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (b *Bridge) PastSpvMaintainerStatusUpdatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	spvMaintainerFilter []common.Address,
+) ([]*abi.BridgeSpvMaintainerStatusUpdated, error) {
+	iterator, err := b.contract.FilterSpvMaintainerStatusUpdated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		spvMaintainerFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past SpvMaintainerStatusUpdated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.BridgeSpvMaintainerStatusUpdated, 0)
 
 	for iterator.Next() {
 		event := iterator.Event

@@ -15,14 +15,14 @@ import (
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/ecdsa/gen/contract"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
 	"github.com/urfave/cli"
 )
 
-var WalletRegistryCommand cli.Command
+var RandomBeaconCommand cli.Command
 
-var walletRegistryDescription = `The wallet-registry command allows calling the WalletRegistry contract on an
+var randomBeaconDescription = `The random-beacon command allows calling the RandomBeacon contract on an
 	ETH-like network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
@@ -47,301 +47,315 @@ var walletRegistryDescription = `The wallet-registry command allows calling the 
 
 func init() {
 	AvailableCommands = append(AvailableCommands, cli.Command{
-		Name:        "wallet-registry",
-		Usage:       `Provides access to the WalletRegistry contract.`,
-		Description: walletRegistryDescription,
+		Name:        "random-beacon",
+		Usage:       `Provides access to the RandomBeacon contract.`,
+		Description: randomBeaconDescription,
 		Subcommands: []cli.Command{{
 			Name:      "authorization-parameters",
-			Usage:     "Calls the view method authorizationParameters on the WalletRegistry contract.",
+			Usage:     "Calls the view method authorizationParameters on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrAuthorizationParameters,
+			Action:    rbAuthorizationParameters,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "available-rewards",
-			Usage:     "Calls the view method availableRewards on the WalletRegistry contract.",
-			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    wrAvailableRewards,
+			Name:      "authorized-requesters",
+			Usage:     "Calls the view method authorizedRequesters on the RandomBeacon contract.",
+			ArgsUsage: "[arg0] ",
+			Action:    rbAuthorizedRequesters,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "dkg-parameters",
-			Usage:     "Calls the view method dkgParameters on the WalletRegistry contract.",
-			ArgsUsage: "",
-			Action:    wrDkgParameters,
-			Before:    cmd.ArgCountChecker(0),
+			Name:      "available-rewards",
+			Usage:     "Calls the view method availableRewards on the RandomBeacon contract.",
+			ArgsUsage: "[arg_stakingProvider] ",
+			Action:    rbAvailableRewards,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "eligible-stake",
-			Usage:     "Calls the view method eligibleStake on the WalletRegistry contract.",
+			Usage:     "Calls the view method eligibleStake on the RandomBeacon contract.",
 			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    wrEligibleStake,
+			Action:    rbEligibleStake,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "gas-parameters",
-			Usage:     "Calls the view method gasParameters on the WalletRegistry contract.",
+			Usage:     "Calls the view method gasParameters on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrGasParameters,
+			Action:    rbGasParameters,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-wallet-creation-state",
-			Usage:     "Calls the view method getWalletCreationState on the WalletRegistry contract.",
+			Name:      "genesis-seed",
+			Usage:     "Calls the view method genesisSeed on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrGetWalletCreationState,
+			Action:    rbGenesisSeed,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-group0",
+			Usage:     "Calls the view method getGroup0 on the RandomBeacon contract.",
+			ArgsUsage: "[arg_groupPubKey] ",
+			Action:    rbGetGroup0,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-group-creation-state",
+			Usage:     "Calls the view method getGroupCreationState on the RandomBeacon contract.",
+			ArgsUsage: "",
+			Action:    rbGetGroupCreationState,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-groups-registry",
+			Usage:     "Calls the view method getGroupsRegistry on the RandomBeacon contract.",
+			ArgsUsage: "",
+			Action:    rbGetGroupsRegistry,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "governance",
-			Usage:     "Calls the view method governance on the WalletRegistry contract.",
+			Usage:     "Calls the view method governance on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrGovernance,
+			Action:    rbGovernance,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "group-creation-parameters",
+			Usage:     "Calls the view method groupCreationParameters on the RandomBeacon contract.",
+			ArgsUsage: "",
+			Action:    rbGroupCreationParameters,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "has-dkg-timed-out",
-			Usage:     "Calls the view method hasDkgTimedOut on the WalletRegistry contract.",
+			Usage:     "Calls the view method hasDkgTimedOut on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrHasDkgTimedOut,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "has-seed-timed-out",
-			Usage:     "Calls the view method hasSeedTimedOut on the WalletRegistry contract.",
-			ArgsUsage: "",
-			Action:    wrHasSeedTimedOut,
+			Action:    rbHasDkgTimedOut,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-operator-in-pool",
-			Usage:     "Calls the view method isOperatorInPool on the WalletRegistry contract.",
+			Usage:     "Calls the view method isOperatorInPool on the RandomBeacon contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    wrIsOperatorInPool,
+			Action:    rbIsOperatorInPool,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-operator-up-to-date",
-			Usage:     "Calls the view method isOperatorUpToDate on the WalletRegistry contract.",
+			Usage:     "Calls the view method isOperatorUpToDate on the RandomBeacon contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    wrIsOperatorUpToDate,
+			Action:    rbIsOperatorUpToDate,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "minimum-authorization",
-			Usage:     "Calls the view method minimumAuthorization on the WalletRegistry contract.",
+			Name:      "is-relay-request-in-progress",
+			Usage:     "Calls the view method isRelayRequestInProgress on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrMinimumAuthorization,
+			Action:    rbIsRelayRequestInProgress,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "minimum-authorization",
+			Usage:     "Calls the view method minimumAuthorization on the RandomBeacon contract.",
+			ArgsUsage: "",
+			Action:    rbMinimumAuthorization,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "operator-to-staking-provider",
-			Usage:     "Calls the view method operatorToStakingProvider on the WalletRegistry contract.",
+			Usage:     "Calls the view method operatorToStakingProvider on the RandomBeacon contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    wrOperatorToStakingProvider,
+			Action:    rbOperatorToStakingProvider,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "pending-authorization-decrease",
-			Usage:     "Calls the view method pendingAuthorizationDecrease on the WalletRegistry contract.",
+			Usage:     "Calls the view method pendingAuthorizationDecrease on the RandomBeacon contract.",
 			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    wrPendingAuthorizationDecrease,
+			Action:    rbPendingAuthorizationDecrease,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "random-beacon",
-			Usage:     "Calls the view method randomBeacon on the WalletRegistry contract.",
+			Name:      "reimbursement-pool",
+			Usage:     "Calls the view method reimbursementPool on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrRandomBeacon,
+			Action:    rbReimbursementPool,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "reimbursement-pool",
-			Usage:     "Calls the view method reimbursementPool on the WalletRegistry contract.",
+			Name:      "relay-entry-parameters",
+			Usage:     "Calls the view method relayEntryParameters on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrReimbursementPool,
+			Action:    rbRelayEntryParameters,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "remaining-authorization-decrease-delay",
-			Usage:     "Calls the view method remainingAuthorizationDecreaseDelay on the WalletRegistry contract.",
+			Usage:     "Calls the view method remainingAuthorizationDecreaseDelay on the RandomBeacon contract.",
 			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    wrRemainingAuthorizationDecreaseDelay,
+			Action:    rbRemainingAuthorizationDecreaseDelay,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "reward-parameters",
-			Usage:     "Calls the view method rewardParameters on the WalletRegistry contract.",
+			Usage:     "Calls the view method rewardParameters on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrRewardParameters,
+			Action:    rbRewardParameters,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "select-group",
-			Usage:     "Calls the view method selectGroup on the WalletRegistry contract.",
+			Usage:     "Calls the view method selectGroup on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrSelectGroup,
+			Action:    rbSelectGroup,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "slashing-parameters",
-			Usage:     "Calls the view method slashingParameters on the WalletRegistry contract.",
+			Usage:     "Calls the view method slashingParameters on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrSlashingParameters,
+			Action:    rbSlashingParameters,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "sortition-pool",
-			Usage:     "Calls the view method sortitionPool on the WalletRegistry contract.",
+			Usage:     "Calls the view method sortitionPool on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrSortitionPool,
+			Action:    rbSortitionPool,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "staking",
-			Usage:     "Calls the view method staking on the WalletRegistry contract.",
+			Usage:     "Calls the view method staking on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrStaking,
+			Action:    rbStaking,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "staking-provider-to-operator",
-			Usage:     "Calls the view method stakingProviderToOperator on the WalletRegistry contract.",
+			Usage:     "Calls the view method stakingProviderToOperator on the RandomBeacon contract.",
 			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    wrStakingProviderToOperator,
+			Action:    rbStakingProviderToOperator,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "wallet-owner",
-			Usage:     "Calls the view method walletOwner on the WalletRegistry contract.",
+			Name:      "t-token",
+			Usage:     "Calls the view method tToken on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrWalletOwner,
+			Action:    rbTToken,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "approve-authorization-decrease",
-			Usage:     "Calls the nonpayable method approveAuthorizationDecrease on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method approveAuthorizationDecrease on the RandomBeacon contract.",
 			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    wrApproveAuthorizationDecrease,
+			Action:    rbApproveAuthorizationDecrease,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "beacon-callback",
-			Usage:     "Calls the nonpayable method beaconCallback on the WalletRegistry contract.",
-			ArgsUsage: "[arg_relayEntry] [arg1] ",
-			Action:    wrBeaconCallback,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "initialize",
-			Usage:     "Calls the nonpayable method initialize on the WalletRegistry contract.",
-			ArgsUsage: "[arg__ecdsaDkgValidator] [arg__randomBeacon] [arg__reimbursementPool] ",
-			Action:    wrInitialize,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
+			Name:      "genesis",
+			Usage:     "Calls the nonpayable method genesis on the RandomBeacon contract.",
+			ArgsUsage: "",
+			Action:    rbGenesis,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "join-sortition-pool",
-			Usage:     "Calls the nonpayable method joinSortitionPool on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method joinSortitionPool on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrJoinSortitionPool,
+			Action:    rbJoinSortitionPool,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "notify-dkg-timeout",
-			Usage:     "Calls the nonpayable method notifyDkgTimeout on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method notifyDkgTimeout on the RandomBeacon contract.",
 			ArgsUsage: "",
-			Action:    wrNotifyDkgTimeout,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "notify-seed-timeout",
-			Usage:     "Calls the nonpayable method notifySeedTimeout on the WalletRegistry contract.",
-			ArgsUsage: "",
-			Action:    wrNotifySeedTimeout,
+			Action:    rbNotifyDkgTimeout,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "register-operator",
-			Usage:     "Calls the nonpayable method registerOperator on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method registerOperator on the RandomBeacon contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    wrRegisterOperator,
+			Action:    rbRegisterOperator,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "request-new-wallet",
-			Usage:     "Calls the nonpayable method requestNewWallet on the WalletRegistry contract.",
-			ArgsUsage: "",
-			Action:    wrRequestNewWallet,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Name:      "request-relay-entry",
+			Usage:     "Calls the nonpayable method requestRelayEntry on the RandomBeacon contract.",
+			ArgsUsage: "[arg_callbackContract] ",
+			Action:    rbRequestRelayEntry,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "submit-relay-entry0",
+			Usage:     "Calls the nonpayable method submitRelayEntry0 on the RandomBeacon contract.",
+			ArgsUsage: "[arg_entry] ",
+			Action:    rbSubmitRelayEntry0,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "transfer-governance",
-			Usage:     "Calls the nonpayable method transferGovernance on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method transferGovernance on the RandomBeacon contract.",
 			ArgsUsage: "[arg_newGovernance] ",
-			Action:    wrTransferGovernance,
+			Action:    rbTransferGovernance,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "update-dkg-parameters",
-			Usage:     "Calls the nonpayable method updateDkgParameters on the WalletRegistry contract.",
-			ArgsUsage: "[arg__seedTimeout] [arg__resultChallengePeriodLength] [arg__resultSubmissionTimeout] [arg__submitterPrecedencePeriodLength] ",
-			Action:    wrUpdateDkgParameters,
+			Name:      "update-gas-parameters",
+			Usage:     "Calls the nonpayable method updateGasParameters on the RandomBeacon contract.",
+			ArgsUsage: "[arg_dkgResultSubmissionGas] [arg_dkgResultApprovalGasOffset] [arg_notifyOperatorInactivityGasOffset] [arg_relayEntrySubmissionGasOffset] ",
+			Action:    rbUpdateGasParameters,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "update-gas-parameters",
-			Usage:     "Calls the nonpayable method updateGasParameters on the WalletRegistry contract.",
-			ArgsUsage: "[arg_dkgResultSubmissionGas] [arg_dkgResultApprovalGasOffset] [arg_notifyOperatorInactivityGasOffset] [arg_notifySeedTimeoutGasOffset] [arg_notifyDkgTimeoutNegativeGasOffset] ",
-			Action:    wrUpdateGasParameters,
+			Name:      "update-group-creation-parameters",
+			Usage:     "Calls the nonpayable method updateGroupCreationParameters on the RandomBeacon contract.",
+			ArgsUsage: "[arg_groupCreationFrequency] [arg_groupLifetime] [arg_dkgResultChallengePeriodLength] [arg_dkgResultSubmissionTimeout] [arg_dkgSubmitterPrecedencePeriodLength] ",
+			Action:    rbUpdateGroupCreationParameters,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(5))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "update-operator-status",
-			Usage:     "Calls the nonpayable method updateOperatorStatus on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method updateOperatorStatus on the RandomBeacon contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    wrUpdateOperatorStatus,
+			Action:    rbUpdateOperatorStatus,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "update-reimbursement-pool",
-			Usage:     "Calls the nonpayable method updateReimbursementPool on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method updateReimbursementPool on the RandomBeacon contract.",
 			ArgsUsage: "[arg__reimbursementPool] ",
-			Action:    wrUpdateReimbursementPool,
+			Action:    rbUpdateReimbursementPool,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "update-relay-entry-parameters",
+			Usage:     "Calls the nonpayable method updateRelayEntryParameters on the RandomBeacon contract.",
+			ArgsUsage: "[arg_relayEntrySoftTimeout] [arg_relayEntryHardTimeout] [arg_callbackGasLimit] ",
+			Action:    rbUpdateRelayEntryParameters,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "update-reward-parameters",
-			Usage:     "Calls the nonpayable method updateRewardParameters on the WalletRegistry contract.",
-			ArgsUsage: "[arg_maliciousDkgResultNotificationRewardMultiplier] [arg_sortitionPoolRewardsBanDuration] ",
-			Action:    wrUpdateRewardParameters,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "update-wallet-owner",
-			Usage:     "Calls the nonpayable method updateWalletOwner on the WalletRegistry contract.",
-			ArgsUsage: "[arg__walletOwner] ",
-			Action:    wrUpdateWalletOwner,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "upgrade-random-beacon",
-			Usage:     "Calls the nonpayable method upgradeRandomBeacon on the WalletRegistry contract.",
-			ArgsUsage: "[arg__randomBeacon] ",
-			Action:    wrUpgradeRandomBeacon,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Usage:     "Calls the nonpayable method updateRewardParameters on the RandomBeacon contract.",
+			ArgsUsage: "[arg_sortitionPoolRewardsBanDuration] [arg_relayEntryTimeoutNotificationRewardMultiplier] [arg_unauthorizedSigningNotificationRewardMultiplier] [arg_dkgMaliciousResultNotificationRewardMultiplier] ",
+			Action:    rbUpdateRewardParameters,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "withdraw-ineligible-rewards",
-			Usage:     "Calls the nonpayable method withdrawIneligibleRewards on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method withdrawIneligibleRewards on the RandomBeacon contract.",
 			ArgsUsage: "[arg_recipient] ",
-			Action:    wrWithdrawIneligibleRewards,
+			Action:    rbWithdrawIneligibleRewards,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "withdraw-rewards",
-			Usage:     "Calls the nonpayable method withdrawRewards on the WalletRegistry contract.",
+			Usage:     "Calls the nonpayable method withdrawRewards on the RandomBeacon contract.",
 			ArgsUsage: "[arg_stakingProvider] ",
-			Action:    wrWithdrawRewards,
+			Action:    rbWithdrawRewards,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}},
@@ -350,8 +364,8 @@ func init() {
 
 /// ------------------- Const methods -------------------
 
-func wrAuthorizationParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbAuthorizationParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -370,8 +384,36 @@ func wrAuthorizationParameters(c *cli.Context) error {
 	return nil
 }
 
-func wrAvailableRewards(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbAuthorizedRequesters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+	arg0, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.AuthorizedRequestersAtBlock(
+		arg0,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func rbAvailableRewards(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -398,28 +440,8 @@ func wrAvailableRewards(c *cli.Context) error {
 	return nil
 }
 
-func wrDkgParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.DkgParametersAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func wrEligibleStake(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbEligibleStake(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -446,8 +468,8 @@ func wrEligibleStake(c *cli.Context) error {
 	return nil
 }
 
-func wrGasParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbGasParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -466,13 +488,13 @@ func wrGasParameters(c *cli.Context) error {
 	return nil
 }
 
-func wrGetWalletCreationState(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbGenesisSeed(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.GetWalletCreationStateAtBlock(
+	result, err := contract.GenesisSeedAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -486,8 +508,76 @@ func wrGetWalletCreationState(c *cli.Context) error {
 	return nil
 }
 
-func wrGovernance(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbGetGroup0(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+	arg_groupPubKey, err := hexutil.Decode(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_groupPubKey, a bytes, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GetGroup0AtBlock(
+		arg_groupPubKey,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func rbGetGroupCreationState(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetGroupCreationStateAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func rbGetGroupsRegistry(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetGroupsRegistryAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func rbGovernance(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -506,8 +596,28 @@ func wrGovernance(c *cli.Context) error {
 	return nil
 }
 
-func wrHasDkgTimedOut(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbGroupCreationParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GroupCreationParametersAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func rbHasDkgTimedOut(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -526,28 +636,8 @@ func wrHasDkgTimedOut(c *cli.Context) error {
 	return nil
 }
 
-func wrHasSeedTimedOut(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.HasSeedTimedOutAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func wrIsOperatorInPool(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbIsOperatorInPool(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -574,8 +664,8 @@ func wrIsOperatorInPool(c *cli.Context) error {
 	return nil
 }
 
-func wrIsOperatorUpToDate(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbIsOperatorUpToDate(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -602,8 +692,28 @@ func wrIsOperatorUpToDate(c *cli.Context) error {
 	return nil
 }
 
-func wrMinimumAuthorization(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbIsRelayRequestInProgress(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsRelayRequestInProgressAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func rbMinimumAuthorization(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -622,8 +732,8 @@ func wrMinimumAuthorization(c *cli.Context) error {
 	return nil
 }
 
-func wrOperatorToStakingProvider(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbOperatorToStakingProvider(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -650,8 +760,8 @@ func wrOperatorToStakingProvider(c *cli.Context) error {
 	return nil
 }
 
-func wrPendingAuthorizationDecrease(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbPendingAuthorizationDecrease(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -678,28 +788,8 @@ func wrPendingAuthorizationDecrease(c *cli.Context) error {
 	return nil
 }
 
-func wrRandomBeacon(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.RandomBeaconAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func wrReimbursementPool(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbReimbursementPool(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -718,8 +808,28 @@ func wrReimbursementPool(c *cli.Context) error {
 	return nil
 }
 
-func wrRemainingAuthorizationDecreaseDelay(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbRelayEntryParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RelayEntryParametersAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func rbRemainingAuthorizationDecreaseDelay(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -746,8 +856,8 @@ func wrRemainingAuthorizationDecreaseDelay(c *cli.Context) error {
 	return nil
 }
 
-func wrRewardParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbRewardParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -766,8 +876,8 @@ func wrRewardParameters(c *cli.Context) error {
 	return nil
 }
 
-func wrSelectGroup(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbSelectGroup(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -786,8 +896,8 @@ func wrSelectGroup(c *cli.Context) error {
 	return nil
 }
 
-func wrSlashingParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbSlashingParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -806,8 +916,8 @@ func wrSlashingParameters(c *cli.Context) error {
 	return nil
 }
 
-func wrSortitionPool(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbSortitionPool(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -826,8 +936,8 @@ func wrSortitionPool(c *cli.Context) error {
 	return nil
 }
 
-func wrStaking(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbStaking(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -846,8 +956,8 @@ func wrStaking(c *cli.Context) error {
 	return nil
 }
 
-func wrStakingProviderToOperator(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbStakingProviderToOperator(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -874,13 +984,13 @@ func wrStakingProviderToOperator(c *cli.Context) error {
 	return nil
 }
 
-func wrWalletOwner(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbTToken(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.WalletOwnerAtBlock(
+	result, err := contract.TTokenAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -896,8 +1006,8 @@ func wrWalletOwner(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func wrApproveAuthorizationDecrease(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbApproveAuthorizationDecrease(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -940,26 +1050,10 @@ func wrApproveAuthorizationDecrease(c *cli.Context) error {
 	return nil
 }
 
-func wrBeaconCallback(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbGenesis(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
-	}
-
-	arg_relayEntry, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg_relayEntry, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	arg1, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg1, a uint256, from passed value %v",
-			c.Args()[1],
-		)
 	}
 
 	var (
@@ -968,10 +1062,7 @@ func wrBeaconCallback(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.BeaconCallback(
-			arg_relayEntry,
-			arg1,
-		)
+		transaction, err = contract.Genesis()
 		if err != nil {
 			return err
 		}
@@ -979,9 +1070,7 @@ func wrBeaconCallback(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallBeaconCallback(
-			arg_relayEntry,
-			arg1,
+		err = contract.CallGenesis(
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -994,72 +1083,8 @@ func wrBeaconCallback(c *cli.Context) error {
 	return nil
 }
 
-func wrInitialize(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	arg__ecdsaDkgValidator, err := chainutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__ecdsaDkgValidator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	arg__randomBeacon, err := chainutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__randomBeacon, a address, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	arg__reimbursementPool, err := chainutil.AddressFromHex(c.Args()[2])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__reimbursementPool, a address, from passed value %v",
-			c.Args()[2],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Initialize(
-			arg__ecdsaDkgValidator,
-			arg__randomBeacon,
-			arg__reimbursementPool,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallInitialize(
-			arg__ecdsaDkgValidator,
-			arg__randomBeacon,
-			arg__reimbursementPool,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func wrJoinSortitionPool(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbJoinSortitionPool(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1091,8 +1116,8 @@ func wrJoinSortitionPool(c *cli.Context) error {
 	return nil
 }
 
-func wrNotifyDkgTimeout(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbNotifyDkgTimeout(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1124,41 +1149,8 @@ func wrNotifyDkgTimeout(c *cli.Context) error {
 	return nil
 }
 
-func wrNotifySeedTimeout(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.NotifySeedTimeout()
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallNotifySeedTimeout(
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func wrRegisterOperator(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbRegisterOperator(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1201,10 +1193,18 @@ func wrRegisterOperator(c *cli.Context) error {
 	return nil
 }
 
-func wrRequestNewWallet(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbRequestRelayEntry(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
+	}
+
+	arg_callbackContract, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_callbackContract, a address, from passed value %v",
+			c.Args()[0],
+		)
 	}
 
 	var (
@@ -1213,7 +1213,9 @@ func wrRequestNewWallet(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RequestNewWallet()
+		transaction, err = contract.RequestRelayEntry(
+			arg_callbackContract,
+		)
 		if err != nil {
 			return err
 		}
@@ -1221,7 +1223,8 @@ func wrRequestNewWallet(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallRequestNewWallet(
+		err = contract.CallRequestRelayEntry(
+			arg_callbackContract,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1234,8 +1237,52 @@ func wrRequestNewWallet(c *cli.Context) error {
 	return nil
 }
 
-func wrTransferGovernance(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbSubmitRelayEntry0(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	arg_entry, err := hexutil.Decode(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_entry, a bytes, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.SubmitRelayEntry0(
+			arg_entry,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallSubmitRelayEntry0(
+			arg_entry,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func rbTransferGovernance(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1278,82 +1325,8 @@ func wrTransferGovernance(c *cli.Context) error {
 	return nil
 }
 
-func wrUpdateDkgParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	arg__seedTimeout, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__seedTimeout, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	arg__resultChallengePeriodLength, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__resultChallengePeriodLength, a uint256, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	arg__resultSubmissionTimeout, err := hexutil.DecodeBig(c.Args()[2])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__resultSubmissionTimeout, a uint256, from passed value %v",
-			c.Args()[2],
-		)
-	}
-
-	arg__submitterPrecedencePeriodLength, err := hexutil.DecodeBig(c.Args()[3])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__submitterPrecedencePeriodLength, a uint256, from passed value %v",
-			c.Args()[3],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpdateDkgParameters(
-			arg__seedTimeout,
-			arg__resultChallengePeriodLength,
-			arg__resultSubmissionTimeout,
-			arg__submitterPrecedencePeriodLength,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallUpdateDkgParameters(
-			arg__seedTimeout,
-			arg__resultChallengePeriodLength,
-			arg__resultSubmissionTimeout,
-			arg__submitterPrecedencePeriodLength,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func wrUpdateGasParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbUpdateGasParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1382,19 +1355,11 @@ func wrUpdateGasParameters(c *cli.Context) error {
 		)
 	}
 
-	arg_notifySeedTimeoutGasOffset, err := hexutil.DecodeBig(c.Args()[3])
+	arg_relayEntrySubmissionGasOffset, err := hexutil.DecodeBig(c.Args()[3])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter arg_notifySeedTimeoutGasOffset, a uint256, from passed value %v",
+			"couldn't parse parameter arg_relayEntrySubmissionGasOffset, a uint256, from passed value %v",
 			c.Args()[3],
-		)
-	}
-
-	arg_notifyDkgTimeoutNegativeGasOffset, err := hexutil.DecodeBig(c.Args()[4])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg_notifyDkgTimeoutNegativeGasOffset, a uint256, from passed value %v",
-			c.Args()[4],
 		)
 	}
 
@@ -1408,8 +1373,7 @@ func wrUpdateGasParameters(c *cli.Context) error {
 			arg_dkgResultSubmissionGas,
 			arg_dkgResultApprovalGasOffset,
 			arg_notifyOperatorInactivityGasOffset,
-			arg_notifySeedTimeoutGasOffset,
-			arg_notifyDkgTimeoutNegativeGasOffset,
+			arg_relayEntrySubmissionGasOffset,
 		)
 		if err != nil {
 			return err
@@ -1422,8 +1386,7 @@ func wrUpdateGasParameters(c *cli.Context) error {
 			arg_dkgResultSubmissionGas,
 			arg_dkgResultApprovalGasOffset,
 			arg_notifyOperatorInactivityGasOffset,
-			arg_notifySeedTimeoutGasOffset,
-			arg_notifyDkgTimeoutNegativeGasOffset,
+			arg_relayEntrySubmissionGasOffset,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1436,8 +1399,92 @@ func wrUpdateGasParameters(c *cli.Context) error {
 	return nil
 }
 
-func wrUpdateOperatorStatus(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbUpdateGroupCreationParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	arg_groupCreationFrequency, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_groupCreationFrequency, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	arg_groupLifetime, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_groupLifetime, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	arg_dkgResultChallengePeriodLength, err := hexutil.DecodeBig(c.Args()[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_dkgResultChallengePeriodLength, a uint256, from passed value %v",
+			c.Args()[2],
+		)
+	}
+
+	arg_dkgResultSubmissionTimeout, err := hexutil.DecodeBig(c.Args()[3])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_dkgResultSubmissionTimeout, a uint256, from passed value %v",
+			c.Args()[3],
+		)
+	}
+
+	arg_dkgSubmitterPrecedencePeriodLength, err := hexutil.DecodeBig(c.Args()[4])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_dkgSubmitterPrecedencePeriodLength, a uint256, from passed value %v",
+			c.Args()[4],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateGroupCreationParameters(
+			arg_groupCreationFrequency,
+			arg_groupLifetime,
+			arg_dkgResultChallengePeriodLength,
+			arg_dkgResultSubmissionTimeout,
+			arg_dkgSubmitterPrecedencePeriodLength,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallUpdateGroupCreationParameters(
+			arg_groupCreationFrequency,
+			arg_groupLifetime,
+			arg_dkgResultChallengePeriodLength,
+			arg_dkgResultSubmissionTimeout,
+			arg_dkgSubmitterPrecedencePeriodLength,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func rbUpdateOperatorStatus(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1480,8 +1527,8 @@ func wrUpdateOperatorStatus(c *cli.Context) error {
 	return nil
 }
 
-func wrUpdateReimbursementPool(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbUpdateReimbursementPool(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1524,25 +1571,105 @@ func wrUpdateReimbursementPool(c *cli.Context) error {
 	return nil
 }
 
-func wrUpdateRewardParameters(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbUpdateRelayEntryParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
 
-	arg_maliciousDkgResultNotificationRewardMultiplier, err := hexutil.DecodeBig(c.Args()[0])
+	arg_relayEntrySoftTimeout, err := hexutil.DecodeBig(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter arg_maliciousDkgResultNotificationRewardMultiplier, a uint256, from passed value %v",
+			"couldn't parse parameter arg_relayEntrySoftTimeout, a uint256, from passed value %v",
 			c.Args()[0],
 		)
 	}
 
-	arg_sortitionPoolRewardsBanDuration, err := hexutil.DecodeBig(c.Args()[1])
+	arg_relayEntryHardTimeout, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_relayEntryHardTimeout, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	arg_callbackGasLimit, err := hexutil.DecodeBig(c.Args()[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_callbackGasLimit, a uint256, from passed value %v",
+			c.Args()[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UpdateRelayEntryParameters(
+			arg_relayEntrySoftTimeout,
+			arg_relayEntryHardTimeout,
+			arg_callbackGasLimit,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallUpdateRelayEntryParameters(
+			arg_relayEntrySoftTimeout,
+			arg_relayEntryHardTimeout,
+			arg_callbackGasLimit,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func rbUpdateRewardParameters(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
+	if err != nil {
+		return err
+	}
+
+	arg_sortitionPoolRewardsBanDuration, err := hexutil.DecodeBig(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter arg_sortitionPoolRewardsBanDuration, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	arg_relayEntryTimeoutNotificationRewardMultiplier, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_relayEntryTimeoutNotificationRewardMultiplier, a uint256, from passed value %v",
 			c.Args()[1],
+		)
+	}
+
+	arg_unauthorizedSigningNotificationRewardMultiplier, err := hexutil.DecodeBig(c.Args()[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_unauthorizedSigningNotificationRewardMultiplier, a uint256, from passed value %v",
+			c.Args()[2],
+		)
+	}
+
+	arg_dkgMaliciousResultNotificationRewardMultiplier, err := hexutil.DecodeBig(c.Args()[3])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_dkgMaliciousResultNotificationRewardMultiplier, a uint256, from passed value %v",
+			c.Args()[3],
 		)
 	}
 
@@ -1553,8 +1680,10 @@ func wrUpdateRewardParameters(c *cli.Context) error {
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
 		transaction, err = contract.UpdateRewardParameters(
-			arg_maliciousDkgResultNotificationRewardMultiplier,
 			arg_sortitionPoolRewardsBanDuration,
+			arg_relayEntryTimeoutNotificationRewardMultiplier,
+			arg_unauthorizedSigningNotificationRewardMultiplier,
+			arg_dkgMaliciousResultNotificationRewardMultiplier,
 		)
 		if err != nil {
 			return err
@@ -1564,8 +1693,10 @@ func wrUpdateRewardParameters(c *cli.Context) error {
 	} else {
 		// Do a call.
 		err = contract.CallUpdateRewardParameters(
-			arg_maliciousDkgResultNotificationRewardMultiplier,
 			arg_sortitionPoolRewardsBanDuration,
+			arg_relayEntryTimeoutNotificationRewardMultiplier,
+			arg_unauthorizedSigningNotificationRewardMultiplier,
+			arg_dkgMaliciousResultNotificationRewardMultiplier,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1578,96 +1709,8 @@ func wrUpdateRewardParameters(c *cli.Context) error {
 	return nil
 }
 
-func wrUpdateWalletOwner(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	arg__walletOwner, err := chainutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__walletOwner, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpdateWalletOwner(
-			arg__walletOwner,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallUpdateWalletOwner(
-			arg__walletOwner,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func wrUpgradeRandomBeacon(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
-	if err != nil {
-		return err
-	}
-
-	arg__randomBeacon, err := chainutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg__randomBeacon, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UpgradeRandomBeacon(
-			arg__randomBeacon,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallUpgradeRandomBeacon(
-			arg__randomBeacon,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func wrWithdrawIneligibleRewards(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbWithdrawIneligibleRewards(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1710,8 +1753,8 @@ func wrWithdrawIneligibleRewards(c *cli.Context) error {
 	return nil
 }
 
-func wrWithdrawRewards(c *cli.Context) error {
-	contract, err := initializeWalletRegistry(c)
+func rbWithdrawRewards(c *cli.Context) error {
+	contract, err := initializeRandomBeacon(c)
 	if err != nil {
 		return err
 	}
@@ -1756,7 +1799,7 @@ func wrWithdrawRewards(c *cli.Context) error {
 
 /// ------------------- Initialization -------------------
 
-func initializeWalletRegistry(c *cli.Context) (*contract.WalletRegistry, error) {
+func initializeRandomBeacon(c *cli.Context) (*contract.RandomBeacon, error) {
 	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
 	if err != nil {
 		return nil, fmt.Errorf("error reading config from file: [%v]", err)
@@ -1797,9 +1840,9 @@ func initializeWalletRegistry(c *cli.Context) (*contract.WalletRegistry, error) 
 		)
 	}
 
-	address := common.HexToAddress(config.ContractAddresses["WalletRegistry"])
+	address := common.HexToAddress(config.ContractAddresses["RandomBeacon"])
 
-	return contract.NewWalletRegistry(
+	return contract.NewRandomBeacon(
 		address,
 		chainID,
 		key,

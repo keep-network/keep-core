@@ -23,7 +23,7 @@ import (
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain/threshold-network/gen/abi"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/abi"
 )
 
 // Create a package-level logger for this contract. The logger exists at
