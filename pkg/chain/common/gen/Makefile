@@ -25,7 +25,9 @@ clean:
 # It requires npm of at least 7.x version to support `pack-destination` flag.
 download_artifacts:
 	rm -rf ${contracts_dir} && mkdir ${contracts_dir}
-	npm pack --silent --pack-destination=${contracts_dir} ${npm_package_name}@${npm_package_tag}\
+	npm pack --silent \
+		--pack-destination=${contracts_dir} \
+		$(shell npm view ${npm_package_name}@${npm_package_tag} _id) \
 		| xargs -I{} tar -zxf ${contracts_dir}/{} -C ${contracts_dir}
 
 gen_contract_go: ${contract_files}
