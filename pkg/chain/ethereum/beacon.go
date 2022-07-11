@@ -21,7 +21,7 @@ type BeaconChain struct {
 	*Chain
 
 	randomBeacon  *contract.RandomBeacon
-	sortitionPool *contract.SortitionPool
+	sortitionPool *contract.BeaconSortitionPool
 }
 
 // newBeaconChain construct a new instance of the beacon-specific Ethereum
@@ -66,7 +66,7 @@ func newBeaconChain(
 	}
 
 	sortitionPool, err :=
-		contract.NewSortitionPool(
+		contract.NewBeaconSortitionPool(
 			sortitionPoolAddress,
 			baseChain.chainID,
 			baseChain.key,
