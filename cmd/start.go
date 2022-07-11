@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
 
@@ -92,17 +93,22 @@ func Start(c *cli.Context) error {
 		return err
 	}
 
-	chainProvider, err := ethereum_v1.Connect(ctx, config.Ethereum)
+	beaconChain, _, err := ethereum.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	blockCounter, err := chainProvider.BlockCounter()
+	chainProviderV1, err := ethereum_v1.Connect(ctx, config.Ethereum)
+	if err != nil {
+		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
+	}
+
+	blockCounter, err := chainProviderV1.BlockCounter()
 	if err != nil {
 		return err
 	}
 
-	stakeMonitor, err := chainProvider.StakeMonitor()
+	stakeMonitor, err := chainProviderV1.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
@@ -154,8 +160,10 @@ func Start(c *cli.Context) error {
 	)
 
 	err = beacon.Initialize(
+		ctx,
 		operatorPublicKey,
-		chainProvider.ThresholdRelay(),
+		chainProviderV1.ThresholdRelay(),
+		beaconChain,
 		netProvider,
 		persistence,
 	)
@@ -164,7 +172,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
-	initializeDiagnostics(ctx, config, netProvider, chainProvider.Signing())
+	initializeDiagnostics(ctx, config, netProvider, chainProviderV1.Signing())
 
 	select {
 	case <-ctx.Done():

@@ -1,11 +1,13 @@
 package beacon
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/sortition"
 
 	"github.com/ipfs/go-log"
 
@@ -23,21 +25,25 @@ var logger = log.Logger("keep-beacon")
 // internal random beacon implementation. Returns an error if this failed,
 // otherwise enters a blocked loop.
 func Initialize(
+	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	beaconChain beaconchain.Interface,
+	// TODO: Get rid of legacy Ethereum chain
+	beaconChainV1 beaconchain.Interface,
+	// TODO: Accept a generic interface, not just sortition.Chain
+	beaconChain sortition.Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	chainConfig := beaconChain.GetConfig()
+	chainConfig := beaconChainV1.GetConfig()
 
-	blockCounter, err := beaconChain.BlockCounter()
+	blockCounter, err := beaconChainV1.BlockCounter()
 	if err != nil {
 		return fmt.Errorf("failed to get block counter instance: [%v]", err)
 	}
 
-	signing := beaconChain.Signing()
+	signing := beaconChainV1.Signing()
 
-	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
+	groupRegistry := registry.NewGroupRegistry(beaconChainV1, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := newNode(
@@ -48,11 +54,16 @@ func Initialize(
 		groupRegistry,
 	)
 
-	eventDeduplicator := event.NewDeduplicator(beaconChain)
+	err = sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	if err != nil {
+		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
+	}
 
-	node.ResumeSigningIfEligible(beaconChain, signing)
+	eventDeduplicator := event.NewDeduplicator(beaconChainV1)
 
-	_ = beaconChain.OnRelayEntryRequested(func(request *event.Request) {
+	node.ResumeSigningIfEligible(beaconChainV1, signing)
+
+	_ = beaconChainV1.OnRelayEntryRequested(func(request *event.Request) {
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
@@ -93,7 +104,7 @@ func Initialize(
 
 					node.GenerateRelayEntry(
 						request.PreviousEntry,
-						beaconChain,
+						beaconChainV1,
 						signing,
 						request.GroupPublicKey,
 						request.BlockNumber,
@@ -104,7 +115,7 @@ func Initialize(
 			}
 
 			go node.MonitorRelayEntry(
-				beaconChain,
+				beaconChainV1,
 				request.BlockNumber,
 				chainConfig,
 			)
@@ -115,14 +126,14 @@ func Initialize(
 
 		confirmCurrentRelayRequest(
 			request.BlockNumber,
-			beaconChain,
+			beaconChainV1,
 			onConfirmed,
 			currentRelayRequestConfirmationRetries,
 			currentRelayRequestConfirmationDelay,
 		)
 	})
 
-	_ = beaconChain.OnDKGStarted(func(event *event.DKGStarted) {
+	_ = beaconChainV1.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
 			if ok := eventDeduplicator.NotifyDKGStarted(
 				event.Seed,
@@ -143,7 +154,7 @@ func Initialize(
 			)
 
 			node.JoinDKGIfEligible(
-				beaconChain,
+				beaconChainV1,
 				signing,
 				event.Seed,
 				event.BlockNumber,
@@ -151,7 +162,7 @@ func Initialize(
 		}()
 	})
 
-	_ = beaconChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+	_ = beaconChainV1.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		logger.Infof(
 			"new group with public key [0x%x] registered on-chain at block [%v]",
 			registration.GroupPublicKey,
