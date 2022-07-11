@@ -64,8 +64,7 @@ Solidity::
 
 == Working with Solidity contracts
 
-The fastest and easiest way to have a local Ethereum testent is to use Hardhat.
-https://hardhat.org/
+The fastest and easiest way to have a local Ethereum testent is to use https://hardhat.org/[Hardhat].
 
 
 Navigate to one of the projects `solidity/ecdsa` or `solidity/random-beacon`.
