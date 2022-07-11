@@ -15,11 +15,10 @@ contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
 # Files containing addresses extracted from the artifacts.
 address_files = $(addprefix _address/,${required_contracts})
 
-all: ${address_files} gen_contract_go
+all: clean ${address_files} gen_contract_go
 
 clean:
 	rm -rf _address/*
-	rm -rf ${contracts_dir}/*
 	rm -rf abi/*
 	rm -rf contract/*
 	mkdir tmp && mv cmd/cmd*.go tmp
