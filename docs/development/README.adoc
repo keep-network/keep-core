@@ -32,14 +32,22 @@ The `+initialize.sh+` script will:
 * increase authorization for `RandomBeacon`
 * register operator
 
-Please refer to the scripts `help` for available command arguments and environment variables. `./install.sh --help` or `./initialize.sh --help`. Accounts unlocking and staking can be run outside of these scripts as standalone hardhat tasks.
+Please refer to the scripts `help` for available command arguments and environment
+variables. `./install.sh --help` or `./initialize.sh --help`. Accounts unlocking
+and staking can be run outside of these scripts as standalone hardhat tasks.
 
 To deploy and initialize contracts:
 
 * run `./scripts/install.sh`. You need to run it only once.
 
-* run `./scripts/initialize.sh --stake-owner <address>` for the default setup for each client. Default setup assumes that the staking provider, operator, beneficiary, and the authorizer are all have the same addresses as the stake owner. Only the `stake-owner` has to be unique for the default setup. The default stake amount is `1,000,000 T` tokens. The default authorization amount is the minimum authorization amount +
-Ex. if you need to initialize a network with 3 clients with the default setup, then run this script 3 times with a different `<address>`.
+* run `./scripts/initialize.sh --stake-owner <address>` for the default setup for
+each client. Default setup assumes that the staking provider, operator, beneficiary,
+and the authorizer all have the same addresses as the stake owner. Only the
+`stake-owner` has to be unique for the default setup. The default stake amount is
+`1,000,000 T` tokens. The default authorization amount is the minimum authorization
+amount +
+Ex. if you need to initialize a network with 3 clients with the default setup,
+then run this script 3 times with a different `<address>`.
 
 
 === Starting a client
@@ -64,7 +72,8 @@ Solidity::
 
 == Working with Solidity contracts
 
-The fastest and easiest way to have a local Ethereum testent is to use https://hardhat.org/[Hardhat].
+The fastest and easiest way to have a local Ethereum testent is to use
+https://hardhat.org/[Hardhat].
 
 
 Navigate to one of the projects `solidity/ecdsa` or `solidity/random-beacon`.
