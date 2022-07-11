@@ -23,16 +23,16 @@ import (
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
-	"github.com/keep-network/keep-core/pkg/chain/ecdsa/gen/abi"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/abi"
 )
 
 // Create a package-level logger for this contract. The logger exists at
 // package level so that the logger is registered at startup and can be
 // included or excluded from logging at startup by name.
-var espLogger = log.Logger("keep-contract-EcdsaSortitionPool")
+var bspLogger = log.Logger("keep-contract-BeaconSortitionPool")
 
-type EcdsaSortitionPool struct {
-	contract          *abi.EcdsaSortitionPool
+type BeaconSortitionPool struct {
+	contract          *abi.BeaconSortitionPool
 	contractAddress   common.Address
 	contractABI       *hostchainabi.ABI
 	caller            bind.ContractCaller
@@ -47,7 +47,7 @@ type EcdsaSortitionPool struct {
 	transactionMutex *sync.Mutex
 }
 
-func NewEcdsaSortitionPool(
+func NewBeaconSortitionPool(
 	contractAddress common.Address,
 	chainId *big.Int,
 	accountKey *keystore.Key,
@@ -56,7 +56,7 @@ func NewEcdsaSortitionPool(
 	miningWaiter *chainutil.MiningWaiter,
 	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
-) (*EcdsaSortitionPool, error) {
+) (*BeaconSortitionPool, error) {
 	callerOptions := &bind.CallOpts{
 		From: accountKey.Address,
 	}
@@ -72,7 +72,7 @@ func NewEcdsaSortitionPool(
 		return nil, fmt.Errorf("failed to instantiate transactor: [%v]", err)
 	}
 
-	contract, err := abi.NewEcdsaSortitionPool(
+	contract, err := abi.NewBeaconSortitionPool(
 		contractAddress,
 		backend,
 	)
@@ -84,12 +84,12 @@ func NewEcdsaSortitionPool(
 		)
 	}
 
-	contractABI, err := hostchainabi.JSON(strings.NewReader(abi.EcdsaSortitionPoolABI))
+	contractABI, err := hostchainabi.JSON(strings.NewReader(abi.BeaconSortitionPoolABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
 	}
 
-	return &EcdsaSortitionPool{
+	return &BeaconSortitionPool{
 		contract:          contract,
 		contractAddress:   contractAddress,
 		contractABI:       &contractABI,
@@ -108,13 +108,13 @@ func NewEcdsaSortitionPool(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) InsertOperator(
+func (bsp *BeaconSortitionPool) InsertOperator(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction insertOperator",
 		" params: ",
 		fmt.Sprint(
@@ -123,12 +123,12 @@ func (esp *EcdsaSortitionPool) InsertOperator(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -138,22 +138,22 @@ func (esp *EcdsaSortitionPool) InsertOperator(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.InsertOperator(
+	transaction, err := bsp.contract.InsertOperator(
 		transactorOptions,
 		arg_operator,
 		arg_authorizedStake,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"insertOperator",
 			arg_operator,
@@ -161,13 +161,13 @@ func (esp *EcdsaSortitionPool) InsertOperator(
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction insertOperator with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -181,15 +181,15 @@ func (esp *EcdsaSortitionPool) InsertOperator(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.InsertOperator(
+			transaction, err := bsp.contract.InsertOperator(
 				newTransactorOptions,
 				arg_operator,
 				arg_authorizedStake,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"insertOperator",
 					arg_operator,
@@ -197,7 +197,7 @@ func (esp *EcdsaSortitionPool) InsertOperator(
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction insertOperator with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -207,13 +207,13 @@ func (esp *EcdsaSortitionPool) InsertOperator(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallInsertOperator(
+func (bsp *BeaconSortitionPool) CallInsertOperator(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 	blockNumber *big.Int,
@@ -221,12 +221,12 @@ func (esp *EcdsaSortitionPool) CallInsertOperator(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"insertOperator",
 		&result,
 		arg_operator,
@@ -236,18 +236,18 @@ func (esp *EcdsaSortitionPool) CallInsertOperator(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) InsertOperatorGasEstimate(
+func (bsp *BeaconSortitionPool) InsertOperatorGasEstimate(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"insertOperator",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_operator,
 		arg_authorizedStake,
 	)
@@ -256,20 +256,20 @@ func (esp *EcdsaSortitionPool) InsertOperatorGasEstimate(
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) Lock(
+func (bsp *BeaconSortitionPool) Lock(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction lock",
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -279,32 +279,32 @@ func (esp *EcdsaSortitionPool) Lock(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.Lock(
+	transaction, err := bsp.contract.Lock(
 		transactorOptions,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"lock",
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction lock with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -318,19 +318,19 @@ func (esp *EcdsaSortitionPool) Lock(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.Lock(
+			transaction, err := bsp.contract.Lock(
 				newTransactorOptions,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"lock",
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction lock with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -340,24 +340,24 @@ func (esp *EcdsaSortitionPool) Lock(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallLock(
+func (bsp *BeaconSortitionPool) CallLock(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"lock",
 		&result,
 	)
@@ -365,22 +365,22 @@ func (esp *EcdsaSortitionPool) CallLock(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) LockGasEstimate() (uint64, error) {
+func (bsp *BeaconSortitionPool) LockGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"lock",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) ReceiveApproval(
+func (bsp *BeaconSortitionPool) ReceiveApproval(
 	arg_sender common.Address,
 	arg_amount *big.Int,
 	arg_token common.Address,
@@ -388,7 +388,7 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction receiveApproval",
 		" params: ",
 		fmt.Sprint(
@@ -399,12 +399,12 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -414,14 +414,14 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.ReceiveApproval(
+	transaction, err := bsp.contract.ReceiveApproval(
 		transactorOptions,
 		arg_sender,
 		arg_amount,
@@ -429,9 +429,9 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 		arg3,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"receiveApproval",
 			arg_sender,
@@ -441,13 +441,13 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -461,7 +461,7 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.ReceiveApproval(
+			transaction, err := bsp.contract.ReceiveApproval(
 				newTransactorOptions,
 				arg_sender,
 				arg_amount,
@@ -469,9 +469,9 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 				arg3,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"receiveApproval",
 					arg_sender,
@@ -481,7 +481,7 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction receiveApproval with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -491,13 +491,13 @@ func (esp *EcdsaSortitionPool) ReceiveApproval(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallReceiveApproval(
+func (bsp *BeaconSortitionPool) CallReceiveApproval(
 	arg_sender common.Address,
 	arg_amount *big.Int,
 	arg_token common.Address,
@@ -507,12 +507,12 @@ func (esp *EcdsaSortitionPool) CallReceiveApproval(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"receiveApproval",
 		&result,
 		arg_sender,
@@ -524,7 +524,7 @@ func (esp *EcdsaSortitionPool) CallReceiveApproval(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) ReceiveApprovalGasEstimate(
+func (bsp *BeaconSortitionPool) ReceiveApprovalGasEstimate(
 	arg_sender common.Address,
 	arg_amount *big.Int,
 	arg_token common.Address,
@@ -533,11 +533,11 @@ func (esp *EcdsaSortitionPool) ReceiveApprovalGasEstimate(
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"receiveApproval",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_sender,
 		arg_amount,
 		arg_token,
@@ -548,20 +548,20 @@ func (esp *EcdsaSortitionPool) ReceiveApprovalGasEstimate(
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) RenounceOwnership(
+func (bsp *BeaconSortitionPool) RenounceOwnership(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction renounceOwnership",
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -571,32 +571,32 @@ func (esp *EcdsaSortitionPool) RenounceOwnership(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.RenounceOwnership(
+	transaction, err := bsp.contract.RenounceOwnership(
 		transactorOptions,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"renounceOwnership",
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction renounceOwnership with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -610,19 +610,19 @@ func (esp *EcdsaSortitionPool) RenounceOwnership(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.RenounceOwnership(
+			transaction, err := bsp.contract.RenounceOwnership(
 				newTransactorOptions,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"renounceOwnership",
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction renounceOwnership with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -632,24 +632,24 @@ func (esp *EcdsaSortitionPool) RenounceOwnership(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallRenounceOwnership(
+func (bsp *BeaconSortitionPool) CallRenounceOwnership(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"renounceOwnership",
 		&result,
 	)
@@ -657,27 +657,27 @@ func (esp *EcdsaSortitionPool) CallRenounceOwnership(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) RenounceOwnershipGasEstimate() (uint64, error) {
+func (bsp *BeaconSortitionPool) RenounceOwnershipGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"renounceOwnership",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) RestoreRewardEligibility(
+func (bsp *BeaconSortitionPool) RestoreRewardEligibility(
 	arg_operator common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction restoreRewardEligibility",
 		" params: ",
 		fmt.Sprint(
@@ -685,12 +685,12 @@ func (esp *EcdsaSortitionPool) RestoreRewardEligibility(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -700,34 +700,34 @@ func (esp *EcdsaSortitionPool) RestoreRewardEligibility(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.RestoreRewardEligibility(
+	transaction, err := bsp.contract.RestoreRewardEligibility(
 		transactorOptions,
 		arg_operator,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"restoreRewardEligibility",
 			arg_operator,
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction restoreRewardEligibility with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -741,21 +741,21 @@ func (esp *EcdsaSortitionPool) RestoreRewardEligibility(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.RestoreRewardEligibility(
+			transaction, err := bsp.contract.RestoreRewardEligibility(
 				newTransactorOptions,
 				arg_operator,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"restoreRewardEligibility",
 					arg_operator,
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction restoreRewardEligibility with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -765,25 +765,25 @@ func (esp *EcdsaSortitionPool) RestoreRewardEligibility(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallRestoreRewardEligibility(
+func (bsp *BeaconSortitionPool) CallRestoreRewardEligibility(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"restoreRewardEligibility",
 		&result,
 		arg_operator,
@@ -792,17 +792,17 @@ func (esp *EcdsaSortitionPool) CallRestoreRewardEligibility(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) RestoreRewardEligibilityGasEstimate(
+func (bsp *BeaconSortitionPool) RestoreRewardEligibilityGasEstimate(
 	arg_operator common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"restoreRewardEligibility",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_operator,
 	)
 
@@ -810,13 +810,13 @@ func (esp *EcdsaSortitionPool) RestoreRewardEligibilityGasEstimate(
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) SetRewardIneligibility(
+func (bsp *BeaconSortitionPool) SetRewardIneligibility(
 	arg_operators []uint32,
 	arg_until *big.Int,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction setRewardIneligibility",
 		" params: ",
 		fmt.Sprint(
@@ -825,12 +825,12 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibility(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -840,22 +840,22 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibility(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.SetRewardIneligibility(
+	transaction, err := bsp.contract.SetRewardIneligibility(
 		transactorOptions,
 		arg_operators,
 		arg_until,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"setRewardIneligibility",
 			arg_operators,
@@ -863,13 +863,13 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibility(
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction setRewardIneligibility with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -883,15 +883,15 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibility(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.SetRewardIneligibility(
+			transaction, err := bsp.contract.SetRewardIneligibility(
 				newTransactorOptions,
 				arg_operators,
 				arg_until,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"setRewardIneligibility",
 					arg_operators,
@@ -899,7 +899,7 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibility(
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction setRewardIneligibility with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -909,13 +909,13 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibility(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallSetRewardIneligibility(
+func (bsp *BeaconSortitionPool) CallSetRewardIneligibility(
 	arg_operators []uint32,
 	arg_until *big.Int,
 	blockNumber *big.Int,
@@ -923,12 +923,12 @@ func (esp *EcdsaSortitionPool) CallSetRewardIneligibility(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"setRewardIneligibility",
 		&result,
 		arg_operators,
@@ -938,18 +938,18 @@ func (esp *EcdsaSortitionPool) CallSetRewardIneligibility(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) SetRewardIneligibilityGasEstimate(
+func (bsp *BeaconSortitionPool) SetRewardIneligibilityGasEstimate(
 	arg_operators []uint32,
 	arg_until *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"setRewardIneligibility",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_operators,
 		arg_until,
 	)
@@ -958,12 +958,12 @@ func (esp *EcdsaSortitionPool) SetRewardIneligibilityGasEstimate(
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) TransferOwnership(
+func (bsp *BeaconSortitionPool) TransferOwnership(
 	arg_newOwner common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction transferOwnership",
 		" params: ",
 		fmt.Sprint(
@@ -971,12 +971,12 @@ func (esp *EcdsaSortitionPool) TransferOwnership(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -986,34 +986,34 @@ func (esp *EcdsaSortitionPool) TransferOwnership(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.TransferOwnership(
+	transaction, err := bsp.contract.TransferOwnership(
 		transactorOptions,
 		arg_newOwner,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"transferOwnership",
 			arg_newOwner,
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction transferOwnership with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1027,21 +1027,21 @@ func (esp *EcdsaSortitionPool) TransferOwnership(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.TransferOwnership(
+			transaction, err := bsp.contract.TransferOwnership(
 				newTransactorOptions,
 				arg_newOwner,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"transferOwnership",
 					arg_newOwner,
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction transferOwnership with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1051,25 +1051,25 @@ func (esp *EcdsaSortitionPool) TransferOwnership(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallTransferOwnership(
+func (bsp *BeaconSortitionPool) CallTransferOwnership(
 	arg_newOwner common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"transferOwnership",
 		&result,
 		arg_newOwner,
@@ -1078,17 +1078,17 @@ func (esp *EcdsaSortitionPool) CallTransferOwnership(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) TransferOwnershipGasEstimate(
+func (bsp *BeaconSortitionPool) TransferOwnershipGasEstimate(
 	arg_newOwner common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"transferOwnership",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_newOwner,
 	)
 
@@ -1096,20 +1096,20 @@ func (esp *EcdsaSortitionPool) TransferOwnershipGasEstimate(
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) Unlock(
+func (bsp *BeaconSortitionPool) Unlock(
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction unlock",
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1119,32 +1119,32 @@ func (esp *EcdsaSortitionPool) Unlock(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.Unlock(
+	transaction, err := bsp.contract.Unlock(
 		transactorOptions,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"unlock",
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction unlock with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1158,19 +1158,19 @@ func (esp *EcdsaSortitionPool) Unlock(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.Unlock(
+			transaction, err := bsp.contract.Unlock(
 				newTransactorOptions,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"unlock",
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction unlock with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1180,24 +1180,24 @@ func (esp *EcdsaSortitionPool) Unlock(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallUnlock(
+func (bsp *BeaconSortitionPool) CallUnlock(
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"unlock",
 		&result,
 	)
@@ -1205,28 +1205,28 @@ func (esp *EcdsaSortitionPool) CallUnlock(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) UnlockGasEstimate() (uint64, error) {
+func (bsp *BeaconSortitionPool) UnlockGasEstimate() (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"unlock",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
+func (bsp *BeaconSortitionPool) UpdateOperatorStatus(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction updateOperatorStatus",
 		" params: ",
 		fmt.Sprint(
@@ -1235,12 +1235,12 @@ func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1250,22 +1250,22 @@ func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.UpdateOperatorStatus(
+	transaction, err := bsp.contract.UpdateOperatorStatus(
 		transactorOptions,
 		arg_operator,
 		arg_authorizedStake,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"updateOperatorStatus",
 			arg_operator,
@@ -1273,13 +1273,13 @@ func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction updateOperatorStatus with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1293,15 +1293,15 @@ func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.UpdateOperatorStatus(
+			transaction, err := bsp.contract.UpdateOperatorStatus(
 				newTransactorOptions,
 				arg_operator,
 				arg_authorizedStake,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"updateOperatorStatus",
 					arg_operator,
@@ -1309,7 +1309,7 @@ func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction updateOperatorStatus with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1319,13 +1319,13 @@ func (esp *EcdsaSortitionPool) UpdateOperatorStatus(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallUpdateOperatorStatus(
+func (bsp *BeaconSortitionPool) CallUpdateOperatorStatus(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 	blockNumber *big.Int,
@@ -1333,12 +1333,12 @@ func (esp *EcdsaSortitionPool) CallUpdateOperatorStatus(
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"updateOperatorStatus",
 		&result,
 		arg_operator,
@@ -1348,18 +1348,18 @@ func (esp *EcdsaSortitionPool) CallUpdateOperatorStatus(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) UpdateOperatorStatusGasEstimate(
+func (bsp *BeaconSortitionPool) UpdateOperatorStatusGasEstimate(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"updateOperatorStatus",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_operator,
 		arg_authorizedStake,
 	)
@@ -1368,12 +1368,12 @@ func (esp *EcdsaSortitionPool) UpdateOperatorStatusGasEstimate(
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) WithdrawIneligible(
+func (bsp *BeaconSortitionPool) WithdrawIneligible(
 	arg_recipient common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction withdrawIneligible",
 		" params: ",
 		fmt.Sprint(
@@ -1381,12 +1381,12 @@ func (esp *EcdsaSortitionPool) WithdrawIneligible(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1396,34 +1396,34 @@ func (esp *EcdsaSortitionPool) WithdrawIneligible(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.WithdrawIneligible(
+	transaction, err := bsp.contract.WithdrawIneligible(
 		transactorOptions,
 		arg_recipient,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"withdrawIneligible",
 			arg_recipient,
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction withdrawIneligible with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1437,21 +1437,21 @@ func (esp *EcdsaSortitionPool) WithdrawIneligible(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.WithdrawIneligible(
+			transaction, err := bsp.contract.WithdrawIneligible(
 				newTransactorOptions,
 				arg_recipient,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"withdrawIneligible",
 					arg_recipient,
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction withdrawIneligible with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1461,25 +1461,25 @@ func (esp *EcdsaSortitionPool) WithdrawIneligible(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallWithdrawIneligible(
+func (bsp *BeaconSortitionPool) CallWithdrawIneligible(
 	arg_recipient common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"withdrawIneligible",
 		&result,
 		arg_recipient,
@@ -1488,17 +1488,17 @@ func (esp *EcdsaSortitionPool) CallWithdrawIneligible(
 	return err
 }
 
-func (esp *EcdsaSortitionPool) WithdrawIneligibleGasEstimate(
+func (bsp *BeaconSortitionPool) WithdrawIneligibleGasEstimate(
 	arg_recipient common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"withdrawIneligible",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_recipient,
 	)
 
@@ -1506,13 +1506,13 @@ func (esp *EcdsaSortitionPool) WithdrawIneligibleGasEstimate(
 }
 
 // Transaction submission.
-func (esp *EcdsaSortitionPool) WithdrawRewards(
+func (bsp *BeaconSortitionPool) WithdrawRewards(
 	arg_operator common.Address,
 	arg_beneficiary common.Address,
 
 	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
-	espLogger.Debug(
+	bspLogger.Debug(
 		"submitting transaction withdrawRewards",
 		" params: ",
 		fmt.Sprint(
@@ -1521,12 +1521,12 @@ func (esp *EcdsaSortitionPool) WithdrawRewards(
 		),
 	)
 
-	esp.transactionMutex.Lock()
-	defer esp.transactionMutex.Unlock()
+	bsp.transactionMutex.Lock()
+	defer bsp.transactionMutex.Unlock()
 
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *esp.transactorOptions
+	*transactorOptions = *bsp.transactorOptions
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1536,22 +1536,22 @@ func (esp *EcdsaSortitionPool) WithdrawRewards(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	nonce, err := esp.nonceManager.CurrentNonce()
+	nonce, err := bsp.nonceManager.CurrentNonce()
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
 	}
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := esp.contract.WithdrawRewards(
+	transaction, err := bsp.contract.WithdrawRewards(
 		transactorOptions,
 		arg_operator,
 		arg_beneficiary,
 	)
 	if err != nil {
-		return transaction, esp.errorResolver.ResolveError(
+		return transaction, bsp.errorResolver.ResolveError(
 			err,
-			esp.transactorOptions.From,
+			bsp.transactorOptions.From,
 			nil,
 			"withdrawRewards",
 			arg_operator,
@@ -1559,13 +1559,13 @@ func (esp *EcdsaSortitionPool) WithdrawRewards(
 		)
 	}
 
-	espLogger.Infof(
+	bspLogger.Infof(
 		"submitted transaction withdrawRewards with id: [%s] and nonce [%v]",
 		transaction.Hash(),
 		transaction.Nonce(),
 	)
 
-	go esp.miningWaiter.ForceMining(
+	go bsp.miningWaiter.ForceMining(
 		transaction,
 		transactorOptions,
 		func(newTransactorOptions *bind.TransactOpts) (*types.Transaction, error) {
@@ -1579,15 +1579,15 @@ func (esp *EcdsaSortitionPool) WithdrawRewards(
 				newTransactorOptions.GasLimit = transactorOptions.GasLimit
 			}
 
-			transaction, err := esp.contract.WithdrawRewards(
+			transaction, err := bsp.contract.WithdrawRewards(
 				newTransactorOptions,
 				arg_operator,
 				arg_beneficiary,
 			)
 			if err != nil {
-				return nil, esp.errorResolver.ResolveError(
+				return nil, bsp.errorResolver.ResolveError(
 					err,
-					esp.transactorOptions.From,
+					bsp.transactorOptions.From,
 					nil,
 					"withdrawRewards",
 					arg_operator,
@@ -1595,7 +1595,7 @@ func (esp *EcdsaSortitionPool) WithdrawRewards(
 				)
 			}
 
-			espLogger.Infof(
+			bspLogger.Infof(
 				"submitted transaction withdrawRewards with id: [%s] and nonce [%v]",
 				transaction.Hash(),
 				transaction.Nonce(),
@@ -1605,13 +1605,13 @@ func (esp *EcdsaSortitionPool) WithdrawRewards(
 		},
 	)
 
-	esp.nonceManager.IncrementNonce()
+	bsp.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (esp *EcdsaSortitionPool) CallWithdrawRewards(
+func (bsp *BeaconSortitionPool) CallWithdrawRewards(
 	arg_operator common.Address,
 	arg_beneficiary common.Address,
 	blockNumber *big.Int,
@@ -1619,12 +1619,12 @@ func (esp *EcdsaSortitionPool) CallWithdrawRewards(
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.transactorOptions.From,
+		bsp.transactorOptions.From,
 		blockNumber, nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"withdrawRewards",
 		&result,
 		arg_operator,
@@ -1634,18 +1634,18 @@ func (esp *EcdsaSortitionPool) CallWithdrawRewards(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) WithdrawRewardsGasEstimate(
+func (bsp *BeaconSortitionPool) WithdrawRewardsGasEstimate(
 	arg_operator common.Address,
 	arg_beneficiary common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := chainutil.EstimateGas(
-		esp.callerOptions.From,
-		esp.contractAddress,
+		bsp.callerOptions.From,
+		bsp.contractAddress,
 		"withdrawRewards",
-		esp.contractABI,
-		esp.transactor,
+		bsp.contractABI,
+		bsp.transactor,
 		arg_operator,
 		arg_beneficiary,
 	)
@@ -1655,18 +1655,18 @@ func (esp *EcdsaSortitionPool) WithdrawRewardsGasEstimate(
 
 // ----- Const Methods ------
 
-func (esp *EcdsaSortitionPool) CanRestoreRewardEligibility(
+func (bsp *BeaconSortitionPool) CanRestoreRewardEligibility(
 	arg_operator uint32,
 ) (bool, error) {
-	result, err := esp.contract.CanRestoreRewardEligibility(
-		esp.callerOptions,
+	result, err := bsp.contract.CanRestoreRewardEligibility(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"canRestoreRewardEligibility",
 			arg_operator,
@@ -1676,20 +1676,20 @@ func (esp *EcdsaSortitionPool) CanRestoreRewardEligibility(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) CanRestoreRewardEligibilityAtBlock(
+func (bsp *BeaconSortitionPool) CanRestoreRewardEligibilityAtBlock(
 	arg_operator uint32,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"canRestoreRewardEligibility",
 		&result,
 		arg_operator,
@@ -1698,18 +1698,18 @@ func (esp *EcdsaSortitionPool) CanRestoreRewardEligibilityAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetAvailableRewards(
+func (bsp *BeaconSortitionPool) GetAvailableRewards(
 	arg_operator common.Address,
 ) (*big.Int, error) {
-	result, err := esp.contract.GetAvailableRewards(
-		esp.callerOptions,
+	result, err := bsp.contract.GetAvailableRewards(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"getAvailableRewards",
 			arg_operator,
@@ -1719,20 +1719,20 @@ func (esp *EcdsaSortitionPool) GetAvailableRewards(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetAvailableRewardsAtBlock(
+func (bsp *BeaconSortitionPool) GetAvailableRewardsAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"getAvailableRewards",
 		&result,
 		arg_operator,
@@ -1741,18 +1741,18 @@ func (esp *EcdsaSortitionPool) GetAvailableRewardsAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetIDOperator(
+func (bsp *BeaconSortitionPool) GetIDOperator(
 	arg_id uint32,
 ) (common.Address, error) {
-	result, err := esp.contract.GetIDOperator(
-		esp.callerOptions,
+	result, err := bsp.contract.GetIDOperator(
+		bsp.callerOptions,
 		arg_id,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"getIDOperator",
 			arg_id,
@@ -1762,20 +1762,20 @@ func (esp *EcdsaSortitionPool) GetIDOperator(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetIDOperatorAtBlock(
+func (bsp *BeaconSortitionPool) GetIDOperatorAtBlock(
 	arg_id uint32,
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"getIDOperator",
 		&result,
 		arg_id,
@@ -1784,18 +1784,18 @@ func (esp *EcdsaSortitionPool) GetIDOperatorAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetIDOperators(
+func (bsp *BeaconSortitionPool) GetIDOperators(
 	arg_ids []uint32,
 ) ([]common.Address, error) {
-	result, err := esp.contract.GetIDOperators(
-		esp.callerOptions,
+	result, err := bsp.contract.GetIDOperators(
+		bsp.callerOptions,
 		arg_ids,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"getIDOperators",
 			arg_ids,
@@ -1805,20 +1805,20 @@ func (esp *EcdsaSortitionPool) GetIDOperators(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetIDOperatorsAtBlock(
+func (bsp *BeaconSortitionPool) GetIDOperatorsAtBlock(
 	arg_ids []uint32,
 	blockNumber *big.Int,
 ) ([]common.Address, error) {
 	var result []common.Address
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"getIDOperators",
 		&result,
 		arg_ids,
@@ -1827,18 +1827,18 @@ func (esp *EcdsaSortitionPool) GetIDOperatorsAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetOperatorID(
+func (bsp *BeaconSortitionPool) GetOperatorID(
 	arg_operator common.Address,
 ) (uint32, error) {
-	result, err := esp.contract.GetOperatorID(
-		esp.callerOptions,
+	result, err := bsp.contract.GetOperatorID(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"getOperatorID",
 			arg_operator,
@@ -1848,20 +1848,20 @@ func (esp *EcdsaSortitionPool) GetOperatorID(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetOperatorIDAtBlock(
+func (bsp *BeaconSortitionPool) GetOperatorIDAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (uint32, error) {
 	var result uint32
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"getOperatorID",
 		&result,
 		arg_operator,
@@ -1870,18 +1870,18 @@ func (esp *EcdsaSortitionPool) GetOperatorIDAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetPoolWeight(
+func (bsp *BeaconSortitionPool) GetPoolWeight(
 	arg_operator common.Address,
 ) (*big.Int, error) {
-	result, err := esp.contract.GetPoolWeight(
-		esp.callerOptions,
+	result, err := bsp.contract.GetPoolWeight(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"getPoolWeight",
 			arg_operator,
@@ -1891,20 +1891,20 @@ func (esp *EcdsaSortitionPool) GetPoolWeight(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) GetPoolWeightAtBlock(
+func (bsp *BeaconSortitionPool) GetPoolWeightAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"getPoolWeight",
 		&result,
 		arg_operator,
@@ -1913,15 +1913,15 @@ func (esp *EcdsaSortitionPool) GetPoolWeightAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IneligibleEarnedRewards() (*big.Int, error) {
-	result, err := esp.contract.IneligibleEarnedRewards(
-		esp.callerOptions,
+func (bsp *BeaconSortitionPool) IneligibleEarnedRewards() (*big.Int, error) {
+	result, err := bsp.contract.IneligibleEarnedRewards(
+		bsp.callerOptions,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"ineligibleEarnedRewards",
 		)
@@ -1930,19 +1930,19 @@ func (esp *EcdsaSortitionPool) IneligibleEarnedRewards() (*big.Int, error) {
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IneligibleEarnedRewardsAtBlock(
+func (bsp *BeaconSortitionPool) IneligibleEarnedRewardsAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"ineligibleEarnedRewards",
 		&result,
 	)
@@ -1950,18 +1950,18 @@ func (esp *EcdsaSortitionPool) IneligibleEarnedRewardsAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsEligibleForRewards(
+func (bsp *BeaconSortitionPool) IsEligibleForRewards(
 	arg_operator uint32,
 ) (bool, error) {
-	result, err := esp.contract.IsEligibleForRewards(
-		esp.callerOptions,
+	result, err := bsp.contract.IsEligibleForRewards(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"isEligibleForRewards",
 			arg_operator,
@@ -1971,20 +1971,20 @@ func (esp *EcdsaSortitionPool) IsEligibleForRewards(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsEligibleForRewardsAtBlock(
+func (bsp *BeaconSortitionPool) IsEligibleForRewardsAtBlock(
 	arg_operator uint32,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"isEligibleForRewards",
 		&result,
 		arg_operator,
@@ -1993,15 +1993,15 @@ func (esp *EcdsaSortitionPool) IsEligibleForRewardsAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsLocked() (bool, error) {
-	result, err := esp.contract.IsLocked(
-		esp.callerOptions,
+func (bsp *BeaconSortitionPool) IsLocked() (bool, error) {
+	result, err := bsp.contract.IsLocked(
+		bsp.callerOptions,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"isLocked",
 		)
@@ -2010,19 +2010,19 @@ func (esp *EcdsaSortitionPool) IsLocked() (bool, error) {
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsLockedAtBlock(
+func (bsp *BeaconSortitionPool) IsLockedAtBlock(
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"isLocked",
 		&result,
 	)
@@ -2030,18 +2030,18 @@ func (esp *EcdsaSortitionPool) IsLockedAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsOperatorInPool(
+func (bsp *BeaconSortitionPool) IsOperatorInPool(
 	arg_operator common.Address,
 ) (bool, error) {
-	result, err := esp.contract.IsOperatorInPool(
-		esp.callerOptions,
+	result, err := bsp.contract.IsOperatorInPool(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"isOperatorInPool",
 			arg_operator,
@@ -2051,20 +2051,20 @@ func (esp *EcdsaSortitionPool) IsOperatorInPool(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsOperatorInPoolAtBlock(
+func (bsp *BeaconSortitionPool) IsOperatorInPoolAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"isOperatorInPool",
 		&result,
 		arg_operator,
@@ -2073,18 +2073,18 @@ func (esp *EcdsaSortitionPool) IsOperatorInPoolAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsOperatorRegistered(
+func (bsp *BeaconSortitionPool) IsOperatorRegistered(
 	arg_operator common.Address,
 ) (bool, error) {
-	result, err := esp.contract.IsOperatorRegistered(
-		esp.callerOptions,
+	result, err := bsp.contract.IsOperatorRegistered(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"isOperatorRegistered",
 			arg_operator,
@@ -2094,20 +2094,20 @@ func (esp *EcdsaSortitionPool) IsOperatorRegistered(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsOperatorRegisteredAtBlock(
+func (bsp *BeaconSortitionPool) IsOperatorRegisteredAtBlock(
 	arg_operator common.Address,
 	blockNumber *big.Int,
 ) (bool, error) {
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"isOperatorRegistered",
 		&result,
 		arg_operator,
@@ -2116,20 +2116,20 @@ func (esp *EcdsaSortitionPool) IsOperatorRegisteredAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsOperatorUpToDate(
+func (bsp *BeaconSortitionPool) IsOperatorUpToDate(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 ) (bool, error) {
-	result, err := esp.contract.IsOperatorUpToDate(
-		esp.callerOptions,
+	result, err := bsp.contract.IsOperatorUpToDate(
+		bsp.callerOptions,
 		arg_operator,
 		arg_authorizedStake,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"isOperatorUpToDate",
 			arg_operator,
@@ -2140,7 +2140,7 @@ func (esp *EcdsaSortitionPool) IsOperatorUpToDate(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) IsOperatorUpToDateAtBlock(
+func (bsp *BeaconSortitionPool) IsOperatorUpToDateAtBlock(
 	arg_operator common.Address,
 	arg_authorizedStake *big.Int,
 	blockNumber *big.Int,
@@ -2148,13 +2148,13 @@ func (esp *EcdsaSortitionPool) IsOperatorUpToDateAtBlock(
 	var result bool
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"isOperatorUpToDate",
 		&result,
 		arg_operator,
@@ -2164,15 +2164,15 @@ func (esp *EcdsaSortitionPool) IsOperatorUpToDateAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) OperatorsInPool() (*big.Int, error) {
-	result, err := esp.contract.OperatorsInPool(
-		esp.callerOptions,
+func (bsp *BeaconSortitionPool) OperatorsInPool() (*big.Int, error) {
+	result, err := bsp.contract.OperatorsInPool(
+		bsp.callerOptions,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"operatorsInPool",
 		)
@@ -2181,19 +2181,19 @@ func (esp *EcdsaSortitionPool) OperatorsInPool() (*big.Int, error) {
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) OperatorsInPoolAtBlock(
+func (bsp *BeaconSortitionPool) OperatorsInPoolAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"operatorsInPool",
 		&result,
 	)
@@ -2201,15 +2201,15 @@ func (esp *EcdsaSortitionPool) OperatorsInPoolAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) Owner() (common.Address, error) {
-	result, err := esp.contract.Owner(
-		esp.callerOptions,
+func (bsp *BeaconSortitionPool) Owner() (common.Address, error) {
+	result, err := bsp.contract.Owner(
+		bsp.callerOptions,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"owner",
 		)
@@ -2218,19 +2218,19 @@ func (esp *EcdsaSortitionPool) Owner() (common.Address, error) {
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) OwnerAtBlock(
+func (bsp *BeaconSortitionPool) OwnerAtBlock(
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"owner",
 		&result,
 	)
@@ -2238,15 +2238,15 @@ func (esp *EcdsaSortitionPool) OwnerAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) PoolWeightDivisor() (*big.Int, error) {
-	result, err := esp.contract.PoolWeightDivisor(
-		esp.callerOptions,
+func (bsp *BeaconSortitionPool) PoolWeightDivisor() (*big.Int, error) {
+	result, err := bsp.contract.PoolWeightDivisor(
+		bsp.callerOptions,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"poolWeightDivisor",
 		)
@@ -2255,19 +2255,19 @@ func (esp *EcdsaSortitionPool) PoolWeightDivisor() (*big.Int, error) {
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) PoolWeightDivisorAtBlock(
+func (bsp *BeaconSortitionPool) PoolWeightDivisorAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"poolWeightDivisor",
 		&result,
 	)
@@ -2275,15 +2275,15 @@ func (esp *EcdsaSortitionPool) PoolWeightDivisorAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) RewardToken() (common.Address, error) {
-	result, err := esp.contract.RewardToken(
-		esp.callerOptions,
+func (bsp *BeaconSortitionPool) RewardToken() (common.Address, error) {
+	result, err := bsp.contract.RewardToken(
+		bsp.callerOptions,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"rewardToken",
 		)
@@ -2292,19 +2292,19 @@ func (esp *EcdsaSortitionPool) RewardToken() (common.Address, error) {
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) RewardTokenAtBlock(
+func (bsp *BeaconSortitionPool) RewardTokenAtBlock(
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"rewardToken",
 		&result,
 	)
@@ -2312,18 +2312,18 @@ func (esp *EcdsaSortitionPool) RewardTokenAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAt(
+func (bsp *BeaconSortitionPool) RewardsEligibilityRestorableAt(
 	arg_operator uint32,
 ) (*big.Int, error) {
-	result, err := esp.contract.RewardsEligibilityRestorableAt(
-		esp.callerOptions,
+	result, err := bsp.contract.RewardsEligibilityRestorableAt(
+		bsp.callerOptions,
 		arg_operator,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"rewardsEligibilityRestorableAt",
 			arg_operator,
@@ -2333,20 +2333,20 @@ func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAt(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAtAtBlock(
+func (bsp *BeaconSortitionPool) RewardsEligibilityRestorableAtAtBlock(
 	arg_operator uint32,
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"rewardsEligibilityRestorableAt",
 		&result,
 		arg_operator,
@@ -2355,20 +2355,20 @@ func (esp *EcdsaSortitionPool) RewardsEligibilityRestorableAtAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) SelectGroup(
+func (bsp *BeaconSortitionPool) SelectGroup(
 	arg_groupSize *big.Int,
 	arg_seed [32]byte,
 ) ([]uint32, error) {
-	result, err := esp.contract.SelectGroup(
-		esp.callerOptions,
+	result, err := bsp.contract.SelectGroup(
+		bsp.callerOptions,
 		arg_groupSize,
 		arg_seed,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"selectGroup",
 			arg_groupSize,
@@ -2379,7 +2379,7 @@ func (esp *EcdsaSortitionPool) SelectGroup(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) SelectGroupAtBlock(
+func (bsp *BeaconSortitionPool) SelectGroupAtBlock(
 	arg_groupSize *big.Int,
 	arg_seed [32]byte,
 	blockNumber *big.Int,
@@ -2387,13 +2387,13 @@ func (esp *EcdsaSortitionPool) SelectGroupAtBlock(
 	var result []uint32
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"selectGroup",
 		&result,
 		arg_groupSize,
@@ -2403,15 +2403,15 @@ func (esp *EcdsaSortitionPool) SelectGroupAtBlock(
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) TotalWeight() (*big.Int, error) {
-	result, err := esp.contract.TotalWeight(
-		esp.callerOptions,
+func (bsp *BeaconSortitionPool) TotalWeight() (*big.Int, error) {
+	result, err := bsp.contract.TotalWeight(
+		bsp.callerOptions,
 	)
 
 	if err != nil {
-		return result, esp.errorResolver.ResolveError(
+		return result, bsp.errorResolver.ResolveError(
 			err,
-			esp.callerOptions.From,
+			bsp.callerOptions.From,
 			nil,
 			"totalWeight",
 		)
@@ -2420,19 +2420,19 @@ func (esp *EcdsaSortitionPool) TotalWeight() (*big.Int, error) {
 	return result, err
 }
 
-func (esp *EcdsaSortitionPool) TotalWeightAtBlock(
+func (bsp *BeaconSortitionPool) TotalWeightAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
 	err := chainutil.CallAtBlock(
-		esp.callerOptions.From,
+		bsp.callerOptions.From,
 		blockNumber,
 		nil,
-		esp.contractABI,
-		esp.caller,
-		esp.errorResolver,
-		esp.contractAddress,
+		bsp.contractABI,
+		bsp.caller,
+		bsp.errorResolver,
+		bsp.contractAddress,
 		"totalWeight",
 		&result,
 	)
@@ -2442,9 +2442,9 @@ func (esp *EcdsaSortitionPool) TotalWeightAtBlock(
 
 // ------ Events -------
 
-func (esp *EcdsaSortitionPool) IneligibleForRewardsEvent(
+func (bsp *BeaconSortitionPool) IneligibleForRewardsEvent(
 	opts *ethlike.SubscribeOpts,
-) *EspIneligibleForRewardsSubscription {
+) *BspIneligibleForRewardsSubscription {
 	if opts == nil {
 		opts = new(ethlike.SubscribeOpts)
 	}
@@ -2455,27 +2455,27 @@ func (esp *EcdsaSortitionPool) IneligibleForRewardsEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &EspIneligibleForRewardsSubscription{
-		esp,
+	return &BspIneligibleForRewardsSubscription{
+		bsp,
 		opts,
 	}
 }
 
-type EspIneligibleForRewardsSubscription struct {
-	contract *EcdsaSortitionPool
+type BspIneligibleForRewardsSubscription struct {
+	contract *BeaconSortitionPool
 	opts     *ethlike.SubscribeOpts
 }
 
-type ecdsaSortitionPoolIneligibleForRewardsFunc func(
+type beaconSortitionPoolIneligibleForRewardsFunc func(
 	Ids []uint32,
 	Until *big.Int,
 	blockNumber uint64,
 )
 
-func (ifrs *EspIneligibleForRewardsSubscription) OnEvent(
-	handler ecdsaSortitionPoolIneligibleForRewardsFunc,
+func (ifrs *BspIneligibleForRewardsSubscription) OnEvent(
+	handler beaconSortitionPoolIneligibleForRewardsFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.EcdsaSortitionPoolIneligibleForRewards)
+	eventChan := make(chan *abi.BeaconSortitionPoolIneligibleForRewards)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -2500,8 +2500,8 @@ func (ifrs *EspIneligibleForRewardsSubscription) OnEvent(
 	})
 }
 
-func (ifrs *EspIneligibleForRewardsSubscription) Pipe(
-	sink chan *abi.EcdsaSortitionPoolIneligibleForRewards,
+func (ifrs *BspIneligibleForRewardsSubscription) Pipe(
+	sink chan *abi.BeaconSortitionPoolIneligibleForRewards,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
@@ -2514,14 +2514,14 @@ func (ifrs *EspIneligibleForRewardsSubscription) Pipe(
 			case <-ticker.C:
 				lastBlock, err := ifrs.contract.blockCounter.CurrentBlock()
 				if err != nil {
-					espLogger.Errorf(
+					bspLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
 				fromBlock := lastBlock - ifrs.opts.PastBlocks
 
-				espLogger.Infof(
+				bspLogger.Infof(
 					"subscription monitoring fetching past IneligibleForRewards events "+
 						"starting from block [%v]",
 					fromBlock,
@@ -2531,13 +2531,13 @@ func (ifrs *EspIneligibleForRewardsSubscription) Pipe(
 					nil,
 				)
 				if err != nil {
-					espLogger.Errorf(
+					bspLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 					continue
 				}
-				espLogger.Infof(
+				bspLogger.Infof(
 					"subscription monitoring fetched [%v] past IneligibleForRewards events",
 					len(events),
 				)
@@ -2559,18 +2559,18 @@ func (ifrs *EspIneligibleForRewardsSubscription) Pipe(
 	})
 }
 
-func (esp *EcdsaSortitionPool) watchIneligibleForRewards(
-	sink chan *abi.EcdsaSortitionPoolIneligibleForRewards,
+func (bsp *BeaconSortitionPool) watchIneligibleForRewards(
+	sink chan *abi.BeaconSortitionPoolIneligibleForRewards,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return esp.contract.WatchIneligibleForRewards(
+		return bsp.contract.WatchIneligibleForRewards(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 		)
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		bspLogger.Errorf(
 			"subscription to event IneligibleForRewards had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2579,7 +2579,7 @@ func (esp *EcdsaSortitionPool) watchIneligibleForRewards(
 	}
 
 	subscriptionFailedFn := func(err error) {
-		espLogger.Errorf(
+		bspLogger.Errorf(
 			"subscription to event IneligibleForRewards failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
@@ -2596,11 +2596,11 @@ func (esp *EcdsaSortitionPool) watchIneligibleForRewards(
 	)
 }
 
-func (esp *EcdsaSortitionPool) PastIneligibleForRewardsEvents(
+func (bsp *BeaconSortitionPool) PastIneligibleForRewardsEvents(
 	startBlock uint64,
 	endBlock *uint64,
-) ([]*abi.EcdsaSortitionPoolIneligibleForRewards, error) {
-	iterator, err := esp.contract.FilterIneligibleForRewards(
+) ([]*abi.BeaconSortitionPoolIneligibleForRewards, error) {
+	iterator, err := bsp.contract.FilterIneligibleForRewards(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -2613,7 +2613,7 @@ func (esp *EcdsaSortitionPool) PastIneligibleForRewardsEvents(
 		)
 	}
 
-	events := make([]*abi.EcdsaSortitionPoolIneligibleForRewards, 0)
+	events := make([]*abi.BeaconSortitionPoolIneligibleForRewards, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -2623,11 +2623,11 @@ func (esp *EcdsaSortitionPool) PastIneligibleForRewardsEvents(
 	return events, nil
 }
 
-func (esp *EcdsaSortitionPool) OwnershipTransferredEvent(
+func (bsp *BeaconSortitionPool) OwnershipTransferredEvent(
 	opts *ethlike.SubscribeOpts,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
-) *EspOwnershipTransferredSubscription {
+) *BspOwnershipTransferredSubscription {
 	if opts == nil {
 		opts = new(ethlike.SubscribeOpts)
 	}
@@ -2638,31 +2638,31 @@ func (esp *EcdsaSortitionPool) OwnershipTransferredEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &EspOwnershipTransferredSubscription{
-		esp,
+	return &BspOwnershipTransferredSubscription{
+		bsp,
 		opts,
 		previousOwnerFilter,
 		newOwnerFilter,
 	}
 }
 
-type EspOwnershipTransferredSubscription struct {
-	contract            *EcdsaSortitionPool
+type BspOwnershipTransferredSubscription struct {
+	contract            *BeaconSortitionPool
 	opts                *ethlike.SubscribeOpts
 	previousOwnerFilter []common.Address
 	newOwnerFilter      []common.Address
 }
 
-type ecdsaSortitionPoolOwnershipTransferredFunc func(
+type beaconSortitionPoolOwnershipTransferredFunc func(
 	PreviousOwner common.Address,
 	NewOwner common.Address,
 	blockNumber uint64,
 )
 
-func (ots *EspOwnershipTransferredSubscription) OnEvent(
-	handler ecdsaSortitionPoolOwnershipTransferredFunc,
+func (ots *BspOwnershipTransferredSubscription) OnEvent(
+	handler beaconSortitionPoolOwnershipTransferredFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.EcdsaSortitionPoolOwnershipTransferred)
+	eventChan := make(chan *abi.BeaconSortitionPoolOwnershipTransferred)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -2687,8 +2687,8 @@ func (ots *EspOwnershipTransferredSubscription) OnEvent(
 	})
 }
 
-func (ots *EspOwnershipTransferredSubscription) Pipe(
-	sink chan *abi.EcdsaSortitionPoolOwnershipTransferred,
+func (ots *BspOwnershipTransferredSubscription) Pipe(
+	sink chan *abi.BeaconSortitionPoolOwnershipTransferred,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
@@ -2701,14 +2701,14 @@ func (ots *EspOwnershipTransferredSubscription) Pipe(
 			case <-ticker.C:
 				lastBlock, err := ots.contract.blockCounter.CurrentBlock()
 				if err != nil {
-					espLogger.Errorf(
+					bspLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
 				fromBlock := lastBlock - ots.opts.PastBlocks
 
-				espLogger.Infof(
+				bspLogger.Infof(
 					"subscription monitoring fetching past OwnershipTransferred events "+
 						"starting from block [%v]",
 					fromBlock,
@@ -2720,13 +2720,13 @@ func (ots *EspOwnershipTransferredSubscription) Pipe(
 					ots.newOwnerFilter,
 				)
 				if err != nil {
-					espLogger.Errorf(
+					bspLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 					continue
 				}
-				espLogger.Infof(
+				bspLogger.Infof(
 					"subscription monitoring fetched [%v] past OwnershipTransferred events",
 					len(events),
 				)
@@ -2750,13 +2750,13 @@ func (ots *EspOwnershipTransferredSubscription) Pipe(
 	})
 }
 
-func (esp *EcdsaSortitionPool) watchOwnershipTransferred(
-	sink chan *abi.EcdsaSortitionPoolOwnershipTransferred,
+func (bsp *BeaconSortitionPool) watchOwnershipTransferred(
+	sink chan *abi.BeaconSortitionPoolOwnershipTransferred,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return esp.contract.WatchOwnershipTransferred(
+		return bsp.contract.WatchOwnershipTransferred(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 			previousOwnerFilter,
@@ -2765,7 +2765,7 @@ func (esp *EcdsaSortitionPool) watchOwnershipTransferred(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		bspLogger.Errorf(
 			"subscription to event OwnershipTransferred had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2774,7 +2774,7 @@ func (esp *EcdsaSortitionPool) watchOwnershipTransferred(
 	}
 
 	subscriptionFailedFn := func(err error) {
-		espLogger.Errorf(
+		bspLogger.Errorf(
 			"subscription to event OwnershipTransferred failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
@@ -2791,13 +2791,13 @@ func (esp *EcdsaSortitionPool) watchOwnershipTransferred(
 	)
 }
 
-func (esp *EcdsaSortitionPool) PastOwnershipTransferredEvents(
+func (bsp *BeaconSortitionPool) PastOwnershipTransferredEvents(
 	startBlock uint64,
 	endBlock *uint64,
 	previousOwnerFilter []common.Address,
 	newOwnerFilter []common.Address,
-) ([]*abi.EcdsaSortitionPoolOwnershipTransferred, error) {
-	iterator, err := esp.contract.FilterOwnershipTransferred(
+) ([]*abi.BeaconSortitionPoolOwnershipTransferred, error) {
+	iterator, err := bsp.contract.FilterOwnershipTransferred(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -2812,7 +2812,7 @@ func (esp *EcdsaSortitionPool) PastOwnershipTransferredEvents(
 		)
 	}
 
-	events := make([]*abi.EcdsaSortitionPoolOwnershipTransferred, 0)
+	events := make([]*abi.BeaconSortitionPoolOwnershipTransferred, 0)
 
 	for iterator.Next() {
 		event := iterator.Event
@@ -2822,11 +2822,11 @@ func (esp *EcdsaSortitionPool) PastOwnershipTransferredEvents(
 	return events, nil
 }
 
-func (esp *EcdsaSortitionPool) RewardEligibilityRestoredEvent(
+func (bsp *BeaconSortitionPool) RewardEligibilityRestoredEvent(
 	opts *ethlike.SubscribeOpts,
 	operatorFilter []common.Address,
 	idFilter []uint32,
-) *EspRewardEligibilityRestoredSubscription {
+) *BspRewardEligibilityRestoredSubscription {
 	if opts == nil {
 		opts = new(ethlike.SubscribeOpts)
 	}
@@ -2837,31 +2837,31 @@ func (esp *EcdsaSortitionPool) RewardEligibilityRestoredEvent(
 		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	return &EspRewardEligibilityRestoredSubscription{
-		esp,
+	return &BspRewardEligibilityRestoredSubscription{
+		bsp,
 		opts,
 		operatorFilter,
 		idFilter,
 	}
 }
 
-type EspRewardEligibilityRestoredSubscription struct {
-	contract       *EcdsaSortitionPool
+type BspRewardEligibilityRestoredSubscription struct {
+	contract       *BeaconSortitionPool
 	opts           *ethlike.SubscribeOpts
 	operatorFilter []common.Address
 	idFilter       []uint32
 }
 
-type ecdsaSortitionPoolRewardEligibilityRestoredFunc func(
+type beaconSortitionPoolRewardEligibilityRestoredFunc func(
 	Operator common.Address,
 	Id uint32,
 	blockNumber uint64,
 )
 
-func (rers *EspRewardEligibilityRestoredSubscription) OnEvent(
-	handler ecdsaSortitionPoolRewardEligibilityRestoredFunc,
+func (rers *BspRewardEligibilityRestoredSubscription) OnEvent(
+	handler beaconSortitionPoolRewardEligibilityRestoredFunc,
 ) subscription.EventSubscription {
-	eventChan := make(chan *abi.EcdsaSortitionPoolRewardEligibilityRestored)
+	eventChan := make(chan *abi.BeaconSortitionPoolRewardEligibilityRestored)
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
@@ -2886,8 +2886,8 @@ func (rers *EspRewardEligibilityRestoredSubscription) OnEvent(
 	})
 }
 
-func (rers *EspRewardEligibilityRestoredSubscription) Pipe(
-	sink chan *abi.EcdsaSortitionPoolRewardEligibilityRestored,
+func (rers *BspRewardEligibilityRestoredSubscription) Pipe(
+	sink chan *abi.BeaconSortitionPoolRewardEligibilityRestored,
 ) subscription.EventSubscription {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	go func() {
@@ -2900,14 +2900,14 @@ func (rers *EspRewardEligibilityRestoredSubscription) Pipe(
 			case <-ticker.C:
 				lastBlock, err := rers.contract.blockCounter.CurrentBlock()
 				if err != nil {
-					espLogger.Errorf(
+					bspLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 				}
 				fromBlock := lastBlock - rers.opts.PastBlocks
 
-				espLogger.Infof(
+				bspLogger.Infof(
 					"subscription monitoring fetching past RewardEligibilityRestored events "+
 						"starting from block [%v]",
 					fromBlock,
@@ -2919,13 +2919,13 @@ func (rers *EspRewardEligibilityRestoredSubscription) Pipe(
 					rers.idFilter,
 				)
 				if err != nil {
-					espLogger.Errorf(
+					bspLogger.Errorf(
 						"subscription failed to pull events: [%v]",
 						err,
 					)
 					continue
 				}
-				espLogger.Infof(
+				bspLogger.Infof(
 					"subscription monitoring fetched [%v] past RewardEligibilityRestored events",
 					len(events),
 				)
@@ -2949,13 +2949,13 @@ func (rers *EspRewardEligibilityRestoredSubscription) Pipe(
 	})
 }
 
-func (esp *EcdsaSortitionPool) watchRewardEligibilityRestored(
-	sink chan *abi.EcdsaSortitionPoolRewardEligibilityRestored,
+func (bsp *BeaconSortitionPool) watchRewardEligibilityRestored(
+	sink chan *abi.BeaconSortitionPoolRewardEligibilityRestored,
 	operatorFilter []common.Address,
 	idFilter []uint32,
 ) event.Subscription {
 	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
-		return esp.contract.WatchRewardEligibilityRestored(
+		return bsp.contract.WatchRewardEligibilityRestored(
 			&bind.WatchOpts{Context: ctx},
 			sink,
 			operatorFilter,
@@ -2964,7 +2964,7 @@ func (esp *EcdsaSortitionPool) watchRewardEligibilityRestored(
 	}
 
 	thresholdViolatedFn := func(elapsed time.Duration) {
-		espLogger.Errorf(
+		bspLogger.Errorf(
 			"subscription to event RewardEligibilityRestored had to be "+
 				"retried [%s] since the last attempt; please inspect "+
 				"host chain connectivity",
@@ -2973,7 +2973,7 @@ func (esp *EcdsaSortitionPool) watchRewardEligibilityRestored(
 	}
 
 	subscriptionFailedFn := func(err error) {
-		espLogger.Errorf(
+		bspLogger.Errorf(
 			"subscription to event RewardEligibilityRestored failed "+
 				"with error: [%v]; resubscription attempt will be "+
 				"performed",
@@ -2990,13 +2990,13 @@ func (esp *EcdsaSortitionPool) watchRewardEligibilityRestored(
 	)
 }
 
-func (esp *EcdsaSortitionPool) PastRewardEligibilityRestoredEvents(
+func (bsp *BeaconSortitionPool) PastRewardEligibilityRestoredEvents(
 	startBlock uint64,
 	endBlock *uint64,
 	operatorFilter []common.Address,
 	idFilter []uint32,
-) ([]*abi.EcdsaSortitionPoolRewardEligibilityRestored, error) {
-	iterator, err := esp.contract.FilterRewardEligibilityRestored(
+) ([]*abi.BeaconSortitionPoolRewardEligibilityRestored, error) {
+	iterator, err := bsp.contract.FilterRewardEligibilityRestored(
 		&bind.FilterOpts{
 			Start: startBlock,
 			End:   endBlock,
@@ -3011,7 +3011,7 @@ func (esp *EcdsaSortitionPool) PastRewardEligibilityRestoredEvents(
 		)
 	}
 
-	events := make([]*abi.EcdsaSortitionPoolRewardEligibilityRestored, 0)
+	events := make([]*abi.BeaconSortitionPoolRewardEligibilityRestored, 0)
 
 	for iterator.Next() {
 		event := iterator.Event

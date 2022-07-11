@@ -35,11 +35,11 @@ RUN go mod download
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
-COPY ./pkg/chain/common/gen $APP_DIR/pkg/chain/common/gen
-COPY ./pkg/chain/ecdsa/gen $APP_DIR/pkg/chain/ecdsa/gen
-COPY ./pkg/chain/random-beacon/gen $APP_DIR/pkg/chain/random-beacon/gen
-COPY ./pkg/chain/tbtc-v2/gen $APP_DIR/pkg/chain/tbtc-v2/gen
-COPY ./pkg/chain/threshold-network/gen $APP_DIR/pkg/chain/threshold-network/gen
+COPY ./pkg/chain/ethereum/common/gen $APP_DIR/pkg/chain/ethereum/common/gen
+COPY ./pkg/chain/ethereum/ecdsa/gen $APP_DIR/pkg/chain/ethereum/ecdsa/gen
+COPY ./pkg/chain/ethereum/beacon/gen $APP_DIR/pkg/chain/ethereum/beacon/gen
+COPY ./pkg/chain/ethereum/tbtc/gen $APP_DIR/pkg/chain/ethereum/tbtc/gen
+COPY ./pkg/chain/ethereum/threshold/gen $APP_DIR/pkg/chain/ethereum/threshold/gen
 COPY ./pkg/beacon/entry/gen $APP_DIR/pkg/beacon/entry/gen
 COPY ./pkg/beacon/gjkr/gen $APP_DIR/pkg/beacon/gjkr/gen
 COPY ./pkg/beacon/dkg/result/gen $APP_DIR/pkg/beacon/dkg/result/gen
