@@ -31,7 +31,7 @@ jobs:
 
       - name: Resolve latest contracts
         run: |
-          yarn upgrade \
+          yarn upgrade --exact \
             @keep-network/random-beacon \
             @keep-network/sortition-pools \
             @threshold-network/solidity-contracts
