@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/ecdsa/gen/contract"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
 )
 
 // Definitions of contract names.
