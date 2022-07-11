@@ -35,11 +35,6 @@ func MonitorPool(
 		return errOperatorUnknown
 	}
 
-	err = checkRewardsEligibility(chain)
-	if err != nil {
-		logger.Errorf("could not check rewards eligibility status: [%v]", err)
-	}
-
 	err = checkOperatorStatus(chain)
 	if err != nil {
 		logger.Errorf("could not check operator sortition pool status: [%v]", err)
@@ -62,58 +57,6 @@ func MonitorPool(
 			}
 		}
 	}()
-
-	return nil
-}
-
-func checkRewardsEligibility(chain Chain) error {
-	logger.Info("checking sortition pool rewards eligibility status")
-
-	isEligibleForRewards, err := chain.IsEligibleForRewards()
-	if err != nil {
-		return err
-	}
-
-	if isEligibleForRewards {
-		logger.Info("operator is eligibile for rewards")
-
-		isLocked, err := chain.IsPoolLocked()
-		if err != nil {
-			return err
-		}
-
-		if isLocked {
-			logger.Info("sortition pool state is locked, waiting with the update")
-
-			return nil
-		} else {
-			logger.Info("restoring eligibility for rewards")
-
-			err = chain.RestoreRewardEligibility()
-			if err != nil {
-				return err
-			}
-		}
-	} else {
-		logger.Info("operator is not eligibile for rewards")
-
-		canRestoreRewardEligibility, err := chain.CanRestoreRewardEligibility()
-		if err != nil {
-			return err
-		}
-
-		if canRestoreRewardEligibility {
-			logger.Info("restoring eligibility for rewards")
-
-			err = chain.RestoreRewardEligibility()
-			if err != nil {
-				return err
-			}
-		} else {
-			logger.Info("cannot restore eligibility for rewards, waiting with the update")
-		}
-
-	}
 
 	return nil
 }
@@ -168,6 +111,44 @@ func checkOperatorStatus(chain Chain) error {
 		err := chain.UpdateOperatorStatus()
 		if err != nil {
 			logger.Errorf("could not update the sortition pool: [%v]", err)
+		}
+	}
+
+	err = checkRewardsEligibility(chain)
+	if err != nil {
+		logger.Errorf("could not check for rewards eligibility [%v]", err)
+	}
+
+	return nil
+}
+
+func checkRewardsEligibility(chain Chain) error {
+	logger.Info("checking sortition pool rewards eligibility status")
+
+	isEligibleForRewards, err := chain.IsEligibleForRewards()
+	if err != nil {
+		return err
+	}
+
+	if isEligibleForRewards {
+		logger.Info("operator is eligibile for rewards")
+	} else {
+		logger.Info("operator is not eligibile for rewards")
+
+		canRestoreRewardEligibility, err := chain.CanRestoreRewardEligibility()
+		if err != nil {
+			return err
+		}
+
+		if canRestoreRewardEligibility {
+			logger.Info("restoring eligibility for rewards")
+
+			err = chain.RestoreRewardEligibility()
+			if err != nil {
+				return err
+			}
+		} else {
+			logger.Info("cannot restore eligibility for rewards")
 		}
 	}
 

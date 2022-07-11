@@ -170,23 +170,21 @@ func (bc *BeaconChain) UpdateOperatorStatus() error {
 	return err
 }
 
-// TODO: add description
+// IsEligibleForRewards checks whether the operator is eligible for rewards or not.
 func (bc *BeaconChain) IsEligibleForRewards() (bool, error) {
-	// TODO: implement
-
-	return false, nil
+	// TODO: check if bc.key.Id.ID() is the right argument
+	return bc.sortitionPool.IsEligibleForRewards(bc.key.Id.ID())
 }
 
-// TODO: add description
+// Checks whether the operator is able to restore their eligibility for rewards
+// right away.
 func (bc *BeaconChain) CanRestoreRewardEligibility() (bool, error) {
-	// TODO: implement
-
-	return false, nil
+	// TODO: check if bc.key.Id.ID() is the right argument
+	return bc.sortitionPool.CanRestoreRewardEligibility(bc.key.Id.ID())
 }
 
-// TODO: add description
+// Restores reward eligibility for a given operator.
 func (bc *BeaconChain) RestoreRewardEligibility() error {
-	// TODO: implement
-
-	return nil
+	_, err := bc.sortitionPool.RestoreRewardEligibility(bc.key.Address)
+	return err
 }
