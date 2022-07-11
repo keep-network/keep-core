@@ -7,7 +7,7 @@ ifndef npm_package_tag
 endif
 
 contracts_dir =_contracts
-artifacts_dir = $(realpath ${contracts_dir}/package/export/artifacts)
+artifacts_dir = $(realpath ${contracts_dir}/package/artifacts)
 
 # Go bindings generated for the solidity contracts.
 contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
