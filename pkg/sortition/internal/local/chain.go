@@ -12,7 +12,7 @@ var errOperatorUnknown = fmt.Errorf("operator not registered for the staking pro
 var errAuthorizationBelowMinimum = fmt.Errorf("authorization below the minimum")
 var errOperatorAlreadyRegisteredInPool = fmt.Errorf("operator is already registered in the pool")
 
-type localChain struct {
+type Chain struct {
 	operatorAddress chain.Address
 
 	operatorToStakingProvider      map[chain.Address]chain.Address
@@ -30,8 +30,8 @@ type localChain struct {
 	isPoolLocked bool
 }
 
-func Connect(operatorAddress chain.Address) *localChain {
-	return &localChain{
+func Connect(operatorAddress chain.Address) *Chain {
+	return &Chain{
 		operatorAddress:           operatorAddress,
 		operatorToStakingProvider: make(map[chain.Address]chain.Address),
 		sortitionPool:             make(map[chain.Address]*big.Int),
@@ -40,34 +40,34 @@ func Connect(operatorAddress chain.Address) *localChain {
 }
 
 // This is a test util function to setup the chain
-func (lc *localChain) RegisterOperator(stakingProvider chain.Address, operator chain.Address) {
-	lc.operatorToStakingProviderMutex.Lock()
-	defer lc.operatorToStakingProviderMutex.Unlock()
+func (c *Chain) RegisterOperator(stakingProvider chain.Address, operator chain.Address) {
+	c.operatorToStakingProviderMutex.Lock()
+	defer c.operatorToStakingProviderMutex.Unlock()
 
-	lc.operatorToStakingProvider[lc.operatorAddress] = stakingProvider
+	c.operatorToStakingProvider[c.operatorAddress] = stakingProvider
 }
 
 // This is a test util function to setup the chain
-func (lc *localChain) SetEligibleStake(stakingProvider chain.Address, stake *big.Int) {
-	lc.eligibleStakeMutex.Lock()
-	defer lc.eligibleStakeMutex.Unlock()
+func (c *Chain) SetEligibleStake(stakingProvider chain.Address, stake *big.Int) {
+	c.eligibleStakeMutex.Lock()
+	defer c.eligibleStakeMutex.Unlock()
 
-	lc.eligibleStake[stakingProvider] = stake
+	c.eligibleStake[stakingProvider] = stake
 }
 
-func (lc *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
-	lc.operatorToStakingProviderMutex.RLock()
-	defer lc.operatorToStakingProviderMutex.RUnlock()
+func (c *Chain) OperatorToStakingProvider() (chain.Address, bool, error) {
+	c.operatorToStakingProviderMutex.RLock()
+	defer c.operatorToStakingProviderMutex.RUnlock()
 
-	stakingProvider, ok := lc.operatorToStakingProvider[lc.operatorAddress]
+	stakingProvider, ok := c.operatorToStakingProvider[c.operatorAddress]
 	return stakingProvider, ok, nil
 }
 
-func (lc *localChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
-	lc.eligibleStakeMutex.RLock()
-	defer lc.eligibleStakeMutex.RUnlock()
+func (c *Chain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
+	c.eligibleStakeMutex.RLock()
+	defer c.eligibleStakeMutex.RUnlock()
 
-	eligibleStake, ok := lc.eligibleStake[stakingProvider]
+	eligibleStake, ok := c.eligibleStake[stakingProvider]
 	if !ok {
 		return big.NewInt(0), nil
 	}
@@ -75,33 +75,33 @@ func (lc *localChain) EligibleStake(stakingProvider chain.Address) (*big.Int, er
 	return eligibleStake, nil
 }
 
-func (lc *localChain) IsPoolLocked() (bool, error) {
-	return lc.isPoolLocked, nil
+func (c *Chain) IsPoolLocked() (bool, error) {
+	return c.isPoolLocked, nil
 }
 
-func (lc *localChain) IsOperatorInPool() (bool, error) {
-	lc.sortitionPoolMutex.RLock()
-	defer lc.sortitionPoolMutex.RUnlock()
+func (c *Chain) IsOperatorInPool() (bool, error) {
+	c.sortitionPoolMutex.RLock()
+	defer c.sortitionPoolMutex.RUnlock()
 
-	_, ok := lc.sortitionPool[lc.operatorAddress]
+	_, ok := c.sortitionPool[c.operatorAddress]
 
 	return ok, nil
 }
 
-func (lc *localChain) IsOperatorUpToDate() (bool, error) {
-	lc.sortitionPoolMutex.RLock()
-	defer lc.sortitionPoolMutex.RUnlock()
+func (c *Chain) IsOperatorUpToDate() (bool, error) {
+	c.sortitionPoolMutex.RLock()
+	defer c.sortitionPoolMutex.RUnlock()
 
-	lc.eligibleStakeMutex.RLock()
-	defer lc.eligibleStakeMutex.RUnlock()
+	c.eligibleStakeMutex.RLock()
+	defer c.eligibleStakeMutex.RUnlock()
 
-	stakingProvider, isRegistered := lc.operatorToStakingProvider[lc.operatorAddress]
+	stakingProvider, isRegistered := c.operatorToStakingProvider[c.operatorAddress]
 	if !isRegistered {
 		return false, errOperatorUnknown
 	}
 
-	eligibleStake, hasStake := lc.eligibleStake[stakingProvider]
-	weight, isInPool := lc.sortitionPool[lc.operatorAddress]
+	eligibleStake, hasStake := c.eligibleStake[stakingProvider]
+	weight, isInPool := c.sortitionPool[c.operatorAddress]
 
 	if isInPool {
 		return weight.Cmp(eligibleStake) == 0, nil
@@ -110,47 +110,47 @@ func (lc *localChain) IsOperatorUpToDate() (bool, error) {
 	}
 }
 
-func (lc *localChain) JoinSortitionPool() error {
-	lc.operatorToStakingProviderMutex.Lock()
-	defer lc.operatorToStakingProviderMutex.Unlock()
+func (c *Chain) JoinSortitionPool() error {
+	c.operatorToStakingProviderMutex.Lock()
+	defer c.operatorToStakingProviderMutex.Unlock()
 
-	lc.sortitionPoolMutex.Lock()
-	defer lc.sortitionPoolMutex.Unlock()
+	c.sortitionPoolMutex.Lock()
+	defer c.sortitionPoolMutex.Unlock()
 
-	stakingProvider, ok := lc.operatorToStakingProvider[lc.operatorAddress]
+	stakingProvider, ok := c.operatorToStakingProvider[c.operatorAddress]
 	if !ok {
 		return errOperatorUnknown
 	}
 
-	eligibleStake, ok := lc.eligibleStake[stakingProvider]
+	eligibleStake, ok := c.eligibleStake[stakingProvider]
 	if !ok || eligibleStake.Cmp(big.NewInt(0)) == 0 {
 		return errAuthorizationBelowMinimum
 	}
 
-	_, ok = lc.sortitionPool[lc.operatorAddress]
+	_, ok = c.sortitionPool[c.operatorAddress]
 	if ok {
 		return errOperatorAlreadyRegisteredInPool
 	}
 
-	lc.sortitionPool[lc.operatorAddress] = eligibleStake
+	c.sortitionPool[c.operatorAddress] = eligibleStake
 
 	return nil
 }
 
-func (lc *localChain) UpdateOperatorStatus() error {
-	lc.eligibleStakeMutex.RLock()
-	defer lc.eligibleStakeMutex.RUnlock()
+func (c *Chain) UpdateOperatorStatus() error {
+	c.eligibleStakeMutex.RLock()
+	defer c.eligibleStakeMutex.RUnlock()
 
-	lc.sortitionPoolMutex.Lock()
-	defer lc.sortitionPoolMutex.Unlock()
+	c.sortitionPoolMutex.Lock()
+	defer c.sortitionPoolMutex.Unlock()
 
-	stakingProvider, isRegistered := lc.operatorToStakingProvider[lc.operatorAddress]
+	stakingProvider, isRegistered := c.operatorToStakingProvider[c.operatorAddress]
 	if !isRegistered {
 		return errOperatorUnknown
 	}
 
-	eligibleStake := lc.eligibleStake[stakingProvider]
-	lc.sortitionPool[lc.operatorAddress] = eligibleStake
+	eligibleStake := c.eligibleStake[stakingProvider]
+	c.sortitionPool[c.operatorAddress] = eligibleStake
 
 	return nil
 }
