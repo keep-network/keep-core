@@ -49,13 +49,13 @@ func (sm *stakeMonitor) HasMinimumStake(
 	// `WalletRegistry` and `RandomBeacon`
 
 	// Ensure the staking provider has an owner
-	owner, _, _, err := sm.chain.RolesOf(walletRegistryStakingProvider)
+	_, _, _, ok, err := sm.chain.RolesOf(walletRegistryStakingProvider)
 	if err != nil {
 		return false, err
 	}
 
-	if owner == "" {
-		return false, nil
+	if !ok {
+		return false, fmt.Errorf("operator is not registered in token staking")
 	}
 
 	// TODO: Continue with the implementation

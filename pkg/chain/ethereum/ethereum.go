@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/rate"
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/threshold-network/gen/contract"
 )
 
@@ -52,10 +51,6 @@ type Chain struct {
 	transactionMutex *sync.Mutex
 
 	tokenStaking *contract.TokenStaking
-}
-
-func (ec *Chain) RolesOf(stakingProvider chain.Address) (owner, beneficiary, authorizer chain.Address, err error) {
-	return chain.Address(""), chain.Address(""), chain.Address(""), nil
 }
 
 // Connect creates Random Beacon and TBTC Ethereum chain handles.
