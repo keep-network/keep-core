@@ -141,7 +141,8 @@ func Start(c *cli.Context) error {
 		config.LibP2P,
 		operatorPrivateKey,
 		libp2p.ProtocolBeacon,
-		firewall.MinimumStakePolicy(stakeMonitorV1),
+		// TODO: Use the firewall policy developed in https://github.com/keep-network/keep-core/pull/3060
+		firewall.Disabled,
 		retransmission.NewTicker(blockCounterV1.WatchBlocks(ctx)),
 	)
 	if err != nil {
