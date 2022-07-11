@@ -60,6 +60,11 @@ func newTbtcChain(
 	}, nil
 }
 
+// OperatorToStakingProvider returns the staking provider address for the
+// given operator. If the staking provider has not been registered for the
+// operator, the returned address is empty and the boolean flag is set to
+// false. If the staking provider has been registered, the address is not
+// empty and the boolean flag indicates true.
 func (tc *TbtcChain) OperatorToStakingProvider(
 	operator chain.Address,
 ) (chain.Address, bool, error) {
