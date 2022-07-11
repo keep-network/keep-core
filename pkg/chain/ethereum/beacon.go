@@ -33,8 +33,6 @@ type BeaconChain struct {
 	randomBeacon  *contract.RandomBeacon
 	sortitionPool *contract.BeaconSortitionPool
 
-	chainConfig *beaconchain.Config
-
 	// TODO: Temporary helper map. Should be removed once real-world DKG
 	//       result submission is implemented.
 	dkgResultSubmissionHandlersMutex sync.Mutex
@@ -100,26 +98,28 @@ func newBeaconChain(
 		)
 	}
 
-	chainConfig, err := fetchChainConfig(randomBeacon)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to fetch the chain config: [%v]",
-			err,
-		)
-	}
-
 	return &BeaconChain{
 		Chain:                       baseChain,
 		randomBeacon:                randomBeacon,
 		sortitionPool:               sortitionPool,
-		chainConfig:                 chainConfig,
 		dkgResultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 	}, nil
 }
 
 // GetConfig returns the expected configuration of the random beacon.
+// TODO: Adjust to the random beacon v2 requirements.
 func (bc *BeaconChain) GetConfig() *beaconchain.Config {
-	return bc.chainConfig
+	groupSize := 64
+	honestThreshold := 33
+	resultPublicationBlockStep := 6
+	relayEntryTimeout := groupSize * resultPublicationBlockStep
+
+	return &beaconchain.Config{
+		GroupSize:                  groupSize,
+		HonestThreshold:            honestThreshold,
+		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
+		RelayEntryTimeout:          uint64(relayEntryTimeout),
+	}
 }
 
 // OperatorToStakingProvider returns the staking provider address for the
@@ -206,7 +206,7 @@ func (bc *BeaconChain) UpdateOperatorStatus() error {
 // the given seed. This function can return an error if the beacon chain's
 // state does not allow for group selection at the moment.
 func (bc *BeaconChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
-	groupSize := big.NewInt(int64(bc.chainConfig.GroupSize))
+	groupSize := big.NewInt(int64(bc.GetConfig().GroupSize))
 	seedBytes := [32]byte{}
 	seed.FillBytes(seedBytes[:])
 
@@ -450,22 +450,4 @@ func (bc *BeaconChain) CurrentRequestPreviousEntry() ([]byte, error) {
 func (bc *BeaconChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	// TODO: Implementation.
 	panic("not implemented yet")
-}
-
-// fetchChainConfig fetches the on-chain random beacon config.
-// TODO: Adjust to the random beacon v2 requirements.
-func fetchChainConfig(
-	randomBeacon *contract.RandomBeacon,
-) (*beaconchain.Config, error) {
-	groupSize := 64
-	honestThreshold := 33
-	resultPublicationBlockStep := 6
-	relayEntryTimeout := groupSize * resultPublicationBlockStep
-
-	return &beaconchain.Config{
-		GroupSize:                  groupSize,
-		HonestThreshold:            honestThreshold,
-		ResultPublicationBlockStep: uint64(resultPublicationBlockStep),
-		RelayEntryTimeout:          uint64(relayEntryTimeout),
-	}, nil
 }
