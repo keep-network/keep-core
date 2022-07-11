@@ -98,17 +98,17 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	legacyChainProvider, err := ethereum_v1.Connect(ctx, config.Ethereum)
+	chainProviderV1, err := ethereum_v1.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	blockCounter, err := legacyChainProvider.BlockCounter()
+	blockCounter, err := chainProviderV1.BlockCounter()
 	if err != nil {
 		return err
 	}
 
-	stakeMonitor, err := legacyChainProvider.StakeMonitor()
+	stakeMonitor, err := chainProviderV1.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
@@ -162,7 +162,7 @@ func Start(c *cli.Context) error {
 	err = beacon.Initialize(
 		ctx,
 		operatorPublicKey,
-		legacyChainProvider.ThresholdRelay(),
+		chainProviderV1.ThresholdRelay(),
 		beaconChain,
 		netProvider,
 		persistence,
@@ -172,7 +172,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
-	initializeDiagnostics(ctx, config, netProvider, legacyChainProvider.Signing())
+	initializeDiagnostics(ctx, config, netProvider, chainProviderV1.Signing())
 
 	select {
 	case <-ctx.Done():
