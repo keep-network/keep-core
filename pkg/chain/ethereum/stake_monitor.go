@@ -7,7 +7,7 @@ import (
 )
 
 type StakeProviderRetriever interface {
-	OperatorToStakingProvider(address chain.Address) (chain.Address, error)
+	OperatorToStakingProvider(address chain.Address) (chain.Address, bool, error)
 }
 
 type stakeMonitor struct {
@@ -34,28 +34,28 @@ func (sm *stakeMonitor) HasMinimumStake(
 		)
 	}
 
-	// Verify staking provider for the given operator.
-	// TODO: Use address obtained from `operatorPublicKeyToChainAddress`
-	walletRegistryStakingProvider, err :=
+	stakingProvider, isRegistered, err :=
 		sm.stakeProviderRetriever.OperatorToStakingProvider(chain.Address(""))
 	if err != nil {
-		return false, err
-	}
-	if walletRegistryStakingProvider == "" {
-		return false, nil
+		return false, fmt.Errorf("could not resolve staking provider: [%v]", err)
 	}
 
-	// TODO: OperatorToStakingProvider should probably be resolved in both
-	// `WalletRegistry` and `RandomBeacon`
+	if !isRegistered {
+		return false, fmt.Errorf(
+			"operator not registered for the staking provider")
+	}
+
+	// TODO: Should OperatorToStakingProvider be resolved in both
+	// `WalletRegistry` and `RandomBeacon` at the same time?
 
 	// Ensure the staking provider has an owner
-	_, _, _, ok, err := sm.chain.RolesOf(walletRegistryStakingProvider)
+	_, _, _, stakeHashOwner, err := sm.chain.RolesOf(stakingProvider)
 	if err != nil {
 		return false, err
 	}
 
-	if !ok {
-		return false, fmt.Errorf("operator is not registered in token staking")
+	if !stakeHashOwner {
+		return false, fmt.Errorf("staking provider has no owner set")
 	}
 
 	// TODO: Continue with the implementation

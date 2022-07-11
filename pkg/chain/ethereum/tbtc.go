@@ -62,18 +62,23 @@ func newTbtcChain(
 
 func (tc *TbtcChain) OperatorToStakingProvider(
 	operator chain.Address,
-) (chain.Address, error) {
+) (chain.Address, bool, error) {
 	stakingProvider, err := tc.walletRegistry.OperatorToStakingProvider(
 		common.HexToAddress(operator.String()),
 	)
 	if err != nil {
-		return "", fmt.Errorf(
+		return "", false, fmt.Errorf(
 			"failed to map operator %v to a staking provider: [%v]",
 			operator,
 			err,
 		)
 	}
-	return chain.Address(stakingProvider.Hex()), nil
+
+	if (stakingProvider == common.Address{}) {
+		return "", false, nil
+	}
+
+	return chain.Address(stakingProvider.Hex()), true, nil
 }
 
 func (tc *TbtcChain) StakeMonitor() (chain.StakeMonitor, error) {

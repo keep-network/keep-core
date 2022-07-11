@@ -115,20 +115,30 @@ func (bc *BeaconChain) CurrentOperatorToStakingProvider() (chain.Address, bool, 
 	return chain.Address(stakingProvider.Hex()), true, nil
 }
 
+// OperatorToStakingProvider returns the staking provider address for the given
+// operator. If the staking provider has not been registered for the operator,
+// the returned address is empty and the boolean flag is set to false.
+// If the staking provider has been registered, the address is not empty and the
+// boolean flag indicates true.
 func (bc *BeaconChain) OperatorToStakingProvider(
 	operator chain.Address,
-) (chain.Address, error) {
+) (chain.Address, bool, error) {
 	stakingProvider, err := bc.randomBeacon.OperatorToStakingProvider(
 		common.HexToAddress(operator.String()),
 	)
 	if err != nil {
-		return "", fmt.Errorf(
+		return "", false, fmt.Errorf(
 			"failed to map operator %v to a staking provider: [%v]",
 			operator,
 			err,
 		)
 	}
-	return chain.Address(stakingProvider.Hex()), nil
+
+	if (stakingProvider == common.Address{}) {
+		return "", false, nil
+	}
+
+	return chain.Address(stakingProvider.Hex()), true, nil
 }
 
 // EligibleStake returns the current value of the staking provider's eligible
