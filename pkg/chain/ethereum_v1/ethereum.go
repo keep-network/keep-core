@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -307,11 +306,7 @@ func convertSignaturesToChainFormat(
 func (ec *ethereumChain) CalculateDKGResultHash(
 	dkgResult *beaconchain.DKGResult,
 ) (beaconchain.DKGResultHash, error) {
-
-	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
-
-	return beaconchain.DKGResultHashFromBytes(hash)
+	panic("unsupported")
 }
 
 func (ec *ethereumChain) Address() common.Address {

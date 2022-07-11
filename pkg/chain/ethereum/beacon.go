@@ -351,11 +351,18 @@ func (bc *BeaconChain) OnDKGResultSubmitted(
 	})
 }
 
+// CalculateDKGResultHash calculates Keccak-256 hash of the DKG result. Operation
+// is performed off-chain.
+//
+// It first encodes the result using solidity ABI and then calculates Keccak-256
+// hash over it. This corresponds to the DKG result hash calculation on-chain.
+// Hashes calculated off-chain and on-chain must always match.
 func (bc *BeaconChain) CalculateDKGResultHash(
 	dkgResult *beaconchain.DKGResult,
 ) (beaconchain.DKGResultHash, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
+	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
+	return beaconchain.DKGResultHashFromBytes(hash)
 }
 
 func (bc *BeaconChain) SubmitRelayEntry(entry []byte) *async.EventEntrySubmittedPromise {
