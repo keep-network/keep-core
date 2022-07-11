@@ -169,3 +169,24 @@ func (bc *BeaconChain) UpdateOperatorStatus() error {
 	_, err := bc.randomBeacon.UpdateOperatorStatus(bc.key.Address)
 	return err
 }
+
+// TODO: add description
+func (bc *BeaconChain) IsEligibleForRewards() (bool, error) {
+	// TODO: implement
+
+	return false, nil
+}
+
+// TODO: add description
+func (bc *BeaconChain) CanRestoreRewardEligibility() (bool, error) {
+	// TODO: implement
+
+	return false, nil
+}
+
+// TODO: add description
+func (bc *BeaconChain) RestoreRewardEligibility() error {
+	// TODO: implement
+
+	return nil
+}

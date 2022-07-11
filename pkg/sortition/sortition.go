@@ -35,6 +35,11 @@ func MonitorPool(
 		return errOperatorUnknown
 	}
 
+	err = checkRewardsEligibility(chain)
+	if err != nil {
+		logger.Errorf("could not check rewards eligibility status: [%v]", err)
+	}
+
 	err = checkOperatorStatus(chain)
 	if err != nil {
 		logger.Errorf("could not check operator sortition pool status: [%v]", err)
@@ -61,6 +66,58 @@ func MonitorPool(
 	return nil
 }
 
+func checkRewardsEligibility(chain Chain) error {
+	logger.Info("checking sortition pool rewards eligibility status")
+
+	isEligibleForRewards, err := chain.IsEligibleForRewards()
+	if err != nil {
+		return err
+	}
+
+	if isEligibleForRewards {
+		logger.Info("operator is eligibile for rewards")
+
+		isLocked, err := chain.IsPoolLocked()
+		if err != nil {
+			return err
+		}
+
+		if isLocked {
+			logger.Info("sortition pool state is locked, waiting with the update")
+
+			return nil
+		} else {
+			logger.Info("restoring eligibility for rewards")
+
+			err = chain.RestoreRewardEligibility()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		logger.Info("operator is not eligibile for rewards")
+
+		canRestoreRewardEligibility, err := chain.CanRestoreRewardEligibility()
+		if err != nil {
+			return err
+		}
+
+		if canRestoreRewardEligibility {
+			logger.Info("restoring eligibility for rewards")
+
+			err = chain.RestoreRewardEligibility()
+			if err != nil {
+				return err
+			}
+		} else {
+			logger.Info("cannot restore eligibility for rewards, waiting with the update")
+		}
+
+	}
+
+	return nil
+}
+
 func checkOperatorStatus(chain Chain) error {
 	logger.Info("checking sortition pool operator status")
 
@@ -82,7 +139,7 @@ func checkOperatorStatus(chain Chain) error {
 
 	if isOperatorUpToDate {
 		if isOperatorInPool {
-			logger.Infof("sortition pool operator status is up to date")
+			logger.Info("sortition pool operator status is up to date")
 		} else {
 			logger.Info("please inspect staking providers's authorization for the Random Beacon")
 		}
@@ -96,18 +153,18 @@ func checkOperatorStatus(chain Chain) error {
 	}
 
 	if isLocked {
-		logger.Infof("sortition pool state is locked, waiting with the update")
+		logger.Info("sortition pool state is locked, waiting with the update")
 		return nil
 	}
 
 	if !isOperatorInPool {
-		logger.Infof("joining the sortition pool")
+		logger.Info("joining the sortition pool")
 		err := chain.JoinSortitionPool()
 		if err != nil {
 			logger.Errorf("could not join the sortition pool: [%v]", err)
 		}
 	} else {
-		logger.Infof("updating operator status in the sortition pool")
+		logger.Info("updating operator status in the sortition pool")
 		err := chain.UpdateOperatorStatus()
 		if err != nil {
 			logger.Errorf("could not update the sortition pool: [%v]", err)

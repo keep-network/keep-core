@@ -46,4 +46,13 @@ type Chain interface {
 	// UpdateOperatorStatus executes a transaction to update the current
 	// operator's state in the sortition pool.
 	UpdateOperatorStatus() error
+
+	// TODO: add description
+	IsEligibleForRewards() (bool, error)
+
+	// TODO: add description
+	CanRestoreRewardEligibility() (bool, error)
+
+	// TODO: add description
+	RestoreRewardEligibility() error
 }
