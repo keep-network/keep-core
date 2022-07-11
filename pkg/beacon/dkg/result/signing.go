@@ -49,7 +49,6 @@ func NewSigningMember(
 func (sm *SigningMember) SignDKGResult(
 	dkgResult *beaconchain.DKGResult,
 	beaconChain beaconchain.Interface,
-	signing chain.Signing,
 ) (
 	*DKGResultHashSignatureMessage,
 	error,
@@ -59,6 +58,8 @@ func (sm *SigningMember) SignDKGResult(
 		return nil, fmt.Errorf("dkg result hash calculation failed [%v]", err)
 	}
 	sm.preferredDKGResultHash = resultHash
+
+	signing := beaconChain.Signing()
 
 	signature, err := signing.Sign(resultHash[:])
 	if err != nil {

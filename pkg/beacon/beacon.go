@@ -29,19 +29,18 @@ func Initialize(
 	operatorPublicKey *operator.PublicKey,
 	// TODO: Get rid of legacy Ethereum chain
 	beaconChainV1 beaconchain.Interface,
-	// TODO: Accept a generic interface, not just sortition.Chain
-	beaconChain sortition.Chain,
+	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
 	chainConfig := beaconChainV1.GetConfig()
 
-	blockCounter, err := beaconChainV1.BlockCounter()
+	blockCounterV1, err := beaconChainV1.BlockCounter()
 	if err != nil {
 		return fmt.Errorf("failed to get block counter instance: [%v]", err)
 	}
 
-	signing := beaconChainV1.Signing()
+	signingV1 := beaconChainV1.Signing()
 
 	groupRegistry := registry.NewGroupRegistry(beaconChainV1, persistence)
 	groupRegistry.LoadExistingGroups()
@@ -49,7 +48,7 @@ func Initialize(
 	node := newNode(
 		operatorPublicKey,
 		netProvider,
-		blockCounter,
+		blockCounterV1,
 		chainConfig,
 		groupRegistry,
 	)
@@ -61,7 +60,7 @@ func Initialize(
 
 	eventDeduplicator := event.NewDeduplicator(beaconChainV1)
 
-	node.ResumeSigningIfEligible(beaconChainV1, signing)
+	node.ResumeSigningIfEligible(beaconChainV1, signingV1)
 
 	_ = beaconChainV1.OnRelayEntryRequested(func(request *event.Request) {
 		onConfirmed := func() {
@@ -105,7 +104,7 @@ func Initialize(
 					node.GenerateRelayEntry(
 						request.PreviousEntry,
 						beaconChainV1,
-						signing,
+						signingV1,
 						request.GroupPublicKey,
 						request.BlockNumber,
 					)
@@ -133,7 +132,7 @@ func Initialize(
 		)
 	})
 
-	_ = beaconChainV1.OnDKGStarted(func(event *event.DKGStarted) {
+	_ = beaconChain.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
 			if ok := eventDeduplicator.NotifyDKGStarted(
 				event.Seed,
@@ -154,8 +153,7 @@ func Initialize(
 			)
 
 			node.JoinDKGIfEligible(
-				beaconChainV1,
-				signing,
+				beaconChain,
 				event.Seed,
 				event.BlockNumber,
 			)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/sortition"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -103,7 +104,7 @@ type DistributedKeyGenerationInterface interface {
 		participantIndex GroupMemberIndex,
 		dkgResult *DKGResult,
 		signatures map[GroupMemberIndex][]byte,
-	) *async.EventDKGResultSubmissionPromise
+	) error
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
@@ -117,7 +118,7 @@ type DistributedKeyGenerationInterface interface {
 // Interface represents the interface that the random beacon expects to interact
 // with the anchoring blockchain on.
 type Interface interface {
-	// GetConfig returns the expected configuration of the threshold random beacon.
+	// GetConfig returns the expected configuration of the random beacon.
 	GetConfig() *Config
 	// BlockCounter returns the chain's block counter.
 	BlockCounter() (chain.BlockCounter, error)
@@ -126,12 +127,14 @@ type Interface interface {
 	// StakeMonitor returns the chain's stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
 
+	sortition.Chain
 	GroupInterface
 	RelayEntryInterface
 	DistributedKeyGenerationInterface
 }
 
 // Config contains the config data needed for the random beacon to operate.
+// TODO: Adjust to the random beacon v2 requirements.
 type Config struct {
 	// GroupSize is the size of a group in the random beacon.
 	GroupSize int
