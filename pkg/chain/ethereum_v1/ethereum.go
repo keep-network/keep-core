@@ -268,7 +268,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	result *beaconchain.DKGResult,
 	signatures map[beaconchain.GroupMemberIndex][]byte,
-) *async.EventDKGResultSubmissionPromise {
+) error {
 	panic("unsupported")
 }
 

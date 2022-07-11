@@ -287,32 +287,18 @@ func (c *localChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	resultToPublish *beaconchain.DKGResult,
 	signatures map[beaconchain.GroupMemberIndex][]byte,
-) *async.EventDKGResultSubmissionPromise {
-	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
-
+) error {
 	if len(signatures) < c.relayConfig.HonestThreshold {
-		err := dkgResultPublicationPromise.Fail(fmt.Errorf(
+		return fmt.Errorf(
 			"failed to submit result with [%v] signatures for honest threshold [%v]",
 			len(signatures),
 			c.relayConfig.HonestThreshold,
-		))
-		if err != nil {
-			logger.Errorf("failed to fail promise: [%v]", err)
-		}
-
-		return dkgResultPublicationPromise
+		)
 	}
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		failErr := dkgResultPublicationPromise.Fail(
-			fmt.Errorf("cannot read current block: [%v]", err),
-		)
-		if failErr != nil {
-			logger.Errorf("failed to fail promise: [%v]", failErr)
-		}
-
-		return dkgResultPublicationPromise
+		return fmt.Errorf("cannot read current block: [%v]", err)
 	}
 
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
@@ -349,12 +335,7 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.handlerMutex.Unlock()
 
-	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
-	if err != nil {
-		logger.Errorf("failed to fulfill promise: [%v]", err)
-	}
-
-	return dkgResultPublicationPromise
+	return nil
 }
 
 func (c *localChain) OnDKGStarted(

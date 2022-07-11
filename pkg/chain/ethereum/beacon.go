@@ -304,63 +304,13 @@ func (bc *BeaconChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	dkgResult *beaconchain.DKGResult,
 	signatures map[beaconchain.GroupMemberIndex][]byte,
-) *async.EventDKGResultSubmissionPromise {
-	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
-
-	failPromise := func(err error) {
-		failErr := resultPublicationPromise.Fail(err)
-		if failErr != nil {
-			logger.Errorf(
-				"failed to fail promise for [%v]: [%v]",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	publishedResult := make(chan *event.DKGResultSubmission)
-
-	subscription := bc.OnDKGResultSubmitted(
-		func(onChainEvent *event.DKGResultSubmission) {
-			publishedResult <- onChainEvent
-		},
-	)
-
-	go func() {
-		for {
-			select {
-			case event, success := <-publishedResult:
-				// Channel is closed when SubmitDKGResult failed.
-				// When this happens, event is nil.
-				if !success {
-					return
-				}
-
-				subscription.Unsubscribe()
-				close(publishedResult)
-
-				err := resultPublicationPromise.Fulfill(event)
-				if err != nil {
-					logger.Errorf(
-						"failed to fulfill promise: [%v]",
-						err,
-					)
-				}
-
-				return
-			}
-		}
-	}()
-
+) error {
 	bc.dkgResultSubmissionHandlersMutex.Lock()
 	defer bc.dkgResultSubmissionHandlersMutex.Unlock()
 
 	blockNumber, err := bc.blockCounter.CurrentBlock()
 	if err != nil {
-		close(publishedResult)
-		subscription.Unsubscribe()
-		failPromise(err)
-		return resultPublicationPromise
+		return fmt.Errorf("failed to get the current block")
 	}
 
 	for _, handler := range bc.dkgResultSubmissionHandlers {
@@ -374,7 +324,7 @@ func (bc *BeaconChain) SubmitDKGResult(
 		}(handler)
 	}
 
-	return resultPublicationPromise
+	return nil
 }
 
 // TODO: Implement a real OnDKGResultSubmitted event subscription. The current

@@ -104,7 +104,7 @@ type DistributedKeyGenerationInterface interface {
 		participantIndex GroupMemberIndex,
 		dkgResult *DKGResult,
 		signatures map[GroupMemberIndex][]byte,
-	) *async.EventDKGResultSubmissionPromise
+	) error
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
