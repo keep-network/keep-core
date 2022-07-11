@@ -12,9 +12,13 @@ artifacts_dir = $(realpath ${contracts_dir}/package/artifacts)
 # Go bindings generated for the solidity contracts.
 contract_files = $(addprefix contract/,$(addsuffix .go,${required_contracts}))
 
-all: gen_contract_go
+# Files containing addresses extracted from the artifacts.
+address_files = $(addprefix _address/,${required_contracts})
+
+all: ${address_files} gen_contract_go
 
 clean:
+	rm -rf _address/*
 	rm -rf ${contracts_dir}/*
 	rm -rf abi/*
 	rm -rf contract/*
@@ -38,8 +42,19 @@ abi/%.abi: ${artifacts_dir}/%.json
 abi/%.go: abi/%.abi
 	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
 
-contract/%.go cmd/%.go: abi/%.abi abi/%.go
+# Extract address of a contract from an artifact. Artfifacts that are published
+# with `development` tag are not accessible on developers' environments, so we
+# replace them with zeros.
+_address/%: ${artifacts_dir}/%.json
+ifeq ($(npm_package_tag), development)
+	@echo "Skipping address extraction for development package"
+	@echo "0x0000000000000000000000000000000000000000" > _address/$*
+else
+	jq -jr .address ${artifacts_dir}/$*.json > _address/$*
+endif
+
+contract/%.go cmd/%.go: abi/%.abi abi/%.go _address/%
 	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/$*.go cmd/$*.go
 
 # Don't remove intermediate files that got generated.
-.PRECIOUS: abi/%.abi abi/%.go
+.PRECIOUS: abi/%.abi abi/%.go _address/%
