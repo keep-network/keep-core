@@ -124,16 +124,19 @@ const config: HardhatUserConfig = {
           "node_modules/@threshold-network/solidity-contracts/export/deploy",
       },
     ],
-    // deployments: {
-    //   // For hardhat environment we can fork the mainnet, so we need to point it
-    //   // to the contract artifacts.
-    //   hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
-    //   // For development environment we expect the local dependencies to be linked
-    //   // with `yarn link` command.
-    //   development: ["node_modules/@keep-network/keep-core/artifacts"],
-    //   ropsten: ["node_modules/@keep-network/keep-core/artifacts"],
-    //   mainnet: ["./external/mainnet"],
-    // },
+    deployments: {
+      // For hardhat environment we can fork the mainnet, so we need to point it
+      // to the contract artifacts.
+      hardhat: process.env.FORKING_URL ? ["./external/mainnet"] : [],
+      // For development environment we expect the local dependencies to be linked
+      // with `yarn link` command.
+      development: [
+        "node_modules/@keep-network/keep-core/artifacts",
+        "node_modules/@threshold-network/solidity-contracts",
+      ],
+      ropsten: ["node_modules/@keep-network/keep-core/artifacts"],
+      mainnet: ["./external/mainnet"],
+    },
   },
   dependencyCompiler: {
     paths: [
