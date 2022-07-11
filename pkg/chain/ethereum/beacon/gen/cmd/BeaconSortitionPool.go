@@ -16,14 +16,14 @@ import (
 	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
-	"github.com/keep-network/keep-core/pkg/chain/ecdsa/gen/contract"
+	"github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/contract"
 
 	"github.com/urfave/cli"
 )
 
-var EcdsaSortitionPoolCommand cli.Command
+var BeaconSortitionPoolCommand cli.Command
 
-var ecdsaSortitionPoolDescription = `The ecdsa-sortition-pool command allows calling the EcdsaSortitionPool contract on an
+var beaconSortitionPoolDescription = `The beacon-sortition-pool command allows calling the BeaconSortitionPool contract on an
 	ETH-like network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
@@ -48,168 +48,168 @@ var ecdsaSortitionPoolDescription = `The ecdsa-sortition-pool command allows cal
 
 func init() {
 	AvailableCommands = append(AvailableCommands, cli.Command{
-		Name:        "ecdsa-sortition-pool",
-		Usage:       `Provides access to the EcdsaSortitionPool contract.`,
-		Description: ecdsaSortitionPoolDescription,
+		Name:        "beacon-sortition-pool",
+		Usage:       `Provides access to the BeaconSortitionPool contract.`,
+		Description: beaconSortitionPoolDescription,
 		Subcommands: []cli.Command{{
 			Name:      "get-available-rewards",
-			Usage:     "Calls the view method getAvailableRewards on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method getAvailableRewards on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    espGetAvailableRewards,
+			Action:    bspGetAvailableRewards,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "get-operator-i-d",
-			Usage:     "Calls the view method getOperatorID on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method getOperatorID on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    espGetOperatorID,
+			Action:    bspGetOperatorID,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "get-pool-weight",
-			Usage:     "Calls the view method getPoolWeight on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method getPoolWeight on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    espGetPoolWeight,
+			Action:    bspGetPoolWeight,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "ineligible-earned-rewards",
-			Usage:     "Calls the view method ineligibleEarnedRewards on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method ineligibleEarnedRewards on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espIneligibleEarnedRewards,
+			Action:    bspIneligibleEarnedRewards,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-locked",
-			Usage:     "Calls the view method isLocked on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method isLocked on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espIsLocked,
+			Action:    bspIsLocked,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-operator-in-pool",
-			Usage:     "Calls the view method isOperatorInPool on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method isOperatorInPool on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    espIsOperatorInPool,
+			Action:    bspIsOperatorInPool,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-operator-registered",
-			Usage:     "Calls the view method isOperatorRegistered on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method isOperatorRegistered on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    espIsOperatorRegistered,
+			Action:    bspIsOperatorRegistered,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-operator-up-to-date",
-			Usage:     "Calls the view method isOperatorUpToDate on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method isOperatorUpToDate on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    espIsOperatorUpToDate,
+			Action:    bspIsOperatorUpToDate,
 			Before:    cmd.ArgCountChecker(2),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "operators-in-pool",
-			Usage:     "Calls the view method operatorsInPool on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method operatorsInPool on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espOperatorsInPool,
+			Action:    bspOperatorsInPool,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "owner",
-			Usage:     "Calls the view method owner on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method owner on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espOwner,
+			Action:    bspOwner,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "pool-weight-divisor",
-			Usage:     "Calls the view method poolWeightDivisor on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method poolWeightDivisor on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espPoolWeightDivisor,
+			Action:    bspPoolWeightDivisor,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "reward-token",
-			Usage:     "Calls the view method rewardToken on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method rewardToken on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espRewardToken,
+			Action:    bspRewardToken,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "total-weight",
-			Usage:     "Calls the view method totalWeight on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the view method totalWeight on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espTotalWeight,
+			Action:    bspTotalWeight,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "insert-operator",
-			Usage:     "Calls the nonpayable method insertOperator on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method insertOperator on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    espInsertOperator,
+			Action:    bspInsertOperator,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "lock",
-			Usage:     "Calls the nonpayable method lock on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method lock on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espLock,
+			Action:    bspLock,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "receive-approval",
-			Usage:     "Calls the nonpayable method receiveApproval on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method receiveApproval on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_sender] [arg_amount] [arg_token] [arg3] ",
-			Action:    espReceiveApproval,
+			Action:    bspReceiveApproval,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "renounce-ownership",
-			Usage:     "Calls the nonpayable method renounceOwnership on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method renounceOwnership on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espRenounceOwnership,
+			Action:    bspRenounceOwnership,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "restore-reward-eligibility",
-			Usage:     "Calls the nonpayable method restoreRewardEligibility on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method restoreRewardEligibility on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
-			Action:    espRestoreRewardEligibility,
+			Action:    bspRestoreRewardEligibility,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "transfer-ownership",
-			Usage:     "Calls the nonpayable method transferOwnership on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method transferOwnership on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_newOwner] ",
-			Action:    espTransferOwnership,
+			Action:    bspTransferOwnership,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "unlock",
-			Usage:     "Calls the nonpayable method unlock on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method unlock on the BeaconSortitionPool contract.",
 			ArgsUsage: "",
-			Action:    espUnlock,
+			Action:    bspUnlock,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(0))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "update-operator-status",
-			Usage:     "Calls the nonpayable method updateOperatorStatus on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method updateOperatorStatus on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] [arg_authorizedStake] ",
-			Action:    espUpdateOperatorStatus,
+			Action:    bspUpdateOperatorStatus,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "withdraw-ineligible",
-			Usage:     "Calls the nonpayable method withdrawIneligible on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method withdrawIneligible on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_recipient] ",
-			Action:    espWithdrawIneligible,
+			Action:    bspWithdrawIneligible,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "withdraw-rewards",
-			Usage:     "Calls the nonpayable method withdrawRewards on the EcdsaSortitionPool contract.",
+			Usage:     "Calls the nonpayable method withdrawRewards on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] [arg_beneficiary] ",
-			Action:    espWithdrawRewards,
+			Action:    bspWithdrawRewards,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}},
@@ -218,8 +218,8 @@ func init() {
 
 /// ------------------- Const methods -------------------
 
-func espGetAvailableRewards(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspGetAvailableRewards(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -246,8 +246,8 @@ func espGetAvailableRewards(c *cli.Context) error {
 	return nil
 }
 
-func espGetOperatorID(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspGetOperatorID(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -274,8 +274,8 @@ func espGetOperatorID(c *cli.Context) error {
 	return nil
 }
 
-func espGetPoolWeight(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspGetPoolWeight(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -302,8 +302,8 @@ func espGetPoolWeight(c *cli.Context) error {
 	return nil
 }
 
-func espIneligibleEarnedRewards(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspIneligibleEarnedRewards(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -322,8 +322,8 @@ func espIneligibleEarnedRewards(c *cli.Context) error {
 	return nil
 }
 
-func espIsLocked(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspIsLocked(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -342,8 +342,8 @@ func espIsLocked(c *cli.Context) error {
 	return nil
 }
 
-func espIsOperatorInPool(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspIsOperatorInPool(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -370,8 +370,8 @@ func espIsOperatorInPool(c *cli.Context) error {
 	return nil
 }
 
-func espIsOperatorRegistered(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspIsOperatorRegistered(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -398,8 +398,8 @@ func espIsOperatorRegistered(c *cli.Context) error {
 	return nil
 }
 
-func espIsOperatorUpToDate(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspIsOperatorUpToDate(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -435,8 +435,8 @@ func espIsOperatorUpToDate(c *cli.Context) error {
 	return nil
 }
 
-func espOperatorsInPool(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspOperatorsInPool(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -455,8 +455,8 @@ func espOperatorsInPool(c *cli.Context) error {
 	return nil
 }
 
-func espOwner(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspOwner(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -475,8 +475,8 @@ func espOwner(c *cli.Context) error {
 	return nil
 }
 
-func espPoolWeightDivisor(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspPoolWeightDivisor(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -495,8 +495,8 @@ func espPoolWeightDivisor(c *cli.Context) error {
 	return nil
 }
 
-func espRewardToken(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspRewardToken(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -515,8 +515,8 @@ func espRewardToken(c *cli.Context) error {
 	return nil
 }
 
-func espTotalWeight(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspTotalWeight(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -537,8 +537,8 @@ func espTotalWeight(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func espInsertOperator(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspInsertOperator(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -591,8 +591,8 @@ func espInsertOperator(c *cli.Context) error {
 	return nil
 }
 
-func espLock(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspLock(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -624,8 +624,8 @@ func espLock(c *cli.Context) error {
 	return nil
 }
 
-func espReceiveApproval(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspReceiveApproval(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -698,8 +698,8 @@ func espReceiveApproval(c *cli.Context) error {
 	return nil
 }
 
-func espRenounceOwnership(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspRenounceOwnership(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -731,8 +731,8 @@ func espRenounceOwnership(c *cli.Context) error {
 	return nil
 }
 
-func espRestoreRewardEligibility(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspRestoreRewardEligibility(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -775,8 +775,8 @@ func espRestoreRewardEligibility(c *cli.Context) error {
 	return nil
 }
 
-func espTransferOwnership(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspTransferOwnership(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -819,8 +819,8 @@ func espTransferOwnership(c *cli.Context) error {
 	return nil
 }
 
-func espUnlock(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspUnlock(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -852,8 +852,8 @@ func espUnlock(c *cli.Context) error {
 	return nil
 }
 
-func espUpdateOperatorStatus(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspUpdateOperatorStatus(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -906,8 +906,8 @@ func espUpdateOperatorStatus(c *cli.Context) error {
 	return nil
 }
 
-func espWithdrawIneligible(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspWithdrawIneligible(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -950,8 +950,8 @@ func espWithdrawIneligible(c *cli.Context) error {
 	return nil
 }
 
-func espWithdrawRewards(c *cli.Context) error {
-	contract, err := initializeEcdsaSortitionPool(c)
+func bspWithdrawRewards(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
 	if err != nil {
 		return err
 	}
@@ -1007,7 +1007,7 @@ func espWithdrawRewards(c *cli.Context) error {
 
 /// ------------------- Initialization -------------------
 
-func initializeEcdsaSortitionPool(c *cli.Context) (*contract.EcdsaSortitionPool, error) {
+func initializeBeaconSortitionPool(c *cli.Context) (*contract.BeaconSortitionPool, error) {
 	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
 	if err != nil {
 		return nil, fmt.Errorf("error reading config from file: [%v]", err)
@@ -1048,9 +1048,9 @@ func initializeEcdsaSortitionPool(c *cli.Context) (*contract.EcdsaSortitionPool,
 		)
 	}
 
-	address := common.HexToAddress(config.ContractAddresses["EcdsaSortitionPool"])
+	address := common.HexToAddress(config.ContractAddresses["BeaconSortitionPool"])
 
-	return contract.NewEcdsaSortitionPool(
+	return contract.NewBeaconSortitionPool(
 		address,
 		chainID,
 		key,
