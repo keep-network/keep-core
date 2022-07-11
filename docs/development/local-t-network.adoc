@@ -1,0 +1,197 @@
+:toc: macro
+
+= Setting up local T network for development purposes
+
+toc::[]
+
+== Pre-requirements
+* Installed https://geth.ethereum.org/[Geth Ethereum client]. Please refer to the docs
+on how to install Geth locally.
+
+[#set-up-local-ethereum]
+== Setting up local Ethereum client - Geth
+
+Create directories for Ethereum client data:
+
+```
+$ mkdir ~/ethereum
+$ mkdir ~/ethereum/data
+$ mkdir ~/ethereum/data/keystore
+```
+
+[#ethereum-accounts]
+=== Generate ethereum accounts
+
+Create a new account for a local Ethereum client and set the password to just `password`.
+Please note, for non-development environements you should use a stronger password.
+```
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-31|14:28:07.264] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {3e208f39da1bc335464f40d85546ad6a1b66a9a4}
+```
+
+Create a new account for each T peer individually. Peer's network identifier
+is derived from the account's address and all messages from the peer are signed
+with the private key belonging to the account. Create 5 accounts for 5 peers. For simplicity, please set the password to `password`.
+```
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-31|14:31:18.980] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {a232599810ecc03816adf607272705b71ff271ac}
+
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-31|14:31:38.690] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {b7314de01d5f3188c7df0a9e95f3477bcaae2120}
+
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-31|14:34:46.260] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {5ef1e10dd1830af50924db623c7a9d90bf8a71be}
+
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-31|14:35:08.025] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {64c20c1ae603c30553de4ea5dd10cc1760b956be}
+
+$ geth account new --keystore ~/ethereum/data/keystore
+
+INFO [10-31|14:35:27.173] Maximum peer count                       ETH=25 LES=0 total=25
+Your new account is locked with a password. Please give a password. Do not forget this password.
+Passphrase:
+Repeat passphrase:
+Address: {c4cba981a8edb64276f71a49f9392bad7a726417}
+```
+
+Check if accounts have been created correctly and `geth` can recognize them:
+```
+$ geth account list --keystore ~/ethereum/data/keystore/
+
+Account #0: {3e208f39da1bc335464f40d85546ad6a1b66a9a4} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-28-13.525596422Z--3e208f39da1bc335464f40d85546ad6a1b66a9a4
+Account #1: {a232599810ecc03816adf607272705b71ff271ac} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-31-24.735759049Z--a232599810ecc03816adf607272705b71ff271ac
+Account #2: {b7314de01d5f3188c7df0a9e95f3477bcaae2120} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-31-43.391759751Z--b7314de01d5f3188c7df0a9e95f3477bcaae2120
+Account #3: {5ef1e10dd1830af50924db623c7a9d90bf8a71be} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-34-52.920270040Z--5ef1e10dd1830af50924db623c7a9d90bf8a71be
+Account #4: {64c20c1ae603c30553de4ea5dd10cc1760b956be} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-35-12.560028755Z--64c20c1ae603c30553de4ea5dd10cc1760b956be
+Account #5: {c4cba981a8edb64276f71a49f9392bad7a726417} keystore:///Users/piotr/ethereum/data/keystore/UTC--2018-10-31T13-35-31.551964909Z--c4cba981a8edb64276f71a49f9392bad7a726417
+```
+
+=== Initialize chain
+
+Initialize your local Ethereum node from `genesis.json` file. This allows to
+issue some tokens to the accounts we just created. We assign tokens to all
+addresses. The account under alloc is the address of the account prepended with
+`0x`.
+
+```
+{
+    "config": {
+        "chainId": 1101,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "homesteadBlock": 0,
+        "constantinopleBlock": 0,
+        "petersburgBlock": 0,
+        "daoForkBlock": 0,
+        "istanbulBlock": 0,
+        "daoForkSupport": true
+    },
+    "difficulty": "0x20",
+    "gasLimit": "0x7A1200",
+    "alloc": {
+        "0x3e208f39da1bc335464f40d85546ad6a1b66a9a4": { "balance": "1000000000000000000000000000000000000000000000000000000" },
+        "0xa232599810ecc03816adf607272705b71ff271ac": { "balance": "1000000000000000000000000000000000000000000000000000000" },
+        "0xb7314de01d5f3188c7df0a9e95f3477bcaae2120": { "balance": "1000000000000000000000000000000000000000000000000000000" },
+        "0x5ef1e10dd1830af50924db623c7a9d90bf8a71be": { "balance": "1000000000000000000000000000000000000000000000000000000" },
+        "0x64c20c1ae603c30553de4ea5dd10cc1760b956be": { "balance": "1000000000000000000000000000000000000000000000000000000" },
+        "0xc4cba981a8edb64276f71a49f9392bad7a726417": { "balance": "1000000000000000000000000000000000000000000000000000000" }
+     }
+}
+
+```
+
+Save the path to your data directory and `geth` client's account in
+environment variables:
+```
+$ export GETH_DATA_DIR=/Users/piotr/ethereum/data/
+$ export GETH_ETHEREUM_ACCOUNT=0x3e208f39da1bc335464f40d85546ad6a1b66a9a4
+```
+
+```
+$ geth --datadir=$GETH_DATA_DIR init genesis.json
+
+INFO [10-31|15:55:25.811] Maximum peer count                       ETH=25 LES=0 total=25
+INFO [10-31|15:55:25.823] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/chaindata cache=16 handles=16
+INFO [10-31|15:55:25.825] Writing custom genesis block
+INFO [10-31|15:55:25.825] Persisted trie from memory database      nodes=8 size=1.30kB time=77.501µs gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B
+INFO [10-31|15:55:25.826] Successfully wrote genesis state         database=chaindata                                 hash=d15d63…61dab6
+INFO [10-31|15:55:25.826] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/lightchaindata cache=16 handles=16
+INFO [10-31|15:55:25.827] Writing custom genesis block
+INFO [10-31|15:55:25.827] Persisted trie from memory database      nodes=8 size=1.30kB time=57.219µs gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B
+INFO [10-31|15:55:25.846] Successfully wrote genesis state         database=lightchaindata                                 hash=d15d63…61dab6
+```
+
+=== Run ethereum client
+
+Start Ethereum client locally using client's wallet address.
+
+```
+$ geth --port 3000 --networkid 1101 --identity 'somerandomidentity' \
+       --ws --ws.addr '127.0.0.1' --ws.port '8546' --ws.origins '*' \ 
+       --ws.api 'admin, debug, web3, eth, txpool, personal, ethash, miner, net' \
+       --http --http.port '8545' --http.addr '127.0.0.1' --http.corsdomain '' \
+       --http.api 'admin, debug, web3, eth, txpool, personal, ethash, miner, net' \
+       --datadir=$GETH_DATA_DIR --allow-insecure-unlock \
+       --miner.etherbase=$GETH_ETHEREUM_ACCOUNT --mine --miner.threads=1
+
+INFO [10-31|15:02:22.113] Maximum peer count                       ETH=25 LES=0 total=25
+INFO [10-31|15:02:22.128] Starting peer-to-peer node               instance=Geth/somerandomidentity/v1.8.14-stable/darwin-amd64/go1.10.3
+INFO [10-31|15:02:22.128] Allocated cache and file handles         database=/Users/piotr/ethereum/data/geth/chaindata cache=768 handles=1024
+INFO [10-31|15:02:22.140] Initialised chain configuration          config="{ChainID: 1101 Homestead: 0 DAO: <nil> DAOSupport: false EIP150: 0 EIP155: 0 EIP158: 0 Byzantium: 0 Constantinople: <nil> Engine: unknown}"
+INFO [10-31|15:02:22.141] Disk storage enabled for ethash caches   dir=/Users/piotr/ethereum/data/geth/ethash count=3
+INFO [10-31|15:02:22.141] Disk storage enabled for ethash DAGs     dir=/Users/piotr/.ethash                   count=2
+INFO [10-31|15:02:22.141] Initialising Ethereum protocol           versions="[63 62]" network=1101
+INFO [10-31|15:02:22.142] Loaded most recent local header          number=0 hash=840a3c…be07a4 td=32
+INFO [10-31|15:02:22.142] Loaded most recent local full block      number=0 hash=840a3c…be07a4 td=32
+INFO [10-31|15:02:22.142] Loaded most recent local fast block      number=0 hash=840a3c…be07a4 td=32
+INFO [10-31|15:02:22.143] Regenerated local transaction journal    transactions=0 accounts=0
+INFO [10-31|15:02:22.145] Starting P2P networking
+INFO [10-31|15:02:24.256] UDP listener up                          self=enode://ef6ad0b1527093a1d3794acc16f3a914816006b1725ce47c5d0fb082f458cb8636c722c6173563f034e0e6ab74fb5230f343755334f1d3db487c744c058b4133@[::]:3000
+INFO [10-31|15:02:24.257] RLPx listener up                         self=enode://ef6ad0b1527093a1d3794acc16f3a914816006b1725ce47c5d0fb082f458cb8636c722c6173563f034e0e6ab74fb5230f343755334f1d3db487c744c058b4133@[::]:3000
+INFO [10-31|15:02:24.264] IPC endpoint opened                      url=/Users/piotr/ethereum/data/geth.ipc
+INFO [10-31|15:02:24.265] HTTP endpoint opened                     url=http://127.0.0.1:8545               cors= vhosts=localhost
+INFO [10-31|15:02:24.265] WebSocket endpoint opened                url=ws://127.0.0.1:8546
+INFO [10-31|15:02:24.265] Transaction pool price threshold updated price=18000000000
+INFO [10-31|15:02:24.266] Commit new mining work                   number=1 uncles=0 txs=0 gas=0 fees=0 elapsed=388.897µs
+INFO [10-31|15:02:25.650] Generating DAG in progress               epoch=0 percentage=0 elapsed=786.175ms
+INFO [10-31|15:02:26.422] Generating DAG in progress               epoch=0 percentage=1 elapsed=1.558s
+INFO [10-31|15:02:27.199] Generating DAG in progress               epoch=0 percentage=2 elapsed=2.335s
+
+(...)
+
+INFO [10-31|15:03:46.999] Generating DAG in progress               epoch=0 percentage=97 elapsed=1m22.134s
+INFO [10-31|15:03:47.641] Generating DAG in progress               epoch=0 percentage=98 elapsed=1m22.777s
+INFO [10-31|15:03:48.684] Generating DAG in progress               epoch=0 percentage=99 elapsed=1m23.820s
+INFO [10-31|15:03:48.687] Generated ethash verification cache      epoch=0 elapsed=1m23.822s
+INFO [10-31|15:03:49.846] Successfully sealed new block            number=1 hash=927e38…9579e6 elapsed=1m25.580s
+INFO [10-31|15:03:49.852] 🔨 mined potential block                  number=1 hash=927e38…9579e6
+
+(...)
+```

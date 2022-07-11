@@ -1,4 +1,4 @@
-package sortition
+package local
 
 import (
 	"math/big"
@@ -14,7 +14,7 @@ const (
 )
 
 func TestOperatorToStakingProvider_NotRegisteredOperator(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
 
 	_, ok, err := localChain.OperatorToStakingProvider()
 	if err != nil {
@@ -26,8 +26,8 @@ func TestOperatorToStakingProvider_NotRegisteredOperator(t *testing.T) {
 }
 
 func TestOperatorToStakingProvider(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
 	stakingProvider, ok, err := localChain.OperatorToStakingProvider()
 	if err != nil {
@@ -46,7 +46,7 @@ func TestOperatorToStakingProvider(t *testing.T) {
 }
 
 func TestEligibleStake(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
 
 	eligibleStake, err := localChain.EligibleStake(testStakingProviderAddress)
 	if err != nil {
@@ -59,7 +59,7 @@ func TestEligibleStake(t *testing.T) {
 		big.NewInt(0),
 	)
 
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(10))
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(10))
 
 	eligibleStake, err = localChain.EligibleStake(testStakingProviderAddress)
 	if err != nil {
@@ -74,15 +74,15 @@ func TestEligibleStake(t *testing.T) {
 }
 
 func TestOperatorUpToDate_NotRegisteredOperator(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
 
 	_, err := localChain.IsOperatorUpToDate()
 	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
 }
 
 func TestOperatorUpToDate_NoStake(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
 	isUpToDate, err := localChain.IsOperatorUpToDate()
 	if err != nil {
@@ -95,9 +95,9 @@ func TestOperatorUpToDate_NoStake(t *testing.T) {
 }
 
 func TestOperatorUpToDate_ZeroStake(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(0))
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(0))
 
 	isUpToDate, err := localChain.IsOperatorUpToDate()
 	if err != nil {
@@ -110,9 +110,9 @@ func TestOperatorUpToDate_ZeroStake(t *testing.T) {
 }
 
 func TestOperatorUpToDate_NonZeroStakeNotInPool(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 
 	isUpToDate, err := localChain.IsOperatorUpToDate()
 	if err != nil {
@@ -125,9 +125,9 @@ func TestOperatorUpToDate_NonZeroStakeNotInPool(t *testing.T) {
 }
 
 func TestOperatorUpToDate_StakeInSyncWithWeight(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	err := localChain.JoinSortitionPool()
 	if err != nil {
 		t.Fatal(err)
@@ -144,14 +144,14 @@ func TestOperatorUpToDate_StakeInSyncWithWeight(t *testing.T) {
 }
 
 func TestOperatorUpToDate_StakeNotInSyncWithWeight(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	err := localChain.JoinSortitionPool()
 	if err != nil {
 		t.Fatal(err)
 	}
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(101))
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
 	isUpToDate, err := localChain.IsOperatorUpToDate()
 	if err != nil {
@@ -164,24 +164,24 @@ func TestOperatorUpToDate_StakeNotInSyncWithWeight(t *testing.T) {
 }
 
 func TestJoinSortitionPool_NotRegisteredOperator(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
 
 	err := localChain.JoinSortitionPool()
 	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
 }
 
 func TestJoinSortitionPool_AuthorizationBelowMinimum(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
 	err := localChain.JoinSortitionPool()
 	testutils.AssertErrorsEqual(t, errAuthorizationBelowMinimum, err)
 }
 
 func TestJoinSortitionPool(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(1))
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(1))
 
 	err := localChain.JoinSortitionPool()
 	if err != nil {
@@ -190,9 +190,9 @@ func TestJoinSortitionPool(t *testing.T) {
 }
 
 func TestJoinSortitionPool_OperatorAlreadyInPool(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(1))
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(1))
 
 	err := localChain.JoinSortitionPool()
 	if err != nil {
@@ -204,21 +204,21 @@ func TestJoinSortitionPool_OperatorAlreadyInPool(t *testing.T) {
 }
 
 func TestUpdateOperatorStatus_NotRegisteredOperator(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
+	localChain := Connect(testOperatorAddress)
 
 	err := localChain.UpdateOperatorStatus()
 	testutils.AssertErrorsEqual(t, errOperatorUnknown, err)
 }
 
 func TestUpdateOperatorStatus(t *testing.T) {
-	localChain := connectLocal(testOperatorAddress)
-	localChain.registerOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain := Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	err := localChain.JoinSortitionPool()
 	if err != nil {
 		t.Fatal(err)
 	}
-	localChain.setEligibleStake(testStakingProviderAddress, big.NewInt(101))
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
 	isUpToDate, err := localChain.IsOperatorUpToDate()
 	if err != nil {

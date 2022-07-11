@@ -31,7 +31,7 @@ type BeaconChain struct {
 	*Chain
 
 	randomBeacon  *contract.RandomBeacon
-	sortitionPool *contract.SortitionPool
+	sortitionPool *contract.BeaconSortitionPool
 
 	chainConfig *beaconchain.Config
 
@@ -83,7 +83,7 @@ func newBeaconChain(
 	}
 
 	sortitionPool, err :=
-		contract.NewSortitionPool(
+		contract.NewBeaconSortitionPool(
 			sortitionPoolAddress,
 			baseChain.chainID,
 			baseChain.key,
@@ -95,7 +95,7 @@ func newBeaconChain(
 		)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to attach to SortitionPool contract: [%v]",
+			"failed to attach to BeaconSortitionPool contract: [%v]",
 			err,
 		)
 	}

@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
 
@@ -74,11 +74,6 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
-	beaconChain, _, err := ethereum.Connect(ctx, config.Ethereum)
-	if err != nil {
-		return fmt.Errorf("cannot connect to the Ethereum node: [%v]", err)
-	}
-
 	ethereumKey, err := ethutil.DecryptKeyFile(
 		config.Ethereum.Account.KeyFile,
 		config.Ethereum.Account.KeyFilePassword,
@@ -96,6 +91,11 @@ func Start(c *cli.Context) error {
 	)
 	if err != nil {
 		return err
+	}
+
+	beaconChain, _, err := ethereum.Connect(ctx, config.Ethereum)
+	if err != nil {
+		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
 	chainProviderV1, err := ethereum_v1.Connect(ctx, config.Ethereum)
@@ -160,6 +160,7 @@ func Start(c *cli.Context) error {
 	)
 
 	err = beacon.Initialize(
+		ctx,
 		operatorPublicKey,
 		chainProviderV1.ThresholdRelay(),
 		beaconChain,

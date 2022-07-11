@@ -1,11 +1,13 @@
 package beacon
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/sortition"
 
 	"github.com/ipfs/go-log"
 
@@ -23,8 +25,10 @@ var logger = log.Logger("keep-beacon")
 // internal random beacon implementation. Returns an error if this failed,
 // otherwise enters a blocked loop.
 func Initialize(
+	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
-	beaconChainV1 beaconchain.Interface, // TODO: Remove once transition from v1 to v2 is done.
+	// TODO: Get rid of legacy Ethereum chain
+	beaconChainV1 beaconchain.Interface,
 	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
 	persistence persistence.Handle,
@@ -48,6 +52,11 @@ func Initialize(
 		chainConfig,
 		groupRegistry,
 	)
+
+	err = sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	if err != nil {
+		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
+	}
 
 	eventDeduplicator := event.NewDeduplicator(beaconChainV1)
 
