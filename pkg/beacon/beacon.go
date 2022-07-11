@@ -28,22 +28,22 @@ func Initialize(
 	ctx context.Context,
 	operatorPublicKey *operator.PublicKey,
 	// TODO: Get rid of legacy Ethereum chain
-	legacyBeaconChain beaconchain.Interface,
+	beaconChainV1 beaconchain.Interface,
 	// TODO: Accept a generic interface, not just sortition.Chain
 	beaconChain sortition.Chain,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
-	chainConfig := legacyBeaconChain.GetConfig()
+	chainConfig := beaconChainV1.GetConfig()
 
-	blockCounter, err := legacyBeaconChain.BlockCounter()
+	blockCounter, err := beaconChainV1.BlockCounter()
 	if err != nil {
 		return fmt.Errorf("failed to get block counter instance: [%v]", err)
 	}
 
-	signing := legacyBeaconChain.Signing()
+	signing := beaconChainV1.Signing()
 
-	groupRegistry := registry.NewGroupRegistry(legacyBeaconChain, persistence)
+	groupRegistry := registry.NewGroupRegistry(beaconChainV1, persistence)
 	groupRegistry.LoadExistingGroups()
 
 	node := newNode(
@@ -59,11 +59,11 @@ func Initialize(
 		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
 	}
 
-	eventDeduplicator := event.NewDeduplicator(legacyBeaconChain)
+	eventDeduplicator := event.NewDeduplicator(beaconChainV1)
 
-	node.ResumeSigningIfEligible(legacyBeaconChain, signing)
+	node.ResumeSigningIfEligible(beaconChainV1, signing)
 
-	_ = legacyBeaconChain.OnRelayEntryRequested(func(request *event.Request) {
+	_ = beaconChainV1.OnRelayEntryRequested(func(request *event.Request) {
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
@@ -104,7 +104,7 @@ func Initialize(
 
 					node.GenerateRelayEntry(
 						request.PreviousEntry,
-						legacyBeaconChain,
+						beaconChainV1,
 						signing,
 						request.GroupPublicKey,
 						request.BlockNumber,
@@ -115,7 +115,7 @@ func Initialize(
 			}
 
 			go node.MonitorRelayEntry(
-				legacyBeaconChain,
+				beaconChainV1,
 				request.BlockNumber,
 				chainConfig,
 			)
@@ -126,14 +126,14 @@ func Initialize(
 
 		confirmCurrentRelayRequest(
 			request.BlockNumber,
-			legacyBeaconChain,
+			beaconChainV1,
 			onConfirmed,
 			currentRelayRequestConfirmationRetries,
 			currentRelayRequestConfirmationDelay,
 		)
 	})
 
-	_ = legacyBeaconChain.OnDKGStarted(func(event *event.DKGStarted) {
+	_ = beaconChainV1.OnDKGStarted(func(event *event.DKGStarted) {
 		go func() {
 			if ok := eventDeduplicator.NotifyDKGStarted(
 				event.Seed,
@@ -154,7 +154,7 @@ func Initialize(
 			)
 
 			node.JoinDKGIfEligible(
-				legacyBeaconChain,
+				beaconChainV1,
 				signing,
 				event.Seed,
 				event.BlockNumber,
@@ -162,7 +162,7 @@ func Initialize(
 		}()
 	})
 
-	_ = legacyBeaconChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+	_ = beaconChainV1.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		logger.Infof(
 			"new group with public key [0x%x] registered on-chain at block [%v]",
 			registration.GroupPublicKey,
