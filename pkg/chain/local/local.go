@@ -447,6 +447,34 @@ func (c *localChain) CalculateDKGResultHash(
 	return dkgResultHash, nil
 }
 
+func (c *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsPoolLocked() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsOperatorInPool() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsOperatorUpToDate() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) JoinSortitionPool() error {
+	panic("unsupported")
+}
+
+func (c *localChain) UpdateOperatorStatus() error {
+	panic("unsupported")
+}
+
 func generateHandlerID() int {
 	// #nosec G404 (insecure random number source (rand))
 	// Local chain implementation doesn't require secure randomness.

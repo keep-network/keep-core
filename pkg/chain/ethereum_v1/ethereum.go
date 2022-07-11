@@ -317,3 +317,31 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 func (ec *ethereumChain) Address() common.Address {
 	return ec.accountKey.Address
 }
+
+func (ec *ethereumChain) OperatorToStakingProvider() (chain.Address, bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) IsPoolLocked() (bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) IsOperatorInPool() (bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) IsOperatorUpToDate() (bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) JoinSortitionPool() error {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) UpdateOperatorStatus() error {
+	panic("unsupported")
+}

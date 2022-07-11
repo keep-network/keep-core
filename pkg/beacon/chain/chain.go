@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/sortition"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -126,6 +127,7 @@ type Interface interface {
 	// StakeMonitor returns the chain's stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
 
+	sortition.Chain
 	GroupInterface
 	RelayEntryInterface
 	DistributedKeyGenerationInterface
