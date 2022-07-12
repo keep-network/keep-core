@@ -68,13 +68,13 @@ func (sm *stakeMonitor) HasMinimumStake(
 
 	// Check if the staking provider has an owner. This check ensures that there
 	// is/was a stake delegation for the given staking provider.
-	_, _, _, stakeHashOwner, err := sm.chain.RolesOf(stakingProvider)
+	_, _, _, hasStakeDelegation, err := sm.chain.RolesOf(stakingProvider)
 	if err != nil {
 		return false, err
 	}
 
-	if !stakeHashOwner {
-		return false, fmt.Errorf("staking provider has no owner set")
+	if !hasStakeDelegation {
+		return false, fmt.Errorf("staking provider has no staking delegation")
 	}
 
 	return true, nil
