@@ -27,7 +27,15 @@ type Chain struct {
 	eligibleStake      map[chain.Address]*big.Int
 	eligibleStakeMutex sync.RWMutex
 
-	isPoolLocked bool
+	operatorRewards      map[chain.Address]*Rewards
+	operatorRewardsMutex sync.RWMutex
+
+	isPoolLocked     bool
+	currentTimestamp *big.Int
+}
+
+type Rewards struct {
+	ineligibleUntil *big.Int
 }
 
 func Connect(operatorAddress chain.Address) *Chain {
@@ -36,6 +44,7 @@ func Connect(operatorAddress chain.Address) *Chain {
 		operatorToStakingProvider: make(map[chain.Address]chain.Address),
 		sortitionPool:             make(map[chain.Address]*big.Int),
 		eligibleStake:             make(map[chain.Address]*big.Int),
+		operatorRewards:           make(map[chain.Address]*Rewards),
 	}
 }
 
@@ -153,4 +162,46 @@ func (c *Chain) UpdateOperatorStatus() error {
 	c.sortitionPool[c.operatorAddress] = eligibleStake
 
 	return nil
+}
+
+func (c *Chain) IsEligibleForRewards() (bool, error) {
+	c.operatorRewardsMutex.RLock()
+	defer c.operatorRewardsMutex.RUnlock()
+
+	return (c.operatorRewards[c.operatorAddress].ineligibleUntil).Cmp(big.NewInt(0)) == 0, nil
+}
+
+func (c *Chain) CanRestoreRewardEligibility() (bool, error) {
+	c.operatorRewardsMutex.RLock()
+	defer c.operatorRewardsMutex.RUnlock()
+
+	return (c.operatorRewards[c.operatorAddress].ineligibleUntil).Cmp(c.currentTimestamp) == -1, nil
+}
+
+func (c *Chain) RestoreRewardEligibility() error {
+	c.operatorRewardsMutex.Lock()
+	defer c.operatorRewardsMutex.Unlock()
+
+	rewards := &Rewards{
+		ineligibleUntil: big.NewInt(0),
+	}
+
+	c.operatorRewards[c.operatorAddress] = rewards
+
+	return nil
+}
+
+func (c *Chain) SetCurrentTimestamp(currentTimestamp *big.Int) {
+	c.currentTimestamp = currentTimestamp
+}
+
+func (c *Chain) SetOperatorRewardsEligibility(until *big.Int) {
+	c.operatorRewardsMutex.Lock()
+	defer c.operatorRewardsMutex.Unlock()
+
+	rewards := &Rewards{
+		ineligibleUntil: until,
+	}
+
+	c.operatorRewards[c.operatorAddress] = rewards
 }
