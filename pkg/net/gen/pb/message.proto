@@ -20,22 +20,6 @@ message BroadcastNetworkMessage {
   uint64 sequenceNumber = 4;
 }
 
-// UnicastNetworkMessage represents a network message used by unicast
-// channels.
-message UnicastNetworkMessage {
-  // The PublicKey of the sender.
-  bytes sender = 1;
-
-  // A marshaled Protocol Message.
-  bytes payload = 2;
-
-  // Type of the message as registered by the protocol.
-  bytes type = 3;
-
-  // Message signature.
-  bytes signature = 4;
-}
-
 message Identity {
   bytes pub_key = 1;
 }

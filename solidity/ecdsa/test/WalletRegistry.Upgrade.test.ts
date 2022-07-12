@@ -203,6 +203,7 @@ describe("WalletRegistry - Upgrade", async () => {
           // WalletRegistry V1
           const {
             walletRegistry: walletRegistryV1,
+            randomBeacon,
             sortitionPool,
             staking,
             walletOwner,
@@ -212,6 +213,7 @@ describe("WalletRegistry - Upgrade", async () => {
           const existingWallet = await createNewWallet(
             walletRegistryV1,
             walletOwner.wallet,
+            randomBeacon,
             expectedExistingWalletData.publicKey
           )
           existingWalletID = existingWallet.walletID
@@ -222,7 +224,6 @@ describe("WalletRegistry - Upgrade", async () => {
             .connect(walletOwner.wallet)
             .requestNewWallet()
 
-          const randomBeacon = await fakeRandomBeacon(walletRegistryV1)
           const relayEntry = ethers.utils.randomBytes(32)
           const dkgSeed = ethers.BigNumber.from(keccak256(relayEntry))
 

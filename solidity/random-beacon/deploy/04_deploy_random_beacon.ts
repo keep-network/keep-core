@@ -33,7 +33,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const RandomBeacon = await deployments.deploy("RandomBeacon", {
     contract:
-      deployments.getNetworkName() === "hardhat"
+      process.env.TEST_USE_STUBS_BEACON === "true"
         ? "RandomBeaconStub"
         : undefined,
     from: deployer,

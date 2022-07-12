@@ -1,0 +1,81 @@
+:toc: macro
+
+= T developer documentation
+
+toc::[]
+
+== <<local-t-network.adoc,Setting up local T network>>
+
+For development purposes, it is convenient to set up a local Ethereum client with
+a group of connected peers. A note-taken walkthrough covers the entire process
+including setting up a local Ethereum client, deploying T contracts and
+configuring T peers.
+
+== Quick installation
+
+To quickly install and start a client use the following scripts.
+
+=== Install scripts
+
+The `+install.sh+` script will:
+
+* install yarn dependencies
+* unlock accounts
+* build contracts
+* deploy contracts
+* build client
+
+The `+initialize.sh+` script will:
+
+* mint & approve `T` tokens
+* stake `T` tokens
+* increase authorization for `RandomBeacon`
+* register operator
+
+Please refer to the scripts `help` for available command arguments and environment
+variables. `./install.sh --help` or `./initialize.sh --help`. Accounts unlocking
+and staking can be run outside of these scripts as standalone hardhat tasks.
+
+To deploy and initialize contracts:
+
+* run `./scripts/install.sh`. You need to run it only once.
+
+* run `./scripts/initialize.sh --stake-owner <address>` for the default setup for
+each client. Default setup assumes that the staking provider, operator, beneficiary,
+and the authorizer all have the same addresses as the stake owner. Only the
+`stake-owner` has to be unique for the default setup. The default stake amount is
+`1,000,000 T` tokens. The default authorization amount is the minimum authorization
+amount +
+Ex. if you need to initialize a network with 3 clients with the default setup,
+then run this script 3 times with a different `<address>`.
+
+
+=== Starting a client
+
+TBD
+
+== Development Guidelines
+
+There are two primary languages in the T code right now:
+
+Go::
+  Go code largely adheres to community practices where they have been decided.
+  Divergences and additional tidbits are listed in the link:go-guidelines.adoc[Go
+  Guidelines] document.
+
+Solidity::
+  Solidity code generally adheres to the
+  https://solidity.readthedocs.io/en/latest/style-guide.html[Solidity style guide].
+  Contracts and their functions are documented using
+  https://docs.soliditylang.org/en/develop/natspec-format.html[the
+  Ethereum Natural Specification Format] (NatSpec).
+
+== Working with Solidity contracts
+
+The fastest and easiest way to have a local Ethereum testent is to use
+https://hardhat.org/[Hardhat].
+
+
+Navigate to one of the projects `solidity/ecdsa` or `solidity/random-beacon`.
+You can deploy contracts executing `yarn deploy` or run tests against the local
+Hardhat's network `yarn test`.

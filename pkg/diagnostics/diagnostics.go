@@ -2,11 +2,11 @@ package diagnostics
 
 import (
 	"encoding/json"
+	"github.com/keep-network/keep-core/pkg/chain"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 var logger = log.Logger("keep-diagnostics")
@@ -29,6 +29,7 @@ func Initialize(port int) (*diagnostics.Registry, bool) {
 func RegisterConnectedPeersSource(
 	registry *diagnostics.Registry,
 	netProvider net.Provider,
+	signing chain.Signing,
 ) {
 	registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -43,9 +44,17 @@ func RegisterConnectedPeersSource(
 				continue
 			}
 
+			peerChainAddress, err := signing.PublicKeyToAddress(
+				peerPublicKey,
+			)
+			if err != nil {
+				logger.Error("error on getting peer chain address: [%v]", err)
+				continue
+			}
+
 			peersList[i] = map[string]interface{}{
-				"network_id":       peer,
-				"ethereum_address": key.NetworkPubKeyToChainAddress(peerPublicKey),
+				"network_id":    peer,
+				"chain_address": peerChainAddress.String(),
 			}
 		}
 
@@ -64,6 +73,7 @@ func RegisterConnectedPeersSource(
 func RegisterClientInfoSource(
 	registry *diagnostics.Registry,
 	netProvider net.Provider,
+	signing chain.Signing,
 ) {
 	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
@@ -75,9 +85,17 @@ func RegisterClientInfoSource(
 			return ""
 		}
 
+		clientChainAddress, err := signing.PublicKeyToAddress(
+			clientPublicKey,
+		)
+		if err != nil {
+			logger.Error("error on getting peer chain address: [%v]", err)
+			return ""
+		}
+
 		clientInfo := map[string]interface{}{
-			"network_id":       clientID,
-			"ethereum_address": key.NetworkPubKeyToChainAddress(clientPublicKey),
+			"network_id":    clientID,
+			"chain_address": clientChainAddress.String(),
 		}
 
 		bytes, err := json.Marshal(clientInfo)

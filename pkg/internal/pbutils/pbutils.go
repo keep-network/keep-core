@@ -10,7 +10,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/gogo/protobuf/proto"
 	fuzz "github.com/google/gofuzz"
-	"github.com/keep-network/keep-core/pkg/net/ephemeral"
+	"github.com/keep-network/keep-core/pkg/crypto/ephemeral"
 )
 
 // RoundTrip takes a marshaler and unmarshaler, marshals the marshaler, and then

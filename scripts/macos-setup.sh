@@ -15,12 +15,12 @@ brew list solidity &>/dev/null || brew install solidity@5
 echo "Installing protobuf requirements..."
 # Protobuf
 brew list protobuf &>/dev/null || brew install protobuf
-go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
+go install github.com/gogo/protobuf/protoc-gen-gogoslick@latest
 
 echo "Installing precommit requirements..."
 brew list pre-commit &>/dev/null || brew install pre-commit
-go get -u golang.org/x/tools/cmd/goimports
-go get -u golang.org/x/lint/golint
+go install golang.org/x/tools/cmd/goimports@latest
+go install golang.org/x/lint/golint@latest
 
 echo "Installing jq..."
 brew list jq &>/dev/null || brew install jq

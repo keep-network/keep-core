@@ -87,19 +87,19 @@ const config: HardhatUserConfig = {
           testConfig.nonStakingAccountsCount +
           testConfig.stakingRolesCount * testConfig.operatorsCount,
       },
-      tags: ["local"],
+      tags: ["allowStubs"],
       // we use higher gas price for tests to obtain more realistic results
       // for gas refund tests than when the default hardhat ~1 gwei gas price is
       // used
       gasPrice: 200000000000, // 200 gwei,
       // Ignore contract size on deployment to hardhat network, to be able to
       // deploy stub contracts in tests.
-      allowUnlimitedContractSize: true,
+      allowUnlimitedContractSize: process.env.TEST_USE_STUBS_ECDSA === "true",
     },
     development: {
       url: "http://localhost:8545",
       chainId: 1101,
-      tags: ["local"],
+      tags: ["allowStubs"],
     },
     ropsten: {
       url: process.env.CHAIN_API_URL || "",
