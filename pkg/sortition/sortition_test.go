@@ -74,6 +74,8 @@ func TestMonitor_JoinPool(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 
+	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
+
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
@@ -100,6 +102,8 @@ func TestMonitor_UpdatePool(t *testing.T) {
 
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
+	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
+
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
@@ -120,6 +124,8 @@ func TestMonitor_JoinPool_WithDelay(t *testing.T) {
 
 	localChain := local.Connect(testOperatorAddress)
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+
+	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
 
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
@@ -157,6 +163,8 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
+	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
+
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
@@ -180,5 +188,110 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 	}
 	if !isOperatorUpToDate {
 		t.Fatal("expected the operator to be up to date")
+	}
+}
+
+func TestMonitor_EligibleForRewards(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain.JoinSortitionPool()
+
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
+
+	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
+	err := MonitorPool(ctx, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isEligibleForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isEligibleForRewards {
+		t.Fatal("expected the operator to be eligible for rewards")
+	}
+}
+
+func TestMonitor_CannotRestoreRewardsEligibility(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain.JoinSortitionPool()
+
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
+
+	localChain.SetOperatorRewardsEligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(0))
+	err := MonitorPool(ctx, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isEligibleForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isEligibleForRewards {
+		t.Fatal("expected the operator not to be eligible for rewards")
+	}
+
+	canRestoreRewardsEligibility, err := localChain.CanRestoreRewardEligibility()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if canRestoreRewardsEligibility {
+		t.Fatal("expected the operator cannot restore rewards eligibility")
+	}
+}
+
+func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain.JoinSortitionPool()
+
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
+
+	localChain.SetOperatorRewardsEligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(2))
+
+	isEligibleForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if isEligibleForRewards {
+		t.Fatal("expected the operator not to be eligible for rewards yet")
+	}
+
+	canRestoreRewardsEligibility, err := localChain.CanRestoreRewardEligibility()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !canRestoreRewardsEligibility {
+		t.Fatal("expected the operator to be able to restore rewards eligibility")
+	}
+
+	err = MonitorPool(ctx, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	isEligibleForRewards, err = localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isEligibleForRewards {
+		t.Fatal("expected the operator to be restored for rewards")
 	}
 }
