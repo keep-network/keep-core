@@ -1,4 +1,4 @@
-package local
+package local_v1
 
 import (
 	"bytes"
@@ -40,8 +40,8 @@ type localChain struct {
 	lastSubmittedRelayEntry          []byte
 
 	handlerMutex             sync.Mutex
-	relayEntryHandlers       map[int]func(entry *event.EntrySubmitted)
-	relayRequestHandlers     map[int]func(request *event.Request)
+	relayEntryHandlers       map[int]func(entry *event.RelayEntrySubmitted)
+	relayRequestHandlers     map[int]func(request *event.RelayEntryRequested)
 	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
 	dkgStartedHandlers       map[int]func(submission *event.DKGStarted)
 	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
@@ -70,7 +70,7 @@ func (c *localChain) Signing() chain.Signing {
 	return newSigner(c.operatorPrivateKey)
 }
 
-func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey, error) {
+func (c *localChain) OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error) {
 	return c.operatorPrivateKey, &c.operatorPrivateKey.PublicKey, nil
 }
 
@@ -78,8 +78,8 @@ func (c *localChain) GetConfig() *beaconchain.Config {
 	return c.relayConfig
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmittedPromise {
-	relayEntryPromise := &async.EventEntrySubmittedPromise{}
+func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventRelayEntrySubmittedPromise {
+	relayEntryPromise := &async.EventRelayEntrySubmittedPromise{}
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
@@ -93,13 +93,13 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 		return relayEntryPromise
 	}
 
-	entry := &event.EntrySubmitted{
+	entry := &event.RelayEntrySubmitted{
 		BlockNumber: currentBlock,
 	}
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayEntryHandlers {
-		go func(handler func(entry *event.EntrySubmitted), entry *event.EntrySubmitted) {
+		go func(handler func(entry *event.RelayEntrySubmitted), entry *event.RelayEntrySubmitted) {
 			handler(entry)
 		}(handler, entry)
 	}
@@ -116,7 +116,7 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 }
 
 func (c *localChain) OnRelayEntrySubmitted(
-	handler func(entry *event.EntrySubmitted),
+	handler func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
@@ -137,7 +137,7 @@ func (c *localChain) GetLastRelayEntry() []byte {
 }
 
 func (c *localChain) OnRelayEntryRequested(
-	handler func(request *event.Request),
+	handler func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
@@ -173,10 +173,6 @@ func (c *localChain) OnGroupRegistered(
 
 		delete(c.groupRegisteredHandlers, handlerID)
 	})
-}
-
-func (c *localChain) ThresholdRelay() beaconchain.Interface {
-	return beaconchain.Interface(c)
 }
 
 // Connect initializes a local stub implementation of the chain
@@ -219,8 +215,8 @@ func ConnectWithKey(
 			ResultPublicationBlockStep: resultPublicationBlockStep,
 			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
-		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
-		relayRequestHandlers:     make(map[int]func(request *event.Request)),
+		relayEntryHandlers:       make(map[int]func(request *event.RelayEntrySubmitted)),
+		relayRequestHandlers:     make(map[int]func(request *event.RelayEntryRequested)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
 		dkgStartedHandlers:       make(map[int]func(submission *event.DKGStarted)),
 		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),

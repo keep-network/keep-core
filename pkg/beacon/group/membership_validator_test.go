@@ -2,15 +2,14 @@ package group
 
 import (
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"testing"
-
-	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 func TestIsInGroup(t *testing.T) {
-	localChain := local.Connect(3, 3, big.NewInt(100))
+	localChain := local_v1.Connect(3, 3, big.NewInt(100))
 	signing := localChain.Signing()
 
 	publicKey1 := generatePublicKey(t)
@@ -44,7 +43,7 @@ func TestIsInGroup(t *testing.T) {
 }
 
 func TestIsValidMembership(t *testing.T) {
-	localChain := local.Connect(3, 3, big.NewInt(100))
+	localChain := local_v1.Connect(3, 3, big.NewInt(100))
 	signing := localChain.Signing()
 
 	publicKey1 := generatePublicKeyBytes(t)
@@ -77,7 +76,7 @@ func TestIsValidMembership(t *testing.T) {
 }
 
 func generatePublicKey(t *testing.T) *operator.PublicKey {
-	_, operatorPublicKey, err := operator.GenerateKeyPair(local.DefaultCurve)
+	_, operatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}

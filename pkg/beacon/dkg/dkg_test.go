@@ -3,6 +3,7 @@ package dkg
 import (
 	"fmt"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 var (
@@ -31,9 +31,9 @@ func setup() {
 	gjkrResult = &gjkr.Result{GroupPublicKey: groupPublicKey}
 	dkgResultChannel = make(chan *event.DKGResultSubmission, 1)
 	startPublicationBlockHeight = uint64(0)
-	localChain := local.Connect(5, 3, big.NewInt(10))
-	beaconChain = localChain.ThresholdRelay()
-	blockCounter, _ = localChain.BlockCounter()
+	localChain := local_v1.Connect(5, 3, big.NewInt(10))
+	beaconChain = localChain
+	blockCounter, _ = beaconChain.BlockCounter()
 }
 
 func TestDecideMemberFate_HappyPath(t *testing.T) {

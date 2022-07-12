@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
@@ -13,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
-	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -52,9 +52,9 @@ var (
 )
 
 func TestRegisterGroup(t *testing.T) {
-	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
+	localChain := local_v1.Connect(5, 3, big.NewInt(200))
 
-	gr := NewGroupRegistry(chain, persistenceMock)
+	gr := NewGroupRegistry(localChain, persistenceMock)
 
 	gr.RegisterGroup(signer1, channelName1)
 
@@ -76,8 +76,8 @@ func TestRegisterGroup(t *testing.T) {
 }
 
 func TestLoadGroup(t *testing.T) {
-	chain := chainLocal.Connect(5, 3, big.NewInt(200)).ThresholdRelay()
-	gr := NewGroupRegistry(chain, persistenceMock)
+	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	gr := NewGroupRegistry(localChain, persistenceMock)
 
 	if len(gr.myGroups) != 0 {
 		t.Fatalf(

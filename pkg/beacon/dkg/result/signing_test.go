@@ -1,13 +1,13 @@
 package result
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
-	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -326,19 +326,19 @@ func initializeSigningMembers(groupSize int) (
 			&mockMembershipValidator{},
 		)
 
-		operatorPrivateKey, _, err := operator.GenerateKeyPair(local.DefaultCurve)
+		operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 		if err != nil {
 			return nil, nil, err
 		}
 
-		chain := local.ConnectWithKey(
+		localChain := local_v1.ConnectWithKey(
 			groupSize,
 			honestThreshold,
 			minimumStake,
 			operatorPrivateKey,
 		)
 
-		beaconChains[i] = chain.ThresholdRelay()
+		beaconChains[i] = localChain
 	}
 
 	return members, beaconChains, nil
