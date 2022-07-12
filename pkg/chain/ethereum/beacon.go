@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	"fmt"
@@ -137,10 +136,7 @@ func (bc *BeaconChain) CurrentOperatorToStakingProvider() (chain.Address, bool, 
 		)
 	}
 
-	if bytes.Equal(
-		stakingProvider.Bytes(),
-		bytes.Repeat([]byte{0}, common.AddressLength),
-	) {
+	if (stakingProvider == common.Address{}) {
 		return "", false, nil
 	}
 
