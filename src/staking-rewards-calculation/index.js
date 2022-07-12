@@ -472,7 +472,7 @@ async function getOngoingRewardsMekleInput(
 
   // Calculate the reward of each stake
   // Rewards formula: r = (s_1 * y_t) * t / 365; where y_t is 0.15
-  const rewards = []
+  const rewards = {}
   Object.keys(stakeList).map((stakingProvider) => {
     let reward = BigNumber(0)
 
@@ -514,12 +514,11 @@ async function getOngoingRewardsMekleInput(
       )
       const beneficiary = stakeDatasItem.beneficiary
 
-      const rewardsItem = {
-        stakingProvider: ethers.utils.getAddress(stakingProvider),
-        reward: reward,
+      const stProvCheckSum = ethers.utils.getAddress(stakingProvider)
+      rewards[stProvCheckSum] = {
         beneficiary: ethers.utils.getAddress(beneficiary),
+        amount: reward.toFixed(0),
       }
-      rewards.push(rewardsItem)
     }
   })
 
@@ -573,7 +572,7 @@ async function getBonusRewardsMerkleInput(gqlUrl) {
     })
   })
 
-  const rewards = []
+  const rewards = {}
 
   // Filter the stakes that are not elegible for bonus
   Object.keys(stakeList).map((stakingProvider) => {
@@ -603,15 +602,15 @@ async function getBonusRewardsMerkleInput(gqlUrl) {
         (stake) => stake.id === stakingProvider
       )
       const beneficiary = stakeDatasItem.beneficiary
-      // Calculate the earning of this stake
-      // r = 0.03 * initial_amount
+
+      // Calculate the earning of this stake r = 0.03 * initial_amount
       const reward = epochStakes[0].amount.times(0.03)
-      const rewardsItem = {
-        stakingProvider: ethers.utils.getAddress(stakingProvider),
-        reward: reward,
+
+      const stProvCheckSum = ethers.utils.getAddress(stakingProvider)
+      rewards[stProvCheckSum] = {
         beneficiary: ethers.utils.getAddress(beneficiary),
+        amount: reward.toFixed(0),
       }
-      rewards.push(rewardsItem)
     }
   })
 
