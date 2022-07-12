@@ -235,11 +235,11 @@ func (bc *BeaconChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
 	return result, nil
 }
 
+// TODO: Implement a real OnGroupRegistered function.
 func (bc *BeaconChain) OnGroupRegistered(
 	handler func(groupRegistration *event.GroupRegistration),
 ) subscription.EventSubscription {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return subscription.NewEventSubscription(func() {})
 }
 
 // TODO: Implement a real IsGroupRegistered function.
@@ -247,16 +247,16 @@ func (bc *BeaconChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	return false, nil
 }
 
+// TODO: Implement a real IsStaleGroup function.
 func (bc *BeaconChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return false, nil
 }
 
+// TODO: Implement a real GetGroupMembers function.
 func (bc *BeaconChain) GetGroupMembers(
 	groupPublicKey []byte,
 ) ([]chain.Address, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return []chain.Address{}, nil
 }
 
 // TODO: Implement a real OnDKGStarted event subscription. The current
@@ -365,46 +365,57 @@ func (bc *BeaconChain) CalculateDKGResultHash(
 	return beaconchain.DKGResultHashFromBytes(hash)
 }
 
-func (bc *BeaconChain) SubmitRelayEntry(entry []byte) *async.EventRelayEntrySubmittedPromise {
-	// TODO: Implementation.
-	panic("not implemented yet")
+// TODO: Implement a real SubmitRelayEntry function.
+func (bc *BeaconChain) SubmitRelayEntry(
+	entry []byte,
+) *async.EventRelayEntrySubmittedPromise {
+	relayEntryPromise := &async.EventRelayEntrySubmittedPromise{}
+
+	err := relayEntryPromise.Fulfill(&event.RelayEntrySubmitted{
+		BlockNumber: 0,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return relayEntryPromise
 }
 
+// TODO: Implement a real OnRelayEntrySubmitted function.
 func (bc *BeaconChain) OnRelayEntrySubmitted(
 	handler func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return subscription.NewEventSubscription(func() {})
 }
 
+// TODO: Implement a real OnRelayEntryRequested function.
 func (bc *BeaconChain) OnRelayEntryRequested(
 	handler func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return subscription.NewEventSubscription(func() {})
 }
 
+// TODO: Implement a real ReportRelayEntryTimeout function.
 func (bc *BeaconChain) ReportRelayEntryTimeout() error {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return nil
 }
 
+// TODO: Implement a real IsEntryInProgress function.
 func (bc *BeaconChain) IsEntryInProgress() (bool, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return false, nil
 }
 
+// TODO: Implement a real CurrentRequestStartBlock function.
 func (bc *BeaconChain) CurrentRequestStartBlock() (*big.Int, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return big.NewInt(0), nil
 }
 
+// TODO: Implement a real CurrentRequestPreviousEntry function.
 func (bc *BeaconChain) CurrentRequestPreviousEntry() ([]byte, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return []byte{}, nil
 }
 
+// TODO: Implement a real CurrentRequestGroupPublicKey function.
 func (bc *BeaconChain) CurrentRequestGroupPublicKey() ([]byte, error) {
-	// TODO: Implementation.
-	panic("not implemented yet")
+	return []byte{}, nil
 }
