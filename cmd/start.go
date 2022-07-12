@@ -28,8 +28,8 @@ var (
 )
 
 const (
-	portFlag          = "port"
-	portShort         = "p"
+	portFlag  = "port"
+	portShort = "p"
 )
 
 const startDescription = `Starts the Keep client in the foreground`
