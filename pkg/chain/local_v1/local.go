@@ -1,4 +1,4 @@
-package local
+package local_v1
 
 import (
 	"bytes"
@@ -70,7 +70,7 @@ func (c *localChain) Signing() chain.Signing {
 	return newSigner(c.operatorPrivateKey)
 }
 
-func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey, error) {
+func (c *localChain) OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error) {
 	return c.operatorPrivateKey, &c.operatorPrivateKey.PublicKey, nil
 }
 
@@ -173,10 +173,6 @@ func (c *localChain) OnGroupRegistered(
 
 		delete(c.groupRegisteredHandlers, handlerID)
 	})
-}
-
-func (c *localChain) ThresholdRelay() beaconchain.Interface {
-	return beaconchain.Interface(c)
 }
 
 // Connect initializes a local stub implementation of the chain

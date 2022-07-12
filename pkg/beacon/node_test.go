@@ -2,20 +2,19 @@ package beacon
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"testing"
-
-	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 var address = "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
 var relayEntryTimeout = uint64(15)
 
 func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
-	chain := chainLocal.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3, big.NewInt(200))
 
 	node := &node{
-		beaconChain: chain,
+		beaconChain: localChain,
 	}
 
 	blockCounter, err := node.beaconChain.BlockCounter()
@@ -42,7 +41,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		)
 	}
 
-	chain.ThresholdRelay().SubmitRelayEntry(big.NewInt(1).Bytes()).
+	localChain.SubmitRelayEntry(big.NewInt(1).Bytes()).
 		OnFailure(func(err error) {
 			if err != nil {
 				t.Fatal(err)
@@ -51,7 +50,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 
 	blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
 
-	timeoutsReport := chain.GetRelayEntryTimeoutReports()
+	timeoutsReport := localChain.GetRelayEntryTimeoutReports()
 	numberOfReports := len(timeoutsReport)
 
 	if numberOfReports != 0 {
@@ -63,10 +62,10 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 }
 
 func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
-	chain := chainLocal.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3, big.NewInt(200))
 
 	node := &node{
-		beaconChain: chain,
+		beaconChain: localChain,
 	}
 
 	blockCounter, err := node.beaconChain.BlockCounter()
@@ -90,7 +89,7 @@ func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	timeoutsReport := chain.GetRelayEntryTimeoutReports()
+	timeoutsReport := localChain.GetRelayEntryTimeoutReports()
 	numberOfReports := len(timeoutsReport)
 
 	if numberOfReports != 1 {

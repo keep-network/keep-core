@@ -1,4 +1,4 @@
-package local
+package local_v1
 
 import (
 	"context"
@@ -18,7 +18,7 @@ func TestLocalSubmitRelayEntry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	relayEntryPromise := chainHandle.SubmitRelayEntry(big.NewInt(19).Bytes())
 
@@ -44,7 +44,7 @@ func TestLocalOnEntrySubmitted(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	eventFired := make(chan *event.RelayEntrySubmitted)
 
@@ -70,7 +70,7 @@ func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	eventFired := make(chan *event.RelayEntrySubmitted)
 
@@ -96,7 +96,7 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	eventFired := make(chan *event.GroupRegistration)
 
@@ -145,7 +145,7 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	eventFired := make(chan *event.GroupRegistration)
 
@@ -184,7 +184,7 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	eventFired := make(chan *event.DKGResultSubmission)
 
@@ -234,7 +234,7 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 	ctx, cancel := newTestContext()
 	defer cancel()
 
-	chainHandle := Connect(10, 4, big.NewInt(200)).ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	eventFired := make(chan *event.DKGResultSubmission)
 
@@ -473,11 +473,10 @@ func TestLocalIsGroupStale(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			localChain := &localChain{
+			chainHandle := &localChain{
 				groups:          availableGroups,
 				simulatedHeight: test.simulatedHeight,
 			}
-			chainHandle := localChain.ThresholdRelay()
 			actualResult, err := chainHandle.IsStaleGroup(test.group.groupPublicKey)
 			if err != nil {
 				t.Fatal(err)
@@ -491,9 +490,7 @@ func TestLocalIsGroupStale(t *testing.T) {
 }
 
 func TestLocalSubmitDKGResult(t *testing.T) {
-	localChain := Connect(10, 4, big.NewInt(200))
-
-	chainHandle := localChain.ThresholdRelay()
+	chainHandle := Connect(10, 4, big.NewInt(200))
 
 	memberIndex := beaconchain.GroupMemberIndex(1)
 	result := &beaconchain.DKGResult{
@@ -526,8 +523,7 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 	groupSize := 5
 	honestThreshold := 3
 
-	localChain := Connect(groupSize, honestThreshold, big.NewInt(200))
-	chainHandle := localChain.ThresholdRelay()
+	chainHandle := Connect(groupSize, honestThreshold, big.NewInt(200))
 
 	var tests = map[string]struct {
 		signatures    map[beaconchain.GroupMemberIndex][]byte
