@@ -7,6 +7,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/contract"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 // Definitions of contract names.
@@ -60,32 +61,42 @@ func newTbtcChain(
 	}, nil
 }
 
-// OperatorToStakingProvider returns the staking provider address for the
-// given operator. If the staking provider has not been registered for the
-// operator, the returned address is empty and the boolean flag is set to
-// false. If the staking provider has been registered, the address is not
-// empty and the boolean flag indicates true.
-func (tc *TbtcChain) OperatorToStakingProvider(
-	operator chain.Address,
-) (chain.Address, bool, error) {
+func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error) {
+	operatorAddress, err := operatorPublicKeyToChainAddress(operatorPublicKey)
+	if err != nil {
+		return false, fmt.Errorf(
+			"cannot convert from operator key to chain address: [%v]",
+			err,
+		)
+	}
+
 	stakingProvider, err := tc.walletRegistry.OperatorToStakingProvider(
-		common.HexToAddress(operator.String()),
+		operatorAddress,
 	)
 	if err != nil {
-		return "", false, fmt.Errorf(
+		return false, fmt.Errorf(
 			"failed to map operator %v to a staking provider: [%v]",
-			operator,
+			operatorAddress,
 			err,
 		)
 	}
 
 	if (stakingProvider == common.Address{}) {
-		return "", false, nil
+		return false, nil
 	}
 
-	return chain.Address(stakingProvider.Hex()), true, nil
-}
+	// Check if the staking provider has an owner. This check ensures that there
+	// is/was a stake delegation for the given staking provider.
+	_, _, _, hasStakeDelegation, err := tc.Chain.RolesOf(
+		chain.Address(stakingProvider.Hex()),
+	)
+	if err != nil {
+		return false, err
+	}
 
-func (tc *TbtcChain) StakeMonitor() (chain.StakeMonitor, error) {
-	return newStakeMonitor(tc, tc.Chain), nil
+	if !hasStakeDelegation {
+		return false, fmt.Errorf("staking provider has no staking delegation")
+	}
+
+	return true, nil
 }

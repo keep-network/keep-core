@@ -55,19 +55,11 @@ func (c *Chain) SetEligibleStake(stakingProvider chain.Address, stake *big.Int) 
 	c.eligibleStake[stakingProvider] = stake
 }
 
-func (c *Chain) CurrentOperatorToStakingProvider() (chain.Address, bool, error) {
+func (c *Chain) OperatorToStakingProvider() (chain.Address, bool, error) {
 	c.operatorToStakingProviderMutex.RLock()
 	defer c.operatorToStakingProviderMutex.RUnlock()
 
 	stakingProvider, ok := c.operatorToStakingProvider[c.operatorAddress]
-	return stakingProvider, ok, nil
-}
-
-func (c *Chain) OperatorToStakingProvider(operator chain.Address) (chain.Address, bool, error) {
-	c.operatorToStakingProviderMutex.RLock()
-	defer c.operatorToStakingProviderMutex.RUnlock()
-
-	stakingProvider, ok := c.operatorToStakingProvider[operator]
 	return stakingProvider, ok, nil
 }
 

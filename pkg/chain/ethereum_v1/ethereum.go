@@ -318,11 +318,7 @@ func (ec *ethereumChain) Address() common.Address {
 	return ec.accountKey.Address
 }
 
-func (ec *ethereumChain) CurrentOperatorToStakingProvider() (chain.Address, bool, error) {
-	panic("unsupported")
-}
-
-func (ec *ethereumChain) OperatorToStakingProvider(operator chain.Address) (chain.Address, bool, error) {
+func (ec *ethereumChain) OperatorToStakingProvider() (chain.Address, bool, error) {
 	panic("unsupported")
 }
 

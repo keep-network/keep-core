@@ -16,7 +16,7 @@ const (
 func TestOperatorToStakingProvider_NotRegisteredOperator(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
 
-	_, ok, err := localChain.CurrentOperatorToStakingProvider()
+	_, ok, err := localChain.OperatorToStakingProvider()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,11 +25,11 @@ func TestOperatorToStakingProvider_NotRegisteredOperator(t *testing.T) {
 	}
 }
 
-func TestCurrentOperatorToStakingProvider(t *testing.T) {
+func TestOperatorToStakingProvider(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 
-	stakingProvider, ok, err := localChain.CurrentOperatorToStakingProvider()
+	stakingProvider, ok, err := localChain.OperatorToStakingProvider()
 	if err != nil {
 		t.Fatal(err)
 	}

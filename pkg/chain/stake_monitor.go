@@ -4,6 +4,7 @@ import "github.com/keep-network/keep-core/pkg/operator"
 
 // StakeMonitor is an interface that provides ability to check and monitor
 // the stake for the provided address.
+// TODO: remove
 type StakeMonitor interface {
 	// HasMinimumStake checks if the specified account has enough active stake
 	// to become network operator and that the operator contract the client is

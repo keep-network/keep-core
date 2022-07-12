@@ -6,6 +6,8 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// TODO: Remove all
+
 // StakeProviderResolver is a handle for interaction with contracts able
 // to resolve staking provider based on the given operator address.
 type StakeProviderResolver interface {

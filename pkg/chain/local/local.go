@@ -428,11 +428,7 @@ func (c *localChain) CalculateDKGResultHash(
 	return dkgResultHash, nil
 }
 
-func (c *localChain) CurrentOperatorToStakingProvider() (chain.Address, bool, error) {
-	panic("unsupported")
-}
-
-func (c *localChain) OperatorToStakingProvider(operator chain.Address) (chain.Address, bool, error) {
+func (c *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
 	panic("unsupported")
 }
 
