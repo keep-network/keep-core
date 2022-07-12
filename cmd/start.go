@@ -163,7 +163,6 @@ func Start(c *cli.Context) error {
 	err = beacon.Initialize(
 		ctx,
 		operatorPublicKey,
-		chainProviderV1.ThresholdRelay(),
 		beaconChain,
 		netProvider,
 		persistence,
