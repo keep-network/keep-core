@@ -37,7 +37,30 @@ library Wallets {
         uint256[49] __gap;
     }
 
-    /// @notice Registers a new wallet.
+    /// @notice Performs preliminary validation of a new group public key.
+    ///         The group public key must be unique and have 64 bytes in length.
+    ///         If the validation fails, the function reverts. This function
+    ///         must be called first for a public key of a wallet added with
+    ///         `addWallet` function.
+    /// @param publicKey Uncompressed public key of a new wallet.
+    function validatePublicKey(Data storage self, bytes calldata publicKey)
+        internal
+        view
+    {
+        bytes32 walletID = keccak256(publicKey);
+        require(
+            self.registry[walletID].publicKeyX == bytes32(0),
+            "Wallet with the given public key already exists"
+        );
+        require(publicKey.length == 64, "Invalid length of the public key");
+
+        bytes32 publicKeyX = bytes32(publicKey[:32]);
+        require(publicKeyX != bytes32(0), "Wallet public key must be non-zero");
+    }
+
+    /// @notice Registers a new wallet. This function does not validate
+    ///         parameters. The code calling this function must call
+    ///         `validatePublicKey` first.
     /// @dev Uses a public key hash as a unique identifier of a wallet.
     /// @param membersIdsHash Keccak256 hash of group members identifiers array
     /// @param publicKey Uncompressed public key
@@ -57,12 +80,6 @@ library Wallets {
         )
     {
         walletID = keccak256(publicKey);
-
-        require(
-            self.registry[walletID].publicKeyX == bytes32(0),
-            "Wallet with the given public key already exists"
-        );
-        require(publicKey.length == 64, "Invalid length of the public key");
 
         publicKeyX = bytes32(publicKey[:32]);
         publicKeyY = bytes32(publicKey[32:]);
