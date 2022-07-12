@@ -2,6 +2,7 @@ package local
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"reflect"
 	"sort"
 	"sync"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/keep-network/keep-core/pkg/internal/testutils"
 	"github.com/keep-network/keep-core/pkg/net"
-	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
 func TestRegisterAndFireHandler(t *testing.T) {
@@ -165,7 +165,7 @@ func TestSendAndDeliver(t *testing.T) {
 
 	channelName := "channel name"
 
-	staticKey1, localChannel1, err := initTestChannel(channelName)
+	operatorPublicKey1, localChannel1, err := initTestChannel(channelName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -226,17 +226,19 @@ loop:
 			)
 		}
 
-		testutils.AssertBytesEqual(t, key.Marshal(staticKey1), msg.SenderPublicKey())
+		operatorPublicKey1Bytes := operator.MarshalUncompressed(operatorPublicKey1)
+
+		testutils.AssertBytesEqual(t, operatorPublicKey1Bytes, msg.SenderPublicKey())
 	}
 }
 
-func initTestChannel(channelName string) (*key.NetworkPublic, net.BroadcastChannel, error) {
-	_, staticKey, err := key.GenerateStaticNetworkKey()
+func initTestChannel(channelName string) (*operator.PublicKey, net.BroadcastChannel, error) {
+	_, operatorPublicKey, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	provider := ConnectWithKey(staticKey)
+	provider := ConnectWithKey(operatorPublicKey)
 	localChannel, err := provider.BroadcastChannelFor(channelName)
 	if err != nil {
 		return nil, nil, err
@@ -246,7 +248,7 @@ func initTestChannel(channelName string) (*key.NetworkPublic, net.BroadcastChann
 		return &mockNetMessage{}
 	})
 
-	return staticKey, localChannel, nil
+	return operatorPublicKey, localChannel, nil
 }
 
 type mockNetMessage struct{}

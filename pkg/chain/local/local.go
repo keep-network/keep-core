@@ -2,22 +2,15 @@ package local
 
 import (
 	"bytes"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"encoding/binary"
 	"fmt"
 	"math/big"
 	"math/rand"
-	"sort"
 	"sync"
 
 	"github.com/ipfs/go-log"
 
-	crand "crypto/rand"
-
-	commonLocal "github.com/keep-network/keep-common/pkg/chain/local"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -32,55 +25,35 @@ var seedRelayEntry = big.NewInt(123456789)
 var groupActiveTime = uint64(10)
 var relayRequestTimeout = uint64(8)
 
-// Chain is an extention of chain.Handle interface which exposes
-// additional functions useful for testing.
-type Chain interface {
-	chain.Handle
-
-	// GetLastDKGResult returns the last DKG result submitted to the chain
-	// as well as all the signatures that supported that result.
-	GetLastDKGResult() (*relaychain.DKGResult, map[relaychain.GroupMemberIndex][]byte)
-
-	// GetLastRelayEntry returns the last relay entry submitted to the chain.
-	GetLastRelayEntry() []byte
-
-	// GetRelayEntryTimeoutReports returns an array of blocks which denote at what
-	// block a relay entry timeout occured.
-	GetRelayEntryTimeoutReports() []uint64
-}
-
 type localGroup struct {
 	groupPublicKey          []byte
 	registrationBlockHeight uint64
 }
 
 type localChain struct {
-	relayConfig *relaychain.Config
+	relayConfig *beaconchain.Config
 
 	groups []localGroup
 
-	lastSubmittedDKGResult           *relaychain.DKGResult
-	lastSubmittedDKGResultSignatures map[relaychain.GroupMemberIndex][]byte
+	lastSubmittedDKGResult           *beaconchain.DKGResult
+	lastSubmittedDKGResultSignatures map[beaconchain.GroupMemberIndex][]byte
 	lastSubmittedRelayEntry          []byte
 
-	handlerMutex                  sync.Mutex
-	relayEntryHandlers            map[int]func(entry *event.EntrySubmitted)
-	relayRequestHandlers          map[int]func(request *event.Request)
-	groupSelectionStartedHandlers map[int]func(groupSelectionStart *event.GroupSelectionStart)
-	groupRegisteredHandlers       map[int]func(groupRegistration *event.GroupRegistration)
-	resultSubmissionHandlers      map[int]func(submission *event.DKGResultSubmission)
+	handlerMutex             sync.Mutex
+	relayEntryHandlers       map[int]func(entry *event.EntrySubmitted)
+	relayRequestHandlers     map[int]func(request *event.Request)
+	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
+	dkgStartedHandlers       map[int]func(submission *event.DKGStarted)
+	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
 
 	simulatedHeight uint64
 	stakeMonitor    chain.StakeMonitor
 	blockCounter    chain.BlockCounter
 
-	tickets      []*relaychain.Ticket
-	ticketsMutex sync.Mutex
-
 	relayEntryTimeoutReportsMutex sync.Mutex
 	relayEntryTimeoutReports      []uint64
 
-	operatorKey *ecdsa.PrivateKey
+	operatorPrivateKey *operator.PrivateKey
 
 	minimumStake *big.Int
 }
@@ -94,82 +67,18 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 }
 
 func (c *localChain) Signing() chain.Signing {
-	return commonLocal.NewSigner(c.operatorKey)
+	return newSigner(c.operatorPrivateKey)
 }
 
-func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	return c.operatorKey, &c.operatorKey.PublicKey
+func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey, error) {
+	return c.operatorPrivateKey, &c.operatorPrivateKey.PublicKey, nil
 }
 
-func (c *localChain) GetConfig() *relaychain.Config {
+func (c *localChain) GetConfig() *beaconchain.Config {
 	return c.relayConfig
 }
 
-func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTicketSubmissionPromise {
-	promise := &async.EventGroupTicketSubmissionPromise{}
-
-	c.ticketsMutex.Lock()
-	defer c.ticketsMutex.Unlock()
-
-	c.tickets = append(c.tickets, ticket)
-	sort.SliceStable(c.tickets, func(i, j int) bool {
-		// Ticket value bytes are interpreted as a big-endian unsigned integers.
-		iValue := new(big.Int).SetBytes(c.tickets[i].Value[:])
-		jValue := new(big.Int).SetBytes(c.tickets[j].Value[:])
-
-		return iValue.Cmp(jValue) == -1
-	})
-
-	err := promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
-		BlockNumber: c.simulatedHeight,
-	})
-	if err != nil {
-		logger.Errorf("failed to fulfill promise: [%v]", err)
-	}
-
-	return promise
-}
-
-func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
-	tickets := make([]uint64, len(c.tickets))
-
-	for i := range tickets {
-		tickets[i] = binary.BigEndian.Uint64(c.tickets[i].Value[:])
-	}
-
-	return tickets, nil
-}
-
-func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
-	c.ticketsMutex.Lock()
-	defer c.ticketsMutex.Unlock()
-
-	selectTickets := func() []*relaychain.Ticket {
-		if len(c.tickets) <= c.relayConfig.GroupSize {
-			return c.tickets
-		}
-
-		selectedTickets := make([]*relaychain.Ticket, c.relayConfig.GroupSize)
-		copy(selectedTickets, c.tickets)
-		return selectedTickets
-	}
-
-	selectedTickets := selectTickets()
-
-	selectedParticipants := make([]relaychain.StakerAddress, len(selectedTickets))
-	for i, ticket := range selectedTickets {
-		selectedParticipants[i] = ticket.Proof.StakerValue.Bytes()
-	}
-
-	return selectedParticipants, nil
-}
-
 func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmittedPromise {
-	c.ticketsMutex.Lock()
-	c.tickets = make([]*relaychain.Ticket, 0)
-	c.ticketsMutex.Unlock()
-
 	relayEntryPromise := &async.EventEntrySubmittedPromise{}
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
@@ -244,21 +153,8 @@ func (c *localChain) OnRelayEntryRequested(
 	})
 }
 
-func (c *localChain) OnGroupSelectionStarted(
-	handler func(entry *event.GroupSelectionStart),
-) subscription.EventSubscription {
-	c.handlerMutex.Lock()
-	defer c.handlerMutex.Unlock()
-
-	handlerID := generateHandlerID()
-	c.groupSelectionStartedHandlers[handlerID] = handler
-
-	return subscription.NewEventSubscription(func() {
-		c.handlerMutex.Lock()
-		defer c.handlerMutex.Unlock()
-
-		delete(c.groupSelectionStartedHandlers, handlerID)
-	})
+func (c *localChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
+	panic("not implemented")
 }
 
 func (c *localChain) OnGroupRegistered(
@@ -279,8 +175,8 @@ func (c *localChain) OnGroupRegistered(
 	})
 }
 
-func (c *localChain) ThresholdRelay() relaychain.Interface {
-	return relaychain.Interface(c)
+func (c *localChain) ThresholdRelay() beaconchain.Interface {
+	return beaconchain.Interface(c)
 }
 
 // Connect initializes a local stub implementation of the chain
@@ -289,13 +185,13 @@ func Connect(
 	groupSize int,
 	honestThreshold int,
 	minimumStake *big.Int,
-) Chain {
-	operatorKey, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+) *localChain {
+	operatorPrivateKey, _, err := operator.GenerateKeyPair(DefaultCurve)
 	if err != nil {
 		panic(err)
 	}
 
-	return ConnectWithKey(groupSize, honestThreshold, minimumStake, operatorKey)
+	return ConnectWithKey(groupSize, honestThreshold, minimumStake, operatorPrivateKey)
 }
 
 // ConnectWithKey initializes a local stub implementation of the chain
@@ -304,8 +200,8 @@ func ConnectWithKey(
 	groupSize int,
 	honestThreshold int,
 	minimumStake *big.Int,
-	operatorKey *ecdsa.PrivateKey,
-) Chain {
+	operatorPrivateKey *operator.PrivateKey,
+) *localChain {
 	bc, _ := BlockCounter()
 
 	currentBlock, _ := bc.CurrentBlock()
@@ -317,22 +213,21 @@ func ConnectWithKey(
 	resultPublicationBlockStep := uint64(3)
 
 	return &localChain{
-		relayConfig: &relaychain.Config{
+		relayConfig: &beaconchain.Config{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
-			TicketSubmissionTimeout:    6,
 			ResultPublicationBlockStep: resultPublicationBlockStep,
 			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
+		dkgStartedHandlers:       make(map[int]func(submission *event.DKGStarted)),
 		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),
 		blockCounter:             bc,
 		stakeMonitor:             NewStakeMonitor(minimumStake),
-		tickets:                  make([]*relaychain.Ticket, 0),
 		groups:                   []localGroup{group},
-		operatorKey:              operatorKey,
+		operatorPrivateKey:       operatorPrivateKey,
 		minimumStake:             minimumStake,
 	}
 }
@@ -372,7 +267,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 }
 
 func (c *localChain) GetGroupMembers(groupPublicKey []byte) (
-	[]relaychain.StakerAddress,
+	[]chain.Address,
 	error,
 ) {
 	return nil, nil // no-op
@@ -389,35 +284,21 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	participantIndex relaychain.GroupMemberIndex,
-	resultToPublish *relaychain.DKGResult,
-	signatures map[relaychain.GroupMemberIndex][]byte,
-) *async.EventDKGResultSubmissionPromise {
-	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
-
+	participantIndex beaconchain.GroupMemberIndex,
+	resultToPublish *beaconchain.DKGResult,
+	signatures map[beaconchain.GroupMemberIndex][]byte,
+) error {
 	if len(signatures) < c.relayConfig.HonestThreshold {
-		err := dkgResultPublicationPromise.Fail(fmt.Errorf(
+		return fmt.Errorf(
 			"failed to submit result with [%v] signatures for honest threshold [%v]",
 			len(signatures),
 			c.relayConfig.HonestThreshold,
-		))
-		if err != nil {
-			logger.Errorf("failed to fail promise: [%v]", err)
-		}
-
-		return dkgResultPublicationPromise
+		)
 	}
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		failErr := dkgResultPublicationPromise.Fail(
-			fmt.Errorf("cannot read current block: [%v]", err),
-		)
-		if failErr != nil {
-			logger.Errorf("failed to fail promise: [%v]", failErr)
-		}
-
-		return dkgResultPublicationPromise
+		return fmt.Errorf("cannot read current block: [%v]", err)
 	}
 
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
@@ -454,12 +335,24 @@ func (c *localChain) SubmitDKGResult(
 	}
 	c.handlerMutex.Unlock()
 
-	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
-	if err != nil {
-		logger.Errorf("failed to fulfill promise: [%v]", err)
-	}
+	return nil
+}
 
-	return dkgResultPublicationPromise
+func (c *localChain) OnDKGStarted(
+	handler func(event *event.DKGStarted),
+) subscription.EventSubscription {
+	c.handlerMutex.Lock()
+	defer c.handlerMutex.Unlock()
+
+	handlerID := generateHandlerID()
+	c.dkgStartedHandlers[handlerID] = handler
+
+	return subscription.NewEventSubscription(func() {
+		c.handlerMutex.Lock()
+		defer c.handlerMutex.Unlock()
+
+		delete(c.dkgStartedHandlers, handlerID)
+	})
 }
 
 func (c *localChain) OnDKGResultSubmitted(
@@ -480,8 +373,8 @@ func (c *localChain) OnDKGResultSubmitted(
 }
 
 func (c *localChain) GetLastDKGResult() (
-	*relaychain.DKGResult,
-	map[relaychain.GroupMemberIndex][]byte,
+	*beaconchain.DKGResult,
+	map[beaconchain.GroupMemberIndex][]byte,
 ) {
 	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }
@@ -525,14 +418,42 @@ func (c *localChain) MinimumStake() (*big.Int, error) {
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.
 func (c *localChain) CalculateDKGResultHash(
-	dkgResult *relaychain.DKGResult,
-) (relaychain.DKGResultHash, error) {
+	dkgResult *beaconchain.DKGResult,
+) (beaconchain.DKGResultHash, error) {
 	encodedDKGResult := fmt.Sprint(dkgResult)
-	dkgResultHash := relaychain.DKGResultHash(
+	dkgResultHash := beaconchain.DKGResultHash(
 		sha3.Sum256([]byte(encodedDKGResult)),
 	)
 
 	return dkgResultHash, nil
+}
+
+func (c *localChain) OperatorToStakingProvider() (chain.Address, bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsPoolLocked() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsOperatorInPool() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) IsOperatorUpToDate() (bool, error) {
+	panic("unsupported")
+}
+
+func (c *localChain) JoinSortitionPool() error {
+	panic("unsupported")
+}
+
+func (c *localChain) UpdateOperatorStatus() error {
+	panic("unsupported")
 }
 
 func generateHandlerID() int {

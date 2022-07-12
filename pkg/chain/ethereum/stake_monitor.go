@@ -1,54 +1,25 @@
 package ethereum
 
 import (
-	"fmt"
-	"math/big"
-
-	"github.com/ethereum/go-ethereum/common"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
-type ethereumStakeMonitor struct {
-	ethereum *ethereumChain
+type stakeMonitor struct {
+	chain *Chain
 }
 
-func (esm *ethereumStakeMonitor) HasMinimumStake(address string) (bool, error) {
-	if !common.IsHexAddress(address) {
-		return false, fmt.Errorf("not a valid ethereum address: %v", address)
-	}
-
-	return esm.ethereum.HasMinimumStake(common.HexToAddress(address))
+func newStakeMonitor(chain *Chain) *stakeMonitor {
+	return &stakeMonitor{chain: chain}
 }
 
-func (esm *ethereumStakeMonitor) StakerFor(address string) (chain.Staker, error) {
-	if !common.IsHexAddress(address) {
-		return nil, fmt.Errorf("not a valid ethereum address: %v", address)
-	}
-
-	return &ethereumStaker{
-		address:  address,
-		ethereum: esm.ethereum,
-	}, nil
+// TODO: Real implementation with v2 contracts.
+func (sm *stakeMonitor) HasMinimumStake(
+	operatorPublicKey *operator.PublicKey,
+) (bool, error) {
+	return true, nil
 }
 
-func (ec *ethereumChain) StakeMonitor() (chain.StakeMonitor, error) {
-	stakeMonitor := &ethereumStakeMonitor{
-		ethereum: ec,
-	}
-
-	return stakeMonitor, nil
-}
-
-type ethereumStaker struct {
-	address  string
-	ethereum *ethereumChain
-}
-
-func (es *ethereumStaker) Address() relaychain.StakerAddress {
-	return common.HexToAddress(es.address).Bytes()
-}
-
-func (es *ethereumStaker) Stake() (*big.Int, error) {
-	return es.ethereum.stakingContract.BalanceOf(common.HexToAddress(es.address))
+func (c *Chain) StakeMonitor() (chain.StakeMonitor, error) {
+	return newStakeMonitor(c), nil
 }

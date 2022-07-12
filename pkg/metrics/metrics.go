@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -94,11 +95,11 @@ func ObserveEthConnectivity(
 	ctx context.Context,
 	registry *metrics.Registry,
 	stakeMonitor chain.StakeMonitor,
-	address string,
+	operatorPublicKey *operator.PublicKey,
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		_, err := stakeMonitor.HasMinimumStake(address)
+		_, err := stakeMonitor.HasMinimumStake(operatorPublicKey)
 
 		if err != nil {
 			return 0
