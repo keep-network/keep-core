@@ -47,12 +47,13 @@ type Chain interface {
 	// operator's state in the sortition pool.
 	UpdateOperatorStatus() error
 
-	// TODO: add description
+	// IsEligibleForRewards checks whether the operator is eligible for rewards or not.
 	IsEligibleForRewards() (bool, error)
 
-	// TODO: add description
+	// Checks whether the operator is able to restore their eligibility for rewards
+	// right away.
 	CanRestoreRewardEligibility() (bool, error)
 
-	// TODO: add description
+	// Restores reward eligibility for a given operator.
 	RestoreRewardEligibility() error
 }
