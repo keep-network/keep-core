@@ -365,13 +365,13 @@ func (bc *BeaconChain) CalculateDKGResultHash(
 	return beaconchain.DKGResultHashFromBytes(hash)
 }
 
-func (bc *BeaconChain) SubmitRelayEntry(entry []byte) *async.EventEntrySubmittedPromise {
+func (bc *BeaconChain) SubmitRelayEntry(entry []byte) *async.EventRelayEntrySubmittedPromise {
 	// TODO: Implementation.
 	panic("not implemented yet")
 }
 
 func (bc *BeaconChain) OnRelayEntrySubmitted(
-	handler func(entry *event.EntrySubmitted),
+	handler func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
 	// TODO: Implementation.
 	panic("not implemented yet")

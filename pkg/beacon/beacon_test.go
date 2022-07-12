@@ -224,12 +224,12 @@ type mockBeaconChain struct {
 
 func (mbc *mockBeaconChain) SubmitRelayEntry(
 	entry []byte,
-) *async.EventEntrySubmittedPromise {
+) *async.EventRelayEntrySubmittedPromise {
 	panic("not implemented")
 }
 
 func (mbc *mockBeaconChain) OnRelayEntrySubmitted(
-	func(entry *event.EntrySubmitted),
+	func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
 	panic("not implemented")
 }

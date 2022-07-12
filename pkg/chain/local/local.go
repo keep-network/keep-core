@@ -40,7 +40,7 @@ type localChain struct {
 	lastSubmittedRelayEntry          []byte
 
 	handlerMutex             sync.Mutex
-	relayEntryHandlers       map[int]func(entry *event.EntrySubmitted)
+	relayEntryHandlers       map[int]func(entry *event.RelayEntrySubmitted)
 	relayRequestHandlers     map[int]func(request *event.Request)
 	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
 	dkgStartedHandlers       map[int]func(submission *event.DKGStarted)
@@ -78,8 +78,8 @@ func (c *localChain) GetConfig() *beaconchain.Config {
 	return c.relayConfig
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmittedPromise {
-	relayEntryPromise := &async.EventEntrySubmittedPromise{}
+func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventRelayEntrySubmittedPromise {
+	relayEntryPromise := &async.EventRelayEntrySubmittedPromise{}
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
@@ -93,13 +93,13 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 		return relayEntryPromise
 	}
 
-	entry := &event.EntrySubmitted{
+	entry := &event.RelayEntrySubmitted{
 		BlockNumber: currentBlock,
 	}
 
 	c.handlerMutex.Lock()
 	for _, handler := range c.relayEntryHandlers {
-		go func(handler func(entry *event.EntrySubmitted), entry *event.EntrySubmitted) {
+		go func(handler func(entry *event.RelayEntrySubmitted), entry *event.RelayEntrySubmitted) {
 			handler(entry)
 		}(handler, entry)
 	}
@@ -116,7 +116,7 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 }
 
 func (c *localChain) OnRelayEntrySubmitted(
-	handler func(entry *event.EntrySubmitted),
+	handler func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
@@ -219,7 +219,7 @@ func ConnectWithKey(
 			ResultPublicationBlockStep: resultPublicationBlockStep,
 			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
-		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
+		relayEntryHandlers:       make(map[int]func(request *event.RelayEntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
 		dkgStartedHandlers:       make(map[int]func(submission *event.DKGStarted)),

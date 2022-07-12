@@ -271,10 +271,10 @@ func (n *node) MonitorRelayEntry(
 		logger.Errorf("waiter for a relay entry timeout block failed: [%v]", err)
 	}
 
-	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
+	onEntrySubmittedChannel := make(chan *event.RelayEntrySubmitted)
 
 	subscription := beaconChain.OnRelayEntrySubmitted(
-		func(event *event.EntrySubmitted) {
+		func(event *event.RelayEntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},
 	)

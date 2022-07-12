@@ -7,10 +7,10 @@ import (
 	"math/big"
 )
 
-// EntrySubmitted indicates that valid relay entry has been submitted to the
-// chain for the currently processed relay request. This event is intended to
-// be used by operators for tracking entry generation and submission progress.
-type EntrySubmitted struct {
+// RelayEntrySubmitted indicates that valid relay entry has been submitted to
+// the chain for the currently processed relay request. This event is intended
+// to be used by operators for tracking entry generation and submission progress.
+type RelayEntrySubmitted struct {
 	BlockNumber uint64
 }
 

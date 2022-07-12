@@ -115,9 +115,9 @@ func executeSigning(
 		return nil, err
 	}
 
-	entrySubmissionChan := make(chan *event.EntrySubmitted)
+	entrySubmissionChan := make(chan *event.RelayEntrySubmitted)
 	_ = beaconChain.OnRelayEntrySubmitted(
-		func(event *event.EntrySubmitted) {
+		func(event *event.RelayEntrySubmitted) {
 			entrySubmissionChan <- event
 		},
 	)

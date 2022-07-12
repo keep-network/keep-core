@@ -62,8 +62,8 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 
 func (ec *ethereumChain) SubmitRelayEntry(
 	entry []byte,
-) *async.EventEntrySubmittedPromise {
-	relayEntryPromise := &async.EventEntrySubmittedPromise{}
+) *async.EventRelayEntrySubmittedPromise {
+	relayEntryPromise := &async.EventRelayEntrySubmittedPromise{}
 
 	failPromise := func(err error) {
 		failErr := relayEntryPromise.Fail(err)
@@ -76,10 +76,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}
 
-	generatedEntry := make(chan *event.EntrySubmitted)
+	generatedEntry := make(chan *event.RelayEntrySubmitted)
 
 	subscription := ec.OnRelayEntrySubmitted(
-		func(onChainEvent *event.EntrySubmitted) {
+		func(onChainEvent *event.RelayEntrySubmitted) {
 			generatedEntry <- onChainEvent
 		},
 	)
@@ -132,10 +132,10 @@ func (ec *ethereumChain) SubmitRelayEntry(
 }
 
 func (ec *ethereumChain) OnRelayEntrySubmitted(
-	handle func(entry *event.EntrySubmitted),
+	handle func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
 	onEvent := func(blockNumber uint64) {
-		handle(&event.EntrySubmitted{
+		handle(&event.RelayEntrySubmitted{
 			BlockNumber: blockNumber,
 		})
 	}
