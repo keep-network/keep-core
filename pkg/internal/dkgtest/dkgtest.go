@@ -102,7 +102,6 @@ func RunTest(
 		seed,
 		localChain.ThresholdRelay(),
 		blockCounter,
-		localChain.Signing(),
 		localChain.GetLastDKGResult,
 		network,
 		selectedStakers,
@@ -113,7 +112,6 @@ func executeDKG(
 	seed *big.Int,
 	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
-	signing chain.Signing,
 	lastDKGResultGetter func() (
 		*beaconchain.DKGResult,
 		map[beaconchain.GroupMemberIndex][]byte,
@@ -157,7 +155,7 @@ func executeDKG(
 
 	membershipValidator := group.NewStakersMembershipValidator(
 		selectedStakers,
-		signing,
+		beaconChain.Signing(),
 	)
 
 	for i := 0; i < relayConfig.GroupSize; i++ {
@@ -172,7 +170,6 @@ func executeDKG(
 				startBlockHeight,
 				blockCounter,
 				beaconChain,
-				signing,
 				broadcastChannel,
 			)
 			if signer != nil {

@@ -112,9 +112,6 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		select {
 		case blockNumber := <-eligibleToSubmitWaiter:
 			// Member becomes eligible to submit the result.
-			errorChannel := make(chan error)
-			defer close(errorChannel)
-
 			subscription.Unsubscribe()
 			close(onSubmittedResultChan)
 
@@ -126,18 +123,12 @@ func (sm *SubmittingMember) SubmitDKGResult(
 				len(signatures),
 				blockNumber,
 			)
-			chainRelay.SubmitDKGResult(
+
+			return chainRelay.SubmitDKGResult(
 				sm.index,
 				result,
 				signatures,
-			).
-				OnComplete(func(
-					dkgResultPublishedEvent *event.DKGResultSubmission,
-					err error,
-				) {
-					errorChannel <- err
-				})
-			return <-errorChannel
+			)
 		case blockNumber := <-onSubmittedResultChan:
 			logger.Infof(
 				"[member:%v] leaving; DKG result submitted by other member at block [%v]",

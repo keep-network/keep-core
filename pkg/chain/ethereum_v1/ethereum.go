@@ -1,13 +1,9 @@
 package ethereum_v1
 
 import (
-	"context"
-	"encoding/binary"
 	"fmt"
-	"math/big"
-	"math/rand"
-
 	"github.com/ipfs/go-log"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -173,18 +169,8 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	return subscription
 }
 
-// TODO: Implement a real SelectGroup function once it is possible on the
-//       contract side. The current implementation just return a group
-//       where all members belong to the chain operator.
 func (ec *ethereumChain) SelectGroup(seed *big.Int) ([]chain.Address, error) {
-	groupSize := ec.GetConfig().GroupSize
-	groupMembers := make([]chain.Address, groupSize)
-
-	for index := range groupMembers {
-		groupMembers[index] = chain.Address(ec.accountKey.Address.String())
-	}
-
-	return groupMembers, nil
+	panic("unsupported")
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
@@ -209,9 +195,8 @@ func (ec *ethereumChain) OnGroupRegistered(
 	return subscription
 }
 
-// TODO: Implement for RandomBeacon v2.
 func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
-	return false, nil
+	panic("unsupported")
 }
 
 func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
@@ -237,66 +222,16 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 	return stakerAddresses, nil
 }
 
-// TODO: Implement a real DkgStarted event subscription once it is possible
-//       on the contract side. The current implementation generate a fake
-//       event every 500th block where the seed is the keccak256 of the
-//       block number.
 func (ec *ethereumChain) OnDKGStarted(
 	handler func(event *event.DKGStarted),
 ) subscription.EventSubscription {
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	blocksChan := ec.blockCounter.WatchBlocks(ctx)
-
-	go func() {
-		for {
-			select {
-			case block := <-blocksChan:
-				// Generate an event every 500th block.
-				if block%500 == 0 {
-					// The seed is keccak256(block).
-					blockBytes := make([]byte, 8)
-					binary.BigEndian.PutUint64(blockBytes, block)
-					seedBytes := crypto.Keccak256(blockBytes)
-					seed := new(big.Int).SetBytes(seedBytes)
-
-					handler(&event.DKGStarted{
-						Seed:        seed,
-						BlockNumber: block,
-					})
-				}
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	return subscription.NewEventSubscription(func() {
-		cancelCtx()
-	})
+	panic("unsupported")
 }
 
-// TODO: Implement a real OnDKGResultSubmitted event subscription once it is
-//       possible on the contract side. The current implementation just pipes
-//       the DKG submission event generated within SubmitDKGResult to the
-//       handlers registered in the dkgResultSubmissionHandlers map.
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) subscription.EventSubscription {
-	ec.dkgResultSubmissionHandlersMutex.Lock()
-	defer ec.dkgResultSubmissionHandlersMutex.Unlock()
-
-	// #nosec G404 (insecure random number source (rand))
-	// Temporary test implementation doesn't require secure randomness.
-	handlerID := rand.Int()
-
-	ec.dkgResultSubmissionHandlers[handlerID] = handler
-
-	return subscription.NewEventSubscription(func() {
-		ec.dkgResultSubmissionHandlersMutex.Lock()
-		defer ec.dkgResultSubmissionHandlersMutex.Unlock()
-
-		delete(ec.dkgResultSubmissionHandlers, handlerID)
-	})
+	panic("unsupported")
 }
 
 func (ec *ethereumChain) ReportRelayEntryTimeout() error {
@@ -329,86 +264,12 @@ func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	return ec.keepRandomBeaconOperatorContract.GetGroupPublicKey(currentRequestGroupIndex)
 }
 
-// TODO: Implement a real SubmitDKGResult action once it is possible on the
-//       contract side. The current implementation just creates and pipes
-//       the DKG submission event to the handlers registered in the
-//       dkgResultSubmissionHandlers map. Consider getting rid of the result
-//       promise in favor of the fire-and-forget style.
 func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	result *beaconchain.DKGResult,
 	signatures map[beaconchain.GroupMemberIndex][]byte,
-) *async.EventDKGResultSubmissionPromise {
-	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
-
-	failPromise := func(err error) {
-		failErr := resultPublicationPromise.Fail(err)
-		if failErr != nil {
-			logger.Errorf(
-				"failed to fail promise for [%v]: [%v]",
-				err,
-				failErr,
-			)
-		}
-	}
-
-	publishedResult := make(chan *event.DKGResultSubmission)
-
-	subscription := ec.OnDKGResultSubmitted(
-		func(onChainEvent *event.DKGResultSubmission) {
-			publishedResult <- onChainEvent
-		},
-	)
-
-	go func() {
-		for {
-			select {
-			case event, success := <-publishedResult:
-				// Channel is closed when SubmitDKGResult failed.
-				// When this happens, event is nil.
-				if !success {
-					return
-				}
-
-				subscription.Unsubscribe()
-				close(publishedResult)
-
-				err := resultPublicationPromise.Fulfill(event)
-				if err != nil {
-					logger.Errorf(
-						"failed to fulfill promise: [%v]",
-						err,
-					)
-				}
-
-				return
-			}
-		}
-	}()
-
-	ec.dkgResultSubmissionHandlersMutex.Lock()
-	defer ec.dkgResultSubmissionHandlersMutex.Unlock()
-
-	blockNumber, err := ec.blockCounter.CurrentBlock()
-	if err != nil {
-		close(publishedResult)
-		subscription.Unsubscribe()
-		failPromise(err)
-		return resultPublicationPromise
-	}
-
-	for _, handler := range ec.dkgResultSubmissionHandlers {
-		go func(handler func(*event.DKGResultSubmission)) {
-			handler(&event.DKGResultSubmission{
-				MemberIndex:    uint32(participantIndex),
-				GroupPublicKey: result.GroupPublicKey,
-				Misbehaved:     result.Misbehaved,
-				BlockNumber:    blockNumber,
-			})
-		}(handler)
-	}
-
-	return resultPublicationPromise
+) error {
+	panic("unsupported")
 }
 
 // convertSignaturesToChainFormat converts signatures map to two slices. First
@@ -455,4 +316,36 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 func (ec *ethereumChain) Address() common.Address {
 	return ec.accountKey.Address
+}
+
+func (ec *ethereumChain) CurrentOperatorToStakingProvider() (chain.Address, bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) OperatorToStakingProvider(operator chain.Address) (chain.Address, bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) IsPoolLocked() (bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) IsOperatorInPool() (bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) IsOperatorUpToDate() (bool, error) {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) JoinSortitionPool() error {
+	panic("unsupported")
+}
+
+func (ec *ethereumChain) UpdateOperatorStatus() error {
+	panic("unsupported")
 }

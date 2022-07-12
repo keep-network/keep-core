@@ -63,7 +63,6 @@ func (n *node) IsInGroup(groupPublicKey []byte) bool {
 // completes the on-chain operation.
 func (n *node) JoinDKGIfEligible(
 	beaconChain beaconchain.Interface,
-	signing chain.Signing,
 	dkgSeed *big.Int,
 	dkgStartBlockNumber uint64,
 ) {
@@ -89,6 +88,8 @@ func (n *node) JoinDKGIfEligible(
 		)
 		return
 	}
+
+	signing := beaconChain.Signing()
 
 	operatorAddress, err := signing.PublicKeyToAddress(n.operatorPublicKey)
 	if err != nil {
@@ -149,7 +150,6 @@ func (n *node) JoinDKGIfEligible(
 					dkgStartBlockNumber,
 					n.blockCounter,
 					beaconChain,
-					signing,
 					broadcastChannel,
 				)
 				if err != nil {

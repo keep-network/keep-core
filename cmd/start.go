@@ -103,17 +103,17 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
 
-	blockCounter, err := chainProviderV1.BlockCounter()
+	blockCounterV1, err := chainProviderV1.BlockCounter()
 	if err != nil {
 		return err
 	}
 
-	stakeMonitor, err := chainProviderV1.StakeMonitor()
+	stakeMonitorV1, err := chainProviderV1.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
 	if c.Int(waitForStakeFlag) != 0 {
-		err = waitForStake(stakeMonitor, operatorPublicKey, c.Int(waitForStakeFlag))
+		err = waitForStake(stakeMonitorV1, operatorPublicKey, c.Int(waitForStakeFlag))
 		if err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func Start(c *cli.Context) error {
 
 	// TODO: Disable the minimum stake check to be able to start the client
 	//       without v1 contracts deployed.
-	// hasMinimumStake, err := stakeMonitor.HasMinimumStake(
+	// hasMinimumStake, err := stakeMonitorV1.HasMinimumStake(
 	// 	operatorPublicKey,
 	// )
 	// if err != nil {
@@ -141,8 +141,9 @@ func Start(c *cli.Context) error {
 		config.LibP2P,
 		operatorPrivateKey,
 		libp2p.ProtocolBeacon,
-		firewall.MinimumStakePolicy(stakeMonitor),
-		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
+		// TODO: Use the firewall policy developed in https://github.com/keep-network/keep-core/pull/3060
+		firewall.Disabled,
+		retransmission.NewTicker(blockCounterV1.WatchBlocks(ctx)),
 	)
 	if err != nil {
 		return err
@@ -171,7 +172,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, stakeMonitor, operatorPublicKey)
+	initializeMetrics(ctx, config, netProvider, stakeMonitorV1, operatorPublicKey)
 	initializeDiagnostics(ctx, config, netProvider, chainProviderV1.Signing())
 
 	select {

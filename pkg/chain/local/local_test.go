@@ -118,7 +118,10 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 		4: []byte{104},
 	}
 
-	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	err := chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedGroupRegistrationEvent := &event.GroupRegistration{
 		GroupPublicKey: groupPublicKey,
@@ -164,7 +167,10 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 		4: []byte{104},
 	}
 
-	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	err := chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	select {
 	case event := <-eventFired:
@@ -200,7 +206,10 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 		4: []byte{104},
 	}
 
-	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	err := chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expectedResultSubmissionEvent := &event.DKGResultSubmission{
 		MemberIndex:    uint32(memberIndex),
@@ -247,7 +256,10 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 		4: []byte{104},
 	}
 
-	chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	err := chainHandle.SubmitDKGResult(memberIndex, dkgResult, signatures)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	select {
 	case event := <-eventFired:
@@ -495,7 +507,11 @@ func TestLocalSubmitDKGResult(t *testing.T) {
 		4: []byte{104},
 	}
 
-	chainHandle.SubmitDKGResult(memberIndex, result, signatures)
+	err := chainHandle.SubmitDKGResult(memberIndex, result, signatures)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	groupRegistered, err := chainHandle.IsGroupRegistered(result.GroupPublicKey)
 	if err != nil {
 		t.Fatal(err)
@@ -565,37 +581,23 @@ func TestLocalSubmitDKGResultWithSignatures(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			ctx, cancel := newTestContext()
-			defer cancel()
-
-			errorChan := make(chan error)
-
 			memberIndex := uint8(1)
 			result := &beaconchain.DKGResult{
 				GroupPublicKey: []byte{11},
 			}
 
-			promise := chainHandle.SubmitDKGResult(
+			err := chainHandle.SubmitDKGResult(
 				memberIndex,
 				result,
 				test.signatures,
 			)
-			promise.OnComplete(func(event *event.DKGResultSubmission, err error) {
-				errorChan <- err
-			})
 
-			select {
-			case err := <-errorChan:
-				if !reflect.DeepEqual(test.expectedError, err) {
-					t.Fatalf(
-						"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
-						test.expectedError,
-						err,
-					)
-				}
-
-			case <-ctx.Done():
-				t.Fatalf("promise timed out")
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Fatalf(
+					"Unexpected error\nExpected: [%v]\nActual:   [%v]\n",
+					test.expectedError,
+					err,
+				)
 			}
 		})
 	}

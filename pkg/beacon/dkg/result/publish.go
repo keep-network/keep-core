@@ -33,14 +33,12 @@ func Publish(
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
 	beaconChain beaconchain.Interface,
-	signing chain.Signing,
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
 	initialState := &resultSigningState{
 		channel:                 channel,
 		beaconChain:             beaconChain,
-		signing:                 signing,
 		blockCounter:            blockCounter,
 		member:                  NewSigningMember(memberIndex, dkgGroup, membershipValidator),
 		result:                  convertGjkrResult(result),
