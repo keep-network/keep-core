@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/sortition"
 	"math/big"
 
@@ -126,6 +127,9 @@ type Interface interface {
 	Signing() chain.Signing
 	// StakeMonitor returns the chain's stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
+	// OperatorKeyPair returns the key pair of the operator assigned to this
+	// chain handle.
+	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)
 
 	sortition.Chain
 	GroupInterface

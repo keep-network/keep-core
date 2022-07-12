@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/sortition"
 
 	"github.com/ipfs/go-log"
@@ -26,11 +25,15 @@ var logger = log.Logger("keep-beacon")
 // otherwise enters a blocked loop.
 func Initialize(
 	ctx context.Context,
-	operatorPublicKey *operator.PublicKey,
 	beaconChain beaconchain.Interface,
 	netProvider net.Provider,
 	persistence persistence.Handle,
 ) error {
+	_, operatorPublicKey, err := beaconChain.OperatorKeyPair()
+	if err != nil {
+		return fmt.Errorf("failed to get operator key pair: [%v]", err)
+	}
+
 	groupRegistry := registry.NewGroupRegistry(beaconChain, persistence)
 	groupRegistry.LoadExistingGroups()
 
@@ -41,7 +44,7 @@ func Initialize(
 		groupRegistry,
 	)
 
-	err := sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
+	err = sortition.MonitorPool(ctx, beaconChain, sortition.DefaultStatusCheckTick)
 	if err != nil {
 		return fmt.Errorf("could not set up sortition pool monitoring: [%v]", err)
 	}
