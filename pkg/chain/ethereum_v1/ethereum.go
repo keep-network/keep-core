@@ -148,14 +148,14 @@ func (ec *ethereumChain) OnRelayEntrySubmitted(
 }
 
 func (ec *ethereumChain) OnRelayEntryRequested(
-	handle func(request *event.Request),
+	handle func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
 	onEvent := func(
 		previousEntry []byte,
 		groupPublicKey []byte,
 		blockNumber uint64,
 	) {
-		handle(&event.Request{
+		handle(&event.RelayEntryRequested{
 			PreviousEntry:  previousEntry,
 			GroupPublicKey: groupPublicKey,
 			BlockNumber:    blockNumber,

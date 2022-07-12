@@ -378,7 +378,7 @@ func (bc *BeaconChain) OnRelayEntrySubmitted(
 }
 
 func (bc *BeaconChain) OnRelayEntryRequested(
-	handler func(request *event.Request),
+	handler func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
 	// TODO: Implementation.
 	panic("not implemented yet")

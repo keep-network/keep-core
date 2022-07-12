@@ -14,8 +14,8 @@ type RelayEntrySubmitted struct {
 	BlockNumber uint64
 }
 
-// Request represents a request for an entry in the threshold relay.
-type Request struct {
+// RelayEntryRequested represents a request for an entry in the threshold relay.
+type RelayEntryRequested struct {
 	PreviousEntry  []byte
 	GroupPublicKey []byte
 	BlockNumber    uint64

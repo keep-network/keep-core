@@ -33,7 +33,7 @@ type RelayEntryInterface interface {
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(
-		func(request *event.Request),
+		func(request *event.RelayEntryRequested),
 	) subscription.EventSubscription
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was
 	// supposed to submit a relay entry, did not deliver it within a specified

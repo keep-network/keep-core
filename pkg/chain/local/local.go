@@ -41,7 +41,7 @@ type localChain struct {
 
 	handlerMutex             sync.Mutex
 	relayEntryHandlers       map[int]func(entry *event.RelayEntrySubmitted)
-	relayRequestHandlers     map[int]func(request *event.Request)
+	relayRequestHandlers     map[int]func(request *event.RelayEntryRequested)
 	groupRegisteredHandlers  map[int]func(groupRegistration *event.GroupRegistration)
 	dkgStartedHandlers       map[int]func(submission *event.DKGStarted)
 	resultSubmissionHandlers map[int]func(submission *event.DKGResultSubmission)
@@ -137,7 +137,7 @@ func (c *localChain) GetLastRelayEntry() []byte {
 }
 
 func (c *localChain) OnRelayEntryRequested(
-	handler func(request *event.Request),
+	handler func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
@@ -220,7 +220,7 @@ func ConnectWithKey(
 			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.RelayEntrySubmitted)),
-		relayRequestHandlers:     make(map[int]func(request *event.Request)),
+		relayRequestHandlers:     make(map[int]func(request *event.RelayEntryRequested)),
 		groupRegisteredHandlers:  make(map[int]func(groupRegistration *event.GroupRegistration)),
 		dkgStartedHandlers:       make(map[int]func(submission *event.DKGStarted)),
 		resultSubmissionHandlers: make(map[int]func(submission *event.DKGResultSubmission)),

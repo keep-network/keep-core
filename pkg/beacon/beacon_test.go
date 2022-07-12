@@ -235,7 +235,7 @@ func (mbc *mockBeaconChain) OnRelayEntrySubmitted(
 }
 
 func (mbc *mockBeaconChain) OnRelayEntryRequested(
-	func(request *event.Request),
+	func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
 	panic("not implemented")
 }

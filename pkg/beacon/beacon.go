@@ -62,7 +62,7 @@ func Initialize(
 
 	node.ResumeSigningIfEligible(beaconChainV1, signingV1)
 
-	_ = beaconChainV1.OnRelayEntryRequested(func(request *event.Request) {
+	_ = beaconChainV1.OnRelayEntryRequested(func(request *event.RelayEntryRequested) {
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {

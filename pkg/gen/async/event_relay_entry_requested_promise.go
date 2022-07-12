@@ -1,4 +1,4 @@
-// Package async code is auto generated.
+// This is auto generated code
 package async
 
 import (
@@ -8,19 +8,19 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 )
 
-// EventRequestPromise represents an eventual completion of an ansynchronous
-// operation and its resulting value. Promise can be either fulfilled or failed
-// nd it can happen only one time. All Promise operations are thread-safe.
+// Promise represents an eventual completion of an ansynchronous operation
+// and its resulting value. Promise can be either fulfilled or failed and
+// it can happen only one time. All Promise operations are thread-safe.
 //
-// To create a promise use: `&EventRequestPromise{}`
-type EventRequestPromise struct {
+// To create a promise use: `&EventRelayEntryRequestedPromise{}`
+type EventRelayEntryRequestedPromise struct {
 	mutex      sync.Mutex
-	successFn  func(*event.Request)
+	successFn  func(*event.RelayEntryRequested)
 	failureFn  func(error)
-	completeFn func(*event.Request, error)
+	completeFn func(*event.RelayEntryRequested, error)
 
 	isComplete bool
-	value      *event.Request
+	value      *event.RelayEntryRequested
 	err        error
 }
 
@@ -29,7 +29,7 @@ type EventRequestPromise struct {
 // called at all. OnSuccess is a non-blocking operation. Only one on success
 // function can be registered for a Promise. If the Promise has been already
 // fulfilled, the function is called immediatelly.
-func (p *EventRequestPromise) OnSuccess(onSuccess func(*event.Request)) *EventRequestPromise {
+func (p *EventRelayEntryRequestedPromise) OnSuccess(onSuccess func(*event.RelayEntryRequested)) *EventRelayEntryRequestedPromise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -47,7 +47,7 @@ func (p *EventRequestPromise) OnSuccess(onSuccess func(*event.Request)) *EventRe
 // called at all. OnFailure is a non-blocking operation. Only one on failure
 // function can be registered for a Promise. If the Promise has already failed,
 // the function is called immediatelly.
-func (p *EventRequestPromise) OnFailure(onFailure func(error)) *EventRequestPromise {
+func (p *EventRelayEntryRequestedPromise) OnFailure(onFailure func(error)) *EventRelayEntryRequestedPromise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -68,7 +68,7 @@ func (p *EventRequestPromise) OnFailure(onFailure func(error)) *EventRequestProm
 // a non-blocking operation. Only one on complete function can be
 // registered for a Promise. If the Promise has already completed,
 // the function is called immediatelly.
-func (p *EventRequestPromise) OnComplete(onComplete func(*event.Request, error)) *EventRequestPromise {
+func (p *EventRelayEntryRequestedPromise) OnComplete(onComplete func(*event.RelayEntryRequested, error)) *EventRelayEntryRequestedPromise {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -85,7 +85,7 @@ func (p *EventRequestPromise) OnComplete(onComplete func(*event.Request, error))
 // the OnSuccess callback, if registered. If Promise has been already
 // completed by either fulfilling or failing, this function reports
 // an error.
-func (p *EventRequestPromise) Fulfill(value *event.Request) error {
+func (p *EventRelayEntryRequestedPromise) Fulfill(value *event.RelayEntryRequested) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -107,7 +107,7 @@ func (p *EventRequestPromise) Fulfill(value *event.Request) error {
 // completed by either fulfilling or failing, this function reports
 // an error. Also, this function reports an error if `err` parameter
 // is `nil`.
-func (p *EventRequestPromise) Fail(err error) error {
+func (p *EventRelayEntryRequestedPromise) Fail(err error) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -128,7 +128,7 @@ func (p *EventRequestPromise) Fail(err error) error {
 	return nil
 }
 
-func (p *EventRequestPromise) callCompleteFn() {
+func (p *EventRelayEntryRequestedPromise) callCompleteFn() {
 	if p.completeFn != nil {
 		go func() {
 			p.completeFn(p.value, p.err)
@@ -136,7 +136,7 @@ func (p *EventRequestPromise) callCompleteFn() {
 	}
 }
 
-func (p *EventRequestPromise) callSuccessFn() {
+func (p *EventRelayEntryRequestedPromise) callSuccessFn() {
 	if p.successFn != nil {
 		go func() {
 			p.successFn(p.value)
@@ -144,7 +144,7 @@ func (p *EventRequestPromise) callSuccessFn() {
 	}
 }
 
-func (p *EventRequestPromise) callFailureFn() {
+func (p *EventRelayEntryRequestedPromise) callFailureFn() {
 	if p.failureFn != nil {
 		go func() {
 			p.failureFn(p.err)
