@@ -1,7 +1,10 @@
 package cmd
 
 import (
-	chaincmd "github.com/keep-network/keep-core/pkg/chain/gen/cmd"
+	beaconcmd "github.com/keep-network/keep-core/pkg/chain/ethereum/beacon/gen/cmd"
+	ecdsacmd "github.com/keep-network/keep-core/pkg/chain/ethereum/ecdsa/gen/cmd"
+	tbtccmd "github.com/keep-network/keep-core/pkg/chain/ethereum/tbtc/gen/cmd"
+	thresholdcmd "github.com/keep-network/keep-core/pkg/chain/ethereum/threshold/gen/cmd"
 	"github.com/urfave/cli"
 )
 
@@ -17,10 +20,16 @@ const ethereumDescription = `The ethereum command allows interacting with Keep's
     See the subcommand help for additional details.`
 
 func init() {
+	var subcommands []cli.Command
+	subcommands = append(subcommands, beaconcmd.AvailableCommands...)
+	subcommands = append(subcommands, ecdsacmd.AvailableCommands...)
+	subcommands = append(subcommands, tbtccmd.AvailableCommands...)
+	subcommands = append(subcommands, thresholdcmd.AvailableCommands...)
+
 	EthereumCommand = cli.Command{
 		Name:        "ethereum",
 		Usage:       `Provides access to Keep network Ethereum contracts.`,
 		Description: ethereumDescription,
-		Subcommands: chaincmd.AvailableCommands,
+		Subcommands: subcommands,
 	}
 }
