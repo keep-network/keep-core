@@ -1,4 +1,4 @@
-package local
+package local_v1
 
 import (
 	"github.com/keep-network/keep-core/pkg/operator"

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/sortition"
 	"math/big"
 
@@ -24,16 +25,16 @@ type RelayEntryInterface interface {
 	// promise to track the submission progress. The promise is fulfilled when
 	// the entry has been successfully submitted to the on-chain, or failed if
 	// the entry submission failed.
-	SubmitRelayEntry(entry []byte) *async.EventEntrySubmittedPromise
+	SubmitRelayEntry(entry []byte) *async.EventRelayEntrySubmittedPromise
 	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntrySubmitted(
-		func(entry *event.EntrySubmitted),
+		func(entry *event.RelayEntrySubmitted),
 	) subscription.EventSubscription
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(
-		func(request *event.Request),
+		func(request *event.RelayEntryRequested),
 	) subscription.EventSubscription
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was
 	// supposed to submit a relay entry, did not deliver it within a specified
@@ -126,6 +127,9 @@ type Interface interface {
 	Signing() chain.Signing
 	// StakeMonitor returns the chain's stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
+	// OperatorKeyPair returns the key pair of the operator assigned to this
+	// chain handle.
+	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)
 
 	sortition.Chain
 	GroupInterface

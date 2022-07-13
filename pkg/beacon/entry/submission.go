@@ -60,7 +60,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			)
 
 			res.chain.SubmitRelayEntry(newEntry).OnComplete(
-				func(entry *event.EntrySubmitted, err error) {
+				func(entry *event.RelayEntrySubmitted, err error) {
 					if err == nil {
 						logger.Infof(
 							"[member:%v] successfully submitted "+

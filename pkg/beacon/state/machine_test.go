@@ -3,13 +3,13 @@ package state
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
-	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
@@ -20,7 +20,7 @@ var blockCounter chain.BlockCounter
 func TestExecute(t *testing.T) {
 	testLog = make(map[uint64][]string)
 
-	localChain := chainLocal.Connect(10, 5, big.NewInt(200))
+	localChain := local_v1.Connect(10, 5, big.NewInt(200))
 	blockCounter, _ = localChain.BlockCounter()
 	provider := netLocal.Connect()
 	channel, err := provider.BroadcastChannelFor("transitions_test")

@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"sync"
 
@@ -165,6 +166,26 @@ func newChain(
 		transactionMutex: transactionMutex,
 		tokenStaking:     tokenStaking,
 	}, nil
+}
+
+// OperatorKeyPair returns the key pair of the operator assigned to this
+// chain handle.
+func (c *Chain) OperatorKeyPair() (
+	*operator.PrivateKey,
+	*operator.PublicKey,
+	error,
+) {
+	privateKey, publicKey, err := ChainPrivateKeyToOperatorKeyPair(
+		c.key.PrivateKey,
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf(
+			"cannot convert chain private key to operator key pair: [%v]",
+			err,
+		)
+	}
+
+	return privateKey, publicKey, nil
 }
 
 // wrapClientAddons wraps the client instance with add-ons like logging, rate
