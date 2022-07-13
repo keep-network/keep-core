@@ -71,6 +71,11 @@ func checkOperatorStatus(chain Chain) error {
 
 	if isOperatorInPool {
 		logger.Info("operator is in the sortition pool")
+
+		err = checkRewardsEligibility(chain)
+		if err != nil {
+			logger.Errorf("could not check for rewards eligibility [%v]", err)
+		}
 	} else {
 		logger.Info("operator is not in the sortition pool")
 	}
@@ -114,11 +119,6 @@ func checkOperatorStatus(chain Chain) error {
 		}
 	}
 
-	err = checkRewardsEligibility(chain)
-	if err != nil {
-		logger.Errorf("could not check for rewards eligibility [%v]", err)
-	}
-
 	return nil
 }
 
@@ -134,6 +134,16 @@ func checkRewardsEligibility(chain Chain) error {
 		logger.Info("operator is eligibile for rewards")
 	} else {
 		logger.Info("operator is not eligibile for rewards")
+
+		isLocked, err := chain.IsPoolLocked()
+		if err != nil {
+			return err
+		}
+
+		if isLocked {
+			logger.Info("sortition pool state is locked, waiting with the update")
+			return nil
+		}
 
 		canRestoreRewardEligibility, err := chain.CanRestoreRewardEligibility()
 		if err != nil {
