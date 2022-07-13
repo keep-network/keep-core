@@ -54,6 +54,131 @@ then run this script 3 times with a different `<address>`.
 
 TBD
 
+==== Configuration
+
+===== Network
+
+Default port mappings.
+
+[%header,cols=2*]
+|===
+|Egress
+|Port
+
+|Ethereum Network
+| TCP: `8545` / `8546`
+
+|Keep Network
+| TCP: `3919`
+|===
+
+[%header,cols=2*]
+|===
+|Ingress
+|Port
+
+|Keep Network
+|`3919`
+|===
+
+If you set a different `port` in your configuration, or configure `peers` with
+non-default ports configured, firewall rules will need to be adjusted accordingly.
+
+===== Application
+
+The client expects parameters to be configured in a config file or passed as environment
+variables.
+
+Application configuration can be stored in a `.toml` file and passed to the application
+run command with the `--config` flag. Example:
+[source,bash]
+----
+./keep-client --config /path/to/your/config.toml start
+----
+
+====== Parameters
+
+
+[%header,cols="m,5,^m,^,^m"]
+|===
+|Property
+|Description
+|Default
+|Required
+|Environment Variable
+
+5+h|`ethereum`
+
+|URL
+|The Ethereum host your client will connect to.  Websocket protocol/port.
+|""
+|Yes
+|KEEP_ETHEREUM_URL
+
+|URLRPC
+|The Ethereum host your client will connect to.  HTTP protocol/port.
+|""
+|Yes
+|KEEP_ETHEREUM_URLRPC
+
+5+h|`ethereum.account`
+
+|KeyFile
+|The local filesystem path to your Keep operator Ethereum account keyfile.
+|""
+|Yes
+|KEEP_ETHEREUM_KEYFILE
+
+5+h|`ethereum.ContractAddresses`
+5+a|The contracts addresses are embedded into the client. Use configuration
+only if you want to overwrite the defaults.
+
+|RandomBeacon
+|Hex-encoded address of the RandomBeacon contract.
+|
+|No
+|KEEP_ETHEREUM_CONTRACTS_RANDOMBEACON
+
+5+h|`LibP2P`
+
+|Peers
+|Comma separated list of network peers to bootstrap against. See list of <<bootstrap-peers-mainnet,bootstrap peers>>.
+|[""]
+|Yes
+|KEEP_PEERS
+
+|Port
+|The port to run your instance of Keep on.
+|3919
+|Yes
+|KEEP_PORT
+
+|AnnouncedAddresses
+|Multiaddr formatted hostnames or addresses announced to the Keep Network.
+More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p reference].
+|[""]
+|No
+|KEEP_ANNOUNCED_ADDRESSES
+
+5+h|`Storage`
+
+|DataDir
+|Location to store the Keep nodes group membership details.
+|".storage/"
+|Yes
+|KEEP_STORAGE_DIR
+
+|===
+
+// TODO: Update the parameters list.
+
+====== Sample Config File
+
+[source,toml,role=small]
+----
+include::../../configs/config.toml.SAMPLE[]
+----
+
 == Development Guidelines
 
 There are two primary languages in the T code right now:
