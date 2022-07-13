@@ -9,7 +9,9 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
+// Application defines functionalities for operator verification in the firewall.
 type Application interface {
+	// IsRecognized
 	IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error)
 }
 
@@ -53,6 +55,12 @@ type anyApplicationPolicy struct {
 	negativeResultCache *cache.TimeCache
 }
 
+// Validate checks whether the given operator meets the conditions to join
+// the network. Validate iterates over a list of applications and if any of them
+// recognizes the operator as eligible, it can join the network. Nil is returned
+// on a successful validation, error is returned if none of the applications
+// validates the operator successfully. Due to performance reasons the results
+// of validations are stored in a cache for a certain amount of time.
 func (msp *anyApplicationPolicy) Validate(
 	remotePeerPublicKey *operator.PublicKey,
 ) error {

@@ -61,6 +61,10 @@ func newTbtcChain(
 	}, nil
 }
 
+// IsRecognized checks whether the given operator is recognized by the TbtcChain
+// as eligible to join the network. If the operator has a stake delegation or
+// had a stake delegation in the past, it will be recognized.
+// TODO: Add unit tests.
 func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error) {
 	operatorAddress, err := operatorPublicKeyToChainAddress(operatorPublicKey)
 	if err != nil {
@@ -91,11 +95,15 @@ func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, 
 		chain.Address(stakingProvider.Hex()),
 	)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf(
+			"failed to check stake delegation for staking provider %v: [%v]",
+			stakingProvider,
+			err,
+		)
 	}
 
 	if !hasStakeDelegation {
-		return false, fmt.Errorf("staking provider has no staking delegation")
+		return false, nil
 	}
 
 	return true, nil
