@@ -2,6 +2,7 @@ package entry
 
 import (
 	"fmt"
+	"math/big"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
@@ -35,7 +36,9 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 
 	// Wait until the current member is eligible to submit the entry.
 	eligibleToSubmitWaiter, err := res.waitForSubmissionEligibility(
+		newEntry,
 		startBlockHeight,
+		config.GroupSize,
 		config.ResultPublicationBlockStep,
 	)
 	if err != nil {
@@ -112,11 +115,46 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 // submit entry to the blockchain. First member is eligible to submit straight
 // away, each following member is eligible after pre-defined block step.
 func (res *relayEntrySubmitter) waitForSubmissionEligibility(
+	entry []byte,
 	startBlockHeight uint64,
+	groupSize int,
 	blockStep uint64,
 ) (<-chan uint64, error) {
-	// (member_index - 1) * T_step
-	blockWaitTime := (uint64(res.index) - 1) * blockStep
+	// First submitter index is calculated as entry % groupSize and gives
+	// an index from range [0, groupSize-1].
+	firstSubmitterMemberIndex := new(big.Int).Mod(
+		new(big.Int).SetBytes(entry),
+		big.NewInt(int64(groupSize)),
+	).Uint64()
+
+	// Calculate the position in the submission queue for the given member.
+	// The submission queue consists of the firstSubmitterMemberIndex followed
+	// by subsequent member indexes according to the modulus groupSize.
+	// The submission queue position for the given member can be computed as:
+	// - if memberIndex >= firstSubmitterMemberIndex: memberIndex - firstSubmitterMemberIndex
+	// - otherwise: memberIndex + groupSize - firstSubmitterMemberIndex
+	//
+	// For example, for `groupSize = 5` and `firstSubmitterMemberIndex = 2`, the
+	// submission queue is [2, 3, 4, 0, 1]. We compute the submission queue
+	// position for each member as:
+	// - member 0: 0 + 5 - 2 = 3
+	// - member 1: 1 + 5 - 2 = 4
+	// - member 2:     2 - 2 = 0
+	// - member 3:     3 - 2 = 1
+	// - member 4:     4 - 2 = 2
+	memberIndex := uint64(res.index)
+	var submissionQueueIndex uint64
+	if memberIndex >= firstSubmitterMemberIndex {
+		submissionQueueIndex = memberIndex - firstSubmitterMemberIndex
+	} else {
+		submissionQueueIndex = memberIndex + uint64(groupSize) - firstSubmitterMemberIndex
+	}
+
+	// Calculate the block wait time based on the position in the submission
+	// queue. For example, the member at the first position (index `0`)
+	// waits `0 * blockStep = 0` blocks, the member at the second position
+	// (index `1`) waits `1 * blockStep` blocks, and so on.
+	blockWaitTime := submissionQueueIndex * blockStep
 
 	eligibleBlockHeight := startBlockHeight + blockWaitTime
 	logger.Infof(
