@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -308,7 +307,7 @@ func (bc *BeaconChain) CalculateDKGResultHash(
 // TODO: Implement a real SubmitRelayEntry function.
 func (bc *BeaconChain) SubmitRelayEntry(
 	entry []byte,
-) *async.EventRelayEntrySubmittedPromise {
+) error {
 	return bc.mockRandomBeacon.SubmitRelayEntry(entry)
 }
 
@@ -534,7 +533,7 @@ func (mrb *mockRandomBeacon) OnRelayEntrySubmitted(
 
 func (mrb *mockRandomBeacon) SubmitRelayEntry(
 	entry []byte,
-) *async.EventRelayEntrySubmittedPromise {
+) error {
 	mrb.relayEntrySubmissionHandlersMutex.Lock()
 	defer mrb.relayEntrySubmissionHandlersMutex.Unlock()
 
@@ -546,7 +545,7 @@ func (mrb *mockRandomBeacon) SubmitRelayEntry(
 
 	blockNumber, err := mrb.blockCounter.CurrentBlock()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to get block counter: [%v]", err)
 	}
 
 	for _, handler := range mrb.relayEntrySubmissionHandlers {

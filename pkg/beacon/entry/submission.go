@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
@@ -46,45 +45,27 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	for {
 		select {
 		case blockNumber := <-eligibleToSubmitWaiter:
-			// Member becomes eligible to submit the result.
-			errorChannel := make(chan error)
-			defer close(errorChannel)
-
 			logger.Infof(
-				"[member:%v] submitting relay entry [0x%x] on behalf of group "+
-					"[0x%x] at block [%v]",
+				"[member:%v] firing relay entry [0x%x] submission "+
+					"on behalf of group [0x%x] at block [%v]",
 				res.index,
 				newEntry,
 				groupPublicKey,
 				blockNumber,
 			)
 
-			res.chain.SubmitRelayEntry(newEntry).OnComplete(
-				func(entry *event.RelayEntrySubmitted, err error) {
-					if err == nil {
-						logger.Infof(
-							"[member:%v] successfully submitted "+
-								"relay entry at block: [%v]",
-							res.index,
-							entry.BlockNumber,
-						)
-					}
-					errorChannel <- err
-				})
-
-			entryErr := <-errorChannel
-
-			if entryErr != nil {
+			err := res.chain.SubmitRelayEntry(newEntry)
+			if err != nil {
 				isEntryInProgress, err := res.chain.IsEntryInProgress()
 				if err != nil {
 					logger.Errorf(
-						"[member:%v] could not check entry status after "+
-							"relay entry submission error: [%v]; "+
+						"[member:%v] could not check entry status "+
+							"after relay entry submission error: [%v]; "+
 							"original error will be returned",
 						res.index,
 						err,
 					)
-					return entryErr
+					return err
 				}
 
 				// Check if we failed because someone else submitted in the
@@ -99,11 +80,21 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				}
 			}
 
-			return entryErr
+			logger.Infof(
+				"[member:%v] successfully fired relay entry "+
+					"submission at block: [%v]",
+				res.index,
+				blockNumber,
+			)
+
+			// Relay entry submission is fire and forget. Submitting member
+			// should not quit the submitter loop after firing the submission
+			// but is still monitoring for relay entry submission confirmation
+			// or timeout
 		case blockNumber := <-relayEntrySubmittedChannel:
 			logger.Infof(
 				"[member:%v] leaving submitter; "+
-					"relay entry submitted by other member at block [%v]",
+					"relay entry submitted at block [%v]",
 				res.index,
 				blockNumber,
 			)

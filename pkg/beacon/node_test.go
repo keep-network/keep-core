@@ -41,14 +41,15 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		)
 	}
 
-	localChain.SubmitRelayEntry(big.NewInt(1).Bytes()).
-		OnFailure(func(err error) {
-			if err != nil {
-				t.Fatal(err)
-			}
-		})
+	err = localChain.SubmitRelayEntry(big.NewInt(1).Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
+	err = blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	timeoutsReport := localChain.GetRelayEntryTimeoutReports()
 	numberOfReports := len(timeoutsReport)

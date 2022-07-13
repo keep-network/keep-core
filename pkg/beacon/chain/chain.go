@@ -9,7 +9,6 @@ import (
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -21,12 +20,8 @@ type GroupMemberIndex = uint8
 // pertains specifically to submission and retrieval of relay requests and
 // entries.
 type RelayEntryInterface interface {
-	// SubmitRelayEntry submits an entry in the random beacon and returns a
-	// promise to track the submission progress. The promise is fulfilled when
-	// the entry has been successfully submitted to the on-chain, or failed if
-	// the entry submission failed.
-	// TODO: Return error instead of the promise.
-	SubmitRelayEntry(entry []byte) *async.EventRelayEntrySubmittedPromise
+	// SubmitRelayEntry submits an entry in the random beacon.
+	SubmitRelayEntry(entry []byte) error
 	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntrySubmitted(

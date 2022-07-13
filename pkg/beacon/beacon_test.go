@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -224,7 +223,7 @@ type mockBeaconChain struct {
 
 func (mbc *mockBeaconChain) SubmitRelayEntry(
 	entry []byte,
-) *async.EventRelayEntrySubmittedPromise {
+) error {
 	panic("not implemented")
 }
 

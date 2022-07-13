@@ -12,7 +12,6 @@ import (
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
 	"golang.org/x/crypto/sha3"
@@ -78,19 +77,10 @@ func (c *localChain) GetConfig() *beaconchain.Config {
 	return c.relayConfig
 }
 
-func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventRelayEntrySubmittedPromise {
-	relayEntryPromise := &async.EventRelayEntrySubmittedPromise{}
-
+func (c *localChain) SubmitRelayEntry(newEntry []byte) error {
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		failErr := relayEntryPromise.Fail(
-			fmt.Errorf("cannot read current block: [%v]", err),
-		)
-		if failErr != nil {
-			logger.Errorf("failed to fail promise: [%v]", failErr)
-		}
-
-		return relayEntryPromise
+		return fmt.Errorf("cannot read current block: [%v]", err)
 	}
 
 	entry := &event.RelayEntrySubmitted{
@@ -105,14 +95,9 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventRelayEntrySub
 	}
 	c.handlerMutex.Unlock()
 
-	err = relayEntryPromise.Fulfill(entry)
-	if err != nil {
-		logger.Errorf("failed to fulfill promise: [%v]", err)
-	}
-
 	c.lastSubmittedRelayEntry = newEntry
 
-	return relayEntryPromise
+	return nil
 }
 
 func (c *localChain) OnRelayEntrySubmitted(
