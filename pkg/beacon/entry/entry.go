@@ -45,7 +45,7 @@ func SignAndSubmit(
 
 	relayEntrySubmittedChannel := make(chan uint64)
 	subscription := beaconChain.OnRelayEntrySubmitted(
-		func(event *event.EntrySubmitted) {
+		func(event *event.RelayEntrySubmitted) {
 			relayEntrySubmittedChannel <- event.BlockNumber
 		},
 	)

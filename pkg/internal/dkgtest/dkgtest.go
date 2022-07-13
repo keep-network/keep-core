@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math"
 	"math/big"
 	"sync"
@@ -19,7 +20,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
-	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -63,7 +63,7 @@ func RunTest(
 	seed *big.Int,
 	rules interception.Rules,
 ) (*Result, error) {
-	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(chainLocal.DefaultCurve)
+	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func RunTest(
 		rules,
 	)
 
-	localChain := chainLocal.ConnectWithKey(
+	localChain := local_v1.ConnectWithKey(
 		groupSize,
 		honestThreshold,
 		minimumStake,
@@ -100,9 +100,8 @@ func RunTest(
 
 	return executeDKG(
 		seed,
-		localChain.ThresholdRelay(),
+		localChain,
 		blockCounter,
-		localChain.Signing(),
 		localChain.GetLastDKGResult,
 		network,
 		selectedStakers,
@@ -113,7 +112,6 @@ func executeDKG(
 	seed *big.Int,
 	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
-	signing chain.Signing,
 	lastDKGResultGetter func() (
 		*beaconchain.DKGResult,
 		map[beaconchain.GroupMemberIndex][]byte,
@@ -157,7 +155,7 @@ func executeDKG(
 
 	membershipValidator := group.NewStakersMembershipValidator(
 		selectedStakers,
-		signing,
+		beaconChain.Signing(),
 	)
 
 	for i := 0; i < relayConfig.GroupSize; i++ {
@@ -172,7 +170,6 @@ func executeDKG(
 				startBlockHeight,
 				blockCounter,
 				beaconChain,
-				signing,
 				broadcastChannel,
 			)
 			if signer != nil {

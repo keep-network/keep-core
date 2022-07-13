@@ -33,7 +33,6 @@ func PrePublicationBlocks() uint64 {
 type resultSigningState struct {
 	channel      net.BroadcastChannel
 	beaconChain  beaconchain.Interface
-	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
@@ -54,7 +53,7 @@ func (rss *resultSigningState) ActiveBlocks() uint64 {
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {
-	message, err := rss.member.SignDKGResult(rss.result, rss.beaconChain, rss.signing)
+	message, err := rss.member.SignDKGResult(rss.result, rss.beaconChain)
 	if err != nil {
 		return err
 	}
@@ -102,7 +101,6 @@ func (rss *resultSigningState) Next() signingState {
 	return &signaturesVerificationState{
 		channel:           rss.channel,
 		beaconChain:       rss.beaconChain,
-		signing:           rss.signing,
 		blockCounter:      rss.blockCounter,
 		member:            rss.member,
 		result:            rss.result,
@@ -127,7 +125,6 @@ func (rss *resultSigningState) MemberIndex() group.MemberIndex {
 type signaturesVerificationState struct {
 	channel      net.BroadcastChannel
 	beaconChain  beaconchain.Interface
-	signing      chain.Signing
 	blockCounter chain.BlockCounter
 
 	member *SigningMember
@@ -151,7 +148,7 @@ func (svs *signaturesVerificationState) ActiveBlocks() uint64 {
 func (svs *signaturesVerificationState) Initiate(ctx context.Context) error {
 	signatures, err := svs.member.VerifyDKGResultSignatures(
 		svs.signatureMessages,
-		svs.signing,
+		svs.beaconChain.Signing(),
 	)
 	if err != nil {
 		return err

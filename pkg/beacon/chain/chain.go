@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/operator"
+	"github.com/keep-network/keep-core/pkg/sortition"
 	"math/big"
 
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -23,16 +25,16 @@ type RelayEntryInterface interface {
 	// promise to track the submission progress. The promise is fulfilled when
 	// the entry has been successfully submitted to the on-chain, or failed if
 	// the entry submission failed.
-	SubmitRelayEntry(entry []byte) *async.EventEntrySubmittedPromise
+	SubmitRelayEntry(entry []byte) *async.EventRelayEntrySubmittedPromise
 	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntrySubmitted(
-		func(entry *event.EntrySubmitted),
+		func(entry *event.RelayEntrySubmitted),
 	) subscription.EventSubscription
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(
-		func(request *event.Request),
+		func(request *event.RelayEntryRequested),
 	) subscription.EventSubscription
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was
 	// supposed to submit a relay entry, did not deliver it within a specified
@@ -103,7 +105,7 @@ type DistributedKeyGenerationInterface interface {
 		participantIndex GroupMemberIndex,
 		dkgResult *DKGResult,
 		signatures map[GroupMemberIndex][]byte,
-	) *async.EventDKGResultSubmissionPromise
+	) error
 	// OnDKGResultSubmitted registers a callback that is invoked when an on-chain
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
@@ -117,7 +119,7 @@ type DistributedKeyGenerationInterface interface {
 // Interface represents the interface that the random beacon expects to interact
 // with the anchoring blockchain on.
 type Interface interface {
-	// GetConfig returns the expected configuration of the threshold random beacon.
+	// GetConfig returns the expected configuration of the random beacon.
 	GetConfig() *Config
 	// BlockCounter returns the chain's block counter.
 	BlockCounter() (chain.BlockCounter, error)
@@ -125,13 +127,18 @@ type Interface interface {
 	Signing() chain.Signing
 	// StakeMonitor returns the chain's stake monitor.
 	StakeMonitor() (chain.StakeMonitor, error)
+	// OperatorKeyPair returns the key pair of the operator assigned to this
+	// chain handle.
+	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)
 
+	sortition.Chain
 	GroupInterface
 	RelayEntryInterface
 	DistributedKeyGenerationInterface
 }
 
 // Config contains the config data needed for the random beacon to operate.
+// TODO: Adjust to the random beacon v2 requirements.
 type Config struct {
 	// GroupSize is the size of a group in the random beacon.
 	GroupSize int

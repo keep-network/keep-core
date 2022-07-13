@@ -1,14 +1,13 @@
 package result
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"testing"
 
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local"
-
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
+	"github.com/keep-network/keep-core/pkg/chain"
 )
 
 func TestSubmitDKGResult(t *testing.T) {
@@ -222,7 +221,7 @@ func initChainHandle(honestThreshold int, groupSize int) (
 	uint64,
 	error,
 ) {
-	chainHandle := local.Connect(groupSize, honestThreshold, big.NewInt(200))
+	chainHandle := local_v1.Connect(groupSize, honestThreshold, big.NewInt(200))
 
 	blockCounter, err := chainHandle.BlockCounter()
 	if err != nil {
@@ -233,5 +232,5 @@ func initChainHandle(honestThreshold int, groupSize int) (
 		return nil, nil, 0, err
 	}
 
-	return chainHandle.ThresholdRelay(), blockCounter, <-initialBlockChan, nil
+	return chainHandle, blockCounter, <-initialBlockChan, nil
 }

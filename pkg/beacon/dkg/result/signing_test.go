@@ -1,14 +1,13 @@
 package result
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"reflect"
 	"testing"
 
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/group"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
@@ -22,13 +21,13 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		GroupPublicKey: []byte{10},
 	}
 
-	members, beaconChains, signings, err := initializeSigningMembers(groupSize)
+	members, beaconChains, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	currentMember := members[0]
-	currentSigning := signings[0]
+	currentSigning := beaconChains[0].Signing()
 
 	messages := make([]*DKGResultHashSignatureMessage, 0)
 
@@ -36,7 +35,6 @@ func TestResultSigningAndVerificationRoundTrip(t *testing.T) {
 		message, err := member.SignDKGResult(
 			dkgResult,
 			beaconChains[i],
-			signings[i],
 		)
 		if err != nil {
 			t.Fatal(err)
@@ -71,21 +69,21 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	dkgResultHash1 := beaconchain.DKGResultHash{10}
 	dkgResultHash2 := beaconchain.DKGResultHash{20}
 
-	members, _, signings, err := initializeSigningMembers(groupSize)
+	members, beaconChains, err := initializeSigningMembers(groupSize)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	verifyingMember, verifyingMemberSigning := members[0], signings[0]
+	verifyingMember, verifyingMemberSigning := members[0], beaconChains[0].Signing()
 	verifyingMember.preferredDKGResultHash = dkgResultHash1
 
 	selfSignature, _ := verifyingMemberSigning.Sign(dkgResultHash1[:])
 	verifyingMember.selfDKGResultSignature = selfSignature
 
-	member2, signing2 := members[1], signings[1]
-	member3, signing3 := members[2], signings[2]
-	member4, signing4 := members[3], signings[3]
-	member5, signing5 := members[4], signings[4]
+	member2, signing2 := members[1], beaconChains[1].Signing()
+	member3, signing3 := members[2], beaconChains[2].Signing()
+	member4, signing4 := members[3], beaconChains[3].Signing()
+	member5, signing5 := members[4], beaconChains[4].Signing()
 
 	signature21, _ := signing2.Sign(dkgResultHash1[:])
 
@@ -308,7 +306,6 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 func initializeSigningMembers(groupSize int) (
 	[]*SigningMember,
 	[]beaconchain.Interface,
-	[]chain.Signing,
 	error,
 ) {
 	honestThreshold := groupSize/2 + 1
@@ -319,7 +316,6 @@ func initializeSigningMembers(groupSize int) (
 
 	members := make([]*SigningMember, groupSize)
 	beaconChains := make([]beaconchain.Interface, groupSize)
-	signings := make([]chain.Signing, groupSize)
 
 	for i := 0; i < groupSize; i++ {
 		memberIndex := group.MemberIndex(i + 1)
@@ -330,23 +326,22 @@ func initializeSigningMembers(groupSize int) (
 			&mockMembershipValidator{},
 		)
 
-		operatorPrivateKey, _, err := operator.GenerateKeyPair(local.DefaultCurve)
+		operatorPrivateKey, _, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, err
 		}
 
-		chain := local.ConnectWithKey(
+		localChain := local_v1.ConnectWithKey(
 			groupSize,
 			honestThreshold,
 			minimumStake,
 			operatorPrivateKey,
 		)
 
-		beaconChains[i] = chain.ThresholdRelay()
-		signings[i] = chain.Signing()
+		beaconChains[i] = localChain
 	}
 
-	return members, beaconChains, signings, nil
+	return members, beaconChains, nil
 }
 
 type mockMembershipValidator struct{}

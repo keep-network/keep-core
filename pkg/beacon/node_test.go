@@ -2,41 +2,32 @@ package beacon
 
 import (
 	"fmt"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"testing"
-
-	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
-	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 var address = "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
 var relayEntryTimeout = uint64(15)
 
 func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
-	chain := chainLocal.Connect(5, 3, big.NewInt(200))
-	blockCounter, err := chain.BlockCounter()
+	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+
+	node := &node{
+		beaconChain: localChain,
+	}
+
+	blockCounter, err := node.beaconChain.BlockCounter()
 	if err != nil {
 		fmt.Printf("failed to setup a block counter: [%v]", err)
 	}
 
-	node := &node{
-		blockCounter: blockCounter,
-	}
-
-	beaconChain := chain.ThresholdRelay()
-	chainConfig := &beaconchain.Config{
-		RelayEntryTimeout: uint64(relayEntryTimeout),
-	}
 	startBlockHeight, err := blockCounter.CurrentBlock()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	go node.MonitorRelayEntry(
-		beaconChain,
-		startBlockHeight,
-		chainConfig,
-	)
+	go node.MonitorRelayEntry(startBlockHeight)
 
 	// the window to get a relay entry is from currentBlock to (currentBlock+relayEntryTimeout)
 	// we subtract arbitarly 5 blocks to be within this window. Ex. 0 + 15 - 5
@@ -50,7 +41,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 		)
 	}
 
-	chain.ThresholdRelay().SubmitRelayEntry(big.NewInt(1).Bytes()).
+	localChain.SubmitRelayEntry(big.NewInt(1).Bytes()).
 		OnFailure(func(err error) {
 			if err != nil {
 				t.Fatal(err)
@@ -59,7 +50,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 
 	blockCounter.WaitForBlockHeight(startBlockHeight + relayEntryTimeout)
 
-	timeoutsReport := chain.GetRelayEntryTimeoutReports()
+	timeoutsReport := localChain.GetRelayEntryTimeoutReports()
 	numberOfReports := len(timeoutsReport)
 
 	if numberOfReports != 0 {
@@ -71,38 +62,34 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 }
 
 func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
-	chain := chainLocal.Connect(5, 3, big.NewInt(200))
-	blockCounter, err := chain.BlockCounter()
+	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+
+	node := &node{
+		beaconChain: localChain,
+	}
+
+	blockCounter, err := node.beaconChain.BlockCounter()
 	if err != nil {
 		fmt.Printf("failed to setup a block counter: [%v]", err)
 	}
 
-	node := &node{
-		blockCounter: blockCounter,
-	}
-
-	beaconChain := chain.ThresholdRelay()
-	chainConfig := &beaconchain.Config{
-		RelayEntryTimeout: uint64(relayEntryTimeout),
-	}
 	startBlockHeight, err := blockCounter.CurrentBlock()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	go node.MonitorRelayEntry(
-		beaconChain,
-		startBlockHeight,
-		chainConfig,
-	)
+	go node.MonitorRelayEntry(startBlockHeight)
 
 	relayEntryTimeoutFromStart := startBlockHeight + relayEntryTimeout
 
 	// we want to exceed the relay entry timeout to report that a relay entry
 	// was not submitted. 5 is an arbitrary number to exceed relayEntryTimeout.
-	blockCounter.WaitForBlockHeight(relayEntryTimeoutFromStart + 5)
+	err = blockCounter.WaitForBlockHeight(relayEntryTimeoutFromStart + 5)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	timeoutsReport := chain.GetRelayEntryTimeoutReports()
+	timeoutsReport := localChain.GetRelayEntryTimeoutReports()
 	numberOfReports := len(timeoutsReport)
 
 	if numberOfReports != 1 {
