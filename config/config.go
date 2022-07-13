@@ -118,8 +118,10 @@ func ReadEthereumConfig(filePath string) (ethereum.Config, error) {
 func readPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	fmt.Print("\n")
 	if err != nil {
 		return "", fmt.Errorf("unable to read password, error [%s]", err)
 	}
+
 	return strings.TrimSpace(string(bytePassword)), nil
 }
