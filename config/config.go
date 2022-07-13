@@ -72,29 +72,6 @@ func ReadConfig(filePath string) (*Config, error) {
 		return nil, fmt.Errorf("unable to load config (file: [%s]): [%w]", filePath, err)
 	}
 
-	envPassword := os.Getenv(passwordEnvVariable)
-	if envPassword == "prompt" {
-		var (
-			password string
-			err      error
-		)
-		if password, err = readPassword("Enter Ethereum Account Password: "); err != nil {
-			return nil, err
-		}
-		config.Ethereum.Account.KeyFilePassword = password
-	} else {
-		config.Ethereum.Account.KeyFilePassword = envPassword
-	}
-
-	if config.Ethereum.Account.KeyFilePassword == "" {
-		return nil, fmt.Errorf(
-			"password is required; set in the config file, set environment "+
-				"variable %v to the password, or set the same environment "+
-				"variable to 'prompt' to be prompted for the password at startup",
-			passwordEnvVariable,
-		)
-	}
-
 	if config.Ethereum.Account.KeyFile == "" {
 		return nil, fmt.Errorf("missing value for ethereum key file")
 	}
@@ -105,6 +82,26 @@ func ReadConfig(filePath string) (*Config, error) {
 
 	if config.Storage.DataDir == "" {
 		return nil, fmt.Errorf("missing value for storage directory data")
+	}
+
+	if strings.TrimSpace(config.Ethereum.Account.KeyFilePassword) == "" {
+		var (
+			password string
+			err      error
+		)
+		fmt.Printf(
+			"Ethereum Account Password has to be set for the configured Ethereum Key File.\n"+
+				"Please set %s environment variable, or set it in the config file, or provide it in the prompt below.\n",
+			ethereumPasswordEnvVariable,
+		)
+
+		for strings.TrimSpace(password) == "" {
+			if password, err = readPassword("Enter Ethereum Account Password: "); err != nil {
+				return nil, err
+			}
+		}
+
+		config.Ethereum.Account.KeyFilePassword = password
 	}
 
 	return config, nil
