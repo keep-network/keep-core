@@ -56,7 +56,7 @@ func Start(c *cli.Context) error {
 
 	config, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
-		return fmt.Errorf("error reading config file: %v", err)
+		return fmt.Errorf("error reading config: %w", err)
 	}
 	if c.Int(portFlag) > 0 {
 		config.LibP2P.Port = c.Int(portFlag)

@@ -63,7 +63,7 @@ func ReadConfig(filePath string) (*Config, error) {
 			password string
 			err      error
 		)
-		if password, err = readPassword("Enter Account Password: "); err != nil {
+		if password, err = readPassword("Enter Ethereum Account Password: "); err != nil {
 			return nil, err
 		}
 		config.Ethereum.Account.KeyFilePassword = password
@@ -119,7 +119,7 @@ func readPassword(prompt string) (string, error) {
 	fmt.Print(prompt)
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		return "", fmt.Errorf("Unable to read password, error [%s]", err)
+		return "", fmt.Errorf("unable to read password, error [%s]", err)
 	}
 	return strings.TrimSpace(string(bytePassword)), nil
 }
