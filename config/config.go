@@ -24,6 +24,9 @@ var logger = log.Logger("keep-config")
 // `viper.AutomaticEnv()` function. For example instead of expecting
 // `KEEP_ETHEREUM_ACCOUNT_KEYFILEPASSWORD` we expect `KEEP_ETHEREUM_PASSWORD`.
 const (
+	// #nosec G101 (look for hardcoded credentials)
+	// This line doesn't contain any credentials.
+	// It's just the name of the environment variable.
 	ethereumPasswordEnvVariable         = "KEEP_ETHEREUM_PASSWORD"
 	ethereumKeyFileEnvVariable          = "KEEP_ETHEREUM_KEYFILE"
 	libp2pPeersEnvVariable              = "KEEP_PEERS"
@@ -142,38 +145,58 @@ func loadConfig(configFilePath string, config *Config) error {
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// Configure Ethereum.
-	v.BindEnv("Ethereum.URL")
-	v.BindEnv("Ethereum.URLRPC")
-	v.BindEnv("Ethereum.Account.KeyFilePassword", ethereumPasswordEnvVariable)
-	v.BindEnv("Ethereum.Account.KeyFile", ethereumKeyFileEnvVariable)
+	if err := v.BindEnv("Ethereum.URL"); err != nil {
+		return err
+	}
+	if err := v.BindEnv("Ethereum.URLRPC"); err != nil {
+		return err
+	}
+	if err := v.BindEnv("Ethereum.Account.KeyFilePassword", ethereumPasswordEnvVariable); err != nil {
+		return err
+	}
+	if err := v.BindEnv("Ethereum.Account.KeyFile", ethereumKeyFileEnvVariable); err != nil {
+		return err
+	}
 
 	// Configure default contract addresses.
-	bindEnvContractAddress := func(contractName string, defaultAddress string) {
+	bindEnvContractAddress := func(contractName string, defaultAddress string) (err error) {
 		configProperty := fmt.Sprintf("Ethereum.ContractAddresses.%s", contractName)
-		v.BindEnv(
+		err = v.BindEnv(
 			configProperty,
 			strings.ToUpper(
 				fmt.Sprintf("KEEP_ETHEREUM_CONTRACTS_%s", contractName),
 			),
 		)
 		v.SetDefault(configProperty, defaultAddress)
+
+		return
 	}
 
-	bindEnvContractAddress(
+	if err := bindEnvContractAddress(
 		ethereumChain.RandomBeaconContractName,
 		ethereumBeaconGen.RandomBeaconAddress,
-	)
+	); err != nil {
+		return err
+	}
 
 	// Configure LibP2P.
-	v.BindEnv("LibP2P.Peers", libp2pPeersEnvVariable)
+	if err := v.BindEnv("LibP2P.Peers", libp2pPeersEnvVariable); err != nil {
+		return err
+	}
 
-	v.BindEnv("LibP2P.Port", libp2pPortEnvVariable)
+	if err := v.BindEnv("LibP2P.Port", libp2pPortEnvVariable); err != nil {
+		return err
+	}
 	v.SetDefault("LibP2P.Port", libp2p.DefaultPort)
 
-	v.BindEnv("LibP2P.AnnouncedAddresses", libp2pAnnouncedAddressesEnvVariable)
+	if err := v.BindEnv("LibP2P.AnnouncedAddresses", libp2pAnnouncedAddressesEnvVariable); err != nil {
+		return err
+	}
 
 	// Configure Storage.
-	v.BindEnv("Storage.DataDir", storageDataDirEnvVariable)
+	if err := v.BindEnv("Storage.DataDir", storageDataDirEnvVariable); err != nil {
+		return err
+	}
 	v.SetDefault("Storage.DataDir", registry.DefaultStoragePath)
 
 	// TODO: Add support for command line flags.
