@@ -52,13 +52,11 @@
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 [ethereum.ContractAddresses]
-	# Hex-encoded address of KeepRandomBeaconOperator contract
-	KeepRandomBeaconOperator = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
-	# Hex-encoded address of TokenStaking contract
+	RandomBeacon = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+
+    # Legacy v1 contracts, do not have to be set. Soon to be removed.
+	KeepRandomBeaconOperator = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 	TokenStaking = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-	# Hex-encoded address of KeepRandomBeaconService contract. Only needed
-	# in cases where the client's utility functions will be used (e.g., the
-	# relay subcommand).
 	KeepRandomBeaconService = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
 [LibP2P]

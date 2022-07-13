@@ -1,27 +1,27 @@
 package firewall
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"math/big"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-common/pkg/cache"
-	"github.com/keep-network/keep-core/pkg/chain/local"
 )
 
 var minimumStake = big.NewInt(1000)
 var cachingPeriod = time.Second
 
 func TestHasMinimumStake(t *testing.T) {
-	stakeMonitor := local.NewStakeMonitor(minimumStake)
+	stakeMonitor := local_v1.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
 		stakeMonitor:        stakeMonitor,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
 
-	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local.DefaultCurve)
+	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,14 +39,14 @@ func TestHasMinimumStake(t *testing.T) {
 }
 
 func TestHasNoMinimumStake(t *testing.T) {
-	stakeMonitor := local.NewStakeMonitor(minimumStake)
+	stakeMonitor := local_v1.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
 		stakeMonitor:        stakeMonitor,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
 
-	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local.DefaultCurve)
+	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,14 +63,14 @@ func TestHasNoMinimumStake(t *testing.T) {
 }
 
 func TestCachesHasMinimumStake(t *testing.T) {
-	stakeMonitor := local.NewStakeMonitor(minimumStake)
+	stakeMonitor := local_v1.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
 		stakeMonitor:        stakeMonitor,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
 
-	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local.DefaultCurve)
+	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,14 +113,14 @@ func TestCachesHasMinimumStake(t *testing.T) {
 }
 
 func TestCachesHasNoMinimumStake(t *testing.T) {
-	stakeMonitor := local.NewStakeMonitor(minimumStake)
+	stakeMonitor := local_v1.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
 		stakeMonitor:        stakeMonitor,
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
 
-	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local.DefaultCurve)
+	_, remotePeerOperatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		t.Fatal(err)
 	}

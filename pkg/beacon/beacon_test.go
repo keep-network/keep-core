@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
@@ -23,7 +23,7 @@ func TestConfirmRelayRequestOnFirstAttempt(t *testing.T) {
 		onConfirmedExecuted = true
 	}
 
-	chain := newMockRelayChain(func(attempt int) (int, error) {
+	chain := newMockBeaconChain(func(attempt int) (int, error) {
 		return expectedRequestStartBlock, nil
 	})
 
@@ -54,7 +54,7 @@ func TestConfirmRelayRequestOnLastAttempt(t *testing.T) {
 		onConfirmedExecuted = true
 	}
 
-	chain := newMockRelayChain(func(attempt int) (int, error) {
+	chain := newMockBeaconChain(func(attempt int) (int, error) {
 		if attempt != currentRelayRequestConfirmationRetries {
 			return 0, nil
 		}
@@ -88,7 +88,7 @@ func TestConfirmRelayRequestOnLastAttemptBecauseOfErrors(t *testing.T) {
 		onConfirmedExecuted = true
 	}
 
-	chain := newMockRelayChain(func(attempt int) (int, error) {
+	chain := newMockBeaconChain(func(attempt int) (int, error) {
 		if attempt != currentRelayRequestConfirmationRetries {
 			return 0, fmt.Errorf("VERY BAD ERROR")
 		}
@@ -122,7 +122,7 @@ func TestConfirmRelayRequestWithMoreRecentEntryPending(t *testing.T) {
 		onConfirmedExecuted = true
 	}
 
-	chain := newMockRelayChain(func(attempt int) (int, error) {
+	chain := newMockBeaconChain(func(attempt int) (int, error) {
 		return expectedRequestStartBlock + 1, nil
 	})
 
@@ -153,7 +153,7 @@ func TestConfirmRelayRequestWithAllAttemptsFailed(t *testing.T) {
 		onConfirmedExecuted = true
 	}
 
-	chain := newMockRelayChain(func(attempt int) (int, error) {
+	chain := newMockBeaconChain(func(attempt int) (int, error) {
 		return 0, nil
 	})
 
@@ -184,7 +184,7 @@ func TestConfirmRelayRequestWithAllAttemptsFailedBecauseOfError(t *testing.T) {
 		onConfirmedExecuted = true
 	}
 
-	chain := newMockRelayChain(func(attempt int) (int, error) {
+	chain := newMockBeaconChain(func(attempt int) (int, error) {
 		return 0, fmt.Errorf("VERY BAD ERROR")
 	})
 
@@ -208,56 +208,56 @@ func TestConfirmRelayRequestWithAllAttemptsFailedBecauseOfError(t *testing.T) {
 	}
 }
 
-func newMockRelayChain(
+func newMockBeaconChain(
 	currentRequestStartBlockFn func(int) (int, error),
-) *mockRelayChain {
-	return &mockRelayChain{
+) *mockBeaconChain {
+	return &mockBeaconChain{
 		currentRequestStartBlockFn:             currentRequestStartBlockFn,
 		currentRequestStartBlockExecutionCount: 0,
 	}
 }
 
-type mockRelayChain struct {
+type mockBeaconChain struct {
 	currentRequestStartBlockExecutionCount int
 	currentRequestStartBlockFn             func(int) (int, error)
 }
 
-func (mrc *mockRelayChain) SubmitRelayEntry(
+func (mbc *mockBeaconChain) SubmitRelayEntry(
 	entry []byte,
-) *async.EventEntrySubmittedPromise {
+) *async.EventRelayEntrySubmittedPromise {
 	panic("not implemented")
 }
 
-func (mrc *mockRelayChain) OnRelayEntrySubmitted(
-	func(entry *event.EntrySubmitted),
+func (mbc *mockBeaconChain) OnRelayEntrySubmitted(
+	func(entry *event.RelayEntrySubmitted),
 ) subscription.EventSubscription {
 	panic("not implemented")
 }
 
-func (mrc *mockRelayChain) OnRelayEntryRequested(
-	func(request *event.Request),
+func (mbc *mockBeaconChain) OnRelayEntryRequested(
+	func(request *event.RelayEntryRequested),
 ) subscription.EventSubscription {
 	panic("not implemented")
 }
 
-func (mrc *mockRelayChain) ReportRelayEntryTimeout() error {
+func (mbc *mockBeaconChain) ReportRelayEntryTimeout() error {
 	panic("not implemented")
 }
 
-func (mrc *mockRelayChain) IsEntryInProgress() (bool, error) {
+func (mbc *mockBeaconChain) IsEntryInProgress() (bool, error) {
 	panic("not implemented")
 }
 
-func (mrc *mockRelayChain) CurrentRequestStartBlock() (*big.Int, error) {
-	mrc.currentRequestStartBlockExecutionCount++
-	startBlock, err := mrc.currentRequestStartBlockFn(mrc.currentRequestStartBlockExecutionCount)
+func (mbc *mockBeaconChain) CurrentRequestStartBlock() (*big.Int, error) {
+	mbc.currentRequestStartBlockExecutionCount++
+	startBlock, err := mbc.currentRequestStartBlockFn(mbc.currentRequestStartBlockExecutionCount)
 	return big.NewInt(int64(startBlock)), err
 }
 
-func (mrc *mockRelayChain) CurrentRequestPreviousEntry() ([]byte, error) {
+func (mbc *mockBeaconChain) CurrentRequestPreviousEntry() ([]byte, error) {
 	panic("not implemented")
 }
 
-func (mrc *mockRelayChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+func (mbc *mockBeaconChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	panic("not implemented")
 }

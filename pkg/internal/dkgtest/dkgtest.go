@@ -7,19 +7,19 @@ import (
 	"crypto/rand"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math"
 	"math/big"
 	"sync"
 	"testing"
 	"time"
 
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	dkgResult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/gjkr"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/dkg"
+	dkgResult "github.com/keep-network/keep-core/pkg/beacon/dkg/result"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
+	"github.com/keep-network/keep-core/pkg/beacon/gjkr"
+	"github.com/keep-network/keep-core/pkg/beacon/group"
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -29,7 +29,7 @@ var minimumStake = big.NewInt(20)
 
 // Result of a DKG test execution.
 type Result struct {
-	dkgResult           *relaychain.DKGResult
+	dkgResult           *beaconchain.DKGResult
 	dkgResultSignatures map[group.MemberIndex][]byte
 	signers             []*dkg.ThresholdSigner
 	memberFailures      []error
@@ -63,7 +63,7 @@ func RunTest(
 	seed *big.Int,
 	rules interception.Rules,
 ) (*Result, error) {
-	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(chainLocal.DefaultCurve)
+	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		return nil, err
 	}
@@ -73,19 +73,19 @@ func RunTest(
 		rules,
 	)
 
-	chain := chainLocal.ConnectWithKey(
+	localChain := local_v1.ConnectWithKey(
 		groupSize,
 		honestThreshold,
 		minimumStake,
 		operatorPrivateKey,
 	)
 
-	blockCounter, err := chain.BlockCounter()
+	blockCounter, err := localChain.BlockCounter()
 	if err != nil {
 		return nil, err
 	}
 
-	address, err := chain.Signing().PublicKeyToAddress(operatorPublicKey)
+	address, err := localChain.Signing().PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"cannot convert operator public key to chain address: [%v]",
@@ -93,17 +93,16 @@ func RunTest(
 		)
 	}
 
-	selectedStakers := make([]relaychain.StakerAddress, groupSize)
+	selectedStakers := make([]chain.Address, groupSize)
 	for i := range selectedStakers {
 		selectedStakers[i] = address
 	}
 
 	return executeDKG(
 		seed,
-		chain.ThresholdRelay(),
+		localChain,
 		blockCounter,
-		chain.Signing(),
-		chain.GetLastDKGResult,
+		localChain.GetLastDKGResult,
 		network,
 		selectedStakers,
 	)
@@ -111,17 +110,16 @@ func RunTest(
 
 func executeDKG(
 	seed *big.Int,
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
-	signing chain.Signing,
 	lastDKGResultGetter func() (
-		*relaychain.DKGResult,
-		map[relaychain.GroupMemberIndex][]byte,
+		*beaconchain.DKGResult,
+		map[beaconchain.GroupMemberIndex][]byte,
 	),
 	network interception.Network,
-	selectedStakers []relaychain.StakerAddress,
+	selectedStakers []chain.Address,
 ) (*Result, error) {
-	relayConfig := relayChain.GetConfig()
+	relayConfig := beaconChain.GetConfig()
 
 	broadcastChannel, err := network.BroadcastChannelFor(fmt.Sprintf("dkg-test-%v", seed))
 	if err != nil {
@@ -129,7 +127,7 @@ func executeDKG(
 	}
 
 	resultSubmissionChan := make(chan *event.DKGResultSubmission)
-	_ = relayChain.OnDKGResultSubmitted(
+	_ = beaconChain.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			resultSubmissionChan <- event
 		},
@@ -157,7 +155,7 @@ func executeDKG(
 
 	membershipValidator := group.NewStakersMembershipValidator(
 		selectedStakers,
-		signing,
+		beaconChain.Signing(),
 	)
 
 	for i := 0; i < relayConfig.GroupSize; i++ {
@@ -171,8 +169,7 @@ func executeDKG(
 				membershipValidator,
 				startBlockHeight,
 				blockCounter,
-				relayChain,
-				signing,
+				beaconChain,
 				broadcastChannel,
 			)
 			if signer != nil {

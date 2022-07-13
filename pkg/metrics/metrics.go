@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"github.com/keep-network/keep-core/pkg/operator"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -94,12 +93,11 @@ func ObserveConnectedBootstrapCount(
 func ObserveEthConnectivity(
 	ctx context.Context,
 	registry *metrics.Registry,
-	stakeMonitor chain.StakeMonitor,
-	operatorPublicKey *operator.PublicKey,
+	blockCounter chain.BlockCounter,
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		_, err := stakeMonitor.HasMinimumStake(operatorPublicKey)
+		_, err := blockCounter.CurrentBlock()
 
 		if err != nil {
 			return 0

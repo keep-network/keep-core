@@ -7,8 +7,9 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/chain"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
 	"math/big"
 	"sync"
 	"time"
@@ -17,11 +18,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/interception"
 	"github.com/keep-network/keep-core/pkg/operator"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/beacon/dkg"
+	"github.com/keep-network/keep-core/pkg/beacon/entry"
+	"github.com/keep-network/keep-core/pkg/beacon/event"
 
-	chainLocal "github.com/keep-network/keep-core/pkg/chain/local"
 	netLocal "github.com/keep-network/keep-core/pkg/net/local"
 )
 
@@ -64,7 +64,7 @@ func RunTest(
 	rules interception.Rules,
 	previousEntry []byte,
 ) (*Result, error) {
-	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(chainLocal.DefaultCurve)
+	operatorPrivateKey, operatorPublicKey, err := operator.GenerateKeyPair(local_v1.DefaultCurve)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +74,9 @@ func RunTest(
 		rules,
 	)
 
-	chain := chainLocal.ConnectWithKey(len(signers), threshold, minimumStake, operatorPrivateKey)
+	localChain := local_v1.ConnectWithKey(len(signers), threshold, minimumStake, operatorPrivateKey)
 
-	blockCounter, err := chain.BlockCounter()
+	blockCounter, err := localChain.BlockCounter()
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +84,9 @@ func RunTest(
 	return executeSigning(
 		signers,
 		threshold,
-		chain.ThresholdRelay(),
+		localChain,
 		blockCounter,
-		chain.GetLastRelayEntry,
+		localChain.GetLastRelayEntry,
 		network,
 		previousEntry,
 	)
@@ -95,7 +95,7 @@ func RunTest(
 func executeSigning(
 	signers []*dkg.ThresholdSigner,
 	threshold int,
-	relayChain relaychain.Interface,
+	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
 	lastRelayEntryGetter func() []byte,
 	network interception.Network,
@@ -115,9 +115,9 @@ func executeSigning(
 		return nil, err
 	}
 
-	entrySubmissionChan := make(chan *event.EntrySubmitted)
-	_ = relayChain.OnRelayEntrySubmitted(
-		func(event *event.EntrySubmitted) {
+	entrySubmissionChan := make(chan *event.RelayEntrySubmitted)
+	_ = beaconChain.OnRelayEntrySubmitted(
+		func(event *event.RelayEntrySubmitted) {
 			entrySubmissionChan <- event
 		},
 	)
@@ -144,7 +144,7 @@ func executeSigning(
 			err := entry.SignAndSubmit(
 				blockCounter,
 				broadcastChannel,
-				relayChain,
+				beaconChain,
 				previousEntry,
 				threshold,
 				signer,
