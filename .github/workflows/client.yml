@@ -155,9 +155,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: securego/gosec@master
         with:
-          args: |
-            -exclude-dir=pkg/chain/gen
-            ./...
+          args: ./...
 
   client-format:
     needs: client-detect-changes
