@@ -28,36 +28,11 @@ func newTbtcChain(
 	config ethereum.Config,
 	baseChain *Chain,
 ) (*TbtcChain, error) {
-	walletRegistryAddress, err := config.ContractAddress(WalletRegistryContractName)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to resolve %s contract address: [%v]",
-			WalletRegistryContractName,
-			err,
-		)
-	}
-
-	walletRegistry, err :=
-		contract.NewWalletRegistry(
-			walletRegistryAddress,
-			baseChain.chainID,
-			baseChain.key,
-			baseChain.client,
-			baseChain.nonceManager,
-			baseChain.miningWaiter,
-			baseChain.blockCounter,
-			baseChain.transactionMutex,
-		)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to attach to WalletRegistry contract: [%v]",
-			err,
-		)
-	}
-
+	// TODO: once WalletRegistry contract can be deployed locally, use it.
+	// For now set walletRegistry to nil.
 	return &TbtcChain{
 		Chain:          baseChain,
-		walletRegistry: walletRegistry,
+		walletRegistry: nil,
 	}, nil
 }
 
