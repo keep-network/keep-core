@@ -9,11 +9,10 @@
 	BalanceAlertThreshold   = "2.5 ether"
 
 [ethereum.account]
-	Address            = "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"
 	KeyFile            = "/tmp/UTC--2018-03-11T01-37-33.202765887Z--c2a56884538778bacd91aa5bf343bf882c5fb18b"
 
 [ethereum.ContractAddresses]
-	KeepRandomBeaconOperator = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
+	RandomBeacon = "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb"
 
 [libp2p]
 	Port = 27001
