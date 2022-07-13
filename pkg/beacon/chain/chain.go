@@ -25,6 +25,7 @@ type RelayEntryInterface interface {
 	// promise to track the submission progress. The promise is fulfilled when
 	// the entry has been successfully submitted to the on-chain, or failed if
 	// the entry submission failed.
+	// TODO: Return error instead of the promise.
 	SubmitRelayEntry(entry []byte) *async.EventRelayEntrySubmittedPromise
 	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.
