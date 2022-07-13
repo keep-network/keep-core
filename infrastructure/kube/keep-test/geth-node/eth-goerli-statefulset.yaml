@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: geth-goerli
+spec:
+  replicas: 1
+  serviceName: geth-goerli
+  volumeClaimTemplates:
+    - metadata:
+        name: geth-goerli
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: geth-goerli
+        resources:
+          requests:
+            storage: 100Gi
+  selector:
+    matchLabels:
+      app: geth
+      type: goerli
+  template:
+    metadata:
+      labels:
+        app: geth
+        type: goerli
+    spec:
+      containers:
+        - name: geth-goerli
+          image: ethereum/client-go:v1.10.20
+          ports:
+            - containerPort: 8545
+            - containerPort: 8546
+            - containerPort: 30303
+          volumeMounts:
+            - name: geth-goerli
+              mountPath: /root/.ethereum
+          args: ["--http", "--http.addr=0.0.0.0", "--ws", "-ws.addr=0.0.0.0", "--goerli", "--syncmode=snap"]
