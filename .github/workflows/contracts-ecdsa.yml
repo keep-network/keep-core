@@ -163,7 +163,9 @@ jobs:
 
   contracts-deployment-testnet:
     needs: [contracts-detect-changes, contracts-build-and-test]
-    if: github.event_name == 'workflow_dispatch'
+    if: |
+      github.event_name == 'workflow_dispatch'
+        && github.event.inputs.environment == 'ropsten'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -201,20 +203,8 @@ jobs:
         env:
           TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
         run: ./config_tenderly.sh
-
-      # Ultimately, we want to get rid of steps deploying on Ropsten (as it will
-      # be shut down in Q4 2022) and switch to deployment on Goerli. We're
-      # leaving both deployment options for the transition period.
-
-      - name: Deploy contracts on Ropsten
-        if: github.event.inputs.environment == 'ropsten'
-        env:
-          CHAIN_API_URL: ${{ secrets.ROPSTEN_ETH_HOSTNAME_HTTP }}
-          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.ROPSTEN_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: yarn deploy --network ${{ github.event.inputs.environment }}
       
-      - name: Deploy contracts on Goerli
-        if: github.event.inputs.environment == 'goerli'
+      - name: Deploy contracts
         env:
           CHAIN_API_URL: ${{ secrets.GOERLI_ETH_HOSTNAME_HTTP }}
           CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: ${{ secrets.GOERLI_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
@@ -281,7 +271,7 @@ jobs:
       - name: Install needed dependencies
         run: yarn install --frozen-lockfile
 
-      # If we don't remove the `keep-core` contracts from `node-modules`, the
+      # If we don't remove the contracts from `node-modules`, the
       # `etherscan-verify` plugins tries to verify them, which is not desired.
       - name: Prepare for verification on Etherscan
         run: |
