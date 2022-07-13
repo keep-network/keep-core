@@ -113,6 +113,8 @@ jobs:
         env:
           IMAGE_NAME: 'keep-client'
         with:
+          build-args: |
+            CONTRACTS_NPM_PACKAGE_TAG=${{ github.event.inputs.environment }}
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment }}
           labels: |
             revision=${{ github.sha }}
