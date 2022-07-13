@@ -171,11 +171,13 @@ func loadConfig(configFilePath string, config *Config) error {
 	v.BindEnv("LibP2P.Peers", libp2pPeersEnvVariable)
 
 	v.BindEnv("LibP2P.Port", libp2pPortEnvVariable)
+	v.SetDefault("LibP2P.Port", libp2p.DefaultPort)
 
 	v.BindEnv("LibP2P.AnnouncedAddresses", libp2pAnnouncedAddressesEnvVariable)
 
 	// Configure Storage.
 	v.BindEnv("Storage.DataDir", storageDataDirEnvVariable)
+	v.SetDefault("Storage.DataDir", registry.DefaultStoragePath)
 
 	// TODO: Add support for command line flags.
 
