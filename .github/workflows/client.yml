@@ -113,11 +113,10 @@ jobs:
         env:
           IMAGE_NAME: 'keep-client'
         with:
-          # GCR image should be named according to following convention:
-          # HOSTNAME/PROJECT-ID/IMAGE:TAG
-          # We don't use TAG yet, will be added at later stages of work on RFC-18.
-          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
-          labels: revision=${{ github.sha }}
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.environment }}
+          labels: |
+            revision=${{ github.sha }}
+            environment=${{ github.event.inputs.environment }}
           push: true
 
       - name: Notify CI about completion of the workflow
