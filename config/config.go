@@ -80,6 +80,10 @@ func ReadConfig(filePath string) (*Config, error) {
 		)
 	}
 
+	if config.Ethereum.Account.KeyFile == "" {
+		return nil, fmt.Errorf("missing value for ethereum key file")
+	}
+
 	if config.LibP2P.Port == 0 {
 		return nil, fmt.Errorf("missing value for port; see node section in config file or use --port flag")
 	}
