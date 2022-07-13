@@ -456,7 +456,3 @@ func (bc *BeaconChain) CurrentRequestPreviousEntry() ([]byte, error) {
 func (bc *BeaconChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	return []byte{}, nil
 }
-
-func (bc *BeaconChain) StakeMonitor()(chain.StakeMonitor, error) {
-	panic("unsupported")
-}

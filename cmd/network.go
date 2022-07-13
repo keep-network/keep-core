@@ -304,7 +304,7 @@ func (pm *PongMessage) Unmarshal(bytes []byte) error {
 
 // getBootstrapPeerOperatorKey returns hardcoded public and private operator key
 // of the bootstrap peer. We hardcode those values because we need to initialize
-// stakes on both sides of the connection using the local, stubbed `StakeMonitor`.
+// stakes on both sides of the connection.
 func getBootstrapPeerOperatorKey() (
 	*operator.PrivateKey,
 	*operator.PublicKey,
@@ -314,7 +314,7 @@ func getBootstrapPeerOperatorKey() (
 
 // getStandardPeerOperatorKey returns hardcoded public and private operator key
 // of the standard peer. We hardcode those values because we need to initialize
-// stake on both sides of the connection using local, stubbed `StakeMonitor`.
+// stake on both sides of the connection.
 func getStandardPeerOperatorKey() (
 	*operator.PrivateKey,
 	*operator.PublicKey,

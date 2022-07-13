@@ -63,7 +63,7 @@ func (msp *anyApplicationPolicy) Validate(
 	// cache it means it has been recognized when the last `IsRecognized` was
 	// executed and caching period has not elapsed yet. Similarly, if the client
 	// is in the negative result cache it means it hasn't been recognized.
-    //
+	//
 	// If the caching period elapsed, cache checks will return false and we
 	// have to ask the chain about the current status.
 	msp.positiveResultCache.Sweep()
