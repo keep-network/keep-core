@@ -13,26 +13,26 @@ type MembershipValidator interface {
 	IsValidMembership(memberID MemberIndex, publicKey []byte) bool
 }
 
-// StakersMembershipValidator operates on a group selection result and lets to
+// OperatorsMembershipValidator operates on a group selection result and lets to
 // validate one's membership based on the provided public key.
 //
 // Validator is used to filter out messages from parties not selected to
 // the group. It is also used to confirm the position in the group of
 // a party that was selected. This is used to validate messages sent by that
 // party to all other group members.
-type StakersMembershipValidator struct {
-	members map[string][]int // staker address -> staker positions in group
+type OperatorsMembershipValidator struct {
+	members map[string][]int // operator address -> operator positions in group
 	signing chain.Signing
 }
 
-// NewStakersMembershipValidator creates a validator for the provided
+// NewOperatorsMembershipValidator creates a validator for the provided
 // group selection result.
-func NewStakersMembershipValidator(
-	stakersAddresses []chain.Address,
+func NewOperatorsMembershipValidator(
+	operatorsAddresses []chain.Address,
 	signing chain.Signing,
-) *StakersMembershipValidator {
+) *OperatorsMembershipValidator {
 	members := make(map[string][]int)
-	for position, address := range stakersAddresses {
+	for position, address := range operatorsAddresses {
 		addressAsString := address.String()
 		positions, ok := members[addressAsString]
 		if ok {
@@ -43,7 +43,7 @@ func NewStakersMembershipValidator(
 		}
 	}
 
-	return &StakersMembershipValidator{
+	return &OperatorsMembershipValidator{
 		members: members,
 		signing: signing,
 	}
@@ -51,7 +51,7 @@ func NewStakersMembershipValidator(
 
 // IsInGroup returns true if party with the given public key has been
 // selected to the group. Otherwise, function returns false.
-func (smv *StakersMembershipValidator) IsInGroup(
+func (smv *OperatorsMembershipValidator) IsInGroup(
 	publicKey *operator.PublicKey,
 ) bool {
 	address, err := smv.signing.PublicKeyToAddress(publicKey)
@@ -68,7 +68,7 @@ func (smv *StakersMembershipValidator) IsInGroup(
 // been selected to the group at the given position. If the position does
 // not match function returns false. The same happens when the party was
 // not selected to the group.
-func (smv *StakersMembershipValidator) IsValidMembership(
+func (smv *OperatorsMembershipValidator) IsValidMembership(
 	memberID MemberIndex,
 	publicKey []byte,
 ) bool {

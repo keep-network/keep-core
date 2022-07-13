@@ -93,9 +93,9 @@ func RunTest(
 		)
 	}
 
-	selectedStakers := make([]chain.Address, groupSize)
-	for i := range selectedStakers {
-		selectedStakers[i] = address
+	selectedOperators := make([]chain.Address, groupSize)
+	for i := range selectedOperators {
+		selectedOperators[i] = address
 	}
 
 	return executeDKG(
@@ -104,7 +104,7 @@ func RunTest(
 		blockCounter,
 		localChain.GetLastDKGResult,
 		network,
-		selectedStakers,
+		selectedOperators,
 	)
 }
 
@@ -117,7 +117,7 @@ func executeDKG(
 		map[beaconchain.GroupMemberIndex][]byte,
 	),
 	network interception.Network,
-	selectedStakers []chain.Address,
+	selectedOperators []chain.Address,
 ) (*Result, error) {
 	relayConfig := beaconChain.GetConfig()
 
@@ -153,8 +153,8 @@ func executeDKG(
 	gjkr.RegisterUnmarshallers(broadcastChannel)
 	dkgResult.RegisterUnmarshallers(broadcastChannel)
 
-	membershipValidator := group.NewStakersMembershipValidator(
-		selectedStakers,
+	membershipValidator := group.NewOperatorsMembershipValidator(
+		selectedOperators,
 		beaconChain.Signing(),
 	)
 

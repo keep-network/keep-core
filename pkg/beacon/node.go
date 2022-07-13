@@ -117,7 +117,7 @@ func (n *node) JoinDKGIfEligible(
 			return
 		}
 
-		membershipValidator := group.NewStakersMembershipValidator(
+		membershipValidator := group.NewOperatorsMembershipValidator(
 			groupMembers,
 			signing,
 		)
@@ -342,7 +342,7 @@ func (n *node) GenerateRelayEntry(
 		return
 	}
 
-	membershipValidator := group.NewStakersMembershipValidator(
+	membershipValidator := group.NewOperatorsMembershipValidator(
 		groupMembers,
 		n.beaconChain.Signing(),
 	)

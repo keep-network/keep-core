@@ -30,7 +30,7 @@ func ExecuteDKG(
 	beaconChain beaconchain.Interface,
 	channel net.BroadcastChannel,
 ) (*ThresholdSigner, error) {
-	// The staker index should begin with 1
+	// The operator index should begin with 1
 	playerIndex := group.MemberIndex(index + 1)
 
 	gjkr.RegisterUnmarshallers(channel)
