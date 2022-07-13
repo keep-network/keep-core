@@ -205,3 +205,7 @@ func (c *Chain) SetOperatorRewardsEligibility(until *big.Int) {
 
 	c.operatorRewards[c.operatorAddress] = rewards
 }
+
+func (c *Chain) SetPoolLock(isPoolLocked bool) {
+	c.isPoolLocked = isPoolLocked
+}
