@@ -129,9 +129,9 @@ func checkRewardsEligibility(chain Chain) error {
 	}
 
 	if isEligibleForRewards {
-		logger.Info("operator is eligibile for rewards")
+		logger.Info("operator is eligible for rewards")
 	} else {
-		logger.Info("operator is marked as ineligibile for rewards")
+		logger.Info("operator is marked as ineligible for rewards")
 
 		isLocked, err := chain.IsPoolLocked()
 		if err != nil {
