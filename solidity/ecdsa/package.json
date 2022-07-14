@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "@keep-network/random-beacon": "development",
-    "@keep-network/sortition-pools": "^2.0.0-pre.9",
+    "@keep-network/sortition-pools": "^2.0.0-pre.13",
     "@openzeppelin/contracts": "^4.6.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@threshold-network/solidity-contracts": "development"
