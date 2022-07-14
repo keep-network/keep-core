@@ -36,13 +36,6 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 		local_v1.DefaultCurve,
 	)
 
-	// Use two application: the first returns error during check, the second
-	// does not recognize the operator
-	application := newMockApplication()
-	application.setIsRecognized(peerOperatorPublicKey, result{
-		isRecognized: false,
-		err:          fmt.Errorf("dummy error"),
-	})
 	policy := &anyApplicationPolicy{
 		applications: []Application{
 			newMockApplication(),
@@ -126,10 +119,11 @@ func TestValidate_OperatorNotRecognized_FirstApplicationReturnedError(t *testing
 	// First application returns error during operator recognition check.
 	// Even though the second application could recognize the operator, the
 	// validation should fail, since an error occurred during checks.
+	applicationError := fmt.Errorf("dummy error")
 	application1 := newMockApplication()
 	application1.setIsRecognized(peerOperatorPublicKey, result{
 		isRecognized: false,
-		err:          fmt.Errorf("dummy error"),
+		err:          applicationError,
 	})
 
 	application2 := newMockApplication()
@@ -147,11 +141,7 @@ func TestValidate_OperatorNotRecognized_FirstApplicationReturnedError(t *testing
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-	expectedError := fmt.Errorf(
-		"could not validate if remote peer is recognized by application: [dummy error]",
-	)
-
-	testutils.AssertErrorsEqual(t, expectedError, err)
+	testutils.AssertAnyErrorInChainMatchesTarget(t, applicationError, err)
 }
 
 func TestValidate_OperatorRecognized_Cached(t *testing.T) {
