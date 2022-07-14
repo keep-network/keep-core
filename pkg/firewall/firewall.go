@@ -89,7 +89,13 @@ func (msp *anyApplicationPolicy) Validate(
 	validationSuccessful := false
 	for _, application := range msp.applications {
 		isRecognized, err := application.IsRecognized(remotePeerPublicKey)
-		if err == nil && isRecognized {
+		if err != nil {
+			return fmt.Errorf(
+				"could not validate if remote peer is recognized by application: [%v]",
+				err,
+			)
+		}
+		if isRecognized {
 			validationSuccessful = true
 			break
 		}
