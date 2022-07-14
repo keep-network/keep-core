@@ -195,7 +195,7 @@ func (c *Chain) SetCurrentTimestamp(currentTimestamp *big.Int) {
 	c.currentTimestamp = currentTimestamp
 }
 
-func (c *Chain) SetOperatorRewardsEligibility(until *big.Int) {
+func (c *Chain) SetRewardIneligibility(until *big.Int) {
 	c.operatorRewardsMutex.Lock()
 	defer c.operatorRewardsMutex.Unlock()
 

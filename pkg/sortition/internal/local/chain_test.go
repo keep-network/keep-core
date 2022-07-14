@@ -243,7 +243,7 @@ func TestUpdateOperatorStatus(t *testing.T) {
 
 func TestIsEligibleForRewards_EligibleOperator(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
+	localChain.SetRewardIneligibility(big.NewInt(0))
 
 	isEligibileForRewards, err := localChain.IsEligibleForRewards()
 	if err != nil {
@@ -257,7 +257,7 @@ func TestIsEligibleForRewards_EligibleOperator(t *testing.T) {
 
 func TestIsEligibleForRewards_NotEligibleOperator(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetOperatorRewardsEligibility(big.NewInt(1))
+	localChain.SetRewardIneligibility(big.NewInt(1))
 
 	isEligibileForRewards, err := localChain.IsEligibleForRewards()
 	if err != nil {
@@ -271,7 +271,7 @@ func TestIsEligibleForRewards_NotEligibleOperator(t *testing.T) {
 
 func TestCanRestoreRewardEligibility_Eligible(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
+	localChain.SetRewardIneligibility(big.NewInt(0))
 	localChain.SetCurrentTimestamp(big.NewInt(1))
 
 	canRestoreRewardEligibility, err := localChain.CanRestoreRewardEligibility()
@@ -286,7 +286,7 @@ func TestCanRestoreRewardEligibility_Eligible(t *testing.T) {
 
 func TestCanRestoreRewardEligibility_NotEligible(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetOperatorRewardsEligibility(big.NewInt(0))
+	localChain.SetRewardIneligibility(big.NewInt(0))
 	localChain.SetCurrentTimestamp(big.NewInt(0))
 
 	canRestoreRewardEligibility, err := localChain.CanRestoreRewardEligibility()
@@ -301,7 +301,7 @@ func TestCanRestoreRewardEligibility_NotEligible(t *testing.T) {
 
 func TestRestoreRewardEligibility_Restore(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetOperatorRewardsEligibility(big.NewInt(1))
+	localChain.SetRewardIneligibility(big.NewInt(1))
 
 	isEligibileForRewards, err := localChain.IsEligibleForRewards()
 	if err != nil {
