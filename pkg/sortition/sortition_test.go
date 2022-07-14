@@ -192,7 +192,7 @@ func TestMonitor_CannotRestoreRewardsEligibility_TimeNotPassed(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
-	// operator is ineligible for rewards and eligibility can
+	// Operator is ineligible for rewards and eligibility can
 	// not be restored yet
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(0))
@@ -220,7 +220,7 @@ func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
-	// operator is ineligible for rewards and eligibility can
+	// Operator is ineligible for rewards and eligibility can
 	// be restored at this point
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(2))
@@ -229,6 +229,39 @@ func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	isEligibleForRewards, err := localChain.IsEligibleForRewards()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !isEligibleForRewards {
+		t.Fatal("expected the operator to be restored for rewards")
+	}
+}
+
+func TestMonitor_CanRestoreRewardsEligibility_WithDelay(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	localChain := local.Connect(testOperatorAddress)
+	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
+	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
+	localChain.JoinSortitionPool()
+
+	// Operator is ineligible for rewards and eligibility can
+	// not be restored yet
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(0))
+
+	err := MonitorPool(ctx, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Eligibility can now be restored
+	localChain.SetCurrentTimestamp(big.NewInt(2))
+	// Let's give some time for the monitoring loop to react...
+	time.Sleep(50 * time.Millisecond)
 
 	isEligibleForRewards, err := localChain.IsEligibleForRewards()
 	if err != nil {
