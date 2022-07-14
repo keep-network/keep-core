@@ -54,6 +54,6 @@ type Chain interface {
 	// right away.
 	CanRestoreRewardEligibility() (bool, error)
 
-	// Restores reward eligibility for a given operator.
+	// Restores reward eligibility for the current operator.
 	RestoreRewardEligibility() error
 }
