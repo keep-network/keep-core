@@ -286,8 +286,8 @@ func TestCanRestoreRewardEligibility_Eligible(t *testing.T) {
 
 func TestCanRestoreRewardEligibility_NotEligible(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetRewardIneligibility(big.NewInt(0))
-	localChain.SetCurrentTimestamp(big.NewInt(0))
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(1))
 
 	canRestoreRewardEligibility, err := localChain.CanRestoreRewardEligibility()
 	if err != nil {
