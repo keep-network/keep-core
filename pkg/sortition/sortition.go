@@ -133,16 +133,6 @@ func checkRewardsEligibility(chain Chain) error {
 	} else {
 		logger.Info("operator is marked as ineligible for rewards")
 
-		isLocked, err := chain.IsPoolLocked()
-		if err != nil {
-			return err
-		}
-
-		if isLocked {
-			logger.Info("sortition pool state is locked, waiting with the update")
-			return nil
-		}
-
 		canRestoreRewardEligibility, err := chain.CanRestoreRewardEligibility()
 		if err != nil {
 			return err
