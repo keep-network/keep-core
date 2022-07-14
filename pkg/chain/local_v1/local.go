@@ -247,13 +247,6 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return true, nil
 }
 
-func (c *localChain) GetGroupMembers(groupPublicKey []byte) (
-	[]chain.Address,
-	error,
-) {
-	return nil, nil // no-op
-}
-
 func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	for _, group := range c.groups {
 		if bytes.Compare(group.groupPublicKey, groupPublicKey) == 0 {

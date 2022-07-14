@@ -72,9 +72,6 @@ type GroupRegistrationInterface interface {
 	// in the past. Stale group is never selected by the chain to any new
 	// operation.
 	IsStaleGroup(groupPublicKey []byte) (bool, error)
-	// GetGroupMembers returns `GroupSize` slice of addresses of
-	// participants which have been selected to the group with given public key.
-	GetGroupMembers(groupPublicKey []byte) ([]chain.Address, error)
 }
 
 // GroupInterface defines the subset of the beacon chain interface that pertains

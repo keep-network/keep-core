@@ -248,13 +248,6 @@ func (bc *BeaconChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return false, nil
 }
 
-// TODO: Implement a real GetGroupMembers function.
-func (bc *BeaconChain) GetGroupMembers(
-	groupPublicKey []byte,
-) ([]chain.Address, error) {
-	return []chain.Address{}, nil
-}
-
 // TODO: Implement a real OnDKGStarted event subscription. The current
 //       implementation generates a fake event every 500th block where the
 //       seed is the keccak256 of the block number.

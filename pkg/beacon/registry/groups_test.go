@@ -218,12 +218,6 @@ func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) 
 	return false, nil
 }
 
-func (mgri *mockGroupRegistrationInterface) GetGroupMembers(
-	groupPublicKey []byte,
-) ([]chain.Address, error) {
-	return nil, nil // no-op
-}
-
 type persistenceHandleMock struct {
 	archivedGroups []string
 }

@@ -326,11 +326,12 @@ func (n *node) GenerateRelayEntry(
 
 	entry.RegisterUnmarshallers(channel)
 
-	groupMembers, err := n.beaconChain.GetGroupMembers(groupPublicKey)
-	if err != nil {
-		logger.Errorf("could not get group members: [%v]", err)
-		return
-	}
+	// Each signer of the given group should have the same picture of other
+	// group operators. Otherwise, they would not be in the group registry.
+	// That said, take the group operators from the first signer.
+	groupMembers := n.groupRegistry.GetGroup(groupPublicKey)[0].
+		Signer.
+		GroupOperators()
 
 	membershipValidator := group.NewOperatorsMembershipValidator(
 		groupMembers,
