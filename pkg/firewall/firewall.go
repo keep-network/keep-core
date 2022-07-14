@@ -62,7 +62,7 @@ type anyApplicationPolicy struct {
 // on a successful validation, error is returned if none of the applications
 // validates the operator successfully. Due to performance reasons the results
 // of validations are stored in a cache for a certain amount of time.
-func (msp *anyApplicationPolicy) Validate(
+func (aap *anyApplicationPolicy) Validate(
 	remotePeerPublicKey *operator.PublicKey,
 ) error {
 	remotePeerPublicKeyHex := remotePeerPublicKey.String()
@@ -75,19 +75,19 @@ func (msp *anyApplicationPolicy) Validate(
 	//
 	// If the caching period elapsed, cache checks will return false and we
 	// have to ask the chain about the current status.
-	msp.positiveResultCache.Sweep()
-	msp.negativeResultCache.Sweep()
+	aap.positiveResultCache.Sweep()
+	aap.negativeResultCache.Sweep()
 
-	if msp.positiveResultCache.Has(remotePeerPublicKeyHex) {
+	if aap.positiveResultCache.Has(remotePeerPublicKeyHex) {
 		return nil
 	}
 
-	if msp.negativeResultCache.Has(remotePeerPublicKeyHex) {
+	if aap.negativeResultCache.Has(remotePeerPublicKeyHex) {
 		return errNotRecognized
 	}
 
 	validationSuccessful := false
-	for _, application := range msp.applications {
+	for _, application := range aap.applications {
 		isRecognized, err := application.IsRecognized(remotePeerPublicKey)
 		if err != nil {
 			return fmt.Errorf(
@@ -104,13 +104,13 @@ func (msp *anyApplicationPolicy) Validate(
 	if !validationSuccessful {
 		// Add this address to the negative result cache.
 		// `IsRecognized` will not be called again for the entire caching period.
-		msp.negativeResultCache.Add(remotePeerPublicKeyHex)
+		aap.negativeResultCache.Add(remotePeerPublicKeyHex)
 		return errNotRecognized
 	}
 
 	// Add this address to the positive result cache.
 	// `IsRecognized` will not be called again for the entire caching period.
-	msp.positiveResultCache.Add(remotePeerPublicKeyHex)
+	aap.positiveResultCache.Add(remotePeerPublicKeyHex)
 
 	return nil
 }
