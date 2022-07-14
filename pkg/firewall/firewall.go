@@ -67,7 +67,7 @@ func (msp *anyApplicationPolicy) Validate(
 ) error {
 	remotePeerPublicKeyHex := remotePeerPublicKey.String()
 
-	// First, check in the in-memory time caches to minimize hits to the on client.
+	// First, check in the in-memory time caches to minimize hits to the ETH client.
 	// If the Keep client with the given chain address is in the positive result
 	// cache it means it has been recognized when the last `IsRecognized` was
 	// executed and caching period has not elapsed yet. Similarly, if the client

@@ -7,7 +7,7 @@ import (
 
 // RolesOf returns the stake owner, the beneficiary and the authorizer for the
 // specified staking provider address. If the owner is set, the function considers
-// the staking provider to have a stake delegation and sets the return boolean flag
+// the staking provider to have a stake delegation and returns the boolean flag
 // set to true.
 func (ec *Chain) RolesOf(stakingProvider chain.Address) (
 	owner, beneficiary, authorizer chain.Address, hasStake bool, err error,
