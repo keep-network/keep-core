@@ -9,7 +9,7 @@ import (
 // Chain handle for interaction with the sortition pool contracts.
 type Chain interface {
 	// OperatorToStakingProvider returns the staking provider address for the
-	// current operator. If the staking provider has not been registered for the
+	// operator. If the staking provider has not been registered for the
 	// operator, the returned address is empty and the boolean flag is set to
 	// false. If the staking provider has been registered, the address is not
 	// empty and the boolean flag indicates true.
@@ -27,7 +27,7 @@ type Chain interface {
 	// changes are allowed.
 	IsPoolLocked() (bool, error)
 
-	// IsOperatorInPool returns true if the current operator is registered in
+	// IsOperatorInPool returns true if the operator is registered in
 	// the sortition pool.
 	IsOperatorInPool() (bool, error)
 
@@ -39,21 +39,22 @@ type Chain interface {
 	// is non-zero, function returns false.
 	IsOperatorUpToDate() (bool, error)
 
-	// JoinSortitionPool executes a transaction to have the current operator
-	// join the sortition pool.
+	// JoinSortitionPool executes a transaction to have the operator join the
+	// sortition pool.
 	JoinSortitionPool() error
 
-	// UpdateOperatorStatus executes a transaction to update the current
-	// operator's state in the sortition pool.
+	// UpdateOperatorStatus executes a transaction to update the operator's
+	// state in the sortition pool.
 	UpdateOperatorStatus() error
 
-	// IsEligibleForRewards checks whether the operator is eligible for rewards or not.
+	// IsEligibleForRewards checks whether the operator is eligible for rewards
+	// or not.
 	IsEligibleForRewards() (bool, error)
 
-	// Checks whether the operator is able to restore their eligibility for rewards
-	// right away.
+	// Checks whether the operator is able to restore their eligibility for
+	// rewards right away.
 	CanRestoreRewardEligibility() (bool, error)
 
-	// Restores reward eligibility for the current operator.
+	// Restores reward eligibility for the operator.
 	RestoreRewardEligibility() error
 }
