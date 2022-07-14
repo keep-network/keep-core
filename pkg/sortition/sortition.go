@@ -68,10 +68,6 @@ func checkOperatorStatus(chain Chain) error {
 	if err != nil {
 		return err
 	}
-	if isPoolLocked {
-		logger.Info("sortition pool state is locked, waiting with the update")
-		return nil
-	}
 
 	isOperatorInPool, err := chain.IsOperatorInPool()
 	if err != nil {
@@ -93,6 +89,11 @@ func checkOperatorStatus(chain Chain) error {
 		logger.Info("operator is in the sortition pool; " +
 			"updating operator status in the sortition pool")
 
+		if isPoolLocked {
+			logger.Info("sortition pool state is locked, waiting with the update")
+			return nil 
+		}
+
 		err := chain.UpdateOperatorStatus()
 		if err != nil {
 			logger.Errorf("could not update the sortition pool: [%v]", err)
@@ -102,7 +103,7 @@ func checkOperatorStatus(chain Chain) error {
 		if err != nil {
 			logger.Errorf("could not check for rewards eligibility [%v]", err)
 		}
-	} else {
+	} else if !isPoolLocked {
 		logger.Info("operator is not in the sortition pool; " +
 			"joining the sortition pool")
 
@@ -110,6 +111,8 @@ func checkOperatorStatus(chain Chain) error {
 		if err != nil {
 			logger.Errorf("could not join the sortition pool: [%v]", err)
 		}
+	} else {
+		logger.Info("sortition pool state is locked, waiting with the update")
 	}
 
 	return nil
@@ -123,7 +126,7 @@ func checkRewardsEligibility(chain Chain) error {
 		return err
 	}
 
-	if isEligibleForRewards {
+	if isEligibleForRewards { 
 		logger.Info("operator is eligibile for rewards")
 	} else {
 		logger.Info("operator is not eligibile for rewards")
