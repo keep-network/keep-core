@@ -43,7 +43,6 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
-
 	if err != nil {
 		t.Fatal(err)
 	}
