@@ -69,6 +69,11 @@ func checkOperatorStatus(chain Chain) error {
 		return err
 	}
 
+	isOperatorUpToDate, err := chain.IsOperatorUpToDate()
+	if err != nil {
+		return err
+	}
+
 	if isOperatorInPool {
 		logger.Info("operator is in the sortition pool")
 
@@ -80,14 +85,9 @@ func checkOperatorStatus(chain Chain) error {
 		logger.Info("operator is not in the sortition pool")
 	}
 
-	isOperatorUpToDate, err := chain.IsOperatorUpToDate()
-	if err != nil {
-		return err
-	}
-
 	if isOperatorUpToDate {
 		if isOperatorInPool {
-			logger.Info("sortition pool operator status is up to date")
+			logger.Info("sortition pool operator weight is up to date")
 		} else {
 			logger.Info("please inspect staking providers's authorization for the Random Beacon")
 		}
