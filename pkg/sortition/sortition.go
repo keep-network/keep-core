@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	DefaultStatusCheckTick = 10 * time.Second
+	DefaultStatusCheckTick = 6 * time.Hour
 )
 
 var logger = log.Logger("keep-sortition")
