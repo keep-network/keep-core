@@ -168,30 +168,40 @@ func (c *Chain) IsEligibleForRewards() (bool, error) {
 	c.ineligibleForRewardsUntilMutex.RLock()
 	defer c.ineligibleForRewardsUntilMutex.RUnlock()
 
-	if _, ok := c.ineligibleForRewardsUntil[c.operatorAddress]; ok {
-		return (c.ineligibleForRewardsUntil[c.operatorAddress]).Cmp(big.NewInt(0)) == 0, nil
-	}
-
-	// Operator is eligible for rewards by default
-	return true, nil
+	_, isIneligible := c.ineligibleForRewardsUntil[c.operatorAddress]
+	return !isIneligible, nil
 }
 
 func (c *Chain) CanRestoreRewardEligibility() (bool, error) {
 	c.ineligibleForRewardsUntilMutex.RLock()
 	defer c.ineligibleForRewardsUntilMutex.RUnlock()
 
-	return (c.ineligibleForRewardsUntil[c.operatorAddress]).Cmp(c.currentTimestamp) == -1, nil
+	return c.canRestoreRewardEligibility()
+}
+
+func (c *Chain) canRestoreRewardEligibility() (bool, error) {
+	ineligibleUntil, isIneligible := c.ineligibleForRewardsUntil[c.operatorAddress]
+	if !isIneligible {
+		return false, fmt.Errorf("operator already eligible")
+	}
+
+	return ineligibleUntil.Cmp(c.currentTimestamp) == -1, nil
 }
 
 func (c *Chain) RestoreRewardEligibility() error {
-	if canRestore, _ := c.CanRestoreRewardEligibility(); !canRestore {
-		return fmt.Errorf("cannot restore the rewards eligibility yet")
-	}
-
 	c.ineligibleForRewardsUntilMutex.Lock()
 	defer c.ineligibleForRewardsUntilMutex.Unlock()
 
-	c.ineligibleForRewardsUntil[c.operatorAddress] = big.NewInt(0)
+	canRestore, err := c.canRestoreRewardEligibility()
+	if err != nil {
+		return err
+	}
+
+	if !canRestore {
+		return fmt.Errorf("operator still ineligible")
+	}
+
+	delete(c.ineligibleForRewardsUntil, c.operatorAddress)
 
 	return nil
 }
