@@ -34,10 +34,6 @@ type Chain struct {
 	currentTimestamp *big.Int
 }
 
-type Rewards struct {
-	ineligibleUntil *big.Int
-}
-
 func Connect(operatorAddress chain.Address) *Chain {
 	return &Chain{
 		operatorAddress:           operatorAddress,
