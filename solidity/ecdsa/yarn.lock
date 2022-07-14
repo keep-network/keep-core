@@ -648,14 +648,6 @@
     "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
     "@threshold-network/solidity-contracts" "^1.2.0-dev.17"
 
-"@keep-network/sortition-pools@^2.0.0-pre.13":
-  version "2.0.0-pre.13"
-  resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.13.tgz#80dbe8066ce378ae4242c3aef6864224477a9e41"
-  integrity sha512-+6VXCJyYT3+HApDExeySHjOgezg+umvdpm5lZXIUlhSx7xmbXSK/YwLXkdeWkGyVdyfwRO4ZXo1CbscbC0XGnA==
-  dependencies:
-    "@openzeppelin/contracts" "^4.3.2"
-    "@thesis/solidity-contracts" "github:thesis/solidity-contracts#4985bcf"
-
 "@keep-network/sortition-pools@^2.0.0-pre.9":
   version "2.0.0-pre.12"
   resolved "https://registry.yarnpkg.com/@keep-network/sortition-pools/-/sortition-pools-2.0.0-pre.12.tgz#2fd708194fd7931999c41e5f4089afb5dc4ba17f"

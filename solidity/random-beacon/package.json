@@ -32,7 +32,7 @@
     "prepublishOnly": "hardhat prepare-artifacts --network $npm_config_network"
   },
   "dependencies": {
-    "@keep-network/sortition-pools": "^2.0.0-pre.13",
+    "@keep-network/sortition-pools": "^2.0.0-pre.9",
     "@openzeppelin/contracts": "^4.6.0",
     "@thesis/solidity-contracts": "github:thesis/solidity-contracts#4985bcf",
     "@threshold-network/solidity-contracts": "development"
