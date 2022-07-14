@@ -3,6 +3,7 @@
 package testutils
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"testing"
@@ -17,6 +18,18 @@ func AssertErrorsEqual(t *testing.T, expected error, actual error) {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			expected,
+			actual,
+		)
+	}
+}
+
+// AssertErrorsEqual checks if any error in the error chain matches the target.
+// If not, it reports a test failure.
+func AssertAnyErrorInChainMatchesTarget(t *testing.T, target error, actual error) {
+	if !errors.Is(actual, target) {
+		t.Errorf(
+			"no error in the chain matches the target\ntarget: %v\nactual:   %v\n",
+			target,
 			actual,
 		)
 	}

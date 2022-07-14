@@ -52,7 +52,7 @@ var (
 )
 
 func TestRegisterGroup(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3)
 
 	gr := NewGroupRegistry(localChain, persistenceMock)
 
@@ -76,7 +76,7 @@ func TestRegisterGroup(t *testing.T) {
 }
 
 func TestLoadGroup(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3)
 	gr := NewGroupRegistry(localChain, persistenceMock)
 
 	if len(gr.myGroups) != 0 {

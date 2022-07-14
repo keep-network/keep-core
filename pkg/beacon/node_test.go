@@ -11,7 +11,7 @@ var address = "0x65ea55c1f10491038425725dc00dffeab2a1e28a"
 var relayEntryTimeout = uint64(15)
 
 func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3)
 
 	node := &node{
 		beaconChain: localChain,
@@ -62,7 +62,7 @@ func TestMonitorRelayEntryOnChain_EntrySubmitted(t *testing.T) {
 }
 
 func TestMonitorRelayEntryOnChain_EntryNotSubmitted(t *testing.T) {
-	localChain := local_v1.Connect(5, 3, big.NewInt(200))
+	localChain := local_v1.Connect(5, 3)
 
 	node := &node{
 		beaconChain: localChain,
