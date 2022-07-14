@@ -27,8 +27,8 @@ type Chain struct {
 	eligibleStake      map[chain.Address]*big.Int
 	eligibleStakeMutex sync.RWMutex
 
-	operatorRewards      map[chain.Address]*Rewards
-	operatorRewardsMutex sync.RWMutex
+	ineligibleForRewardsUntil      map[chain.Address]*big.Int
+	ineligibleForRewardsUntilMutex sync.RWMutex
 
 	isPoolLocked     bool
 	currentTimestamp *big.Int
@@ -44,7 +44,7 @@ func Connect(operatorAddress chain.Address) *Chain {
 		operatorToStakingProvider: make(map[chain.Address]chain.Address),
 		sortitionPool:             make(map[chain.Address]*big.Int),
 		eligibleStake:             make(map[chain.Address]*big.Int),
-		operatorRewards:           make(map[chain.Address]*Rewards),
+		ineligibleForRewardsUntil: make(map[chain.Address]*big.Int),
 	}
 }
 
@@ -165,28 +165,24 @@ func (c *Chain) UpdateOperatorStatus() error {
 }
 
 func (c *Chain) IsEligibleForRewards() (bool, error) {
-	c.operatorRewardsMutex.RLock()
-	defer c.operatorRewardsMutex.RUnlock()
+	c.ineligibleForRewardsUntilMutex.RLock()
+	defer c.ineligibleForRewardsUntilMutex.RUnlock()
 
-	return (c.operatorRewards[c.operatorAddress].ineligibleUntil).Cmp(big.NewInt(0)) == 0, nil
+	return (c.ineligibleForRewardsUntil[c.operatorAddress]).Cmp(big.NewInt(0)) == 0, nil
 }
 
 func (c *Chain) CanRestoreRewardEligibility() (bool, error) {
-	c.operatorRewardsMutex.RLock()
-	defer c.operatorRewardsMutex.RUnlock()
+	c.ineligibleForRewardsUntilMutex.RLock()
+	defer c.ineligibleForRewardsUntilMutex.RUnlock()
 
-	return (c.operatorRewards[c.operatorAddress].ineligibleUntil).Cmp(c.currentTimestamp) == -1, nil
+	return (c.ineligibleForRewardsUntil[c.operatorAddress]).Cmp(c.currentTimestamp) == -1, nil
 }
 
 func (c *Chain) RestoreRewardEligibility() error {
-	c.operatorRewardsMutex.Lock()
-	defer c.operatorRewardsMutex.Unlock()
+	c.ineligibleForRewardsUntilMutex.Lock()
+	defer c.ineligibleForRewardsUntilMutex.Unlock()
 
-	rewards := &Rewards{
-		ineligibleUntil: big.NewInt(0),
-	}
-
-	c.operatorRewards[c.operatorAddress] = rewards
+	c.ineligibleForRewardsUntil[c.operatorAddress] = big.NewInt(0)
 
 	return nil
 }
@@ -196,12 +192,8 @@ func (c *Chain) SetCurrentTimestamp(currentTimestamp *big.Int) {
 }
 
 func (c *Chain) SetRewardIneligibility(until *big.Int) {
-	c.operatorRewardsMutex.Lock()
-	defer c.operatorRewardsMutex.Unlock()
+	c.ineligibleForRewardsUntilMutex.Lock()
+	defer c.ineligibleForRewardsUntilMutex.Unlock()
 
-	rewards := &Rewards{
-		ineligibleUntil: until,
-	}
-
-	c.operatorRewards[c.operatorAddress] = rewards
+	c.ineligibleForRewardsUntil[c.operatorAddress] = until
 }
