@@ -2,13 +2,13 @@ package firewall
 
 import (
 	"fmt"
-	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"github.com/keep-network/keep-core/pkg/operator"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/keep-network/keep-common/pkg/cache"
+	"github.com/keep-network/keep-core/pkg/chain/local_v1"
+	"github.com/keep-network/keep-core/pkg/internal/testutils"
+	"github.com/keep-network/keep-core/pkg/operator"
 )
 
 const cachingPeriod = time.Second
@@ -28,17 +28,7 @@ func TestValidate_OperatorNotRecognized_NoApplications(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-
-	expectedError := fmt.Errorf(
-		"remote peer has not been recognized by any application",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertErrorsEqual(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
@@ -66,17 +56,7 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-
-	expectedError := fmt.Errorf(
-		"remote peer has not been recognized by any application",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertErrorsEqual(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorRecognized_FirstApplicationRecognizes(t *testing.T) {
@@ -245,17 +225,7 @@ func TestValidate_OperatorNotRecognized_CacheEmptied(t *testing.T) {
 	time.Sleep(cachingPeriod)
 
 	err = policy.Validate(peerOperatorPublicKey)
-
-	expectedError := fmt.Errorf(
-		"remote peer has not been recognized by any application",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertErrorsEqual(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
@@ -279,16 +249,7 @@ func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-	expectedError := fmt.Errorf(
-		"remote peer has not been recognized by any application",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertErrorsEqual(t, errNotRecognized, err)
 
 	// Ensure the application recognizes the operator, but the validation should
 	// fail since the result from the previous call has been cached.
@@ -298,13 +259,7 @@ func TestValidate_OperatorNotRecognized_Cached(t *testing.T) {
 	})
 
 	err = policy.Validate(peerOperatorPublicKey)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertErrorsEqual(t, errNotRecognized, err)
 }
 
 func TestValidate_OperatorRecognized_CacheEmptied(t *testing.T) {
@@ -328,16 +283,7 @@ func TestValidate_OperatorRecognized_CacheEmptied(t *testing.T) {
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
-	expectedError := fmt.Errorf(
-		"remote peer has not been recognized by any application",
-	)
-	if !reflect.DeepEqual(expectedError, err) {
-		t.Errorf(
-			"unexpected error\nexpected: %v\nactual:   %v\n",
-			expectedError,
-			err,
-		)
-	}
+	testutils.AssertErrorsEqual(t, errNotRecognized, err)
 
 	// Ensure the application recognizes the operator. Wait for the caching
 	// period to elapse. The validation should pass since the result from the
