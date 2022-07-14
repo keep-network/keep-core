@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/keep-network/keep-core/pkg/chain/local_v1"
-	"math/big"
 	"reflect"
 	"testing"
 
@@ -20,7 +19,7 @@ var blockCounter chain.BlockCounter
 func TestExecute(t *testing.T) {
 	testLog = make(map[uint64][]string)
 
-	localChain := local_v1.Connect(10, 5, big.NewInt(200))
+	localChain := local_v1.Connect(10, 5)
 	blockCounter, _ = localChain.BlockCounter()
 	provider := netLocal.Connect()
 	channel, err := provider.BroadcastChannelFor("transitions_test")

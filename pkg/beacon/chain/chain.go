@@ -125,8 +125,6 @@ type Interface interface {
 	BlockCounter() (chain.BlockCounter, error)
 	// Signing returns the chain's signer.
 	Signing() chain.Signing
-	// StakeMonitor returns the chain's stake monitor.
-	StakeMonitor() (chain.StakeMonitor, error)
 	// OperatorKeyPair returns the key pair of the operator assigned to this
 	// chain handle.
 	OperatorKeyPair() (*operator.PrivateKey, *operator.PublicKey, error)

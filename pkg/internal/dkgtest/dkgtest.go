@@ -25,8 +25,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/operator"
 )
 
-var minimumStake = big.NewInt(20)
-
 // Result of a DKG test execution.
 type Result struct {
 	dkgResult           *beaconchain.DKGResult
@@ -76,7 +74,6 @@ func RunTest(
 	localChain := local_v1.ConnectWithKey(
 		groupSize,
 		honestThreshold,
-		minimumStake,
 		operatorPrivateKey,
 	)
 
