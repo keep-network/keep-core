@@ -107,7 +107,7 @@ func newBeaconChain(
 func (bc *BeaconChain) GetConfig() *beaconchain.Config {
 	groupSize := 64
 	honestThreshold := 33
-	resultPublicationBlockStep := 6
+	resultPublicationBlockStep := 1
 	relayEntryTimeout := groupSize * resultPublicationBlockStep
 
 	return &beaconchain.Config{
