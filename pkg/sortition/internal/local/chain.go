@@ -168,7 +168,12 @@ func (c *Chain) IsEligibleForRewards() (bool, error) {
 	c.ineligibleForRewardsUntilMutex.RLock()
 	defer c.ineligibleForRewardsUntilMutex.RUnlock()
 
-	return (c.ineligibleForRewardsUntil[c.operatorAddress]).Cmp(big.NewInt(0)) == 0, nil
+	if _, ok := c.ineligibleForRewardsUntil[c.operatorAddress]; ok {
+		return (c.ineligibleForRewardsUntil[c.operatorAddress]).Cmp(big.NewInt(0)) == 0, nil
+	}
+
+	// Operator is eligible for rewards by default
+	return true, nil
 }
 
 func (c *Chain) CanRestoreRewardEligibility() (bool, error) {

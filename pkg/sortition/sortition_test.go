@@ -74,8 +74,6 @@ func TestMonitor_JoinPool(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 
-	localChain.SetRewardIneligibility(big.NewInt(0))
-
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
@@ -102,8 +100,6 @@ func TestMonitor_UpdatePool(t *testing.T) {
 
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
-	localChain.SetRewardIneligibility(big.NewInt(0))
-
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
@@ -124,8 +120,6 @@ func TestMonitor_JoinPool_WithDelay(t *testing.T) {
 
 	localChain := local.Connect(testOperatorAddress)
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
-
-	localChain.SetRewardIneligibility(big.NewInt(0))
 
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
@@ -162,8 +156,6 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
-
-	localChain.SetRewardIneligibility(big.NewInt(0))
 
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
@@ -202,7 +194,6 @@ func TestMonitor_EligibleForRewards(t *testing.T) {
 
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
-	localChain.SetRewardIneligibility(big.NewInt(0))
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
