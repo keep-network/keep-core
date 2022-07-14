@@ -252,34 +252,6 @@ func TestMonitor_CannotRestoreRewardsEligibility(t *testing.T) {
 	}
 }
 
-func TestMonitor_CannotRestoreRewardsEligibility_PoolLocked(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	localChain := local.Connect(testOperatorAddress)
-	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
-	localChain.JoinSortitionPool()
-
-	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
-
-	localChain.SetOperatorRewardsEligibility(big.NewInt(1))
-	localChain.SetCurrentTimestamp(big.NewInt(2))
-	localChain.SetPoolLock(true)
-	err := MonitorPool(ctx, localChain, statusCheckTick)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	isEligibleForRewards, err := localChain.IsEligibleForRewards()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if isEligibleForRewards {
-		t.Fatal("expected the operator not to be eligible for rewards")
-	}
-}
-
 func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
