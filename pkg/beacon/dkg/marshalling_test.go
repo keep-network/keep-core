@@ -1,6 +1,7 @@
 package dkg
 
 import (
+	"github.com/keep-network/keep-core/pkg/chain"
 	"reflect"
 	"testing"
 
@@ -20,6 +21,7 @@ func TestThresholdSignerRoundtrip(t *testing.T) {
 			group.MemberIndex(1): new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 			group.MemberIndex(2): new(bn256.G2).ScalarBaseMult(big.NewInt(11)),
 		},
+		groupOperators: []chain.Address{"address1", "address2"},
 	}
 
 	unmarshaled := &ThresholdSigner{}

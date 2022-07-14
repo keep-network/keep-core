@@ -24,30 +24,35 @@ var (
 	persistenceMock = &persistenceHandleMock{}
 
 	groupPublicKeyShares = make(map[group.MemberIndex]*bn256.G2)
+	groupOperators       = []chain.Address{"address1", "address2"}
 
 	signer1 = dkg.NewThresholdSigner(
 		group.MemberIndex(1),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		big.NewInt(1),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 	signer2 = dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
 		big.NewInt(2),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 	signer3 = dkg.NewThresholdSigner(
 		group.MemberIndex(3),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
 		big.NewInt(3),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 	signer4 = dkg.NewThresholdSigner(
 		group.MemberIndex(3),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
 		big.NewInt(2),
 		groupPublicKeyShares,
+		groupOperators,
 	)
 )
 

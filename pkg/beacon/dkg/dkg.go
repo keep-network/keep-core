@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/ipfs/go-log"
 
@@ -22,14 +23,19 @@ var logger = log.Logger("keep-dkg")
 func ExecuteDKG(
 	seed *big.Int,
 	index uint8, // starts with 0
-	groupSize int,
-	dishonestThreshold int,
-	membershipValidator group.MembershipValidator,
 	startBlockHeight uint64,
-	blockCounter chain.BlockCounter,
 	beaconChain beaconchain.Interface,
 	channel net.BroadcastChannel,
+	membershipValidator group.MembershipValidator,
+	selectedOperators []chain.Address,
 ) (*ThresholdSigner, error) {
+	beaconConfig := beaconChain.GetConfig()
+
+	blockCounter, err := beaconChain.BlockCounter()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get block counter: [%v]", err)
+	}
+
 	// The operator index should begin with 1
 	playerIndex := group.MemberIndex(index + 1)
 
@@ -38,10 +44,10 @@ func ExecuteDKG(
 
 	gjkrResult, gjkrEndBlockHeight, err := gjkr.Execute(
 		playerIndex,
-		groupSize,
+		beaconConfig.GroupSize,
 		blockCounter,
 		channel,
-		dishonestThreshold,
+		beaconConfig.DishonestThreshold(),
 		seed,
 		membershipValidator,
 		startBlockHeight,
@@ -99,11 +105,17 @@ func ExecuteDKG(
 		}
 	}
 
+	groupOperators := resolveGroupOperators(
+		selectedOperators,
+		gjkrResult.Group.OperatingMemberIDs(),
+	)
+
 	return &ThresholdSigner{
 		memberIndex:          playerIndex,
 		groupPublicKey:       gjkrResult.GroupPublicKey,
 		groupPrivateKeyShare: gjkrResult.GroupPrivateKeyShare,
 		groupPublicKeyShares: gjkrResult.GroupPublicKeyShares(),
+		groupOperators:       groupOperators,
 	}, nil
 }
 
@@ -181,4 +193,46 @@ func waitForDkgResultEvent(
 	case <-timeoutBlockChannel:
 		return nil, fmt.Errorf("DKG result publication timed out")
 	}
+}
+
+// resolveGroupOperators takes two parameters:
+// - selectedOperators: Contains addresses of all selected operators. Slice
+//   length equals to the groupSize. Each element with index N corresponds
+//   to the group member with ID N+1.
+// - operatingGroupMembersIDs: Contains group members IDs that were neither
+//   disqualified nor marked as inactive. Slice length is lesser than or equal
+//   to the groupSize.
+//
+// Using those parameters, this function transforms the selectedOperators
+// slice into another slice that contains addresses of all operators
+// that were neither disqualified nor marked as inactive. This way, the
+// resulting slice has only addresses of properly operating operators
+// who form the resulting group.
+//
+// Example:
+// selectedOperators: [member1, member2, member3, member4, member5]
+// operatingGroupMembersIDs: [5, 1, 3]
+// groupOperators: [member1, member3, member5]
+func resolveGroupOperators(
+	selectedOperators []chain.Address,
+	operatingGroupMembersIDs []group.MemberIndex,
+) []chain.Address {
+	if len(selectedOperators) == 0 || len(operatingGroupMembersIDs) == 0 {
+		return []chain.Address{}
+	}
+
+	sort.Slice(operatingGroupMembersIDs, func(i, j int) bool {
+		return operatingGroupMembersIDs[i] < operatingGroupMembersIDs[j]
+	})
+
+	groupOperators := make(
+		[]chain.Address,
+		len(operatingGroupMembersIDs),
+	)
+
+	for i, operatingMemberID := range operatingGroupMembersIDs {
+		groupOperators[i] = selectedOperators[operatingMemberID-1]
+	}
+
+	return groupOperators
 }

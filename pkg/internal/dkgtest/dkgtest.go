@@ -80,11 +80,6 @@ func RunTest(
 		operatorPrivateKey,
 	)
 
-	blockCounter, err := localChain.BlockCounter()
-	if err != nil {
-		return nil, err
-	}
-
 	address, err := localChain.Signing().PublicKeyToAddress(operatorPublicKey)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -101,7 +96,6 @@ func RunTest(
 	return executeDKG(
 		seed,
 		localChain,
-		blockCounter,
 		localChain.GetLastDKGResult,
 		network,
 		selectedOperators,
@@ -111,7 +105,6 @@ func RunTest(
 func executeDKG(
 	seed *big.Int,
 	beaconChain beaconchain.Interface,
-	blockCounter chain.BlockCounter,
 	lastDKGResultGetter func() (
 		*beaconchain.DKGResult,
 		map[beaconchain.GroupMemberIndex][]byte,
@@ -119,7 +112,12 @@ func executeDKG(
 	network interception.Network,
 	selectedOperators []chain.Address,
 ) (*Result, error) {
-	relayConfig := beaconChain.GetConfig()
+	beaconConfig := beaconChain.GetConfig()
+
+	blockCounter, err := beaconChain.BlockCounter()
+	if err != nil {
+		return nil, err
+	}
 
 	broadcastChannel, err := network.BroadcastChannelFor(fmt.Sprintf("dkg-test-%v", seed))
 	if err != nil {
@@ -139,7 +137,7 @@ func executeDKG(
 	var memberFailures []error
 
 	var wg sync.WaitGroup
-	wg.Add(relayConfig.GroupSize)
+	wg.Add(beaconConfig.GroupSize)
 
 	currentBlockHeight, err := blockCounter.CurrentBlock()
 	if err != nil {
@@ -158,19 +156,17 @@ func executeDKG(
 		beaconChain.Signing(),
 	)
 
-	for i := 0; i < relayConfig.GroupSize; i++ {
+	for i := 0; i < beaconConfig.GroupSize; i++ {
 		i := i // capture for goroutine
 		go func() {
 			signer, err := dkg.ExecuteDKG(
 				seed,
 				uint8(i),
-				relayConfig.GroupSize,
-				relayConfig.DishonestThreshold(),
-				membershipValidator,
 				startBlockHeight,
-				blockCounter,
 				beaconChain,
 				broadcastChannel,
+				membershipValidator,
+				selectedOperators,
 			)
 			if signer != nil {
 				signersMutex.Lock()

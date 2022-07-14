@@ -51,16 +51,16 @@ func NewOperatorsMembershipValidator(
 
 // IsInGroup returns true if party with the given public key has been
 // selected to the group. Otherwise, function returns false.
-func (smv *OperatorsMembershipValidator) IsInGroup(
+func (omv *OperatorsMembershipValidator) IsInGroup(
 	publicKey *operator.PublicKey,
 ) bool {
-	address, err := smv.signing.PublicKeyToAddress(publicKey)
+	address, err := omv.signing.PublicKeyToAddress(publicKey)
 	if err != nil {
 		logger.Errorf("cannot convert public key to chain address: [%v]", err)
 		return false
 	}
 
-	_, isInGroup := smv.members[address.String()]
+	_, isInGroup := omv.members[address.String()]
 	return isInGroup
 }
 
@@ -68,13 +68,13 @@ func (smv *OperatorsMembershipValidator) IsInGroup(
 // been selected to the group at the given position. If the position does
 // not match function returns false. The same happens when the party was
 // not selected to the group.
-func (smv *OperatorsMembershipValidator) IsValidMembership(
+func (omv *OperatorsMembershipValidator) IsValidMembership(
 	memberID MemberIndex,
 	publicKey []byte,
 ) bool {
-	address := smv.signing.PublicKeyBytesToAddress(publicKey).String()
+	address := omv.signing.PublicKeyBytesToAddress(publicKey).String()
 
-	positions, isInGroup := smv.members[address]
+	positions, isInGroup := omv.members[address]
 
 	if !isInGroup {
 		return false

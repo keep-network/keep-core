@@ -66,7 +66,7 @@ func (n *node) JoinDKGIfEligible(
 		dkgSeed,
 	)
 
-	groupMembers, err := n.beaconChain.SelectGroup(dkgSeed)
+	selectedOperators, err := n.beaconChain.SelectGroup(dkgSeed)
 	if err != nil {
 		logger.Errorf(
 			"failed to select group with seed [0x%x]: [%v]",
@@ -76,10 +76,10 @@ func (n *node) JoinDKGIfEligible(
 		return
 	}
 
-	if len(groupMembers) > maxGroupSize {
+	if len(selectedOperators) > maxGroupSize {
 		logger.Errorf(
 			"group size larger than supported: [%v]",
-			len(groupMembers),
+			len(selectedOperators),
 		)
 		return
 	}
@@ -93,9 +93,9 @@ func (n *node) JoinDKGIfEligible(
 	}
 
 	indexes := make([]uint8, 0)
-	for index, groupMember := range groupMembers {
+	for index, selectedOperator := range selectedOperators {
 		// See if we are amongst those chosen
-		if groupMember == operatorAddress {
+		if selectedOperator == operatorAddress {
 			indexes = append(indexes, uint8(index))
 		}
 	}
@@ -118,7 +118,7 @@ func (n *node) JoinDKGIfEligible(
 		}
 
 		membershipValidator := group.NewOperatorsMembershipValidator(
-			groupMembers,
+			selectedOperators,
 			signing,
 		)
 
@@ -131,14 +131,6 @@ func (n *node) JoinDKGIfEligible(
 			)
 		}
 
-		blockCounter, err := n.beaconChain.BlockCounter()
-		if err != nil {
-			logger.Errorf("failed to get block counter: [%v]", err)
-			return
-		}
-
-		chainConfig := n.beaconChain.GetConfig()
-
 		for _, index := range indexes {
 			// Capture the player index for the goroutine.
 			playerIndex := index
@@ -147,13 +139,11 @@ func (n *node) JoinDKGIfEligible(
 				signer, err := dkg.ExecuteDKG(
 					dkgSeed,
 					playerIndex,
-					chainConfig.GroupSize,
-					chainConfig.DishonestThreshold(),
-					membershipValidator,
 					dkgStartBlockNumber,
-					blockCounter,
 					n.beaconChain,
 					broadcastChannel,
+					membershipValidator,
+					selectedOperators,
 				)
 				if err != nil {
 					logger.Errorf("failed to execute dkg: [%v]", err)

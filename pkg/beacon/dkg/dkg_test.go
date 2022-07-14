@@ -146,3 +146,57 @@ func TestDecideMemberFate_Timeout(t *testing.T) {
 		)
 	}
 }
+
+func TestResolveGroupOperators(t *testing.T) {
+	selectedOperators := []chain.Address{
+		"0xAA",
+		"0xBB",
+		"0xCC",
+		"0xDD",
+		"0xEE",
+	}
+
+	var tests = map[string]struct {
+		selectedOperators        []chain.Address
+		operatingGroupMembersIDs []group.MemberIndex
+		expectedGroupOperators   []chain.Address
+	}{
+		"no selected operators": {
+			selectedOperators:        nil,
+			operatingGroupMembersIDs: []group.MemberIndex{1},
+			expectedGroupOperators:   []chain.Address{},
+		},
+		"all selected operators are operating": {
+			selectedOperators:        selectedOperators,
+			operatingGroupMembersIDs: []group.MemberIndex{5, 4, 3, 2, 1},
+			expectedGroupOperators:   selectedOperators,
+		},
+		"part of the selected operators are operating": {
+			selectedOperators:        selectedOperators,
+			operatingGroupMembersIDs: []group.MemberIndex{5, 1, 3},
+			expectedGroupOperators:   []chain.Address{"0xAA", "0xCC", "0xEE"},
+		},
+		"none of the selected operators are operating": {
+			selectedOperators:        selectedOperators,
+			operatingGroupMembersIDs: nil,
+			expectedGroupOperators:   []chain.Address{},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			actualGroupOperators := resolveGroupOperators(
+				test.selectedOperators,
+				test.operatingGroupMembersIDs,
+			)
+
+			if !reflect.DeepEqual(test.expectedGroupOperators, actualGroupOperators) {
+				t.Errorf(
+					"unexpected group operators\nexpected: %v\nactual:   %v\n",
+					test.expectedGroupOperators,
+					actualGroupOperators,
+				)
+			}
+		})
+	}
+}
