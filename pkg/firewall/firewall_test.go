@@ -35,6 +35,9 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 	_, peerOperatorPublicKey, err := operator.GenerateKeyPair(
 		local_v1.DefaultCurve,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	policy := &anyApplicationPolicy{
 		applications: []Application{
@@ -42,9 +45,6 @@ func TestValidate_OperatorNotRecognized_MultipleApplications(t *testing.T) {
 			newMockApplication()},
 		positiveResultCache: cache.NewTimeCache(cachingPeriod),
 		negativeResultCache: cache.NewTimeCache(cachingPeriod),
-	}
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	err = policy.Validate(peerOperatorPublicKey)
