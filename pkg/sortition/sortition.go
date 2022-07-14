@@ -64,14 +64,23 @@ func MonitorPool(
 func checkOperatorStatus(chain Chain) error {
 	logger.Info("checking sortition pool operator status")
 
+	isPoolLocked, err := chain.IsPoolLocked()
+	if err != nil {
+		return err
+	}
+
 	isOperatorInPool, err := chain.IsOperatorInPool()
+	if err != nil {
+		return err
+	}
+
+	isOperatorUpToDate, err := chain.IsOperatorUpToDate()
 	if err != nil {
 		return err
 	}
 
 	if isOperatorInPool {
 		logger.Info("operator is in the sortition pool")
-
 		err = checkRewardsEligibility(chain)
 		if err != nil {
 			logger.Errorf("could not check for rewards eligibility [%v]", err)
@@ -80,43 +89,24 @@ func checkOperatorStatus(chain Chain) error {
 		logger.Info("operator is not in the sortition pool")
 	}
 
-	isOperatorUpToDate, err := chain.IsOperatorUpToDate()
-	if err != nil {
-		return err
-	}
-
-	if isOperatorUpToDate {
-		if isOperatorInPool {
-			logger.Info("sortition pool operator status is up to date")
-		} else {
-			logger.Info("please inspect staking providers's authorization for the Random Beacon")
-		}
-
-		return nil
-	}
-
-	isLocked, err := chain.IsPoolLocked()
-	if err != nil {
-		return err
-	}
-
-	if isLocked {
-		logger.Info("sortition pool state is locked, waiting with the update")
-		return nil
-	}
-
-	if isOperatorInPool {
+	if isOperatorUpToDate && isOperatorInPool {
+		logger.Info("sortition pool operator weight is up to date")
+	} else if isOperatorUpToDate {
+		logger.Info("inspect staking providers's authorization for the Random Beacon")
+	} else if isOperatorInPool && !isPoolLocked {
 		logger.Info("updating operator status in the sortition pool")
 		err := chain.UpdateOperatorStatus()
 		if err != nil {
 			logger.Errorf("could not update the sortition pool: [%v]", err)
 		}
-	} else {
+	} else if !isPoolLocked {
 		logger.Info("joining the sortition pool")
 		err := chain.JoinSortitionPool()
 		if err != nil {
 			logger.Errorf("could not join the sortition pool: [%v]", err)
 		}
+	} else {
+		logger.Info("sortition pool state is locked, waiting with the update")
 	}
 
 	return nil
