@@ -9,6 +9,8 @@ import (
 	"math/rand"
 	"sync"
 
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+
 	"github.com/ethereum/go-ethereum/crypto"
 	beaconchain "github.com/keep-network/keep-core/pkg/beacon/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/event"
@@ -354,9 +356,6 @@ type mockRandomBeacon struct {
 	activeGroupMutex sync.RWMutex
 	activeGroup      []byte
 
-	latestRelayEntryMutex sync.RWMutex
-	latestRelayEntry      []byte
-
 	currentRequestMutex         sync.RWMutex
 	currentRequestStartBlock    *big.Int
 	currentRequestPreviousEntry []byte
@@ -370,7 +369,6 @@ func newMockRandomBeacon(blockCounter chain.BlockCounter) *mockRandomBeacon {
 	return &mockRandomBeacon{
 		blockCounter:                 blockCounter,
 		dkgResultSubmissionHandlers:  make(map[int]func(submission *event.DKGResultSubmission)),
-		latestRelayEntry:             big.NewInt(1000000000).Bytes(),
 		relayEntrySubmissionHandlers: make(map[int]func(submission *event.RelayEntrySubmitted)),
 	}
 }
@@ -474,12 +472,17 @@ func (mrb *mockRandomBeacon) OnRelayEntryRequested(
 				// Generate an event every 25th block.
 				if block%25 == 0 {
 					mrb.activeGroupMutex.RLock()
-					mrb.latestRelayEntryMutex.RLock()
 					mrb.currentRequestMutex.Lock()
 
 					if mrb.currentRequestStartBlock == nil && len(mrb.activeGroup) > 0 {
+						blockBytes := make([]byte, 8)
+						binary.BigEndian.PutUint64(blockBytes, block)
+						blockHashBytes := crypto.Keccak256(blockBytes)
+						blockHash := new(big.Int).SetBytes(blockHashBytes)
+						previousEntry := new(bn256.G1).ScalarBaseMult(blockHash)
+
 						mrb.currentRequestStartBlock = big.NewInt(int64(block))
-						mrb.currentRequestPreviousEntry = mrb.latestRelayEntry
+						mrb.currentRequestPreviousEntry = previousEntry.Marshal()
 						mrb.currentRequestGroup = mrb.activeGroup
 
 						go handler(&event.RelayEntryRequested{
@@ -490,7 +493,6 @@ func (mrb *mockRandomBeacon) OnRelayEntryRequested(
 					}
 
 					mrb.currentRequestMutex.Unlock()
-					mrb.latestRelayEntryMutex.RUnlock()
 					mrb.activeGroupMutex.RUnlock()
 				}
 			case <-ctx.Done():
@@ -530,9 +532,6 @@ func (mrb *mockRandomBeacon) SubmitRelayEntry(
 	mrb.relayEntrySubmissionHandlersMutex.Lock()
 	defer mrb.relayEntrySubmissionHandlersMutex.Unlock()
 
-	mrb.latestRelayEntryMutex.Lock()
-	defer mrb.latestRelayEntryMutex.Unlock()
-
 	mrb.currentRequestMutex.Lock()
 	defer mrb.currentRequestMutex.Unlock()
 
@@ -547,7 +546,6 @@ func (mrb *mockRandomBeacon) SubmitRelayEntry(
 		}(handler)
 	}
 
-	mrb.latestRelayEntry = entry
 	mrb.currentRequestStartBlock = nil
 	mrb.currentRequestPreviousEntry = nil
 	mrb.currentRequestGroup = nil
