@@ -184,6 +184,10 @@ func (c *Chain) CanRestoreRewardEligibility() (bool, error) {
 }
 
 func (c *Chain) RestoreRewardEligibility() error {
+	if canRestore, _ := c.CanRestoreRewardEligibility(); !canRestore {
+		return fmt.Errorf("cannot restore the rewards eligibility yet")
+	}
+
 	c.ineligibleForRewardsUntilMutex.Lock()
 	defer c.ineligibleForRewardsUntilMutex.Unlock()
 

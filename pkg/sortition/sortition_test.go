@@ -206,7 +206,7 @@ func TestMonitor_EligibleForRewards(t *testing.T) {
 	}
 }
 
-func TestMonitor_CannotRestoreRewardsEligibility(t *testing.T) {
+func TestMonitor_CannotRestoreRewardsEligibility_TimeNotPassed(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -228,14 +228,6 @@ func TestMonitor_CannotRestoreRewardsEligibility(t *testing.T) {
 	}
 	if isEligibleForRewards {
 		t.Fatal("expected the operator not to be eligible for rewards")
-	}
-
-	canRestoreRewardsEligibility, err := localChain.CanRestoreRewardEligibility()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if canRestoreRewardsEligibility {
-		t.Fatal("expected the operator cannot restore rewards eligibility")
 	}
 }
 
