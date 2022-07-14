@@ -11,6 +11,8 @@ import (
 var errOperatorUnknown = fmt.Errorf("operator not registered for the staking provider")
 var errAuthorizationBelowMinimum = fmt.Errorf("authorization below the minimum")
 var errOperatorAlreadyRegisteredInPool = fmt.Errorf("operator is already registered in the pool")
+var errOperatorAlreadyEligibleForRewards = fmt.Errorf("operator already eligible")
+var errOperatorStillIneligibleForRewards = fmt.Errorf("operator still ineligible")
 
 type Chain struct {
 	operatorAddress chain.Address
@@ -178,7 +180,7 @@ func (c *Chain) CanRestoreRewardEligibility() (bool, error) {
 func (c *Chain) canRestoreRewardEligibility() (bool, error) {
 	ineligibleUntil, isIneligible := c.ineligibleForRewardsUntil[c.operatorAddress]
 	if !isIneligible {
-		return false, fmt.Errorf("operator already eligible")
+		return false, errOperatorAlreadyEligibleForRewards
 	}
 
 	return ineligibleUntil.Cmp(c.currentTimestamp) == -1, nil
@@ -194,7 +196,7 @@ func (c *Chain) RestoreRewardEligibility() error {
 	}
 
 	if !canRestore {
-		return fmt.Errorf("operator still ineligible")
+		return errOperatorStillIneligibleForRewards
 	}
 
 	delete(c.ineligibleForRewardsUntil, c.operatorAddress)

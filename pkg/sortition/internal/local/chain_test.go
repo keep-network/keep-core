@@ -243,7 +243,6 @@ func TestUpdateOperatorStatus(t *testing.T) {
 
 func TestIsEligibleForRewards_EligibleOperator(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetRewardIneligibility(big.NewInt(0))
 
 	isEligibileForRewards, err := localChain.IsEligibleForRewards()
 	if err != nil {
@@ -271,8 +270,8 @@ func TestIsEligibleForRewards_NotEligibleOperator(t *testing.T) {
 
 func TestCanRestoreRewardEligibility_Eligible(t *testing.T) {
 	localChain := Connect(testOperatorAddress)
-	localChain.SetRewardIneligibility(big.NewInt(0))
-	localChain.SetCurrentTimestamp(big.NewInt(1))
+	localChain.SetRewardIneligibility(big.NewInt(1))
+	localChain.SetCurrentTimestamp(big.NewInt(2))
 
 	canRestoreRewardEligibility, err := localChain.CanRestoreRewardEligibility()
 	if err != nil {
@@ -343,7 +342,5 @@ func TestRestoreRewardEligibility_CannotRestore(t *testing.T) {
 	}
 
 	err = localChain.RestoreRewardEligibility()
-	if err == nil {
-		t.Fatal("expected the operator not to be eligible for rewards")
-	}
+	testutils.AssertErrorsEqual(t, errOperatorStillIneligibleForRewards, err)
 }
