@@ -192,8 +192,6 @@ func TestMonitor_EligibleForRewards(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
-	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
-
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
@@ -216,8 +214,6 @@ func TestMonitor_CannotRestoreRewardsEligibility(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
-
-	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(0))
@@ -251,8 +247,6 @@ func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
 	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
-
-	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(101))
 
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(2))
