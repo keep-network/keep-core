@@ -183,29 +183,6 @@ func TestMonitor_UpdatePool_WithDelay(t *testing.T) {
 	}
 }
 
-func TestMonitor_EligibleForRewards(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	localChain := local.Connect(testOperatorAddress)
-	localChain.RegisterOperator(testStakingProviderAddress, testOperatorAddress)
-	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
-	localChain.JoinSortitionPool()
-
-	err := MonitorPool(ctx, localChain, statusCheckTick)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	isEligibleForRewards, err := localChain.IsEligibleForRewards()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !isEligibleForRewards {
-		t.Fatal("expected the operator to be eligible for rewards")
-	}
-}
-
 func TestMonitor_CannotRestoreRewardsEligibility_TimeNotPassed(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
