@@ -123,8 +123,6 @@ func checkOperatorStatus(chain Chain) error {
 }
 
 func checkRewardsEligibility(chain Chain) error {
-	logger.Info("checking sortition pool rewards eligibility status")
-
 	isEligibleForRewards, err := chain.IsEligibleForRewards()
 	if err != nil {
 		return err
@@ -133,7 +131,7 @@ func checkRewardsEligibility(chain Chain) error {
 	if isEligibleForRewards {
 		logger.Info("operator is eligibile for rewards")
 	} else {
-		logger.Info("operator is not eligibile for rewards")
+		logger.Info("operator is marked as ineligibile for rewards")
 
 		isLocked, err := chain.IsPoolLocked()
 		if err != nil {
@@ -158,7 +156,7 @@ func checkRewardsEligibility(chain Chain) error {
 				return err
 			}
 		} else {
-			logger.Info("cannot restore eligibility for rewards")
+			logger.Info("cannot restore eligibility for rewards yet")
 		}
 	}
 
