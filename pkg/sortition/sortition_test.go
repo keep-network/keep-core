@@ -192,8 +192,11 @@ func TestMonitor_CannotRestoreRewardsEligibility_TimeNotPassed(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
+	// operator is ineligible for rewards and eligibility can
+	// not be restored yet
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(0))
+
 	err := MonitorPool(ctx, localChain, statusCheckTick)
 	if err != nil {
 		t.Fatal(err)
@@ -217,31 +220,17 @@ func TestMonitor_CanRestoreRewardsEligibility(t *testing.T) {
 	localChain.SetEligibleStake(testStakingProviderAddress, big.NewInt(100))
 	localChain.JoinSortitionPool()
 
+	// operator is ineligible for rewards and eligibility can
+	// be restored at this point
 	localChain.SetRewardIneligibility(big.NewInt(1))
 	localChain.SetCurrentTimestamp(big.NewInt(2))
 
+	err := MonitorPool(ctx, localChain, statusCheckTick)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	isEligibleForRewards, err := localChain.IsEligibleForRewards()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if isEligibleForRewards {
-		t.Fatal("expected the operator not to be eligible for rewards yet")
-	}
-
-	canRestoreRewardsEligibility, err := localChain.CanRestoreRewardEligibility()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !canRestoreRewardsEligibility {
-		t.Fatal("expected the operator to be able to restore rewards eligibility")
-	}
-
-	err = MonitorPool(ctx, localChain, statusCheckTick)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	isEligibleForRewards, err = localChain.IsEligibleForRewards()
 	if err != nil {
 		t.Fatal(err)
 	}
