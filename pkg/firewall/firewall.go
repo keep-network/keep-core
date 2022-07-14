@@ -11,7 +11,8 @@ import (
 
 // Application defines functionalities for operator verification in the firewall.
 type Application interface {
-	// IsRecognized
+	// IsRecognized returns true if the application recognizes the operator
+	// as one participating in the application.
 	IsRecognized(operatorPublicKey *operator.PublicKey) (bool, error)
 }
 
@@ -26,15 +27,15 @@ func (nf *noFirewall) Validate(remotePeerPublicKey *operator.PublicKey) error {
 }
 
 const (
-	// PositiveMinimumStakeCachePeriod is the time period the cache maintains
+	// PositiveIsRecognizedCachePeriod is the time period the cache maintains
 	// the positive result of the last `IsRecognized` checks.
 	// We use the cache to minimize calls to the on-chain client.
-	PositiveMinimumStakeCachePeriod = 12 * time.Hour
+	PositiveIsRecognizedCachePeriod = 12 * time.Hour
 
-	// NegativeMinimumStakeCachePeriod is the time period the cache maintains
+	// NegativeIsRecognizedCachePeriod is the time period the cache maintains
 	// the negative result of the last `IsRecognized` checks.
 	// We use the cache to minimize calls to the on-chain client.
-	NegativeMinimumStakeCachePeriod = 1 * time.Hour
+	NegativeIsRecognizedCachePeriod = 1 * time.Hour
 )
 
 var errNotRecognized = fmt.Errorf(
@@ -44,8 +45,8 @@ var errNotRecognized = fmt.Errorf(
 func AnyApplicationPolicy(applications []Application) net.Firewall {
 	return &anyApplicationPolicy{
 		applications:        applications,
-		positiveResultCache: cache.NewTimeCache(PositiveMinimumStakeCachePeriod),
-		negativeResultCache: cache.NewTimeCache(NegativeMinimumStakeCachePeriod),
+		positiveResultCache: cache.NewTimeCache(PositiveIsRecognizedCachePeriod),
+		negativeResultCache: cache.NewTimeCache(NegativeIsRecognizedCachePeriod),
 	}
 }
 
