@@ -29,7 +29,11 @@ var (
 func setup() {
 	playerIndex = group.MemberIndex(1)
 	groupPublicKey = new(bn256.G2).ScalarBaseMult(big.NewInt(10))
-	gjkrResult = &gjkr.Result{GroupPublicKey: groupPublicKey}
+	dkgGroup := group.NewDkgGroup(4, 10)
+	gjkrResult = &gjkr.Result{
+		GroupPublicKey: groupPublicKey,
+		Group:          dkgGroup,
+	}
 	dkgResultChannel = make(chan *event.DKGResultSubmission, 1)
 	startPublicationBlockHeight = uint64(0)
 	localChain := local_v1.Connect(5, 3)
@@ -42,10 +46,10 @@ func TestDecideMemberFate_HappyPath(t *testing.T) {
 
 	dkgResultChannel <- &event.DKGResultSubmission{
 		GroupPublicKey: groupPublicKey.Marshal(),
-		Misbehaved:     []byte{},
+		Misbehaved:     []byte{7, 10},
 	}
 
-	err := decideMemberFate(
+	operatingMemberIDs, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -53,12 +57,20 @@ func TestDecideMemberFate_HappyPath(t *testing.T) {
 		beaconChain,
 		blockCounter,
 	)
-
 	if err != nil {
 		t.Errorf(
 			"unexpected error\nexpected: %v\nactual:   %v\n",
 			nil,
 			err,
+		)
+	}
+
+	expectedOperatingMemberIDs := []group.MemberIndex{1, 2, 3, 4, 5, 6, 8, 9}
+	if !reflect.DeepEqual(expectedOperatingMemberIDs, operatingMemberIDs) {
+		t.Errorf(
+			"unexpected operating members\nexpected: %v\nactual:   %v\n",
+			expectedOperatingMemberIDs,
+			operatingMemberIDs,
 		)
 	}
 }
@@ -72,7 +84,7 @@ func TestDecideMemberFate_NotSameGroupPublicKey(t *testing.T) {
 		Misbehaved:     []byte{},
 	}
 
-	err := decideMemberFate(
+	_, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -103,7 +115,7 @@ func TestDecideMemberFate_MemberIsMisbehaved(t *testing.T) {
 		Misbehaved:     []byte{playerIndex},
 	}
 
-	err := decideMemberFate(
+	_, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,
@@ -129,7 +141,7 @@ func TestDecideMemberFate_MemberIsMisbehaved(t *testing.T) {
 func TestDecideMemberFate_Timeout(t *testing.T) {
 	setup()
 
-	err := decideMemberFate(
+	_, err := decideMemberFate(
 		playerIndex,
 		gjkrResult,
 		dkgResultChannel,

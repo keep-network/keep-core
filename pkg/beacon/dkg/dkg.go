@@ -62,6 +62,8 @@ func ExecuteDKG(
 
 	startPublicationBlockHeight := gjkrEndBlockHeight
 
+	operatingMemberIDs := gjkrResult.Group.OperatingMemberIDs()
+
 	dkgResultChannel := make(chan *event.DKGResultSubmission)
 	dkgResultSubscription := beaconChain.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
@@ -93,7 +95,7 @@ func ExecuteDKG(
 			err,
 		)
 
-		if err := decideMemberFate(
+		if operatingMemberIDs, err = decideMemberFate(
 			playerIndex,
 			gjkrResult,
 			dkgResultChannel,
@@ -107,7 +109,7 @@ func ExecuteDKG(
 
 	groupOperators := resolveGroupOperators(
 		selectedOperators,
-		gjkrResult.Group.OperatingMemberIDs(),
+		operatingMemberIDs,
 		beaconConfig,
 	)
 
@@ -131,7 +133,7 @@ func decideMemberFate(
 	startPublicationBlockHeight uint64,
 	beaconChain beaconchain.Interface,
 	blockCounter chain.BlockCounter,
-) error {
+) ([]group.MemberIndex, error) {
 	dkgResultEvent, err := waitForDkgResultEvent(
 		dkgResultChannel,
 		startPublicationBlockHeight,
@@ -139,36 +141,48 @@ func decideMemberFate(
 		blockCounter,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	groupPublicKey, err := gjkrResult.GroupPublicKeyBytes()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// If member don't support the same group public key, it could not stay
 	// in the group.
 	if !bytes.Equal(groupPublicKey, dkgResultEvent.GroupPublicKey) {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"[member:%v] could not stay in the group because "+
 				"member do not support the same group public key",
 			playerIndex,
 		)
 	}
 
+	misbehavedSet := make(map[group.MemberIndex]struct{})
+	for _, misbehavedID := range dkgResultEvent.Misbehaved {
+		misbehavedSet[misbehavedID] = struct{}{}
+	}
+
 	// If member is considered as misbehaved, it could not stay in the group.
-	for _, misbehaved := range dkgResultEvent.Misbehaved {
-		if playerIndex == misbehaved {
-			return fmt.Errorf(
-				"[member:%v] could not stay in the group because "+
-					"member is considered as misbehaving",
-				playerIndex,
-			)
+	if _, isMisbehaved := misbehavedSet[playerIndex]; isMisbehaved {
+		return nil, fmt.Errorf(
+			"[member:%v] could not stay in the group because "+
+				"member is considered as misbehaving",
+			playerIndex,
+		)
+	}
+
+	// Construct a new view of the operating members according to the accepted
+	// DKG result.
+	operatingMemberIDs := make([]group.MemberIndex, 0)
+	for _, memberID := range gjkrResult.Group.MemberIDs() {
+		if _, isMisbehaved := misbehavedSet[memberID]; !isMisbehaved {
+			operatingMemberIDs = append(operatingMemberIDs, memberID)
 		}
 	}
 
-	return nil
+	return operatingMemberIDs, nil
 }
 
 func waitForDkgResultEvent(

@@ -46,7 +46,7 @@ type GroupRegistration struct {
 type DKGResultSubmission struct {
 	MemberIndex    uint32
 	GroupPublicKey []byte
-	Misbehaved     []byte
+	Misbehaved     []uint8
 
 	BlockNumber uint64
 }
