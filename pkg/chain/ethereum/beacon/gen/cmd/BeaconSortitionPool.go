@@ -52,6 +52,13 @@ func init() {
 		Usage:       `Provides access to the BeaconSortitionPool contract.`,
 		Description: beaconSortitionPoolDescription,
 		Subcommands: []cli.Command{{
+			Name:      "can-restore-reward-eligibility",
+			Usage:     "Calls the view method canRestoreRewardEligibility on the BeaconSortitionPool contract.",
+			ArgsUsage: "[arg_operator] ",
+			Action:    bspCanRestoreRewardEligibility,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "get-available-rewards",
 			Usage:     "Calls the view method getAvailableRewards on the BeaconSortitionPool contract.",
 			ArgsUsage: "[arg_operator] ",
@@ -78,6 +85,13 @@ func init() {
 			ArgsUsage: "",
 			Action:    bspIneligibleEarnedRewards,
 			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-eligible-for-rewards",
+			Usage:     "Calls the view method isEligibleForRewards on the BeaconSortitionPool contract.",
+			ArgsUsage: "[arg_operator] ",
+			Action:    bspIsEligibleForRewards,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "is-locked",
@@ -134,6 +148,13 @@ func init() {
 			ArgsUsage: "",
 			Action:    bspRewardToken,
 			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "rewards-eligibility-restorable-at",
+			Usage:     "Calls the view method rewardsEligibilityRestorableAt on the BeaconSortitionPool contract.",
+			ArgsUsage: "[arg_operator] ",
+			Action:    bspRewardsEligibilityRestorableAt,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "total-weight",
@@ -217,6 +238,34 @@ func init() {
 }
 
 /// ------------------- Const methods -------------------
+
+func bspCanRestoreRewardEligibility(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.CanRestoreRewardEligibilityAtBlock(
+		arg_operator,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
 
 func bspGetAvailableRewards(c *cli.Context) error {
 	contract, err := initializeBeaconSortitionPool(c)
@@ -309,6 +358,34 @@ func bspIneligibleEarnedRewards(c *cli.Context) error {
 	}
 
 	result, err := contract.IneligibleEarnedRewardsAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func bspIsEligibleForRewards(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.IsEligibleForRewardsAtBlock(
+		arg_operator,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -502,6 +579,34 @@ func bspRewardToken(c *cli.Context) error {
 	}
 
 	result, err := contract.RewardTokenAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func bspRewardsEligibilityRestorableAt(c *cli.Context) error {
+	contract, err := initializeBeaconSortitionPool(c)
+	if err != nil {
+		return err
+	}
+	arg_operator, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg_operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.RewardsEligibilityRestorableAtAtBlock(
+		arg_operator,
 
 		cmd.BlockFlagValue.Uint,
 	)

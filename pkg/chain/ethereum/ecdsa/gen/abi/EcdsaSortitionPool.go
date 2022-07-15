@@ -30,7 +30,7 @@ var (
 
 // EcdsaSortitionPoolMetaData contains all meta data concerning the EcdsaSortitionPool contract.
 var EcdsaSortitionPoolMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"_rewardToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_poolWeightDivisor\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"IneligibleForRewards\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"RewardEligibilityRestored\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"operator\",\"type\":\"uint32\"}],\"name\":\"canRestoreRewardEligibility\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getAvailableRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"getIDOperator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"}],\"name\":\"getIDOperators\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getOperatorID\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getPoolWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ineligibleEarnedRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"insertOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"operator\",\"type\":\"uint32\"}],\"name\":\"isEligibleForRewards\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isLocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorInPool\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"isOperatorUpToDate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"operatorsInPool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolWeightDivisor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"restoreRewardEligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardToken\",\"outputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"operator\",\"type\":\"uint32\"}],\"name\":\"rewardsEligibilityRestorableAt\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupSize\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"seed\",\"type\":\"bytes32\"}],\"name\":\"selectGroup\",\"outputs\":[{\"internalType\":\"uint32[]\",\"name\":\"\",\"type\":\"uint32[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"operators\",\"type\":\"uint32[]\"},{\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"setRewardIneligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"updateOperatorStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"withdrawIneligible\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"withdrawRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"_rewardToken\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_poolWeightDivisor\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"IneligibleForRewards\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"RewardEligibilityRestored\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"canRestoreRewardEligibility\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getAvailableRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"id\",\"type\":\"uint32\"}],\"name\":\"getIDOperator\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"ids\",\"type\":\"uint32[]\"}],\"name\":\"getIDOperators\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getOperatorID\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getPoolWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ineligibleEarnedRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"insertOperator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isEligibleForRewards\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isLocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorInPool\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isOperatorRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"isOperatorUpToDate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"lock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"operatorsInPool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"poolWeightDivisor\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"restoreRewardEligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rewardToken\",\"outputs\":[{\"internalType\":\"contractIERC20WithPermit\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"rewardsEligibilityRestorableAt\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupSize\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"seed\",\"type\":\"bytes32\"}],\"name\":\"selectGroup\",\"outputs\":[{\"internalType\":\"uint32[]\",\"name\":\"\",\"type\":\"uint32[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32[]\",\"name\":\"operators\",\"type\":\"uint32[]\"},{\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"setRewardIneligibility\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalWeight\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"unlock\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"authorizedStake\",\"type\":\"uint256\"}],\"name\":\"updateOperatorStatus\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"}],\"name\":\"withdrawIneligible\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"}],\"name\":\"withdrawRewards\",\"outputs\":[{\"internalType\":\"uint96\",\"name\":\"\",\"type\":\"uint96\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // EcdsaSortitionPoolABI is the input ABI used to generate the binding from.
@@ -179,10 +179,10 @@ func (_EcdsaSortitionPool *EcdsaSortitionPoolTransactorRaw) Transact(opts *bind.
 	return _EcdsaSortitionPool.Contract.contract.Transact(opts, method, params...)
 }
 
-// CanRestoreRewardEligibility is a free data retrieval call binding the contract method 0x69ba3c33.
+// CanRestoreRewardEligibility is a free data retrieval call binding the contract method 0xc0a3f9eb.
 //
-// Solidity: function canRestoreRewardEligibility(uint32 operator) view returns(bool)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) CanRestoreRewardEligibility(opts *bind.CallOpts, operator uint32) (bool, error) {
+// Solidity: function canRestoreRewardEligibility(address operator) view returns(bool)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) CanRestoreRewardEligibility(opts *bind.CallOpts, operator common.Address) (bool, error) {
 	var out []interface{}
 	err := _EcdsaSortitionPool.contract.Call(opts, &out, "canRestoreRewardEligibility", operator)
 
@@ -196,17 +196,17 @@ func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) CanRestoreRewardEligibility
 
 }
 
-// CanRestoreRewardEligibility is a free data retrieval call binding the contract method 0x69ba3c33.
+// CanRestoreRewardEligibility is a free data retrieval call binding the contract method 0xc0a3f9eb.
 //
-// Solidity: function canRestoreRewardEligibility(uint32 operator) view returns(bool)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolSession) CanRestoreRewardEligibility(operator uint32) (bool, error) {
+// Solidity: function canRestoreRewardEligibility(address operator) view returns(bool)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolSession) CanRestoreRewardEligibility(operator common.Address) (bool, error) {
 	return _EcdsaSortitionPool.Contract.CanRestoreRewardEligibility(&_EcdsaSortitionPool.CallOpts, operator)
 }
 
-// CanRestoreRewardEligibility is a free data retrieval call binding the contract method 0x69ba3c33.
+// CanRestoreRewardEligibility is a free data retrieval call binding the contract method 0xc0a3f9eb.
 //
-// Solidity: function canRestoreRewardEligibility(uint32 operator) view returns(bool)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) CanRestoreRewardEligibility(operator uint32) (bool, error) {
+// Solidity: function canRestoreRewardEligibility(address operator) view returns(bool)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) CanRestoreRewardEligibility(operator common.Address) (bool, error) {
 	return _EcdsaSortitionPool.Contract.CanRestoreRewardEligibility(&_EcdsaSortitionPool.CallOpts, operator)
 }
 
@@ -396,10 +396,10 @@ func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) IneligibleEarnedRewa
 	return _EcdsaSortitionPool.Contract.IneligibleEarnedRewards(&_EcdsaSortitionPool.CallOpts)
 }
 
-// IsEligibleForRewards is a free data retrieval call binding the contract method 0x5222580a.
+// IsEligibleForRewards is a free data retrieval call binding the contract method 0x660186e6.
 //
-// Solidity: function isEligibleForRewards(uint32 operator) view returns(bool)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) IsEligibleForRewards(opts *bind.CallOpts, operator uint32) (bool, error) {
+// Solidity: function isEligibleForRewards(address operator) view returns(bool)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) IsEligibleForRewards(opts *bind.CallOpts, operator common.Address) (bool, error) {
 	var out []interface{}
 	err := _EcdsaSortitionPool.contract.Call(opts, &out, "isEligibleForRewards", operator)
 
@@ -413,17 +413,17 @@ func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) IsEligibleForRewards(opts *
 
 }
 
-// IsEligibleForRewards is a free data retrieval call binding the contract method 0x5222580a.
+// IsEligibleForRewards is a free data retrieval call binding the contract method 0x660186e6.
 //
-// Solidity: function isEligibleForRewards(uint32 operator) view returns(bool)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolSession) IsEligibleForRewards(operator uint32) (bool, error) {
+// Solidity: function isEligibleForRewards(address operator) view returns(bool)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolSession) IsEligibleForRewards(operator common.Address) (bool, error) {
 	return _EcdsaSortitionPool.Contract.IsEligibleForRewards(&_EcdsaSortitionPool.CallOpts, operator)
 }
 
-// IsEligibleForRewards is a free data retrieval call binding the contract method 0x5222580a.
+// IsEligibleForRewards is a free data retrieval call binding the contract method 0x660186e6.
 //
-// Solidity: function isEligibleForRewards(uint32 operator) view returns(bool)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) IsEligibleForRewards(operator uint32) (bool, error) {
+// Solidity: function isEligibleForRewards(address operator) view returns(bool)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) IsEligibleForRewards(operator common.Address) (bool, error) {
 	return _EcdsaSortitionPool.Contract.IsEligibleForRewards(&_EcdsaSortitionPool.CallOpts, operator)
 }
 
@@ -675,10 +675,10 @@ func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) RewardToken() (commo
 	return _EcdsaSortitionPool.Contract.RewardToken(&_EcdsaSortitionPool.CallOpts)
 }
 
-// RewardsEligibilityRestorableAt is a free data retrieval call binding the contract method 0xbe51fb4a.
+// RewardsEligibilityRestorableAt is a free data retrieval call binding the contract method 0x00983b73.
 //
-// Solidity: function rewardsEligibilityRestorableAt(uint32 operator) view returns(uint256)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) RewardsEligibilityRestorableAt(opts *bind.CallOpts, operator uint32) (*big.Int, error) {
+// Solidity: function rewardsEligibilityRestorableAt(address operator) view returns(uint256)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) RewardsEligibilityRestorableAt(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
 	var out []interface{}
 	err := _EcdsaSortitionPool.contract.Call(opts, &out, "rewardsEligibilityRestorableAt", operator)
 
@@ -692,17 +692,17 @@ func (_EcdsaSortitionPool *EcdsaSortitionPoolCaller) RewardsEligibilityRestorabl
 
 }
 
-// RewardsEligibilityRestorableAt is a free data retrieval call binding the contract method 0xbe51fb4a.
+// RewardsEligibilityRestorableAt is a free data retrieval call binding the contract method 0x00983b73.
 //
-// Solidity: function rewardsEligibilityRestorableAt(uint32 operator) view returns(uint256)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolSession) RewardsEligibilityRestorableAt(operator uint32) (*big.Int, error) {
+// Solidity: function rewardsEligibilityRestorableAt(address operator) view returns(uint256)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolSession) RewardsEligibilityRestorableAt(operator common.Address) (*big.Int, error) {
 	return _EcdsaSortitionPool.Contract.RewardsEligibilityRestorableAt(&_EcdsaSortitionPool.CallOpts, operator)
 }
 
-// RewardsEligibilityRestorableAt is a free data retrieval call binding the contract method 0xbe51fb4a.
+// RewardsEligibilityRestorableAt is a free data retrieval call binding the contract method 0x00983b73.
 //
-// Solidity: function rewardsEligibilityRestorableAt(uint32 operator) view returns(uint256)
-func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) RewardsEligibilityRestorableAt(operator uint32) (*big.Int, error) {
+// Solidity: function rewardsEligibilityRestorableAt(address operator) view returns(uint256)
+func (_EcdsaSortitionPool *EcdsaSortitionPoolCallerSession) RewardsEligibilityRestorableAt(operator common.Address) (*big.Int, error) {
 	return _EcdsaSortitionPool.Contract.RewardsEligibilityRestorableAt(&_EcdsaSortitionPool.CallOpts, operator)
 }
 
