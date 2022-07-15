@@ -178,11 +178,12 @@ func TestResolveGroupOperators(t *testing.T) {
 		selectedOperators        []chain.Address
 		operatingGroupMembersIDs []group.MemberIndex
 		expectedGroupOperators   []chain.Address
+		expectedError            error
 	}{
 		"selected operators count not equal to the group size": {
 			selectedOperators:        selectedOperators[:4],
 			operatingGroupMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
-			expectedGroupOperators:   []chain.Address{},
+			expectedError:            fmt.Errorf("invalid input parameters"),
 		},
 		"all selected operators are operating": {
 			selectedOperators:        selectedOperators,
@@ -197,17 +198,25 @@ func TestResolveGroupOperators(t *testing.T) {
 		"less than honest majority of selected operators are operating": {
 			selectedOperators:        selectedOperators,
 			operatingGroupMembersIDs: []group.MemberIndex{5, 1},
-			expectedGroupOperators:   []chain.Address{},
+			expectedError:            fmt.Errorf("invalid input parameters"),
 		},
 	}
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			actualGroupOperators := resolveGroupOperators(
+			actualGroupOperators, err := resolveGroupOperators(
 				test.selectedOperators,
 				test.operatingGroupMembersIDs,
 				beaconConfig,
 			)
+
+			if !reflect.DeepEqual(test.expectedError, err) {
+				t.Errorf(
+					"unexpected error\nexpected: %v\nactual:   %v\n",
+					test.expectedError,
+					err,
+				)
+			}
 
 			if !reflect.DeepEqual(test.expectedGroupOperators, actualGroupOperators) {
 				t.Errorf(

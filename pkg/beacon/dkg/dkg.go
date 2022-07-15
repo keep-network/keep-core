@@ -107,11 +107,14 @@ func ExecuteDKG(
 		}
 	}
 
-	groupOperators := resolveGroupOperators(
+	groupOperators, err := resolveGroupOperators(
 		selectedOperators,
 		operatingMemberIDs,
 		beaconConfig,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve group operators: [%v]", err)
+	}
 
 	return &ThresholdSigner{
 		memberIndex:          playerIndex,
@@ -232,10 +235,10 @@ func resolveGroupOperators(
 	selectedOperators []chain.Address,
 	operatingGroupMembersIDs []group.MemberIndex,
 	beaconConfig *beaconchain.Config,
-) []chain.Address {
+) ([]chain.Address, error) {
 	if len(selectedOperators) != beaconConfig.GroupSize ||
 		len(operatingGroupMembersIDs) < beaconConfig.HonestThreshold {
-		return []chain.Address{}
+		return nil, fmt.Errorf("invalid input parameters")
 	}
 
 	sort.Slice(operatingGroupMembersIDs, func(i, j int) bool {
@@ -251,5 +254,5 @@ func resolveGroupOperators(
 		groupOperators[i] = selectedOperators[operatingMemberID-1]
 	}
 
-	return groupOperators
+	return groupOperators, nil
 }
