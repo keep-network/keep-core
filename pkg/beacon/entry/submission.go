@@ -134,28 +134,11 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 		big.NewInt(int64(groupSize)),
 	).Uint64()
 
-	// Calculate the position in the submission queue for the given member.
-	// The submission queue consists of the firstSubmitterMemberIndex followed
-	// by subsequent member indexes according to the modulus groupSize.
-	// The submission queue position for the given member can be computed as:
-	// - if memberIndex >= firstSubmitterMemberIndex: memberIndex - firstSubmitterMemberIndex
-	// - otherwise: memberIndex + groupSize - firstSubmitterMemberIndex
-	//
-	// For example, for `groupSize = 5` and `firstSubmitterMemberIndex = 2`, the
-	// submission queue is [2, 3, 4, 0, 1]. We compute the submission queue
-	// position for each member as:
-	// - member 0: 0 + 5 - 2 = 3
-	// - member 1: 1 + 5 - 2 = 4
-	// - member 2:     2 - 2 = 0
-	// - member 3:     3 - 2 = 1
-	// - member 4:     4 - 2 = 2
-	memberIndex := uint64(res.index)
-	var submissionQueueIndex uint64
-	if memberIndex >= firstSubmitterMemberIndex {
-		submissionQueueIndex = memberIndex - firstSubmitterMemberIndex
-	} else {
-		submissionQueueIndex = memberIndex + uint64(groupSize) - firstSubmitterMemberIndex
-	}
+	submissionQueueIndex := calculateSubmissionQueueIndex(
+		uint64(res.index),
+		firstSubmitterMemberIndex,
+		uint64(groupSize),
+	)
 
 	// Calculate the block wait time based on the position in the submission
 	// queue. For example, the member at the first position (index `0`)
@@ -176,4 +159,32 @@ func (res *relayEntrySubmitter) waitForSubmissionEligibility(
 	}
 
 	return waiter, err
+}
+
+// calculateSubmissionQueueIndex calculates the position in the submission
+// queue for the given member. The submission queue consists of the
+// firstSubmitterMemberIndex followed by subsequent member indexes according to
+// the modulus groupSize. The submission queue position for the given member
+// can be computed as:
+// - if memberIndex >= firstSubmitterMemberIndex: memberIndex - firstSubmitterMemberIndex
+// - otherwise: memberIndex + groupSize - firstSubmitterMemberIndex
+//
+// For example, for `groupSize = 5` and `firstSubmitterMemberIndex = 2`, the
+// submission queue is [2, 3, 4, 0, 1]. We compute the submission queue
+// position for each member as:
+// - member 0: 0 + 5 - 2 = 3
+// - member 1: 1 + 5 - 2 = 4
+// - member 2:     2 - 2 = 0
+// - member 3:     3 - 2 = 1
+// - member 4:     4 - 2 = 2
+func calculateSubmissionQueueIndex(
+	memberIndex uint64,
+	firstSubmitterMemberIndex uint64,
+	groupSize uint64,
+) uint64 {
+	if memberIndex >= firstSubmitterMemberIndex {
+		return memberIndex - firstSubmitterMemberIndex
+	} else {
+		return memberIndex + groupSize - firstSubmitterMemberIndex
+	}
 }
