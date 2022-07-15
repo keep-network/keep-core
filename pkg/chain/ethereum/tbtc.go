@@ -108,6 +108,85 @@ func (tc *TbtcChain) GetConfig() *tbtc.ChainConfig {
 	}
 }
 
+// OperatorToStakingProvider returns the staking provider address for the
+// operator. If the staking provider has not been registered for the
+// operator, the returned address is empty and the boolean flag is set to
+// false. If the staking provider has been registered, the address is not
+// empty and the boolean flag indicates true.
+func (tc *TbtcChain) OperatorToStakingProvider() (chain.Address, bool, error) {
+	stakingProvider, err := tc.walletRegistry.OperatorToStakingProvider(tc.key.Address)
+	if err != nil {
+		return "", false, fmt.Errorf(
+			"failed to map operator [%v] to a staking provider: [%v]",
+			tc.key.Address,
+			err,
+		)
+	}
+
+	if (stakingProvider == common.Address{}) {
+		return "", false, nil
+	}
+
+	return chain.Address(stakingProvider.Hex()), true, nil
+}
+
+// EligibleStake returns the current value of the staking provider's
+// eligible stake. Eligible stake is defined as the currently authorized
+// stake minus the pending authorization decrease. Eligible stake
+// is what is used for operator's weight in the sortition pool.
+// If the authorized stake minus the pending authorization decrease
+// is below the minimum authorization, eligible stake is 0.
+func (tc *TbtcChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
+	eligibleStake, err := tc.walletRegistry.EligibleStake(
+		common.HexToAddress(stakingProvider.String()),
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get eligible stake for staking provider %s: [%w]",
+			stakingProvider,
+			err,
+		)
+	}
+
+	return eligibleStake, nil
+}
+
+// IsPoolLocked returns true if the sortition pool is locked and no state
+// changes are allowed.
+func (tc *TbtcChain) IsPoolLocked() (bool, error) {
+	return tc.sortitionPool.IsLocked()
+}
+
+// IsOperatorInPool returns true if the operator is registered in
+// the sortition pool.
+func (tc *TbtcChain) IsOperatorInPool() (bool, error) {
+	return tc.walletRegistry.IsOperatorInPool(tc.key.Address)
+}
+
+// IsOperatorUpToDate checks if the operator's authorized stake is in sync
+// with operator's weight in the sortition pool.
+// If the operator's authorized stake is not in sync with sortition pool
+// weight, function returns false.
+// If the operator is not in the sortition pool and their authorized stake
+// is non-zero, function returns false.
+func (tc *TbtcChain) IsOperatorUpToDate() (bool, error) {
+	return tc.walletRegistry.IsOperatorUpToDate(tc.key.Address)
+}
+
+// JoinSortitionPool executes a transaction to have the operator join the
+// sortition pool.
+func (tc *TbtcChain) JoinSortitionPool() error {
+	_, err := tc.walletRegistry.JoinSortitionPool()
+	return err
+}
+
+// UpdateOperatorStatus executes a transaction to update the operator's
+// state in the sortition pool.
+func (tc *TbtcChain) UpdateOperatorStatus() error {
+	_, err := tc.walletRegistry.UpdateOperatorStatus(tc.key.Address)
+	return err
+}
+
 // IsRecognized checks whether the given operator is recognized by the TbtcChain
 // as eligible to join the network. If the operator has a stake delegation or
 // had a stake delegation in the past, it will be recognized.
@@ -153,41 +232,6 @@ func (tc *TbtcChain) IsRecognized(operatorPublicKey *operator.PublicKey) (bool, 
 	}
 
 	return true, nil
-}
-
-func (tc *TbtcChain) OperatorToStakingProvider() (chain.Address, bool, error) {
-	//TODO: Implementation.
-	panic("not implemented yet")
-}
-
-func (tc *TbtcChain) EligibleStake(stakingProvider chain.Address) (*big.Int, error) {
-	//TODO: Implementation.
-	panic("not implemented yet")
-}
-
-func (tc *TbtcChain) IsPoolLocked() (bool, error) {
-	//TODO: Implementation.
-	panic("not implemented yet")
-}
-
-func (tc *TbtcChain) IsOperatorInPool() (bool, error) {
-	//TODO: Implementation.
-	panic("not implemented yet")
-}
-
-func (tc *TbtcChain) IsOperatorUpToDate() (bool, error) {
-	//TODO: Implementation.
-	panic("not implemented yet")
-}
-
-func (tc *TbtcChain) JoinSortitionPool() error {
-	//TODO: Implementation.
-	panic("not implemented yet")
-}
-
-func (tc *TbtcChain) UpdateOperatorStatus() error {
-	//TODO: Implementation.
-	panic("not implemented yet")
 }
 
 // TODO: Implement a real SelectGroup function.
