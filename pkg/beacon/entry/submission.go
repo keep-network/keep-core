@@ -84,7 +84,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			}
 
 			logger.Infof(
-				"[member:%v] successfully submitted relay entry " +
+				"[member:%v] successfully submitted relay entry "+
 					"transaction to the mempool at block [%v]",
 				res.index,
 				blockNumber,
