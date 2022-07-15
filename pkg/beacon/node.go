@@ -17,8 +17,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-const maxGroupSize = 255
-
 // node represents the current state of a beacon node.
 type node struct {
 	operatorPublicKey *operator.PublicKey
@@ -76,7 +74,7 @@ func (n *node) JoinDKGIfEligible(
 		return
 	}
 
-	if len(selectedOperators) > maxGroupSize {
+	if len(selectedOperators) > n.beaconChain.GetConfig().GroupSize {
 		logger.Errorf(
 			"group size larger than supported: [%v]",
 			len(selectedOperators),
