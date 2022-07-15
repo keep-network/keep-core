@@ -21,7 +21,7 @@ type GroupMemberIndex = uint8
 // pertains specifically to submission and retrieval of relay requests and
 // entries.
 type RelayEntryInterface interface {
-	// SubmitRelayEntry submits an entry in the random beacon.
+	// SubmitRelayEntry submits a newly created relay entry to the chain.
 	SubmitRelayEntry(entry []byte) error
 	// OnRelayEntrySubmitted is a callback that is invoked when an on-chain
 	// notification of a new, valid relay entry is seen.

@@ -258,8 +258,7 @@ func (bc *BeaconChain) OnDKGStarted(
 
 // TODO: Implement a real SubmitDKGResult action. The current implementation
 //       just creates and pipes the DKG submission event to the handlers
-//       registered in the dkgResultSubmissionHandlers map. Consider getting
-//       rid of the result promise in favor of the fire-and-forget style.
+//       registered in the dkgResultSubmissionHandlers map.
 func (bc *BeaconChain) SubmitDKGResult(
 	participantIndex beaconchain.GroupMemberIndex,
 	dkgResult *beaconchain.DKGResult,
@@ -513,7 +512,8 @@ func (mrb *mockRandomBeacon) OnRelayEntryRequested(
 		for {
 			select {
 			case block := <-blocksChan:
-				// Generate an event every 25th block.
+				// Generate an event every 25th block, if there is no other
+				// request in progress.
 				if block%25 == 0 {
 					mrb.activeGroupMutex.RLock()
 					mrb.currentRequestMutex.Lock()

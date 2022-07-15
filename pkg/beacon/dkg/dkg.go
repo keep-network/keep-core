@@ -36,7 +36,7 @@ func ExecuteDKG(
 		return nil, fmt.Errorf("failed to get block counter: [%v]", err)
 	}
 
-	// The operator index should begin with 1
+	// The group member index should begin with 1.
 	playerIndex := group.MemberIndex(index + 1)
 
 	gjkr.RegisterUnmarshallers(channel)
