@@ -149,6 +149,11 @@ func TestDecideMemberFate_Timeout(t *testing.T) {
 }
 
 func TestResolveGroupOperators(t *testing.T) {
+	beaconConfig := &beaconchain.Config{
+		GroupSize:       5,
+		HonestThreshold: 3,
+	}
+
 	selectedOperators := []chain.Address{
 		"0xAA",
 		"0xBB",
@@ -162,9 +167,9 @@ func TestResolveGroupOperators(t *testing.T) {
 		operatingGroupMembersIDs []group.MemberIndex
 		expectedGroupOperators   []chain.Address
 	}{
-		"no selected operators": {
-			selectedOperators:        nil,
-			operatingGroupMembersIDs: []group.MemberIndex{1},
+		"selected operators count not equal to the group size": {
+			selectedOperators:        selectedOperators[:4],
+			operatingGroupMembersIDs: []group.MemberIndex{1, 2, 3, 4, 5},
 			expectedGroupOperators:   []chain.Address{},
 		},
 		"all selected operators are operating": {
@@ -172,14 +177,14 @@ func TestResolveGroupOperators(t *testing.T) {
 			operatingGroupMembersIDs: []group.MemberIndex{5, 4, 3, 2, 1},
 			expectedGroupOperators:   selectedOperators,
 		},
-		"part of the selected operators are operating": {
+		"honest majority of selected operators are operating": {
 			selectedOperators:        selectedOperators,
 			operatingGroupMembersIDs: []group.MemberIndex{5, 1, 3},
 			expectedGroupOperators:   []chain.Address{"0xAA", "0xCC", "0xEE"},
 		},
-		"none of the selected operators are operating": {
+		"less than honest majority of selected operators are operating": {
 			selectedOperators:        selectedOperators,
-			operatingGroupMembersIDs: nil,
+			operatingGroupMembersIDs: []group.MemberIndex{5, 1},
 			expectedGroupOperators:   []chain.Address{},
 		},
 	}
@@ -189,6 +194,7 @@ func TestResolveGroupOperators(t *testing.T) {
 			actualGroupOperators := resolveGroupOperators(
 				test.selectedOperators,
 				test.operatingGroupMembersIDs,
+				beaconConfig,
 			)
 
 			if !reflect.DeepEqual(test.expectedGroupOperators, actualGroupOperators) {

@@ -108,6 +108,7 @@ func ExecuteDKG(
 	groupOperators := resolveGroupOperators(
 		selectedOperators,
 		gjkrResult.Group.OperatingMemberIDs(),
+		beaconConfig,
 	)
 
 	return &ThresholdSigner{
@@ -216,8 +217,10 @@ func waitForDkgResultEvent(
 func resolveGroupOperators(
 	selectedOperators []chain.Address,
 	operatingGroupMembersIDs []group.MemberIndex,
+	beaconConfig *beaconchain.Config,
 ) []chain.Address {
-	if len(selectedOperators) == 0 || len(operatingGroupMembersIDs) == 0 {
+	if len(selectedOperators) != beaconConfig.GroupSize ||
+		len(operatingGroupMembersIDs) < beaconConfig.HonestThreshold {
 		return []chain.Address{}
 	}
 
