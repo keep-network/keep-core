@@ -27,6 +27,7 @@ type TbtcChain struct {
 	walletRegistry *contract.WalletRegistry
 
 	mockWalletRegistry *mockWalletRegistry
+	sortitionPool      *contract.EcdsaSortitionPool
 }
 
 // NewTbtcChain construct a new instance of the TBTC-specific Ethereum
@@ -62,10 +63,37 @@ func newTbtcChain(
 		)
 	}
 
+	sortitionPoolAddress, err := walletRegistry.SortitionPool()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to get sortition pool address: [%v]",
+			err,
+		)
+	}
+
+	sortitionPool, err :=
+		contract.NewEcdsaSortitionPool(
+			sortitionPoolAddress,
+			baseChain.chainID,
+			baseChain.key,
+			baseChain.client,
+			baseChain.nonceManager,
+			baseChain.miningWaiter,
+			baseChain.blockCounter,
+			baseChain.transactionMutex,
+		)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to attach to EcdsaSortitionPool contract: [%v]",
+			err,
+		)
+	}
+
 	return &TbtcChain{
 		Chain:              baseChain,
 		walletRegistry:     walletRegistry,
 		mockWalletRegistry: newMockWalletRegistry(baseChain.blockCounter),
+		sortitionPool:      sortitionPool,
 	}, nil
 }
 
