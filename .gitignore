@@ -3,7 +3,10 @@ node_modules/
 artifacts/
 build/
 cache/
-deployments/
+deployments/*/
+!deployments/mainnet/
+deployments/mainnet/*
+!deployments/mainnet/*.json
 export/
 export.json
 
