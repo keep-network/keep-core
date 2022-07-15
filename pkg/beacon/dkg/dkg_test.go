@@ -31,7 +31,7 @@ func setup() {
 	gjkrResult = &gjkr.Result{GroupPublicKey: groupPublicKey}
 	dkgResultChannel = make(chan *event.DKGResultSubmission, 1)
 	startPublicationBlockHeight = uint64(0)
-	localChain := local_v1.Connect(5, 3, big.NewInt(10))
+	localChain := local_v1.Connect(5, 3)
 	beaconChain = localChain
 	blockCounter, _ = beaconChain.BlockCounter()
 }
